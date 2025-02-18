@@ -64,9 +64,9 @@ end
 
 module Msg = struct
   type access_control_denied =
-    [ `All_dirspaces of Terrat_access_control.R.Deny.t list
+    [ `All_dirspaces of Terrat_access_control2.R.Deny.t list
     | `Ci_config_update of Terrat_base_repo_config_v1.Access_control.Match_list.t
-    | `Dirspaces of Terrat_access_control.R.Deny.t list
+    | `Dirspaces of Terrat_access_control2.R.Deny.t list
     | `Files of string * Terrat_base_repo_config_v1.Access_control.Match_list.t
     | `Lookup_err
     | `Terrateam_config_update of Terrat_base_repo_config_v1.Access_control.Match_list.t
@@ -146,7 +146,10 @@ module type S = sig
       (unit, [> `Error ]) result Abb.Future.t
 
     val store_pull_request :
-      request_id:string -> t -> Api.Pull_request.t -> (unit, [> `Error ]) result Abb.Future.t
+      request_id:string ->
+      t ->
+      (Terrat_change.Diff.t list, bool) Api.Pull_request.t ->
+      (unit, [> `Error ]) result Abb.Future.t
 
     val store_index :
       request_id:string ->
@@ -223,7 +226,9 @@ module type S = sig
     val query_next_pending_work_manifest :
       request_id:string ->
       t ->
-      ( (Api.Account.t, (Api.Pull_request.t, Api.Repo.t) Target.t) Terrat_work_manifest3.Existing.t
+      ( ( Api.Account.t,
+          ((unit, unit) Api.Pull_request.t, Api.Repo.t) Target.t )
+        Terrat_work_manifest3.Existing.t
         option,
         [> `Error ] )
       result
@@ -238,29 +243,31 @@ module type S = sig
     val query_pull_request_out_of_change_applies :
       request_id:string ->
       t ->
-      Api.Pull_request.t ->
+      ('diff, 'checks) Api.Pull_request.t ->
       (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
 
     val query_applied_dirspaces :
       request_id:string ->
       t ->
-      Api.Pull_request.t ->
+      ('diff, 'checks) Api.Pull_request.t ->
       (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
 
     val query_dirspaces_without_valid_plans :
       request_id:string ->
       t ->
-      Api.Pull_request.t ->
+      ('diff, 'checks) Api.Pull_request.t ->
       Terrat_change.Dirspace.t list ->
       (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
 
     val query_conflicting_work_manifests_in_repo :
       request_id:string ->
       t ->
-      Api.Pull_request.t ->
+      ('diff, 'checks) Api.Pull_request.t ->
       Terrat_change.Dirspace.t list ->
       [< `Plan | `Apply ] ->
-      ( (Api.Account.t, (Api.Pull_request.t, Api.Repo.t) Target.t) Terrat_work_manifest3.Existing.t
+      ( ( Api.Account.t,
+          ((unit, unit) Api.Pull_request.t, Api.Repo.t) Target.t )
+        Terrat_work_manifest3.Existing.t
         Conflicting_work_manifests.t
         option,
         [> `Error ] )
@@ -270,9 +277,10 @@ module type S = sig
     val query_dirspaces_owned_by_other_pull_requests :
       request_id:string ->
       t ->
-      Api.Pull_request.t ->
+      ('diff, 'checks) Api.Pull_request.t ->
       Terrat_change.Dirspace.t list ->
-      ((Terrat_change.Dirspace.t * Api.Pull_request.t) list, [> `Error ]) result Abb.Future.t
+      ((Terrat_change.Dirspace.t * (unit, unit) Api.Pull_request.t) list, [> `Error ]) result
+      Abb.Future.t
 
     val query_missing_drift_scheduled_runs :
       request_id:string ->
@@ -318,7 +326,7 @@ module type S = sig
       Api.User.t ->
       Api.Client.t ->
       'a Terrat_base_repo_config_v1.t ->
-      Api.Pull_request.t ->
+      ('diff, 'checks) Api.Pull_request.t ->
       Terrat_change_match3.Dirspace_config.t list ->
       (Result.t, [> `Error ]) result Abb.Future.t
   end
@@ -327,11 +335,11 @@ module type S = sig
     val publish_comment :
       request_id:string ->
       Api.Client.t ->
-      Api.User.t ->
-      Api.Pull_request.t ->
+      string ->
+      ('diff, 'checks) Api.Pull_request.t ->
       ( Api.Account.t,
-        Api.Pull_request.t,
-        (Api.Pull_request.t, Api.Repo.t) Target.t,
+        ('diff2, 'checks2) Api.Pull_request.t,
+        (('diff3, 'checks3) Api.Pull_request.t, Api.Repo.t) Target.t,
         Apply_requirements.Result.t )
       Msg.t ->
       (unit, [> `Error ]) result Abb.Future.t
@@ -352,22 +360,20 @@ module type S = sig
   end
 
   module Access_control : sig
-    module Ctx : sig
-      type t
-
-      val make :
-        client:Api.Client.t -> config:Terrat_config.t -> repo:Api.Repo.t -> user:string -> unit -> t
-    end
-
     val query :
-      Ctx.t ->
+      request_id:string ->
+      Api.Client.t ->
+      Api.Repo.t ->
+      string ->
       Terrat_base_repo_config_v1.Access_control.Match.t ->
       (bool, [> access_control_query_err ]) result Abb.Future.t
 
     val is_ci_changed :
-      Ctx.t -> Terrat_change.Diff.t list -> (bool, [> access_control_err ]) result Abb.Future.t
-
-    val set_user : string -> Ctx.t -> Ctx.t
+      request_id:string ->
+      Api.Client.t ->
+      Api.Repo.t ->
+      Terrat_change.Diff.t list ->
+      (bool, [> access_control_err ]) result Abb.Future.t
   end
 
   module Commit_check : sig
@@ -387,14 +393,20 @@ module type S = sig
       request_id:string ->
       Terrat_config.t ->
       Api.Client.t ->
-      (Api.Account.t, (Api.Pull_request.t, Api.Repo.t) Target.t) Terrat_work_manifest3.Existing.t ->
+      ( Api.Account.t,
+        ((unit, unit) Api.Pull_request.t, Api.Repo.t) Target.t )
+      Terrat_work_manifest3.Existing.t ->
       (unit, [> `Failed_to_start | `Missing_workflow | `Error ]) result Abb.Future.t
 
     val create :
       request_id:string ->
       Db.t ->
-      (Api.Account.t, (Api.Pull_request.t, Api.Repo.t) Target.t) Terrat_work_manifest3.New.t ->
-      ( (Api.Account.t, (Api.Pull_request.t, Api.Repo.t) Target.t) Terrat_work_manifest3.Existing.t,
+      ( Api.Account.t,
+        ((unit, unit) Api.Pull_request.t, Api.Repo.t) Target.t )
+      Terrat_work_manifest3.New.t ->
+      ( ( Api.Account.t,
+          ((unit, unit) Api.Pull_request.t, Api.Repo.t) Target.t )
+        Terrat_work_manifest3.Existing.t,
         [> `Error ] )
       result
       Abb.Future.t
@@ -403,7 +415,9 @@ module type S = sig
       request_id:string ->
       Db.t ->
       Uuidm.t ->
-      ( (Api.Account.t, (Api.Pull_request.t, Api.Repo.t) Target.t) Terrat_work_manifest3.Existing.t
+      ( ( Api.Account.t,
+          ((unit, unit) Api.Pull_request.t, Api.Repo.t) Target.t )
+        Terrat_work_manifest3.Existing.t
         option,
         [> `Error ] )
       result

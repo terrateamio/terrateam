@@ -1,3 +1,7 @@
+let src = Logs.Src.create "vcs_service_github_ep_work_manifest"
+
+module Logs = (val Logs.src_log src : Logs.LOG)
+
 module Make (P : Terrat_vcs_provider2_github.S) = struct
   module Evaluator = Terrat_vcs_event_evaluator.Make (P)
 
@@ -53,21 +57,11 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
                (Brtl_rspnc.create ~headers:response_headers ~status:`Not_found "")
                ctx)
       | Error (#Pgsql_pool.err as err) ->
-          Logs.err (fun m ->
-              m
-                "EP_GITHUB_WORK_MANIFEST : %s : ACCESS_TOKEN : %a"
-                (Brtl_ctx.token ctx)
-                Pgsql_pool.pp_err
-                err);
+          Logs.err (fun m -> m "%s : ACCESS_TOKEN : %a" (Brtl_ctx.token ctx) Pgsql_pool.pp_err err);
           Abb.Future.return
             (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
       | Error (#Pgsql_io.err as err) ->
-          Logs.err (fun m ->
-              m
-                "EP_GITHUB_WORK_MANIFEST : %s : ACCESS_TOKEN : %a"
-                (Brtl_ctx.token ctx)
-                Pgsql_io.pp_err
-                err);
+          Logs.err (fun m -> m "%s : ACCESS_TOKEN : %a" (Brtl_ctx.token ctx) Pgsql_io.pp_err err);
           Abb.Future.return
             (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
       | Error `Error ->
@@ -306,7 +300,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
               | Error (#Terrat_github.get_installation_access_token_err as err) ->
                   Logs.err (fun m ->
                       m
-                        "EP_GITHUB_WORK_MANIFEST : %s : ACCESS_TOKEN : %a"
+                        "%s : ACCESS_TOKEN : %a"
                         (Brtl_ctx.token ctx)
                         Terrat_github.pp_get_installation_access_token_err
                         err);
@@ -319,20 +313,12 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
                 (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx)
           | Error (#Pgsql_pool.err as err) ->
               Logs.err (fun m ->
-                  m
-                    "EP_GITHUB_WORK_MANIFEST : %s : ACCESS_TOKEN : %a"
-                    (Brtl_ctx.token ctx)
-                    Pgsql_pool.pp_err
-                    err);
+                  m "%s : ACCESS_TOKEN : %a" (Brtl_ctx.token ctx) Pgsql_pool.pp_err err);
               Abb.Future.return
                 (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
           | Error (#Pgsql_io.err as err) ->
               Logs.err (fun m ->
-                  m
-                    "EP_GITHUB_WORK_MANIFEST : %s : ACCESS_TOKEN : %a"
-                    (Brtl_ctx.token ctx)
-                    Pgsql_io.pp_err
-                    err);
+                  m "%s : ACCESS_TOKEN : %a" (Brtl_ctx.token ctx) Pgsql_io.pp_err err);
               Abb.Future.return
                 (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
   end

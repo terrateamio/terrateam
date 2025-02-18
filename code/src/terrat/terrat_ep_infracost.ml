@@ -1,3 +1,6 @@
+let src = Logs.Src.create "infracost"
+
+module Logs = (val Logs.src_log src : Logs.LOG)
 module Http = Cohttp_abb.Make (Abb)
 
 module Metrics = struct
@@ -66,18 +69,13 @@ let post' config storage api_key infracost_uri path ctx =
             |> header_replace "x-api-key" api_key
           in
           Logs.debug (fun m ->
-              m
-                "INFRACOST: %s : work_manifest=%s : URI : %s"
-                request_id
-                work_manifest_id
-                (Uri.to_string uri));
+              m "%s : work_manifest=%s : URI : %s" request_id work_manifest_id (Uri.to_string uri));
           Abbs_future_combinators.timeout
             ~timeout:(Abb.Sys.sleep 30.0)
             (Http.Client.post ~headers ~body uri)
           >>= function
           | `Ok (Ok (resp, body)) when Cohttp.Response.status resp = `OK ->
-              Logs.debug (fun m ->
-                  m "INFRACOST: %s : work_manifest=%s : SUCCESS" request_id work_manifest_id);
+              Logs.debug (fun m -> m "%s : work_manifest=%s : SUCCESS" request_id work_manifest_id);
               Prmths.Counter.inc_one (Metrics.responses_total "success");
               Abb.Future.return
                 (Brtl_ctx.set_response
@@ -86,7 +84,7 @@ let post' config storage api_key infracost_uri path ctx =
           | `Ok (Ok (resp, _)) ->
               Logs.err (fun m ->
                   m
-                    "INFRACOST : %s : work_manifest=%s : ERROR : %a"
+                    "%s : work_manifest=%s : ERROR : %a"
                     request_id
                     work_manifest_id
                     Cohttp.Response.pp_hum
@@ -98,7 +96,7 @@ let post' config storage api_key infracost_uri path ctx =
           | `Ok (Error (#Cohttp_abb.request_err as err)) ->
               Logs.err (fun m ->
                   m
-                    "INFRACOST : %s : work_manifest=%s : ERROR : %s"
+                    "%s : work_manifest=%s : ERROR : %s"
                     request_id
                     work_manifest_id
                     (Cohttp_abb.show_request_err err));
@@ -108,10 +106,7 @@ let post' config storage api_key infracost_uri path ctx =
                 (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
           | `Timeout ->
               Logs.err (fun m ->
-                  m
-                    "INFRACOST : %s : work_manifest=%s : ERROR : TIMEOUT"
-                    request_id
-                    work_manifest_id);
+                  m "%s : work_manifest=%s : ERROR : TIMEOUT" request_id work_manifest_id);
               Prmths.Counter.inc_one Metrics.timeout_errors_total;
               Prmths.Counter.inc_one (Metrics.responses_total "timeout");
               Abb.Future.return
@@ -120,7 +115,7 @@ let post' config storage api_key infracost_uri path ctx =
           Prmths.Counter.inc_one Metrics.pgsql_pool_errors_total;
           Logs.err (fun m ->
               m
-                "INFRACOST : %s : work_manifest=%s : ERROR : %a"
+                "%s : work_manifest=%s : ERROR : %a"
                 request_id
                 work_manifest_id
                 Pgsql_pool.pp_err
@@ -130,27 +125,16 @@ let post' config storage api_key infracost_uri path ctx =
       | Error (#Pgsql_io.err as err) ->
           Prmths.Counter.inc_one Metrics.pgsql_errors_total;
           Logs.err (fun m ->
-              m
-                "INFRACOST : %s : work_manifest=%s : ERROR : %a"
-                request_id
-                work_manifest_id
-                Pgsql_io.pp_err
-                err);
+              m "%s : work_manifest=%s : ERROR : %a" request_id work_manifest_id Pgsql_io.pp_err err);
           Abb.Future.return
             (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
       | Ok [] ->
           Logs.warn (fun m ->
-              m
-                "INFRACOST : %s : work_manifest=%s : ERROR : MISSING_WORK_MANIFEST"
-                request_id
-                work_manifest_id);
+              m "%s : work_manifest=%s : ERROR : MISSING_WORK_MANIFEST" request_id work_manifest_id);
           Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx)
       | Error `Bad_work_manifest ->
           Logs.err (fun m ->
-              m
-                "INFRACOST : %s : work_manifest=%s : ERROR : BAD_WORK_MANIFEST"
-                request_id
-                work_manifest_id);
+              m "%s : work_manifest=%s : ERROR : BAD_WORK_MANIFEST" request_id work_manifest_id);
           Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx))
   | None ->
       Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx)
@@ -159,15 +143,15 @@ let post config storage path ctx =
   let request_id = Brtl_ctx.token ctx in
   match Terrat_config.infracost config with
   | Some { Terrat_config.Infracost.endpoint = infracost_uri; api_key } ->
-      Logs.info (fun m -> m "INFRACOST : %s : START" request_id);
+      Logs.info (fun m -> m "%s : START" request_id);
       Prmths.Counter.inc_one Metrics.requests_total;
       Metrics.DefaultHistogram.time Metrics.duration_seconds (fun () ->
           Prmths.Gauge.track_inprogress Metrics.requests_concurrent (fun () ->
               Abbs_future_combinators.with_finally
                 (fun () -> post' config storage api_key infracost_uri path ctx)
                 ~finally:(fun () ->
-                  Logs.info (fun m -> m "INFRACOST : %s : FINISH" request_id);
+                  Logs.info (fun m -> m "%s : FINISH" request_id);
                   Abbs_future_combinators.unit)))
   | None ->
-      Logs.info (fun m -> m "INFRACOST : %s : DISABLED" request_id);
+      Logs.info (fun m -> m "%s : DISABLED" request_id);
       Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx)

@@ -141,9 +141,9 @@ let client_id t =
       Abb_js.Future.return (Ok client_id)
   | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
 
-let installations t =
+let list_github_installations t =
   let open Abb_js_future_combinators.Infix_result_monad in
-  call (Terrat_api_user.List_installations.make ())
+  call (Terrat_api_user.List_github_installations.make ())
   >>= fun resp ->
   match Openapi.Response.value resp with
   | `OK res -> Abb_js.Future.return (Ok res)

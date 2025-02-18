@@ -27,7 +27,7 @@ module Installations = struct
 
   let get' config storage user =
     let open Abbs_future_combinators.Infix_result_monad in
-    Terrat_vcs_github_user.get_token config storage user
+    Terrat_vcs_service_github_ee_user.get_token config storage user
     >>= fun token ->
     Terrat_github.with_client config (`Bearer token) Terrat_github.get_user_installations
     >>= fun installations ->
@@ -44,9 +44,7 @@ module Installations = struct
         Pgsql_io.Prepared_stmt.fetch
           db
           (Sql.select_installations ())
-          ~f:(fun id name ->
-            Terrat_api_components.Installation.
-              { id = CCInt64.to_string id; name; type_ = Type.Installation_type_github "github" })
+          ~f:(fun id name -> Terrat_api_components.Installation.{ id = CCInt64.to_string id; name })
           (CCList.map (fun I.{ primary = Primary.{ id; _ }; _ } -> Int64.of_int id) installations))
 
   let get config storage =
@@ -59,7 +57,7 @@ module Installations = struct
         >>= function
         | Ok installations ->
             let body =
-              Terrat_api_user.List_installations.Responses.OK.(
+              Terrat_api_user.List_github_installations.Responses.OK.(
                 { installations } |> to_yojson |> Yojson.Safe.to_string)
             in
             Abb.Future.return (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK body) ctx))
@@ -68,7 +66,7 @@ module Installations = struct
                 m
                   "%s : GET : INSTALLATIONS : %a"
                   (Brtl_ctx.token ctx)
-                  Terrat_vcs_github_user.pp_err
+                  Terrat_vcs_service_github_ee_user.pp_err
                   err);
             Abb.Future.return
               (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Forbidden "") ctx))
@@ -96,12 +94,12 @@ module Installations = struct
                   err);
             Abb.Future.return
               (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-        | Error (#Terrat_vcs_github_user.err as err) ->
+        | Error (#Terrat_vcs_service_github_ee_user.err as err) ->
             Logs.err (fun m ->
                 m
                   "%s : GET : INSTALLATIONS : %a"
                   (Brtl_ctx.token ctx)
-                  Terrat_vcs_github_user.pp_err
+                  Terrat_vcs_service_github_ee_user.pp_err
                   err);
             Abb.Future.return
               (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)))

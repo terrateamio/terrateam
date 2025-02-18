@@ -1,3 +1,7 @@
+let src = Logs.Src.create "vcs_service_github_ep_events"
+
+module Logs = (val Logs.src_log src : Logs.LOG)
+
 module Metrics = struct
   module DefaultHistogram = Prmths.Histogram (struct
     let spec = Prmths.Histogram_spec.of_list [ 0.005; 0.5; 1.0; 5.0; 10.0; 15.0; 20.0 ]
@@ -231,7 +235,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         Prmths.Counter.inc_one (Metrics.pr_events_total "open");
         Logs.info (fun m ->
             m
-              "GITHUB_EVENT : %s : PULL_REQUEST_EVENT : owner=%s : repo=%s : sender=%s"
+              "%s : PULL_REQUEST_EVENT : owner=%s : repo=%s : sender=%s"
               request_id
               repository.Gw.Repository.owner.Gw.User.login
               repository.Gw.Repository.name
@@ -264,7 +268,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         Prmths.Counter.inc_one (Metrics.pr_events_total "sync");
         Logs.info (fun m ->
             m
-              "GITHUB_EVENT : %s : PULL_REQUEST_EVENT : owner=%s : repo=%s : sender=%s"
+              "%s : PULL_REQUEST_EVENT : owner=%s : repo=%s : sender=%s"
               request_id
               repository.Gw.Repository.owner.Gw.User.login
               repository.Gw.Repository.name
@@ -299,7 +303,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         Prmths.Counter.inc_one (Metrics.pr_events_total "reopen");
         Logs.info (fun m ->
             m
-              "GITHUB_EVENT : %s : PULL_REQUEST_EVENT : owner=%s : repo=%s : sender=%s"
+              "%s : PULL_REQUEST_EVENT : owner=%s : repo=%s : sender=%s"
               request_id
               repository.Gw.Repository.owner.Gw.User.login
               repository.Gw.Repository.name
@@ -334,7 +338,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         Prmths.Counter.inc_one (Metrics.pr_events_total "ready_for_review");
         Logs.info (fun m ->
             m
-              "GITHUB_EVENT : %s : PULL_REQUEST_EVENT : owner=%s : repo=%s : sender=%s"
+              "%s : PULL_REQUEST_EVENT : owner=%s : repo=%s : sender=%s"
               request_id
               repository.Gw.Repository.owner.Gw.User.login
               repository.Gw.Repository.name
@@ -374,7 +378,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         Prmths.Counter.inc_one (Metrics.pr_events_total "close");
         Logs.info (fun m ->
             m
-              "GITHUB_EVENT : %s : PULL_REQUEST_CLOSED_EVENT : owner=%s : repo=%s : sender=%s"
+              "%s : PULL_REQUEST_CLOSED_EVENT : owner=%s : repo=%s : sender=%s"
               request_id
               repository.Gw.Repository.owner.Gw.User.login
               repository.Gw.Repository.name
@@ -397,56 +401,49 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
           ()
     | Gw.Pull_request_event.Pull_request_closed _ -> failwith "Invalid pull_request_closed event"
     | Gw.Pull_request_event.Pull_request_assigned _ ->
-        Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_ASSIGNED" request_id);
+        Logs.debug (fun m -> m "%s : NOOP : PULL_REQUEST_ASSIGNED" request_id);
         Abb.Future.return (Ok ())
     | Gw.Pull_request_event.Pull_request_auto_merge_disabled _ ->
-        Logs.debug (fun m ->
-            m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_AUTO_MERGE_DISABLED" request_id);
+        Logs.debug (fun m -> m "%s : NOOP : PULL_REQUEST_AUTO_MERGE_DISABLED" request_id);
         Abb.Future.return (Ok ())
     | Gw.Pull_request_event.Pull_request_auto_merge_enabled _ ->
-        Logs.debug (fun m ->
-            m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_AUTO_MERGE_ENABLED" request_id);
+        Logs.debug (fun m -> m "%s : NOOP : PULL_REQUEST_AUTO_MERGE_ENABLED" request_id);
         Abb.Future.return (Ok ())
     | Gw.Pull_request_event.Pull_request_converted_to_draft _ ->
-        Logs.debug (fun m ->
-            m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_CONVERTED_TO_DRAFT" request_id);
+        Logs.debug (fun m -> m "%s : NOOP : PULL_REQUEST_CONVERTED_TO_DRAFT" request_id);
         Abb.Future.return (Ok ())
     | Gw.Pull_request_event.Pull_request_edited _ ->
-        Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_EDITED" request_id);
+        Logs.debug (fun m -> m "%s : NOOP : PULL_REQUEST_EDITED" request_id);
         Abb.Future.return (Ok ())
     | Gw.Pull_request_event.Pull_request_labeled _ ->
-        Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_LABELED" request_id);
+        Logs.debug (fun m -> m "%s : NOOP : PULL_REQUEST_LABELED" request_id);
         Abb.Future.return (Ok ())
     | Gw.Pull_request_event.Pull_request_locked _ ->
-        Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_LOCKED" request_id);
+        Logs.debug (fun m -> m "%s : NOOP : PULL_REQUEST_LOCKED" request_id);
         Abb.Future.return (Ok ())
     | Gw.Pull_request_event.Pull_request_milestoned _ ->
-        Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_MILESTONED" request_id);
+        Logs.debug (fun m -> m "%s : NOOP : PULL_REQUEST_MILESTONED" request_id);
         Abb.Future.return (Ok ())
     | Gw.Pull_request_event.Pull_request_ready_for_review _ ->
-        Logs.debug (fun m ->
-            m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_READY_FOR_REVIEW" request_id);
+        Logs.debug (fun m -> m "%s : NOOP : PULL_REQUEST_READY_FOR_REVIEW" request_id);
         Abb.Future.return (Ok ())
     | Gw.Pull_request_event.Pull_request_review_request_removed _ ->
-        Logs.debug (fun m ->
-            m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_REVIEW_REQUEST_REMOVED" request_id);
+        Logs.debug (fun m -> m "%s : NOOP : PULL_REQUEST_REVIEW_REQUEST_REMOVED" request_id);
         Abb.Future.return (Ok ())
     | Gw.Pull_request_event.Pull_request_review_requested _ ->
-        Logs.debug (fun m ->
-            m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_REVIEW_REQUESTED" request_id);
+        Logs.debug (fun m -> m "%s : NOOP : PULL_REQUEST_REVIEW_REQUESTED" request_id);
         Abb.Future.return (Ok ())
     | Gw.Pull_request_event.Pull_request_unassigned _ ->
-        Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_UNASSIGNED" request_id);
+        Logs.debug (fun m -> m "%s : NOOP : PULL_REQUEST_UNASSIGNED" request_id);
         Abb.Future.return (Ok ())
     | Gw.Pull_request_event.Pull_request_unlabeled _ ->
-        Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_UNLABELED" request_id);
+        Logs.debug (fun m -> m "%s : NOOP : PULL_REQUEST_UNLABELED" request_id);
         Abb.Future.return (Ok ())
     | Gw.Pull_request_event.Pull_request_unlocked _ ->
-        Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_UNLOCKED" request_id);
+        Logs.debug (fun m -> m "%s : NOOP : PULL_REQUEST_UNLOCKED" request_id);
         Abb.Future.return (Ok ())
     | Gw.Pull_request_event.Pull_request_review_submitted _ ->
-        Logs.debug (fun m ->
-            m "GITHUB_EVENT : %s : NOOP : PULL_REQUEST_REVIEW_SUBMITTED" request_id);
+        Logs.debug (fun m -> m "%s : NOOP : PULL_REQUEST_REVIEW_SUBMITTED" request_id);
         Abb.Future.return (Ok ())
 
   let process_issue_comment request_id config storage = function
@@ -464,7 +461,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         } -> (
         Logs.info (fun m ->
             m
-              "GITHUB_EVENT : %s : COMMENT_CREATED_EVENT : owner=%s : repo=%s : sender=%s"
+              "%s : COMMENT_CREATED_EVENT : owner=%s : repo=%s : sender=%s"
               request_id
               repository.Gw.Repository.owner.Gw.User.login
               repository.Gw.Repository.name
@@ -498,8 +495,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
             match Snabela.apply Tmpl.terrateam_comment_tag_query_error kv with
             | Ok body ->
                 let open Abbs_future_combinators.Infix_result_monad in
-                Logs.info (fun m ->
-                    m "GITHUB_EVENT : %s : COMMENT_ERROR : TAG_QUERY_ERROR : %s" request_id err);
+                Logs.info (fun m -> m "%s : COMMENT_ERROR : TAG_QUERY_ERROR : %s" request_id err);
                 Terrat_github.get_installation_access_token config installation_id
                 >>= fun access_token ->
                 Terrat_github.with_client
@@ -512,16 +508,12 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
                      ~body)
             | Error (#Snabela.err as err) ->
                 Logs.err (fun m ->
-                    m
-                      "GITHUB_EVENT : %s : TMPL_ERROR : TAG_QUERY_ERROR : %s"
-                      request_id
-                      (Snabela.show_err err));
+                    m "%s : TMPL_ERROR : TAG_QUERY_ERROR : %s" request_id (Snabela.show_err err));
                 Abb.Future.return (Ok ()))
         | Error (`Unknown_action action) ->
             Prmths.Counter.inc_one (Metrics.comment_events_total "unknown_action");
             let open Abbs_future_combinators.Infix_result_monad in
-            Logs.info (fun m ->
-                m "GITHUB_EVENT : %s : COMMENT_ERROR : UNKNOWN_ACTION : %s" request_id action);
+            Logs.info (fun m -> m "%s : COMMENT_ERROR : UNKNOWN_ACTION : %s" request_id action);
             Terrat_github.get_installation_access_token config installation_id
             >>= fun access_token ->
             Terrat_github.with_client
@@ -533,19 +525,19 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
                  ~pull_number:pull_request_id
                  ~body:Tmpl.terrateam_comment_unknown_action))
     | Gw.Issue_comment_event.Issue_comment_created _ ->
-        Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : ISSUE_COMMENT_CREATED" request_id);
+        Logs.debug (fun m -> m "%s : NOOP : ISSUE_COMMENT_CREATED" request_id);
         Prmths.Counter.inc_one (Metrics.comment_events_total "noop");
         Abb.Future.return (Ok ())
     | Gw.Issue_comment_event.Issue_comment_deleted _ ->
-        Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : ISSUE_COMMENT_DELETED" request_id);
+        Logs.debug (fun m -> m "%s : NOOP : ISSUE_COMMENT_DELETED" request_id);
         Prmths.Counter.inc_one (Metrics.comment_events_total "noop");
         Abb.Future.return (Ok ())
     | Gw.Issue_comment_event.Issue_comment_edited _ ->
-        Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : ISSUE_COMMENT_EDITED" request_id);
+        Logs.debug (fun m -> m "%s : NOOP : ISSUE_COMMENT_EDITED" request_id);
         Prmths.Counter.inc_one (Metrics.comment_events_total "noop");
         Abb.Future.return (Ok ())
     | Gw.Issue_comment_event.Issue_any _ ->
-        Logs.debug (fun m -> m "GITHUB_EVENT : %s : NOOP : ISSUE" request_id);
+        Logs.debug (fun m -> m "%s : NOOP : ISSUE" request_id);
         Prmths.Counter.inc_one (Metrics.comment_events_total "noop");
         Abb.Future.return (Ok ())
 
@@ -576,7 +568,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         | None ->
             Logs.info (fun m ->
                 m
-                  "GITHUB_EVENT : %s : WORK_MANIFEST_FAILURE : NOT_FOUND : account=%d : run_id=%d"
+                  "%s : WORK_MANIFEST_FAILURE : NOT_FOUND : account=%d : run_id=%d"
                   request_id
                   installation_id
                   run_id);
@@ -608,43 +600,36 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
           ~branch:(P.Api.Ref.of_string default_branch)
           ()
     | Some _ | None ->
-        Logs.debug (fun m -> m "GITHUB_EVENT : %s : PUSH_EVENT : NOOP" request_id);
+        Logs.debug (fun m -> m "%s : PUSH_EVENT : NOOP" request_id);
         Abb.Future.return (Ok ())
 
   let handle_error ctx = function
     | #Pgsql_pool.err as err ->
         Prmths.Counter.inc_one Metrics.pgsql_pool_errors_total;
-        Logs.err (fun m ->
-            m "GITHUB_EVENT : %s : ERROR : %a" (Brtl_ctx.token ctx) Pgsql_pool.pp_err err);
+        Logs.err (fun m -> m "%s : ERROR : %a" (Brtl_ctx.token ctx) Pgsql_pool.pp_err err);
         Abb.Future.return
           (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
     | #Pgsql_io.err as err ->
         Prmths.Counter.inc_one Metrics.pgsql_errors_total;
-        Logs.err (fun m ->
-            m "GITHUB_EVENT : %s : ERROR : %a" (Brtl_ctx.token ctx) Pgsql_io.pp_err err);
+        Logs.err (fun m -> m "%s : ERROR : %a" (Brtl_ctx.token ctx) Pgsql_io.pp_err err);
         Abb.Future.return
           (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
     | #Githubc2_abb.call_err as err ->
         Prmths.Counter.inc_one Metrics.github_errors_total;
-        Logs.err (fun m ->
-            m "GITHUB_EVENT : %s : ERROR : %a" (Brtl_ctx.token ctx) Githubc2_abb.pp_call_err err);
+        Logs.err (fun m -> m "%s : ERROR : %a" (Brtl_ctx.token ctx) Githubc2_abb.pp_call_err err);
         Abb.Future.return
           (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
     | #Terrat_github.publish_comment_err as err ->
         Prmths.Counter.inc_one Metrics.github_errors_total;
         Logs.err (fun m ->
-            m
-              "GITHUB_EVENT : %s : ERROR : %a"
-              (Brtl_ctx.token ctx)
-              Terrat_github.pp_publish_comment_err
-              err);
+            m "%s : ERROR : %a" (Brtl_ctx.token ctx) Terrat_github.pp_publish_comment_err err);
         Abb.Future.return
           (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
     | #Terrat_github.get_installation_access_token_err as err ->
         Prmths.Counter.inc_one Metrics.github_errors_total;
         Logs.err (fun m ->
             m
-              "GITHUB_EVENT : %s : ERROR : %a"
+              "%s : ERROR : %a"
               (Brtl_ctx.token ctx)
               Terrat_github.pp_get_installation_access_token_err
               err);
@@ -693,21 +678,18 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
                 process_event_handler config storage ctx (fun () ->
                     process_push_event (Brtl_ctx.token ctx) config storage event)
             | Ok (Gw.Event.Workflow_run_event _) ->
-                Logs.debug (fun m ->
-                    m "GITHUB_EVENT : %s : NOOP : WORKFLOW_RUN_EVENT" (Brtl_ctx.token ctx));
+                Logs.debug (fun m -> m "%s : NOOP : WORKFLOW_RUN_EVENT" (Brtl_ctx.token ctx));
                 Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
             | Ok (Gw.Event.Installation_repositories_event _)
             | Ok (Gw.Event.Workflow_dispatch_event _) ->
                 Logs.debug (fun m ->
-                    m
-                      "GITHUB_EVENT : %s : NOOP : INSTALLATION_REPOSITORIES_EVENT"
-                      (Brtl_ctx.token ctx));
+                    m "%s : NOOP : INSTALLATION_REPOSITORIES_EVENT" (Brtl_ctx.token ctx));
                 Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
             | Error (#Terrat_github_webhooks_decoder.err as err) ->
                 Prmths.Counter.inc_one Metrics.github_webhook_decode_errors_total;
                 Logs.warn (fun m ->
                     m
-                      "GITHUB_EVENT : %s : UNKNOWN_EVENT : %s"
+                      "%s : UNKNOWN_EVENT : %s"
                       (Brtl_ctx.token ctx)
                       (Terrat_github_webhooks_decoder.show_err err));
                 Abb.Future.return

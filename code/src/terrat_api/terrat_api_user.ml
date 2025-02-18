@@ -1,4 +1,4 @@
-module List_installations = struct
+module List_github_installations = struct
   module Parameters = struct end
 
   module Responses = struct
@@ -26,7 +26,7 @@ module List_installations = struct
       ]
   end
 
-  let url = "/api/v1/user/installations"
+  let url = "/api/v1/user/github/installations"
 
   let make () =
     Openapi.Request.make

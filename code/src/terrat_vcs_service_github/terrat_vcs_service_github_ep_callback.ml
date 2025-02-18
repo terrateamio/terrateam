@@ -1,8 +1,14 @@
+let src = Logs.Src.create "vcs_service_github_ep_callback"
+
+module Logs = (val Logs.src_log src : Logs.LOG)
+
 module Sql = struct
   let insert_user () =
     Pgsql_io.Typed_sql.(
       sql
-      // (* id *) Ret.uuid
+      //
+      (* id *)
+      Ret.uuid
       /^ "insert into users (avatar_url, email, name) values ($avatar_url, $email, $name) \
           returning id"
       /% Var.(option (text "email"))
@@ -98,18 +104,18 @@ let get config storage code installation_id_opt ctx =
       Abb.Future.return
         (Brtl_ctx.set_response (Brtl_rspnc.create ~headers ~status:`See_other "") ctx)
   | Error (#Pgsql_pool.err as err) ->
-      Logs.err (fun m -> m "GITHUB_CALLBACK : FAIL : %s" (Pgsql_pool.show_err err));
+      Logs.err (fun m -> m "FAIL : %s" (Pgsql_pool.show_err err));
       Abb.Future.return
         (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
   | Error (#Pgsql_io.err as err) ->
-      Logs.err (fun m -> m "GITHUB_CALLBACK : FAIL : %s" (Pgsql_io.show_err err));
+      Logs.err (fun m -> m "FAIL : %s" (Pgsql_io.show_err err));
       Abb.Future.return
         (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
   | Error (#Terrat_github.user_err as err) ->
-      Logs.err (fun m -> m "GITHUB_CALLBACK : FAIL : %s" (Terrat_github.show_user_err err));
+      Logs.err (fun m -> m "FAIL : %s" (Terrat_github.show_user_err err));
       Abb.Future.return
         (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
   | Error (#Terrat_github.Oauth.authorize_err as err) ->
-      Logs.err (fun m -> m "GITHUB_CALLBACK : FAIL : %a" Terrat_github.Oauth.pp_authorize_err err);
+      Logs.err (fun m -> m "FAIL : %a" Terrat_github.Oauth.pp_authorize_err err);
       Abb.Future.return
         (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)

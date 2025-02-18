@@ -1,9 +1,13 @@
+let src = Logs.Src.create "vcs_service_github_ee_ep_installations"
+
+module Logs = (val Logs.src_log src : Logs.LOG)
+
 module Metrics = struct
   module Psql_query_time = Prmths.Histogram (struct
     let spec = Prmths.Histogram_spec.of_linear ~start:0.0 ~interval:0.1 ~count:15
   end)
 
-  let namespace = "terrat"
+  let namespace = "terrat_vcs_service_github_ee"
   let subsystem = "ep_installations"
 
   let psql_query_time =
@@ -180,17 +184,17 @@ module Work_manifests = struct
             let module Bad_request =
               Terrat_api_installations.List_work_manifests.Responses.Bad_request
             in
-            Logs.err (fun m -> m "INSTALLATIONS : %s : ERROR : STATEMENT_TIMEOUT" token);
+            Logs.err (fun m -> m "%s : ERROR : STATEMENT_TIMEOUT" token);
             let body =
               Bad_request.(
                 { id = "STATEMENT_TIMEOUT"; data = None } |> to_yojson |> Yojson.Safe.to_string)
             in
             Brtl_rspnc.create ~status:`Bad_request body
         | #Pgsql_pool.err as err ->
-            Logs.err (fun m -> m "INSTALLATIONS : %s : ERROR : %a" token Pgsql_pool.pp_err err);
+            Logs.err (fun m -> m "%s : ERROR : %a" token Pgsql_pool.pp_err err);
             Brtl_rspnc.create ~status:`Internal_server_error ""
         | #Pgsql_io.err as err ->
-            Logs.err (fun m -> m "INSTALLATIONS : %s : ERROR : %a" token Pgsql_io.pp_err err);
+            Logs.err (fun m -> m "%s : ERROR : %a" token Pgsql_io.pp_err err);
             Brtl_rspnc.create ~status:`Internal_server_error ""
     end
 
@@ -530,17 +534,17 @@ module Work_manifests = struct
           let module Bad_request =
             Terrat_api_installations.List_work_manifests.Responses.Bad_request
           in
-          Logs.err (fun m -> m "INSTALLATIONS : %s : ERROR : STATEMENT_TIMEOUT" token);
+          Logs.err (fun m -> m "%s : ERROR : STATEMENT_TIMEOUT" token);
           let body =
             Bad_request.(
               { id = "STATEMENT_TIMEOUT"; data = None } |> to_yojson |> Yojson.Safe.to_string)
           in
           Brtl_rspnc.create ~status:`Bad_request body
       | #Pgsql_pool.err as err ->
-          Logs.err (fun m -> m "INSTALLATIONS : %s : ERROR : %a" token Pgsql_pool.pp_err err);
+          Logs.err (fun m -> m "%s : ERROR : %a" token Pgsql_pool.pp_err err);
           Brtl_rspnc.create ~status:`Internal_server_error ""
       | #Pgsql_io.err as err ->
-          Logs.err (fun m -> m "INSTALLATIONS : %s : ERROR : %a" token Pgsql_io.pp_err err);
+          Logs.err (fun m -> m "%s : ERROR : %a" token Pgsql_io.pp_err err);
           Brtl_rspnc.create ~status:`Internal_server_error ""
   end
 
@@ -872,17 +876,17 @@ module Dirspaces = struct
     let rspnc_of_err ~token = function
       | `Statement_timeout ->
           let module Bad_request = Terrat_api_installations.List_dirspaces.Responses.Bad_request in
-          Logs.err (fun m -> m "INSTALLATIONS : %s : ERROR : STATEMENT_TIMEOUT" token);
+          Logs.err (fun m -> m "%s : ERROR : STATEMENT_TIMEOUT" token);
           let body =
             Bad_request.(
               { id = "STATEMENT_TIMEOUT"; data = None } |> to_yojson |> Yojson.Safe.to_string)
           in
           Brtl_rspnc.create ~status:`Bad_request body
       | #Pgsql_pool.err as err ->
-          Logs.err (fun m -> m "INSTALLATIONS : %s : ERROR : %a" token Pgsql_pool.pp_err err);
+          Logs.err (fun m -> m "%s : ERROR : %a" token Pgsql_pool.pp_err err);
           Brtl_rspnc.create ~status:`Internal_server_error ""
       | #Pgsql_io.err as err ->
-          Logs.err (fun m -> m "INSTALLATIONS : %s : ERROR : %a" token Pgsql_io.pp_err err);
+          Logs.err (fun m -> m "%s : ERROR : %a" token Pgsql_io.pp_err err);
           Brtl_rspnc.create ~status:`Internal_server_error ""
   end
 
@@ -1123,10 +1127,10 @@ module Pull_requests = struct
 
     let rspnc_of_err ~token = function
       | #Pgsql_pool.err as err ->
-          Logs.err (fun m -> m "INSTALLATIONS : %s : ERROR : %a" token Pgsql_pool.pp_err err);
+          Logs.err (fun m -> m "%s : ERROR : %a" token Pgsql_pool.pp_err err);
           Brtl_rspnc.create ~status:`Internal_server_error ""
       | #Pgsql_io.err as err ->
-          Logs.err (fun m -> m "INSTALLATIONS : %s : ERROR : %a" token Pgsql_io.pp_err err);
+          Logs.err (fun m -> m "%s : ERROR : %a" token Pgsql_io.pp_err err);
           Brtl_rspnc.create ~status:`Internal_server_error ""
   end
 
@@ -1249,10 +1253,10 @@ module Repos = struct
 
     let rspnc_of_err ~token = function
       | #Pgsql_pool.err as err ->
-          Logs.err (fun m -> m "INSTALLATIONS : %s : ERROR : %a" token Pgsql_pool.pp_err err);
+          Logs.err (fun m -> m "%s : ERROR : %a" token Pgsql_pool.pp_err err);
           Brtl_rspnc.create ~status:`Internal_server_error ""
       | #Pgsql_io.err as err ->
-          Logs.err (fun m -> m "INSTALLATIONS : %s : ERROR : %a" token Pgsql_io.pp_err err);
+          Logs.err (fun m -> m "%s : ERROR : %a" token Pgsql_io.pp_err err);
           Brtl_rspnc.create ~status:`Internal_server_error ""
   end
 
@@ -1280,11 +1284,11 @@ module Repos = struct
           Terrat_user.enforce_installation_access storage user installation_id ctx
           >>= fun () ->
           let open Abb.Future.Infix_monad in
-          Terrat_vcs_github_installation.refresh_repos'
+          Terrat_vcs_service_github_ee_installation.refresh_repos'
             ~request_id:(Brtl_ctx.token ctx)
             ~config
             ~storage
-            (Terrat_vcs_github_installation.Id.make installation_id)
+            (Terrat_vcs_service_github_ee_installation.Id.make installation_id)
           >>= function
           | Ok task ->
               let id = Uuidm.to_string (Terrat_task.id task) in

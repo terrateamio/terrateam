@@ -1,3 +1,6 @@
+let src = Logs.Src.create "vcs_event_evaluator"
+
+module Logs = (val Logs.src_log src : Logs.LOG)
 module Msg = Terrat_vcs_provider2.Msg
 
 let cache_capacity_mb_in_kb = ( * ) 1024
@@ -80,7 +83,7 @@ end
 module Make (S : Terrat_vcs_provider2.S) = struct
   (* Logging wrappers *)
   let log_time ?m request_id name t =
-    Logs.info (fun m -> m "EVALUATOR : %s : %s : time=%f" request_id name t);
+    Logs.info (fun m -> m "%s : %s : time=%f" request_id name t);
     match m with
     | Some m -> Metrics.DefaultHistogram.observe m t
     | None -> ()
@@ -94,7 +97,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : STORE_ACCOUNT_REPOSITORY : account=%s : repo=%s : time=%f"
+              "%s : STORE_ACCOUNT_REPOSITORY : account=%s : repo=%s : time=%f"
               request_id
               (S.Api.Account.to_string account)
               (S.Api.Repo.to_string repo)
@@ -114,7 +117,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : FETCH_BRANCH_SHA : repo=%s : ref_=%s : time=%f"
+              "%s : FETCH_BRANCH_SHA : repo=%s : ref_=%s : time=%f"
               request_id
               (S.Api.Repo.to_string repo)
               (S.Api.Ref.to_string ref_)
@@ -126,7 +129,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : FETCH_FILE : repo=%s : ref=%s : path=%s : time=%f"
+              "%s : FETCH_FILE : repo=%s : ref=%s : path=%s : time=%f"
               request_id
               (S.Api.Repo.to_string repo)
               (S.Api.Ref.to_string ref_)
@@ -139,7 +142,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : FETCH_REMOTE_REPO : repo=%s : time=%f"
+              "%s : FETCH_REMOTE_REPO : repo=%s : time=%f"
               request_id
               (S.Api.Repo.to_string repo)
               time))
@@ -149,7 +152,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     Abbs_time_it.run
       (fun time ->
         Logs.info (fun m ->
-            m "EVALUATOR : %s : FETCH_CENTRALIZED_REPO : owner=%s : time=%f" request_id owner time))
+            m "%s : FETCH_CENTRALIZED_REPO : owner=%s : time=%f" request_id owner time))
       (fun () -> S.Api.fetch_centralized_repo ~request_id client owner)
 
   let fetch_tree request_id client repo ref_ =
@@ -157,7 +160,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : FETCH_TREE : repo=%s : ref=%s : time=%f"
+              "%s : FETCH_TREE : repo=%s : ref=%s : time=%f"
               request_id
               (S.Api.Repo.to_string repo)
               (S.Api.Ref.to_string ref_)
@@ -168,35 +171,21 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     Abbs_time_it.run
       (fun time ->
         Logs.info (fun m ->
-            m
-              "EVALUATOR : %s : QUERY_INDEX : ref=%s : time=%f"
-              request_id
-              (S.Api.Ref.to_string ref_)
-              time))
+            m "%s : QUERY_INDEX : ref=%s : time=%f" request_id (S.Api.Ref.to_string ref_) time))
       (fun () -> S.Db.query_index ~request_id db account ref_)
 
   let store_index request_id db work_manifest_id index =
     Abbs_time_it.run
       (fun time ->
         Logs.info (fun m ->
-            m
-              "EVALUATOR : %s : STORE_INDEX : id=%a : time=%f"
-              request_id
-              Uuidm.pp
-              work_manifest_id
-              time))
+            m "%s : STORE_INDEX : id=%a : time=%f" request_id Uuidm.pp work_manifest_id time))
       (fun () -> S.Db.store_index ~request_id db work_manifest_id index)
 
   let store_index_result request_id db work_manifest_id result =
     Abbs_time_it.run
       (fun time ->
         Logs.info (fun m ->
-            m
-              "EVALUATOR : %s : STORE_INDEX_RESULT : id=%a : time=%f"
-              request_id
-              Uuidm.pp
-              work_manifest_id
-              time))
+            m "%s : STORE_INDEX_RESULT : id=%a : time=%f" request_id Uuidm.pp work_manifest_id time))
       (fun () -> S.Db.store_index_result ~request_id db work_manifest_id result)
 
   let query_repo_config_json request_id db account ref_ =
@@ -204,7 +193,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : QUERY_REPO_CONFIG : account=%s : ref=%s : time=%f"
+              "%s : QUERY_REPO_CONFIG : account=%s : ref=%s : time=%f"
               request_id
               (S.Api.Account.to_string account)
               (S.Api.Ref.to_string ref_)
@@ -216,7 +205,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : STORE_REPO_CONFIG : account=%s : ref=%s : time=%f"
+              "%s : STORE_REPO_CONFIG : account=%s : ref=%s : time=%f"
               request_id
               (S.Api.Account.to_string account)
               (S.Api.Ref.to_string ref_)
@@ -225,13 +214,12 @@ module Make (S : Terrat_vcs_provider2.S) = struct
 
   let cleanup_repo_configs request_id db =
     Abbs_time_it.run
-      (fun time ->
-        Logs.info (fun m -> m "EVALUATOR : %s : CLEANUP_REPO_CONFIGS : time=%f" request_id time))
+      (fun time -> Logs.info (fun m -> m "%s : CLEANUP_REPO_CONFIGS : time=%f" request_id time))
       (fun () -> S.Db.cleanup_repo_configs ~request_id db)
 
   let publish_msg request_id client user pull_request msg =
     Abbs_time_it.run
-      (fun time -> Logs.info (fun m -> m "EVALUATOR : %s : PUBLISH_MSG : time=%f" request_id time))
+      (fun time -> Logs.info (fun m -> m "%s : PUBLISH_MSG : time=%f" request_id time))
       (fun () -> S.Comment.publish_comment ~request_id client user pull_request msg)
 
   let fetch_pull_request request_id account client repo pull_request_id =
@@ -239,7 +227,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : FETCH_PULL_REQUEST : repo=%s : pull_request_id=%s : time=%f"
+              "%s : FETCH_PULL_REQUEST : repo=%s : pull_request_id=%s : time=%f"
               request_id
               (S.Api.Repo.to_string repo)
               (S.Api.Pull_request.Id.to_string pull_request_id)
@@ -251,7 +239,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : REACT_TO_COMMENT : repo=%s : comment_id=%d : time=%f"
+              "%s : REACT_TO_COMMENT : repo=%s : comment_id=%d : time=%f"
               request_id
               (S.Api.Repo.to_string repo)
               comment_id
@@ -261,8 +249,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   let query_next_pending_work_manifest request_id db =
     Abbs_time_it.run
       (fun time ->
-        Logs.info (fun m ->
-            m "EVALUATOR : %s : QUERY_NEXT_PENDING_WORK_MANIFEST : time=%f" request_id time))
+        Logs.info (fun m -> m "%s : QUERY_NEXT_PENDING_WORK_MANIFEST : time=%f" request_id time))
       (fun () -> S.Db.query_next_pending_work_manifest ~request_id db)
 
   let run_work_manifest request_id config client work_manifest =
@@ -271,7 +258,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : RUN_WORK_MANIFEST : id=%a : time=%f"
+              "%s : RUN_WORK_MANIFEST : id=%a : time=%f"
               request_id
               Uuidm.pp
               work_manifest.Wm.id
@@ -282,48 +269,31 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     Abbs_time_it.run
       (fun time ->
         Logs.info (fun m ->
-            m
-              "EVALUATOR : %s : STORE_FLOW_STATE : id=%a : time=%f"
-              request_id
-              Uuidm.pp
-              work_manifest_id
-              time))
+            m "%s : STORE_FLOW_STATE : id=%a : time=%f" request_id Uuidm.pp work_manifest_id time))
       (fun () -> S.Db.store_flow_state ~request_id db work_manifest_id state)
 
   let query_flow_state request_id db work_manifest_id =
     Abbs_time_it.run
       (fun time ->
         Logs.info (fun m ->
-            m
-              "EVALUATOR : %s : QUERY_FLOW_STATE : id=%a : time=%f"
-              request_id
-              Uuidm.pp
-              work_manifest_id
-              time))
+            m "%s : QUERY_FLOW_STATE : id=%a : time=%f" request_id Uuidm.pp work_manifest_id time))
       (fun () -> S.Db.query_flow_state ~request_id db work_manifest_id)
 
   let delete_flow_state request_id db work_manifest_id =
     Abbs_time_it.run
       (fun time ->
         Logs.info (fun m ->
-            m
-              "EVALUATOR : %s : DELETE_FLOW_STATE : id=%a : time=%f"
-              request_id
-              Uuidm.pp
-              work_manifest_id
-              time))
+            m "%s : DELETE_FLOW_STATE : id=%a : time=%f" request_id Uuidm.pp work_manifest_id time))
       (fun () -> S.Db.delete_flow_state ~request_id db work_manifest_id)
 
   let cleanup_flow_states request_id db =
     Abbs_time_it.run
-      (fun time ->
-        Logs.info (fun m -> m "EVALUATOR : %s : CLEANUP_FLOW_STATE : time=%f" request_id time))
+      (fun time -> Logs.info (fun m -> m "%s : CLEANUP_FLOW_STATE : time=%f" request_id time))
       (fun () -> S.Db.cleanup_flow_states ~request_id db)
 
   let create_work_manifest request_id db work_manifest =
     Abbs_time_it.run
-      (fun time ->
-        Logs.info (fun m -> m "EVALUATOR : %s : CREATE_WORK_MANIFEST : time=%f" request_id time))
+      (fun time -> Logs.info (fun m -> m "%s : CREATE_WORK_MANIFEST : time=%f" request_id time))
       (fun () -> S.Work_manifest.create ~request_id db work_manifest)
 
   let update_work_manifest_state request_id db work_manifest_id state =
@@ -331,7 +301,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : UPDATE_WORK_MANIFEST_STATE : id=%a : state=%s : time=%f"
+              "%s : UPDATE_WORK_MANIFEST_STATE : id=%a : state=%s : time=%f"
               request_id
               Uuidm.pp
               work_manifest_id
@@ -344,7 +314,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : UPDATE_WORK_MANIFEST_RUN_ID : id=%a : run_id=%s : time=%f"
+              "%s : UPDATE_WORK_MANIFEST_RUN_ID : id=%a : run_id=%s : time=%f"
               request_id
               Uuidm.pp
               work_manifest_id
@@ -357,7 +327,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : UPDATE_WORK_MANIFEST_CHANGES : id=%a : time=%f"
+              "%s : UPDATE_WORK_MANIFEST_CHANGES : id=%a : time=%f"
               request_id
               Uuidm.pp
               work_manifest_id
@@ -369,7 +339,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : UPDATE_WORK_MANIFEST_DENIED_DIRSPACES : id=%a : time=%f"
+              "%s : UPDATE_WORK_MANIFEST_DENIED_DIRSPACES : id=%a : time=%f"
               request_id
               Uuidm.pp
               work_manifest_id
@@ -382,7 +352,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : UPDATE_WORK_MANIFEST_STEPS : id=%a : time=%f"
+              "%s : UPDATE_WORK_MANIFEST_STEPS : id=%a : time=%f"
               request_id
               Uuidm.pp
               work_manifest_id
@@ -393,12 +363,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     Abbs_time_it.run
       (fun time ->
         Logs.info (fun m ->
-            m
-              "EVALUATOR : %s : QUERY_WORK_MANIFEST : id=%a : time=%f"
-              request_id
-              Uuidm.pp
-              work_manifest_id
-              time))
+            m "%s : QUERY_WORK_MANIFEST : id=%a : time=%f" request_id Uuidm.pp work_manifest_id time))
       (fun () -> S.Work_manifest.query ~request_id db work_manifest_id)
 
   let create_commit_checks request_id client repo ref_ checks =
@@ -406,7 +371,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : CREATE_COMMIT_CHECKS : repo=%s : num=%d : ref=%s : time=%f"
+              "%s : CREATE_COMMIT_CHECKS : repo=%s : num=%d : ref=%s : time=%f"
               request_id
               (S.Api.Repo.to_string repo)
               (CCList.length checks)
@@ -419,7 +384,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : FETCH_COMMIT_CHECKS : repo=%s : ref=%s : time=%f"
+              "%s : FETCH_COMMIT_CHECKS : repo=%s : ref=%s : time=%f"
               request_id
               (S.Api.Repo.to_string repo)
               (S.Api.Ref.to_string ref_)
@@ -431,7 +396,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : UNLOCK : repo=%s : unlock_id=%s : time=%f"
+              "%s : UNLOCK : repo=%s : unlock_id=%s : time=%f"
               request_id
               (S.Api.Repo.to_string repo)
               (S.Unlock_id.to_string unlock_id)
@@ -443,7 +408,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : QUERY_PULL_REQUEST_OUT_OF_CHANGE_APPLIES : pull_number=%s : time=%f"
+              "%s : QUERY_PULL_REQUEST_OUT_OF_CHANGE_APPLIES : pull_number=%s : time=%f"
               request_id
               (S.Api.Pull_request.Id.to_string (S.Api.Pull_request.id pull_request))
               time))
@@ -454,10 +419,10 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : QUERY_APPLIED_DIRSPACES : repo=%s : pull_number=%s : time=%f"
+              "%s : QUERY_APPLIED_DIRSPACES : repo=%s : pull_number=%s : time=%f"
               request_id
-              (S.Api.Repo.to_string (S.Api.Pull_request.repo pull_request))
-              (S.Api.Pull_request.Id.to_string (S.Api.Pull_request.id pull_request))
+              (S.Api.Repo.to_string @@ S.Api.Pull_request.repo pull_request)
+              (S.Api.Pull_request.Id.to_string @@ S.Api.Pull_request.id pull_request)
               time))
       (fun () -> S.Db.query_applied_dirspaces ~request_id db pull_request)
 
@@ -466,9 +431,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : QUERY_DIRSPACES_WITHOUT_VALID_PLANS : pull_number=%s : time=%f"
+              "%s : QUERY_DIRSPACES_WITHOUT_VALID_PLANS : pull_number=%s : time=%f"
               request_id
-              (S.Api.Pull_request.Id.to_string (S.Api.Pull_request.id pull_request))
+              (S.Api.Pull_request.Id.to_string @@ S.Api.Pull_request.id pull_request)
               time))
       (fun () -> S.Db.query_dirspaces_without_valid_plans ~request_id db pull_request dirspaces)
 
@@ -477,8 +442,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : STORE_DIRSPACEFLOWS : repo=%s : base_ref=%s : branch_ref=%s : \
-               time=%f"
+              "%s : STORE_DIRSPACEFLOWS : repo=%s : base_ref=%s : branch_ref=%s : time=%f"
               request_id
               (S.Api.Repo.to_string repo)
               (S.Api.Ref.to_string base_ref)
@@ -491,7 +455,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : QUERY_PLAN : id=%a : dir=%s : workspace=%s : time=%f"
+              "%s : QUERY_PLAN : id=%a : dir=%s : workspace=%s : time=%f"
               request_id
               Uuidm.pp
               work_manifest_id
@@ -502,8 +466,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
 
   let cleanup_plans request_id db =
     Abbs_time_it.run
-      (fun time ->
-        Logs.info (fun m -> m "EVALUATOR : %s : CLEANUP_PLANS : time=%f" request_id time))
+      (fun time -> Logs.info (fun m -> m "%s : CLEANUP_PLANS : time=%f" request_id time))
       (fun () -> S.Db.cleanup_plans ~request_id db)
 
   let store_plan request_id db work_manifest_id dirspace data has_changes =
@@ -511,7 +474,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : STORE_PLAN : id=%a : dir=%s : workspace=%s : time=%f"
+              "%s : STORE_PLAN : id=%a : dir=%s : workspace=%s : time=%f"
               request_id
               Uuidm.pp
               work_manifest_id
@@ -525,7 +488,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : STORE_TF_OPERATION_RESULT : id=%a : time=%f"
+              "%s : STORE_TF_OPERATION_RESULT : id=%a : time=%f"
               request_id
               Uuidm.pp
               work_manifest_id
@@ -537,7 +500,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : STORE_TF_OPERATION_RESULT2 : id=%a : time=%f"
+              "%s : STORE_TF_OPERATION_RESULT2 : id=%a : time=%f"
               request_id
               Uuidm.pp
               work_manifest_id
@@ -548,14 +511,13 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     Abbs_time_it.run
       (fun time ->
         Logs.info (fun m ->
-            m "EVALUATOR : %s : QUERY_CONFLICTING_WORK_MANIFESTS_IN_REPO : time=%f" request_id time))
+            m "%s : QUERY_CONFLICTING_WORK_MANIFESTS_IN_REPO : time=%f" request_id time))
       (fun () ->
         S.Db.query_conflicting_work_manifests_in_repo ~request_id db pull_request dirspaces op)
 
   let eval_apply_requirements request_id config user client repo_config pull_request matches =
     Abbs_time_it.run
-      (fun time ->
-        Logs.info (fun m -> m "EVALUATOR : %s : EVAL_APPLY_REQUIREMENTS : time=%f" request_id time))
+      (fun time -> Logs.info (fun m -> m "%s : EVAL_APPLY_REQUIREMENTS : time=%f" request_id time))
       (fun () ->
         S.Apply_requirements.eval ~request_id config user client repo_config pull_request matches)
 
@@ -563,17 +525,13 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     Abbs_time_it.run
       (fun time ->
         Logs.info (fun m ->
-            m
-              "EVALUATOR : %s : QUERY_DIRSPACES_OWNED_BY_OTHER_PULL_REQUESTS : time=%f"
-              request_id
-              time))
+            m "%s : QUERY_DIRSPACES_OWNED_BY_OTHER_PULL_REQUESTS : time=%f" request_id time))
       (fun () ->
         S.Db.query_dirspaces_owned_by_other_pull_requests ~request_id db pull_request dirspaces)
 
   let merge_pull_request request_id client pull_request =
     Abbs_time_it.run
-      (fun time ->
-        Logs.info (fun m -> m "EVALUATOR : %s : MERGE_PULL_REQUEST : time=%f" request_id time))
+      (fun time -> Logs.info (fun m -> m "%s : MERGE_PULL_REQUEST : time=%f" request_id time))
       (fun () -> S.Api.merge_pull_request ~request_id client pull_request)
 
   let delete_branch request_id client repo branch =
@@ -581,7 +539,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : DELETE_BRANCH : repo=%s : branch=%s : time=%f"
+              "%s : DELETE_BRANCH : repo=%s : branch=%s : time=%f"
               request_id
               (S.Api.Repo.to_string repo)
               branch
@@ -593,7 +551,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : STORE_DRIFT_SCHEDULE : repo=%s : time=%f"
+              "%s : STORE_DRIFT_SCHEDULE : repo=%s : time=%f"
               request_id
               (S.Api.Repo.to_string repo)
               time))
@@ -602,8 +560,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   let query_missing_drift_scheduled_runs request_id db =
     Abbs_time_it.run
       (fun time ->
-        Logs.info (fun m ->
-            m "EVALUATOR : %s : QUERY_MISSING_DRIFT_SCHEDULED_RUNS : time=%f" request_id time))
+        Logs.info (fun m -> m "%s : QUERY_MISSING_DRIFT_SCHEDULED_RUNS : time=%f" request_id time))
       (fun () -> S.Db.query_missing_drift_scheduled_runs ~request_id db)
 
   let fetch_repo_config_with_provenance ?built_config ~system_defaults request_id client repo ref_ =
@@ -611,7 +568,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun time ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : FETCH_REPO_CONFIG_WITH_PROVENANCE : repo=%s : ref=%s : time=%f"
+              "%s : FETCH_REPO_CONFIG_WITH_PROVENANCE : repo=%s : ref=%s : time=%f"
               request_id
               (S.Api.Repo.to_string repo)
               (S.Api.Ref.to_string ref_)
@@ -1062,13 +1019,13 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     | Flow.Event.Step_start (step, state) ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : FLOW : STEP_START : %s"
+              "%s : FLOW : STEP_START : %s"
               state.State.request_id
               (Id.to_string (Flow.Step.id step)))
     | Flow.Event.Step_end (step, ret, state) ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : FLOW : STEP_END : %s : %s"
+              "%s : FLOW : STEP_END : %s : %s"
               state.State.request_id
               (Id.to_string (Flow.Step.id step))
               (match ret with
@@ -1081,11 +1038,11 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                   | _ -> "YIELD")))
     | Flow.Event.Choice_start (id, state) ->
         Logs.info (fun m ->
-            m "EVALUATOR : %s : FLOW : CHOICE_START : %s" state.State.request_id (Id.to_string id))
+            m "%s : FLOW : CHOICE_START : %s" state.State.request_id (Id.to_string id))
     | Flow.Event.Choice_end (id, ret, state) ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : FLOW : CHOICE_END : %s : %s"
+              "%s : FLOW : CHOICE_END : %s : %s"
               state.State.request_id
               (Id.to_string id)
               (match ret with
@@ -1093,25 +1050,27 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               | Error run_err -> "FAILURE : " ^ Flow.show_run_err run_err))
     | Flow.Event.Finally_start (id, state) ->
         Logs.info (fun m ->
-            m "EVALUATOR : %s : FLOW : FINALLY_START : %s" state.State.request_id (Id.to_string id))
+            m "%s : FLOW : FINALLY_START : %s" state.State.request_id (Id.to_string id))
     | Flow.Event.Finally_resume (id, state) ->
         Logs.info (fun m ->
-            m "EVALUATOR : %s : FLOW : FINALLY_RESUME : %s" state.State.request_id (Id.to_string id))
+            m "%s : FLOW : FINALLY_RESUME : %s" state.State.request_id (Id.to_string id))
     | Flow.Event.Recover_choice (recover_id, choice_id, state) ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : FLOW : RECOVER_CHOICE : %s : %s"
+              "%s : FLOW : RECOVER_CHOICE : %s : %s"
               state.State.request_id
               (Id.to_string recover_id)
               (Id.to_string choice_id))
     | Flow.Event.Recover_start (recover_id, state) ->
         Logs.info (fun m ->
-            m
-              "EVALUATOR : %s : FLOW : RECOVER_START : %s"
-              state.State.request_id
-              (Id.to_string recover_id))
+            m "%s : FLOW : RECOVER_START : %s" state.State.request_id (Id.to_string recover_id))
 
-  module Access_control = Terrat_access_control.Make (S.Access_control)
+  module Access_control = Terrat_access_control2.Make (struct
+    type client = S.Api.Client.t
+    type repo = S.Api.Repo.t
+
+    include S.Access_control
+  end)
 
   module Access_control_engine = struct
     module Dirspace_map = Terrat_data.Dirspace_map
@@ -1121,7 +1080,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
 
     type t = {
       config : Terrat_base_repo_config_v1.Access_control.t;
-      ctx : S.Access_control.Ctx.t;
+      ctx : Access_control.Ctx.t;
       policy_branch : S.Api.Ref.t;
       request_id : string;
       user : string;
@@ -1143,7 +1102,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             | true -> None
             | false -> Some ci_config_update)
       else (
-        Logs.info (fun m -> m "EVALUATOR : %s : ACCESS_CONTROL_DISABLED" t.request_id);
+        Logs.info (fun m -> m "%s : ACCESS_CONTROL_DISABLED" t.request_id);
         Abb.Future.return (Ok None))
 
     let eval_files t diff =
@@ -1156,7 +1115,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             | `Ok -> None
             | `Denied denied -> Some denied)
       else (
-        Logs.info (fun m -> m "EVALUATOR : %s : ACCESS_CONTROL_DISABLED" t.request_id);
+        Logs.info (fun m -> m "%s : ACCESS_CONTROL_DISABLED" t.request_id);
         Abb.Future.return (Ok None))
 
     let eval_repo_config t diff =
@@ -1169,7 +1128,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             | true -> None
             | false -> Some terrateam_config_update)
       else (
-        Logs.info (fun m -> m "EVALUATOR : %s : ACCESS_CONTROL_DISABLED" t.request_id);
+        Logs.info (fun m -> m "%s : ACCESS_CONTROL_DISABLED" t.request_id);
         Abb.Future.return (Ok None))
 
     let eval' t change_matches selector =
@@ -1181,13 +1140,13 @@ module Make (S : Terrat_vcs_provider2.S) = struct
              default if that configuration was not specified. *)
           t.config.Ac.policies
           |> CCList.map (fun ({ P.tag_query; _ } as p) ->
-                 Terrat_access_control.Policy.{ tag_query; policy = selector p })
+                 Terrat_access_control2.Policy.{ tag_query; policy = selector p })
         in
         Abbs_time_it.run (log_time t.request_id "ACCESS_CONTROL_SUPERAPPROVAL_EVAL") (fun () ->
             Access_control.eval t.ctx policies change_matches)
       else (
-        Logs.info (fun m -> m "EVALUATOR : %s : ACCESS_CONTROL_DISABLED" t.request_id);
-        Abb.Future.return (Ok Terrat_access_control.R.{ pass = change_matches; deny = [] }))
+        Logs.info (fun m -> m "%s : ACCESS_CONTROL_DISABLED" t.request_id);
+        Abb.Future.return (Ok Terrat_access_control2.R.{ pass = change_matches; deny = [] }))
 
     let eval_superapproved t reviewers change_matches =
       let open Abbs_future_combinators.Infix_result_monad in
@@ -1197,7 +1156,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
          approvals. *)
       eval' t change_matches (fun { P.apply_with_superapproval; _ } -> apply_with_superapproval)
       >>= function
-      | Terrat_access_control.R.{ pass = _ :: _ as pass; deny } ->
+      | { Terrat_access_control2.R.pass = _ :: _ as pass; deny } ->
           (* Now, of those that passed, let's see if any have been approved by a
              super approver.  To do this we'll iterate over the approvers. *)
           let pass_with_superapproval =
@@ -1209,10 +1168,10 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           Abbs_future_combinators.List_result.fold_left
             ~f:(fun acc user ->
               let changes = acc |> Dirspace_map.to_list |> CCList.map snd in
-              let ctx = S.Access_control.set_user user t.ctx in
+              let ctx = Access_control.Ctx.set_user user t.ctx in
               let t' = { t with ctx } in
               eval' t' changes (fun { P.superapproval; _ } -> superapproval)
-              >>= fun Terrat_access_control.R.{ pass; _ } ->
+              >>= fun { Terrat_access_control2.R.pass; _ } ->
               let acc =
                 CCListLabels.fold_left
                   ~f:(fun acc { Terrat_change_match3.Dirspace_config.dirspace; _ } ->
@@ -1232,9 +1191,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                   pass_with_superapproval))
       | _ ->
           Logs.debug (fun m ->
-              m
-                "EVALUATOR : %s : ACCESS_CONTROL : NO_MATCHING_CHANGES_FOR_SUPERAPPROVAL"
-                t.request_id);
+              m "%s : ACCESS_CONTROL : NO_MATCHING_CHANGES_FOR_SUPERAPPROVAL" t.request_id);
           Abb.Future.return (Ok Dirspace_map.empty)
 
     let eval_tf_operation t change_matches = function
@@ -1243,15 +1200,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           let open Abbs_future_combinators.Infix_result_monad in
           eval' t change_matches (fun { P.apply; _ } -> apply)
           >>= function
-          | Terrat_access_control.R.{ pass; deny = _ :: _ as deny } ->
+          | { Terrat_access_control2.R.pass; deny = _ :: _ as deny } ->
               (* If we have some denies, then let's see if any of them can be
                  applied with because of a super approver.  If not, we'll return
                  the original response. *)
-              Logs.debug (fun m ->
-                  m "EVALUATOR : %s : ACCESS_CONTROL : EVAL_SUPERAPPROVAL" t.request_id);
+              Logs.debug (fun m -> m "%s : ACCESS_CONTROL : EVAL_SUPERAPPROVAL" t.request_id);
               let denied_change_matches =
                 CCList.map
-                  (fun Terrat_access_control.R.Deny.{ change_match; _ } -> change_match)
+                  (fun { Terrat_access_control2.R.Deny.change_match; _ } -> change_match)
                   deny
               in
               eval_superapproved t reviewers denied_change_matches
@@ -1259,12 +1215,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               let pass = pass @ (superapproved |> Dirspace_map.to_list |> CCList.map snd) in
               let deny =
                 CCList.filter
-                  (fun Terrat_access_control.R.Deny.
-                         { change_match = { Terrat_change_match3.Dirspace_config.dirspace; _ }; _ }
+                  (fun {
+                         Terrat_access_control2.R.Deny.change_match =
+                           { Terrat_change_match3.Dirspace_config.dirspace; _ };
+                         _;
+                       }
                      -> not (Dirspace_map.mem dirspace superapproved))
                   deny
               in
-              Abb.Future.return (Ok Terrat_access_control.R.{ pass; deny })
+              Abb.Future.return (Ok { Terrat_access_control2.R.pass; deny })
           | r -> Abb.Future.return (Ok r))
       | `Apply_force -> eval' t change_matches (fun { P.apply_force; _ } -> apply_force)
       | `Apply_autoapprove ->
@@ -1281,7 +1240,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                 | true -> None
                 | false -> Some match_list)
           else (
-            Logs.debug (fun m -> m "EVALUATOR : %s : ACCESS_CONTROL_DISABLED" t.request_id);
+            Logs.debug (fun m -> m "%s : ACCESS_CONTROL_DISABLED" t.request_id);
             Abb.Future.return (Ok None))
 
     let plan_require_all_dirspace_access t = t.config.Ac.plan_require_all_dirspace_access
@@ -1345,7 +1304,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           * [ `Plan | `Apply of string list | `Apply_autoapprove | `Apply_force ]
         [@@deriving eq]
 
-        type v = Terrat_access_control.R.t
+        type v = Terrat_access_control2.R.t
 
         type err =
           [ Repo_config.fetch_err
@@ -1355,7 +1314,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         type args = unit -> (v, err) result Abb.Future.t
 
         let fetch f = f ()
-        let weight v = kb_of_bytes (CCString.length (Terrat_access_control.R.show v))
+        let weight v = kb_of_bytes (CCString.length (Terrat_access_control2.R.show v))
       end)
 
       module Apply_requirements = Abbs_cache.Expiring.Make (struct
@@ -1390,15 +1349,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
 
       module Pull_request = Abbs_cache.Expiring.Make (struct
         type k = string * S.Api.Account.t * S.Api.Repo.t * S.Api.Pull_request.Id.t [@@deriving eq]
-        type v = S.Api.Pull_request.t
+        type v = (Terrat_change.Diff.t list, bool) S.Api.Pull_request.t [@@deriving to_yojson]
         type err = [ `Error ]
         type args = unit -> (v, err) result Abb.Future.t
 
         let fetch f = f ()
 
         let weight pull_request =
-          kb_of_bytes
-            (CCString.length (Yojson.Safe.to_string (S.Api.Pull_request.to_yojson pull_request)))
+          kb_of_bytes (CCString.length (Yojson.Safe.to_string (v_to_yojson pull_request)))
       end)
 
       let matches =
@@ -1496,7 +1454,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               if time > 0.0 then
                 Logs.info (fun m ->
                     m
-                      "EVALUATOR : %s : DV : PULL_REQUEST : repo=%s : pull_number=%s : time=%f"
+                      "%s : DV : PULL_REQUEST : repo=%s : pull_number=%s : time=%f"
                       state.State.request_id
                       (S.Api.Repo.to_string repo)
                       (S.Api.Pull_request.Id.to_string pull_request_id)
@@ -1527,7 +1485,10 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Event.Pull_request_comment _ ->
           pull_request ctx state
           >>= fun pull_request ->
-          Abb.Future.return (Ok (Terrat_vcs_provider2.Target.Pr pull_request))
+          Abb.Future.return
+            (Ok
+               (Terrat_vcs_provider2.Target.Pr
+                  (Terrat_pull_request.set_diff () @@ Terrat_pull_request.set_checks () pull_request)))
       | Event.Run_drift { repo; _ } ->
           client ctx state
           >>= fun client ->
@@ -1668,7 +1629,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         (fun time ->
           Logs.info (fun m ->
               m
-                "EVALUATOR : %s : DV : REPO_CONFIG : account=%s : repo=%s : time=%f"
+                "%s : DV : REPO_CONFIG : account=%s : repo=%s : time=%f"
                 state.State.request_id
                 (S.Api.Account.to_string account)
                 (S.Api.Repo.to_string repo)
@@ -1992,8 +1953,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       let open Abb.Future.Infix_monad in
       Abbs_time_it.run
         (fun time ->
-          Logs.info (fun m ->
-              m "EVALUATOR : %s : DV : MATCHES : time=%f" state.State.request_id time))
+          Logs.info (fun m -> m "%s : DV : MATCHES : time=%f" state.State.request_id time))
         (fun () ->
           let open Abbs_future_combinators.Infix_result_monad in
           base_ref ctx state
@@ -2029,7 +1989,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
            (Access_control_engine.make
               ~request_id:state.State.request_id
               ~ctx:
-                (S.Access_control.Ctx.make
+                (Access_control.Ctx.make
+                   ~request_id:state.State.request_id
                    ~client
                    ~config:(Ctx.config ctx)
                    ~repo:(S.Api.Pull_request.repo pull_request)
@@ -2061,7 +2022,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       Abbs_time_it.run
         (fun time ->
           Logs.info (fun m ->
-              m "EVALUATOR : %s : DV : ACCESS_CONTROL_TF_OP : time=%f" state.State.request_id time))
+              m "%s : DV : ACCESS_CONTROL_TF_OP : time=%f" state.State.request_id time))
         (fun () ->
           let open Abbs_future_combinators.Infix_result_monad in
           pull_request ctx state
@@ -2223,7 +2184,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       Abbs_time_it.run
         (fun time ->
           Logs.info (fun m ->
-              m "EVALUATOR : %s : DV : APPLY_REQUIREMENTS : time=%f" state.State.request_id time))
+              m "%s : DV : APPLY_REQUIREMENTS : time=%f" state.State.request_id time))
         (fun () ->
           Cache.Apply_requirements.fetch Cache.apply_requirements (Ctx.request_id ctx) fetch)
       >>= function
@@ -2252,7 +2213,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           matches ctx state op
           >>= fun matches ->
           Abb.Future.return
-            (Ok { Terrat_access_control.R.pass = matches.Matches.working_set_matches; deny = [] })
+            (Ok { Terrat_access_control2.R.pass = matches.Matches.working_set_matches; deny = [] })
   end
 
   module H = struct
@@ -2300,7 +2261,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             publish_msg
               state.State.request_id
               client
-              (Event.user state.State.event)
+              (S.Api.User.to_string @@ Event.user state.State.event)
               pull_request
               msg
         | None -> Abb.Future.return (Ok ())
@@ -2310,7 +2271,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       >>= function
       | Ok () -> Abb.Future.return ()
       | Error `Error ->
-          Logs.err (fun m -> m "EVALUATOR : %s : MAYBE_PUBLISH_MSG" state.State.request_id);
+          Logs.err (fun m -> m "%s : MAYBE_PUBLISH_MSG" state.State.request_id);
           Abb.Future.return ()
 
     (* Implement a work manifest iteration.  This can create a work manifest if
@@ -2343,8 +2304,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       let open Abbs_future_combinators.Infix_result_monad in
       match (state.State.st, state.State.input, state.State.work_manifest_id) with
       | St.Initial, None, None -> (
-          Logs.info (fun m ->
-              m "EVALUATOR : %s : WORK_MANIFEST_ITER : %s : CREATE" state.State.request_id name);
+          Logs.info (fun m -> m "%s : WORK_MANIFEST_ITER : %s : CREATE" state.State.request_id name);
           Abbs_time_it.run (log_time state.State.request_id "CREATE") (fun () -> create ctx state)
           >>= function
           | [] -> Abb.Future.return (Error (`Noop state))
@@ -2361,7 +2321,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | St.Initial, None, Some work_manifest_id -> (
           Logs.info (fun m ->
               m
-                "EVALUATOR : %s : WORK_MANIFEST_ITER : %s : UPDATE : id=%a"
+                "%s : WORK_MANIFEST_ITER : %s : UPDATE : id=%a"
                 state.State.request_id
                 name
                 Uuidm.pp
@@ -2404,8 +2364,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           | Some { Wm.id; state = state'; _ } ->
               Logs.err (fun m ->
                   m
-                    "EVALUATOR : %s : WORK_MANIFEST_ITER : %s : UPDATE : INVALID_STATE : id=%a : \
-                     state=%s"
+                    "%s : WORK_MANIFEST_ITER : %s : UPDATE : INVALID_STATE : id=%a : state=%s"
                     state.State.request_id
                     name
                     Uuidm.pp
@@ -2415,7 +2374,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           | None ->
               Logs.err (fun m ->
                   m
-                    "EVALUATOR : %s : WORK_MANIFEST_ITER : %s : UPDATE : NOT_FOUND : id=%a"
+                    "%s : WORK_MANIFEST_ITER : %s : UPDATE : NOT_FOUND : id=%a"
                     state.State.request_id
                     name
                     Uuidm.pp
@@ -2431,7 +2390,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         -> (
           Logs.info (fun m ->
               m
-                "EVALUATOR : %s : WORK_MANIFEST_ITER : %s : RUN_SUCCESS : id=%a"
+                "%s : WORK_MANIFEST_ITER : %s : RUN_SUCCESS : id=%a"
                 state.State.request_id
                 name
                 Uuidm.pp
@@ -2449,8 +2408,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           | Some { Wm.id; state = state'; _ } ->
               Logs.err (fun m ->
                   m
-                    "EVALUATOR : %s : WORK_MANIFEST_ITER : %s : RUN_SUCCESS : INVALID_STATE : \
-                     id=%a : state=%s"
+                    "%s : WORK_MANIFEST_ITER : %s : RUN_SUCCESS : INVALID_STATE : id=%a : state=%s"
                     state.State.request_id
                     name
                     Uuidm.pp
@@ -2460,7 +2418,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           | None ->
               Logs.err (fun m ->
                   m
-                    "EVALUATOR : %s : WORK_MANIFEST_ITER : %s : RUN_SUCCESS : NOT_FOUND : id=%a"
+                    "%s : WORK_MANIFEST_ITER : %s : RUN_SUCCESS : NOT_FOUND : id=%a"
                     state.State.request_id
                     name
                     Uuidm.pp
@@ -2471,7 +2429,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           Some work_manifest_id ) -> (
           Logs.info (fun m ->
               m
-                "EVALUATOR : %s : WORK_MANIFEST_ITER : %s : RUN_FAILURE : id=%a"
+                "%s : WORK_MANIFEST_ITER : %s : RUN_FAILURE : id=%a"
                 state.State.request_id
                 name
                 Uuidm.pp
@@ -2488,7 +2446,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           | None ->
               Logs.err (fun m ->
                   m
-                    "EVALUATOR : %s : WORK_MANIFEST_ITER : %s : RUN_FAILURE : NOT_FOUND : id=%a"
+                    "%s : WORK_MANIFEST_ITER : %s : RUN_FAILURE : NOT_FOUND : id=%a"
                     state.State.request_id
                     name
                     Uuidm.pp
@@ -2507,7 +2465,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           Some work_manifest_id ) -> (
           Logs.info (fun m ->
               m
-                "EVALUATOR : %s : WORK_MANIFEST_ITER : %s : INITIATE : id=%a : run_id=%s : sha=%s"
+                "%s : WORK_MANIFEST_ITER : %s : INITIATE : id=%a : run_id=%s : sha=%s"
                 state.State.request_id
                 name
                 Uuidm.pp
@@ -2537,7 +2495,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           | Some { Wm.id; state = Wm.State.Aborted; _ } ->
               Logs.info (fun m ->
                   m
-                    "EVALUATOR : %s : WORK_MANIFEST_ITER %s : INITIATE : ABORTED : id=%a"
+                    "%s : WORK_MANIFEST_ITER %s : INITIATE : ABORTED : id=%a"
                     state.State.request_id
                     name
                     Uuidm.pp
@@ -2546,8 +2504,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           | Some { Wm.id; state = state'; _ } ->
               Logs.err (fun m ->
                   m
-                    "EVALUATOR : %s : WORK_MANIFEST_ITER : %s : INITIATE : INVALID_STATE : id=%a : \
-                     state=%s"
+                    "%s : WORK_MANIFEST_ITER : %s : INITIATE : INVALID_STATE : id=%a : state=%s"
                     state.State.request_id
                     name
                     Uuidm.pp
@@ -2557,7 +2514,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           | None ->
               Logs.err (fun m ->
                   m
-                    "EVALUATOR : %s : WORK_MANIFEST_ITER : %s : INITIATE : NOT_FOUND : id=%a"
+                    "%s : WORK_MANIFEST_ITER : %s : INITIATE : NOT_FOUND : id=%a"
                     state.State.request_id
                     name
                     Uuidm.pp
@@ -2568,7 +2525,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           Some work_manifest_id ) ->
           Logs.info (fun m ->
               m
-                "EVALUATOR : %s : WORK_MANIFEST_ITER : %s : RESULT : id=%a"
+                "%s : WORK_MANIFEST_ITER : %s : RESULT : id=%a"
                 state.State.request_id
                 name
                 Uuidm.pp
@@ -2596,8 +2553,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               | Some { Wm.id; state = state'; _ } ->
                   Logs.err (fun m ->
                       m
-                        "EVALUATOR : %s : WORK_MANIFEST_ITER : %s : RESULT : INVALID_STATE : id=%a \
-                         : state=%s"
+                        "%s : WORK_MANIFEST_ITER : %s : RESULT : INVALID_STATE : id=%a : state=%s"
                         state.State.request_id
                         name
                         Uuidm.pp
@@ -2607,7 +2563,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               | None ->
                   Logs.err (fun m ->
                       m
-                        "EVALUATOR : %s : WORK_MANIFEST_ITER : %s : RESULT : NOT_FOUND : id=%a"
+                        "%s : WORK_MANIFEST_ITER : %s : RESULT : NOT_FOUND : id=%a"
                         state.State.request_id
                         name
                         Uuidm.pp
@@ -2617,7 +2573,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | _, Some (I.Work_manifest_failure { p }), Some work_manifest_id ->
           Logs.info (fun m ->
               m
-                "EVALUATOR : %s : WORK_MANIFEST_ITER : %s : WORK_MANIFEST_FAILURE : id=%a"
+                "%s : WORK_MANIFEST_ITER : %s : WORK_MANIFEST_FAILURE : id=%a"
                 state.State.request_id
                 name
                 Uuidm.pp
@@ -2639,8 +2595,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               | None ->
                   Logs.err (fun m ->
                       m
-                        "EVALUATOR : %s : WORK_MANIFEST_ITER : %s : WORK_MANIFEST_FAILURE : \
-                         NOT_FOUND : id=%a"
+                        "%s : WORK_MANIFEST_ITER : %s : WORK_MANIFEST_FAILURE : NOT_FOUND : id=%a"
                         state.State.request_id
                         name
                         Uuidm.pp
@@ -2691,7 +2646,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | { Wm.id; branch_ref; state = Wm.State.(Queued | Running); _ } ->
           Logs.info (fun m ->
               m
-                "EVALUATOR : %s : MISMATCHED_REFS : id=%a : branch_ref=%s : sha=%s"
+                "%s : MISMATCHED_REFS : id=%a : branch_ref=%s : sha=%s"
                 request_id
                 Uuidm.pp
                 id
@@ -2702,7 +2657,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | { Wm.id; branch_ref; state = state'; _ } ->
           Logs.info (fun m ->
               m
-                "EVALUATOR : %s : COULD_NOT_INITIATE : id=%a : state=%s : branch_ref=%s : sha=%s"
+                "%s : COULD_NOT_INITIATE : id=%a : state=%s : branch_ref=%s : sha=%s"
                 request_id
                 Uuidm.pp
                 id
@@ -3220,8 +3175,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           >>= fun work_manifest ->
           Logs.info (fun m ->
               m
-                "EVALUATOR : %s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s : \
-                 env=%s"
+                "%s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s : env=%s"
                 state.State.request_id
                 Uuidm.pp
                 work_manifest.Wm.id
@@ -3361,8 +3315,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             >>= fun work_manifest ->
             Logs.info (fun m ->
                 m
-                  "EVALUATOR : %s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s : \
-                   env=%s"
+                  "%s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s : env=%s"
                   state.State.request_id
                   Uuidm.pp
                   work_manifest.Wm.id
@@ -3414,7 +3367,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                 matches,
                 access_control_results )
             ->
-      let { Terrat_access_control.R.pass = passed_dirspaces; deny = denied_dirspaces } =
+      let { Terrat_access_control2.R.pass = passed_dirspaces; deny = denied_dirspaces } =
         access_control_results
       in
       Abb.Future.return
@@ -3431,7 +3384,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       Abb.Future.return (dirspaceflows_of_changes repo_config passed_dirspaces)
       >>= fun dirspaceflows ->
       let denied_dirspaces =
-        let module Ac = Terrat_access_control in
+        let module Ac = Terrat_access_control2 in
         let module Dc = Terrat_change_match3.Dirspace_config in
         CCList.map
           (fun { Ac.R.Deny.change_match = { Dc.dirspace; _ }; policy } ->
@@ -3476,8 +3429,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           >>= fun work_manifest ->
           Logs.info (fun m ->
               m
-                "EVALUATOR : %s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s : \
-                 env=%s"
+                "%s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s : env=%s"
                 state.State.request_id
                 Uuidm.pp
                 work_manifest.Wm.id
@@ -3529,7 +3481,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                 matches,
                 access_control_results )
             ->
-      let { Terrat_access_control.R.pass = passed_dirspaces; deny = denied_dirspaces } =
+      let { Terrat_access_control2.R.pass = passed_dirspaces; deny = denied_dirspaces } =
         access_control_results
       in
       Abb.Future.return
@@ -3546,7 +3498,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       Abb.Future.return (dirspaceflows_of_changes repo_config passed_dirspaces)
       >>= fun dirspaceflows ->
       let denied_dirspaces =
-        let module Ac = Terrat_access_control in
+        let module Ac = Terrat_access_control2 in
         let module Dc = Terrat_change_match3.Dirspace_config in
         CCList.map
           (fun { Ac.R.Deny.change_match = { Dc.dirspace; _ }; policy } ->
@@ -3650,8 +3602,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             >>= fun work_manifest ->
             Logs.info (fun m ->
                 m
-                  "EVALUATOR : %s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s : \
-                   env=%s"
+                  "%s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s : env=%s"
                   state.State.request_id
                   Uuidm.pp
                   work_manifest.Wm.id
@@ -3713,7 +3664,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           maybe_publish_autoapply_running
             state.State.request_id
             client
-            (Event.user state.State.event)
+            (S.Api.User.to_string @@ Event.user state.State.event)
             pull_request
             op
           >>= fun () -> Abb.Future.return (Ok ()))
@@ -3740,7 +3691,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           publish_run_failure
             state.State.request_id
             client
-            (Event.user state.State.event)
+            (S.Api.User.to_string @@ Event.user state.State.event)
             pull_request
             err
           >>= fun () -> Abb.Future.return (Ok ()))
@@ -3946,7 +3897,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                  publish_msg
                    state.State.request_id
                    client
-                   (Event.user state.State.event)
+                   (S.Api.User.to_string @@ Event.user state.State.event)
                    pull_request
                    (Msg.Tf_op_result2
                       {
@@ -3993,7 +3944,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                  publish_msg
                    state.State.request_id
                    client
-                   (Event.user state.State.event)
+                   (S.Api.User.to_string @@ Event.user state.State.event)
                    pull_request
                    (Msg.Tf_op_result
                       {
@@ -4020,7 +3971,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         has_changes
 
     let run_op_work_manifest_plan_iter_fetch ctx state dirspace work_manifest_id =
-      let open Abbs_future_combinators.Infix_result_monad in
       query_plan state.State.request_id (Ctx.storage ctx) work_manifest_id dirspace
   end
 
@@ -4057,7 +4007,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
 
     let account_disabled _ state =
       Prmths.Counter.inc_one Metrics.op_on_account_disabled_total;
-      Logs.info (fun m -> m "EVALUATOR : %s : ACCOUNT_DISABLED" state.State.request_id);
+      Logs.info (fun m -> m "%s : ACCOUNT_DISABLED" state.State.request_id);
       Abb.Future.return (Error (`Noop state))
 
     let test_event_kind ctx state =
@@ -4151,7 +4101,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           >>= fun () ->
           Logs.info (fun m ->
               m
-                "EVALUATOR : %s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s"
+                "%s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s"
                 state.State.request_id
                 Uuidm.pp
                 work_manifest.Wm.id
@@ -4247,7 +4197,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               H.publish_run_failure
                 state.State.request_id
                 client
-                (Event.user state.State.event)
+                (S.Api.User.to_string @@ Event.user state.State.event)
                 pull_request
                 err
               >>= fun () -> Abb.Future.return (Ok ()))
@@ -4287,7 +4237,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                        (Terrat_base_repo_config_v1.Ctx.make
                           ~dest_branch:
                             (S.Api.Ref.to_string (S.Api.Pull_request.base_branch_name pull_request))
-                          ~branch:(S.Api.Ref.to_string (S.Api.Pull_request.branch_name pull_request))
+                          ~branch:
+                            (S.Api.Ref.to_string (S.Api.Pull_request.branch_name pull_request))
                           ())
                      ~index
                      ~file_list:repo_tree
@@ -4298,18 +4249,18 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             publish_msg
               state.State.request_id
               client
-              (Event.user state.State.event)
+              (S.Api.User.to_string @@ Event.user state.State.event)
               pull_request
               (Msg.Repo_config (provenance, repo_config))
             >>= fun () -> Abb.Future.return (Ok state)
         | Error (`Bad_glob_err s) ->
             let open Abb.Future.Infix_monad in
-            Logs.err (fun m -> m "EVALUATOR : %s : BAD_GLOB : %s" state.State.request_id s);
+            Logs.err (fun m -> m "%s : BAD_GLOB : %s" state.State.request_id s);
             Abbs_future_combinators.ignore
               (publish_msg
                  state.State.request_id
                  client
-                 (Event.user state.State.event)
+                 (S.Api.User.to_string @@ Event.user state.State.event)
                  pull_request
                  (Msg.Bad_glob s))
             >>= fun () -> Abb.Future.return (Error `Error)
@@ -4317,7 +4268,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             let open Abb.Future.Infix_monad in
             Logs.err (fun m ->
                 m
-                  "EVALUATOR : %s : DEPENDS_ON_CYCLE : %s"
+                  "%s : DEPENDS_ON_CYCLE : %s"
                   state.State.request_id
                   (CCString.concat
                      " -> "
@@ -4329,7 +4280,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               (publish_msg
                  state.State.request_id
                  client
-                 (Event.user state.State.event)
+                 (S.Api.User.to_string @@ Event.user state.State.event)
                  pull_request
                  (Msg.Depends_on_cycle cycle))
             >>= fun () -> Abb.Future.return (Error `Error)
@@ -4343,7 +4294,12 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       >>= fun client ->
       Dv.pull_request ctx state
       >>= fun pull_request ->
-      publish_msg state.State.request_id client (Event.user state.State.event) pull_request Msg.Help
+      publish_msg
+        state.State.request_id
+        client
+        (S.Api.User.to_string @@ Event.user state.State.event)
+        pull_request
+        Msg.Help
       >>= fun () -> Abb.Future.return (Ok state)
 
     let publish_index ctx state =
@@ -4358,7 +4314,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           publish_msg
             state.State.request_id
             client
-            (Event.user state.State.event)
+            (S.Api.User.to_string @@ Event.user state.State.event)
             pull_request
             (Msg.Index_complete
                ( index.Terrat_vcs_provider2.Index.success,
@@ -4408,7 +4364,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           { account; repo; user; comment = Terrat_comment.Feedback feedback; pull_request_id; _ } ->
           Logs.info (fun m ->
               m
-                "EVALUATOR : %s : FEEDBACK : account=%s : repo=%s : pull_number=%s : user=%s : %s"
+                "%s : FEEDBACK : account=%s : repo=%s : pull_number=%s : user=%s : %s"
                 state.State.request_id
                 (S.Api.Account.to_string account)
                 (S.Api.Repo.to_string repo)
@@ -4424,7 +4380,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Event.Push _
       | Event.Run_scheduled_drift
       | Event.Run_drift _ ->
-          Logs.err (fun m -> m "EVALUATOR : %s : NOT_FEEDBACK_COMMENT" state.State.request_id);
+          Logs.err (fun m -> m "%s : NOT_FEEDBACK_COMMENT" state.State.request_id);
           Abb.Future.return (Ok state)
 
     let complete_work_manifest ctx state =
@@ -4516,7 +4472,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             publish_msg
               state.State.request_id
               client
-              (Event.user state.State.event)
+              (S.Api.User.to_string @@ Event.user state.State.event)
               pull_request
               Msg.Unlock_success
             >>= fun () -> Abb.Future.return (Ok state)
@@ -4526,7 +4482,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             publish_msg
               state.State.request_id
               client
-              (Event.user state.State.event)
+              (S.Api.User.to_string @@ Event.user state.State.event)
               pull_request
               (Msg.Access_control_denied
                  (Access_control_engine.policy_branch access_control, `Unlock match_list))
@@ -4537,7 +4493,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             publish_msg
               state.State.request_id
               client
-              (Event.user state.State.event)
+              (S.Api.User.to_string @@ Event.user state.State.event)
               pull_request
               (Msg.Access_control_denied
                  (Access_control_engine.policy_branch access_control, `Lookup_err))
@@ -4561,7 +4517,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           publish_msg
             state.State.request_id
             client
-            (Event.user state.State.event)
+            (S.Api.User.to_string @@ Event.user state.State.event)
             pull_request
             (Msg.Invalid_unlock_id s)
           >>= fun _ -> Abb.Future.return (Error `Error)
@@ -4592,19 +4548,18 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       >>= fun pull_request ->
       match S.Api.Pull_request.state pull_request with
       | Terrat_pull_request.State.Closed ->
-          Logs.info (fun m -> m "EVALUATOR : %s : NOOP : PR_CLOSED" state.State.request_id);
+          Logs.info (fun m -> m "%s : NOOP : PR_CLOSED" state.State.request_id);
           Abb.Future.return (Error (`Noop state))
       | Terrat_pull_request.State.(Open _ | Merged _) -> Abb.Future.return (Ok state)
 
     let check_non_empty_matches ctx state =
       let open Abbs_future_combinators.Infix_result_monad in
       Dv.access_control_results ctx state `Plan
-      >>= fun { Terrat_access_control.R.pass = working_set_matches; _ } ->
+      >>= fun { Terrat_access_control2.R.pass = working_set_matches; _ } ->
       let trigger_type = Event.trigger_type state.State.event in
       match (working_set_matches, trigger_type) with
       | [], `Auto ->
-          Logs.info (fun m ->
-              m "EVALUATOR : %s : NOOP : AUTOPLAN_NO_MATCHES" state.State.request_id);
+          Logs.info (fun m -> m "%s : NOOP : AUTOPLAN_NO_MATCHES" state.State.request_id);
           Abbs_future_combinators.Infix_result_app.(
             (fun pull_request repo_config -> (pull_request, repo_config))
             <$> Dv.pull_request ctx state
@@ -4622,8 +4577,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             pull_request
           >>= fun () -> Abb.Future.return (Error (`Noop state))
       | [], `Manual ->
-          Logs.info (fun m ->
-              m "EVALUATOR : %s : PLAN_NO_MATCHING_DIRSPACES" state.State.request_id);
+          Logs.info (fun m -> m "%s : PLAN_NO_MATCHING_DIRSPACES" state.State.request_id);
           Dv.pull_request ctx state
           >>= fun pull_request ->
           Dv.client ctx state
@@ -4631,7 +4585,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           publish_msg
             state.State.request_id
             client
-            (Event.user state.State.event)
+            (S.Api.User.to_string @@ Event.user state.State.event)
             pull_request
             Msg.Plan_no_matching_dirspaces
           >>= fun () -> Abb.Future.return (Error (`Noop state))
@@ -4653,7 +4607,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                 (Duration.to_day duration));
           Abb.Future.return (Ok state)
       | `Expired | `Disabled ->
-          Logs.info (fun m -> m "EVALUATOR : %s : ACCOUNT_EXPIRED" state.State.request_id);
+          Logs.info (fun m -> m "%s : ACCOUNT_EXPIRED" state.State.request_id);
           Dv.client ctx state
           >>= fun client ->
           Dv.pull_request ctx state
@@ -4661,7 +4615,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           publish_msg
             state.State.request_id
             client
-            (Event.user state.State.event)
+            (S.Api.User.to_string @@ Event.user state.State.event)
             pull_request
             Msg.Account_expired
           >>= fun () -> Abb.Future.return (Error (`Noop state))
@@ -4684,7 +4638,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           publish_msg
             state.State.request_id
             client
-            (Event.user state.State.event)
+            (S.Api.User.to_string @@ Event.user state.State.event)
             pull_request
             (Msg.Access_control_denied
                (Access_control_engine.policy_branch access_control, `Ci_config_update match_list))
@@ -4699,7 +4653,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           publish_msg
             state.State.request_id
             client
-            (Event.user state.State.event)
+            (S.Api.User.to_string @@ Event.user state.State.event)
             pull_request
             (Msg.Access_control_denied
                (Access_control_engine.policy_branch access_control, `Lookup_err))
@@ -4723,7 +4677,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           publish_msg
             state.State.request_id
             client
-            (Event.user state.State.event)
+            (S.Api.User.to_string @@ Event.user state.State.event)
             pull_request
             (Msg.Access_control_denied
                (Access_control_engine.policy_branch access_control, `Files (fname, match_list)))
@@ -4738,7 +4692,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           publish_msg
             state.State.request_id
             client
-            (Event.user state.State.event)
+            (S.Api.User.to_string @@ Event.user state.State.event)
             pull_request
             (Msg.Access_control_denied
                (Access_control_engine.policy_branch access_control, `Lookup_err))
@@ -4762,7 +4716,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           publish_msg
             state.State.request_id
             client
-            (Event.user state.State.event)
+            (S.Api.User.to_string @@ Event.user state.State.event)
             pull_request
             (Msg.Access_control_denied
                ( Access_control_engine.policy_branch access_control,
@@ -4778,7 +4732,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           publish_msg
             state.State.request_id
             client
-            (Event.user state.State.event)
+            (S.Api.User.to_string @@ Event.user state.State.event)
             pull_request
             (Msg.Access_control_denied
                (Access_control_engine.policy_branch access_control, `Lookup_err))
@@ -4881,7 +4835,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           | `Auto ->
               Logs.info (fun m ->
                   m
-                    "EVALUATOR : %s : DEST_BRANCH_NOT_VALID : branch=%s"
+                    "%s : DEST_BRANCH_NOT_VALID : branch=%s"
                     state.State.request_id
                     (S.Api.Ref.to_string base_branch_name));
               Abb.Future.return (Error (`Noop state))
@@ -4889,13 +4843,13 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               let open Abbs_future_combinators.Infix_result_monad in
               Logs.info (fun m ->
                   m
-                    "EVALUATOR : %s : DEST_BRANCH_NOT_VALID_BRANCH_EXPLICIT : branch=%s"
+                    "%s : DEST_BRANCH_NOT_VALID_BRANCH_EXPLICIT : branch=%s"
                     state.State.request_id
                     (S.Api.Ref.to_string base_branch_name));
               publish_msg
                 state.State.request_id
                 client
-                (Event.user state.State.event)
+                (S.Api.User.to_string @@ Event.user state.State.event)
                 pull_request
                 (Msg.Dest_branch_no_match pull_request)
               >>= fun () -> Abb.Future.return (Error `Error))
@@ -4904,7 +4858,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           | `Auto ->
               Logs.info (fun m ->
                   m
-                    "EVALUATOR : %s : SOURCE_BRANCH_NOT_VALID : branch=%s"
+                    "%s : SOURCE_BRANCH_NOT_VALID : branch=%s"
                     state.State.request_id
                     (S.Api.Ref.to_string branch_name));
               Abb.Future.return (Error (`Noop state))
@@ -4912,13 +4866,13 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               let open Abbs_future_combinators.Infix_result_monad in
               Logs.info (fun m ->
                   m
-                    "EVALUATOR : %s : SOURCE_BRANCH_NOT_VALID_BRANCH_EXPLICIT : branch=%s"
+                    "%s : SOURCE_BRANCH_NOT_VALID_BRANCH_EXPLICIT : branch=%s"
                     state.State.request_id
                     (S.Api.Ref.to_string branch_name));
               publish_msg
                 state.State.request_id
                 client
-                (Event.user state.State.event)
+                (S.Api.User.to_string @@ Event.user state.State.event)
                 pull_request
                 (Msg.Dest_branch_no_match pull_request)
               >>= fun () -> Abb.Future.return (Error (`Noop state)))
@@ -4930,7 +4884,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       let open Abb.Future.Infix_monad in
       Dv.tf_operation_access_control_evaluation ctx state `Plan
       >>= function
-      | Ok { Terrat_access_control.R.pass = []; deny = _ :: _ as deny }
+      | Ok { Terrat_access_control2.R.pass = []; deny = _ :: _ as deny }
         when not (Access_control_engine.plan_require_all_dirspace_access access_control) ->
           let open Abbs_future_combinators.Infix_result_monad in
           Abbs_future_combinators.Infix_result_app.(
@@ -4941,16 +4895,16 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           publish_msg
             state.State.request_id
             client
-            (Event.user state.State.event)
+            (S.Api.User.to_string @@ Event.user state.State.event)
             pull_request
             (Msg.Access_control_denied
                (Access_control_engine.policy_branch access_control, `All_dirspaces deny))
           >>= fun () -> Abb.Future.return (Error (`Noop state))
-      | Ok { Terrat_access_control.R.pass; deny }
+      | Ok { Terrat_access_control2.R.pass; deny }
         when CCList.is_empty deny
              || not (Access_control_engine.plan_require_all_dirspace_access access_control) ->
           Abb.Future.return (Ok state)
-      | Ok { Terrat_access_control.R.deny; _ } ->
+      | Ok { Terrat_access_control2.R.deny; _ } ->
           let open Abbs_future_combinators.Infix_result_monad in
           Abbs_future_combinators.Infix_result_app.(
             (fun client pull_request -> (client, pull_request))
@@ -4960,7 +4914,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           publish_msg
             state.State.request_id
             client
-            (Event.user state.State.event)
+            (S.Api.User.to_string @@ Event.user state.State.event)
             pull_request
             (Msg.Access_control_denied
                (Access_control_engine.policy_branch access_control, `Dirspaces deny))
@@ -4975,7 +4929,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           publish_msg
             state.State.request_id
             client
-            (Event.user state.State.event)
+            (S.Api.User.to_string @@ Event.user state.State.event)
             pull_request
             (Msg.Access_control_denied
                (Access_control_engine.policy_branch access_control, `Lookup_err))
@@ -4989,13 +4943,13 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       >>= fun pull_request ->
       match S.Api.Pull_request.state pull_request with
       | Terrat_pull_request.State.(Open Open_status.Merge_conflict) ->
-          Logs.info (fun m -> m "EVALUATOR : %s : MERGE_CONFLICT" state.State.request_id);
+          Logs.info (fun m -> m "%s : MERGE_CONFLICT" state.State.request_id);
           Dv.client ctx state
           >>= fun client ->
           publish_msg
             state.State.request_id
             client
-            (Event.user state.State.event)
+            (S.Api.User.to_string @@ Event.user state.State.event)
             pull_request
             Msg.Pull_request_not_mergeable
           >>= fun () -> Abb.Future.return (Error (`Noop state))
@@ -5009,7 +4963,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       Dv.pull_request ctx state
       >>= fun pull_request ->
       Dv.access_control_results ctx state op
-      >>= fun { Terrat_access_control.R.pass = passed_dirspaces; _ } ->
+      >>= fun { Terrat_access_control2.R.pass = passed_dirspaces; _ } ->
       let dirspaces =
         CCList.map
           (fun { Terrat_change_match3.Dirspace_config.dirspace; _ } -> dirspace)
@@ -5034,7 +4988,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           publish_msg
             state.State.request_id
             client
-            (Event.user state.State.event)
+            (S.Api.User.to_string @@ Event.user state.State.event)
             pull_request
             (Msg.Conflicting_work_manifests wms)
           >>= fun () -> Abb.Future.return (Error (`Noop state))
@@ -5046,7 +5000,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           publish_msg
             state.State.request_id
             client
-            (Event.user state.State.event)
+            (S.Api.User.to_string @@ Event.user state.State.event)
             pull_request
             (Msg.Maybe_stale_work_manifests wms)
           >>= fun () -> Abb.Future.return (Ok state)
@@ -5110,33 +5064,33 @@ module Make (S : Terrat_vcs_provider2.S) = struct
              passed, then we cannot apply this change UNLESS we are in an
              "apply-force" because then access control result is important
              because we are bypassing the apply requirements. *)
-          Logs.info (fun m -> m "EVALUATOR : %s : PR_NOT_APPLIABLE" state.State.request_id);
+          Logs.info (fun m -> m "%s : PR_NOT_APPLIABLE" state.State.request_id);
           publish_msg
             state.State.request_id
             client
-            (Event.user state.State.event)
+            (S.Api.User.to_string @@ Event.user state.State.event)
             pull_request
             (Msg.Pull_request_not_appliable (pull_request, apply_requirements))
           >>= fun () -> Abb.Future.return (Error (`Noop state))
-      | { Terrat_access_control.R.pass = []; deny = _ :: _ as deny }
+      | { Terrat_access_control2.R.pass = []; deny = _ :: _ as deny }
         when not (Access_control_engine.apply_require_all_dirspace_access access_control) ->
           publish_msg
             state.State.request_id
             client
-            (Event.user state.State.event)
+            (S.Api.User.to_string @@ Event.user state.State.event)
             pull_request
             (Msg.Access_control_denied
                (Access_control_engine.policy_branch access_control, `All_dirspaces deny))
           >>= fun () -> Abb.Future.return (Error (`Noop state))
-      | { Terrat_access_control.R.pass; deny }
+      | { Terrat_access_control2.R.pass; deny }
         when CCList.is_empty deny
              || not (Access_control_engine.apply_require_all_dirspace_access access_control) ->
           Abb.Future.return (Ok state)
-      | { Terrat_access_control.R.deny; _ } ->
+      | { Terrat_access_control2.R.deny; _ } ->
           publish_msg
             state.State.request_id
             client
-            (Event.user state.State.event)
+            (S.Api.User.to_string @@ Event.user state.State.event)
             pull_request
             (Msg.Access_control_denied
                (Access_control_engine.policy_branch access_control, `Dirspaces deny))
@@ -5145,16 +5099,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     let check_non_empty_matches_apply op ctx state =
       let open Abbs_future_combinators.Infix_result_monad in
       Dv.access_control_results ctx state op
-      >>= fun { Terrat_access_control.R.pass = working_set_matches; _ } ->
+      >>= fun { Terrat_access_control2.R.pass = working_set_matches; _ } ->
       let trigger_type = Event.trigger_type state.State.event in
       match (working_set_matches, trigger_type) with
       | [], `Auto ->
-          Logs.info (fun m ->
-              m "EVALUATOR : %s : NOOP : AUTOAPPLY_NO_MATCHES" state.State.request_id);
+          Logs.info (fun m -> m "%s : NOOP : AUTOAPPLY_NO_MATCHES" state.State.request_id);
           Abb.Future.return (Error (`Noop state))
       | [], _ ->
-          Logs.info (fun m ->
-              m "EVALUATOR : %s : NOOP : APPLY_NO_MATCHING_DIRSPACES" state.State.request_id);
+          Logs.info (fun m -> m "%s : NOOP : APPLY_NO_MATCHING_DIRSPACES" state.State.request_id);
           Dv.client ctx state
           >>= fun client ->
           Dv.pull_request ctx state
@@ -5162,7 +5114,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           publish_msg
             state.State.request_id
             client
-            (Event.user state.State.event)
+            (S.Api.User.to_string @@ Event.user state.State.event)
             pull_request
             Msg.Apply_no_matching_dirspaces
           >>= fun () -> Abb.Future.return (Error (`Noop state))
@@ -5192,7 +5144,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           publish_msg
             state.State.request_id
             client
-            (Event.user state.State.event)
+            (S.Api.User.to_string @@ Event.user state.State.event)
             pull_request
             (Msg.Dirspaces_owned_by_other_pull_request owned_dirspaces)
           >>= fun () -> Abb.Future.return (Error (`Noop state))
@@ -5202,7 +5154,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       Dv.pull_request ctx state
       >>= fun pull_request ->
       Dv.access_control_results ctx state op
-      >>= fun { Terrat_access_control.R.pass = working_set_matches; _ } ->
+      >>= fun { Terrat_access_control2.R.pass = working_set_matches; _ } ->
       query_dirspaces_without_valid_plans
         state.State.request_id
         (Ctx.storage ctx)
@@ -5218,7 +5170,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           publish_msg
             state.State.request_id
             client
-            (Event.user state.State.event)
+            (S.Api.User.to_string @@ Event.user state.State.event)
             pull_request
             (Msg.Missing_plans dirspaces)
           >>= fun () -> Abb.Future.return (Error (`Noop state))
@@ -5250,7 +5202,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           | Some work_manifest ->
               Logs.info (fun m ->
                   m
-                    "EVALUATOR : %s : ALL_DIRSPACES_APPLIED : id=%a"
+                    "%s : ALL_DIRSPACES_APPLIED : id=%a"
                     state.State.request_id
                     Uuidm.pp
                     work_manifest_id);
@@ -5304,7 +5256,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           let module Dsc = Terrat_change_match3.Dirspace_config in
           Logs.info (fun m ->
               m
-                "EVALUATOR : %s : UNAPPLIED_DIRSPACES : id=%a : dirspaces=%s"
+                "%s : UNAPPLIED_DIRSPACES : id=%a : dirspaces=%s"
                 state.State.request_id
                 Uuidm.pp
                 work_manifest_id
@@ -5333,8 +5285,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         (fun (name, { D.Schedule.tag_query; reconcile; schedule; window }) ->
           Logs.info (fun m ->
               m
-                "EVALUATOR : %s : DRIFT : name=%s : enabled=%s : repo=%s : schedule=%s : \
-                 reconcile=%s : tag_query=%s : window=%s"
+                "%s : DRIFT : name=%s : enabled=%s : repo=%s : schedule=%s : reconcile=%s : \
+                 tag_query=%s : window=%s"
                 state.State.request_id
                 name
                 (Bool.to_string enabled)
@@ -5368,8 +5320,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               let f (name, account, repo, reconcile, tag_query) =
                 Logs.info (fun m ->
                     m
-                      "EVALUATOR : %s : DRIFT : name=%s : account=%s : repo=%s : reconcile=%s : \
-                       tag_query=%s"
+                      "%s : DRIFT : name=%s : account=%s : repo=%s : reconcile=%s : tag_query=%s"
                       state.State.request_id
                       name
                       (S.Api.Account.to_string account)
@@ -5482,7 +5433,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           >>= fun () ->
           Logs.info (fun m ->
               m
-                "EVALUATOR : %s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s"
+                "%s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s"
                 state.State.request_id
                 Uuidm.pp
                 work_manifest.Wm.id
@@ -5547,7 +5498,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               H.publish_run_failure
                 state.State.request_id
                 client
-                (Event.user state.State.event)
+                (S.Api.User.to_string @@ Event.user state.State.event)
                 pull_request
                 err
               >>= fun () -> Abb.Future.return (Ok ()))
@@ -5646,15 +5597,16 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                 publish_msg
                   state.State.request_id
                   client
-                  (Event.user state.State.event)
+                  (S.Api.User.to_string @@ Event.user state.State.event)
                   pull_request
                   msg)
           in
           match result with
           | Wmr.Work_manifest_build_config_result
               (Bc.Work_manifest_build_config_result_success { Bcs.config }) -> (
+              let module V1 = Terrat_base_repo_config_v1 in
               let open Abb.Future.Infix_monad in
-              Abb.Future.return (Terrat_base_repo_config_v1.of_version_1_json config)
+              Abb.Future.return (V1.of_version_1_json config)
               >>= function
               | Ok _ ->
                   let open Abbs_future_combinators.Infix_result_monad in
@@ -5841,7 +5793,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         | Error (`Checkpoint state) ->
             Abb.Future.return (`Yield { state with State.output = Some State.Io.O.Checkpoint })
         | Error `Error ->
-            Logs.info (fun m -> m "EVALUATOR : %s" state.State.request_id);
+            Logs.info (fun m -> m "%s" state.State.request_id);
             H.maybe_publish_msg ctx state Msg.Unexpected_temporary_err
             >>= fun () -> Abb.Future.return (`Failure `Error)
         | Error (`Bad_glob_err s) ->
@@ -5853,7 +5805,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         | Error (#Terrat_base_repo_config_v1.of_version_1_err as err) ->
             Logs.info (fun m ->
                 m
-                  "EVALUATOR : %s : %a"
+                  "%s : %a"
                   state.State.request_id
                   Terrat_base_repo_config_v1.pp_of_version_1_err
                   err);
@@ -5868,21 +5820,20 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         | Error (`Premium_feature_err feature as err) ->
             Logs.info (fun m ->
                 m
-                  "EVALUATOR : %s : %a"
+                  "%s : %a"
                   state.State.request_id
                   Terrat_vcs_provider2.pp_fetch_repo_config_with_provenance_err
                   err);
             H.maybe_publish_msg ctx state (Msg.Premium_feature_err feature)
             >>= fun () -> Abb.Future.return (`Failure `Error)
         | Error (`Config_merge_err details as err) ->
-            Logs.info (fun m ->
-                m "EVALUATOR : %s : %a" state.State.request_id Repo_config.pp_fetch_err err);
+            Logs.info (fun m -> m "%s : %a" state.State.request_id Repo_config.pp_fetch_err err);
             H.maybe_publish_msg ctx state (Msg.Repo_config_merge_err details)
             >>= fun () -> Abb.Future.return (`Failure `Error)
         | Error (#Terrat_vcs_provider2.fetch_repo_config_with_provenance_err as err) ->
             Logs.info (fun m ->
                 m
-                  "EVALUATOR : %s : %a"
+                  "%s : %a"
                   state.State.request_id
                   Terrat_vcs_provider2.pp_fetch_repo_config_with_provenance_err
                   err);
@@ -5895,11 +5846,10 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             (* A failure where we know that any communication to the user that
                is necessary has been done.  So we just want to log that the
                failure happened. *)
-            Logs.info (fun m -> m "EVALUATOR : %s : SILENT_FAILURE" state.State.request_id);
+            Logs.info (fun m -> m "%s : SILENT_FAILURE" state.State.request_id);
             Abb.Future.return (`Failure `Error)
         | Error (#Pgsql_io.err as err) ->
-            Logs.err (fun m ->
-                m "EVALUATOR : %s : ERROR : %a" state.State.request_id Pgsql_io.pp_err err);
+            Logs.err (fun m -> m "%s : ERROR : %a" state.State.request_id Pgsql_io.pp_err err);
             Abb.Future.return (`Failure `Error))
 
   (* Flow start *)
@@ -6299,7 +6249,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         (fun () ->
           Logs.info (fun m ->
               m
-                "EVALUATOR : %s : FLOW : RESUME_START : id=%s : new_request_id=%s"
+                "%s : FLOW : RESUME_START : id=%s : new_request_id=%s"
                 (Ctx.request_id ctx)
                 state.State.request_id
                 request_id');
@@ -6307,7 +6257,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         ~finally:(fun () ->
           Logs.info (fun m ->
               m
-                "EVALUATOR : %s : FLOW : RESUME_END : id=%s : new_request_id=%s"
+                "%s : FLOW : RESUME_END : id=%s : new_request_id=%s"
                 (Ctx.request_id ctx)
                 state.State.request_id
                 request_id');
@@ -6329,7 +6279,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                 ~f:(fun state ->
                   let request_id = Ouuid.to_string (Ouuid.v4 ()) in
                   Logs.info (fun m ->
-                      m "EVALUATOR : %s : CLONE : request_id=%s" state.State.request_id request_id);
+                      m "%s : CLONE : request_id=%s" state.State.request_id request_id);
                   let state = { state with State.request_id; input = None; output = None } in
                   let resume' = Flow.Yield.set_state state resume' in
                   exec_flow ctx resume')
@@ -6438,8 +6388,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                request_id;
                _;
               } ->
-                  Logs.info (fun m ->
-                      m "EVALUATOR : %s : RESUME_CHECKPOINTED_WITH_WORK_MANIFEST_ID" request_id);
+                  Logs.info (fun m -> m "%s : RESUME_CHECKPOINTED_WITH_WORK_MANIFEST_ID" request_id);
                   resume_raw ctx (`Work_manifest work_manifest_id) (fun state ->
                       { state with State.input = Some State.Io.I.Checkpointed; output = None })
               | {
@@ -6449,7 +6398,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                _;
               } ->
                   Logs.info (fun m ->
-                      m "EVALUATOR : %s : RESUME_CHECKPOINTED_WITHOUT_WORK_MANIFEST_ID" request_id);
+                      m "%s : RESUME_CHECKPOINTED_WITHOUT_WORK_MANIFEST_ID" request_id);
                   let resume' = Flow.Yield.set_state state resume' in
                   resume_raw ctx (`Resume resume') (fun state ->
                       { state with State.input = Some State.Io.I.Checkpointed; output = None })
@@ -6483,12 +6432,12 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         (function
           | `Det () -> Abb.Future.return ()
           | `Aborted ->
-              Logs.info (fun m -> m "EVALUATOR : %s : RUNNER : ABORTED" (Ctx.request_id ctx));
+              Logs.info (fun m -> m "%s : RUNNER : ABORTED" (Ctx.request_id ctx));
               Abb.Future.return ()
           | `Exn (exn, bt_opt) ->
               Logs.err (fun m ->
                   m
-                    "EVALUATOR : %s : RUNNER : %s : %s"
+                    "%s : RUNNER : %s : %s"
                     (Ctx.request_id ctx)
                     (Printexc.to_string exn)
                     (CCOption.map_or ~default:"" Printexc.raw_backtrace_to_string bt_opt));
@@ -6497,12 +6446,10 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         >>= function
         | Ok () -> Abb.Future.return ()
         | Error (#Pgsql_io.err as err) ->
-            Logs.err (fun m ->
-                m "EVALUATOR : %s : ERROR : %a" (Ctx.request_id ctx) Pgsql_io.pp_err err);
+            Logs.err (fun m -> m "%s : ERROR : %a" (Ctx.request_id ctx) Pgsql_io.pp_err err);
             Abb.Future.return ()
         | Error (#Pgsql_pool.err as err) ->
-            Logs.err (fun m ->
-                m "EVALUATOR : %s : ERROR : %a" (Ctx.request_id ctx) Pgsql_pool.pp_err err);
+            Logs.err (fun m -> m "%s : ERROR : %a" (Ctx.request_id ctx) Pgsql_pool.pp_err err);
             Abb.Future.return ()
         | Error `Error -> Abb.Future.return ())
   end
@@ -6512,8 +6459,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     | Event.Pull_request_open { account; user; repo; pull_request_id } ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : EVENT : PULL_REQUEST_OPEN : account=%s : user=%s : repo=%s : \
-               pull_number=%s"
+              "%s : EVENT : PULL_REQUEST_OPEN : account=%s : user=%s : repo=%s : pull_number=%s"
               state.State.request_id
               (S.Api.Account.to_string account)
               (S.Api.User.to_string user)
@@ -6522,8 +6468,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     | Event.Pull_request_close { account; user; repo; pull_request_id } ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : EVENT : PULL_REQUEST_CLOSE : account=%s : user=%s : repo=%s : \
-               pull_number=%s"
+              "%s : EVENT : PULL_REQUEST_CLOSE : account=%s : user=%s : repo=%s : pull_number=%s"
               state.State.request_id
               (S.Api.Account.to_string account)
               (S.Api.User.to_string user)
@@ -6532,8 +6477,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     | Event.Pull_request_sync { account; user; repo; pull_request_id } ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : EVENT : PULL_REQUEST_SYNC : account=%s : user=%s : repo=%s : \
-               pull_number=%s"
+              "%s : EVENT : PULL_REQUEST_SYNC : account=%s : user=%s : repo=%s : pull_number=%s"
               state.State.request_id
               (S.Api.Account.to_string account)
               (S.Api.User.to_string user)
@@ -6542,8 +6486,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     | Event.Pull_request_ready_for_review { account; user; repo; pull_request_id } ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : EVENT : PULL_REQUEST_READY_FOR_REVIEW : account=%s : user=%s : \
-               repo=%s : pull_number=%s"
+              "%s : EVENT : PULL_REQUEST_READY_FOR_REVIEW : account=%s : user=%s : repo=%s : \
+               pull_number=%s"
               state.State.request_id
               (S.Api.Account.to_string account)
               (S.Api.User.to_string user)
@@ -6552,8 +6496,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     | Event.Pull_request_comment { account; comment; repo; pull_request_id; comment_id; user } ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : EVENT : PULL_REQUEST_COMMENT : account=%s : user=%s : repo=%s : \
-               pull_number=%s : comment_id=%d : comment=%s "
+              "%s : EVENT : PULL_REQUEST_COMMENT : account=%s : user=%s : repo=%s : pull_number=%s \
+               : comment_id=%d : comment=%s "
               state.State.request_id
               (S.Api.Account.to_string account)
               (S.Api.User.to_string user)
@@ -6564,14 +6508,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     | Event.Push { account; user; repo; branch } ->
         Logs.info (fun m ->
             m
-              "EVALUATOR : %s : EVENT : PUSH : account=%s : user=%s : repo=%s : branch=%s"
+              "%s : EVENT : PUSH : account=%s : user=%s : repo=%s : branch=%s"
               state.State.request_id
               (S.Api.Account.to_string account)
               (S.Api.User.to_string user)
               (S.Api.Repo.to_string repo)
               (S.Api.Ref.to_string branch))
     | Event.Run_scheduled_drift ->
-        Logs.info (fun m -> m "EVALUATOR : %s : EVENT : RUN_SCHEDULED_DRIFT" state.State.request_id)
+        Logs.info (fun m -> m "%s : EVENT : RUN_SCHEDULED_DRIFT" state.State.request_id)
     | Event.Run_drift _ -> assert false
 
   let run_event ctx event =
@@ -6579,7 +6523,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     Abb.Future.fork
       (Abbs_future_combinators.with_finally
          (fun () ->
-           Logs.info (fun m -> m "EVALUATOR : %s : FLOW : START" (Ctx.request_id ctx));
+           Logs.info (fun m -> m "%s : FLOW : START" (Ctx.request_id ctx));
            let state =
              {
                State.request_id = Ctx.request_id ctx;
@@ -6593,7 +6537,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
            log_event state;
            Runner.resume_raw ctx (`Resume (Flow.yield_of_state state)) CCFun.id)
          ~finally:(fun () ->
-           Logs.info (fun m -> m "EVALUATOR : %s : FLOW : END" (Ctx.request_id ctx));
+           Logs.info (fun m -> m "%s : FLOW : END" (Ctx.request_id ctx));
            Abbs_future_combinators.ignore (Abb.Future.fork (Runner.run ctx))))
     >>= fun _ -> Abb.Future.return ()
 
@@ -6602,12 +6546,12 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (function
         | `Det r -> Abb.Future.return r
         | `Aborted ->
-            Logs.err (fun m -> m "EVALUATOR : %s : RUNNER : ABORTED" (Ctx.request_id ctx));
+            Logs.err (fun m -> m "%s : RUNNER : ABORTED" (Ctx.request_id ctx));
             Abb.Future.return (Error `Error)
         | `Exn (exn, bt_opt) ->
             Logs.err (fun m ->
                 m
-                  "EVALUATOR : %s : RUNNER : %s : %s"
+                  "%s : RUNNER : %s : %s"
                   (Ctx.request_id ctx)
                   (Printexc.to_string exn)
                   (CCOption.map_or ~default:"" Printexc.raw_backtrace_to_string bt_opt));
@@ -6621,7 +6565,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
            | Error (#Pgsql_pool.err as err) ->
                Logs.err (fun m ->
                    m
-                     "EVALUATOR : %s : work_manifest_id=%a : %a"
+                     "%s : work_manifest_id=%a : %a"
                      (Ctx.request_id ctx)
                      Uuidm.pp
                      work_manifest_id
@@ -6631,7 +6575,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
            | Error (#Pgsql_io.err as err) ->
                Logs.err (fun m ->
                    m
-                     "EVALUATOR : %s : work_manifest_id=%a : %a"
+                     "%s : work_manifest_id=%a : %a"
                      (Ctx.request_id ctx)
                      Uuidm.pp
                      work_manifest_id
@@ -6641,7 +6585,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
            | Error (#Flow.Yield.of_string_err as err) ->
                Logs.err (fun m ->
                    m
-                     "EVALUATOR : %s : work_manifest_id=%a : %a"
+                     "%s : work_manifest_id=%a : %a"
                      (Ctx.request_id ctx)
                      Uuidm.pp
                      work_manifest_id
@@ -6651,7 +6595,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
            | Error `Error ->
                Logs.err (fun m ->
                    m
-                     "EVALUATOR : %s : work_manifest_id=%a : ERROR"
+                     "%s : work_manifest_id=%a : ERROR"
                      (Ctx.request_id ctx)
                      Uuidm.pp
                      work_manifest_id);
@@ -6721,7 +6665,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     Abb.Future.fork
       (resume_work ctx work_manifest_id (fun state ->
            Logs.info (fun m ->
-               m "EVALUATOR : %s : INITIATE : state=%s" (Ctx.request_id ctx) state.State.request_id);
+               m "%s : INITIATE : state=%s" (Ctx.request_id ctx) state.State.request_id);
            {
              state with
              State.input = Some (State.Io.I.Work_manifest_initiate { encryption_key; initiate; p });
@@ -6737,7 +6681,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     Abb.Future.fork
       (resume_work ctx work_manifest_id (fun state ->
            Logs.info (fun m ->
-               m "EVALUATOR : %s : RESULT : state=%s" (Ctx.request_id ctx) state.State.request_id);
+               m "%s : RESULT : state=%s" (Ctx.request_id ctx) state.State.request_id);
            { state with State.input = Some (State.Io.I.Work_manifest_result { result; p }) }))
     >>= fun fut ->
     (first fut (Abb.Future.Promise.future p)
@@ -6753,10 +6697,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     Abb.Future.fork
       (resume_work ctx work_manifest_id (fun state ->
            Logs.info (fun m ->
-               m
-                 "EVALUATOR : %s : PLAN_STORE : state=%s"
-                 (Ctx.request_id ctx)
-                 state.State.request_id);
+               m "%s : PLAN_STORE : state=%s" (Ctx.request_id ctx) state.State.request_id);
            {
              state with
              State.input =
@@ -6773,10 +6714,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     Abb.Future.fork
       (resume_work ctx work_manifest_id (fun state ->
            Logs.info (fun m ->
-               m
-                 "EVALUATOR : %s : PLAN_FETCH : state=%s"
-                 (Ctx.request_id ctx)
-                 state.State.request_id);
+               m "%s : PLAN_FETCH : state=%s" (Ctx.request_id ctx) state.State.request_id);
            { state with State.input = Some (State.Io.I.Plan_fetch { dirspace; p }) }))
     >>= fun fut ->
     (first fut (Abb.Future.Promise.future p)
@@ -6789,10 +6727,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     Abb.Future.fork
       (resume_work ctx work_manifest_id (fun state ->
            Logs.info (fun m ->
-               m
-                 "EVALUATOR : %s : WORK_MANIFEST_FAILURE : state=%s"
-                 (Ctx.request_id ctx)
-                 state.State.request_id);
+               m "%s : WORK_MANIFEST_FAILURE : state=%s" (Ctx.request_id ctx) state.State.request_id);
            { state with State.input = Some (State.Io.I.Work_manifest_failure { p }) }))
     >>= fun fut ->
     (first fut (Abb.Future.Promise.future p)
@@ -6800,24 +6735,23 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       :> (unit, [> `Error ]) result Abb.Future.t)
 
   let run_scheduled_drift ctx =
-    Logs.info (fun m -> m "EVALUATOR : %s : SCHEDULED_DRIFT" (Ctx.request_id ctx));
+    Logs.info (fun m -> m "%s : SCHEDULED_DRIFT" (Ctx.request_id ctx));
     Abbs_future_combinators.to_result (run_event ctx Event.Run_scheduled_drift)
 
   let run_plan_cleanup ctx =
     let open Abb.Future.Infix_monad in
-    Logs.info (fun m -> m "EVALUATOR : %s : PLAN_CLEANUP" (Ctx.request_id ctx));
+    Logs.info (fun m -> m "%s : PLAN_CLEANUP" (Ctx.request_id ctx));
     Pgsql_pool.with_conn (Ctx.storage ctx) ~f:(fun db -> cleanup_plans (Ctx.request_id ctx) db)
     >>= function
     | Ok () -> Abb.Future.return (Ok ())
     | Error `Error -> Abb.Future.return (Error `Error)
     | Error (#Pgsql_pool.err as err) ->
-        Logs.err (fun m ->
-            m "EVALUATOR : %s : PLAN_CLEANUP : %a" (Ctx.request_id ctx) Pgsql_pool.pp_err err);
+        Logs.err (fun m -> m "%s : PLAN_CLEANUP : %a" (Ctx.request_id ctx) Pgsql_pool.pp_err err);
         Abb.Future.return (Error `Error)
 
   let run_flow_state_cleanup ctx =
     let open Abb.Future.Infix_monad in
-    Logs.info (fun m -> m "EVALUATOR : %s : FLOW_STATE_CLEANUP" (Ctx.request_id ctx));
+    Logs.info (fun m -> m "%s : FLOW_STATE_CLEANUP" (Ctx.request_id ctx));
     Pgsql_pool.with_conn (Ctx.storage ctx) ~f:(fun db ->
         cleanup_flow_states (Ctx.request_id ctx) db)
     >>= function
@@ -6825,12 +6759,12 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     | Error `Error -> Abb.Future.return (Error `Error)
     | Error (#Pgsql_pool.err as err) ->
         Logs.err (fun m ->
-            m "EVALUATOR : %s : FLOW_STATE_CLEANUP : %a" (Ctx.request_id ctx) Pgsql_pool.pp_err err);
+            m "%s : FLOW_STATE_CLEANUP : %a" (Ctx.request_id ctx) Pgsql_pool.pp_err err);
         Abb.Future.return (Error `Error)
 
   let run_repo_config_cleanup ctx =
     let open Abb.Future.Infix_monad in
-    Logs.info (fun m -> m "EVALUATOR : %s : REPO_CONFIG_CLEANUP" (Ctx.request_id ctx));
+    Logs.info (fun m -> m "%s : REPO_CONFIG_CLEANUP" (Ctx.request_id ctx));
     Pgsql_pool.with_conn (Ctx.storage ctx) ~f:(fun db ->
         cleanup_repo_configs (Ctx.request_id ctx) db)
     >>= function
@@ -6838,6 +6772,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     | Error `Error -> Abb.Future.return (Error `Error)
     | Error (#Pgsql_pool.err as err) ->
         Logs.err (fun m ->
-            m "EVALUATOR : %s : REPO_CONFIG_CLEANUP : %a" (Ctx.request_id ctx) Pgsql_pool.pp_err err);
+            m "%s : REPO_CONFIG_CLEANUP : %a" (Ctx.request_id ctx) Pgsql_pool.pp_err err);
         Abb.Future.return (Error `Error)
 end

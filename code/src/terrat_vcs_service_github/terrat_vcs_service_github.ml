@@ -1,4 +1,11 @@
-module Make (Provider : Terrat_vcs_provider2_github.S) = struct
+module type ROUTES = sig
+  val routes :
+    Terrat_config.t ->
+    Terrat_storage.t ->
+    (Brtl_rtng.Method.t * Brtl_rtng.Handler.t Brtl_rtng.Route.Route.t) list
+end
+
+module Make (Provider : Terrat_vcs_provider2_github.S) (Routes : ROUTES) = struct
   module Evaluator = Terrat_vcs_event_evaluator.Make (Provider)
   module Events = Terrat_vcs_service_github_ep_events3.Make (Provider)
   module Work_manifest = Terrat_vcs_service_github_ep_work_manifest.Make (Provider)
@@ -50,22 +57,26 @@ module Make (Provider : Terrat_vcs_provider2_github.S) = struct
     end
 
     let routes config storage =
-      Brtl_rtng.Route.
-        [
-          (* Work manifests *)
-          (`POST, Rt.github_work_manifest_plan () --> Work_manifest.Plans.post config storage);
-          (`GET, Rt.github_get_work_manifest_plan () --> Work_manifest.Plans.get config storage);
-          (`PUT, Rt.github_work_manifest_results () --> Work_manifest.Results.put config storage);
-          (`POST, Rt.github_work_manifest_initiate () --> Work_manifest.Initiate.post config storage);
-          ( `POST,
-            Rt.github_work_manifest_access_token ()
-            --> Work_manifest.Access_token.post config storage );
-          (* Github *)
-          (`POST, Rt.github_events () --> Events.post config storage);
-          (`GET, Rt.github_callback () --> Terrat_vcs_service_github_ep_callback.get config storage);
-          ( `GET,
-            Rt.github_client_id () --> Terrat_vcs_service_github_ep_client_id.get config storage );
-        ]
+      Routes.routes config storage
+      @ Brtl_rtng.Route.
+          [
+            (* Work manifests *)
+            (`POST, Rt.github_work_manifest_plan () --> Work_manifest.Plans.post config storage);
+            (`GET, Rt.github_get_work_manifest_plan () --> Work_manifest.Plans.get config storage);
+            (`PUT, Rt.github_work_manifest_results () --> Work_manifest.Results.put config storage);
+            ( `POST,
+              Rt.github_work_manifest_initiate () --> Work_manifest.Initiate.post config storage );
+            ( `POST,
+              Rt.github_work_manifest_access_token ()
+              --> Work_manifest.Access_token.post config storage );
+            (* Github *)
+            (`POST, Rt.github_events () --> Events.post config storage);
+            ( `GET,
+              Rt.github_callback () --> Terrat_vcs_service_github_ep_callback.get config storage );
+            ( `GET,
+              Rt.github_client_id () --> Terrat_vcs_service_github_ep_client_id.get config storage
+            );
+          ]
   end
 
   module Service = struct

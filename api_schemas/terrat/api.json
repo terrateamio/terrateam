@@ -85,13 +85,6 @@
           },
           "name": {
             "type": "string"
-          },
-          "type": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/installation-type-github"
-              }
-            ]
           }
         },
         "required": [
@@ -280,10 +273,6 @@
           "updated_at"
         ],
         "type": "object"
-      },
-      "installation-type-github": {
-        "const": "github",
-        "type": "string"
       },
       "installation-work-manifest": {
         "additionalProperties": false,
@@ -2420,9 +2409,9 @@
         }
       }
     },
-    "/api/v1/user/installations": {
+    "/api/v1/user/github/installations": {
       "get": {
-        "operationId": "user/list-installations",
+        "operationId": "user/list-github-installations",
         "parameters": [],
         "responses": {
           "200": {

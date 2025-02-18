@@ -1,4 +1,4 @@
-let src = Logs.Src.create "terrat_vcs_api_github"
+let src = Logs.Src.create "vcs_api_github"
 
 module Logs = (val Logs.src_log src : Logs.LOG)
 
@@ -70,6 +70,7 @@ module Account = struct
   type t = { installation_id : int } [@@deriving make, yojson, eq]
 
   let make installation_id = { installation_id }
+  let id t = t.installation_id
   let to_string t = CCInt.to_string t.installation_id
 end
 
@@ -89,6 +90,7 @@ module Repo = struct
   [@@deriving eq, yojson]
 
   let make ~id ~name ~owner () = { id; name; owner }
+  let id t = t.id
   let name t = t.name
   let owner t = t.owner
   let to_string t = t.owner ^ "/" ^ t.name
@@ -126,70 +128,10 @@ module Pull_request = struct
     let to_string = CCInt.to_string
   end
 
-  module Diff = struct
-    type t = Terrat_change.Diff.t =
-      | Add of { filename : string }
-      | Change of { filename : string }
-      | Remove of { filename : string }
-      | Move of {
-          filename : string;
-          previous_filename : string;
-        }
-    [@@deriving yojson]
-  end
+  include Terrat_pull_request
 
-  module State = struct
-    module Merged = struct
-      type t = Terrat_pull_request.State.Merged.t = {
-        merged_hash : string;
-        merged_at : string;
-      }
-      [@@deriving show, yojson]
-    end
-
-    module Open_status = struct
-      type t = Terrat_pull_request.State.Open_status.t =
-        | Mergeable
-        | Merge_conflict
-      [@@deriving show, yojson]
-    end
-
-    type t = Terrat_pull_request.State.t =
-      | Open of Open_status.t
-      | Closed
-      | Merged of Merged.t
-    [@@deriving show, yojson]
-  end
-
-  type t = {
-    base_branch_name : Ref.t;
-    base_ref : Ref.t;
-    branch_name : Ref.t;
-    branch_ref : Ref.t;
-    checks : bool;
-    diff : Diff.t list;
-    id : int;
-    is_draft_pr : bool;
-    mergeable : bool option;
-    provisional_merge_ref : Ref.t option;
-    repo : Repo.t;
-    state : State.t;
-    title : string option;
-    user : string option;
-  }
-  [@@deriving yojson]
-
-  let base_branch_name t = t.base_branch_name
-  let base_ref t = t.base_ref
-  let branch_name t = t.branch_name
-  let branch_ref t = t.branch_ref
-  let diff t = t.diff
-  let id t = t.id
-  let is_draft_pr t = t.is_draft_pr
-  let provisional_merge_ref t = t.provisional_merge_ref
-  let pull_number t = t.id
-  let repo t = t.repo
-  let state t = t.state
+  type ('diff, 'checks) t = (Id.t, 'diff, 'checks, Repo.t, Ref.t) Terrat_pull_request.t
+  [@@deriving to_yojson]
 end
 
 module Client = struct
@@ -298,6 +240,8 @@ module Client = struct
         }
   end
 
+  type native = Githubc2_abb.t
+
   type t = {
     account : Account.t;
     client : Githubc2_abb.t;
@@ -316,6 +260,8 @@ module Client = struct
       fetch_repo_cache = Globals.fetch_repo_cache;
       fetch_tree_by_rev_cache = Globals.fetch_tree_by_rev_cache;
     }
+
+  let to_native t = t.client
 end
 
 let fetch_branch_sha ~request_id client repo ref_ =
@@ -338,11 +284,7 @@ let fetch_branch_sha ~request_id client repo ref_ =
   | Error (`Not_found _) -> Abb.Future.return (Ok None)
   | Error (#Terrat_github.fetch_branch_err as err) ->
       Logs.err (fun m ->
-          m
-            "GITHUB_EVALUATOR : %s : FETCH_BRANCH_SHA : %a"
-            request_id
-            Terrat_github.pp_fetch_branch_err
-            err);
+          m "%s : FETCH_BRANCH_SHA : %a" request_id Terrat_github.pp_fetch_branch_err err);
       Abb.Future.return (Error `Error)
 
 let fetch_file ~request_id client repo ref_ path =
@@ -371,8 +313,7 @@ let fetch_file ~request_id client repo ref_ path =
   | Ok (Some { C.primary = { C.Primary.content; _ }; _ }) -> Abb.Future.return (Ok (Some content))
   | Ok None -> Abb.Future.return (Ok None)
   | Error (#Terrat_github.fetch_file_err as err) ->
-      Logs.err (fun m ->
-          m "GITHUB_EVALUATOR : %s : FETCH_FILE : %a" request_id Terrat_github.pp_fetch_file_err err);
+      Logs.err (fun m -> m "%s : FETCH_FILE : %a" request_id Terrat_github.pp_fetch_file_err err);
       Abb.Future.return (Error `Error)
 
 let fetch_remote_repo ~request_id client repo =
@@ -388,11 +329,7 @@ let fetch_remote_repo ~request_id client repo =
   | Ok _ as r -> Abb.Future.return r
   | Error (#Terrat_github.fetch_repo_err as err) ->
       Logs.err (fun m ->
-          m
-            "GITHUB_EVALUATOR : %s : FETCH_REMOTE_REPO : %a"
-            request_id
-            Terrat_github.pp_fetch_repo_err
-            err);
+          m "%s : FETCH_REMOTE_REPO : %a" request_id Terrat_github.pp_fetch_repo_err err);
       Abb.Future.return (Error `Error)
 
 let fetch_centralized_repo ~request_id client owner =
@@ -408,11 +345,7 @@ let fetch_centralized_repo ~request_id client owner =
   | Error (`Not_found _) -> Abb.Future.return (Ok None)
   | Error (#Terrat_github.fetch_repo_err as err) ->
       Logs.err (fun m ->
-          m
-            "GITHUB_EVALUATOR : %s : FETCH_CENTRALIZED_REPO : %a"
-            request_id
-            Terrat_github.pp_fetch_repo_err
-            err);
+          m "%s : FETCH_CENTRALIZED_REPO : %a" request_id Terrat_github.pp_fetch_repo_err err);
       Abb.Future.return (Error `Error)
 
 let create_client' config { Account.installation_id } =
@@ -430,11 +363,7 @@ let create_client ~request_id config account =
     | Ok _ as ret -> Abb.Future.return ret
     | Error (#Terrat_github.get_installation_access_token_err as err) ->
         Logs.err (fun m ->
-            m
-              "GITHUB_EVALUATOR : %s: ERROR : %a"
-              request_id
-              Terrat_github.pp_get_installation_access_token_err
-              err);
+            m "%s: ERROR : %a" request_id Terrat_github.pp_get_installation_access_token_err err);
         Abb.Future.return (Error `Error)
   in
   Client.Client_cache.fetch Client.Globals.client_cache account fetch
@@ -461,24 +390,22 @@ let fetch_tree ~request_id client repo ref_ =
   >>= function
   | Ok _ as r -> Abb.Future.return r
   | Error (#Terrat_github.get_tree_err as err) ->
-      Logs.err (fun m ->
-          m "GITHUB_EVALUATOR : %s : FETCH_TREE : %a" request_id Terrat_github.pp_get_tree_err err);
+      Logs.err (fun m -> m "%s : FETCH_TREE : %a" request_id Terrat_github.pp_get_tree_err err);
       Abb.Future.return (Error `Error)
 
 let comment_on_pull_request ~request_id client pull_request body =
   let open Abb.Future.Infix_monad in
   Terrat_github.publish_comment
-    ~owner:(Repo.owner (Pull_request.repo pull_request))
-    ~repo:(Repo.name (Pull_request.repo pull_request))
-    ~pull_number:(Pull_request.pull_number pull_request)
+    ~owner:(Repo.owner (Terrat_pull_request.repo pull_request))
+    ~repo:(Repo.name (Terrat_pull_request.repo pull_request))
+    ~pull_number:(Terrat_pull_request.id pull_request)
     ~body
     client.Client.client
   >>= function
   | Ok () -> Abb.Future.return (Ok ())
   | Error (#Terrat_github.publish_comment_err as err) ->
       Prmths.Counter.inc_one Metrics.github_errors_total;
-      Logs.err (fun m ->
-          m "GITHUB_EVALUATOR : %s : ERROR : %a" request_id Terrat_github.pp_publish_comment_err err);
+      Logs.err (fun m -> m "%s : ERROR : %a" request_id Terrat_github.pp_publish_comment_err err);
       Abb.Future.return (Error `Error)
 
 let diff_of_github_diff =
@@ -551,8 +478,7 @@ let fetch_pull_request' request_id account client repo pull_request_id =
       Prmths.Counter.inc_one (Metrics.pull_request_mergeable_state_count mergeable_state);
       Logs.info (fun m ->
           m
-            "GITHUB_EVALUATOR : %s : MERGEABLE : merged=%s : mergeable_state=%s : \
-             merge_commit_sha=%s"
+            "%s : MERGEABLE : merged=%s : mergeable_state=%s : merge_commit_sha=%s"
             request_id
             (Bool.to_string merged)
             mergeable_state
@@ -560,13 +486,13 @@ let fetch_pull_request' request_id account client repo pull_request_id =
       Abb.Future.return
         (Ok
            ( mergeable_state,
-             {
-               Pull_request.base_branch_name;
-               base_ref = base_sha;
-               branch_name;
-               branch_ref = head_sha;
-               id = pull_request_id;
-               state =
+             Terrat_pull_request.make
+               ~base_branch_name
+               ~base_ref:base_sha
+               ~branch_name
+               ~branch_ref:head_sha
+               ~id:pull_request_id
+               ~state:
                  (match (merge_commit_sha, state, merged, merged_at) with
                  | Some _, "open", _, _ -> Terrat_pull_request.State.(Open Open_status.Mergeable)
                  | None, "open", _, _ -> Terrat_pull_request.State.(Open Open_status.Merge_conflict)
@@ -574,21 +500,21 @@ let fetch_pull_request' request_id account client repo pull_request_id =
                      Terrat_pull_request.State.(
                        Merged Merged.{ merged_hash = merge_commit_sha; merged_at })
                  | _, "closed", false, _ -> Terrat_pull_request.State.Closed
-                 | _, _, _, _ -> assert false);
-               title = Some title;
-               user = Some login;
-               repo;
-               checks =
-                 merged
+                 | _, _, _, _ -> assert false)
+               ~title:(Some title)
+               ~user:(Some login)
+               ~repo
+               ~checks:
+                 (merged
                  || CCList.mem
                       ~eq:CCString.equal
                       mergeable_state
-                      [ "clean"; "unstable"; "has_hooks" ];
-               diff;
-               is_draft_pr = draft;
-               mergeable;
-               provisional_merge_ref = merge_commit_sha;
-             } ))
+                      [ "clean"; "unstable"; "has_hooks" ])
+               ~diff
+               ~draft
+               ~mergeable
+               ~provisional_merge_ref:merge_commit_sha
+               () ))
   | (`Not_found _ | `Internal_server_error _ | `Not_modified | `Service_unavailable _) as err ->
       Abb.Future.return (Error err)
 
@@ -603,14 +529,13 @@ let fetch_pull_request ~request_id account client repo pull_request_id =
       err -> Abb.Future.return err
     | Error `Error ->
         Prmths.Counter.inc_one Metrics.github_errors_total;
-        Logs.err (fun m ->
-            m "GITHUB_EVALUATOR : %s : ERROR : repo=%s : ERROR" request_id (Repo.to_string repo));
+        Logs.err (fun m -> m "%s : ERROR : repo=%s : ERROR" request_id (Repo.to_string repo));
         Abb.Future.return (Error `Error)
     | Error (#Terrat_github.compare_commits_err as err) ->
         Prmths.Counter.inc_one Metrics.github_errors_total;
         Logs.err (fun m ->
             m
-              "GITHUB_EVALUATOR : %s : ERROR : repo=%s : %a"
+              "%s : ERROR : repo=%s : %a"
               request_id
               (Repo.to_string repo)
               Terrat_github.pp_compare_commits_err
@@ -621,8 +546,11 @@ let fetch_pull_request ~request_id account client repo pull_request_id =
     ~f
     ~while_:
       (Abbs_future_combinators.finite_tries fetch_pull_request_tries (function
-        | Error _ | Ok ("unknown", { Pull_request.state = Terrat_pull_request.State.Open _; _ }) ->
-            true
+        | Error _ -> true
+        | Ok ("unknown", pull_request) -> (
+            match Terrat_pull_request.state pull_request with
+            | Terrat_pull_request.State.Open _ -> true
+            | _ -> false)
         | Ok _ -> false))
     ~betwixt:
       (Abbs_future_combinators.series ~start:2.0 ~step:(( *. ) 1.5) (fun n _ ->
@@ -647,17 +575,12 @@ let react_to_comment ~request_id client repo comment_id =
   | Ok () -> Abb.Future.return (Ok ())
   | Error (#Terrat_github.publish_reaction_err as err) ->
       Logs.err (fun m ->
-          m
-            "GITHUB_EVALUATOR : %s : REACT_TO_COMMENT : %a"
-            request_id
-            Terrat_github.pp_publish_reaction_err
-            err);
+          m "%s : REACT_TO_COMMENT : %a" request_id Terrat_github.pp_publish_reaction_err err);
       Abb.Future.return (Error `Error)
 
 let create_commit_checks ~request_id client repo ref_ checks =
   let open Abb.Future.Infix_monad in
-  Logs.info (fun m ->
-      m "GITHUB_EVALUATOR : %s : CREATE_COMMIT_CHECKS : num=%d" request_id (CCList.length checks));
+  Logs.info (fun m -> m "%s : CREATE_COMMIT_CHECKS : num=%d" request_id (CCList.length checks));
   Terrat_vcs_api_github_commit_check.create
     ~owner:(Repo.owner repo)
     ~repo:(Repo.name repo)
@@ -668,8 +591,7 @@ let create_commit_checks ~request_id client repo ref_ checks =
   | Ok () -> Abb.Future.return (Ok ())
   | Error (#Githubc2_abb.call_err as err) ->
       Prmths.Counter.inc_one Metrics.github_errors_total;
-      Logs.err (fun m ->
-          m "GITHUB_EVALUATOR : %s : ERROR : %a" request_id Githubc2_abb.pp_call_err err);
+      Logs.err (fun m -> m "%s : ERROR : %a" request_id Githubc2_abb.pp_call_err err);
       Abb.Future.return (Error `Error)
 
 let fetch_commit_checks ~request_id client repo ref_ =
@@ -677,8 +599,7 @@ let fetch_commit_checks ~request_id client repo ref_ =
   let owner = Repo.owner repo in
   let repo = Repo.name repo in
   Abbs_time_it.run
-    (fun time ->
-      Logs.info (fun m -> m "GITHUB_EVALUATOR : %s : LIST_COMMIT_CHECKS : %f" request_id time))
+    (fun time -> Logs.info (fun m -> m "%s : LIST_COMMIT_CHECKS : %f" request_id time))
     (fun () ->
       Terrat_vcs_api_github_commit_check.list
         ~log_id:request_id
@@ -692,18 +613,17 @@ let fetch_commit_checks ~request_id client repo ref_ =
       Prmths.Counter.inc_one Metrics.github_errors_total;
       Logs.err (fun m ->
           m
-            "GITHUB_EVALUATOR : %s : FETCH_COMMIT_CHECKS : %a"
+            "%s : FETCH_COMMIT_CHECKS : %a"
             request_id
             Terrat_vcs_api_github_commit_check.pp_list_err
             err);
       Abb.Future.return (Error `Error)
 
-let fetch_pull_request_reviews ~request_id client pull_request =
+let fetch_pull_request_reviews ~request_id repo pull_request_id client =
   let open Abb.Future.Infix_monad in
-  let repo = Pull_request.repo pull_request in
   let owner = Repo.owner repo in
   let repo = Repo.name repo in
-  let pull_number = pull_request.Pull_request.id in
+  let pull_number = pull_request_id in
   Terrat_github.Pull_request_reviews.list ~owner ~repo ~pull_number client.Client.client
   >>= function
   | Ok reviews ->
@@ -730,23 +650,19 @@ let fetch_pull_request_reviews ~request_id client pull_request =
   | Error (#Terrat_github.Pull_request_reviews.list_err as err) ->
       Prmths.Counter.inc_one Metrics.github_errors_total;
       Logs.err (fun m ->
-          m
-            "GITHUB_EVALUATOR : %s : ERROR : %a"
-            request_id
-            Terrat_github.Pull_request_reviews.pp_list_err
-            err);
+          m "%s : ERROR : %a" request_id Terrat_github.Pull_request_reviews.pp_list_err err);
       Abb.Future.return (Error `Error)
 
 let merge_pull_request' request_id client pull_request =
   let open Abbs_future_combinators.Infix_result_monad in
-  let repo = pull_request.Pull_request.repo in
+  let repo = Terrat_pull_request.repo pull_request in
   Logs.info (fun m ->
       m
-        "GITHUB_EVALUATOR : %s : MERGE_PULL_REQUEST : %s : %s : %d"
+        "%s : MERGE_PULL_REQUEST : %s : %s : %d"
         request_id
-        repo.Repo.owner
-        repo.Repo.name
-        pull_request.Pull_request.id);
+        (Repo.owner repo)
+        (Repo.name repo)
+        (Terrat_pull_request.id pull_request));
   Githubc2_abb.call
     client.Client.client
     Githubc2_pulls.Merge.(
@@ -757,10 +673,16 @@ let merge_pull_request' request_id client pull_request =
               Primary.(
                 make
                   ~commit_title:
-                    (Some (Printf.sprintf "Terrateam Automerge #%d" pull_request.Pull_request.id))
+                    (Some
+                       (Printf.sprintf
+                          "Terrateam Automerge #%d"
+                          (Terrat_pull_request.id pull_request)))
                   ()))
         Parameters.(
-          make ~owner:repo.Repo.owner ~repo:repo.Repo.name ~pull_number:pull_request.Pull_request.id))
+          make
+            ~owner:repo.Repo.owner
+            ~repo:repo.Repo.name
+            ~pull_number:(Terrat_pull_request.id pull_request)))
   >>= fun resp ->
   let module Mna = Githubc2_pulls.Merge.Responses.Method_not_allowed in
   match Openapi.Response.value resp with
@@ -770,11 +692,11 @@ let merge_pull_request' request_id client pull_request =
   | `Method_not_allowed _ -> (
       Logs.info (fun m ->
           m
-            "GITHUB_EVALUATOR : %s : MERGE_METHOD_NOT_ALLOWED : %s : %s : %d"
+            "%s : MERGE_METHOD_NOT_ALLOWED : %s : %s : %d"
             request_id
-            repo.Repo.owner
-            repo.Repo.name
-            pull_request.Pull_request.id);
+            (Repo.owner repo)
+            (Repo.name repo)
+            (Terrat_pull_request.id pull_request));
       Githubc2_abb.call
         client.Client.client
         Githubc2_pulls.Merge.(
@@ -784,7 +706,7 @@ let merge_pull_request' request_id client pull_request =
               make
                 ~owner:repo.Repo.owner
                 ~repo:repo.Repo.name
-                ~pull_number:pull_request.Pull_request.id))
+                ~pull_number:(Terrat_pull_request.id pull_request)))
       >>= fun resp ->
       match Openapi.Response.value resp with
       | `OK _ -> Abb.Future.return (Ok ())
@@ -804,11 +726,7 @@ let merge_pull_request ~request_id client pull_request =
       | Ok _ as ret -> Abb.Future.return ret
       | Error (#Githubc2_abb.call_err as err) ->
           Logs.info (fun m ->
-              m
-                "GITHUB_EVALUATOR : %s : MERGE_PULL_REQUEST : %a"
-                request_id
-                Githubc2_abb.pp_call_err
-                err);
+              m "%s : MERGE_PULL_REQUEST : %a" request_id Githubc2_abb.pp_call_err err);
           Abb.Future.return (Error `Error)
       | Error
           (( `Method_not_allowed
@@ -818,19 +736,11 @@ let merge_pull_request ~request_id client pull_request =
                Githubc2_pulls.Merge.Responses.Conflict.
                  { primary = Primary.{ message = Some message; _ }; _ } ) as err) ->
           Logs.info (fun m ->
-              m
-                "GITHUB_EVALUATOR : %s : MERGE_PULL_REQUEST : %a"
-                request_id
-                Githubc2_pulls.Merge.Responses.pp
-                err);
+              m "%s : MERGE_PULL_REQUEST : %a" request_id Githubc2_pulls.Merge.Responses.pp err);
           Abb.Future.return (Error (`Merge_err message))
       | Error (#Githubc2_pulls.Merge.Responses.t as err) ->
           Logs.info (fun m ->
-              m
-                "GITHUB_EVALUATOR : %s : MERGE_PULL_REQUEST : %a"
-                request_id
-                Githubc2_pulls.Merge.Responses.pp
-                err);
+              m "%s : MERGE_PULL_REQUEST : %a" request_id Githubc2_pulls.Merge.Responses.pp err);
           Abb.Future.return (Error `Error))
     ~while_:
       (Abbs_future_combinators.finite_tries num_tries (function
@@ -842,7 +752,7 @@ let delete_branch' request_id client repo branch =
   let open Abbs_future_combinators.Infix_result_monad in
   Logs.info (fun m ->
       m
-        "GITHUB_EVALUATOR : %s : DELETE_PULL_REQUEST_BRANCH : %s : %s : %s"
+        "%s : DELETE_PULL_REQUEST_BRANCH : %s : %s : %s"
         request_id
         repo.Repo.owner
         repo.Repo.name
@@ -857,7 +767,7 @@ let delete_branch' request_id client repo branch =
   | `Unprocessable_entity err ->
       Logs.info (fun m ->
           m
-            "GITHUB_EVALUATOR : %s : DELETE_PULL_REQUEST_BRANCH : %s : %s : %s : %a"
+            "%s : DELETE_PULL_REQUEST_BRANCH : %s : %s : %s : %a"
             request_id
             repo.Repo.owner
             repo.Repo.name
@@ -874,10 +784,58 @@ let delete_branch ~request_id client repo branch =
   | Error (#Githubc2_abb.call_err as err) ->
       Prmths.Counter.inc_one Metrics.github_errors_total;
       Logs.info (fun m ->
-          m
-            "GITHUB_EVALUATOR : %s : DELETE_PULL_REQUEST_BRANCH : %a"
-            request_id
-            Githubc2_abb.pp_call_err
-            err);
+          m "%s : DELETE_PULL_REQUEST_BRANCH : %a" request_id Githubc2_abb.pp_call_err err);
       Abb.Future.return (Error `Error)
   | Error `Error -> Abb.Future.return (Error `Error)
+
+let is_member_of_team ~request_id ~team ~user repo client =
+  let open Abb.Future.Infix_monad in
+  Terrat_github.get_team_membership_in_org ~org:(Repo.owner repo) ~team ~user client.Client.client
+  >>= function
+  | Ok _ as res -> Abb.Future.return res
+  | Error (#Terrat_github.get_team_membership_in_org_err as err) ->
+      Prmths.Counter.inc_one Metrics.github_errors_total;
+      Logs.info (fun m ->
+          m
+            "%s : DELETE_PULL_REQUEST_BRANCH : %a"
+            request_id
+            Terrat_github.pp_get_team_membership_in_org_err
+            err);
+      Abb.Future.return (Error `Error)
+
+let get_repo_role ~request_id repo user client =
+  let open Abb.Future.Infix_monad in
+  Terrat_github.get_repo_collaborator_permission
+    ~org:(Repo.owner repo)
+    ~repo:(Repo.name repo)
+    ~user
+    client.Client.client
+  >>= function
+  | Ok _ as res -> Abb.Future.return res
+  | Error (#Terrat_github.get_repo_collaborator_permission_err as err) ->
+      Prmths.Counter.inc_one Metrics.github_errors_total;
+      Logs.info (fun m ->
+          m
+            "%s : DELETE_PULL_REQUEST_BRANCH : %a"
+            request_id
+            Terrat_github.pp_get_repo_collaborator_permission_err
+            err);
+      Abb.Future.return (Error `Error)
+
+let find_workflow_file ~request_id repo client =
+  let open Abb.Future.Infix_monad in
+  Terrat_github.find_workflow_file
+    ~owner:(Repo.owner repo)
+    ~repo:(Repo.name repo)
+    client.Client.client
+  >>= function
+  | Ok _ as res -> Abb.Future.return res
+  | Error (#Terrat_github.get_installation_access_token_err as err) ->
+      Prmths.Counter.inc_one Metrics.github_errors_total;
+      Logs.info (fun m ->
+          m
+            "%s : FIND_WORKFLOW_FILE : %a"
+            request_id
+            Terrat_github.pp_get_installation_access_token_err
+            err);
+      Abb.Future.return (Error `Error)

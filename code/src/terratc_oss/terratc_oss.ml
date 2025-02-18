@@ -70,15 +70,8 @@ module Make (M : S) = struct
       (* Access control is an enterprise feature, so always return success on
          any requests. *)
 
-      module Ctx = struct
-        type t = unit
-
-        let make ~client ~config ~repo ~user () = ()
-      end
-
-      let query ctx match_list = Abb.Future.return (Ok true)
-      let is_ci_changed ctx diff = Abb.Future.return (Ok false)
-      let set_user user t = ()
+      let query ~request_id client repo match_ = Abb.Future.return (Ok true)
+      let is_ci_changed ~request_id client repo diff = Abb.Future.return (Ok false)
     end
 
     module Repo_config = struct

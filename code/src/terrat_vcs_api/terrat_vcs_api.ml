@@ -22,11 +22,15 @@ module type S = sig
     type t [@@deriving eq, yojson]
 
     val make : Id.t -> t
+    val id : t -> Id.t
     val to_string : t -> string
   end
 
   module Client : sig
     type t
+    type native
+
+    val to_native : t -> native
   end
 
   module Ref : sig
@@ -42,6 +46,7 @@ module type S = sig
     type t [@@deriving eq, yojson]
 
     val make : id:Id.t -> name:string -> owner:string -> unit -> t
+    val id : t -> Id.t
     val owner : t -> string
     val name : t -> string
     val to_string : t -> string
@@ -57,18 +62,16 @@ module type S = sig
   module Pull_request : sig
     module Id : ID
 
-    type t [@@deriving yojson]
+    include
+      module type of Terrat_pull_request
+        with type ('id, 'diff, 'checks, 'repo, 'ref) t =
+          ('id, 'diff, 'checks, 'repo, 'ref) Terrat_pull_request.t
+         and type State.Merged.t = Terrat_pull_request.State.Merged.t
+         and type State.Open_status.t = Terrat_pull_request.State.Open_status.t
+         and type State.t = Terrat_pull_request.State.t
 
-    val base_branch_name : t -> Ref.t
-    val base_ref : t -> Ref.t
-    val branch_name : t -> Ref.t
-    val branch_ref : t -> Ref.t
-    val diff : t -> Terrat_change.Diff.t list
-    val id : t -> Id.t
-    val is_draft_pr : t -> bool
-    val provisional_merge_ref : t -> Ref.t option
-    val repo : t -> Repo.t
-    val state : t -> Terrat_pull_request.State.t
+    type ('diff, 'checks) t = (Id.t, 'diff, 'checks, Repo.t, Ref.t) Terrat_pull_request.t
+    [@@deriving to_yojson]
   end
 
   val create_client :
@@ -108,7 +111,7 @@ module type S = sig
   val comment_on_pull_request :
     request_id:string ->
     Client.t ->
-    Pull_request.t ->
+    ('diff, 'checks) Pull_request.t ->
     string ->
     (unit, [> `Error ]) result Abb.Future.t
 
@@ -118,12 +121,13 @@ module type S = sig
     Client.t ->
     Repo.t ->
     Pull_request.Id.t ->
-    (Pull_request.t, [> `Error ]) result Abb.Future.t
+    ((Terrat_change.Diff.t list, bool) Pull_request.t, [> `Error ]) result Abb.Future.t
 
   val fetch_pull_request_reviews :
     request_id:string ->
+    Repo.t ->
+    Pull_request.Id.t ->
     Client.t ->
-    Pull_request.t ->
     (Terrat_pull_request_review.t list, [> `Error ]) result Abb.Future.t
 
   val react_to_comment :
@@ -147,9 +151,27 @@ module type S = sig
   val merge_pull_request :
     request_id:string ->
     Client.t ->
-    Pull_request.t ->
+    ('diff, 'checks) Pull_request.t ->
     (unit, [> `Error | `Merge_err of string ]) result Abb.Future.t
 
   val delete_branch :
     request_id:string -> Client.t -> Repo.t -> string -> (unit, [> `Error ]) result Abb.Future.t
+
+  val is_member_of_team :
+    request_id:string ->
+    team:string ->
+    user:User.t ->
+    Repo.t ->
+    Client.t ->
+    (bool, [> `Error ]) result Abb.Future.t
+
+  val get_repo_role :
+    request_id:string ->
+    Repo.t ->
+    User.t ->
+    Client.t ->
+    (string option, [> `Error ]) result Abb.Future.t
+
+  val find_workflow_file :
+    request_id:string -> Repo.t -> Client.t -> (string option, [> `Error ]) result Abb.Future.t
 end
