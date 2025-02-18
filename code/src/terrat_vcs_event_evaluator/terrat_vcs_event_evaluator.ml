@@ -445,7 +445,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             m
               "EVALUATOR : %s : QUERY_PULL_REQUEST_OUT_OF_CHANGE_APPLIES : pull_number=%s : time=%f"
               request_id
-              (S.Api.Pull_request.Id.to_string (S.Api.Pull_request.id pull_request))
+              (S.Api.Pull_request.Id.to_string (S.Pull_request.id pull_request))
               time))
       (fun () -> S.Db.query_pull_request_out_of_change_applies ~request_id db pull_request)
 
@@ -456,8 +456,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             m
               "EVALUATOR : %s : QUERY_APPLIED_DIRSPACES : repo=%s : pull_number=%s : time=%f"
               request_id
-              (S.Api.Repo.to_string (S.Api.Pull_request.repo pull_request))
-              (S.Api.Pull_request.Id.to_string (S.Api.Pull_request.id pull_request))
+              (S.Api.Repo.to_string @@ S.Pull_request.repo pull_request)
+              (S.Api.Pull_request.Id.to_string @@ S.Pull_request.id pull_request)
               time))
       (fun () -> S.Db.query_applied_dirspaces ~request_id db pull_request)
 
@@ -468,7 +468,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             m
               "EVALUATOR : %s : QUERY_DIRSPACES_WITHOUT_VALID_PLANS : pull_number=%s : time=%f"
               request_id
-              (S.Api.Pull_request.Id.to_string (S.Api.Pull_request.id pull_request))
+              (S.Api.Pull_request.Id.to_string @@ S.Pull_request.id pull_request)
               time))
       (fun () -> S.Db.query_dirspaces_without_valid_plans ~request_id db pull_request dirspaces)
 
@@ -3798,7 +3798,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             | `Pull_request pr ->
                 Some
                   (Rkd.Run_kind_data_pull_request
-                     { Rkdpr.id = S.Api.Pull_request.Id.to_string (S.Api.Pull_request.id pr) })
+                     { Rkdpr.id = S.Api.Pull_request.Id.to_string (S.Pull_request.id pr) })
             | `Index | `Drift | `Build_config -> None
           in
           match step with
@@ -4020,7 +4020,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         has_changes
 
     let run_op_work_manifest_plan_iter_fetch ctx state dirspace work_manifest_id =
-      let open Abbs_future_combinators.Infix_result_monad in
       query_plan state.State.request_id (Ctx.storage ctx) work_manifest_id dirspace
   end
 
@@ -4287,7 +4286,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                        (Terrat_base_repo_config_v1.Ctx.make
                           ~dest_branch:
                             (S.Api.Ref.to_string (S.Api.Pull_request.base_branch_name pull_request))
-                          ~branch:(S.Api.Ref.to_string (S.Api.Pull_request.branch_name pull_request))
+                          ~branch:
+                            (S.Api.Ref.to_string (S.Api.Pull_request.branch_name pull_request))
                           ())
                      ~index
                      ~file_list:repo_tree

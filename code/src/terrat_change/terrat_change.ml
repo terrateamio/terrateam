@@ -7,7 +7,7 @@ module Diff = struct
         filename : string;
         previous_filename : string;
       }
-  [@@deriving eq, show]
+  [@@deriving yojson, eq, show]
 end
 
 module Dirspace = Terrat_dirspace

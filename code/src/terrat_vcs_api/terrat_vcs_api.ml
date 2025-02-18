@@ -22,6 +22,7 @@ module type S = sig
     type t [@@deriving eq, yojson]
 
     val make : Id.t -> t
+    val id : t -> Id.t
     val to_string : t -> string
   end
 
@@ -42,6 +43,7 @@ module type S = sig
     type t [@@deriving eq, yojson]
 
     val make : id:Id.t -> name:string -> owner:string -> unit -> t
+    val id : t -> Id.t
     val owner : t -> string
     val name : t -> string
     val to_string : t -> string
@@ -57,18 +59,17 @@ module type S = sig
   module Pull_request : sig
     module Id : ID
 
-    type t [@@deriving yojson]
+    include
+      module type of Terrat_pull_request
+        with type ('id, 'diff, 'checks, 'repo, 'ref) t =
+          ('id, 'diff, 'checks, 'repo, 'ref) Terrat_pull_request.t
+         and type State.Merged.t = Terrat_pull_request.State.Merged.t
+         and type State.Open_status.t = Terrat_pull_request.State.Open_status.t
+         and type State.t = Terrat_pull_request.State.t
 
-    val base_branch_name : t -> Ref.t
-    val base_ref : t -> Ref.t
-    val branch_name : t -> Ref.t
-    val branch_ref : t -> Ref.t
-    val diff : t -> Terrat_change.Diff.t list
-    val id : t -> Id.t
-    val is_draft_pr : t -> bool
-    val provisional_merge_ref : t -> Ref.t option
-    val repo : t -> Repo.t
-    val state : t -> Terrat_pull_request.State.t
+    type t = (Id.t, Terrat_change.Diff.t list, bool, Repo.t, Ref.t) Terrat_pull_request.t
+
+    val to_yojson : t -> Yojson.Safe.t
   end
 
   val create_client :
@@ -122,8 +123,9 @@ module type S = sig
 
   val fetch_pull_request_reviews :
     request_id:string ->
+    Repo.t ->
+    Pull_request.Id.t ->
     Client.t ->
-    Pull_request.t ->
     (Terrat_pull_request_review.t list, [> `Error ]) result Abb.Future.t
 
   val react_to_comment :
@@ -152,4 +154,19 @@ module type S = sig
 
   val delete_branch :
     request_id:string -> Client.t -> Repo.t -> string -> (unit, [> `Error ]) result Abb.Future.t
+
+  val is_member_of_team :
+    request_id:string ->
+    team:string ->
+    user:User.t ->
+    Repo.t ->
+    Client.t ->
+    (bool, [> `Error ]) result Abb.Future.t
+
+  val get_repo_role :
+    request_id:string ->
+    Repo.t ->
+    User.t ->
+    Client.t ->
+    (string option, [> `Error ]) result Abb.Future.t
 end
