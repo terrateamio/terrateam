@@ -17,6 +17,8 @@ depends: [
 	"cmdliner" { >= "1.3.0" }
 	"containers" { >= "3.12" }
 	"crunch"
+	"fmt"
+	"logs"
 	"ocaml" { >= "4.12.0" }
 	"ocamlfind"
 	"ppx_deriving"
@@ -37,10 +39,10 @@ A tool to build Makefiles for Ocaml projects.
 homepage: "https://hg.sr.ht/~mmatalka/pds"
 
 url {
-	src: "http://acsl-pkgs.s3.amazonaws.com/pds-6.51.tar.gz"
+	src: "http://acsl-pkgs.s3.amazonaws.com/pds-6.53.tar.gz"
 	checksum: [
-		"md5=40c94677d24d6631ec3d20017d6d3d36"
-		"sha256=5762d08b21e7ff802a318e306d7d26a56d027b0f0054d37bfbdc9a6e39e70149"
+		"md5=b5dabc506dc15093a3104279838a4580"
+		"sha256=d6acc1a1f8e5ecb89c43968e07fb9cae0402b267973d6c87aed768260cdfbe23"
 	]
 }
 bug-reports: "https://todo.sr.ht/~mmatalka/pds"
