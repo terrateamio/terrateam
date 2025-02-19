@@ -8,7 +8,7 @@ all: .merlin
 	pds -f | merlin-of-pds > .merlin
 
 pds.mk: pds.conf
-	pds
+	pds -d
 
 terrat-schemas: terrat-api terrat-repo-config terrat-webhooks
 
