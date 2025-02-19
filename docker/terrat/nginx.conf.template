@@ -37,7 +37,7 @@ http {
         ${IPV6_LISTEN}
 
         server_name  localhost;
-        access_log   off;
+        access_log   ${TERRAT_ACCESS_LOG};
         server_tokens off;
 
         location / {
