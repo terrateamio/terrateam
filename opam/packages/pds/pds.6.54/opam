@@ -39,10 +39,10 @@ A tool to build Makefiles for Ocaml projects.
 homepage: "https://hg.sr.ht/~mmatalka/pds"
 
 url {
-	src: "http://acsl-pkgs.s3.amazonaws.com/pds-6.53.tar.gz"
+	src: "http://acsl-pkgs.s3.amazonaws.com/pds-6.54.tar.gz"
 	checksum: [
-		"md5=b5dabc506dc15093a3104279838a4580"
-		"sha256=d6acc1a1f8e5ecb89c43968e07fb9cae0402b267973d6c87aed768260cdfbe23"
+		"md5=1bc9af75fb639f3052e50e4e5bc4b6d8"
+		"sha256=032ece45682ee434c3b6576c322cbb78ea9fdfbf3b952af74094d6723b2dae9c"
 	]
 }
 bug-reports: "https://todo.sr.ht/~mmatalka/pds"
