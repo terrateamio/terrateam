@@ -4044,7 +4044,6 @@ module Make (S : Terrat_vcs_provider.S) = struct
         (Terrat_vcs_provider.Ctx.storage ctx)
         work_manifest_id
         dirspace
-      >>= fun data -> Abb.Future.return (Ok (CCOption.map Base64.encode_exn data))
   end
 
   module F = struct

@@ -2,6 +2,7 @@ module Reader : sig
   type err =
     [ `Unknown_type of char
     | `Length
+    | `Needed_bytes of int
     | `Invalid_frame
     ]
 
@@ -29,6 +30,7 @@ end = struct
   type err =
     [ `Unknown_type of char
     | `Length
+    | `Needed_bytes of int
     | `Invalid_frame
     ]
 
@@ -60,7 +62,7 @@ end = struct
     if st.State.pos + n <= st.State.stop then
       let s = Bytes.sub_string st.State.buf st.State.pos n in
       (Ok s, { st with State.pos = st.State.pos + n })
-    else (Error `Length, st)
+    else (Error (`Needed_bytes (n - (st.State.stop - st.State.pos))), st)
 
   let string st =
     match Bytes.index_from_opt st.State.buf st.State.pos '\000' with
@@ -270,9 +272,12 @@ module Decode = struct
     ]
   [@@deriving show, eq]
 
-  type t = Buffer.t
+  type t = {
+    buf : Buffer.t;
+    mutable needed_bytes : int;
+  }
 
-  let create () = Buffer.create 4096
+  let create () = { buf = Buffer.create 4096; needed_bytes = -1 }
 
   let dispatch_backend_msg len =
     let open Reader in
@@ -407,22 +412,34 @@ module Decode = struct
         | Error (frames, err, pos) -> Error (frame :: frames, err, pos))
     | Error (err, _) -> Error ([], err, pos)
 
-  let backend_msg t ~pos ~len buf =
-    let buf, pos, len =
-      if Buffer.length t = 0 then (buf, pos, len)
-      else (
-        Buffer.add_subbytes t buf pos len;
-        let b = Buffer.to_bytes t in
-        (b, 0, Bytes.length b))
-    in
+  let run_backend_msg t pos buf len =
     match backend_msg' pos buf len with
     | Error ([], (`Unknown_type _ as err), _) | Error ([], (`Invalid_frame as err), _) -> Error err
+    | Error (frames, `Needed_bytes n, pos) ->
+        assert (n > 0);
+        Buffer.clear t.buf;
+        Buffer.add_subbytes t.buf buf pos (len - pos);
+        t.needed_bytes <- n;
+        Ok frames
     | Error (frames, _, pos) | Ok (frames, pos) ->
-        Buffer.clear t;
-        Buffer.add_subbytes t buf pos (len - pos);
+        Buffer.clear t.buf;
+        Buffer.add_subbytes t.buf buf pos (len - pos);
         Ok frames
 
+  let backend_msg t ~pos ~len buf =
+    if Buffer.length t.buf = 0 && t.needed_bytes < 0 then run_backend_msg t pos buf len
+    else if t.needed_bytes < 0 then (
+      Buffer.add_subbytes t.buf buf pos len;
+      let b = Buffer.to_bytes t.buf in
+      run_backend_msg t 0 b (Bytes.length b))
+    else (
+      Buffer.add_subbytes t.buf buf pos len;
+      t.needed_bytes <- t.needed_bytes - len;
+      let b = Buffer.to_bytes t.buf in
+      if t.needed_bytes < 0 then run_backend_msg t 0 b (Bytes.length b) else Ok [])
+
   let frontend_msg t ~pos ~len buf = failwith "nyi"
+  let needed_bytes t = if t.needed_bytes < 0 then None else Some t.needed_bytes
 end
 
 module Encode = struct
