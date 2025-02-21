@@ -1,3 +1,5 @@
+let buf_size = 1024 * 8
+
 exception Nested_tx_not_supported
 
 module Backend_key_data = struct
@@ -86,11 +88,49 @@ module Io = struct
     | r -> wait_for_frames' conn r
 
   and wait_for_frames' conn = function
-    | Ok [] -> wait_for_frames conn
+    | Ok [] when Pgsql_codec.Decode.needed_bytes conn.decoder = None -> wait_for_frames conn
+    | Ok [] -> wait_for_frame_needed_bytes conn
     | Ok fs as r ->
         (* List.iter (fun frame -> Printf.printf "Rx %s\n%!" (Pgsql_codec.Frame.Backend.show frame)) fs; *)
         Abb.Future.return r
     | Error err -> Abb.Future.return (Error (`Parse_error err))
+
+  and wait_for_frame_needed_bytes conn =
+    (* Read all the needed bytes, this is an important performance optimization
+       for large queries responses. *)
+    match Pgsql_codec.Decode.needed_bytes conn.decoder with
+    | Some needed_bytes -> (
+        let open Abb.Future.Infix_monad in
+        let b = Buffer.create needed_bytes in
+        let buf = Bytes.create buf_size in
+        let needed_bytes = ref needed_bytes in
+        Abbs_future_combinators.retry
+          ~f:(fun () ->
+            let open Abbs_future_combinators.Infix_result_monad in
+            Abbs_io_buffered.read conn.r ~buf ~pos:0 ~len:(Bytes.length buf)
+            >>= fun n ->
+            Buffer.add_subbytes b buf 0 n;
+            needed_bytes := !needed_bytes - n;
+            Abb.Future.return (Ok n))
+          ~while_:(function
+            | Ok 0 | Error _ -> false
+            | Ok _ -> !needed_bytes > 0)
+          ~betwixt:(fun _ ->
+            (* Force a scheduler tick so we don't starve the system *)
+            Abb.Sys.sleep 0.0)
+        >>= function
+        | Ok 0 | Error `E_io | Error (`Unexpected _) ->
+            conn.connected <- false;
+            Abb.Future.return (Error `Disconnected)
+        | Ok _ -> (
+            let buf = Buffer.to_bytes b in
+            match
+              Pgsql_codec.Decode.backend_msg conn.decoder ~pos:0 ~len:(Bytes.length buf) buf
+            with
+            | Ok [] -> wait_for_frames conn
+            | Ok _ as r -> Abb.Future.return r
+            | Error err -> Abb.Future.return (Error (`Parse_error err))))
+    | None -> assert false
 
   let rec consume_until conn f =
     let open Abbs_future_combinators.Infix_result_monad in
@@ -818,7 +858,7 @@ let rec create_sm ?tls_config ?passwd ~notice_response ~host ~port ~user databas
   >>= fun (_, tcp) ->
   match tls_config with
   | None ->
-      let r, w = Abbs_io_buffered.Of.of_tcp_socket ~size:4096 tcp in
+      let r, w = Abbs_io_buffered.Of.of_tcp_socket ~size:buf_size tcp in
       create_sm_perform_login r w ?passwd ~notice_response ~user database
   | Some (`Require tls_config) ->
       create_sm_ssl_conn
@@ -848,7 +888,7 @@ and create_sm_ssl_conn ?passwd ~required ~notice_response ~host ~port ~user tls_
   let open Abbs_future_combinators.Infix_result_monad in
   let buf = Buffer.create 5 in
   let bytes = Io.encode_frame buf Pgsql_codec.Frame.Frontend.SSLRequest in
-  let r, w = Abbs_io_buffered.Of.of_tcp_socket ~size:4096 tcp in
+  let r, w = Abbs_io_buffered.Of.of_tcp_socket ~size:buf_size tcp in
   Abbs_io_buffered.write w ~bufs:[ Io.write_buf bytes ]
   >>= fun _ ->
   Abbs_io_buffered.flushed w
@@ -857,7 +897,7 @@ and create_sm_ssl_conn ?passwd ~required ~notice_response ~host ~port ~user tls_
   Abbs_io_buffered.read r ~buf:bytes ~pos:0 ~len:(Bytes.length bytes)
   >>= function
   | n when n = 1 && Bytes.get bytes 0 = 'S' -> (
-      match Abbs_tls.client_tcp tcp tls_config host with
+      match Abbs_tls.client_tcp ~size:buf_size tcp tls_config host with
       | Ok (r, w) -> create_sm_perform_login r w ?passwd ~notice_response ~user database
       | Error (#Abb_tls.err as err) -> Abb.Future.return (Error (`Tls_negotiate_err err)))
   | n when n = 1 && Bytes.get bytes 0 = 'N' && not required ->
@@ -869,8 +909,8 @@ and create_sm_ssl_conn ?passwd ~required ~notice_response ~host ~port ~user tls_
 and create_sm_perform_login r w ?passwd ~notice_response ~user database =
   let open Abbs_future_combinators.Infix_result_monad in
   let decoder = Pgsql_codec.Decode.create () in
-  let buf = Bytes.create 4096 in
-  let scratch = Buffer.create 4096 in
+  let buf = Bytes.create buf_size in
+  let scratch = Buffer.create buf_size in
   let t =
     {
       connected = true;

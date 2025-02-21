@@ -96,13 +96,6 @@ module Sql = struct
            |> CCString.concat "\n")
          (Terrat_files_github_sql.read fname))
 
-  let base64 = function
-    | Some s :: rest -> (
-        match Base64.decode (CCString.replace ~sub:"\n" ~by:"" s) with
-        | Ok s -> Some (s, rest)
-        | _ -> None)
-    | _ -> None
-
   let policy =
     let module P = struct
       type t = Terrat_base_repo_config_v1.Access_control.Match_list.t [@@deriving yojson]
@@ -511,7 +504,7 @@ module Sql = struct
       sql
       //
       (* data *)
-      Ret.ud base64
+      Ret.text
       /^ read "select_recent_plan.sql"
       /% Var.uuid "id"
       /% Var.text "dir"
