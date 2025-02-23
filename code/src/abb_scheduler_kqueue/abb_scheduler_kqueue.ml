@@ -1109,47 +1109,43 @@ module Socket = struct
         ()
     in
     let addr = unix_sockaddr_of_sockaddr sockaddr in
-    let rec send' total = function
+    let rec send' ~total ~pos = function
       | [] -> Future.Promise.set p (Ok total)
-      | wb :: bufs -> (
-          try
-            let n =
-              Unix.sendto
-                t
-                ~buf:wb.Abb_intf.Write_buf.buf
-                ~pos:wb.Abb_intf.Write_buf.pos
-                ~len:wb.Abb_intf.Write_buf.len
-                ~mode:[]
-                ~addr
-            in
-            (* FIXME Make this handle incomplete sends *)
-            assert (n = wb.Abb_intf.Write_buf.len);
-            send' (n + total) bufs
-          with
-          | Unix.Unix_error (Unix.EAGAIN, _, _) | Unix.Unix_error (Unix.EWOULDBLOCK, _, _) ->
-              Future.with_state (fun s ->
-                  let el = Abb_fut.State.state s in
-                  let handler s = Future.run_with_state (send' total (wb :: bufs)) s in
-                  let el = El.add_write t handler el in
-                  let s = Abb_fut.State.set_state el s in
-                  (s, Future.return ()))
-          | Unix.Unix_error (err, _, _) as exn ->
-              let open Unix in
-              Future.Promise.set
-                p
-                (Error
-                   (match err with
-                   | EBADF -> `E_bad_file
-                   | EACCES -> `E_access
-                   | ENOBUFS -> `E_no_buffers
-                   | EHOSTUNREACH -> `E_host_unreachable
-                   | EHOSTDOWN -> `E_host_down
-                   | ECONNREFUSED -> `E_connection_refused
-                   | _ -> `Unexpected exn))
-          | exn -> Future.Promise.set p (Error (`Unexpected exn)))
+      | wb :: bufs as all_bufs ->
+          Future.with_state (fun s ->
+              let el = Abb_fut.State.state s in
+              let handler s =
+                try
+                  let len = wb.Abb_intf.Write_buf.len - pos in
+                  let n = Unix.sendto t ~buf:wb.Abb_intf.Write_buf.buf ~pos ~len ~mode:[] ~addr in
+                  let total = total + n in
+                  match n with
+                  | n when n = len -> Future.run_with_state (send' ~total ~pos:0 bufs) s
+                  | n -> Future.run_with_state (send' ~total ~pos:(pos + n) all_bufs) s
+                with
+                | Unix.Unix_error (err, _, _) as exn ->
+                    let open Unix in
+                    Future.run_with_state
+                      (Future.Promise.set
+                         p
+                         (Error
+                            (match err with
+                            | EBADF -> `E_bad_file
+                            | EACCES -> `E_access
+                            | ENOBUFS -> `E_no_buffers
+                            | EHOSTUNREACH -> `E_host_unreachable
+                            | EHOSTDOWN -> `E_host_down
+                            | ECONNREFUSED -> `E_connection_refused
+                            | _ -> `Unexpected exn)))
+                      s
+                | exn -> Future.run_with_state (Future.Promise.set p (Error (`Unexpected exn))) s
+              in
+              let el = El.add_write t handler el in
+              let s = Abb_fut.State.set_state el s in
+              (s, Future.return ()))
     in
     let open Future.Infix_monad in
-    send' 0 bufs >>= fun () -> Future.Promise.future p
+    send' ~total:0 ~pos:0 bufs >>= fun () -> Future.Promise.future p
 
   let close t =
     (* This scheduler is used in FreeBSD and Linux, with linux support via
@@ -1430,44 +1426,43 @@ module Socket = struct
                 (s, Future.return ())))
           ()
       in
-      let rec send' total = function
+      let rec send' ~total ~pos = function
         | [] -> Future.Promise.set p (Ok total)
-        | wb :: bufs -> (
-            try
-              let n =
-                Unix.send
-                  t
-                  ~buf:wb.Abb_intf.Write_buf.buf
-                  ~pos:wb.Abb_intf.Write_buf.pos
-                  ~len:wb.Abb_intf.Write_buf.len
-                  ~mode:[]
-              in
-              send' (total + n) bufs
-            with
-            | Unix.Unix_error (Unix.EAGAIN, _, _) | Unix.Unix_error (Unix.EWOULDBLOCK, _, _) ->
-                Future.with_state (fun s ->
-                    let el = Abb_fut.State.state s in
-                    let handler s = Future.run_with_state (send' total (wb :: bufs)) s in
-                    let el = El.add_write t handler el in
-                    let s = Abb_fut.State.set_state el s in
-                    (s, Future.return ()))
-            | Unix.Unix_error (err, _, _) as exn ->
-                let open Unix in
-                Future.Promise.set
-                  p
-                  (Error
-                     (match err with
-                     | ENOTSOCK | EBADF -> `E_bad_file
-                     | EACCES -> `E_access
-                     | ENOBUFS -> `E_no_buffers
-                     | EHOSTUNREACH -> `E_host_unreachable
-                     | EHOSTDOWN -> `E_host_down
-                     | EPIPE -> `E_pipe
-                     | _ -> `Unexpected exn))
-            | exn -> Future.Promise.set p (Error (`Unexpected exn)))
+        | wb :: bufs as all_bufs ->
+            Future.with_state (fun s ->
+                let el = Abb_fut.State.state s in
+                let handler s =
+                  try
+                    let len = wb.Abb_intf.Write_buf.len - pos in
+                    let n = Unix.send t ~buf:wb.Abb_intf.Write_buf.buf ~pos ~len ~mode:[] in
+                    let total = total + n in
+                    match n with
+                    | n when n = len -> Future.run_with_state (send' ~total ~pos:0 bufs) s
+                    | n -> Future.run_with_state (send' ~total ~pos:(pos + n) all_bufs) s
+                  with
+                  | Unix.Unix_error (err, _, _) as exn ->
+                      let open Unix in
+                      Future.run_with_state
+                        (Future.Promise.set
+                           p
+                           (Error
+                              (match err with
+                              | ENOTSOCK | EBADF -> `E_bad_file
+                              | EACCES -> `E_access
+                              | ENOBUFS -> `E_no_buffers
+                              | EHOSTUNREACH -> `E_host_unreachable
+                              | EHOSTDOWN -> `E_host_down
+                              | EPIPE -> `E_pipe
+                              | _ -> `Unexpected exn)))
+                        s
+                  | exn -> Future.run_with_state (Future.Promise.set p (Error (`Unexpected exn))) s
+                in
+                let el = El.add_write t handler el in
+                let s = Abb_fut.State.set_state el s in
+                (s, Future.return ()))
       in
       let open Future.Infix_monad in
-      send' 0 bufs >>= fun () -> Future.Promise.future p
+      send' ~total:0 ~pos:0 bufs >>= fun () -> Future.Promise.future p
 
     let nodelay t enabled =
       try
