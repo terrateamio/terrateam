@@ -43,7 +43,7 @@ module El = struct
     change_read : [ `Add | `Del ] Fd_map.t;
     change_write : [ `Add | `Del ] Fd_map.t;
     eventlist : Kqueue.Eventlist.t;
-    exec_duration : float array;
+    exec_duration : float -> unit;
     thread_pool : (Unix.file_descr * Unix.file_descr) Abb_thread_pool.t;
   }
 
@@ -53,7 +53,7 @@ module El = struct
     type t = t_
   end)
 
-  let create () =
+  let create ?(exec_duration = fun _ -> ()) () =
     let t =
       {
         kq = Kqueue.create ();
@@ -66,11 +66,10 @@ module El = struct
         change_read = Fd_map.empty;
         change_write = Fd_map.empty;
         eventlist = Kqueue.Eventlist.create 1024;
-        exec_duration = Array.create_float 1024;
+        exec_duration;
         thread_pool = Abb_thread_pool.create ~capacity:100 ~wait:Unix.pipe;
       }
     in
-    Array.fill t.exec_duration 0 (Array.length t.exec_duration) 0.0;
     t
 
   let destroy t = Abb_thread_pool.destroy t.thread_pool
@@ -160,10 +159,6 @@ module El = struct
         kevent :: acc)
       t.change_write
       changelist
-
-  let update_exec_duration exec_duration time =
-    let spot = Random.int (Array.length exec_duration) in
-    exec_duration.(spot) <- time
 
   let dispatch fd get set s =
     let m = get s in
@@ -274,7 +269,7 @@ module El = struct
     let s = dispatch_timers s in
     let end_time = Mtime_clock.elapsed () in
     let duration = Mtime.Span.(to_float_ns (abs_diff end_time t.mono_time) /. sec_ns) in
-    update_exec_duration (Abb_fut.State.state s).exec_duration duration;
+    (Abb_fut.State.state s).exec_duration duration;
     s
 
   let rec loop s done_fut =
@@ -290,7 +285,7 @@ module Future = El.Future
 module Scheduler = struct
   type t = El.t Abb_fut.State.t
 
-  let create () = Abb_fut.State.create (El.create ())
+  let create ?exec_duration () = Abb_fut.State.create (El.create ?exec_duration ())
   let destroy t = El.destroy (Abb_fut.State.state t)
 
   let run t f =
@@ -302,15 +297,11 @@ module Scheduler = struct
     | (`Det _ | `Aborted | `Exn _) as r -> (t, r)
     | `Undet -> assert false
 
-  let run_with_state f =
-    let t = create () in
+  let run_with_state ?exec_duration f =
+    let t = create ?exec_duration () in
     let t, r = run t f in
     destroy t;
     r
-
-  let exec_duration t =
-    let el = Abb_fut.State.state t in
-    el.El.exec_duration
 end
 
 module Sys = struct

@@ -4,6 +4,19 @@ end)
 
 module Server = Terrat_server.Make (Terratc)
 
+module Metrics = struct
+  module Exec_duration_histogram = Prmths.Histogram (struct
+    let spec = Prmths.Histogram_spec.of_list [ 0.01; 0.05; 0.1; 0.3; 0.5; 0.8; 1.0; 2.0 ]
+  end)
+
+  let namespace = "terrat"
+  let subsystem = "main"
+
+  let exec_duration =
+    let help = "Time scheduler spends processing a loop." in
+    Exec_duration_histogram.v ~help ~namespace ~subsystem "exec_duration"
+end
+
 module Cmdline = struct
   module C = Cmdliner
 
@@ -99,6 +112,10 @@ module Cmdline = struct
   let default_cmd = C.Term.(ret (const (`Help (`Pager, None))))
 end
 
+let exec_duration duration =
+  Metrics.Exec_duration_histogram.observe Metrics.exec_duration duration;
+  if duration >= 0.5 then Logs.info (fun m -> m "EXEC_DURATION : %f" duration)
+
 let server () =
   match Terrat_config.create () with
   | Ok config -> (
@@ -107,7 +124,7 @@ let server () =
         Terrat_storage.create config >>= fun storage -> Server.run config storage
       in
       print_endline (Terrat_config.show config);
-      match Abb.Scheduler.run_with_state run with
+      match Abb.Scheduler.run_with_state ~exec_duration run with
       | `Det () -> ()
       | `Aborted -> assert false
       | `Exn (exn, bt_opt) ->
