@@ -155,6 +155,9 @@ module Decode : sig
   (** How many bytes the decode needs to continue, if it knows it. *)
   val needed_bytes : t -> int option
 
+  (** How many bytes are in the buffer that has been accumulated. *)
+  val buffer_length : t -> int
+
   (** Printers *)
   val pp_err : Format.formatter -> err -> unit
 

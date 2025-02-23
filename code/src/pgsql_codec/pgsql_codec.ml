@@ -440,6 +440,7 @@ module Decode = struct
 
   let frontend_msg t ~pos ~len buf = failwith "nyi"
   let needed_bytes t = if t.needed_bytes < 0 then None else Some t.needed_bytes
+  let buffer_length t = Buffer.length t.buf
 end
 
 module Encode = struct
