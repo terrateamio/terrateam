@@ -850,59 +850,45 @@ module Socket = struct
     | Unix.ADDR_INET (addr, port) -> Abb_intf.Socket.Sockaddr.(Inet { addr; port })
 
   let recvfrom t ~buf ~pos ~len =
-    try
-      let n, addr = Unix.recvfrom t ~buf ~pos ~len ~mode:[] in
-      Future.return (Ok (n, sockaddr_of_unix_sockaddr addr))
-    with
-    | Unix.Unix_error (Unix.EAGAIN, _, _) | Unix.Unix_error (Unix.EWOULDBLOCK, _, _) ->
-        let p =
-          Future.Promise.create
-            ~abort:(fun () ->
-              Future.with_state (fun s ->
-                  let el = Abb_fut.State.state s in
-                  let el =
-                    {
-                      el with
-                      El.reads = Fd_map.remove t el.El.reads;
-                      ignore_reads = t :: el.El.ignore_reads;
-                    }
-                  in
-                  let s = Abb_fut.State.set_state el s in
-                  (s, Future.return ())))
-            ()
-        in
-        let handler s =
-          Future.run_with_state
-            (Future.Promise.set
-               p
-               (try
-                  let n, addr = Unix.recvfrom t ~buf ~pos ~len ~mode:[] in
-                  Ok (n, sockaddr_of_unix_sockaddr addr)
-                with
-               | Unix.Unix_error (err, _, _) as exn ->
-                   let open Unix in
-                   Error
-                     (match err with
-                     | EBADF -> `E_bad_file
-                     | ECONNRESET -> `E_connection_reset
-                     | _ -> `Unexpected exn)
-               | exn -> Error (`Unexpected exn)))
-            s
-        in
-        Future.with_state (fun s ->
-            let el = Abb_fut.State.state s in
-            let el = { el with El.reads = Fd_map.add t handler el.El.reads } in
-            let s = Abb_fut.State.set_state el s in
-            (s, Future.Promise.future p))
-    | Unix.Unix_error (err, _, _) as exn ->
-        let open Unix in
-        Future.return
-          (Error
-             (match err with
-             | EBADF -> `E_bad_file
-             | ECONNRESET -> `E_connection_reset
-             | _ -> `Unexpected exn))
-    | exn -> Future.return (Error (`Unexpected exn))
+    let p =
+      Future.Promise.create
+        ~abort:(fun () ->
+          Future.with_state (fun s ->
+              let el = Abb_fut.State.state s in
+              let el =
+                {
+                  el with
+                  El.reads = Fd_map.remove t el.El.reads;
+                  ignore_reads = t :: el.El.ignore_reads;
+                }
+              in
+              let s = Abb_fut.State.set_state el s in
+              (s, Future.return ())))
+        ()
+    in
+    let handler s =
+      Future.run_with_state
+        (Future.Promise.set
+           p
+           (try
+              let n, addr = Unix.recvfrom t ~buf ~pos ~len ~mode:[] in
+              Ok (n, sockaddr_of_unix_sockaddr addr)
+            with
+           | Unix.Unix_error (err, _, _) as exn ->
+               let open Unix in
+               Error
+                 (match err with
+                 | EBADF -> `E_bad_file
+                 | ECONNRESET -> `E_connection_reset
+                 | _ -> `Unexpected exn)
+           | exn -> Error (`Unexpected exn)))
+        s
+    in
+    Future.with_state (fun s ->
+        let el = Abb_fut.State.state s in
+        let el = { el with El.reads = Fd_map.add t handler el.El.reads } in
+        let s = Abb_fut.State.set_state el s in
+        (s, Future.Promise.future p))
 
   let sendto t ~bufs sockaddr =
     let p =
@@ -1196,55 +1182,43 @@ module Socket = struct
       | exn -> Future.return (Error (`Unexpected exn))
 
     let recv t ~buf ~pos ~len =
-      try Future.return (Ok (Unix.recv t ~buf ~pos ~len ~mode:[])) with
-      | Unix.Unix_error (Unix.EAGAIN, _, _) | Unix.Unix_error (Unix.EWOULDBLOCK, _, _) ->
-          let p =
-            Future.Promise.create
-              ~abort:(fun () ->
-                Future.with_state (fun s ->
-                    let el = Abb_fut.State.state s in
-                    let el =
-                      {
-                        el with
-                        El.reads = Fd_map.remove t el.El.reads;
-                        ignore_reads = t :: el.El.ignore_reads;
-                      }
-                    in
-                    let s = Abb_fut.State.set_state el s in
-                    (s, Future.return ())))
-              ()
-          in
-          let handler s =
-            Future.run_with_state
-              (Future.Promise.set
-                 p
-                 (try Ok (Unix.recv t ~buf ~pos ~len ~mode:[]) with
-                 | Unix.Unix_error (err, _, _) as exn ->
-                     let open Unix in
-                     Error
-                       (match err with
-                       | ENOTSOCK | EBADF -> `E_bad_file
-                       | ECONNRESET -> `E_connection_reset
-                       | ENOTCONN -> `E_not_connected
-                       | _ -> `Unexpected exn)
-                 | exn -> Error (`Unexpected exn)))
-              s
-          in
-          Future.with_state (fun s ->
-              let el = Abb_fut.State.state s in
-              let el = { el with El.reads = Fd_map.add t handler el.El.reads } in
-              let s = Abb_fut.State.set_state el s in
-              (s, Future.Promise.future p))
-      | Unix.Unix_error (err, _, _) as exn ->
-          let open Unix in
-          Future.return
-            (Error
-               (match err with
-               | ENOTSOCK | EBADF -> `E_bad_file
-               | ECONNRESET -> `E_connection_reset
-               | ENOTCONN -> `E_not_connected
-               | _ -> `Unexpected exn))
-      | exn -> Future.return (Error (`Unexpected exn))
+      let p =
+        Future.Promise.create
+          ~abort:(fun () ->
+            Future.with_state (fun s ->
+                let el = Abb_fut.State.state s in
+                let el =
+                  {
+                    el with
+                    El.reads = Fd_map.remove t el.El.reads;
+                    ignore_reads = t :: el.El.ignore_reads;
+                  }
+                in
+                let s = Abb_fut.State.set_state el s in
+                (s, Future.return ())))
+          ()
+      in
+      let handler s =
+        Future.run_with_state
+          (Future.Promise.set
+             p
+             (try Ok (Unix.recv t ~buf ~pos ~len ~mode:[]) with
+             | Unix.Unix_error (err, _, _) as exn ->
+                 let open Unix in
+                 Error
+                   (match err with
+                   | ENOTSOCK | EBADF -> `E_bad_file
+                   | ECONNRESET -> `E_connection_reset
+                   | ENOTCONN -> `E_not_connected
+                   | _ -> `Unexpected exn)
+             | exn -> Error (`Unexpected exn)))
+          s
+      in
+      Future.with_state (fun s ->
+          let el = Abb_fut.State.state s in
+          let el = { el with El.reads = Fd_map.add t handler el.El.reads } in
+          let s = Abb_fut.State.set_state el s in
+          (s, Future.Promise.future p))
 
     let send t ~bufs =
       let p =

@@ -115,9 +115,7 @@ module Io = struct
           ~while_:(function
             | Ok 0 | Error _ -> false
             | Ok _ -> !needed_bytes > 0)
-          ~betwixt:(fun _ ->
-            (* Force a scheduler tick so we don't starve the system *)
-            Abb.Sys.sleep 0.0)
+          ~betwixt:(fun _ -> Abbs_future_combinators.unit)
         >>= function
         | Ok 0 | Error `E_io | Error (`Unexpected _) ->
             conn.connected <- false;
