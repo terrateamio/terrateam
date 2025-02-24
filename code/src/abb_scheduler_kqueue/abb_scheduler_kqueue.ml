@@ -44,7 +44,7 @@ module El = struct
     change_write : [ `Add | `Del ] Fd_map.t;
     eventlist : Kqueue.Eventlist.t;
     exec_duration : float -> unit;
-    thread_pool : (Unix.file_descr * Unix.file_descr) Abb_thread_pool.t;
+    thread_pool : (Unix.file_descr * Unix.file_descr) Abb_domain_pool.t;
   }
 
   type t_ = t
@@ -67,12 +67,15 @@ module El = struct
         change_write = Fd_map.empty;
         eventlist = Kqueue.Eventlist.create 1024;
         exec_duration;
-        thread_pool = Abb_thread_pool.create ~capacity:100 ~wait:Unix.pipe;
+        thread_pool =
+          Abb_domain_pool.create
+            ~capacity:(CCInt.max 2 (Domain.recommended_domain_count ()))
+            ~wait:Unix.pipe;
       }
     in
     t
 
-  let destroy t = Abb_thread_pool.destroy t.thread_pool
+  let destroy t = Abb_domain_pool.destroy t.thread_pool
 
   let add_read fd handler t =
     { t with reads = Fd_map.add fd handler t.reads; change_read = Fd_map.add fd `Add t.change_read }
@@ -360,7 +363,7 @@ module Thread = struct
              ());
           Unix.close trigger
         in
-        let wait, d = Abb_thread_pool.enqueue t.El.thread_pool ~f ~trigger in
+        let wait, d = Abb_domain_pool.enqueue t.El.thread_pool ~f ~trigger in
         let abort () =
           (* It would be nice to kill the thread here but several issues arise,
              including: the thread may have allocated resources it needs to clean
@@ -1536,18 +1539,6 @@ module Process = struct
     | 31 -> Abb_intf.Process.Signal.SIGUSR2
     | n -> Abb_intf.Process.Signal.Num n
 
-  let init_child_process init_args dups =
-    let open Abb_intf.Process in
-    assert (init_args.env = None);
-    assert (init_args.cwd = None);
-    List.iter
-      ~f:(fun dup ->
-        Unix.dup2 ?cloexec:None ~src:(Dup.src dup) ~dst:(Dup.dst dup);
-        Unix.close (Dup.src dup))
-      dups;
-    try Unix.execvp ~prog:init_args.exec_name ~args:(Array.of_list init_args.args)
-    with _ -> exit 255
-
   let wait_on_pid pid =
     Thread.run (fun () ->
         let pid', signal = Unix.waitpid ~mode:[] pid in
@@ -1557,15 +1548,31 @@ module Process = struct
         | Unix.WSIGNALED code -> Abb_intf.Process.Exit_code.Signaled (signal_of_int code)
         | Unix.WSTOPPED code -> Abb_intf.Process.Exit_code.Stopped (signal_of_int code))
 
-  let spawn init_args dups =
+  let spawn ~stdin ~stdout ~stderr init_args =
     try
-      let pid = Unix.fork () in
-      if pid > 0 then (
-        List.iter ~f:(fun dup -> Unix.close (Abb_intf.Process.Dup.src dup)) dups;
-        Ok { pid; exit_code = wait_on_pid pid })
-      else (
-        ignore (init_child_process init_args dups);
-        assert false)
+      let pid =
+        let module P = Abb_intf.Process in
+        match init_args.P.env with
+        | Some env ->
+            let env =
+              CCArray.of_list @@ CCList.map (fun (k, v) -> CCString.concat "=" [ k; v ]) env
+            in
+            Unix.create_process_env
+              ~prog:init_args.P.exec_name
+              ~args:(CCArray.of_list init_args.P.args)
+              ~env
+              ~stdin
+              ~stdout
+              ~stderr
+        | None ->
+            Unix.create_process
+              ~prog:init_args.P.exec_name
+              ~args:(CCArray.of_list init_args.P.args)
+              ~stdin
+              ~stdout
+              ~stderr
+      in
+      Ok { pid; exit_code = wait_on_pid pid }
     with
     | Unix.Unix_error (err, _, _) as exn ->
         let open Unix in
