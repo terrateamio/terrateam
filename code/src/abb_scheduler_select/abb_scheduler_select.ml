@@ -1348,18 +1348,6 @@ module Process = struct
     | 31 -> Abb_intf.Process.Signal.SIGUSR2
     | n -> Abb_intf.Process.Signal.Num n
 
-  let init_child_process init_args dups =
-    let open Abb_intf.Process in
-    assert (init_args.env = None);
-    assert (init_args.cwd = None);
-    List.iter
-      ~f:(fun dup ->
-        Unix.dup2 ?cloexec:None ~src:(Dup.src dup) ~dst:(Dup.dst dup);
-        Unix.close (Dup.src dup))
-      dups;
-    try Unix.execvp ~prog:init_args.exec_name ~args:(Array.of_list init_args.args)
-    with _ -> exit 255
-
   let wait_on_pid pid =
     Thread.run (fun () ->
         let pid', signal = Unix.waitpid ~mode:[] pid in
@@ -1369,15 +1357,31 @@ module Process = struct
         | Unix.WSIGNALED code -> Abb_intf.Process.Exit_code.Signaled (signal_of_int code)
         | Unix.WSTOPPED code -> Abb_intf.Process.Exit_code.Stopped (signal_of_int code))
 
-  let spawn init_args dups =
+  let spawn ~stdin ~stdout ~stderr init_args =
     try
-      let pid = Unix.fork () in
-      if pid > 0 then (
-        List.iter ~f:(fun dup -> Unix.close (Abb_intf.Process.Dup.src dup)) dups;
-        Ok { pid; exit_code = wait_on_pid pid })
-      else (
-        ignore (init_child_process init_args dups);
-        assert false)
+      let pid =
+        let module P = Abb_intf.Process in
+        match init_args.P.env with
+        | Some env ->
+            let env =
+              CCArray.of_list @@ CCList.map (fun (k, v) -> CCString.concat "=" [ k; v ]) env
+            in
+            Unix.create_process_env
+              ~prog:init_args.P.exec_name
+              ~args:(CCArray.of_list init_args.P.args)
+              ~env
+              ~stdin
+              ~stdout
+              ~stderr
+        | None ->
+            Unix.create_process
+              ~prog:init_args.P.exec_name
+              ~args:(CCArray.of_list init_args.P.args)
+              ~stdin
+              ~stdout
+              ~stderr
+      in
+      Ok { pid; exit_code = wait_on_pid pid }
     with
     | Unix.Unix_error (err, _, _) as exn ->
         let open Unix in
