@@ -616,31 +616,10 @@ module Process = struct
     [@@deriving show, eq]
   end
 
-  (** A Dup represents a relationship between two values. This is purely a container that expresses
-      that relationship, it does not create anything.
-
-      The relationship a Dup expresses is that one value should replace another value. The usecase
-      for this is when creating a new process and wanting to reassign [Native.t]s to other ones. For
-      example, replacing [stdin] in the spawned process with one from the parent program. *)
-  module Dup : sig
-    type 'a t
-
-    val create : src:'a -> dst:'a -> 'a t
-    val src : 'a t -> 'a
-    val dst : 'a t -> 'a
-  end = struct
-    type 'a t = 'a * 'a
-
-    let create ~src ~dst = (src, dst)
-    let src = fst
-    let dst = snd
-  end
-
   type t = {
     exec_name : string;
     args : string list;
     env : (string * string) list option;
-    cwd : string option;
   }
   [@@deriving show, eq]
 end
@@ -673,7 +652,7 @@ module type S = sig
   (** {2 System operations} *)
 
   module Sys : sig
-    (** Sleep for the given number of seconds, fractional sections allowed. *)
+    (** Sleep for the given number of seconds, fractional seconds allowed. *)
     val sleep : float -> unit Future.t
 
     (** Get the wallclock time. This is updated only once for each loop of the event loop.
@@ -964,7 +943,12 @@ module type S = sig
         inherited by a spawned process.
 
         @return on success, the handle to the running process *)
-    val spawn : Process.t -> Native.t Process.Dup.t list -> (t, [> Errors.spawn ]) result
+    val spawn :
+      stdin:Native.t ->
+      stdout:Native.t ->
+      stderr:Native.t ->
+      Process.t ->
+      (t, [> Errors.spawn ]) result
 
     (** Get the pid of a process. *)
     val pid : t -> Pid.t

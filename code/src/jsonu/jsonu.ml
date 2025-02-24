@@ -16,7 +16,7 @@ let to_yaml_string json =
   let open Abb.Future.Infix_monad in
   Process.check_output
     ~input:(Yojson.Safe.to_string json)
-    Abb_intf.Process.{ exec_name = "yj"; args = [ "yj"; "-jy" ]; env = None; cwd = None }
+    Abb_intf.Process.{ exec_name = "yj"; args = [ "yj"; "-jy" ]; env = None }
   >>= function
   | Ok (stdout, _) -> Abb.Future.return (Ok stdout)
   | Error (#Abb_process.check_output_err as err) -> Abb.Future.return (Error err)
@@ -25,7 +25,7 @@ let of_yaml_string yaml_str =
   let open Abb.Future.Infix_monad in
   Process.check_output
     ~input:yaml_str
-    Abb_intf.Process.{ exec_name = "yj"; args = [ "yj" ]; env = None; cwd = None }
+    Abb_intf.Process.{ exec_name = "yj"; args = [ "yj" ]; env = None }
   >>= function
   | Ok (stdout, _) -> (
       try Abb.Future.return (Ok (Yojson.Safe.from_string stdout))
