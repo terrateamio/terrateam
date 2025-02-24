@@ -133,7 +133,11 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) : sig
   module Response = Response
   module Options = Options
 
-  type request_err = [ `Curl_request_err of string ] [@@deriving show, eq]
+  type request_err =
+    [ `Curl_request_err of string
+    | `Timeout
+    ]
+  [@@deriving show, eq]
 
   val call :
     ?options:Options.t ->

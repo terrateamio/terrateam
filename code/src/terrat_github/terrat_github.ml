@@ -1,3 +1,7 @@
+let src = Logs.Src.create "terrat_github"
+
+module Logs = (val Logs.src_log src : Logs.LOG)
+
 let one_minute = Duration.(to_f (of_min 1))
 let terrateam_workflow_name = "Terrateam Workflow"
 let terrateam_workflow_path = ".github/workflows/terrateam.yml"
@@ -21,6 +25,10 @@ module Metrics = struct
   let rate_limit_retry_wait_seconds =
     let help = "Number of seconds a call has spent waiting due to rate limit" in
     Call_retry_wait_histograph.v ~help ~namespace ~subsystem "rate_limit_retry_wait_seconds"
+
+  let rate_limit_remaining_count =
+    let help = "Number of calls remaining in the rate limit window." in
+    Prmths.Gauge.v ~help ~namespace ~subsystem "rate_limit_remaining_count"
 
   let fn_call_total =
     let help = "Number of calls of a function" in
@@ -168,13 +176,15 @@ let rate_limit_wait resp =
   let get k = CCList.Assoc.get ~eq:CCString.equal_caseless k headers in
   if Openapi.Response.status resp = 403 then
     match (get "retry-after", get "x-ratelimit-remaining", get "x-ratelimit-reset") with
-    | (Some _ as retry_after), _, _ ->
+    | (Some ra as retry_after), _, _ ->
+        Logs.debug (fun m -> m "RATE_LIMIT : RETRY_AFTER : %s" ra);
         Abb.Future.return
           (CCOption.map_or
              ~default:(Some one_minute)
              CCFun.(CCInt.of_string %> CCOption.map CCFloat.of_int)
              retry_after)
     | None, Some "0", Some retry_time -> (
+        Logs.debug (fun m -> m "RATE_LIMIT : RETRY_TIME : %s" retry_time);
         match CCFloat.of_string_opt retry_time with
         | Some retry_time ->
             let open Abb.Future.Infix_monad in
@@ -185,6 +195,13 @@ let rate_limit_wait resp =
         | None -> Abb.Future.return (Some one_minute))
     | _, _, _ -> Abb.Future.return None
   else Abb.Future.return None
+
+let get_rate_limit_remaining resp =
+  let headers = Openapi.Response.headers resp in
+  let get k = CCList.Assoc.get ~eq:CCString.equal_caseless k headers in
+  match get "x-ratelimit-remaining" with
+  | Some remaining -> CCOption.map_or ~default:(-1.0) CCFloat.of_int @@ CCInt.of_string remaining
+  | None -> -1.0
 
 let create config auth =
   Githubc2_abb.create
@@ -208,7 +225,12 @@ let retry_wait default_wait resp =
 
 let call ?(tries = 3) t req =
   Abbs_future_combinators.retry
-    ~f:(fun () -> Githubc2_abb.call t req)
+    ~f:(fun () ->
+      let open Abbs_future_combinators.Infix_result_monad in
+      Githubc2_abb.call t req
+      >>= fun resp ->
+      Prmths.Gauge.set Metrics.rate_limit_remaining_count (get_rate_limit_remaining resp);
+      Abb.Future.return (Ok resp))
     ~while_:
       (Abbs_future_combinators.finite_tries tries (function
         | Error _ -> true
