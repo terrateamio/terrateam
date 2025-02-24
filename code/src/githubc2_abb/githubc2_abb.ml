@@ -19,7 +19,11 @@ module Io = struct
       | `Post -> `POST body
     in
     let headers' = Http.Headers.of_list headers in
-    Http.call ~headers:headers' meth' uri
+    Http.call
+      ~options:Http.Options.(with_opt (Timeout (Duration.of_sec 4)) default)
+      ~headers:headers'
+      meth'
+      uri
     >>= function
     | Ok (resp, body) ->
         let headers = resp |> Http.Response.headers |> Http.Headers.to_list in
