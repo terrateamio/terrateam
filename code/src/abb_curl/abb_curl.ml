@@ -1,6 +1,4 @@
-external unsafe_int_of_file_descr : Unix.file_descr -> int = "%identity"
-external unsafe_file_descr_of_int : int -> Unix.file_descr = "%identity"
-
+let () = Curl.global_init Curl.CURLINIT_GLOBALALL
 let src = Logs.Src.create "abb_curl"
 
 module Logs = (val Logs.src_log src : Logs.LOG)
@@ -345,11 +343,24 @@ module Response = struct
 end
 
 module Options = struct
-  type opt = Follow_location
+  type opt =
+    | Follow_location
+    | Http_version of [ `Http2 | `Http1_1 ]
+
   type t = opt list
 
   let default = [ Follow_location ]
-  let with_opt opt t = opt :: t
+
+  let with_opt opt t =
+    opt
+    :: CCList.remove
+         ~eq:(fun v1 v2 ->
+           match (v1, v2) with
+           | Http_version _, Http_version _ -> true
+           | v1, v2 -> v1 = v2)
+         ~key:opt
+         t
+
   let without_opt opt = CCList.filter (( <> ) opt)
 end
 
@@ -372,71 +383,148 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
   module Status = Status
   module Headers = Headers
   module Response = Response
+  module Options = Options
 
   type request_err =
     [ `Closed
     | `Cancelled
+    | `Curl_err of string
     ]
   [@@deriving show, eq]
 
   module Connector = struct
     module Id_map = CCMap.Make (CCString)
 
-    module Fd_map = CCMap.Make (struct
-      type t = Unix.file_descr
-
-      let compare = compare
-    end)
-
-    module Event = struct
-      type t =
-        | Socket of (Unix.file_descr * Curl.Multi.poll)
-        | Header of (Id.t * (string * string))
-        | Write of (Id.t * string)
-        | Set_timeout of int
-        | Close_socket of Unix.file_descr
+    module Request = struct
+      type t = {
+        options : Options.t;
+        headers : Headers.t;
+        body_reader : string -> unit Abb.Future.t;
+        meth_ : Method.t;
+        uri : Uri.t;
+        id : Id.t;
+      }
     end
 
-    module Server = struct
-      module Msg = struct
-        module Request = struct
-          type t = {
-            options : Options.t;
-            headers : Headers.t;
-            body_reader : string -> unit Abb.Future.t;
-            meth_ : Method.t;
-            uri : Uri.t;
-            id_p : Id.t Abb.Future.Promise.t;
-            p : (Response.t, request_err) result Abb.Future.Promise.t;
-          }
-        end
+    module In_event = struct
+      type t =
+        | Request of Request.t
+        | Cancel of Id.t
+        | Shutdown
+    end
 
-        type t =
-          | Request of Request.t
-          | Cancel of Id.t
-          | Iterate_in of Unix.file_descr
-          | Iterate_out of Unix.file_descr
-          | Timeout
-      end
+    module Out_event = struct
+      type t =
+        | Ret of (Id.t * (Response.t, request_err) result)
+        | Body of (Id.t * string)
+    end
 
+    let trigger_bytes = Bytes.of_string "0"
+    let trigger_eventfd eventfd = ignore (UnixLabels.write eventfd ~buf:trigger_bytes ~pos:0 ~len:1)
+
+    let consume_eventfd eventfd =
+      let buf = Bytes.create 4 in
+      try ignore (UnixLabels.read eventfd ~buf ~pos:0 ~len:(Bytes.length buf))
+      with Unix.Unix_error (Unix.EAGAIN, _, _) | Unix.Unix_error (Unix.EWOULDBLOCK, _, _) -> ()
+
+    module Loop = struct
       type t = {
+        kq : Kqueue.t;
+        eventlist : Kqueue.Eventlist.t;
+        trigger_eventfd : Unix.file_descr;
+        wait_eventfd : Unix.file_descr;
+        in_event : In_event.t Queue.t;
+        out_event : Out_event.t Queue.t;
+        mutex : Mutex.t;
         mt : Curl.Multi.mt;
-        requests : Msg.Request.t Id_map.t;
-        responses : Response.t Id_map.t;
-        handles : Curl.t Id_map.t;
-        fds_in : unit Abb.Future.t Fd_map.t;
-        fds_out : unit Abb.Future.t Fd_map.t;
-        ev_queue : Event.t Queue.t; (* Watch your fingers, this queue is mutable *)
-        id_gen : Id.Gen.t;
-        timeout : unit Abb.Future.t option;
+        mutable requests : Request.t Id_map.t;
+        mutable responses : Response.t Id_map.t;
+        mutable handles : Curl.t Id_map.t;
+        mutable timeout : Duration.t option;
+        mutable shutdown : bool;
       }
+
+      let socket_function t fd poll =
+        match poll with
+        | Curl.Multi.POLL_NONE -> ()
+        | Curl.Multi.POLL_IN ->
+            Logs.debug (fun m ->
+                m "SOCKET_FUNCTION : fd=%d : POLL_IN" (Kqueue.unsafe_int_of_file_descr fd));
+            let changelist =
+              Kqueue.Eventlist.of_list
+                [
+                  Kqueue.Change.(
+                    Filter.to_kevent
+                      Action.(to_t [ Flag.Add ])
+                      (Filter.Read (Kqueue.unsafe_int_of_file_descr fd)));
+                ]
+            in
+            let ret =
+              Kqueue.kevent t.kq ~changelist ~eventlist:Kqueue.Eventlist.null ~timeout:None
+            in
+            Logs.debug (fun m -> m "RET : %d" ret)
+        | Curl.Multi.POLL_OUT ->
+            Logs.debug (fun m ->
+                m "SOCKET_FUNCTION : fd=%d : POLL_OUT" (Kqueue.unsafe_int_of_file_descr fd));
+            let changelist =
+              Kqueue.Eventlist.of_list
+                [
+                  Kqueue.Change.(
+                    Filter.to_kevent
+                      Action.(to_t [ Flag.Add ])
+                      (Filter.Write (Kqueue.unsafe_int_of_file_descr fd)));
+                ]
+            in
+            let ret =
+              Kqueue.kevent t.kq ~changelist ~eventlist:Kqueue.Eventlist.null ~timeout:None
+            in
+            Logs.debug (fun m -> m "RET : %d" ret)
+        | Curl.Multi.POLL_INOUT ->
+            Logs.debug (fun m ->
+                m "SOCKET_FUNCTION : fd=%d : POLL_INOUT" (Kqueue.unsafe_int_of_file_descr fd));
+            let changelist =
+              Kqueue.Eventlist.of_list
+                [
+                  Kqueue.Change.(
+                    Filter.to_kevent
+                      Action.(to_t [ Flag.Add ])
+                      (Filter.Read (Kqueue.unsafe_int_of_file_descr fd)));
+                  Kqueue.Change.(
+                    Filter.to_kevent
+                      Action.(to_t [ Flag.Add ])
+                      (Filter.Write (Kqueue.unsafe_int_of_file_descr fd)));
+                ]
+            in
+            let ret =
+              Kqueue.kevent t.kq ~changelist ~eventlist:Kqueue.Eventlist.null ~timeout:None
+            in
+            Logs.debug (fun m -> m "RET : %d" ret)
+        | Curl.Multi.POLL_REMOVE ->
+            Logs.debug (fun m ->
+                m "SOCKET_FUNCTION : fd=%d : POLL_REMOVE" (Kqueue.unsafe_int_of_file_descr fd));
+            let changelist =
+              Kqueue.Eventlist.of_list
+                [
+                  Kqueue.Change.(
+                    Filter.to_kevent
+                      Action.(to_t [ Flag.Delete ])
+                      (Filter.Read (Kqueue.unsafe_int_of_file_descr fd)));
+                  Kqueue.Change.(
+                    Filter.to_kevent
+                      Action.(to_t [ Flag.Delete ])
+                      (Filter.Write (Kqueue.unsafe_int_of_file_descr fd)));
+                ]
+            in
+            let ret =
+              Kqueue.kevent t.kq ~changelist ~eventlist:Kqueue.Eventlist.null ~timeout:None
+            in
+            Logs.debug (fun m -> m "RET : %d" ret)
 
       let maybe_set_body_writer handle = function
         | Some body ->
             let pos = ref 0 in
             let length = CCString.length body in
             Curl.set_readfunction handle (fun n ->
-                Logs.debug (fun m -> m "readfunction");
                 if !pos < length then (
                   let len = length - !pos in
                   let pos' = !pos in
@@ -446,6 +534,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
         | None -> ()
 
       let setup_request handle meth_ headers uri =
+        Logs.debug (fun _ -> Curl.set_verbose handle true);
         Curl.set_url handle (Uri.to_string uri);
         (match meth_ with
         | `GET -> ()
@@ -466,139 +555,103 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
             maybe_set_body_writer handle body);
         let response_body = Buffer.create 100 in
         Curl.set_writefunction handle (fun s ->
-            Logs.debug (fun m -> m "writefunction : %s" s);
             Buffer.add_string response_body s;
             CCString.length s);
         Curl.set_httpheader
           handle
           (CCList.map (fun (k, v) -> k ^ ": " ^ v) (Headers.to_list headers))
 
-      let setup_response handle queue id =
+      let setup_response t handle id =
         Curl.set_headerfunction handle (fun s ->
-            Logs.debug (fun m -> m "header : %s" s);
             match CCString.Split.left ~by:":" s with
-            | Some (key, v) ->
-                Queue.add (Event.Header (id, (CCString.trim key, CCString.trim v))) queue;
-                CCString.length s
+            | Some (k, v) -> (
+                let k = CCString.trim k in
+                let v = CCString.trim v in
+                match Id_map.get id t.responses with
+                | Some ({ Response.headers; _ } as resp) ->
+                    t.responses <-
+                      Id_map.add
+                        id
+                        { resp with Response.headers = Headers.add k v headers }
+                        t.responses;
+                    CCString.length s
+                | None ->
+                    t.responses <-
+                      Id_map.add
+                        id
+                        {
+                          Response.status = `Internal_server_error;
+                          headers = Headers.of_list [ (k, v) ];
+                        }
+                        t.responses;
+                    CCString.length s)
             | None -> CCString.length s);
         Curl.set_writefunction handle (fun s ->
-            Queue.add (Event.Write (id, s)) queue;
+            Mutex.lock t.mutex;
+            Queue.add (Out_event.Body (id, s)) t.out_event;
+            Mutex.unlock t.mutex;
             CCString.length s)
 
-      let start_fd_listen fd w wait msg =
-        let open Abb.Future.Infix_monad in
-        Abb.Future.fork
-          (let fd' = Abb.Socket.Tcp.of_native fd in
-           Logs.debug (fun m -> m "wait fd : %d" (unsafe_int_of_file_descr fd));
-           wait fd'
-           >>= fun () ->
-           Logs.debug (fun m -> m "trigger fd : %d" (unsafe_int_of_file_descr fd));
-           Fc.ignore (Channel.send w msg))
+      let process_request
+          t
+          ({ Request.options; headers; body_reader; meth_; uri; id; _ } as request) =
+        let handle = Curl.init () in
+        t.requests <- Id_map.add id request t.requests;
+        t.responses <-
+          Id_map.add
+            id
+            { Response.status = `Internal_server_error; headers = Headers.empty }
+            t.responses;
+        t.handles <- Id_map.add id handle t.handles;
+        CCList.iter
+          (function
+            | Options.Follow_location -> Curl.set_followlocation handle true
+            | Options.Http_version `Http1_1 -> Curl.set_httpversion handle Curl.HTTP_VERSION_1_1
+            | Options.Http_version `Http2 -> Curl.set_httpversion handle Curl.HTTP_VERSION_2)
+          options;
+        (* Use our id to track this *)
+        Curl.setopt handle (Curl.CURLOPT_PRIVATE id);
+        setup_request handle meth_ headers uri;
+        setup_response t handle id;
+        Curl.Multi.add t.mt handle
 
-      let stop_listener fd m =
-        match Fd_map.get fd m with
-        | Some fut ->
-            let open Abb.Future.Infix_monad in
-            Logs.debug (fun m -> m "stop_listener : %d" (unsafe_int_of_file_descr fd));
-            (match Abb.Future.state fut with
-            | `Aborted -> Logs.debug (fun m -> m "aborted")
-            | `Undet -> Logs.debug (fun m -> m "undet")
-            | `Exn _ -> Logs.debug (fun m -> m "exn")
-            | `Det _ -> Logs.debug (fun m -> m "det"));
-            Abb.Future.abort fut
-            >>= fun () ->
-            (* Ensure that the abort has time to remove the listening socket
-               because we might close it as part of this scheduler iteration *)
-            Abb.Sys.sleep 0.0 >>= fun () -> Abb.Future.return (Fd_map.remove fd m)
-        | None -> Abb.Future.return m
+      let process_cancel t id =
+        match Id_map.get id t.handles with
+        | Some handle ->
+            Curl.Multi.remove t.mt handle;
+            Curl.cleanup handle;
+            t.requests <- Id_map.remove id t.requests;
+            t.responses <- Id_map.remove id t.responses;
+            t.handles <- Id_map.remove id t.handles
+        | None -> ()
 
-      let rec process_event t w =
-        match Queue.take_opt t.ev_queue with
-        | Some (Event.Header (id, (k, v))) -> (
-            match Id_map.get id t.responses with
-            | Some ({ Response.headers; _ } as resp) ->
-                let resp = { resp with Response.headers = Headers.add k v headers } in
-                let t = { t with responses = Id_map.add id resp t.responses } in
-                process_event t w
-            | None ->
-                let resp =
-                  { Response.status = `Internal_server_error; headers = Headers.of_list [ (k, v) ] }
-                in
-                let t = { t with responses = Id_map.add id resp t.responses } in
-                process_event t w)
-        | Some (Event.Socket (fd, poll)) -> (
-            let open Abb.Future.Infix_monad in
-            match poll with
-            | Curl.Multi.POLL_NONE ->
-                Logs.debug (fun m -> m "socket : poll_none : %d" (unsafe_int_of_file_descr fd));
-                assert false
-            | Curl.Multi.POLL_IN ->
-                Logs.debug (fun m -> m "socket : poll_in : %d" (unsafe_int_of_file_descr fd));
-                start_fd_listen fd w Abb.Socket.readable (Msg.Iterate_in fd)
-                >>= fun fut ->
-                let t = { t with fds_in = Fd_map.add fd fut t.fds_in } in
-                process_event t w
-            | Curl.Multi.POLL_OUT ->
-                Logs.debug (fun m -> m "socket : poll_out : %d" (unsafe_int_of_file_descr fd));
-                start_fd_listen fd w Abb.Socket.writable (Msg.Iterate_out fd)
-                >>= fun fut ->
-                let t = { t with fds_in = Fd_map.add fd fut t.fds_out } in
-                process_event t w
-            | Curl.Multi.POLL_INOUT ->
-                Logs.debug (fun m -> m "socket : poll_inout : %d" (unsafe_int_of_file_descr fd));
-                start_fd_listen fd w Abb.Socket.readable (Msg.Iterate_in fd)
-                >>= fun fut ->
-                let t = { t with fds_in = Fd_map.add fd fut t.fds_in } in
-                start_fd_listen fd w Abb.Socket.writable (Msg.Iterate_out fd)
-                >>= fun fut ->
-                let t = { t with fds_in = Fd_map.add fd fut t.fds_out } in
-                process_event t w
-            | Curl.Multi.POLL_REMOVE ->
-                Logs.debug (fun m -> m "socket : poll_remove : %d" (unsafe_int_of_file_descr fd));
-                stop_listener fd t.fds_in
-                >>= fun fds_in ->
-                stop_listener fd t.fds_out
-                >>= fun fds_out ->
-                let t = { t with fds_in; fds_out } in
-                process_event t w)
-        | Some (Event.Write (id, s)) -> (
-            let open Abb.Future.Infix_monad in
-            match Id_map.get id t.requests with
-            | Some { Msg.Request.body_reader; _ } -> body_reader s >>= fun () -> process_event t w
-            | None -> process_event t w)
-        | Some (Event.Set_timeout timeout) ->
-            let open Abb.Future.Infix_monad in
-            (match t.timeout with
-            | Some fut -> Abb.Future.abort fut
-            | None -> Abb.Future.return ())
-            >>= fun () ->
-            if timeout >= 0 then
-              Abb.Future.fork
-                (Abb.Sys.sleep Duration.(to_f (of_ms timeout))
-                >>= fun () ->
-                Logs.debug (fun m -> m "firing timeout");
-                Fc.ignore (Channel.send w Msg.Timeout))
-              >>= fun fut ->
-              let t = { t with timeout = Some fut } in
-              process_event t w
-            else
-              let open Abb.Future.Infix_monad in
-              Fc.ignore (Channel.send w Msg.Timeout) >>= fun () -> process_event t w
-        | Some (Event.Close_socket fd) ->
-            let open Abb.Future.Infix_monad in
-            Logs.debug (fun m -> m "close_socket : %d" (unsafe_int_of_file_descr fd));
-            stop_listener fd t.fds_in
-            >>= fun fds_in ->
-            stop_listener fd t.fds_out
-            >>= fun fds_out ->
-            let t = { t with fds_in; fds_out } in
-            let fd = Abb.Socket.Tcp.of_native fd in
-            Abb.Socket.close fd >>= fun _ -> process_event t w
-        | None -> Abb.Future.return t
+      let process_shutdown t =
+        Id_map.iter (fun id _ -> process_cancel t id) t.handles;
+        Curl.Multi.cleanup t.mt;
+        t.shutdown <- true
 
-      let rec iterate_removed t =
+      let trigger_out_events t =
+        Mutex.lock t.mutex;
+        if Queue.length t.out_event > 0 then trigger_eventfd t.trigger_eventfd;
+        Mutex.unlock t.mutex
+
+      let rec process_in_events t =
+        Mutex.lock t.mutex;
+        let event = Queue.take_opt t.in_event in
+        Mutex.unlock t.mutex;
+        match event with
+        | Some (In_event.Request request) ->
+            process_request t request;
+            process_in_events t
+        | Some (In_event.Cancel id) ->
+            process_cancel t id;
+            process_in_events t
+        | Some In_event.Shutdown -> process_shutdown t
+        | None -> ()
+
+      let rec process_finished t =
         match Curl.Multi.remove_finished t.mt with
-        | Some (handle, exit_code) -> (
+        | Some (handle, exit_code) when exit_code = Curl.CURLE_OK -> (
             let id =
               match Curl.getinfo handle Curl.CURLINFO_PRIVATE with
               | Curl.CURLINFO_String id -> id
@@ -619,207 +672,318 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
               | Curl.CURLINFO_Socket _ -> assert false
               | Curl.CURLINFO_Version _ -> assert false
             in
-            Logs.debug (fun m -> m "removed : %s : %s" id (Status.to_string status));
             Curl.cleanup handle;
-            match (Id_map.get id t.requests, Id_map.get id t.responses) with
-            | Some { Msg.Request.p; _ }, Some resp ->
-                let open Abb.Future.Infix_monad in
-                let t =
+            match Id_map.get id t.responses with
+            | Some resp ->
+                t.responses <- Id_map.remove id t.responses;
+                t.requests <- Id_map.remove id t.requests;
+                t.handles <- Id_map.remove id t.handles;
+                Mutex.lock t.mutex;
+                Queue.add (Out_event.Ret (id, Ok { resp with Response.status })) t.out_event;
+                Mutex.unlock t.mutex;
+                process_finished t
+            | None -> assert false)
+        | Some (handle, exit_code) -> (
+            let id =
+              match Curl.getinfo handle Curl.CURLINFO_PRIVATE with
+              | Curl.CURLINFO_String id -> id
+              | Curl.CURLINFO_Long _ -> assert false
+              | Curl.CURLINFO_Double _ -> assert false
+              | Curl.CURLINFO_StringList _ -> assert false
+              | Curl.CURLINFO_StringListList _ -> assert false
+              | Curl.CURLINFO_Socket _ -> assert false
+              | Curl.CURLINFO_Version _ -> assert false
+            in
+            match Id_map.get id t.responses with
+            | Some resp ->
+                t.responses <- Id_map.remove id t.responses;
+                t.requests <- Id_map.remove id t.requests;
+                t.handles <- Id_map.remove id t.handles;
+                Mutex.lock t.mutex;
+                Queue.add
+                  (Out_event.Ret (id, Error (`Curl_err (Curl.strerror exit_code))))
+                  t.out_event;
+                Mutex.unlock t.mutex;
+                process_finished t
+            | None -> assert false)
+        | None -> ()
+
+      let rec loop t =
+        let timeout =
+          CCOption.map
+            (fun duration ->
+              let sec = Duration.to_f duration in
+              let frac, sec = modf sec in
+              let nsec = frac *. 1e9 in
+              Kqueue.Timeout.create ~sec:(CCFloat.to_int sec) ~nsec:(CCFloat.to_int nsec))
+            t.timeout
+        in
+        Logs.debug (fun m -> m "WAIT : timeout=%a" (CCOption.pp Duration.pp) t.timeout);
+        let start = Mtime_clock.elapsed () in
+        let ret =
+          Kqueue.kevent t.kq ~changelist:Kqueue.Eventlist.null ~eventlist:t.eventlist ~timeout
+        in
+        assert (ret >= 0);
+        let end_ = Mtime_clock.elapsed () in
+        let wait_time = Mtime.Span.(to_float_ns (abs_diff start end_)) /. 1e9 in
+        t.timeout <-
+          CCOption.map
+            (fun timeout -> Duration.of_f (CCFloat.max 0.0 (Duration.to_f timeout -. wait_time)))
+            t.timeout;
+        if ret > 0 then (
+          let eventfd_event = ref false in
+          Kqueue.Eventlist.iter
+            ~f:(fun event ->
+              match Kqueue.Event.of_kevent event with
+              | Kqueue.Event.Read r
+                when Kqueue.unsafe_file_descr_of_int r.Kqueue.Event.Read.descr = t.wait_eventfd ->
+                  consume_eventfd t.wait_eventfd;
+                  eventfd_event := true;
+                  ()
+              | Kqueue.Event.Read r ->
+                  let fd = Kqueue.unsafe_file_descr_of_int r.Kqueue.Event.Read.descr in
+                  ignore (Curl.Multi.action t.mt fd Curl.Multi.EV_IN)
+              | Kqueue.Event.Write w ->
+                  let fd = Kqueue.unsafe_file_descr_of_int w.Kqueue.Event.Write.descr in
+                  ignore (Curl.Multi.action t.mt fd Curl.Multi.EV_OUT)
+              | _ -> ())
+            t.eventlist;
+          if !eventfd_event && ret = 1 then Curl.Multi.action_timeout t.mt)
+        else Curl.Multi.action_timeout t.mt;
+        process_in_events t;
+        Curl.Multi.action_timeout t.mt;
+        if not t.shutdown then (
+          process_finished t;
+          trigger_out_events t;
+          loop t)
+
+      let start () =
+        let wait_loop_eventfd, trigger_server_eventfd = Unix.pipe ~cloexec:true () in
+        let wait_server_eventfd, trigger_loop_eventfd = Unix.pipe ~cloexec:true () in
+        UnixLabels.set_nonblock wait_loop_eventfd;
+        UnixLabels.set_nonblock trigger_loop_eventfd;
+        UnixLabels.set_nonblock wait_server_eventfd;
+        UnixLabels.set_nonblock trigger_server_eventfd;
+        let t =
+          {
+            kq = Kqueue.create ();
+            eventlist = Kqueue.Eventlist.create 1024;
+            trigger_eventfd = trigger_loop_eventfd;
+            wait_eventfd = wait_loop_eventfd;
+            in_event = Queue.create ();
+            out_event = Queue.create ();
+            mutex = Mutex.create ();
+            mt = Curl.Multi.create ();
+            requests = Id_map.empty;
+            responses = Id_map.empty;
+            handles = Id_map.empty;
+            timeout = None;
+            shutdown = false;
+          }
+        in
+        Curl.Multi.set_socket_function t.mt (socket_function t);
+        Curl.Multi.set_timer_function t.mt (function
+          | -1 ->
+              Logs.debug (fun m -> m "TIMER : DISABLE");
+              t.timeout <- None
+          | timeout ->
+              Logs.debug (fun m -> m "TIMER : SET : %d" timeout);
+              t.timeout <- Some (Duration.of_ms timeout));
+        ignore
+          (Domain.spawn (fun () ->
+               try
+                 Kqueue.Eventlist.set_from_list
+                   t.eventlist
+                   [
+                     Kqueue.Change.(
+                       Filter.to_kevent
+                         Action.(to_t [ Flag.Add ])
+                         (Filter.Read (Kqueue.unsafe_int_of_file_descr t.wait_eventfd)));
+                   ];
+                 let ret =
+                   Kqueue.kevent
+                     t.kq
+                     ~changelist:t.eventlist
+                     ~eventlist:Kqueue.Eventlist.null
+                     ~timeout:None
+                 in
+                 if ret <> 0 then raise (Failure "kevent error");
+                 loop t
+               with exn -> Logs.err (fun m -> m "%s" (Printexc.to_string exn))));
+        (wait_server_eventfd, trigger_server_eventfd, t.mutex, t.in_event, t.out_event)
+    end
+
+    module Server = struct
+      module Msg = struct
+        type t =
+          | Request of {
+              request : Request.t;
+              p : (Response.t, request_err) result Abb.Future.Promise.t;
+            }
+          | Cancel of Id.t
+          | Iterate
+      end
+
+      type t = {
+        wait_eventfd : Unix.file_descr;
+        trigger_eventfd : Unix.file_descr;
+        mutex : Mutex.t;
+        in_event : In_event.t Queue.t;
+        out_event : Out_event.t Queue.t;
+        iterate_fut : unit Abb.Future.t;
+        body_readers : (string -> unit Abb.Future.t) Id_map.t;
+        responses : (Request.t * (Response.t, request_err) result Abb.Future.Promise.t) Id_map.t;
+      }
+
+      let rec process_events t =
+        Mutex.lock t.mutex;
+        let event = Queue.take_opt t.out_event in
+        Mutex.unlock t.mutex;
+        match event with
+        | Some (Out_event.Ret (id, ret)) -> (
+            let open Abb.Future.Infix_monad in
+            match Id_map.get id t.responses with
+            | Some (request, p) ->
+                Logs.debug (fun m -> m "RET : id=%s : uri=%a" id Uri.pp request.Request.uri);
+                Abb.Future.Promise.set p ret
+                >>= fun () ->
+                process_events
                   {
                     t with
+                    body_readers = Id_map.remove id t.body_readers;
                     responses = Id_map.remove id t.responses;
-                    requests = Id_map.remove id t.requests;
-                    handles = Id_map.remove id t.handles;
                   }
-                in
-                let resp = { resp with Response.status } in
-                Abb.Future.Promise.set p (Ok resp) >>= fun () -> iterate_removed t
-            | _, _ ->
-                Logs.debug (fun m -> m "impossible");
-                assert false)
+            | None -> process_events t)
+        | Some (Out_event.Body (id, string)) -> (
+            let open Abb.Future.Infix_monad in
+            match Id_map.get id t.body_readers with
+            | Some body_reader -> body_reader string >>= fun () -> process_events t
+            | None -> process_events t)
         | None -> Abb.Future.return t
 
-      let run_iter t w =
-        let open Abb.Future.Infix_monad in
-        Logs.debug (fun m -> m "perform");
-        let still_running = Curl.Multi.perform t.mt in
-        Logs.debug (fun m -> m "still_running : %d" still_running);
-        process_event t w >>= fun t -> iterate_removed t
-
       let handle_msg t w r = function
-        | Msg.Request
-            ({ Msg.Request.options; headers; body_reader; meth_; uri; id_p; _ } as request) ->
-            let open Abb.Future.Infix_monad in
-            let id, id_gen = Id.Gen.next t.id_gen in
-            Logs.debug (fun m -> m "request : %a : %s" Uri.pp uri id);
-            Abb.Future.Promise.set id_p id
-            >>= fun () ->
-            let handle = Curl.init () in
-            Logs.debug (fun m ->
-                Curl.set_verbose handle true;
-                m "verbose");
+        | Msg.Request { request; p } ->
+            let id = request.Request.id in
+            Logs.debug (fun m -> m "MSG : REQUEST : id=%s : uri=%a" id Uri.pp request.Request.uri);
+            let body_reader = request.Request.body_reader in
             let t =
               {
                 t with
-                id_gen;
-                requests = Id_map.add id request t.requests;
-                responses =
-                  Id_map.add
-                    id
-                    { Response.status = `Internal_server_error; headers = Headers.empty }
-                    t.responses;
-                handles = Id_map.add id handle t.handles;
+                body_readers = Id_map.add id body_reader t.body_readers;
+                responses = Id_map.add id (request, p) t.responses;
               }
             in
-            CCList.iter
-              (function
-                | Options.Follow_location -> Curl.set_followlocation handle true)
-              options;
-            (* Use our id to track this *)
-            Curl.setopt handle (Curl.CURLOPT_PRIVATE id);
-            setup_request handle meth_ headers uri;
-            setup_response handle t.ev_queue id;
-            Curl.Multi.add t.mt handle;
+            Mutex.lock t.mutex;
+            Queue.add (In_event.Request request) t.in_event;
+            Mutex.unlock t.mutex;
+            trigger_eventfd t.trigger_eventfd;
             Abb.Future.return t
-        | Msg.Cancel id -> (
-            Logs.debug (fun m -> m "canceling : %s" id);
-            match Id_map.get id t.handles with
-            | Some handle ->
-                let open Abb.Future.Infix_monad in
-                Curl.Multi.remove t.mt handle;
-                (match Id_map.get id t.requests with
-                | Some { Msg.Request.p; uri; _ } ->
-                    Logs.debug (fun m -> m "canceled : %s : %a" id Uri.pp uri);
-                    Abb.Future.Promise.set p (Error `Cancelled)
-                | None -> Abb.Future.return ())
-                >>= fun () ->
-                Abb.Future.return
-                  {
-                    t with
-                    requests = Id_map.remove id t.requests;
-                    responses = Id_map.remove id t.responses;
-                    handles = Id_map.remove id t.handles;
-                  }
-            | None -> Abb.Future.return t)
-        | Msg.Iterate_in fd ->
+        | Msg.Cancel id ->
             let open Abb.Future.Infix_monad in
-            Logs.debug (fun m -> m "iterate_in : %d" (unsafe_int_of_file_descr fd));
-            (* TODO: Handle errors *)
-            ignore (Curl.Multi.action t.mt fd Curl.Multi.EV_IN);
-            start_fd_listen fd w Abb.Socket.readable (Msg.Iterate_in fd)
-            >>= fun fut ->
-            let t = { t with fds_in = Fd_map.add fd fut t.fds_in } in
-            Abb.Future.return t
-        | Msg.Iterate_out fd ->
-            let open Abb.Future.Infix_monad in
-            Logs.debug (fun m -> m "iterate_out : %d" (unsafe_int_of_file_descr fd));
-            (* TODO: Handle errors *)
-            ignore (Curl.Multi.action t.mt fd Curl.Multi.EV_OUT);
-            start_fd_listen fd w Abb.Socket.writable (Msg.Iterate_out fd)
-            >>= fun fut ->
-            let t = { t with fds_in = Fd_map.add fd fut t.fds_out } in
-            Abb.Future.return t
-        | Msg.Timeout ->
-            Logs.debug (fun m -> m "timeout");
-            Curl.Multi.action_timeout t.mt;
-            Abb.Future.return t
+            Logs.debug (fun m -> m "MSG : CANCEL : id=%s" id);
+            Mutex.lock t.mutex;
+            Queue.add (In_event.Cancel id) t.in_event;
+            Mutex.unlock t.mutex;
+            trigger_eventfd t.trigger_eventfd;
+            (match Id_map.get id t.responses with
+            | Some (_, p) -> Abb.Future.Promise.set p (Error `Cancelled)
+            | None -> Fc.unit)
+            >>= fun () ->
+            Abb.Future.return
+              {
+                t with
+                body_readers = Id_map.remove id t.body_readers;
+                responses = Id_map.remove id t.responses;
+              }
+        | Msg.Iterate -> process_events t
 
       let rec loop t w r =
         let open Abb.Future.Infix_monad in
         Channel.recv r
         >>= function
-        | `Ok msg -> handle_msg t w r msg >>= fun t -> run_iter t w >>= fun t -> loop t w r
+        | `Ok msg -> handle_msg t w r msg >>= fun t -> loop t w r
         | `Closed ->
-            let open Abb.Future.Infix_monad in
-            Logs.debug (fun m -> m "closing");
-            run_iter t w
-            >>= fun t ->
-            Id_map.iter
-              (fun _ handle ->
-                Curl.Multi.remove t.mt handle;
-                Curl.cleanup handle)
-              t.handles;
-            Fc.List.iter
-              ~f:Abb.Future.abort
-              (CCList.map snd (Fd_map.to_list t.fds_in @ Fd_map.to_list t.fds_out))
-            >>= fun () ->
-            let t =
-              { t with fds_in = Fd_map.empty; fds_out = Fd_map.empty; handles = Id_map.empty }
-            in
-            (try Curl.Multi.cleanup t.mt
-             with exn ->
-               Logs.debug (fun m -> m "failed : %s" (Printexc.to_string exn));
-               raise exn);
-            Fc.ignore (process_event t w)
-            >>= fun () ->
-            Logs.debug (fun m -> m "closed");
+            Mutex.lock t.mutex;
+            Queue.add In_event.Shutdown t.in_event;
+            Mutex.unlock t.mutex;
+            trigger_eventfd t.trigger_eventfd;
             Abb.Future.return ()
+
+      let rec iterate_loop eventfd buf w =
+        let open Abb.Future.Infix_monad in
+        Abb.File.read eventfd ~buf ~pos:0 ~len:(Bytes.length buf)
+        >>= fun _ ->
+        Channel.send w Msg.Iterate
+        >>= function
+        | `Ok () -> iterate_loop eventfd buf w
+        | `Closed -> Abb.Future.return ()
+
+      let start w r =
+        let open Abb.Future.Infix_monad in
+        let wait_eventfd, trigger_eventfd, mutex, in_event, out_event = Loop.start () in
+        Abb.Future.fork
+          (let buf = Bytes.create 4 in
+           let eventfd = Abb.File.of_native wait_eventfd in
+           iterate_loop eventfd buf w)
+        >>= fun iterate_fut ->
+        let t =
+          {
+            wait_eventfd;
+            trigger_eventfd;
+            mutex;
+            in_event;
+            out_event;
+            iterate_fut;
+            body_readers = Id_map.empty;
+            responses = Id_map.empty;
+          }
+        in
+        Logs.debug (fun m -> m "LOOP");
+        loop t w r
     end
 
-    type t = Server.Msg.t Service_local.w
+    type t = {
+      w : Server.Msg.t Service_local.w;
+      mutable id_gen : Id.Gen.t;
+    }
 
     let create () =
-      Curl.global_init Curl.CURLINIT_GLOBALALL;
-      let t =
-        {
-          Server.mt = Curl.Multi.create ();
-          requests = Id_map.empty;
-          responses = Id_map.empty;
-          handles = Id_map.empty;
-          fds_in = Fd_map.empty;
-          fds_out = Fd_map.empty;
-          ev_queue = Queue.create ();
-          id_gen = Id.Gen.make ();
-          timeout = None;
-        }
-      in
-      Curl.Multi.set_socket_function t.Server.mt (fun fd poll ->
-          Logs.debug (fun m ->
-              m
-                "socket_function : %s : %d"
-                (match poll with
-                | Curl.Multi.POLL_NONE -> "poll_none"
-                | Curl.Multi.POLL_IN -> "poll_in"
-                | Curl.Multi.POLL_OUT -> "poll_out"
-                | Curl.Multi.POLL_INOUT -> "poll_inout"
-                | Curl.Multi.POLL_REMOVE -> "poll_remove")
-                (unsafe_int_of_file_descr fd));
-          Queue.add (Event.Socket (fd, poll)) t.Server.ev_queue);
-      Curl.Multi.set_closesocket_function t.Server.mt (fun fd ->
-          Logs.debug (fun m -> m "closesocket_function : %d" (unsafe_int_of_file_descr fd));
-          Queue.add (Event.Close_socket fd) t.Server.ev_queue);
-      Curl.Multi.set_timer_function t.Server.mt (fun timeout ->
-          Logs.debug (fun m -> m "timeout_function : %d" timeout);
-          Queue.add (Event.Set_timeout timeout) t.Server.ev_queue);
-      Service_local.create (Server.loop t)
+      let open Abb.Future.Infix_monad in
+      Service_local.create Server.start
+      >>= fun w ->
+      Logs.debug (fun m -> m "STARTED");
+      Abb.Future.return { w; id_gen = Id.Gen.make () }
 
-    let destroy t = Fc.ignore (Channel.close t)
+    let destroy t = Fc.ignore (Channel.close t.w)
 
     let request t options headers body_reader meth_ uri =
       let open Fc.Infix_result_monad in
-      let id_p = Abb.Future.Promise.create () in
+      let id, id_gen = Id.Gen.next t.id_gen in
+      t.id_gen <- id_gen;
       let p = Abb.Future.Promise.create () in
       Channel.Combinators.to_result
         (Channel.send
-           t
+           t.w
            (Server.Msg.Request
-              { Server.Msg.Request.options; headers; body_reader; meth_; uri; id_p; p }))
-      >>= fun () -> Abb.Future.return (Ok (id_p, p))
+              { request = { Request.options; headers; body_reader; meth_; uri; id }; p }))
+      >>= fun () -> Abb.Future.return (Ok (id, Abb.Future.Promise.future p))
 
-    let cancel t id = Channel.Combinators.to_result (Channel.send t (Server.Msg.Cancel id))
+    let cancel t id = Channel.Combinators.to_result (Channel.send t.w (Server.Msg.Cancel id))
   end
+
+  let default_connector = Connector.create ()
 
   let call ?connector ?(options = Options.default) ?(headers = Headers.empty) meth_ uri =
     let open Abb.Future.Infix_monad in
-    let create_connector, destroy_connector =
-      match connector with
-      | None -> (Connector.create, Connector.destroy)
-      | Some connector -> ((fun _ -> Abb.Future.return connector), CCFun.const Fc.unit)
-    in
     Fc.protect_finally
       ~setup:(fun () ->
         let open Abb.Future.Infix_monad in
-        create_connector ()
+        let connector =
+          match connector with
+          | None -> default_connector
+          | Some connector -> Abb.Future.return connector
+        in
+        connector
         >>= fun connector ->
         let open Fc.Infix_result_monad in
         let buf = Buffer.create 10 in
@@ -828,15 +992,12 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
           Abb.Future.return ()
         in
         Connector.request connector options headers body meth_ uri
-        >>= fun (id_p, p) ->
-        let open Abb.Future.Infix_monad in
-        Abb.Future.Promise.future id_p >>= fun id -> Abb.Future.return (Ok (connector, id, buf, p)))
+        >>= fun (id, p) -> Abb.Future.return (Ok (connector, id, buf, p)))
       (fun res ->
         let open Fc.Infix_result_monad in
         Abb.Future.return res
         >>= fun (_, _, buf, p) ->
-        Abb.Future.Promise.future p
-        >>= fun resp -> Abb.Future.return (Ok (resp, Buffer.contents buf)))
+        p >>= fun resp -> Abb.Future.return (Ok (resp, Buffer.contents buf)))
       ~finally:(fun res ->
         Fc.ignore
           (let open Fc.Infix_result_monad in
@@ -846,7 +1007,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
               however we got to this [finally], then cancel the request.  If we
               are in the [finally] because the request ended successfully, then
               this is a noop. *)
-           Connector.cancel connector id >>= fun () -> Fc.to_result (destroy_connector connector)))
+           Connector.cancel connector id))
     >>= function
     | Ok res -> Abb.Future.return (Ok res)
     | Error (#request_err as err) -> Abb.Future.return (Error err)
