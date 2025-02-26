@@ -1,5 +1,5 @@
 let () = Curl.global_init Curl.CURLINIT_GLOBALALL
-let src = Logs.Src.create "abb_curl"
+let src = Logs.Src.create "abb_curl_easy"
 
 module Logs = (val Logs.src_log src : Logs.LOG)
 
