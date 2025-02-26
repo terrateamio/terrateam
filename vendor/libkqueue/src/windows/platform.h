@@ -17,47 +17,66 @@
 #ifndef  _KQUEUE_WINDOWS_PLATFORM_H
 #define  _KQUEUE_WINDOWS_PLATFORM_H
 
-/* Require Windows XP or later */
-#define WINVER 0x0501
-#define _WIN32_WINNT 0x0501
+#include "config.h"
 
-/* Reduces build time by omitting extra system headers */
-#define WIN32_LEAN_AND_MEAN
+/* Require Windows Server 2003 or later */
+#if WINVER < 0x0502
+#define WINVER 0x0502
+#endif
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0502
+#endif
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <io.h>
 #include <malloc.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <fcntl.h>
 #include <sys/stat.h>
-#include <sys/types.h>
- 
+#include <errno.h>
+
+#include "../common/queue.h"
+
 #define _CRT_SECURE_NO_WARNINGS 1
 /* The #define doesn't seem to work, but the #pragma does.. */
 #ifdef _MSC_VER
 # pragma warning( disable : 4996 )
 #endif
 
-#include "../../include/sys/event.h"
-
-
+#ifndef _MSC_VER
+#include <stdatomic.h>
 /*
- * Atomic integer operations 
+ * C11 atomic operations
  */
-#define atomic_inc(value) InterlockedIncrement((LONG volatile *)value)
-#define atomic_dec(value) InterlockedDecrement((LONG volatile *)value)
-#define atomic_cas(p, oval, nval) InterlockedCompareExchange(p, nval, oval)
-#define atomic_ptr_cas(p, oval, nval) InterlockedCompareExchangePointer(p, nval, oval)
+#define atomic_inc(p)                 (atomic_fetch_add((p), 1) + 1)
+#define atomic_dec(p)                 (atomic_fetch_sub((p), 1) - 1)
+
+/* We use compound literals here to stop the 'expected' values from being overwritten */
+#define atomic_cas(p, oval, nval)     atomic_compare_exchange_strong(p, &(__typeof__(oval)){ oval }, nval)
+#define atomic_ptr_cas(p, oval, nval) atomic_compare_exchange_strong(p, (&(uintptr_t){ (uintptr_t)oval }), (uintptr_t)nval)
+#define atomic_ptr_swap(p, nval)      atomic_exchange(p, (uintptr_t)nval)
+#define atomic_ptr_load(p)            atomic_load(p)
+#else
+/*
+ * Atomic integer operations
+ */
+#define atomic_uintptr_t              uintptr_t
+#define atomic_uint                   unsigned int
+#define atomic_inc(value)             InterlockedIncrement((LONG volatile *)value)
+#define atomic_dec(value)             InterlockedDecrement((LONG volatile *)value)
+#define atomic_cas(p, oval, nval)     (InterlockedCompareExchange(p, nval, oval) == oval)
+#define atomic_ptr_cas(p, oval, nval) (InterlockedCompareExchangePointer(p, nval, oval) == oval)
+#define atomic_ptr_swap(p, oval)      InterlockedExchangePointer(p, oval)
+#define atomic_ptr_load(p)            (*p)
+
+#endif
 
 /*
  * Additional members of struct kqueue
  */
 #define KQUEUE_PLATFORM_SPECIFIC \
-	HANDLE kq_iocp; \
-	HANDLE kq_synthetic_event; \
-	struct filter *kq_filt_ref[EVFILT_SYSCOUNT]; \
+    HANDLE kq_iocp; \
+    HANDLE kq_synthetic_event; \
+    struct filter *kq_filt_ref[EVFILT_SYSCOUNT]; \
     size_t kq_filt_count
 
 /*
@@ -65,14 +84,15 @@
  */
 /*
 #define FILTER_PLATFORM_SPECIFIC \
-	HANDLE kf_event_handle
+    HANDLE kf_event_handle
 */
 
 /*
  * Additional members for struct knote
  */
 #define KNOTE_PLATFORM_SPECIFIC \
-	HANDLE kn_event_whandle
+    HANDLE          kn_event_whandle; \
+    void            *kn_handle
 
 /*
  * Some datatype forward declarations
@@ -96,16 +116,18 @@ int     windows_get_descriptor_type(struct knote *);
  * GCC-compatible branch prediction macros
  */
 #ifdef __GNUC__
-# define fastpath(x)     __builtin_expect((x), 1)
-# define slowpath(x)     __builtin_expect((x), 0)
+# define likely(x)       __builtin_expect((x), 1)
+# define unlikely(x)     __builtin_expect((x), 0)
 #else
-# define fastpath(x) (x)
-# define slowpath(x) (x)
+# define likely(x) (x)
+# define unlikely(x) (x)
 #endif
 
+#ifdef _MSC_VER
 /* Function visibility macros */
 #define VISIBLE __declspec(dllexport)
-#define HIDDEN  
+#define HIDDEN
+#endif
 
 #if !defined(__func__) && !defined(__GNUC__)
 #define __func__ __FUNCDNAME__
@@ -122,7 +144,9 @@ typedef int nlink_t;
 typedef int timer_t;
 typedef int pthread_t;
 typedef int sigset_t;
+#if HAVE_SYS_TYPES_H != 1
 typedef int pid_t;
+#endif
 
 #ifndef __GNUC__
 # define __thread    __declspec(thread)
@@ -131,24 +155,23 @@ typedef int pid_t;
 /* Emulation of pthreads mutex functionality */
 #define PTHREAD_PROCESS_SHARED 1
 #define PTHREAD_PROCESS_PRIVATE 2
-typedef CRITICAL_SECTION pthread_mutex_t;
-typedef CRITICAL_SECTION pthread_spinlock_t;
-typedef CRITICAL_SECTION pthread_rwlock_t;
-#define _cs_init(x)  InitializeCriticalSection((x))
-#define _cs_lock(x)  EnterCriticalSection ((x))
-#define _cs_unlock(x)  LeaveCriticalSection ((x))
-#define pthread_mutex_lock _cs_lock
-#define pthread_mutex_unlock _cs_unlock
-#define pthread_mutex_init(x,y) _cs_init((x))
-#define pthread_spin_lock _cs_lock
-#define pthread_spin_unlock _cs_unlock
-#define pthread_spin_init(x,y) _cs_init((x))
-#define pthread_mutex_init(x,y) _cs_init((x))
+typedef CRITICAL_SECTION           pthread_mutex_t;
+typedef CRITICAL_SECTION           pthread_spinlock_t;
+typedef CRITICAL_SECTION           pthread_rwlock_t;
+
+#define EnterCriticalSection(x)    EnterCriticalSection ((x))
+#define pthread_mutex_lock         EnterCriticalSection
+#define pthread_mutex_unlock       LeaveCriticalSection
+#define pthread_mutex_init(x,y)    InitializeCriticalSection((x))
+#define pthread_spin_lock          EnterCriticalSection
+#define pthread_spin_unlock        LeaveCriticalSection
+#define pthread_spin_init(x,y)     InitializeCriticalSection((x))
+#define pthread_mutex_init(x,y)    InitializeCriticalSection((x))
 #define pthread_mutex_destroy(x)
-#define pthread_rwlock_rdlock _cs_lock
-#define pthread_rwlock_wrlock _cs_lock
-#define pthread_rwlock_unlock _cs_unlock
-#define pthread_rwlock_init(x,y) _cs_init((x))
+#define pthread_rwlock_rdlock      EnterCriticalSection
+#define pthread_rwlock_wrlock      EnterCriticalSection
+#define pthread_rwlock_unlock      LeaveCriticalSection
+#define pthread_rwlock_init(x,y)   InitializeCriticalSection((x))
 
 
 #endif  /* ! _KQUEUE_WINDOWS_PLATFORM_H */

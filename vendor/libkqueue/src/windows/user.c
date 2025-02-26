@@ -28,10 +28,11 @@ evfilt_user_destroy(struct filter *filt)
 }
 
 int
-evfilt_user_copyout(struct kevent* dst, struct knote* src, void* ptr)
+evfilt_user_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt,
+    struct knote *src, void* ptr)
 {
     memcpy(dst, &src->kev, sizeof(struct kevent));
-	
+
     dst->fflags &= ~NOTE_FFCTRLMASK;     //FIXME: Not sure if needed
     dst->fflags &= ~NOTE_TRIGGER;
     if (src->kev.flags & EV_ADD) {
@@ -39,23 +40,22 @@ evfilt_user_copyout(struct kevent* dst, struct knote* src, void* ptr)
            other filters. */
         dst->flags &= ~EV_ADD;
     }
-    if (src->kev.flags & EV_CLEAR)
+    if ((src->kev.flags & EV_CLEAR) || (src->kev.flags & EV_DISPATCH))
         src->kev.fflags &= ~NOTE_TRIGGER;
 
-    if (src->kev.flags & EV_DISPATCH)
-        src->kev.fflags &= ~NOTE_TRIGGER;
+    if (knote_copyout_flag_actions(filt, src) < 0) return -1;
 
-	return (0);
+    return (1);
 }
 
 int
 evfilt_user_knote_create(struct filter *filt, struct knote *kn)
 {
-	return (0);
+    return (0);
 }
 
 int
-evfilt_user_knote_modify(struct filter *filt, struct knote *kn, 
+evfilt_user_knote_modify(struct filter *filt, struct knote *kn,
         const struct kevent *kev)
 {
     unsigned int ffctrl;
@@ -87,10 +87,10 @@ evfilt_user_knote_modify(struct filter *filt, struct knote *kn,
 
     if ((!(kn->kev.flags & EV_DISABLE)) && kev->fflags & NOTE_TRIGGER) {
         kn->kev.fflags |= NOTE_TRIGGER;
-		if (!PostQueuedCompletionStatus(kn->kn_kq->kq_iocp, 1, (ULONG_PTR) 0, (LPOVERLAPPED) kn)) {
-			dbg_lasterror("PostQueuedCompletionStatus()");
-			return (-1);
-		}
+        if (!PostQueuedCompletionStatus(kn->kn_kq->kq_iocp, 1, (ULONG_PTR) 0, (LPOVERLAPPED) kn)) {
+            dbg_lasterror("PostQueuedCompletionStatus()");
+            return (-1);
+        }
     }
 
     return (0);
@@ -115,13 +115,13 @@ evfilt_user_knote_disable(struct filter *filt, struct knote *kn)
 }
 
 const struct filter evfilt_user = {
-    EVFILT_USER,
-    evfilt_user_init,
-    evfilt_user_destroy,
-    evfilt_user_copyout,
-    evfilt_user_knote_create,
-    evfilt_user_knote_modify,
-    evfilt_user_knote_delete,
-    evfilt_user_knote_enable,
-    evfilt_user_knote_disable,     
+    .kf_id      = EVFILT_USER,
+    .kf_init    = evfilt_user_init,
+    .kf_destroy = evfilt_user_destroy,
+    .kf_copyout = evfilt_user_copyout,
+    .kn_create  = evfilt_user_knote_create,
+    .kn_modify  = evfilt_user_knote_modify,
+    .kn_delete  = evfilt_user_knote_delete,
+    .kn_enable  = evfilt_user_knote_enable,
+    .kn_disable = evfilt_user_knote_disable,
 };

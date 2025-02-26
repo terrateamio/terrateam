@@ -1,7 +1,13 @@
 .vagrant/
+.DS_Store
 config.h
 *.pc
 *.log
+*.deb
+*.ddeb
+*.swp
+.fuse*
+cmake-build-*/
 CMakeCache.txt
 CMakeFiles/
 CPackConfig.cmake
@@ -12,9 +18,10 @@ Testing/
 _CPack_Packages/
 cmake_install.cmake
 install_manifest*.txt
-kqueue-*.deb
-libkqueue.so
+libkqueue.so*
+tags
 test/CMakeCache.txt
 test/CMakeFiles/
 test/cmake_install.cmake
 test/libkqueue-test
+version.h

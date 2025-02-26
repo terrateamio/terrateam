@@ -1,0 +1,33 @@
+name: CI tests macOS
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'test/*'
+      - '.github/workflows/ci-macos.yml'
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'test/*'
+      - '.github/workflows/ci-macos.yml'
+
+jobs:
+  macos-tests:
+    timeout-minutes: 5
+    runs-on: macos-latest
+    name: "macOS tests"
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Build and configure
+      run: |
+        cd test
+        cmake .
+        make
+
+    - name: libkqueue test suite
+      run: |
+        ./test/libkqueue-test

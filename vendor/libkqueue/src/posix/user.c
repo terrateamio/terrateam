@@ -13,26 +13,16 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include <errno.h>
-#include <fcntl.h>
-#include <pthread.h>
 #include <signal.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/queue.h>
 #include <sys/socket.h>
-#include <sys/types.h>
-#include <string.h>
 #include <unistd.h>
 
-#include "sys/event.h"
 #include "private.h"
 
 int
 posix_evfilt_user_init(struct filter *filt)
 {
-    if (kqops.eventfd_init(&filt->kf_efd) < 0)
+    if (kqops.eventfd_init(&filt->kf_efd, filt) < 0)
         return (-1);
 
     filt->kf_pfd = kqops.eventfd_descriptor(&filt->kf_efd);
@@ -48,12 +38,12 @@ posix_evfilt_user_destroy(struct filter *filt)
 }
 
 int
-posix_evfilt_user_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
+posix_evfilt_user_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt,
+    struct knote *src, void *ptr UNUSED)
 {
     memcpy(dst, &src->kev, sizeof(*dst));
     struct knote *kn;
-    int nevents = 0;
-  
+
     dst->fflags &= ~NOTE_FFCTRLMASK;     //FIXME: Not sure if needed
     dst->fflags &= ~NOTE_TRIGGER;
     if (src->kev.flags & EV_ADD) {
@@ -64,13 +54,15 @@ posix_evfilt_user_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSE
     if (src->kev.flags & EV_CLEAR)
         src->kev.fflags &= ~NOTE_TRIGGER;
     if (src->kev.flags & (EV_DISPATCH | EV_CLEAR | EV_ONESHOT)) {
-        kqops.eventfd_raise(&src->kdata.kn_eventfd);
+        kqops.eventfd_raise(&filt->kf_efd);
     }
 
-    if (src->kev.flags & EV_DISPATCH) 
+    if (src->kev.flags & EV_DISPATCH)
         src->kev.fflags &= ~NOTE_TRIGGER;
 
-    return (0);
+    if (knote_copyout_flag_actions(filt, src) < 0) return -1;
+
+    return (1);
 }
 
 int
@@ -90,7 +82,7 @@ posix_evfilt_user_knote_create(struct filter *filt, struct knote *kn)
 }
 
 int
-posix_evfilt_user_knote_modify(struct filter *filt, struct knote *kn, 
+posix_evfilt_user_knote_modify(struct filter *filt, struct knote *kn,
         const struct kevent *kev)
 {
     unsigned int ffctrl;
@@ -122,7 +114,7 @@ posix_evfilt_user_knote_modify(struct filter *filt, struct knote *kn,
 
     if ((!(kn->kev.flags & EV_DISABLE)) && kev->fflags & NOTE_TRIGGER) {
         kn->kev.fflags |= NOTE_TRIGGER;
-        knote_enqueue(filt, kn);
+        LIST_INSERT_HEAD(&filt->kf_ready, kn, kn_ready);
         kqops.eventfd_raise(&filt->kf_efd);
     }
 
@@ -149,18 +141,14 @@ posix_evfilt_user_knote_disable(struct filter *filt, struct knote *kn)
     return (0);
 }
 
-/* FIXME: this conflicts with the struct in linux/platform.c
-
 const struct filter evfilt_user = {
-    EVFILT_USER,
-    evfilt_user_init,
-    evfilt_user_destroy,
-    evfilt_user_copyout,
-    evfilt_user_knote_create,
-    evfilt_user_knote_modify,
-    evfilt_user_knote_delete,
-    evfilt_user_knote_enable,
-    evfilt_user_knote_disable,   
+    .kf_id      = EVFILT_USER,
+    .kf_init    = posix_evfilt_user_init,
+    .kf_destroy = posix_evfilt_user_destroy,
+    .kf_copyout = posix_evfilt_user_copyout,
+    .kn_create  = posix_evfilt_user_knote_create,
+    .kn_modify  = posix_evfilt_user_knote_modify,
+    .kn_delete  = posix_evfilt_user_knote_delete,
+    .kn_enable  = posix_evfilt_user_knote_enable,
+    .kn_disable = posix_evfilt_user_knote_disable,
 };
-
-*/

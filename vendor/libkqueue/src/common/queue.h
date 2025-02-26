@@ -323,12 +323,7 @@ struct {								\
 		(head2)->stqh_last = &STAILQ_FIRST(head2);		\
 } while (0)
 
-
-/*
- * List declarations.
- * NOTE: LIST_HEAD conflicts with a Linux macro.
- */
-#define	FIXME_LIST_HEAD(name, type)						\
+#define	LIST_HEAD(name, type)						\
 struct name {								\
 	struct type *lh_first;	/* first element */			\
 }

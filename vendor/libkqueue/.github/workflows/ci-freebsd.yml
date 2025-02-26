@@ -1,0 +1,42 @@
+name: CI tests FreeBSD
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'test/*'
+      - '.github/workflows/ci-freebsd.yml'
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'test/*'
+      - '.github/workflows/ci-freebsd.yml'
+
+jobs:
+  freebsd-tests:
+# virtualbox takes a long time to start
+    timeout-minutes: 15
+    runs-on: macos-10.15
+    name: "FreeBSD tests"
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        path: libkqueue
+
+    - name: libkqueue test suite
+      uses: vmactions/freebsd-vm@v0.1.5
+      with:
+        usesh: true
+        sync: sshfs
+        prepare: |
+          pkg install -y         \
+            cmake                \
+            llvm                 \
+        run: |
+          freebsd-version
+          cd libkqueue/test
+          cmake .
+          make
+          ./libkqueue-test

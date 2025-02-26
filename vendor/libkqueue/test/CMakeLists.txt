@@ -13,10 +13,14 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
+project(libkqueue-test LANGUAGES C)
 
 set(LIBKQUEUE_TEST_SOURCES
-    kevent.c
+    common.c
+    kqueue.c
+    libkqueue.c
     main.c
+    proc.c
     read.c
     test.c
     timer.c
@@ -27,6 +31,9 @@ if(UNIX)
        proc.c
        signal.c)
 endif()
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
+               ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 add_executable(libkqueue-test ${LIBKQUEUE_TEST_SOURCES})
 target_include_directories(libkqueue-test
@@ -43,22 +50,24 @@ if(WIN32)
     target_compile_options(libkqueue-test PRIVATE -Wno-unused-variable)
   endif()
 elseif(UNIX)
-  target_compile_options(libkqueue-test
-                         PRIVATE
-                           -rdynamic)
+  target_link_libraries(libkqueue-test PRIVATE -rdynamic)
 endif()
-target_link_libraries(libkqueue-test
-                      PRIVATE
+
+#
+# Don't link against -lkqueue on OSX and FreeBSD
+#
+if(NOT "${CMAKE_SYSTEM_NAME}" MATCHES "(Darwin|FreeBSD)")
+  target_link_libraries(libkqueue-test
+                        PRIVATE
                         kqueue
                         Threads::Threads)
+endif()
+
 if(WIN32)
   target_link_libraries(libkqueue-test
                         PRIVATE
-                          Ws2_32)
+                          ws2_32)
 endif()
-set_target_properties(libkqueue-test
-                      PROPERTIES
-                        DEBUG_POSTFIX "d")
 
 add_test(NAME libkqueue-test
          COMMAND libkqueue-test)

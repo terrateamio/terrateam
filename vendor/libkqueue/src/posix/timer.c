@@ -13,22 +13,13 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include <errno.h>
-#include <fcntl.h>
-#include <pthread.h>
 #include <signal.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/queue.h>
+#include <sys/prctl.h>
 #include <sys/socket.h>
 #include <sys/time.h>
-#include <sys/types.h>
-#include <string.h>
 #include <time.h>
 #include <unistd.h>
 
-#include "sys/event.h"
 #include "private.h"
 
 /* A request to sleep for a certain time */
@@ -59,7 +50,7 @@ sleeper_thread(void *arg)
     ssize_t         cnt;
     bool            cts = true;     /* Clear To Send */
     char            buf[1];
-	int rv;
+    int rv;
 
 #if 0
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
@@ -85,7 +76,7 @@ sleeper_thread(void *arg)
 
         /* Sleep */
         dbg_printf("sleeping for %ld ms", (unsigned long) sr->interval);
-		rv = pthread_cond_timedwait(&sr->cond, &sr->mtx, &req);
+        rv = pthread_cond_timedwait(&sr->cond, &sr->mtx, &req);
         pthread_mutex_unlock(&sr->mtx);
         if (rv == 0) {
             /* _timer_delete() has requested that we terminate */
@@ -93,10 +84,10 @@ sleeper_thread(void *arg)
             break;
         } else if (rv != 0) {
             dbg_printf("rv=%d %s", rv, strerror(rv));
-			if (rv == EINTR)
+            if (rv == EINTR)
                 abort(); //FIXME should not happen
 
-			//ASSUME: rv == ETIMEDOUT
+            //ASSUME: rv == ETIMEDOUT
         }
         si.counter++;
         dbg_printf(" -------- sleep over (CTS=%d)----------", cts);
@@ -126,8 +117,8 @@ sleeper_thread(void *arg)
                 /* FIXME: handle EAGAIN */
                 dbg_perror("write(2)");
             } else if ((size_t)cnt < sizeof(si)) {
-                dbg_puts("FIXME: handle short write"); 
-            } 
+                dbg_puts("FIXME: handle short write");
+            }
             cts = false;
             si.counter = 0;
         }
@@ -154,7 +145,7 @@ _timer_create(struct filter *filt, struct knote *kn)
     req->wfd = filt->kf_wfd;
     req->ident = kn->kev.ident;
     req->interval = kn->kev.data;
-    kn->data.sleepreq = req;
+    kn->kn_sleepreq = req;
     pthread_cond_init(&req->cond, NULL);
     pthread_mutex_init(&req->mtx, NULL);
 
@@ -166,6 +157,13 @@ _timer_create(struct filter *filt, struct knote *kn)
         free(req);
         return (-1);
     }
+
+#ifdef __linux__
+    /* Set the thread's name to something descriptive so it shows up in gdb,
+     * etc. Max name length is 16 bytes. */
+    prctl(PR_SET_NAME, "libkqueue_sleep", 0, 0, 0);
+#endif
+
     pthread_attr_destroy(&attr);
 
     return (0);
@@ -174,14 +172,14 @@ _timer_create(struct filter *filt, struct knote *kn)
 static int
 _timer_delete(struct knote *kn)
 {
-    if (kn->data.sleepreq != NULL) {
+    if (kn->kn_sleepreq != NULL) {
         dbg_puts("deleting timer");
-        pthread_mutex_lock(&kn->data.sleepreq->mtx); //FIXME - error check
-        pthread_cond_signal(&kn->data.sleepreq->cond); //FIXME - error check
-        pthread_mutex_unlock(&kn->data.sleepreq->mtx); //FIXME - error check
-        pthread_cond_destroy(&kn->data.sleepreq->cond); //FIXME - error check
-        free(kn->data.sleepreq);
-        kn->data.sleepreq = NULL;
+        pthread_mutex_lock(&kn->kn_sleepreq->mtx); //FIXME - error check
+        pthread_cond_signal(&kn->kn_sleepreq->cond); //FIXME - error check
+        pthread_mutex_unlock(&kn->kn_sleepreq->mtx); //FIXME - error check
+        pthread_cond_destroy(&kn->kn_sleepreq->cond); //FIXME - error check
+        free(kn->kn_sleepreq);
+        kn->kn_sleepreq = NULL;
     }
     return (0);
 }
@@ -217,14 +215,12 @@ evfilt_timer_destroy(struct filter *filt)
 }
 
 int
-evfilt_timer_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
+evfilt_timer_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt,
+    struct knote *src, void *ptr UNUSED)
 {
-    struct filter *filt;
     struct sleepinfo    si;
     ssize_t       cnt;
     struct knote *kn;
-
-    filt = knote_get_filter(src);
 
     /* Read the ident */
     cnt = read(filt->kf_pfd, &si, sizeof(si));
@@ -268,9 +264,11 @@ evfilt_timer_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
         _timer_delete(kn);
     } else if (kn->kev.flags & EV_ONESHOT) {
         _timer_delete(kn);
-        knote_free(filt, kn);
-    } 
+        knote_delete(filt, kn);
+    }
 #endif
+
+    if (knote_copyout_flag_actions(filt, src) < 0) return -1;
 
     return (1);
 }
@@ -282,7 +280,7 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_timer_knote_modify(struct filter *filt, struct knote *kn, 
+evfilt_timer_knote_modify(struct filter *filt, struct knote *kn,
         const struct kevent *kev)
 {
     (void) filt;
@@ -315,13 +313,13 @@ evfilt_timer_knote_disable(struct filter *filt, struct knote *kn)
 }
 
 const struct filter evfilt_timer = {
-    EVFILT_TIMER,
-    evfilt_timer_init,
-    evfilt_timer_destroy,
-    evfilt_timer_copyout,
-    evfilt_timer_knote_create,
-    evfilt_timer_knote_modify,
-    evfilt_timer_knote_delete,
-    evfilt_timer_knote_enable,
-    evfilt_timer_knote_disable,     
+    .kf_id      = EVFILT_TIMER,
+    .kf_init    = evfilt_timer_init,
+    .kf_destroy = evfilt_timer_destroy,
+    .kf_copyout = evfilt_timer_copyout,
+    .kn_create  = evfilt_timer_knote_create,
+    .kn_modify  = evfilt_timer_knote_modify,
+    .kn_delete  = evfilt_timer_knote_delete,
+    .kn_enable  = evfilt_timer_knote_enable,
+    .kn_disable = evfilt_timer_knote_disable,
 };

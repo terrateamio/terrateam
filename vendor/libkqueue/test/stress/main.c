@@ -21,8 +21,8 @@
 #include <unistd.h>
 #include <err.h>
 
-#include <pthread.h> 
-#include <sys/event.h> 
+#include <pthread.h>
+#include <sys/event.h>
 
 /* Number of threads to create */
 static const int nthreads = 64;
@@ -73,9 +73,11 @@ test_harness(void *arg)
         printf("thread %d round %d / %d\n", id, i, nrounds);
     }
     printf("thread %d done\n", id);
+
+    close(kqfd);
 }
 
-int 
+int
 main(int argc, char **argv)
 {
     pthread_t tid[nthreads];

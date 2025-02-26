@@ -32,13 +32,13 @@ static void
 signal_handler(int sig)
 {
     struct sentry *s;
-   
+
     if (sig < 0 || sig >= SIGNAL_MAX) // 0..31 are valid
-    {    
+    {
         dbg_printf("Received unexpected signal %d", sig);
         return;
     }
-    
+
     s = &sigtbl[sig];
     dbg_printf("sig=%d %d", sig, s->st_signum);
     atomic_inc((volatile uint32_t *) &s->st_count);
@@ -49,23 +49,23 @@ signal_handler(int sig)
 static int
 catch_signal(struct filter *filt, struct knote *kn)
 {
-	int sig;
-	struct sigaction sa;
-    
-    sig = kn->kev.ident;
-	memset(&sa, 0, sizeof(sa));
-	sa.sa_handler = signal_handler;
-	sa.sa_flags |= SA_RESTART;
-	sigfillset(&sa.sa_mask);
+    int sig;
+    struct sigaction sa;
 
-	if (sigaction(kn->kev.ident, &sa, NULL) == -1) {
-		dbg_perror("sigaction");
-		return (-1);
-	}
+    sig = kn->kev.ident;
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = signal_handler;
+    sa.sa_flags |= SA_RESTART;
+    sigfillset(&sa.sa_mask);
+
+    if (sigaction(kn->kev.ident, &sa, NULL) == -1) {
+        dbg_perror("sigaction");
+        return (-1);
+    }
 
     pthread_mutex_lock(&sigtbl_mtx);
     sigtbl[sig].st_signum = sig;
-    sigtbl[sig].st_port = filter_epfd(filt);
+    sigtbl[sig].st_port = filter_epoll_fd(filt);
     sigtbl[sig].st_count = 0;
     memcpy(&sigtbl[sig].st_kev, &kn->kev, sizeof(struct kevent));
     pthread_mutex_unlock(&sigtbl_mtx);
@@ -78,16 +78,16 @@ catch_signal(struct filter *filt, struct knote *kn)
 static int
 ignore_signal(int sig)
 {
-	struct sigaction sa;
-    
-	memset(&sa, 0, sizeof(sa));
-	sa.sa_handler = SIG_IGN;
-	sigemptyset(&sa.sa_mask);
+    struct sigaction sa;
 
-	if (sigaction(sig, &sa, NULL) == -1) {
-		dbg_perror("sigaction");
-		return (-1);
-	}
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = SIG_IGN;
+    sigemptyset(&sa.sa_mask);
+
+    if (sigaction(sig, &sa, NULL) == -1) {
+        dbg_perror("sigaction");
+        return (-1);
+    }
 
     dbg_printf("removed handler for signal %d", sig);
     return (0);
@@ -97,7 +97,7 @@ int
 evfilt_signal_knote_create(struct filter *filt, struct knote *kn)
 {
     if (kn->kev.ident >= SIGNAL_MAX) {
-        dbg_printf("unsupported signal number %u", 
+        dbg_printf("unsupported signal number %u",
                     (unsigned int) kn->kev.ident);
         return (-1);
     }
@@ -108,7 +108,7 @@ evfilt_signal_knote_create(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_signal_knote_modify(struct filter *filt UNUSED, struct knote *kn, 
+evfilt_signal_knote_modify(struct filter *filt UNUSED, struct knote *kn,
                 const struct kevent *kev)
 {
     kn->kev.flags = kev->flags | EV_CLEAR;
@@ -117,7 +117,7 @@ evfilt_signal_knote_modify(struct filter *filt UNUSED, struct knote *kn,
 
 int
 evfilt_signal_knote_delete(struct filter *filt UNUSED, struct knote *kn)
-{   
+{
     return ignore_signal(kn->kev.ident);
 }
 
@@ -134,7 +134,8 @@ evfilt_signal_knote_disable(struct filter *filt UNUSED, struct knote *kn)
 }
 
 int
-evfilt_signal_copyout(struct kevent *dst, struct knote *src, void *ptr)
+evfilt_signal_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt,
+    struct knote *src, void *ptr)
 {
     port_event_t *pe = (port_event_t *) ptr;
     struct sentry *ent = (struct sentry *) pe->portev_user;
@@ -144,25 +145,25 @@ evfilt_signal_copyout(struct kevent *dst, struct knote *src, void *ptr)
     dst->ident = ent->st_kev.ident;
     dst->filter = EVFILT_SIGNAL;
     dst->udata = ent->st_kev.udata;
-    dst->flags = ent->st_kev.flags; 
+    dst->flags = ent->st_kev.flags;
     dst->fflags = 0;
     dst->data = 1;
     pthread_mutex_unlock(&sigtbl_mtx);
 
-    if (src->kev.flags & EV_DISPATCH || src->kev.flags & EV_ONESHOT) 
+    if (src->kev.flags & EV_DISPATCH || src->kev.flags & EV_ONESHOT)
         ignore_signal(src->kev.ident);
+
+    if (knote_copyout_flag_actions(filt, src) < 0) return -1;
 
     return (1);
 }
 
 const struct filter evfilt_signal = {
-    EVFILT_SIGNAL,
-    NULL,
-    NULL,
-    evfilt_signal_copyout,
-    evfilt_signal_knote_create,
-    evfilt_signal_knote_modify,
-    evfilt_signal_knote_delete,
-    evfilt_signal_knote_enable,
-    evfilt_signal_knote_disable,     
+    .kf_id      = EVFILT_SIGNAL,
+    .kf_copyout = evfilt_signal_copyout,
+    .kn_create  = evfilt_signal_knote_create,
+    .kn_modify  = evfilt_signal_knote_modify,
+    .kn_delete  = evfilt_signal_knote_delete,
+    .kn_enable  = evfilt_signal_knote_enable,
+    .kn_disable = evfilt_signal_knote_disable,
 };

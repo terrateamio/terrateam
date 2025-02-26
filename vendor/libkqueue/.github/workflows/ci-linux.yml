@@ -1,0 +1,122 @@
+name: CI Linux
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'CMakeLists.txt'
+      - 'include/sys/*'
+      - 'src/common/*'
+      - 'src/linux/*'
+      - 'test/*'
+      - '.github/workflows/ci-linux.yml'
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'CMakeLists.txt'
+      - 'include/sys/*'
+      - 'src/common/*'
+      - 'src/linux/*'
+      - 'test/*'
+      - '.github/workflows/ci-linux.yml'
+
+env:
+  ASAN_OPTIONS: symbolize=1 detect_leaks=1 detect_stack_use_after_return=1
+  LSAN_OPTIONS: fast_unwind_on_malloc=0:malloc_context_size=50
+  KQUEUE_DEBUG: yes
+  M_PERTURB: "0x42"
+
+jobs:
+  linux-build-and-test:
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+          env:
+            - { CC: gcc,      OS: ubuntu-20.04, NAME: release-gcc,               BUILD_TYPE: Release    }
+            - { CC: clang,    OS: ubuntu-20.04, NAME: release-clang,             BUILD_TYPE: Release    }
+            - { CC: musl-gcc, OS: ubuntu-20.04, NAME: release-musl-gcc,          BUILD_TYPE: Release    }
+            - { CC: clang,    OS: ubuntu-20.04, NAME: debug-asan,                BUILD_TYPE: Debug,    ENABLE_ASAN: YES,   ENABLE_LSAN: YES,   ENABLE_UBSAN: YES }
+            - { CC: clang,    OS: ubuntu-20.04, NAME: debug-tsan,                BUILD_TYPE: Debug,    ENABLE_TSAN: YES }
+            # Older kernel triggers a switch to posix/proc as it doesn't support pidfd.
+            - { CC: clang,    OS: ubuntu-18.04, NAME: debug-asan-posix-proc,     BUILD_TYPE: Debug,    ENABLE_ASAN: YES,   ENABLE_LSAN: YES,   ENABLE_UBSAN: YES }
+            - { CC: clang,    OS: ubuntu-18.04, NAME: debug-tsan-posix-proc,     BUILD_TYPE: Debug,    ENABLE_TSAN: YES }
+
+    runs-on: ${{ matrix.env.OS }}
+
+    env: ${{ matrix.env }}
+
+    name: "${{ matrix.env.NAME }}"
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Add llvm source
+      if: ${{ matrix.env.CC == 'clang' && matrix.env.OS == 'ubuntu-18.04' }}
+      uses: myci-actions/add-deb-repo@10
+      with:
+        repo: deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main
+        repo-name: llvm-toolchain
+        keys-asc: https://apt.llvm.org/llvm-snapshot.gpg.key
+
+    - name: Add GCC source
+      if: ${{ matrix.env.CC == 'gcc' && matrix.env.OS == 'ubuntu-18.04' }}
+      run: |
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+
+    - name: Install LLVM 10
+      if: ${{ matrix.env.CC == 'clang' }}
+      run: |
+        sudo apt-get install -y --no-install-recommends clang-10 llvm-10 gdb
+        sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-10 60 && sudo update-alternatives --set clang /usr/bin/clang-10
+        sudo update-alternatives --install /usr/bin/llvm-symbolizer llvm-symbolizer /usr/bin/llvm-symbolizer-10 60 && sudo update-alternatives --set llvm-symbolizer /usr/bin/llvm-symbolizer-10
+
+    - name: Install GCC 7
+      if: ${{ matrix.env.CC == 'gcc' }}
+      run: |
+        sudo apt-get install -y --no-install-recommends gcc-7 gccgo-7 gdb
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 9999 && sudo update-alternatives --config gcc
+
+    - name: Install MUSL
+      if: ${{ matrix.env.CC == 'musl-gcc' }}
+      run: |
+        sudo apt-get install -y --no-install-recommends musl musl-dev musl-tools
+
+    - name: Install other build deps
+      run: |
+        sudo apt-get install -y \
+          build-essential \
+          debhelper \
+          devscripts \
+          dh-make \
+          fakeroot
+
+    - name: Configure build system
+      run: |
+        cmake . -G "Unix Makefiles" \
+          -DCMAKE_INSTALL_PREFIX="/usr" \
+          -DCMAKE_INSTALL_LIBDIR="lib"  \
+          -DCMAKE_VERBOSE_MAKEFILE:BOOL="ON" \
+          -DENABLE_TESTING="YES" \
+          -DENABLE_ASAN="${ENABLE_ASAN:-NO}" \
+          -DENABLE_LSAN="${ENABLE_LSAN:-NO}" \
+          -DENABLE_UBSAN="${ENABLE_UBSAN:-NO}" \
+          -DENABLE_TSAN="${ENABLE_TSAN:-NO}" \
+          -DCMAKE_BUILD_TYPE="${BUILD_TYPE}"
+        cat config.h
+
+    - name: Build libkqueue
+      run: make -j2
+
+    - name: Run tests
+      env:
+        KQUEUE_DEBUG: 1
+      run: test/libkqueue-test
+
+    - name: Build debian packages
+      run: cpack -G DEB
+
+    - name: Install debian packages
+      run: sudo apt-get install -y ./*.deb

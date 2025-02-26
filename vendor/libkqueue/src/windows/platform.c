@@ -35,12 +35,12 @@ const struct filter evfilt_signal = EVFILT_NOTIMPL;
 const struct filter evfilt_write = EVFILT_NOTIMPL;
 
 const struct kqueue_vtable kqops = {
-    windows_kqueue_init,
-    windows_kqueue_free,
-    windows_kevent_wait,
-    windows_kevent_copyout,
-    windows_filter_init,
-    windows_filter_free,
+    .kqueue_init        = windows_kqueue_init,
+    .kqueue_free        = windows_kqueue_free,
+    .kevent_wait        = windows_kevent_wait,
+    .kevent_copyout     = windows_kevent_copyout,
+    .filter_init        = windows_filter_init,
+    .filter_free        = windows_filter_free
 };
 
 int
@@ -70,10 +70,10 @@ windows_kqueue_init(struct kqueue *kq)
     }
 #endif
 
-	if(filter_register_all(kq) < 0) {
-		CloseHandle(kq->kq_iocp);
-		return (-1);
-	}
+    if(filter_register_all(kq) < 0) {
+        CloseHandle(kq->kq_iocp);
+        return (-1);
+    }
 
     return (0);
 }
@@ -82,13 +82,12 @@ void
 windows_kqueue_free(struct kqueue *kq)
 {
     CloseHandle(kq->kq_iocp);
-    free(kq);
 }
 
 int
 windows_kevent_wait(struct kqueue *kq, int no, const struct timespec *timeout)
 {
-	int retval;
+    int retval;
     DWORD       timeout_ms;
     BOOL        success;
 
@@ -106,10 +105,10 @@ windows_kevent_wait(struct kqueue *kq, int no, const struct timespec *timeout)
             timeout_ms += timeout->tv_nsec / 1000000;
     }
 
-    dbg_printf("waiting for events (timeout=%u ms)", (unsigned int) timeout_ms);
+    dbg_printf("timeout=%u ms - waiting for events", (unsigned int) timeout_ms);
 #if 0
     if(timeout_ms <= 0)
-        dbg_printf("Woop, not waiting !?");
+        dbg_puts("Woop, not waiting !?");
 #endif
     memset(&iocp_buf, 0, sizeof(iocp_buf));
     success = GetQueuedCompletionStatus(kq->kq_iocp,
@@ -134,14 +133,14 @@ windows_kevent_copyout(struct kqueue *kq, int nready,
         struct kevent *eventlist, int nevents)
 {
     struct filter *filt;
-	struct knote* kn;
+    struct knote* kn;
     int rv, nret;
 
     //FIXME: not true for EVFILT_IOCP
     kn = (struct knote *) iocp_buf.overlap;
     filt = &kq->kq_filt[~(kn->kev.filter)];
-    rv = filt->kf_copyout(eventlist, kn, &iocp_buf);
-    if (slowpath(rv < 0)) {
+    rv = filt->kf_copyout(eventlist, nevents, filt, kn, &iocp_buf);
+    if (unlikely(rv < 0)) {
         dbg_puts("knote_copyout failed");
         /* XXX-FIXME: hard to handle this without losing events */
         abort();
@@ -159,24 +158,24 @@ windows_kevent_copyout(struct kqueue *kq, int nready,
         knote_delete(filt, kn); //TODO: Error checking
 
     /* If an empty kevent structure is returned, the event is discarded. */
-    if (fastpath(eventlist->filter != 0)) {
+    if (likely(eventlist->filter != 0)) {
         eventlist++;
     } else {
         dbg_puts("spurious wakeup, discarding event");
         nret--;
     }
 
-	return nret;
+    return nret;
 }
 
 int
 windows_filter_init(struct kqueue *kq, struct filter *kf)
 {
 
-	kq->kq_filt_ref[kq->kq_filt_count] = (struct filter *) kf;
+    kq->kq_filt_ref[kq->kq_filt_count] = (struct filter *) kf;
     kq->kq_filt_count++;
 
-	return (0);
+    return (0);
 }
 
 void
@@ -213,7 +212,7 @@ windows_get_descriptor_type(struct knote *kn)
   default: {
     struct stat sb;
     if (fstat((int)kn->kev.ident, &sb) == 0) {
-      dbg_printf("HANDLE %d appears to be a regular file", kn->kev.ident);
+      dbg_printf("handle=%d - appears to be a regular file", kn->kev.ident);
       kn->kn_flags |= KNFL_FILE;
     }
   }
