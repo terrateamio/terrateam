@@ -1,12 +1,16 @@
 module Abb = Abb_scheduler_kqueue
 module Curl = Abb_curl.Make (Abb)
+module Fc = Abb_future_combinators.Make (Abb.Future)
 
 let get uri =
   let open Abb.Future.Infix_monad in
   Curl.get uri
   >>= function
   | Ok (resp, body) ->
-      Printf.printf "%d\n" (CCString.length body);
+      CCList.iter (fun (k, v) -> Printf.printf "%s - %s: %s\n%!" (Uri.to_string uri) k v)
+      @@ Curl.Headers.to_list
+      @@ Curl.Response.headers resp;
+      Printf.printf "%s - %d\n" (Uri.to_string uri) (CCString.length body);
       Abb.Future.return ()
   | Error _ -> assert false
 
@@ -36,11 +40,9 @@ let main () =
   in
   Logs.set_reporter (reporter Format.std_formatter);
   Logs.set_level (Some Logs.Debug);
-  let rec run = function
-    | [] -> Abb.Future.return ()
-    | uri :: xs ->
-        let open Abb.Future.Infix_monad in
-        get (Uri.of_string uri) >>= fun () -> run xs
+  let run uris =
+    let open Abb.Future.Infix_monad in
+    Fc.all (CCList.map (fun uri -> get (Uri.of_string uri)) uris) >>= fun _ -> Abb.Future.return ()
   in
   match Abb.Scheduler.run_with_state (fun () -> run (List.drop 1 (Array.to_list Sys.argv))) with
   | `Det () -> ()

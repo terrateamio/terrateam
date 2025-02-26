@@ -8,7 +8,7 @@ end
 type call_err =
   [ `Conversion_err of string * string Openapi.Response.t
   | `Missing_response of string Openapi.Response.t
-  | `Io_err of Abb_curl_easy.Make(Abb).request_err
+  | `Io_err of Abb_curl.Make(Abb).request_err
   | `Timeout
   ]
 [@@deriving show]

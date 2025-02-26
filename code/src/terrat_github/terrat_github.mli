@@ -371,14 +371,14 @@ val get_repo_collaborator_permission :
 module Oauth : sig
   type authorize_err =
     [ `Authorize_err of string
-    | Abb_curl_easy.Make(Abb).request_err
+    | Abb_curl.Make(Abb).request_err
     ]
   [@@deriving show]
 
   type refresh_err =
     [ `Refresh_err of string
     | `Bad_refresh_token
-    | Abb_curl_easy.Make(Abb).request_err
+    | Abb_curl.Make(Abb).request_err
     ]
   [@@deriving show]
 
