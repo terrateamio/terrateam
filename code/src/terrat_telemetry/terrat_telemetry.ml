@@ -1,4 +1,4 @@
-module Http = Abb_curl_easy.Make (Abb)
+module Http = Abb_curl.Make (Abb)
 
 let one_hour = 60.0 *. 60.0
 
@@ -33,13 +33,12 @@ let send' telemetry_config event =
           (* For some reason, on dev ngrok this request hangs if it is HTTP2,
              but forcing it to HTTP/1.1 works. *)
           Abbs_future_combinators.ignore
-            (Http.post
-               ~options:
-                 Http.Options.(
-                   with_opt (Http_version `Http1_1)
-                   @@ with_opt (Timeout (Duration.of_sec 1)) default)
-               ~headers:http_headers
-               uri)
+            (Abbs_future_combinators.timeout
+               ~timeout:(Abb.Sys.sleep 1.0)
+               (Http.post
+                  ~options:Http.Options.(with_opt (Http_version `Http1_1) default)
+                  ~headers:http_headers
+                  uri))
       | Event.Run { github_app_id; step; owner; repo } ->
           let uri =
             Uri.with_path
@@ -55,13 +54,12 @@ let send' telemetry_config event =
           (* For some reason, on dev ngrok this request hangs if it is HTTP2,
              but forcing it to HTTP/1.1 works. *)
           Abbs_future_combinators.ignore
-            (Http.post
-               ~options:
-                 Http.Options.(
-                   with_opt (Http_version `Http1_1)
-                   @@ with_opt (Timeout (Duration.of_sec 1)) default)
-               ~headers:http_headers
-               uri)
+            (Abbs_future_combinators.timeout
+               ~timeout:(Abb.Sys.sleep 1.0)
+               (Http.post
+                  ~options:Http.Options.(with_opt (Http_version `Http1_1) default)
+                  ~headers:http_headers
+                  uri))
       | Event.Ping { github_app_id } ->
           let uri =
             Uri.with_path
@@ -72,13 +70,12 @@ let send' telemetry_config event =
           (* For some reason, on dev ngrok this request hangs if it is HTTP2,
              but forcing it to HTTP/1.1 works. *)
           Abbs_future_combinators.ignore
-            (Http.post
-               ~options:
-                 Http.Options.(
-                   with_opt (Http_version `Http1_1)
-                   @@ with_opt (Timeout (Duration.of_sec 1)) default)
-               ~headers:http_headers
-               uri))
+            (Abbs_future_combinators.timeout
+               ~timeout:(Abb.Sys.sleep 1.0)
+               (Http.post
+                  ~options:Http.Options.(with_opt (Http_version `Http1_1) default)
+                  ~headers:http_headers
+                  uri)))
 
 let send telemetry_config event =
   Abbs_future_combinators.ignore (Abb.Future.fork (send' telemetry_config event))

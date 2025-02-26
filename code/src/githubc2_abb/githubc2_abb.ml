@@ -1,4 +1,4 @@
-module Http = Abb_curl_easy.Make (Abb)
+module Http = Abb_curl.Make (Abb)
 
 let base_url = Uri.of_string "https://api.github.com/"
 
@@ -19,11 +19,7 @@ module Io = struct
       | `Post -> `POST body
     in
     let headers' = Http.Headers.of_list headers in
-    Http.call
-      ~options:Http.Options.(with_opt (Timeout (Duration.of_sec 4)) default)
-      ~headers:headers'
-      meth'
-      uri
+    Http.call ~headers:headers' meth' uri
     >>= function
     | Ok (resp, body) ->
         let headers = resp |> Http.Response.headers |> Http.Headers.to_list in
