@@ -14,7 +14,7 @@ module Eventlist = struct
 
   let create count =
     assert (count >= 0);
-    { kevents = C.allocate_n Stubs.Kevent.t ~count; capacity = count; size = count }
+    { kevents = C.allocate_n Stubs.Kevent.t ~count; capacity = count; size = 0 }
 
   let capacity t = t.capacity
   let size t = t.size
@@ -27,7 +27,7 @@ module Eventlist = struct
 
   let set_from_list t kevents =
     let l = List.length kevents in
-    assert (t.capacity <= l);
+    assert (l <= t.capacity);
     t.size <- l;
     List.iteri (fun idx k -> C.(t.kevents +@ idx <-@ k)) kevents
 
