@@ -144,7 +144,10 @@ def main():
     subprocess.check_call(['/usr/local/bin/terrat', 'migrate', '--verbosity=debug'])
 
     # Run server
-    os.execv('/usr/local/bin/terrat', ['/usr/local/bin/terrat', 'server', '--verbosity=debug'])
+    if os.environ.get('TERRAT_STRACE'):
+        os.execv('/usr/bin/strace', ['/usr/bin/strace', '-ff', '-o', '/tmp/strace.log', '-v', '/usr/local/bin/terrat', 'server', '--verbosity=debug'])
+    else:
+        os.execv('/usr/local/bin/terrat', ['/usr/local/bin/terrat', 'server', '--verbosity=debug'])
 
 
 if __name__ == '__main__':
