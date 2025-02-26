@@ -120,7 +120,10 @@ module Response : sig
 end
 
 module Options : sig
-  type opt = Follow_location
+  type opt =
+    | Follow_location
+    | Http_version of [ `Http2 | `Http1_1 ]
+
   type t = opt list
 
   val default : t
@@ -133,6 +136,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) : sig
   module Status = Status
   module Headers = Headers
   module Response = Response
+  module Options = Options
 
   module Connector : sig
     type t
