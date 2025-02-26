@@ -140,6 +140,7 @@ COPY docker/terrat/service/terrat /etc/service/terrat/run
 COPY docker/terrat/service/nginx /etc/service/nginx/run
 COPY docker/terrat/nginx.conf.template /etc/nginx/nginx.conf.template
 COPY --from=terrat-ee-build /usr/lib/libkqueue.so /usr/lib/libkqueue.so
+COPY --from=terrat-ee-build /usr/lib/libkqueue.so.0 /usr/lib/libkqueue.so.0
 COPY --from=terrat-ee-build /mono/code/build/release/terrat_ee/terrat_ee.native /usr/local/bin/terrat
 COPY --from=terrat-ee-build /mono/code/build/release/terrat_ui_files/assets /usr/local/share/terrat/ui/assets/
 EXPOSE 8080
@@ -169,6 +170,7 @@ COPY docker/terrat/service/terrat /etc/service/terrat/run
 COPY docker/terrat/service/nginx /etc/service/nginx/run
 COPY docker/terrat/nginx.conf.template /etc/nginx/nginx.conf.template
 COPY --from=terrat-oss-build /usr/lib/libkqueue.so /usr/lib/libkqueue.so
+COPY --from=terrat-oss-build /usr/lib/libkqueue.so.0 /usr/lib/libkqueue.so.0
 COPY --from=terrat-oss-build /mono/code/build/release/terrat_oss/terrat_oss.native /usr/local/bin/terrat
 EXPOSE 8080
 CMD ["runsvdir", "/etc/service"]
