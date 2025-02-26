@@ -15,6 +15,12 @@ module Metrics = struct
     let spec = Prmths.Histogram_spec.of_exponential ~start:30.0 ~factor:1.2 ~count:20
   end)
 
+  module Rate_limit_remaining_histograph = Prmths.Histogram (struct
+    let spec =
+      Prmths.Histogram_spec.of_list
+        [ 100.0; 500.0; 1000.0; 2000.0; 3000.0; 4000.0; 5000.0; 6000.0; 10000.0 ]
+  end)
+
   let namespace = "terrat"
   let subsystem = "github"
 
@@ -28,7 +34,7 @@ module Metrics = struct
 
   let rate_limit_remaining_count =
     let help = "Number of calls remaining in the rate limit window." in
-    Prmths.Gauge.v ~help ~namespace ~subsystem "rate_limit_remaining_count"
+    Rate_limit_remaining_histograph.v ~help ~namespace ~subsystem "rate_limit_remaining_count"
 
   let fn_call_total =
     let help = "Number of calls of a function" in
@@ -199,9 +205,7 @@ let rate_limit_wait resp =
 let get_rate_limit_remaining resp =
   let headers = Openapi.Response.headers resp in
   let get k = CCList.Assoc.get ~eq:CCString.equal_caseless k headers in
-  match get "x-ratelimit-remaining" with
-  | Some remaining -> CCOption.map_or ~default:(-1.0) CCFloat.of_int @@ CCInt.of_string remaining
-  | None -> -1.0
+  CCOption.map CCFloat.of_int @@ CCOption.flat_map CCInt.of_string @@ get "x-ratelimit-remaining"
 
 let create config auth =
   Githubc2_abb.create
@@ -229,7 +233,11 @@ let call ?(tries = 3) t req =
       let open Abbs_future_combinators.Infix_result_monad in
       Githubc2_abb.call t req
       >>= fun resp ->
-      Prmths.Gauge.set Metrics.rate_limit_remaining_count (get_rate_limit_remaining resp);
+      CCOption.iter (fun remaining ->
+          Metrics.Rate_limit_remaining_histograph.observe
+            Metrics.rate_limit_remaining_count
+            remaining)
+      @@ get_rate_limit_remaining resp;
       Abb.Future.return (Ok resp))
     ~while_:
       (Abbs_future_combinators.finite_tries tries (function
@@ -748,7 +756,7 @@ module Pull_request_reviews = struct
 end
 
 module Oauth = struct
-  module Http = Abb_curl_easy.Make (Abb)
+  module Http = Abb_curl.Make (Abb)
 
   type authorize_err =
     [ `Authorize_err of string
