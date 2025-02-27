@@ -1,9 +1,9 @@
-(** Abb_intf defines the interface that users of Abb should program against as
-    well as what backends should implement.  A monadic interface is requires as
-    well as low-level OS operations. This is targeted at POSIX-like OS's.
+(** Abb_intf defines the interface that users of Abb should program against as well as what backends
+    should implement. A monadic interface is requires as well as low-level OS operations. This is
+    targeted at POSIX-like OS's.
 
-    Unless otherwise specified, no operations on a single value (such as a file
-    or socket) are safe to execute concurrent operations. *)
+    Unless otherwise specified, no operations on a single value (such as a file or socket) are safe
+    to execute concurrent operations. *)
 
 module Errors = struct
   let pp_exn fmt exn = Format.fprintf fmt "%s" (Printexc.to_string exn)
@@ -363,8 +363,7 @@ module Errors = struct
   [@@deriving show, eq]
 end
 
-(** An implementation of future must provide an interface which works
-    within  these types. *)
+(** An implementation of future must provide an interface which works within these types. *)
 module Future = struct
   module State = struct
     type 'a t =
@@ -388,34 +387,30 @@ module Future = struct
     type +'a t
     type abort = unit -> unit t
 
-    (** A promise is the value used to set a [Future].  The promise can be
-       aborted by turning it into a future with {!Promise.future} and then
-       calling {!abort}. *)
+    (** A promise is the value used to set a [Future]. The promise can be aborted by turning it into
+        a future with {!Promise.future} and then calling {!abort}. *)
     module Promise : sig
       type 'a fut = 'a t
       type 'a t
 
-      (** Create a promise with an optional function to call on abort.  When
-         aborting or canceling a future, the processing of the dependency tree
-         is executed depth-first and the each abort is executed to completion
-         before working back up the stack of aborts.  If calling the [abort]
-         function raises and exception, then that exception is what is
-         propagated through the tree, replacing whatever the existing error
-         was. *)
+      (** Create a promise with an optional function to call on abort. When aborting or canceling a
+          future, the processing of the dependency tree is executed depth-first and the each abort
+          is executed to completion before working back up the stack of aborts. If calling the
+          [abort] function raises and exception, then that exception is what is propagated through
+          the tree, replacing whatever the existing error was. *)
       val create : ?abort:abort -> unit -> 'a t
 
       (** Return a future for the promise. *)
       val future : 'a t -> 'a fut
 
-      (** Set the promise to a value and kick any values waiting for it.  If the
-          promise is determined already, this is a no-op. *)
+      (** Set the promise to a value and kick any values waiting for it. If the promise is
+          determined already, this is a no-op. *)
       val set : 'a t -> 'a -> unit fut
 
-      (** Set the promise to an exception, this will fail all of the connected
-         futures with the exception, causing their abort function to be
-         executed.  The returned future is not determined until all aborts have
-         been executed.  This is a no-op if the promise has already been
-         determined. *)
+      (** Set the promise to an exception, this will fail all of the connected futures with the
+          exception, causing their abort function to be executed. The returned future is not
+          determined until all aborts have been executed. This is a no-op if the promise has already
+          been determined. *)
       val set_exn : 'a t -> exn * Printexc.raw_backtrace option -> unit fut
     end
 
@@ -436,31 +431,28 @@ module Future = struct
     val app : ('a -> 'b) t -> 'a t -> 'b t
     val map : ('a -> 'b) -> 'a t -> 'b t
 
-    (** Execute a future without waiting for it to complete.  The future can be
-       applied with [bind], [app], or [map] later in order to get the value. *)
+    (** Execute a future without waiting for it to complete. The future can be applied with [bind],
+        [app], or [map] later in order to get the value. *)
     val fork : 'a t -> 'a t t
 
     (** Query the state of the Future *)
     val state : 'a t -> 'a State.t
 
-    (** Create a future that will evaluate to the determined state of the
-       queried future.  If the await is aborted, the input future is aborted as
-       well. *)
+    (** Create a future that will evaluate to the determined state of the queried future. If the
+        await is aborted, the input future is aborted as well. *)
     val await : 'a t -> 'a Set.t t
 
     val await_map : ('a Set.t -> 'b) -> 'a t -> 'b t
     val await_bind : ('a Set.t -> 'b t) -> 'a t -> 'b t
 
-    (** Abort a future and all of its undetermined dependencies.  The returned
-       future will not be determined until all aborts of dependencies have been
-       completed.  If a future has been determined already then {!abort} is a
-       no-op. *)
+    (** Abort a future and all of its undetermined dependencies. The returned future will not be
+        determined until all aborts of dependencies have been completed. If a future has been
+        determined already then {!abort} is a no-op. *)
     val abort : 'a t -> unit t
 
-    (** Cancel a future, this is like an abort except it only spreads to
-       watchers.  The returned future will not be determined until all aborts of
-       dependencies have been completed.  If the future has been determined
-       already then {!cancel} is a no-op. *)
+    (** Cancel a future, this is like an abort except it only spreads to watchers. The returned
+        future will not be determined until all aborts of dependencies have been completed. If the
+        future has been determined already then {!cancel} is a no-op. *)
     val cancel : 'a t -> unit t
 
     (** Add [dep] future as a dependency to the given future. *)
@@ -624,44 +616,20 @@ module Process = struct
     [@@deriving show, eq]
   end
 
-  (** A Dup represents a relationship between two values.  This is purely a
-      container that expresses that relationship, it does not create anything.
-
-      The relationship a Dup expresses is that one value should replace another
-      value.  The usecase for this is when creating a new process and wanting to
-      reassign [Native.t]s to other ones.  For example, replacing [stdin] in the
-      spawned process with one from the parent program. *)
-  module Dup : sig
-    type 'a t
-
-    val create : src:'a -> dst:'a -> 'a t
-    val src : 'a t -> 'a
-    val dst : 'a t -> 'a
-  end = struct
-    type 'a t = 'a * 'a
-
-    let create ~src ~dst = (src, dst)
-    let src = fst
-    let dst = snd
-  end
-
   type t = {
     exec_name : string;
     args : string list;
     env : (string * string) list option;
-    cwd : string option;
   }
   [@@deriving show, eq]
 end
 
-(** The scheduler interface.  This only has those types and value that the
-    implementation must specify.  Common values across all schedulers are pulled
-    out of the module type *)
+(** The scheduler interface. This only has those types and value that the implementation must
+    specify. Common values across all schedulers are pulled out of the module type *)
 module type S = sig
-  (** The Native module represents the underlying native platform type of files
-      and sockets.  This does assume that files and sockets have the same
-      underlying representation.  The type, [Native.t] must be available to the
-      user. *)
+  (** The Native module represents the underlying native platform type of files and sockets. This
+      does assume that files and sockets have the same underlying representation. The type,
+      [Native.t] must be available to the user. *)
   module Native : sig
     type t
   end
@@ -675,29 +643,27 @@ module type S = sig
   module Scheduler : sig
     type t
 
-    val create : unit -> t
+    val create : ?exec_duration:(float -> unit) -> unit -> t
     val destroy : t -> unit
     val run : t -> (unit -> 'a Future.t) -> t * 'a Future_set.t
-    val run_with_state : (unit -> 'a Future.t) -> 'a Future_set.t
-    val exec_duration : t -> float array
+    val run_with_state : ?exec_duration:(float -> unit) -> (unit -> 'a Future.t) -> 'a Future_set.t
   end
 
   (** {2 System operations} *)
 
   module Sys : sig
-    (** Sleep for the given number of seconds, fractional sections allowed. *)
+    (** Sleep for the given number of seconds, fractional seconds allowed. *)
     val sleep : float -> unit Future.t
 
-    (** Get the wallclock time.  This is updated only once for each loop of the
-        event loop.  Successive calls to [time] provide no guarantee about their
-        values relative to each other. *)
+    (** Get the wallclock time. This is updated only once for each loop of the event loop.
+        Successive calls to [time] provide no guarantee about their values relative to each other.
+    *)
     val time : unit -> float Future.t
 
-    (** Return a monotonically increasing value.  The value is updated only once
-        for each loop of the event loop.  The value itself represents the number
-        of seconds since a stable arbitrary point in the past.  The values are
-        guaranteed to always be equal to or greater than the previous call and
-        subtracting them will give the number of seconds elapsed. *)
+    (** Return a monotonically increasing value. The value is updated only once for each loop of the
+        event loop. The value itself represents the number of seconds since a stable arbitrary point
+        in the past. The values are guaranteed to always be equal to or greater than the previous
+        call and subtracting them will give the number of seconds elapsed. *)
     val monotonic : unit -> float Future.t
   end
 
@@ -706,9 +672,8 @@ module type S = sig
   module File : sig
     type t
 
-    (** Convert the underlying type to the native representation.  This is here
-        as an escape hatch if a user needs to perform some system specific
-        work. *)
+    (** Convert the underlying type to the native representation. This is here as an escape hatch if
+        a user needs to perform some system specific work. *)
     val to_native : t -> Native.t
 
     (** Convert the native representation to the underlying type. *)
@@ -718,8 +683,8 @@ module type S = sig
     val stdout : t
     val stderr : t
 
-    (** Open a file path with the specified flags.  The file created will be
-        automatically closed during {!Process.spawn}. *)
+    (** Open a file path with the specified flags. The file created will be automatically closed
+        during {!Process.spawn}. *)
     val open_file : flags:File.Flag.t list -> string -> (t, [> Errors.open_file ]) result Future.t
 
     (** Read bytes from a {!File.t}.
@@ -733,12 +698,10 @@ module type S = sig
         @return the number of bytes read *)
     val read : t -> buf:bytes -> pos:int -> len:int -> (int, [> Errors.read ]) result Future.t
 
-    (** Read bytes from a {!File.t} from a particular offset within the file.
-        It is undefined if the cursor within the file is modified after this
-        operation or not.
+    (** Read bytes from a {!File.t} from a particular offset within the file. It is undefined if the
+        cursor within the file is modified after this operation or not.
 
-        @param offset offset relative to the beginning of the file to start
-        reading
+        @param offset offset relative to the beginning of the file to start reading
 
         @param buf buffer to read the contents into
 
@@ -750,19 +713,17 @@ module type S = sig
     val pread :
       t -> offset:int -> buf:bytes -> pos:int -> len:int -> (int, [> Errors.pread ]) result Future.t
 
-    (** Write the list of buffers to the file in the order they are specified.
-        Not all bytes are guaranteed to be written.
+    (** Write the list of buffers to the file in the order they are specified. Not all bytes are
+        guaranteed to be written.
 
         @return the number of bytes written *)
     val write : t -> Write_buf.t list -> (int, [> Errors.write ]) result Future.t
 
-    (** Write the list of buffers to the file in the order they are specified
-        starting from the specified offset.  Not all bytes are guaranteed to be
-        written.  It is undefined if the cursor within the file is modified
-        after this operation or not.
+    (** Write the list of buffers to the file in the order they are specified starting from the
+        specified offset. Not all bytes are guaranteed to be written. It is undefined if the cursor
+        within the file is modified after this operation or not.
 
-        @param offset offset relative to the beginning of the file to start
-        writing
+        @param offset offset relative to the beginning of the file to start writing
 
         @return the number of bytes written *)
     val pwrite : t -> offset:int -> Write_buf.t list -> (int, [> Errors.pwrite ]) result Future.t
@@ -776,15 +737,15 @@ module type S = sig
     (** Unlink a file path. *)
     val unlink : string -> (unit, [> Errors.unlink ]) result Future.t
 
-    (** Make a directory with the specified permissions.  This will fail if the
-        directory already exists but does not have the correct permissions. *)
+    (** Make a directory with the specified permissions. This will fail if the directory already
+        exists but does not have the correct permissions. *)
     val mkdir : string -> File.Permissions.t -> (unit, [> Errors.mkdir ]) result Future.t
 
     (** Deleted a directory, this may fail if the directory is not empty. *)
     val rmdir : string -> (unit, [> Errors.rmdir ]) result Future.t
 
-    (** Read the contents of a directory.  The returned list will not contain
-        any path information, just the name of the entries in the directory. *)
+    (** Read the contents of a directory. The returned list will not contain any path information,
+        just the name of the entries in the directory. *)
     val readdir : string -> (string list, [> Errors.readdir ]) result Future.t
 
     (** Return stat information about a file path. *)
@@ -793,41 +754,36 @@ module type S = sig
     (** Return stat information about the {!File.t}. *)
     val fstat : t -> (File.Stat.t, [> Errors.fstat ]) result Future.t
 
-    (** Like {!stat} except in the case where the file path is a symbolic link
-        it returns information about the link. *)
+    (** Like {!stat} except in the case where the file path is a symbolic link it returns
+        information about the link. *)
     val lstat : string -> (File.Stat.t, [> Errors.stat ]) result Future.t
 
-    (** Rename a file path in [src] to [dst].  This may fail if the underlying
-        OS does not support renaming the particular file, for example across
-        mount point. *)
+    (** Rename a file path in [src] to [dst]. This may fail if the underlying OS does not support
+        renaming the particular file, for example across mount point. *)
     val rename : src:string -> dst:string -> (unit, [> Errors.rename ]) result Future.t
 
-    (** Truncate a file path to the given size (possibly growing it if it is
-        larger than the file's size *)
+    (** Truncate a file path to the given size (possibly growing it if it is larger than the file's
+        size *)
     val truncate : string -> Int64.t -> (unit, [> Errors.truncate ]) result Future.t
 
-    (** Truncate a {!File.t} to the given size (possibly growing it if it is
-        larger than the file's size *)
+    (** Truncate a {!File.t} to the given size (possibly growing it if it is larger than the file's
+        size *)
     val ftruncate : t -> Int64.t -> (unit, [> Errors.ftruncate ]) result Future.t
 
-    (** Modify the permissions of a file path where the permissions are
-        specified as an [int]. *)
+    (** Modify the permissions of a file path where the permissions are specified as an [int]. *)
     val chmod : string -> File.Permissions.t -> (unit, [> Errors.chmod ]) result Future.t
 
-    (** Modify the permissions of a {!File.t} where the permissions are
-        specified as an [int]. *)
+    (** Modify the permissions of a {!File.t} where the permissions are specified as an [int]. *)
     val fchmod : t -> File.Permissions.t -> (unit, [> Errors.fchmod ]) result Future.t
 
-    (** Make a symbolic link to a file or directory in [src] to the destination
-        [dst], specified as a path. *)
+    (** Make a symbolic link to a file or directory in [src] to the destination [dst], specified as
+        a path. *)
     val symlink : src:string -> dst:string -> (unit, [> Errors.symlink ]) result Future.t
 
-    (** Hard link a file or directory in [src] to the destination [dst],
-        specified as a path. *)
+    (** Hard link a file or directory in [src] to the destination [dst], specified as a path. *)
     val link : src:string -> dst:string -> (unit, [> Errors.link ]) result Future.t
 
-    (** Change the owner of a file, specified as a path, to a uid and a gid
-        encoded as an int *)
+    (** Change the owner of a file, specified as a path, to a uid and a gid encoded as an int *)
     val chown : string -> uid:int -> gid:int -> (unit, [> Errors.chown ]) result Future.t
 
     (** Change the owner of a {!File.t} to a uid and a gid encoded as an int *)
@@ -864,8 +820,7 @@ module type S = sig
 
         @param len length of the buffer available for storing data
 
-        @return on success, the number of bytes read and the sockaddr of the
-        sender *)
+        @return on success, the number of bytes read and the sockaddr of the sender *)
     val recvfrom :
       'a t ->
       buf:bytes ->
@@ -879,8 +834,9 @@ module type S = sig
 
         @param sockaddr the address to send to
 
-        @return on success, the number of bytes written, this could be less
-        than the length of the write bufs *)
+        @return
+          on success, the number of bytes written, this could be less than the length of the write
+          bufs *)
     val sendto :
       'a t ->
       bufs:Write_buf.t list ->
@@ -905,16 +861,15 @@ module type S = sig
     (** {2 TCP sockets} *)
 
     module Tcp : sig
-      (** Convert the underlying type to the native representation.  This is here
-          as an escape hatch if a user needs to perform some system specific
-          work. *)
+      (** Convert the underlying type to the native representation. This is here as an escape hatch
+          if a user needs to perform some system specific work. *)
       val to_native : tcp t -> Native.t
 
       (** Convert the native representation to the underlying type. *)
       val of_native : Native.t -> tcp t
 
-      (** Create a new TCP socket. The socket will be automatically closed
-          during {!Process.spawn}. *)
+      (** Create a new TCP socket. The socket will be automatically closed during {!Process.spawn}.
+      *)
       val create : domain:Socket.Domain.t -> (tcp t, [> Errors.sock_create ]) result
 
       (** Bind to a port and address. *)
@@ -939,8 +894,9 @@ module type S = sig
 
           @param bufs list of buffers to write, in order
 
-          @return on success, the number of bytes written, this could be less
-          than the length of the write bufs *)
+          @return
+            on success, the number of bytes written, this could be less than the length of the write
+            bufs *)
       val send : tcp t -> bufs:Write_buf.t list -> (int, [> Errors.send ]) result Future.t
 
       (** Set Nagle's algorithm on and off. *)
@@ -950,16 +906,15 @@ module type S = sig
     (** {2 UDP sockets} *)
 
     module Udp : sig
-      (** Convert the underlying type to the native representation.  This is here
-          as an escape hatch if a user needs to perform some system specific
-          work. *)
+      (** Convert the underlying type to the native representation. This is here as an escape hatch
+          if a user needs to perform some system specific work. *)
       val to_native : udp t -> Native.t
 
       (** Convert the native representation to the underlying type. *)
       val of_native : Native.t -> udp t
 
-      (** Create a new UDP socket.  The socket will be automatically closed
-          during {!Process.spawn}. *)
+      (** Create a new UDP socket. The socket will be automatically closed during {!Process.spawn}.
+      *)
       val create : domain:Socket.Domain.t -> (udp t, [> Errors.sock_create ]) result
 
       val bind : udp t -> Socket.Sockaddr.t -> (unit, [> Errors.bind ]) result
@@ -975,22 +930,25 @@ module type S = sig
     module Pid : sig
       type t
 
-      (** The native representation for a pid.  This type must be public to the
-          user. *)
+      (** The native representation for a pid. This type must be public to the user. *)
       type native
 
       val of_native : native -> t
       val to_native : t -> native
     end
 
-    (** Spawn a process with a list of Dups.  The [src] side of the Dup will be
-       closed once the [dst] has been replaced in the spawned process and the
-       [src] will be closed in the parent process after forking.  In this case
-       the Dups are {!Native}s because any descriptor type can be inherited by a
-       spawned process.
+    (** Spawn a process with a list of Dups. The [src] side of the Dup will be closed once the [dst]
+        has been replaced in the spawned process and the [src] will be closed in the parent process
+        after forking. In this case the Dups are {!Native}s because any descriptor type can be
+        inherited by a spawned process.
 
         @return on success, the handle to the running process *)
-    val spawn : Process.t -> Native.t Process.Dup.t list -> (t, [> Errors.spawn ]) result
+    val spawn :
+      stdin:Native.t ->
+      stdout:Native.t ->
+      stderr:Native.t ->
+      Process.t ->
+      (t, [> Errors.spawn ]) result
 
     (** Get the pid of a process. *)
     val pid : t -> Pid.t
@@ -1000,8 +958,7 @@ module type S = sig
 
     (** Get the exit code of a process if it has terminated.
 
-        @return the exit code of the process or [None] if it has not
-        terminated *)
+        @return the exit code of the process or [None] if it has not terminated *)
     val exit_code : t -> Process.Exit_code.t option
 
     (** Send the specified signal to the process handle. *)
@@ -1012,8 +969,8 @@ module type S = sig
   end
 
   module Thread : sig
-    (** Run a function in a thread.  Aborting this future is not guaranteed to
-        abort stop the thread. *)
+    (** Run a function in a thread. Aborting this future is not guaranteed to abort stop the thread.
+    *)
     val run : (unit -> 'a) -> 'a Future.t
   end
 end

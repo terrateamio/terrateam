@@ -1,3 +1,7 @@
+let src = Logs.Src.create "terrat_github"
+
+module Logs = (val Logs.src_log src : Logs.LOG)
+
 let one_minute = Duration.(to_f (of_min 1))
 let terrateam_workflow_name = "Terrateam Workflow"
 let terrateam_workflow_path = ".github/workflows/terrateam.yml"
@@ -11,6 +15,12 @@ module Metrics = struct
     let spec = Prmths.Histogram_spec.of_exponential ~start:30.0 ~factor:1.2 ~count:20
   end)
 
+  module Rate_limit_remaining_histograph = Prmths.Histogram (struct
+    let spec =
+      Prmths.Histogram_spec.of_list
+        [ 100.0; 500.0; 1000.0; 2000.0; 3000.0; 4000.0; 5000.0; 6000.0; 10000.0 ]
+  end)
+
   let namespace = "terrat"
   let subsystem = "github"
 
@@ -21,6 +31,10 @@ module Metrics = struct
   let rate_limit_retry_wait_seconds =
     let help = "Number of seconds a call has spent waiting due to rate limit" in
     Call_retry_wait_histograph.v ~help ~namespace ~subsystem "rate_limit_retry_wait_seconds"
+
+  let rate_limit_remaining_count =
+    let help = "Number of calls remaining in the rate limit window." in
+    Rate_limit_remaining_histograph.v ~help ~namespace ~subsystem "rate_limit_remaining_count"
 
   let fn_call_total =
     let help = "Number of calls of a function" in
@@ -168,13 +182,15 @@ let rate_limit_wait resp =
   let get k = CCList.Assoc.get ~eq:CCString.equal_caseless k headers in
   if Openapi.Response.status resp = 403 then
     match (get "retry-after", get "x-ratelimit-remaining", get "x-ratelimit-reset") with
-    | (Some _ as retry_after), _, _ ->
+    | (Some ra as retry_after), _, _ ->
+        Logs.debug (fun m -> m "RATE_LIMIT : RETRY_AFTER : %s" ra);
         Abb.Future.return
           (CCOption.map_or
              ~default:(Some one_minute)
              CCFun.(CCInt.of_string %> CCOption.map CCFloat.of_int)
              retry_after)
     | None, Some "0", Some retry_time -> (
+        Logs.debug (fun m -> m "RATE_LIMIT : RETRY_TIME : %s" retry_time);
         match CCFloat.of_string_opt retry_time with
         | Some retry_time ->
             let open Abb.Future.Infix_monad in
@@ -185,6 +201,11 @@ let rate_limit_wait resp =
         | None -> Abb.Future.return (Some one_minute))
     | _, _, _ -> Abb.Future.return None
   else Abb.Future.return None
+
+let get_rate_limit_remaining resp =
+  let headers = Openapi.Response.headers resp in
+  let get k = CCList.Assoc.get ~eq:CCString.equal_caseless k headers in
+  CCOption.map CCFloat.of_int @@ CCOption.flat_map CCInt.of_string @@ get "x-ratelimit-remaining"
 
 let create config auth =
   Githubc2_abb.create
@@ -208,7 +229,16 @@ let retry_wait default_wait resp =
 
 let call ?(tries = 3) t req =
   Abbs_future_combinators.retry
-    ~f:(fun () -> Githubc2_abb.call t req)
+    ~f:(fun () ->
+      let open Abbs_future_combinators.Infix_result_monad in
+      Githubc2_abb.call t req
+      >>= fun resp ->
+      CCOption.iter (fun remaining ->
+          Metrics.Rate_limit_remaining_histograph.observe
+            Metrics.rate_limit_remaining_count
+            remaining)
+      @@ get_rate_limit_remaining resp;
+      Abb.Future.return (Ok resp))
     ~while_:
       (Abbs_future_combinators.finite_tries tries (function
         | Error _ -> true
@@ -726,7 +756,7 @@ module Pull_request_reviews = struct
 end
 
 module Oauth = struct
-  module Http = Abb_curl_easy.Make (Abb)
+  module Http = Abb_curl.Make (Abb)
 
   type authorize_err =
     [ `Authorize_err of string

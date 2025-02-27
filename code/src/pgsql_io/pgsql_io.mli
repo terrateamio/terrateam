@@ -207,11 +207,14 @@ type create_err =
   ]
 [@@deriving show]
 
+(** Create a connection. [buf_size_threshold] is a threshold for how large the protocol debugging
+    buffer can get before decoding is pushed to another thread. *)
 val create :
   ?tls_config:[ `Require of Otls.Tls_config.t | `Prefer of Otls.Tls_config.t ] ->
   ?passwd:string ->
   ?port:int ->
   ?notice_response:((char * string) list -> unit) ->
+  ?buf_size_threshold:int ->
   host:string ->
   user:string ->
   string ->

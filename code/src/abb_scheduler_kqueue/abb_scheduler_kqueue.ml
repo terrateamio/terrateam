@@ -43,8 +43,8 @@ module El = struct
     change_read : [ `Add | `Del ] Fd_map.t;
     change_write : [ `Add | `Del ] Fd_map.t;
     eventlist : Kqueue.Eventlist.t;
-    exec_duration : float array;
-    thread_pool : (Unix.file_descr * Unix.file_descr) Abb_thread_pool.t;
+    exec_duration : float -> unit;
+    thread_pool : (Unix.file_descr * Unix.file_descr) Abb_domain_pool.t;
   }
 
   type t_ = t
@@ -53,7 +53,7 @@ module El = struct
     type t = t_
   end)
 
-  let create () =
+  let create ?(exec_duration = fun _ -> ()) () =
     let t =
       {
         kq = Kqueue.create ();
@@ -66,14 +66,16 @@ module El = struct
         change_read = Fd_map.empty;
         change_write = Fd_map.empty;
         eventlist = Kqueue.Eventlist.create 1024;
-        exec_duration = Array.create_float 1024;
-        thread_pool = Abb_thread_pool.create ~capacity:100 ~wait:Unix.pipe;
+        exec_duration;
+        thread_pool =
+          Abb_domain_pool.create
+            ~capacity:(CCInt.max 2 (Domain.recommended_domain_count ()))
+            ~wait:Unix.pipe;
       }
     in
-    Array.fill t.exec_duration 0 (Array.length t.exec_duration) 0.0;
     t
 
-  let destroy t = Abb_thread_pool.destroy t.thread_pool
+  let destroy t = Abb_domain_pool.destroy t.thread_pool
 
   let add_read fd handler t =
     { t with reads = Fd_map.add fd handler t.reads; change_read = Fd_map.add fd `Add t.change_read }
@@ -160,10 +162,6 @@ module El = struct
         kevent :: acc)
       t.change_write
       changelist
-
-  let update_exec_duration exec_duration time =
-    let spot = Random.int (Array.length exec_duration) in
-    exec_duration.(spot) <- time
 
   let dispatch fd get set s =
     let m = get s in
@@ -274,7 +272,7 @@ module El = struct
     let s = dispatch_timers s in
     let end_time = Mtime_clock.elapsed () in
     let duration = Mtime.Span.(to_float_ns (abs_diff end_time t.mono_time) /. sec_ns) in
-    update_exec_duration (Abb_fut.State.state s).exec_duration duration;
+    (Abb_fut.State.state s).exec_duration duration;
     s
 
   let rec loop s done_fut =
@@ -290,7 +288,7 @@ module Future = El.Future
 module Scheduler = struct
   type t = El.t Abb_fut.State.t
 
-  let create () = Abb_fut.State.create (El.create ())
+  let create ?exec_duration () = Abb_fut.State.create (El.create ?exec_duration ())
   let destroy t = El.destroy (Abb_fut.State.state t)
 
   let run t f =
@@ -302,15 +300,11 @@ module Scheduler = struct
     | (`Det _ | `Aborted | `Exn _) as r -> (t, r)
     | `Undet -> assert false
 
-  let run_with_state f =
-    let t = create () in
+  let run_with_state ?exec_duration f =
+    let t = create ?exec_duration () in
     let t, r = run t f in
     destroy t;
     r
-
-  let exec_duration t =
-    let el = Abb_fut.State.state t in
-    el.El.exec_duration
 end
 
 module Sys = struct
@@ -369,7 +363,7 @@ module Thread = struct
              ());
           Unix.close trigger
         in
-        let wait, d = Abb_thread_pool.enqueue t.El.thread_pool ~f ~trigger in
+        let wait, d = Abb_domain_pool.enqueue t.El.thread_pool ~f ~trigger in
         let abort () =
           (* It would be nice to kill the thread here but several issues arise,
              including: the thread may have allocated resources it needs to clean
@@ -1072,53 +1066,39 @@ module Socket = struct
     | Unix.ADDR_INET (addr, port) -> Abb_intf.Socket.Sockaddr.(Inet { addr; port })
 
   let recvfrom t ~buf ~pos ~len =
-    try
-      let n, addr = Unix.recvfrom t ~buf ~pos ~len ~mode:[] in
-      Future.return (Ok (n, sockaddr_of_unix_sockaddr addr))
-    with
-    | Unix.Unix_error (Unix.EAGAIN, _, _) | Unix.Unix_error (Unix.EWOULDBLOCK, _, _) ->
-        Future.with_state (fun s ->
-            let el = Abb_fut.State.state s in
-            let p =
-              Future.Promise.create
-                ~abort:(fun () ->
-                  Future.with_state (fun s ->
-                      let el = Abb_fut.State.state s in
-                      let t = El.remove_read t el in
-                      let s = Abb_fut.State.set_state t s in
-                      (s, Future.return ())))
-                ()
-            in
-            let handler s =
-              Future.run_with_state
-                (Future.Promise.set
-                   p
-                   (try
-                      let n, addr = Unix.recvfrom t ~buf ~pos ~len ~mode:[] in
-                      Ok (n, sockaddr_of_unix_sockaddr addr)
-                    with
-                   | Unix.Unix_error (err, _, _) as exn ->
-                       let open Unix in
-                       Error
-                         (match err with
-                         | EBADF -> `E_bad_file
-                         | ECONNRESET -> `E_connection_reset
-                         | _ -> `Unexpected exn)
-                   | exn -> Error (`Unexpected exn)))
-                s
-            in
-            let el = El.add_read t handler el in
-            let s = Abb_fut.State.set_state el s in
-            (s, Future.Promise.future p))
-    | Unix.Unix_error (err, _, _) as exn ->
-        let open Unix in
-        Future.return
-          (Error
-             (match err with
-             | EBADF -> `E_bad_file
-             | ECONNRESET -> `E_connection_reset
-             | _ -> `Unexpected exn))
-    | exn -> Future.return (Error (`Unexpected exn))
+    Future.with_state (fun s ->
+        let el = Abb_fut.State.state s in
+        let p =
+          Future.Promise.create
+            ~abort:(fun () ->
+              Future.with_state (fun s ->
+                  let el = Abb_fut.State.state s in
+                  let t = El.remove_read t el in
+                  let s = Abb_fut.State.set_state t s in
+                  (s, Future.return ())))
+            ()
+        in
+        let handler s =
+          Future.run_with_state
+            (Future.Promise.set
+               p
+               (try
+                  let n, addr = Unix.recvfrom t ~buf ~pos ~len ~mode:[] in
+                  Ok (n, sockaddr_of_unix_sockaddr addr)
+                with
+               | Unix.Unix_error (err, _, _) as exn ->
+                   let open Unix in
+                   Error
+                     (match err with
+                     | EBADF -> `E_bad_file
+                     | ECONNRESET -> `E_connection_reset
+                     | _ -> `Unexpected exn)
+               | exn -> Error (`Unexpected exn)))
+            s
+        in
+        let el = El.add_read t handler el in
+        let s = Abb_fut.State.set_state el s in
+        (s, Future.Promise.future p))
 
   let sendto t ~bufs sockaddr =
     let p =
@@ -1132,47 +1112,43 @@ module Socket = struct
         ()
     in
     let addr = unix_sockaddr_of_sockaddr sockaddr in
-    let rec send' total = function
+    let rec send' ~total ~pos = function
       | [] -> Future.Promise.set p (Ok total)
-      | wb :: bufs -> (
-          try
-            let n =
-              Unix.sendto
-                t
-                ~buf:wb.Abb_intf.Write_buf.buf
-                ~pos:wb.Abb_intf.Write_buf.pos
-                ~len:wb.Abb_intf.Write_buf.len
-                ~mode:[]
-                ~addr
-            in
-            (* FIXME Make this handle incomplete sends *)
-            assert (n = wb.Abb_intf.Write_buf.len);
-            send' (n + total) bufs
-          with
-          | Unix.Unix_error (Unix.EAGAIN, _, _) | Unix.Unix_error (Unix.EWOULDBLOCK, _, _) ->
-              Future.with_state (fun s ->
-                  let el = Abb_fut.State.state s in
-                  let handler s = Future.run_with_state (send' total (wb :: bufs)) s in
-                  let el = El.add_write t handler el in
-                  let s = Abb_fut.State.set_state el s in
-                  (s, Future.return ()))
-          | Unix.Unix_error (err, _, _) as exn ->
-              let open Unix in
-              Future.Promise.set
-                p
-                (Error
-                   (match err with
-                   | EBADF -> `E_bad_file
-                   | EACCES -> `E_access
-                   | ENOBUFS -> `E_no_buffers
-                   | EHOSTUNREACH -> `E_host_unreachable
-                   | EHOSTDOWN -> `E_host_down
-                   | ECONNREFUSED -> `E_connection_refused
-                   | _ -> `Unexpected exn))
-          | exn -> Future.Promise.set p (Error (`Unexpected exn)))
+      | wb :: bufs as all_bufs ->
+          Future.with_state (fun s ->
+              let el = Abb_fut.State.state s in
+              let handler s =
+                try
+                  let len = wb.Abb_intf.Write_buf.len - pos in
+                  let n = Unix.sendto t ~buf:wb.Abb_intf.Write_buf.buf ~pos ~len ~mode:[] ~addr in
+                  let total = total + n in
+                  match n with
+                  | n when n = len -> Future.run_with_state (send' ~total ~pos:0 bufs) s
+                  | n -> Future.run_with_state (send' ~total ~pos:(pos + n) all_bufs) s
+                with
+                | Unix.Unix_error (err, _, _) as exn ->
+                    let open Unix in
+                    Future.run_with_state
+                      (Future.Promise.set
+                         p
+                         (Error
+                            (match err with
+                            | EBADF -> `E_bad_file
+                            | EACCES -> `E_access
+                            | ENOBUFS -> `E_no_buffers
+                            | EHOSTUNREACH -> `E_host_unreachable
+                            | EHOSTDOWN -> `E_host_down
+                            | ECONNREFUSED -> `E_connection_refused
+                            | _ -> `Unexpected exn)))
+                      s
+                | exn -> Future.run_with_state (Future.Promise.set p (Error (`Unexpected exn))) s
+              in
+              let el = El.add_write t handler el in
+              let s = Abb_fut.State.set_state el s in
+              (s, Future.return ()))
     in
     let open Future.Infix_monad in
-    send' 0 bufs >>= fun () -> Future.Promise.future p
+    send' ~total:0 ~pos:0 bufs >>= fun () -> Future.Promise.future p
 
   let close t =
     (* This scheduler is used in FreeBSD and Linux, with linux support via
@@ -1410,49 +1386,37 @@ module Socket = struct
       | exn -> Future.return (Error (`Unexpected exn))
 
     let recv t ~buf ~pos ~len =
-      try Future.return (Ok (Unix.recv t ~buf ~pos ~len ~mode:[])) with
-      | Unix.Unix_error (Unix.EAGAIN, _, _) | Unix.Unix_error (Unix.EWOULDBLOCK, _, _) ->
-          Future.with_state (fun s ->
-              let el = Abb_fut.State.state s in
-              let p =
-                Future.Promise.create
-                  ~abort:(fun () ->
-                    Future.with_state (fun s ->
-                        let el = Abb_fut.State.state s in
-                        let el = El.remove_read t el in
-                        let s = Abb_fut.State.set_state el s in
-                        (s, Future.return ())))
-                  ()
-              in
-              let handler s =
-                Future.run_with_state
-                  (Future.Promise.set
-                     p
-                     (try Ok (Unix.recv t ~buf ~pos ~len ~mode:[]) with
-                     | Unix.Unix_error (err, _, _) as exn ->
-                         let open Unix in
-                         Error
-                           (match err with
-                           | ENOTSOCK | EBADF -> `E_bad_file
-                           | ECONNRESET -> `E_connection_reset
-                           | ENOTCONN -> `E_not_connected
-                           | _ -> `Unexpected exn)
-                     | exn -> Error (`Unexpected exn)))
-                  s
-              in
-              let el = El.add_read t handler el in
-              let s = Abb_fut.State.set_state el s in
-              (s, Future.Promise.future p))
-      | Unix.Unix_error (err, _, _) as exn ->
-          let open Unix in
-          Future.return
-            (Error
-               (match err with
-               | ENOTSOCK | EBADF -> `E_bad_file
-               | ECONNRESET -> `E_connection_reset
-               | ENOTCONN -> `E_not_connected
-               | _ -> `Unexpected exn))
-      | exn -> Future.return (Error (`Unexpected exn))
+      Future.with_state (fun s ->
+          let el = Abb_fut.State.state s in
+          let p =
+            Future.Promise.create
+              ~abort:(fun () ->
+                Future.with_state (fun s ->
+                    let el = Abb_fut.State.state s in
+                    let el = El.remove_read t el in
+                    let s = Abb_fut.State.set_state el s in
+                    (s, Future.return ())))
+              ()
+          in
+          let handler s =
+            Future.run_with_state
+              (Future.Promise.set
+                 p
+                 (try Ok (Unix.recv t ~buf ~pos ~len ~mode:[]) with
+                 | Unix.Unix_error (err, _, _) as exn ->
+                     let open Unix in
+                     Error
+                       (match err with
+                       | ENOTSOCK | EBADF -> `E_bad_file
+                       | ECONNRESET -> `E_connection_reset
+                       | ENOTCONN -> `E_not_connected
+                       | _ -> `Unexpected exn)
+                 | exn -> Error (`Unexpected exn)))
+              s
+          in
+          let el = El.add_read t handler el in
+          let s = Abb_fut.State.set_state el s in
+          (s, Future.Promise.future p))
 
     let send t ~bufs =
       let p =
@@ -1465,44 +1429,43 @@ module Socket = struct
                 (s, Future.return ())))
           ()
       in
-      let rec send' total = function
+      let rec send' ~total ~pos = function
         | [] -> Future.Promise.set p (Ok total)
-        | wb :: bufs -> (
-            try
-              let n =
-                Unix.send
-                  t
-                  ~buf:wb.Abb_intf.Write_buf.buf
-                  ~pos:wb.Abb_intf.Write_buf.pos
-                  ~len:wb.Abb_intf.Write_buf.len
-                  ~mode:[]
-              in
-              send' (total + n) bufs
-            with
-            | Unix.Unix_error (Unix.EAGAIN, _, _) | Unix.Unix_error (Unix.EWOULDBLOCK, _, _) ->
-                Future.with_state (fun s ->
-                    let el = Abb_fut.State.state s in
-                    let handler s = Future.run_with_state (send' total (wb :: bufs)) s in
-                    let el = El.add_write t handler el in
-                    let s = Abb_fut.State.set_state el s in
-                    (s, Future.return ()))
-            | Unix.Unix_error (err, _, _) as exn ->
-                let open Unix in
-                Future.Promise.set
-                  p
-                  (Error
-                     (match err with
-                     | ENOTSOCK | EBADF -> `E_bad_file
-                     | EACCES -> `E_access
-                     | ENOBUFS -> `E_no_buffers
-                     | EHOSTUNREACH -> `E_host_unreachable
-                     | EHOSTDOWN -> `E_host_down
-                     | EPIPE -> `E_pipe
-                     | _ -> `Unexpected exn))
-            | exn -> Future.Promise.set p (Error (`Unexpected exn)))
+        | wb :: bufs as all_bufs ->
+            Future.with_state (fun s ->
+                let el = Abb_fut.State.state s in
+                let handler s =
+                  try
+                    let len = wb.Abb_intf.Write_buf.len - pos in
+                    let n = Unix.send t ~buf:wb.Abb_intf.Write_buf.buf ~pos ~len ~mode:[] in
+                    let total = total + n in
+                    match n with
+                    | n when n = len -> Future.run_with_state (send' ~total ~pos:0 bufs) s
+                    | n -> Future.run_with_state (send' ~total ~pos:(pos + n) all_bufs) s
+                  with
+                  | Unix.Unix_error (err, _, _) as exn ->
+                      let open Unix in
+                      Future.run_with_state
+                        (Future.Promise.set
+                           p
+                           (Error
+                              (match err with
+                              | ENOTSOCK | EBADF -> `E_bad_file
+                              | EACCES -> `E_access
+                              | ENOBUFS -> `E_no_buffers
+                              | EHOSTUNREACH -> `E_host_unreachable
+                              | EHOSTDOWN -> `E_host_down
+                              | EPIPE -> `E_pipe
+                              | _ -> `Unexpected exn)))
+                        s
+                  | exn -> Future.run_with_state (Future.Promise.set p (Error (`Unexpected exn))) s
+                in
+                let el = El.add_write t handler el in
+                let s = Abb_fut.State.set_state el s in
+                (s, Future.return ()))
       in
       let open Future.Infix_monad in
-      send' 0 bufs >>= fun () -> Future.Promise.future p
+      send' ~total:0 ~pos:0 bufs >>= fun () -> Future.Promise.future p
 
     let nodelay t enabled =
       try
@@ -1576,18 +1539,6 @@ module Process = struct
     | 31 -> Abb_intf.Process.Signal.SIGUSR2
     | n -> Abb_intf.Process.Signal.Num n
 
-  let init_child_process init_args dups =
-    let open Abb_intf.Process in
-    assert (init_args.env = None);
-    assert (init_args.cwd = None);
-    List.iter
-      ~f:(fun dup ->
-        Unix.dup2 ?cloexec:None ~src:(Dup.src dup) ~dst:(Dup.dst dup);
-        Unix.close (Dup.src dup))
-      dups;
-    try Unix.execvp ~prog:init_args.exec_name ~args:(Array.of_list init_args.args)
-    with _ -> exit 255
-
   let wait_on_pid pid =
     Thread.run (fun () ->
         let pid', signal = Unix.waitpid ~mode:[] pid in
@@ -1597,15 +1548,31 @@ module Process = struct
         | Unix.WSIGNALED code -> Abb_intf.Process.Exit_code.Signaled (signal_of_int code)
         | Unix.WSTOPPED code -> Abb_intf.Process.Exit_code.Stopped (signal_of_int code))
 
-  let spawn init_args dups =
+  let spawn ~stdin ~stdout ~stderr init_args =
     try
-      let pid = Unix.fork () in
-      if pid > 0 then (
-        List.iter ~f:(fun dup -> Unix.close (Abb_intf.Process.Dup.src dup)) dups;
-        Ok { pid; exit_code = wait_on_pid pid })
-      else (
-        ignore (init_child_process init_args dups);
-        assert false)
+      let pid =
+        let module P = Abb_intf.Process in
+        match init_args.P.env with
+        | Some env ->
+            let env =
+              CCArray.of_list @@ CCList.map (fun (k, v) -> CCString.concat "=" [ k; v ]) env
+            in
+            Unix.create_process_env
+              ~prog:init_args.P.exec_name
+              ~args:(CCArray.of_list init_args.P.args)
+              ~env
+              ~stdin
+              ~stdout
+              ~stderr
+        | None ->
+            Unix.create_process
+              ~prog:init_args.P.exec_name
+              ~args:(CCArray.of_list init_args.P.args)
+              ~stdin
+              ~stdout
+              ~stderr
+      in
+      Ok { pid; exit_code = wait_on_pid pid }
     with
     | Unix.Unix_error (err, _, _) as exn ->
         let open Unix in

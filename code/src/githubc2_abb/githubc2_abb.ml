@@ -1,4 +1,4 @@
-module Http = Abb_curl_easy.Make (Abb)
+module Http = Abb_curl.Make (Abb)
 
 let base_url = Uri.of_string "https://api.github.com/"
 

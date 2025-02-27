@@ -13,8 +13,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
 #include "private.h"
+
+#include <signal.h>
 
 #if HAVE_SYS_SIGNALFD_H
 # include <sys/signalfd.h>
@@ -61,16 +62,13 @@ signalfd_reset(int sigfd)
 }
 
 static int
-signalfd_add(int epfd, int sigfd, void *ptr)
+signalfd_add(int epoll_fd, int sigfd, struct knote *kn)
 {
-    struct epoll_event ev;
     int rv;
 
     /* Add the signalfd to the kqueue's epoll descriptor set */
-    memset(&ev, 0, sizeof(ev));
-    ev.events = EPOLLIN;
-    ev.data.ptr = ptr;
-    rv = epoll_ctl(epfd, EPOLL_CTL_ADD, sigfd, &ev);
+    KN_UDATA(kn);   /* populate this knote's kn_udata field */
+    rv = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, sigfd, EPOLL_EV_KN(EPOLLIN, kn));
     if (rv < 0) {
         dbg_perror("epoll_ctl(2)");
         return (-1);
@@ -80,15 +78,16 @@ signalfd_add(int epfd, int sigfd, void *ptr)
 }
 
 static int
-signalfd_create(int epfd, void *ptr, int signum)
+signalfd_create(int epoll_fd, struct knote *kn, int signum)
 {
-    static int flags = SFD_NONBLOCK;
+    static int flags = SFD_NONBLOCK | SFD_CLOEXEC;
     sigset_t sigmask;
     int sigfd;
 
     /* Create a signalfd */
     sigemptyset(&sigmask);
     sigaddset(&sigmask, signum);
+
     sigfd = signalfd(-1, &sigmask, flags);
 
     /* WORKAROUND: Flags are broken on kernels older than Linux 2.6.27 */
@@ -97,7 +96,11 @@ signalfd_create(int epfd, void *ptr, int signum)
         sigfd = signalfd(-1, &sigmask, flags);
     }
     if (sigfd < 0) {
-        dbg_perror("signalfd(2)");
+        if ((errno == EMFILE) || (errno == ENFILE)) {
+            dbg_perror("signalfd(2) fd_used=%u fd_max=%u", get_fd_used(), get_fd_limit());
+        } else {
+            dbg_perror("signalfd(2)");
+        }
         goto errout;
     }
 
@@ -107,12 +110,10 @@ signalfd_create(int epfd, void *ptr, int signum)
         goto errout;
     }
 
-    signalfd_reset(sigfd);
-
-    if (signalfd_add(epfd, sigfd, ptr) < 0)
+    if (signalfd_add(epoll_fd, sigfd, kn) < 0)
         goto errout;
 
-    dbg_printf("added sigfd %d to epfd %d (signum=%d)", sigfd, epfd, signum);
+    dbg_printf("sig_fd=%d - sigfd added to epoll_fd=%d (signum=%d)", sigfd, epoll_fd, signum);
 
     return (sigfd);
 
@@ -122,11 +123,12 @@ errout:
 }
 
 int
-evfilt_signal_copyout(struct kevent *dst, struct knote *src, void *x UNUSED)
+evfilt_signal_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt,
+    struct knote *src, void *x UNUSED)
 {
     int sigfd;
 
-    sigfd = src->kdata.kn_signalfd;
+    sigfd = src->kn_signalfd;
 
     signalfd_reset(sigfd);
 
@@ -134,9 +136,11 @@ evfilt_signal_copyout(struct kevent *dst, struct knote *src, void *x UNUSED)
     /* NOTE: dst->data should be the number of times the signal occurred,
        but that information is not available.
      */
-    dst->data = 1;  
+    dst->data = 1;
 
-    return (0);
+    if (knote_copyout_flag_actions(filt, src) < 0) return -1;
+
+    return (1);
 }
 
 int
@@ -144,20 +148,20 @@ evfilt_signal_knote_create(struct filter *filt, struct knote *kn)
 {
     int fd;
 
-    fd = signalfd_create(filter_epfd(filt), kn, kn->kev.ident);
+    fd = signalfd_create(filter_epoll_fd(filt), kn, kn->kev.ident);
     if (fd > 0) {
         kn->kev.flags |= EV_CLEAR;
-        kn->kdata.kn_signalfd = fd;
+        kn->kn_signalfd = fd;
         return (0);
     } else {
-        kn->kdata.kn_signalfd = -1;
+        kn->kn_signalfd = -1;
         return (-1);
     }
 }
 
 int
-evfilt_signal_knote_modify(struct filter *filt UNUSED, 
-        struct knote *kn UNUSED, 
+evfilt_signal_knote_modify(struct filter *filt UNUSED,
+        struct knote *kn UNUSED,
         const struct kevent *kev UNUSED)
 {
     /* Nothing to do since the signal number does not change. */
@@ -168,51 +172,51 @@ evfilt_signal_knote_modify(struct filter *filt UNUSED,
 int
 evfilt_signal_knote_delete(struct filter *filt, struct knote *kn)
 {
-    const int sigfd = kn->kdata.kn_signalfd;
+    const int sigfd = kn->kn_signalfd;
+    int       rv = 0;
 
     /* Needed so that delete() can be called after disable() */
-    if (kn->kdata.kn_signalfd == -1)
+    if (kn->kn_signalfd == -1)
         return (0);
 
-    if (epoll_ctl(filter_epfd(filt), EPOLL_CTL_DEL, sigfd, NULL) < 0) {
+    rv = epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_DEL, sigfd, NULL);
+    if (rv < 0) {
         dbg_perror("epoll_ctl(2)");
-        return (-1);
+    } else {
+        dbg_printf("sig_fd=%i - removed from epoll_fd=%i", sigfd, filter_epoll_fd(filt));
     }
 
+    dbg_printf("sig_fd=%d - closed", sigfd);
     if (close(sigfd) < 0) {
         dbg_perror("close(2)");
         return (-1);
     }
 
     /* NOTE: This does not call sigprocmask(3) to unblock the signal. */
-    kn->kdata.kn_signalfd = -1;
+    kn->kn_signalfd = -1;
 
-    return (0);
+    return (rv);
 }
 
 int
 evfilt_signal_knote_enable(struct filter *filt, struct knote *kn)
 {
-    dbg_printf("enabling ident %u", (unsigned int) kn->kev.ident);
     return evfilt_signal_knote_create(filt, kn);
 }
 
 int
 evfilt_signal_knote_disable(struct filter *filt, struct knote *kn)
 {
-    dbg_printf("disabling ident %u", (unsigned int) kn->kev.ident);
     return evfilt_signal_knote_delete(filt, kn);
 }
 
 
 const struct filter evfilt_signal = {
-    EVFILT_SIGNAL,
-    NULL,
-    NULL,
-    evfilt_signal_copyout,
-    evfilt_signal_knote_create,
-    evfilt_signal_knote_modify,
-    evfilt_signal_knote_delete,
-    evfilt_signal_knote_enable,
-    evfilt_signal_knote_disable,         
+    .kf_id      = EVFILT_SIGNAL,
+    .kf_copyout = evfilt_signal_copyout,
+    .kn_create  = evfilt_signal_knote_create,
+    .kn_modify  = evfilt_signal_knote_modify,
+    .kn_delete  = evfilt_signal_knote_delete,
+    .kn_enable  = evfilt_signal_knote_enable,
+    .kn_disable = evfilt_signal_knote_disable,
 };

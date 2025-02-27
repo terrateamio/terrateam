@@ -1,5 +1,5 @@
 let () = Curl.global_init Curl.CURLINIT_GLOBALALL
-let src = Logs.Src.create "abb_curl"
+let src = Logs.Src.create "abb_curl_easy"
 
 module Logs = (val Logs.src_log src : Logs.LOG)
 
@@ -373,7 +373,11 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
   module Response = Response
   module Options = Options
 
-  type request_err = [ `Curl_request_err of string ] [@@deriving show, eq]
+  type request_err =
+    [ `Curl_request_err of string
+    | `Timeout
+    ]
+  [@@deriving show, eq]
 
   let maybe_set_body_writer handle = function
     | Some body ->
@@ -462,9 +466,26 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
       Curl.cleanup handle;
       Error (`Curl_request_err err)
 
+  let get_timeout opts =
+    match
+      CCList.find_opt
+        (function
+          | Options.Timeout _ -> true
+          | _ -> false)
+        opts
+    with
+    | Some (Options.Timeout timeout) -> timeout
+    | Some _ | None -> Duration.of_min 2
+
   let call ?(options = Options.default) ?(headers = Headers.empty) meth_ uri =
     let open Abb.Future.Infix_monad in
-    Abb.Thread.run (fun () -> perform options headers meth_ uri)
+    Abb.Sys.monotonic ()
+    >>= fun mono_now ->
+    let timeout_time = mono_now +. (Duration.to_f @@ get_timeout options) in
+    Abb.Thread.run (fun () ->
+        (* Do not even try to perform the request if we're already past the timeout point. *)
+        let mono_now = Mtime.Span.(to_float_ns (Mtime_clock.elapsed ()) /. to_float_ns s) in
+        if mono_now < timeout_time then perform options headers meth_ uri else Error `Timeout)
     >>= function
     | Ok res -> Abb.Future.return (Ok res)
     | Error (#request_err as err) -> Abb.Future.return (Error err)

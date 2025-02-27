@@ -32,9 +32,9 @@ testfile_touch(const char *path)
 {
     char buf[1024];
 
-    snprintf(&buf[0], sizeof(buf), "touch %s", path);
+    snprintf(buf, sizeof(buf), "touch %s", path);
     if (system(buf) != 0)
-        die("system"); 
+        die("system");
 }
 
 static void
@@ -42,9 +42,9 @@ testfile_write(const char *path)
 {
     char buf[1024];
 
-    snprintf(&buf[0], sizeof(buf), "echo hi >> %s", path);
+    snprintf(buf, sizeof(buf), "echo hi >> %s", path);
     if (system(buf) != 0)
-        die("system"); 
+        die("system");
 }
 
 static void
@@ -52,7 +52,7 @@ testfile_rename(const char *path, int step)
 {
     char buf[1024];
 
-    snprintf(&buf[0], sizeof(buf), "%s.tmp", path);
+    snprintf(buf, sizeof(buf), "%s.tmp", path);
     /* XXX-FIXME use of 'step' conceals a major memory corruption
             when the file is renamed twice.
             To replicate, remove "if step" conditional so
@@ -60,10 +60,10 @@ testfile_rename(const char *path, int step)
             */
     if (step == 0) {
         if (rename(path, buf) != 0)
-            err(1,"rename"); 
+            err(1,"rename");
     } else {
         if (rename(buf, path) != 0)
-            err(1,"rename"); 
+            err(1,"rename");
     }
 }
 
@@ -78,79 +78,87 @@ test_kevent_vnode_add(struct test_context *ctx)
     if (ctx->vnode_fd < 0)
         err(1, "open of %s", ctx->testfile);
 
-    kevent_add(ctx->kqfd, &kev, ctx->vnode_fd, EVFILT_VNODE, EV_ADD, 
+    kevent_add(ctx->kqfd, &kev, ctx->vnode_fd, EVFILT_VNODE, EV_ADD,
             NOTE_WRITE | NOTE_ATTRIB | NOTE_RENAME | NOTE_DELETE, 0, NULL);
 }
 
 void
 test_kevent_vnode_note_delete(struct test_context *ctx)
 {
-    struct kevent kev, ret;
+    struct kevent kev, ret[1];
 
     kevent_add(ctx->kqfd, &kev, ctx->vnode_fd, EVFILT_VNODE, EV_ADD | EV_ONESHOT, NOTE_DELETE, 0, NULL);
 
     if (unlink(ctx->testfile) < 0)
         die("unlink");
 
-    kevent_get(&ret, ctx->kqfd);
-    kevent_cmp(&kev, &ret);
+    kevent_get(ret, NUM_ELEMENTS(ret), ctx->kqfd, 1);
+
+    /*
+     *  FIXME - macOS 11.5.2 also sets NOTE_LINK.
+     *  This seems redundant, but behaviour should be
+     *  checked on FreeBSD/OpenBSD to determine the
+     *  correct behaviour for libkqueue.
+     */
+#ifdef __APPLE__
+    kev.fflags |= NOTE_LINK;
+#endif
+
+    kevent_cmp(&kev, ret);
 }
 
 void
 test_kevent_vnode_note_write(struct test_context *ctx)
 {
-    struct kevent kev, ret;
+    struct kevent kev, ret[1];
 
     kevent_add(ctx->kqfd, &kev, ctx->vnode_fd, EVFILT_VNODE, EV_ADD | EV_ONESHOT, NOTE_WRITE, 0, NULL);
 
     testfile_write(ctx->testfile);
 
-    /* BSD kqueue adds NOTE_EXTEND even though it was not requested */
-    /* BSD kqueue removes EV_ENABLE */
-    kev.flags &= ~EV_ENABLE; // XXX-FIXME compatibility issue
-    kev.fflags |= NOTE_EXTEND; // XXX-FIXME compatibility issue
-    kevent_get(&ret, ctx->kqfd);
-    kevent_cmp(&kev, &ret);
+    /*
+     * macOS 11.5.2 does not add NOTE_EXTEND,
+     * BSD kqueue does, as does libkqueue.
+     */
+#ifndef __APPLE__
+    kev.fflags |= NOTE_EXTEND;
+#endif
+    kevent_get(ret, NUM_ELEMENTS(ret), ctx->kqfd, 1);
+    kevent_cmp(&kev, ret);
 }
 
 void
 test_kevent_vnode_note_attrib(struct test_context *ctx)
 {
     struct kevent kev;
-    int nfds;
 
     kevent_add(ctx->kqfd, &kev, ctx->vnode_fd, EVFILT_VNODE, EV_ADD | EV_ONESHOT, NOTE_ATTRIB, 0, NULL);
 
     testfile_touch(ctx->testfile);
 
-    nfds = kevent(ctx->kqfd, NULL, 0, &kev, 1, NULL);
-    if (nfds < 1)
-        die("kevent");
+    kevent_rv_cmp(1, kevent(ctx->kqfd, NULL, 0, &kev, 1, NULL));
     if (kev.ident != ctx->vnode_fd ||
-            kev.filter != EVFILT_VNODE || 
+            kev.filter != EVFILT_VNODE ||
             kev.fflags != NOTE_ATTRIB)
-        err(1, "%s - incorrect event (sig=%u; filt=%d; flags=%d)", 
-                test_id, (unsigned int)kev.ident, kev.filter, kev.flags);
+        err(1, "%s - incorrect event (sig=%u; filt=%d; flags=%d)",
+                ctx->cur_test_id, (unsigned int)kev.ident, kev.filter, kev.flags);
 }
 
 void
 test_kevent_vnode_note_rename(struct test_context *ctx)
 {
     struct kevent kev;
-    int nfds;
 
     kevent_add(ctx->kqfd, &kev, ctx->vnode_fd, EVFILT_VNODE, EV_ADD | EV_ONESHOT, NOTE_RENAME, 0, NULL);
 
     testfile_rename(ctx->testfile, 0);
 
-    nfds = kevent(ctx->kqfd, NULL, 0, &kev, 1, NULL);
-    if (nfds < 1)
-        die("kevent");
+    kevent_rv_cmp(1, kevent(ctx->kqfd, NULL, 0, &kev, 1, NULL));
     if (kev.ident != ctx->vnode_fd ||
-            kev.filter != EVFILT_VNODE || 
+            kev.filter != EVFILT_VNODE ||
             kev.fflags != NOTE_RENAME)
-        err(1, "%s - incorrect event (sig=%u; filt=%d; flags=%d)", 
-                test_id, (unsigned int)kev.ident, kev.filter, kev.flags);
+        err(1, "%s - incorrect event (sig=%u; filt=%d; flags=%d)",
+                ctx->cur_test_id, (unsigned int)kev.ident, kev.filter, kev.flags);
 
     testfile_rename(ctx->testfile, 1);
 
@@ -169,7 +177,6 @@ void
 test_kevent_vnode_disable_and_enable(struct test_context *ctx)
 {
     struct kevent kev;
-    int nfds;
 
     test_no_kevents(ctx->kqfd);
 
@@ -186,22 +193,19 @@ test_kevent_vnode_disable_and_enable(struct test_context *ctx)
     kev.flags = EV_ENABLE;
     kevent_update(ctx->kqfd, &kev);
     testfile_touch(ctx->testfile);
-    nfds = kevent(ctx->kqfd, NULL, 0, &kev, 1, NULL);
-    if (nfds < 1)
-        die("kevent");
+    kevent_rv_cmp(1, kevent(ctx->kqfd, NULL, 0, &kev, 1, NULL));
     if (kev.ident != ctx->vnode_fd ||
-            kev.filter != EVFILT_VNODE || 
+            kev.filter != EVFILT_VNODE ||
             kev.fflags != NOTE_ATTRIB)
-        err(1, "%s - incorrect event (sig=%u; filt=%d; flags=%d)", 
-                test_id, (unsigned int)kev.ident, kev.filter, kev.flags);
+        err(1, "%s - incorrect event (sig=%u; filt=%d; flags=%d)",
+                ctx->cur_test_id, (unsigned int)kev.ident, kev.filter, kev.flags);
 }
 
 #ifdef EV_DISPATCH
 void
 test_kevent_vnode_dispatch(struct test_context *ctx)
 {
-    struct kevent kev, ret;
-    int nfds;
+    struct kevent kev, ret[1];
 
     test_no_kevents(ctx->kqfd);
 
@@ -209,14 +213,12 @@ test_kevent_vnode_dispatch(struct test_context *ctx)
 
     testfile_touch(ctx->testfile);
 
-    nfds = kevent(ctx->kqfd, NULL, 0, &kev, 1, NULL);
-    if (nfds < 1)
-        die("kevent");
+    kevent_rv_cmp(1, kevent(ctx->kqfd, NULL, 0, &kev, 1, NULL));
     if (kev.ident != ctx->vnode_fd ||
-            kev.filter != EVFILT_VNODE || 
+            kev.filter != EVFILT_VNODE ||
             kev.fflags != NOTE_ATTRIB)
-        err(1, "%s - incorrect event (sig=%u; filt=%d; flags=%d)", 
-                test_id, (unsigned int)kev.ident, kev.filter, kev.flags);
+        err(1, "%s - incorrect event (sig=%u; filt=%d; flags=%d)",
+                ctx->cur_test_id, (unsigned int)kev.ident, kev.filter, kev.flags);
 
     /* Confirm that the watch is disabled automatically */
     testfile_touch(ctx->testfile);
@@ -228,14 +230,14 @@ test_kevent_vnode_dispatch(struct test_context *ctx)
     kev.flags = EV_ADD | EV_DISPATCH;   /* FIXME: may not be portable */
     kev.fflags = NOTE_ATTRIB;
     testfile_touch(ctx->testfile);
-    kevent_get(&ret, ctx->kqfd);
-    kevent_cmp(&kev, &ret);
+    kevent_get(ret, NUM_ELEMENTS(ret), ctx->kqfd, 1);
+    kevent_cmp(&kev, ret);
     test_no_kevents(ctx->kqfd);
 
     /* Delete the watch */
     kevent_add(ctx->kqfd, &kev, ctx->vnode_fd, EVFILT_VNODE, EV_DELETE, NOTE_ATTRIB, 0, NULL);
 }
-#endif 	/* EV_DISPATCH */
+#endif     /* EV_DISPATCH */
 
 void
 test_evfilt_vnode(struct test_context *ctx)
@@ -269,4 +271,6 @@ test_evfilt_vnode(struct test_context *ctx)
     /* TODO: test r590 corner case where a descriptor is closed and
              the associated knote is automatically freed. */
     unlink(ctx->testfile);
+    close(ctx->vnode_fd);
+    ctx->vnode_fd = -1;
 }

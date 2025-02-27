@@ -1,11 +1,11 @@
-(** Curl interface using the multi interface. DO NOT USE, this is in development and depending on
-    changes in an upcoming version of Curl. Using this will crash the program.
-
-    The underlying issue is that file descriptors that are sent to [socketfunction] are not always
-    ones that we can control when they are closed. Because we need to alter the world in the Abb
-    monad, and we do not have access to the state in the callback. However, for some sockets, Curl
-    will call it [socketfunction] with [POLL_REMOVE] and then immediately close the socket, when
-    wrecks havoc with Abb. We need a new callback (which will hopefully be added to curl soon). *)
+(** Curl interface using the multi interface. This runs each [Connector] in its own domain with its
+    own event loop. This is because libcurl expects that every operation requested in the
+    [socket_function] callback is completed by the end of the callback. This is not possible in Abb
+    because we do not have access to the scheduler in the callback. This is especially problematic
+    because after the [POLL_REMOVE] request, libcurl might close the file descriptor (the
+    [closesocketfunction] does not help here because libcurl manages other file descriptors that the
+    callback is not used on) before we remove it from kqueue. So, instead, we implement its own
+    event loop that can interact directly with the kqueue in the [socket_function] callback. *)
 
 module Method : sig
   type body = string
@@ -120,7 +120,10 @@ module Response : sig
 end
 
 module Options : sig
-  type opt = Follow_location
+  type opt =
+    | Follow_location
+    | Http_version of [ `Http2 | `Http1_1 ]
+
   type t = opt list
 
   val default : t
@@ -133,6 +136,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) : sig
   module Status = Status
   module Headers = Headers
   module Response = Response
+  module Options = Options
 
   module Connector : sig
     type t
@@ -144,6 +148,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) : sig
   type request_err =
     [ `Closed
     | `Cancelled
+    | `Curl_err of string
     ]
   [@@deriving show, eq]
 

@@ -15,10 +15,14 @@
  */
 
 #include "../common/private.h"
+#include "platform.h"
+#include "eventfd.h"
 
 int
-posix_kqueue_init(struct kqueue *kq UNUSED)
+posix_kqueue_init(struct kqueue *kq)
 {
+    FD_ZERO(&kq->kq_fds);
+    kq->kq_nfds++;
     return (0);
 }
 
@@ -28,63 +32,76 @@ posix_kqueue_free(struct kqueue *kq UNUSED)
 }
 
 int
-posix_eventfd_init(struct eventfd *e)
+posix_kevent_wait(
+        struct kqueue *kq,
+        const struct timespec *timeout)
 {
-    int sd[2];
+    int n, nfds;
+    fd_set rfds;
 
-    if (socketpair(AF_UNIX, SOCK_STREAM, 0, sd) < 0) {
+    nfds = kq->kq_nfds;
+    rfds = kq->kq_fds;
+
+    dbg_puts("waiting for events");
+    n = pselect(nfds, &rfds, NULL , NULL, timeout, NULL);
+    if (n < 0) {
+        if (errno == EINTR) {
+            dbg_puts("signal caught");
+            return (-1);
+        }
+        dbg_perror("pselect(2)");
         return (-1);
     }
-    if ((fcntl(sd[0], F_SETFL, O_NONBLOCK) < 0) ||
-            (fcntl(sd[1], F_SETFL, O_NONBLOCK) < 0)) {
-        close(sd[0]);
-        close(sd[1]);
-        return (-1);
-    }
-    e->ef_wfd = sd[0];
-    e->ef_id = sd[1];
 
-    return (0);
-}
+    kq->kq_rfds = rfds;
 
-void
-posix_eventfd_close(struct eventfd *e)
-{
-    close(e->ef_id);
-    close(e->ef_wfd);
-    e->ef_id = -1;
+    return (n);
 }
 
 int
-posix_eventfd_raise(struct eventfd *e)
+posix_kevent_copyout(struct kqueue *kq, int nready,
+        struct kevent *eventlist, int nevents)
 {
-    dbg_puts("raising event level");
-    if (write(e->ef_wfd, ".", 1) < 0) {
-        /* FIXME: handle EAGAIN and EINTR */
-        dbg_printf("write(2) on fd %d: %s", e->ef_wfd, strerror(errno));
-        return (-1);
+    struct filter *filt;
+    int i, rv, nret;
+
+    nret = 0;
+    for (i = 0; (i < NUM_ELEMENTS(kq->kq_filt) && nready > 0 && nevents > 0); i++) {
+        dbg_printf("eventlist: n = %d nevents = %d", nready, nevents);
+        filt = &kq->kq_filt[i];
+        dbg_printf("pfd[%d] = %d", i, filt->kf_pfd);
+        if (FD_ISSET(filt->kf_id, &kq->kq_rfds)) {
+            dbg_printf("pending events for filter %d (%s)", filt->kf_id, filter_name(filt->kf_id));
+#if 0
+            rv = filt->kf_copyout(eventlist, nevents, filt, kn, evt);
+            if (rv < 0) {
+                dbg_puts("kevent_copyout failed");
+                nret = -1;
+                break;
+            }
+#endif
+            nret += rv;
+            eventlist += rv;
+            nevents -= rv;
+            nready--;
+        }
     }
-    return (0);
+
+    return (nret);
 }
 
-int
-posix_eventfd_lower(struct eventfd *e)
-{
-    char buf[1024];
-
-    /* Reset the counter */
-    dbg_puts("lowering event level");
-    if (read(e->ef_id, &buf, sizeof(buf)) < 0) {
-        /* FIXME: handle EAGAIN and EINTR */
-        /* FIXME: loop so as to consume all data.. may need mutex */
-        dbg_printf("read(2): %s", strerror(errno));
-        return (-1);
-    }
-    return (0);
-}
-
-int
-posix_eventfd_descriptor(struct eventfd *e)
-{
-    return (e->ef_id);
-}
+const struct kqueue_vtable kqops = {
+//    .libkqueue_fork     = posix_libkqueue_fork,
+//    .libkqueue_free     = posix_libkqueue_free,
+    .kqueue_init        = posix_kqueue_init,
+    .kqueue_free        = posix_kqueue_free,
+//    .kevent_wait        = posix_kevent_wait,
+    .kevent_copyout     = posix_kevent_copyout,
+//    .eventfd_register   = posix_eventfd_register,
+//    .eventfd_unregister = posix_eventfd_unregister,
+    .eventfd_init       = posix_eventfd_init,
+    .eventfd_close      = posix_eventfd_close,
+    .eventfd_raise      = posix_eventfd_raise,
+    .eventfd_lower      = posix_eventfd_lower,
+    .eventfd_descriptor = posix_eventfd_descriptor,
+};

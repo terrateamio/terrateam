@@ -13,22 +13,18 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include <errno.h>
-#include <fcntl.h>
-#include <linux/sockios.h>
-#include <pthread.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/ioctl.h>
-#include <sys/queue.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <string.h>
-#include <unistd.h>
-
 #include "private.h"
+
+#if HAVE_LINUX_SOCKIOS_H
+# include <linux/sockios.h>
+#endif
+
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+
+#ifndef SIOCINQ
+# define SIOCINQ FIONREAD
+#endif
 
 /*
  * Return the offset from the current position to end of file.
@@ -49,12 +45,13 @@ get_eof_offset(int fd)
         sb.st_size = 1;
     }
 
-    dbg_printf("curpos=%zu size=%zu\n", (size_t)curpos, (size_t)sb.st_size);
+    dbg_printf("curpos=%zu size=%zu", (size_t)curpos, (size_t)sb.st_size);
     return (sb.st_size - curpos); //FIXME: can overflow
 }
 
 int
-evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
+evfilt_read_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt,
+    struct knote *src, void *ptr)
 {
     int ret;
     int serr;
@@ -68,14 +65,14 @@ evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
 
         if (dst->data == 0) {
             dst->filter = 0;    /* Will cause the kevent to be discarded */
-            if (epoll_ctl(src->kn_epollfd, EPOLL_CTL_DEL, src->kdata.kn_eventfd, NULL) < 0) {
+            if (epoll_ctl(src->kn_epollfd, EPOLL_CTL_DEL, src->kn_eventfd, NULL) < 0) {
                 dbg_perror("epoll_ctl(2)");
                 return (-1);
             }
             src->kn_registered = 0;
 
 #if FIXME
-            /* XXX-FIXME Switch to using kn_inotifyfd to monitor for IN_ATTRIB events
+            /* XXX-FIXME Switch to using kn_vnode.inotifyfd to monitor for IN_ATTRIB events
                          that may signify the file size has changed.
 
                          This code is not tested.
@@ -89,14 +86,14 @@ evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
                 (void) close(inofd);
                 return (-1);
             }
-            src->kdata.kn_inotifyfd = inofd;
-            if (linux_fd_to_path(&path[0], sizeof(path), src->kev.ident) < 0)
+            src->kn_vnode.inotifyfd = inofd;
+            if (linux_fd_to_path(path, sizeof(path), src->kev.ident) < 0)
                 return (-1);
             if (inotify_add_watch(inofd, path, IN_ATTRIB) < 0) {
                 dbg_perror("inotify_add_watch");
                 return (-1);
             }
-            if (epoll_ctl(src->kn_epollfd, EPOLL_CTL_ADD, src->kdata.kn_inotifyfd, NULL) < 0) {
+            if (epoll_ctl(src->kn_epollfd, EPOLL_CTL_ADD, src->kn_vnode.inotifyfd, NULL) < 0) {
                 dbg_perror("epoll_ctl(2)");
                 return (-1);
             }
@@ -104,10 +101,10 @@ evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
 #endif
         }
 
-        return (0);
+        return (1);
     }
 
-    dbg_printf("epoll: %s", epoll_event_dump(ev));
+    dbg_printf("epoll_ev=%s", epoll_event_dump(ev));
     memcpy(dst, &src->kev, sizeof(*dst));
 #if defined(HAVE_EPOLLRDHUP)
     if (ev->events & EPOLLRDHUP || ev->events & EPOLLHUP)
@@ -120,7 +117,14 @@ evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
         if (src->kn_flags & KNFL_SOCKET) {
             ret = getsockopt(src->kev.ident, SOL_SOCKET, SO_ERROR, &serr, &slen);
             dst->fflags = ((ret < 0) ? errno : serr);
-        } else { dst->fflags = EIO; }
+        } else
+            dst->fflags = EIO;
+
+        /*
+         * The only way we seem to be able to signal an error
+         * is by setting EOF on the socket.
+         */
+        dst->flags |= EV_EOF;
     }
 
     if (src->kn_flags & KNFL_SOCKET_PASSIVE) {
@@ -144,37 +148,44 @@ evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
         }
     }
 
-    return (0);
+    if (knote_copyout_flag_actions(filt, src) < 0) return -1;
+
+    return (1);
 }
 
 int
 evfilt_read_knote_create(struct filter *filt, struct knote *kn)
 {
-    struct epoll_event ev;
-
     if (linux_get_descriptor_type(kn) < 0)
         return (-1);
 
     /* Convert the kevent into an epoll_event */
 #if defined(HAVE_EPOLLRDHUP)
-    kn->data.events = EPOLLIN | EPOLLRDHUP;
+    kn->epoll_events = EPOLLIN | EPOLLRDHUP;
 #else
-    kn->data.events = EPOLLIN;
+    kn->epoll_events = EPOLLIN;
 #endif
-    if (kn->kev.flags & EV_ONESHOT || kn->kev.flags & EV_DISPATCH)
-        kn->data.events |= EPOLLONESHOT;
     if (kn->kev.flags & EV_CLEAR)
-        kn->data.events |= EPOLLET;
-
-    memset(&ev, 0, sizeof(ev));
-    ev.events = kn->data.events;
-    ev.data.ptr = kn;
+        kn->epoll_events |= EPOLLET;
 
     /* Special case: for regular files, add a surrogate eventfd that is always readable */
     if (kn->kn_flags & KNFL_FILE) {
         int evfd;
 
-        kn->kn_epollfd = filter_epfd(filt);
+        /*
+         * We only set oneshot for cases where we're not going to
+         * be using EPOLL_CTL_MOD.
+         *
+         * We rely on the common code disabling the event after
+         * it's fired once.
+         *
+         * See this SO post for details:
+         * https://stackoverflow.com/questions/59517961/how-should-i-use-epoll-to-read-and-write-from-the-same-fd
+         */
+        if (kn->kev.flags & EV_ONESHOT || kn->kev.flags & EV_DISPATCH)
+            kn->epoll_events |= EPOLLONESHOT;
+
+        kn->kn_epollfd = filter_epoll_fd(filt);
         evfd = eventfd(0, 0);
         if (evfd < 0) {
             dbg_perror("eventfd(2)");
@@ -186,10 +197,12 @@ evfilt_read_knote_create(struct filter *filt, struct knote *kn)
             return (-1);
         }
 
-        kn->kdata.kn_eventfd = evfd;
+        kn->kn_eventfd = evfd;
 
-        if (epoll_ctl(kn->kn_epollfd, EPOLL_CTL_ADD, kn->kdata.kn_eventfd, &ev) < 0) {
+        KN_UDATA(kn);   /* populate this knote's kn_udata field */
+        if (epoll_ctl(kn->kn_epollfd, EPOLL_CTL_ADD, kn->kn_eventfd, EPOLL_EV_KN(kn->epoll_events, kn)) < 0) {
             dbg_printf("epoll_ctl(2): %s", strerror(errno));
+            (void) close(evfd);
             return (-1);
         }
 
@@ -198,89 +211,82 @@ evfilt_read_knote_create(struct filter *filt, struct knote *kn)
         return (0);
     }
 
-    return epoll_update(EPOLL_CTL_ADD, filt, kn, &ev);
+    return epoll_update(EPOLL_CTL_ADD, filt, kn, kn->epoll_events, false);
 }
 
 int
-evfilt_read_knote_modify(struct filter *filt, struct knote *kn,
+evfilt_read_knote_modify(UNUSED struct filter *filt, struct knote *kn,
         const struct kevent *kev)
 {
-    (void) filt;
-    (void) kn;
-    (void) kev;
-    return (-1); /* STUB */
+    if (!(kn->kn_flags & KNFL_FILE)) {
+        /*
+         * This should reset the EOF sate of the socket.
+         * but it's not even clear what that really means.
+         *
+         * With the native kqueue implementations it
+         * basically does nothing.
+         */
+        if ((kev->flags & EV_CLEAR))
+            return (0);
+        return (-1);
+    }
+
+    return (-1);
 }
 
 int
 evfilt_read_knote_delete(struct filter *filt, struct knote *kn)
 {
-    if (kn->kev.flags & EV_DISABLE)
-        return (0);
-
-    if ((kn->kn_flags & KNFL_FILE) && (kn->kdata.kn_eventfd != -1)) {
-        if (kn->kn_registered && epoll_ctl(kn->kn_epollfd, EPOLL_CTL_DEL, kn->kdata.kn_eventfd, NULL) < 0) {
+    if ((kn->kn_flags & KNFL_FILE) && (kn->kn_eventfd != -1)) {
+        if (kn->kn_registered && epoll_ctl(kn->kn_epollfd, EPOLL_CTL_DEL, kn->kn_eventfd, NULL) < 0) {
             dbg_perror("epoll_ctl(2)");
             return (-1);
         }
         kn->kn_registered = 0;
-        (void) close(kn->kdata.kn_eventfd);
-        kn->kdata.kn_eventfd = -1;
+        (void) close(kn->kn_eventfd);
+        kn->kn_eventfd = -1;
         return (0);
-    } else {
-        return epoll_update(EPOLL_CTL_DEL, filt, kn, NULL);
     }
 
-    // clang will complain about not returning a value otherwise
-    return (-1);
+    return epoll_update(EPOLL_CTL_DEL, filt, kn, EPOLLIN, true);
 }
 
 int
 evfilt_read_knote_enable(struct filter *filt, struct knote *kn)
 {
-    struct epoll_event ev;
-
-    memset(&ev, 0, sizeof(ev));
-    ev.events = kn->data.events;
-    ev.data.ptr = kn;
-
     if (kn->kn_flags & KNFL_FILE) {
-        if (epoll_ctl(kn->kn_epollfd, EPOLL_CTL_ADD, kn->kdata.kn_eventfd, &ev) < 0) {
+        if (epoll_ctl(kn->kn_epollfd, EPOLL_CTL_ADD, kn->kn_eventfd, EPOLL_EV_KN(kn->epoll_events, kn)) < 0) {
             dbg_perror("epoll_ctl(2)");
             return (-1);
         }
         kn->kn_registered = 1;
         return (0);
-    } else {
-        return epoll_update(EPOLL_CTL_ADD, filt, kn, &ev);
     }
 
-    // clang will complain about not returning a value otherwise
-    return (-1);
+    return epoll_update(EPOLL_CTL_ADD, filt, kn, kn->epoll_events, false);
 }
 
 int
 evfilt_read_knote_disable(struct filter *filt, struct knote *kn)
 {
     if (kn->kn_flags & KNFL_FILE) {
-        if (epoll_ctl(kn->kn_epollfd, EPOLL_CTL_DEL, kn->kdata.kn_eventfd, NULL) < 0) {
+        if (epoll_ctl(kn->kn_epollfd, EPOLL_CTL_DEL, kn->kn_eventfd, NULL) < 0) {
             dbg_perror("epoll_ctl(2)");
             return (-1);
         }
-        kn->kn_registered = 1;
+        kn->kn_registered = 0;
         return (0);
-    } else {
-        return epoll_update(EPOLL_CTL_DEL, filt, kn, NULL);
     }
+
+    return epoll_update(EPOLL_CTL_DEL, filt, kn, EPOLLIN, false);
 }
 
 const struct filter evfilt_read = {
-    EVFILT_READ,
-    NULL,
-    NULL,
-    evfilt_read_copyout,
-    evfilt_read_knote_create,
-    evfilt_read_knote_modify,
-    evfilt_read_knote_delete,
-    evfilt_read_knote_enable,
-    evfilt_read_knote_disable,
+    .kf_id      = EVFILT_READ,
+    .kf_copyout = evfilt_read_copyout,
+    .kn_create  = evfilt_read_knote_create,
+    .kn_modify  = evfilt_read_knote_modify,
+    .kn_delete  = evfilt_read_knote_delete,
+    .kn_enable  = evfilt_read_knote_enable,
+    .kn_disable = evfilt_read_knote_disable,
 };

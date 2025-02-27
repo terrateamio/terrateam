@@ -26,4 +26,4 @@ edit:
 	$(EDITOR) $(SOURCES)
 
 distclean: clean
-	rm -f $(PROGRAM) 
+	rm -f $(PROGRAM)
