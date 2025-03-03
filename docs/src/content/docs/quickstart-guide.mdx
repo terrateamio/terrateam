@@ -2,95 +2,144 @@
 title: Quickstart Guide
 description: Get up and running with Terrateam in minutes
 ---
-
 import { Steps } from '@astrojs/starlight/components';
 import { Icon } from '@astrojs/starlight/components';
-import { LinkCard } from '@astrojs/starlight/components';
+import { LinkCard, CardGrid, Card } from '@astrojs/starlight/components';
 
-Installing Terrateam is a straightforward process. By following these three easy steps, you'll have Terrateam up and running in your GitHub repository in no time.
+## Prerequisites
 
-## Terrateam Installation
+Before getting started with Terrateam, make sure you have:
 
-#### Step 1. [Sign up and Install the Terrateam GitHub Application](https://terrateam.io/signup)
+- **A GitHub repository** with Terraform code
+- **GitHub Actions** enabled in your repository
+- **Administrator access** to install the Terrateam GitHub app
+- **Cloud provider credentials** (optional for initial setup, required for production use)
 
-   * **$149/mo unlimited. 14-day free trial. No credit card required.**
-   * Select any of your GitHub organizations and repositories that contain Terraform code.
-   * [Click here to sign up and install the Terrateam GitHub application](https://terrateam.io/signup)
+## Demo Repository
+
+Want to follow along with a working example? You can fork our [Terrateam example repository](https://github.com/terrateamio/terrateam-example) to practice with pre-configured Terraform code.
+
+<LinkCard
+  title="Terrateam Example Repository"
+  href="https://github.com/terrateamio/terrateam-example"
+  icon="github"
+/>
+
+## Setting Up Terrateam
+
+Terrateam bridges GitHub's pull request workflow with Terraform operations, automating the plan/apply process while maintaining safety controls.
+
+<Steps>
+1. **Install the Terrateam GitHub Application**
+
+   Sign up for a Terrateam account and install the GitHub app in your organization.
+   
+   - $149/mo unlimited with 14-day free trial (no credit card required)
+   - Select the GitHub organizations and repositories containing your Terraform code
+   
+   <LinkCard
+     title="Sign up for Terrateam"
+     href="https://terrateam.io/signup"
+   />
+   
    ![GitHub application installation](../../assets/install-terrateam-github.png)
 
-#### Step 2. Add the Terrateam GitHub Actions Workflow
+2. **Add the Terrateam GitHub Actions Workflow**
 
-    * **[Download terrateam.yml](https://raw.githubusercontent.com/terrateamio/terrateam-example/main/github/actions/workflows/default/terrateam.yml)**
-    * The Terrateam GitHub Actions workflow file (`.github/workflows/terrateam.yml`) must be stored in the default branch of your Terraform repository. The default branch is usually named `main` or `master`.
-
+   The workflow file enables Terrateam to run Terraform operations within your GitHub Actions environment.
+   
+   - Create a `.github/workflows` directory in your repository if it doesn't exist
+   - Download and add the [terrateam.yml](https://raw.githubusercontent.com/terrateamio/terrateam-example/main/.github/actions/workflows/default/terrateam.yml) file to this directory
+   - Commit the file to your default branch (`main` or `master`)
+   
+   ![GitHub Actions Workflow File](../../assets/github-actions-workflow-file-location.png)
+   
    :::note
-   Create the `.github/workflows` directory if it doesn't exist. This is done for you automatically if you're using the GitHub UI (GitHub.com in a browser).
+   This workflow file is essential as it allows Terrateam to execute Terraform commands in response to pull request events.
    :::
 
-   ![GitHub Actions Workflow File](../../assets/github-actions-workflow-file-location.png)
+3. **Configure Cloud Provider Authentication (Optional for this guide)**
 
-#### Step 3. Start Using Terrateam
-   If you want to see how Terrateam works without connecting to your cloud provider, continue reading to deploy a simple `null_resource`. Otherwise, jump to [Cloud Providers
-](/cloud-providers).
+   For real infrastructure deployments, you'll need to set up authentication with your cloud provider.
+   
+   <LinkCard
+     title="Cloud Provider Setup"
+     href="/cloud-providers"
+     description="Configure AWS, GCP, Azure or other providers"
+   />
+</Steps>
 
 ## Your First Terrateam Deployment
 
-:::tip[Did you know?]
-With Terrateam you can apply changes before or after merging a pull request.
+Let's test Terrateam with a simple example that doesn't require cloud provider credentials.
+
+:::tip[What is a null_resource?]
+The `null_resource` in Terraform lets you run provisioners without creating any actual infrastructure. It's perfect for testing workflows since it doesn't modify any real resources.
 :::
 
-### Plan and Apply
-
-    We will now trigger our first Terrateam deployment by creating a simple pull request with a `null_resource`. The `null_resource` provider does not take any action against live environments
-    making it completely safe for our first deployment.
-
 <Steps>
+1. **Create a New Branch**
 
-1.  #### New Branch
+   Create a branch to make your changes.
+   
+   ![Terrateam first run branch](../../assets/terrateam-first-run-branch.png)
 
-    Create a new branch against a repository with Terrateam installed.
+2. **Add Terraform Code**
 
-    ![Terrateam first run branch](../../assets/terrateam-first-run-branch.png)
+   Create a file called `main.tf` with the following code:
+   
+   ```hcl
+    resource "null_resource" "terrateam_test" {
+    provisioner "local-exec" {
+        command = "echo terrateam first run"
+      }
+    }
+   ```
+   
+   ![Terrateam main.tf](../../assets/nibbler-main-tf.png)
+   
+   You can also [download the sample code](https://raw.githubusercontent.com/terrateamio/terrateam-example/main/main.tf).
 
-1.  #### Add Terraform Code
+3. **Create a Pull Request**
 
-    Create a new file called `main.tf` in any directory in the repository. [Download the code here](https://raw.githubusercontent.com/terrateamio/terrateam-example/main/main.tf).
+   Commit and push your changes, then create a pull request.
+   
+   ![Terrateam pull request](../../assets/nibbler-pull-request.png)
 
-    ![Terrateam main.tf](../../assets/nibbler-main-tf.png)
+4. **Watch the Automatic Terraform Plan**
 
-1.  #### Pull Request
+   Terrateam automatically triggers a `terraform plan` when a pull request contains Terraform code changes.
+   
+   ![Terrateam plan](../../assets/nibbler-terrateam-plan.png)
+   
+   This plan is a preview of what will happen when you apply the changes.
 
-    Commit and push `main.tf` to your branch and then create a pull request.
+5. **Apply the Changes**
 
-    ![Terrateam pull request](../../assets/nibbler-pull-request.png)
+   Comment `terrateam apply` on the pull request to execute the changes.
+   
+   ![Terrateam Apply](../../assets/nibbler-terrateam-apply.png)
+   
+   Terrateam will run `terraform apply` based on the previously generated plan.
 
-1.  #### Terraform Plan
+6. **Merge Your Changes**
 
-    Terrateam will automatically trigger a `terraform plan`.
-
-    ![Terrateam plan](../../assets/nibbler-terrateam-plan.png)
-
-1.  #### Terraform Apply
-
-    Comment `terrateam apply` on the pull request. Terrateam will trigger a `terraform apply`.
-
-    ![Terrateam Apply](../../assets/nibbler-terrateam-apply.png)
-
-1.  #### Merge
-
-    Merge the pull request.
-
-    ![Pull Request Merge](../../assets/nibbler-merge.png)
-
-    :::tip[Apply after merge]
-    [Click here to learn how to apply your changes after merging a pull request.](/advanced-workflows/apply-after-merge)
-    :::
-
+   Once applied, you can merge the pull request to incorporate the changes into your main branch.
+   
+   ![Pull Request Merge](../../assets/nibbler-merge.png)
+   
+   :::tip[Apply after merge]
+   In production workflows, you might want to apply changes only after merging.
+   [Learn about apply-after-merge workflows](/advanced-workflows/apply-after-merge)
+   :::
 </Steps>
 
-### Bravo!
+## Congratulations!
 
-You've just completed your first Terrateam deployment.
+You've successfully completed your first Terrateam deployment! This demonstrates the core GitOps workflow that Terrateam enables:
 
-## Learn More
-See [Cloud Providers](/cloud-providers) to learn how to integrate Terrateam against AWS, GCP, Azure, and more.
+1. Make infrastructure changes in a branch
+2. Create a pull request
+3. Review the automatically generated plan
+4. Apply changes through simple comments
+5. Merge the approved changes
