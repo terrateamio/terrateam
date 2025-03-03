@@ -13,13 +13,14 @@ To effectively use Terrateam, it's important to understand its key concepts and 
 
 At the heart of Terrateam is the concept of a Dirspace. A Dirspace represents a unique combination of a repository, a directory, and a workspace. It is denoted as a tuple `(repository, directory, workspace)` or simply `(directory, workspace)` when the repository is implied.
 
-For example, consider a repository named `repo` with two directories, `dir1` and `dir2`, and no extra configuration for workspaces. This repository would have two Dirspaces:
+Dirspaces are automatically created when Terrateam detects Terraform configurations in your repository. Each directory containing Terraform files forms a Dirspace with either its explicitly configured workspace or the **default workspace** (created automatically when no specific workspace is defined).
 
-1. `(repo, dir1, default)` or `(dir1, default)`
-2. `(repo, dir2, default)` or `(dir2, default)`
+For example, consider a repository named `repo` with two directories, `dir1` and `dir2`, and no extra workspace configuration. This repository would have two Dirspaces:
 
-Terrateam executes its operations, such as plan and apply, within the context of a Dirspace.
+1. (`repo`, `dir1`, `default`) or (`dir1`, `default`)
+2. (`repo`, `dir2`, `default`) or (`dir2`, `default`)
 
+Terrateam executes operations like plan and apply within the context of a Dirspace.
 ```
 Repository
   |
@@ -29,34 +30,72 @@ Repository
   |-- Directory 2
         |-- Workspace: default
 ```
-
 ## Changes and File Patterns
 
-When a pull request is opened or updated, Terrateam detects changes in the repository based on the `file_patterns` specified in the [`when_modified`](/configuration-reference/when-modified) configuration. By default, the `file_patterns` are set to `['**/*.tf', '**/*.tfvars']`, which means Terrateam will consider changes to any files with `.tf` or `.tfvars` extensions.
+When a pull request is opened or updated, Terrateam detects changes based on patterns defined in your `.terrateam/config.yml` file under the `when_modified` configuration. The default configuration looks like:
 
-Terrateam maps the detected changes to their appropriate [Dirspaces](/getting-started/concepts#dirspace). These mapped Dirspaces are referred to as Changes. When Terrateam executes a Plan or Apply operation on the changes in a pull request, it only considers the Dirspaces that have files modified in the pull request.
+```yaml
+when_modified:
+  file_patterns:
+    - '**/*.tf'
+    - '**/*.tfvars'
+```
+
+This configuration tells Terrateam to monitor changes to any files with `.tf` or `.tfvars` extensions. Modify these patterns in your configuration file to match your project's structure.
+
+Terrateam maps detected changes to their appropriate [Dirspaces](/getting-started/concepts#dirspace). These mapped Dirspaces are referred to as Changes. When executing operations, Terrateam only considers Dirspaces with modified files in the pull request.
 
 ## Auto-Plan and Auto-Apply
 
-Terrateam offers two automated operations:
+Terrateam offers two configurable automated operations:
 
-- **Auto-Plan**: Automatically runs a Plan on a new pull request or an update to an existing one. This allows you to see the proposed changes to your infrastructure before merging the pull request.
-- **Auto-Apply**: Automatically runs an Apply after merging a pull request. This ensures that the approved changes are applied to your infrastructure immediately after the merge.
+- **Auto-Plan**: (Enabled by default) Runs `terraform plan` on new or updated pull requests. Configure in `.terrateam/config.yml`:
+  ```yaml
+  auto_plan: true  # Set to false to disable
+  ```
+- **Auto-Apply**: (Disabled by default) Runs `terraform apply` post-merge. Enable with:
+  ```yaml
+  auto_apply: true
+  ```
 
-These automated operations streamline your workflow and reduce the manual effort required to manage your infrastructure.
+These automated operations streamline workflows while maintaining control through configurable thresholds.
 
 ## Locks and Unlocks
 
-Terrateam Locks make sure that only a single change to a resource can be applied in a pull request at any given time. This prevents conflicts and maintains consistency in your infrastructure.
+Terrateam's locking system prevents concurrent modifications by ensuring only one change can be applied to a resource at a time. This prevents:
 
-* **Lock**: A guarantee that only a single change to a resource can be applied in a pull request at any given time.
-* **Unlock**: The process of releasing a lock, allowing other changes to be applied.
+- State file conflicts  
+- Resource modification races  
+- Concurrent apply operations  
 
+**Key behaviors**:
+- Enabled by default (no config needed)
+- Automatically released after apply + merge
+- Force unlock via comment: `terrateam unlock`
+
+```yaml
+# .terrateam/config.yml (default shown)
+workflows:
+  lock_policy: strict  # strict|apply|merge|none
+```
+
+For advanced configurations see our [Locks & Concurrency guide](/advanced-workflows/locks-and-concurrency).
+
+:::note
+ Default settings work for most teams. Customize only if you need specific lock timing or policies.
+:::
 ## Tags and Tag Sets
 
-Terrateam uses Tags to group Terraform resources in a repository and match against those labels. There are two types of Tags:
+Terrateam uses Tags to organize Terraform resources through flexible labeling:
 
-* **Tag Set**: An unordered and deduplicated list of labels assigned to Terraform resources.
-* **Tag Query**: A Tag Set used for matching. Every Tag in a Tag Query must exist in a Tag Set for a match to occur.
+* **Tag Set**: Unordered, unique labels assigned to resources  
+  Example: `env:prod, component:network`
+* **Tag Query**: Filter to match specific Tag Sets  
+  Example: `env:prod` matches all production resources
 
-Tags provide a flexible way to organize and manage your Terraform resources within Terrateam.
+**Example workflow:**
+1. Tag EC2 instances with `resource-type:compute`
+2. Create Auto-Scaling Groups with `resource-type:compute, environment:production`
+3. Query with `resource-type:compute` to manage all compute resources
+
+Tags enable precise resource management across complex infrastructures.
