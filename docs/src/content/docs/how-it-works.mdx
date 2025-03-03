@@ -1,55 +1,86 @@
 ---
 title: How Terrateam Works
-description: Understanding the inner workings of Terrateam
+description: Understanding the core concepts and inner workings of Terrateam
 ---
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 import { Steps } from '@astrojs/starlight/components';
 
-Terrateam is a powerful GitHub application that seamlessly integrates with your Terraform workflow, enabling you to manage your infrastructure as code directly from your pull requests. Let's dive into how Terrateam works under the hood.
 
-## Architecture Overview
-Terrateam consists of two main components:
+Terrateam is a powerful GitHub application that seamlessly integrates with your [Terraform](https://www.terraform.io/) workflow, enabling you to manage your infrastructure as code directly from your pull requests. This page explains the core concepts and inner workings of Terrateam.
+
+## Core Concepts
+
+Before diving into the technical details, let's understand some key concepts:
+
 <CardGrid>
-  <Card title="Terrateam Server" icon="server">
-    The server receives GitHub events and makes decisions based on the event payload. It orchestrates the execution of Terraform operations and manages the state of your infrastructure.
+  <Card title="Infrastructure as Code" icon="document">
+    Terrateam builds upon [Terraform](https://www.terraform.io/), a tool for defining infrastructure using code. If you're new to Terraform, we recommend reviewing their [documentation](https://www.terraform.io/docs) first.
   </Card>
-  <Card title="Terrateam Runner" icon="running">
-    The runner is responsible for executing the Terraform jobs created by the server. It interacts with your GitHub repository, performs the necessary Terraform commands, and reports the results back to the server.
+  <Card title="Pull Request Integration" icon="github">
+    Terrateam brings Terraform operations directly into your GitHub pull request workflow, allowing you to plan, review, and apply infrastructure changes without leaving GitHub.
+  </Card>
+  <Card title="Automated Workflows" icon="refresh">
+    Terrateam automates the execution of Terraform commands based on pull request events, streamlining your infrastructure management process.
+  </Card>
+  <Card title="Collaboration" icon="people">
+    Terrateam enables team collaboration on infrastructure changes by providing clear visibility into proposed changes and their impacts.
   </Card>
 </CardGrid>
 
+## Hierarchy of Repositories
+
+Terrateam organizes your Terraform code using the following hierarchy:
+
+<CardGrid>
+  <Card title="Repository" icon="github">
+    The top-level entity that represents your GitHub repository containing Terraform code.
+  </Card>
+  <Card title="Directory" icon="folder">
+    A repository can contain zero or more directories, each representing a logical grouping of Terraform resources. Each directory is processed independently.
+  </Card>
+  <Card title="Workspace" icon="layers">
+    Each directory can have one or more workspaces, allowing you to use the same Terraform code in different contexts (e.g., development, staging, production). If no workspace is specified, each directory has a default workspace.
+  </Card>
+</CardGrid>
+
+This hierarchy enables you to structure your Terraform code in a modular and reusable way, making it easier to manage and maintain your infrastructure.
+
 ## Workflow
+
 Here's a high-level overview of how Terrateam works:
+
 <Steps>
 1. Event Trigger
 
    A user performs an action on GitHub, such as opening a pull request, updating it, or commenting on it. This action triggers an event that is sent to the Terrateam server.
 
-1. Event Evaluation
+2. Event Evaluation
 
    The Terrateam server evaluates the received event to determine if a Terraform operation needs to be executed. It analyzes the changes in the pull request and decides whether to trigger a plan or apply operation.
 
-1. Workflow Dispatch
+3. Workflow Dispatch
 
    If the server determines that a Terraform operation is required, it dispatches a GitHub Actions workflow to the Terrateam runner. The workflow contains the necessary information and instructions for executing the Terraform commands.
 
-1. Terraform Execution
+4. Terraform Execution
 
    The Terrateam runner receives the workflow dispatch and starts executing the Terraform operations. It clones your GitHub repository, sets up the necessary environment, and runs the Terraform commands (e.g., `terraform plan` or `terraform apply`) for each modified directory.
 
-1. Result Reporting
+5. Result Reporting
 
    Once the Terraform execution is complete, the Terrateam runner collects the results and sends them back to the Terrateam server. The results include the output of the Terraform commands, any changes made to the infrastructure, and the overall status of the operation.
 
-1. Feedback and Notifications
+6. Feedback and Notifications
 
    The Terrateam server processes the received results and provides feedback to the user. It adds comments to the pull request with the Terraform plan output, updates the status checks, and notifies the relevant stakeholders about the outcome of the operation.
 
 </Steps>
 
 ## Key Features
+
 Terrateam offers several key features that enhance your Terraform workflow:
+
 <CardGrid>
   <Card title="Plan and Apply Operations" icon="list-check">
     Terrateam allows you to manually trigger Terraform plan and apply operations directly from your pull requests. You can review the proposed changes, collaborate with your team, and apply the changes when ready.
@@ -65,10 +96,18 @@ Terrateam offers several key features that enhance your Terraform workflow:
   </Card>
 </CardGrid>
 
-## Hierarchy Of Repositories
-Terrateam organizes your Terraform code using the following hierarchy:
-- **Repository**: The top-level entity that represents your GitHub repository.
-- **Directory**: A repository can contain zero or more directories, each representing a logical grouping of Terraform resources.
-- **Workspace**: Each directory can have one or more workspaces, allowing you to use the same Terraform code in different contexts. If no workspace is specified, each directory has a default workspace.
+## Architecture Overview
 
-This hierarchy enables you to structure your Terraform code in a modular and reusable way, making it easier to manage and maintain your infrastructure.
+Terrateam consists of two main components:
+
+<CardGrid>
+  <Card title="Terrateam Server" icon="server">
+    The server receives GitHub events and makes decisions based on the event payload. It orchestrates the execution of Terraform operations and manages the state of your infrastructure.
+  </Card>
+  <Card title="Terrateam Runner" icon="running">
+    The runner is responsible for executing the Terraform jobs created by the server. It interacts with your GitHub repository, performs the necessary Terraform commands, and reports the results back to the server.
+  </Card>
+</CardGrid>
+
+### Summary
+In this page, you've learned about the core concepts of Terrateam and how it integrates with GitHub and Terraform to enhance your infrastructure as code workflow. You now understand Terrateam's repository hierarchy, its event-driven workflow process, key features that improve collaboration and automation, and the basic architecture that powers these capabilities. With this foundation, you're ready to leverage Terrateam to streamline your infrastructure management through GitHub pull requests.
