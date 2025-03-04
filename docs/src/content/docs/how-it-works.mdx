@@ -7,7 +7,9 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
 import { Steps } from '@astrojs/starlight/components';
 
 
-Terrateam is a powerful GitHub application that seamlessly integrates with your [Terraform](https://www.terraform.io/) workflow, enabling you to manage your infrastructure as code directly from your pull requests. This page explains the core concepts and inner workings of Terrateam.
+Terrateam is a powerful GitHub application that seamlessly integrates with your [Terraform](https://www.terraform.io/) workflow, enabling you to manage your infrastructure as code directly from your pull requests. 
+
+This page explains the core concepts and technical components of Terrateam, helping you understand how it integrates with GitHub and Terraform to automate infrastructure management.
 
 ## Core Concepts
 
@@ -25,6 +27,20 @@ Before diving into the technical details, let's understand some key concepts:
   </Card>
   <Card title="Collaboration" icon="people">
     Terrateam enables team collaboration on infrastructure changes by providing clear visibility into proposed changes and their impacts.
+  </Card>
+</CardGrid>
+
+## Terrateam Architecture
+
+Terrateam consists of two main components:
+
+<CardGrid>
+  <Card title="Terrateam Server" icon="server">
+    The server listens for GitHub events and determines the appropriate Terraform operation based on the event payload. It manages Terraform execution and state updates.
+  </Card>
+
+  <Card title="Terrateam Runner" icon="running">
+    The runner executes Terraform commands in response to instructions from the server. It interacts with your repository and reports the results back to GitHub.
   </Card>
 </CardGrid>
 
