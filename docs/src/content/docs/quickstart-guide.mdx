@@ -1,6 +1,6 @@
 ---
 title: Quickstart Guide
-description: Get up and running with Terrateam in minutes
+description: Get up and running with Terrateam in minutes.
 ---
 import { Steps } from '@astrojs/starlight/components';
 import { Icon } from '@astrojs/starlight/components';
@@ -35,7 +35,7 @@ Terrateam bridges GitHub's pull request workflow with Terraform operations, auto
    Sign up for a Terrateam account and install the GitHub app in your organization.
    
    - $149/mo unlimited with 14-day free trial (no credit card required)
-   - Select the GitHub organizations and repositories containing your Terraform code
+   - Select the GitHub organizations and repositories containing your Terraform code.
    
    <LinkCard
      title="Sign up for Terrateam"
@@ -48,9 +48,9 @@ Terrateam bridges GitHub's pull request workflow with Terraform operations, auto
 
    The workflow file enables Terrateam to run Terraform operations within your GitHub Actions environment.
    
-   - Create a `.github/workflows` directory in your repository if it doesn't exist
-   - Download and add the [terrateam.yml](https://raw.githubusercontent.com/terrateamio/terrateam-example/main/.github/actions/workflows/default/terrateam.yml) file to this directory
-   - Commit the file to your default branch (`main` or `master`)
+   - Create a `.github/workflows` directory in your repository if it doesn't exist.
+   - Download and add the [terrateam.yml](https://raw.githubusercontent.com/terrateamio/terrateam-example/main/.github/actions/workflows/default/terrateam.yml) file to this directory.
+   - Commit the file to your default branch (`main` or `master`).
    
    ![GitHub Actions Workflow File](../../assets/github-actions-workflow-file-location.png)
    
@@ -73,8 +73,8 @@ Terrateam bridges GitHub's pull request workflow with Terraform operations, auto
 
 Let's test Terrateam with a simple example that doesn't require cloud provider credentials.
 
-:::tip[What is a null_resource?]
-The `null_resource` in Terraform lets you run provisioners without creating any actual infrastructure. It's perfect for testing workflows since it doesn't modify any real resources.
+:::tip[What is a `null_resource`?]
+The [`null_resource`](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) in Terraform allows you to run provisioners without creating real infrastructure. It’s perfect for testing workflows.
 :::
 
 <Steps>
