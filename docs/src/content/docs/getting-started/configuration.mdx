@@ -1,6 +1,6 @@
 ---
 title: Configuration 
-description: Understanding the Terrateam configuration file
+description: Understanding the Terrateam configuration file and how to customize your workflow
 ---
 
 import { Steps } from '@astrojs/starlight/components';
@@ -17,17 +17,25 @@ The `config.yml` file is written in YAML and has the following basic structure:
 
 ```yaml
 access_control:
-  # Access Controls
+  # Access Controls - Defines who can perform which operations
 apply_requirements:
-  # Apply Requirements
+  # Apply Requirements - Sets conditions that must be met before applying changes
 dirs:
-  # Repository Layout Definitions
+  # Repository Layout Definitions - Maps directories to tags, workspaces, and behaviors
 hooks:
-  # Pre/Post Hooks 
+  # Pre/Post Hooks - Custom commands to run before or after operations
 workflows:
-  # Custom Workflow Steps 
-# Other Configuration Options
+  # Custom Workflow Steps - Defines specialized plan and apply processes
+# Other Configuration Options - Additional settings for Terrateam behavior
 ```
+
+Each section serves a specific purpose in customizing Terrateam's behavior:
+
+- **access_control**: Controls who can run plan and apply operations
+- **apply_requirements**: Defines conditions that must be met before changes can be applied
+- **dirs**: Maps your repository's directory structure to Terrateam's concepts
+- **hooks**: Allows custom actions before or after operations
+- **workflows**: Creates specialized processing for different directories or environments
 
 ## Access Control
 
@@ -38,12 +46,16 @@ Here's an example `access_control` configuration:
 ```yaml
 access_control:
   policies:
-    - tag_query: ''
-      plan: ['*']
-      apply: ['team:sre']
+    - tag_query: ''  # Empty string matches all directories
+      plan: ['*']    # Anyone can plan
+      apply: ['team:sre']  # Only SRE team members can apply
 ```
 
 This configuration allows anyone to trigger a Plan operation but restricts Apply operations to members of the `sre` team.
+
+:::note
+The `tag_query` field is used to match specific directories or environments. An empty string (`''`) matches all directories. You can use it to create different access policies for different parts of your infrastructure, like `tag_query: 'production'` to set stricter permissions for production environments.
+:::
 
 For more information, see the [Access Control](/configuration-reference/access-control) section of the Configuration Reference.
 
@@ -51,24 +63,32 @@ For more information, see the [Access Control](/configuration-reference/access-c
 
 Apply Requirements allows you to specify conditions that must be met before an Apply operation can be performed on an unmerged pull request. This helps ensure that changes are properly reviewed and validated before being applied.
 
-Here's an example `apply_requirements` configuration:
+Here's an example `apply_requirements` configuration with explanations:
 
 ```yaml
 apply_requirements:
+  # Creates a status check that prevents merging until apply is complete
   create_pending_apply_check: true
+  
   checks:
-    - tag_query: ""
+    - tag_query: ""  # Apply to all directories
+      
+      # Requires PR approvals
       approved:
-        enabled: true
-        any_of: []
-        any_of_count: 2
-        all_of: []
+        enabled: true        # Enable approval checking
+        any_of: []           # No specific approvers required
+        any_of_count: 2      # Requires at least 2 approvals
+        all_of: []           # No mandatory approvers
+      
+      # Prevents apply if merge conflicts exist
       merge_conflicts:
         enabled: true
+      
+      # Requires all status checks to pass
       status_checks:
-        enabled: true
-        ignore_matching:
-          - "ci/.*"
+        enabled: true              # Enable status check verification
+        ignore_matching:           # Regex patterns for checks to ignore
+          - "ci/.*"                # Ignores all CI status checks
 ```
 
 This configuration requires that the pull request has at least 2 approvals, no merge conflicts, and all status checks (except those matching `ci/.*`) have passed before an apply can be performed.
@@ -79,24 +99,35 @@ For more information, see the [Apply Requirements](/configuration-reference/appl
 
 ## Dirs
 
-Dirs allow you to define which [Tags](/advanced-workflows/tags), Workspaces, and [When Modified](/configuration-reference/when-modified) rules rules apply to specific directories in your repository.
+Dirs allow you to define which [Tags](/advanced-workflows/tags), Workspaces, and [When Modified](/configuration-reference/when-modified) rules apply to specific directories in your repository.
 
 Here's an example `dirs` configuration:
 
 ```yaml
 dirs:
-  ec2:
-    tags: [aws, ec2]
+  ec2:  # Directory name (relative to repository root)
+    tags: [aws, ec2]  # Directory-level tags
     workspaces:
-      production:
-        tags: [production]
+      production:  # Workspace name
+        tags: [production]  # Workspace-specific tags
     when_modified:
       file_patterns: ["ec2/*.tf", "ec2/*.tfvars", "iam/*.tf", "iam/*.tfvars"]
   iam:
     tags: [aws, iam]
 ```
 
-This configuration assigns the Tags `aws` and `ec2` to the `ec2` directory, and the Tags `aws` and `iam` to the `iam` directory. It also specifies that the `production` Workspace should be used when a [Tag Query](/advanced-workflows/tags) includes `aws`, `ec2`, and `production` for a [Workflow](/configuration-reference/workflows) or [Command](/command-reference). Additionally, it overrides the [`when_modified`](/configuration-reference/when-modified) file patterns for the `ec2` directory.
+This configuration:
+
+1. Assigns directory-level tags `aws` and `ec2` to the `ec2` directory
+2. Assigns directory-level tags `aws` and `iam` to the `iam` directory
+3. Creates a `production` workspace for the `ec2` directory with the tag `production`
+4. Specifies custom file patterns that, when modified, will trigger Terrateam operations for the `ec2` directory
+
+:::note[Directory vs. Workspace Tags]
+- **Directory tags** (`tags` at the directory level) apply to all operations in that directory across all workspaces
+- **Workspace tags** (`tags` under a specific workspace) only apply when operating on that specific workspace
+- Tags are used in tag queries (like `tag_query: "aws"`) to target specific operations
+:::
 
 Terrateam also supports glob patterns in the `dirs` directive, allowing you to match multiple directories with similar configurations. The `${DIR}` variable can be used to specify the directory that Terrateam is working against, relative to the root of the repository.
 
@@ -114,12 +145,12 @@ Here's an example `hooks` configuration:
 
 ```yaml
 hooks:
-  all:
-    pre:
+  all:  # Apply to all operations (plan & apply)
+    pre:  # Run before the operation
       - type: run
         cmd: ['echo', 'Running pre-hook for all operations']
-  plan:
-    post:
+  plan:  # Apply only to plan operations
+    post:  # Run after the operation
       - type: run
         cmd: ['echo', 'Running post-hook for plan operations']
 ```
@@ -134,20 +165,26 @@ Here's an example `workflows` configuration:
 
 ```yaml
 workflows:
-  - tag_query: "dir:production"
+  # This workflow applies to any directory tagged with "production"
+  # (This could match directories set with tags: [production] in the dirs section)
+  - tag_query: "production"
     plan:
-      - type: init
-      - type: plan
-        extra_args: ["-var-file=production.tfvars"]
+      - type: init  # Run terraform init
+      - type: plan  # Run terraform plan
+        extra_args: ["-var-file=production.tfvars"]  # With these extra arguments
     apply:
-      - type: init
-      - type: apply
-      - type: run
+      - type: init  # Run terraform init for apply
+      - type: apply  # Run terraform apply
+      - type: run   # Run a custom command
         cmd: ['echo', 'Error running apply']
-        run_on: failure
+        run_on: failure  # Only if apply fails
 ```
 
-This workflow runs a custom plan and apply process for any changes in the `production` directory.
+This workflow runs a custom plan and apply process for any directories tagged with `production`. The tag queries like `tag_query: "production"` match the tags defined in the `dirs` section, creating a connection between your directory structure and custom workflows.
+
+:::note
+All the examples in this page are complementary parts of a single configuration. The tag query in the workflow (`tag_query: "production"`) would match directories or workspaces tagged with `production` in the `dirs` section.
+:::
 
 For more information, see the [Workflows](/configuration-reference/workflows) section of the Configuration Reference.
 
