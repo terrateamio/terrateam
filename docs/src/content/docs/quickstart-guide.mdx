@@ -6,6 +6,8 @@ import { Steps } from '@astrojs/starlight/components';
 import { Icon } from '@astrojs/starlight/components';
 import { LinkCard, CardGrid, Card } from '@astrojs/starlight/components';
 
+Welcome to the Terrateam Quickstart Guide! This guide will help you set up Terrateam, integrate it with GitHub, and run your first Terraform deployment—all in a few simple steps. 
+
 ## Prerequisites
 
 Before getting started with Terrateam, make sure you have the following:
@@ -74,7 +76,7 @@ Terrateam bridges GitHub's pull request workflow with Terraform operations, auto
 Let's test Terrateam with a simple example that doesn't require cloud provider credentials.
 
 :::tip[What is a `null_resource`?]
-The [`null_resource`](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) in Terraform allows you to run provisioners without creating real infrastructure. It’s perfect for testing workflows.
+The [`null_resource`](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) in Terraform is like a placeholder, it doesn’t create real cloud resources but can still run commands, It’s perfect for testing workflows.
 :::
 
 <Steps>
