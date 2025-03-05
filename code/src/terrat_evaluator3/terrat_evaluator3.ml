@@ -1884,25 +1884,25 @@ module Make (S : Terrat_vcs_provider.S) = struct
             ~file_list:repo_tree
             repo_config
         in
-        Abb.Future.return
-          (compute_matches
-             ~ctx:
-               (Terrat_base_repo_config_v1.Ctx.make
-                  ~dest_branch:(S.Ref.to_string base_branch_name)
-                  ~branch:(S.Ref.to_string branch_name)
-                  ())
-             ~repo_config
-             ~tag_query
-             ~out_of_change_applies
-             ~applied_dirspaces
-             ~diff
-             ~repo_tree
-             ~index:
-               (CCOption.map_or
-                  ~default:Terrat_base_repo_config_v1.Index.empty
-                  (fun { Terrat_vcs_provider.Index.index; _ } -> index)
-                  index)
-             ())
+        Abb.Thread.run (fun () ->
+            compute_matches
+              ~ctx:
+                (Terrat_base_repo_config_v1.Ctx.make
+                   ~dest_branch:(S.Ref.to_string base_branch_name)
+                   ~branch:(S.Ref.to_string branch_name)
+                   ())
+              ~repo_config
+              ~tag_query
+              ~out_of_change_applies
+              ~applied_dirspaces
+              ~diff
+              ~repo_tree
+              ~index:
+                (CCOption.map_or
+                   ~default:Terrat_base_repo_config_v1.Index.empty
+                   (fun { Terrat_vcs_provider.Index.index; _ } -> index)
+                   index)
+              ())
         >>= fun (working_set_matches, all_matches, all_tag_query_matches, all_unapplied_matches) ->
         pull_request_safe ctx state
         >>= function
@@ -2095,12 +2095,14 @@ module Make (S : Terrat_vcs_provider.S) = struct
              ~index:Terrat_base_repo_config_v1.Index.empty
              repo_config)
         >>= fun config ->
-        let matches =
-          CCList.flatten
-            (Terrat_change_match3.match_diff_list
-               config
-               (CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) repo_tree))
-        in
+        let open Abb.Future.Infix_monad in
+        Abb.Thread.run (fun () ->
+            CCList.flatten
+              (Terrat_change_match3.match_diff_list
+                 config
+                 (CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) repo_tree)))
+        >>= fun matches ->
+        let open Abbs_future_combinators.Infix_result_monad in
         let workflows = Terrat_base_repo_config_v1.workflows repo_config in
         let dirspaceflows =
           CCList.map
