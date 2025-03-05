@@ -47,7 +47,7 @@ Below is an example migration to AWS S3. If you use other cloud backends, adapt 
 1. Export State from TFC  
      ```bash
      terraform login            # authenticate with TFC
-     terraform state pull > state.tfstate
+     terraform state pull > terraform.tfstate
      ```  
      This pulls the current TFC state into a local file.  
 
@@ -69,9 +69,6 @@ Below is an example migration to AWS S3. If you use other cloud backends, adapt 
      ```
 
 4. Migrate the State  
-     - Temporarily configure local state (remove/comment out the remote backend).  
-     - Place the downloaded state file in your working directory (`terraform.tfstate`).  
-     - Re-enable the S3 backend config.  
      - Run `terraform init -migrate-state`, and approve the migration.
 
 5. Verify  
