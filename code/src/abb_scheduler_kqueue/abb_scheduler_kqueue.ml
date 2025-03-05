@@ -224,19 +224,19 @@ module El = struct
       try Kqueue.kevent t.kq ~changelist ~eventlist:t.eventlist ~timeout
       with Unix.Unix_error (Unix.EINTR, _, _) -> 0
     in
-    assert (ret >= 0);
-    let t = { t with curr_time = Unix.gettimeofday (); mono_time = Mtime_clock.elapsed () } in
-    let s = Abb_fut.State.set_state t s in
-    let s =
-      Kqueue.Eventlist.fold
-        ~f:(fun s event ->
-          let t = Abb_fut.State.state s in
-          match Kqueue.Event.of_kevent event with
-          | Kqueue.Event.Read r
-            when Fd_map.mem
-                   (Kqueue.unsafe_file_descr_of_int r.Kqueue.Event.Read.descr)
-                   t.change_read ->
-              (* If the FD being processed now is in the change_read or
+    if ret >= 0 then (
+      let t = { t with curr_time = Unix.gettimeofday (); mono_time = Mtime_clock.elapsed () } in
+      let s = Abb_fut.State.set_state t s in
+      let s =
+        Kqueue.Eventlist.fold
+          ~f:(fun s event ->
+            let t = Abb_fut.State.state s in
+            match Kqueue.Event.of_kevent event with
+            | Kqueue.Event.Read r
+              when Fd_map.mem
+                     (Kqueue.unsafe_file_descr_of_int r.Kqueue.Event.Read.descr)
+                     t.change_read ->
+                (* If the FD being processed now is in the change_read or
                  change_write map, then means we have done something in this
                  iteration of the loop where a previously handled FD has
                  modified something related to this FD.  This is most likely an
@@ -248,32 +248,34 @@ module El = struct
                  already out of the kqueue.  So we just remove the change
                  operation and continue on.  That away we don't try to delete
                  what is already not there. *)
-              let fd = Kqueue.unsafe_file_descr_of_int r.Kqueue.Event.Read.descr in
-              assert (Fd_map.find fd t.change_read = `Del);
-              let t = { t with change_read = Fd_map.remove fd t.change_read } in
-              Abb_fut.State.set_state t s
-          | Kqueue.Event.Write w
-            when Fd_map.mem
-                   (Kqueue.unsafe_file_descr_of_int w.Kqueue.Event.Write.descr)
-                   t.change_write ->
-              (* See the comment above in Read. *)
-              let fd = Kqueue.unsafe_file_descr_of_int w.Kqueue.Event.Write.descr in
-              assert (Fd_map.find fd t.change_write = `Del);
-              let t = { t with change_write = Fd_map.remove fd t.change_write } in
-              Abb_fut.State.set_state t s
-          | Kqueue.Event.Read r ->
-              dispatch_read (Kqueue.unsafe_file_descr_of_int r.Kqueue.Event.Read.descr) s
-          | Kqueue.Event.Write w ->
-              dispatch_write (Kqueue.unsafe_file_descr_of_int w.Kqueue.Event.Write.descr) s
-          | _ -> s)
-        ~init:s
-        t.eventlist
-    in
-    let s = dispatch_timers s in
-    let end_time = Mtime_clock.elapsed () in
-    let duration = Mtime.Span.(to_float_ns (abs_diff end_time t.mono_time) /. sec_ns) in
-    (Abb_fut.State.state s).exec_duration duration;
-    s
+                let fd = Kqueue.unsafe_file_descr_of_int r.Kqueue.Event.Read.descr in
+                assert (Fd_map.find fd t.change_read = `Del);
+                let t = { t with change_read = Fd_map.remove fd t.change_read } in
+                Abb_fut.State.set_state t s
+            | Kqueue.Event.Write w
+              when Fd_map.mem
+                     (Kqueue.unsafe_file_descr_of_int w.Kqueue.Event.Write.descr)
+                     t.change_write ->
+                (* See the comment above in Read. *)
+                let fd = Kqueue.unsafe_file_descr_of_int w.Kqueue.Event.Write.descr in
+                assert (Fd_map.find fd t.change_write = `Del);
+                let t = { t with change_write = Fd_map.remove fd t.change_write } in
+                Abb_fut.State.set_state t s
+            | Kqueue.Event.Read r ->
+                dispatch_read (Kqueue.unsafe_file_descr_of_int r.Kqueue.Event.Read.descr) s
+            | Kqueue.Event.Write w ->
+                dispatch_write (Kqueue.unsafe_file_descr_of_int w.Kqueue.Event.Write.descr) s
+            | _ -> s)
+          ~init:s
+          t.eventlist
+      in
+      let s = dispatch_timers s in
+      let end_time = Mtime_clock.elapsed () in
+      let duration = Mtime.Span.(to_float_ns (abs_diff end_time t.mono_time) /. sec_ns) in
+      (Abb_fut.State.state s).exec_duration duration;
+      s)
+    else if Sys.getenv_opt "ABB_SCHEDULER_DEBUG" = Some "true" then s
+    else assert false
 
   let rec loop s done_fut =
     match Future.state done_fut with
