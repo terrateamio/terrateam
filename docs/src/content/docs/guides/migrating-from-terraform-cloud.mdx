@@ -1,0 +1,207 @@
+---
+title: Migrating from Terraform Cloud
+description: How to successfully migrate from Terraform Cloud to Terrateam
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Terraform Cloud (TFC) is HashiCorp's managed service offering remote state management, execution, and collaboration features via a web UI. Terrateam is an open-source GitOps CI/CD platform tightly integrated with GitHub for automating Terraform workflows. Rather than a separate TFC interface, Terrateam manages infrastructure changes through GitHub pull requests and GitHub Actions.
+
+## Pre-Migration Planning
+
+A successful migration starts with a thorough plan. Begin by taking an inventory of your TFC setup:
+
+<Steps>
+1. List Organizations and Workspaces  
+   - Note each workspace's purpose (project, environment, etc.) and the Terraform code repository/directory it connects to.  
+   - Record the Terraform version and any relevant workspace settings.
+
+2. State Location and Names  
+   - TFC stores state within each workspace. Note each workspace name, since it often forms part of the key path if you use an S3-like backend after migration.
+
+3. Variables and Secrets  
+   - Document all TFC workspace variables, both sensitive and non-sensitive. Sensitive values can't be viewed directly in TFC if you never saved them elsewhere, so plan to regenerate or locate them securely.
+
+4. Workflow Triggers  
+   - Understand how runs are triggered (automatic via VCS push, manual in UI, CLI-driven, etc.). If you rely on TFC's run tasks or webhooks, decide how you'll replicate them with Terrateam.
+
+5. Compliance/Approvals  
+   - Check if TFC used Sentinel, manual approvals, or RBAC. Decide how you'll replicate or improve those controls in Terrateam using GitHub reviews, built-in Terrateam features like Access Controls or Apply Requirements, OPA, or other policy tools.
+
+6. Choose a New Backend  
+   - Terrateam doesn't host your state. Common choices include AWS S3 (+ DynamoDB for locking), Azure Blob, GCS, or another remote backend. Create the backend, ensuring versioning/encryption for compliance.
+
+7. Security, Governance, and Secrets  
+   - Evaluate how you'll store secrets going forward (e.g. GitHub Secrets). Review how you'll replicate TFC's role/team restrictions, usually via GitHub team permissions and `.terrateam/config.yml` access controls.
+</Steps>
+
+Compile these into a migration checklist for each workspace so nothing (like a crucial API key) is overlooked.
+
+---
+
+## Migrating Terraform State to S3
+
+Below is an example migration to AWS S3. If you use other cloud backends, adapt accordingly:
+
+<Steps>
+1. Export State from TFC  
+     ```bash
+     terraform login            # authenticate with TFC
+     terraform state pull > state.tfstate
+     ```  
+     This pulls the current TFC state into a local file.  
+
+2. Set Up S3  
+   - Create an S3 bucket (e.g., `mycompany-terraform-state`) with versioning and encryption.  
+
+3. Update Terraform Backend  
+   - In your Terraform config (`backend.tf` or within `terraform { backend "s3" { ... } }`):
+     ```hcl
+     terraform {
+       backend "s3" {
+         bucket         = "mycompany-terraform-state"
+         key            = "prod/network/terraform.tfstate"
+         region         = "us-west-2"
+         dynamodb_table = "terraform-state-locks"
+         encrypt        = true
+       }
+     }
+     ```
+
+4. Migrate the State  
+     - Temporarily configure local state (remove/comment out the remote backend).  
+     - Place the downloaded state file in your working directory (`terraform.tfstate`).  
+     - Re-enable the S3 backend config.  
+     - Run `terraform init -migrate-state`, and approve the migration.
+
+5. Verify  
+   - Run `terraform plan` to confirm no changes.  
+   - Repeat for each workspace, adjusting the `key` path accordingly.
+</Steps>
+
+## Handling Secrets & Environment Variables
+<Steps>
+1. Identify Secrets in TFC
+   - Non-sensitive values can be viewed in the TFC UI.  
+   - Sensitive variables are masked. If you didn't store them elsewhere, you may need to regenerate new credentials or rotate them accordingly.
+
+2. Storing Secrets in GitHub
+   - GitHub Secrets: Store sensitive credentials (AWS keys, DB passwords, etc.).  
+   - GitHub Variables: For non-sensitive configs.  
+   - GitHub Environments: For dev/staging/prod scopes.
+</Steps>
+
+Terrateam automatically injects these secrets as environment variables during plan/apply. Any variable prefixed with `TF_VAR_` is recognized by Terraform as an input variable.
+
+## Use OIDC
+Rather than static credentials, set up Terrateam to use OIDC so it can assume roles in AWS/GCP/Azure without storing long-lived secrets in GitHub.
+
+## Logs
+Make sure your Terraform or custom scripts don't accidentally print sensitive information. Terrateam will mask matches for any secrets defined in GitHub Secrets and in your `.terrateam/config.yml` if they are marked as `sensitive`.
+
+## Execution & Workflow Migration
+
+<Steps>
+1. Set Up Terrateam  
+   - Install the [Terrateam GitHub App](https://github.com/apps/terrateam-action) on your repo/organization.  
+   - Add the `.github/workflows/terrateam.yml`.
+   - See [quickstart-guide](/quickstart-guide) for details.
+
+2. Mirror Existing TFC Workflows  
+   - Automatic Plan on PR: Terrateam comments plan results in the PR.  
+   - Manual Approvals: Instead of TFC's “Confirm & Apply,” you comment `terrateam apply` on the PR, or you configure merges to trigger an apply.
+   - Multiple Environments: If TFC used multiple workspaces, replicate that in `.terrateam/config.yml` with separate directories, tags, or CLI workspaces.
+
+3. Configure `.terrateam/config.yml`  
+   - Directories or Branches to represent each environment.  
+   - Apply Requirements: e.g., require PR approval, successful checks.  
+   - Access Control: Restrict who can run applies in different environments.
+
+4. Testing  
+   - Open a test PR, ensure plan output shows up, confirm secrets are recognized, then do a test `terrateam apply`.  
+   - Verify it references the correct new S3 backend.
+</Steps>
+
+## Compliance, Logging, and Auditability
+
+### Policy Enforcement
+- Sentinel -> OPA/Checkov: Rewrite or replicate TFC's Sentinel policies with OPA/Checkov. Terrateam can automatically run these checks on each pull request.
+
+### Approvals
+- GitHub code reviews and branch protections can replace TFC's manual apply. Terrateam can also require certain statuses or approvals from GitHub identities (teams, users, roles).
+
+### Audit Logging
+- GitHub PR History: Each plan/apply is commented in the PR.
+- Terrateam Audit Trail: Terrateam keeps an audit trail in the UI.
+- GitHub Actions Logs: Each run is a job log you can store or export.
+
+### Cost Estimation & Other Checks
+- Terrateam provides cost estimates in PRs.
+- Additional scripts or checks can be added in `.terrateam/config.yml` using custom workflows and hooks.
+
+## Custom Workflows & Automation
+
+Terrateam is highly configurable and can fit into any workflow.
+
+### Hooks
+
+Run scripts pre or post plan/apply to integrate policy checks, custom validations, notifications, etc.  
+
+### Parallel or Layered Runs
+
+For multiple directories, run them in parallel or define dependencies so certain directories apply before others.  
+
+### Branching Strategies
+
+Automate multi-environment setups using branch naming or tags referencing directories.  
+
+### Notifications
+
+Post Slack or Teams messages on plan/apply success/failure.  
+
+### Monorepo vs Multiple Repos
+
+If TFC used multiple repos, you can replicate that or consolidate into one repository with subdirectories.
+
+## Validating the Migration
+
+### Test in a Non-Prod Environment  
+Try it out on dev/staging. Compare TFC plan output to Terrateam if needed.
+
+### Compare Terraform State  
+Run `terraform state list` to ensure it matches your resources in the new backend.
+
+### Check Secrets  
+Confirm GitHub secrets are set properly and recognized in the workflow.
+
+### Check Drift  
+If TFC wasn't up-to-date, Terrateam might highlight differences. Evaluate carefully.
+
+## Best Practices for Enterprise Adoption
+
+- Security & Access Control: Use GitHub teams, code owners, and Terrateam's `access_control` or production safety.  
+- Policy & Governance: Replace Sentinel with OPA or Checkov, use branch protection for merges, and configure `apply_requirements`.
+- Secrets Management: Use ephemeral credentials (OIDC) where possible. If static secrets are required, store them in GitHub Secrets or an external vault.  
+- Monitoring & Audits: Export logs to a central store. Use Terrateam's dashboard for a consolidated view of runs.  
+- Training & Documentation: Provide internal docs or a short tutorial so your team knows how to open PRs, read plan outputs, and apply changes with Terrateam's commands.
+
+## Final Steps and Next Actions
+
+<Steps>
+1. Decommission TFC  
+   - After all workspaces are migrated and validated, remove or disable them in TFC, and cancel any paid subscriptions.
+
+2. Optimize Terrateam  
+   - Refine your `.terrateam/config.yml` based on real usage: parallel runs, environment-based tags, advanced hooks, etc.
+
+3. Continuous Improvement  
+   - Monitor runs, gather feedback, and add improvements, like OPA policies, additional validations, or new environment setups.
+
+4. Wrap-Up  
+   - You've successfully transitioned to a more GitOps-style approach with Terrateam. All infra changes now go through GitHub pull requests, providing better transparency, collaboration, and control.
+</Steps>
+---
+
+### Support
+
+Need help migrating? Reach out via [Slack](https://terrateam.io/slack) or [email](mailto:support@terrateam.io).
