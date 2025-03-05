@@ -15,12 +15,16 @@ At the heart of Terrateam is the concept of a Dirspace. A Dirspace represents a 
 
 Dirspaces are automatically created when Terrateam detects Terraform configurations in your repository. Each directory containing Terraform files forms a Dirspace with either its explicitly configured workspace or the **default workspace** (created automatically when no specific workspace is defined).
 
-For example, consider a repository named `repo` with two directories, `dir1` and `dir2`, and no extra workspace configuration. This repository would have two Dirspaces:
+#### **Example:**
+Consider a repository named `repo` with two directories, `dir1` and `dir2`, and no explicitly configured workspaces. This repository would have two Dirspaces:
 
-1. (`repo`, `dir1`, `default`) or (`dir1`, `default`)
-2. (`repo`, `dir2`, `default`) or (`dir2`, `default`)
+| Repository  | Directory | Workspace |
+|------------|----------|-----------|
+| repo       | dir1     | default   |
+| repo       | dir2     | default   |
 
-Terrateam executes operations like plan and apply within the context of a Dirspace.
+A **workspace** allows you to manage multiple states for the same directory. This helps isolate environments such as `dev`, `staging`, and `prod` within the same repository, making infrastructure management more organized.
+
 ```
 Repository
   |
@@ -30,6 +34,9 @@ Repository
   |-- Directory 2
         |-- Workspace: default
 ```
+:::note
+Terrateam executes operations like plan and apply within the context of a Dirspace.
+:::
 ## Changes and File Patterns
 
 When a pull request is opened or updated, Terrateam detects changes based on patterns defined in your `.terrateam/config.yml` file under the `when_modified` configuration. The default configuration looks like:
@@ -47,10 +54,7 @@ Terrateam maps detected changes to their appropriate [Dirspaces](/getting-starte
 
 ## Auto-Plan and Auto-Apply
 
-Terrateam offers two configurable automated operations:
-
-- **Auto-Plan**: (Enabled by default) Runs `terraform plan` on new or updated pull requests. Configure in `.terrateam/config.yml`:
-  ```yaml
+Terrateam offers two configurable automated operations:New chat
   auto_plan: true  # Set to false to disable
   ```
 - **Auto-Apply**: (Disabled by default) Runs `terraform apply` post-merge. Enable with:
