@@ -96,6 +96,11 @@ export default defineConfig({
           collapsed: true,
         },
         {
+          label: "Guides",
+          autogenerate: { directory: "guides" },
+          collapsed: true,
+        },
+        {
           label: "Company",
           autogenerate: { directory: "company" },
           collapsed: true,
