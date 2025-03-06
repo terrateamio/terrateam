@@ -1321,6 +1321,87 @@ let test_large_directory_count_matching_files =
       let changes = CCList.flatten (Terrat_change_match3.match_diff_list dirs diff) in
       assert (CCList.length changes = 1 + num_dirs))
 
+let test_large_file_count_with_low_match_count =
+  Oth.test ~name:"Test large file count with low match count" (fun _ ->
+      let num_tf_dirs = 70 in
+      let num_tf_files_per_dir = 10 in
+      let num_dirs = 1000 in
+      let num_files_per_dir = 50 in
+      let file_list =
+        CCList.flat_map
+          (fun i ->
+            CCList.map
+              (Printf.sprintf "foo/terraform/%04d/foo_%d.tf" i)
+              (CCList.range 1 num_tf_files_per_dir))
+          (CCList.range 1 num_tf_dirs)
+        @ CCList.flat_map
+            (fun i ->
+              CCList.map
+                (Printf.sprintf "other/%04d/foo_%d.txt" i)
+                (CCList.range 1 num_files_per_dir))
+            (CCList.range 1 num_dirs)
+      in
+      let repo_config =
+        let module R = Terrat_base_repo_config_v1 in
+        R.derive ~ctx ~index:Terrat_base_repo_config_v1.Index.empty ~file_list
+        @@ R.of_view
+        @@ R.View.make
+             ~when_modified:(R.When_modified.make ~file_patterns:[] ())
+             ~dirs:(R.String_map.of_list [ ("**/terraform/**", R.Dirs.Dir.make ()) ])
+             ()
+      in
+      let diff = CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) file_list in
+      let dirs =
+        CCResult.get_exn
+          (Terrat_change_match3.synthesize_config
+             ~index:Terrat_base_repo_config_v1.Index.empty
+             repo_config)
+      in
+      let changes = CCList.flatten (Terrat_change_match3.match_diff_list dirs diff) in
+      assert (CCList.length changes = num_tf_dirs))
+
+let test_large_file_count_with_low_match_count_lesser_dir_depth =
+  Oth.test ~name:"Test large file count with low match count lesser dir dpeth" (fun _ ->
+      (* Only meaningful difference here is our glob starts with [**] but the
+         dir our terraform is in is in the root level.  Just making sure all the
+         machinery works here as expected. *)
+      let num_tf_dirs = 70 in
+      let num_tf_files_per_dir = 10 in
+      let num_dirs = 1000 in
+      let num_files_per_dir = 50 in
+      let file_list =
+        CCList.flat_map
+          (fun i ->
+            CCList.map
+              (Printf.sprintf "terraform/%04d/foo_%d.tf" i)
+              (CCList.range 1 num_tf_files_per_dir))
+          (CCList.range 1 num_tf_dirs)
+        @ CCList.flat_map
+            (fun i ->
+              CCList.map
+                (Printf.sprintf "other/%04d/foo_%d.txt" i)
+                (CCList.range 1 num_files_per_dir))
+            (CCList.range 1 num_dirs)
+      in
+      let repo_config =
+        let module R = Terrat_base_repo_config_v1 in
+        R.derive ~ctx ~index:Terrat_base_repo_config_v1.Index.empty ~file_list
+        @@ R.of_view
+        @@ R.View.make
+             ~when_modified:(R.When_modified.make ~file_patterns:[] ())
+             ~dirs:(R.String_map.of_list [ ("**/terraform/**", R.Dirs.Dir.make ()) ])
+             ()
+      in
+      let diff = CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) file_list in
+      let dirs =
+        CCResult.get_exn
+          (Terrat_change_match3.synthesize_config
+             ~index:Terrat_base_repo_config_v1.Index.empty
+             repo_config)
+      in
+      let changes = CCList.flatten (Terrat_change_match3.match_diff_list dirs diff) in
+      assert (CCList.length changes = num_tf_dirs))
+
 let test_large_directory_count_non_default_when_modified =
   Oth.test ~name:"Test large directory count non default when_modified" (fun _ ->
       (* Number of operations = num_dirs * num_files.  Its not exactly that
@@ -2177,6 +2258,8 @@ let test =
       test_module_dir_with_root_dir;
       test_large_directory_count_unmatching_files;
       test_large_directory_count_matching_files;
+      test_large_file_count_with_low_match_count;
+      test_large_file_count_with_low_match_count_lesser_dir_depth;
       test_large_directory_count_non_default_when_modified;
       test_not_match;
       test_not_match_multiple;

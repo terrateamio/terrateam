@@ -587,6 +587,9 @@ module File_pattern = struct
     s : string;
     p : Path_glob.Glob.globber;
     negate : bool;
+    prefix : string;
+    suffix : string;
+    words : string list;
   }
 
   let sanitize =
@@ -596,13 +599,50 @@ module File_pattern = struct
 
   let make s =
     try
-      if CCString.prefix ~pre:"!" s then
-        Ok { s; p = Path_glob.Glob.parse ("<" ^ sanitize (CCString.drop 1 s) ^ ">"); negate = true }
-      else Ok { s; p = Path_glob.Glob.parse ("<" ^ sanitize s ^ ">"); negate = false }
+      let negate, s' =
+        if CCString.prefix ~pre:"!" s then (true, CCString.drop 1 s) else (false, s)
+      in
+      (* [prefix], [suffix], and [words] allow optimizing some of the checks in
+         the case that globbing is too expensive.  This can happen in very large
+         repositories with lots of files and globs with lots of wild cards. *)
+      let prefix =
+        match CCString.index_opt s' '*' with
+        | Some idx -> CCString.sub s' 0 idx
+        | None -> s'
+      in
+      let suffix =
+        match CCString.rindex_opt s' '*' with
+        | Some idx -> CCString.sub s' (idx + 1) (CCString.length s' - (idx + 1))
+        | None -> s'
+      in
+      let words =
+        CCList.map
+          (* Strip any dir separators around the string.  If a glob looks like
+             [**/foo] that will match [foo]. *)
+          CCFun.(
+            CCString.drop_while (( = ) '/')
+            %> CCString.rev
+            %> CCString.drop_while (( = ) '/')
+            %> CCString.rev)
+        @@ CCList.filter (fun word ->
+               (* [3] is just an arbitrary limit of what a string that adds value
+               in discriminating a check is. Short strings are likely to not
+               tell us much. *)
+               CCString.length word > 3)
+        @@ CCString.split_on_char '*' s'
+      in
+      Ok { s; p = Path_glob.Glob.parse ("<" ^ sanitize s' ^ ">"); negate; prefix; suffix; words }
     with Path_glob.Glob.Parse_error err -> Error (`Glob_parse_err (s, err))
 
-  let is_match { p; negate; _ } str =
-    let m = Path_glob.Glob.eval p str in
+  let is_match { p; negate; prefix = pre; suffix = suf; words; _ } str =
+    (* Evaluating a glob can be expensive, so we do as many cheap checks as we
+       can prior to evaluating the globa. *)
+    let m =
+      CCString.prefix ~pre str
+      && CCString.suffix ~suf str
+      && CCList.for_all (fun word -> CCString.mem ~sub:word str) words
+      && Path_glob.Glob.eval p str
+    in
     if negate then not m else m
 
   let is_negate { negate; _ } = negate
