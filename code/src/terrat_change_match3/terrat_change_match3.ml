@@ -96,38 +96,12 @@ let build_symlinks =
     ~init:CCTrie.String.empty
 
 let compile_file_pattern_matcher file_patterns =
-  (* Checking file globs can be expensive, but most file globs start with
-     directory prefix.  So we can do a fairly inexpensive prefix check on
-     the filename first and if anything in there matches we then test the
-     more expensive dir globs.
-
-     TODO: Map the prefix to the specific file pattern so we only check
-     those file patterns that have a prefix match. *)
   let not_patterns, patterns = CCList.partition R.File_pattern.is_negate file_patterns in
-  let patterns_str =
-    CCList.map
-      (fun pat ->
-        CCString.drop
-          (if R.File_pattern.is_negate pat then 1 else 0)
-          (R.File_pattern.file_pattern pat))
-      file_patterns
-  in
-  let short_circuit =
-    CCList.map
-      (fun pat ->
-        match CCString.index_opt pat '*' with
-        | Some idx -> CCString.sub pat 0 idx
-        | None -> pat)
-      patterns_str
-  in
   let patterns_match fname = CCList.exists (CCFun.flip R.File_pattern.is_match fname) patterns in
   let not_patterns_match fname =
     CCList.for_all (CCFun.flip R.File_pattern.is_match fname) not_patterns
   in
-  fun fname ->
-    CCList.exists (fun pre -> CCString.prefix ~pre fname) short_circuit
-    && patterns_match fname
-    && not_patterns_match fname
+  fun fname -> patterns_match fname && not_patterns_match fname
 
 let synthesize_config ~index repo_config =
   try
@@ -181,7 +155,8 @@ let match_dir_map dirspaces dir_map =
          Dirspace_map.fold
            (fun dirspace
                 ({ Dirspace_config.file_pattern_matcher; _ } as dirspace_config)
-                ((dirspaces, matches) as acc) ->
+                ((dirspaces, matches) as acc)
+              ->
              if CCList.exists file_pattern_matcher files then
                (Dirspace_map.remove dirspace dirspaces, dirspace_config :: matches)
              else acc)
