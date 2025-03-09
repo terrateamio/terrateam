@@ -761,18 +761,18 @@ module Engine = struct
   end
 
   module Opentofu = struct
-    type t = { version : string [@default "latest"] } [@@deriving make, show, yojson, eq]
+    type t = { version : string option } [@@deriving make, show, yojson, eq]
   end
 
   module Terraform = struct
-    type t = { version : string [@default "latest"] } [@@deriving make, show, yojson, eq]
+    type t = { version : string option } [@@deriving make, show, yojson, eq]
   end
 
   module Terragrunt = struct
     type t = {
       tf_cmd : string; [@default "terraform"]
-      tf_version : string; [@default "latest"]
-      version : string; [@default "latest"]
+      tf_version : string option;
+      version : string option;
     }
     [@@deriving make, show, yojson, eq]
   end
@@ -1462,9 +1462,9 @@ let of_version_1_workflow_op_list ops =
 let of_version_1_workflow_engine cdktf terraform_version terragrunt default_engine engine =
   let default_tf_cmd, default_tf_version, default_wrapper_version =
     match default_engine with
-    | Some Engine.(Opentofu { Opentofu.version; _ }) -> (Some "tofu", Some version, None)
+    | Some Engine.(Opentofu { Opentofu.version; _ }) -> (Some "tofu", version, None)
     | Some Engine.(Terragrunt { Terragrunt.tf_cmd; tf_version; version; _ }) ->
-        (Some tf_cmd, Some tf_version, Some version)
+        (Some tf_cmd, tf_version, version)
     | _ -> (Some "terraform", None, None)
   in
   match (cdktf, terraform_version, terragrunt, engine) with
@@ -2229,21 +2229,15 @@ let to_version_1_engine engine =
   | Engine.Opentofu ot ->
       let module Ot = Terrat_repo_config.Engine_opentofu in
       let { Engine.Opentofu.version } = ot in
-      E.Engine_opentofu { Ot.name = "tofu"; version = Some version }
+      E.Engine_opentofu { Ot.name = "tofu"; version }
   | Engine.Terraform tf ->
       let module Tf = Terrat_repo_config.Engine_terraform in
       let { Engine.Terraform.version } = tf in
-      E.Engine_terraform { Tf.name = "terraform"; version = Some version }
+      E.Engine_terraform { Tf.name = "terraform"; version }
   | Engine.Terragrunt tg ->
       let module Tg = Terrat_repo_config.Engine_terragrunt in
       let { Engine.Terragrunt.tf_cmd; tf_version; version } = tg in
-      E.Engine_terragrunt
-        {
-          Tg.name = "terragrunt";
-          tf_cmd = Some tf_cmd;
-          tf_version = Some tf_version;
-          version = Some version;
-        }
+      E.Engine_terragrunt { Tg.name = "terragrunt"; tf_cmd = Some tf_cmd; tf_version; version }
   | Engine.Pulumi ->
       let module P = Terrat_repo_config.Engine_pulumi in
       E.Engine_pulumi { P.name = "pulumi" }
