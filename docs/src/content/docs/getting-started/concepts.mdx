@@ -16,23 +16,28 @@ At the core of Terrateam is the concept of a Dirspace. It represents a unique bl
 Dirspaces are automatically created when Terrateam detects Terraform configurations in your repository. Each directory containing Terraform files forms a Dirspace with either its explicitly configured workspace or the **default workspace** (created automatically when no specific workspace is defined).
 
 #### **Example:**
-Consider a repository named `repo` with two directories, `dir1` and `dir2`, and no explicitly configured workspaces. This repository would have two Dirspaces:
 
-| Repository  | Directory | Workspace |
-|------------|----------|-----------|
-| repo       | dir1     | default   |
-| repo       | dir2     | default   |
+Imagine you have a repository called `infra-repo` managing multiple environments:
 
-A **workspace** enables you to manage multiple states for the same directory. This helps to isolate environments such as `dev`, `staging`, and `prod` within the same repository, making infrastructure management more organized.
+| Repository | Directory | Workspace |
+| ---------- | --------- | --------- |
+| infra-repo | dev       | default   |
+| infra-repo | staging   | default   |
+| infra-repo | prod      | default   |
+
+A **workspace** enables you to manage multiple states for the same directory, isolating environments like `dev`, `staging`, and `prod` within the same repository.
 
 ```
-Repository
+Repository: infra-repo
   |
-  |-- Directory 1
-  |     |-- Workspace: default
+  |-- dev/
+  |    |-- Workspace: default
   |
-  |-- Directory 2
-        |-- Workspace: default
+  |-- staging/
+  |    |-- Workspace: default
+  |
+  |-- prod/
+       |-- Workspace: default
 ```
 :::note
 Terrateam executes operations like plan and apply within the context of a Dirspace.
@@ -54,16 +59,33 @@ Terrateam maps detected changes to their appropriate [Dirspaces](/getting-starte
 
 ## Auto-Plan and Auto-Apply
 
-Terrateam offers two configurable automated operations:New chat
+Terrateam provides automated Terraform execution workflows to simplify infrastructure changes:
+
+- **Auto-Plan**: Runs `terraform plan` automatically when a pull request is created or updated. Enable with:
+  ```yaml
   auto_plan: true  # Set to false to disable
   ```
 - **Auto-Apply**: (Disabled by default) Runs `terraform apply` post-merge. Enable with:
   ```yaml
   auto_apply: true
   ```
-
 These automated operations streamline workflows while maintaining control through configurable thresholds.
 
+## Tags and Tag Sets
+
+Terrateam uses Tags to organize Terraform resources through flexible labeling:
+
+* **Tag Set**: Unordered, unique labels assigned to resources  
+  Example: `env:prod, component:network`
+* **Tag Query**: Filter to match specific Tag Sets  
+  Example: `env:prod` matches all production resources
+
+**Example workflow:**
+1. Tag EC2 instances with `resource-type:compute`
+2. Create Auto-Scaling Groups with `resource-type:compute, environment:production`
+3. Query with `resource-type:compute` to manage all compute resources
+
+Tags enable precise resource management across complex infrastructures.
 ## Locks and Unlocks
 
 Terrateam's locking system prevents concurrent modifications by ensuring only one change can be applied to a resource at a time. This prevents:
@@ -88,18 +110,3 @@ For advanced configurations see our [Locks & Concurrency guide](/advanced-workfl
 :::note
  Default settings work for most teams. Customize only if you need specific lock timing or policies.
 :::
-## Tags and Tag Sets
-
-Terrateam uses Tags to organize Terraform resources through flexible labeling:
-
-* **Tag Set**: Unordered, unique labels assigned to resources  
-  Example: `env:prod, component:network`
-* **Tag Query**: Filter to match specific Tag Sets  
-  Example: `env:prod` matches all production resources
-
-**Example workflow:**
-1. Tag EC2 instances with `resource-type:compute`
-2. Create Auto-Scaling Groups with `resource-type:compute, environment:production`
-3. Query with `resource-type:compute` to manage all compute resources
-
-Tags enable precise resource management across complex infrastructures.
