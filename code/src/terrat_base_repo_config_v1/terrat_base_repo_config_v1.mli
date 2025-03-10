@@ -389,18 +389,18 @@ module Engine : sig
   end
 
   module Opentofu : sig
-    type t = { version : string [@default "latest"] } [@@deriving make, show, yojson, eq]
+    type t = { version : string option } [@@deriving make, show, yojson, eq]
   end
 
   module Terraform : sig
-    type t = { version : string [@default "latest"] } [@@deriving make, show, yojson, eq]
+    type t = { version : string option } [@@deriving make, show, yojson, eq]
   end
 
   module Terragrunt : sig
     type t = {
       tf_cmd : string; [@default "terraform"]
-      tf_version : string; [@default "latest"]
-      version : string; [@default "latest"]
+      tf_version : string option;
+      version : string option;
     }
     [@@deriving make, show, yojson, eq]
   end
