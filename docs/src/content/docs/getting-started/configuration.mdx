@@ -91,7 +91,7 @@ apply_requirements:
           - "ci/.*"                # Ignores all CI status checks
 ```
 
-This configuration requires that the pull request has at least 2 approvals, no merge conflicts, and all status checks (except those matching `ci/.*`) have passed before an apply can be performed.
+This configuration requires that the pull request has at least two approvals, no merge conflicts, and all status checks (except those matching `ci/.*`) have passed before an apply can be performed.
 
 When `create_pending_apply_check` is enabled, Terrateam will create a `Terrateam Apply` GitHub status check. Combined with [GitHub Rulesets](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets), this prevents the pull request from being merged until all Apply operations have completed.
 
