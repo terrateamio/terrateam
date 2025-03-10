@@ -26,7 +26,6 @@ hooks:
   # Executes custom commands before or after operations
 workflows:
   # Configures specialized plan and apply processes
-
 ```
 
 Each section serves a specific purpose in customizing Terrateam's behavior:
@@ -37,6 +36,37 @@ Each section serves a specific purpose in customizing Terrateam's behavior:
 - **hooks**: Allows custom actions before or after operations
 - **workflows**: Creates specialized processing for different directories or environments
 
+## Understanding Tag Queries
+
+Tag queries are a core concept in Terrateam, allowing you to target specific operations for particular directories, environments, or infrastructure components. They connect various configuration sections and provide granular control over workflow execution, apply requirements, and access control.
+
+### How Do Tag Queries Work?
+
+1. **Assigning Tags**: In the configuration file (`.terrateam/config.yml`), you define **tags** for directories in the `dirs` section. These tags can represent environments, applications, or other organizational criteria.
+2. **Using Tag Queries**: In other configuration sections (such as `access_control`, `apply_requirements`, and `workflows`), you use **tag queries** to select and apply rules to specific directories or resources.
+
+### Usage Examples
+
+- Assign the `production` and `critical` tags to the `production` directory.
+- Create a workflow that applies only to this directory using `tag_query: "production"`.
+- Restrict permissions for critical directories using `tag_query: "critical"`.
+
+### Common Tag Query Patterns
+
+- `tag_query: ""` → Matches all directories.
+- `tag_query: "production"` → Matches directories tagged with `production`.
+- `tag_query: "aws and production"` → Matches directories with both `aws` **and** `production` tags.
+- `tag_query: "staging or development"` → Matches directories with either the `staging` **or** `development` tag.
+
+### Benefits of Tag Queries
+
+- **Structured Organization**: Define meaningful tags to better manage your infrastructure.
+- **Targeted Precision**: Combine dynamic tags (based on branch) and static tags (directories) for greater flexibility.
+- **Refined Control**: Use operators (`and`, `or`, `not`, `in`) to build advanced rules.
+
+Tag queries provide an efficient mechanism to automate and manage your Terraform infrastructure with Terrateam, ensuring well-defined workflows aligned with your operational needs.
+
+See [Tag Queries](/advanced-workflows/tags) for more details.
 ## Access Control
 
 Access Control allows you to define policies for who can perform various Terrateam operations, such as planning and applying changes. You can configure access based on individual users, GitHub teams, or repository collaborator roles.
@@ -53,11 +83,7 @@ access_control:
 
 This configuration allows anyone to trigger a Plan operation but restricts Apply operations to members of the `sre` team.
 
-:::note
-The `tag_query` field is used to match specific directories or environments. An empty string (`''`) matches all directories. You can use it to create different access policies for different parts of your infrastructure, like `tag_query: 'production'` to set stricter permissions for production environments.
-:::
-
-For more information, see the [Access Control](/configuration-reference/access-control) section of the Configuration Reference.
+See [Access Control](/configuration-reference/access-control) for details.
 
 ## Apply Requirements
 
@@ -95,7 +121,7 @@ This configuration requires that the pull request has at least two approvals, no
 
 When `create_pending_apply_check` is enabled, Terrateam will create a `Terrateam Apply` GitHub status check. Combined with [GitHub Rulesets](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets), this prevents the pull request from being merged until all Apply operations have completed.
 
-For more information, see the [Apply Requirements](/configuration-reference/apply-requirements) section of the Configuration Reference.
+See [Apply Requirements](/configuration-reference/apply-requirements) for details.
 
 ## Dirs
 
@@ -131,7 +157,7 @@ This configuration:
 
 Terrateam also supports glob patterns in the `dirs` directive, allowing you to match multiple directories with similar configurations. The `${DIR}` variable can be used to specify the directory that Terrateam is working against, relative to the root of the repository.
 
-For more information, see the [Dirs](/configuration-reference/dirs) section of the Configuration Reference.
+See [Dirs](/configuration-reference/dirs) for details.
 
 ## Hooks
 
@@ -155,18 +181,37 @@ hooks:
         cmd: ['echo', 'Running post-hook for plan operations']
 ```
 
-For more details, see the [Hooks](/configuration-reference/hooks) section of the Configuration Reference.
+See [Hooks](/configuration-reference/hooks) for details.
 
 ## Workflows
 
 Workflows allow you to define custom steps for Terrateam's Plan and Apply operations. You can use Workflows to replace or augment the default behavior.
 
-Here's an example `workflows` configuration:
+### Simple Workflow Example
+
+Here's a basic workflow that slightly modifies the default behavior:
+
+```yaml
+workflows:
+  # Apply to all directories
+  - tag_query: ""
+    plan:
+      - type: init  # Run terraform init
+      - type: plan  # Run terraform plan
+    apply:
+      - type: init  # Run terraform init
+      - type: apply # Run terraform apply
+```
+
+This simple workflow explicitly defines the standard Terraform workflow steps.
+
+### Advanced Workflow Example
+
+For more complex scenarios, you can create specialized workflows:
 
 ```yaml
 workflows:
   # This workflow applies to any directory tagged with "production"
-  # (This could match directories set with tags: [production] in the dirs section)
   - tag_query: "production"
     plan:
       - type: init  # Run terraform init
@@ -180,13 +225,9 @@ workflows:
         run_on: failure  # Only if apply fails
 ```
 
-This workflow runs a custom plan and apply process for any directories tagged with `production`. The tag queries like `tag_query: "production"` match the tags defined in the `dirs` section, creating a connection between your directory structure and custom workflows.
+This advanced workflow runs a custom plan and apply process for any directories tagged with `production`. It adds production-specific variables during planning and executes error handling after failed applies.
 
-:::note
-All the examples in this page are complementary parts of a single configuration. The tag query in the workflow (`tag_query: "production"`) would match directories or workspaces tagged with `production` in the `dirs` section.
-:::
-
-For more information, see the [Workflows](/configuration-reference/workflows) section of the Configuration Reference.
+See [Workflows](/configuration-reference/workflows) for details.
 
 ## Other Configuration Options
 
@@ -197,4 +238,62 @@ The `config.yml` file supports many other configuration options, including:
 - `cost_estimation`: Enable and configure cost estimation for Terraform plans
 - `automerge`: Automatically merge pull requests after successful applies
 
-For a complete list of available options and their usage, refer to the [Configuration Reference](/configuration-reference) section of the documentation.
+See the [Configuration Reference](/configuration-reference) for a complete list of available options.
+
+## Basic Example
+
+Here's a complete basic example of a `config.yml` file that combines the various sections:
+
+```yaml
+# Basic Terrateam configuration example
+access_control:
+  policies:
+    - tag_query: ''  # All directories
+      plan: ['*']    # Anyone can plan
+      apply: ['team:infra', 'team:platform']  # Only specific teams can apply
+
+apply_requirements:
+  create_pending_apply_check: true
+  checks:
+    - tag_query: ""  # All directories
+      approved:
+        enabled: true
+        any_of_count: 1  # Requires at least 1 approval
+      
+dirs:
+  staging:
+    tags: [aws, staging]
+  production:
+    tags: [aws, production, critical]
+    workspaces:
+      default:
+        tags: [default]
+
+hooks:
+  all:
+    pre:
+      - type: run
+        cmd: ['echo', 'Starting Terraform operation']
+
+workflows:
+  - tag_query: "staging"
+    plan:
+      - type: init
+      - type: plan
+        extra_args: ["-var-file=staging.tfvars"]
+  
+  - tag_query: "production"
+    plan:
+      - type: init
+      - type: plan
+        extra_args: ["-var-file=production.tfvars"]
+```
+
+This configuration:
+1. Allows anyone to plan, but only members of `infra` or `platform` teams to apply
+2. Requires at least one approval before applying
+3. Defines staging and production directories with appropriate tags
+4. Runs a simple pre-hook for all operations
+5. Uses custom workflows for staging and production environments, applying the appropriate variable files
+
+You can start with a basic configuration like this and gradually add more advanced features as your deployment needs grow.
