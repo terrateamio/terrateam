@@ -48,7 +48,7 @@ when_modified:
     - '**/*.tfvars'
 ```
 
-This configuration tells Terrateam to monitor changes to any files with `.tf` or `.tfvars` extensions. Modify these patterns in your configuration file to match your project's structure.
+This configuration instructs Terrateam to monitor changes to any files with `.tf` or `.tfvars` extensions. Adjust these patterns in your configuration file to align with your project's structure.
 
 Terrateam maps detected changes to their appropriate [Dirspaces](/getting-started/concepts#dirspace). These mapped Dirspaces are referred to as Changes. When executing operations, Terrateam only considers Dirspaces with modified files in the pull request.
 
