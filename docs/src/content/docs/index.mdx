@@ -11,9 +11,6 @@ hero:
     - text: Quickstart guide
       link: /quickstart-guide
       variant: primary
-    - text: Core Concepts
-      link: /getting-started/concepts
-      variant: secondary
 ---
 
 import { Steps } from '@astrojs/starlight/components';
@@ -23,17 +20,19 @@ import { LinkCard, CardGrid, Card } from '@astrojs/starlight/components';
 
 Terrateam is a GitOps CI/CD platform for Terraform and OpenTofu that integrates with GitHub, enabling teams to manage infrastructure changes through pull requests.
 
+With Terrateam, you can easily manage your infrastructure as code, collaborate with your team, and automate your deployment processes.
+
 <CardGrid>
 	<Card title="GitHub-Native" icon="github">
-		Built as a GitHub app and Action for seamless integration with your repos.
-        <LinkCard title="Installation" href="/quickstart-guide" />
+		Built as a GitHub app and Action for managing your infrastructure from your repository.
+    <LinkCard title="Installation" href="/quickstart-guide"  />
 	</Card>
 	<Card title="GitOps Workflow" icon="rocket">
-		Manage infrastructure via pull requests with automated plans and controlled applies.
+		Manage infrastructure via comments and pull requests with automated plans and controlled applies.
         <LinkCard title="Workflows" href="/getting-started/plan-and-apply" />
 	</Card>
 	<Card title="Enterprise Security" icon="sun">
-		OIDC authentication, access controls, and policy enforcement.
+		Terrateam uses OIDC for cloud authentication, enhancing security and minimizing credential exposure.
         <LinkCard title="Security" href="/security-and-compliance" />
 	</Card>
 	<Card title="Resource Coordination" icon="seti:lock">
@@ -41,19 +40,19 @@ Terrateam is a GitOps CI/CD platform for Terraform and OpenTofu that integrates 
         <LinkCard title="Locks" href="/advanced-workflows/locks-and-concurrency" />
 	</Card>
 	<Card title="Access Control" icon="error">
-		Fine-grained policies determine who can perform specific infrastructure operations.
+		Define role-based policies to determine who can perform specific infrastructure operations.
         <LinkCard title="RBAC" href="/security-and-compliance/role-based-access-control" />
 	</Card>
 	<Card title="Custom Workflows" icon="puzzle">
-		Automate processes like post-apply notifications tailored to your team's needs.
+		Automate Terraform workflows, like post-apply Slack notifications, tailored to your team’s needs.
         <LinkCard title="Custom Workflows" href="/configuration-reference/workflows" />
 	</Card>
 	<Card title="Multi-Environment" icon="star">
-		Consistently manage development, staging, and production environments.
+		Manage enviroments (e.g., development, staging, and production) and cloud providers.
         <LinkCard title="Environments" href="/advanced-workflows/multiple-environments" />
 	</Card>
 	<Card title="Policy Enforcement" icon="document">
-		Integrate OPA Conftest to ensure compliance with best practices.
+		Integrate OPA Conftest to enforce best practices and compliance in infrastructure changes.
         <LinkCard title="OPA Integration" href="/security-and-compliance/policy-enforcement-with-opa" />
 	</Card>
 </CardGrid>
