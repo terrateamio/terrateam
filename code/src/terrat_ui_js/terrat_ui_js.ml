@@ -9,8 +9,8 @@ let no_installation state =
   Terrat_ui_js_client.whoami client
   >>= function
   | Ok (Some _) -> (
-      let module R = Terrat_api_user.List_installations.Responses.OK in
-      Terrat_ui_js_client.installations client
+      let module R = Terrat_api_user.List_github_installations.Responses.OK in
+      Terrat_ui_js_client.list_github_installations client
       >>= function
       | Ok R.{ installations = [] } -> (
           Terrat_ui_js_client.server_config client

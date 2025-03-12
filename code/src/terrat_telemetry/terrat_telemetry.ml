@@ -1,3 +1,6 @@
+let src = Logs.Src.create "telemetry"
+
+module Logs = (val Logs.src_log src : Logs.LOG)
 module Http = Abb_curl.Make (Abb)
 
 let one_hour = 60.0 *. 60.0
@@ -29,7 +32,7 @@ let send' telemetry_config event =
               (Printf.sprintf "/event/start/%s" Digest.(to_hex (string github_app_id)))
           in
           Logs.info (fun m -> m "%a" Uri.pp uri);
-          Logs.info (fun m -> m "TELEMETRY : ANONYMOUS : EVENT : START");
+          Logs.info (fun m -> m "ANONYMOUS : EVENT : START");
           (* For some reason, on dev ngrok this request hangs if it is HTTP2,
              but forcing it to HTTP/1.1 works. *)
           Abbs_future_combinators.ignore
@@ -50,7 +53,7 @@ let send' telemetry_config event =
                  Digest.(to_hex (string owner))
                  Digest.(to_hex (string repo)))
           in
-          Logs.info (fun m -> m "TELEMETRY : ANONYMOUS : EVENT : RUN");
+          Logs.info (fun m -> m "ANONYMOUS : EVENT : RUN");
           (* For some reason, on dev ngrok this request hangs if it is HTTP2,
              but forcing it to HTTP/1.1 works. *)
           Abbs_future_combinators.ignore
@@ -66,7 +69,7 @@ let send' telemetry_config event =
               uri
               (Printf.sprintf "/event/ping/%s" Digest.(to_hex (string github_app_id)))
           in
-          Logs.info (fun m -> m "TELEMETRY : ANONYMOUS : EVENT : PING");
+          Logs.info (fun m -> m "ANONYMOUS : EVENT : PING");
           (* For some reason, on dev ngrok this request hangs if it is HTTP2,
              but forcing it to HTTP/1.1 works. *)
           Abbs_future_combinators.ignore

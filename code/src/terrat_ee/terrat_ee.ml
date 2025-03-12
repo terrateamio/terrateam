@@ -1,9 +1,3 @@
-module Terratc = Terratc_ee.Make (struct
-  module Github = Terrat_vcs_github.S
-end)
-
-module Server = Terrat_server.Make (Terratc)
-
 module Metrics = struct
   module Exec_duration_histogram = Prmths.Histogram (struct
     let spec = Prmths.Histogram_spec.of_list [ 0.01; 0.05; 0.1; 0.3; 0.5; 0.8; 1.0; 2.0 ]
@@ -135,7 +129,11 @@ let server () =
   | Ok config -> (
       let run () =
         let open Abb.Future.Infix_monad in
-        Terrat_storage.create config >>= fun storage -> Server.run config storage
+        Terrat_storage.create config
+        >>= fun storage ->
+        Terrat_vcs_service_github_ee.Service.start config storage
+        >>= fun github ->
+        Terrat_server.run config storage (Terrat_vcs_service_github_ee.Service.routes github)
       in
       print_endline (Terrat_config.show config);
       match Abb.Scheduler.run_with_state ~exec_duration run with

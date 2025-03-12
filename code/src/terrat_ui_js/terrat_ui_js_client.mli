@@ -41,8 +41,8 @@ val whoami :
 
 val client_id : t -> (string, [> err ]) result Abb_js.Future.t
 
-val installations :
-  t -> (Terrat_api_user.List_installations.Responses.OK.t, [> err ]) result Abb_js.Future.t
+val list_github_installations :
+  t -> (Terrat_api_user.List_github_installations.Responses.OK.t, [> err ]) result Abb_js.Future.t
 
 val work_manifests :
   ?tz:string ->

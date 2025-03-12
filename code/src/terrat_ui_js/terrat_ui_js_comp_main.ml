@@ -156,7 +156,7 @@ let ph_loading =
 let load_info client =
   Abb_js_future_combinators.Infix_result_app.(
     (fun installations server_config -> (installations, server_config))
-    <$> Terrat_ui_js_client.installations client
+    <$> Terrat_ui_js_client.list_github_installations client
     <*> Terrat_ui_js_client.server_config client)
 
 let run installation_id state =
@@ -166,7 +166,7 @@ let run installation_id state =
   >>= function
   | Ok (Some user) ->
       let module I = Terrat_api_components.Installation in
-      let module R = Terrat_api_user.List_installations.Responses.OK in
+      let module R = Terrat_api_user.List_github_installations.Responses.OK in
       Brtl_js2.Ph.create
         ph_loading
         (fun state ->
