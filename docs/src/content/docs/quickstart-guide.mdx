@@ -19,7 +19,7 @@ Before getting started with Terrateam quickstart guide, make sure you have the f
 
 ## Demo Repository Workflow
 
-The easiest way to get started is using our ready-to-use demo repository with pre-configured Terraform code. Follow these steps to quickly test Terrateam's capabilities.
+To have an overview on how to use Terrateam, use the the Terrateam ready-to-use demo repository with pre-configured Terraform code. Follow these steps to quickly test Terrateam's capabilities.  
 
 <LinkCard
   title="Terrateam Demo Repository"
@@ -57,10 +57,12 @@ The easiest way to get started is using our ready-to-use demo repository with pr
      title="Sign up for Terrateam"
      href="https://terrateam.io/signup"
    />
+   
    ![Install Terrateam](../../assets/demo-install-terrateam-2.png)
+   
    After installation, go to [your Terrateam dashboard](https://app.terrateam.io/). Your forked repository should appear there.
+   
    ![Terrateam dashboard](../../assets/demo-terrateam-dashboard.png)
-
 
 3. **Clone Your Forked Repository**
 
@@ -70,6 +72,7 @@ The easiest way to get started is using our ready-to-use demo repository with pr
    git clone https://github.com/your-username/kick-the-tires.git
    cd kick-the-tires
    ```
+   
    :::note
    replace `your-username` with your GitHub username.
    :::
@@ -88,29 +91,29 @@ The easiest way to get started is using our ready-to-use demo repository with pr
    
    For example, find a line like:
    
-   ```hcl {5}
+   ```hcl
    module "staging_compute_instance" {
-   source = "../../modules/compute"
+     source = "../../modules/compute"
 
-   instance_count = 0
-   instance_name  = "staging-instance"
-   instance_zone  = "us-central1-a"
-   boot_disk_image = "debian-cloud/debian-11"
-   network_name    = "default"
+     instance_count = 0
+     instance_name  = "staging-instance"
+     instance_zone  = "us-central1-a"
+     boot_disk_image = "debian-cloud/debian-11"
+     network_name    = "default"
    }
    ```
    
    Change the `instance_name` to something like:
    
-   ```hcl {5}
+   ```hcl
    module "staging_compute_instance" {
-   source = "../../modules/compute"
+     source = "../../modules/compute"
 
-   instance_count = 0
-   instance_name  = "staging-instance-modified"
-   instance_zone  = "us-central1-a"
-   boot_disk_image = "debian-cloud/debian-11"
-   network_name    = "default"
+     instance_count = 0
+     instance_name  = "staging-instance-modified"
+     instance_zone  = "us-central1-a"
+     boot_disk_image = "debian-cloud/debian-11"
+     network_name    = "default"
    }
    ```
    
@@ -123,11 +126,11 @@ The easiest way to get started is using our ready-to-use demo repository with pr
    git commit -m "Testing Terrateam workflow"
    git push origin test-branch
    ```
-   
 
 7. **Create a Pull Request**
 
    Go to your forked repository on GitHub. You should see a prompt to create a pull request for your recently pushed branch.
+   
    ![Create a pull request](../../assets/demo-pr.png)
    
    :::warning
@@ -152,13 +155,11 @@ The easiest way to get started is using our ready-to-use demo repository with pr
 
    To execute the changes, comment `terrateam apply` on the pull request.
    
-   
-  After you add the comment, the Terrateam app will run the `terraform apply` command. This will apply the previous plan to the Terraform file, updating your infrastructure.
+   After you add the comment, the Terrateam app will run the `terraform apply` command. This will apply the previous plan to the Terraform file, updating your infrastructure.
 
 10. **Merge Your Changes**
 
     Once applied and everything looks good, you can merge the pull request to incorporate the changes into your main branch.
-    
 </Steps>
 
 
