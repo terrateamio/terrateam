@@ -1838,7 +1838,7 @@
         }
       }
     },
-    "/api/v1/installations/{installation_id}/dirspaces": {
+    "/api/v1/github/installations/{installation_id}/dirspaces": {
       "get": {
         "operationId": "installations/list-dirspaces",
         "parameters": [
@@ -1947,7 +1947,7 @@
         }
       }
     },
-    "/api/v1/installations/{installation_id}/pull-requests": {
+    "/api/v1/github/installations/{installation_id}/pull-requests": {
       "get": {
         "operationId": "installations/list-pull-requests",
         "parameters": [
@@ -2007,7 +2007,7 @@
         }
       }
     },
-    "/api/v1/installations/{installation_id}/repos": {
+    "/api/v1/github/installations/{installation_id}/repos": {
       "get": {
         "operationId": "installations/list-repos",
         "parameters": [
@@ -2059,7 +2059,7 @@
         }
       }
     },
-    "/api/v1/installations/{installation_id}/repos/refresh": {
+    "/api/v1/github/installations/{installation_id}/repos/refresh": {
       "post": {
         "operationId": "installations/repo-refresh",
         "parameters": [
@@ -2097,7 +2097,7 @@
         }
       }
     },
-    "/api/v1/installations/{installation_id}/work-manifests": {
+    "/api/v1/github/installations/{installation_id}/work-manifests": {
       "get": {
         "operationId": "installations/list-work-manifests",
         "parameters": [
@@ -2206,7 +2206,7 @@
         }
       }
     },
-    "/api/v1/installations/{installation_id}/work-manifests/{work_manifest_id}": {
+    "/api/v1/github/installations/{installation_id}/work-manifests/{work_manifest_id}": {
       "get": {
         "operationId": "installations/get-work-manifest",
         "parameters": [
@@ -2246,7 +2246,7 @@
         }
       }
     },
-    "/api/v1/installations/{installation_id}/work-manifests/{work_manifest_id}/outputs": {
+    "/api/v1/github/installations/{installation_id}/work-manifests/{work_manifest_id}/outputs": {
       "get": {
         "operationId": "installations/get-work-manifest-outputs",
         "parameters": [

@@ -60,7 +60,7 @@ module List_dirspaces = struct
       ]
   end
 
-  let url = "/api/v1/installations/{installation_id}/dirspaces"
+  let url = "/api/v1/github/installations/{installation_id}/dirspaces"
 
   let make params =
     Openapi.Request.make
@@ -123,7 +123,7 @@ module List_pull_requests = struct
       ]
   end
 
-  let url = "/api/v1/installations/{installation_id}/pull-requests"
+  let url = "/api/v1/github/installations/{installation_id}/pull-requests"
 
   let make params =
     Openapi.Request.make
@@ -179,7 +179,7 @@ module List_repos = struct
       ]
   end
 
-  let url = "/api/v1/installations/{installation_id}/repos"
+  let url = "/api/v1/github/installations/{installation_id}/repos"
 
   let make params =
     Openapi.Request.make
@@ -221,7 +221,7 @@ module Repo_refresh = struct
       ]
   end
 
-  let url = "/api/v1/installations/{installation_id}/repos/refresh"
+  let url = "/api/v1/github/installations/{installation_id}/repos/refresh"
 
   let make params =
     Openapi.Request.make
@@ -298,7 +298,7 @@ module List_work_manifests = struct
       ]
   end
 
-  let url = "/api/v1/installations/{installation_id}/work-manifests"
+  let url = "/api/v1/github/installations/{installation_id}/work-manifests"
 
   let make params =
     Openapi.Request.make
@@ -355,7 +355,7 @@ module Get_work_manifest = struct
       ]
   end
 
-  let url = "/api/v1/installations/{installation_id}/work-manifests/{work_manifest_id}"
+  let url = "/api/v1/github/installations/{installation_id}/work-manifests/{work_manifest_id}"
 
   let make params =
     Openapi.Request.make
@@ -429,7 +429,8 @@ module Get_work_manifest_outputs = struct
       ]
   end
 
-  let url = "/api/v1/installations/{installation_id}/work-manifests/{work_manifest_id}/outputs"
+  let url =
+    "/api/v1/github/installations/{installation_id}/work-manifests/{work_manifest_id}/outputs"
 
   let make params =
     Openapi.Request.make
