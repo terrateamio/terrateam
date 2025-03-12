@@ -64,6 +64,8 @@ import { LinkCard, CardGrid, Card } from '@astrojs/starlight/components';
 
 Terrateam brings GitOps principles to Terraform workflows, making infrastructure changes visible, reviewable, and safe.
 
+The following steps explain how Terrateam processes your Terraform changes:
+
 <Steps>
 1. **Create a Pull Request with Terraform Changes**
 
@@ -88,27 +90,10 @@ Terrateam brings GitOps principles to Terraform workflows, making infrastructure
 
 ## Why Choose Terrateam?
 
-<CardGrid>
-  <Card title="Team Collaboration" icon="approve-check">
-    Review infrastructure changes with intelligent locking to prevent conflicts.
-    <LinkCard title="Collaboration Features" href="/advanced-workflows/locks-and-concurrency" />
-  </Card>
-  
-  <Card title="Enhanced Security" icon="seti:lock">
-    Fine-grained access controls, policy enforcement, and OIDC authentication.
-    <LinkCard title="Access Control" href="/security-and-compliance/role-based-access-control" />
-  </Card>
-  
-  <Card title="Ready-to-Use" icon="laptop">
-    Skip building custom pipelines. Terrateam handles plan storage, locks, drift detection, and more.
-    <LinkCard title="Drift Detection" href="/advanced-workflows/drift-detection" />
-  </Card>
-  
-  <Card title="Multi-Environment" icon="star">
-    Manage dev, staging, and production with consistent workflows.
-    <LinkCard title="Configuration" href="/configuration-reference" />
-  </Card>
-</CardGrid>
+- **Team Collaboration**: Review infrastructure changes with intelligent locking to prevent conflicts.
+- **Enhanced Security**: Fine-grained access controls, policy enforcement, and OIDC authentication.
+- **Ready-to-Use**: Avoid building custom pipelines-Terrateam handles plan storage, locks, drift detection, and more.
+- **Multi-Environment**: Manage dev, staging, and production with consistent workflows.
 
 ## Getting Started
 
@@ -121,7 +106,7 @@ Terrateam brings GitOps principles to Terraform workflows, making infrastructure
 
 2. **Configure**
 
-   Create a `.terrateam/config.yml` file in your repository.
+   Configure Terrateam using the `.terrateam/config.yml` file in your repository.
    
    <LinkCard title="Configuration" href="/getting-started/configuration" />
 
@@ -133,6 +118,8 @@ Terrateam brings GitOps principles to Terraform workflows, making infrastructure
 </Steps>
 
 ## Next Steps
+
+Now that you have an overview of Terrateam, explore the following sections to dive deeper into specific topics:
 
 <CardGrid>
   <LinkCard title="Core Concepts" href="/getting-started/concepts" />
