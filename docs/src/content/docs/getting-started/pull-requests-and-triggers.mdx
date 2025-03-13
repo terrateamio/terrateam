@@ -3,7 +3,9 @@ title: Pull Requests and Triggers
 description: How Terrateam decides to run operations
 ---
 
-import { Steps } from '@astrojs/starlight/components';
+import { Steps, Code } from '@astrojs/starlight/components';
+
+
 
 Terrateam seamlessly integrates with GitHub's pull request workflow, allowing you to trigger Terraform operations directly from your pull requests. This section will guide you through the different ways Terrateam can be triggered and how to use pull requests effectively with Terrateam.
 
@@ -39,6 +41,9 @@ Here's a typical workflow when using Terrateam with pull requests:
 1. Create a branch
 
     Create a new branch in your repository to work on your Terraform changes. This branch will be used to create a pull request later.
+    ```bash
+    git checkout -b <your-branch-name>
+    ```
 
 1. Make changes
 
@@ -47,11 +52,12 @@ Here's a typical workflow when using Terrateam with pull requests:
 1. Open a pull request
 
     Open a new pull request from your branch to the main branch. Terrateam will automatically detect the pull request and trigger a Plan operation.
+    ![Pull request](../../../assets/demo-pr-2.png)
 
 1. Review the plan output
 
     Terrateam will add a comment to your pull request with the output of the Plan operation. Review the proposed changes and ensure they align with your expectations.
-
+    ![Plan output](../../../assets/plan-output.png)
 1. Collaborate and iterate
 
     If necessary, collaborate with your team by requesting reviews, discussing changes, and making additional commits to the pull request. Terrateam will re-run the Plan operation each time you update the pull request.
@@ -59,7 +65,7 @@ Here's a typical workflow when using Terrateam with pull requests:
 1. Apply the changes
 
     Once you're satisfied with the proposed changes, you can trigger an Apply operation by commenting `terrateam apply` on the pull request. Terrateam will attempt to acquire a lock, apply the changes, and update the pull request with the result.
-
+    ![Apply command](../../../assets/demo-pr-apply.png)
 1. Merge the pull request
 
     After a successful apply, merge the pull request into your main branch to incorporate the changes into your production environment. Terrateam will then release the acquired lock.
