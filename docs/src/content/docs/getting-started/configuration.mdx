@@ -6,7 +6,9 @@ description: Understanding the Terrateam configuration file and how to customize
 import { Steps } from '@astrojs/starlight/components';
 
 The Terrateam configuration file (`config.yml`) is the primary way to customize how Terrateam interacts with your GitHub repository and Terraform code. This file is stored in the `.terrateam` directory at the root of your repository.
-
+:::note[Should i create the config.yml file?]
+Terrateam automatically checks if a config.yml exists, but the file is not required. If you don't create a config.yml file, Terrateam will use default settings.
+:::
 :::note
 Default settings work for most teams. Customize only if you need specific lock timing or policies.
 :::
@@ -206,6 +208,9 @@ workflows:
 ```
 
 This simple workflow explicitly defines the standard Terraform workflow steps.
+1. Initialization(`init`): Runs `terraform init` to prepare the directory for planning or applying changes.
+2. Planning(`plan`): Runs `terraform plan` to generate an execution plan for the changes.
+3. Apply(`apply`): Applies the changes to the infrastructure.
 
 
 For more complex scenarios, you can create specialized workflows, such as the next one:
@@ -291,10 +296,10 @@ workflows:
 ```
 
 This configuration:
-1. Allows anyone to plan, but only members of `infra` or `platform` teams to apply
-2. Requires at least one approval before applying
-3. Defines staging and production directories with appropriate tags
-4. Runs a simple pre-hook for all operations
-5. Uses custom workflows for staging and production environments, applying the appropriate variable files
+1. Allows anyone to plan, but only members of `infra` or `platform` teams to apply.
+2. Requires at least one approval before applying.
+3. Defines staging and production directories with appropriate tags.
+4. Runs a simple pre-hook for all operations.
+5. Uses custom workflows for staging and production environments, applying the appropriate variable files.
 
 You can start with a basic configuration like this and gradually add more advanced features as your deployment needs grow.
