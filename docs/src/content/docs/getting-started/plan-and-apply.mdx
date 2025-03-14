@@ -56,7 +56,7 @@ Here's an example of a common usage of the apply feature:
 </Steps>
 
 :::caution
-If another PR is trying to apply changes to the same directory, it will be blocked until the [current lock is released](/advanced-workflows/locks-and-concurrency/). This prevents conflicting changes from being applied simultaneously.
+If another PR is trying to apply changes to the same directory, it will be blocked until the [current lock is released](/advanced-workflows/locks-and-concurrency/). Locks prevent conflicting changes from being applied simultaneously.
 :::
 
 
@@ -65,30 +65,35 @@ If another PR is trying to apply changes to the same directory, it will be block
 
 Terrateam has a set of [Apply Requirements](/configuration-reference/apply-requirements) that must be met before an Apply operation can be triggered. These include:
 
-- Requiring a certain number of [approvals](/configuration-reference/apply-requirements#approved) on the pull request
-- Ensuring there are no [merge conflicts](/configuration-reference/apply-requirements#merge-conflicts)
-- Checking that all [status checks](/configuration-reference/apply-requirements#status-checks) have passed
+- Requiring a certain number of [approvals](/configuration-reference/apply-requirements#approved) on the pull request.
+- Ensuring there are no [merge conflicts](/configuration-reference/apply-requirements#merge-conflicts).
+- Checking that all [status checks](/configuration-reference/apply-requirements#status-checks) have passed.
 
 You can configure these requirements in your [Terrateam configuration file](/getting-started/configuration).
 ### Auto-Apply
-
-Automatically apply changes when a pull request is merged using [When Modified](/configuration-reference/when-modified).
-
+If you want to automatically apply changes when a pull request is merged, you can use the [When Modified](/configuration-reference/when-modified) feature. This is useful for repositories where merged changes are always expected to be applied, like production environments.
+```yaml
+when_modified:
+  autoapply: true
+```
 :::note 
-   Useful for repositories where merged changes are always expected to be applied, like production environments.
+   Auto-Apply is disabled by default to prevent accidental changes to your infrastructure.
 :::
 ## Apply Workflows: Pre-merge vs Post-merge
+Terrateam offers two primary workflows based on when changes are applied. These workflows determine the timing and process of applying changes to your infrastructure, providing flexibility to suit different environments and requirements.
 
-Terrateam offers two primary workflows based on when changes are applied:
+Workflows in Terrateam define the sequence of steps that are executed during the Plan and Apply operations. They allow you to customize the behavior of these operations to fit your specific needs. 
+
+Key differences between the two workflows:
 
 **Pre-merge Workflow:**
-- Greater safety and visibility
-- More complex
-- Recommended for critical infrastructure
+- Greater safety and visibility.
+- More complex.
+- Recommended for critical infrastructure.
 
 **Post-merge Workflow:**
-- Simpler and faster
-- Increased risk
-- Suitable for less sensitive environments
+- Simpler and faster.
+- Increased risk.
+- Suitable for less sensitive environments.
 
 For stability-critical environments, consider a pre-merge workflow with [automerge](/configuration-reference/automerge) for balanced validation and efficiency.
