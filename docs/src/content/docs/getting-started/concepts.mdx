@@ -11,7 +11,7 @@ To effectively use Terrateam, it's important to understand its key concepts and 
 
 ## Dirspace
 
-At the core of Terrateam is the concept of a Dirspace. It represents a unique blend of a repository, directory, and workspace. It is referred to as a tuple `(repository, directory, workspace)` or simply `(directory, workspace)` when the repository is implied.
+In Terrateam, a Dirspace is a fundamental concept that defines the scope of Terraform operations. It uniquely combines a `repository`, a `directory` within that repository, and a Terraform `workspace`, represented as a tuple `(repository, directory, workspace)`. When the repository context is clear, it can be simplified to `(directory, workspace)`.
 
 Dirspaces are automatically created when Terrateam detects Terraform configurations in your repository. Each directory containing Terraform files creates a Dirspace with either its explicitly configured workspace or the **default workspace** (created automatically when no specific workspace is defined).
 
