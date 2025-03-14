@@ -3,7 +3,7 @@ title: How Terrateam Works
 description: Understanding the core concepts and inner workings of Terrateam
 ---
 
-import { Card, CardGrid } from '@astrojs/starlight/components';
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 import { Steps } from '@astrojs/starlight/components';
 
 
@@ -18,6 +18,10 @@ Before diving into the technical details, it's important to understand some key 
 - Terrateam integrates Terraform operations directly into your GitHub pull request workflow, enabling you to plan, review, and apply infrastructure changes through GitHub comments.
 - Terrateam automates the execution of Terraform commands based on pull request events, streamlining your infrastructure management process.
 - Terrateam enables team collaboration on infrastructure changes by providing clear visibility into proposed changes and their impacts.
+
+:::note
+For additional context about the the concepts behind Terrateam, check the [Concepts](/getting-started/concepts/) page.
+:::
 
 ## Terrateam Architecture
 
@@ -34,26 +38,26 @@ Terrateam consists of two main components:
 </CardGrid>
 
 ## Repositories Hierarchy
-![Repositories Hierarchy](../../assets/repository-flowchart.png)
+
 Terrateam organizes your Terraform code using the following hierarchy:
 
-<CardGrid>
-  <Card title="Repository" icon="github">
-    The top-level entity that represents your GitHub repository containing Terraform code.
-  </Card>
-  <Card title="Directory" icon="folder">
-    A repository can contain zero or more directories, each representing a logical grouping of Terraform resources. Each directory is processed independently.
-  </Card>
-  <Card title="Workspace" icon="layers">
-    Each directory can have one or more workspaces, allowing you to use the same Terraform code in different contexts (e.g., development, staging, production). If no workspace is specified, each directory has a default workspace.
-  </Card>
-</CardGrid>
+- **Repository**: The top-level entity that represents your GitHub repository containing Terraform code.
+- **Directory**: A repository can contain zero or more directories, each representing a logical grouping of Terraform resources. Each directory is processed independently.
+- **Workspace**: Each directory can have one or more workspaces, allowing you to use the same Terraform code in different contexts (e.g., development, staging, production). If no workspace is specified, each directory has a default workspace.
+
+The following diagram presents the hierarchy Terrateam uses.
+
+![Repositories Hierarchy](../../assets/repository-flowchart.png)
 
 This hierarchy enables you to structure your Terraform code in a modular and reusable way, making it easier to manage and maintain your infrastructure.
 
 ## Workflow
-![Workflow](../../assets/flow-flowchart.png)
+
 Here's a high-level overview of how Terrateam works:
+
+![Workflow](../../assets/flow-flowchart.png)
+
+The following steps offer a more detailed explanation of each part of the diagram.
 
 <Steps>
 1. Event Trigger
@@ -102,8 +106,11 @@ Terrateam offers several key features that enhance your Terraform workflow:
 </CardGrid>
 
 
-### Next Steps
+## Next Steps
 Continue learning about Terrateam on the following pages:
-- [Getting started pages](./getting-started)
-- [Terrateam key concepts](./getting-started/concepts)
-- [Configuring your project](./getting-started/configuration)
+
+<CardGrid>
+  <LinkCard title="Getting started pages" href="/getting-started" />
+  <LinkCard title="Terrateam key concepts" href="/getting-started/concepts" />
+  <LinkCard title="Configuring your project" href="/getting-started/configuration" />
+</CardGrid>
