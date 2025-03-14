@@ -6,8 +6,11 @@ tableOfContents:
   maxHeadingLevel: 3
 ---
 
-## Key Concepts and Terminology
 To effectively use Terrateam, it's important to understand its key concepts and terminology. In the following section, we'll explore the core components of Terrateam and how they work together to simplify your infrastructure management workflow.
+
+:::note
+ Default settings work for most teams. Customize only if you need specific lock timing or policies.
+:::
 
 ## Dirspace
 
@@ -19,11 +22,7 @@ Dirspaces are automatically created when Terrateam detects Terraform configurati
 
 Imagine you have a repository called `infra-repo` managing multiple environments:
 
-| Repository | Directory | Workspace |
-| ---------- | --------- | --------- |
-| infra-repo | dev       | default   |
-| infra-repo | staging   | default   |
-| infra-repo | prod      | default   |
+![Dirspace Example](../../../assets/repo-chart.png)
 
 A **workspace** enables you to manage multiple states for the same directory, isolating environments like `dev`, `staging`, and `prod` within the same repository.
 
@@ -73,32 +72,39 @@ These automated operations streamline workflows while maintaining control throug
 
 ## Tags and Tag Sets
 
-Terrateam uses Tags to organize Terraform resources through flexible labeling:
+Terrateam uses [Tags](/advanced-workflows/tags) to organize Terraform resources through flexible labeling. Tags provide a powerful way to categorize, filter, and manage your infrastructure resources, making it easier to apply specific operations to targeted sets of resources.
 
-* **Tag Set**: Unordered, unique labels assigned to resources  
-  Example: `env:prod, component:network`
-* **Tag Query**: Filter to match specific Tag Sets  
-  Example: `env:prod` matches all production resources
+Tags in Terrateam can be both user-defined and automatically assigned. They are optional but provide significant benefits for organizing and managing infrastructure resources.
+:::note
+Users can define custom tags in their Terrateam configuration file (.terrateam/config.yml).
+:::
+Below are the key concepts related to Tags in Terrateam:
 
-**Example workflow:**
-1. Tag EC2 instances with `resource-type:compute`
-2. Create Auto-Scaling Groups with `resource-type:compute, environment:production`
-3. Query with `resource-type:compute` to manage all compute resources
+* **Tag Set**: Unordered, unique labels assigned to resources.
+  Example: `env:prod, component:network`.
+* **Tag Query**: Filter to match specific Tag Sets.
+  Example: `env:prod` matches all production resources.
+
+The following steps describe the Tags workflow:
+1. Tag EC2 instances with `resource-type:compute`.
+2. Create Auto-Scaling Groups with `resource-type:compute, environment:production`.
+3. Query with `resource-type:compute` to manage all compute resources.
 
 Tags enable precise resource management across complex infrastructures.
-## Locks and Unlocks
+## Lock policy
 
 Terrateam's locking system prevents concurrent modifications by ensuring only one change can be applied to a resource at a time. This prevents:
 
-- State file conflicts  
-- Resource modification races  
-- Concurrent apply operations  
+- State file conflicts.
+- Resource modification races. 
+- Concurrent apply operations.
 
-**Key behaviors**:
-- Enabled by default (no config needed)
-- Automatically released after apply + merge
-- Force unlock via comment: `terrateam unlock`
+Key behaviors:
+- Enabled by default (no config needed).
+- Automatically released after apply + merge.
+- Force unlock via comment: `terrateam unlock`.
 
+Customizing lock policies:
 ```yaml
 # .terrateam/config.yml (default shown)
 workflows:
@@ -107,6 +113,4 @@ workflows:
 
 For advanced configurations see our [Locks & Concurrency guide](/advanced-workflows/locks-and-concurrency).
 
-:::note
- Default settings work for most teams. Customize only if you need specific lock timing or policies.
-:::
+
