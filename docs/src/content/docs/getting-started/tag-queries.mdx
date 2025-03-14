@@ -1,0 +1,122 @@
+---
+title: Tag Queries
+description: Learn how to use tag queries in Terrateam to manage Terraform resources.​
+---
+
+Tag queries are a fundamental feature in Terrateam, enabling you to organize, manage, and automate your Terraform resources. You can create logical groupings based on various criteria, such as environment, application, or region, and use tag queries to match and filter resources. They act as filters that determine:  
+
+- Which workflows apply to which directories. 
+- Who has access to specific resources.  
+- How apply requirements are enforced.
+
+By using tag queries, you gain granular control over infrastructure management and automation.
+
+## Defining Tags
+
+Terrateam provides two primary methods for defining tags:
+
+- **Top-Level Tags**: Dynamic tags based on criteria like the destination branch of a pull request.
+- **Directory-Level Tags**: Static tags assigned directly to specific directories in your repository.
+
+### Top-Level Tags
+
+In the `.terrateam/config.yml` file, you can define dynamic tags using the top-level `tags` key. This allows for workflows that adapt to the context of your pull requests and branches. For example:
+
+```yaml
+tags:
+  dest_branch:
+    main: '^main$'
+    staging: '^staging$'
+    dev: '^dev$'
+```
+
+In this configuration, the `dest_branch` tag has three possible values: `main,` `staging,` and `dev.` Each value is associated with a regular expression matching the corresponding branch name.
+
+### Directory-Level Tags
+
+Within the `dirs` section of your [configuration](/getting-started/configuration/), you can assign static tags to specific directories:
+
+```yaml
+dirs:
+  dev:
+    tags: [dev]
+  staging:
+    tags: [staging]
+  prod:
+    tags: [prod]
+```
+
+Here:
+
+- The `dev` directory is tagged with `dev`.
+- The `staging` directory is tagged with `staging`.
+- The `prod` directory is tagged with `prod`.
+
+## Tag Query Syntax
+
+Tag queries are boolean expressions that allow you to match and filter resources based on their assigned tags. Terrateam supports a rich set of operators and features to create complex and targeted tag queries.
+
+The following operators are supported when creating tag queries:
+
+- `and`: Matches resources that have all the specified tags. This is the default operator if none is specified.
+- `or`: Matches resources that have at least one of the specified tags.
+- `not`: Matches resources that do not have the specified tag.
+- `in`: Matches resources that have the specified tag as a fragment in their path or name.
+- Parentheses: Used to group and prioritize expressions. 
+
+The following table presents some examples of tag queries:
+
+
+| **Tag Query Expression**     | **Description**                                               |
+|------------------------------|---------------------------------------------------------------|
+| `prod and api`               | Matches resources with both `prod` and `api` tags.            |
+| `staging or dev`             | Matches resources with either `staging` or `dev` tag.         |
+| `not deprecated`             | Matches resources without the `deprecated` tag.               |
+| `app in dir`                 | Matches resources where `app` is a fragment in their directory path. |
+| `(web or api) and prod`      | Matches resources with either `web` or `api` tags, and also the `prod` tag. |
+
+## Using Tag Queries
+
+Tag queries can be used in different parts of your Terrateam configuration to target specific resources and define granular behavior.
+
+### Workflows
+
+In the `workflows` section of your [configuration](/getting-started/configuration/) file, you can use tag queries to specify which resources a particular workflow should apply. In the following example, the first workflow is triggered for the `main` branch and `prod` environment, while the second workflow is triggered for the `staging` branch and `staging` environment. 
+
+```yaml
+workflows:
+  - tag_query: 'dest_branch:main and prod'
+    plan:
+      - type: init
+      - type: plan
+    apply:
+      - type: init
+      - type: apply
+  - tag_query: 'dest_branch:staging and staging'
+    plan:
+      - type: init
+      - type: plan
+    apply:
+      - type: init
+      - type: apply
+```
+
+### Commands
+
+When running Terrateam commands, you can use tag queries to target specific resources. For example, to target a plan to a specific tag query:
+
+  ```bash
+  terrateam plan <tag-query>
+  ```
+
+You can also apply a specific tag query:
+
+  ```bash
+  terrateam apply <tag-query>
+  ```
+
+:::note
+Check the [Tags](/advanced-workflows/tags) page to learn more about advanced tag queries.
+:::
+
+
