@@ -10,7 +10,8 @@ The Plan and Apply operations are the core of Terrateam's functionality. They al
 ## Plan
 
 The Plan operation generates a preview of changes that will be made to your infrastructure when you apply your Terraform code. This preview is called a "plan" in Terraform terminology.
-Here's a example of a common usage of the plan feature:
+
+The following example shows a common usage of the plan feature, enabling you to review changes and collaborate with your team before the changes are applied:
 <Steps>
 1. Open a pull request with changes to your Terraform code.
 
@@ -18,13 +19,10 @@ Here's a example of a common usage of the plan feature:
 
 2. Terrateam automatically triggers a Plan operation.
 
-   ![Terrateam plan](../../../assets/nibbler-terrateam-plan.png)
-
 3. Review the plan output in the PR comment. It shows what will be created, modified, or destroyed:
 
     ![Terrateam plan](../../../assets/nibbler-terrateam-plan.png)
 
-4. Collaborate with your team based on the plan output and review the changes before they are executed.
 </Steps>
 
 You can manually trigger another Plan by commenting `terrateam plan` on the pull request.
