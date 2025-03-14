@@ -18,12 +18,34 @@ import { LinkCard, CardGrid, Card } from '@astrojs/starlight/components';
 
 ## What is Terrateam?
 
-- Terrateam is a GitOps CI/CD platform for Terraform and OpenTofu that integrates with GitHub.
-- It enables teams to manage infrastructure changes through pull requests.
-- With Terrateam, you can:
+Terrateam is a GitOps CI/CD platform for Terraform and OpenTofu that integrates with GitHub. It enables teams to manage infrastructure changes through pull requests.
+
+With Terrateam, you can:
   - Easily manage your infrastructure as code.
   - Collaborate with your team.
   - Automate your deployment processes.
+
+## Why Choose Terrateam?
+
+<CardGrid>
+  <Card title="Team Collaboration" icon="approve-check">
+    Review infrastructure changes with intelligent locking to prevent conflicts.
+  </Card>
+
+  <Card title="Enhanced Security" icon="seti:lock">
+    Fine-grained access controls, policy enforcement, and OIDC authentication.
+  </Card>
+
+  <Card title="Ready-to-Use"  icon="laptop">
+    Skip building custom pipelines. Terrateam handles plan storage, locks, drift detection, and more.
+  </Card>
+
+  <Card title="Multi-Environment" icon="star">
+    Manage dev, staging, and production with consistent workflows.
+  </Card>
+</CardGrid>
+
+## Terrateam Features
 
 <CardGrid>
 	<Card title="GitHub-Native" icon="github">
@@ -87,13 +109,6 @@ The following steps explain how Terrateam processes your Terraform changes:
 
 </Steps>
 <LinkCard title="Learn more about workflows" href="/getting-started/pull-requests-and-triggers" />
-
-## Why Choose Terrateam?
-
-- **Team Collaboration**: Review infrastructure changes with intelligent locking to prevent conflicts.
-- **Enhanced Security**: Fine-grained access controls, policy enforcement, and OIDC authentication.
-- **Ready-to-Use**: Avoid building custom pipelines-Terrateam handles plan storage, locks, drift detection, and more.
-- **Multi-Environment**: Manage dev, staging, and production with consistent workflows.
 
 ## Getting Started
 
