@@ -10,14 +10,21 @@ let http_headers =
 
 module Event = struct
   type t =
-    | Start of { github_app_id : string }
+    | Start of {
+        app_type : string;
+        app_id : string;
+      }
     | Run of {
-        github_app_id : string;
+        app_type : string;
+        app_id : string;
         step : Terrat_work_manifest3.Step.t;
         owner : string;
         repo : string;
       }
-    | Ping of { github_app_id : string }
+    | Ping of {
+        app_type : string;
+        app_id : string;
+      }
 end
 
 let send' telemetry_config event =
@@ -25,11 +32,11 @@ let send' telemetry_config event =
   | Terrat_config.Telemetry.Disabled -> Abbs_future_combinators.unit
   | Terrat_config.Telemetry.Anonymous uri -> (
       match event with
-      | Event.Start { github_app_id } ->
+      | Event.Start { app_type; app_id } ->
           let uri =
             Uri.with_path
               uri
-              (Printf.sprintf "/event/start/%s" Digest.(to_hex (string github_app_id)))
+              (Printf.sprintf "/event/start/%s/%s" app_type Digest.(to_hex (string app_id)))
           in
           Logs.info (fun m -> m "%a" Uri.pp uri);
           Logs.info (fun m -> m "ANONYMOUS : EVENT : START");
@@ -42,13 +49,14 @@ let send' telemetry_config event =
                   ~options:Http.Options.(with_opt (Http_version `Http1_1) default)
                   ~headers:http_headers
                   uri))
-      | Event.Run { github_app_id; step; owner; repo } ->
+      | Event.Run { app_type; app_id; step; owner; repo } ->
           let uri =
             Uri.with_path
               uri
               (Printf.sprintf
-                 "/event/run/%s/%s/%s/%s"
-                 Digest.(to_hex (string github_app_id))
+                 "/event/run/%s/%s/%s/%s/%s"
+                 app_type
+                 Digest.(to_hex (string app_id))
                  (Terrat_work_manifest3.Step.to_string step)
                  Digest.(to_hex (string owner))
                  Digest.(to_hex (string repo)))
@@ -63,11 +71,11 @@ let send' telemetry_config event =
                   ~options:Http.Options.(with_opt (Http_version `Http1_1) default)
                   ~headers:http_headers
                   uri))
-      | Event.Ping { github_app_id } ->
+      | Event.Ping { app_type; app_id } ->
           let uri =
             Uri.with_path
               uri
-              (Printf.sprintf "/event/ping/%s" Digest.(to_hex (string github_app_id)))
+              (Printf.sprintf "/event/ping/%s/%s" app_type Digest.(to_hex (string app_id)))
           in
           Logs.info (fun m -> m "ANONYMOUS : EVENT : PING");
           (* For some reason, on dev ngrok this request hangs if it is HTTP2,
@@ -87,7 +95,10 @@ let rec start_ping_loop config =
   let open Abb.Future.Infix_monad in
   Abb.Sys.sleep one_hour
   >>= fun () ->
-  send
-    (Terrat_config.telemetry config)
-    (Event.Ping { github_app_id = Terrat_config.github_app_id config })
+  (match Terrat_config.github config with
+  | Some github ->
+      send
+        (Terrat_config.telemetry config)
+        (Event.Ping { app_type = "github"; app_id = Terrat_config.Github.app_id github })
+  | None -> Abb.Future.return ())
   >>= fun () -> start_ping_loop config

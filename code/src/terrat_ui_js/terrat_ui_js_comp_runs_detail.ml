@@ -675,15 +675,15 @@ let render_work_manifest state =
     } as wm -> (
       let run =
         let open Abb_js_future_combinators.Infix_result_monad in
-        let module Sc = Terrat_api_components.Server_config in
+        let module Scg = Terrat_api_components.Server_config_github in
         let module I = Terrat_api_components.Installation in
         let module Ds = Terrat_api_components.Work_manifest_dirspace in
         let app_state = Brtl_js2.State.app_state state in
         let installation = Terrat_ui_js_state.selected_installation app_state in
         let installation_id = installation.I.id in
         let client = Terrat_ui_js_state.client app_state in
-        let server_config = Terrat_ui_js_state.server_config app_state in
-        let github_web_base_url = server_config.Sc.github_web_base_url in
+        let vcs_config = Terrat_ui_js_state.vcs_config app_state in
+        let github_web_base_url = vcs_config.Scg.web_base_url in
         Abb_js_future_combinators.Infix_result_app.(
           (fun failed_runs header_steps all_runs -> (failed_runs, header_steps, all_runs))
           <$> Terrat_ui_js_client.work_manifest_outputs

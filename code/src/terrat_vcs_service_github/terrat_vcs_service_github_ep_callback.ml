@@ -33,10 +33,15 @@ end
 let perform_auth config storage code =
   let module Oauth = Terrat_github.Oauth.Response in
   let open Abbs_future_combinators.Infix_result_monad in
-  Terrat_github.Oauth.authorize ~config code
+  Terrat_github.Oauth.authorize
+    ~config:(Terrat_vcs_service_github_provider.Api.Config.vcs_config config)
+    code
   >>= fun oauth ->
   let access_token = oauth.Oauth.access_token in
-  Terrat_github.user ~config ~access_token ()
+  Terrat_github.user
+    ~config:(Terrat_vcs_service_github_provider.Api.Config.vcs_config config)
+    ~access_token
+    ()
   >>= fun current_user ->
   Abbs_future_combinators.to_result (Abb.Sys.time ())
   >>= fun now ->

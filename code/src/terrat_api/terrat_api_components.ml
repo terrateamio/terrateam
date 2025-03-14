@@ -21,6 +21,7 @@ module Plan_create = Terrat_api_components_plan_create
 module Run_kind_data_pull_request = Terrat_api_components_run_kind_data_pull_request
 module Run_type = Terrat_api_components_run_type
 module Server_config = Terrat_api_components_server_config
+module Server_config_github = Terrat_api_components_server_config_github
 module Task = Terrat_api_components_task
 module User = Terrat_api_components_user
 module Work_manifest = Terrat_api_components_work_manifest

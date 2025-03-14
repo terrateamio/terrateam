@@ -1,7 +1,2 @@
-type t = {
-  github_api_base_url : string;
-  github_app_client_id : string;
-  github_app_url : string;
-  github_web_base_url : string;
-}
+type t = { github : Terrat_api_components_server_config_github.t option [@default None] }
 [@@deriving yojson { strict = true; meta = true }, show, eq]

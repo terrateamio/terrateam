@@ -250,7 +250,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
             ()
         in
         Evaluator.run_pull_request_open
-          ~ctx:(Terrat_vcs_event_evaluator.Ctx.make ~request_id ~config ~storage ())
+          ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
           ~account
           ~user
           ~repo
@@ -283,7 +283,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
             ()
         in
         Evaluator.run_pull_request_sync
-          ~ctx:(Terrat_vcs_event_evaluator.Ctx.make ~request_id ~config ~storage ())
+          ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
           ~account
           ~user
           ~repo
@@ -318,7 +318,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
             ()
         in
         Evaluator.run_pull_request_open
-          ~ctx:(Terrat_vcs_event_evaluator.Ctx.make ~request_id ~config ~storage ())
+          ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
           ~account
           ~user
           ~repo
@@ -353,7 +353,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
             ()
         in
         Evaluator.run_pull_request_ready_for_review
-          ~ctx:(Terrat_vcs_event_evaluator.Ctx.make ~request_id ~config ~storage ())
+          ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
           ~account
           ~user
           ~repo
@@ -393,7 +393,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
             ()
         in
         Evaluator.run_pull_request_close
-          ~ctx:(Terrat_vcs_event_evaluator.Ctx.make ~request_id ~config ~storage ())
+          ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
           ~account
           ~user
           ~repo
@@ -478,7 +478,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
                 ()
             in
             Evaluator.run_pull_request_comment
-              ~ctx:(Terrat_vcs_event_evaluator.Ctx.make ~request_id ~config ~storage ())
+              ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
               ~account
               ~user
               ~comment
@@ -496,10 +496,12 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
             | Ok body ->
                 let open Abbs_future_combinators.Infix_result_monad in
                 Logs.info (fun m -> m "%s : COMMENT_ERROR : TAG_QUERY_ERROR : %s" request_id err);
-                Terrat_github.get_installation_access_token config installation_id
+                Terrat_github.get_installation_access_token
+                  (P.Api.Config.vcs_config config)
+                  installation_id
                 >>= fun access_token ->
                 Terrat_github.with_client
-                  config
+                  (P.Api.Config.vcs_config config)
                   (`Token access_token)
                   (Terrat_github.publish_comment
                      ~owner:repository.Gw.Repository.owner.Gw.User.login
@@ -514,10 +516,12 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
             Prmths.Counter.inc_one (Metrics.comment_events_total "unknown_action");
             let open Abbs_future_combinators.Infix_result_monad in
             Logs.info (fun m -> m "%s : COMMENT_ERROR : UNKNOWN_ACTION : %s" request_id action);
-            Terrat_github.get_installation_access_token config installation_id
+            Terrat_github.get_installation_access_token
+              (P.Api.Config.vcs_config config)
+              installation_id
             >>= fun access_token ->
             Terrat_github.with_client
-              config
+              (P.Api.Config.vcs_config config)
               (`Token access_token)
               (Terrat_github.publish_comment
                  ~owner:repository.Gw.Repository.owner.Gw.User.login
@@ -563,7 +567,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         >>= function
         | Some work_manifest_id ->
             Evaluator.run_work_manifest_failure
-              ~ctx:(Terrat_vcs_event_evaluator.Ctx.make ~request_id ~config ~storage ())
+              ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
               work_manifest_id
         | None ->
             Logs.info (fun m ->
@@ -593,7 +597,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         in
         let user = P.Api.User.make event.Gw.Push_event.sender.Gw.User.login in
         Evaluator.run_push
-          ~ctx:(Terrat_vcs_event_evaluator.Ctx.make ~request_id ~config ~storage ())
+          ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
           ~account
           ~user
           ~repo
@@ -654,7 +658,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         Prmths.Gauge.track_inprogress Metrics.events_concurrent (fun () ->
             match
               Terrat_github_webhooks_decoder.run
-                ?secret:(Terrat_config.github_webhook_secret config)
+                ?secret:(Terrat_config.Github.webhook_secret @@ P.Api.Config.vcs_config config)
                 headers
                 body
             with

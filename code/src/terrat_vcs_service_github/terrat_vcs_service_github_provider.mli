@@ -2,7 +2,7 @@ module Api = Terrat_vcs_api_github
 
 module type S = sig
   val work_manifest_url :
-    Terrat_config.t -> Api.Account.t -> ('a, 'b) Terrat_work_manifest3.Existing.t -> Uri.t option
+    Api.Config.t -> Api.Account.t -> ('a, 'b) Terrat_work_manifest3.Existing.t -> Uri.t option
 end
 
 module Unlock_id : sig
@@ -199,7 +199,7 @@ module Apply_requirements : sig
 
   val eval :
     request_id:string ->
-    Terrat_config.t ->
+    Api.Config.t ->
     Api.User.t ->
     Api.Client.t ->
     'a Terrat_base_repo_config_v1.t ->
@@ -217,7 +217,8 @@ module Comment (S : S) : sig
     ( Api.Account.t,
       ('diff1, 'checks1) Api.Pull_request.t,
       (('diff2, 'checks2) Api.Pull_request.t, Api.Repo.t) Terrat_vcs_provider2.Target.t,
-      Apply_requirements.Result.t )
+      Apply_requirements.Result.t,
+      Api.Config.t )
     Terrat_vcs_provider2.Msg.t ->
     (unit, [> `Error ]) result Abb.Future.t
 end
@@ -225,7 +226,7 @@ end
 module Work_manifest : sig
   val run :
     request_id:string ->
-    Terrat_config.t ->
+    Api.Config.t ->
     Api.Client.t ->
     ( Api.Account.t,
       ((unit, unit) Api.Pull_request.t, Api.Repo.t) Terrat_vcs_provider2.Target.t )

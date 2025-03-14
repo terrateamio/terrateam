@@ -1,4 +1,6 @@
-module Provider : Terrat_vcs_provider2_github.S = struct
+module Provider :
+  Terrat_vcs_provider2_github.S
+    with type Api.Config.t = Terrat_vcs_service_github_provider.Api.Config.t = struct
   module Api = Terrat_vcs_api_github
   module Unlock_id = Terrat_vcs_service_github_provider.Unlock_id
   module Db = Terrat_vcs_service_github_provider.Db
@@ -162,14 +164,14 @@ module Provider : Terrat_vcs_provider2_github.S = struct
         | Some { Wm.id; run_id = Some run_id; _ } ->
             Printf.sprintf
               "%s/%s/%s/actions/runs/%s"
-              (Uri.to_string (Terrat_config.github_web_base_url config))
+              (Uri.to_string (Terrat_config.Github.web_base_url @@ Api.Config.vcs_config config))
               (Api.Repo.owner repo)
               (Api.Repo.name repo)
               run_id
         | Some _ | None ->
             Printf.sprintf
               "%s/%s/%s/actions"
-              (Uri.to_string (Terrat_config.github_web_base_url config))
+              (Uri.to_string (Terrat_config.Github.web_base_url @@ Api.Config.vcs_config config))
               (Api.Repo.owner repo)
               (Api.Repo.name repo)
       in
@@ -187,5 +189,7 @@ include
   Terrat_vcs_service_github.Make
     (Provider)
     (struct
+      type config = Provider.Api.Config.t
+
       let routes _ _ = []
     end)

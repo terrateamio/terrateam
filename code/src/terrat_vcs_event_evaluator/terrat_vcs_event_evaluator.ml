@@ -65,21 +65,6 @@ module Tag_query = struct
     CCResult.map_err Terrat_tag_query_ast.show_err (Terrat_tag_query.of_string tag_query)
 end
 
-module Ctx = struct
-  type 's t = {
-    request_id : string;
-    config : Terrat_config.t;
-    storage : 's;
-  }
-
-  let make ~request_id ~config ~storage () = { request_id; config; storage }
-  let request_id t = t.request_id
-  let config t = t.config
-  let storage t = t.storage
-  let set_request_id request_id t = { t with request_id }
-  let set_storage storage t = { t with storage }
-end
-
 module Make (S : Terrat_vcs_provider2.S) = struct
   (* Logging wrappers *)
   let log_time ?m request_id name t =
@@ -87,6 +72,21 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     match m with
     | Some m -> Metrics.DefaultHistogram.observe m t
     | None -> ()
+
+  module Ctx = struct
+    type 's t = {
+      request_id : string;
+      config : S.Api.Config.t;
+      storage : 's;
+    }
+
+    let make ~request_id ~config ~storage () = { request_id; config; storage }
+    let request_id t = t.request_id
+    let config t = t.config
+    let storage t = t.storage
+    let set_request_id request_id t = { t with request_id }
+    let set_storage storage t = { t with storage }
+  end
 
   let create_client request_id config account =
     Abbs_time_it.run (log_time request_id "CREATE_CLIENT") (fun () ->
@@ -1421,7 +1421,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
 
     let repo_config_system_defaults ctx state =
       let module V1 = Terrat_base_repo_config_v1 in
-      match Terrat_config.infracost (Ctx.config ctx) with
+      match Terrat_config.infracost @@ S.Api.Config.config @@ Ctx.config ctx with
       | Some _ -> Abb.Future.return (Ok V1.default)
       | None ->
           let system_defaults =
@@ -1992,7 +1992,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                 (Access_control.Ctx.make
                    ~request_id:state.State.request_id
                    ~client
-                   ~config:(Ctx.config ctx)
+                   ~config:(S.Api.Config.config (Ctx.config ctx))
                    ~repo:(S.Api.Pull_request.repo pull_request)
                    ~user:S.Api.User.(Id.to_string @@ id @@ Event.user state.State.event)
                    ())

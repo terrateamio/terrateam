@@ -42,9 +42,15 @@ type refresh_repos_err' =
 
 let refresh_repos ~request_id ~config ~storage installation_id =
   let open Abbs_future_combinators.Infix_result_monad in
-  Terrat_github.get_installation_access_token config installation_id
+  Terrat_github.get_installation_access_token
+    (Terrat_vcs_service_github_provider.Api.Config.vcs_config config)
+    installation_id
   >>= fun access_token ->
-  let client = Terrat_github.create config (`Token access_token) in
+  let client =
+    Terrat_github.create
+      (Terrat_vcs_service_github_provider.Api.Config.vcs_config config)
+      (`Token access_token)
+  in
   Terrat_github.get_installation_repos client
   >>= fun repositories ->
   let module R = Githubc2_components.Repository in

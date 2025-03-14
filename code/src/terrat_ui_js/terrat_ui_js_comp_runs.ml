@@ -16,12 +16,12 @@ let perform_query query s =
     | { Q.q = Some str; _ } as q -> { q with Q.q = Some ("(" ^ str ^ ") and " ^ s) })
 
 let render_dirspace query dirspace state =
-  let module Sc = Terrat_api_components.Server_config in
+  let module Scg = Terrat_api_components.Server_config_github in
   let module Ds = Terrat_api_components.Installation_dirspace in
   let module P = Terrat_api_components.Kind_pull_request in
   let app_state = Brtl_js2.State.app_state state in
-  let server_config = Terrat_ui_js_state.server_config app_state in
-  let github_web_base_url = server_config.Sc.github_web_base_url in
+  let vcs_config = Terrat_ui_js_state.vcs_config app_state in
+  let github_web_base_url = vcs_config.Scg.web_base_url in
   let consumed_path = Brtl_js2.State.consumed_path state in
   let {
     Ds.base_branch;
@@ -429,7 +429,7 @@ let comp state =
   let module Page = Brtl_js2_page.Make (struct
     type fetch_err = Terrat_ui_js_client.dirspaces_err [@@deriving show]
     type elt = Ds.t [@@deriving eq, show]
-    type state = Terrat_ui_js_state.t
+    type state = Terrat_api_components.Server_config_github.t Terrat_ui_js_state.t
     type query = Q.t [@@deriving eq]
 
     let class' = "dirspaces"

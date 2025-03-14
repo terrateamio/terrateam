@@ -110,7 +110,7 @@ module Work_manifests = struct
       type cursor = int
 
       type query = {
-        config : Terrat_config.t;
+        config : Terrat_vcs_service_github_provider.Api.Config.t;
         installation_id : int;
         limit : int;
         query : Terrat_sql_of_tag_query.t;
@@ -144,7 +144,9 @@ module Work_manifests = struct
                 Metrics.Psql_query_time.time (Metrics.psql_query_time "select_outputs") (fun () ->
                     Pgsql_io.Prepared_stmt.execute
                       db
-                      (set_timeout (Terrat_config.statement_timeout query.config))
+                      (set_timeout
+                         (Terrat_config.statement_timeout
+                         @@ Terrat_vcs_service_github_provider.Api.Config.config query.config))
                     >>= fun () ->
                     return
                       search
@@ -403,7 +405,7 @@ module Work_manifests = struct
     type query = {
       user : Uuidm.t;
       query : Terrat_sql_of_tag_query.t;
-      config : Terrat_config.t;
+      config : Terrat_vcs_service_github_provider.Api.Config.t;
       storage : Terrat_storage.t;
       installation_id : int;
       limit : int;
@@ -436,7 +438,9 @@ module Work_manifests = struct
           Pgsql_io.tx db ~f:(fun () ->
               Pgsql_io.Prepared_stmt.execute
                 db
-                (set_timeout (Terrat_config.statement_timeout query.config))
+                (set_timeout
+                   (Terrat_config.statement_timeout
+                   @@ Terrat_vcs_service_github_provider.Api.Config.config query.config))
               >>= fun () ->
               Metrics.Psql_query_time.time
                 (Metrics.psql_query_time "select_work_manifests")
@@ -744,7 +748,7 @@ module Dirspaces = struct
     type query = {
       user : Uuidm.t;
       query : Terrat_sql_of_tag_query.t;
-      config : Terrat_config.t;
+      config : Terrat_vcs_service_github_provider.Api.Config.t;
       storage : Terrat_storage.t;
       installation_id : int;
       limit : int;
@@ -778,7 +782,9 @@ module Dirspaces = struct
           Pgsql_io.tx db ~f:(fun () ->
               Pgsql_io.Prepared_stmt.execute
                 db
-                (set_timeout (Terrat_config.statement_timeout query.config))
+                (set_timeout
+                   (Terrat_config.statement_timeout
+                   @@ Terrat_vcs_service_github_provider.Api.Config.config query.config))
               >>= fun () ->
               Metrics.Psql_query_time.time (Metrics.psql_query_time "select_dirspaces") (fun () ->
                   return

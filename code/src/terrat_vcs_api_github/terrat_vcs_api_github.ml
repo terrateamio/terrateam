@@ -44,6 +44,19 @@ module Metrics = struct
       "pull_request_mergeable_state_count"
 end
 
+module Config = struct
+  type t = {
+    config : Terrat_config.t;
+    github : Terrat_config.Github.t;
+  }
+
+  type vcs_config = Terrat_config.Github.t
+
+  let make ~config ~vcs_config () = { config; github = vcs_config }
+  let config t = t.config
+  let vcs_config t = t.github
+end
+
 module User = struct
   module Id = struct
     type t = string [@@deriving yojson, show, eq]
@@ -245,17 +258,15 @@ module Client = struct
   type t = {
     account : Account.t;
     client : Githubc2_abb.t;
-    config : Terrat_config.t;
     fetch_file_by_rev_cache : Fetch_file_cache.By_rev.t;
     fetch_repo_cache : Fetch_repo_cache.t;
     fetch_tree_by_rev_cache : Fetch_tree_cache.By_rev.t;
   }
 
-  let make ~account ~client ~config () =
+  let make ~account ~client () =
     {
       account;
       client;
-      config;
       fetch_file_by_rev_cache = Globals.fetch_file_by_rev_cache;
       fetch_repo_cache = Globals.fetch_repo_cache;
       fetch_tree_by_rev_cache = Globals.fetch_tree_by_rev_cache;
@@ -350,9 +361,9 @@ let fetch_centralized_repo ~request_id client owner =
 
 let create_client' config { Account.installation_id } =
   let open Abbs_future_combinators.Infix_result_monad in
-  Terrat_github.get_installation_access_token config installation_id
+  Terrat_github.get_installation_access_token config.Config.github installation_id
   >>= fun access_token ->
-  let github_client = Terrat_github.create config (`Token access_token) in
+  let github_client = Terrat_github.create config.Config.github (`Token access_token) in
   Abb.Future.return (Ok github_client)
 
 let create_client ~request_id config account =
@@ -368,8 +379,7 @@ let create_client ~request_id config account =
   in
   Client.Client_cache.fetch Client.Globals.client_cache account fetch
   >>= function
-  | Ok github_client ->
-      Abb.Future.return (Ok (Client.make ~account ~client:github_client ~config ()))
+  | Ok github_client -> Abb.Future.return (Ok (Client.make ~account ~client:github_client ()))
   | Error `Error -> Abb.Future.return (Error `Error)
 
 let fetch_tree ~request_id client repo ref_ =

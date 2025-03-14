@@ -1,7 +1,7 @@
 module Work_manifests : sig
   module Outputs : sig
     val get :
-      Terrat_config.t ->
+      Terrat_vcs_service_github_provider.Api.Config.t ->
       Terrat_storage.t ->
       int ->
       Uuidm.t ->
@@ -14,7 +14,7 @@ module Work_manifests : sig
   end
 
   val get :
-    Terrat_config.t ->
+    Terrat_vcs_service_github_provider.Api.Config.t ->
     Terrat_storage.t ->
     int ->
     string option ->
@@ -26,7 +26,7 @@ end
 
 module Dirspaces : sig
   val get :
-    Terrat_config.t ->
+    Terrat_vcs_service_github_provider.Api.Config.t ->
     Terrat_storage.t ->
     int ->
     string option ->
@@ -38,7 +38,7 @@ end
 
 module Pull_requests : sig
   val get :
-    Terrat_config.t ->
+    Terrat_vcs_service_github_provider.Api.Config.t ->
     Terrat_storage.t ->
     int ->
     int option ->
@@ -49,7 +49,7 @@ end
 
 module Repos : sig
   val get :
-    Terrat_config.t ->
+    Terrat_vcs_service_github_provider.Api.Config.t ->
     Terrat_storage.t ->
     int ->
     string Brtl_ep_paginate.Param.t option ->
@@ -57,6 +57,10 @@ module Repos : sig
     Brtl_rtng.Handler.t
 
   module Refresh : sig
-    val post : Terrat_config.t -> Terrat_storage.t -> int -> Brtl_rtng.Handler.t
+    val post :
+      Terrat_vcs_service_github_provider.Api.Config.t ->
+      Terrat_storage.t ->
+      int ->
+      Brtl_rtng.Handler.t
   end
 end

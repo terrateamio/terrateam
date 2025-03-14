@@ -588,24 +588,33 @@
       "server-config": {
         "additionalProperties": false,
         "properties": {
-          "github_api_base_url": {
+          "github": {
+            "$ref": "#/components/schemas/server-config-github"
+          }
+        },
+        "type": "object"
+      },
+      "server-config-github": {
+        "additionalProperties": false,
+        "properties": {
+          "api_base_url": {
             "type": "string"
           },
-          "github_app_client_id": {
+          "app_client_id": {
             "type": "string"
           },
-          "github_app_url": {
+          "app_url": {
             "type": "string"
           },
-          "github_web_base_url": {
+          "web_base_url": {
             "type": "string"
           }
         },
         "required": [
-          "github_api_base_url",
-          "github_app_client_id",
-          "github_app_url",
-          "github_web_base_url"
+          "api_base_url",
+          "app_client_id",
+          "app_url",
+          "web_base_url"
         ],
         "type": "object"
       },
@@ -2306,8 +2315,8 @@
             "name": "lite",
             "required": false,
             "schema": {
-              "type": "boolean",
-              "default": false
+              "default": false,
+              "type": "boolean"
             }
           }
         ],

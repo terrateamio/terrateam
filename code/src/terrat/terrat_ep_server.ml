@@ -3,10 +3,17 @@ module Config = struct
     let body =
       Terrat_api_components.Server_config.(
         {
-          github_api_base_url = Uri.to_string (Terrat_config.github_api_base_url config);
-          github_app_client_id = Terrat_config.github_app_client_id config;
-          github_app_url = Uri.to_string (Terrat_config.github_app_url config);
-          github_web_base_url = Uri.to_string (Terrat_config.github_web_base_url config);
+          github =
+            CCOption.map
+              (fun github ->
+                {
+                  Terrat_api_components.Server_config_github.api_base_url =
+                    Uri.to_string (Terrat_config.Github.api_base_url github);
+                  app_client_id = Terrat_config.Github.app_client_id github;
+                  app_url = Uri.to_string (Terrat_config.Github.app_url github);
+                  web_base_url = Uri.to_string (Terrat_config.Github.web_base_url github);
+                })
+              (Terrat_config.github config);
         }
         |> to_yojson
         |> Yojson.Safe.to_string)

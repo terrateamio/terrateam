@@ -1,15 +1,15 @@
-module Ctx : sig
-  type 's t
-
-  val make : request_id:string -> config:Terrat_config.t -> storage:'s -> unit -> 's t
-  val request_id : 's t -> string
-  val config : 's t -> Terrat_config.t
-  val storage : 's t -> 's
-  val set_request_id : string -> 's t -> 's t
-  val set_storage : 's -> 'a t -> 's t
-end
-
 module Make (S : Terrat_vcs_provider2.S) : sig
+  module Ctx : sig
+    type 's t
+
+    val make : request_id:string -> config:S.Api.Config.t -> storage:'s -> unit -> 's t
+    val request_id : 's t -> string
+    val config : 's t -> S.Api.Config.t
+    val storage : 's t -> 's
+    val set_request_id : string -> 's t -> 's t
+    val set_storage : 's -> 'a t -> 's t
+  end
+
   module Repo_config : sig
     type fetch_err = Terrat_vcs_provider2.fetch_repo_config_with_provenance_err [@@deriving show]
   end

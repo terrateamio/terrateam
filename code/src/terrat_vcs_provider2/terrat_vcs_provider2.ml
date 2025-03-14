@@ -73,7 +73,7 @@ module Msg = struct
     | `Unlock of Terrat_base_repo_config_v1.Access_control.Match_list.t
     ]
 
-  type ('account, 'pull_request, 'target, 'apply_requirements) t =
+  type ('account, 'pull_request, 'target, 'apply_requirements, 'config) t =
     | Access_control_denied of (string * access_control_denied)
     | Account_expired
     | Apply_no_matching_dirspaces
@@ -114,7 +114,7 @@ module Msg = struct
       }
     | Tf_op_result2 of {
         account_status : Account_status.t;
-        config : Terrat_config.t;
+        config : 'config;
         is_layered_run : bool;
         remaining_layers : Terrat_change_match3.Dirspace_config.t list list;
         result : Terrat_api_components_work_manifest_tf_operation_result2.t;
@@ -322,7 +322,7 @@ module type S = sig
 
     val eval :
       request_id:string ->
-      Terrat_config.t ->
+      Api.Config.t ->
       Api.User.t ->
       Api.Client.t ->
       'a Terrat_base_repo_config_v1.t ->
@@ -340,7 +340,8 @@ module type S = sig
       ( Api.Account.t,
         ('diff2, 'checks2) Api.Pull_request.t,
         (('diff3, 'checks3) Api.Pull_request.t, Api.Repo.t) Target.t,
-        Apply_requirements.Result.t )
+        Apply_requirements.Result.t,
+        Api.Config.t )
       Msg.t ->
       (unit, [> `Error ]) result Abb.Future.t
   end
@@ -379,7 +380,7 @@ module type S = sig
   module Commit_check : sig
     val make :
       ?work_manifest:('a, 'b) Terrat_work_manifest3.Existing.t ->
-      config:Terrat_config.t ->
+      config:Api.Config.t ->
       description:string ->
       title:string ->
       status:Terrat_commit_check.Status.t ->
@@ -391,7 +392,7 @@ module type S = sig
   module Work_manifest : sig
     val run :
       request_id:string ->
-      Terrat_config.t ->
+      Api.Config.t ->
       Api.Client.t ->
       ( Api.Account.t,
         ((unit, unit) Api.Pull_request.t, Api.Repo.t) Target.t )
@@ -462,6 +463,6 @@ module type S = sig
 
   module Ui : sig
     val work_manifest_url :
-      Terrat_config.t -> Api.Account.t -> ('a, 'b) Terrat_work_manifest3.Existing.t -> Uri.t option
+      Api.Config.t -> Api.Account.t -> ('a, 'b) Terrat_work_manifest3.Existing.t -> Uri.t option
   end
 end

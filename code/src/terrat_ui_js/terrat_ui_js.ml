@@ -13,28 +13,31 @@ let no_installation state =
       Terrat_ui_js_client.list_github_installations client
       >>= function
       | Ok R.{ installations = [] } -> (
+          let module C = Terrat_api_components.Server_config in
           Terrat_ui_js_client.server_config client
           >>= function
-          | Ok config ->
-              let module C = Terrat_api_components.Server_config in
-              Abb_js.Future.return
-                (Brtl_js2.Output.navigate (Uri.of_string config.C.github_app_url))
+          | Ok { C.github = Some github } ->
+              let module Cg = Terrat_api_components.Server_config_github in
+              Abb_js.Future.return (Brtl_js2.Output.navigate (Uri.of_string github.Cg.app_url))
+          | Ok { C.github = None } -> raise (Failure "nyi")
           | Error _ -> failwith "nyi4")
       | Ok R.{ installations = i :: _ } ->
           let module I = Terrat_api_components.Installation in
           Abb_js.Future.return
             (Brtl_js2.Output.navigate (Uri.of_string (consumed_path ^ "/i/" ^ i.I.id)))
       | Error `Forbidden -> (
+          let module C = Terrat_api_components.Server_config in
           Terrat_ui_js_client.server_config client
           >>= function
-          | Ok config ->
-              let module C = Terrat_api_components.Server_config in
+          | Ok { C.github = Some github } ->
+              let module Cg = Terrat_api_components.Server_config_github in
               Abb_js.Future.return
                 (Brtl_js2.Output.navigate
-                   (config.C.github_web_base_url
+                   (github.Cg.web_base_url
                    |> Uri.of_string
                    |> CCFun.flip Uri.with_path "login/oauth/authorize"
-                   |> CCFun.flip Uri.with_query' [ ("client_id", config.C.github_app_client_id) ]))
+                   |> CCFun.flip Uri.with_query' [ ("client_id", github.Cg.app_client_id) ]))
+          | Ok { C.github = None } -> raise (Failure "nyi")
           | Error _ -> assert false)
       | Error _ -> failwith "nyi2")
   | Ok None -> Abb_js.Future.return (Brtl_js2.Output.navigate (Uri.of_string "/login"))

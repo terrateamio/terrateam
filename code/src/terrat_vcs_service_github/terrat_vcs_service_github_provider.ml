@@ -73,7 +73,7 @@ module Api = Terrat_vcs_api_github
 
 module type S = sig
   val work_manifest_url :
-    Terrat_config.t -> Api.Account.t -> ('a, 'b) Terrat_work_manifest3.Existing.t -> Uri.t option
+    Api.Config.t -> Api.Account.t -> ('a, 'b) Terrat_work_manifest3.Existing.t -> Uri.t option
 end
 
 module Unlock_id = struct
@@ -4486,7 +4486,8 @@ module Work_manifest = struct
     let module Wm = Terrat_work_manifest3 in
     Terrat_telemetry.Event.Run
       {
-        github_app_id = Terrat_config.github_app_id config;
+        app_type = "github";
+        app_id = Terrat_config.Github.app_id @@ Api.Config.vcs_config config;
         step;
         owner = Api.Repo.owner repo;
         repo = Api.Repo.name repo;
@@ -4540,7 +4541,9 @@ module Work_manifest = struct
                                            ( "work-token",
                                              `String (Ouuid.to_string work_manifest.Wm.id) );
                                            ( "api-base-url",
-                                             `String (Terrat_config.api_base config ^ "/github") );
+                                             `String
+                                               (Terrat_config.api_base (Api.Config.config config)
+                                               ^ "/github") );
                                          ]
                                         @
                                         match work_manifest.Wm.environment with
@@ -4560,7 +4563,7 @@ module Work_manifest = struct
               match CCList.last_opt work_manifest.Wm.steps with
               | Some step ->
                   Terrat_telemetry.send
-                    (Terrat_config.telemetry config)
+                    (Terrat_config.telemetry @@ Api.Config.config config)
                     (make_run_telemetry config step repo)
                   >>= fun () -> Abb.Future.return (Ok ())
               | None -> Abb.Future.return (Ok ()))
