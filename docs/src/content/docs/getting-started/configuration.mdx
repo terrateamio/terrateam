@@ -45,25 +45,25 @@ Each section serves a specific purpose in customizing Terrateam's behavior:
 
 Tag queries are a core concept in Terrateam, allowing you to target specific operations for particular directories, environments, or infrastructure components. They connect various configuration sections and provide granular control over workflow execution, apply requirements, and access control.
 
-### How Do Tag Queries Work?
+Tag queries work by matching directories based on the tags assigned to them:
 
 1. **Assigning Tags**: In the configuration file (`.terrateam/config.yml`), you define **tags** for directories in the `dirs` section. These tags can represent environments, applications, or other organizational criteria.
 2. **Using Tag Queries**: In other configuration sections (such as `access_control`, `apply_requirements`, and `workflows`), you use **tag queries** to select and apply rules to specific directories or resources.
 
-### Usage Examples
+The most common usages for terrateam tags are:
 
 - Assign the `production` and `critical` tags to the `production` directory.
 - Create a workflow that applies only to this directory using `tag_query: "production"`.
 - Restrict permissions for critical directories using `tag_query: "critical"`.
 
-### Common Tag Query Patterns
+Some common tag queries include:
 
 - `tag_query: ""` → Matches all directories.
 - `tag_query: "production"` → Matches directories tagged with `production`.
 - `tag_query: "aws and production"` → Matches directories with both `aws` **and** `production` tags.
 - `tag_query: "staging or development"` → Matches directories with either the `staging` **or** `development` tag.
 
-### Benefits of Tag Queries
+The benefits of using tag queries to manage your infrastructure are:
 
 - **Structured Organization**: Define meaningful tags to better manage your infrastructure.
 - **Targeted Precision**: Combine dynamic tags (based on branch) and static tags (directories) for greater flexibility.
