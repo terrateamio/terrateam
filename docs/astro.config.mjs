@@ -2,6 +2,8 @@ import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 import starlightImageZoom from "starlight-image-zoom";
 import { pluginLineNumbers } from '@expressive-code/plugin-line-numbers';
+import rehypeMermaid from 'rehype-mermaid';
+import addMermaidClass from './add-mermaid-classname';
 
 export default defineConfig({
   vite: {
@@ -108,6 +110,9 @@ export default defineConfig({
       ],
     }),
   ],
+  markdown: {
+    rehypePlugins: [addMermaidClass, rehypeMermaid],
+  },
   redirects: {
     '/security-and-compliance/plan-and-apply-permissions': '/security-and-compliance/role-based-access-control',
     '/configuration': '/getting-started/configuration',
