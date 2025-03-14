@@ -1,4 +1,6 @@
-module Provider : Terrat_vcs_provider2_github.S = struct
+module Provider :
+  Terrat_vcs_provider2_github.S
+    with type Api.Config.t = Terrat_vcs_service_github_provider.Api.Config.t = struct
   module Api = Terrat_vcs_api_github
   module Unlock_id = Terrat_vcs_service_github_provider.Unlock_id
   module Db = Terrat_vcs_service_github_provider.Db
@@ -335,10 +337,10 @@ module Provider : Terrat_vcs_provider2_github.S = struct
         | Some work_manifest ->
             Printf.sprintf
               "%s/i/%d/runs/%s"
-              (Uri.to_string (Terrat_config.terrateam_web_base_url config))
+              (Uri.to_string @@ Terrat_config.terrateam_web_base_url @@ Api.Config.config config)
               (Api.Account.id account)
               (Uuidm.to_string work_manifest.Wm.id)
-        | None -> Uri.to_string (Terrat_config.terrateam_web_base_url config)
+        | None -> Uri.to_string @@ Terrat_config.terrateam_web_base_url @@ Api.Config.config config
       in
       Terrat_commit_check.make ~details_url ~description ~title ~status
   end
@@ -350,7 +352,7 @@ module Provider : Terrat_vcs_provider2_github.S = struct
         (Uri.of_string
            (Printf.sprintf
               "%s/i/%d/runs/%s"
-              (Uri.to_string (Terrat_config.terrateam_web_base_url config))
+              (Uri.to_string (Terrat_config.terrateam_web_base_url @@ Api.Config.config config))
               (Api.Account.id account)
               (Uuidm.to_string work_manifest.Wm.id)))
   end
@@ -359,6 +361,8 @@ module Provider : Terrat_vcs_provider2_github.S = struct
 end
 
 module Routes = struct
+  type config = Provider.Api.Config.t
+
   module Rt = struct
     let api () = Brtl_rtng.Route.(rel / "api")
     let api_v1 () = Brtl_rtng.Route.(api () / "v1")

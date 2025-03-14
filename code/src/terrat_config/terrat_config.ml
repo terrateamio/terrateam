@@ -1,8 +1,32 @@
-let default_github_api_base_url = Uri.of_string "https://api.github.com"
-let default_github_app_url = Uri.of_string "https://github.com/apps/terrateam-action"
-let default_github_web_base_url = Uri.of_string "https://github.com"
 let default_telemetry_uri = Uri.of_string "https://telemetry.terrateam.io"
 let default_terrateam_web_base_url = Uri.of_string "https://app.terrateam.io"
+
+module Github = struct
+  let default_github_api_base_url = Uri.of_string "https://api.github.com"
+  let default_github_app_url = Uri.of_string "https://github.com/apps/terrateam-action"
+  let default_github_web_base_url = Uri.of_string "https://github.com"
+
+  type t = {
+    api_base_url : Uri.t;
+    app_client_id : string;
+    app_client_secret : (string[@opaque]);
+    app_id : string;
+    app_pem : (Mirage_crypto_pk.Rsa.priv[@opaque]);
+    app_url : Uri.t;
+    web_base_url : Uri.t;
+    webhook_secret : (string[@opaque]) option;
+  }
+  [@@deriving show]
+
+  let api_base_url t = t.api_base_url
+  let app_client_id t = t.app_client_id
+  let app_client_secret t = t.app_client_secret
+  let app_id t = t.app_id
+  let app_pem t = t.app_pem
+  let app_url t = t.app_url
+  let web_base_url t = t.web_base_url
+  let webhook_secret t = t.webhook_secret
+end
 
 module Telemetry = struct
   type t =
@@ -27,14 +51,7 @@ type t = {
   db_host : string;
   db_password : (string[@opaque]);
   db_user : string;
-  github_api_base_url : Uri.t;
-  github_app_client_id : string;
-  github_app_client_secret : (string[@opaque]);
-  github_app_id : string;
-  github_app_pem : (Mirage_crypto_pk.Rsa.priv[@opaque]);
-  github_app_url : Uri.t;
-  github_web_base_url : Uri.t;
-  github_webhook_secret : (string[@opaque]) option;
+  github : Github.t option;
   infracost : Infracost.t option;
   nginx_status_uri : Uri.t option;
   port : int;
@@ -65,6 +82,54 @@ let infracost () =
   | Some endpoint, Some api_key -> Some { Infracost.endpoint = Uri.of_string endpoint; api_key }
   | _, _ -> None
 
+let load_github () =
+  let open CCResult.Infix in
+  match Sys.getenv_opt "GITHUB_APP_ID" with
+  | Some app_id ->
+      let webhook_secret = Sys.getenv_opt "GITHUB_WEBHOOK_SECRET" in
+      env_str "GITHUB_APP_PEM"
+      >>= fun app_pem_content ->
+      (match X509.Private_key.decode_pem (Cstruct.of_string app_pem_content) with
+      | Ok (`RSA v) -> Ok v
+      | Ok _ -> Error (`Bad_pem "Expected RSA")
+      | Error (`Msg s) -> Error (`Bad_pem s))
+      >>= fun app_pem ->
+      env_str "GITHUB_APP_CLIENT_SECRET"
+      >>= fun app_client_secret ->
+      env_str "GITHUB_APP_CLIENT_ID"
+      >>= fun app_client_id ->
+      let api_base_url =
+        CCOption.map_or
+          ~default:Github.default_github_api_base_url
+          Uri.of_string
+          (Sys.getenv_opt "GITHUB_API_BASE_URL")
+      in
+      let web_base_url =
+        CCOption.map_or
+          ~default:Github.default_github_web_base_url
+          Uri.of_string
+          (Sys.getenv_opt "GITHUB_WEB_BASE_URL")
+      in
+      let app_url =
+        CCOption.map_or
+          ~default:Github.default_github_app_url
+          Uri.of_string
+          (Sys.getenv_opt "GITHUB_APP_URL")
+      in
+      Ok
+        (Some
+           {
+             Github.api_base_url;
+             app_client_id;
+             app_client_secret;
+             app_id;
+             app_pem;
+             app_url;
+             web_base_url;
+             webhook_secret;
+           })
+  | None -> Ok None
+
 let create () =
   let open CCResult.Infix in
   of_opt
@@ -83,20 +148,6 @@ let create () =
     (`Key_error "DB_CONNECT_TIMEOUT")
     (CCFloat.of_string_opt (CCOption.get_or ~default:"120" (Sys.getenv_opt "DB_CONNECT_TIMEOUT")))
   >>= fun db_connect_timeout ->
-  env_str "GITHUB_APP_ID"
-  >>= fun github_app_id ->
-  let github_webhook_secret = Sys.getenv_opt "GITHUB_WEBHOOK_SECRET" in
-  env_str "GITHUB_APP_PEM"
-  >>= fun github_app_pem_content ->
-  (match X509.Private_key.decode_pem (Cstruct.of_string github_app_pem_content) with
-  | Ok (`RSA v) -> Ok v
-  | Ok _ -> Error (`Bad_pem "Expected RSA")
-  | Error (`Msg s) -> Error (`Bad_pem s))
-  >>= fun github_app_pem ->
-  env_str "GITHUB_APP_CLIENT_SECRET"
-  >>= fun github_app_client_secret ->
-  env_str "GITHUB_APP_CLIENT_ID"
-  >>= fun github_app_client_id ->
   env_str "TERRAT_API_BASE"
   >>= fun api_base ->
   env_str "TERRAT_PYTHON_EXEC"
@@ -117,31 +168,17 @@ let create () =
     | "disabled" -> Some Telemetry.Disabled
     | _ -> None)
   >>= fun telemetry ->
-  let github_api_base_url =
-    CCOption.map_or
-      ~default:default_github_api_base_url
-      Uri.of_string
-      (Sys.getenv_opt "GITHUB_API_BASE_URL")
-  in
-  let github_web_base_url =
-    CCOption.map_or
-      ~default:default_github_web_base_url
-      Uri.of_string
-      (Sys.getenv_opt "GITHUB_WEB_BASE_URL")
-  in
-  let github_app_url =
-    CCOption.map_or ~default:default_github_app_url Uri.of_string (Sys.getenv_opt "GITHUB_APP_URL")
-  in
   let terrateam_web_base_url =
     CCOption.map_or
       ~default:default_terrateam_web_base_url
       Uri.of_string
       (Sys.getenv_opt "TERRAT_WEB_BASE_URL")
   in
-
   let statement_timeout =
     CCOption.get_or ~default:"500ms" (Sys.getenv_opt "TERRAT_STATEMENT_TIMEOUT")
   in
+  load_github ()
+  >>= fun github ->
   Ok
     {
       admin_token;
@@ -151,14 +188,7 @@ let create () =
       db_host;
       db_password;
       db_user;
-      github_api_base_url;
-      github_app_client_id;
-      github_app_client_secret;
-      github_app_id;
-      github_app_pem;
-      github_app_url;
-      github_web_base_url;
-      github_webhook_secret;
+      github;
       infracost;
       nginx_status_uri;
       port;
@@ -175,14 +205,7 @@ let db_connect_timeout t = t.db_connect_timeout
 let db_host t = t.db_host
 let db_password t = t.db_password
 let db_user t = t.db_user
-let github_api_base_url t = t.github_api_base_url
-let github_app_client_id t = t.github_app_client_id
-let github_app_client_secret t = t.github_app_client_secret
-let github_app_id t = t.github_app_id
-let github_app_pem t = t.github_app_pem
-let github_app_url t = t.github_app_url
-let github_web_base_url t = t.github_web_base_url
-let github_webhook_secret t = t.github_webhook_secret
+let github t = t.github
 let infracost t = t.infracost
 let nginx_status_uri t = t.nginx_status_uri
 let port t = t.port
