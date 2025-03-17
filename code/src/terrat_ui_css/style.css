@@ -1036,17 +1036,32 @@
         box-shadow: 0 0 15px 0px rgba(34, 197, 94, 1);
     }
 
-    body > .logout {
+    body > .login {
         @apply mx-auto;
         @apply py-20;
-        @apply flex flex-col;
-        @apply text-2xl;
+        @apply flex flex flex-col gap-8;
         @apply text-center;
+        @apply text-2xl;
     }
 
-    body > .logout .logo {
+    body > .login .logo {
         @apply mx-auto;
         @apply h-14;
+    }
+
+    body > .login .logins {
+        @apply mx-auto;
+        @apply flex flex-col gap-4;
+    }
+
+    body > .login .logins > div > a {
+        @apply flex flex-row gap-2;
+        @apply justify-center items-center;
+        @apply px-8 py-4;
+        @apply text-black;
+        @apply border-2 border-slate-500;
+        @apply rounded;
+        @apply hover:bg-slate-100;
     }
 }
 
