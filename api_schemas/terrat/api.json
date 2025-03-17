@@ -2372,6 +2372,20 @@
         }
       }
     },
+    "/api/v1/logout": {
+      "post": {
+        "operationId": "user/logout",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {}
+          },
+          "403": {
+            "content": {}
+          }
+        }
+      }
+    },
     "/api/v1/server/config": {
       "get": {
         "operationId": "server/config",

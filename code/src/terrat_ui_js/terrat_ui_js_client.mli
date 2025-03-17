@@ -28,6 +28,7 @@ type dirspaces_err =
 type t
 
 val create : unit -> t
+val logout : t -> (unit, [> err ]) result Abb_js.Future.t
 
 val whoami :
   t ->
