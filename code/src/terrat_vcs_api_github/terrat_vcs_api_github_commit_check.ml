@@ -1,3 +1,6 @@
+let src = Logs.Src.create "vcs_api_github_commit_check"
+
+module Logs = (val Logs.src_log src : Logs.LOG)
 module String_map = CCMap.Make (CCString)
 
 type err = Githubc2_abb.call_err [@@deriving show]
@@ -32,13 +35,12 @@ let create ~owner ~repo ~ref_ ~checks client =
 
 let list_commit_statuses ~log_id ~owner ~repo ~sha client =
   Abbs_time_it.run
-    (fun t ->
-      Logs.info (fun m -> m "GITHUB_COMMIT_CHECK : %s : LIST_COMMIT_STATUSES : %f" log_id t))
+    (fun t -> Logs.info (fun m -> m "%s : LIST_COMMIT_STATUSES : %f" log_id t))
     (fun () -> Terrat_github.Commit_status.list ~owner ~repo ~sha client)
 
 let list_status_checks ~log_id ~owner ~repo ~ref_ client =
   Abbs_time_it.run
-    (fun t -> Logs.info (fun m -> m "GITHUB_COMMIT_CHECK : %s : LIST_STATUS_CHECKS : %f" log_id t))
+    (fun t -> Logs.info (fun m -> m "%s : LIST_STATUS_CHECKS : %f" log_id t))
     (fun () -> Terrat_github.Status_check.list ~owner ~repo ~ref_ client)
 
 let list ~log_id ~owner ~repo ~ref_ client =
@@ -83,22 +85,21 @@ let list ~log_id ~owner ~repo ~ref_ client =
         let module App = Githubc2_components.Nullable_integration in
         checks
         |> CCList.filter (function
-               | Check_run.
-                   {
-                     primary =
-                       Primary.
-                         {
-                           app =
-                             Some App.{ primary = Primary.{ slug = Some "github-actions"; _ }; _ };
-                           _;
-                         };
-                     _;
-                   } ->
-                   (* We are filtering out checks from the github app because that
+             | Check_run.
+                 {
+                   primary =
+                     Primary.
+                       {
+                         app = Some App.{ primary = Primary.{ slug = Some "github-actions"; _ }; _ };
+                         _;
+                       };
+                   _;
+                 } ->
+                 (* We are filtering out checks from the github app because that
                       is metadata about running the action and not the action
                       output itself. *)
-                   false
-               | _ -> true)
+                 false
+             | _ -> true)
         |> CCList.sort
              (fun
                Check_run.{ primary = Primary.{ completed_at = c1; _ }; _ }

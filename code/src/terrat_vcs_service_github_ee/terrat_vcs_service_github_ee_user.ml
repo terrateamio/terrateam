@@ -49,7 +49,9 @@ let get_token config storage user =
   | [] -> assert false
   | (_, true, refresh_token) :: _ ->
       let module Oauth = Terrat_github.Oauth.Response in
-      Terrat_github.Oauth.refresh ~config refresh_token
+      Terrat_github.Oauth.refresh
+        ~config:(Terrat_vcs_service_github_provider.Api.Config.vcs_config config)
+        refresh_token
       >>= fun oauth ->
       Abbs_future_combinators.to_result (Abb.Sys.time ())
       >>= fun now ->

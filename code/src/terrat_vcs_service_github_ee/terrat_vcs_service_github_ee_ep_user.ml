@@ -29,7 +29,10 @@ module Installations = struct
     let open Abbs_future_combinators.Infix_result_monad in
     Terrat_vcs_service_github_ee_user.get_token config storage user
     >>= fun token ->
-    Terrat_github.with_client config (`Bearer token) Terrat_github.get_user_installations
+    Terrat_github.with_client
+      (Terrat_vcs_service_github_provider.Api.Config.vcs_config config)
+      (`Bearer token)
+      Terrat_github.get_user_installations
     >>= fun installations ->
     Pgsql_pool.with_conn storage ~f:(fun db ->
         let module I = Githubc2_components.Installation in

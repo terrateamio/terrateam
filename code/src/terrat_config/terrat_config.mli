@@ -1,3 +1,16 @@
+module Github : sig
+  type t [@@deriving show]
+
+  val api_base_url : t -> Uri.t
+  val app_client_id : t -> string
+  val app_client_secret : t -> string
+  val app_id : t -> string
+  val app_pem : t -> Mirage_crypto_pk.Rsa.priv
+  val app_url : t -> Uri.t
+  val web_base_url : t -> Uri.t
+  val webhook_secret : t -> string option
+end
+
 type t [@@deriving show]
 
 type err =
@@ -27,14 +40,7 @@ val db_connect_timeout : t -> float
 val db_host : t -> string
 val db_password : t -> string
 val db_user : t -> string
-val github_api_base_url : t -> Uri.t
-val github_app_client_id : t -> string
-val github_app_client_secret : t -> string
-val github_app_id : t -> string
-val github_app_pem : t -> Mirage_crypto_pk.Rsa.priv
-val github_app_url : t -> Uri.t
-val github_web_base_url : t -> Uri.t
-val github_webhook_secret : t -> string option
+val github : t -> Github.t option
 val infracost : t -> Infracost.t option
 val nginx_status_uri : t -> Uri.t option
 val port : t -> int

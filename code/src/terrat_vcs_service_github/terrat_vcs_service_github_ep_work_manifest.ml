@@ -31,7 +31,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
       | encryption_key :: _ ->
           let request_id = Brtl_ctx.token ctx in
           Evaluator.run_work_manifest_initiate
-            ~ctx:(Terrat_vcs_event_evaluator.Ctx.make ~request_id ~config ~storage ())
+            ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
             ~encryption_key
             work_manifest_id
             initiate
@@ -74,7 +74,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
       let open Abb.Future.Infix_monad in
       let request_id = Brtl_ctx.token ctx in
       Evaluator.run_plan_store
-        ~ctx:(Terrat_vcs_event_evaluator.Ctx.make ~request_id ~config ~storage ())
+        ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
         work_manifest_id
         plan
       >>= function
@@ -87,7 +87,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
       let open Abb.Future.Infix_monad in
       let request_id = Brtl_ctx.token ctx in
       Evaluator.run_plan_fetch
-        ~ctx:(Terrat_vcs_event_evaluator.Ctx.make ~request_id ~config ~storage ())
+        ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
         work_manifest_id
         { Terrat_dirspace.dir; workspace }
       >>= function
@@ -112,7 +112,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
       let open Abb.Future.Infix_monad in
       let request_id = Brtl_ctx.token ctx in
       Evaluator.run_work_manifest_result
-        ~ctx:(Terrat_vcs_event_evaluator.Ctx.make ~request_id ~config ~storage ())
+        ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
         work_manifest_id
         result
       >>= fun r ->
@@ -284,7 +284,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
               Cache.fetch cache installation_id (fun () ->
                   Terrat_github.get_installation_access_token
                     ~permissions:github_permissions
-                    config
+                    (P.Api.Config.vcs_config config)
                     (CCInt64.to_int installation_id))
               >>= function
               | Ok access_token ->

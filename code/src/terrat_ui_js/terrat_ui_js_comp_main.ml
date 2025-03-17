@@ -44,12 +44,12 @@ let nav_bar state =
 let run' state =
   let consumed_path = Brtl_js2.State.consumed_path state in
   let app_state = Brtl_js2.State.app_state state in
-  let server_config = Terrat_ui_js_state.server_config app_state in
+  let vcs_config = Terrat_ui_js_state.vcs_config app_state in
   let user = Terrat_ui_js_state.user app_state in
   let avatar_url = CCOption.get_or ~default:"" user.Terrat_api_components.User.avatar_url in
   let nav_bar_div = nav_bar state in
   let installation_sel_el = installation_sel state in
-  let module C = Terrat_api_components_server_config in
+  let module Cg = Terrat_api_components_server_config_github in
   Abb_js.Future.return
     (Brtl_js2.Output.const
        Brtl_js2.Brr.El.
@@ -114,11 +114,7 @@ let run' state =
                          [
                            a
                              ~at:
-                               At.
-                                 [
-                                   class' (Jstr.v "install");
-                                   href (Jstr.v server_config.C.github_app_url);
-                                 ]
+                               At.[ class' (Jstr.v "install"); href (Jstr.v vcs_config.Cg.app_url) ]
                              [
                                span ~at:At.[ class' (Jstr.v "material-icons") ] [ txt' "add" ];
                                span [ txt' "Install" ];
@@ -166,6 +162,7 @@ let run installation_id state =
   >>= function
   | Ok (Some user) ->
       let module I = Terrat_api_components.Installation in
+      let module C = Terrat_api_components.Server_config in
       let module R = Terrat_api_user.List_github_installations.Responses.OK in
       Brtl_js2.Ph.create
         ph_loading
@@ -173,7 +170,7 @@ let run installation_id state =
           load_info client
           >>= function
           | Ok (R.{ installations = []; _ }, _) -> assert false
-          | Ok (R.{ installations; _ }, server_config) -> (
+          | Ok (R.{ installations; _ }, ({ C.github = Some github } as server_config)) -> (
               match
                 CCList.find_opt (fun I.{ id; _ } -> CCString.equal id installation_id) installations
               with
@@ -190,23 +187,24 @@ let run installation_id state =
                       ~installations
                       ~selected_installation
                       ~server_config
+                      ~vcs_config:github
                       ()
                   in
                   run' (Brtl_js2.State.with_app_state app_state state)
               | None -> Abb_js.Future.return (Brtl_js2.Output.navigate (Uri.of_string "/")))
+          | Ok (R.{ installations; _ }, { C.github = None }) -> raise (Failure "nyi")
           | Error `Forbidden -> (
               Terrat_ui_js_client.server_config client
               >>= function
-              | Ok config ->
-                  let module C = Terrat_api_components.Server_config in
+              | Ok { C.github = Some github } ->
+                  let module Cg = Terrat_api_components.Server_config_github in
                   Abb_js.Future.return
                     (Brtl_js2.Output.navigate
-                       (config.C.github_web_base_url
+                       (github.Cg.web_base_url
                        |> Uri.of_string
                        |> CCFun.flip Uri.with_path "login/oauth/authorize"
-                       |> CCFun.flip
-                            Uri.with_query'
-                            [ ("client_id", config.C.github_app_client_id) ]))
+                       |> CCFun.flip Uri.with_query' [ ("client_id", github.Cg.app_client_id) ]))
+              | Ok { C.github = None } -> raise (Failure "nyi")
               | Error _ -> assert false)
           | Error _ -> failwith "nyi4")
         state

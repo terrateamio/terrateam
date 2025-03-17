@@ -209,7 +209,7 @@ let get_rate_limit_remaining resp =
 
 let create config auth =
   Githubc2_abb.create
-    ~base_url:(Terrat_config.github_api_base_url config)
+    ~base_url:(Terrat_config.Github.api_base_url config)
     ~user_agent:"Terrateam"
     ~call_timeout
     auth
@@ -280,11 +280,11 @@ let get_installation_access_token
     let module P = Jwt.Payload in
     let module C = Jwt.Claim in
     P.empty
-    |> P.add_claim C.iss (`String (Terrat_config.github_app_id config))
+    |> P.add_claim C.iss (`String (Terrat_config.Github.app_id config))
     |> P.add_claim C.iat (`Int (Float.to_int (time -. expiration_sec)))
     |> P.add_claim C.exp (`Int (Float.to_int (time +. expiration_sec)))
   in
-  let signer = Jwt.Signer.(RS256 (Priv_key.of_priv_key (Terrat_config.github_app_pem config))) in
+  let signer = Jwt.Signer.(RS256 (Priv_key.of_priv_key (Terrat_config.Github.app_pem config))) in
   let header = Jwt.Header.create (Jwt.Signer.to_string signer) in
   let jwt = Jwt.of_header_and_payload signer header payload in
   let token = Jwt.token jwt in
@@ -805,14 +805,14 @@ module Oauth = struct
       Uri.of_string
         (Printf.sprintf
            "%s/login/oauth/access_token"
-           (Uri.to_string (Terrat_config.github_web_base_url config)))
+           (Uri.to_string (Terrat_config.Github.web_base_url config)))
     in
     let body =
       Yojson.Safe.to_string
         (`Assoc
            [
-             ("client_id", `String (Terrat_config.github_app_client_id config));
-             ("client_secret", `String (Terrat_config.github_app_client_secret config));
+             ("client_id", `String (Terrat_config.Github.app_client_id config));
+             ("client_secret", `String (Terrat_config.Github.app_client_secret config));
              ("code", `String code);
            ])
     in
@@ -839,14 +839,14 @@ module Oauth = struct
       Uri.of_string
         (Printf.sprintf
            "%s/login/oauth/access_token"
-           (Uri.to_string (Terrat_config.github_web_base_url config)))
+           (Uri.to_string (Terrat_config.Github.web_base_url config)))
     in
     let body =
       Yojson.Safe.to_string
         (`Assoc
            [
-             ("client_id", `String (Terrat_config.github_app_client_id config));
-             ("client_secret", `String (Terrat_config.github_app_client_secret config));
+             ("client_id", `String (Terrat_config.Github.app_client_id config));
+             ("client_secret", `String (Terrat_config.Github.app_client_secret config));
              ("grant_type", `String "refresh_token");
              ("refresh_token", `String refresh_token);
            ])

@@ -1,11 +1,18 @@
 module type ROUTES = sig
+  type config
+
   val routes :
-    Terrat_config.t ->
+    config ->
     Terrat_storage.t ->
     (Brtl_rtng.Method.t * Brtl_rtng.Handler.t Brtl_rtng.Route.Route.t) list
 end
 
-module Make (Provider : Terrat_vcs_provider2_github.S) (Routes : ROUTES) = struct
+module Make
+    (Provider :
+      Terrat_vcs_provider2_github.S
+        with type Api.Config.t = Terrat_vcs_service_github_provider.Api.Config.t)
+    (Routes : ROUTES with type config = Provider.Api.Config.t) =
+struct
   module Evaluator = Terrat_vcs_event_evaluator.Make (Provider)
   module Events = Terrat_vcs_service_github_ep_events3.Make (Provider)
   module Work_manifest = Terrat_vcs_service_github_ep_work_manifest.Make (Provider)
@@ -80,10 +87,12 @@ module Make (Provider : Terrat_vcs_provider2_github.S) (Routes : ROUTES) = struc
   end
 
   module Service = struct
+    type vcs_config = Provider.Api.Config.vcs_config
+
     let one_hour = Duration.to_f (Duration.of_hour 1)
 
     type t = {
-      config : Terrat_config.t;
+      config : Provider.Api.Config.t;
       storage : Terrat_storage.t;
       drift : unit Abb.Future.t;
       flow_state_cleanup : unit Abb.Future.t;
@@ -95,48 +104,33 @@ module Make (Provider : Terrat_vcs_provider2_github.S) (Routes : ROUTES) = struc
       let open Abb.Future.Infix_monad in
       Abbs_future_combinators.ignore
         (Evaluator.run_scheduled_drift
-           (Terrat_vcs_event_evaluator.Ctx.make
-              ~config
-              ~storage
-              ~request_id:(Ouuid.to_string (Ouuid.v4 ()))
-              ()))
+           (Evaluator.Ctx.make ~config ~storage ~request_id:(Ouuid.to_string (Ouuid.v4 ())) ()))
       >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> drift config storage
 
     let rec flow_state_cleanup config storage =
       let open Abb.Future.Infix_monad in
       Abbs_future_combinators.ignore
         (Evaluator.run_flow_state_cleanup
-           (Terrat_vcs_event_evaluator.Ctx.make
-              ~config
-              ~storage
-              ~request_id:(Ouuid.to_string (Ouuid.v4 ()))
-              ()))
+           (Evaluator.Ctx.make ~config ~storage ~request_id:(Ouuid.to_string (Ouuid.v4 ())) ()))
       >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> flow_state_cleanup config storage
 
     let rec plan_cleanup config storage =
       let open Abb.Future.Infix_monad in
       Abbs_future_combinators.ignore
         (Evaluator.run_plan_cleanup
-           (Terrat_vcs_event_evaluator.Ctx.make
-              ~config
-              ~storage
-              ~request_id:(Ouuid.to_string (Ouuid.v4 ()))
-              ()))
+           (Evaluator.Ctx.make ~config ~storage ~request_id:(Ouuid.to_string (Ouuid.v4 ())) ()))
       >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> plan_cleanup config storage
 
     let rec repo_config_cleanup config storage =
       let open Abb.Future.Infix_monad in
       Abbs_future_combinators.ignore
         (Evaluator.run_repo_config_cleanup
-           (Terrat_vcs_event_evaluator.Ctx.make
-              ~config
-              ~storage
-              ~request_id:(Ouuid.to_string (Ouuid.v4 ()))
-              ()))
+           (Evaluator.Ctx.make ~config ~storage ~request_id:(Ouuid.to_string (Ouuid.v4 ())) ()))
       >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> repo_config_cleanup config storage
 
-    let start config storage =
+    let start config vcs_config storage =
       let open Abb.Future.Infix_monad in
+      let config = Provider.Api.Config.make ~config ~vcs_config () in
       Abb.Future.Infix_app.(
         (fun drift flow_state_cleanup plan_cleanup repo_config_cleanup ->
           (drift, flow_state_cleanup, plan_cleanup, repo_config_cleanup))
