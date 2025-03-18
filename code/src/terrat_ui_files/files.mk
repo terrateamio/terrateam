@@ -10,6 +10,7 @@ asset_files := \
 	$(wildcard ../../../../vendor/highlightjs/highlight.11.10.0.min.*) \
 	$(wildcard ../../../../vendor/highlightjs-terraform/terraform.2024-11-01-eb1b966.*) \
 	$(wildcard ../terrat_ui_site/*.html) \
+	$(wildcard ../terrat_ui_site/*.html.tmpl) \
 	$(wildcard ../terrat_ui_site/*.png) \
 	$(wildcard ../terrat_ui_site/*.json) \
 	$(wildcard ../terrat_ui_site/*.svg)
