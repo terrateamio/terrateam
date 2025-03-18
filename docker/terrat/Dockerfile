@@ -97,8 +97,8 @@ WORKDIR /mono/code
 RUN ulimit -s 524288 && ulimit -a && \
     mv /build-cache ./build && \
     eval $(opam env) && pds && \
-    (time env TERRAT_UI_ANALYTICS=$TERRAT_UI_ANALYTICS make -j$(nproc --all) test release_terrat_ee release_terrat_ui \
-     || time env TERRAT_UI_ANALYTICS=$TERRAT_UI_ANALYTICS make -j1 test release_terrat_ee release_terrat_ui) && \
+    (time env TERRAT_UI_ANALYTICS=$TERRAT_UI_ANALYTICS make -j$(nproc --all) test release_terrat_ee release_terrat_ui_files \
+     || time env TERRAT_UI_ANALYTICS=$TERRAT_UI_ANALYTICS make -j1 test release_terrat_ee release_terrat_ui_files) && \
     find . -name '*.tap' -exec cat '{}' \;
 
 # Build target for terrat-oss
