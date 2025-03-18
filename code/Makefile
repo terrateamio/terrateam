@@ -14,9 +14,9 @@ terrat-schemas: terrat-api terrat-repo-config terrat-webhooks
 
 terrat: release-terrat debug-terrat
 
-release-terrat: release_terrat_oss release_terrat_ee release_terrat_ui
+release-terrat: release_terrat_oss release_terrat_ee release_terrat_ui_files
 
-debug-terrat: debug_terrat_oss debug_terrat_ee debug_terrat_ui
+debug-terrat: debug_terrat_oss debug_terrat_ee debug_terrat_ui_files
 
 debug-terrat: test-debug_abb_fut test-debug_abb_future_combinators
 
