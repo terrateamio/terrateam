@@ -3,6 +3,7 @@ module Rt = struct
   let api_404 () = Brtl_rtng.Route.(api () /% Path.any)
   let api_v1 () = Brtl_rtng.Route.(api () / "v1")
   let whoami () = Brtl_rtng.Route.(api_v1 () / "whoami")
+  let logout () = Brtl_rtng.Route.(api_v1 () / "logout")
   let server_config () = Brtl_rtng.Route.(api_v1 () / "server" / "config")
   let health_check () = Brtl_rtng.Route.(rel / "health")
   let infracost () = Brtl_rtng.Route.(api () / "github" / "infracost" /% Path.any)
@@ -48,6 +49,7 @@ let rtng config storage routes =
         @ [
             (* User *)
             (`GET, Rt.whoami () --> Terrat_ep_whoami.get config storage);
+            (`POST, Rt.logout () --> Terrat_ep_logout.post storage);
             (* Infracost *)
             (`POST, Rt.infracost () --> Terrat_ep_infracost.post config storage);
             (* Server *)

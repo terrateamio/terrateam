@@ -124,6 +124,14 @@ type t = unit
 let call = Api.call
 let create () = ()
 
+let logout t =
+  let open Abb_js_future_combinators.Infix_result_monad in
+  call (Terrat_api_user.Logout.make ())
+  >>= fun resp ->
+  match Openapi.Response.value resp with
+  | `OK -> Abb_js.Future.return (Ok ())
+  | `Forbidden -> Abb_js.Future.return (Ok ())
+
 let whoami t =
   let open Abb_js_future_combinators.Infix_result_monad in
   call (Terrat_api_user.Whoami.make ())

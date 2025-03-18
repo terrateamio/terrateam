@@ -147,6 +147,10 @@
         @apply rounded-full border-2 border-gray-400 h-9 w-9;
     }
 
+    .header .right .logout a:link, .header .right .logout a:visited {
+        @apply text-white;
+    }
+
     .logo-text {
         @apply uppercase text-2xl font-bold my-auto;
     }
@@ -1030,6 +1034,19 @@
         @apply flex flex-row items-center justify-center;
         @apply p-4;
         box-shadow: 0 0 15px 0px rgba(34, 197, 94, 1);
+    }
+
+    body > .logout {
+        @apply mx-auto;
+        @apply py-20;
+        @apply flex flex-col;
+        @apply text-2xl;
+        @apply text-center;
+    }
+
+    body > .logout .logo {
+        @apply mx-auto;
+        @apply h-14;
     }
 }
 

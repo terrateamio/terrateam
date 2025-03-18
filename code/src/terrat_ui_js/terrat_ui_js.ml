@@ -45,6 +45,7 @@ let no_installation state =
 
 let init state =
   let login_rt () = Brtl_js2_rtng.(root "" / "login") in
+  let logout_rt () = Brtl_js2_rtng.(root "" / "logout") in
   let main_rt () = Brtl_js2_rtng.(root "" / "i" /% Path.string) in
   let installation_install_rt () = Brtl_js2_rtng.(root "" /? Query.string "installation_id") in
   let no_installation_rt () = Brtl_js2_rtng.(root "") in
@@ -56,6 +57,7 @@ let init state =
        Brtl_js2_rtng.
          [
            login_rt () --> Terrat_ui_js_comp_login.run;
+           logout_rt () --> Terrat_ui_js_comp_logout.run;
            main_rt () --> Terrat_ui_js_comp_main.run;
            installation_install_rt () --> new_installation_install;
            no_installation_rt () --> no_installation;

@@ -123,6 +123,9 @@ let run' state =
                            div
                              ~at:At.[ class' (Jstr.v "avatar") ]
                              [ img ~at:At.[ src (Jstr.v avatar_url) ] () ];
+                           div
+                             ~at:At.[ class' (Jstr.v "logout") ]
+                             [ a ~at:At.[ href (Jstr.v "/logout") ] [ txt' "Logout" ] ];
                          ];
                      ];
                  ];

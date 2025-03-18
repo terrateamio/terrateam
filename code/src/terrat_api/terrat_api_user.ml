@@ -1,3 +1,31 @@
+module Logout = struct
+  module Parameters = struct end
+
+  module Responses = struct
+    module OK = struct end
+    module Forbidden = struct end
+
+    type t =
+      [ `OK
+      | `Forbidden
+      ]
+    [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK); ("403", fun _ -> Ok `Forbidden) ]
+  end
+
+  let url = "/api/v1/logout"
+
+  let make () =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
 module List_github_installations = struct
   module Parameters = struct end
 
