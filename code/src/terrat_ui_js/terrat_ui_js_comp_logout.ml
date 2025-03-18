@@ -6,19 +6,7 @@ let run state =
   let client = Brtl_js2.State.app_state state in
   Terrat_ui_js_client.logout client
   >>= function
-  | Ok () ->
-      Abb_js.Future.return
-        (Brtl_js2.Output.const
-           Brtl_js2.Brr.El.
-             [
-               div
-                 ~at:At.[ class' (Jstr.v "logout") ]
-                 [
-                   div [ img ~at:At.[ src (Jstr.v "/assets/logo.svg"); class' (Jstr.v "logo") ] () ];
-                   div [ txt' "Terrateam" ];
-                   div [ a ~at:At.[ href (Jstr.v "/login") ] [ txt' "Return to login page" ] ];
-                 ];
-             ])
+  | Ok () -> Abb_js.Future.return (Brtl_js2.Output.navigate (Uri.of_string "/login"))
   | Error _ ->
       Abb_js.Future.return
         (Brtl_js2.Output.const
