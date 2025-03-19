@@ -32,6 +32,6 @@ let create config =
     ~host:(Terrat_config.db_host config)
     ~user:(Terrat_config.db_user config)
     ~passwd:(Terrat_config.db_password config)
-    ~max_conns:100
+    ~max_conns:(Terrat_config.db_max_pool_size config)
     ~connect_timeout:(Terrat_config.db_connect_timeout config)
     (Terrat_config.db config)
