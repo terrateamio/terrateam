@@ -140,6 +140,14 @@ def main():
     if os.environ.get('GITHUB_WEBHOOK_URL_UPDATE', '').upper() == 'TRUE':
         update_github_webhook_url()
 
+    # If the UI assets exist, generate the index file from template
+    if os.path.exists('/usr/local/share/terrat/ui/assets/index.html.tmpl'):
+        print('UI Assets exist, creating index page')
+        with open('/usr/local/share/terrat/ui/assets/index.html', 'w') as fout:
+            subprocess.check_call(
+                ['/usr/local/share/terrat/ui/assets/index.html.tmpl'],
+                stdout=fout)
+
     # Run db migration
     subprocess.check_call(['/usr/local/bin/terrat', 'migrate', '--verbosity=debug'])
 

@@ -1,11 +1,11 @@
 .PHONY: all release debug clean clean_all_site_files docs
 
 site_files = $(notdir $(wildcard $(SRC_DIR)/*.html) \
+	$(wildcard $(SRC_DIR)/*.html.tmpl) \
 	$(wildcard $(SRC_DIR)/*.css) \
 	$(wildcard $(SRC_DIR)/*.png) \
 	$(wildcard $(SRC_DIR)/*.json) \
-	$(wildcard $(SRC_DIR)/*.svg)) \
-	index.html
+	$(wildcard $(SRC_DIR)/*.svg))
 
 all: release
 
@@ -22,8 +22,8 @@ clean: clean_all_files
 clean_all_files:
 	-rm $(site_files)
 
-index.html: $(SRC_DIR)/index.html.tmpl
-	./"$<" > "$@"
+%.html.tmpl: $(SRC_DIR)/%.html.tmpl
+	cp $< $@
 
 %.html: $(SRC_DIR)/%.html
 	cp $< $@
