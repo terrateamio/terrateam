@@ -480,8 +480,8 @@ module Output_treeview = Brtl_js2_treeview.Make (struct
   let render_payload step payload =
     let run =
       match step with
-      | "tf/plan" -> render_payload_plan payload
-      | "tf/apply" -> render_payload_apply payload
+      | "tf/plan" | "pulumi/plan" | "custom/plan" -> render_payload_plan payload
+      | "tf/apply" | "pulumi/apply" | "custom/apply" -> render_payload_apply payload
       | "tf/cost-estimation" -> render_payload_cost_estimation payload
       | "tf/cost-estimation/details" -> render_payload_cost_estimation_details payload
       | step -> render_payload_run payload
