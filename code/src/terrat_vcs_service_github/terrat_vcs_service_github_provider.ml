@@ -2122,7 +2122,7 @@ module Comment (S : S) = struct
       match
         CCList.find_map
           (function
-            | { O.step = "tf/plan" | "pulumi/plan"; payload; success; _ } -> (
+            | { O.step = "tf/plan" | "pulumi/plan" | "custom/plan"; payload; success; _ } -> (
                 match P.of_yojson (O.Payload.to_yojson payload) with
                 | Ok { P.has_changes } -> Some has_changes
                 | _ -> None)
@@ -2326,9 +2326,11 @@ module Comment (S : S) = struct
         let module O = Terrat_api_components.Workflow_step_output in
         match output.O.step with
         | "run" | "env" -> output_of_run output
-        | "tf/init" | "pulumi/init" -> output_of_run ~default_visible_on:Visible_on.Failure output
-        | "tf/apply" | "pulumi/apply" -> output_of_run ~default_visible_on:Visible_on.Always output
-        | "tf/plan" | "pulumi/plan" -> output_of_plan output
+        | "tf/init" | "pulumi/init" | "custom/init" ->
+            output_of_run ~default_visible_on:Visible_on.Failure output
+        | "tf/apply" | "pulumi/apply" | "custom/apply" ->
+            output_of_run ~default_visible_on:Visible_on.Always output
+        | "tf/plan" | "pulumi/plan" | "custom/plan" -> output_of_plan output
         | step -> output_of_run output
 
       let output_of_raw output =
