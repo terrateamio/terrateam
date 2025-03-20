@@ -417,6 +417,9 @@
         },
         {
           "$ref": "#/definitions/engine-pulumi"
+        },
+        {
+          "$ref": "#/definitions/engine-custom"
         }
       ]
     },
@@ -425,6 +428,9 @@
       "properties": {
         "name": {
           "const": "cdktf",
+          "type": "string"
+        },
+        "override_tf_cmd": {
           "type": "string"
         },
         "tf_cmd": {
@@ -439,11 +445,63 @@
       ],
       "type": "object"
     },
+    "engine-custom": {
+      "additionalProperties": false,
+      "properties": {
+        "apply": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "diff": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "init": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "name": {
+          "const": "custom",
+          "type": "string"
+        },
+        "outputs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "plan": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "unsafe_apply": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
     "engine-opentofu": {
       "additionalProperties": false,
       "properties": {
         "name": {
           "const": "tofu",
+          "type": "string"
+        },
+        "override_tf_cmd": {
           "type": "string"
         },
         "version": {
@@ -475,6 +533,9 @@
           "const": "terraform",
           "type": "string"
         },
+        "override_tf_cmd": {
+          "type": "string"
+        },
         "version": {
           "type": "string"
         }
@@ -489,6 +550,9 @@
       "properties": {
         "name": {
           "const": "terragrunt",
+          "type": "string"
+        },
+        "override_tf_cmd": {
           "type": "string"
         },
         "tf_cmd": {
