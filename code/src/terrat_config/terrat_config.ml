@@ -49,6 +49,7 @@ type t = {
   db : string;
   db_connect_timeout : float;
   db_host : string;
+  db_max_pool_size : int;
   db_password : (string[@opaque]);
   db_user : string;
   github : Github.t option;
@@ -148,6 +149,10 @@ let create () =
     (`Key_error "DB_CONNECT_TIMEOUT")
     (CCFloat.of_string_opt (CCOption.get_or ~default:"120" (Sys.getenv_opt "DB_CONNECT_TIMEOUT")))
   >>= fun db_connect_timeout ->
+  of_opt
+    (`Key_error "DB_MAX_POOL_SIZE")
+    (CCInt.of_string (CCOption.get_or ~default:"100" (Sys.getenv_opt "DB_MAX_POOL_SIZE")))
+  >>= fun db_max_pool_size ->
   env_str "TERRAT_API_BASE"
   >>= fun api_base ->
   env_str "TERRAT_PYTHON_EXEC"
@@ -186,6 +191,7 @@ let create () =
       db;
       db_connect_timeout;
       db_host;
+      db_max_pool_size;
       db_password;
       db_user;
       github;
@@ -203,6 +209,7 @@ let api_base t = t.api_base
 let db t = t.db
 let db_connect_timeout t = t.db_connect_timeout
 let db_host t = t.db_host
+let db_max_pool_size t = t.db_max_pool_size
 let db_password t = t.db_password
 let db_user t = t.db_user
 let github t = t.github
