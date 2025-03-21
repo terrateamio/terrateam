@@ -799,6 +799,10 @@ module Engine = struct
     [@@deriving make, show, yojson, eq]
   end
 
+  module Fly = struct
+    type t = { config_file : string } [@@deriving make, show, yojson, eq]
+  end
+
   module Cdktf = struct
     type t = {
       override_tf_cmd : string option;
@@ -837,6 +841,7 @@ module Engine = struct
   type t =
     | Cdktf of Cdktf.t
     | Custom of Custom.t
+    | Fly of Fly.t
     | Opentofu of Opentofu.t
     | Pulumi
     | Terraform of Terraform.t
@@ -1630,6 +1635,10 @@ let of_version_1_workflow_engine cdktf terraform_version terragrunt default_engi
           let module E = Terrat_repo_config_engine_custom in
           let { E.apply; init; plan; diff; unsafe_apply; outputs; name = _ } = custom in
           Ok (Some Engine.(Custom (Custom.make ?apply ?init ?plan ?diff ?unsafe_apply ?outputs ())))
+      | E.Engine_fly fly ->
+          let module E = Terrat_repo_config_engine_fly in
+          let { E.config_file; name = _ } = fly in
+          Ok (Some Engine.(Fly (Fly.make ~config_file)))
       | E.Engine_cdktf cdktf ->
           let module E = Terrat_repo_config_engine_cdktf in
           Ok
@@ -1924,6 +1933,10 @@ let of_version_1_engine default_tf_version engine =
           let module E = Terrat_repo_config_engine_custom in
           let { E.apply; init; plan; diff; unsafe_apply; outputs; name = _ } = custom in
           Ok (Some Engine.(Custom (Custom.make ?apply ?init ?plan ?diff ?unsafe_apply ?outputs ())))
+      | E.Engine_fly fly ->
+          let module E = Terrat_repo_config_engine_fly in
+          let { E.config_file; name = _ } = fly in
+          Ok (Some Engine.(Fly (Fly.make ~config_file)))
       | E.Engine_cdktf cdktf ->
           let module E = Terrat_repo_config_engine_cdktf in
           Ok
@@ -2449,6 +2462,10 @@ let to_version_1_engine engine =
       let module Custom = Terrat_repo_config.Engine_custom in
       let { Engine.Custom.apply; init; plan; diff; unsafe_apply; outputs } = custom in
       E.Engine_custom { Custom.name = "custom"; apply; init; plan; diff; unsafe_apply; outputs }
+  | Engine.Fly fly ->
+      let module Fly = Terrat_repo_config.Engine_fly in
+      let { Engine.Fly.config_file } = fly in
+      E.Engine_fly { Fly.name = "fly"; config_file }
   | Engine.Cdktf cdktf ->
       let module Cdktf = Terrat_repo_config.Engine_cdktf in
       let { Engine.Cdktf.tf_cmd; tf_version; override_tf_cmd } = cdktf in

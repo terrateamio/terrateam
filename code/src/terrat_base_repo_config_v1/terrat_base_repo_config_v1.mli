@@ -436,6 +436,10 @@ module Engine : sig
     [@@deriving make, show, yojson, eq]
   end
 
+  module Fly : sig
+    type t = { config_file : string } [@@deriving make, show, yojson, eq]
+  end
+
   module Opentofu : sig
     type t = {
       override_tf_cmd : string option;
@@ -465,6 +469,7 @@ module Engine : sig
   type t =
     | Cdktf of Cdktf.t
     | Custom of Custom.t
+    | Fly of Fly.t
     | Opentofu of Opentofu.t
     | Pulumi
     | Terraform of Terraform.t
