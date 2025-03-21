@@ -419,6 +419,9 @@
           "$ref": "#/definitions/engine-pulumi"
         },
         {
+          "$ref": "#/definitions/engine-fly"
+        },
+        {
           "$ref": "#/definitions/engine-custom"
         }
       ]
@@ -490,6 +493,23 @@
         }
       },
       "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "engine-fly": {
+      "additionalProperties": false,
+      "properties": {
+        "config_file": {
+          "type": "string"
+        },
+        "name": {
+          "const": "fly",
+          "type": "string"
+        }
+      },
+      "required": [
+        "config_file",
         "name"
       ],
       "type": "object"
