@@ -112,6 +112,8 @@ RUN ulimit -s 524288 && ulimit -a && \
 
 # Final code-indexer image
 FROM alpine:3.18 as code-indexer
+RUN addgroup -S terrat && adduser -S -G terrat terrat
+USER terrat
 COPY --from=code-indexer-build /mono/code/build/release/terrat_code_indexer/terrat_code_indexer.native /usr/local/bin/terrat_code_indexer
 WORKDIR /mnt
 ENTRYPOINT ["/usr/local/bin/terrat_code_indexer"]
@@ -135,7 +137,10 @@ RUN apk add --no-cache \
     runit \
     strace \
     yj
+RUN addgroup -S terrat && adduser -S -G terrat terrat
 RUN mkdir -p /usr/local/bin /etc/service/terrat /etc/service/nginx /usr/local/share/terrat/ui/assets
+RUN chown -R terrat:terrat /usr/local/bin /etc/service /usr/local/share /etc/nginx /var/lib/nginx /var/log/nginx /run
+USER terrat
 COPY docker/terrat/service/terrat /etc/service/terrat/run
 COPY docker/terrat/service/nginx /etc/service/nginx/run
 COPY docker/terrat/nginx.conf.template /etc/nginx/nginx.conf.template
@@ -165,7 +170,10 @@ RUN apk add --no-cache \
     runit \
     strace \
     yj
+RUN addgroup -S terrat && adduser -S -G terrat terrat
 RUN mkdir -p /usr/local/bin /etc/service/terrat /etc/service/nginx /usr/local/share/terrat/ui/assets
+RUN chown -R terrat:terrat /usr/local/bin /etc/service /usr/local/share /etc/nginx /var/lib/nginx /var/log/nginx /run
+USER terrat
 COPY docker/terrat/service/terrat /etc/service/terrat/run
 COPY docker/terrat/service/nginx /etc/service/nginx/run
 COPY docker/terrat/nginx.conf.template /etc/nginx/nginx.conf.template
