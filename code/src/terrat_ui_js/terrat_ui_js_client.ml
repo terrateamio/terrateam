@@ -124,6 +124,14 @@ type t = unit
 let call = Api.call
 let create () = ()
 
+let logout t =
+  let open Abb_js_future_combinators.Infix_result_monad in
+  call (Terrat_api_user.Logout.make ())
+  >>= fun resp ->
+  match Openapi.Response.value resp with
+  | `OK -> Abb_js.Future.return (Ok ())
+  | `Forbidden -> Abb_js.Future.return (Ok ())
+
 let whoami t =
   let open Abb_js_future_combinators.Infix_result_monad in
   call (Terrat_api_user.Whoami.make ())
@@ -141,9 +149,9 @@ let client_id t =
       Abb_js.Future.return (Ok client_id)
   | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
 
-let installations t =
+let list_github_installations t =
   let open Abb_js_future_combinators.Infix_result_monad in
-  call (Terrat_api_user.List_installations.make ())
+  call (Terrat_api_user.List_github_installations.make ())
   >>= fun resp ->
   match Openapi.Response.value resp with
   | `OK res -> Abb_js.Future.return (Ok res)
@@ -175,12 +183,12 @@ let work_manifests ?tz ?page ?limit ?q ?dir ~installation_id t =
   | `Bad_request _ as err -> Abb_js.Future.return (Error err)
   | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
 
-let work_manifest_outputs ?tz ?page ?limit ?q ~installation_id ~work_manifest_id t =
+let work_manifest_outputs ?tz ?page ?limit ?q ?lite ~installation_id ~work_manifest_id t =
   let open Abb_js_future_combinators.Infix_result_monad in
   let module R = Terrat_api_installations.Get_work_manifest_outputs.Responses.OK in
   call
     Terrat_api_installations.Get_work_manifest_outputs.(
-      make Parameters.(make ~page ~limit ~q ~tz ~installation_id ~work_manifest_id ()))
+      make Parameters.(make ~page ~limit ~q ~tz ?lite ~installation_id ~work_manifest_id ()))
   >>= fun resp ->
   match Openapi.Response.value resp with
   | `OK { R.steps } -> Abb_js.Future.return (Ok (Page.of_response resp steps))

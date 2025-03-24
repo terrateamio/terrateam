@@ -294,14 +294,14 @@ module Histogram_spec = struct
     let real_at_index i = if i >= count then infinity else at_index_f i in
     Array.init (count + 1) real_at_index
 
-  let of_linear start interval count =
+  let of_linear ~start ~interval ~count =
     let at_index i =
       let f = float_of_int i in
       start +. (interval *. f)
     in
     make at_index count
 
-  let of_exponential start factor count =
+  let of_exponential ~start ~factor ~count =
     let at_index i =
       let multiplier = factor ** float_of_int i in
       start *. multiplier

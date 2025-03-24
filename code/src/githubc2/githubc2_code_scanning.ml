@@ -287,7 +287,8 @@ module Update_alert = struct
 
   let url = "/repos/{owner}/{repo}/code-scanning/alerts/{alert_number}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -962,7 +963,8 @@ module Update_default_setup = struct
 
   let url = "/repos/{owner}/{repo}/code-scanning/default-setup"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1128,7 +1130,8 @@ module Upload_sarif = struct
 
   let url = "/repos/{owner}/{repo}/code-scanning/sarifs"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]

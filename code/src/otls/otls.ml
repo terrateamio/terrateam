@@ -48,6 +48,11 @@ module Tls_config = struct
   let create () = Otls_c_bindings.Tls_config.tls_config_new ()
   let destroy t = Otls_c_bindings.Tls_config.tls_config_free t
 
+  let set_ca_path t fname =
+    match Otls_c_bindings.Tls_config.tls_config_set_ca_path t fname with
+    | -1 -> Error `Error
+    | _ -> Ok ()
+
   let set_ca_file t fname =
     match Otls_c_bindings.Tls_config.tls_config_set_ca_file t fname with
     | -1 -> Error `Error
@@ -81,6 +86,11 @@ module Tls_config = struct
   let set_ciphers t ciphers =
     let ret = Otls_c_bindings.Tls_config.tls_config_set_ciphers t (Tls_ciphers.to_string ciphers) in
     match ret with
+    | -1 -> Error `Error
+    | _ -> Ok ()
+
+  let set_alpn t alpn =
+    match Otls_c_bindings.Tls_config.tls_config_set_alpn t alpn with
     | -1 -> Error `Error
     | _ -> Ok ()
 end

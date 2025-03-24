@@ -17,10 +17,11 @@
 #include "private.h"
 
 int
-evfilt_user_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
+evfilt_user_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt,
+    struct knote *src, void *ptr UNUSED)
 {
     //port_event_t *pe = (port_event_t *) ptr;
-  
+
     memcpy(dst, &src->kev, sizeof(*dst));
     dst->fflags &= ~NOTE_FFCTRLMASK;     //FIXME: Not sure if needed
     dst->fflags &= ~NOTE_TRIGGER;
@@ -40,9 +41,11 @@ evfilt_user_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
             KNOTE_DISABLE(src);
             src->kev.fflags &= ~NOTE_TRIGGER;
         } else if (src->kev.flags & EV_ONESHOT) {
-            knote_free(filt, src);
+            knote_delete(filt, src);
         }
      */
+
+    if (knote_copyout_flag_actions(filt, src) < 0) return -1;
 
     return (1);
 }
@@ -65,7 +68,7 @@ evfilt_user_knote_create(struct filter *filt UNUSED, struct knote *kn UNUSED)
 }
 
 int
-evfilt_user_knote_modify(struct filter *filt, struct knote *kn, 
+evfilt_user_knote_modify(struct filter *filt, struct knote *kn,
         const struct kevent *kev)
 {
     unsigned int ffctrl;
@@ -97,7 +100,7 @@ evfilt_user_knote_modify(struct filter *filt, struct knote *kn,
 
     if ((!(kn->kev.flags & EV_DISABLE)) && kev->fflags & NOTE_TRIGGER) {
         kn->kev.fflags |= NOTE_TRIGGER;
-        return (port_send(filter_epfd(filt), X_PORT_SOURCE_USER, kn)); 
+        return (port_send(filter_epoll_fd(filt), X_PORT_SOURCE_USER, kn));
     }
 
     return (0);
@@ -124,13 +127,11 @@ evfilt_user_knote_disable(struct filter *filt UNUSED, struct knote *kn UNUSED)
 }
 
 const struct filter evfilt_user = {
-    EVFILT_USER,
-    NULL,
-    NULL,
-    evfilt_user_copyout,
-    evfilt_user_knote_create,
-    evfilt_user_knote_modify,
-    evfilt_user_knote_delete,
-    evfilt_user_knote_enable,
-    evfilt_user_knote_disable,   
+    .kf_id      = EVFILT_USER,
+    .kf_copyout = evfilt_user_copyout,
+    .kn_create  = evfilt_user_knote_create,
+    .kn_modify  = evfilt_user_knote_modify,
+    .kn_delete  = evfilt_user_knote_delete,
+    .kn_enable  = evfilt_user_knote_enable,
+    .kn_disable = evfilt_user_knote_disable,
 };

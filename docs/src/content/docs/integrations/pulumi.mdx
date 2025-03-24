@@ -1,0 +1,125 @@
+---
+title: Pulumi
+description: Learn how to use Pulumi with Terrateam
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+[Pulumi](https://pulumi.com) is an open-source infrastructure as code tool that enables you to define, deploy, and manage cloud infrastructure using programming languages. Terrateam supports Pulumi, allowing you to integrate it into your GitOps workflows.
+
+:::note
+The Terrateam Pulumi integration is in active development.
+:::
+
+## Enabling Pulumi
+
+To integrate Pulumi into all Terrateam operations, configure the `engine` section within your Terrateam configuration file (`.terrateam/config.yml`):
+
+```yaml
+engine:
+  name: pulumi
+```
+
+### Directory Configuration
+
+In your repository, you can organize Pulumi stacks under a directory and specify which files trigger updates. For example, if your Pulumi configurations are under a directory called `code`, your configuration might look like this if you are using the YAML engine:
+
+```yaml
+dirs:
+  code:
+    when_modified:
+      file_patterns:
+        - '${DIR}/**/*.yaml'
+    stacks:
+      dev: {}
+```
+
+Or like this if you are using the TypeScript engine:
+
+```yaml
+dirs:
+  code:
+    when_modified:
+      file_patterns:
+        - '${DIR}/**/*.ts'
+    stacks:
+      dev: {}
+```
+
+### Hooks for Language-Specific Dependencies
+
+Since Pulumi supports multiple programming languages, you'll need to install the required language-specific dependencies. This can be done using hooks in your Terrateam configuration:
+
+```yaml
+hooks:
+  all:
+    pre:
+      - type: run
+        cmd: ['command', 'to', 'install', 'run-time']
+```
+
+:::note
+If you are using Pulumi, please reach out so we can improve support for automatically setting up the language run-times.
+:::
+
+### Hooks for Configurations
+
+To set up a Pulumi stack with a local state and an empty passphrase, you can use hooks as shown below:
+
+```yaml
+hooks:
+  all:
+    pre:
+      - type: env
+        name: PULUMI_CONFIG_PASSPHRASE
+        cmd: ['echo', '']
+```
+
+## Workflows
+
+Pulumi must perform a `login` operation to function.  In Terrateam this corresponds to the `init` workflow step.  To configure the location of login, add it to `extra_args`.
+
+```yaml
+workflows:
+  - tag_query: ''
+    plan:
+      - type: init
+        extra_args: ['file://${TERRATEAM_ROOT}/pulumi']
+      - type: plan
+    apply:
+      - type: init
+        extra_args: ['file://${TERRATEAM_ROOT}/pulumi']
+      - type: apply
+```
+
+## Cost Estimation
+
+Currently, cost estimation should be disabled with Pulumi. You can configure this setting as follows:
+
+```yaml
+cost_estimation:
+  enabled: false
+```
+
+## Using Pulumi with Terrateam
+
+Once you've configured Pulumi in your Terrateam configuration file, you can use Terrateam commands as usual. Terrateam will automatically execute Pulumi commands during workflows.
+
+<Steps>
+1. Open a pull request with changes to your Pulumi code.
+
+1. Terrateam automatically runs a preview operation using Pulumi and comments on the pull request with the output.
+
+1. Review the preview output and collaborate with your team to ensure the changes are as expected.
+
+1. Once the pull request is approved, comment `terrateam apply` to trigger an apply operation using Pulumi.
+
+1. Terrateam runs the apply operation and comments on the pull request with the apply output.
+</Steps>
+
+## Benefits of using Pulumi in Terrateam
+
+- **Apply requirements** - You can use Terrateam to ensure that certain requirements are met before a `pulumi up` is executed, such as approvals and passing status checks.
+- **Permissions** - Control which users can perform which operations on which stacks.
+- **Safety** - Terrateam ensure that when a `pulumi up` operation is performed, only the one operation is executing for that stack.  This ensures safety when multiple people are modifying the same infrastructure.
+- **Preview Invalidation** - When multiple people are modifying the same infrastructure, when one of them performs an `up`, the others must preview their changes again to review it against the new infrastructure.

@@ -17,6 +17,13 @@ access_control:
 
 ### Configuring Access Control Policies
 Access control policies define the capabilities and permissions for different users, groups, and roles. Here's an example configuration:
+
+:::caution
+The order of `policies` is important and should always be listed with a `tag_query` from most specific to most general.  This is because, when Terrateam evaluates a policy, it uses the first policy in the list that matches.
+
+`tag_query: ''` is the most general and matches everything and should always be last.
+:::
+
 ```yaml
 access_control:
   enabled: true

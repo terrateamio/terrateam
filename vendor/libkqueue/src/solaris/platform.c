@@ -35,9 +35,9 @@ poll_events_dump(short events)
 
 #define _PL_DUMP(attrib) \
     if (events == attrib) \
-       strcat(&buf[0], " "#attrib);
+       strcat(buf, " "#attrib);
 
-    snprintf(&buf[0], 512, "events = %hd 0x%o (", events, events);
+    snprintf(buf, 512, "events = %hd 0x%o (", events, events);
     _PL_DUMP(POLLIN);
     _PL_DUMP(POLLPRI);
     _PL_DUMP(POLLOUT);
@@ -47,9 +47,9 @@ poll_events_dump(short events)
     _PL_DUMP(POLLERR);
     _PL_DUMP(POLLHUP);
     _PL_DUMP(POLLNVAL);
-    strcat(&buf[0], ")");
+    strcat(buf, ")");
 
-    return (&buf[0]);
+    return (buf);
 
 #undef _PL_DUMP
 }
@@ -60,15 +60,15 @@ port_event_dump(port_event_t *evt)
     static __thread char buf[512];
 
     if (evt == NULL) {
-        snprintf(&buf[0], sizeof(buf), "NULL ?!?!\n");
+        snprintf(buf, sizeof(buf), "NULL ?!?!\n");
         goto out;
     }
 
 #define PE_DUMP(attrib) \
     if (evt->portev_source == attrib) \
-       strcat(&buf[0], #attrib);
+       strcat(buf, #attrib);
 
-    snprintf(&buf[0], 512,
+    snprintf(buf, 512,
                 " { object = %u, user = %p, %s, source = %d (",
                 (unsigned int) evt->portev_object,
                 evt->portev_user,
@@ -79,11 +79,11 @@ port_event_dump(port_event_t *evt)
     PE_DUMP(PORT_SOURCE_TIMER);
     PE_DUMP(PORT_SOURCE_USER);
     PE_DUMP(PORT_SOURCE_ALERT);
-    strcat(&buf[0], ") }");
+    strcat(buf, ") }");
 #undef PE_DUMP
 
 out:
-    return (&buf[0]);
+    return (buf);
 }
 
 #endif /* !NDEBUG */
@@ -114,7 +114,7 @@ solaris_kqueue_free(struct kqueue *kq)
 
 int
 solaris_kevent_wait(
-        struct kqueue *kq, 
+        struct kqueue *kq,
         int nevents UNUSED,
         const struct timespec *ts)
 
@@ -124,7 +124,7 @@ solaris_kevent_wait(
 
     reset_errno();
     dbg_puts("waiting for events");
-    rv = port_getn(kq->kq_id, &evbuf[0], 1, &nget, (struct timespec *) ts);
+    rv = port_getn(kq->kq_id, evbuf, 1, &nget, (struct timespec *) ts);
 
     dbg_printf("rv=%d errno=%d (%s) nget=%d", rv, errno, strerror(errno), nget);
     if ((rv < 0) && (nget < 1)) {
@@ -145,7 +145,7 @@ solaris_kevent_wait(
 
 int
 solaris_kevent_copyout(struct kqueue *kq, int nready,
-        struct kevent *eventlist, int nevents UNUSED)
+        struct kevent *eventlist, int nevents)
 {
     port_event_t  *evt;
     struct knote  *kn;
@@ -162,34 +162,34 @@ solaris_kevent_copyout(struct kqueue *kq, int nready,
             case PORT_SOURCE_FD:
 //XXX-FIXME WHAT ABOUT WRITE???
                 filter_lookup(&filt, kq, EVFILT_READ);
-                rv = filt->kf_copyout(eventlist, kn, evt);
+                rv = filt->kf_copyout(eventlist, nevents, filt, kn, evt);
 
                 /* For sockets, the event port object must be reassociated
                    after each event is retrieved. */
-                if (rv == 0 && !(kn->kev.flags & EV_DISPATCH 
+                if (rv == 0 && !(kn->kev.flags & EV_DISPATCH
                             || kn->kev.flags & EV_ONESHOT)) {
                     rv = filt->kn_create(filt, kn);
                 }
-                
+
                 if (eventlist->data == 0) // if zero data is returned, we raced with a read of data from the socket, skip event to have proper semantics
                     skip_event = 1;
-                
+
                 break;
 
             case PORT_SOURCE_TIMER:
                 filter_lookup(&filt, kq, EVFILT_TIMER);
-                rv = filt->kf_copyout(eventlist, kn, evt);
+                rv = filt->kf_copyout(eventlist, nevents, filt, kn, evt);
                 break;
 
             case PORT_SOURCE_USER:
                 switch (evt->portev_events) {
                     case X_PORT_SOURCE_SIGNAL:
                         filter_lookup(&filt, kq, EVFILT_SIGNAL);
-                        rv = filt->kf_copyout(eventlist, kn, evt);
+                        rv = filt->kf_copyout(eventlist, nevents, filt, kn, evt);
                         break;
                     case X_PORT_SOURCE_USER:
                         filter_lookup(&filt, kq, EVFILT_USER);
-                        rv = filt->kf_copyout(eventlist, kn, evt);
+                        rv = filt->kf_copyout(eventlist, nevents, filt, kn, evt);
                         break;
                     default:
                 dbg_puts("unsupported portev_events");
@@ -211,9 +211,9 @@ solaris_kevent_copyout(struct kqueue *kq, int nready,
          * Certain flags cause the associated knote to be deleted
          * or disabled.
          */
-        if (eventlist->flags & EV_DISPATCH) 
+        if (eventlist->flags & EV_DISPATCH)
             knote_disable(filt, kn); //TODO: Error checking
-        if (eventlist->flags & EV_ONESHOT) 
+        if (eventlist->flags & EV_ONESHOT)
         {
             knote_delete(filt, kn); //TODO: Error checking
         }
@@ -229,15 +229,13 @@ solaris_kevent_copyout(struct kqueue *kq, int nready,
 
 const struct kqueue_vtable kqops =
 {
-    solaris_kqueue_init,
-    solaris_kqueue_free,
-    solaris_kevent_wait,
-    solaris_kevent_copyout,
-    NULL,
-    NULL,
-    posix_eventfd_init,
-    posix_eventfd_close,
-    posix_eventfd_raise,
-    posix_eventfd_lower,
-    posix_eventfd_descriptor
+    .kqueue_init        = solaris_kqueue_init,
+    .kqueue_free        = solaris_kqueue_free,
+    .kevent_wait        = solaris_kevent_wait,
+    .kevent_copyout     = solaris_kevent_copyout,
+    .eventfd_init       = posix_eventfd_init,
+    .eventfd_close      = posix_eventfd_close,
+    .eventfd_raise      = posix_eventfd_raise,
+    .eventfd_lower      = posix_eventfd_lower,
+    .eventfd_descriptor = posix_eventfd_descriptor,
 };

@@ -164,7 +164,8 @@ module Update = struct
 
   let url = "/orgs/{org}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -559,7 +560,8 @@ module Create_webhook = struct
 
   let url = "/orgs/{org}/hooks"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -700,7 +702,8 @@ module Update_webhook = struct
 
   let url = "/orgs/{org}/hooks/{hook_id}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -843,7 +846,8 @@ module Update_webhook_config_for_org = struct
 
   let url = "/orgs/{org}/hooks/{hook_id}/config"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -1243,7 +1247,8 @@ module Create_invitation = struct
 
   let url = "/orgs/{org}/invitations"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -1726,7 +1731,8 @@ module Set_membership_for_user = struct
 
   let url = "/orgs/{org}/memberships/{username}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -1952,7 +1958,8 @@ module Convert_member_to_outside_collaborator = struct
 
   let url = "/orgs/{org}/outside_collaborators/{username}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -2047,7 +2054,8 @@ module Review_pat_grant_requests_in_bulk = struct
 
   let url = "/orgs/{org}/personal-access-token-requests"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -2253,7 +2261,8 @@ module Review_pat_grant_request = struct
 
   let url = "/orgs/{org}/personal-access-token-requests/{pat_request_id}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -2415,7 +2424,8 @@ module Update_pat_accesses = struct
 
   let url = "/orgs/{org}/personal-access-tokens"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -2617,7 +2627,8 @@ module Update_pat_access = struct
 
   let url = "/orgs/{org}/personal-access-tokens/{pat_id}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -3020,7 +3031,8 @@ module Enable_or_disable_security_product_on_all_org_repos = struct
 
   let url = "/orgs/{org}/{security_product}/{enablement}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -3183,7 +3195,8 @@ module Update_membership_for_authenticated_user = struct
 
   let url = "/user/memberships/orgs/{org}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]

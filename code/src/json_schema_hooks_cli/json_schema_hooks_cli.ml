@@ -39,8 +39,8 @@ let module_name_of_string s =
   |> CCString.replace ~sub:"-" ~by:"_"
   |> CCString.replace ~sub:"$" ~by:"_"
   |> (function
-       | s when CCString.prefix ~pre:"_" s -> CCString.drop_while (( = ) '_') s ^ "_"
-       | s -> s)
+  | s when CCString.prefix ~pre:"_" s -> CCString.drop_while (( = ) '_') s ^ "_"
+  | s -> s)
   |> CCString.capitalize_ascii
 
 let module_name_of_field_name defs s =
@@ -61,8 +61,8 @@ let variant_name_of_ref ref_ =
 
 let field_name_of_schema s =
   match CCString.lowercase_ascii s with
-  | ("type" | "in" | "object" | "class" | "to" | "private" | "include" | "ref" | "method") as s ->
-      s ^ "_"
+  | ("type" | "in" | "object" | "class" | "to" | "private" | "include" | "ref" | "method" | "end")
+    as s -> s ^ "_"
   | s when CCString.prefix ~pre:"_" s -> CCString.drop_while (( = ) '_') s ^ "_"
   | s when CCString.prefix ~pre:"$" s -> CCString.drop_while (( = ) '$') s ^ "_"
   | s when CCString.prefix ~pre:"@" s -> CCString.drop_while (( = ) '@') s ^ "_"
@@ -167,12 +167,12 @@ let convert_def strict_records definitions module_base def =
          CCList.flatten
            [
              (if CCString.equal field_name name then []
-             else Json_schema_conv.Gen.yojson_key_name name);
+              else Json_schema_conv.Gen.yojson_key_name name);
              (if Json_schema_conv.String_set.mem name required then []
-             else
-               match schema.Json_schema_conv.Schema.default with
-               | Some default -> field_default_of_value default
-               | None -> Json_schema_conv.Gen.field_default_none);
+              else
+                match schema.Json_schema_conv.Schema.default with
+                | Some default -> field_default_of_value default
+                | None -> Json_schema_conv.Gen.field_default_none);
            ])
        ~resolve_ref:(resolve_ref definitions)
        ~variant_name_of_ref

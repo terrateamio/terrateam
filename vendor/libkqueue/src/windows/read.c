@@ -30,7 +30,7 @@ evfilt_read_callback(void *param, BOOLEAN fired)
         dbg_puts("called, but event was not triggered(?)");
         return;
     }
-    
+
     assert(param);
     kn = (struct knote*)param;
     // FIXME: check if knote is pending destroyed
@@ -39,15 +39,15 @@ evfilt_read_callback(void *param, BOOLEAN fired)
 
     /* Retrieve the socket events and update the knote */
     rv = WSAEnumNetworkEvents(
-            (SOCKET) kn->kev.ident, 
-            kn->data.handle,
+            (SOCKET) kn->kev.ident,
+            kn->kn_handle,
                 &events);
     if (rv != 0) {
         dbg_wsalasterror("WSAEnumNetworkEvents");
         return; //fIXME: should crash or invalidate the knote
     }
     /* FIXME: check for errors somehow..
-    if (events.lNetworkEvents & FD_ACCEPT) 
+    if (events.lNetworkEvents & FD_ACCEPT)
         kn->kev.flags |= EV
     */
 
@@ -58,7 +58,7 @@ evfilt_read_callback(void *param, BOOLEAN fired)
         /* FIXME: need more extreme action */
     }
 
-    /* DEADWOOD 
+    /* DEADWOOD
     kn = (struct knote *) param;
     evt_signal(kn->kn_kq->kq_loop, EVT_WAKEUP, kn);
     */
@@ -81,23 +81,24 @@ get_eof_offset(int fd)
         sb.st_size = 1;
     }
 
-    dbg_printf("curpos=%zu size=%zu\n", curpos, sb.st_size);
+    dbg_printf("curpos=%zu size=%zu", curpos, sb.st_size);
     return (sb.st_size - curpos); //FIXME: can overflow
 }
 #endif
 
 int
-evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
+evfilt_read_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt,
+    struct knote *src, void *ptr)
 {
     unsigned long bufsize;
 
     //struct event_buf * const ev = (struct event_buf *) ptr;
 
-    /* TODO: handle regular files 
+    /* TODO: handle regular files
     if (src->flags & KNFL_FILE) { ... } */
 
-    memcpy(dst, &src->kev, sizeof(*dst));          
-    if (src->kn_flags & KNFL_PASSIVE_SOCKET) {
+    memcpy(dst, &src->kev, sizeof(*dst));
+    if (src->kn_flags & KNFL_SOCKET_PASSIVE) {
         /* TODO: should contains the length of the socket backlog */
         dst->data = 1;
     } else {
@@ -111,7 +112,9 @@ evfilt_read_copyout(struct kevent *dst, struct knote *src, void *ptr)
         dst->data = bufsize;
     }
 
-    return (0);
+    if (knote_copyout_flag_actions(filt, src) < 0) return -1;
+
+    return (1);
 }
 
 int
@@ -131,28 +134,28 @@ evfilt_read_knote_create(struct filter *filt, struct knote *kn)
     }
 
     rv = WSAEventSelect(
-                (SOCKET) kn->kev.ident, 
-                evt, 
+                (SOCKET) kn->kev.ident,
+                evt,
                 FD_READ | FD_ACCEPT | FD_CLOSE);
     if (rv != 0) {
         dbg_wsalasterror("WSAEventSelect()");
         CloseHandle(evt);
         return (-1);
     }
-    
+
     /* TODO: handle regular files in addition to sockets */
 
     /* TODO: handle in copyout
     if (kn->kev.flags & EV_ONESHOT || kn->kev.flags & EV_DISPATCH)
-        kn->data.events |= EPOLLONESHOT;
+        kn->epoll_events |= EPOLLONESHOT;
     if (kn->kev.flags & EV_CLEAR)
-        kn->data.events |= EPOLLET;
+        kn->epoll_events |= EPOLLET;
     */
 
-    kn->data.handle = evt;
+    kn->kn_handle = evt;
 
-    if (RegisterWaitForSingleObject(&kn->kn_event_whandle, evt, 
-	    evfilt_read_callback, kn, INFINITE, 0) == 0) {
+    if (RegisterWaitForSingleObject(&kn->kn_event_whandle, evt,
+        evfilt_read_callback, kn, INFINITE, 0) == 0) {
         dbg_puts("RegisterWaitForSingleObject failed");
         CloseHandle(evt);
         return (-1);
@@ -162,7 +165,7 @@ evfilt_read_knote_create(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_read_knote_modify(struct filter *filt, struct knote *kn, 
+evfilt_read_knote_modify(struct filter *filt, struct knote *kn,
         const struct kevent *kev)
 {
     return (-1); /* STUB */
@@ -171,19 +174,19 @@ evfilt_read_knote_modify(struct filter *filt, struct knote *kn,
 int
 evfilt_read_knote_delete(struct filter *filt, struct knote *kn)
 {
-    if (kn->data.handle == NULL || kn->kn_event_whandle == NULL)
+    if (kn->kn_handle == NULL || kn->kn_event_whandle == NULL)
         return (0);
 
-	if(!UnregisterWaitEx(kn->kn_event_whandle, INVALID_HANDLE_VALUE)) {
-		dbg_lasterror("UnregisterWait()");
-		return (-1);
-	}
-	if (!WSACloseEvent(kn->data.handle)) {
-		dbg_wsalasterror("WSACloseEvent()");
-		return (-1);
-	}
+    if(!UnregisterWaitEx(kn->kn_event_whandle, INVALID_HANDLE_VALUE)) {
+        dbg_lasterror("UnregisterWait()");
+        return (-1);
+    }
+    if (!WSACloseEvent(kn->kn_handle)) {
+        dbg_wsalasterror("WSACloseEvent()");
+        return (-1);
+    }
 
-    kn->data.handle = NULL;
+    kn->kn_handle = NULL;
     return (0);
 }
 
@@ -200,13 +203,11 @@ evfilt_read_knote_disable(struct filter *filt, struct knote *kn)
 }
 
 const struct filter evfilt_read = {
-    EVFILT_READ,
-    NULL,
-    NULL,
-    evfilt_read_copyout,
-    evfilt_read_knote_create,
-    evfilt_read_knote_modify,
-    evfilt_read_knote_delete,
-    evfilt_read_knote_enable,
-    evfilt_read_knote_disable,         
+    .kf_id      = EVFILT_READ,
+    .kf_copyout = evfilt_read_copyout,
+    .kn_create  = evfilt_read_knote_create,
+    .kn_modify  = evfilt_read_knote_modify,
+    .kn_delete  = evfilt_read_knote_delete,
+    .kn_enable  = evfilt_read_knote_enable,
+    .kn_disable = evfilt_read_knote_disable,
 };

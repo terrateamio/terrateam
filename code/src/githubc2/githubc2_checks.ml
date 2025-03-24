@@ -150,7 +150,8 @@ module Create = struct
 
   let url = "/repos/{owner}/{repo}/check-runs"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -464,7 +465,8 @@ module Update = struct
 
   let url = "/repos/{owner}/{repo}/check-runs/{check_run_id}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -679,7 +681,8 @@ module Create_suite = struct
 
   let url = "/repos/{owner}/{repo}/check-suites"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -740,7 +743,8 @@ module Set_suites_preferences = struct
 
   let url = "/repos/{owner}/{repo}/check-suites/preferences"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]

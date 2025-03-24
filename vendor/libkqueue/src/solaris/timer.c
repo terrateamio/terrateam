@@ -13,21 +13,12 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include <errno.h>
-#include <fcntl.h>
-#include <pthread.h>
 #include <signal.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/queue.h>
+
 #include <sys/socket.h>
-#include <sys/types.h>
-#include <string.h>
 #include <time.h>
 #include <unistd.h>
 
-#include "sys/event.h"
 #include "private.h"
 
 #ifndef NDEBUG
@@ -85,7 +76,8 @@ evfilt_timer_destroy(struct filter *filt UNUSED)
 }
 
 int
-evfilt_timer_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
+evfilt_timer_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt,
+    struct knote *src, void *ptr UNUSED)
 {
     /* port_event_t *pe = (port_event_t *) ptr; */
 
@@ -94,17 +86,19 @@ evfilt_timer_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
     //if (ev->events & EPOLLERR)
     //    dst->fflags = 1; /* FIXME: Return the actual timer error */
 
-    dst->data = timer_getoverrun(src->data.timerid) + 1; 
+    dst->data = timer_getoverrun(src->kn_timerid) + 1;
 
 #if FIXME
-    timerid = src->data.timerid;
-    //should be done in kqops.copyout() 
+    timerid = src->kn_timerid;
+    //should be done in kqops.copyout()
     if (src->kev.flags & EV_DISPATCH) {
-        timer_delete(src->data.timerid);
+        timer_delete(src->kn_timerid);
     } else if (src->kev.flags & EV_ONESHOT) {
-        timer_delete(src->data.timerid);
+        timer_delete(src->kn_timerid);
     }
 #endif
+
+    if (knote_copyout_flag_actions(filt, src) < 0) return -1;
 
     return (1);
 }
@@ -119,17 +113,17 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
 
     kn->kev.flags |= EV_CLEAR;
 
-    pn.portnfy_port = filter_epfd(filt);
+    pn.portnfy_port = filter_epoll_fd(filt);
     pn.portnfy_user = (void *) kn;
 
     se.sigev_notify = SIGEV_PORT;
     se.sigev_value.sival_ptr = &pn;
 
     if (timer_create (CLOCK_MONOTONIC, &se, &timerid) < 0) {
-        dbg_perror("timer_create(2)"); 
+        dbg_perror("timer_create(2)");
         return (-1);
     }
-   
+
     convert_msec_to_itimerspec(&ts, kn->kev.data, kn->kev.flags & EV_ONESHOT);
     if (timer_settime(timerid, 0, &ts, NULL) < 0) {
         dbg_perror("timer_settime(2)");
@@ -137,14 +131,14 @@ evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
         return (-1);
     }
 
-    kn->data.timerid = timerid;
-    dbg_printf("created timer with id #%lu", (unsigned long) timerid);
+    kn->kn_timerid = timerid;
+    dbg_printf("th=%lu - created timer", (unsigned long) timerid);
 
     return (0);
 }
 
 int
-evfilt_timer_knote_modify(struct filter *filt, struct knote *kn, 
+evfilt_timer_knote_modify(struct filter *filt, struct knote *kn,
         const struct kevent *kev)
 {
     (void)filt;
@@ -159,8 +153,8 @@ evfilt_timer_knote_delete(struct filter *filt UNUSED, struct knote *kn)
     if (kn->kev.flags & EV_DISABLE)
         return (0);
 
-    dbg_printf("deleting timer # %d", kn->data.timerid);
-    return timer_delete(kn->data.timerid);
+    dbg_printf("th=%d - deleting timer", kn->kn_timerid);
+    return timer_delete(kn->kn_timerid);
 }
 
 int
@@ -176,13 +170,13 @@ evfilt_timer_knote_disable(struct filter *filt, struct knote *kn)
 }
 
 const struct filter evfilt_timer = {
-    EVFILT_TIMER,
-    evfilt_timer_init,
-    evfilt_timer_destroy,
-    evfilt_timer_copyout,
-    evfilt_timer_knote_create,
-    evfilt_timer_knote_modify,
-    evfilt_timer_knote_delete,
-    evfilt_timer_knote_enable,
-    evfilt_timer_knote_disable,     
+    .kf_id      = EVFILT_TIMER,
+    .kf_init    = evfilt_timer_init,
+    .kf_destroy = evfilt_timer_destroy,
+    .kf_copyout = evfilt_timer_copyout,
+    .kn_create  = evfilt_timer_knote_create,
+    .kn_modify  = evfilt_timer_knote_modify,
+    .kn_delete  = evfilt_timer_knote_delete,
+    .kn_enable  = evfilt_timer_knote_enable,
+    .kn_disable = evfilt_timer_knote_disable,
 };

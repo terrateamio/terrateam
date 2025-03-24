@@ -28,6 +28,7 @@ type dirspaces_err =
 type t
 
 val create : unit -> t
+val logout : t -> (unit, [> err ]) result Abb_js.Future.t
 
 val whoami :
   t ->
@@ -41,8 +42,8 @@ val whoami :
 
 val client_id : t -> (string, [> err ]) result Abb_js.Future.t
 
-val installations :
-  t -> (Terrat_api_user.List_installations.Responses.OK.t, [> err ]) result Abb_js.Future.t
+val list_github_installations :
+  t -> (Terrat_api_user.List_github_installations.Responses.OK.t, [> err ]) result Abb_js.Future.t
 
 val work_manifests :
   ?tz:string ->
@@ -62,6 +63,7 @@ val work_manifest_outputs :
   ?page:string list ->
   ?limit:int ->
   ?q:string ->
+  ?lite:bool ->
   installation_id:string ->
   work_manifest_id:string ->
   t ->

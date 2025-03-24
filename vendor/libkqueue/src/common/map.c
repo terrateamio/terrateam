@@ -16,9 +16,13 @@
 
 #include "private.h"
 
+#ifndef _WIN32
+#include <sys/mman.h>
+#endif
+
 struct map {
     size_t len;
-    void **data;
+    atomic_uintptr_t *data;
 };
 
 struct map *
@@ -30,15 +34,15 @@ map_new(size_t len)
     if (dst == NULL)
         return (NULL);
 #ifdef _WIN32
-	dst->data = calloc(len, sizeof(void*));
-	if(dst->data == NULL) {
-		dbg_perror("calloc()");
-		free(dst);
-		return NULL;
-	}
-	dst->len = len;
+    dst->data = calloc(len, sizeof(dst->data[0]));
+    if(dst->data == NULL) {
+        dbg_perror("calloc()");
+        free(dst);
+        return NULL;
+    }
+    dst->len = len;
 #else
-    dst->data = mmap(NULL, len * sizeof(void *), PROT_READ | PROT_WRITE, 
+    dst->data = mmap(NULL, len * sizeof(dst->data[0]), PROT_READ | PROT_WRITE,
             MAP_PRIVATE | MAP_NORESERVE | MAP_ANON, -1, 0);
     if (dst->data == MAP_FAILED) {
         dbg_perror("mmap(2)");
@@ -54,16 +58,15 @@ map_new(size_t len)
 int
 map_insert(struct map *m, int idx, void *ptr)
 {
-    if (slowpath(idx < 0 || idx > (int)m->len))
+    if (unlikely(idx < 0 || idx > (int)m->len))
            return (-1);
 
-    if (atomic_ptr_cas(&(m->data[idx]), 0, ptr) == NULL) {
-        dbg_printf("inserted %p in location %d", ptr, idx);
+    if (atomic_ptr_cas(&(m->data[idx]), NULL, ptr)) {
+        dbg_printf("idx=%i - inserted ptr=%p into map", idx, ptr);
         return (0);
     } else {
-        dbg_printf("tried to insert a value into a non-empty location %d (value=%p)",
-                idx,
-                m->data[idx]);
+        dbg_printf("idx=%i - tried to insert ptr=%p into a non-empty location (cur_ptr=%p)",
+                   idx, ptr, (void *)m->data[idx]);
         return (-1);
     }
 }
@@ -71,14 +74,14 @@ map_insert(struct map *m, int idx, void *ptr)
 int
 map_remove(struct map *m, int idx, void *ptr)
 {
-    if (slowpath(idx < 0 || idx > (int)m->len))
+    if (unlikely(idx < 0 || idx > (int)m->len))
            return (-1);
 
-    if (atomic_ptr_cas(&(m->data[idx]), ptr, 0) == NULL) {
-        dbg_printf("removed %p from location %d", ptr, idx);
+    if (atomic_ptr_cas(&(m->data[idx]), ptr, NULL)) {
+        dbg_printf("idx=%i - removed ptr=%p from map", idx, (void *)ptr);
         return (0);
     } else {
-        dbg_printf("removal failed: location %d does not contain value %p", idx, m->data[idx]);
+        dbg_printf("idx=%i - removal failed, ptr=%p != cur_ptr=%p", idx, ptr, (void *)m->data[idx]);
         return (-1);
     }
 }
@@ -86,19 +89,15 @@ map_remove(struct map *m, int idx, void *ptr)
 int
 map_replace(struct map *m, int idx, void *oldp, void *newp)
 {
-    void *tmp;
-
-    if (slowpath(idx < 0 || idx > (int)m->len))
+    if (unlikely(idx < 0 || idx > (int)m->len))
            return (-1);
 
-    tmp = atomic_ptr_cas(&(m->data[idx]), oldp, newp);
-    if (tmp == oldp) {
-        dbg_printf("replaced value %p in location %d with value %p",
-                oldp, idx, newp);
+    if (atomic_ptr_cas(&(m->data[idx]), oldp, newp)) {
+        dbg_printf("idx=%i - replaced item in map with ptr=%p", idx, (void *)newp);
+
         return (0);
     } else {
-        dbg_printf("item in location %d does not match expected value %p",
-                idx, oldp);
+        dbg_printf("idx=%i - replace failed, ptr=%p != cur_ptr=%p", idx, newp, (void *)m->data[idx]);
         return (-1);
     }
 }
@@ -106,28 +105,17 @@ map_replace(struct map *m, int idx, void *oldp, void *newp)
 void *
 map_lookup(struct map *m, int idx)
 {
-    if (slowpath(idx < 0 || idx > (int)m->len))
+    if (unlikely(idx < 0 || idx > (int)m->len))
         return (NULL);
 
-    return m->data[idx];
+    return (void *)atomic_ptr_load(&m->data[idx]);
 }
 
 void *
 map_delete(struct map *m, int idx)
 {
-    void *oval;
-    void *nval;
-
-    if (slowpath(idx < 0 || idx > (int)m->len))
+    if (unlikely(idx < 0 || idx > (int)m->len))
            return ((void *)-1);
 
-    /* Hopefully we aren't racing with another thread, but you never know.. */
-    do {
-        oval = m->data[idx];
-        nval = atomic_ptr_cas(&(m->data[idx]), oval, NULL);
-    } while (nval != oval);
-
-    m->data[idx] = NULL;
-
-    return ((void *) oval);
+    return (void *)atomic_ptr_swap(&(m->data[idx]), NULL);
 }

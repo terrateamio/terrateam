@@ -12,8 +12,7 @@ type check_output_err =
   ]
 [@@deriving show]
 
-let args program args =
-  Abb_intf.Process.{ exec_name = program; args = program :: args; env = None; cwd = None }
+let args program args = Abb_intf.Process.{ exec_name = program; args = program :: args; env = None }
 
 module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
   module Fut_comb = Abb_future_combinators.Make (Abb.Future)
@@ -43,14 +42,14 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
     Unix.set_close_on_exec stdin_w;
     Unix.set_close_on_exec stdout_r;
     Unix.set_close_on_exec stderr_r;
-    let stdin_dup = Abb_intf.Process.Dup.create ~src:stdin_r ~dst:Unix.stdin in
-    let stdout_dup = Abb_intf.Process.Dup.create ~src:stdout_w ~dst:Unix.stdout in
-    let stderr_dup = Abb_intf.Process.Dup.create ~src:stderr_w ~dst:Unix.stderr in
-    let stdin_w = Abb.File.of_native stdin_w in
-    let stdout_r = Abb.File.of_native stdout_r in
-    let stderr_r = Abb.File.of_native stderr_r in
-    match Abb.Process.spawn process [ stdin_dup; stdout_dup; stderr_dup ] with
+    match Abb.Process.spawn ~stdin:stdin_r ~stdout:stdout_w ~stderr:stderr_w process with
     | Ok process -> (
+        Unix.close stdin_r;
+        Unix.close stdout_w;
+        Unix.close stderr_w;
+        let stdin_w = Abb.File.of_native stdin_w in
+        let stdout_r = Abb.File.of_native stdout_r in
+        let stderr_r = Abb.File.of_native stderr_r in
         (match input with
         | Some input ->
             Abb.File.write

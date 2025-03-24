@@ -339,8 +339,8 @@ let test_workflow_idx_multiple_dirs =
       let change =
         CCList.hd
           (CCList.filter
-             (fun { Terrat_change_match3.Dirspace_config.dirspace = { Terrat_dirspace.dir; _ }; _ } ->
-               dir = "ec2")
+             (fun { Terrat_change_match3.Dirspace_config.dirspace = { Terrat_dirspace.dir; _ }; _ }
+                -> dir = "ec2")
              changes)
       in
       let workflows = Terrat_base_repo_config_v1.workflows repo_config in
@@ -528,7 +528,8 @@ let test_dir_config_iam =
                Terrat_change_match3.Dirspace_config.dirspace = { Terrat_dirspace.dir; _ };
                when_modified;
                _;
-             } ->
+             }
+           ->
           let module Wm = Terrat_base_repo_config_v1.When_modified in
           match dir with
           | "ec2" ->
@@ -563,7 +564,8 @@ let test_dir_config_ebl =
                Terrat_change_match3.Dirspace_config.dirspace = { Terrat_dirspace.dir; _ };
                when_modified;
                _;
-             } ->
+             }
+           ->
           let module Wm = Terrat_base_repo_config_v1.When_modified in
           match dir with
           | "ebl" ->
@@ -595,7 +597,8 @@ let test_dir_config_ebl_modules =
                Terrat_change_match3.Dirspace_config.dirspace = { Terrat_dirspace.dir; _ };
                when_modified;
                _;
-             } ->
+             }
+           ->
           let module Wm = Terrat_base_repo_config_v1.When_modified in
           match dir with
           | "ebl" ->
@@ -629,7 +632,8 @@ let test_dir_config_ebl_and_modules =
                Terrat_change_match3.Dirspace_config.dirspace = { Terrat_dirspace.dir; _ };
                when_modified;
                _;
-             } ->
+             }
+           ->
           let module Wm = Terrat_base_repo_config_v1.When_modified in
           match dir with
           | "ebl" ->
@@ -669,7 +673,8 @@ let test_dir_config_s3 =
                Terrat_change_match3.Dirspace_config.dirspace = { Terrat_dirspace.dir; _ };
                when_modified;
                _;
-             } ->
+             }
+           ->
           let module Wm = Terrat_base_repo_config_v1.When_modified in
           match dir with
           | "s3" ->
@@ -702,7 +707,8 @@ let test_dir_config_lambda_json =
                Terrat_change_match3.Dirspace_config.dirspace = { Terrat_dirspace.dir; _ };
                when_modified;
                _;
-             } ->
+             }
+           ->
           let module Wm = Terrat_base_repo_config_v1.When_modified in
           match dir with
           | "lambda" ->
@@ -772,7 +778,8 @@ let test_dir_config_null_file_patterns =
                Terrat_change_match3.Dirspace_config.dirspace = { Terrat_dirspace.dir; _ };
                when_modified;
                _;
-             } ->
+             }
+           ->
           let module Wm = Terrat_base_repo_config_v1.When_modified in
           match dir with
           | "null_file_patterns" ->
@@ -1007,7 +1014,8 @@ let test_recursive_dirs_tags =
                Terrat_change_match3.Dirspace_config.dirspace = { Terrat_dirspace.dir; _ };
                when_modified;
                _;
-             } ->
+             }
+           ->
           let module Wm = Terrat_base_repo_config_v1.When_modified in
           match dir with
           | "aws/prod/secrets-manager/us-east-1" ->
@@ -1107,7 +1115,8 @@ let test_recursive_dirs_without_tags =
                Terrat_change_match3.Dirspace_config.dirspace = { Terrat_dirspace.dir; _ };
                when_modified;
                _;
-             } ->
+             }
+           ->
           let module Wm = Terrat_base_repo_config_v1.When_modified in
           match dir with
           | "aws/prod/secrets-manager/us-east-1" | "aws/prod/us-east-1" ->
@@ -1311,6 +1320,87 @@ let test_large_directory_count_matching_files =
       in
       let changes = CCList.flatten (Terrat_change_match3.match_diff_list dirs diff) in
       assert (CCList.length changes = 1 + num_dirs))
+
+let test_large_file_count_with_low_match_count =
+  Oth.test ~name:"Test large file count with low match count" (fun _ ->
+      let num_tf_dirs = 70 in
+      let num_tf_files_per_dir = 10 in
+      let num_dirs = 1000 in
+      let num_files_per_dir = 50 in
+      let file_list =
+        CCList.flat_map
+          (fun i ->
+            CCList.map
+              (Printf.sprintf "foo/terraform/%04d/foo_%d.tf" i)
+              (CCList.range 1 num_tf_files_per_dir))
+          (CCList.range 1 num_tf_dirs)
+        @ CCList.flat_map
+            (fun i ->
+              CCList.map
+                (Printf.sprintf "other/%04d/foo_%d.txt" i)
+                (CCList.range 1 num_files_per_dir))
+            (CCList.range 1 num_dirs)
+      in
+      let repo_config =
+        let module R = Terrat_base_repo_config_v1 in
+        R.derive ~ctx ~index:Terrat_base_repo_config_v1.Index.empty ~file_list
+        @@ R.of_view
+        @@ R.View.make
+             ~when_modified:(R.When_modified.make ~file_patterns:[] ())
+             ~dirs:(R.String_map.of_list [ ("**/terraform/**", R.Dirs.Dir.make ()) ])
+             ()
+      in
+      let diff = CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) file_list in
+      let dirs =
+        CCResult.get_exn
+          (Terrat_change_match3.synthesize_config
+             ~index:Terrat_base_repo_config_v1.Index.empty
+             repo_config)
+      in
+      let changes = CCList.flatten (Terrat_change_match3.match_diff_list dirs diff) in
+      assert (CCList.length changes = num_tf_dirs))
+
+let test_large_file_count_with_low_match_count_lesser_dir_depth =
+  Oth.test ~name:"Test large file count with low match count lesser dir dpeth" (fun _ ->
+      (* Only meaningful difference here is our glob starts with [**] but the
+         dir our terraform is in is in the root level.  Just making sure all the
+         machinery works here as expected. *)
+      let num_tf_dirs = 70 in
+      let num_tf_files_per_dir = 10 in
+      let num_dirs = 1000 in
+      let num_files_per_dir = 50 in
+      let file_list =
+        CCList.flat_map
+          (fun i ->
+            CCList.map
+              (Printf.sprintf "terraform/%04d/foo_%d.tf" i)
+              (CCList.range 1 num_tf_files_per_dir))
+          (CCList.range 1 num_tf_dirs)
+        @ CCList.flat_map
+            (fun i ->
+              CCList.map
+                (Printf.sprintf "other/%04d/foo_%d.txt" i)
+                (CCList.range 1 num_files_per_dir))
+            (CCList.range 1 num_dirs)
+      in
+      let repo_config =
+        let module R = Terrat_base_repo_config_v1 in
+        R.derive ~ctx ~index:Terrat_base_repo_config_v1.Index.empty ~file_list
+        @@ R.of_view
+        @@ R.View.make
+             ~when_modified:(R.When_modified.make ~file_patterns:[] ())
+             ~dirs:(R.String_map.of_list [ ("**/terraform/**", R.Dirs.Dir.make ()) ])
+             ()
+      in
+      let diff = CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) file_list in
+      let dirs =
+        CCResult.get_exn
+          (Terrat_change_match3.synthesize_config
+             ~index:Terrat_base_repo_config_v1.Index.empty
+             repo_config)
+      in
+      let changes = CCList.flatten (Terrat_change_match3.match_diff_list dirs diff) in
+      assert (CCList.length changes = num_tf_dirs))
 
 let test_large_directory_count_non_default_when_modified =
   Oth.test ~name:"Test large directory count non default when_modified" (fun _ ->
@@ -2078,6 +2168,67 @@ let test_depends_on_relative_dir =
                 { Terrat_dirspace.dir = "projects/proj1/database"; workspace = "default" })
              changes)))
 
+let test_files_in_same_dir_match_multiple_dirs =
+  Oth.test ~name:"files_in_same_dir_match_multiple_dirs" (fun _ ->
+      let module R = Terrat_base_repo_config_v1 in
+      let file_list = [ "projects/dir1/file1"; "projects/dir1/file2" ] in
+      let repo_config =
+        R.derive
+          ~ctx
+          ~index:Terrat_base_repo_config_v1.Index.empty
+          ~file_list
+          (R.of_view
+             (R.View.make
+                ~dirs:
+                  (R.String_map.of_list
+                     [
+                       ( "projects/**",
+                         R.Dirs.Dir.make
+                           ~workspaces:
+                             (R.String_map.of_list
+                                [
+                                  ( "default",
+                                    R.Dirs.Workspace.make
+                                      ~when_modified:(R.When_modified.make ~file_patterns:[] ())
+                                      () );
+                                ])
+                           () );
+                       ( "projects/**/file1",
+                         R.Dirs.Dir.make
+                           ~tags:[ "dir1" ]
+                           ~workspaces:
+                             (R.String_map.of_list
+                                [
+                                  ( "default",
+                                    R.Dirs.Workspace.make
+                                      ~when_modified:
+                                        (R.When_modified.make
+                                           ~file_patterns:
+                                             [ CCResult.get_exn (R.File_pattern.make "${DIR}/*") ]
+                                           ())
+                                      () );
+                                ])
+                           () );
+                     ])
+                ()))
+      in
+      let diff =
+        Terrat_change.Diff.
+          [ Add { filename = "projects/dir1/file1" }; Add { filename = "projects/dir1/file2" } ]
+      in
+      let config =
+        CCResult.get_exn
+          (Terrat_change_match3.synthesize_config
+             ~index:Terrat_base_repo_config_v1.Index.empty
+             repo_config)
+      in
+      let changes = CCList.flatten (Terrat_change_match3.match_diff_list config diff) in
+      assert (CCList.length changes = 1);
+      match changes with
+      | [ { Terrat_change_match3.Dirspace_config.tags; _ } ] ->
+          assert (Terrat_tag_set.mem "dir1" tags)
+      | _ -> assert false)
+
 let test =
   Oth.parallel
     [
@@ -2107,6 +2258,8 @@ let test =
       test_module_dir_with_root_dir;
       test_large_directory_count_unmatching_files;
       test_large_directory_count_matching_files;
+      test_large_file_count_with_low_match_count;
+      test_large_file_count_with_low_match_count_lesser_dir_depth;
       test_large_directory_count_non_default_when_modified;
       test_not_match;
       test_not_match_multiple;
@@ -2123,6 +2276,7 @@ let test =
       test_depends_on_multiple_depends_disjoint;
       test_depends_on_cycle;
       test_depends_on_relative_dir;
+      test_files_in_same_dir_match_multiple_dirs;
     ]
 
 let () =

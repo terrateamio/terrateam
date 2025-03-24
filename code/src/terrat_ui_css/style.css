@@ -147,6 +147,10 @@
         @apply rounded-full border-2 border-gray-400 h-9 w-9;
     }
 
+    .header .right .logout a:link, .header .right .logout a:visited {
+        @apply text-white;
+    }
+
     .logo-text {
         @apply uppercase text-2xl font-bold my-auto;
     }
@@ -1030,6 +1034,34 @@
         @apply flex flex-row items-center justify-center;
         @apply p-4;
         box-shadow: 0 0 15px 0px rgba(34, 197, 94, 1);
+    }
+
+    body > .login {
+        @apply mx-auto;
+        @apply py-20;
+        @apply flex flex flex-col gap-8;
+        @apply text-center;
+        @apply text-2xl;
+    }
+
+    body > .login .logo {
+        @apply mx-auto;
+        @apply h-14;
+    }
+
+    body > .login .logins {
+        @apply mx-auto;
+        @apply flex flex-col gap-4;
+    }
+
+    body > .login .logins > div > a {
+        @apply flex flex-row gap-2;
+        @apply justify-center items-center;
+        @apply px-8 py-4;
+        @apply text-black;
+        @apply border-2 border-slate-500;
+        @apply rounded;
+        @apply hover:bg-slate-100;
     }
 }
 

@@ -10,7 +10,7 @@
 [![License: MPL-2.0](https://img.shields.io/badge/License-MPL--2.0-blue.svg)](https://opensource.org/licenses/MPL-2.0)
 
 ## Terrateam
-[Terrateam](https://terrateam.io) is an open-source GitOps CI/CD platform for automating infrastructure workflows. It integrates with GitHub to orchestrate Terraform, OpenTofu, CDKTF, and Terragrunt operations via pull requests. Use our hosted service or run on-premise.
+[Terrateam](https://terrateam.io) is an open-source GitOps CI/CD platform for automating infrastructure workflows. It integrates with GitHub to orchestrate Terraform, OpenTofu, CDKTF, Terragrunt, and Pulumi operations via pull requests. Use our hosted service or run on-premise.
 
 ### Why Terrateam
 #### **True GitOps**
@@ -39,7 +39,9 @@ For those who prefer more control, you can deploy Terrateam in your own environm
 Before you begin, ensure you have the following:
 
 - Docker and Docker Compose installed on your machine.
-- An [Ngrok auth token](https://ngrok.com/) for tunneling.
+- A way to expose the Terrateam server to the internet. The server must be able to receive GitHub webhooks and allow the GitHub Action to communicate with it.
+  - **For local testing:** Terrateam supports [Ngrok](https://ngrok.com/) natively through the provided `docker-compose.yml` file. Alternatively, you can use [any tunneling](https://github.com/anderspitman/awesome-tunneling) or reverse proxy tool that fits your needs.
+  - **For production environments:** It is recommended to use a load balancer or another production-grade solution for secure and reliable communication. [Read the docs](https://docs.terrateam.io/self-hosted/overview/) for more details.
 
 #### Terrateam Setup Steps
 
@@ -54,6 +56,11 @@ Before you begin, ensure you have the following:
    GH_ORG=YOUR_GITHUB_ORG docker-compose up setup
    ```
 
+   If you're using a GitHub Enterprise server, set the `GHE_HOST` environment variable:
+   ```sh
+   GHE_HOST=github.mycompany.com GH_ORG=YOUR_GITHUB_ORG docker-compose up setup
+   ```
+
 3. **Navigate to [http://localhost:3000](http://localhost:3000)** to create your private Terrateam GitHub application. Take note of your application URL for use below.
 
    > ⚠️ **Important:** Do not install your private Terrateam GitHub application until you complete the steps below.
@@ -66,12 +73,17 @@ Before you begin, ensure you have the following:
 6. **Start the Terrateam Server:**
    [Get your Ngrok auth token here](https://dashboard.ngrok.com/get-started/your-authtoken)
    ```sh
-   NGROK_AUTHTOKEN=<YOUR-NGROK-AUTH-TOKEN> docker-compose up server -d
+   NGROK_AUTHTOKEN=<YOUR-NGROK-AUTH-TOKEN> docker-compose up -d server
+   ```
+
+   If you're using a GitHub Enterprise server that can communicate directly with the Terrateam server, use the following environment variables to start the server:
+   ```sh
+   TERRAT_API_BASE=https://terrateam.example.com GITHUB_API_BASE_URL=https://api.github.example.com GITHUB_WEB_BASE_URL=https://github.example.com docker-compose up server -d
    ```
    
 7. **Wait for the server to be ready.** The `docker-compose` command will return you to your shell when the Terrateam Server is ready for connections.
 
-8. **Install your private Terrateam GitHub application** using the application URL from step 3. You can install Terrateam aginst your entire organization or specific repositories.
+8. **Install your private Terrateam GitHub application** using the application URL from step 3. You can install Terrateam against your entire organization or specific repositories.
 
    > ⚠️ **Important:** Ensure the Terrateam Server is running (see step 7) before installing the GitHub application.
 
@@ -171,25 +183,25 @@ Terrateam is available in two versions:
   
 - **Enterprise Edition (EE)**: Designed for larger teams and organizations that require advanced features like RBAC, UI-based audit trails, centralized configuration, and more. Available via [Terrateam Cloud](https://terrateam.io) (all plans), Private Cloud, or Self-Hosted options. The Enterprise Edition is ideal for companies with stricter compliance and governance requirements. [Contact us](https://terrateam.io/contact) for more details.
 
-| Category                    | Feature                             | Open-Source (MPL-2.0)    | Enterprise (Proprietary) |
-|-----------------------------|-------------------------------------|--------------------------|--------------------------|
-| **Core Features**           | Plan & Apply Operations             | :white_check_mark:       | :white_check_mark:       |
-|                             | Apply Before / After Merge          | :white_check_mark:       | :white_check_mark:       |
-|                             | Layered Runs (Dependencies)         | :white_check_mark:       | :white_check_mark:       |
-|                             | Drift Detection & Reconciliation    | :white_check_mark:       | :white_check_mark:       |
-|                             | Cost Estimation                     | :white_check_mark:       | :white_check_mark:       |
-| **Scalability**             | High Availability                   | :white_check_mark:       | :white_check_mark:       |
-|                             | Unlimited Concurrency               | :white_check_mark:       | :white_check_mark:       |
-|                             | Private Runners                     | :white_check_mark:       | :white_check_mark:       |
-| **Integrations**            | GitHub Environments Support         | :white_check_mark:       | :white_check_mark:       |
-|                             | GitHub Secrets Integration          | :white_check_mark:       | :white_check_mark:       |
-|                             | OPA, Checkov, and more              | :white_check_mark:       | :white_check_mark:       |
-| **Advanced Features**       | Centralized Configuration           | :heavy_minus_sign:       | :white_check_mark:       |
-|                             | Dynamic Configuration Builder       | :white_check_mark:       | :white_check_mark:       |
-| **Security & Compliance**   | Fine-Grained Apply Requirements     | :white_check_mark:       | :white_check_mark:       |
-|                             | OIDC Authentication                 | :white_check_mark:       | :white_check_mark:       |
-|                             | Role-Based Access Control (RBAC)    | :heavy_minus_sign:       | :white_check_mark:       |
-|                             | Audit Trail UI                      | :heavy_minus_sign:       | :white_check_mark:       |
+| Category                  | Feature                          | Open-Source (MPL-2.0)                | Enterprise (Proprietary)                |
+|---------------------------|----------------------------------|--------------------------------------|-----------------------------------------|
+| **Core Features**         | Plan & Apply Operations          | :white_check_mark:                   | :white_check_mark:                      |
+|                           | Apply Before / After Merge       | :white_check_mark:                   | :white_check_mark:                      |
+|                           | Layered Runs (Dependencies)      | :white_check_mark:                   | :white_check_mark:                      |
+|                           | Drift Detection & Reconciliation | :white_check_mark: (Single schedule) | :white_check_mark: (Multiple schedules) |
+|                           | Cost Estimation                  | :white_check_mark:                   | :white_check_mark:                      |
+| **Scalability**           | High Availability                | :white_check_mark:                   | :white_check_mark:                      |
+|                           | Unlimited Concurrency            | :white_check_mark:                   | :white_check_mark:                      |
+|                           | Private Runners                  | :white_check_mark:                   | :white_check_mark:                      |
+| **Integrations**          | GitHub Environments Support      | :white_check_mark:                   | :white_check_mark:                      |
+|                           | GitHub Secrets Integration       | :white_check_mark:                   | :white_check_mark:                      |
+|                           | OPA, Checkov, and more           | :white_check_mark:                   | :white_check_mark:                      |
+| **Advanced Features**     | Centralized Configuration        | :heavy_minus_sign:                   | :white_check_mark:                      |
+|                           | Dynamic Configuration Builder    | :white_check_mark:                   | :white_check_mark:                      |
+| **Security & Compliance** | Fine-Grained Apply Requirements  | :white_check_mark:                   | :white_check_mark:                      |
+|                           | OIDC Authentication              | :white_check_mark:                   | :white_check_mark:                      |
+|                           | Role-Based Access Control (RBAC) | :heavy_minus_sign:                   | :white_check_mark:                      |
+|                           | Audit Trail UI                   | :heavy_minus_sign:                   | :white_check_mark:                      |
 
 Both versions include essential automation features, but the Enterprise Edition offers additional capabilities that help manage larger infrastructures, provide more granular control, and ensure security and compliance at scale.
 

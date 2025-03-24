@@ -381,7 +381,8 @@ module Create_repository_advisory = struct
 
   let url = "/repos/{owner}/{repo}/security-advisories"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -551,7 +552,8 @@ module Create_private_vulnerability_report = struct
 
   let url = "/repos/{owner}/{repo}/security-advisories/reports"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -621,7 +623,8 @@ module Update_repository_advisory = struct
 
   let url = "/repos/{owner}/{repo}/security-advisories/{ghsa_id}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]

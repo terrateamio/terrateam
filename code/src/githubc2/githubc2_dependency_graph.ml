@@ -153,7 +153,8 @@ module Create_repository_snapshot = struct
 
   let url = "/repos/{owner}/{repo}/dependency-graph/snapshots"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]

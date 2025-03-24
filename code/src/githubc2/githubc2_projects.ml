@@ -70,7 +70,8 @@ module Create_for_org = struct
 
   let url = "/orgs/{org}/projects"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -221,7 +222,8 @@ module Update_card = struct
 
   let url = "/projects/columns/cards/{card_id}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -487,7 +489,8 @@ module Move_card = struct
 
   let url = "/projects/columns/cards/{card_id}/moves"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -551,7 +554,8 @@ module Update_column = struct
 
   let url = "/projects/columns/{column_id}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -818,7 +822,8 @@ module Create_card = struct
 
   let url = "/projects/columns/{column_id}/cards"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -969,7 +974,8 @@ module Move_column = struct
 
   let url = "/projects/columns/{column_id}/moves"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1083,7 +1089,8 @@ module Update = struct
 
   let url = "/projects/{project_id}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -1471,7 +1478,8 @@ module Add_collaborator = struct
 
   let url = "/projects/{project_id}/collaborators/{username}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -1621,7 +1629,8 @@ module Create_column = struct
 
   let url = "/projects/{project_id}/columns"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1774,7 +1783,8 @@ module Create_for_repo = struct
 
   let url = "/repos/{owner}/{repo}/projects"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1945,7 +1955,8 @@ module Create_for_authenticated_user = struct
 
   let url = "/user/projects"
 
-  let make ~body () =
+  let make ~body =
+   fun () ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]

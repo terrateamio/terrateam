@@ -5,6 +5,7 @@ services:
     image: ghcr.io/terrateamio/terrateam-setup:latest
     environment:
       GH_ORG: "${GH_ORG}"
+      GHE_HOST: "${GHE_HOST}"
     ports:
       - "3000:3000"
     networks:
@@ -44,7 +45,6 @@ services:
       GITHUB_APP_CLIENT_ID: "${GITHUB_APP_CLIENT_ID}"
       GITHUB_APP_ID: "${GITHUB_APP_ID}"
       GITHUB_APP_PEM: "${GITHUB_APP_PEM}"
-      INFRACOST_PRICING_API_ENDPOINT: "https://pricing.api.infracost.io"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 60s

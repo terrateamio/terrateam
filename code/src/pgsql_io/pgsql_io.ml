@@ -1,3 +1,6 @@
+let buf_size = 1024 * 8
+let buf_size_threshold = 1024 * 8
+
 exception Nested_tx_not_supported
 
 module Backend_key_data = struct
@@ -20,6 +23,7 @@ type t = {
   mutable expected_frames : (Pgsql_codec.Frame.Backend.t -> bool) list;
   mutable in_tx : bool;
   mutable busy : bool;
+  buf_size_threshold : int;
 }
 
 let add_expected_frame t frame = t.expected_frames <- frame :: t.expected_frames
@@ -69,9 +73,16 @@ module Io = struct
           Error `Disconnected)
     else Abb.Future.return (Error `Disconnected)
 
+  let backend_msg conn len buf =
+    if Pgsql_codec.Decode.buffer_length conn.decoder > conn.buf_size_threshold then
+      Abb.Thread.run (fun () -> Pgsql_codec.Decode.backend_msg conn.decoder ~pos:0 ~len buf)
+    else Abb.Future.return (Pgsql_codec.Decode.backend_msg conn.decoder ~pos:0 ~len buf)
+
   let rec wait_for_frames conn =
     let open Abb.Future.Infix_monad in
-    match Pgsql_codec.Decode.backend_msg conn.decoder ~pos:0 ~len:0 conn.buf with
+    backend_msg conn 0 conn.buf
+    >>= fun ret ->
+    match ret with
     | Ok [] -> (
         Abbs_io_buffered.read conn.r ~buf:conn.buf ~pos:0 ~len:(Bytes.length conn.buf)
         >>= function
@@ -80,17 +91,51 @@ module Io = struct
             Abb.Future.return (Error `Disconnected)
         | Ok n ->
             (* Printf.printf "Rx = %S\n%!" (Bytes.to_string (Bytes.sub conn.buf 0 n)); *)
-            wait_for_frames'
-              conn
-              (Pgsql_codec.Decode.backend_msg conn.decoder ~pos:0 ~len:n conn.buf))
+            backend_msg conn n conn.buf >>= fun ret -> wait_for_frames' conn ret)
     | r -> wait_for_frames' conn r
 
   and wait_for_frames' conn = function
-    | Ok [] -> wait_for_frames conn
+    | Ok [] when Pgsql_codec.Decode.needed_bytes conn.decoder = None -> wait_for_frames conn
+    | Ok [] -> wait_for_frame_needed_bytes conn
     | Ok fs as r ->
         (* List.iter (fun frame -> Printf.printf "Rx %s\n%!" (Pgsql_codec.Frame.Backend.show frame)) fs; *)
         Abb.Future.return r
     | Error err -> Abb.Future.return (Error (`Parse_error err))
+
+  and wait_for_frame_needed_bytes conn =
+    (* Read all the needed bytes, this is an important performance optimization
+       for large queries responses. *)
+    match Pgsql_codec.Decode.needed_bytes conn.decoder with
+    | Some needed_bytes -> (
+        let open Abb.Future.Infix_monad in
+        let b = Buffer.create needed_bytes in
+        let buf = Bytes.create buf_size in
+        let needed_bytes = ref needed_bytes in
+        Abbs_future_combinators.retry
+          ~f:(fun () ->
+            let open Abbs_future_combinators.Infix_result_monad in
+            Abbs_io_buffered.read conn.r ~buf ~pos:0 ~len:(Bytes.length buf)
+            >>= fun n ->
+            Buffer.add_subbytes b buf 0 n;
+            needed_bytes := !needed_bytes - n;
+            Abb.Future.return (Ok n))
+          ~while_:(function
+            | Ok 0 | Error _ -> false
+            | Ok _ -> !needed_bytes > 0)
+          ~betwixt:(fun _ -> Abbs_future_combinators.unit)
+        >>= function
+        | Ok 0 | Error `E_io | Error (`Unexpected _) ->
+            conn.connected <- false;
+            Abb.Future.return (Error `Disconnected)
+        | Ok _ -> (
+            let buf = Buffer.to_bytes b in
+            backend_msg conn (Bytes.length buf) buf
+            >>= fun ret ->
+            match ret with
+            | Ok [] -> wait_for_frames conn
+            | Ok _ as r -> Abb.Future.return r
+            | Error err -> Abb.Future.return (Error (`Parse_error err))))
+    | None -> assert false
 
   let rec consume_until conn f =
     let open Abbs_future_combinators.Infix_result_monad in
@@ -107,9 +152,9 @@ module Io = struct
     let open Abbs_future_combinators.Infix_result_monad in
     conn.expected_frames <- [];
     consume_until conn (function
-        | Pgsql_codec.Frame.Backend.ReadyForQuery { status = 'T' | 'E' } when conn.in_tx -> true
-        | Pgsql_codec.Frame.Backend.ReadyForQuery { status = 'I' } when not conn.in_tx -> true
-        | _ -> false)
+      | Pgsql_codec.Frame.Backend.ReadyForQuery { status = 'T' | 'E' } when conn.in_tx -> true
+      | Pgsql_codec.Frame.Backend.ReadyForQuery { status = 'I' } when not conn.in_tx -> true
+      | _ -> false)
     >>= fun res ->
     assert (res = []);
     Abb.Future.return (Ok ())
@@ -240,6 +285,7 @@ module Typed_sql = struct
     let boolean = make Oid.bool (fun b vs -> (if b then Some "true" else Some "false") :: vs)
     let date = make Oid.date (fun s vs -> Some s :: vs)
     let time = make Oid.time (fun s vs -> Some s :: vs)
+    let timetz = make Oid.timetz (fun s vs -> Some s :: vs)
     let timestamp = make Oid.timestamp (fun s vs -> Some s :: vs)
     let timestamptz = make Oid.timestamptz (fun s vs -> Some s :: vs)
     let ud t f = make t.oid (fun v vs -> t.f (f v) vs) t.name
@@ -314,9 +360,9 @@ module Typed_sql = struct
 
     let boolean =
       take_one (function
-          | "true" | "t" -> Some true
-          | "false" | "f" -> Some false
-          | _ -> None)
+        | "true" | "t" -> Some true
+        | "false" | "f" -> Some false
+        | _ -> None)
 
     let ud f xs = f xs
 
@@ -343,8 +389,8 @@ module Typed_sql = struct
   let ( /% ) t v = Variable (t, v)
   let ( // ) t r = Ret (t, r)
 
-  let rec concat :
-      type q qr p pr qr' pr'. (q, qr, p, pr) t -> (qr, qr', pr, pr') t -> (q, qr', p, pr') t =
+  let rec concat : type q qr p pr qr' pr'.
+      (q, qr, p, pr) t -> (qr, qr', pr, pr') t -> (q, qr', p, pr') t =
    fun t1 t2 ->
     match t2 with
     | Sql -> t1
@@ -811,17 +857,26 @@ type create_err =
   ]
 [@@deriving show]
 
-let rec create_sm ?tls_config ?passwd ~notice_response ~host ~port ~user database =
+let rec create_sm
+    ?tls_config
+    ?passwd
+    ~notice_response
+    ~buf_size_threshold
+    ~host
+    ~port
+    ~user
+    database =
   let open Abbs_future_combinators.Infix_result_monad in
   Abbs_happy_eyeballs.connect host [ port ]
   >>= fun (_, tcp) ->
   match tls_config with
   | None ->
-      let r, w = Abbs_io_buffered.Of.of_tcp_socket ~size:4096 tcp in
-      create_sm_perform_login r w ?passwd ~notice_response ~user database
+      let r, w = Abbs_io_buffered.Of.of_tcp_socket ~size:buf_size tcp in
+      create_sm_perform_login r w ?passwd ~notice_response ~buf_size_threshold ~user database
   | Some (`Require tls_config) ->
       create_sm_ssl_conn
         ?passwd
+        ~buf_size_threshold
         ~required:true
         ~notice_response
         ~host
@@ -833,6 +888,7 @@ let rec create_sm ?tls_config ?passwd ~notice_response ~host ~port ~user databas
   | Some (`Prefer tls_config) ->
       create_sm_ssl_conn
         ?passwd
+        ~buf_size_threshold
         ~required:false
         ~notice_response
         ~host
@@ -842,12 +898,21 @@ let rec create_sm ?tls_config ?passwd ~notice_response ~host ~port ~user databas
         tcp
         database
 
-and create_sm_ssl_conn ?passwd ~required ~notice_response ~host ~port ~user tls_config tcp database
-    =
+and create_sm_ssl_conn
+    ?passwd
+    ~buf_size_threshold
+    ~required
+    ~notice_response
+    ~host
+    ~port
+    ~user
+    tls_config
+    tcp
+    database =
   let open Abbs_future_combinators.Infix_result_monad in
   let buf = Buffer.create 5 in
   let bytes = Io.encode_frame buf Pgsql_codec.Frame.Frontend.SSLRequest in
-  let r, w = Abbs_io_buffered.Of.of_tcp_socket ~size:4096 tcp in
+  let r, w = Abbs_io_buffered.Of.of_tcp_socket ~size:buf_size tcp in
   Abbs_io_buffered.write w ~bufs:[ Io.write_buf bytes ]
   >>= fun _ ->
   Abbs_io_buffered.flushed w
@@ -856,20 +921,21 @@ and create_sm_ssl_conn ?passwd ~required ~notice_response ~host ~port ~user tls_
   Abbs_io_buffered.read r ~buf:bytes ~pos:0 ~len:(Bytes.length bytes)
   >>= function
   | n when n = 1 && Bytes.get bytes 0 = 'S' -> (
-      match Abbs_tls.client_tcp tcp tls_config host with
-      | Ok (r, w) -> create_sm_perform_login r w ?passwd ~notice_response ~user database
+      match Abbs_tls.client_tcp ~size:buf_size tcp tls_config host with
+      | Ok (r, w) ->
+          create_sm_perform_login r w ?passwd ~notice_response ~buf_size_threshold ~user database
       | Error (#Abb_tls.err as err) -> Abb.Future.return (Error (`Tls_negotiate_err err)))
   | n when n = 1 && Bytes.get bytes 0 = 'N' && not required ->
-      create_sm_perform_login r w ?passwd ~notice_response ~user database
+      create_sm_perform_login r w ?passwd ~notice_response ~buf_size_threshold ~user database
   | n when n = 1 && Bytes.get bytes 0 = 'N' && required ->
       Abb.Future.return (Error `Tls_required_but_denied_err)
   | n -> Abb.Future.return (Error (`Tls_unexpected_response (n, Bytes.sub_string bytes 0 n)))
 
-and create_sm_perform_login r w ?passwd ~notice_response ~user database =
+and create_sm_perform_login r w ?passwd ~notice_response ~buf_size_threshold ~user database =
   let open Abbs_future_combinators.Infix_result_monad in
   let decoder = Pgsql_codec.Decode.create () in
-  let buf = Bytes.create 4096 in
-  let scratch = Buffer.create 4096 in
+  let buf = Bytes.create buf_size in
+  let scratch = Buffer.create buf_size in
   let t =
     {
       connected = true;
@@ -884,6 +950,7 @@ and create_sm_perform_login r w ?passwd ~notice_response ~user database =
       expected_frames = [];
       in_tx = false;
       busy = false;
+      buf_size_threshold;
     }
   in
   let msgs = [ ("user", user); ("database", database) ] in
@@ -928,10 +995,18 @@ and create_sm_process_login_frames ?passwd ~user t =
   | AuthenticationSSPI :: _ -> Abb.Future.return (Error `Unsupported_auth_sspi_err)
   | fs -> Abb.Future.return (Error (`Unmatching_frame fs))
 
-let create ?tls_config ?passwd ?(port = 5432) ?(notice_response = fun _ -> ()) ~host ~user database
-    =
+let create
+    ?tls_config
+    ?passwd
+    ?(port = 5432)
+    ?(notice_response = fun _ -> ())
+    ?(buf_size_threshold = buf_size_threshold)
+    ~host
+    ~user
+    database =
   let open Abb.Future.Infix_monad in
-  create_sm ?tls_config ?passwd ~notice_response ~host ~port ~user database
+  assert (buf_size_threshold > 0);
+  create_sm ?tls_config ?passwd ~notice_response ~buf_size_threshold ~host ~port ~user database
   >>= function
   | Ok _ as r -> Abb.Future.return r
   | Error `Disconnected | Error #Abb_happy_eyeballs.connect_err | Error `E_io | Error `E_no_space ->

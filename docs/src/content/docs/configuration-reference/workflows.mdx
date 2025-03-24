@@ -24,7 +24,6 @@ workflows:
 | --- | --- | --- |
 | environment | String | The GitHub Environment to associate the workflow with. Default is null. |
 | lock_policy | String | When the directory should have a lock acquired. Values are strict (acquire a lock if either it is merged or applied), apply (only acquire a lock when it is applied), merge (only acquire a lock when it is merged), and none (never acquire a lock). Default is strict. |
-| lock_policy | String | When the directory should have a lock acquired. Values are strict (acquire a lock if either it is merged or applied), apply (only acquire a lock when it is applied), merge (only acquire a lock when it is merged), and none (never acquire a lock). Default is strict. |
 
 ### Tag Query
 A [tag query](/advanced-workflows/tags) is a list of all tags that must be present in a tag set to match the workflow.
@@ -88,9 +87,11 @@ Custom commands can be run using the `run` step type.
 | Key | Type | Description |
 |-----|------|-------------|
 | cmd | List | Command to run from the directory that Terrateam is operating against. |
-| run_on | String | Run the command on step `success`, `failure`, or `always`. Default is `success`. |
-| capture_output | Boolean | When set to `true`, command output is included in the GitHub pull request comment on a failure. Sensitive data is not masked. Be aware, this data is sent back to the Terrateam backend for processing. Default is `false`. |
+| run_on | String | Run the command depending on the state of the workflow.  Options are `success`, `failure`, or `always`. Default is `success`. |
+| capture_output | Boolean | When set to `true`, command output is recorded.  Secrets are masked with `***`.  Default is `true`. |
 | env | Object | Environment variables to set for this execution. Object keys are environment variable names and the value is a string. |
+| ignore_errors | Boolean | Set to `true` if failure should be ignored.  Default is `false.` |
+| visible_on | String | When the output of the command should be visible in a PR comment or the UI.  Options are `always`, `failure`, `success`.  Default is `failure`. |
 
 ### OIDC
 An OIDC connection to a cloud provider can be initiated using the `oidc` step type, which supports AWS and GCP providers.

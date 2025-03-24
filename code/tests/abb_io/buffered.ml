@@ -7,7 +7,7 @@ let bytes_read =
   Oth_abb.test ~desc:"Simple read test" ~name:"Bytes Read" (fun () ->
       let open Fut.Infix_monad in
       let b = Bytes.of_string "testing" in
-      let (r, _) = Buffered.of_bytes b in
+      let r, _ = Buffered.of_bytes b in
       let b' = Bytes.create (Bytes.length b) in
       Buffered.read r ~buf:b' ~pos:0 ~len:(Bytes.length b')
       >>= fun ret ->
@@ -24,7 +24,7 @@ let bytes_write =
       let b = Bytes.of_string "" in
       let buf = Bytes.of_string "testing" in
       let len = Bytes.length buf in
-      let (r, w) = Buffered.of_bytes b in
+      let r, w = Buffered.of_bytes b in
       Buffered.write w ~bufs:Abb_intf.Write_buf.[ { buf; pos = 0; len } ]
       >>= fun write_ret ->
       Buffered.flushed w
@@ -45,23 +45,23 @@ let read_line =
   Oth_abb.test ~desc:"Simple read_line" ~name:"Read line" (fun () ->
       let open Fut.Infix_monad in
       let b = Bytes.of_string "foo\nbar" in
-      let (r, _) = Buffered.of_bytes b in
+      let r, _ = Buffered.of_bytes b in
       Buffered.read_line r
       >>= fun read_ret ->
-      assert (read_ret = Ok "foo");
+      assert (read_ret = Ok (Some "foo"));
       Buffered.read_line r
       >>= fun read_ret ->
-      assert (read_ret = Ok "bar");
+      assert (read_ret = Ok (Some "bar"));
       Buffered.read_line r
       >>= fun read_ret ->
-      assert (read_ret = Error (`Unexpected End_of_file));
+      assert (read_ret = Ok None);
       Fut.return ())
 
 let close_gives_read_eof =
   Oth_abb.test ~desc:"Closing writer gives EOF on reader" ~name:"Close gives read EOF" (fun _ ->
       let open Abb.Future.Infix_monad in
       let b = Bytes.of_string "" in
-      let (r, _) = Buffered.of_bytes b in
+      let r, _ = Buffered.of_bytes b in
       let b' = Bytes.create 1024 in
       Buffered.read r ~buf:b' ~pos:0 ~len:(Bytes.length b')
       >>= fun read_ret ->

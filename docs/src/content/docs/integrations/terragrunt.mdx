@@ -11,10 +11,11 @@ import { Steps } from '@astrojs/starlight/components';
 
 To use Terragrunt with Terrateam, you need to configure Terrateam to use the Terragrunt CLI instead of the default Terraform CLI. You can do this by specifying the [engine](/configuration-reference/engine) in your Terrateam configuration file (`.terrateam/config.yml`).
 
-Here's an example configuration that sets Terragrunt as the default engine and triggers Terrateam operations when any `terragrunt.hcl` file is modified, except for the root `terragrunt.hcl`:
+Here's an example configuration that sets Terragrunt as the default engine with a specific version and triggers Terrateam operations when any `terragrunt.hcl` file is modified, except for the root `terragrunt.hcl`:
 ```yaml
 engine:
   name: terragrunt
+  version: 0.69.3
 dirs:
   "**/terragrunt.hcl":
     when_modified:

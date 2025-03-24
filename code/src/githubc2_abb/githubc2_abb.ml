@@ -1,57 +1,33 @@
-module Http = Cohttp_abb.Make (Abb)
+module Http = Abb_curl.Make (Abb)
 
-let max_redirect_retries = 10
 let base_url = Uri.of_string "https://api.github.com/"
-
-let tls_config =
-  let cfg = Otls.Tls_config.create () in
-  Otls.Tls_config.insecure_noverifycert cfg;
-  cfg
 
 module Io = struct
   type 'a t = 'a Abb.Future.t
-  type err = Cohttp_abb.request_err
+  type err = Http.request_err
 
   let ( >>= ) = Abb.Future.Infix_monad.( >>= )
   let return = Abb.Future.return
 
-  let rec call' ?body ~tries ~headers ~meth uri =
+  let call' ?body ~headers ~meth uri =
     let meth' =
       match meth with
       | `Get -> `GET
-      | `Delete -> `DELETE
-      | `Patch -> `PATCH
-      | `Put -> `PUT
-      | `Post -> `POST
+      | `Delete -> `DELETE body
+      | `Patch -> `PATCH body
+      | `Put -> `PUT body
+      | `Post -> `POST body
     in
-    let headers' = Cohttp.Header.of_list headers in
-    let body' = CCOption.map Cohttp.Body.of_string body in
-    Http.Client.call ?body:body' ~tls_config ~headers:headers' meth' uri
+    let headers' = Http.Headers.of_list headers in
+    Http.call ~headers:headers' meth' uri
     >>= function
-    | Ok (resp, body')
-      when (resp.Http.Response.status = `See_other
-           || resp.Http.Response.status = `Moved_permanently
-           || resp.Http.Response.status = `Permanent_redirect
-           || resp.Http.Response.status = `Found)
-           && tries < max_redirect_retries -> (
-        match Cohttp.Header.get_location resp.Http.Response.headers with
-        | Some url -> call' ~tries:(tries + 1) ?body ~headers ~meth url
-        | None ->
-            let headers = resp |> Http.Response.headers |> Cohttp.Header.to_list in
-            let status = resp |> Http.Response.status |> Cohttp.Code.code_of_status in
-            return (Ok (Openapi.Response.make ~headers ~status body')))
-    | Ok (resp, body')
-      when resp.Http.Response.status = `See_other
-           || resp.Http.Response.status = `Moved_permanently
-           || resp.Http.Response.status = `Permanent_redirect
-           || resp.Http.Response.status = `Found -> failwith "redirect_limit"
     | Ok (resp, body) ->
-        let headers = resp |> Http.Response.headers |> Cohttp.Header.to_list in
-        let status = resp |> Http.Response.status |> Cohttp.Code.code_of_status in
+        let headers = resp |> Http.Response.headers |> Http.Headers.to_list in
+        let status = resp |> Http.Response.status |> Http.Status.to_int in
         return (Ok (Openapi.Response.make ~headers ~status body))
     | Error err -> return (Error (`Io_err err))
 
-  let call ?body ~headers ~meth uri = call' ~tries:1 ?body ~headers ~meth uri
+  let call ?body ~headers ~meth uri = call' ?body ~headers ~meth uri
 end
 
 module Api = Openapi.Make (Io)
@@ -66,7 +42,7 @@ end
 type call_err =
   [ `Conversion_err of string * string Openapi.Response.t
   | `Missing_response of string Openapi.Response.t
-  | `Io_err of Cohttp_abb.request_err
+  | `Io_err of Http.request_err
   | `Timeout
   ]
 [@@deriving show]
@@ -140,7 +116,7 @@ let links resp =
     (parse_links
        (CCOption.get_or
           ~default:""
-          (Cohttp.Header.get (Cohttp.Header.of_list (Openapi.Response.headers resp)) "link")))
+          (Http.Headers.get "link" (Http.Headers.of_list (Openapi.Response.headers resp)))))
 
 let rec fold' t ~init ~f req =
   let open Abbs_future_combinators.Infix_result_monad in

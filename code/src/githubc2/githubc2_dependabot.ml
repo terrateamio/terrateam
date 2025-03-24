@@ -449,7 +449,8 @@ module Create_or_update_org_secret = struct
 
   let url = "/orgs/{org}/dependabot/secrets/{secret_name}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -530,7 +531,8 @@ module Set_selected_repos_for_org_secret = struct
 
   let url = "/orgs/{org}/dependabot/secrets/{secret_name}/repositories"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -910,7 +912,8 @@ module Update_alert = struct
 
   let url = "/repos/{owner}/{repo}/dependabot/alerts/{alert_number}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1161,7 +1164,8 @@ module Create_or_update_repo_secret = struct
 
   let url = "/repos/{owner}/{repo}/dependabot/secrets/{secret_name}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]

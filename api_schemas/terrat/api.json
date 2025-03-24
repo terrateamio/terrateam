@@ -85,13 +85,6 @@
           },
           "name": {
             "type": "string"
-          },
-          "type": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/installation-type-github"
-              }
-            ]
           }
         },
         "required": [
@@ -281,10 +274,6 @@
         ],
         "type": "object"
       },
-      "installation-type-github": {
-        "const": "github",
-        "type": "string"
-      },
       "installation-work-manifest": {
         "additionalProperties": false,
         "properties": {
@@ -422,7 +411,6 @@
           "idx",
           "ignore_errors",
           "location",
-          "payload",
           "scope",
           "state",
           "step"
@@ -600,24 +588,33 @@
       "server-config": {
         "additionalProperties": false,
         "properties": {
-          "github_api_base_url": {
+          "github": {
+            "$ref": "#/components/schemas/server-config-github"
+          }
+        },
+        "type": "object"
+      },
+      "server-config-github": {
+        "additionalProperties": false,
+        "properties": {
+          "api_base_url": {
             "type": "string"
           },
-          "github_app_client_id": {
+          "app_client_id": {
             "type": "string"
           },
-          "github_app_url": {
+          "app_url": {
             "type": "string"
           },
-          "github_web_base_url": {
+          "web_base_url": {
             "type": "string"
           }
         },
         "required": [
-          "github_api_base_url",
-          "github_app_client_id",
-          "github_app_url",
-          "github_web_base_url"
+          "api_base_url",
+          "app_client_id",
+          "app_url",
+          "web_base_url"
         ],
         "type": "object"
       },
@@ -701,6 +698,12 @@
           "base_ref": {
             "type": "string"
           },
+          "capabilities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "changed_dirspaces": {
             "items": {
               "$ref": "#/components/schemas/work-manifest-dir"
@@ -726,6 +729,7 @@
         },
         "required": [
           "base_ref",
+          "capabilities",
           "changed_dirspaces",
           "config",
           "result_version",
@@ -1007,6 +1011,12 @@
           "base_ref": {
             "type": "string"
           },
+          "capabilities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "changed_dirspaces": {
             "items": {
               "$ref": "#/components/schemas/work-manifest-dir"
@@ -1046,6 +1056,7 @@
         "required": [
           "base_dirspaces",
           "base_ref",
+          "capabilities",
           "changed_dirspaces",
           "config",
           "dirspaces",
@@ -1836,7 +1847,7 @@
         }
       }
     },
-    "/api/v1/installations/{installation_id}/dirspaces": {
+    "/api/v1/github/installations/{installation_id}/dirspaces": {
       "get": {
         "operationId": "installations/list-dirspaces",
         "parameters": [
@@ -1945,7 +1956,7 @@
         }
       }
     },
-    "/api/v1/installations/{installation_id}/pull-requests": {
+    "/api/v1/github/installations/{installation_id}/pull-requests": {
       "get": {
         "operationId": "installations/list-pull-requests",
         "parameters": [
@@ -2005,7 +2016,7 @@
         }
       }
     },
-    "/api/v1/installations/{installation_id}/repos": {
+    "/api/v1/github/installations/{installation_id}/repos": {
       "get": {
         "operationId": "installations/list-repos",
         "parameters": [
@@ -2057,7 +2068,7 @@
         }
       }
     },
-    "/api/v1/installations/{installation_id}/repos/refresh": {
+    "/api/v1/github/installations/{installation_id}/repos/refresh": {
       "post": {
         "operationId": "installations/repo-refresh",
         "parameters": [
@@ -2095,7 +2106,7 @@
         }
       }
     },
-    "/api/v1/installations/{installation_id}/work-manifests": {
+    "/api/v1/github/installations/{installation_id}/work-manifests": {
       "get": {
         "operationId": "installations/list-work-manifests",
         "parameters": [
@@ -2204,7 +2215,7 @@
         }
       }
     },
-    "/api/v1/installations/{installation_id}/work-manifests/{work_manifest_id}": {
+    "/api/v1/github/installations/{installation_id}/work-manifests/{work_manifest_id}": {
       "get": {
         "operationId": "installations/get-work-manifest",
         "parameters": [
@@ -2244,7 +2255,7 @@
         }
       }
     },
-    "/api/v1/installations/{installation_id}/work-manifests/{work_manifest_id}/outputs": {
+    "/api/v1/github/installations/{installation_id}/work-manifests/{work_manifest_id}/outputs": {
       "get": {
         "operationId": "installations/get-work-manifest-outputs",
         "parameters": [
@@ -2297,6 +2308,15 @@
             "required": false,
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lite",
+            "required": false,
+            "schema": {
+              "default": false,
+              "type": "boolean"
             }
           }
         ],
@@ -2352,6 +2372,20 @@
         }
       }
     },
+    "/api/v1/logout": {
+      "post": {
+        "operationId": "user/logout",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {}
+          },
+          "403": {
+            "content": {}
+          }
+        }
+      }
+    },
     "/api/v1/server/config": {
       "get": {
         "operationId": "server/config",
@@ -2398,9 +2432,9 @@
         }
       }
     },
-    "/api/v1/user/installations": {
+    "/api/v1/user/github/installations": {
       "get": {
-        "operationId": "user/list-installations",
+        "operationId": "user/list-github-installations",
         "parameters": [],
         "responses": {
           "200": {

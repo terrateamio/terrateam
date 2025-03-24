@@ -15,20 +15,36 @@ module Drift = struct
                |> CCString.split_on_char '\n'
                |> CCList.filter CCFun.(CCString.prefix ~pre:"--" %> not)
                |> CCString.concat "\n")
-             (Terrat_files_sql.read fname))
+             (Terrat_files_github_sql.read fname))
 
       let select_admin_drift_list () =
         Pgsql_io.Typed_sql.(
           sql
-          // (* id *) Ret.uuid
-          // (* owner *) Ret.text
-          // (* name *) Ret.text
-          // (* state *) Ret.text
-          // (* run_type *) Ret.ud' Terrat_work_manifest3.Step.of_string
-          // (* created_at *) Ret.text
-          // (* completed_at *) Ret.(option text)
-          // (* unlocked *) Ret.boolean
-          /^ read "select_github_admin_drift_list.sql")
+          //
+          (* id *)
+          Ret.uuid
+          //
+          (* owner *)
+          Ret.text
+          //
+          (* name *)
+          Ret.text
+          //
+          (* state *)
+          Ret.text
+          //
+          (* run_type *)
+          Ret.ud' Terrat_work_manifest3.Step.of_string
+          //
+          (* created_at *)
+          Ret.text
+          //
+          (* completed_at *)
+          Ret.(option text)
+          //
+          (* unlocked *)
+          Ret.boolean
+          /^ read "select_admin_drift_list.sql")
     end
 
     let make_drift id owner name state run_type created_at completed_at unlocked =

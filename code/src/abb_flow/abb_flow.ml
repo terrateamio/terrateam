@@ -96,6 +96,7 @@ module Make (Fut : Abb_intf.Future.S) (Id : ID) (State : S) = struct
     type 'a t =
       | Seq of ('a t * 'a t)
       | Action of 'a Step.t list
+      | Gen of ('a -> State.t -> 'a t)
       | Choice of {
           id : Id.t;
           f : ('a -> State.t -> (Id.t * State.t, State.step_err) result Fut.t[@opaque]);
@@ -115,6 +116,7 @@ module Make (Fut : Abb_intf.Future.S) (Id : ID) (State : S) = struct
 
     let seq t1 t2 = Seq (t1, t2)
     let action steps = Action steps
+    let gen f = Gen f
     let choice ~id ~f choices = Choice { id; f; choices }
     let finally ~id flow ~finally = Finally { id; flow; finally }
     let recover ~id flow ~f ~recover = Recover { id; flow; f; recover }
@@ -128,6 +130,7 @@ module Make (Fut : Abb_intf.Future.S) (Id : ID) (State : S) = struct
               ("type", `String "action");
               ("steps", `List (CCList.map (fun { Step.id; _ } -> `String (Id.to_string id)) steps));
             ]
+      | Gen _ -> `Assoc [ ("type", `String "gen") ]
       | Choice { id; choices; _ } ->
           `Assoc
             [
@@ -249,6 +252,7 @@ module Make (Fut : Abb_intf.Future.S) (Id : ID) (State : S) = struct
         | `Success (t, state) -> run_flow t state run_data flow2
         | (`Yield _ | `Failure _) as ret -> Fut.return ret)
     | Flow.Action steps -> run_steps t state run_data steps
+    | Flow.Gen f -> run_flow t state run_data (f run_data state)
     | Flow.Choice { id; f; choices } -> (
         match resume_choice id choices t.resume_path with
         | `Ok (flow, choice, resume_path) ->

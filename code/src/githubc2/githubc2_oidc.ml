@@ -41,7 +41,8 @@ module Update_oidc_custom_sub_template_for_org = struct
 
   let url = "/orgs/{org}/actions/oidc/customization/sub"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]

@@ -123,7 +123,8 @@ module Create_in_org = struct
 
   let url = "/orgs/{org}/repos"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -294,7 +295,8 @@ module Create_org_ruleset = struct
 
   let url = "/orgs/{org}/rulesets"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -503,7 +505,8 @@ module Update_org_ruleset = struct
 
   let url = "/orgs/{org}/rulesets/{ruleset_id}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -759,7 +762,8 @@ module Update = struct
 
   let url = "/repos/{owner}/{repo}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -1053,7 +1057,8 @@ module Create_autolink = struct
 
   let url = "/repos/{owner}/{repo}/autolinks"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1682,7 +1687,8 @@ module Update_branch_protection = struct
 
   let url = "/repos/{owner}/{repo}/branches/{branch}/protection"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1986,7 +1992,8 @@ module Update_pull_request_review_protection = struct
 
   let url = "/repos/{owner}/{repo}/branches/{branch}/protection/required_pull_request_reviews"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -2327,7 +2334,8 @@ module Update_status_check_protection = struct
 
   let url = "/repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -2503,7 +2511,8 @@ module Remove_status_check_contexts = struct
 
   let url = "/repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks/contexts"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -2596,7 +2605,8 @@ module Add_status_check_contexts = struct
 
   let url = "/repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks/contexts"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -2682,7 +2692,8 @@ module Set_status_check_contexts = struct
 
   let url = "/repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks/contexts"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -2904,7 +2915,8 @@ module Remove_app_access_restrictions = struct
 
   let url = "/repos/{owner}/{repo}/branches/{branch}/protection/restrictions/apps"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -2984,7 +2996,8 @@ module Add_app_access_restrictions = struct
 
   let url = "/repos/{owner}/{repo}/branches/{branch}/protection/restrictions/apps"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -3064,7 +3077,8 @@ module Set_app_access_restrictions = struct
 
   let url = "/repos/{owner}/{repo}/branches/{branch}/protection/restrictions/apps"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -3197,7 +3211,8 @@ module Remove_team_access_restrictions = struct
 
   let url = "/repos/{owner}/{repo}/branches/{branch}/protection/restrictions/teams"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -3277,7 +3292,8 @@ module Add_team_access_restrictions = struct
 
   let url = "/repos/{owner}/{repo}/branches/{branch}/protection/restrictions/teams"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -3357,7 +3373,8 @@ module Set_team_access_restrictions = struct
 
   let url = "/repos/{owner}/{repo}/branches/{branch}/protection/restrictions/teams"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -3490,7 +3507,8 @@ module Remove_user_access_restrictions = struct
 
   let url = "/repos/{owner}/{repo}/branches/{branch}/protection/restrictions/users"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -3570,7 +3588,8 @@ module Add_user_access_restrictions = struct
 
   let url = "/repos/{owner}/{repo}/branches/{branch}/protection/restrictions/users"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -3650,7 +3669,8 @@ module Set_user_access_restrictions = struct
 
   let url = "/repos/{owner}/{repo}/branches/{branch}/protection/restrictions/users"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -3781,7 +3801,8 @@ module Rename_branch = struct
 
   let url = "/repos/{owner}/{repo}/branches/{branch}/rename"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -4044,7 +4065,8 @@ module Add_collaborator = struct
 
   let url = "/repos/{owner}/{repo}/collaborators/{username}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -4241,7 +4263,8 @@ module Update_commit_comment = struct
 
   let url = "/repos/{owner}/{repo}/comments/{comment_id}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -4565,7 +4588,8 @@ module Create_commit_comment = struct
 
   let url = "/repos/{owner}/{repo}/commits/{commit_sha}/comments"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -5170,7 +5194,8 @@ module Delete_file = struct
 
   let url = "/repos/{owner}/{repo}/contents/{path}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -5288,7 +5313,8 @@ module Create_or_update_file_contents = struct
 
   let url = "/repos/{owner}/{repo}/contents/{path}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -5571,7 +5597,8 @@ module Create_deployment = struct
 
   let url = "/repos/{owner}/{repo}/deployments"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -5816,7 +5843,8 @@ module Create_deployment_status = struct
 
   let url = "/repos/{owner}/{repo}/deployments/{deployment_id}/statuses"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -5996,7 +6024,8 @@ module Create_dispatch_event = struct
 
   let url = "/repos/{owner}/{repo}/dispatches"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -6163,7 +6192,8 @@ module Create_or_update_environment = struct
 
   let url = "/repos/{owner}/{repo}/environments/{environment_name}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -6262,7 +6292,8 @@ module Create_deployment_branch_policy = struct
 
   let url = "/repos/{owner}/{repo}/environments/{environment_name}/deployment-branch-policies"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -6407,7 +6438,8 @@ module Update_deployment_branch_policy = struct
   let url =
     "/repos/{owner}/{repo}/environments/{environment_name}/deployment-branch-policies/{branch_policy_id}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -6501,7 +6533,8 @@ module Create_deployment_protection_rule = struct
 
   let url = "/repos/{owner}/{repo}/environments/{environment_name}/deployment_protection_rules"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -6784,7 +6817,8 @@ module Create_fork = struct
 
   let url = "/repos/{owner}/{repo}/forks"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -6947,7 +6981,8 @@ module Create_webhook = struct
 
   let url = "/repos/{owner}/{repo}/hooks"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -7101,7 +7136,8 @@ module Update_webhook = struct
 
   let url = "/repos/{owner}/{repo}/hooks/{hook_id}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -7255,7 +7291,8 @@ module Update_webhook_config_for_repo = struct
 
   let url = "/repos/{owner}/{repo}/hooks/{hook_id}/config"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -7694,7 +7731,8 @@ module Update_invitation = struct
 
   let url = "/repos/{owner}/{repo}/invitations/{invitation_id}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -7798,7 +7836,8 @@ module Create_deploy_key = struct
 
   let url = "/repos/{owner}/{repo}/keys"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -8021,7 +8060,8 @@ module Merge_upstream = struct
 
   let url = "/repos/{owner}/{repo}/merge-upstream"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -8102,7 +8142,8 @@ module Merge = struct
 
   let url = "/repos/{owner}/{repo}/merges"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -8326,7 +8367,8 @@ module Create_pages_site = struct
 
   let url = "/repos/{owner}/{repo}/pages"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -8795,7 +8837,8 @@ module Update_information_about_pages_site = struct
 
   let url = "/repos/{owner}/{repo}/pages"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -9071,7 +9114,8 @@ module Create_pages_deployment = struct
 
   let url = "/repos/{owner}/{repo}/pages/deployment"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -9438,7 +9482,8 @@ module Create_release = struct
 
   let url = "/repos/{owner}/{repo}/releases"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -9541,7 +9586,8 @@ module Update_release_asset = struct
 
   let url = "/repos/{owner}/{repo}/releases/assets/{asset_id}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -9702,7 +9748,8 @@ module Generate_release_notes = struct
 
   let url = "/repos/{owner}/{repo}/releases/generate-notes"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -9869,7 +9916,8 @@ module Update_release = struct
 
   let url = "/repos/{owner}/{repo}/releases/{release_id}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -10199,7 +10247,8 @@ module Create_repo_ruleset = struct
 
   let url = "/repos/{owner}/{repo}/rulesets"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -10420,7 +10469,8 @@ module Update_repo_ruleset = struct
 
   let url = "/repos/{owner}/{repo}/rulesets/{ruleset_id}"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -10798,7 +10848,8 @@ module Create_commit_status = struct
 
   let url = "/repos/{owner}/{repo}/statuses/{sha}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -10907,7 +10958,8 @@ module Create_tag_protection = struct
 
   let url = "/repos/{owner}/{repo}/tags/protection"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -11179,7 +11231,8 @@ module Replace_all_topics = struct
 
   let url = "/repos/{owner}/{repo}/topics"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -11503,7 +11556,8 @@ module Transfer = struct
 
   let url = "/repos/{owner}/{repo}/transfer"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -11692,7 +11746,8 @@ module Create_using_template = struct
 
   let url = "/repos/{template_owner}/{template_repo}/generate"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -11895,7 +11950,8 @@ module Create_for_authenticated_user = struct
 
   let url = "/user/repos"
 
-  let make ~body () =
+  let make ~body =
+   fun () ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]

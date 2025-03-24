@@ -2,6 +2,226 @@ module V1 = Terrat_repo_config.Version_1
 module String_map = Terrat_data.String_map
 module String_set = Terrat_data.String_set
 
+let timezone_abbreviations =
+  String_set.of_list
+    [
+      "ACDT";
+      "ACST";
+      "ACT";
+      "ACT";
+      "ACWST";
+      "ADT";
+      "AEDT";
+      "AEST";
+      "AEST";
+      "AEDT";
+      "AFT";
+      "AKDT";
+      "AKST";
+      "ALMT";
+      "AMST";
+      "AMT";
+      "AMT";
+      "ANAT";
+      "AQTT";
+      "ART";
+      "AST";
+      "AST";
+      "AWST";
+      "AZOST";
+      "AZOT";
+      "AZT";
+      "BNT";
+      "BIOT";
+      "BIT";
+      "BOT";
+      "BRST";
+      "BRT";
+      "BST";
+      "BST";
+      "BST";
+      "BTT";
+      "CAT";
+      "CCT";
+      "CDT";
+      "CDT";
+      "CEST";
+      "CET";
+      "CHADT";
+      "CHAST";
+      "CHOT";
+      "CHOST";
+      "CHST";
+      "CHUT";
+      "CIST";
+      "CKT";
+      "CLST";
+      "CLT";
+      "COST";
+      "COT";
+      "CST";
+      "CST";
+      "CST";
+      "CST";
+      "CDT";
+      "CVT";
+      "CWST";
+      "CXT";
+      "DAVT";
+      "DDUT";
+      "DFT";
+      "EASST";
+      "EAST";
+      "EAT";
+      "ECT";
+      "ECT";
+      "EDT";
+      "EEST";
+      "EET";
+      "EGST";
+      "EGT";
+      "EST";
+      "EST";
+      "EDT";
+      "FET";
+      "FJT";
+      "FKST";
+      "FKT";
+      "FNT";
+      "GALT";
+      "GAMT";
+      "GET";
+      "GFT";
+      "GILT";
+      "GIT";
+      "GMT";
+      "GST";
+      "GST";
+      "GYT";
+      "HDT";
+      "HAEC";
+      "HST";
+      "HKT";
+      "HMT";
+      "HOVST";
+      "HOVT";
+      "ICT";
+      "IDLW";
+      "IDT";
+      "IOT";
+      "IRDT";
+      "IRKT";
+      "IRST";
+      "IST";
+      "IST";
+      "IST";
+      "JST";
+      "KALT";
+      "KGT";
+      "KOST";
+      "KRAT";
+      "KST";
+      "LHST";
+      "LHST";
+      "LINT";
+      "MAGT";
+      "MART";
+      "MAWT";
+      "MDT";
+      "MET";
+      "MEST";
+      "MHT";
+      "MIST";
+      "MIT";
+      "MMT";
+      "MSK";
+      "MST";
+      "MST";
+      "MST";
+      "MDT";
+      "MUT";
+      "MVT";
+      "MYT";
+      "NCT";
+      "NDT";
+      "NFT";
+      "NOVT";
+      "NPT";
+      "NST";
+      "NT";
+      "NUT";
+      "NZDT";
+      "NZST";
+      "OMST";
+      "ORAT";
+      "PDT";
+      "PET";
+      "PETT";
+      "PGT";
+      "PHOT";
+      "PHT";
+      "PHST";
+      "PKT";
+      "PMDT";
+      "PMST";
+      "PONT";
+      "PST";
+      "PST";
+      "PDT";
+      "PWT";
+      "PYST";
+      "PYT";
+      "RET";
+      "ROTT";
+      "SAKT";
+      "SAMT";
+      "SAST";
+      "SBT";
+      "SCT";
+      "SDT";
+      "SGT";
+      "SLST";
+      "SRET";
+      "SRT";
+      "SST";
+      "SYOT";
+      "TAHT";
+      "THA";
+      "TFT";
+      "TJT";
+      "TKT";
+      "TLT";
+      "TMT";
+      "TRT";
+      "TOT";
+      "TST";
+      "TVT";
+      "ULAST";
+      "ULAT";
+      "UTC";
+      "UYST";
+      "UYT";
+      "UZT";
+      "VET";
+      "VLAT";
+      "VOLT";
+      "VOST";
+      "VUT";
+      "WAKT";
+      "WAST";
+      "WAT";
+      "WEST";
+      "WET";
+      "WIB";
+      "WIT";
+      "WITA";
+      "WGST";
+      "WGT";
+      "WST";
+      "YAKT";
+      "YEKT";
+    ]
+
 let map_opt f = function
   | None -> Ok None
   | Some v ->
@@ -67,6 +287,19 @@ module Workflow_step = struct
     let to_string = function
       | Failure -> "failure"
       | Always -> "always"
+      | Success -> "success"
+  end
+
+  module Visible_on = struct
+    type t =
+      | Always
+      | Failure
+      | Success
+    [@@deriving show, yojson, eq]
+
+    let to_string = function
+      | Always -> "always"
+      | Failure -> "failure"
       | Success -> "success"
   end
 
@@ -145,6 +378,7 @@ module Workflow_step = struct
       env : string String_map.t option;
       ignore_errors : bool; [@default false]
       run_on : Run_on.t; [@default Run_on.Success]
+      visible_on : Visible_on.t; [@default Visible_on.Failure]
     }
     [@@deriving make, show, yojson, eq]
   end
@@ -192,7 +426,7 @@ module Access_control = struct
     type t =
       | User of string
       | Team of string
-      | Repo of string
+      | Role of string
       | Any
     [@@deriving show, eq, ord]
 
@@ -200,14 +434,16 @@ module Access_control = struct
       match CCString.Split.left ~by:":" m with
       | Some ("user", user) -> Ok (User user)
       | Some ("team", team) -> Ok (Team team)
-      | Some ("repo", repo) -> Ok (Repo repo)
+      | Some (("role" | "repo"), repo) ->
+          (* Support 'repo' for backwards compatibility reasons. *)
+          Ok (Role repo)
       | _ when CCString.equal m "*" -> Ok Any
       | _ -> Error (`Match_parse_err m)
 
     let to_string = function
       | User user -> "user:" ^ user
       | Team team -> "team:" ^ team
-      | Repo repo -> "repo:" ^ repo
+      | Role role -> "role:" ^ role
       | Any -> "*"
 
     let to_yojson t =
@@ -351,6 +587,9 @@ module File_pattern = struct
     s : string;
     p : Path_glob.Glob.globber;
     negate : bool;
+    prefix : string;
+    suffix : string;
+    words : string list;
   }
 
   let sanitize =
@@ -360,13 +599,50 @@ module File_pattern = struct
 
   let make s =
     try
-      if CCString.prefix ~pre:"!" s then
-        Ok { s; p = Path_glob.Glob.parse ("<" ^ sanitize (CCString.drop 1 s) ^ ">"); negate = true }
-      else Ok { s; p = Path_glob.Glob.parse ("<" ^ sanitize s ^ ">"); negate = false }
+      let negate, s' =
+        if CCString.prefix ~pre:"!" s then (true, CCString.drop 1 s) else (false, s)
+      in
+      (* [prefix], [suffix], and [words] allow optimizing some of the checks in
+         the case that globbing is too expensive.  This can happen in very large
+         repositories with lots of files and globs with lots of wild cards. *)
+      let prefix =
+        match CCString.index_opt s' '*' with
+        | Some idx -> CCString.sub s' 0 idx
+        | None -> s'
+      in
+      let suffix =
+        match CCString.rindex_opt s' '*' with
+        | Some idx -> CCString.sub s' (idx + 1) (CCString.length s' - (idx + 1))
+        | None -> s'
+      in
+      let words =
+        CCList.map
+          (* Strip any dir separators around the string.  If a glob looks like
+             [**/foo] that will match [foo]. *)
+          CCFun.(
+            CCString.drop_while (( = ) '/')
+            %> CCString.rev
+            %> CCString.drop_while (( = ) '/')
+            %> CCString.rev)
+        @@ CCList.filter (fun word ->
+               (* [3] is just an arbitrary limit of what a string that adds value
+               in discriminating a check is. Short strings are likely to not
+               tell us much. *)
+               CCString.length word > 3)
+        @@ CCString.split_on_char '*' s'
+      in
+      Ok { s; p = Path_glob.Glob.parse ("<" ^ sanitize s' ^ ">"); negate; prefix; suffix; words }
     with Path_glob.Glob.Parse_error err -> Error (`Glob_parse_err (s, err))
 
-  let is_match { p; negate; _ } str =
-    let m = Path_glob.Glob.eval p str in
+  let is_match { p; negate; prefix = pre; suffix = suf; words; _ } str =
+    (* Evaluating a glob can be expensive, so we do as many cheap checks as we
+       can prior to evaluating the globa. *)
+    let m =
+      CCString.prefix ~pre str
+      && CCString.suffix ~suf str
+      && CCList.for_all (fun word -> CCString.mem ~sub:word str) words
+      && Path_glob.Glob.eval p str
+    in
     if negate then not m else m
 
   let is_negate { negate; _ } = negate
@@ -426,26 +702,51 @@ module Dirs = struct
 end
 
 module Drift = struct
-  module Schedule = struct
-    type t =
-      | Hourly
-      | Daily
-      | Weekly
-      | Monthly
+  module Window = struct
+    type t = {
+      end_ : string;
+      start : string;
+    }
     [@@deriving show, yojson, eq]
 
-    let to_string = function
-      | Hourly -> "hourly"
-      | Daily -> "daily"
-      | Weekly -> "weekly"
-      | Monthly -> "monthly"
+    let make ~start ~end_ () =
+      match (CCString.Split.right ~by:" " start, CCString.Split.right ~by:" " end_) with
+      | Some (_, tz), _ when not (String_set.mem tz timezone_abbreviations) ->
+          Error (`Window_parse_timezone_err tz)
+      | _, Some (_, tz) when not (String_set.mem tz timezone_abbreviations) ->
+          Error (`Window_parse_timezone_err tz)
+      | None, _ | _, None -> Error (`Window_parse_timezone_err "")
+      | _, _ -> Ok { start; end_ }
+  end
+
+  module Schedule = struct
+    module Sched = struct
+      type t =
+        | Hourly
+        | Daily
+        | Weekly
+        | Monthly
+      [@@deriving show, yojson, eq]
+
+      let to_string = function
+        | Hourly -> "hourly"
+        | Daily -> "daily"
+        | Weekly -> "weekly"
+        | Monthly -> "monthly"
+    end
+
+    type t = {
+      tag_query : Tag_query.t;
+      schedule : Sched.t;
+      reconcile : bool; [@default false]
+      window : Window.t option;
+    }
+    [@@deriving make, show, yojson, eq]
   end
 
   type t = {
     enabled : bool; [@default false]
-    reconcile : bool; [@default false]
-    schedule : Schedule.t; [@default Schedule.Weekly]
-    tag_query : Tag_query.t; [@default Tag_query.any]
+    schedules : Schedule.t String_map.t; [@default String_map.empty]
   }
   [@@deriving make, show, yojson, eq]
 end
@@ -460,18 +761,18 @@ module Engine = struct
   end
 
   module Opentofu = struct
-    type t = { version : string [@default "latest"] } [@@deriving make, show, yojson, eq]
+    type t = { version : string option } [@@deriving make, show, yojson, eq]
   end
 
   module Terraform = struct
-    type t = { version : string [@default "latest"] } [@@deriving make, show, yojson, eq]
+    type t = { version : string option } [@@deriving make, show, yojson, eq]
   end
 
   module Terragrunt = struct
     type t = {
       tf_cmd : string; [@default "terraform"]
-      tf_version : string; [@default "latest"]
-      version : string; [@default "latest"]
+      tf_version : string option;
+      version : string option;
     }
     [@@deriving make, show, yojson, eq]
   end
@@ -481,6 +782,7 @@ module Engine = struct
     | Opentofu of Opentofu.t
     | Terraform of Terraform.t
     | Terragrunt of Terragrunt.t
+    | Pulumi
   [@@deriving show, yojson, eq]
 end
 
@@ -705,11 +1007,15 @@ type of_version_1_err =
   | `Drift_tag_query_err of string * string
   | `Glob_parse_err of string * string
   | `Hooks_unknown_run_on_err of Terrat_repo_config_run_on.t
+  | `Hooks_unknown_visible_on_err of string
   | `Pattern_parse_err of string
   | `Unknown_lock_policy_err of string
   | `Unknown_plan_mode_err of string
+  | `Window_parse_timezone_err of string
   | `Workflows_apply_unknown_run_on_err of Terrat_repo_config_run_on.t
+  | `Workflows_apply_unknown_visible_on_err of string
   | `Workflows_plan_unknown_run_on_err of Terrat_repo_config_run_on.t
+  | `Workflows_plan_unknown_visible_on_err of string
   | `Workflows_tag_query_parse_err of string * string
   ]
 [@@deriving show]
@@ -748,7 +1054,8 @@ let of_version_1_access_control_policies policies =
            plan;
            superapproval;
            tag_query;
-         } ->
+         }
+       ->
       let open CCResult.Infix in
       CCResult.map_err
         (function
@@ -852,7 +1159,8 @@ let of_version_1_apply_requirements_checks =
       let open CCResult.Infix in
       let module I = C2.Items in
       CCResult.map_l
-        (fun { I.approved; merge_conflicts; require_ready_for_review_pr; status_checks; tag_query } ->
+        (fun { I.approved; merge_conflicts; require_ready_for_review_pr; status_checks; tag_query }
+           ->
           CCResult.map_err
             (function
               | `Tag_query_error err -> `Apply_requirements_check_tag_query_err err)
@@ -922,6 +1230,14 @@ let of_version_1_run_on =
   | "always" -> Ok R.Always
   | "success" -> Ok R.Success
   | v -> Error (`Unknown_run_on v)
+
+let of_version_1_visible_on =
+  let module V = Workflow_step.Visible_on in
+  function
+  | "always" -> Ok V.Always
+  | "failure" -> Ok V.Failure
+  | "success" -> Ok V.Success
+  | v -> Error (`Unknown_visible_on v)
 
 let of_version_1_hook_op =
   let module Op = Terrat_repo_config_hook_op in
@@ -993,24 +1309,29 @@ let of_version_1_hook_op =
   | Op.Hook_op_run op ->
       let open CCResult.Infix in
       let module Op = Terrat_repo_config_hook_op_run in
-      let { Op.capture_output; cmd; env; run_on; type_ = _; ignore_errors } = op in
+      let { Op.capture_output; cmd; env; run_on; type_ = _; ignore_errors; visible_on } = op in
       CCResult.map_err
         (function
           | `Unknown_run_on err -> `Hooks_unknown_run_on_err err)
         (map_opt of_version_1_run_on run_on)
       >>= fun run_on ->
+      CCResult.map_err
+        (function
+          | `Unknown_visible_on err -> `Hooks_unknown_visible_on_err err)
+        (map_opt of_version_1_visible_on visible_on)
+      >>= fun visible_on ->
       map_opt (fun { Op.Env.additional; _ } -> Ok additional) env
       >>= fun env ->
       Ok
         (Hooks.Hook_op.Run
-           (Workflow_step.Run.make ~capture_output ~cmd ~ignore_errors ?env ?run_on ()))
+           (Workflow_step.Run.make ~capture_output ~cmd ~ignore_errors ?visible_on ?env ?run_on ()))
   | Op.Hook_op_slack _ -> assert false
 
 let of_version_1_drift_schedule = function
-  | "hourly" -> Ok Drift.Schedule.Hourly
-  | "daily" -> Ok Drift.Schedule.Daily
-  | "weekly" -> Ok Drift.Schedule.Weekly
-  | "monthly" -> Ok Drift.Schedule.Monthly
+  | "hourly" -> Ok Drift.Schedule.Sched.Hourly
+  | "daily" -> Ok Drift.Schedule.Sched.Daily
+  | "weekly" -> Ok Drift.Schedule.Sched.Weekly
+  | "monthly" -> Ok Drift.Schedule.Sched.Monthly
   | unknown -> Error (`Drift_schedule_err unknown)
 
 let of_version_1_workflow_op_plan_mode = function
@@ -1049,7 +1370,7 @@ let of_version_1_workflow_op_list ops =
           >>= fun retry -> Ok (O.Apply (Workflow_step.Apply.make ?env ?extra_args ?retry ()))
       | Op.Hook_op_run op ->
           let module Op = Terrat_repo_config_hook_op_run in
-          let { Op.capture_output; cmd; env; run_on; type_ = _; ignore_errors } = op in
+          let { Op.capture_output; cmd; env; run_on; type_ = _; ignore_errors; visible_on } = op in
           map_opt (fun { Op.Env.additional; _ } -> Ok additional) env
           >>= fun env ->
           CCResult.map_err
@@ -1057,7 +1378,21 @@ let of_version_1_workflow_op_list ops =
               | `Unknown_run_on err -> `Workflows_unknown_run_on_err err)
             (map_opt of_version_1_run_on run_on)
           >>= fun run_on ->
-          Ok (O.Run (Workflow_step.Run.make ~capture_output ~cmd ~ignore_errors ?env ?run_on ()))
+          CCResult.map_err
+            (function
+              | `Unknown_visible_on err -> `Workflows_unknown_visible_on_err err)
+            (map_opt of_version_1_visible_on visible_on)
+          >>= fun visible_on ->
+          Ok
+            (O.Run
+               (Workflow_step.Run.make
+                  ~capture_output
+                  ~cmd
+                  ~ignore_errors
+                  ?env
+                  ?run_on
+                  ?visible_on
+                  ()))
       | Op.Hook_op_slack _ -> assert false
       | Op.Hook_op_env_exec op ->
           let module Op = Terrat_repo_config_hook_op_env_exec in
@@ -1127,9 +1462,9 @@ let of_version_1_workflow_op_list ops =
 let of_version_1_workflow_engine cdktf terraform_version terragrunt default_engine engine =
   let default_tf_cmd, default_tf_version, default_wrapper_version =
     match default_engine with
-    | Some Engine.(Opentofu { Opentofu.version; _ }) -> (Some "tofu", Some version, None)
+    | Some Engine.(Opentofu { Opentofu.version; _ }) -> (Some "tofu", version, None)
     | Some Engine.(Terragrunt { Terragrunt.tf_cmd; tf_version; version; _ }) ->
-        (Some tf_cmd, Some tf_version, Some version)
+        (Some tf_cmd, tf_version, version)
     | _ -> (Some "terraform", None, None)
   in
   match (cdktf, terraform_version, terragrunt, engine) with
@@ -1172,7 +1507,8 @@ let of_version_1_workflow_engine cdktf terraform_version terragrunt default_engi
                       ?tf_cmd:(CCOption.or_ ~else_:default_tf_cmd tg.E.tf_cmd)
                       ?tf_version:(CCOption.or_ ~else_:default_tf_version tg.E.tf_version)
                       ?version:(CCOption.or_ ~else_:default_wrapper_version tg.E.version)
-                      ()))))
+                      ())))
+      | E.Engine_pulumi _ -> Ok (Some Engine.Pulumi))
   | true, _, _, _ ->
       (* Cdktf *)
       Ok (Some Engine.(Cdktf (Cdktf.make ?tf_cmd:default_tf_cmd ?tf_version:default_tf_version ())))
@@ -1303,11 +1639,11 @@ let of_version_1_when_modified when_modified =
        to [${DIR}/*.hcl].  If it starts with [**] then we want to remove that and
        replace it with [${DIR}] so that it does not match subdirs. *)
     CCList.map (function
-        | s when CCString.prefix ~pre:"!**/" s -> "!${DIR}/" ^ CCString.drop 4 s
-        | s when CCString.prefix ~pre:"!*" s -> "!${DIR}/" ^ CCString.drop 1 s
-        | s when CCString.prefix ~pre:"**/" s -> "${DIR}/" ^ CCString.drop 3 s
-        | s when CCString.prefix ~pre:"*" s -> "${DIR}/" ^ s
-        | s -> s)
+      | s when CCString.prefix ~pre:"!**/" s -> "!${DIR}/" ^ CCString.drop 4 s
+      | s when CCString.prefix ~pre:"!*" s -> "!${DIR}/" ^ CCString.drop 1 s
+      | s when CCString.prefix ~pre:"**/" s -> "${DIR}/" ^ CCString.drop 3 s
+      | s when CCString.prefix ~pre:"*" s -> "${DIR}/" ^ s
+      | s -> s)
   in
   let { Wm.autoapply; autoplan; autoplan_draft_pr; depends_on; file_patterns } = when_modified in
   CCResult.map_err
@@ -1354,9 +1690,9 @@ let of_version_1_dirs default_when_modified { V1.Dirs.additional; _ } =
     (Json_schema.String_map.to_list additional)
   >>= fun dirs -> Ok (String_map.of_list dirs)
 
-let of_version_1_drift drift =
+let of_version_1_drift_1 drift =
   let open CCResult.Infix in
-  let module Dr = Terrat_repo_config_drift in
+  let module Dr = Terrat_repo_config_drift_1 in
   let { Dr.enabled; reconcile; schedule; tag_query } = drift in
   of_version_1_drift_schedule schedule
   >>= fun schedule ->
@@ -1364,7 +1700,40 @@ let of_version_1_drift drift =
     (function
       | `Tag_query_error err -> `Drift_tag_query_err err)
     (map_opt Terrat_tag_query.of_string tag_query)
-  >>= fun tag_query -> Ok (Drift.make ~enabled ~reconcile ~schedule ?tag_query ())
+  >>= fun tag_query ->
+  let tag_query = CCOption.get_or ~default:Tag_query.any tag_query in
+  Ok
+    (Drift.make
+       ~enabled
+       ~schedules:
+         (String_map.of_list
+            [ ("default", Drift.Schedule.make ~tag_query ~schedule ~reconcile ()) ])
+       ())
+
+let of_version_1_drift_2 drift =
+  let open CCResult.Infix in
+  let module Dr = Terrat_repo_config_drift_2 in
+  let module Schedule = Terrat_repo_config_drift_schedule in
+  let { Dr.enabled; schedules } = drift in
+  CCResult.map_l
+    (fun (name, { Schedule.tag_query; reconcile; schedule; window }) ->
+      of_version_1_drift_schedule schedule
+      >>= fun schedule ->
+      CCResult.map_err
+        (function
+          | `Tag_query_error err -> `Drift_tag_query_err err)
+        (Terrat_tag_query.of_string tag_query)
+      >>= fun tag_query ->
+      map_opt (fun { Schedule.Window.start; end_ } -> Drift.Window.make ~start ~end_ ()) window
+      >>= fun window -> Ok (name, Drift.Schedule.make ~tag_query ~reconcile ~schedule ?window ()))
+    (Json_schema.String_map.to_list @@ Dr.Schedules.additional schedules)
+  >>= fun schedules -> Ok (Drift.make ~enabled ~schedules:(String_map.of_list schedules) ())
+
+let of_version_1_drift =
+  let module V1 = Terrat_repo_config_version_1 in
+  function
+  | V1.Drift.Drift_1 drift -> of_version_1_drift_1 drift
+  | V1.Drift.Drift_2 drift -> of_version_1_drift_2 drift
 
 let of_version_1_engine default_tf_version engine =
   match (default_tf_version, engine) with
@@ -1392,7 +1761,8 @@ let of_version_1_engine default_tf_version engine =
                       ?tf_cmd:tg.E.tf_cmd
                       ?tf_version:tg.E.tf_version
                       ?version:tg.E.version
-                      ()))))
+                      ())))
+      | E.Engine_pulumi _ -> Ok (Some Engine.Pulumi))
   | Some default_tf_version, _ ->
       Ok (Some Engine.(Terraform (Terraform.make ~version:default_tf_version ())))
   | None, None -> Ok None
@@ -1513,10 +1883,12 @@ let of_version_1_workflows default_engine default_integrations workflows =
            tag_query;
            terraform_version;
            terragrunt;
-         } ->
+         }
+       ->
       CCResult.map_err
         (function
           | `Workflows_unknown_run_on_err err -> `Workflows_apply_unknown_run_on_err err
+          | `Workflows_unknown_visible_on_err err -> `Workflows_apply_unknown_visible_on_err err
           | `Unknown_plan_mode_err _ -> assert false)
         (map_opt of_version_1_workflow_op_list apply)
       >>= fun apply ->
@@ -1529,6 +1901,7 @@ let of_version_1_workflows default_engine default_integrations workflows =
       CCResult.map_err
         (function
           | `Workflows_unknown_run_on_err err -> `Workflows_plan_unknown_run_on_err err
+          | `Workflows_unknown_visible_on_err err -> `Workflows_plan_unknown_visible_on_err err
           | `Unknown_plan_mode_err _ as err -> err)
         (map_opt of_version_1_workflow_op_list plan)
       >>= fun plan ->
@@ -1632,12 +2005,27 @@ let of_version_1 v1 =
        ?workflows
        ())
 
+let of_version_1_json json =
+  match Terrat_repo_config.Version_1.of_yojson json with
+  | Ok config -> of_version_1 config
+  | Error err ->
+      (* This is a cheap trick but we just want to make the error message a
+         little bit more friendly to users by replacing the parts of the error
+         message that are specific to the implementation. *)
+      Error
+        (`Repo_config_parse_err
+           ("Failed to parse repo config: "
+           ^ (err
+             |> CCString.replace ~sub:"Terrat_repo_config." ~by:""
+             |> CCString.replace ~sub:".t" ~by:""
+             |> CCString.lowercase_ascii)))
+
 let to_version_1_match_list =
   CCList.map (function
-      | Access_control.Match.User user -> "user:" ^ user
-      | Access_control.Match.Team team -> "team:" ^ team
-      | Access_control.Match.Repo repo -> "repo:" ^ repo
-      | Access_control.Match.Any -> "*")
+    | Access_control.Match.User user -> "user:" ^ user
+    | Access_control.Match.Team team -> "team:" ^ team
+    | Access_control.Match.Role role -> "role:" ^ role
+    | Access_control.Match.Any -> "*")
 
 let to_version_1_access_control_files files =
   let module Ac = Terrat_repo_config_access_control in
@@ -1819,14 +2207,32 @@ let to_version_1_dirs dirs =
   Ds.make ~additional:(to_version_1_dirs_dir dirs) Json_schema.Empty_obj.t
 
 let to_version_1_drift drift =
-  let module D = Terrat_repo_config.Drift in
-  let { Drift.enabled; reconcile; schedule; tag_query } = drift in
-  {
-    D.enabled;
-    reconcile;
-    schedule = Drift.Schedule.to_string schedule;
-    tag_query = Some (Terrat_tag_query.to_string tag_query);
-  }
+  let module D = Terrat_repo_config.Drift_2 in
+  let module Schedule = Terrat_repo_config_drift_schedule in
+  let { Drift.enabled; schedules } = drift in
+  let schedules =
+    CCList.map
+      (fun (name, { Drift.Schedule.tag_query; reconcile; schedule; window }) ->
+        let window =
+          CCOption.map (fun { Drift.Window.start; end_ } -> { Schedule.Window.start; end_ }) window
+        in
+        ( name,
+          {
+            Schedule.reconcile;
+            schedule = Drift.Schedule.Sched.to_string schedule;
+            tag_query = Terrat_tag_query.to_string tag_query;
+            window;
+          } ))
+      (String_map.to_list schedules)
+  in
+  Terrat_repo_config_version_1.Drift.Drift_2
+    {
+      D.enabled;
+      schedules =
+        D.Schedules.make
+          ~additional:(Json_schema.String_map.of_list schedules)
+          Json_schema.Empty_obj.t;
+    }
 
 let to_version_1_engine engine =
   let module E = Terrat_repo_config.Engine in
@@ -1838,21 +2244,18 @@ let to_version_1_engine engine =
   | Engine.Opentofu ot ->
       let module Ot = Terrat_repo_config.Engine_opentofu in
       let { Engine.Opentofu.version } = ot in
-      E.Engine_opentofu { Ot.name = "tofu"; version = Some version }
+      E.Engine_opentofu { Ot.name = "tofu"; version }
   | Engine.Terraform tf ->
       let module Tf = Terrat_repo_config.Engine_terraform in
       let { Engine.Terraform.version } = tf in
-      E.Engine_terraform { Tf.name = "terraform"; version = Some version }
+      E.Engine_terraform { Tf.name = "terraform"; version }
   | Engine.Terragrunt tg ->
       let module Tg = Terrat_repo_config.Engine_terragrunt in
       let { Engine.Terragrunt.tf_cmd; tf_version; version } = tg in
-      E.Engine_terragrunt
-        {
-          Tg.name = "terragrunt";
-          tf_cmd = Some tf_cmd;
-          tf_version = Some tf_version;
-          version = Some version;
-        }
+      E.Engine_terragrunt { Tg.name = "terragrunt"; tf_cmd = Some tf_cmd; tf_version; version }
+  | Engine.Pulumi ->
+      let module P = Terrat_repo_config.Engine_pulumi in
+      E.Engine_pulumi { P.name = "pulumi" }
 
 let to_version_1_hooks_op_env_exec env =
   let module Op = Terrat_repo_config.Hook_op in
@@ -1920,28 +2323,29 @@ let to_version_1_hooks_op_oidc = function
 
 let to_version_1_hooks_op_run r =
   let module R = Terrat_repo_config.Hook_op_run in
-  let { Workflow_step.Run.capture_output; cmd; env; run_on; ignore_errors } = r in
+  let { Workflow_step.Run.capture_output; cmd; env; run_on; ignore_errors; visible_on } = r in
   {
     R.capture_output;
     cmd;
     env = CCOption.map (fun env -> R.Env.make ~additional:env Json_schema.Empty_obj.t) env;
+    ignore_errors;
     run_on = Some (Workflow_step.Run_on.to_string run_on);
     type_ = "run";
-    ignore_errors;
+    visible_on = Some (Workflow_step.Visible_on.to_string visible_on);
   }
 
 let to_version_1_hooks_hook_list =
   let module Op = Terrat_repo_config.Hook_op in
   CCList.map (function
-      | Hooks.Hook_op.Drift_create_issue ->
-          let module D = Terrat_repo_config.Hook_op_drift_create_issue in
-          Op.Hook_op_drift_create_issue { D.type_ = Some "drift_create_issue" }
-      | Hooks.Hook_op.Env (Workflow_step.Env.Exec env) ->
-          Op.Hook_op_env_exec (to_version_1_hooks_op_env_exec env)
-      | Hooks.Hook_op.Env (Workflow_step.Env.Source env) ->
-          Op.Hook_op_env_source (to_version_1_hooks_op_env_source env)
-      | Hooks.Hook_op.Oidc oidc -> Op.Hook_op_oidc (to_version_1_hooks_op_oidc oidc)
-      | Hooks.Hook_op.Run r -> Op.Hook_op_run (to_version_1_hooks_op_run r))
+    | Hooks.Hook_op.Drift_create_issue ->
+        let module D = Terrat_repo_config.Hook_op_drift_create_issue in
+        Op.Hook_op_drift_create_issue { D.type_ = Some "drift_create_issue" }
+    | Hooks.Hook_op.Env (Workflow_step.Env.Exec env) ->
+        Op.Hook_op_env_exec (to_version_1_hooks_op_env_exec env)
+    | Hooks.Hook_op.Env (Workflow_step.Env.Source env) ->
+        Op.Hook_op_env_source (to_version_1_hooks_op_env_source env)
+    | Hooks.Hook_op.Oidc oidc -> Op.Hook_op_oidc (to_version_1_hooks_op_oidc oidc)
+    | Hooks.Hook_op.Run r -> Op.Hook_op_run (to_version_1_hooks_op_run r))
 
 let to_version_1_hooks_hook hook =
   let module H = Terrat_repo_config.Hook in
@@ -2051,44 +2455,41 @@ let to_version_1_workflow_retry retry =
 let to_version_1_workflows_op =
   let module Op = Terrat_repo_config.Workflow_op_list in
   CCList.map (function
-      | Workflows.Entry.Op.Init init ->
-          let module I = Terrat_repo_config.Workflow_op_init in
-          let { Workflow_step.Init.env; extra_args } = init in
-          Op.Items.Workflow_op_init
-            {
-              I.env =
-                CCOption.map (fun env -> I.Env.make ~additional:env Json_schema.Empty_obj.t) env;
-              extra_args = Some extra_args;
-              type_ = "init";
-            }
-      | Workflows.Entry.Op.Plan plan ->
-          let module P = Terrat_repo_config.Workflow_op_plan in
-          let { Workflow_step.Plan.env; extra_args; mode } = plan in
-          Op.Items.Workflow_op_plan
-            {
-              P.env =
-                CCOption.map (fun env -> P.Env.make ~additional:env Json_schema.Empty_obj.t) env;
-              extra_args = Some extra_args;
-              mode = Workflow_step.Plan.Mode.to_string mode;
-              type_ = "plan";
-            }
-      | Workflows.Entry.Op.Apply apply ->
-          let module A = Terrat_repo_config.Workflow_op_apply in
-          let { Workflow_step.Apply.env; extra_args; retry } = apply in
-          Op.Items.Workflow_op_apply
-            {
-              A.env =
-                CCOption.map (fun env -> A.Env.make ~additional:env Json_schema.Empty_obj.t) env;
-              extra_args = Some extra_args;
-              retry = CCOption.map to_version_1_workflow_retry retry;
-              type_ = "apply";
-            }
-      | Workflows.Entry.Op.Run r -> Op.Items.Hook_op_run (to_version_1_hooks_op_run r)
-      | Workflows.Entry.Op.Env (Workflow_step.Env.Exec env) ->
-          Op.Items.Hook_op_env_exec (to_version_1_hooks_op_env_exec env)
-      | Workflows.Entry.Op.Env (Workflow_step.Env.Source env) ->
-          Op.Items.Hook_op_env_source (to_version_1_hooks_op_env_source env)
-      | Workflows.Entry.Op.Oidc oidc -> Op.Items.Hook_op_oidc (to_version_1_hooks_op_oidc oidc))
+    | Workflows.Entry.Op.Init init ->
+        let module I = Terrat_repo_config.Workflow_op_init in
+        let { Workflow_step.Init.env; extra_args } = init in
+        Op.Items.Workflow_op_init
+          {
+            I.env = CCOption.map (fun env -> I.Env.make ~additional:env Json_schema.Empty_obj.t) env;
+            extra_args = Some extra_args;
+            type_ = "init";
+          }
+    | Workflows.Entry.Op.Plan plan ->
+        let module P = Terrat_repo_config.Workflow_op_plan in
+        let { Workflow_step.Plan.env; extra_args; mode } = plan in
+        Op.Items.Workflow_op_plan
+          {
+            P.env = CCOption.map (fun env -> P.Env.make ~additional:env Json_schema.Empty_obj.t) env;
+            extra_args = Some extra_args;
+            mode = Workflow_step.Plan.Mode.to_string mode;
+            type_ = "plan";
+          }
+    | Workflows.Entry.Op.Apply apply ->
+        let module A = Terrat_repo_config.Workflow_op_apply in
+        let { Workflow_step.Apply.env; extra_args; retry } = apply in
+        Op.Items.Workflow_op_apply
+          {
+            A.env = CCOption.map (fun env -> A.Env.make ~additional:env Json_schema.Empty_obj.t) env;
+            extra_args = Some extra_args;
+            retry = CCOption.map to_version_1_workflow_retry retry;
+            type_ = "apply";
+          }
+    | Workflows.Entry.Op.Run r -> Op.Items.Hook_op_run (to_version_1_hooks_op_run r)
+    | Workflows.Entry.Op.Env (Workflow_step.Env.Exec env) ->
+        Op.Items.Hook_op_env_exec (to_version_1_hooks_op_env_exec env)
+    | Workflows.Entry.Op.Env (Workflow_step.Env.Source env) ->
+        Op.Items.Hook_op_env_source (to_version_1_hooks_op_env_source env)
+    | Workflows.Entry.Op.Oidc oidc -> Op.Items.Hook_op_oidc (to_version_1_hooks_op_oidc oidc))
 
 let to_version_1_workflows =
   CCList.map (fun entry ->
@@ -2309,6 +2710,12 @@ let update_file_patterns index module_paths dirname workspacename file_patterns 
                    (CCString.replace ~sub ~by pat)))))
       file_patterns
 
+(* Unique a sorted, guaranteed to keep the first element *)
+let[@tail_mod_cons] rec uniq_succ ~eq = function
+  | [] -> []
+  | x :: xx :: xs when eq x xx -> uniq_succ ~eq (x :: xs)
+  | x :: xs -> x :: uniq_succ ~eq xs
+
 let derive ~ctx ~index ~file_list repo_config =
   let update_dir_config ~global_tags ~module_paths ~index dirname config =
     let update_workspace tag_prefix name tags workspace_config =
@@ -2384,13 +2791,24 @@ let derive ~ctx ~index ~file_list repo_config =
               This means we will get the same match multiple times as we walk
               the file list so we then have to remove duplicates *)
            CCOption.map
-             (fun (d, config) -> (Filename.dirname fname, config))
+             (fun (d, config) ->
+               (* Include the length of the matched directory in the output,
+                  this is used in the case of multiple directory configs
+                  matching, we take the longer. *)
+               (Filename.dirname fname, CCString.length (File_pattern.to_string d), config))
              (CCList.find_opt
                 (fun (d, _) ->
                   (not (String_map.mem (Filename.dirname fname) dirs))
                   && File_pattern.is_match d fname)
                 glob_dirs))
-    |> CCList.sort_uniq ~cmp:(fun (d1, _) (d2, _) -> CCString.compare d1 d2)
+    |> CCList.sort (fun (d1, l1, _) (d2, l2, _) ->
+           (* Sort in reveres order, we want the longer matches first. *)
+           let module Cmp = struct
+             type t = string * int [@@deriving ord]
+           end in
+           Cmp.compare (d2, l2) (d1, l1))
+    |> CCList.map (fun (d1, _, config) -> (d1, config))
+    |> uniq_succ ~eq:(fun (d1, _) (d2, _) -> CCString.equal d1 d2)
   in
   (* [specified_dirs] is all of those dirs that have been specified in the
      [dirs] section of the config.  But we also need to create dir entries for

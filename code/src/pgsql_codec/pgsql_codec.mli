@@ -140,17 +140,23 @@ module Decode : sig
 
   val create : unit -> t
 
-  (** Given a sequence of bytes, decode them into a list of frames.  If there is
-     the bytes do not encode a complete frame, the empty list is returned.  If
-     the bytes do not decode to a valid frame, then any correctly decoded frames
-     will be returned and subsequent calls will return an error. *)
+  (** Given a sequence of bytes, decode them into a list of frames. If there is the bytes do not
+      encode a complete frame, the empty list is returned. If the bytes do not decode to a valid
+      frame, then any correctly decoded frames will be returned and subsequent calls will return an
+      error. *)
   val backend_msg : t -> pos:int -> len:int -> Bytes.t -> (Frame.Backend.t list, err) result
 
-  (** Given a sequence of bytes, decode them into a list of frames.  If there is
-     the bytes do not encode a complete frame, the empty list is returned.  If
-     the bytes do not decode to a valid frame, then any correctly decoded frames
-     will be returned and subsequent calls will return an error. *)
+  (** Given a sequence of bytes, decode them into a list of frames. If there is the bytes do not
+      encode a complete frame, the empty list is returned. If the bytes do not decode to a valid
+      frame, then any correctly decoded frames will be returned and subsequent calls will return an
+      error. *)
   val frontend_msg : t -> pos:int -> len:int -> Bytes.t -> (Frame.Frontend.t list, err) result
+
+  (** How many bytes the decode needs to continue, if it knows it. *)
+  val needed_bytes : t -> int option
+
+  (** How many bytes are in the buffer that has been accumulated. *)
+  val buffer_length : t -> int
 
   (** Printers *)
   val pp_err : Format.formatter -> err -> unit

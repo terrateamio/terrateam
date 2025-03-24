@@ -107,7 +107,8 @@ module Set_github_actions_permissions_organization = struct
 
   let url = "/orgs/{org}/actions/permissions"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -180,7 +181,8 @@ module Set_selected_repositories_enabled_github_actions_organization = struct
 
   let url = "/orgs/{org}/actions/permissions/repositories"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -329,7 +331,8 @@ module Set_allowed_actions_organization = struct
 
   let url = "/orgs/{org}/actions/permissions/selected-actions"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -394,7 +397,8 @@ module Set_github_actions_default_workflow_permissions_organization = struct
 
   let url = "/orgs/{org}/actions/permissions/workflow"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -590,7 +594,8 @@ module Generate_runner_jitconfig_for_org = struct
 
   let url = "/orgs/{org}/actions/runners/generate-jitconfig"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -861,7 +866,8 @@ module Add_custom_labels_to_self_hosted_runner_for_org = struct
 
   let url = "/orgs/{org}/actions/runners/{runner_id}/labels"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -943,7 +949,8 @@ module Set_custom_labels_for_self_hosted_runner_for_org = struct
 
   let url = "/orgs/{org}/actions/runners/{runner_id}/labels"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1292,7 +1299,8 @@ module Create_or_update_org_secret = struct
 
   let url = "/orgs/{org}/actions/secrets/{secret_name}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1373,7 +1381,8 @@ module Set_selected_repos_for_org_secret = struct
 
   let url = "/orgs/{org}/actions/secrets/{secret_name}/repositories"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1570,7 +1579,8 @@ module Create_org_variable = struct
 
   let url = "/orgs/{org}/actions/variables"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1683,7 +1693,8 @@ module Update_org_variable = struct
 
   let url = "/orgs/{org}/actions/variables/{name}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -1801,7 +1812,8 @@ module Set_selected_repos_for_org_variable = struct
 
   let url = "/orgs/{org}/actions/variables/{name}/repositories"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -2449,7 +2461,8 @@ module Re_run_job_for_workflow_run = struct
 
   let url = "/repos/{owner}/{repo}/actions/jobs/{job_id}/rerun"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -2533,7 +2546,8 @@ module Set_custom_oidc_sub_claim_for_repo = struct
 
   let url = "/repos/{owner}/{repo}/actions/oidc/customization/sub"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -2737,7 +2751,8 @@ module Set_github_actions_permissions_repository = struct
 
   let url = "/repos/{owner}/{repo}/actions/permissions"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -2810,7 +2825,8 @@ module Set_workflow_access_to_repository = struct
 
   let url = "/repos/{owner}/{repo}/actions/permissions/access"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -2883,7 +2899,8 @@ module Set_allowed_actions_repository = struct
 
   let url = "/repos/{owner}/{repo}/actions/permissions/selected-actions"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -2961,7 +2978,8 @@ module Set_github_actions_default_workflow_permissions_repository = struct
 
   let url = "/repos/{owner}/{repo}/actions/permissions/workflow"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -3170,7 +3188,8 @@ module Generate_runner_jitconfig_for_repo = struct
 
   let url = "/repos/{owner}/{repo}/actions/runners/generate-jitconfig"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -3465,7 +3484,8 @@ module Add_custom_labels_to_self_hosted_runner_for_repo = struct
 
   let url = "/repos/{owner}/{repo}/actions/runners/{runner_id}/labels"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -3552,7 +3572,8 @@ module Set_custom_labels_for_self_hosted_runner_for_repo = struct
 
   let url = "/repos/{owner}/{repo}/actions/runners/{runner_id}/labels"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -4304,7 +4325,8 @@ module Review_custom_gates_for_run = struct
 
   let url = "/repos/{owner}/{repo}/actions/runs/{run_id}/deployment_protection_rule"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -4539,7 +4561,8 @@ module Review_pending_deployments_for_run = struct
 
   let url = "/repos/{owner}/{repo}/actions/runs/{run_id}/pending_deployments"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -4629,7 +4652,8 @@ module Re_run_workflow = struct
 
   let url = "/repos/{owner}/{repo}/actions/runs/{run_id}/rerun"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -4679,7 +4703,8 @@ module Re_run_workflow_failed_jobs = struct
 
   let url = "/repos/{owner}/{repo}/actions/runs/{run_id}/rerun-failed-jobs"
 
-  let make ?body params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
       ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
@@ -4906,7 +4931,8 @@ module Create_or_update_repo_secret = struct
 
   let url = "/repos/{owner}/{repo}/actions/secrets/{secret_name}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -4998,7 +5024,8 @@ module Create_repo_variable = struct
 
   let url = "/repos/{owner}/{repo}/actions/variables"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -5096,7 +5123,8 @@ module Update_repo_variable = struct
 
   let url = "/repos/{owner}/{repo}/actions/variables/{name}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -5407,7 +5435,8 @@ module Create_workflow_dispatch = struct
 
   let url = "/repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -5831,7 +5860,8 @@ module Create_or_update_environment_secret = struct
 
   let url = "/repositories/{repository_id}/environments/{environment_name}/secrets/{secret_name}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -5923,7 +5953,8 @@ module Create_environment_variable = struct
 
   let url = "/repositories/{repository_id}/environments/{environment_name}/variables"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -6027,7 +6058,8 @@ module Update_environment_variable = struct
 
   let url = "/repositories/{repository_id}/environments/{environment_name}/variables/{name}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]

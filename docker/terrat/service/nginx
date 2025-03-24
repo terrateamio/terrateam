@@ -12,6 +12,10 @@ else
   export IPV6_LISTEN="listen [::]:8080;"
 fi
 
+if [ -z "$TERRAT_ACCESS_LOG" ]; then
+    export TERRAT_ACCESS_LOG="off"
+fi
+
 mkdir -p /run/nginx
-envsubst '$TERRAT_UI_BASE $IPV6_LISTEN' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
+envsubst '$TERRAT_UI_BASE $IPV6_LISTEN $TERRAT_ACCESS_LOG' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 exec /usr/sbin/nginx -c /etc/nginx/nginx.conf

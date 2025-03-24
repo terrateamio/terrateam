@@ -311,7 +311,7 @@
       },
       "type": "object"
     },
-    "drift": {
+    "drift-1": {
       "additionalProperties": false,
       "properties": {
         "enabled": {
@@ -340,6 +340,67 @@
       ],
       "type": "object"
     },
+    "drift-2": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": false,
+          "type": "boolean"
+        },
+        "schedules": {
+          "additionalProperties": {
+            "$ref": "#/definitions/drift-schedule"
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "schedules"
+      ],
+      "type": "object"
+    },
+    "drift-schedule": {
+      "additionalProperties": false,
+      "properties": {
+        "reconcile": {
+          "default": false,
+          "type": "boolean"
+        },
+        "schedule": {
+          "enum": [
+            "hourly",
+            "daily",
+            "weekly",
+            "monthly"
+          ],
+          "type": "string"
+        },
+        "tag_query": {
+          "type": "string"
+        },
+        "window": {
+          "additionalProperties": false,
+          "properties": {
+            "end": {
+              "type": "string"
+            },
+            "start": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "end",
+            "start"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "schedule",
+        "tag_query"
+      ],
+      "type": "object"
+    },
     "engine": {
       "oneOf": [
         {
@@ -353,6 +414,9 @@
         },
         {
           "$ref": "#/definitions/engine-terragrunt"
+        },
+        {
+          "$ref": "#/definitions/engine-pulumi"
         }
       ]
     },
@@ -383,6 +447,19 @@
           "type": "string"
         },
         "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "engine-pulumi": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "const": "pulumi",
           "type": "string"
         }
       },
@@ -665,6 +742,14 @@
         "type": {
           "const": "run",
           "type": "string"
+        },
+        "visible_on": {
+          "enum": [
+            "always",
+            "failure",
+            "success"
+          ],
+          "type": "string"
         }
       },
       "required": [
@@ -945,7 +1030,14 @@
           "type": "object"
         },
         "drift": {
-          "$ref": "#/definitions/drift"
+          "oneOf": [
+            {
+              "$ref": "#/definitions/drift-1"
+            },
+            {
+              "$ref": "#/definitions/drift-2"
+            }
+          ]
         },
         "enabled": {
           "default": true,

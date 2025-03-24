@@ -75,13 +75,14 @@ module Typed_sql : sig
 
     val date : string v
     val time : string v
+    val timetz : string v
     val timestamp : string v
     val timestamptz : string v
     val ud : 'b t -> ('a -> 'b) -> 'a t
     val option : 'a t -> 'a option t
 
-    (** Type for any array that is NOT a string.  Strings require a special
-       representation that this does not account for. *)
+    (** Type for any array that is NOT a string. Strings require a special representation that this
+        does not account for. *)
     val array : 'a t -> 'a list t
 
     (** Any kind of string array. *)
@@ -174,8 +175,7 @@ module Prepared_stmt : sig
   (** Perform the create, bind, cursor execute, and cleanup of an SQL statement. *)
   val execute : conn -> ('q, (unit, [> err ]) result Abb.Future.t, unit, unit) Typed_sql.t -> 'q
 
-  (** Perform the bind and execute, useful when executing the same statement
-     multiple times. *)
+  (** Perform the bind and execute, useful when executing the same statement multiple times. *)
   val bind_execute : ('q, (unit, [> err ]) result Abb.Future.t, unit, unit) t -> 'q
 
   (** Perform the create, bind, cursor fetch, and cleanup of an SQL statement. *)
@@ -207,11 +207,14 @@ type create_err =
   ]
 [@@deriving show]
 
+(** Create a connection. [buf_size_threshold] is a threshold for how large the protocol debugging
+    buffer can get before decoding is pushed to another thread. *)
 val create :
   ?tls_config:[ `Require of Otls.Tls_config.t | `Prefer of Otls.Tls_config.t ] ->
   ?passwd:string ->
   ?port:int ->
   ?notice_response:((char * string) list -> unit) ->
+  ?buf_size_threshold:int ->
   host:string ->
   user:string ->
   string ->
@@ -219,19 +222,18 @@ val create :
 
 val destroy : t -> unit Abb.Future.t
 
-(** Return if the connection is considered connected.  A connection can be set
-   to disconnected by an earlier operation failing.  This does not perform any
-   network operations to test if the connection is still alive. *)
+(** Return if the connection is considered connected. A connection can be set to disconnected by an
+    earlier operation failing. This does not perform any network operations to test if the
+    connection is still alive. *)
 val connected : t -> bool
 
-(** Perform a network operation to test if the connection is alive.  Return
-   [true] if it succeeds and [false] if it not.  This also sets [connected] to
-   [false] if the connection is not alive. *)
+(** Perform a network operation to test if the connection is alive. Return [true] if it succeeds and
+    [false] if it not. This also sets [connected] to [false] if the connection is not alive. *)
 val ping : t -> bool Abb.Future.t
 
-(** Execute the function inside a transaction. If the function fails, either by
-   returning [Error _] or throwing an exception or being aborted, the exception
-   will be rolled back.  Otherwise it will be commited.
+(** Execute the function inside a transaction. If the function fails, either by returning [Error _]
+    or throwing an exception or being aborted, the exception will be rolled back. Otherwise it will
+    be commited.
 
-   Nested transactions are not supported. *)
+    Nested transactions are not supported. *)
 val tx : t -> f:(unit -> ('a, ([> err ] as 'e)) result Abb.Future.t) -> ('a, 'e) result Abb.Future.t

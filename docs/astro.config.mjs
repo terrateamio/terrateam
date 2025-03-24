@@ -13,6 +13,9 @@ export default defineConfig({
   integrations: [
     starlight({
       title: "Terrateam",
+      components: {
+        Banner: './src/components/Banner.astro',
+      },
       plugins: [starlightImageZoom()],
       expressiveCode: {
         themes: ["starlight-dark", "solarized-light"],
@@ -90,6 +93,11 @@ export default defineConfig({
         {
           label: "Self-Hosted",
           autogenerate: { directory: "self-hosted" },
+          collapsed: true,
+        },
+        {
+          label: "Guides",
+          autogenerate: { directory: "guides" },
           collapsed: true,
         },
         {

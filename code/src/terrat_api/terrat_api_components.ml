@@ -5,7 +5,6 @@ module Installation = Terrat_api_components_installation
 module Installation_dirspace = Terrat_api_components_installation_dirspace
 module Installation_pull_request = Terrat_api_components_installation_pull_request
 module Installation_repo = Terrat_api_components_installation_repo
-module Installation_type_github = Terrat_api_components_installation_type_github
 module Installation_work_manifest = Terrat_api_components_installation_work_manifest
 
 module Installation_work_manifest_target_pull_request =
@@ -22,6 +21,7 @@ module Plan_create = Terrat_api_components_plan_create
 module Run_kind_data_pull_request = Terrat_api_components_run_kind_data_pull_request
 module Run_type = Terrat_api_components_run_type
 module Server_config = Terrat_api_components_server_config
+module Server_config_github = Terrat_api_components_server_config_github
 module Task = Terrat_api_components_task
 module User = Terrat_api_components_user
 module Work_manifest = Terrat_api_components_work_manifest

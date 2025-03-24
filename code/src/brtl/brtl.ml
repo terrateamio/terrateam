@@ -6,6 +6,10 @@ module Mw = Brtl_mw
 module Rspnc = Brtl_rspnc
 module Rtng = Brtl_rtng
 
+let src = Logs.Src.create "brtl"
+
+module Logs = (val Logs.src_log src : Logs.LOG)
+
 let rec read_body_chunks r b =
   let open Abb.Future.Infix_monad in
   Http.Request_io.read_body_chunk r

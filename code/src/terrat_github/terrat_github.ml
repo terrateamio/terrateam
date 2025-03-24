@@ -1,3 +1,7 @@
+let src = Logs.Src.create "terrat_github"
+
+module Logs = (val Logs.src_log src : Logs.LOG)
+
 let one_minute = Duration.(to_f (of_min 1))
 let terrateam_workflow_name = "Terrateam Workflow"
 let terrateam_workflow_path = ".github/workflows/terrateam.yml"
@@ -8,7 +12,13 @@ module Org_admin = CCMap.Make (CCInt)
 
 module Metrics = struct
   module Call_retry_wait_histograph = Prmths.Histogram (struct
-    let spec = Prmths.Histogram_spec.of_exponential 30.0 1.2 20
+    let spec = Prmths.Histogram_spec.of_exponential ~start:30.0 ~factor:1.2 ~count:20
+  end)
+
+  module Rate_limit_remaining_histograph = Prmths.Histogram (struct
+    let spec =
+      Prmths.Histogram_spec.of_list
+        [ 100.0; 500.0; 1000.0; 2000.0; 3000.0; 4000.0; 5000.0; 6000.0; 10000.0 ]
   end)
 
   let namespace = "terrat"
@@ -21,6 +31,10 @@ module Metrics = struct
   let rate_limit_retry_wait_seconds =
     let help = "Number of seconds a call has spent waiting due to rate limit" in
     Call_retry_wait_histograph.v ~help ~namespace ~subsystem "rate_limit_retry_wait_seconds"
+
+  let rate_limit_remaining_count =
+    let help = "Number of calls remaining in the rate limit window." in
+    Rate_limit_remaining_histograph.v ~help ~namespace ~subsystem "rate_limit_remaining_count"
 
   let fn_call_total =
     let help = "Number of calls of a function" in
@@ -168,13 +182,15 @@ let rate_limit_wait resp =
   let get k = CCList.Assoc.get ~eq:CCString.equal_caseless k headers in
   if Openapi.Response.status resp = 403 then
     match (get "retry-after", get "x-ratelimit-remaining", get "x-ratelimit-reset") with
-    | (Some _ as retry_after), _, _ ->
+    | (Some ra as retry_after), _, _ ->
+        Logs.debug (fun m -> m "RATE_LIMIT : RETRY_AFTER : %s" ra);
         Abb.Future.return
           (CCOption.map_or
              ~default:(Some one_minute)
              CCFun.(CCInt.of_string %> CCOption.map CCFloat.of_int)
              retry_after)
     | None, Some "0", Some retry_time -> (
+        Logs.debug (fun m -> m "RATE_LIMIT : RETRY_TIME : %s" retry_time);
         match CCFloat.of_string_opt retry_time with
         | Some retry_time ->
             let open Abb.Future.Infix_monad in
@@ -186,9 +202,14 @@ let rate_limit_wait resp =
     | _, _, _ -> Abb.Future.return None
   else Abb.Future.return None
 
+let get_rate_limit_remaining resp =
+  let headers = Openapi.Response.headers resp in
+  let get k = CCList.Assoc.get ~eq:CCString.equal_caseless k headers in
+  CCOption.map CCFloat.of_int @@ CCOption.flat_map CCInt.of_string @@ get "x-ratelimit-remaining"
+
 let create config auth =
   Githubc2_abb.create
-    ~base_url:(Terrat_config.github_api_base_url config)
+    ~base_url:(Terrat_config.Github.api_base_url config)
     ~user_agent:"Terrateam"
     ~call_timeout
     auth
@@ -208,11 +229,20 @@ let retry_wait default_wait resp =
 
 let call ?(tries = 3) t req =
   Abbs_future_combinators.retry
-    ~f:(fun () -> Githubc2_abb.call t req)
+    ~f:(fun () ->
+      let open Abbs_future_combinators.Infix_result_monad in
+      Githubc2_abb.call t req
+      >>= fun resp ->
+      CCOption.iter (fun remaining ->
+          Metrics.Rate_limit_remaining_histograph.observe
+            Metrics.rate_limit_remaining_count
+            remaining)
+      @@ get_rate_limit_remaining resp;
+      Abb.Future.return (Ok resp))
     ~while_:
       (Abbs_future_combinators.finite_tries tries (function
-          | Error _ -> true
-          | Ok resp -> Openapi.Response.status resp >= 500 || is_secondary_rate_limit_error resp))
+        | Error _ -> true
+        | Ok resp -> Openapi.Response.status resp >= 500 || is_secondary_rate_limit_error resp))
     ~betwixt:
       (Abbs_future_combinators.series ~start:1.5 ~step:(( *. ) 1.5) (fun n resp ->
            Prmths.Counter.inc_one Metrics.call_retries_total;
@@ -250,11 +280,11 @@ let get_installation_access_token
     let module P = Jwt.Payload in
     let module C = Jwt.Claim in
     P.empty
-    |> P.add_claim C.iss (`String (Terrat_config.github_app_id config))
+    |> P.add_claim C.iss (`String (Terrat_config.Github.app_id config))
     |> P.add_claim C.iat (`Int (Float.to_int (time -. expiration_sec)))
     |> P.add_claim C.exp (`Int (Float.to_int (time +. expiration_sec)))
   in
-  let signer = Jwt.Signer.(RS256 (Priv_key.of_priv_key (Terrat_config.github_app_pem config))) in
+  let signer = Jwt.Signer.(RS256 (Priv_key.of_priv_key (Terrat_config.Github.app_pem config))) in
   let header = Jwt.Header.create (Jwt.Signer.to_string signer) in
   let jwt = Jwt.of_header_and_payload signer header payload in
   let token = Jwt.token jwt in
@@ -726,25 +756,20 @@ module Pull_request_reviews = struct
 end
 
 module Oauth = struct
-  module Http = Cohttp_abb.Make (Abb)
+  module Http = Abb_curl.Make (Abb)
 
   type authorize_err =
     [ `Authorize_err of string
-    | Cohttp_abb.request_err
+    | Http.request_err
     ]
   [@@deriving show]
 
   type refresh_err =
     [ `Refresh_err of string
     | `Bad_refresh_token
-    | Cohttp_abb.request_err
+    | Http.request_err
     ]
   [@@deriving show]
-
-  let tls_config =
-    let cfg = Otls.Tls_config.create () in
-    Otls.Tls_config.insecure_noverifycert cfg;
-    cfg
 
   module Response = struct
     type t = {
@@ -769,7 +794,7 @@ module Oauth = struct
   let authorize ~config code =
     let open Abb.Future.Infix_monad in
     let headers =
-      Cohttp.Header.of_list
+      Http.Headers.of_list
         [
           ("user-agent", "Terrateam");
           ("content-type", "application/json");
@@ -780,22 +805,20 @@ module Oauth = struct
       Uri.of_string
         (Printf.sprintf
            "%s/login/oauth/access_token"
-           (Uri.to_string (Terrat_config.github_web_base_url config)))
+           (Uri.to_string (Terrat_config.Github.web_base_url config)))
     in
     let body =
-      Cohttp.Body.of_string
-        (Yojson.Safe.to_string
-           (`Assoc
-             [
-               ("client_id", `String (Terrat_config.github_app_client_id config));
-               ("client_secret", `String (Terrat_config.github_app_client_secret config));
-               ("code", `String code);
-             ]))
+      Yojson.Safe.to_string
+        (`Assoc
+           [
+             ("client_id", `String (Terrat_config.Github.app_client_id config));
+             ("client_secret", `String (Terrat_config.Github.app_client_secret config));
+             ("code", `String code);
+           ])
     in
-    Http.Client.call ~headers ~tls_config ~body `POST uri
+    Http.post ~headers ~body uri
     >>| function
-    | Ok (resp, body)
-      when Cohttp.Code.is_success (Cohttp.Code.code_of_status (Http.Response.status resp)) -> (
+    | Ok (resp, body) when Http.Status.is_success (Http.Response.status resp) -> (
         match Response.of_yojson (Yojson.Safe.from_string body) with
         | Ok value -> Ok value
         | Error _ -> Error (`Authorize_err body))
@@ -805,7 +828,7 @@ module Oauth = struct
   let refresh ~config refresh_token =
     let open Abb.Future.Infix_monad in
     let headers =
-      Cohttp.Header.of_list
+      Http.Headers.of_list
         [
           ("user-agent", "Terrateam");
           ("accept", "application/json");
@@ -816,23 +839,21 @@ module Oauth = struct
       Uri.of_string
         (Printf.sprintf
            "%s/login/oauth/access_token"
-           (Uri.to_string (Terrat_config.github_web_base_url config)))
+           (Uri.to_string (Terrat_config.Github.web_base_url config)))
     in
     let body =
-      Cohttp.Body.of_string
-        (Yojson.Safe.to_string
-           (`Assoc
-             [
-               ("client_id", `String (Terrat_config.github_app_client_id config));
-               ("client_secret", `String (Terrat_config.github_app_client_secret config));
-               ("grant_type", `String "refresh_token");
-               ("refresh_token", `String refresh_token);
-             ]))
+      Yojson.Safe.to_string
+        (`Assoc
+           [
+             ("client_id", `String (Terrat_config.Github.app_client_id config));
+             ("client_secret", `String (Terrat_config.Github.app_client_secret config));
+             ("grant_type", `String "refresh_token");
+             ("refresh_token", `String refresh_token);
+           ])
     in
-    Http.Client.call ~headers ~tls_config ~body `POST uri
+    Http.post ~headers ~body uri
     >>| function
-    | Ok (resp, body)
-      when Cohttp.Code.is_success (Cohttp.Code.code_of_status (Http.Response.status resp)) -> (
+    | Ok (resp, body) when Http.Status.is_success (Http.Response.status resp) -> (
         match Response.of_yojson (Yojson.Safe.from_string body) with
         | Ok value -> Ok value
         | Error _ -> (

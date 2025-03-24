@@ -13,7 +13,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
 #include "private.h"
 
 #ifndef NDEBUG
@@ -78,6 +77,15 @@ get_one_event(struct inotify_event *dst, size_t len, int inofd)
             return (-1);
         }
 
+        /*
+         * Last member of struct inotify_event is the name field.
+         * this field will be padded to the next multiple of
+         * struct inotify_event.
+         *
+         * We need this loop here so that we don't accidentally
+         * read more than one inotify event per read call which
+         * could happen if the event's name field were 0.
+         */
         n = read(inofd, dst, want);
         if (n < 0) {
             switch (errno) {
@@ -97,19 +105,23 @@ get_one_event(struct inotify_event *dst, size_t len, int inofd)
 
     dbg_printf("read(2) from inotify wd: %ld bytes", (long)n);
 
+#ifdef __COVERITY__
+    /* Coverity complains this isn't \0 terminated, but it is */
+    if (evt->len > 0) evt->name[ev->len - 1] = '\0';
+#endif
+
     return (0);
 }
 
 static int
 add_watch(struct filter *filt, struct knote *kn)
 {
-    struct epoll_event ev;
     int ifd;
     char path[PATH_MAX];
     uint32_t mask;
 
     /* Convert the fd to a pathname */
-    if (linux_fd_to_path(&path[0], sizeof(path), kn->kev.ident) < 0)
+    if (linux_fd_to_path(path, sizeof(path), kn->kev.ident) < 0)
         return (-1);
 
     /* Convert the fflags to the inotify mask */
@@ -129,14 +141,18 @@ add_watch(struct filter *filt, struct knote *kn)
         mask |= IN_ONESHOT;
 
     /* Create an inotify descriptor */
-    ifd = inotify_init();
+    ifd = inotify_init1(IN_CLOEXEC);
     if (ifd < 0) {
-        dbg_perror("inotify_init(2)");
+        if ((errno == EMFILE) || (errno == ENFILE)) {
+            dbg_perror("inotify_init(2) fd_used=%u fd_max=%u", get_fd_used(), get_fd_limit());
+        } else {
+            dbg_perror("inotify_init(2)");
+        }
         return (-1);
     }
 
     /* Add the watch */
-    dbg_printf("inotify_add_watch(2); inofd=%d, %s, path=%s",
+    dbg_printf("inotify_add_watch(2); inofd=%d flags=%s path=%s",
             ifd, inotify_mask_dump(mask), path);
     kn->kev.data = inotify_add_watch(ifd, path, mask);
     if (kn->kev.data < 0) {
@@ -145,20 +161,19 @@ add_watch(struct filter *filt, struct knote *kn)
     }
 
     /* Add the inotify fd to the epoll set */
-    memset(&ev, 0, sizeof(ev));
-    ev.events = EPOLLIN;
-    ev.data.ptr = kn;
-    if (epoll_ctl(filter_epfd(filt), EPOLL_CTL_ADD, ifd, &ev) < 0) {
+    KN_UDATA(kn);   /* populate this knote's kn_udata field */
+    if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_ADD, ifd, EPOLL_EV_KN(EPOLLIN, kn)) < 0) {
         dbg_perror("epoll_ctl(2)");
         goto errout;
     }
 
-    kn->kdata.kn_inotifyfd = ifd;
+    kn->kn_vnode.inotifyfd = ifd;
 
     return (0);
 
 errout:
-    kn->kdata.kn_inotifyfd = -1;
+    inotify_rm_watch(ifd, kn->kev.data);
+    kn->kn_vnode.inotifyfd = -1;
     (void) close(ifd);
     return (-1);
 }
@@ -166,29 +181,30 @@ errout:
 static int
 delete_watch(struct filter *filt, struct knote *kn)
 {
-    int ifd = kn->kdata.kn_inotifyfd;
+    int ifd = kn->kn_vnode.inotifyfd;
 
     if (ifd < 0)
         return (0);
-    if (epoll_ctl(filter_epfd(filt), EPOLL_CTL_DEL, ifd, NULL) < 0) {
+    if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_DEL, ifd, NULL) < 0) {
         dbg_perror("epoll_ctl(2)");
         return (-1);
     }
     (void) close(ifd);
-    kn->kdata.kn_inotifyfd = -1;
+    kn->kn_vnode.inotifyfd = -1;
 
     return (0);
 }
 
 int
-evfilt_vnode_copyout(struct kevent *dst, struct knote *src, void *ptr UNUSED)
+evfilt_vnode_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt,
+    struct knote *src, void *ptr UNUSED)
 {
     uint8_t buf[sizeof(struct inotify_event) + NAME_MAX + 1] __attribute__ ((aligned(__alignof__(struct inotify_event))));
     struct inotify_event *evt;
     struct stat sb;
 
     evt = (struct inotify_event *)buf;
-    if (get_one_event(evt, sizeof(buf), src->kdata.kn_inotifyfd) < 0)
+    if (get_one_event(evt, sizeof(buf), src->kn_vnode.inotifyfd) < 0)
         return (-1);
 
     dbg_printf("inotify event: %s", inotify_event_dump(evt));
@@ -221,21 +237,20 @@ scriptors reference the same file.
         if ((evt->mask & IN_ATTRIB || evt->mask & IN_MODIFY)) {
             if (sb.st_nlink == 0 && src->kev.fflags & NOTE_DELETE)
                 dst->fflags |= NOTE_DELETE;
-            if (sb.st_nlink != src->data.vnode.nlink &&
+            if (sb.st_nlink != src->kn_vnode.nlink &&
                 src->kev.fflags & NOTE_LINK)
                 dst->fflags |= NOTE_LINK;
 #if HAVE_NOTE_TRUNCATE
             if (sb.st_nsize == 0 && src->kev.fflags & NOTE_TRUNCATE)
                 dst->fflags |= NOTE_TRUNCATE;
 #endif
-            if (sb.st_size > src->data.vnode.size &&
+            if (sb.st_size > src->kn_vnode.size &&
                 src->kev.fflags & NOTE_WRITE)
                 dst->fflags |= NOTE_EXTEND;
-            src->data.vnode.nlink = sb.st_nlink;
-            src->data.vnode.size = sb.st_size;
+            src->kn_vnode.nlink = sb.st_nlink;
+            src->kn_vnode.size = sb.st_size;
         }
     }
-
 
     if (evt->mask & IN_MODIFY && src->kev.fflags & NOTE_WRITE)
         dst->fflags |= NOTE_WRITE;
@@ -246,7 +261,9 @@ scriptors reference the same file.
     if (evt->mask & IN_DELETE_SELF && src->kev.fflags & NOTE_DELETE)
         dst->fflags |= NOTE_DELETE;
 
-    return (0);
+    if (knote_copyout_flag_actions(filt, src) < 0) return -1;
+
+    return (1);
 }
 
 int
@@ -258,8 +275,8 @@ evfilt_vnode_knote_create(struct filter *filt, struct knote *kn)
         dbg_puts("fstat failed");
         return (-1);
     }
-    kn->data.vnode.nlink = sb.st_nlink;
-    kn->data.vnode.size = sb.st_size;
+    kn->kn_vnode.nlink = sb.st_nlink;
+    kn->kn_vnode.size = sb.st_size;
     kn->kev.data = -1;
 
     return (add_watch(filt, kn));
@@ -294,13 +311,11 @@ evfilt_vnode_knote_disable(struct filter *filt, struct knote *kn)
 }
 
 const struct filter evfilt_vnode = {
-    EVFILT_VNODE,
-    NULL,
-    NULL,
-    evfilt_vnode_copyout,
-    evfilt_vnode_knote_create,
-    evfilt_vnode_knote_modify,
-    evfilt_vnode_knote_delete,
-    evfilt_vnode_knote_enable,
-    evfilt_vnode_knote_disable,
+    .kf_id      = EVFILT_VNODE,
+    .kf_copyout = evfilt_vnode_copyout,
+    .kn_create  = evfilt_vnode_knote_create,
+    .kn_modify  = evfilt_vnode_knote_modify,
+    .kn_delete  = evfilt_vnode_knote_delete,
+    .kn_enable  = evfilt_vnode_knote_enable,
+    .kn_disable = evfilt_vnode_knote_disable,
 };

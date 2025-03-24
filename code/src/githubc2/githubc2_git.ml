@@ -67,7 +67,8 @@ module Create_blob = struct
 
   let url = "/repos/{owner}/{repo}/git/blobs"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -238,7 +239,8 @@ module Create_commit = struct
 
   let url = "/repos/{owner}/{repo}/git/commits"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -446,7 +448,8 @@ module Create_ref = struct
 
   let url = "/repos/{owner}/{repo}/git/refs"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -509,7 +512,8 @@ module Update_ref = struct
 
   let url = "/repos/{owner}/{repo}/git/refs/{ref}"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -653,7 +657,8 @@ module Create_tag = struct
 
   let url = "/repos/{owner}/{repo}/git/tags"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]
@@ -825,7 +830,8 @@ module Create_tree = struct
 
   let url = "/repos/{owner}/{repo}/git/trees"
 
-  let make ~body params =
+  let make ~body =
+   fun params ->
     Openapi.Request.make
       ~body:(Request_body.to_yojson body)
       ~headers:[]

@@ -114,45 +114,58 @@ module Make (Fut : Abb_intf.Future.S) = struct
     (read' t ~buf ~pos ~len : (int, read_err) result Fut.t :> (int, [> read_err ]) result Fut.t)
 
   let rec read_line_buffer' t b =
-    match CCString.find ~start:t.pos ~sub:"\n" (Bytes.unsafe_to_string t.buf) with
-    | n when n = -1 || n >= t.length -> (
-        let open Fut_comb.Infix_result_monad in
-        let len = t.length - t.pos in
-        Buffer.add_subbytes b t.buf t.pos len;
-        t.pos <- t.pos + len;
-        fill_buffer t
-        >>= function
-        | 0 -> Fut.return (Ok ())
-        | _ -> read_line_buffer' t b)
-    | 0 ->
-        t.pos <- 1;
-        Fut.return (Ok ())
-    | 1 when Bytes.get t.buf 0 = '\r' ->
-        t.pos <- 2;
-        Fut.return (Ok ())
-    | n when Bytes.get t.buf (n - 1) = '\r' ->
-        Buffer.add_subbytes b t.buf t.pos (n - t.pos - 1);
-        t.pos <- n + 1;
-        Fut.return (Ok ())
-    | n ->
-        Buffer.add_subbytes b t.buf t.pos (n - t.pos);
-        t.pos <- n + 1;
-        Fut.return (Ok ())
+    if t.length > 0 && t.pos < t.length then (
+      (* Only perform an operation if the buffer has contents, otherwise fill it. *)
+      match CCString.find ~start:t.pos ~sub:"\n" (Bytes.unsafe_to_string t.buf) with
+      | n when n = -1 || n >= t.length -> (
+          let open Fut_comb.Infix_result_monad in
+          let len = t.length - t.pos in
+          (* We want to be careful here because we want to know when we've hit
+             EOF so we can return it, so we only want to enter here if we know
+             there is something in the buffer. *)
+          Buffer.add_subbytes b t.buf t.pos len;
+          t.pos <- t.pos + len;
+          fill_buffer t
+          >>= function
+          | 0 -> Fut.return (Ok `Ok)
+          | _ -> read_line_buffer' t b)
+      | 0 ->
+          t.pos <- 1;
+          Fut.return (Ok `Ok)
+      | 1 when Bytes.get t.buf 0 = '\r' ->
+          t.pos <- 2;
+          Fut.return (Ok `Ok)
+      | n when Bytes.get t.buf (n - 1) = '\r' ->
+          Buffer.add_subbytes b t.buf t.pos (n - t.pos - 1);
+          t.pos <- n + 1;
+          Fut.return (Ok `Ok)
+      | n ->
+          Buffer.add_subbytes b t.buf t.pos (n - t.pos);
+          t.pos <- n + 1;
+          Fut.return (Ok `Ok))
+    else
+      let open Fut_comb.Infix_result_monad in
+      fill_buffer t
+      >>= function
+      | 0 -> Fut.return (Ok `Eof)
+      | _ -> read_line_buffer' t b
 
   let read_line_buffer t b =
-    (read_line_buffer' t b : (unit, read_err) result Fut.t :> (unit, [> read_err ]) result Fut.t)
+    (read_line_buffer' t b
+      : ([ `Ok | `Eof ], read_err) result Fut.t
+      :> ([ `Ok | `Eof ], [> read_err ]) result Fut.t)
 
   let read_line_bytes t =
     let open Fut_comb.Infix_result_monad in
     let b = Buffer.create (Bytes.length t.buf) in
     read_line_buffer t b
     >>= function
-    | () when Buffer.length b = 0 -> Fut.return (Error (`Unexpected End_of_file))
-    | () -> Fut.return (Ok (Buffer.to_bytes b))
+    | `Ok -> Fut.return (Ok (Some (Buffer.to_bytes b)))
+    | `Eof -> Fut.return (Ok None)
 
   let read_line t =
     let open Fut_comb.Infix_result_monad in
-    read_line_bytes t >>| fun b -> Bytes.to_string b
+    read_line_bytes t >>| fun v -> CCOption.map Bytes.to_string v
 
   let rec flushed' t =
     let open Fut_comb.Infix_result_monad in

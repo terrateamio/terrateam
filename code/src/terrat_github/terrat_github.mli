@@ -186,10 +186,10 @@ module Pull_request_reviews : sig
     (Githubc2_components.Pull_request_review.t list, [> list_err ]) result Abb.Future.t
 end
 
-val create : Terrat_config.t -> Githubc2_abb.Authorization.t -> Githubc2_abb.t
+val create : Terrat_config.Github.t -> Githubc2_abb.Authorization.t -> Githubc2_abb.t
 
 val with_client :
-  Terrat_config.t ->
+  Terrat_config.Github.t ->
   Githubc2_abb.Authorization.t ->
   (Githubc2_abb.t -> 'a Abb.Future.t) ->
   'a Abb.Future.t
@@ -202,7 +202,7 @@ val call :
   ('a Openapi.Response.t, [> Githubc2_abb.call_err ]) result Abb_scheduler_kqueue.Future.t
 
 val user :
-  config:Terrat_config.t ->
+  config:Terrat_config.Github.t ->
   access_token:string ->
   unit ->
   (Githubc2_users.Get_authenticated.Responses.OK.t, [> user_err ]) result Abb.Future.t
@@ -210,7 +210,7 @@ val user :
 val get_installation_access_token :
   ?expiration_sec:float ->
   ?permissions:Githubc2_components.App_permissions.t ->
-  Terrat_config.t ->
+  Terrat_config.Github.t ->
   int ->
   (string, [> get_installation_access_token_err ]) result Abb.Future.t
 
@@ -367,19 +367,18 @@ val get_repo_collaborator_permission :
   Githubc2_abb.t ->
   (string option, [> get_repo_collaborator_permission_err ]) result Abb.Future.t
 
-(** GitHub does not include Oauth operations in their JSON schema, so
-    implementing here. *)
+(** GitHub does not include Oauth operations in their JSON schema, so implementing here. *)
 module Oauth : sig
   type authorize_err =
     [ `Authorize_err of string
-    | Cohttp_abb.request_err
+    | Abb_curl.Make(Abb).request_err
     ]
   [@@deriving show]
 
   type refresh_err =
     [ `Refresh_err of string
     | `Bad_refresh_token
-    | Cohttp_abb.request_err
+    | Abb_curl.Make(Abb).request_err
     ]
   [@@deriving show]
 
@@ -396,8 +395,8 @@ module Oauth : sig
   end
 
   val authorize :
-    config:Terrat_config.t -> string -> (Response.t, [> authorize_err ]) result Abb.Future.t
+    config:Terrat_config.Github.t -> string -> (Response.t, [> authorize_err ]) result Abb.Future.t
 
   val refresh :
-    config:Terrat_config.t -> string -> (Response.t, [> refresh_err ]) result Abb.Future.t
+    config:Terrat_config.Github.t -> string -> (Response.t, [> refresh_err ]) result Abb.Future.t
 end

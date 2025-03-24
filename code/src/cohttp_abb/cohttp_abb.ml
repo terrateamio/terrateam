@@ -1,19 +1,21 @@
 module List = ListLabels
 
-type connect_http_err = Abb_happy_eyeballs.connect_err [@@deriving show]
+let src = Logs.Src.create "cohttp_abb"
 
-type connect_https_err =
-  [ connect_http_err
+module Logs = (val Logs.src_log src : Logs.LOG)
+
+type connect_err =
+  [ Abb_happy_eyeballs.connect_err
+  | `E_connection_refused
+  | `Unknown_scheme of string
+  | `Unexpected_err of string
   | `Error
-  | Abb_happy_eyeballs.connect_err
   ]
 [@@deriving show]
 
 type request_err =
-  [ connect_https_err
-  | `E_connection_refused
-  | `Invalid_scheme of string
-  | `Invalid of string
+  [ connect_err
+  | `Invalid_request of string
   ]
 [@@deriving show]
 
@@ -41,92 +43,371 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
   module Response_io = Cohttp.Response.Make (Io)
 
   module Client = struct
-    module Scheme = struct
-      type t =
-        | Http
-        | Https of Otls.Tls_config.t
+    module Transport = struct
+      type t = {
+        write_request :
+          ?flush:bool ->
+          ?body:(Request_io.writer -> unit Abb.Future.t) ->
+          Request.t ->
+          (Response.t, request_err) result Abb.Future.t;
+        read_body_chunk : unit -> (string option, request_err) result Abb.Future.t;
+        destroy : unit -> unit Abb.Future.t;
+      }
+
+      let create ~write_request ~read_body_chunk ~destroy =
+        { write_request; read_body_chunk; destroy }
+
+      let write_request ?flush ?body t request =
+        (t.write_request ?flush ?body request
+          : (Response.t, request_err) result Abb.Future.t
+          :> (Response.t, [> request_err ]) result Abb.Future.t)
+
+      let read_body_chunk t =
+        (t.read_body_chunk ()
+          : (string option, request_err) result Abb.Future.t
+          :> (string option, [> request_err ]) result Abb.Future.t)
+
+      let destroy t = t.destroy ()
+
+      let default reader writer =
+        let state :
+            [ `Idle | `In_request | `Consuming_body of Response_io.reader | `Body_consumed ] ref =
+          ref `Idle
+        in
+        let write_request ?(flush = false) ?body req =
+          assert (!state = `Idle);
+          state := `In_request;
+          let open Abb.Future.Infix_monad in
+          Logs.debug (fun m ->
+              m "write_request : writing_request : %s" (Uri.to_string (Request.uri req)));
+          Request_io.write
+            ~flush
+            (fun writer ->
+              match body with
+              | Some body -> body writer
+              | None -> Abb.Future.return ())
+            req
+            writer
+          >>= fun () ->
+          Logs.debug (fun m -> m "write_request : flushing : %s" (Uri.to_string (Request.uri req)));
+          Fut_comb.ignore (Buffered.flushed writer)
+          >>= fun () ->
+          Logs.debug (fun m ->
+              m "write_request : reading_response : %s" (Uri.to_string (Request.uri req)));
+          Response_io.read reader
+          >>| function
+          | `Ok resp ->
+              (match Response_io.has_body resp with
+              | `Yes | `Unknown ->
+                  state := `Consuming_body (Response_io.make_body_reader resp reader)
+              | `No -> state := `Body_consumed);
+              Logs.debug (fun m ->
+                  m "write_request : success : %s" (Uri.to_string (Request.uri req)));
+              Ok resp
+          | `Eof ->
+              state := `Idle;
+              Logs.debug (fun m -> m "write_request : eof : %s" (Uri.to_string (Request.uri req)));
+              Error `Error
+          | `Invalid err ->
+              state := `Idle;
+              Logs.debug (fun m ->
+                  m "write_request : invalid : %s : %s" (Uri.to_string (Request.uri req)) err);
+              Error (`Invalid_request err)
+        in
+        let read_body_chunk () =
+          match !state with
+          | `Consuming_body r -> (
+              let open Abb.Future.Infix_monad in
+              Response_io.read_body_chunk r
+              >>| function
+              | Cohttp.Transfer.Chunk s -> Ok (Some s)
+              | Cohttp.Transfer.Final_chunk s ->
+                  state := `Body_consumed;
+                  Ok (Some s)
+              | Cohttp.Transfer.Done ->
+                  state := `Body_consumed;
+                  Ok None)
+          | `Body_consumed -> Abb.Future.return (Ok None)
+          | _ -> assert false
+        in
+        let destroy () =
+          Logs.debug (fun m -> m "closing");
+          Fut_comb.ignore (Buffered.close_writer writer)
+        in
+        create ~write_request ~read_body_chunk ~destroy
     end
 
-    let connect_to_port host port conv =
-      let open Fut_comb.Infix_result_monad in
-      Happy_eyeballs.connect host [ port ] >>= fun (_, sock) -> Abb.Future.return (Ok (conv sock))
+    module Connector = struct
+      type t = Request.t -> (Transport.t, connect_err) result Abb.Future.t
 
-    let connect_http uri =
-      let host = CCOption.get_exn_or "get host" (Uri.host uri) in
-      let port = CCOption.get_or ~default:80 (Uri.port uri) in
-      connect_to_port host port Buffered_of.of_tcp_socket
+      let connect_to_port host port =
+        let open Abb.Future.Infix_monad in
+        Logs.debug (fun m -> m "CONNECT : %s : %d" host port);
+        Happy_eyeballs.connect host [ port ]
+        >>= function
+        | Ok (_, sock) ->
+            Logs.debug (fun m -> m "CONNECT : success :  %s : %d" host port);
+            Abb.Future.return (Ok sock)
+        | Error (#Abb_happy_eyeballs.connect_err as err) ->
+            Logs.debug (fun m ->
+                m "CONNECT : error :  %s : %d : %a" host port Abb_happy_eyeballs.pp_connect_err err);
+            Abb.Future.return (Error err)
 
-    let connect_https conf uri =
-      let open Fut_comb.Infix_result_monad in
-      let host = CCOption.get_exn_or "get host" (Uri.host uri) in
-      let port = CCOption.get_or ~default:443 (Uri.port uri) in
-      connect_to_port host port CCFun.id
-      >>= fun conn -> Abb.Future.return (Abb_tls.client_tcp conn conf host)
+      let connect_with_sock tls_config uri =
+        let open Fut_comb.Infix_result_monad in
+        match Uri.scheme uri with
+        | Some "http" ->
+            let host = CCOption.get_exn_or "get host" (Uri.host uri) in
+            let port = CCOption.get_or ~default:80 (Uri.port uri) in
+            connect_to_port host port
+            >>= fun sock ->
+            let reader, writer = Buffered_of.of_tcp_socket sock in
+            Abb.Future.return (Ok (sock, reader, writer))
+        | Some "https" ->
+            let host = CCOption.get_exn_or "get host" (Uri.host uri) in
+            let port = CCOption.get_or ~default:443 (Uri.port uri) in
+            Fut_comb.protect_finally
+              ~setup:(fun () -> Abb.Future.return (tls_config host))
+              (fun tls_config ->
+                connect_to_port host port
+                >>= fun sock ->
+                Abb.Future.return (Abb_tls.client_tcp sock tls_config host)
+                >>= fun (reader, writer) -> Abb.Future.return (Ok (sock, reader, writer)))
+              ~finally:(fun tls_config ->
+                Otls.Tls_config.destroy tls_config;
+                Fut_comb.unit)
+        | Some scheme -> Abb.Future.return (Error (`Unknown_scheme scheme))
+        | _ -> assert false
 
-    let write_body writer = function
-      | `Empty -> Abb.Future.return ()
-      | `String s -> Request_io.write_body writer s
-      | `Strings ss -> Fut_comb.List.iter ~f:(Request_io.write_body writer) ss
+      let connect tls_config request =
+        let open Fut_comb.Infix_result_monad in
+        connect_with_sock tls_config (Request.uri request)
+        >>= fun (_, reader, writer) -> Abb.Future.return (Ok (Transport.default reader writer))
 
-    let do_request ?(flush = false) ?(body = `Empty) req ic oc =
-      let open Abb.Future.Infix_monad in
-      Request_io.write ~flush (fun writer -> write_body writer body) req oc
-      >>= fun () ->
-      Fut_comb.ignore (Buffered.flushed oc)
-      >>= fun () ->
-      Response_io.read ic
-      >>| function
-      | `Ok res -> Ok (res, ic)
-      | `Eof -> Error `E_connection_refused
-      | `Invalid reason as err -> Error err
+      let make ?(tls_config = fun _ -> Otls.Tls_config.create ()) ?(connect = connect) () =
+        connect tls_config
 
-    let request ?flush ?(body = `Empty) scheme req =
-      let open Fut_comb.Infix_result_monad in
-      let connect scheme uri =
-        match scheme with
-        | Scheme.Http -> connect_http uri
-        | Scheme.Https tls_config -> connect_https tls_config uri
-      in
-      connect scheme (Request.uri req)
-      >>= fun (ic, oc) ->
-      Fut_comb.on_failure
-        (fun () -> do_request ?flush ~body req ic oc)
-        ~failure:(fun () -> Fut_comb.ignore (Buffered.close_writer oc))
-
-    let rec read_body r b =
-      let open Abb.Future.Infix_monad in
-      Response_io.read_body_chunk r
-      >>= function
-      | Cohttp.Transfer.Chunk s ->
-          Buffer.add_string b s;
-          read_body r b
-      | Cohttp.Transfer.Final_chunk s ->
-          Buffer.add_string b s;
-          Fut_comb.unit
-      | Cohttp.Transfer.Done -> Fut_comb.unit
-
-    let call ?flush ?headers ?(chunked = false) ?(body = `Empty) ?tls_config meth uri =
-      let open Fut_comb.Infix_result_monad in
-      let body_length = Int64.of_int (String.length (Body.to_string body)) in
-      let req = Request.make_for_client ?headers ~chunked ~body_length meth uri in
-      let scheme =
-        match (tls_config, Uri.scheme uri) with
-        | _, None | _, Some "http" -> Scheme.Http
-        | Some conf, Some "https" -> Scheme.Https conf
-        | _, _ -> failwith "nyi"
-      in
-      request ?flush ~body scheme req
-      >>= fun (resp, ic) ->
-      Fut_comb.with_finally
-        (fun () ->
-          match Response_io.has_body resp with
-          | `Yes | `Unknown ->
+      let of_env ?tls_config () =
+        let maybe_add_proxy_auth uri =
+          match (Uri.user uri, Uri.password uri) with
+          | Some user, Some password ->
+              Some ("proxy-authorization: Basic " ^ Base64.encode_string (user ^ ":" ^ password))
+          | _, _ -> None
+        in
+        let rec read_remaining_headers uri reader =
+          let open Fut_comb.Infix_result_monad in
+          Buffered.read_line reader
+          >>= function
+          | None | Some "" ->
+              Logs.debug (fun m -> m "proxy : %s : " (Uri.to_string uri));
+              Abb.Future.return (Ok ())
+          | Some line ->
+              Logs.debug (fun m -> m "proxy : %s : %s" (Uri.to_string uri) line);
+              read_remaining_headers uri reader
+        in
+        let finish_proxy_response tls_config uri sock scheme host reader writer =
+          let open Fut_comb.Infix_result_monad in
+          Buffered.read_line reader
+          >>= function
+          | Some line -> (
+              Logs.debug (fun m -> m "proxy : %s : %s" (Uri.to_string uri) line);
+              read_remaining_headers uri reader
+              >>= fun () ->
+              match CCString.split_on_char ' ' line with
+              | "HTTP/1.1" :: status :: _ -> (
+                  match CCInt.of_string status with
+                  | Some status when Cohttp.Code.is_success status && CCString.equal scheme "https"
+                    ->
+                      Abb.Future.return (Abb_tls.client_tcp sock (tls_config host) host)
+                      >>= fun (reader, writer) ->
+                      Abb.Future.return (Ok (Transport.default reader writer))
+                  | Some status when Cohttp.Code.is_success status && CCString.equal scheme "http"
+                    -> Abb.Future.return (Ok (Transport.default reader writer))
+                  | _ -> Abb.Future.return (Error (`Unexpected_err ("PROXY:RESPONSE:" ^ status))))
+              | _ -> Abb.Future.return (Error (`Unexpected_err ("PROXY:RESPONSE:" ^ line))))
+          | None -> Abb.Future.return (Error (`Unexpected_err "PROXY:RESPONSE:EOF"))
+        in
+        let port uri =
+          CCOption.get_or
+            ~default:
+              (match Uri.scheme uri with
+              | Some "http" -> 80
+              | Some "https" -> 443
+              | _ -> assert false)
+            (Uri.port uri)
+        in
+        let get_env name =
+          CCOption.or_
+            ~else_:(Sys.getenv_opt (CCString.uppercase_ascii name))
+            (Sys.getenv_opt (CCString.lowercase_ascii name))
+        in
+        let http_proxy = CCOption.map Uri.of_string (get_env "http_proxy") in
+        let https_proxy = CCOption.map Uri.of_string (get_env "https_proxy") in
+        let no_proxy =
+          CCOption.map_or
+            ~default:[]
+            CCFun.(CCString.split_on_char ',' %> CCList.map CCString.trim)
+            (get_env "no_proxy")
+        in
+        let no_verify_tls_cert =
+          CCOption.map_or
+            ~default:[]
+            CCFun.(CCString.split_on_char ',' %> CCList.map CCString.trim)
+            (get_env "no_verify_tls_cert")
+        in
+        let no_verify_tls_name =
+          CCOption.map_or
+            ~default:[]
+            CCFun.(CCString.split_on_char ',' %> CCList.map CCString.trim)
+            (get_env "no_verify_tls_name")
+        in
+        let local_certs_dir = Sys.getenv_opt "CERTS_DIR" in
+        let connect tls_config request =
+          let tls_config host =
+            let config = tls_config host in
+            ignore (Otls.Tls_config.set_alpn config "http/1.1");
+            CCOption.iter
+              (fun local_certs_dir ->
+                Logs.debug (fun m -> m "CERTS_DIR : %s" local_certs_dir);
+                ignore (Otls.Tls_config.set_ca_path config local_certs_dir))
+              local_certs_dir;
+            if CCList.mem ~eq:CCString.equal host no_verify_tls_cert || no_verify_tls_cert = [ "*" ]
+            then (
+              Logs.debug (fun m ->
+                  m "NO_VERIFY_CERT : %s : %s" host (CCString.concat " " no_verify_tls_cert));
+              Otls.Tls_config.insecure_noverifycert config);
+            if CCList.mem ~eq:CCString.equal host no_verify_tls_name || no_verify_tls_name = [ "*" ]
+            then (
+              Logs.debug (fun m ->
+                  m "NO_VERIFY_NAME : %s : %s" host (CCString.concat " " no_verify_tls_name));
+              Otls.Tls_config.insecure_noverifyname config);
+            config
+          in
+          let request_host = Uri.host_with_default ~default:"" (Request.uri request) in
+          match (Uri.scheme (Request.uri request), http_proxy, https_proxy) with
+          | (Some ("http" as scheme), Some proxy, _ | Some ("https" as scheme), _, Some proxy)
+            when (not (CCList.mem ~eq:CCString.equal request_host no_proxy)) && no_proxy <> [ "*" ]
+            -> (
+              (* Proxy only those hosts that are not in the no_proxy list. *)
+              Logs.debug (fun m ->
+                  m "PROXY : %s : %s" (Uri.to_string (Request.uri request)) (Uri.to_string proxy));
+              let run =
+                let open Fut_comb.Infix_result_monad in
+                connect_with_sock tls_config proxy
+                >>= fun (sock, reader, writer) ->
+                let host =
+                  match Uri.host (Request.uri request) with
+                  | Some host -> host
+                  | None -> assert false
+                in
+                let port = port (Request.uri request) in
+                let b = Buffer.create 50 in
+                Buffer.add_string
+                  b
+                  (Printf.sprintf "CONNECT %s:%d HTTP/1.1\r\nhost: %s:%d" host port host port);
+                (match maybe_add_proxy_auth proxy with
+                | Some header ->
+                    Buffer.add_string b "\r\n";
+                    Buffer.add_string b header
+                | None -> ());
+                Buffer.add_string b "\r\n\r\n";
+                Logs.debug (fun m ->
+                    m "proxy : %s : %s" (Uri.to_string (Request.uri request)) (Buffer.contents b));
+                let contents = Buffer.to_bytes b in
+                Buffered.write
+                  writer
+                  ~bufs:
+                    Abb_intf.Write_buf.[ { buf = contents; pos = 0; len = Bytes.length contents } ]
+                >>= fun _ ->
+                Buffered.flushed writer
+                >>= fun () ->
+                finish_proxy_response
+                  tls_config
+                  (Request.uri request)
+                  sock
+                  scheme
+                  host
+                  reader
+                  writer
+              in
               let open Abb.Future.Infix_monad in
-              let b = Buffer.create 1024 in
-              read_body (Response_io.make_body_reader resp ic) b
-              >>| fun () -> Ok (resp, Buffer.contents b)
-          | `No -> Abb.Future.return (Ok (resp, "")))
-        ~finally:(fun () -> Fut_comb.ignore (Buffered.close ic))
+              run
+              >>= function
+              | Ok _ as res ->
+                  Logs.debug (fun m -> m "connected : %s" (Uri.to_string (Request.uri request)));
+                  Abb.Future.return res
+              | Error (#connect_err as err) ->
+                  Logs.debug (fun m ->
+                      m
+                        "connect_err : %s : %a"
+                        (Uri.to_string (Request.uri request))
+                        pp_connect_err
+                        err);
+                  Abb.Future.return (Error err)
+              | Error `E_io | Error `E_no_space ->
+                  Logs.debug (fun m ->
+                      m "connection_refused : %s" (Uri.to_string (Request.uri request)));
+                  Abb.Future.return (Error `E_connection_refused)
+              | Error (`Unexpected exn) ->
+                  Logs.debug (fun m ->
+                      m
+                        "unexpected : %s : %s"
+                        (Uri.to_string (Request.uri request))
+                        (Printexc.to_string exn));
+                  raise exn)
+          | _, _, _ -> connect tls_config request
+        in
+        make ?tls_config ~connect ()
+    end
+
+    let connect connector request =
+      (connector request
+        : (Transport.t, connect_err) result Abb.Future.t
+        :> (Transport.t, [> connect_err ]) result Abb.Future.t)
+
+    let do_request ?flush ?body transport request =
+      Transport.write_request ?flush ?body transport request
+
+    let read_body_chunk transport = Transport.read_body_chunk transport
+    let close transport = Transport.destroy transport
+
+    let read_whole_body transport =
+      let rec read' transport b =
+        let open Fut_comb.Infix_result_monad in
+        read_body_chunk transport
+        >>= function
+        | Some chunk ->
+            Buffer.add_string b chunk;
+            read' transport b
+        | None -> Abb.Future.return (Ok (Buffer.contents b))
+      in
+      let b = Buffer.create 10 in
+      read' transport b
+
+    let call ?flush ?headers ?chunked ?body ?(connector = Connector.of_env ()) meth uri =
+      let open Fut_comb.Infix_result_monad in
+      let request = Request.make_for_client ?headers ?chunked meth uri in
+      Fut_comb.protect_finally
+        ~setup:(fun () -> connect connector request)
+        (function
+          | Ok transport ->
+              do_request
+                ?flush
+                ?body:
+                  (CCOption.map (fun body -> fun writer -> Request_io.write_body writer body) body)
+                transport
+                request
+              >>= fun response ->
+              read_whole_body transport >>= fun body -> Abb.Future.return (Ok (response, body))
+          | Error _ as err -> Abb.Future.return err)
+        ~finally:(function
+          | Ok transport -> Transport.destroy transport
+          | Error _ -> Fut_comb.unit)
+
+    let get ?headers ?connector uri = call ?headers ?connector `GET uri
+    let put ?headers ?body ?connector uri = call ?headers ?body ?connector `PUT uri
+    let post ?headers ?body ?connector uri = call ?headers ?body ?connector `POST uri
+    let delete ?headers ?connector uri = call ?headers ?connector `DELETE uri
   end
 
   module Server = struct
@@ -213,6 +494,12 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
               >>= fun () ->
               Fut_comb.ignore (Channel.send wc ret) >>= fun () -> run_handler config conn r w wc
           | `Det (`Timeout as err) | (`Exn _ as err) -> (
+              (* If it was a timeout, then close the connection.  If it was an
+                 exception, this will be done for us in the [failure]
+                 handler. *)
+              (if err = `Timeout then Fut_comb.ignore (Abb.Socket.close conn)
+               else Abb.Future.return ())
+              >>= fun () ->
               (* On timeout or error, run the error handler, which can only make
                  decisions about whether to continue or stop the server. *)
               Abb.Future.await
@@ -220,19 +507,10 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
                    (fun () -> Config.on_handler_err config req err)
                    ~failure:(fun () -> Fut_comb.unit))
               >>= function
-              | `Det (`Ok as ret) | `Det (`Stop as ret) ->
-                  (* Send an HTTP 500 response. *)
-                  Response_io.write
-                    (fun writer -> Response_io.write_body writer "")
-                    (Cohttp.Response.make ~status:`Internal_server_error ())
-                    w
-                  >>= fun () ->
-                  Fut_comb.ignore (Buffered.flushed w)
-                  >>= fun () ->
-                  Fut_comb.ignore (Channel.send wc ret) >>= fun () -> run_handler config conn r w wc
-              | `Aborted -> Fut_comb.ignore (Channel.send wc `Stop)
+              | `Det (`Ok as ret) | `Det (`Stop as ret) -> Fut_comb.ignore (Channel.send wc ret)
+              | `Aborted -> Abb.Future.return ()
               | `Exn (exn, _) -> Fut_comb.ignore (Channel.send wc (`Exn exn)))
-          | `Aborted -> Fut_comb.ignore (Abb.Socket.close conn))
+          | `Aborted -> Abb.Future.return ())
       | `Req `Eof ->
           Fut_comb.ignore (Abb.Socket.close conn)
           >>= fun () -> Fut_comb.ignore (Abb.Future.fork (Channel.send wc `Ok))

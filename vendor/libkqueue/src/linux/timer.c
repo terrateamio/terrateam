@@ -13,10 +13,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
 #include "private.h"
 
-#ifndef HAVE_SYS_TIMERFD_H
+#if HAVE_SYS_TIMERFD_H != 1
 
 /* Android 4.0 does not have this header, but the kernel supports timerfds */
 #ifndef SYS_timerfd_create
@@ -33,12 +32,12 @@
 #define SYS_timerfd_gettime __NR_timerfd_gettime
 #endif /* ! SYS_timerfd_create */
 
-/* XXX-FIXME 
+/* XXX-FIXME
    These are horrible hacks that are only known to be true on RHEL 5 x86.
  */
 #ifndef SYS_timerfd_settime
 #define SYS_timerfd_settime (SYS_timerfd_create + 1)
-#endif 
+#endif
 #ifndef SYS_timerfd_gettime
 #define SYS_timerfd_gettime (SYS_timerfd_create + 2)
 #endif
@@ -58,7 +57,8 @@ int timerfd_gettime(int ufc, struct itimerspec *otmr)
 {
   return syscall(SYS_timerfd_gettime, ufc, otmr);
 }
-
+#else
+#include <sys/timerfd.h>
 #endif
 
 #ifndef NDEBUG
@@ -85,27 +85,30 @@ itimerspec_dump(struct itimerspec *ts)
 
 static void
 convert_timedata_to_itimerspec(struct itimerspec *dst, long src,
-						       unsigned int flags, int oneshot)
+                               unsigned int flags, int oneshot)
 {
     time_t sec, nsec;
 
-	switch (flags & NOTE_TIMER_MASK) {
-	case NOTE_USECONDS:
+    switch (flags & NOTE_TIMER_MASK) {
+    case NOTE_USECONDS:
         sec = src / 1000000;
-        nsec = (src % 1000000);
+        nsec = (src % 1000000) * 1000;
         break;
-	case NOTE_NSECONDS:
+
+    case NOTE_NSECONDS:
         sec = src / 1000000000;
         nsec = (src % 1000000000);
         break;
-	case NOTE_SECONDS:
+
+    case NOTE_SECONDS:
         sec = src;
         nsec = 0;
         break;
-	default: /* milliseconds */
+
+    default: /* milliseconds */
         sec = src / 1000;
         nsec = (src % 1000) * 1000000;
-	}
+    }
 
     /* Set the interval */
     if (oneshot) {
@@ -123,7 +126,8 @@ convert_timedata_to_itimerspec(struct itimerspec *dst, long src,
 }
 
 int
-evfilt_timer_copyout(struct kevent *dst, struct knote *src, void *ptr)
+evfilt_timer_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt,
+    struct knote *src, void *ptr)
 {
     struct epoll_event * const ev = (struct epoll_event *) ptr;
     uint64_t expired;
@@ -132,70 +136,89 @@ evfilt_timer_copyout(struct kevent *dst, struct knote *src, void *ptr)
     memcpy(dst, &src->kev, sizeof(*dst));
     if (ev->events & EPOLLERR)
         dst->fflags = 1; /* FIXME: Return the actual timer error */
-          
+
     /* On return, data contains the number of times the
        timer has been trigered.
      */
-    n = read(src->data.pfd, &expired, sizeof(expired));
+    n = read(src->kn_timerfd, &expired, sizeof(expired));
     if (n != sizeof(expired)) {
         dbg_puts("invalid read from timerfd");
         expired = 1;  /* Fail gracefully */
-    } 
+    }
     dst->data = expired;
 
-    return (0);
+    if (knote_copyout_flag_actions(filt, src) < 0) return -1;
+
+    return (1);
 }
 
 int
 evfilt_timer_knote_create(struct filter *filt, struct knote *kn)
 {
-    struct epoll_event ev;
     struct itimerspec ts;
     int tfd;
     int flags;
+    int events;
 
     kn->kev.flags |= EV_CLEAR;
 
-    tfd = timerfd_create(CLOCK_MONOTONIC, 0);
+    tfd = timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC);
     if (tfd < 0) {
-        dbg_printf("timerfd_create(2): %s", strerror(errno));
+        if ((errno == EMFILE) || (errno == ENFILE)) {
+            dbg_perror("timerfd_create(2) fd_used=%u fd_max=%u", get_fd_used(), get_fd_limit());
+        } else {
+            dbg_perror("timerfd_create(2)");
+        }
         return (-1);
     }
-    dbg_printf("created timerfd %d", tfd);
+    dbg_printf("timer_fd=%i - created", tfd);
 
     convert_timedata_to_itimerspec(&ts, kn->kev.data, kn->kev.fflags,
-								   kn->kev.flags & EV_ONESHOT);
-	flags = (kn->kev.fflags & NOTE_ABSOLUTE) ? TFD_TIMER_ABSTIME : 0;
+                                   kn->kev.flags & EV_ONESHOT);
+    flags = (kn->kev.fflags & NOTE_ABSOLUTE) ? TFD_TIMER_ABSTIME : 0;
     if (timerfd_settime(tfd, flags, &ts, NULL) < 0) {
         dbg_printf("timerfd_settime(2): %s", strerror(errno));
         close(tfd);
         return (-1);
     }
 
-    memset(&ev, 0, sizeof(ev));
-    ev.events = EPOLLIN | EPOLLET;
+    events = EPOLLIN | EPOLLET;
     if (kn->kev.flags & (EV_ONESHOT | EV_DISPATCH))
-        ev.events |= EPOLLONESHOT;
+        events |= EPOLLONESHOT;
 
-    ev.data.ptr = kn;
-    if (epoll_ctl(filter_epfd(filt), EPOLL_CTL_ADD, tfd, &ev) < 0) {
+    KN_UDATA(kn);   /* populate this knote's kn_udata field */
+    if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_ADD, tfd, EPOLL_EV_KN(events, kn)) < 0) {
         dbg_printf("epoll_ctl(2): %d", errno);
         close(tfd);
         return (-1);
     }
 
-    kn->data.pfd = tfd;
+    kn->kn_timerfd = tfd;
     return (0);
 }
 
 int
-evfilt_timer_knote_modify(struct filter *filt, struct knote *kn, 
+evfilt_timer_knote_modify(struct filter *filt, struct knote *kn,
         const struct kevent *kev)
 {
-    (void)filt;
-    (void)kn;
-    (void)kev;
-    return (0); /* STUB */
+    struct itimerspec ts;
+    int flags;
+
+    dbg_printf("timer_fd=%i - modified", kn->kn_timerfd);
+
+    convert_timedata_to_itimerspec(&ts, kev->data, kev->fflags,
+                                   kev->flags & EV_ONESHOT);
+    flags = (kev->fflags & NOTE_ABSOLUTE) ? TFD_TIMER_ABSTIME : 0;
+    if (timerfd_settime(kn->kn_timerfd, flags, &ts, NULL) < 0) {
+        dbg_printf("timerfd_settime(2): %s", strerror(errno));
+        return (-1);
+    }
+
+    kn->kev.flags = kev->flags | EV_CLEAR;
+    kn->kev.fflags = kev->fflags;
+    kn->kev.data = kev->data;
+
+    return (0);
 }
 
 int
@@ -203,19 +226,21 @@ evfilt_timer_knote_delete(struct filter *filt, struct knote *kn)
 {
     int rv = 0;
 
-    if (kn->data.pfd == -1)
+    if (kn->kn_timerfd == -1)
         return (0);
 
-    if (epoll_ctl(filter_epfd(filt), EPOLL_CTL_DEL, kn->data.pfd, NULL) < 0) {
+    if (epoll_ctl(filter_epoll_fd(filt), EPOLL_CTL_DEL, kn->kn_timerfd, NULL) < 0) {
         dbg_printf("epoll_ctl(2): %s", strerror(errno));
         rv = -1;
     }
-    if (close(kn->data.pfd) < 0) {
+
+    dbg_printf("timer_fd=%i - closed", kn->kn_timerfd);
+    if (close(kn->kn_timerfd) < 0) {
         dbg_printf("close(2): %s", strerror(errno));
         rv = -1;
     }
 
-    kn->data.pfd = -1;
+    kn->kn_timerfd = -1;
     return (rv);
 }
 
@@ -232,13 +257,11 @@ evfilt_timer_knote_disable(struct filter *filt, struct knote *kn)
 }
 
 const struct filter evfilt_timer = {
-    EVFILT_TIMER,
-    NULL,
-    NULL,
-    evfilt_timer_copyout,
-    evfilt_timer_knote_create,
-    evfilt_timer_knote_modify,
-    evfilt_timer_knote_delete,
-    evfilt_timer_knote_enable,
-    evfilt_timer_knote_disable,     
+    .kf_id      = EVFILT_TIMER,
+    .kf_copyout = evfilt_timer_copyout,
+    .kn_create  = evfilt_timer_knote_create,
+    .kn_modify  = evfilt_timer_knote_modify,
+    .kn_delete  = evfilt_timer_knote_delete,
+    .kn_enable  = evfilt_timer_knote_enable,
+    .kn_disable = evfilt_timer_knote_disable,
 };

@@ -28,6 +28,16 @@ module Workflow_step : sig
     [@@deriving show, yojson, eq]
   end
 
+  module Visible_on : sig
+    type t =
+      | Always
+      | Failure
+      | Success
+    [@@deriving show, yojson, eq]
+
+    val to_string : t -> string
+  end
+
   module Retry : sig
     type t = {
       backoff : float; [@default 1.5]
@@ -104,6 +114,7 @@ module Workflow_step : sig
       env : string String_map.t option;
       ignore_errors : bool; [@default false]
       run_on : Run_on.t; [@default Run_on.Success]
+      visible_on : Visible_on.t; [@default Visible_on.Failure]
     }
     [@@deriving make, show, yojson, eq]
   end
@@ -147,7 +158,7 @@ module Access_control : sig
     type t =
       | User of string
       | Team of string
-      | Repo of string
+      | Role of string
       | Any
     [@@deriving show, yojson, eq, ord]
 
@@ -329,22 +340,41 @@ module Dirs : sig
 end
 
 module Drift : sig
-  module Schedule : sig
-    type t =
-      | Hourly
-      | Daily
-      | Weekly
-      | Monthly
+  module Window : sig
+    type t = {
+      end_ : string;
+      start : string;
+    }
     [@@deriving show, yojson, eq]
 
-    val to_string : t -> string
+    val make :
+      start:string -> end_:string -> unit -> (t, [> `Window_parse_timezone_err of string ]) result
+  end
+
+  module Schedule : sig
+    module Sched : sig
+      type t =
+        | Hourly
+        | Daily
+        | Weekly
+        | Monthly
+      [@@deriving show, yojson, eq]
+
+      val to_string : t -> string
+    end
+
+    type t = {
+      tag_query : Tag_query.t;
+      schedule : Sched.t;
+      reconcile : bool; [@default false]
+      window : Window.t option;
+    }
+    [@@deriving make, show, yojson, eq]
   end
 
   type t = {
     enabled : bool; [@default false]
-    reconcile : bool; [@default false]
-    schedule : Schedule.t; [@default Schedule.Weekly]
-    tag_query : Tag_query.t; [@default Tag_query.any]
+    schedules : Schedule.t String_map.t; [@default String_map.empty]
   }
   [@@deriving make, show, yojson, eq]
 end
@@ -359,18 +389,18 @@ module Engine : sig
   end
 
   module Opentofu : sig
-    type t = { version : string [@default "latest"] } [@@deriving make, show, yojson, eq]
+    type t = { version : string option } [@@deriving make, show, yojson, eq]
   end
 
   module Terraform : sig
-    type t = { version : string [@default "latest"] } [@@deriving make, show, yojson, eq]
+    type t = { version : string option } [@@deriving make, show, yojson, eq]
   end
 
   module Terragrunt : sig
     type t = {
       tf_cmd : string; [@default "terraform"]
-      tf_version : string; [@default "latest"]
-      version : string; [@default "latest"]
+      tf_version : string option;
+      version : string option;
     }
     [@@deriving make, show, yojson, eq]
   end
@@ -380,6 +410,7 @@ module Engine : sig
     | Opentofu of Opentofu.t
     | Terraform of Terraform.t
     | Terragrunt of Terragrunt.t
+    | Pulumi
   [@@deriving show, yojson, eq]
 end
 
@@ -595,11 +626,15 @@ type of_version_1_err =
   | `Drift_tag_query_err of string * string
   | `Glob_parse_err of string * string
   | `Hooks_unknown_run_on_err of Terrat_repo_config_run_on.t
+  | `Hooks_unknown_visible_on_err of string
   | `Pattern_parse_err of string
   | `Unknown_lock_policy_err of string
   | `Unknown_plan_mode_err of string
+  | `Window_parse_timezone_err of string
   | `Workflows_apply_unknown_run_on_err of Terrat_repo_config_run_on.t
+  | `Workflows_apply_unknown_visible_on_err of string
   | `Workflows_plan_unknown_run_on_err of Terrat_repo_config_run_on.t
+  | `Workflows_plan_unknown_visible_on_err of string
   | `Workflows_tag_query_parse_err of string * string
   ]
 [@@deriving show]
@@ -608,11 +643,14 @@ val of_view : View.t -> raw t
 val to_view : 'a t -> View.t
 val default : raw t
 val of_version_1 : Terrat_repo_config.Version_1.t -> (raw t, [> of_version_1_err ]) result
+
+val of_version_1_json :
+  Yojson.Safe.t -> (raw t, [> of_version_1_err | `Repo_config_parse_err of string ]) result
+
 val to_version_1 : 'a t -> Terrat_repo_config.Version_1.t
 val merge_with_default_branch_config : default:'a t -> 'a t -> 'a t
 
-(** Given contextual information, take a configuration and produce a derived
-    configuration. *)
+(** Given contextual information, take a configuration and produce a derived configuration. *)
 val derive : ctx:Ctx.t -> index:Index.t -> file_list:string list -> 'a t -> derived t
 
 (** Accessors*)

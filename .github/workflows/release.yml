@@ -56,7 +56,7 @@ jobs:
     env:
       VERSION_TAG: ${{ needs.set-version-tag.outputs.version_tag }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      TERRATEAM_UI_ANALYTICS: ${{ github.event.inputs.environment == 'production' && vars.TERRATEAM_POSTHOG_TOKEN || 'false' }}
+      TERRAT_UI_ANALYTICS: ${{ github.event.inputs.environment == 'production' && vars.TERRATEAM_POSTHOG_TOKEN || 'false' }}
       TERRATEAM_ENVIRONMENT: ${{ github.event.inputs.environment || 'production' }}
       MATRIX_TARGET: ${{ matrix.target }}
 

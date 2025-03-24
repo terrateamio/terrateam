@@ -16,6 +16,18 @@ REQUIRED_ENV_KEYS = ['GITHUB_APP_PEM']
 
 
 def setup_environment():
+    if os.getenv('CUSTOM_CA_CERT'):
+        cert_path_root = '/usr/local/share/ca-certificates/'
+        certs = [cert
+                 for cert in os.getenv('CUSTOM_CA_CERT').split('-----END CERTIFICATE-----')
+                 if cert.strip()]
+        for idx in range(len(certs)):
+            cert_path = os.path.join(cert_path_root, 'custom-ca-cert-{}.crt'.format(idx))
+            with open(cert_path, 'w') as cert_file:
+                cert_file.write((certs[idx] + '-----END CERTIFICATE-----').strip())
+        subprocess.check_call(['update-ca-certificates'])
+        os.environ['CERTS_DIR'] = '/etc/ssl/certs'
+        print(f"Self-signed certificate installed to {cert_path}")
     os.environ['GITHUB_APP_PEM'] = os.environ['GITHUB_APP_PEM'].replace('\\n', '\n')
     os.environ['TERRAT_PYTHON_EXEC'] = '/usr/bin/python3'
     os.environ['OCAMLRUNPARAM'] = 'b'
@@ -128,11 +140,34 @@ def main():
     if os.environ.get('GITHUB_WEBHOOK_URL_UPDATE', '').upper() == 'TRUE':
         update_github_webhook_url()
 
+    # If the UI assets exist, generate the index file from template
+    if os.path.exists('/usr/local/share/terrat/ui/assets/index.html.tmpl'):
+        print('UI Assets exist, creating index page')
+        with open('/usr/local/share/terrat/ui/assets/index.html', 'w') as fout:
+            subprocess.check_call(
+                ['/usr/local/share/terrat/ui/assets/index.html.tmpl'],
+                stdout=fout)
+
     # Run db migration
     subprocess.check_call(['/usr/local/bin/terrat', 'migrate', '--verbosity=debug'])
 
     # Run server
-    os.execv('/usr/local/bin/terrat', ['/usr/local/bin/terrat', 'server', '--verbosity=debug'])
+    if os.environ.get('TERRAT_STRACE'):
+        os.execv('/usr/bin/strace',
+                 [
+                     '/usr/bin/strace',
+                     '-ff',
+                     '-o',
+                     '/tmp/strace.log',
+                     '-t',
+                     '-s',
+                     '100',
+                     '-v',
+                     '/usr/local/bin/terrat',
+                     'server', '--verbosity=debug'
+                 ])
+    else:
+        os.execv('/usr/local/bin/terrat', ['/usr/local/bin/terrat', 'server', '--verbosity=debug'])
 
 
 if __name__ == '__main__':

@@ -203,7 +203,7 @@ will not return it.
 The filter itself is not disabled.
 .It EV_DISPATCH
 Disable the event source immediately after delivery of an event.
-See 
+See
 .Dv EV_DISABLE
 above.
 .It EV_DELETE
@@ -217,7 +217,7 @@ any pending events.
 When passed as input, it forces
 .Dv EV_ERROR
 to always be returned.
-When a filter is successfully added the 
+When a filter is successfully added the
 .Va data
 field will be zero.
 .It EV_ONESHOT
@@ -266,11 +266,14 @@ subject to the
 value of the socket buffer.
 This may be overridden with a per-filter low water mark at the
 time the filter is added by setting the
-NOTE_LOWAT
+.Dv NOTE_LOWAT
 flag in
 .Va fflags ,
 and specifying the new low water mark in
 .Va data .
+.Sy This is not supported by libkqueue .
+.Dv SO_RCVLOWAT
+may be ignored on Linux.
 On return,
 .Va data
 contains the number of bytes of protocol data available to read.
@@ -394,10 +397,10 @@ Establishes a user event identified by
 .Va ident
 which is not assosicated with any kernel mechanism but is triggered by
 user level code.
-The lower 24 bits of the 
+The lower 24 bits of the
 .Va fflags
 may be used for user defined flags and manipulated using the following:
-.Bl -tag -width XXNOTE_FFLAGSMASK 
+.Bl -tag -width XXNOTE_FFLAGSMASK
 .It Dv NOTE_FFNOP
 Ignore the input
 .Va fflags .

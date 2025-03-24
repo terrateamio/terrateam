@@ -30,7 +30,10 @@ let load_cookie cookie_name ctx =
 
 let store_cookie config v ctx =
   let open Abb.Future.Infix_monad in
-  let cookie_id = if v.Value.is_create then None else load_cookie config.Config.cookie_name ctx in
+  let cookie_id =
+    if v.Value.is_create || v.Value.is_dirty then None
+    else load_cookie config.Config.cookie_name ctx
+  in
   config.Config.store cookie_id v.Value.v ctx
   >>| fun cookie_id ->
   let cookie =

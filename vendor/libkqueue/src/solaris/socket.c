@@ -14,21 +14,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <errno.h>
-#include <fcntl.h>
 #include <signal.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/queue.h>
 #include <sys/socket.h>
-#include <sys/types.h>
-#include <string.h>
 #include <unistd.h>
 #include <sys/filio.h>
 
 #include <port.h>
 
-#include "sys/event.h"
 #include "private.h"
 
 int
@@ -47,10 +39,10 @@ evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
             dbg_puts("invalid filter");
             return (-1);
     }
-    
-    dbg_printf("port_associate kq fd %d with actual fd %ld", filter_epfd(filt), kn->kev.ident);
 
-    rv = port_associate(filter_epfd(filt), PORT_SOURCE_FD, kn->kev.ident, 
+    dbg_printf("port_associate kq fd=%d with actual fd %ld", filter_epoll_fd(filt), kn->kev.ident);
+
+    rv = port_associate(filter_epoll_fd(filt), PORT_SOURCE_FD, kn->kev.ident,
             events, kn);
     if (rv < 0) {
             dbg_perror("port_associate(2)");
@@ -61,7 +53,7 @@ evfilt_socket_knote_create(struct filter *filt, struct knote *kn)
 }
 
 int
-evfilt_socket_knote_modify(struct filter *filt, struct knote *kn, 
+evfilt_socket_knote_modify(struct filter *filt, struct knote *kn,
         const struct kevent *kev)
 {
     dbg_puts("XXX-FIXME");
@@ -79,7 +71,7 @@ evfilt_socket_knote_delete(struct filter *filt, struct knote *kn)
         return (0);
     */
 
-    if (port_dissociate(filter_epfd(filt), PORT_SOURCE_FD, kn->kev.ident) < 0) {
+    if (port_dissociate(filter_epoll_fd(filt), PORT_SOURCE_FD, kn->kev.ident) < 0) {
         dbg_perror("port_dissociate(2)");
         return (-1);
     }
@@ -90,23 +82,23 @@ evfilt_socket_knote_delete(struct filter *filt, struct knote *kn)
 int
 evfilt_socket_knote_enable(struct filter *filt, struct knote *kn)
 {
-    dbg_printf("enabling knote %p", kn);
+
     return evfilt_socket_knote_create(filt, kn);
 }
 
 int
 evfilt_socket_knote_disable(struct filter *filt, struct knote *kn)
 {
-    dbg_printf("disabling knote %p", kn);
     return evfilt_socket_knote_delete(filt, kn);
 }
 
 int
-evfilt_socket_copyout(struct kevent *dst, struct knote *src, void *ptr)
+evfilt_socket_copyout(struct kevent *dst, UNUSED int nevents, struct filter *filt,
+    struct knote *src, void *ptr)
 {
     port_event_t *pe = (port_event_t *) ptr;
     unsigned int pending_data = 0;
-    
+
     memcpy(dst, &src->kev, sizeof(*dst));
     if (pe->portev_events == 8) //XXX-FIXME Should be POLLHUP)
         dst->flags |= EV_EOF;
@@ -123,40 +115,32 @@ evfilt_socket_copyout(struct kevent *dst, struct knote *src, void *ptr)
             /* race condition with socket close, so ignore this error */
             dbg_puts("ioctl(2) of socket failed");
             dst->data = 0;
-        }   
+        }
         else
             dst->data = pending_data;
     }
-    
-    /* FIXME: make sure this is in kqops.copyout() 
-    if (src->kev.flags & EV_DISPATCH || src->kev.flags & EV_ONESHOT) {
-        socket_knote_delete(filt->kf_kqueue->kq_port, kn->kev.ident);
-    }
-    */
 
-    return (0);
+    if (knote_copyout_flag_actions(filt, src) < 0) return -1;
+
+    return (1);
 }
 
 const struct filter evfilt_read = {
-    EVFILT_READ,
-    NULL,
-    NULL,
-    evfilt_socket_copyout,
-    evfilt_socket_knote_create,
-    evfilt_socket_knote_modify,
-    evfilt_socket_knote_delete,
-    evfilt_socket_knote_enable,
-    evfilt_socket_knote_disable,         
+    .kf_id      = EVFILT_READ,
+    .kf_copyout = evfilt_socket_copyout,
+    .kn_create  = evfilt_socket_knote_create,
+    .kn_modify  = evfilt_socket_knote_modify,
+    .kn_delete  = evfilt_socket_knote_delete,
+    .kn_enable  = evfilt_socket_knote_enable,
+    .kn_disable = evfilt_socket_knote_disable,
 };
 
 const struct filter evfilt_write = {
-    EVFILT_WRITE,
-    NULL,
-    NULL,
-    evfilt_socket_copyout,
-    evfilt_socket_knote_create,
-    evfilt_socket_knote_modify,
-    evfilt_socket_knote_delete,
-    evfilt_socket_knote_enable,
-    evfilt_socket_knote_disable,         
+    .kf_id      = EVFILT_WRITE,
+    .kf_copyout = evfilt_socket_copyout,
+    .kn_create  = evfilt_socket_knote_create,
+    .kn_modify  = evfilt_socket_knote_modify,
+    .kn_delete  = evfilt_socket_knote_delete,
+    .kn_enable  = evfilt_socket_knote_enable,
+    .kn_disable = evfilt_socket_knote_disable,
 };

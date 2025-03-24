@@ -1,3 +1,7 @@
+let src = Logs.Src.create "brtl_mw_log"
+
+module Logs = (val Logs.src_log src : Logs.LOG)
+
 module Config = struct
   type t = {
     remote_ip_header : string option;
