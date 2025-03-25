@@ -6178,6 +6178,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           index_flow
           (action
              [
+               Flow.Step.make ~id:Id.React_to_comment ~f:(eval_step F.react_to_comment) ();
                Flow.Step.make
                  ~id:Id.Complete_work_manifest
                  ~f:(eval_step F.complete_work_manifest)
