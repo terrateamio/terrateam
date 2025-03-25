@@ -1951,6 +1951,14 @@ module Comment (S : S) = struct
                   |> CCList.filter (fun s -> CCString.find ~sub:"= (known after apply)" s = -1)
                   |> CCString.concat "\n")
             | any -> any) )
+
+      let minus_one =
+        ( "minus_one",
+          Snabela.Kv.(
+            function
+            | I v -> I (v - 1)
+            | F v -> F (v -. 1.0)
+            | any -> any) )
     end
 
     let read fname =
@@ -1961,7 +1969,8 @@ module Comment (S : S) = struct
       |> (function
       | Ok tmpl -> tmpl
       | Error (#Snabela.Template.err as err) -> failwith (Snabela.Template.show_err err))
-      |> fun tmpl -> Snabela.of_template tmpl Transformers.[ money; compact_plan; plan_diff ]
+      |> fun tmpl ->
+      Snabela.of_template tmpl Transformers.[ money; compact_plan; plan_diff; minus_one ]
 
     let terrateam_comment_help = read "terrateam_comment_help.tmpl"
 
@@ -2484,7 +2493,6 @@ module Comment (S : S) = struct
                        | `Trial_ending duration -> int (Duration.to_day duration)
                        | _ -> int 0 );
                      ("is_layered_run", bool is_layered_run);
-                     ("is_last_layer", bool (num_remaining_layers = 0));
                      ("num_more_layers", int num_remaining_layers);
                      ("overall_success", bool overall_success);
                      ( "pre_hooks",
