@@ -1259,9 +1259,17 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     module Matches = struct
       type t = {
         working_set_matches : Terrat_change_match3.Dirspace_config.t list;
+            (* All unapplied matches in the current working layer *)
         all_matches : Terrat_change_match3.Dirspace_config.t list list;
+            (* All matches broken up into layers in the order they must be applied. *)
         all_unapplied_matches : Terrat_change_match3.Dirspace_config.t list list;
+            (* All unapplied layers in the order they must be applied *)
         all_tag_query_matches : Terrat_change_match3.Dirspace_config.t list list;
+            (* All layers filtered by the tag query *)
+        working_layer : Terrat_change_match3.Dirspace_config.t list;
+            (* The all dirspaces configs in current layer, where "current" is
+               defined as the first layer that does not have all of its
+               dirspaces applied. *)
       }
       [@@deriving show]
     end
@@ -1709,6 +1717,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           ~repo_tree
           ~index
           () =
+        let module Dc = Terrat_change_match3.Dirspace_config in
         let module Dir_set = CCSet.Make (CCString) in
         let open CCResult.Infix in
         Terrat_change_match3.synthesize_config ~index repo_config
@@ -1753,7 +1762,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         let all_unapplied_matches =
           CCList.filter_map
             (fun layer ->
-              let module Dc = Terrat_change_match3.Dirspace_config in
               match
                 CCList.filter
                   (fun { Dc.dirspace = { Terrat_dirspace.dir; _ } as dirspace; _ } ->
@@ -1773,7 +1781,27 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         let all_tag_query_matches =
           CCList.map (CCList.filter (Terrat_change_match3.match_tag_query ~tag_query)) all_matches
         in
-        Ok (working_set_matches, all_matches, all_tag_query_matches, all_unapplied_matches)
+        let unapplied_dirspaces =
+          all_unapplied_matches
+          |> CCList.flat_map (fun layer -> CCList.map (fun { Dc.dirspace; _ } -> dirspace) layer)
+          |> Terrat_data.Dirspace_set.of_list
+        in
+        let working_layer =
+          all_matches
+          |> CCList.filter (fun layer ->
+                 CCList.exists
+                   (fun { Dc.dirspace; _ } ->
+                     Terrat_data.Dirspace_set.mem dirspace unapplied_dirspaces)
+                   layer)
+          |> CCList.head_opt
+          |> CCOption.get_or ~default:[]
+        in
+        Ok
+          ( working_set_matches,
+            all_matches,
+            all_tag_query_matches,
+            all_unapplied_matches,
+            working_layer )
       in
       let missing_autoplan_matches db pull_request matches =
         let module Dc = Terrat_change_match3.Dirspace_config in
@@ -1879,7 +1907,12 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                        (fun { Terrat_vcs_provider2.Index.index; _ } -> index)
                        index)
                   ()))
-        >>= fun (working_set_matches, all_matches, all_tag_query_matches, all_unapplied_matches) ->
+        >>= fun ( working_set_matches,
+                  all_matches,
+                  all_tag_query_matches,
+                  all_unapplied_matches,
+                  working_layer )
+              ->
         pull_request_safe ctx state
         >>= function
         | Some pull_request -> (
@@ -1911,6 +1944,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                        all_matches;
                        all_tag_query_matches;
                        all_unapplied_matches;
+                       working_layer;
                      })
             | (`Apply | `Apply_autoapprove | `Apply_force), `Auto ->
                 let working_set_matches =
@@ -1930,6 +1964,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                        all_matches;
                        all_tag_query_matches;
                        all_unapplied_matches;
+                       working_layer;
                      })
             | (`Plan | `Apply | `Apply_autoapprove | `Apply_force), `Manual ->
                 Abb.Future.return
@@ -1939,6 +1974,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                        all_matches;
                        all_tag_query_matches;
                        all_unapplied_matches;
+                       working_layer;
                      }))
         | None ->
             Abb.Future.return
@@ -1948,6 +1984,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                    all_matches;
                    all_tag_query_matches;
                    all_unapplied_matches;
+                   working_layer;
                  })
       in
       let open Abb.Future.Infix_monad in
@@ -5669,13 +5706,13 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       let open Abbs_future_combinators.Infix_result_monad in
       Dv.matches ctx state op
       >>= fun matches ->
-      match matches.Dv.Matches.all_unapplied_matches with
+      match matches.Dv.Matches.working_layer with
       | [] -> Abb.Future.return (Ok (Id.All_layers_completed, state))
-      | unapplied_matches :: _ -> (
+      | working_layer -> (
           let module Dc = Terrat_change_match3.Dirspace_config in
-          let unapplied_dirspaces =
+          let working_layer_dirspaces =
             Terrat_data.Dirspace_set.of_list
-              (CCList.map (fun { Dc.dirspace; _ } -> dirspace) unapplied_matches)
+              (CCList.map (fun { Dc.dirspace; _ } -> dirspace) working_layer)
           in
           match state.State.work_manifest_id with
           | Some work_manifest_id -> (
@@ -5687,7 +5724,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                   let changed_dirspaces =
                     Terrat_data.Dirspace_set.of_list (CCList.map Dsf.to_dirspace changes)
                   in
-                  if Terrat_data.Dirspace_set.disjoint changed_dirspaces unapplied_dirspaces then
+                  if Terrat_data.Dirspace_set.disjoint changed_dirspaces working_layer_dirspaces
+                  then
                     (* If there is no overlap between the dirspaces that were
                        just ran as part of the work manifest and the remaining
                        unapplied dirspaces, that means we can safely try to run
@@ -5709,7 +5747,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                   else
                     (* This does not mean that all layers are completely
                        finished, but it means all layers are done as far as they
-                       can be and there are no more layers that can be run. *)
+                       can be and there are no more layers that can be
+                       automatically run. *)
                     Abb.Future.return (Ok (Id.All_layers_completed, state))
               | None -> assert false)
           | None -> Abb.Future.return (Ok (Id.More_layers_to_run, state)))
