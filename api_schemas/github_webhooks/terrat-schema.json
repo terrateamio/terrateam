@@ -105,7 +105,6 @@
       "required": [
         "enabled_by",
         "merge_method",
-        "commit_title",
         "commit_message"
       ],
       "title": "PullRequestAutoMerge",
