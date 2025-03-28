@@ -842,6 +842,148 @@ module Prepared_stmt = struct
       sql
 end
 
+module Auth_scram = struct
+  type client_first = {
+    user : string;
+    passwd : string;
+    nonce : string;
+    message : string;
+  }
+
+  type server_first = {
+    nonce : string;
+    salt : string;
+    iter : int;
+    message : string;
+  }
+
+  type client_final = {
+    server_key : string;
+    auth_message : string;
+    message : string;
+  }
+
+  (* Notation and function naming come from RFC 5802, to avoid
+     messing up the implementation:
+        https://www.rfc-editor.org/rfc/rfc5802#section-2.2 *)
+  let hmac key msg =
+    let hash = Cryptokit.MAC.hmac_sha256 key in
+    Cryptokit.hash_string hash msg
+
+  let h hf msg = Cryptokit.hash_string hf msg
+
+  let hi str salt iter =
+    let ui = hmac str (salt ^ "\x00\x00\x00\x01") in
+    let u = Bytes.of_string ui in
+    let rec loop it ui =
+      match it with
+      | 0 -> String.of_bytes u
+      | k ->
+          let ui = hmac str ui in
+          Cryptokit.xor_string ui 0 u 0 (Bytes.length u);
+          loop (it - 1) ui
+    in
+    loop (iter - 1) ui
+
+  (* The next functions are an implementation of
+        https://www.rfc-editor.org/rfc/rfc5802#page-7 *)
+  let salt_passwd passwd server_first = hi passwd server_first.salt server_first.iter
+
+  let auth_message client_first_message_bare server_first_message client_final_message_without_proof
+      =
+    (* client_first_message_bare = n=$USER,r=$CLIENT_NONCE
+       server_first_message = r=$NONCE,s=$SALT,i=$ITER
+       client_final_message_without_proof = c=$CHANNEL_BINDING,r=$NONCE *)
+    Printf.sprintf
+      "%s,%s,%s"
+      client_first_message_bare
+      server_first_message
+      client_final_message_without_proof
+
+  let client_key salted_passwd = hmac salted_passwd "Client Key"
+  let server_key salted_passwd = hmac salted_passwd "Server Key"
+
+  let server_signature server_key auth_message =
+    hmac server_key auth_message |> Base64.encode_string
+
+  let stored_key client_key =
+    let hash = Cryptokit.Hash.sha256 () in
+    h hash client_key
+
+  let client_proof client_key client_signature =
+    let result = Bytes.of_string client_signature in
+    Cryptokit.xor_string client_key 0 result 0 (Bytes.length result);
+    result |> String.of_bytes |> Base64.encode_string
+
+  (* SCRAM Steps
+
+     Check RFCs 5802 or 7677 to get a better idea on each 
+     exchange format.
+
+     https://www.rfc-editor.org/rfc/rfc5802#section-5
+     https://www.rfc-editor.org/rfc/rfc7677.html#section-3 *)
+  let client_first user passwd =
+    let nonce_len = 16 in
+    let random_data = CCString.init nonce_len (fun _ -> Char.chr @@ Random.int 256) in
+    let nonce = Base64.encode_string random_data in
+    let message = Printf.sprintf "n,,n=%s,r=%s" user nonce in
+    let client_request = { nonce; user; passwd; message } in
+    (client_request, message)
+
+  let parse_server_reply message =
+    (* The first server response looks like this:
+        |----------nonce-----------|
+      r=<client_nonce><server_nonce>,s=<salt>,i=<iter> *)
+    let fields = CCString.split ~by:"," message in
+    let extract prefix =
+      (* TODO: this can be further improved later *)
+      fields
+      |> List.find_map (fun field ->
+             if CCString.prefix ~pre:prefix field then
+               Some (CCString.drop (String.length prefix) field)
+             else None)
+    in
+    let r = extract "r=" in
+    let s = extract "s=" |> Option.map Base64.decode_exn in
+    let i = extract "i=" |> Option.map int_of_string in
+    match (r, s, i) with
+    | Some nonce, Some salt, Some iter -> Some { nonce; salt; iter; message }
+    | _ -> None
+
+  let client_final client_first server_first =
+    let salted_password = salt_passwd client_first.passwd server_first in
+    let client_first_message_bare =
+      Printf.sprintf "n=%s,r=%s" client_first.user client_first.nonce
+    in
+    let client_final_without_proof = Printf.sprintf "c=biws,r=%s" server_first.nonce in
+    let auth_message =
+      auth_message client_first_message_bare server_first.message client_final_without_proof
+    in
+    let client_key = client_key salted_password in
+    let server_key = server_key salted_password in
+    let stored_key = stored_key client_key in
+    let client_signature = hmac stored_key auth_message in
+    let proof = client_proof client_key client_signature in
+    let message = Printf.sprintf "%s,p=%s" client_final_without_proof proof in
+    let record = { server_key; auth_message; message } in
+    (record, message)
+
+  let verify_server_final client_final server_final =
+    let is_verifier = CCString.chop_prefix ~pre:"v=" server_final in
+    let is_error = CCString.chop_prefix ~pre:"e=" server_final in
+    match (is_verifier, is_error) with
+    | Some signature_from_server, _ ->
+        let signature_from_client =
+          server_signature client_final.server_key client_final.auth_message
+        in
+        (* If both match then it's proof that the server has 
+           access to the client's key *)
+        if signature_from_client = signature_from_server then Ok ()
+        else Error "Invalid server signature"
+    | _, Some error_reason -> Error error_reason
+    | _ -> Error "Unsuported final server message format for AuthenticationSASLFinal"
+end
+
 type create_err =
   [ `Unexpected of (exn[@printer fun fmt v -> fprintf fmt "%s" (Printexc.to_string v)])
   | `Connection_failed
@@ -961,6 +1103,36 @@ and create_sm_login ?passwd ~user t =
   let open Abbs_future_combinators.Infix_result_monad in
   Io.wait_for_frames t >>= fun frames -> create_sm_process_login_frames ?passwd ~user t frames
 
+(* TODO: Maybe it's worth aglutinating step_02 and step_03
+   under the same recursive function, left it for a future
+   refactor *)
+and create_sm_scram_sha256_step_03 ?passwd ~user client_final t =
+  let open Pgsql_codec.Frame.Backend in
+  let open Abbs_future_combinators.Infix_result_monad in
+  Io.wait_for_frames t
+  >>= function
+  | AuthenticationSASLFinal { data } :: fs -> (
+      match Auth_scram.verify_server_final client_final data with
+      | Ok _ ->
+          (* Should be waiting for the next frame as an AuthenticationOk *)
+          create_sm_process_login_frames ?passwd ~user t fs
+      | _ -> Abb.Future.return (Error `Unsupported_auth_sasl_err))
+  | fs -> Abb.Future.return (Error (`Unmatching_frame fs))
+
+and create_sm_scram_sha256_step_02 ?passwd ~user client_request t =
+  let open Pgsql_codec.Frame.Backend in
+  let open Abbs_future_combinators.Infix_result_monad in
+  Io.wait_for_frames t
+  >>= function
+  | AuthenticationSASLContinue { data } :: fs -> (
+      match Auth_scram.parse_server_reply data with
+      | Some server_response ->
+          let client_final, data = Auth_scram.client_final client_request server_response in
+          Io.send_frame t Pgsql_codec.Frame.Frontend.(SASLResponse { data })
+          >>= fun () -> create_sm_scram_sha256_step_03 ?passwd ~user client_final t
+      | _ -> Abb.Future.return (Error `Unsupported_auth_sasl_err))
+  | fs -> Abb.Future.return (Error (`Unmatching_frame fs))
+
 and create_sm_process_login_frames ?passwd ~user t =
   let open Pgsql_codec.Frame.Backend in
   function
@@ -991,7 +1163,17 @@ and create_sm_process_login_frames ?passwd ~user t =
   | AuthenticationSCMCredential :: _ ->
       Abb.Future.return (Error `Unsupported_auth_scm_credential_err)
   | AuthenticationGSS :: _ -> Abb.Future.return (Error `Unsupported_auth_gss_err)
-  | AuthenticationSASL _ :: _ -> Abb.Future.return (Error `Unsupported_auth_sasl_err)
+  | AuthenticationSASL { auth_mechanisms = [ ("SCRAM-SHA-256" as auth_mechanism) ] } :: fs -> (
+      (* TODO: ALSO SUPPORT "SCRAM-SHA-256-PLUS" *)
+      match passwd with
+      | Some password ->
+          let open Abbs_future_combinators.Infix_result_monad in
+          let client_first, data = Auth_scram.client_first user password in
+          Io.send_frame t Pgsql_codec.Frame.Frontend.(SASLInitialResponse { auth_mechanism; data })
+          >>= fun () -> create_sm_scram_sha256_step_02 ?passwd ~user client_first t
+      | None -> Abb.Future.return (Error `Connect_missing_password_err))
+  | AuthenticationSASL { auth_mechanisms } :: _ ->
+      Abb.Future.return (Error `Unsupported_auth_sasl_err)
   | AuthenticationSSPI :: _ -> Abb.Future.return (Error `Unsupported_auth_sspi_err)
   | fs -> Abb.Future.return (Error (`Unmatching_frame fs))
 

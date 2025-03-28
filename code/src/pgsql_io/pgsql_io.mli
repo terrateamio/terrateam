@@ -192,6 +192,43 @@ module Prepared_stmt : sig
     'q
 end
 
+module Auth_scram : sig
+  type client_first = {
+    user : string;
+    passwd : string;
+    nonce : string;
+    message : string;
+  }
+
+  type server_first = {
+    nonce : string;
+    salt : string;
+    iter : int;
+    message : string;
+  }
+
+  type client_final = {
+    server_key : string;
+    auth_message : string;
+    message : string;
+  }
+
+  val hmac : string -> string -> string
+  val h : Cryptokit.hash -> string -> string
+  val hi : string -> string -> int -> string
+  val salt_passwd : string -> server_first -> string
+  val auth_message : string -> string -> string -> string
+  val client_key : string -> string
+  val server_key : string -> string
+  val server_signature : string -> string -> string
+  val stored_key : string -> string
+  val client_proof : string -> string -> string
+  val client_first : string -> string -> client_first * string
+  val parse_server_reply : string -> server_first option
+  val client_final : client_first -> server_first -> client_final * string
+  val verify_server_final : client_final -> string -> (unit, string) result
+end
+
 type create_err =
   [ `Unexpected of exn
   | `Connection_failed
