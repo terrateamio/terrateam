@@ -80,6 +80,11 @@ module Apply_requirements = struct
     raise (Failure "nyi")
 end
 
+module Gate = struct
+  let insert_approval ~request_id ~token ~approver pull_request db = raise (Failure "nyi")
+  let eval ~request_id client dirspaces pull_request db = raise (Failure "nyi")
+end
+
 module Comment = struct
   let publish_comment ~request_id client user pull_request msg = raise (Failure "nyi")
 end

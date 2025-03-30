@@ -1,3 +1,7 @@
+let src = Logs.Src.create "vcs_service_github_oss"
+
+module Logs = (val Logs.src_log src : Logs.LOG)
+
 module Provider :
   Terrat_vcs_provider2_github.S
     with type Api.Config.t = Terrat_vcs_service_github_provider.Api.Config.t = struct
@@ -6,6 +10,13 @@ module Provider :
   module Db = Terrat_vcs_service_github_provider.Db
   module Apply_requirements = Terrat_vcs_service_github_provider.Apply_requirements
   module Work_manifest = Terrat_vcs_service_github_provider.Work_manifest
+
+  module Gate = struct
+    let add_approval ~request_id ~token ~approver pull_request db =
+      Abb.Future.return (Error (`Premium_feature_err `Gatekeeping))
+
+    let eval ~request_id _ _ _ _ = Abb.Future.return (Ok [])
+  end
 
   module Repo_config = struct
     let fetch_repo_config_file request_id client repo ref_ basename =
@@ -150,7 +161,7 @@ module Provider :
 
   module Access_control = struct
     (* Access control is an enterprise feature, so always return success on
-         any requests. *)
+       any requests. *)
 
     let query ~request_id _ _ _ _ = Abb.Future.return (Ok true)
     let is_ci_changed ~request_id _ _ _ = Abb.Future.return (Ok false)

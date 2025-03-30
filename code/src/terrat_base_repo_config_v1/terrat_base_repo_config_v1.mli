@@ -113,6 +113,7 @@ module Workflow_step : sig
       cmd : Cmd.t;
       env : string String_map.t option;
       ignore_errors : bool; [@default false]
+      on_error : Yojson.Safe.t list; [@default []]
       run_on : Run_on.t; [@default Run_on.Success]
       visible_on : Visible_on.t; [@default Visible_on.Failure]
     }

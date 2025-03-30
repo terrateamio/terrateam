@@ -1,13 +1,14 @@
 type t =
-  | Plan of { tag_query : Terrat_tag_query.t }
   | Apply of { tag_query : Terrat_tag_query.t }
   | Apply_autoapprove of { tag_query : Terrat_tag_query.t }
   | Apply_force of { tag_query : Terrat_tag_query.t }
-  | Unlock of string list
-  | Help
   | Feedback of string
-  | Repo_config
+  | Gate_approval of { tokens : string list }
+  | Help
   | Index
+  | Plan of { tag_query : Terrat_tag_query.t }
+  | Repo_config
+  | Unlock of string list
 
 type err =
   [ `Not_terrateam

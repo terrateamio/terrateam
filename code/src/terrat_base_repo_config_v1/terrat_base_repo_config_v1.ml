@@ -377,6 +377,7 @@ module Workflow_step = struct
       cmd : Cmd.t;
       env : string String_map.t option;
       ignore_errors : bool; [@default false]
+      on_error : Yojson.Safe.t list; [@default []]
       run_on : Run_on.t; [@default Run_on.Success]
       visible_on : Visible_on.t; [@default Visible_on.Failure]
     }
@@ -1309,7 +1310,9 @@ let of_version_1_hook_op =
   | Op.Hook_op_run op ->
       let open CCResult.Infix in
       let module Op = Terrat_repo_config_hook_op_run in
-      let { Op.capture_output; cmd; env; run_on; type_ = _; ignore_errors; visible_on } = op in
+      let { Op.capture_output; cmd; env; run_on; type_ = _; ignore_errors; visible_on; on_error } =
+        op
+      in
       CCResult.map_err
         (function
           | `Unknown_run_on err -> `Hooks_unknown_run_on_err err)
@@ -1324,7 +1327,15 @@ let of_version_1_hook_op =
       >>= fun env ->
       Ok
         (Hooks.Hook_op.Run
-           (Workflow_step.Run.make ~capture_output ~cmd ~ignore_errors ?visible_on ?env ?run_on ()))
+           (Workflow_step.Run.make
+              ~capture_output
+              ~cmd
+              ~ignore_errors
+              ?visible_on
+              ?env
+              ?run_on
+              ?on_error
+              ()))
   | Op.Hook_op_slack _ -> assert false
 
 let of_version_1_drift_schedule = function
@@ -1370,7 +1381,18 @@ let of_version_1_workflow_op_list ops =
           >>= fun retry -> Ok (O.Apply (Workflow_step.Apply.make ?env ?extra_args ?retry ()))
       | Op.Hook_op_run op ->
           let module Op = Terrat_repo_config_hook_op_run in
-          let { Op.capture_output; cmd; env; run_on; type_ = _; ignore_errors; visible_on } = op in
+          let {
+            Op.capture_output;
+            cmd;
+            env;
+            run_on;
+            type_ = _;
+            ignore_errors;
+            visible_on;
+            on_error;
+          } =
+            op
+          in
           map_opt (fun { Op.Env.additional; _ } -> Ok additional) env
           >>= fun env ->
           CCResult.map_err
@@ -1392,6 +1414,7 @@ let of_version_1_workflow_op_list ops =
                   ?env
                   ?run_on
                   ?visible_on
+                  ?on_error
                   ()))
       | Op.Hook_op_slack _ -> assert false
       | Op.Hook_op_env_exec op ->
@@ -2323,7 +2346,9 @@ let to_version_1_hooks_op_oidc = function
 
 let to_version_1_hooks_op_run r =
   let module R = Terrat_repo_config.Hook_op_run in
-  let { Workflow_step.Run.capture_output; cmd; env; run_on; ignore_errors; visible_on } = r in
+  let { Workflow_step.Run.capture_output; cmd; env; run_on; ignore_errors; visible_on; on_error } =
+    r
+  in
   {
     R.capture_output;
     cmd;
@@ -2332,6 +2357,7 @@ let to_version_1_hooks_op_run r =
     run_on = Some (Workflow_step.Run_on.to_string run_on);
     type_ = "run";
     visible_on = Some (Workflow_step.Visible_on.to_string visible_on);
+    on_error = Some on_error;
   }
 
 let to_version_1_hooks_hook_list =

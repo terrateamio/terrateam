@@ -26,6 +26,39 @@
         ],
         "type": "object"
       },
+      "gate": {
+        "additionalProperties": false,
+        "properties": {
+          "all_of": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "any_of": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "any_of_count": {
+            "type": "integer"
+          },
+          "token": {
+            "type": "string"
+          },
+          "dir": {
+            "type": "string"
+          },
+          "workspace": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
       "hook-outputs": {
         "additionalProperties": false,
         "properties": {
@@ -1124,6 +1157,12 @@
       "work-manifest-tf-operation-result2": {
         "additionalProperties": false,
         "properties": {
+          "gates": {
+            "items": {
+              "$ref": "#/components/schemas/gate"
+            },
+            "type": "array"
+          },
           "steps": {
             "items": {
               "$ref": "#/components/schemas/workflow-step-output"

@@ -736,6 +736,12 @@
           "default": false,
           "type": "boolean"
         },
+        "on_error": {
+          "items": {
+            "type": null
+          },
+          "type": "array"
+        },
         "run_on": {
           "$ref": "#/definitions/run-on"
         },

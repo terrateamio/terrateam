@@ -611,6 +611,18 @@ module Db = struct
         /% Var.text "workspace"
         /% Var.(ud (text "data") Base64.encode_string)
         /% Var.boolean "has_changes")
+
+    let insert_gate =
+      Pgsql_io.Typed_sql.(
+        sql
+        /^ read "insert_gate.sql"
+        /% Var.text "token"
+        /% Var.json "gate"
+        /% Var.bigint "repository"
+        /% Var.bigint "pull_number"
+        /% Var.text "sha"
+        /% Var.text "dir"
+        /% Var.text "workspace")
   end
 
   type t = Pgsql_io.t
@@ -1028,6 +1040,48 @@ module Db = struct
         Abb.Future.return (Error `Error)
     | Error `Error -> Abb.Future.return (Error `Error)
 
+  let maybe_store_gates ~request_id db work_manifest_id = function
+    | Some [] | None -> Abb.Future.return (Ok ())
+    | Some gates -> (
+        let open Abbs_future_combinators.Infix_result_monad in
+        let module G = Terrat_api_components.Gate in
+        let module Wm = Terrat_work_manifest3 in
+        query_work_manifest ~request_id db work_manifest_id
+        >>= function
+        | Some { Wm.target = Terrat_vcs_provider2.Target.Pr pr; _ } ->
+            let repo = CCInt64.of_int @@ Api.Repo.id @@ Terrat_pull_request.repo pr in
+            let pull_number = CCInt64.of_int @@ Terrat_pull_request.id pr in
+            let sha = Api.Ref.to_string @@ Terrat_pull_request.branch_ref pr in
+            Abbs_future_combinators.List_result.iter
+              ~f:(fun { G.all_of; any_of; any_of_count; dir; workspace; token } ->
+                Abb.Future.return
+                @@ CCResult.map_l Terrat_gate.Match.make
+                @@ CCOption.get_or ~default:[] all_of
+                >>= fun all_of ->
+                Abb.Future.return
+                @@ CCResult.map_l Terrat_gate.Match.make
+                @@ CCOption.get_or ~default:[] any_of
+                >>= fun any_of ->
+                let gate =
+                  {
+                    Terrat_gate.all_of;
+                    any_of;
+                    any_of_count = CCOption.get_or ~default:0 any_of_count;
+                  }
+                in
+                Pgsql_io.Prepared_stmt.execute
+                  db
+                  Sql.insert_gate
+                  token
+                  (Yojson.Safe.to_string @@ Terrat_gate.to_yojson gate)
+                  repo
+                  pull_number
+                  sha
+                  (CCOption.get_or ~default:"" dir)
+                  (CCOption.get_or ~default:"" workspace))
+              gates
+        | Some _ | None -> Abb.Future.return (Ok ()))
+
   let store_tf_operation_result2 ~request_id db work_manifest_id result =
     let module R2 = Terrat_api_components_work_manifest_tf_operation_result2 in
     let open Abb.Future.Infix_monad in
@@ -1052,81 +1106,96 @@ module Db = struct
         let module Scope = Terrat_api_components.Workflow_step_output_scope in
         let open Abbs_future_combinators.Infix_result_monad in
         let steps = CCList.mapi (fun idx step -> (idx, step)) result.R2.steps in
-        Abbs_future_combinators.List_result.iter
-          ~f:(fun chunk ->
-            let idx = CCList.map (fun (idx, _) -> idx) chunk in
-            let ignore_errors =
-              CCList.map (fun (_, { O.ignore_errors; _ }) -> ignore_errors) chunk
-            in
-            let payload =
-              CCList.map
-                (fun (_, { O.payload; _ }) ->
-                  Yojson.Safe.to_string (replace_nul_byte_json (O.Payload.to_yojson payload)))
-                chunk
-            in
-            let scope =
-              CCList.map
-                (fun (_, { O.scope; _ }) ->
-                  Yojson.Safe.to_string (replace_nul_byte_json (Scope.to_yojson scope)))
-                chunk
-            in
-            let step = CCList.map (fun (_, { O.step; _ }) -> replace_nul_byte step) chunk in
-            let success = CCList.map (fun (_, { O.success; _ }) -> success) chunk in
-            let work_manifest_id = CCList.replicate (CCList.length chunk) work_manifest_id in
-            Metrics.Psql_query_time.time
-              (Metrics.psql_query_time "insert_workflow_step_output")
-              (fun () ->
-                Pgsql_io.Prepared_stmt.execute
-                  db
-                  Sql.insert_workflow_step_output
-                  idx
-                  ignore_errors
-                  payload
-                  scope
-                  step
-                  success
-                  work_manifest_id))
-          (CCList.chunks not_a_bad_chunk_size steps)
+        let gates = result.R2.gates in
+        maybe_store_gates ~request_id db work_manifest_id gates
         >>= fun () ->
-        let dirspaces =
-          CCList.map (fun (dirspace, steps) -> (dirspace, steps_success steps)) dirspaces
+        let run =
+          Abbs_future_combinators.List_result.iter
+            ~f:(fun chunk ->
+              let idx = CCList.map (fun (idx, _) -> idx) chunk in
+              let ignore_errors =
+                CCList.map (fun (_, { O.ignore_errors; _ }) -> ignore_errors) chunk
+              in
+              let payload =
+                CCList.map
+                  (fun (_, { O.payload; _ }) ->
+                    Yojson.Safe.to_string (replace_nul_byte_json (O.Payload.to_yojson payload)))
+                  chunk
+              in
+              let scope =
+                CCList.map
+                  (fun (_, { O.scope; _ }) ->
+                    Yojson.Safe.to_string (replace_nul_byte_json (Scope.to_yojson scope)))
+                  chunk
+              in
+              let step = CCList.map (fun (_, { O.step; _ }) -> replace_nul_byte step) chunk in
+              let success = CCList.map (fun (_, { O.success; _ }) -> success) chunk in
+              let work_manifest_id = CCList.replicate (CCList.length chunk) work_manifest_id in
+              Metrics.Psql_query_time.time
+                (Metrics.psql_query_time "insert_workflow_step_output")
+                (fun () ->
+                  Pgsql_io.Prepared_stmt.execute
+                    db
+                    Sql.insert_workflow_step_output
+                    idx
+                    ignore_errors
+                    payload
+                    scope
+                    step
+                    success
+                    work_manifest_id))
+            (CCList.chunks not_a_bad_chunk_size steps)
+          >>= fun () ->
+          let dirspaces =
+            CCList.map (fun (dirspace, steps) -> (dirspace, steps_success steps)) dirspaces
+          in
+          CCList.iter
+            (fun ({ Terrat_dirspace.dir; workspace }, success) ->
+              Logs.info (fun m ->
+                  m
+                    "%s : RESULT_STORE : id=%a : dir=%s : workspace=%s : result=%s"
+                    request_id
+                    Uuidm.pp
+                    work_manifest_id
+                    dir
+                    workspace
+                    (if success then "SUCCESS" else "FAILURE")))
+            dirspaces;
+          Abbs_future_combinators.List_result.iter
+            ~f:(fun chunk ->
+              let work_manifest_id = CCList.replicate (CCList.length chunk) work_manifest_id in
+              let dir = CCList.map (fun ({ Terrat_dirspace.dir; _ }, _) -> dir) chunk in
+              let workspace =
+                CCList.map (fun ({ Terrat_dirspace.workspace; _ }, _) -> workspace) chunk
+              in
+              let success = CCList.map (fun (_, success) -> success) chunk in
+              Metrics.Psql_query_time.time
+                (Metrics.psql_query_time "insert_github_work_manifest_result")
+                (fun () ->
+                  Pgsql_io.Prepared_stmt.execute
+                    db
+                    Sql.insert_github_work_manifest_result
+                    work_manifest_id
+                    dir
+                    workspace
+                    success))
+            (CCList.chunks not_a_bad_chunk_size dirspaces)
         in
-        CCList.iter
-          (fun ({ Terrat_dirspace.dir; workspace }, success) ->
-            Logs.info (fun m ->
-                m
-                  "%s : RESULT_STORE : id=%a : dir=%s : workspace=%s : result=%s"
-                  request_id
-                  Uuidm.pp
-                  work_manifest_id
-                  dir
-                  workspace
-                  (if success then "SUCCESS" else "FAILURE")))
-          dirspaces;
-        Abbs_future_combinators.List_result.iter
-          ~f:(fun chunk ->
-            let work_manifest_id = CCList.replicate (CCList.length chunk) work_manifest_id in
-            let dir = CCList.map (fun ({ Terrat_dirspace.dir; _ }, _) -> dir) chunk in
-            let workspace =
-              CCList.map (fun ({ Terrat_dirspace.workspace; _ }, _) -> workspace) chunk
-            in
-            let success = CCList.map (fun (_, success) -> success) chunk in
-            Metrics.Psql_query_time.time
-              (Metrics.psql_query_time "insert_github_work_manifest_result")
-              (fun () ->
-                Pgsql_io.Prepared_stmt.execute
-                  db
-                  Sql.insert_github_work_manifest_result
-                  work_manifest_id
-                  dir
-                  workspace
-                  success))
-          (CCList.chunks not_a_bad_chunk_size dirspaces))
+        let open Abb.Future.Infix_monad in
+        (* Not sure why, but the type system was upset at me about something and this resolved it. *)
+        run
+        >>= function
+        | Ok _ as res -> Abb.Future.return res
+        | Error (#Pgsql_io.err as err) -> Abb.Future.return (Error err)
+        | Error `Error -> Abb.Future.return (Error `Error))
     >>= function
     | Ok () -> Abb.Future.return (Ok ())
+    | Error (`Match_parse_err err) ->
+        Logs.info (fun m -> m "%s : MATCH_PARSE_ERR : %s" request_id err);
+        Abb.Future.return (Error `Error)
     | Error (#Pgsql_io.err as err) ->
         Prmths.Counter.inc_one Metrics.pgsql_errors_total;
-        Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
+        Logs.err (fun m -> m "%s : %a" request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
     | Error `Error -> Abb.Future.return (Error `Error)
 
@@ -2105,7 +2174,9 @@ module Comment (S : S) = struct
     let premium_feature_err_multiple_drift_schedules =
       read "premium_feature_err_multiple_drift_schedules.tmpl"
 
+    let premium_feature_err_gatekeeping = read "premium_feature_err_gatekeeping.tmpl"
     let repo_config_merge_err = read "repo_config_merge_err.tmpl"
+    let gate_check_failure = read "gate_check_failure.tmpl"
   end
 
   let comment_on_pull_request ~request_id client pull_request msg_type body =
@@ -2383,7 +2454,8 @@ module Comment (S : S) = struct
           config
           is_layered_run
           remaining_dirspace_configs
-          (by_scope : (Scope.t * Terrat_api_components.Workflow_step_output.t list) list)
+          by_scope
+          gates
           work_manifest =
         let module Wm = Terrat_work_manifest3 in
         let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
@@ -2534,6 +2606,35 @@ module Comment (S : S) = struct
                                      ];
                                    ]))
                             dirspaces) );
+                     ( "gates",
+                       let module G = Terrat_api_components.Gate in
+                       list
+                       @@ CCList.map
+                            (fun { G.all_of; any_of; any_of_count; dir; token; workspace } ->
+                              let all_of = CCOption.get_or ~default:[] all_of in
+                              let any_of = CCOption.get_or ~default:[] any_of in
+                              let any_of_count = CCOption.get_or ~default:0 any_of_count in
+                              let dir = CCOption.get_or ~default:"" dir in
+                              let workspace = CCOption.get_or ~default:"" workspace in
+                              Map.of_list
+                                [
+                                  ("token", string token);
+                                  ("dir", string dir);
+                                  ("workspace", string workspace);
+                                  ( "all_of",
+                                    list
+                                    @@ CCList.map (fun q -> Map.of_list [ ("q", string q) ]) all_of
+                                  );
+                                  ( "any_of",
+                                    list
+                                    @@ CCList.map
+                                         (fun q -> Map.of_list [ ("q", string q) ])
+                                         (if any_of_count = 0 then [] else any_of) );
+                                  ("any_of_count", int any_of_count);
+                                ])
+                       @@ CCList.sort (fun { G.token = t1; _ } { G.token = t2; _ } ->
+                              CCString.compare t1 t2)
+                       @@ CCOption.get_or ~default:[] gates );
                    ];
                    denied_dirspaces;
                    cost_estimation;
@@ -2565,6 +2666,7 @@ module Comment (S : S) = struct
         let module Wm = Terrat_work_manifest3 in
         let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
         let by_scope = By_scope.group results.R2.steps in
+        let gates = results.R2.gates in
         let output =
           create_run_output
             ~view
@@ -2574,6 +2676,7 @@ module Comment (S : S) = struct
             is_layered_run
             remaining_layers
             by_scope
+            gates
             work_manifest
         in
         let open Abb.Future.Infix_monad in
@@ -3879,6 +3982,52 @@ module Comment (S : S) = struct
           "DIRSPACES_OWNED_BY_OTHER_PRS"
           Tmpl.dirspaces_owned_by_other_pull_requests
           kv
+    | Msg.Gate_check_failure denied ->
+        let module G = Terrat_vcs_provider2.Gate_eval in
+        let kv =
+          Snabela.Kv.(
+            Map.of_list
+              [
+                ( "denied",
+                  list
+                  @@ CCList.map (fun { G.dirspace; token; result } ->
+                         let { Terrat_gate.all_of; any_of; any_of_count } = result in
+                         let { Terrat_dirspace.dir; workspace } =
+                           CCOption.get_or
+                             ~default:{ Terrat_dirspace.dir = ""; workspace = "" }
+                             dirspace
+                         in
+                         Map.of_list
+                           [
+                             ("token", string token);
+                             ("dir", string dir);
+                             ("workspace", string workspace);
+                             ( "all_of",
+                               list
+                               @@ CCList.map
+                                    (fun q ->
+                                      Map.of_list [ ("q", string @@ Terrat_gate.Match.to_string q) ])
+                                    all_of );
+                             ( "any_of",
+                               list
+                               @@ CCList.map
+                                    (fun q ->
+                                      Map.of_list [ ("q", string @@ Terrat_gate.Match.to_string q) ])
+                                    (if any_of_count = 0 then [] else any_of) );
+                             ("any_of_count", int any_of_count);
+                           ])
+                  @@ CCList.sort
+                       (fun { G.token = t1; _ } { G.token = t2; _ } -> CCString.compare t1 t2)
+                       denied );
+              ])
+        in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "GATE_CHECK_FAILURE"
+          Tmpl.gate_check_failure
+          kv
     | Msg.Help ->
         let kv = Snabela.Kv.(Map.of_list []) in
         apply_template_and_publish
@@ -4036,6 +4185,15 @@ module Comment (S : S) = struct
           pull_request
           "PREMIUM_FEATURE_MULTIPLE_DRIFT_SCHEDULES"
           Tmpl.premium_feature_err_multiple_drift_schedules
+          kv
+    | Msg.Premium_feature_err `Gatekeeping ->
+        let kv = Snabela.Kv.(Map.of_list []) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "PREMIUM_FEATURE_GATEKEEPING"
+          Tmpl.premium_feature_err_gatekeeping
           kv
     | Msg.Pull_request_not_appliable (_, apply_requirements) ->
         let module Dc = Terrat_change_match3.Dirspace_config in
