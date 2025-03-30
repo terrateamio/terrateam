@@ -25,7 +25,7 @@ module Account = struct
     let to_string t = raise (Failure "nyi")
   end
 
-  type t = unit [@@deriving make, yojson, eq]
+  type t = unit [@@deriving yojson, eq]
 
   let make id = raise (Failure "nyi")
   let to_string t = raise (Failure "nyi")
