@@ -16,7 +16,11 @@ terrat: release-terrat debug-terrat
 
 release-terrat: release_terrat_oss release_terrat_ee release_terrat_ui_files
 
+release-terrat: release_terrat_vcs_api_nyi release_terrat_vcs_provider2_nyi release_terrat_vcs_service_nyi
+
 debug-terrat: debug_terrat_oss debug_terrat_ee debug_terrat_ui_files
+
+debug-terrat: debug_terrat_vcs_api_nyi debug_terrat_vcs_provider2_nyi debug_terrat_vcs_service_nyi
 
 debug-terrat: test-debug_abb_fut test-debug_abb_future_combinators
 
