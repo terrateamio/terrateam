@@ -313,6 +313,16 @@ module Workflow_step = struct
     [@@deriving make, show, yojson, eq]
   end
 
+  module Gate = struct
+    type t = {
+      any_of : string list option; [@default None]
+      all_of : string list option; [@default None]
+      any_of_count : int option; [@default None]
+      token : string;
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
   (* Workflow steps *)
   module Env = struct
     module Exec = struct
@@ -417,6 +427,30 @@ module Workflow_step = struct
       env : string String_map.t option;
       extra_args : string list; [@default []]
       retry : Retry.t option;
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  module Conftest = struct
+    type t = {
+      env : string String_map.t option;
+      extra_args : string list; [@default []]
+      gate : Gate.t option; [@default None]
+      ignore_errors : bool; [@default false]
+      run_on : Run_on.t; [@default Run_on.Success]
+      visible_on : Visible_on.t; [@default Visible_on.Failure]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  module Checkov = struct
+    type t = {
+      env : string String_map.t option;
+      extra_args : string list; [@default []]
+      gate : Gate.t option; [@default None]
+      ignore_errors : bool; [@default false]
+      run_on : Run_on.t; [@default Run_on.Success]
+      visible_on : Visible_on.t; [@default Visible_on.Failure]
     }
     [@@deriving make, show, yojson, eq]
   end
@@ -896,6 +930,8 @@ module Workflows = struct
         | Run of Workflow_step.Run.t
         | Env of Workflow_step.Env.t
         | Oidc of Workflow_step.Oidc.t
+        | Checkov of Workflow_step.Checkov.t
+        | Conftest of Workflow_step.Conftest.t
       [@@deriving show, yojson, eq]
     end
 
@@ -1350,6 +1386,11 @@ let of_version_1_workflow_op_plan_mode = function
   | "fast-and-loose" -> Ok Workflow_step.Plan.Mode.Fast_and_loose
   | any -> Error (`Unknown_plan_mode_err any)
 
+let of_version_1_gate gate =
+  let module G = Terrat_repo_config_gate in
+  let { G.all_of; any_of; any_of_count; token } = gate in
+  Ok { Workflow_step.Gate.all_of; any_of; any_of_count; token }
+
 let of_version_1_workflow_op_list ops =
   let open CCResult.Infix in
   let module Op = Terrat_repo_config_workflow_op_list.Items in
@@ -1479,7 +1520,63 @@ let of_version_1_workflow_op_list ops =
                           ~access_token_lifetime
                           ~service_account
                           ~workload_identity_provider
-                          ())))))
+                          ()))))
+      | Op.Workflow_op_conftest op ->
+          let module Op = Terrat_repo_config_workflow_op_conftest in
+          let { Op.env; extra_args; gate; ignore_errors; run_on; visible_on; type_ = _ } = op in
+          map_opt (fun { Op.Env.additional; _ } -> Ok additional) env
+          >>= fun env ->
+          CCResult.map_err
+            (function
+              | `Unknown_run_on err -> `Workflows_unknown_run_on_err err)
+            (map_opt of_version_1_run_on run_on)
+          >>= fun run_on ->
+          CCResult.map_err
+            (function
+              | `Unknown_visible_on err -> `Workflows_unknown_visible_on_err err)
+            (map_opt of_version_1_visible_on visible_on)
+          >>= fun visible_on ->
+          map_opt of_version_1_gate gate
+          >>= fun gate ->
+          let extra_args = CCOption.get_or ~default:[] extra_args in
+          Ok
+            (O.Conftest
+               (Workflow_step.Conftest.make
+                  ?env
+                  ~extra_args
+                  ~gate
+                  ~ignore_errors
+                  ?run_on
+                  ?visible_on
+                  ()))
+      | Op.Workflow_op_checkov op ->
+          let module Op = Terrat_repo_config_workflow_op_checkov in
+          let { Op.env; extra_args; gate; ignore_errors; run_on; visible_on; type_ = _ } = op in
+          map_opt (fun { Op.Env.additional; _ } -> Ok additional) env
+          >>= fun env ->
+          CCResult.map_err
+            (function
+              | `Unknown_run_on err -> `Workflows_unknown_run_on_err err)
+            (map_opt of_version_1_run_on run_on)
+          >>= fun run_on ->
+          CCResult.map_err
+            (function
+              | `Unknown_visible_on err -> `Workflows_unknown_visible_on_err err)
+            (map_opt of_version_1_visible_on visible_on)
+          >>= fun visible_on ->
+          map_opt of_version_1_gate gate
+          >>= fun gate ->
+          let extra_args = CCOption.get_or ~default:[] extra_args in
+          Ok
+            (O.Checkov
+               (Workflow_step.Checkov.make
+                  ?env
+                  ~extra_args
+                  ~gate
+                  ~ignore_errors
+                  ?run_on
+                  ?visible_on
+                  ())))
     ops
 
 let of_version_1_workflow_engine cdktf terraform_version terragrunt default_engine engine =
@@ -2478,6 +2575,11 @@ let to_version_1_workflow_retry retry =
   let { Workflow_step.Retry.backoff; enabled; initial_sleep; tries } = retry in
   { R.backoff; enabled; initial_sleep; tries }
 
+let to_version_1_gate gate =
+  let module G = Terrat_repo_config_gate in
+  let { Workflow_step.Gate.all_of; any_of; any_of_count; token } = gate in
+  { G.all_of; any_of; any_of_count; token }
+
 let to_version_1_workflows_op =
   let module Op = Terrat_repo_config.Workflow_op_list in
   CCList.map (function
@@ -2515,7 +2617,37 @@ let to_version_1_workflows_op =
         Op.Items.Hook_op_env_exec (to_version_1_hooks_op_env_exec env)
     | Workflows.Entry.Op.Env (Workflow_step.Env.Source env) ->
         Op.Items.Hook_op_env_source (to_version_1_hooks_op_env_source env)
-    | Workflows.Entry.Op.Oidc oidc -> Op.Items.Hook_op_oidc (to_version_1_hooks_op_oidc oidc))
+    | Workflows.Entry.Op.Oidc oidc -> Op.Items.Hook_op_oidc (to_version_1_hooks_op_oidc oidc)
+    | Workflows.Entry.Op.Conftest ct ->
+        let module C = Terrat_repo_config.Workflow_op_conftest in
+        let { Workflow_step.Conftest.env; extra_args; gate; ignore_errors; run_on; visible_on } =
+          ct
+        in
+        Op.Items.Workflow_op_conftest
+          {
+            C.type_ = "conftest";
+            env = CCOption.map (fun env -> C.Env.make ~additional:env Json_schema.Empty_obj.t) env;
+            extra_args = Some extra_args;
+            gate = CCOption.map to_version_1_gate gate;
+            ignore_errors;
+            run_on = Some (Workflow_step.Run_on.to_string run_on);
+            visible_on = Some (Workflow_step.Visible_on.to_string visible_on);
+          }
+    | Workflows.Entry.Op.Checkov c ->
+        let module C = Terrat_repo_config.Workflow_op_checkov in
+        let { Workflow_step.Checkov.env; extra_args; gate; ignore_errors; run_on; visible_on } =
+          c
+        in
+        Op.Items.Workflow_op_checkov
+          {
+            C.type_ = "checkov";
+            env = CCOption.map (fun env -> C.Env.make ~additional:env Json_schema.Empty_obj.t) env;
+            extra_args = Some extra_args;
+            gate = CCOption.map to_version_1_gate gate;
+            ignore_errors;
+            run_on = Some (Workflow_step.Run_on.to_string run_on);
+            visible_on = Some (Workflow_step.Visible_on.to_string visible_on);
+          })
 
 let to_version_1_workflows =
   CCList.map (fun entry ->

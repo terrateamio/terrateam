@@ -506,6 +506,33 @@
       ],
       "type": "object"
     },
+    "gate": {
+      "additionalProperties": false,
+      "properties": {
+        "all_of": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "any_of": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "any_of_count": {
+          "type": "integer"
+        },
+        "token": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "token"
+      ],
+      "type": "object"
+    },
     "hook": {
       "additionalProperties": false,
       "properties": {
@@ -1258,6 +1285,92 @@
       ],
       "type": "object"
     },
+    "workflow-op-checkov": {
+      "additionalProperties": false,
+      "properties": {
+        "env": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "extra_args": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "gate": {
+          "$ref": "#/definitions/gate"
+        },
+        "ignore_errors": {
+          "default": false,
+          "type": "boolean"
+        },
+        "run_on": {
+          "$ref": "#/definitions/run-on"
+        },
+        "type": {
+          "const": "checkov",
+          "type": "string"
+        },
+        "visible_on": {
+          "enum": [
+            "always",
+            "failure",
+            "success"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "workflow-op-conftest": {
+      "additionalProperties": false,
+      "properties": {
+        "env": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "extra_args": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "gate": {
+          "$ref": "#/definitions/gate"
+        },
+        "ignore_errors": {
+          "default": false,
+          "type": "boolean"
+        },
+        "run_on": {
+          "$ref": "#/definitions/run-on"
+        },
+        "type": {
+          "const": "conftest",
+          "type": "string"
+        },
+        "visible_on": {
+          "enum": [
+            "always",
+            "failure",
+            "success"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
     "workflow-op-init": {
       "additionalProperties": false,
       "properties": {
@@ -1291,6 +1404,12 @@
           },
           {
             "$ref": "#/definitions/workflow-op-plan"
+          },
+          {
+            "$ref": "#/definitions/workflow-op-checkov"
+          },
+          {
+            "$ref": "#/definitions/workflow-op-conftest"
           },
           {
             "$ref": "#/definitions/workflow-op-apply"
