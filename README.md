@@ -115,6 +115,7 @@ For non-local setup instructions, including manual setup and Kubernetes deployme
 - **Configuration Builder**: Dynamically generate configurations for complex workflows.
 - **Role-Based Access Control (RBAC)**: Securely manage permissions across GitHub identities.
 - **Audit Trail**: Track and review all infrastructure changes for compliance and security.
+- **Gatekeeper**: Dynamically create approval gates that require specific individuals or teams to authorize changes before applying.
 
 ---
 
@@ -202,6 +203,7 @@ Terrateam is available in two versions:
 |                           | OIDC Authentication              | :white_check_mark:                   | :white_check_mark:                      |
 |                           | Role-Based Access Control (RBAC) | :heavy_minus_sign:                   | :white_check_mark:                      |
 |                           | Audit Trail UI                   | :heavy_minus_sign:                   | :white_check_mark:                      |
+|                           | Gatekeeper                       | :heavy_minus_sign:                   | :white_check_mark:                      |
 
 Both versions include essential automation features, but the Enterprise Edition offers additional capabilities that help manage larger infrastructures, provide more granular control, and ensure security and compliance at scale.
 

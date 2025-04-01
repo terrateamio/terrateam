@@ -582,6 +582,30 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           repo
           ref_)
 
+  let store_gate_approval ~request_id ~token ~approver pull_request db =
+    Abbs_time_it.run
+      (fun time ->
+        Logs.info (fun m ->
+            m
+              "%s : STORE_GATE_APPROVAL : token=%s : approver=%s : pull_number = %s : time=%f"
+              request_id
+              token
+              approver
+              (S.Api.Pull_request.Id.to_string @@ S.Api.Pull_request.id pull_request)
+              time))
+      (fun () -> S.Gate.add_approval ~request_id ~token ~approver pull_request db)
+
+  let eval_gate ~request_id client dirspaces pull_request db =
+    Abbs_time_it.run
+      (fun time ->
+        Logs.info (fun m ->
+            m
+              "%s : EVAL_GATE : pull_number = %s : time=%f"
+              request_id
+              (S.Api.Pull_request.Id.to_string @@ S.Api.Pull_request.id pull_request)
+              time))
+      (fun () -> S.Gate.eval ~request_id client dirspaces pull_request db)
+
   module Repo_config = struct
     type fetch_err = Terrat_vcs_provider2.fetch_repo_config_with_provenance_err [@@deriving show]
 
@@ -716,6 +740,17 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Pull_request_close _ -> `Auto
       | Pull_request_comment _ -> `Manual
       | Push _ | Run_scheduled_drift | Run_drift _ -> assert false
+
+    let gate_approval_tokens = function
+      | Pull_request_comment { comment = Terrat_comment.Gate_approval { tokens }; _ } -> tokens
+      | Pull_request_open _
+      | Pull_request_sync _
+      | Pull_request_ready_for_review _
+      | Pull_request_close _
+      | Pull_request_comment _
+      | Push _
+      | Run_scheduled_drift
+      | Run_drift _ -> assert false
   end
 
   module Id = struct
@@ -736,6 +771,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Check_dirspaces_missing_plans
       | Check_dirspaces_owned_by_other_pull_requests
       | Check_enabled_in_repo_config
+      | Check_gates
       | Check_merge_conflict
       | Check_non_empty_matches
       | Check_pull_request_state
@@ -749,6 +785,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Create_drift_events
       | Create_work_manifest
       | Event_kind_feedback
+      | Event_kind_gate_approval
       | Event_kind_help
       | Event_kind_index
       | Event_kind_op
@@ -773,6 +810,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Recover_noop
       | Run_work_manifest_iter
       | Store_account_repository
+      | Store_gate_approval
       | Store_pull_request
       | Synthesize_pull_request_sync
       | Test_account_status
@@ -805,6 +843,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Check_dirspaces_owned_by_other_pull_requests ->
           "check_dirspaces_owned_by_other_pull_requests"
       | Check_enabled_in_repo_config -> "check_enabled_in_repo_config"
+      | Check_gates -> "check_gates"
       | Check_merge_conflict -> "check_merge_conflict"
       | Check_non_empty_matches -> "check_non_empty_matches"
       | Check_pull_request_state -> "check_pull_request_state"
@@ -818,6 +857,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Create_drift_events -> "create_drift_events"
       | Create_work_manifest -> "create_work_manifest"
       | Event_kind_feedback -> "event_kind_feedback"
+      | Event_kind_gate_approval -> "event_kind_gate_approval"
       | Event_kind_help -> "event_kind_help"
       | Event_kind_index -> "event_kind_index"
       | Event_kind_op -> "event_kind_op"
@@ -842,6 +882,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Recover_noop -> "recover_noop"
       | Run_work_manifest_iter -> "run_work_manifest_iter"
       | Store_account_repository -> "store_account_repository"
+      | Store_gate_approval -> "store_gate_approval"
       | Store_pull_request -> "store_pull_request"
       | Synthesize_pull_request_sync -> "synthesize_pull_request_sync"
       | Test_account_status -> "test_account_status"
@@ -873,6 +914,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | "check_dirspaces_owned_by_other_pull_requests" ->
           Some Check_dirspaces_owned_by_other_pull_requests
       | "check_enabled_in_repo_config" -> Some Check_enabled_in_repo_config
+      | "check_gates" -> Some Check_gates
       | "check_merge_conflict" -> Some Check_merge_conflict
       | "check_non_empty_matches" -> Some Check_non_empty_matches
       | "check_pull_request_state" -> Some Check_pull_request_state
@@ -886,6 +928,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | "create_drift_events" -> Some Create_drift_events
       | "create_work_manifest" -> Some Create_work_manifest
       | "event_kind_feedback" -> Some Event_kind_feedback
+      | "event_kind_gate_approval" -> Some Event_kind_gate_approval
       | "event_kind_help" -> Some Event_kind_help
       | "event_kind_index" -> Some Event_kind_index
       | "event_kind_op" -> Some Event_kind_op
@@ -910,6 +953,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | "recover_noop" -> Some Recover_noop
       | "run_work_manifest_iter" -> Some Run_work_manifest_iter
       | "store_account_repository" -> Some Store_account_repository
+      | "store_gate_approval" -> Some Store_gate_approval
       | "store_pull_request" -> Some Store_pull_request
       | "synthesize_pull_request_sync" -> Some Synthesize_pull_request_sync
       | "test_account_status" -> Some Test_account_status
@@ -4066,6 +4110,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           Abb.Future.return (Ok (Id.Event_kind_feedback, state))
       | Event.Pull_request_comment { comment = Terrat_comment.Index; _ } ->
           Abb.Future.return (Ok (Id.Event_kind_index, state))
+      | Event.Pull_request_comment { comment = Terrat_comment.Gate_approval _; _ } ->
+          Abb.Future.return (Ok (Id.Event_kind_gate_approval, state))
       | Event.Push _ -> Abb.Future.return (Ok (Id.Event_kind_push, state))
       | Event.Run_scheduled_drift -> Abb.Future.return (Ok (Id.Event_kind_run_drift, state))
       | Event.Run_drift _ ->
@@ -4575,8 +4621,11 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Event.Pull_request_close _ -> Abb.Future.return (Ok (Id.Op_kind_apply, state))
       | Event.Run_scheduled_drift -> Abb.Future.return (Ok (Id.Event_kind_run_drift, state))
       | Event.Pull_request_comment
-          { comment = Terrat_comment.(Feedback _ | Help | Repo_config | Unlock _ | Index); _ } ->
-          assert false
+          {
+            comment =
+              Terrat_comment.(Feedback _ | Help | Repo_config | Unlock _ | Index | Gate_approval _);
+            _;
+          } -> assert false
       | Event.Push _ | Event.Run_drift _ -> assert false
 
     let check_pull_request_state ctx state =
@@ -5071,6 +5120,33 @@ module Make (S : Terrat_vcs_provider2.S) = struct
              ~store:H.run_op_work_manifest_plan_iter_store
              ~fetch:H.run_op_work_manifest_plan_iter_fetch
              ~fallthrough:H.log_state_err_iter)
+
+    let check_gates op ctx state =
+      match op with
+      | `Apply_force -> Abb.Future.return (Ok state)
+      | _ -> (
+          let open Abbs_future_combinators.Infix_result_monad in
+          Abbs_future_combinators.Infix_result_app.(
+            (fun client pull_request matches -> (client, pull_request, matches))
+            <$> Dv.client ctx state
+            <*> Dv.pull_request ctx state
+            <*> Dv.matches ctx state `Apply)
+          >>= fun (client, pull_request, matches) ->
+          let module Dc = Terrat_change_match3.Dirspace_config in
+          let dirspaces =
+            CCList.map (fun { Dc.dirspace; _ } -> dirspace) matches.Dv.Matches.working_set_matches
+          in
+          eval_gate ~request_id:state.State.request_id client dirspaces pull_request ctx.Ctx.storage
+          >>= function
+          | [] -> Abb.Future.return (Ok state)
+          | denied ->
+              publish_msg
+                state.State.request_id
+                client
+                (S.Api.User.to_string @@ Event.user state.State.event)
+                pull_request
+                (Msg.Gate_check_failure denied)
+              >>= fun () -> Abb.Future.return (Error `Silent_failure))
 
     let check_access_control_apply op ctx state =
       let open Abbs_future_combinators.Infix_result_monad in
@@ -5815,6 +5891,23 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               | None -> Abb.Future.return (Ok ()))
           | None -> Abb.Future.return (Ok ()))
       >>= fun () -> Abb.Future.return (Ok state)
+
+    let store_gate_approval ctx state =
+      let open Abbs_future_combinators.Infix_result_monad in
+      Dv.pull_request ctx state
+      >>= fun pull_request ->
+      let approver = S.Api.User.to_string @@ Event.user state.State.event in
+      let tokens = Event.gate_approval_tokens state.State.event in
+      Abbs_future_combinators.List_result.iter
+        ~f:(fun token ->
+          store_gate_approval
+            ~request_id:state.State.request_id
+            ~token
+            ~approver
+            pull_request
+            ctx.Ctx.storage)
+        tokens
+      >>= fun () -> Abb.Future.return (Ok state)
   end
 
   let eval_step step ctx state =
@@ -5881,6 +5974,11 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         | Error (`Ref_mismatch_err state) ->
             H.maybe_publish_msg ctx state Msg.Mismatched_refs
             >>= fun () -> Abb.Future.return (`Failure (`Noop state))
+        | Error (#Terrat_vcs_provider2.gate_add_approval_err as err) ->
+            Logs.info (fun m ->
+                m "%s : %a" state.State.request_id Terrat_vcs_provider2.pp_gate_add_approval_err err);
+            H.maybe_publish_msg ctx state Msg.Unexpected_temporary_err
+            >>= fun () -> Abb.Future.return (`Failure `Error)
         | Error `Silent_failure ->
             (* A failure where we know that any communication to the user that
                is necessary has been done.  So we just want to log that the
@@ -6094,6 +6192,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                    ~id:Id.Check_access_control_repo_config
                    ~f:(eval_step F.check_access_control_repo_config)
                    ();
+                 Flow.Step.make ~id:Id.Check_gates ~f:(eval_step (F.check_gates op)) ();
                  Flow.Step.make
                    ~id:Id.Check_access_control_apply
                    ~f:(eval_step (F.check_access_control_apply op))
@@ -6239,6 +6338,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     let event_kind_unlock_flow =
       Flow.Flow.(action [ Flow.Step.make ~id:Id.Unlock ~f:(eval_step F.unlock) () ])
     in
+    let event_kind_gate_approval =
+      Flow.Flow.(
+        action
+          [
+            Flow.Step.make ~id:Id.React_to_comment ~f:(eval_step F.react_to_comment) ();
+            Flow.Step.make ~id:Id.Store_gate_approval ~f:(eval_step F.store_gate_approval) ();
+          ])
+    in
     let store_account_repository_flow =
       Flow.Flow.(
         action
@@ -6269,6 +6376,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                ( Id.Event_kind_feedback,
                  action
                    [ Flow.Step.make ~id:Id.Record_feedback ~f:(eval_step F.record_feedback) () ] );
+               (Id.Event_kind_gate_approval, event_kind_gate_approval);
              ]))
   (* Flow end *)
 

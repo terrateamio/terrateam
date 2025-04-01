@@ -1,3 +1,12 @@
+type premium_features =
+  [ `Access_control
+  | `Multiple_drift_schedules
+  | `Gatekeeping
+  ]
+[@@deriving show]
+
+type premium_feature_err = [ `Premium_feature_err of premium_features ] [@@deriving show]
+
 type fetch_repo_config_with_provenance_err =
   [ Terrat_base_repo_config_v1.of_version_1_err
   | `Repo_config_parse_err of string * string
@@ -5,13 +14,22 @@ type fetch_repo_config_with_provenance_err =
   | `Json_decode_err of string * string
   | `Unexpected_err of string
   | `Yaml_decode_err of string * string
-  | `Premium_feature_err of [ `Access_control | `Multiple_drift_schedules ]
+  | premium_feature_err
   | `Error
   ]
 [@@deriving show]
 
 type access_control_query_err = [ `Error ] [@@deriving show]
 type access_control_err = access_control_query_err [@@deriving show]
+
+type gate_add_approval_err =
+  [ `Error
+  | `No_matching_token_err of string
+  | `Premium_feature_err of premium_features
+  ]
+[@@deriving show]
+
+type gate_eval_err = [ `Error ] [@@deriving show]
 
 module Account_status = struct
   type t =
@@ -62,6 +80,15 @@ module Index = struct
   }
 end
 
+module Gate_eval = struct
+  type t = {
+    dirspace : Terrat_dirspace.t option;
+    token : string;
+    result : Terrat_gate.Result.t;
+  }
+  [@@deriving show]
+end
+
 module Msg = struct
   type access_control_denied =
     [ `All_dirspaces of Terrat_access_control2.R.Deny.t list
@@ -89,6 +116,7 @@ module Msg = struct
     | Depends_on_cycle of Terrat_dirspace.t list
     | Dest_branch_no_match of 'pull_request
     | Dirspaces_owned_by_other_pull_request of (Terrat_change.Dirspace.t * 'pull_request) list
+    | Gate_check_failure of Gate_eval.t list
     | Help
     | Index_complete of (bool * (string * int option * string) list)
     | Invalid_unlock_id of string
@@ -96,7 +124,7 @@ module Msg = struct
     | Mismatched_refs
     | Missing_plans of Terrat_change.Dirspace.t list
     | Plan_no_matching_dirspaces
-    | Premium_feature_err of [ `Access_control | `Multiple_drift_schedules ]
+    | Premium_feature_err of premium_features
     | Pull_request_not_appliable of ('pull_request * 'apply_requirements)
     | Pull_request_not_mergeable
     | Repo_config of (string list * Terrat_base_repo_config_v1.derived Terrat_base_repo_config_v1.t)
@@ -329,6 +357,24 @@ module type S = sig
       ('diff, 'checks) Api.Pull_request.t ->
       Terrat_change_match3.Dirspace_config.t list ->
       (Result.t, [> `Error ]) result Abb.Future.t
+  end
+
+  module Gate : sig
+    val add_approval :
+      request_id:string ->
+      token:string ->
+      approver:string ->
+      ('a, 'b) Api.Pull_request.t ->
+      Db.t ->
+      (unit, [> gate_add_approval_err ]) result Abb.Future.t
+
+    val eval :
+      request_id:string ->
+      Api.Client.t ->
+      Terrat_dirspace.t list ->
+      ('a, 'b) Api.Pull_request.t ->
+      Db.t ->
+      (Gate_eval.t list, [> gate_eval_err ]) result Abb.Future.t
   end
 
   module Comment : sig

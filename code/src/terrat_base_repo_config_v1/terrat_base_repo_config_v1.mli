@@ -48,6 +48,16 @@ module Workflow_step : sig
     [@@deriving make, show, yojson, eq]
   end
 
+  module Gate : sig
+    type t = {
+      any_of : string list option; [@default None]
+      all_of : string list option; [@default None]
+      any_of_count : int option; [@default None]
+      token : string;
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
   (* Workflow steps *)
 
   module Env : sig
@@ -113,6 +123,7 @@ module Workflow_step : sig
       cmd : Cmd.t;
       env : string String_map.t option;
       ignore_errors : bool; [@default false]
+      on_error : Yojson.Safe.t list; [@default []]
       run_on : Run_on.t; [@default Run_on.Success]
       visible_on : Visible_on.t; [@default Visible_on.Failure]
     }
@@ -148,6 +159,30 @@ module Workflow_step : sig
       env : string String_map.t option;
       extra_args : string list; [@default []]
       retry : Retry.t option;
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  module Conftest : sig
+    type t = {
+      env : string String_map.t option;
+      extra_args : string list; [@default []]
+      gate : Gate.t option; [@default None]
+      ignore_errors : bool; [@default false]
+      run_on : Run_on.t; [@default Run_on.Success]
+      visible_on : Visible_on.t; [@default Visible_on.Failure]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  module Checkov : sig
+    type t = {
+      env : string String_map.t option;
+      extra_args : string list; [@default []]
+      gate : Gate.t option; [@default None]
+      ignore_errors : bool; [@default false]
+      run_on : Run_on.t; [@default Run_on.Success]
+      visible_on : Visible_on.t; [@default Visible_on.Failure]
     }
     [@@deriving make, show, yojson, eq]
   end
@@ -523,6 +558,8 @@ module Workflows : sig
         | Run of Workflow_step.Run.t
         | Env of Workflow_step.Env.t
         | Oidc of Workflow_step.Oidc.t
+        | Checkov of Workflow_step.Checkov.t
+        | Conftest of Workflow_step.Conftest.t
       [@@deriving show, yojson, eq]
     end
 

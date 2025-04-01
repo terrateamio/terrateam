@@ -1,15 +1,16 @@
 let trigger_words = [ "terrateam"; "terraform"; "tofu" ]
 
 type t =
-  | Plan of { tag_query : Terrat_tag_query.t }
   | Apply of { tag_query : Terrat_tag_query.t }
   | Apply_autoapprove of { tag_query : Terrat_tag_query.t }
   | Apply_force of { tag_query : Terrat_tag_query.t }
-  | Unlock of string list
-  | Help
   | Feedback of string
-  | Repo_config
+  | Gate_approval of { tokens : string list }
+  | Help
   | Index
+  | Plan of { tag_query : Terrat_tag_query.t }
+  | Repo_config
+  | Unlock of string list
 
 type err =
   [ `Not_terrateam
@@ -49,17 +50,26 @@ let parse s =
   | Some ("feedback", rest) -> Ok (Feedback rest)
   | Some ("repo-config", _) -> Ok Repo_config
   | Some ("index", _) -> Ok Index
+  | Some ("gate", rest) -> (
+      match CCString.Split.left ~by:" " (CCString.trim rest) with
+      | Some ("approve", tokens) ->
+          Ok
+            (Gate_approval
+               { tokens = CCList.map CCString.trim @@ CCString.split_on_char ' ' tokens })
+      | Some (action, _) -> Error (`Unknown_action action)
+      | None -> Error (`Unknown_action s))
   | Some (action, rest) -> Error (`Unknown_action action)
   | None -> Error `Not_terrateam
 
 let to_string = function
-  | Plan { tag_query } -> "terrateam plan " ^ Terrat_tag_query.to_string tag_query
   | Apply { tag_query } -> "terrateam apply " ^ Terrat_tag_query.to_string tag_query
   | Apply_autoapprove { tag_query } ->
       "terrateam apply-autoapprove " ^ Terrat_tag_query.to_string tag_query
   | Apply_force { tag_query } -> "terrateam apply-force " ^ Terrat_tag_query.to_string tag_query
-  | Unlock ids -> "terrateam unlock " ^ CCString.concat " " ids
-  | Help -> "terrateam help"
   | Feedback feedback -> "terrateam feedback " ^ feedback
-  | Repo_config -> "terrateam repo-config"
+  | Gate_approval { tokens } -> "terrateam gate approval " ^ CCString.concat " " tokens
+  | Help -> "terrateam help"
   | Index -> "terrateam index"
+  | Plan { tag_query } -> "terrateam plan " ^ Terrat_tag_query.to_string tag_query
+  | Repo_config -> "terrateam repo-config"
+  | Unlock ids -> "terrateam unlock " ^ CCString.concat " " ids
