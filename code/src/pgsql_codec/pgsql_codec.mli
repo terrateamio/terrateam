@@ -19,7 +19,7 @@ module Frame : sig
       | AuthenticationGSS
       | AuthenticationSSPI
       | AuthenticationGSSContinue of { data : string }
-      | AuthenticationSASL of { auth_mechanism : string }
+      | AuthenticationSASL of { auth_mechanisms : string list }
       | AuthenticationSASLContinue of { data : string }
       | AuthenticationSASLFinal of { data : string }
       | BackendKeyData of {

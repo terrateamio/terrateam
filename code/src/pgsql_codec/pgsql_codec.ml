@@ -66,7 +66,7 @@ end = struct
 
   let string st =
     match Bytes.index_from_opt st.State.buf st.State.pos '\000' with
-    | Some idx when idx + 1 < st.State.stop ->
+    | Some idx when idx < st.State.stop ->
         let s = Bytes.sub_string st.State.buf st.State.pos (idx - st.State.pos) in
         (* +1 to consume the end null byte *)
         (Ok s, { st with State.pos = st.State.pos + (idx - st.State.pos) + 1 })
@@ -172,7 +172,7 @@ module Frame = struct
       | AuthenticationGSS
       | AuthenticationSSPI
       | AuthenticationGSSContinue of { data : string }
-      | AuthenticationSASL of { auth_mechanism : string }
+      | AuthenticationSASL of { auth_mechanisms : string list }
       | AuthenticationSASLContinue of { data : string }
       | AuthenticationSASLFinal of { data : string }
       | BackendKeyData of {
@@ -279,6 +279,13 @@ module Decode = struct
 
   let create () = { buf = Buffer.create 4096; needed_bytes = -1 }
 
+  let rec string_list () =
+    let open Reader in
+    string
+    >>= function
+    | "" -> return []
+    | auth_mechanism -> string_list () >>= fun rest -> return (auth_mechanism :: rest)
+
   let dispatch_backend_msg len =
     let open Reader in
     let open Frame.Backend in
@@ -295,7 +302,9 @@ module Decode = struct
         | 7 -> return AuthenticationGSS
         | 9 -> return AuthenticationSSPI
         | 8 -> bytes (len - 4) >>= fun data -> return (AuthenticationGSSContinue { data })
-        | 10 -> string >>= fun auth_mechanism -> return (AuthenticationSASL { auth_mechanism })
+        | 10 ->
+            string_list ()
+            >>= fun auth_mechanisms -> return (AuthenticationSASL { auth_mechanisms })
         | 11 -> bytes (len - 4) >>= fun data -> return (AuthenticationSASLContinue { data })
         | 12 -> bytes (len - 4) >>= fun data -> return (AuthenticationSASLFinal { data })
         | _ -> fail `Invalid_frame)
