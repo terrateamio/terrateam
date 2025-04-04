@@ -9,6 +9,7 @@ end
 
 type t = {
   name : Name.t;
+  override_tf_cmd : string option; [@default None]
   tf_cmd : string option; [@default None]
   tf_version : string option; [@default None]
 }
