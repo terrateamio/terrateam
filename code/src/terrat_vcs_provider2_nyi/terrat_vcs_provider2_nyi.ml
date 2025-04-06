@@ -1,16 +1,11 @@
 module Api = Terrat_vcs_api_nyi
 
 module Unlock_id = struct
-  type t =
-    | Pull_request of int
-    | Drift
+  type t = unit
 
-  let of_pull_request id = Pull_request id
-  let drift () = Drift
-
-  let to_string = function
-    | Pull_request id -> CCInt.to_string id
-    | Drift -> "drift"
+  let of_pull_request id = raise (Failure "nyi")
+  let drift () = raise (Failure "nyi")
+  let to_string t = raise (Failure "nyi")
 end
 
 module Pull_request = struct
@@ -80,8 +75,12 @@ module Apply_requirements = struct
     raise (Failure "nyi")
 end
 
+module Tier = struct
+  let check ~request_id user account db = raise (Failure "nyi")
+end
+
 module Gate = struct
-  let insert_approval ~request_id ~token ~approver pull_request db = raise (Failure "nyi")
+  let add_approval ~request_id ~token ~approver pull_request db = raise (Failure "nyi")
   let eval ~request_id client dirspaces pull_request db = raise (Failure "nyi")
 end
 
@@ -95,15 +94,8 @@ module Repo_config = struct
 end
 
 module Access_control = struct
-  module Ctx = struct
-    type t
-
-    let make ~client ~config ~repo ~user () = raise (Failure "nyi")
-  end
-
-  let query ctx mtch = raise (Failure "nyi")
-  let is_ci_changed ctx diff = raise (Failure "nyi")
-  let set_user user ctx = raise (Failure "nyi")
+  let query ~request_id client repo user match_ = raise (Failure "nyi")
+  let is_ci_changed ~request_id client repo diffs = raise (Failure "nyi")
 end
 
 module Commit_check = struct
