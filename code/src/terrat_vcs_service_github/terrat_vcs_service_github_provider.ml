@@ -1992,6 +1992,119 @@ module Apply_requirements = struct
     | Error (`Error as ret) -> Abb.Future.return (Error ret)
 end
 
+module Tier = struct
+  module Sql = struct
+    let read fname =
+      CCOption.get_exn_or
+        fname
+        (CCOption.map
+           (fun s ->
+             s
+             |> CCString.split_on_char '\n'
+             |> CCList.filter CCFun.(CCString.prefix ~pre:"--" %> not)
+             |> CCString.concat "\n")
+           (Terrat_files_github_sql.read fname))
+
+    let tier =
+      CCFun.(
+        CCOption.wrap Yojson.Safe.from_string
+        %> CCOption.map Terrat_tier.of_yojson
+        %> CCOption.flat_map CCResult.to_opt)
+
+    let select_tier =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* id *)
+        Ret.text
+        //
+        (* name *)
+        Ret.text
+        //
+        (* tier *)
+        Ret.(ud' tier)
+        /^ read "select_tier.sql"
+        /% Var.bigint "installation_id")
+
+    let select_users_this_month =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* user *)
+        Ret.text
+        //
+        (* created_at *)
+        Ret.text
+        /^ read "select_users_this_month.sql"
+        /% Var.bigint "installation_id")
+  end
+
+  let check ~request_id user account db =
+    let run =
+      let open Abbs_future_combinators.Infix_result_monad in
+      Pgsql_io.Prepared_stmt.fetch
+        db
+        Sql.select_tier
+        ~f:(fun id name tier -> (id, name, tier))
+        (CCInt64.of_int @@ Api.Account.id account)
+      >>= function
+      | [] -> assert false
+      | (tier_id, tier_name, tier) :: _ -> (
+          let { Terrat_tier.num_users_per_month; _ } = tier in
+          Pgsql_io.Prepared_stmt.fetch
+            db
+            Sql.select_users_this_month
+            ~f:(fun user created_at -> (user, created_at))
+            (CCInt64.of_int @@ Api.Account.id account)
+          >>= function
+          | [] -> Abb.Future.return (Ok None)
+          | users -> (
+              let user = Api.User.to_string user in
+              let all_users =
+                Terrat_data.String_set.to_list
+                @@ Terrat_data.String_set.of_list (user :: CCList.map fst users)
+              in
+              (* Allow users that have used the product with-in the existing tier to use it. *)
+              let allowed_users =
+                Terrat_data.String_set.of_list
+                @@ CCList.take num_users_per_month
+                @@ CCList.map fst users
+              in
+              Logs.info (fun m -> m "%s : TIER : id=%s : name=%s" request_id tier_id tier_name);
+              Logs.info (fun m ->
+                  m
+                    "%s : TIER_CHECK : NUM_USERS_PER_MONTH : all_users=%d : limit=%d"
+                    request_id
+                    (CCList.length all_users)
+                    num_users_per_month);
+              match CCList.length all_users with
+              | n
+                when n > num_users_per_month && not (Terrat_data.String_set.mem user allowed_users)
+                ->
+                  CCList.iter
+                    (fun (user, first_run) ->
+                      Logs.info (fun m ->
+                          m "%s : TIER_CHECK : user=%s : first_run=%s" request_id user first_run))
+                    users;
+                  Abb.Future.return
+                    (Ok
+                       (Some
+                          {
+                            Terrat_tier.Check.tier_name;
+                            users_per_month =
+                              { Terrat_tier.Check.users = all_users; limit = num_users_per_month };
+                          }))
+              | _ -> Abb.Future.return (Ok None)))
+    in
+    let open Abb.Future.Infix_monad in
+    run
+    >>= function
+    | Ok _ as res -> Abb.Future.return res
+    | Error (#Pgsql_io.err as err) ->
+        Logs.err (fun m -> m "%s : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+end
+
 module Comment (S : S) = struct
   module Tmpl = struct
     module Transformers = struct
@@ -2177,6 +2290,7 @@ module Comment (S : S) = struct
     let premium_feature_err_gatekeeping = read "premium_feature_err_gatekeeping.tmpl"
     let repo_config_merge_err = read "repo_config_merge_err.tmpl"
     let gate_check_failure = read "gate_check_failure.tmpl"
+    let tier_check = read "tier_check.tmpl"
   end
 
   let comment_on_pull_request ~request_id client pull_request msg_type body =
@@ -4388,6 +4502,31 @@ module Comment (S : S) = struct
         >>= function
         | Ok () -> Abb.Future.return (Ok ())
         | Error _ -> Abb.Future.return (Error `Error))
+    | Msg.Tier_check checks ->
+        let module C = Terrat_tier.Check in
+        let { C.tier_name; users_per_month } = checks in
+        let kv =
+          Snabela.Kv.(
+            Map.of_list
+              [
+                ("tier_name", string tier_name);
+                ( "num_users_per_month",
+                  list
+                    [
+                      Map.of_list
+                        [
+                          ( "all_users",
+                            list
+                            @@ CCList.map
+                                 (fun user -> Map.of_list [ ("name", string user) ])
+                                 users_per_month.C.users );
+                          ("limit", int users_per_month.C.limit);
+                          ("num_users", int @@ CCList.length users_per_month.C.users);
+                        ];
+                    ] );
+              ])
+        in
+        apply_template_and_publish ~request_id client pull_request "TIER_CHECK" Tmpl.tier_check kv
     | Msg.Unexpected_temporary_err ->
         let kv = Snabela.Kv.(Map.of_list []) in
         apply_template_and_publish
