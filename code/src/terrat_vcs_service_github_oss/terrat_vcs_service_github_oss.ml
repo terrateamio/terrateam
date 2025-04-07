@@ -10,6 +10,7 @@ module Provider :
   module Db = Terrat_vcs_service_github_provider.Db
   module Apply_requirements = Terrat_vcs_service_github_provider.Apply_requirements
   module Work_manifest = Terrat_vcs_service_github_provider.Work_manifest
+  module Tier = Terrat_vcs_service_github_provider.Tier
 
   module Gate = struct
     let add_approval ~request_id ~token ~approver pull_request db =

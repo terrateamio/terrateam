@@ -12,6 +12,7 @@ module Provider :
   module Unlock_id = Terrat_vcs_service_github_provider.Unlock_id
   module Db = Terrat_vcs_service_github_provider.Db
   module Apply_requirements = Terrat_vcs_service_github_provider.Apply_requirements
+  module Tier = Terrat_vcs_service_github_provider.Tier
 
   (* Order matters here.  Roles closer to the beginning of the search are more
          powerful than those closer to the end *)

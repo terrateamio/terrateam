@@ -52,6 +52,7 @@ type t = {
   db_max_pool_size : int;
   db_password : (string[@opaque]);
   db_user : string;
+  default_tier : string;
   github : Github.t option;
   infracost : Infracost.t option;
   nginx_status_uri : Uri.t option;
@@ -184,6 +185,7 @@ let create () =
   in
   load_github ()
   >>= fun github ->
+  let default_tier = CCOption.get_or ~default:"unlimited" @@ Sys.getenv_opt "TERRAT_DEFAULT_TIER" in
   Ok
     {
       admin_token;
@@ -194,6 +196,7 @@ let create () =
       db_max_pool_size;
       db_password;
       db_user;
+      default_tier;
       github;
       infracost;
       nginx_status_uri;
@@ -212,6 +215,7 @@ let db_host t = t.db_host
 let db_max_pool_size t = t.db_max_pool_size
 let db_password t = t.db_password
 let db_user t = t.db_user
+let default_tier t = t.default_tier
 let github t = t.github
 let infracost t = t.infracost
 let nginx_status_uri t = t.nginx_status_uri

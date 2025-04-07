@@ -30,6 +30,7 @@ type gate_add_approval_err =
 [@@deriving show]
 
 type gate_eval_err = [ `Error ] [@@deriving show]
+type tier_check_err = [ `Error ] [@@deriving show]
 
 module Account_status = struct
   type t =
@@ -148,6 +149,7 @@ module Msg = struct
         result : Terrat_api_components_work_manifest_tf_operation_result2.t;
         work_manifest : ('account, 'target) Terrat_work_manifest3.Existing.t;
       }
+    | Tier_check of Terrat_tier.Check.t
     | Unexpected_temporary_err
     | Unlock_success
 end
@@ -375,6 +377,15 @@ module type S = sig
       ('a, 'b) Api.Pull_request.t ->
       Db.t ->
       (Gate_eval.t list, [> gate_eval_err ]) result Abb.Future.t
+  end
+
+  module Tier : sig
+    val check :
+      request_id:string ->
+      Api.User.t ->
+      Api.Account.t ->
+      Db.t ->
+      (Terrat_tier.Check.t option, [> tier_check_err ]) result Abb.Future.t
   end
 
   module Comment : sig

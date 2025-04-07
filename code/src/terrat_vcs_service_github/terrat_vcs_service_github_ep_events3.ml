@@ -64,7 +64,8 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         /% Var.bigint "id"
         /% Var.text "login"
         /% Var.uuid "org"
-        /% Var.text "target_type")
+        /% Var.text "target_type"
+        /% Var.text "tier")
 
     let update_github_installation_unsuspend =
       Pgsql_io.Typed_sql.(
@@ -161,6 +162,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
                       installation.Gw.Installation.account.Gw.User.login
                       org_id
                       installation.Gw.Installation.account.Gw.User.type_
+                      (Terrat_config.default_tier @@ P.Api.Config.config config)
                 | [] -> assert false)
             | _ :: _ -> Abb.Future.return (Ok ()))
     | Gw.Installation_event.Installation_deleted deleted ->

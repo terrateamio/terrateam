@@ -208,6 +208,15 @@ module Apply_requirements : sig
     (Result.t, [> `Error ]) result Abb.Future.t
 end
 
+module Tier : sig
+  val check :
+    request_id:string ->
+    Api.User.t ->
+    Api.Account.t ->
+    Db.t ->
+    (Terrat_tier.Check.t option, [> Terrat_vcs_provider2.tier_check_err ]) result Abb.Future.t
+end
+
 module Comment (S : S) : sig
   val publish_comment :
     request_id:string ->
