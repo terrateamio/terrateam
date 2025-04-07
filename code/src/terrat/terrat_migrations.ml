@@ -126,6 +126,7 @@ let migrations =
     ("add-trial-columns", run_file_sql "2025-01-14-add-trial-columns.sql");
     ("add-multiple-drift-schedules", run_file_sql "2025-02-15-add-multiple-drift-schedules.sql");
     ("add-gatekeeping", run_file_sql "2025-03-30-add-gatekeeping.sql");
+    ("add-tiers", run_file_sql "2025-04-05-add-tiers.sql");
   ]
 
 let run config storage = Mig.run (config, storage) migrations
