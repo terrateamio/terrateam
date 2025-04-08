@@ -24,6 +24,48 @@ let replace_where q = function
 let set_timeout timeout =
   Pgsql_io.Typed_sql.(sql /^ Printf.sprintf "set local statement_timeout = '%s'" timeout)
 
+module Sql = struct
+  let read fname =
+    CCOption.get_exn_or
+      fname
+      (CCOption.map Pgsql_io.clean_string (Terrat_files_github_sql.read fname))
+
+  let select_user_installation () =
+    Pgsql_io.Typed_sql.(
+      sql
+      //
+      (* installation_id *)
+      Ret.bigint
+      /^ read "select_user_installation.sql"
+      /% Var.uuid "user_id"
+      /% Var.bigint "installation_id")
+end
+
+let enforce_installation_access storage user installation_id ctx =
+  let open Abb.Future.Infix_monad in
+  Pgsql_pool.with_conn storage ~f:(fun db ->
+      Pgsql_io.Prepared_stmt.fetch
+        db
+        (Sql.select_user_installation ())
+        ~f:CCFun.id
+        (Terrat_user.id user)
+        (CCInt64.of_int installation_id))
+  >>= function
+  | Ok (_ :: _) -> Abb.Future.return (Ok ())
+  | Ok [] -> Abb.Future.return (Error (Brtl_ctx.set_response `Forbidden ctx))
+  | Error (#Pgsql_pool.err as err) ->
+      Logs.err (fun m ->
+          m
+            "ENFORCE_INSTALLATION_ACCESS : %s : ERROR : %a"
+            (Brtl_ctx.token ctx)
+            Pgsql_pool.pp_err
+            err);
+      Abb.Future.return (Error (Brtl_ctx.set_response `Internal_server_error ctx))
+  | Error (#Pgsql_io.err as err) ->
+      Logs.err (fun m ->
+          m "ENFORCE_INSTALLATION_ACCESS : %s : ERROR : %a" (Brtl_ctx.token ctx) Pgsql_io.pp_err err);
+      Abb.Future.return (Error (Brtl_ctx.set_response `Internal_server_error ctx))
+
 module Work_manifests = struct
   module Outputs = struct
     module T = Terrat_api_components.Installation_workflow_step_output
@@ -210,7 +252,7 @@ module Work_manifests = struct
           let open Abbs_future_combinators.Infix_result_monad in
           Terrat_session.with_session ctx
           >>= fun user ->
-          Terrat_user.enforce_installation_access storage user installation_id ctx
+          enforce_installation_access storage user installation_id ctx
           >>= fun () ->
           let open Abb.Future.Infix_monad in
           match CCOption.map Terrat_tag_query_ast.of_string query with
@@ -560,7 +602,7 @@ module Work_manifests = struct
         let open Abbs_future_combinators.Infix_result_monad in
         Terrat_session.with_session ctx
         >>= fun user ->
-        Terrat_user.enforce_installation_access storage user installation_id ctx
+        enforce_installation_access storage user installation_id ctx
         >>= fun () ->
         let open Abb.Future.Infix_monad in
         match CCOption.map Terrat_tag_query_ast.of_string query with
@@ -904,7 +946,7 @@ module Dirspaces = struct
         let open Abbs_future_combinators.Infix_result_monad in
         Terrat_session.with_session ctx
         >>= fun user ->
-        Terrat_user.enforce_installation_access storage user installation_id ctx
+        enforce_installation_access storage user installation_id ctx
         >>= fun () ->
         let open Abb.Future.Infix_monad in
         match CCOption.map Terrat_tag_query_ast.of_string query with
@@ -1147,7 +1189,7 @@ module Pull_requests = struct
         let open Abbs_future_combinators.Infix_result_monad in
         Terrat_session.with_session ctx
         >>= fun user ->
-        Terrat_user.enforce_installation_access storage user installation_id ctx
+        enforce_installation_access storage user installation_id ctx
         >>= fun () ->
         let open Abb.Future.Infix_monad in
         let query =
@@ -1162,13 +1204,7 @@ module Repos = struct
     let read fname =
       CCOption.get_exn_or
         fname
-        (CCOption.map
-           (fun s ->
-             s
-             |> CCString.split_on_char '\n'
-             |> CCList.filter CCFun.(CCString.prefix ~pre:"--" %> not)
-             |> CCString.concat "\n")
-           (Terrat_files_github_sql.read fname))
+        (CCOption.map Pgsql_io.clean_string (Terrat_files_github_sql.read fname))
 
     let select_installation_repos_page () =
       Pgsql_io.Typed_sql.(
@@ -1273,7 +1309,7 @@ module Repos = struct
         let open Abbs_future_combinators.Infix_result_monad in
         Terrat_session.with_session ctx
         >>= fun user ->
-        Terrat_user.enforce_installation_access storage user installation_id ctx
+        enforce_installation_access storage user installation_id ctx
         >>= fun () ->
         let open Abb.Future.Infix_monad in
         let query =
@@ -1287,7 +1323,7 @@ module Repos = struct
           let open Abbs_future_combinators.Infix_result_monad in
           Terrat_session.with_session ctx
           >>= fun user ->
-          Terrat_user.enforce_installation_access storage user installation_id ctx
+          enforce_installation_access storage user installation_id ctx
           >>= fun () ->
           let open Abb.Future.Infix_monad in
           Terrat_vcs_service_github_ee_installation.refresh_repos'

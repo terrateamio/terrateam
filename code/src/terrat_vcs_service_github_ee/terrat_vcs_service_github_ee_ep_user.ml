@@ -4,6 +4,11 @@ module Logs = (val Logs.src_log src : Logs.LOG)
 
 module Installations = struct
   module Sql = struct
+    let read fname =
+      CCOption.get_exn_or
+        fname
+        (CCOption.map Pgsql_io.clean_string (Terrat_files_github_sql.read fname))
+
     let select_installations () =
       Pgsql_io.Typed_sql.(
         sql
@@ -19,8 +24,7 @@ module Installations = struct
     let insert_user_installations () =
       Pgsql_io.Typed_sql.(
         sql
-        /^ "insert into github_user_installations (user_id, installation_id) select * from \
-            unnest($user, $installation) on conflict (user_id, installation_id) do nothing"
+        /^ read "upsert_user_installations.sql"
         /% Var.(array (uuid "user"))
         /% Var.(array (bigint "installation")))
   end

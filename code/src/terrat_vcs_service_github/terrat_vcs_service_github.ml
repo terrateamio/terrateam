@@ -1,3 +1,7 @@
+let src = Logs.Src.create "vcs_service_github"
+
+module Logs = (val Logs.src_log src : Logs.LOG)
+
 module type ROUTES = sig
   type config
 
@@ -87,6 +91,22 @@ struct
   end
 
   module Service = struct
+    module Sql = struct
+      let read fname =
+        CCOption.get_exn_or
+          fname
+          (CCOption.map Pgsql_io.clean_string (Terrat_files_github_sql.read fname))
+
+      let select_github_user2_exists =
+        Pgsql_io.Typed_sql.(
+          sql
+          //
+          (* created_at *)
+          Ret.text
+          /^ read "select_github_user2_exists.sql"
+          /% Var.uuid "user_id")
+    end
+
     type vcs_config = Provider.Api.Config.vcs_config
 
     let one_hour = Duration.to_f (Duration.of_hour 1)
@@ -128,6 +148,8 @@ struct
            (Evaluator.Ctx.make ~config ~storage ~request_id:(Ouuid.to_string (Ouuid.v4 ())) ()))
       >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> repo_config_cleanup config storage
 
+    let name _ = "github"
+
     let start config vcs_config storage =
       let open Abb.Future.Infix_monad in
       let config = Provider.Api.Config.make ~config ~vcs_config () in
@@ -152,5 +174,25 @@ struct
       >>= fun () -> Abb.Future.abort t.repo_config_cleanup >>= fun () -> Abb.Future.return ()
 
     let routes t = Routes.routes t.config t.storage
+
+    let get_user t user_id =
+      let run =
+        let open Abbs_future_combinators.Infix_result_monad in
+        Pgsql_pool.with_conn t.storage ~f:(fun db ->
+            Pgsql_io.Prepared_stmt.fetch db Sql.select_github_user2_exists ~f:CCFun.id user_id
+            >>= function
+            | [] -> Abb.Future.return (Ok None)
+            | _ :: _ -> Abb.Future.return (Ok (Some (Terrat_user.make ~id:user_id ()))))
+      in
+      let open Abb.Future.Infix_monad in
+      run
+      >>= function
+      | Ok _ as ret -> Abb.Future.return ret
+      | Error (#Pgsql_pool.err as err) ->
+          Logs.err (fun m -> m "GET_USER : user_id=%a : %a" Uuidm.pp user_id Pgsql_pool.pp_err err);
+          Abb.Future.return (Error `Error)
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m -> m "GET_USER : user_id=%a : %a" Uuidm.pp user_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
   end
 end

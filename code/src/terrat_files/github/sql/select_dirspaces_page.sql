@@ -78,7 +78,7 @@ q as (
         on gwmds.work_manifest = gwm.id
     inner join github_installation_repositories as gir
         on gir.id = gwm.repository
-    inner join github_user_installations as gui
+    inner join github_user_installations2 as gui
         on gir.installation_id = gui.installation_id
     inner join unified_run_types as urt
         on urt.id = gwm.id

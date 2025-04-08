@@ -685,21 +685,19 @@
       "user": {
         "additionalProperties": false,
         "properties": {
-          "avatar_url": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          },
           "id": {
             "type": "string"
           },
-          "name": {
-            "type": "string"
+          "vcs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
-          "id"
+          "id",
+          "vcs"
         ],
         "type": "object"
       },
