@@ -1090,3 +1090,9 @@ let tx t ~f =
       | Ok fs -> tx_rollback t >>= fun _ -> Abb.Future.return (Error (`Unmatching_frame fs))
       | Error _ as err -> tx_rollback t >>= fun _ -> Abb.Future.return err)
     ~failure:(fun () -> Abbs_future_combinators.ignore (tx_rollback t))
+
+let clean_string s =
+  s
+  |> CCString.split_on_char '\n'
+  |> CCList.filter CCFun.(CCString.prefix ~pre:"--" %> not)
+  |> CCString.concat "\n"
