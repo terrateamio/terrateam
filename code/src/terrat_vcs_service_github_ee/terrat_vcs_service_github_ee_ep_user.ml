@@ -27,6 +27,12 @@ module Installations = struct
         /^ read "upsert_user_installations.sql"
         /% Var.(array (uuid "user"))
         /% Var.(array (bigint "installation")))
+
+    let delete_user_installations () =
+      Pgsql_io.Typed_sql.(
+        sql
+        /^ "delete from github_user_installations2 where user_id = $user_id"
+        /% Var.uuid "user_id")
   end
 
   let get' config storage user =
@@ -40,8 +46,8 @@ module Installations = struct
     >>= fun installations ->
     Pgsql_pool.with_conn storage ~f:(fun db ->
         let module I = Githubc2_components.Installation in
-        (* This insert will fail if we miss the webhook that an installation has
-           occurred.  The user will probably need to remove and install again. *)
+        Pgsql_io.Prepared_stmt.execute db (Sql.delete_user_installations ()) (Terrat_user.id user)
+        >>= fun () ->
         Pgsql_io.Prepared_stmt.execute
           db
           (Sql.insert_user_installations ())
