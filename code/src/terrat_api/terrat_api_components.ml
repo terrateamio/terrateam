@@ -1,6 +1,7 @@
 module Dirspace_state = Terrat_api_components_dirspace_state
 module Error = Terrat_api_components_error
 module Gate = Terrat_api_components_gate
+module Github_user = Terrat_api_components_github_user
 module Hook_outputs = Terrat_api_components_hook_outputs
 module Installation = Terrat_api_components_installation
 module Installation_dirspace = Terrat_api_components_installation_dirspace

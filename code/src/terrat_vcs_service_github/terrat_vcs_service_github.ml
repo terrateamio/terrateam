@@ -23,9 +23,18 @@ struct
 
   module Routes = struct
     module Rt = struct
+      (* Apparently at some point Malcolm decided that it made sense to have two
+         sets of URLs.  Those that look like [/api/github/v1] and those that
+         look like [/api/v1/github].  The ones that look like [/api/github/v1]
+         are calls that, generally, come from the action, so that is probably
+         because we pass an API base URL to the action, and we want it to always
+         hit GitHub, and be able to version that URL.  The other APIs are for
+         the UI and non-action related.  I'm not sure if it makes sense to
+         rewrite these to all be of the form [/api/github/v1]. *)
       let api () = Brtl_rtng.Route.(rel / "api")
       let api_v1 () = Brtl_rtng.Route.(api () / "v1")
       let github_client_id () = Brtl_rtng.Route.(api_v1 () / "github" / "client_id")
+      let github_whoami () = Brtl_rtng.Route.(api_v1 () / "github" / "whoami")
       let work_manifest_root base = Brtl_rtng.Route.(base () / "work-manifests")
       let work_manifest base = Brtl_rtng.Route.(work_manifest_root base /% Path.ud Uuidm.of_string)
 
@@ -47,6 +56,8 @@ struct
           /* Body.decode ~json:Terrat_api_work_manifest.Results.Request_body.of_yojson ())
 
       let work_manifest_access_token base = Brtl_rtng.Route.(work_manifest base / "access-token")
+
+      (* This is the other group of URLs, which are [/api/github/v1] *)
       let github () = Brtl_rtng.Route.(api () / "github")
       let github_v1 () = Brtl_rtng.Route.(github () / "v1")
       let github_events () = Brtl_rtng.Route.(github_v1 () / "events")
@@ -87,6 +98,8 @@ struct
             ( `GET,
               Rt.github_client_id () --> Terrat_vcs_service_github_ep_client_id.get config storage
             );
+            ( `GET,
+              Rt.github_whoami () --> Terrat_vcs_service_github_ep_user.Whoami.get config storage );
           ]
   end
 

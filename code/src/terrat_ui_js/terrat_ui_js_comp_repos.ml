@@ -10,7 +10,12 @@ let comp state =
   let module Page = Brtl_js2_page.Make (struct
     type fetch_err = Terrat_ui_js_client.err [@@deriving show]
     type elt = Repo.t [@@deriving eq, show]
-    type state = Terrat_api_components.Server_config_github.t Terrat_ui_js_state.t
+
+    type state =
+      ( Terrat_api_components.Github_user.t,
+        Terrat_api_components.Server_config_github.t )
+      Terrat_ui_js_state.t
+
     type query = { page : string list option } [@@deriving eq]
 
     let class' = "repos"

@@ -429,7 +429,12 @@ let comp state =
   let module Page = Brtl_js2_page.Make (struct
     type fetch_err = Terrat_ui_js_client.dirspaces_err [@@deriving show]
     type elt = Ds.t [@@deriving eq, show]
-    type state = Terrat_api_components.Server_config_github.t Terrat_ui_js_state.t
+
+    type state =
+      ( Terrat_api_components.Github_user.t,
+        Terrat_api_components.Server_config_github.t )
+      Terrat_ui_js_state.t
+
     type query = Q.t [@@deriving eq]
 
     let class' = "dirspaces"

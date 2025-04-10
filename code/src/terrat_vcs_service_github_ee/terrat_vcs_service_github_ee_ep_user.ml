@@ -1,4 +1,4 @@
-let src = Logs.Src.create "ep_user"
+let src = Logs.Src.create "vcs_service_github_ee_ep_user"
 
 module Logs = (val Logs.src_log src : Logs.LOG)
 

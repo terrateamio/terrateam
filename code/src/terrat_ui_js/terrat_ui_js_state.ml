@@ -1,12 +1,12 @@
-type 'a t = {
+type ('user, 'vcs_config) t = {
   client : Terrat_ui_js_client.t;
   installations : Terrat_api_components.Installation.t list Brtl_js2.Note.S.t;
   notifications : Terrat_ui_js_notification.t Brtl_js2.Note.E.t;
   notify : Terrat_ui_js_notification.t Brtl_js2.Note.E.send;
   selected_installation : Terrat_api_components.Installation.t;
   server_config : Terrat_api_components.Server_config.t;
-  vcs_config : 'a;
-  user : Terrat_api_components.User.t;
+  vcs_config : 'vcs_config;
+  user : 'user;
 }
 
 let create ~client ~user ~installations ~selected_installation ~server_config ~vcs_config () =
