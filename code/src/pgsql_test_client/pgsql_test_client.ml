@@ -3,6 +3,7 @@ module Oth_abb = Oth_abb.Make (Abb)
 let host = Sys.argv.(1)
 let user = Sys.argv.(2)
 let database = Sys.argv.(3)
+let passwd = Sys.argv.(4)
 
 module Sql = struct
   let drop_foo = Pgsql_io.Typed_sql.(sql /^ "drop table if exists foo")
@@ -20,7 +21,7 @@ let with_conn :
       ('a, 'e) result Abb.Future.t =
  fun f ->
   let open Abb.Future.Infix_monad in
-  Pgsql_io.create ~tls_config:(`Require tls_config) ~host ~user database
+  Pgsql_io.create ~tls_config:(`Require tls_config) ~host ~user ~passwd database
   >>= function
   | Ok conn ->
       Abbs_future_combinators.with_finally
