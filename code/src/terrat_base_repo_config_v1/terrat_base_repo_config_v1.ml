@@ -920,6 +920,14 @@ module Tags = struct
   [@@deriving make, show, yojson, eq]
 end
 
+module Tree_builder = struct
+  type t = {
+    enabled : bool; [@default false]
+    script : string; [@default ""]
+  }
+  [@@deriving make, show, yojson, eq]
+end
+
 module Workflows = struct
   module Entry = struct
     module Op = struct
@@ -991,6 +999,7 @@ module View = struct
     parallel_runs : int; [@default 3]
     storage : Storage.t; [@default Storage.make ()]
     tags : Tags.t; [@default Tags.make ()]
+    tree_builder : Tree_builder.t; [@default Tree_builder.make ()]
     when_modified : When_modified.t; [@default When_modified.make ()]
     workflows : Workflows.t; [@default []]
   }
@@ -1729,6 +1738,9 @@ let of_version_automerge automerge =
 let of_version_1_config_builder { Terrat_repo_config.Config_builder.enabled; script } =
   Ok (Config_builder.make ~enabled ?script ())
 
+let of_version_1_tree_builder { Terrat_repo_config.Tree_builder.enabled; script } =
+  Ok (Tree_builder.make ~enabled ?script ())
+
 let of_version_1_cost_estimation { V1.Cost_estimation.currency; enabled; provider } =
   assert (provider = "infracost");
   Ok (Cost_estimation.make ~currency ~enabled ())
@@ -2063,6 +2075,7 @@ let of_version_1 v1 =
     parallel_runs;
     storage;
     tags;
+    tree_builder;
     version = _;
     when_modified;
     workflows;
@@ -2100,6 +2113,8 @@ let of_version_1 v1 =
   >>= fun storage ->
   map_opt of_version_1_tags tags
   >>= fun tags ->
+  map_opt of_version_1_tree_builder tree_builder
+  >>= fun tree_builder ->
   map_opt (of_version_1_workflows engine integrations) workflows
   >>= fun workflows ->
   Ok
@@ -2121,6 +2136,7 @@ let of_version_1 v1 =
        ~parallel_runs
        ?storage
        ?tags
+       ?tree_builder
        ?when_modified
        ?workflows
        ())
@@ -2254,6 +2270,11 @@ let to_version_1_config_builder config_builder =
   let module Cb = Terrat_repo_config.Config_builder in
   let { Config_builder.enabled; script } = config_builder in
   { Cb.enabled; script }
+
+let to_version_1_tree_builder tree_builder =
+  let module Tb = Terrat_repo_config.Tree_builder in
+  let { Tree_builder.enabled; script } = tree_builder in
+  { Tb.enabled; script = Some script }
 
 let to_version_1_cost_estimation_provider = function
   | Cost_estimation.Provider.Infracost -> "infracost"
@@ -2692,6 +2713,7 @@ let to_version_1 t =
     parallel_runs;
     storage;
     tags;
+    tree_builder;
     when_modified;
     workflows;
   } =
@@ -2748,6 +2770,11 @@ let to_version_1 t =
     storage =
       map_opt_if_true CCFun.(Storage.equal (Storage.make ()) %> not) to_version_1_storage storage;
     tags = map_opt_if_true CCFun.(Tags.equal (Tags.make ()) %> not) to_version_1_tags tags;
+    tree_builder =
+      map_opt_if_true
+        CCFun.(Tree_builder.equal (Tree_builder.make ()) %> not)
+        to_version_1_tree_builder
+        tree_builder;
     version = "1";
     when_modified =
       map_opt_if_true
