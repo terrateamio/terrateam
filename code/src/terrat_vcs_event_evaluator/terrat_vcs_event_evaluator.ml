@@ -2936,6 +2936,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           assert false
       | Terrat_api_components_work_manifest_result.Work_manifest_build_config_result _ ->
           assert false
+      | Terrat_api_components_work_manifest_result.Work_manifest_build_tree_result _ -> assert false
+      | Terrat_api_components_work_manifest_result.Work_manifest_build_result_failure _ ->
+          assert false
 
     let maybe_create_completed_apply_check
         request_id
@@ -3953,6 +3956,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Terrat_api_components_work_manifest_result.Work_manifest_index_result _ -> assert false
       | Terrat_api_components_work_manifest_result.Work_manifest_build_config_result _ ->
           assert false
+      | Terrat_api_components_work_manifest_result.Work_manifest_build_result_failure _ ->
+          assert false
+      | Terrat_api_components_work_manifest_result.Work_manifest_build_tree_result _ -> assert false
       | Terrat_api_components_work_manifest_result.Work_manifest_tf_operation_result2 result ->
           Dv.client ctx state
           >>= fun client ->
@@ -5822,6 +5828,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               let open Abbs_future_combinators.Infix_result_monad in
               fail (Msg.Build_config_failure msg)
               >>= fun () -> Abb.Future.return (Error (`Noop state))
+          | Wmr.Work_manifest_build_tree_result _ -> assert false
           | Terrat_api_components_work_manifest_result.Work_manifest_tf_operation_result _ ->
               assert false
           | Terrat_api_components_work_manifest_result.Work_manifest_tf_operation_result2 _ ->
