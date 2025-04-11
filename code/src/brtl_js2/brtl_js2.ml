@@ -370,11 +370,17 @@ module Router_output = struct
                      !curr_iteration;
                    ]);
                Abb_js.Future.return ())
-         (try wrap (Brtl_js2_rtng.Match.apply mtch) state
-          with exn ->
-            Brr.Console.(log [ Jstr.of_string "EXN"; exn ]);
-            Brr.El.set_children el [];
-            assert false))
+         (try wrap (Brtl_js2_rtng.Match.apply mtch) state with
+         | Jv.Error err ->
+             Brr.Console.(log [ Jstr.v "EXN"; err ]);
+             Brr.Console.(log [ Jstr.v "EXN"; Jv.Error.stack err ]);
+             Brr.El.set_children el [];
+             assert false
+         | exn ->
+             Brr.Console.(log [ Jstr.v "EXN"; exn ]);
+             Brr.Console.(log [ Jstr.v "EXN"; Jstr.v @@ Printexc.get_backtrace () ]);
+             Brr.El.set_children el [];
+             assert false))
 
   let route_uri wrap iteration state routes prev_match with_cleanup consumed_path el uri =
     let match_opt = match_uri routes uri in

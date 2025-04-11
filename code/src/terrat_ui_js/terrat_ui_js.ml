@@ -1,3 +1,5 @@
+module Github_service = Terrat_ui_js_service.Make (Terrat_ui_js_service_github)
+
 let new_installation_install installation_id state =
   Abb_js.Future.return
     (Brtl_js2.Output.navigate (Uri.of_string ("/i/" ^ installation_id ^ "/repos/refresh")))
@@ -43,20 +45,30 @@ let no_installation state =
   | Ok None -> Abb_js.Future.return (Brtl_js2.Output.navigate (Uri.of_string "/login"))
   | Error _ -> raise (Failure "nyi5")
 
+let main_comp services state =
+  let open Abb_js.Future.Infix_monad in
+  let rec run = function
+    | Terrat_ui_js_service.Service ((module M), s) :: services -> (
+        M.is_logged_in s
+        >>= function
+        | Ok _ -> M.Comp.Main.run (Brtl_js2.State.with_app_state s state)
+        | Error _ -> run services)
+    | [] -> Abb_js.Future.return (Brtl_js2.Output.navigate (Uri.of_string "/login"))
+  in
+  run services
+
 let init state =
   let run =
     let open Abb_js_future_combinators.Infix_result_monad in
     let login_rt () = Brtl_js2_rtng.(root "" / "login") in
     let logout_rt () = Brtl_js2_rtng.(root "" / "logout") in
-    let main_rt () = Brtl_js2_rtng.(root "" / "i" /% Path.string) in
-    let installation_install_rt () = Brtl_js2_rtng.(root "" /? Query.string "installation_id") in
-    let no_installation_rt () = Brtl_js2_rtng.(root "") in
-    let unknown_rt () = Brtl_js2_rtng.(root "") in
-    Terrat_ui_js_service_github.create ()
+    let main_rt () = Brtl_js2_rtng.(root "") in
+    (* let installation_install_rt () = Brtl_js2_rtng.(root "" /? Query.string "installation_id") in *)
+    (* let no_installation_rt () = Brtl_js2_rtng.(root "") in *)
+    (* let unknown_rt () = Brtl_js2_rtng.(root "") in *)
+    Github_service.create ()
     >>= fun github ->
-    let services =
-      [ Terrat_ui_js_service.Service ((module Terrat_ui_js_service_github), github) ]
-    in
+    let services = [ Terrat_ui_js_service.Service ((module Github_service), github) ] in
     ignore
       (Brtl_js2.Router_output.create
          state
@@ -65,12 +77,12 @@ let init state =
            [
              login_rt () --> Terrat_ui_js_comp_login.run services;
              logout_rt () --> Terrat_ui_js_comp_logout.run;
-             main_rt () --> Terrat_ui_js_comp_main.run;
-             installation_install_rt () --> new_installation_install;
-             no_installation_rt () --> no_installation;
-             (unknown_rt ()
-             --> fun _ ->
-             Abb_js.Future.return (Brtl_js2.Output.const Brtl_js2.Brr.El.[ txt' "Unknown" ]));
+             main_rt () --> main_comp services;
+             (* installation_install_rt () --> new_installation_install; *)
+             (* no_installation_rt () --> no_installation; *)
+             (* (unknown_rt () *)
+             (* --> fun _ -> *)
+             (* Abb_js.Future.return (Brtl_js2.Output.const Brtl_js2.Brr.El.[ txt' "Unknown" ])); *)
            ]);
     Abb_js.Future.return (Ok ())
   in
