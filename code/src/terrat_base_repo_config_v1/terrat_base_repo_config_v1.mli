@@ -718,5 +718,6 @@ val integrations : 'a t -> Integrations.t
 val parallel_runs : 'a t -> int
 val storage : 'a t -> Storage.t
 val tags : 'a t -> Tags.t
+val tree_builder : 'a t -> Tree_builder.t
 val when_modified : 'a t -> When_modified.t
 val workflows : 'a t -> Workflows.t

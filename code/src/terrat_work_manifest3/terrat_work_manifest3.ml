@@ -23,6 +23,7 @@ module Step = struct
   type t =
     | Apply
     | Build_config
+    | Build_tree
     | Index
     | Plan
     | Unsafe_apply
@@ -30,6 +31,7 @@ module Step = struct
   let to_string = function
     | Apply -> "apply"
     | Build_config -> "build-config"
+    | Build_tree -> "build-tree"
     | Index -> "index"
     | Plan -> "plan"
     | Unsafe_apply -> "unsafe-apply"
@@ -37,6 +39,7 @@ module Step = struct
   let of_string = function
     | "apply" -> Some Apply
     | "build-config" -> Some Build_config
+    | "build-tree" -> Some Build_tree
     | "index" -> Some Index
     | "plan" -> Some Plan
     | "unsafe-apply" -> Some Unsafe_apply

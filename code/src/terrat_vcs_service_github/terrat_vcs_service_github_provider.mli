@@ -47,6 +47,14 @@ module Db : sig
     Yojson.Safe.t ->
     (unit, [> `Error ]) result Abb.Future.t
 
+  val store_repo_tree :
+    request_id:string ->
+    t ->
+    Api.Account.t ->
+    Api.Ref.t ->
+    Terrat_api_components.Work_manifest_build_tree_result.Files.t ->
+    (unit, [> `Error ]) result Abb.Future.t
+
   val store_flow_state :
     request_id:string -> t -> Uuidm.t -> string -> (unit, [> `Error ]) result Abb.Future.t
 
@@ -99,6 +107,14 @@ module Db : sig
     Api.Account.t ->
     Api.Ref.t ->
     (Yojson.Safe.t option, [> `Error ]) result Abb.Future.t
+
+  val query_repo_tree :
+    request_id:string ->
+    t ->
+    Api.Account.t ->
+    Api.Ref.t ->
+    (Terrat_api_components.Work_manifest_build_tree_result.Files.t option, [> `Error ]) result
+    Abb.Future.t
 
   val query_next_pending_work_manifest :
     request_id:string ->

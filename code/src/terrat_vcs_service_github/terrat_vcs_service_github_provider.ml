@@ -305,6 +305,15 @@ module Db = struct
         /% Var.text "sha"
         /% Var.json "data")
 
+    let insert_repo_tree =
+      Pgsql_io.Typed_sql.(
+        sql
+        /^ read "insert_repo_tree.sql"
+        /% Var.(array (bigint "installation_ids"))
+        /% Var.(str_array (text "shas"))
+        /% Var.(str_array (text "paths"))
+        /% Var.(array (option (boolean "changed"))))
+
     let upsert_flow_state_query = read "update_flow_state.sql"
 
     let upsert_flow_state () =
@@ -391,6 +400,19 @@ module Db = struct
         (* repo_config *)
         Ret.ud' (CCOption.wrap Yojson.Safe.from_string)
         /^ read "select_repo_config.sql"
+        /% Var.bigint "installation_id"
+        /% Var.text "sha")
+
+    let select_repo_tree =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* path *)
+        Ret.text
+        //
+        (* changed *)
+        Ret.(option boolean)
+        /^ read "select_repo_tree.sql"
         /% Var.bigint "installation_id"
         /% Var.text "sha")
 
@@ -945,6 +967,27 @@ module Db = struct
         Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
 
+  let store_repo_tree ~request_id db account ref_ files =
+    let module I = Terrat_api_components.Work_manifest_build_tree_result.Files.Items in
+    let open Abb.Future.Infix_monad in
+    Abbs_future_combinators.List_result.iter
+      ~f:(fun chunk ->
+        Metrics.Psql_query_time.time (Metrics.psql_query_time "insert_repo_tree") (fun () ->
+            Pgsql_io.Prepared_stmt.execute
+              db
+              Sql.insert_repo_tree
+              (CCList.replicate (CCList.length chunk) (Int64.of_int @@ Api.Account.id account))
+              (CCList.replicate (CCList.length chunk) (Api.Ref.to_string ref_))
+              (CCList.map (fun { I.path; _ } -> path) chunk)
+              (CCList.map (fun { I.changed; _ } -> changed) chunk)))
+      (CCList.chunks not_a_bad_chunk_size files)
+    >>= function
+    | Ok () -> Abb.Future.return (Ok ())
+    | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+        Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
   let store_flow_state ~request_id db work_manifest_id data =
     let open Abb.Future.Infix_monad in
     Metrics.Psql_query_time.time (Metrics.psql_query_time "upsert_flow_state") (fun () ->
@@ -1299,6 +1342,24 @@ module Db = struct
     >>= function
     | Ok (repo_config :: _) -> Abb.Future.return (Ok (Some repo_config))
     | Ok [] -> Abb.Future.return (Ok None)
+    | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+        Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
+  let query_repo_tree ~request_id db account ref_ =
+    let module I = Terrat_api_components.Work_manifest_build_tree_result.Files.Items in
+    let open Abb.Future.Infix_monad in
+    Metrics.Psql_query_time.time (Metrics.psql_query_time "select_repo_tree") (fun () ->
+        Pgsql_io.Prepared_stmt.fetch
+          db
+          Sql.select_repo_tree
+          ~f:(fun path changed -> { I.changed; path })
+          (CCInt64.of_int @@ Api.Account.id account)
+          (Api.Ref.to_string ref_))
+    >>= function
+    | Ok [] -> Abb.Future.return (Ok None)
+    | Ok files -> Abb.Future.return (Ok (Some files))
     | Error (#Pgsql_io.err as err) ->
         Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
@@ -2291,6 +2352,7 @@ module Comment (S : S) = struct
     let repo_config_merge_err = read "repo_config_merge_err.tmpl"
     let gate_check_failure = read "gate_check_failure.tmpl"
     let tier_check = read "tier_check.tmpl"
+    let build_tree_failure = read "build_tree_failure.tmpl"
   end
 
   let comment_on_pull_request ~request_id client pull_request msg_type body =
@@ -2756,7 +2818,8 @@ module Comment (S : S) = struct
         in
         let tmpl =
           match CCList.rev work_manifest.Wm.steps with
-          | [] | Wm.Step.Index :: _ | Wm.Step.Build_config :: _ -> assert false
+          | [] | Wm.Step.Index :: _ | Wm.Step.Build_config :: _ | Wm.Step.Build_tree :: _ ->
+              assert false
           | Wm.Step.Plan :: _ -> Tmpl.plan_complete2
           | Wm.Step.(Apply | Unsafe_apply) :: _ -> Tmpl.apply_complete2
         in
@@ -3299,7 +3362,8 @@ module Comment (S : S) = struct
       in
       let tmpl =
         match CCList.rev work_manifest.Wm.steps with
-        | [] | Wm.Step.Index :: _ | Wm.Step.Build_config :: _ -> assert false
+        | [] | Wm.Step.Index :: _ | Wm.Step.Build_config :: _ | Wm.Step.Build_tree :: _ ->
+            assert false
         | Wm.Step.Plan :: _ -> Tmpl.plan_complete
         | Wm.Step.(Apply | Unsafe_apply) :: _ -> Tmpl.apply_complete
       in
@@ -3955,6 +4019,15 @@ module Comment (S : S) = struct
     | Msg.Build_config_err err -> repo_config_err ~request_id ~client ~pull_request ~title:"" err
     | Msg.Build_config_failure err ->
         repo_config_failure ~request_id ~client ~pull_request ~title:"built" err
+    | Msg.Build_tree_failure msg ->
+        let kv = Snabela.Kv.(Map.of_list [ ("msg", string msg) ]) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "BUILD_TREE_FAILURE"
+          Tmpl.build_tree_failure
+          kv
     | Msg.Conflicting_work_manifests wms ->
         let module Wm = Terrat_work_manifest3 in
         let kv =

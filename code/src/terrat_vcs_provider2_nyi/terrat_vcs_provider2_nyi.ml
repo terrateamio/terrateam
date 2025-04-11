@@ -28,6 +28,7 @@ module Db = struct
   let store_index ~request_id db work_manifest_id index = raise (Failure "nyi")
   let store_index_result ~request_id db work_manifest_id index_result = raise (Failure "nyi")
   let store_repo_config_json ~request_id db account ref_ json = raise (Failure "nyi")
+  let store_repo_tree ~request_id db account ref_ files = raise (Failure "nyi")
   let store_flow_state ~request_id db work_manifest_id state = raise (Failure "nyi")
 
   let store_dirspaceflows ~request_id ~base_ref ~branch_ref db repo dirspaceflows =
@@ -39,6 +40,7 @@ module Db = struct
   let query_account_status ~request_id db account = raise (Failure "nyi")
   let query_index ~request_id db account ref_ = raise (Failure "nyi")
   let query_repo_config_json ~request_id db account ref_ = raise (Failure "nyi")
+  let query_repo_tree ~request_id db accoutn ref_ = raise (Failure "nyi")
   let query_next_pending_work_manifest ~request_id db = raise (Failure "nyi")
   let query_flow_state ~request_id db work_manifest_id = raise (Failure "nyi")
   let delete_flow_state ~request_id db work_manifest_id = raise (Failure "nyi")

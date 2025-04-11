@@ -3093,5 +3093,6 @@ let integrations t = t.View.integrations
 let parallel_runs t = t.View.parallel_runs
 let storage t = t.View.storage
 let tags t = t.View.tags
+let tree_builder t = t.View.tree_builder
 let when_modified t = t.View.when_modified
 let workflows t = t.View.workflows
