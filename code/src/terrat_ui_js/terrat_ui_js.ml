@@ -1,3 +1,5 @@
+module Github_service = Terrat_ui_js_service.Make (Terrat_ui_js_service_github)
+
 let new_installation_install installation_id state =
   Abb_js.Future.return
     (Brtl_js2.Output.navigate (Uri.of_string ("/i/" ^ installation_id ^ "/repos/refresh")))
@@ -52,11 +54,9 @@ let init state =
     let installation_install_rt () = Brtl_js2_rtng.(root "" /? Query.string "installation_id") in
     let no_installation_rt () = Brtl_js2_rtng.(root "") in
     let unknown_rt () = Brtl_js2_rtng.(root "") in
-    Terrat_ui_js_service_github.create ()
+    Github_service.create ()
     >>= fun github ->
-    let services =
-      [ Terrat_ui_js_service.Service ((module Terrat_ui_js_service_github), github) ]
-    in
+    let services = [ Terrat_ui_js_service.Service ((module Github_service), github) ] in
     ignore
       (Brtl_js2.Router_output.create
          state
