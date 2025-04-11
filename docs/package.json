@@ -16,6 +16,8 @@
     "@expressive-code/plugin-line-numbers": "^0.35.6",
     "@fontsource/roboto": "^5.0.14",
     "astro": "^4.16.18",
+    "playwright": "^1.51.0",
+    "rehype-mermaid": "^3.0.0",
     "sharp": "^0.32.5",
     "starlight-image-zoom": "^0.7.0",
     "typescript": "^5.5.4"
