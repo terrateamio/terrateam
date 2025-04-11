@@ -29,17 +29,8 @@ type t
 
 val create : unit -> t
 val logout : t -> (unit, [> err ]) result Abb_js.Future.t
-
-val whoami :
-  t ->
-  ( Terrat_api_components.User.t option,
-    [> `Conversion_err of string * string Openapi.Response.t
-    | `Missing_response of string Openapi.Response.t
-    | `Io_err of Jv.Error.t
-    ] )
-  result
-  Abb_js.Future.t
-
+val whoami : t -> (Terrat_api_components.User.t option, [> err ]) result Abb_js.Future.t
+val github_whoami : t -> (Terrat_api_components.Github_user.t, [> err ]) result Abb_js.Future.t
 val client_id : t -> (string, [> err ]) result Abb_js.Future.t
 
 val list_github_installations :

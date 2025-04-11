@@ -16,7 +16,7 @@ q as (
       on gwm.id = gwso.work_manifest
   inner join github_installation_repositories as gir
       on gir.id = gwm.repository
-  inner join github_user_installations as gui
+  inner join github_user_installations2 as gui
       on gir.installation_id = gui.installation_id
   where gui.user_id = $user and gui.installation_id = $installation_id and gwm.id = $work_manifest_id
 )

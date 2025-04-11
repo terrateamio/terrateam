@@ -140,6 +140,14 @@ let whoami t =
   | `OK user -> Abb_js.Future.return (Ok (Some user))
   | `Forbidden -> Abb_js.Future.return (Ok None)
 
+let github_whoami t =
+  let open Abb_js_future_combinators.Infix_result_monad in
+  call (Terrat_api_github_user.Whoami.make ())
+  >>= fun resp ->
+  match Openapi.Response.value resp with
+  | `OK user -> Abb_js.Future.return (Ok user)
+  | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
+
 let client_id t =
   let open Abb_js_future_combinators.Infix_result_monad in
   call (Terrat_api_api_v1.Client_id.make ())

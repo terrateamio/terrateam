@@ -4,25 +4,26 @@ module Sql = struct
   let load () =
     Pgsql_io.Typed_sql.(
       sql
-      // (* avatar_url *) Ret.(option text)
-      // (* email *) Ret.(option text)
-      // (* id *) Ret.uuid
-      // (* name *) Ret.(option text)
-      /^ "select users.avatar_url, users.email, users.id, users.name  from user_sessions as us \
-          inner join users on users.id = us.user_id where us.token = $token"
+      //
+      (* id *)
+      Ret.uuid
+      /^ "select user_id from user_sessions2 where token = $token"
       /% Var.uuid "token")
 
   let store () =
     Pgsql_io.Typed_sql.(
       sql
-      // (* token *) Ret.uuid
-      /^ "insert into user_sessions (user_id, user_agent) values ($user_id, $user_agent) returning \
-          token"
+      //
+      (* token *)
+      Ret.uuid
+      /^ "insert into user_sessions2 (user_id, user_agent) values ($user_id, $user_agent) \
+          returning token"
       /% Var.uuid "user_id"
       /% Var.text "user_agent")
 
   let delete =
-    Pgsql_io.Typed_sql.(sql /^ "delete from user_sessions where token = $token" /% Var.uuid "token")
+    Pgsql_io.Typed_sql.(
+      sql /^ "delete from user_sessions2 where token = $token" /% Var.uuid "token")
 end
 
 let key : Terrat_user.t Brtl_mw_session.Value.t Hmap.key = Brtl_mw_session.create_key ()
@@ -37,7 +38,7 @@ let load storage id =
             Pgsql_io.Prepared_stmt.fetch
               db
               (Sql.load ())
-              ~f:(fun avatar_url email id name -> Terrat_user.make ?avatar_url ?email ?name ~id ())
+              ~f:(fun id -> Terrat_user.make ~id ())
               uuid
             >>= function
             | [] -> Abb.Future.return (Ok None)

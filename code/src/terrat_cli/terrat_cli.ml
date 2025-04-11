@@ -131,8 +131,13 @@ struct
     match Terrat_config.github config with
     | Some github ->
         Github.Service.start config github storage
-        >>= fun service -> Abb.Future.return (Github.Service.routes service)
-    | None -> Abb.Future.return []
+        >>= fun service ->
+        Abb.Future.return
+          (Some
+             (Terrat_vcs_service.Service
+                ( (module Github : Terrat_vcs_service.S with type Service.t = Github.Service.t),
+                  (service : Github.Service.t) )))
+    | None -> Abb.Future.return None
 
   let server () =
     let run () =
@@ -143,7 +148,9 @@ struct
           Terrat_storage.create config
           >>= fun storage ->
           maybe_start_github config storage
-          >>= fun github_routes -> Terrat_server.run config storage github_routes
+          >>= fun github_service ->
+          let services = CCOption.to_list github_service in
+          Terrat_server.run config storage services
       | Error err ->
           Logs.err (fun m -> m "CONFIG : ERROR : %s" (Terrat_config.show_err err));
           exit 1

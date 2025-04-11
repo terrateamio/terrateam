@@ -44,10 +44,10 @@
           "any_of_count": {
             "type": "integer"
           },
-          "token": {
+          "dir": {
             "type": "string"
           },
-          "dir": {
+          "token": {
             "type": "string"
           },
           "workspace": {
@@ -56,6 +56,21 @@
         },
         "required": [
           "token"
+        ],
+        "type": "object"
+      },
+      "github-user": {
+        "additionalProperties": false,
+        "properties": {
+          "avatar_url": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "username"
         ],
         "type": "object"
       },
@@ -685,21 +700,19 @@
       "user": {
         "additionalProperties": false,
         "properties": {
-          "avatar_url": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          },
           "id": {
             "type": "string"
           },
-          "name": {
-            "type": "string"
+          "vcs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           }
         },
         "required": [
-          "id"
+          "id",
+          "vcs"
         ],
         "type": "object"
       },
@@ -2406,6 +2419,26 @@
             "content": {}
           },
           "404": {
+            "content": {}
+          }
+        }
+      }
+    },
+    "/api/v1/github/whoami": {
+      "get": {
+        "operationId": "github-user/whoami",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/github-user"
+                }
+              }
+            }
+          },
+          "403": {
             "content": {}
           }
         }

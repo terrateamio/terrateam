@@ -2,13 +2,15 @@ let terrateam_github_action_workflow_path = ".github/workflows/terrateam.yml"
 let chunk_size = 500
 
 module Sql = struct
+  let read fname =
+    CCOption.get_exn_or
+      fname
+      (CCOption.map Pgsql_io.clean_string (Terrat_files_github_sql.read fname))
+
   let insert_installation_repos () =
     Pgsql_io.Typed_sql.(
       sql
-      /^ "insert into github_installation_repositories (id, installation_id, owner, name, setup) \
-          select * from unnest($id, $installation_id, $owner, $name, $setup) on conflict (id) do \
-          update set (installation_id, owner, name, setup) = (excluded.installation_id, \
-          excluded.owner, excluded.name, excluded.setup)"
+      /^ read "upsert_installation_repos.sql"
       /% Var.(array (bigint "id"))
       /% Var.(array (bigint "installation_id"))
       /% Var.(str_array (text "owner"))

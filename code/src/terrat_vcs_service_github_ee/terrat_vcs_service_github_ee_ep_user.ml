@@ -1,9 +1,14 @@
-let src = Logs.Src.create "ep_user"
+let src = Logs.Src.create "vcs_service_github_ee_ep_user"
 
 module Logs = (val Logs.src_log src : Logs.LOG)
 
 module Installations = struct
   module Sql = struct
+    let read fname =
+      CCOption.get_exn_or
+        fname
+        (CCOption.map Pgsql_io.clean_string (Terrat_files_github_sql.read fname))
+
     let select_installations () =
       Pgsql_io.Typed_sql.(
         sql
@@ -19,10 +24,15 @@ module Installations = struct
     let insert_user_installations () =
       Pgsql_io.Typed_sql.(
         sql
-        /^ "insert into github_user_installations (user_id, installation_id) select * from \
-            unnest($user, $installation) on conflict (user_id, installation_id) do nothing"
+        /^ read "upsert_user_installations.sql"
         /% Var.(array (uuid "user"))
         /% Var.(array (bigint "installation")))
+
+    let delete_user_installations () =
+      Pgsql_io.Typed_sql.(
+        sql
+        /^ "delete from github_user_installations2 where user_id = $user_id"
+        /% Var.uuid "user_id")
   end
 
   let get' config storage user =
@@ -36,8 +46,8 @@ module Installations = struct
     >>= fun installations ->
     Pgsql_pool.with_conn storage ~f:(fun db ->
         let module I = Githubc2_components.Installation in
-        (* This insert will fail if we miss the webhook that an installation has
-           occurred.  The user will probably need to remove and install again. *)
+        Pgsql_io.Prepared_stmt.execute db (Sql.delete_user_installations ()) (Terrat_user.id user)
+        >>= fun () ->
         Pgsql_io.Prepared_stmt.execute
           db
           (Sql.insert_user_installations ())

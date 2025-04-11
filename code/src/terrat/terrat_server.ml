@@ -32,7 +32,13 @@ let maybe_add_admin_routes config storage =
         ]
   | None -> []
 
-let rtng config storage routes =
+let rtng config storage services =
+  let routes =
+    CCList.flat_map
+      (function
+        | Terrat_vcs_service.Service ((module M), service) -> M.Service.routes service)
+      services
+  in
   Brtl_rtng.create
     ~default:(fun ctx ->
       Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Not_found "") ctx))
@@ -48,7 +54,7 @@ let rtng config storage routes =
         @ routes
         @ [
             (* User *)
-            (`GET, Rt.whoami () --> Terrat_ep_whoami.get config storage);
+            (`GET, Rt.whoami () --> Terrat_ep_whoami.get config storage services);
             (`POST, Rt.logout () --> Terrat_ep_logout.post storage);
             (* Infracost *)
             (`POST, Rt.infracost () --> Terrat_ep_infracost.post config storage);
@@ -80,7 +86,7 @@ let start_telemetry config =
       >>= fun () ->
       Abbs_future_combinators.ignore (Abb.Future.fork (Terrat_telemetry.start_ping_loop config))
 
-let run config storage routes =
+let run config storage services =
   let open Abb.Future.Infix_monad in
   let one_min = Duration.of_min 1 in
   let five_min = Duration.of_min 5 in
@@ -107,7 +113,7 @@ let run config storage routes =
         Terrat_nginx_metrics.start uri
     | None -> Abb.Future.return ())
   >>= fun _ ->
-  Brtl.run cfg mw (rtng config storage routes)
+  Brtl.run cfg mw (rtng config storage services)
   >>| function
   | Ok () -> ()
   | Error (`Exn exn) ->
