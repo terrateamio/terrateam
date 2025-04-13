@@ -56,6 +56,7 @@ module Storage_plan_s3 = Terrat_repo_config_storage_plan_s3
 module Storage_plan_terrateam = Terrat_repo_config_storage_plan_terrateam
 module Tags = Terrat_repo_config_tags
 module Terraform_version = Terrat_repo_config_terraform_version
+module Tree_builder = Terrat_repo_config_tree_builder
 module Version_1 = Terrat_repo_config_version_1
 module When_modified = Terrat_repo_config_when_modified
 module When_modified_nullable = Terrat_repo_config_when_modified_nullable

@@ -992,6 +992,19 @@
     "terraform-version": {
       "type": "string"
     },
+    "tree-builder": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": false,
+          "type": "boolean"
+        },
+        "script": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "version-1": {
       "additionalProperties": false,
       "properties": {
@@ -1136,6 +1149,9 @@
         },
         "tags": {
           "$ref": "#/definitions/custom-tags"
+        },
+        "tree_builder": {
+          "$ref": "#/definitions/tree-builder"
         },
         "version": {
           "const": "1",

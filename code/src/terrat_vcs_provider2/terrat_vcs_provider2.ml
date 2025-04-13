@@ -113,6 +113,7 @@ module Msg = struct
     | Bad_glob of string
     | Build_config_err of Terrat_base_repo_config_v1.of_version_1_err
     | Build_config_failure of string
+    | Build_tree_failure of string
     | Conflicting_work_manifests of ('account, 'target) Terrat_work_manifest3.Existing.t list
     | Depends_on_cycle of Terrat_dirspace.t list
     | Dest_branch_no_match of 'pull_request
@@ -203,6 +204,14 @@ module type S = sig
       Yojson.Safe.t ->
       (unit, [> `Error ]) result Abb.Future.t
 
+    val store_repo_tree :
+      request_id:string ->
+      t ->
+      Api.Account.t ->
+      Api.Ref.t ->
+      Terrat_api_components.Work_manifest_build_tree_result.Files.t ->
+      (unit, [> `Error ]) result Abb.Future.t
+
     val store_flow_state :
       request_id:string -> t -> Uuidm.t -> string -> (unit, [> `Error ]) result Abb.Future.t
 
@@ -252,6 +261,14 @@ module type S = sig
       Api.Account.t ->
       Api.Ref.t ->
       (Yojson.Safe.t option, [> `Error ]) result Abb.Future.t
+
+    val query_repo_tree :
+      request_id:string ->
+      t ->
+      Api.Account.t ->
+      Api.Ref.t ->
+      (Terrat_api_components.Work_manifest_build_tree_result.Files.t option, [> `Error ]) result
+      Abb.Future.t
 
     val query_next_pending_work_manifest :
       request_id:string ->

@@ -10,6 +10,7 @@ unified_run_types as (
            when 'plan' then 'plan'
            when 'index' then 'index'
            when 'build-config' then 'build-config'
+           when 'build-tree' then 'build-tree'
            end) as run_type
     from github_work_manifests as gwm
 ),

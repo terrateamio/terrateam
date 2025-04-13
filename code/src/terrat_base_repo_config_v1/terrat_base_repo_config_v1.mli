@@ -548,6 +548,14 @@ module Tags : sig
   [@@deriving make, show, yojson, eq]
 end
 
+module Tree_builder : sig
+  type t = {
+    enabled : bool; [@default false]
+    script : string; [@default ""]
+  }
+  [@@deriving make, show, yojson, eq]
+end
+
 module Workflows : sig
   module Entry : sig
     module Op : sig
@@ -610,6 +618,7 @@ module View : sig
     parallel_runs : int; [@default 3]
     storage : Storage.t; [@default Storage.make ()]
     tags : Tags.t; [@default Tags.make ()]
+    tree_builder : Tree_builder.t; [@default Tree_builder.make ()]
     when_modified : When_modified.t; [@default When_modified.make ()]
     workflows : Workflows.t; [@default []]
   }
@@ -709,5 +718,6 @@ val integrations : 'a t -> Integrations.t
 val parallel_runs : 'a t -> int
 val storage : 'a t -> Storage.t
 val tags : 'a t -> Tags.t
+val tree_builder : 'a t -> Tree_builder.t
 val when_modified : 'a t -> When_modified.t
 val workflows : 'a t -> Workflows.t

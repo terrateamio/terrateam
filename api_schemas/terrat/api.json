@@ -628,6 +628,7 @@
         "enum": [
           "apply",
           "build-config",
+          "build-tree",
           "index",
           "plan"
         ],
@@ -735,6 +736,9 @@
           },
           {
             "$ref": "#/components/schemas/work-manifest-done"
+          },
+          {
+            "$ref": "#/components/schemas/work-manifest-build-tree"
           }
         ]
       },
@@ -811,16 +815,18 @@
         "type": "object"
       },
       "work-manifest-build-config-result": {
-        "oneOf": [
-          {
-            "$ref": "#/components/schemas/work-manifest-build-config-result-success"
-          },
-          {
-            "$ref": "#/components/schemas/work-manifest-build-config-result-failure"
+        "additionalProperties": false,
+        "properties": {
+          "config": {
+            "type": null
           }
-        ]
+        },
+        "required": [
+          "config"
+        ],
+        "type": "object"
       },
-      "work-manifest-build-config-result-failure": {
+      "work-manifest-build-result-failure": {
         "additionalProperties": false,
         "properties": {
           "msg": {
@@ -832,15 +838,55 @@
         ],
         "type": "object"
       },
-      "work-manifest-build-config-result-success": {
+      "work-manifest-build-tree": {
         "additionalProperties": false,
         "properties": {
+          "base_ref": {
+            "type": "string"
+          },
           "config": {
             "type": null
+          },
+          "token": {
+            "type": "string"
+          },
+          "type": {
+            "const": "build-tree",
+            "type": "string"
           }
         },
         "required": [
-          "config"
+          "base_ref",
+          "config",
+          "token",
+          "type"
+        ],
+        "type": "object"
+      },
+      "work-manifest-build-tree-result": {
+        "additionalProperties": false,
+        "properties": {
+          "files": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "changed": {
+                  "type": "boolean"
+                },
+                "path": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "files"
         ],
         "type": "object"
       },
@@ -1120,6 +1166,12 @@
           },
           {
             "$ref": "#/components/schemas/work-manifest-build-config-result"
+          },
+          {
+            "$ref": "#/components/schemas/work-manifest-build-tree-result"
+          },
+          {
+            "$ref": "#/components/schemas/work-manifest-build-result-failure"
           },
           {
             "$ref": "#/components/schemas/work-manifest-tf-operation-result"

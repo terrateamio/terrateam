@@ -200,6 +200,18 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               time))
       (fun () -> S.Db.query_repo_config_json ~request_id db account ref_)
 
+  let query_repo_tree request_id db account ref_ =
+    Abbs_time_it.run
+      (fun time ->
+        Logs.info (fun m ->
+            m
+              "%s : QUERY_REPO_TREE : account=%s : ref=%s : time=%f"
+              request_id
+              (S.Api.Account.to_string account)
+              (S.Api.Ref.to_string ref_)
+              time))
+      (fun () -> S.Db.query_repo_tree ~request_id db account ref_)
+
   let store_repo_config_json request_id db account ref_ repo_config =
     Abbs_time_it.run
       (fun time ->
@@ -211,6 +223,18 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               (S.Api.Ref.to_string ref_)
               time))
       (fun () -> S.Db.store_repo_config_json ~request_id db account ref_ repo_config)
+
+  let store_repo_tree request_id db account ref_ files =
+    Abbs_time_it.run
+      (fun time ->
+        Logs.info (fun m ->
+            m
+              "%s : STORE_REPO_TREE : account=%s : ref=%s : time=%f"
+              request_id
+              (S.Api.Account.to_string account)
+              (S.Api.Ref.to_string ref_)
+              time))
+      (fun () -> S.Db.store_repo_tree ~request_id db account ref_ files)
 
   let cleanup_repo_configs request_id db =
     Abbs_time_it.run
@@ -820,6 +844,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Test_index_required
       | Test_more_layers_to_run
       | Test_op_kind
+      | Test_tree_build_required
+      | Tree_build_not_required
+      | Tree_build_required
       | Unlock
       | Unset_work_manifest_id
       | Update_drift_schedule
@@ -893,6 +920,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Test_index_required -> "test_index_required"
       | Test_more_layers_to_run -> "test_more_layers_to_run"
       | Test_op_kind -> "test_op_kind"
+      | Test_tree_build_required -> "test_tree_build_required"
+      | Tree_build_not_required -> "tree_build_not_required"
+      | Tree_build_required -> "tree_build_required"
       | Unlock -> "unlock"
       | Unset_work_manifest_id -> "unset_work_manifest_id"
       | Update_drift_schedule -> "update_drift_schedule"
@@ -965,6 +995,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | "test_index_required" -> Some Test_index_required
       | "test_more_layers_to_run" -> Some Test_more_layers_to_run
       | "test_op_kind" -> Some Test_op_kind
+      | "test_tree_build_required" -> Some Test_tree_build_required
+      | "tree_build_not_required" -> Some Tree_build_not_required
+      | "tree_build_required" -> Some Tree_build_required
       | "unlock" -> Some Unlock
       | "unset_work_manifest_id" -> Some Unset_work_manifest_id
       | "update_drift_schedule" -> Some Update_drift_schedule
@@ -1657,6 +1690,16 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         (Event.account state.State.event)
         working_branch_ref'
 
+    let query_built_tree ctx state =
+      let open Abbs_future_combinators.Infix_result_monad in
+      working_branch_ref ctx state
+      >>= fun working_branch_ref' ->
+      query_repo_tree
+        state.State.request_id
+        (Ctx.storage ctx)
+        (Event.account state.State.event)
+        working_branch_ref'
+
     let repo_config_with_provenance ctx state =
       let account = Event.account state.State.event in
       let repo = Event.repo state.State.event in
@@ -1719,6 +1762,16 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       working_branch_ref ctx state
       >>= fun working_branch_ref' ->
       query_index
+        state.State.request_id
+        (Ctx.storage ctx)
+        (Event.account state.State.event)
+        working_branch_ref'
+
+    let query_repo_tree ctx state =
+      let open Abbs_future_combinators.Infix_result_monad in
+      working_branch_ref ctx state
+      >>= fun working_branch_ref' ->
+      query_repo_tree
         state.State.request_id
         (Ctx.storage ctx)
         (Event.account state.State.event)
@@ -1899,7 +1952,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       let account = Event.account state.State.event in
       let repo = Event.repo state.State.event in
       let fetch () =
+        let module I = Terrat_api_components.Work_manifest_build_tree_result.Files.Items in
         let open Abbs_future_combinators.Infix_result_monad in
+        (* TODO: Do not fetch the branch if we are going to use a built tree *)
         Abbs_future_combinators.Infix_result_app.(
           (fun repo_config repo_tree -> (repo_config, repo_tree))
           <$> repo_config ctx state
@@ -1907,6 +1962,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         >>= fun (repo_config, repo_tree) ->
         query_index ctx state
         >>= fun index ->
+        query_repo_tree ctx state
+        >>= fun built_repo_tree ->
         out_of_change_applies ctx state
         >>= fun out_of_change_applies ->
         applied_dirspaces ctx state
@@ -1919,6 +1976,39 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         >>= fun diff ->
         tag_query ctx state
         >>= fun tag_query ->
+        (* If there is a built repo tree, use that, otherwise the one derived
+           from the repository. *)
+        let repo_tree =
+          CCOption.map_or
+            ~default:repo_tree
+            (fun built_tree -> CCList.map (fun { I.path; _ } -> path) built_tree)
+            built_repo_tree
+        in
+        let changed_files =
+          Terrat_data.String_set.of_list
+          @@ CCList.flat_map
+               (function
+                 | Terrat_change.Diff.Add { filename }
+                 | Terrat_change.Diff.Change { filename }
+                 | Terrat_change.Diff.Remove { filename } -> [ filename ]
+                 | Terrat_change.Diff.Move { filename; previous_filename } ->
+                     [ filename; previous_filename ])
+               diff
+        in
+        let diff =
+          CCOption.map_or
+            ~default:diff
+            (fun built_tree ->
+              CCList.filter_map
+                (function
+                  | { I.path; changed = Some true } ->
+                      Some (Terrat_change.Diff.Change { filename = path })
+                  | { I.path; changed = None } when Terrat_data.String_set.mem path changed_files ->
+                      Some (Terrat_change.Diff.Change { filename = path })
+                  | _ -> None)
+                built_tree)
+            built_repo_tree
+        in
         Abbs_time_it.run (log_time state.State.request_id "DERIVE_AND_COMPUTE") (fun () ->
             Abb.Thread.run (fun () ->
                 let repo_config =
@@ -2936,6 +3026,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           assert false
       | Terrat_api_components_work_manifest_result.Work_manifest_build_config_result _ ->
           assert false
+      | Terrat_api_components_work_manifest_result.Work_manifest_build_tree_result _ -> assert false
+      | Terrat_api_components_work_manifest_result.Work_manifest_build_result_failure _ ->
+          assert false
 
     let maybe_create_completed_apply_check
         request_id
@@ -3825,6 +3918,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                 `Pull_request pr
             | Vcs.Target.Pr _, Wm.Step.Index -> `Index
             | Vcs.Target.Pr _, Wm.Step.Build_config -> `Build_config
+            | Vcs.Target.Pr _, Wm.Step.Build_tree -> `Build_tree
             | Vcs.Target.Drift _, _ -> `Drift
           in
           let run_kind_str =
@@ -3833,6 +3927,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             | `Index -> "index"
             | `Drift -> "drift"
             | `Build_config -> "build-config"
+            | `Build_tree -> "build-tree"
           in
           let run_kind_data =
             let module Rkd = Terrat_api_components.Work_manifest_plan.Run_kind_data in
@@ -3842,7 +3937,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                 Some
                   (Rkd.Run_kind_data_pull_request
                      { Rkdpr.id = S.Api.Pull_request.Id.to_string (S.Api.Pull_request.id pr) })
-            | `Index | `Drift | `Build_config -> None
+            | `Index | `Drift | `Build_config | `Build_tree -> None
           in
           match step with
           | Wm.Step.Plan ->
@@ -3943,7 +4038,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                             capabilities = [];
                           })))
           | Wm.Step.Index -> assert false
-          | Wm.Step.Build_config -> assert false)
+          | Wm.Step.Build_config -> assert false
+          | Wm.Step.Build_tree -> assert false)
       | None -> Abb.Future.return (Ok None)
 
     let run_op_work_manifest_iter_result op ctx state result work_manifest =
@@ -3953,6 +4049,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Terrat_api_components_work_manifest_result.Work_manifest_index_result _ -> assert false
       | Terrat_api_components_work_manifest_result.Work_manifest_build_config_result _ ->
           assert false
+      | Terrat_api_components_work_manifest_result.Work_manifest_build_result_failure _ ->
+          assert false
+      | Terrat_api_components_work_manifest_result.Work_manifest_build_tree_result _ -> assert false
       | Terrat_api_components_work_manifest_result.Work_manifest_tf_operation_result2 result ->
           Dv.client ctx state
           >>= fun client ->
@@ -5537,6 +5636,303 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         | None -> Abb.Future.return (Ok (Id.Config_build_required, state))
       else Abb.Future.return (Ok (Id.Config_build_not_required, state))
 
+    let test_tree_build_required ctx state =
+      let open Abbs_future_combinators.Infix_result_monad in
+      Dv.repo_config ctx state
+      >>= fun repo_config ->
+      let module V1 = Terrat_base_repo_config_v1 in
+      let tree_builder = V1.tree_builder repo_config in
+      if tree_builder.V1.Tree_builder.enabled then
+        Dv.query_built_tree ctx state
+        >>= function
+        | Some _ -> Abb.Future.return (Ok (Id.Tree_build_not_required, state))
+        | None -> Abb.Future.return (Ok (Id.Tree_build_required, state))
+      else Abb.Future.return (Ok (Id.Tree_build_not_required, state))
+
+    let run_tree_builder_work_manifest_iter =
+      H.eval_work_manifest_iter
+        ~name:"TREE_BUILDER"
+        ~create:(fun ctx state ->
+          let module Wm = Terrat_work_manifest3 in
+          let open Abbs_future_combinators.Infix_result_monad in
+          let account = Event.account state.State.event in
+          let repo = Event.repo state.State.event in
+          Dv.client ctx state
+          >>= fun client ->
+          Dv.base_ref ctx state
+          >>= fun base_ref' ->
+          Dv.working_branch_ref ctx state
+          >>= fun working_branch_ref' ->
+          Dv.target ctx state
+          >>= fun target ->
+          let work_manifest =
+            {
+              Wm.account;
+              base_ref = S.Api.Ref.to_string base_ref';
+              branch_ref = S.Api.Ref.to_string working_branch_ref';
+              changes = [];
+              completed_at = None;
+              created_at = ();
+              denied_dirspaces = [];
+              environment = None;
+              id = ();
+              initiator = Event.initiator state.State.event;
+              run_id = ();
+              state = ();
+              steps = [ Wm.Step.Build_tree ];
+              tag_query = Terrat_tag_query.any;
+              target;
+            }
+          in
+          create_work_manifest state.State.request_id (Ctx.storage ctx) work_manifest
+          >>= fun work_manifest ->
+          H.run_interactive ctx state (fun () ->
+              let module Status = Terrat_commit_check.Status in
+              Dv.branch_ref ctx state
+              >>= fun branch_ref' ->
+              let check =
+                S.Commit_check.make
+                  ~config:(Ctx.config ctx)
+                  ~description:"Queued"
+                  ~title:"terrateam build-tree"
+                  ~status:Status.Queued
+                  ~work_manifest
+                  ~repo
+                  account
+              in
+              create_commit_checks state.State.request_id client repo branch_ref' [ check ]
+              >>= fun () -> Abb.Future.return (Ok state))
+          >>= fun state ->
+          Logs.info (fun m ->
+              m
+                "%s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s"
+                state.State.request_id
+                Uuidm.pp
+                work_manifest.Wm.id
+                (S.Api.Ref.to_string base_ref')
+                (S.Api.Ref.to_string working_branch_ref'));
+          Abb.Future.return (Ok [ work_manifest ]))
+        ~update:(fun ctx state work_manifest ->
+          let module Wm = Terrat_work_manifest3 in
+          let open Abbs_future_combinators.Infix_result_monad in
+          let work_manifest =
+            { work_manifest with Wm.steps = work_manifest.Wm.steps @ [ Wm.Step.Build_tree ] }
+          in
+          update_work_manifest_steps
+            state.State.request_id
+            (Ctx.storage ctx)
+            work_manifest.Wm.id
+            work_manifest.Wm.steps
+          >>= fun () ->
+          H.run_interactive ctx state (fun () ->
+              let module Status = Terrat_commit_check.Status in
+              let account = Event.account state.State.event in
+              let repo = Event.repo state.State.event in
+              Dv.client ctx state
+              >>= fun client ->
+              Dv.branch_ref ctx state
+              >>= fun branch_ref' ->
+              let check =
+                S.Commit_check.make
+                  ~config:(Ctx.config ctx)
+                  ~description:"Queued"
+                  ~title:"terrateam build-tree"
+                  ~status:Status.Queued
+                  ~work_manifest
+                  ~repo
+                  account
+              in
+              create_commit_checks state.State.request_id client repo branch_ref' [ check ]
+              >>= fun () -> Abb.Future.return (Ok state))
+          >>= fun _ -> Abb.Future.return (Ok [ work_manifest ]))
+        ~run_success:(fun ctx state work_manifest ->
+          let open Abbs_future_combinators.Infix_result_monad in
+          H.run_interactive ctx state (fun () ->
+              let account = Event.account state.State.event in
+              let repo = Event.repo state.State.event in
+              Dv.client ctx state
+              >>= fun client ->
+              Dv.pull_request ctx state
+              >>= fun pull_request ->
+              let module Status = Terrat_commit_check.Status in
+              let check =
+                S.Commit_check.make
+                  ~config:(Ctx.config ctx)
+                  ~description:"Running"
+                  ~title:"terrateam build-tree"
+                  ~status:Status.Running
+                  ~work_manifest
+                  ~repo
+                  account
+              in
+              create_commit_checks
+                state.State.request_id
+                client
+                repo
+                (S.Api.Pull_request.branch_ref pull_request)
+                [ check ]
+              >>= fun () -> Abb.Future.return (Ok state))
+          >>= fun _ -> Abb.Future.return (Ok ()))
+        ~run_failure:(fun ctx state err work_manifest ->
+          let open Abbs_future_combinators.Infix_result_monad in
+          H.run_interactive ctx state (fun () ->
+              let account = Event.account state.State.event in
+              let repo = Event.repo state.State.event in
+              Dv.client ctx state
+              >>= fun client ->
+              Dv.pull_request ctx state
+              >>= fun pull_request ->
+              let module Status = Terrat_commit_check.Status in
+              let check =
+                S.Commit_check.make
+                  ~config:(Ctx.config ctx)
+                  ~description:"Failed"
+                  ~title:"terrateam build-tree"
+                  ~status:Status.Failed
+                  ~work_manifest
+                  ~repo
+                  account
+              in
+              create_commit_checks
+                state.State.request_id
+                client
+                repo
+                (S.Api.Pull_request.branch_ref pull_request)
+                [ check ]
+              >>= fun () ->
+              H.publish_run_failure
+                state.State.request_id
+                client
+                (S.Api.User.to_string @@ Event.user state.State.event)
+                pull_request
+                err
+              >>= fun () -> Abb.Future.return (Ok state))
+          >>= fun _ -> Abb.Future.return (Ok ()))
+        ~initiate:(fun ctx state encryption_key run_id sha work_manifest ->
+          let module Wm = Terrat_work_manifest3 in
+          let open Abbs_future_combinators.Infix_result_monad in
+          H.initiate_work_manifest
+            state
+            state.State.request_id
+            (Ctx.storage ctx)
+            run_id
+            sha
+            work_manifest
+          >>= function
+          | Some { Wm.id; branch_ref; base_ref; state = Wm.State.(Queued | Running); _ } ->
+              Dv.base_branch_name ctx state
+              >>= fun base_branch_name' ->
+              Dv.repo_config ctx state
+              >>= fun repo_config ->
+              let module B = Terrat_api_components.Work_manifest_build_tree in
+              let config =
+                repo_config
+                |> Terrat_base_repo_config_v1.to_version_1
+                |> Terrat_repo_config.Version_1.to_yojson
+              in
+              let response =
+                Terrat_api_components.Work_manifest.Work_manifest_build_tree
+                  {
+                    B.base_ref = S.Api.Ref.to_string base_branch_name';
+                    token = H.token encryption_key id;
+                    type_ = "build-tree";
+                    config;
+                  }
+              in
+              Abb.Future.return (Ok (Some response))
+          | Some _ | None -> Abb.Future.return (Ok None))
+        ~result:(fun ctx state result work_manifest ->
+          let module Wm = Terrat_work_manifest3 in
+          let module Wmr = Terrat_api_components.Work_manifest_result in
+          let module Bt = Terrat_api_components.Work_manifest_build_tree_result in
+          let module Bf = Terrat_api_components.Work_manifest_build_result_failure in
+          let open Abbs_future_combinators.Infix_result_monad in
+          let fail msg =
+            H.run_interactive ctx state (fun () ->
+                let account = Event.account state.State.event in
+                let repo = Event.repo state.State.event in
+                Dv.client ctx state
+                >>= fun client ->
+                Dv.pull_request ctx state
+                >>= fun pull_request ->
+                let module Status = Terrat_commit_check.Status in
+                let check =
+                  S.Commit_check.make
+                    ~config:(Ctx.config ctx)
+                    ~description:"Failed"
+                    ~title:"terrateam build-tree"
+                    ~status:Status.Failed
+                    ~work_manifest
+                    ~repo
+                    account
+                in
+                create_commit_checks
+                  state.State.request_id
+                  client
+                  repo
+                  (S.Api.Pull_request.branch_ref pull_request)
+                  [ check ]
+                >>= fun () ->
+                publish_msg
+                  state.State.request_id
+                  client
+                  (S.Api.User.to_string @@ Event.user state.State.event)
+                  pull_request
+                  msg
+                >>= fun () -> Abb.Future.return (Ok state))
+            >>= fun _ -> Abb.Future.return (Ok ())
+          in
+          match result with
+          | Wmr.Work_manifest_build_tree_result { Bt.files } ->
+              let open Abbs_future_combinators.Infix_result_monad in
+              let account = Event.account state.State.event in
+              Dv.working_branch_ref ctx state
+              >>= fun working_branch_ref' ->
+              store_repo_tree
+                state.State.request_id
+                (Ctx.storage ctx)
+                account
+                working_branch_ref'
+                files
+              >>= fun () ->
+              H.run_interactive ctx state (fun () ->
+                  let account = Event.account state.State.event in
+                  let repo = Event.repo state.State.event in
+                  Dv.client ctx state
+                  >>= fun client ->
+                  Dv.pull_request ctx state
+                  >>= fun pull_request ->
+                  let module Status = Terrat_commit_check.Status in
+                  let check =
+                    S.Commit_check.make
+                      ~config:(Ctx.config ctx)
+                      ~description:"Completed"
+                      ~title:"terrateam build-tree"
+                      ~status:Status.Completed
+                      ~work_manifest
+                      ~repo
+                      account
+                  in
+                  create_commit_checks
+                    state.State.request_id
+                    client
+                    repo
+                    (S.Api.Pull_request.branch_ref pull_request)
+                    [ check ]
+                  >>= fun () -> Abb.Future.return (Ok state))
+              >>= fun _ -> Abb.Future.return (Ok ())
+          | Wmr.Work_manifest_build_result_failure { Bf.msg } ->
+              let open Abbs_future_combinators.Infix_result_monad in
+              fail (Msg.Build_tree_failure msg)
+              >>= fun () -> Abb.Future.return (Error (`Noop state))
+          | Wmr.Work_manifest_build_config_result _ -> assert false
+          | Terrat_api_components_work_manifest_result.Work_manifest_tf_operation_result _ ->
+              assert false
+          | Terrat_api_components_work_manifest_result.Work_manifest_tf_operation_result2 _ ->
+              assert false
+          | Terrat_api_components_work_manifest_result.Work_manifest_index_result _ -> assert false)
+        ~fallthrough:H.log_state_err_iter
+
     let run_config_builder_work_manifest_iter =
       H.eval_work_manifest_iter
         ~name:"CONFIG_BUILDER"
@@ -5600,7 +5996,39 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                 (S.Api.Ref.to_string base_ref')
                 (S.Api.Ref.to_string working_branch_ref'));
           Abb.Future.return (Ok [ work_manifest ]))
-        ~update:(fun ctx state work_manifest -> raise (Failure "nyi"))
+        ~update:(fun ctx state work_manifest ->
+          let module Wm = Terrat_work_manifest3 in
+          let open Abbs_future_combinators.Infix_result_monad in
+          let work_manifest =
+            { work_manifest with Wm.steps = work_manifest.Wm.steps @ [ Wm.Step.Build_config ] }
+          in
+          update_work_manifest_steps
+            state.State.request_id
+            (Ctx.storage ctx)
+            work_manifest.Wm.id
+            work_manifest.Wm.steps
+          >>= fun () ->
+          H.run_interactive ctx state (fun () ->
+              let module Status = Terrat_commit_check.Status in
+              let account = Event.account state.State.event in
+              let repo = Event.repo state.State.event in
+              Dv.client ctx state
+              >>= fun client ->
+              Dv.branch_ref ctx state
+              >>= fun branch_ref' ->
+              let check =
+                S.Commit_check.make
+                  ~config:(Ctx.config ctx)
+                  ~description:"Queued"
+                  ~title:"terrateam build-config"
+                  ~status:Status.Queued
+                  ~work_manifest
+                  ~repo
+                  account
+              in
+              create_commit_checks state.State.request_id client repo branch_ref' [ check ]
+              >>= fun () -> Abb.Future.return (Ok state))
+          >>= fun _ -> Abb.Future.return (Ok [ work_manifest ]))
         ~run_success:(fun ctx state work_manifest ->
           let open Abbs_future_combinators.Infix_result_monad in
           H.run_interactive ctx state (fun () ->
@@ -5676,8 +6104,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             work_manifest
           >>= function
           | Some { Wm.id; branch_ref; base_ref; state = Wm.State.(Queued | Running); _ } ->
-              Dv.base_ref ctx state
-              >>= fun base_ref' ->
               Dv.repo_config ctx state
               >>= fun repo_config ->
               Dv.repo_tree_branch ctx state
@@ -5714,7 +6140,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               let response =
                 Terrat_api_components.Work_manifest.Work_manifest_build_config
                   {
-                    B.base_ref = S.Api.Ref.to_string base_ref';
+                    B.base_ref = S.Api.Ref.to_string base_branch_name;
                     token = H.token encryption_key id;
                     type_ = "build-config";
                     config;
@@ -5726,8 +6152,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           let module Wm = Terrat_work_manifest3 in
           let module Wmr = Terrat_api_components.Work_manifest_result in
           let module Bc = Terrat_api_components.Work_manifest_build_config_result in
-          let module Bcs = Terrat_api_components.Work_manifest_build_config_result_success in
-          let module Bcf = Terrat_api_components.Work_manifest_build_config_result_failure in
+          let module Bf = Terrat_api_components.Work_manifest_build_result_failure in
           let open Abbs_future_combinators.Infix_result_monad in
           let fail msg =
             H.run_interactive ctx state (fun () ->
@@ -5765,8 +6190,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             >>= fun _ -> Abb.Future.return (Ok ())
           in
           match result with
-          | Wmr.Work_manifest_build_config_result
-              (Bc.Work_manifest_build_config_result_success { Bcs.config }) -> (
+          | Wmr.Work_manifest_build_config_result { Bc.config } -> (
               let module V1 = Terrat_base_repo_config_v1 in
               let open Abb.Future.Infix_monad in
               Abb.Future.return (V1.of_version_1_json config)
@@ -5817,11 +6241,11 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                   let open Abbs_future_combinators.Infix_result_monad in
                   fail (Msg.Build_config_failure msg)
                   >>= fun () -> Abb.Future.return (Error (`Noop state)))
-          | Wmr.Work_manifest_build_config_result
-              (Bc.Work_manifest_build_config_result_failure { Bcf.msg }) ->
+          | Wmr.Work_manifest_build_result_failure { Bf.msg } ->
               let open Abbs_future_combinators.Infix_result_monad in
               fail (Msg.Build_config_failure msg)
               >>= fun () -> Abb.Future.return (Error (`Noop state))
+          | Wmr.Work_manifest_build_tree_result _ -> assert false
           | Terrat_api_components_work_manifest_result.Work_manifest_tf_operation_result _ ->
               assert false
           | Terrat_api_components_work_manifest_result.Work_manifest_tf_operation_result2 _ ->
@@ -6087,6 +6511,23 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       Flow.Flow.(
         action [ Flow.Step.make ~id:Id.Store_pull_request ~f:(eval_step F.store_pull_request) () ])
     in
+    let tree_builder_flow =
+      Flow.Flow.(
+        choice
+          ~id:Id.Test_tree_build_required
+          ~f:F.test_tree_build_required
+          [
+            ( Id.Tree_build_required,
+              action
+                [
+                  Flow.Step.make
+                    ~id:Id.Run_work_manifest_iter
+                    ~f:(eval_step F.run_tree_builder_work_manifest_iter)
+                    ();
+                ] );
+            (Id.Tree_build_not_required, action []);
+          ])
+    in
     let config_builder_flow =
       Flow.Flow.(
         choice
@@ -6106,9 +6547,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     in
     let index_flow =
       Flow.Flow.(
-        seq
-          config_builder_flow
-          (choice
+        seq tree_builder_flow
+        @@ seq config_builder_flow
+        @@ choice
              ~id:Id.Test_index_required
              ~f:F.test_index_required
              [
@@ -6121,7 +6562,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                        ();
                    ] );
                (Id.Index_not_required, action []);
-             ]))
+             ])
     in
     let event_kind_op_flow =
       let layers_flow op next_layer_flow =

@@ -161,6 +161,7 @@ type t = {
   parallel_runs : int; [@default 3]
   storage : Storage.t option; [@default None]
   tags : Terrat_repo_config_custom_tags.t option; [@default None]
+  tree_builder : Terrat_repo_config_tree_builder.t option; [@default None]
   version : Version.t; [@default "1"]
   when_modified : Terrat_repo_config_when_modified.t option; [@default None]
   workflows : Workflows.t option; [@default None]
