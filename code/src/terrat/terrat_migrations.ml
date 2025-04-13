@@ -128,6 +128,7 @@ let migrations =
     ("add-gatekeeping", run_file_sql "2025-03-30-add-gatekeeping.sql");
     ("add-tiers", run_file_sql "2025-04-05-add-tiers.sql");
     ("add-users2-tables", run_file_sql "2025-04-07-refactor-user-tables.sql");
+    ("add-tree-builder", run_file_sql "2025-04-11-add-tree-builder.sql");
   ]
 
 let run config storage = Mig.run (config, storage) migrations
