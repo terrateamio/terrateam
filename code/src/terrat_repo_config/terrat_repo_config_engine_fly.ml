@@ -1,6 +1,6 @@
 module Name = struct
   let t_of_yojson = function
-    | `String "terragrunt" -> Ok "terragrunt"
+    | `String "fly" -> Ok "fly"
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
   type t = (string[@of_yojson t_of_yojson])
@@ -8,10 +8,7 @@ module Name = struct
 end
 
 type t = {
+  config_file : string;
   name : Name.t;
-  override_tf_cmd : string option; [@default None]
-  tf_cmd : string option; [@default None]
-  tf_version : string option; [@default None]
-  version : string option; [@default None]
 }
 [@@deriving yojson { strict = true; meta = true }, make, show, eq]

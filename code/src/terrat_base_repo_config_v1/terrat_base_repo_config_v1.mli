@@ -417,22 +417,48 @@ end
 module Engine : sig
   module Cdktf : sig
     type t = {
+      override_tf_cmd : string option;
       tf_cmd : string; [@default "terraform"]
       tf_version : string; [@default "latest"]
     }
     [@@deriving make, show, yojson, eq]
   end
 
+  module Custom : sig
+    type t = {
+      apply : string list option;
+      diff : string list option;
+      init : string list option;
+      outputs : string list option;
+      plan : string list option;
+      unsafe_apply : string list option;
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  module Fly : sig
+    type t = { config_file : string } [@@deriving make, show, yojson, eq]
+  end
+
   module Opentofu : sig
-    type t = { version : string option } [@@deriving make, show, yojson, eq]
+    type t = {
+      override_tf_cmd : string option;
+      version : string option;
+    }
+    [@@deriving make, show, yojson, eq]
   end
 
   module Terraform : sig
-    type t = { version : string option } [@@deriving make, show, yojson, eq]
+    type t = {
+      override_tf_cmd : string option;
+      version : string option;
+    }
+    [@@deriving make, show, yojson, eq]
   end
 
   module Terragrunt : sig
     type t = {
+      override_tf_cmd : string option;
       tf_cmd : string; [@default "terraform"]
       tf_version : string option;
       version : string option;
@@ -442,10 +468,12 @@ module Engine : sig
 
   type t =
     | Cdktf of Cdktf.t
+    | Custom of Custom.t
+    | Fly of Fly.t
     | Opentofu of Opentofu.t
+    | Pulumi
     | Terraform of Terraform.t
     | Terragrunt of Terragrunt.t
-    | Pulumi
   [@@deriving show, yojson, eq]
 end
 
