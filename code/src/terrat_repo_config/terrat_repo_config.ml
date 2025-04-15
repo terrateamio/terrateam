@@ -34,6 +34,7 @@ module Engine_cdktf = Terrat_repo_config_engine_cdktf
 module Engine_custom = Terrat_repo_config_engine_custom
 module Engine_fly = Terrat_repo_config_engine_fly
 module Engine_opentofu = Terrat_repo_config_engine_opentofu
+module Engine_other = Terrat_repo_config_engine_other
 module Engine_pulumi = Terrat_repo_config_engine_pulumi
 module Engine_terraform = Terrat_repo_config_engine_terraform
 module Engine_terragrunt = Terrat_repo_config_engine_terragrunt

@@ -843,6 +843,7 @@ module Engine = struct
     | Custom of Custom.t
     | Fly of Fly.t
     | Opentofu of Opentofu.t
+    | Other of Yojson.Safe.t
     | Pulumi
     | Terraform of Terraform.t
     | Terragrunt of Terragrunt.t
@@ -1631,6 +1632,7 @@ let of_version_1_workflow_engine cdktf terraform_version terragrunt default_engi
   | _, _, _, Some engine -> (
       let module E = Terrat_repo_config_engine in
       match engine with
+      | E.Engine_other other -> Ok (Some (Engine.Other other))
       | E.Engine_custom custom ->
           let module E = Terrat_repo_config_engine_custom in
           let { E.apply; init; plan; diff; unsafe_apply; outputs; name = _ } = custom in
@@ -1929,6 +1931,7 @@ let of_version_1_engine default_tf_version engine =
   | _, Some engine -> (
       let module E = Terrat_repo_config_engine in
       match engine with
+      | E.Engine_other other -> Ok (Some (Engine.Other other))
       | E.Engine_custom custom ->
           let module E = Terrat_repo_config_engine_custom in
           let { E.apply; init; plan; diff; unsafe_apply; outputs; name = _ } = custom in
@@ -2458,6 +2461,7 @@ let to_version_1_drift drift =
 let to_version_1_engine engine =
   let module E = Terrat_repo_config.Engine in
   match engine with
+  | Engine.Other other -> E.Engine_other other
   | Engine.Custom custom ->
       let module Custom = Terrat_repo_config.Engine_custom in
       let { Engine.Custom.apply; init; plan; diff; unsafe_apply; outputs } = custom in
