@@ -94,13 +94,7 @@ module Db = struct
     let read fname =
       CCOption.get_exn_or
         fname
-        (CCOption.map
-           (fun s ->
-             s
-             |> CCString.split_on_char '\n'
-             |> CCList.filter CCFun.(CCString.prefix ~pre:"--" %> not)
-             |> CCString.concat "\n")
-           (Terrat_files_github_sql.read fname))
+        (CCOption.map Pgsql_io.clean_string (Terrat_files_github_sql.read fname))
 
     let policy =
       let module P = struct
