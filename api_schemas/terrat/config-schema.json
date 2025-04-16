@@ -402,7 +402,7 @@
       "type": "object"
     },
     "engine": {
-      "oneOf": [
+      "anyOf": [
         {
           "$ref": "#/definitions/engine-cdktf"
         },
@@ -423,6 +423,9 @@
         },
         {
           "$ref": "#/definitions/engine-custom"
+        },
+        {
+          "$ref": "#/definitions/engine-other"
         }
       ]
     },
@@ -532,6 +535,9 @@
         "name"
       ],
       "type": "object"
+    },
+    "engine-other": {
+      "type": null
     },
     "engine-pulumi": {
       "additionalProperties": false,

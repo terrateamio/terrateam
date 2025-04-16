@@ -471,6 +471,7 @@ module Engine : sig
     | Custom of Custom.t
     | Fly of Fly.t
     | Opentofu of Opentofu.t
+    | Other of Yojson.Safe.t
     | Pulumi
     | Terraform of Terraform.t
     | Terragrunt of Terragrunt.t
