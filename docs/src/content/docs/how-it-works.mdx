@@ -44,8 +44,20 @@ Terrateam operates on your Terraform code using the following hierarchy:
 - **Workspace**: Each directory can have one or more workspaces, allowing you to use the same Terraform code in different contexts (e.g., development, staging, production). If no workspace is specified, each directory has a default workspace.
 
 The following diagram presents the hierarchy Terrateam uses.
+```mermaid
+graph TD
+    Repository -->|Contains| Directory1
+    Repository -->|Contains| Directory2
+    Repository -->|Contains| DirectoryN
 
-![Repositories Hierarchy](../../assets/repository-flowchart.png)
+    Directory1 -->|Has| WorkspaceA
+    Directory1 -->|Has| WorkspaceB
+
+    Directory2 -->|Has| WorkspaceX
+    Directory2 -->|Has| WorkspaceY
+
+    DirectoryN -->|Has Default| DefaultWorkspace
+```
 
 This hierarchy enables you to structure your Terraform code in a modular and reusable way, making it easier to manage and maintain your infrastructure.
 
@@ -53,7 +65,26 @@ This hierarchy enables you to structure your Terraform code in a modular and reu
 
 Here's a high-level overview of how Terrateam works:
 
-![Workflow](../../assets/flow-flowchart.png)
+```mermaid
+sequenceDiagram
+    participant User
+    participant GitHub
+    participant TerrateamServer as Terrateam Server
+    participant TerrateamRunner as Terrateam Runner
+
+    User->>GitHub: (1) Opens PR, updates, or comments
+    GitHub->>Terrateam Server: Sends event payload
+    Terrateam Server->>Terrateam Server: (2) Evaluates event
+    Terrateam Server-->>GitHub: Updates PR status (checks/comments)
+
+    alt [Terraform operation required]
+        Terrateam Server->>GitHub: (3) Dispatches GitHub Actions workflow
+        GitHub->>Terrateam Server: Receives the workflow dispatch
+        Terrateam Server->>Terrateam Runner: (4) Set up environment and run Terraform (plan/apply)
+        Terrateam Runner->>Terrateam Server: (5) Send execution results
+        Terrateam Server-->>GitHub: (6) Updates PR with results (comments/status)
+    end
+```
 
 The following steps offer a more detailed explanation of each part of the diagram.
 

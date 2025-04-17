@@ -3,7 +3,7 @@ import type { Plugin } from 'unified';
 import type { Root, Element } from 'hast';
 
 const visitor = (node: any) => {
-  const dataLanguageMermaid = "mermaid";
+  const dataLanguageMermaid = "";
   const typeElement = "element";
   const tagNamePre = "pre";
   const classMermaid = dataLanguageMermaid;
