@@ -216,7 +216,7 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
     | Ok (i :: _) ->
         Abb_js.Future.return
           (Brtl_js2.Output.navigate (Uri.of_string (consumed_path ^ "/i/" ^ Vcs.Installation.id i)))
-    | Error `Forbidden -> assert false
+    | Error `Forbidden -> Abb_js.Future.return (Brtl_js2.Output.navigate (Uri.of_string "/login"))
     | Error #Terrat_ui_js_service_vcs.Api.api_err -> raise (Failure "nyi")
 
   let run state =
