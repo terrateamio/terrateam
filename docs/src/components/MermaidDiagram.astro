@@ -1,0 +1,76 @@
+---
+interface Props {
+  chart: string;
+}
+
+const { chart } = Astro.props;
+---
+
+<div class="mermaid-wrapper">
+  <pre class="mermaid">
+    {chart}
+  </pre>
+</div>
+
+<script>
+  import mermaid from 'mermaid';
+
+  const config = {
+    startOnLoad: true,
+    theme: document.documentElement.dataset.theme === 'dark' ? 'dark' : 'default',
+    themeVariables: {
+      primaryColor: '#3b82f6',
+      primaryTextColor: document.documentElement.dataset.theme === 'dark' ? '#e2e8f0' : '#0f172a',
+      primaryBorderColor: document.documentElement.dataset.theme === 'dark' ? '#94a3b8' : '#64748b',
+      lineColor: document.documentElement.dataset.theme === 'dark' ? '#94a3b8' : '#64748b',
+      mainBkg: document.documentElement.dataset.theme === 'dark' ? '#1e293b' : '#ffffff',
+      secondBkg: document.documentElement.dataset.theme === 'dark' ? '#0f172a' : '#f8fafc',
+      nodeBkg: document.documentElement.dataset.theme === 'dark' ? '#1e293b' : '#f1f5f9',
+      nodeTextColor: document.documentElement.dataset.theme === 'dark' ? '#e2e8f0' : '#0f172a',
+      textColor: document.documentElement.dataset.theme === 'dark' ? '#e2e8f0' : '#0f172a'
+    }
+  };
+
+  mermaid.initialize(config);
+
+  // Watch for theme changes
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.attributeName === 'data-theme') {
+        const isDark = document.documentElement.dataset.theme === 'dark';
+        mermaid.initialize({
+          ...config,
+          theme: isDark ? 'dark' : 'default',
+          themeVariables: {
+            ...config.themeVariables,
+            primaryTextColor: isDark ? '#e2e8f0' : '#0f172a',
+            primaryBorderColor: isDark ? '#94a3b8' : '#64748b',
+            lineColor: isDark ? '#94a3b8' : '#64748b',
+            mainBkg: isDark ? '#1e293b' : '#ffffff',
+            secondBkg: isDark ? '#0f172a' : '#f8fafc',
+            nodeBkg: isDark ? '#1e293b' : '#f1f5f9',
+            nodeTextColor: isDark ? '#e2e8f0' : '#0f172a',
+            textColor: isDark ? '#e2e8f0' : '#0f172a'
+          }
+        });
+        
+        // Re-render all diagrams
+        document.querySelectorAll('.mermaid').forEach(async (element) => {
+          element.removeAttribute('data-processed');
+          await mermaid.run();
+        });
+      }
+    });
+  });
+
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-theme']
+  });
+</script>
+
+<style>
+  .mermaid-wrapper {
+    margin: 1rem 0;
+  }
+</style>
