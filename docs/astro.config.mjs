@@ -53,7 +53,11 @@ export default defineConfig({
       },
       customCss: process.env.NO_GRADIENTS
         ? []
-        : ["/src/assets/docs.css", "@fontsource/roboto"],
+        : [
+            "/src/assets/docs.css",
+            "@fontsource/roboto",
+            "/src/styles/mermaid.css"  
+          ],
       sidebar: [
         { label: "Welcome", link: "/" },
         { label: "Quickstart Guide", link: "/quickstart-guide" },
@@ -106,7 +110,36 @@ export default defineConfig({
     }),
   ],
   markdown: {
-    rehypePlugins: [addMermaidClass, rehypeMermaid],
+    rehypePlugins: [
+      addMermaidClass,
+      [rehypeMermaid, {
+        strategy: "inline-svg",
+        mermaidConfig: {
+          theme: 'dark',
+          themeVariables: {
+            primaryColor: '#3b82f6',
+            primaryTextColor: '#ffffff',
+            primaryBorderColor: '#94a3b8',
+            lineColor: '#94a3b8',
+            
+            mainBkg: '#1e293b',
+            secondBkg: '#0f172a',
+            
+            nodeBkg: '#1e293b',
+            nodeTextColor: '#f1f5f9',
+            
+            fontFamily: 'system-ui',
+            fontSize: '14px',
+            
+            darkMode: true,
+            background: '#0f172a',
+            textColor: '#e2e8f0'
+          },
+          securityLevel: 'strict',
+          startOnLoad: true
+        }
+      }]
+    ]
   },
   redirects: {
     '/security-and-compliance/plan-and-apply-permissions': '/security-and-compliance/role-based-access-control',
