@@ -177,7 +177,6 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
         <*> Vcs.Api.installations vcs
         <*> Vcs.Api.server_config vcs)
       >>= function
-      | Ok (_, [], _) -> raise (Failure "nyi")
       | Ok (user, installations, server_config) -> (
           match
             CCList.find_opt
@@ -197,7 +196,7 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
                 ph_loading
                 (fun state -> run' notifications (Brtl_js2.State.with_app_state t state))
                 state
-          | None -> raise (Failure "nyi"))
+          | None -> Abb_js.Future.return (Brtl_js2.Output.navigate (Uri.of_string "/")))
       | Error _ -> raise (Failure "nyi")
   end
 
