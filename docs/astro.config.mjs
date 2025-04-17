@@ -2,7 +2,6 @@ import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 import starlightImageZoom from "starlight-image-zoom";
 import { pluginLineNumbers } from '@expressive-code/plugin-line-numbers';
-import addMermaidClass from './add-mermaid-classname';
 
 export default defineConfig({
   vite: {
