@@ -685,8 +685,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Run_scheduled_drift
       | Run_drift of {
           account : S.Api.Account.t;
-          repo : S.Api.Repo.t;
+          name : string;
           reconcile : bool option; [@default None]
+          repo : S.Api.Repo.t;
           tag_query :
             (Terrat_tag_query.t[@to_yojson Tag_query.to_yojson] [@of_yojson Tag_query.of_yojson])
             option;
@@ -5543,8 +5544,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         (fun (name, { D.Schedule.tag_query; reconcile; schedule; window }) ->
           Logs.info (fun m ->
               m
-                "%s : DRIFT : name=%s : enabled=%s : repo=%s : schedule=%s : reconcile=%s : \
-                 tag_query=%s : window=%s"
+                "%s : DRIFT : UPDATE_SCHEDULE : name=%s : enabled=%s : repo=%s : schedule=%s : \
+                 reconcile=%s : tag_query=%s : window=%s"
                 state.State.request_id
                 name
                 (Bool.to_string enabled)
@@ -5578,7 +5579,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               let f (name, account, repo, reconcile, tag_query) =
                 Logs.info (fun m ->
                     m
-                      "%s : DRIFT : name=%s : account=%s : repo=%s : reconcile=%s : tag_query=%s"
+                      "%s : DRIFT : CREATE_EVENT : name=%s : account=%s : repo=%s : reconcile=%s : \
+                       tag_query=%s"
                       state.State.request_id
                       name
                       (S.Api.Account.to_string account)
@@ -5590,13 +5592,33 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                   State.st = State.St.Resume;
                   event =
                     Event.Run_drift
-                      { account; repo; reconcile = Some reconcile; tag_query = Some tag_query };
+                      {
+                        account;
+                        name;
+                        repo;
+                        reconcile = Some reconcile;
+                        tag_query = Some tag_query;
+                      };
                 }
               in
               let states = CCList.map f needed_runs in
               let state = f self in
               Abb.Future.return (Error (`Clone (state, states))))
-      | State.St.Resume -> Abb.Future.return (Ok { state with State.st = State.St.Initial })
+      | State.St.Resume -> (
+          match state.State.event with
+          | Event.Run_drift { account; name; repo; reconcile; tag_query } ->
+              Logs.info (fun m ->
+                  m
+                    "%s : DRIFT : RUN : name=%s : account=%s : repo=%s : reconcile=%s : \
+                     tag_query=%s"
+                    state.State.request_id
+                    name
+                    (S.Api.Account.to_string account)
+                    (S.Api.Repo.to_string repo)
+                    (CCOption.map_or ~default:"" Bool.to_string reconcile)
+                    (CCOption.map_or ~default:"" Terrat_tag_query.to_string tag_query));
+              Abb.Future.return (Ok { state with State.st = State.St.Initial })
+          | _ -> assert false)
       | _ ->
           H.log_state_err
             state.State.request_id

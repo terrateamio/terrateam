@@ -60,8 +60,9 @@ module Make (S : Terrat_vcs_provider2.S) : sig
       | Run_scheduled_drift
       | Run_drift of {
           account : S.Api.Account.t;
-          repo : S.Api.Repo.t;
+          name : string;
           reconcile : bool option;
+          repo : S.Api.Repo.t;
           tag_query : Terrat_tag_query.t option;
         }
   end
