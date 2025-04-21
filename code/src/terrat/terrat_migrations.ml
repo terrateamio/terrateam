@@ -130,6 +130,8 @@ let migrations =
     ("add-users2-tables", run_file_sql "2025-04-07-refactor-user-tables.sql");
     ("add-tree-builder", run_file_sql "2025-04-11-add-tree-builder.sql");
     ("refactor-rename-core-tables", run_file_sql "2025-04-21-refactor-rename-core-tables.sql");
+    ( "refactor-remove-core-table-views",
+      run_file_sql "2025-04-21-refactor-delete-core-table-views.sql" );
   ]
 
 let run config storage = Mig.run (config, storage) migrations
