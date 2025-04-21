@@ -1,4 +1,4 @@
-insert into github_gate_approvals (
+insert into gate_approvals (
     approver,
     token,
     repository,

@@ -1,4 +1,4 @@
-insert into github_work_manifest_results (
+insert into work_manifest_results (
        path,
        success,
        work_manifest,

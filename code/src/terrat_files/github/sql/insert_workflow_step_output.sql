@@ -1,4 +1,4 @@
-insert into github_workflow_step_outputs (
+insert into workflow_step_outputs (
     idx,
     ignore_errors,
     payload,

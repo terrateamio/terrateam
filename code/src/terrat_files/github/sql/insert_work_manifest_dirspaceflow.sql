@@ -1,4 +1,4 @@
-insert into github_work_manifest_dirspaceflows (
+insert into work_manifest_dirspaceflows (
     work_manifest,
     path,
     workspace,

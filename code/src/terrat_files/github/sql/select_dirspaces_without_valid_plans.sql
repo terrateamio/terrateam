@@ -4,7 +4,7 @@ latest_unlocks as (
         repository,
         pull_number,
         max(unlocked_at) as unlocked_at
-    from github_pull_request_unlocks
+    from pull_request_unlocks
     where repository = $repository and pull_number = $pull_number
     group by repository, pull_number
 ),
@@ -12,7 +12,7 @@ latest_drift_unlocks as (
     select
         repository,
         max(unlocked_at) as unlocked_at
-    from github_drift_unlocks
+    from drift_unlocks
     where repository = $repository
     group by repository
 ),
@@ -53,11 +53,11 @@ all_completed_runs as (
         on latest_unlocks.repository = gpr.repository and latest_unlocks.pull_number = gpr.pull_number
     left join latest_merged_pull_request as lmpr
         on gpr.repository = lmpr.repository
-    inner join github_work_manifests as gwm
+    inner join work_manifests as gwm
         on gpr.base_sha = gwm.base_sha and (gpr.sha = gwm.sha or (gpr.state = 'merged' and lmpr.merged_sha = gwm.sha))
-    inner join github_work_manifest_dirspaceflows as gwmds
+    inner join work_manifest_dirspaceflows as gwmds
         on gwmds.work_manifest = gwm.id
-    left join github_work_manifest_results as gwmr
+    left join work_manifest_results as gwmr
         on gwmr.work_manifest = gwmds.work_manifest and gwmr.path = gwmds.path and gwmr.workspace = gwmds.workspace
     left join latest_drift_unlocks
         on latest_drift_unlocks.repository = gpr.repository

@@ -41,7 +41,7 @@ module Sql = struct
       //
       (* id *)
       Ret.uuid
-      /^ "select id from github_work_manifests where state = 'running' and id = $id"
+      /^ "select id from work_manifests where state = 'running' and id = $id"
       /% Var.uuid "id")
 end
 

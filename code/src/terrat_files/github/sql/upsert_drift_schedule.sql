@@ -1,4 +1,4 @@
-insert into github_drift_schedules as gds
+insert into drift_schedules as gds
   (repository, schedule, reconcile, tag_query, updated_at, name, window_start, window_end)
 values ($repo, $schedule, $reconcile, $tag_query, now(), $name, $window_start, $window_end)
 on conflict (repository, name)

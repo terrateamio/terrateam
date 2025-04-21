@@ -7,7 +7,7 @@ latest_unlocks as (
         repository,
         pull_number,
         max(unlocked_at) as unlocked_at
-    from github_pull_request_unlocks
+    from pull_request_unlocks
     group by repository, pull_number
 ),
 -- First things we'll do is for each pull request determine all of the dirspaces
@@ -28,9 +28,9 @@ pull_request_applies_previous_commits as (
         gwmds.path as path,
         gwmds.workspace as workspace
     from github_pull_requests as gpr
-    inner join github_work_manifests as gwm
+    inner join work_manifests as gwm
         on gpr.repository = gwm.repository and gpr.pull_number = gwm.pull_number
-    inner join github_work_manifest_dirspaceflows as gwmds
+    inner join work_manifest_dirspaceflows as gwmds
         on gwmds.work_manifest = gwm.id
     left join latest_unlocks as gpru
         on gpru.repository = gpr.repository and gpru.pull_number = gpr.pull_number
@@ -48,7 +48,7 @@ all_necessary_dirspaces as (
         coalesce(gds.workspace, prapc.workspace) as workspace,
         gds.lock_policy as lock_policy
     from github_pull_requests as gpr
-    inner join github_dirspaces as gds
+    inner join change_dirspaces as gds
         on gds.base_sha = gpr.base_sha and (gds.sha = gpr.sha or gds.sha = gpr.merged_sha)
     left join pull_request_applies_previous_commits as prapc
         on gpr.repository = prapc.repository and gpr.pull_number = prapc.pull_number
@@ -58,7 +58,7 @@ unmerged_pull_requests_with_applies as (
         gpr.repository as repository,
         gpr.pull_number as pull_number
     from github_pull_requests as gpr
-    inner join github_work_manifests as gwm
+    inner join work_manifests as gwm
         on gwm.repository = gpr.repository and gwm.pull_number = gpr.pull_number
     left join latest_unlocks as gpru
         on gpru.repository = gpr.repository and gpru.pull_number = gpr.pull_number
@@ -101,15 +101,15 @@ applies_for_merged_pull_requests as (
         gwmds.path as path,
         gwmds.workspace as workspace
     from merged_pull_requests as mpr
-    inner join github_work_manifests as gwm
+    inner join work_manifests as gwm
         on mpr.repository = gwm.repository and mpr.pull_number = gwm.pull_number
            and gwm.base_sha = mpr.base_sha and (gwm.sha = mpr.sha or gwm.sha = mpr.merged_sha)
-    inner join github_work_manifest_dirspaceflows as gwmds
+    inner join work_manifest_dirspaceflows as gwmds
         on gwmds.work_manifest = gwm.id
-    inner join github_work_manifest_results as results
+    inner join work_manifest_results as results
         on results.work_manifest = gwm.id
            and results.path = gwmds.path and results.workspace = gwmds.workspace
-    left join github_terraform_plans as gtp
+    left join plans as gtp
         on gtp.work_manifest = gwm.id and gtp.path = gwmds.path and gtp.workspace = gwmds.workspace
     where (gwm.run_type in ('apply', 'autoapply', 'unsafe-apply') and results.success)
           or (gwm.run_type in ('autoplan', 'plan') and gtp.has_changes is not null and not gtp.has_changes)

@@ -1,4 +1,4 @@
-update github_work_manifests as gwm
+update work_manifests as gwm
 set state = 'aborted', completed_at = now()
 from github_installation_repositories as gir
 where gir.id = gwm.repository

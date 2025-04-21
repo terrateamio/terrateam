@@ -1,4 +1,4 @@
-insert into github_work_manifests (
+insert into work_manifests (
        base_sha,
        pull_number,
        repository,

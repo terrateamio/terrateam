@@ -1,15 +1,15 @@
-update github_work_manifests set
+update work_manifests set
        run_id = $run_id
-from github_work_manifests as gwm
+from work_manifests as gwm
 inner join github_installation_repositories as gir
     on gwm.repository = gir.id
 left join github_pull_requests as gpr
     on gir.id = gpr.repository and gwm.pull_number = gpr.pull_number
-left join github_drift_work_manifests as gdwm
+left join drift_work_manifests as gdwm
     on gdwm.work_manifest = gwm.id
-left join github_index_work_manifests as giwm
+left join index_work_manifests as giwm
     on giwm.work_manifest = gwm.id
-where github_work_manifests.id = gwm.id
+where work_manifests.id = gwm.id
       and (gwm.pull_number is not null
            or gdwm.work_manifest is not null
            or giwm.work_manifest is not null)

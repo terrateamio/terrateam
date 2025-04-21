@@ -1,4 +1,4 @@
-insert into github_gates (
+insert into gates (
     gate,
     repository,
     pull_number,

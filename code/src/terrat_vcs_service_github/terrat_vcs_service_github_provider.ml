@@ -352,8 +352,7 @@ module Db = struct
     let delete_drift_schedules =
       Pgsql_io.Typed_sql.(
         sql
-        /^ "delete from github_drift_schedules where repository = $repo_id and not (name = \
-            any($names))"
+        /^ "delete from drift_schedules where repository = $repo_id and not (name = any($names))"
         /% Var.bigint "repo_id"
         /% Var.(str_array (text "names")))
 
