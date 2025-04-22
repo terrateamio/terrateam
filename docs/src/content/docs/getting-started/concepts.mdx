@@ -30,6 +30,28 @@ Repository
         |-- Workspace: default
 ```
 
+## Engine
+
+Every Dirspace in Terrateam is executed using a specific engine, the tool responsible for running the `init`, `plan`, `apply`, and related steps. By default, this engine is the Terraform CLI, but Terrateam also supports OpenTofu, Terragrunt, Pulumi, CDKTF, and even fully custom engines.
+
+The engine can be defined globally for the entire repository or overridden per workflow to suit different environments or teams.
+
+For example, you might want to use OpenTofu in development and Terraform in production:
+
+```yaml
+workflows:
+  - tag_query: "development"
+    engine:
+      name: tofu
+  - tag_query: "production"
+    engine:
+      name: terraform
+```
+
+Terrateam uses this configuration to decide how to execute each Dirspace when a change is detected. If you define a custom engine, you can provide commands for each lifecycle step, giving you full control over the execution logic.
+
+Learn more about configuring an [Engine here](/configuration-reference/engine).
+
 ## Changes and File Patterns
 
 When a pull request is opened or updated, Terrateam detects changes in the repository based on the `file_patterns` specified in the [`when_modified`](/configuration-reference/when-modified) configuration. By default, the `file_patterns` are set to `['**/*.tf', '**/*.tfvars']`, which means Terrateam will consider changes to any files with `.tf` or `.tfvars` extensions.

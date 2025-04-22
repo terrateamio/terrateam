@@ -3,7 +3,7 @@ title: engine
 description: The engine configuration reference
 ---
 
-The `engine` configuration allows you to specify which tool should be used for executing plan and apply operations. Terrateam supports multiple tools, including Terraform, OpenTofu, Terragrunt, and CDKTF.
+The `engine` configuration allows you to specify which tool should be used for executing plan and apply operations. Terrateam supports multiple tools, including Terraform, OpenTofu, Terragrunt, Pulumi, CDKTF, and custom engines. This configuration can be defined globally or overridden per workflow by including it under the `workflows` key.
 
 ## Default Configuration
 ```yaml
@@ -16,10 +16,15 @@ engine:
 ## Keys
 | Key | Type | Description |
 |-----|------|-------------|
-| name | String | The name of the tool to use for executing Terraform operations. Can be terraform, tofu, terragrunt, or cdktf. Default is terraform. |
-| version | String | The version of the tool to use. Only applies to terraform, tofu, and terragrunt. This value is overridden by any version information specified in the Terraform or OpenTofu code. Default is latest. |
-| tf_version | String | The version of the Terraform or OpenTofu CLI to use when engine is set to terragrunt or cdktf. Default is latest. |
-| tf_cmd | String | The command to use for terragrunt or cdktf executions. Can be terraform or tofu. Default is terraform. |
+| name | String | The name of the tool to use for executing Terraform operations. Can be `terraform`, `tofu`, `terragrunt`, `cdktf`, or `custom`. Default is `terraform`. |
+| version | String | The version of the tool to use. Only applies to `terraform`, `tofu`, and `terragrunt`. This value is overridden by any version information specified in the Terraform or OpenTofu code. Default is `latest`. |
+| tf_version | String | The version of the Terraform or OpenTofu CLI to use when `engine.name` is set to `terragrunt` or `cdktf`. Default is `latest`. |
+| tf_cmd | String | The command to use for `terragrunt` or `cdktf` executions. Can be `terraform` or `tofu`. Default is `terraform`. |
+| init | Array | *(Custom engine only)* The command to run during the init step. Optional. |
+| plan | Array | *(Custom engine only)* The command to run during the plan step. Must write to the path specified by the `TERRATEAM_PLAN_FILE` environment variable. Required. |
+| diff | Array | *(Custom engine only)* The command to produce a human-readable diff of the plan output. Optional. |
+| apply | Array | *(Custom engine only)* The command to run during the apply step. Optional. |
+| outputs | Array | *(Custom engine only)* The command to return output values as a JSON string. Optional. |
 
 ## Examples
 ### Using Terraform
@@ -28,23 +33,20 @@ engine:
   name: terraform
   version: 1.0.0
 ```
-This configuration will use Terraform version `1.0.0` for executing Terraform operations.
 
 ### Using OpenTofu
 ```yaml
 engine:
   name: tofu
-  version: 1.6.2
+  version: 1.9.0
 ```
-This configuration will use OpenTofu version `1.6.2` for executing Terraform operations.
 
 ### Using Terragrunt with a Specific Terraform Version
 ```yaml
 engine:
   name: terragrunt
-  tf_version: 0.15.5
+  tf_version: 1.11.1
 ```
-This configuration will use Terragrunt with Terraform version `0.15.5` for executing Terraform operations.
 
 ### Using Terragrunt with OpenTofu
 ```yaml
@@ -52,21 +54,30 @@ engine:
   name: terragrunt
   tf_cmd: tofu
 ```
-This configuration will use Terragrunt with the latest version of OpenTofu.
 
 ### Using CDKTF with the Latest Terraform Version
 ```yaml
 engine:
   name: cdktf
 ```
-This configuration will use CDKTF with the latest version of Terraform for executing Terraform operations.
 
 ### Using Pulumi
 ```yaml
 engine:
   name: pulumi
 ```
-This configuration will use the latest version of Pulumi. See our [Pulumi](/integrations/pulumi) for more details.
+
+### Using a Custom Engine
+```yaml
+engine:
+  name: custom
+  init: ['echo', 'init']
+  plan: ['touch', '$TERRATEAM_PLAN_FILE']
+  diff: ['printf', '+ added foo\n- removed bar\n~ updated baz\n']
+  apply: ['cat', 'foo.txt']
+  outputs: ['echo', '{"foo": "bar"}']
+```
+This configuration defines a fully custom engine using shell commands for each step.
 
 ## Considerations
 When configuring `engine`, keep the following in mind:
@@ -75,3 +86,4 @@ When configuring `engine`, keep the following in mind:
 - The `terragrunt` engine uses Terragrunt, a thin wrapper for Terraform that provides extra tools for keeping your configurations DRY, working with multiple Terraform modules, and managing remote state.
 - The `cdktf` engine uses CDKTF (Cloud Development Kit for Terraform), which allows you to define your infrastructure using familiar programming languages like TypeScript, Python, Go, and Java.
 - When using `terragrunt` or `cdktf`, you can specify the version of Terraform or OpenTofu CLI to use with the `tf_version` option. This allows you to control the underlying Terraform version independently of the Terragrunt or CDKTF version.
+- The `custom` engine allows full control over each step in the pipeline. You may specify only the steps relevant to your use case. For `plan`, you must write output to `TERRATEAM_PLAN_FILE`. The `outputs` step must return valid JSON.
