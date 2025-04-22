@@ -11,8 +11,8 @@ q as (
        when success then 'success'
        else 'failure'
        end) as state
-  from github_workflow_step_outputs as gwso
-  inner join github_work_manifests as gwm
+  from workflow_step_outputs as gwso
+  inner join work_manifests as gwm
       on gwm.id = gwso.work_manifest
   inner join github_installation_repositories as gir
       on gir.id = gwm.repository

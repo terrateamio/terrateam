@@ -1,1 +1,1 @@
-insert into github_drift_unlocks (repository) values($repository)
+insert into drift_unlocks (repository) values($repository)

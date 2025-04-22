@@ -109,7 +109,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         //
         (* id *)
         Ret.uuid
-        /^ "select id from github_work_manifests where run_id = $run_id"
+        /^ "select id from work_manifests where run_id = $run_id"
         /% Var.text "run_id")
   end
 

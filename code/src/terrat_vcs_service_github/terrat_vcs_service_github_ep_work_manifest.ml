@@ -160,7 +160,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
           //
           (* id *)
           Ret.uuid
-          /^ "select id from github_work_manifests where id = $id and state = 'running'"
+          /^ "select id from work_manifests where id = $id and state = 'running'"
           /% Var.uuid "id")
 
       let select_installation_id () =
@@ -169,7 +169,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
           //
           (* id *)
           Ret.bigint
-          /^ "select gir.installation_id from github_work_manifests as gwm inner join \
+          /^ "select gir.installation_id from work_manifests as gwm inner join \
               github_installation_repositories as gir on gwm.repository = gir.id where gwm.id = \
               $id"
           /% Var.uuid "id")

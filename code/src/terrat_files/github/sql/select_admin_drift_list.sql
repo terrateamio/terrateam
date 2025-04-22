@@ -1,6 +1,6 @@
 with
 latest_unlocks as (
-    select repository, max(unlocked_at) as unlocked_at from github_drift_unlocks group by repository
+    select repository, max(unlocked_at) as unlocked_at from drift_unlocks group by repository
 )
 select
     gwm.id,
@@ -11,8 +11,8 @@ select
     to_char(gwm.created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
     to_char(gwm.completed_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
     (not (latest_unlocks.repository is null or latest_unlocks.unlocked_at < gwm.created_at)) as unlocked
-from github_drift_work_manifests as gdwm
-inner join github_work_manifests as gwm
+from drift_work_manifests as gdwm
+inner join work_manifests as gwm
     on gdwm.work_manifest = gwm.id
 inner join github_installation_repositories as gir
     on gir.id = gwm.repository

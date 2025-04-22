@@ -1,4 +1,4 @@
 select
-    github_repo_configs.data
-from github_repo_configs
+    repo_configs.data
+from repo_configs
 where sha = $sha and installation_id = $installation_id

@@ -12,13 +12,13 @@ select
      gwm.pull_number,
      gwm.run_kind,
      gwm.run_type
-from github_work_manifests as gwm
+from work_manifests as gwm
 inner join github_installation_repositories as gir
     on gir.id = gwm.repository
-left join github_drift_work_manifests as gdwm
+left join drift_work_manifests as gdwm
     on gwm.id = gdwm.work_manifest
 left join github_pull_requests as gpr
     on gwm.repository = gpr.repository and gwm.pull_number = gpr.pull_number
-left join github_index_work_manifests as giwm
+left join index_work_manifests as giwm
     on giwm.work_manifest = gwm.id
 where gwm.id = $work_manifest

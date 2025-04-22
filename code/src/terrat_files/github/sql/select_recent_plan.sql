@@ -4,7 +4,7 @@ work_manifest as (
          gwm.id as id,
          gwm.repository as repository,
          gwm.pull_number as pull_number
-     from github_work_manifests as gwm
+     from work_manifests as gwm
      where gwm.id = $id and gwm.state = 'running'
 ),
 recent_completed_work_manifest as (
@@ -12,14 +12,14 @@ recent_completed_work_manifest as (
         gwm.run_type as run_type,
         gwmr.success as success,
         gtp.data as data
-    from github_work_manifest_results as gwmr
-    inner join github_work_manifests as gwm
+    from work_manifest_results as gwmr
+    inner join work_manifests as gwm
         on gwm.id = gwmr.work_manifest
     inner join work_manifest as wm
         on wm.repository = gwm.repository
-    left join github_drift_work_manifests as gdwm
+    left join drift_work_manifests as gdwm
         on gdwm.work_manifest = gwmr.work_manifest
-    left join github_terraform_plans as gtp
+    left join plans as gtp
         on gtp.work_manifest = gwmr.work_manifest
            and gtp.path = gwmr.path
            and gtp.workspace = gwmr.workspace

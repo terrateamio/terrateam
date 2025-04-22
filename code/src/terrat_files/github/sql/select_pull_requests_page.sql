@@ -5,7 +5,7 @@ latest_github_work_manifest as (
         gwm.repository as repository,
         gwm.pull_number as pull_number,
         row_number() over (partition by gwm.repository, gwm.pull_number order by gwm.created_at desc) as rn
-    from github_work_manifests as gwm
+    from work_manifests as gwm
     inner join github_installation_repositories as gir
         on gwm.repository = gir.id
     where gir.installation_id = $installation_id

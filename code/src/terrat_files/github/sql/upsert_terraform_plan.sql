@@ -1,4 +1,4 @@
-insert into github_terraform_plans
+insert into plans
        (work_manifest, path, workspace, data, has_changes)
 values (
    $work_manifest,
