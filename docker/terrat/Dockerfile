@@ -27,7 +27,7 @@ RUN apk add --no-cache \
     opam \
     openssh \
     perl \
-    pkgconfig \
+    pkgconf \
     py3-yaml \
     python3 \
     sqlite-dev \
