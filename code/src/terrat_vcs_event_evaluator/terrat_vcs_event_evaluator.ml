@@ -5576,17 +5576,22 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           >>= function
           | [] -> Abb.Future.return (Error (`Noop state))
           | self :: needed_runs ->
-              let f (name, account, repo, reconcile, tag_query) =
+              let f (name, account, repo, reconcile, tag_query, window) =
                 Logs.info (fun m ->
                     m
                       "%s : DRIFT : CREATE_EVENT : name=%s : account=%s : repo=%s : reconcile=%s : \
-                       tag_query=%s"
+                       tag_query=%s : window=%s"
                       state.State.request_id
                       name
                       (S.Api.Account.to_string account)
                       (S.Api.Repo.to_string repo)
                       (Bool.to_string reconcile)
-                      (Terrat_tag_query.to_string tag_query));
+                      (Terrat_tag_query.to_string tag_query)
+                      (CCOption.map_or
+                         ~default:""
+                         (fun (window_start, window_end) ->
+                           Printf.sprintf "%s-%s" window_start window_end)
+                         window));
                 {
                   state with
                   State.st = State.St.Resume;
