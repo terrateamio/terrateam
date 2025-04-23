@@ -580,6 +580,12 @@ module Db = struct
         //
         (* tag_query *)
         Ret.(option (ud' CCFun.(Terrat_tag_query.of_string %> CCResult.to_opt)))
+        //
+        (* window_start *)
+        Ret.(option text)
+        //
+        (* window_end *)
+        Ret.(option text)
         /^ select_missing_drift_scheduled_runs_query)
 
     let cleanup_repo_configs = Pgsql_io.Typed_sql.(sql /^ read "cleanup_repo_configs.sql")
@@ -1614,12 +1620,26 @@ module Db = struct
         Pgsql_io.Prepared_stmt.fetch
           db
           (Sql.select_missing_drift_scheduled_runs ())
-          ~f:(fun drift_name installation_id repository_id owner name reconcile tag_query ->
+          ~f:(fun
+              drift_name
+              installation_id
+              repository_id
+              owner
+              name
+              reconcile
+              tag_query
+              window_start
+              window_end
+            ->
             ( drift_name,
               Api.Account.make @@ CCInt64.to_int installation_id,
               Api.Repo.make ~id:(CCInt64.to_int repository_id) ~owner ~name (),
               reconcile,
-              CCOption.get_or ~default:Terrat_tag_query.any tag_query )))
+              CCOption.get_or ~default:Terrat_tag_query.any tag_query,
+              CCOption.map2
+                (fun window_start window_end -> (window_start, window_end))
+                window_start
+                window_end )))
     >>= function
     | Ok _ as ret -> Abb.Future.return ret
     | Error (#Pgsql_io.err as err) ->
