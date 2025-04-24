@@ -229,45 +229,15 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
       | _ -> Abb.Future.return false
 
     let github_permissions =
-      Githubc2_components.App_permissions.(
-        make
-          Primary.
-            {
-              actions = None;
-              administration = None;
-              checks = None;
-              contents = Some "read";
-              deployments = None;
-              environments = None;
-              issues = Some "write";
-              members = None;
-              metadata = None;
-              organization_administration = None;
-              organization_announcement_banners = None;
-              organization_custom_roles = None;
-              organization_hooks = None;
-              organization_packages = None;
-              organization_personal_access_token_requests = None;
-              organization_personal_access_tokens = None;
-              organization_plan = None;
-              organization_projects = None;
-              organization_secrets = None;
-              organization_self_hosted_runners = None;
-              organization_user_blocking = None;
-              packages = None;
-              pages = None;
-              pull_requests = Some "write";
-              repository_hooks = None;
-              repository_projects = None;
-              secret_scanning_alerts = None;
-              secrets = None;
-              security_events = None;
-              single_file = None;
-              statuses = Some "write";
-              team_discussions = None;
-              vulnerability_alerts = None;
-              workflows = None;
-            })
+      let module P = Githubc2_components.App_permissions in
+      P.make
+        {
+          (CCResult.get_or_failwith @@ P.Primary.of_yojson (`Assoc [])) with
+          P.Primary.contents = Some "read";
+          issues = Some "write";
+          pull_requests = Some "write";
+          statuses = Some "write";
+        }
 
     let post config storage work_manifest_id ctx =
       Brtl_permissions.with_permissions

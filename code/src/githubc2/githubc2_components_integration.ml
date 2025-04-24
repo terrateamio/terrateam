@@ -3,6 +3,25 @@ module Primary = struct
     type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
+  module Owner = struct
+    type t =
+      | Simple_user of Githubc2_components_simple_user.t
+      | Enterprise of Githubc2_components_enterprise.t
+    [@@deriving show, eq]
+
+    let of_yojson =
+      Json_schema.one_of
+        (let open CCResult in
+         [
+           (fun v -> map (fun v -> Simple_user v) (Githubc2_components_simple_user.of_yojson v));
+           (fun v -> map (fun v -> Enterprise v) (Githubc2_components_enterprise.of_yojson v));
+         ])
+
+    let to_yojson = function
+      | Simple_user v -> Githubc2_components_simple_user.to_yojson v
+      | Enterprise v -> Githubc2_components_enterprise.to_yojson v
+  end
+
   module Permissions = struct
     module Primary = struct
       type t = {
@@ -34,7 +53,7 @@ module Primary = struct
     installations_count : int option; [@default None]
     name : string;
     node_id : string;
-    owner : Githubc2_components_nullable_simple_user.t option;
+    owner : Owner.t;
     pem : string option; [@default None]
     permissions : Permissions.t;
     slug : string option; [@default None]

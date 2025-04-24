@@ -643,7 +643,7 @@ end
 module Update_comment = struct
   module Parameters = struct
     type t = {
-      comment_id : int;
+      comment_id : int64;
       gist_id : string;
     }
     [@@deriving make, show, eq]
@@ -691,7 +691,9 @@ module Update_comment = struct
       ~url_params:
         (let open Openapi.Request.Var in
          let open Parameters in
-         [ ("gist_id", Var (params.gist_id, String)); ("comment_id", Var (params.comment_id, Int)) ])
+         [
+           ("gist_id", Var (params.gist_id, String)); ("comment_id", Var (params.comment_id, Int64));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -701,7 +703,7 @@ end
 module Delete_comment = struct
   module Parameters = struct
     type t = {
-      comment_id : int;
+      comment_id : int64;
       gist_id : string;
     }
     [@@deriving make, show, eq]
@@ -746,7 +748,9 @@ module Delete_comment = struct
       ~url_params:
         (let open Openapi.Request.Var in
          let open Parameters in
-         [ ("gist_id", Var (params.gist_id, String)); ("comment_id", Var (params.comment_id, Int)) ])
+         [
+           ("gist_id", Var (params.gist_id, String)); ("comment_id", Var (params.comment_id, Int64));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -756,7 +760,7 @@ end
 module Get_comment = struct
   module Parameters = struct
     type t = {
-      comment_id : int;
+      comment_id : int64;
       gist_id : string;
     }
     [@@deriving make, show, eq]
@@ -826,7 +830,9 @@ module Get_comment = struct
       ~url_params:
         (let open Openapi.Request.Var in
          let open Parameters in
-         [ ("gist_id", Var (params.gist_id, String)); ("comment_id", Var (params.comment_id, Int)) ])
+         [
+           ("gist_id", Var (params.gist_id, String)); ("comment_id", Var (params.comment_id, Int64));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t

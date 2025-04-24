@@ -37,6 +37,27 @@ module Create_from_manifest = struct
             type t = string list [@@deriving yojson { strict = false; meta = false }, show, eq]
           end
 
+          module Owner = struct
+            type t =
+              | Simple_user of Githubc2_components.Simple_user.t
+              | Enterprise of Githubc2_components.Enterprise.t
+            [@@deriving show, eq]
+
+            let of_yojson =
+              Json_schema.one_of
+                (let open CCResult in
+                 [
+                   (fun v ->
+                     map (fun v -> Simple_user v) (Githubc2_components.Simple_user.of_yojson v));
+                   (fun v ->
+                     map (fun v -> Enterprise v) (Githubc2_components.Enterprise.of_yojson v));
+                 ])
+
+            let to_yojson = function
+              | Simple_user v -> Githubc2_components.Simple_user.to_yojson v
+              | Enterprise v -> Githubc2_components.Enterprise.to_yojson v
+          end
+
           module Permissions = struct
             module Primary = struct
               type t = {
@@ -68,7 +89,7 @@ module Create_from_manifest = struct
             installations_count : int option; [@default None]
             name : string;
             node_id : string;
-            owner : Githubc2_components.Nullable_simple_user.t option;
+            owner : Owner.t;
             pem : string;
             permissions : Permissions.t;
             slug : string option; [@default None]
@@ -87,6 +108,27 @@ module Create_from_manifest = struct
             type t = string list [@@deriving yojson { strict = false; meta = false }, show, eq]
           end
 
+          module Owner = struct
+            type t =
+              | Simple_user of Githubc2_components.Simple_user.t
+              | Enterprise of Githubc2_components.Enterprise.t
+            [@@deriving show, eq]
+
+            let of_yojson =
+              Json_schema.one_of
+                (let open CCResult in
+                 [
+                   (fun v ->
+                     map (fun v -> Simple_user v) (Githubc2_components.Simple_user.of_yojson v));
+                   (fun v ->
+                     map (fun v -> Enterprise v) (Githubc2_components.Enterprise.of_yojson v));
+                 ])
+
+            let to_yojson = function
+              | Simple_user v -> Githubc2_components.Simple_user.to_yojson v
+              | Enterprise v -> Githubc2_components.Enterprise.to_yojson v
+          end
+
           module Permissions = struct
             module Primary = struct
               type t = {
@@ -118,7 +160,7 @@ module Create_from_manifest = struct
             installations_count : int option; [@default None]
             name : string;
             node_id : string;
-            owner : Githubc2_components.Nullable_simple_user.t option;
+            owner : Owner.t;
             pem : string;
             permissions : Permissions.t;
             slug : string option; [@default None]
@@ -252,7 +294,6 @@ module List_webhook_deliveries = struct
     type t = {
       cursor : string option; [@default None]
       per_page : int; [@default 30]
-      redelivery : bool option; [@default None]
     }
     [@@deriving make, show, eq]
   end
@@ -299,9 +340,7 @@ module List_webhook_deliveries = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("per_page", Var (params.per_page, Int));
-           ("cursor", Var (params.cursor, Option String));
-           ("redelivery", Var (params.redelivery, Option Bool));
+           ("per_page", Var (params.per_page, Int)); ("cursor", Var (params.cursor, Option String));
          ])
       ~url
       ~responses:Responses.t

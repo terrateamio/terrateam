@@ -21,7 +21,7 @@ module Primary = struct
     description : string; [@default ""]
     environment : string; [@default ""]
     environment_url : string; [@default ""]
-    id : int;
+    id : int64;
     log_url : string; [@default ""]
     node_id : string;
     performed_via_github_app : Githubc2_components_nullable_integration.t option; [@default None]

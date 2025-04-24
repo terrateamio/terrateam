@@ -14,7 +14,7 @@ module Primary = struct
     merge_group : Githubc2_components_merge_group.t;
     organization : Githubc2_components_organization_simple_webhooks.t option; [@default None]
     repository : Githubc2_components_repository_webhooks.t option; [@default None]
-    sender : Githubc2_components_simple_user_webhooks.t option; [@default None]
+    sender : Githubc2_components_simple_user.t option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

@@ -37,6 +37,10 @@ module Primary = struct
           | V1 v -> V1.to_yojson v
       end
 
+      module Custom_properties = struct
+        include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Json_schema.Obj)
+      end
+
       module License_ = struct
         module Primary = struct
           type t = {
@@ -87,6 +91,7 @@ module Primary = struct
             subscriptions_url : string option; [@default None]
             type_ : Type.t option; [@default None] [@key "type"]
             url : string option; [@default None]
+            user_view_type : string option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -171,6 +176,7 @@ module Primary = struct
         contents_url : string;
         contributors_url : string;
         created_at : Created_at.t;
+        custom_properties : Custom_properties.t option; [@default None]
         default_branch : string;
         delete_branch_on_merge : bool; [@default false]
         deployments_url : string;
@@ -195,7 +201,7 @@ module Primary = struct
         homepage : string option;
         hooks_url : string;
         html_url : string;
-        id : int;
+        id : int64;
         is_template : bool option; [@default None]
         issue_comment_url : string;
         issue_events_url : string;
@@ -248,102 +254,14 @@ module Primary = struct
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
   end
 
-  module Team_ = struct
-    module Primary = struct
-      module Notification_setting = struct
-        let t_of_yojson = function
-          | `String "notifications_enabled" -> Ok "notifications_enabled"
-          | `String "notifications_disabled" -> Ok "notifications_disabled"
-          | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-        type t = (string[@of_yojson t_of_yojson])
-        [@@deriving yojson { strict = false; meta = true }, show, eq]
-      end
-
-      module Parent = struct
-        module Primary = struct
-          module Notification_setting = struct
-            let t_of_yojson = function
-              | `String "notifications_enabled" -> Ok "notifications_enabled"
-              | `String "notifications_disabled" -> Ok "notifications_disabled"
-              | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-            type t = (string[@of_yojson t_of_yojson])
-            [@@deriving yojson { strict = false; meta = true }, show, eq]
-          end
-
-          module Privacy = struct
-            let t_of_yojson = function
-              | `String "open" -> Ok "open"
-              | `String "closed" -> Ok "closed"
-              | `String "secret" -> Ok "secret"
-              | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-            type t = (string[@of_yojson t_of_yojson])
-            [@@deriving yojson { strict = false; meta = true }, show, eq]
-          end
-
-          type t = {
-            description : string option;
-            html_url : string;
-            id : int;
-            members_url : string;
-            name : string;
-            node_id : string;
-            notification_setting : Notification_setting.t;
-            permission : string;
-            privacy : Privacy.t;
-            repositories_url : string;
-            slug : string;
-            url : string;
-          }
-          [@@deriving yojson { strict = false; meta = true }, show, eq]
-        end
-
-        include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-      end
-
-      module Privacy = struct
-        let t_of_yojson = function
-          | `String "open" -> Ok "open"
-          | `String "closed" -> Ok "closed"
-          | `String "secret" -> Ok "secret"
-          | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-        type t = (string[@of_yojson t_of_yojson])
-        [@@deriving yojson { strict = false; meta = true }, show, eq]
-      end
-
-      type t = {
-        deleted : bool option; [@default None]
-        description : string option; [@default None]
-        html_url : string option; [@default None]
-        id : int;
-        members_url : string option; [@default None]
-        name : string;
-        node_id : string option; [@default None]
-        notification_setting : Notification_setting.t option; [@default None]
-        parent : Parent.t option; [@default None]
-        permission : string option; [@default None]
-        privacy : Privacy.t option; [@default None]
-        repositories_url : string option; [@default None]
-        slug : string option; [@default None]
-        url : string option; [@default None]
-      }
-      [@@deriving yojson { strict = false; meta = true }, show, eq]
-    end
-
-    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-  end
-
   type t = {
     action : Action.t;
     enterprise : Githubc2_components_enterprise_webhooks.t option; [@default None]
     installation : Githubc2_components_simple_installation.t option; [@default None]
     organization : Githubc2_components_organization_simple_webhooks.t;
     repository : Repository_.t option; [@default None]
-    sender : Githubc2_components_simple_user_webhooks.t option; [@default None]
-    team : Team_.t;
+    sender : Githubc2_components_simple_user.t option; [@default None]
+    team : Githubc2_components_webhooks_team_1.t;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

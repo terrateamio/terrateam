@@ -177,6 +177,7 @@ module List_for_org = struct
       since : string option; [@default None]
       sort : Sort.t; [@default "created"]
       state : State.t; [@default "open"]
+      type_ : string option; [@default None] [@key "type"]
     }
     [@@deriving make, show, eq]
   end
@@ -221,6 +222,7 @@ module List_for_org = struct
            ("filter", Var (params.filter, String));
            ("state", Var (params.state, String));
            ("labels", Var (params.labels, Option String));
+           ("type", Var (params.type_, Option String));
            ("sort", Var (params.sort, String));
            ("direction", Var (params.direction, String));
            ("since", Var (params.since, Option String));
@@ -452,6 +454,7 @@ module Create = struct
         labels : Labels.t option; [@default None]
         milestone : Milestone.t option; [@default None]
         title : Title.t;
+        type_ : string option; [@default None] [@key "type"]
       }
       [@@deriving make, yojson { strict = false; meta = true }, show, eq]
     end
@@ -589,6 +592,7 @@ module List_for_repo = struct
       since : string option; [@default None]
       sort : Sort.t; [@default "created"]
       state : State.t; [@default "open"]
+      type_ : string option; [@default None] [@key "type"]
     }
     [@@deriving make, show, eq]
   end
@@ -648,6 +652,7 @@ module List_for_repo = struct
            ("milestone", Var (params.milestone, Option String));
            ("state", Var (params.state, String));
            ("assignee", Var (params.assignee, Option String));
+           ("type", Var (params.type_, Option String));
            ("creator", Var (params.creator, Option String));
            ("mentioned", Var (params.mentioned, Option String));
            ("labels", Var (params.labels, Option String));
@@ -753,7 +758,7 @@ end
 module Update_comment = struct
   module Parameters = struct
     type t = {
-      comment_id : int;
+      comment_id : int64;
       owner : string;
       repo : string;
     }
@@ -806,7 +811,7 @@ module Update_comment = struct
          [
            ("owner", Var (params.owner, String));
            ("repo", Var (params.repo, String));
-           ("comment_id", Var (params.comment_id, Int));
+           ("comment_id", Var (params.comment_id, Int64));
          ])
       ~query_params:[]
       ~url
@@ -817,7 +822,7 @@ end
 module Delete_comment = struct
   module Parameters = struct
     type t = {
-      comment_id : int;
+      comment_id : int64;
       owner : string;
       repo : string;
     }
@@ -843,7 +848,7 @@ module Delete_comment = struct
          [
            ("owner", Var (params.owner, String));
            ("repo", Var (params.repo, String));
-           ("comment_id", Var (params.comment_id, Int));
+           ("comment_id", Var (params.comment_id, Int64));
          ])
       ~query_params:[]
       ~url
@@ -854,7 +859,7 @@ end
 module Get_comment = struct
   module Parameters = struct
     type t = {
-      comment_id : int;
+      comment_id : int64;
       owner : string;
       repo : string;
     }
@@ -896,7 +901,7 @@ module Get_comment = struct
          [
            ("owner", Var (params.owner, String));
            ("repo", Var (params.repo, String));
-           ("comment_id", Var (params.comment_id, Int));
+           ("comment_id", Var (params.comment_id, Int64));
          ])
       ~query_params:[]
       ~url
@@ -1166,6 +1171,7 @@ module Update = struct
         state : State.t option; [@default None]
         state_reason : State_reason.t option; [@default None]
         title : Title.t option; [@default None]
+        type_ : string option; [@default None] [@key "type"]
       }
       [@@deriving make, yojson { strict = false; meta = true }, show, eq]
     end
@@ -2325,6 +2331,329 @@ module Lock = struct
       ~url
       ~responses:Responses.t
       `Put
+end
+
+module Remove_sub_issue = struct
+  module Parameters = struct
+    type t = {
+      issue_number : int;
+      owner : string;
+      repo : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    module Primary = struct
+      type t = { sub_issue_id : int }
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
+    end
+
+    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Githubc2_components.Issue.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Bad_request = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    type t =
+      [ `OK of OK.t
+      | `Bad_request of Bad_request.t
+      | `Not_found of Not_found.t
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("400", Openapi.of_json_body (fun v -> `Bad_request v) Bad_request.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+      ]
+  end
+
+  let url = "/repos/{owner}/{repo}/issues/{issue_number}/sub_issue"
+
+  let make ~body =
+   fun params ->
+    Openapi.Request.make
+      ~body:(Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("issue_number", Var (params.issue_number, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
+module Add_sub_issue = struct
+  module Parameters = struct
+    type t = {
+      issue_number : int;
+      owner : string;
+      repo : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    module Primary = struct
+      type t = {
+        replace_parent : bool option; [@default None]
+        sub_issue_id : int;
+      }
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
+    end
+
+    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+  end
+
+  module Responses = struct
+    module Created = struct
+      type t = Githubc2_components.Issue.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Forbidden = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Gone = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Unprocessable_entity = struct
+      type t = Githubc2_components.Validation_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    type t =
+      [ `Created of Created.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Gone of Gone.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
+        ("403", Openapi.of_json_body (fun v -> `Forbidden v) Forbidden.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ("410", Openapi.of_json_body (fun v -> `Gone v) Gone.of_yojson);
+        ( "422",
+          Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
+      ]
+  end
+
+  let url = "/repos/{owner}/{repo}/issues/{issue_number}/sub_issues"
+
+  let make ~body =
+   fun params ->
+    Openapi.Request.make
+      ~body:(Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("issue_number", Var (params.issue_number, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module List_sub_issues = struct
+  module Parameters = struct
+    type t = {
+      issue_number : int;
+      owner : string;
+      page : int; [@default 1]
+      per_page : int; [@default 30]
+      repo : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Githubc2_components.Issue.t list
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Gone = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_found of Not_found.t
+      | `Gone of Gone.t
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ("410", Openapi.of_json_body (fun v -> `Gone v) Gone.of_yojson);
+      ]
+  end
+
+  let url = "/repos/{owner}/{repo}/issues/{issue_number}/sub_issues"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("issue_number", Var (params.issue_number, Int));
+         ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("per_page", Var (params.per_page, Int)); ("page", Var (params.page, Int)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module Reprioritize_sub_issue = struct
+  module Parameters = struct
+    type t = {
+      issue_number : int;
+      owner : string;
+      repo : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    module Primary = struct
+      type t = {
+        after_id : int option; [@default None]
+        before_id : int option; [@default None]
+        sub_issue_id : int;
+      }
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
+    end
+
+    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Githubc2_components.Issue.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Forbidden = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Unprocessable_entity = struct
+      type t = Githubc2_components.Validation_error_simple.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Service_unavailable = struct
+      module Primary = struct
+        type t = {
+          code : string option; [@default None]
+          documentation_url : string option; [@default None]
+          message : string option; [@default None]
+        }
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+    end
+
+    type t =
+      [ `OK of OK.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      | `Service_unavailable of Service_unavailable.t
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("403", Openapi.of_json_body (fun v -> `Forbidden v) Forbidden.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ( "422",
+          Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
+        ("503", Openapi.of_json_body (fun v -> `Service_unavailable v) Service_unavailable.of_yojson);
+      ]
+  end
+
+  let url = "/repos/{owner}/{repo}/issues/{issue_number}/sub_issues/priority"
+
+  let make ~body =
+   fun params ->
+    Openapi.Request.make
+      ~body:(Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("issue_number", Var (params.issue_number, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Patch
 end
 
 module List_events_for_timeline = struct

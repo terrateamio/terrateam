@@ -38,6 +38,7 @@ type fetch_file_err =
   | `Forbidden of Githubc2_components.Basic_error.t
   | `Found
   | `Not_file
+  | `Not_modified
   ]
 [@@deriving show]
 
@@ -59,6 +60,7 @@ type create_pull_request_err =
 type create_ref_err =
   [ Githubc2_abb.call_err
   | `Unprocessable_entity of Githubc2_components.Validation_error.t
+  | `Conflict of Githubc2_components.Basic_error.t
   ]
 [@@deriving show]
 
@@ -88,6 +90,7 @@ type get_tree_raw_err =
   [ Githubc2_abb.call_err
   | `Not_found of Githubc2_components.Basic_error.t
   | `Unprocessable_entity of Githubc2_components.Validation_error.t
+  | `Conflict of Githubc2_components.Basic_error.t
   ]
 [@@deriving show]
 
@@ -95,6 +98,7 @@ type get_tree_err =
   [ Githubc2_abb.call_err
   | `Not_found of Githubc2_components.Basic_error.t
   | `Unprocessable_entity of Githubc2_components.Validation_error.t
+  | `Conflict of Githubc2_components.Basic_error.t
   ]
 [@@deriving show]
 
@@ -103,6 +107,7 @@ type create_tree_err =
   | `Forbidden of Githubc2_components.Basic_error.t
   | `Not_found of Githubc2_components.Basic_error.t
   | `Unprocessable_entity of Githubc2_components.Validation_error.t
+  | `Conflict of Githubc2_components.Basic_error.t
   ]
 [@@deriving show]
 
@@ -110,6 +115,7 @@ type create_commit_err =
   [ Githubc2_abb.call_err
   | `Not_found of Githubc2_components.Basic_error.t
   | `Unprocessable_entity of Githubc2_components.Validation_error.t
+  | `Conflict of Githubc2_components.Basic_error.t
   ]
 [@@deriving show]
 

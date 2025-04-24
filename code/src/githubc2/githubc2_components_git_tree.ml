@@ -3,11 +3,11 @@ module Primary = struct
     module Items = struct
       module Primary = struct
         type t = {
-          mode : string option; [@default None]
-          path : string option; [@default None]
-          sha : string option; [@default None]
+          mode : string;
+          path : string;
+          sha : string;
           size : int option; [@default None]
-          type_ : string option; [@default None] [@key "type"]
+          type_ : string; [@key "type"]
           url : string option; [@default None]
         }
         [@@deriving yojson { strict = false; meta = true }, show, eq]
@@ -23,7 +23,7 @@ module Primary = struct
     sha : string;
     tree : Tree.t;
     truncated : bool;
-    url : string;
+    url : string option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

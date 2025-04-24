@@ -20,6 +20,7 @@ module Request = struct
       | Array : 'a v -> 'a list v
       | Option : 'a v -> 'a option v
       | Int : int v
+      | Int64 : int64 v
       | String : string v
       | Bool : bool v
       | Null : unit v
@@ -30,6 +31,7 @@ module Request = struct
      fun t v ->
       match (t, v) with
       | Int, v -> Some (Uritmpl.Var.S (CCInt.to_string v))
+      | Int64, v -> Some (Uritmpl.Var.S (CCInt64.to_string v))
       | String, v -> Some (Uritmpl.Var.S v)
       | Bool, v -> Some (Uritmpl.Var.S (Bool.to_string v))
       | Option t, Some v -> to_uritmpl_var t v
@@ -39,9 +41,9 @@ module Request = struct
           Some
             (Uritmpl.Var.A
                (CCList.map (function
-                    | Uritmpl.Var.S s -> s
-                    | Uritmpl.Var.A _ -> assert false
-                    | Uritmpl.Var.M _ -> assert false)
+                  | Uritmpl.Var.S s -> s
+                  | Uritmpl.Var.A _ -> assert false
+                  | Uritmpl.Var.M _ -> assert false)
                @@ CCList.filter_map (to_uritmpl_var t) arr))
   end
 

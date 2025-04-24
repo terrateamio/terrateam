@@ -22,6 +22,7 @@ module List_alerts_for_enterprise = struct
       let t_of_yojson = function
         | `String "created" -> Ok "created"
         | `String "updated" -> Ok "updated"
+        | `String "epss_percentage" -> Ok "epss_percentage"
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
       type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
@@ -33,6 +34,7 @@ module List_alerts_for_enterprise = struct
       direction : Direction.t; [@default "desc"]
       ecosystem : string option; [@default None]
       enterprise : string;
+      epss_percentage : string option; [@default None]
       first : int; [@default 30]
       last : int option; [@default None]
       package : string option; [@default None]
@@ -105,6 +107,7 @@ module List_alerts_for_enterprise = struct
            ("severity", Var (params.severity, Option String));
            ("ecosystem", Var (params.ecosystem, Option String));
            ("package", Var (params.package, Option String));
+           ("epss_percentage", Var (params.epss_percentage, Option String));
            ("scope", Var (params.scope, Option String));
            ("sort", Var (params.sort, String));
            ("direction", Var (params.direction, String));
@@ -143,6 +146,7 @@ module List_alerts_for_org = struct
       let t_of_yojson = function
         | `String "created" -> Ok "created"
         | `String "updated" -> Ok "updated"
+        | `String "epss_percentage" -> Ok "epss_percentage"
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
       type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
@@ -153,6 +157,7 @@ module List_alerts_for_org = struct
       before : string option; [@default None]
       direction : Direction.t; [@default "desc"]
       ecosystem : string option; [@default None]
+      epss_percentage : string option; [@default None]
       first : int; [@default 30]
       last : int option; [@default None]
       org : string;
@@ -233,6 +238,7 @@ module List_alerts_for_org = struct
            ("severity", Var (params.severity, Option String));
            ("ecosystem", Var (params.ecosystem, Option String));
            ("package", Var (params.package, Option String));
+           ("epss_percentage", Var (params.epss_percentage, Option String));
            ("scope", Var (params.scope, Option String));
            ("sort", Var (params.sort, String));
            ("direction", Var (params.direction, String));
@@ -706,6 +712,7 @@ module List_alerts_for_repo = struct
       let t_of_yojson = function
         | `String "created" -> Ok "created"
         | `String "updated" -> Ok "updated"
+        | `String "epss_percentage" -> Ok "epss_percentage"
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
       type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
@@ -716,6 +723,7 @@ module List_alerts_for_repo = struct
       before : string option; [@default None]
       direction : Direction.t; [@default "desc"]
       ecosystem : string option; [@default None]
+      epss_percentage : string option; [@default None]
       first : int; [@default 30]
       last : int option; [@default None]
       manifest : string option; [@default None]
@@ -800,6 +808,7 @@ module List_alerts_for_repo = struct
            ("ecosystem", Var (params.ecosystem, Option String));
            ("package", Var (params.package, Option String));
            ("manifest", Var (params.manifest, Option String));
+           ("epss_percentage", Var (params.epss_percentage, Option String));
            ("scope", Var (params.scope, Option String));
            ("sort", Var (params.sort, String));
            ("direction", Var (params.direction, String));

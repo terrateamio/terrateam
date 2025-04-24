@@ -59,6 +59,7 @@ module Primary = struct
           type t = {
             id : int;
             node_id : string;
+            prevent_self_review : bool option; [@default None]
             reviewers : Reviewers.t option; [@default None]
             type_ : string; [@key "type"]
           }
@@ -110,7 +111,7 @@ module Primary = struct
     deployment_branch_policy : Githubc2_components_deployment_branch_policy_settings.t option;
         [@default None]
     html_url : string;
-    id : int;
+    id : int64;
     name : string;
     node_id : string;
     protection_rules : Protection_rules.t option; [@default None]

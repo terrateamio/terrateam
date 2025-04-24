@@ -21,6 +21,7 @@ module Primary = struct
     subscriptions_url : string option; [@default None]
     type_ : string; [@key "type"]
     url : string option; [@default None]
+    user_view_type : string option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

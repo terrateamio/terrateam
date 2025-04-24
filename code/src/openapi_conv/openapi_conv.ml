@@ -285,9 +285,11 @@ let request_param_of_op_params components param_in params =
         Ast_helper.(Exp.construct (Location.mknoloc (Gen.ident [ "Array" ])) (Some obj))
       in
       let rec type_desc_of_schema = function
-        | { Schema.typ = Some typ; _ } as schema when Json_schema_conv.is_prim_type schema -> (
+        | { Schema.typ = Some typ; format; _ } as schema when Json_schema_conv.is_prim_type schema
+          -> (
             match Json_schema_conv.extract_prim_type schema with
             | Some "string" -> scalar "String"
+            | Some "integer" when format = Some "int64" -> scalar "Int64"
             | Some "integer" -> scalar "Int"
             | Some "boolean" -> scalar "Bool"
             | Some "number" -> assert false

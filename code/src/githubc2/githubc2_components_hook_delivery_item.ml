@@ -5,12 +5,13 @@ module Primary = struct
     duration : float;
     event : string;
     guid : string;
-    id : int;
-    installation_id : int option;
+    id : int64;
+    installation_id : int64 option;
     redelivery : bool;
-    repository_id : int option;
+    repository_id : int64 option;
     status : string;
     status_code : int;
+    throttled_at : string option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

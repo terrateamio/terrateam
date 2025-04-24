@@ -4,6 +4,7 @@ type t =
   | Repository_rule_deletion of Githubc2_components_repository_rule_deletion.t
   | Repository_rule_required_linear_history of
       Githubc2_components_repository_rule_required_linear_history.t
+  | Repository_rule_merge_queue of Githubc2_components_repository_rule_merge_queue.t
   | Repository_rule_required_deployments of
       Githubc2_components_repository_rule_required_deployments.t
   | Repository_rule_required_signatures of Githubc2_components_repository_rule_required_signatures.t
@@ -19,6 +20,15 @@ type t =
       Githubc2_components_repository_rule_committer_email_pattern.t
   | Repository_rule_branch_name_pattern of Githubc2_components_repository_rule_branch_name_pattern.t
   | Repository_rule_tag_name_pattern of Githubc2_components_repository_rule_tag_name_pattern.t
+  | Repository_rule_file_path_restriction of
+      Githubc2_components_repository_rule_file_path_restriction.t
+  | Repository_rule_max_file_path_length of
+      Githubc2_components_repository_rule_max_file_path_length.t
+  | Repository_rule_file_extension_restriction of
+      Githubc2_components_repository_rule_file_extension_restriction.t
+  | Repository_rule_max_file_size of Githubc2_components_repository_rule_max_file_size.t
+  | Repository_rule_workflows of Githubc2_components_repository_rule_workflows.t
+  | Repository_rule_code_scanning of Githubc2_components_repository_rule_code_scanning.t
 [@@deriving show, eq]
 
 let of_yojson =
@@ -41,6 +51,10 @@ let of_yojson =
          map
            (fun v -> Repository_rule_required_linear_history v)
            (Githubc2_components_repository_rule_required_linear_history.of_yojson v));
+       (fun v ->
+         map
+           (fun v -> Repository_rule_merge_queue v)
+           (Githubc2_components_repository_rule_merge_queue.of_yojson v));
        (fun v ->
          map
            (fun v -> Repository_rule_required_deployments v)
@@ -81,6 +95,30 @@ let of_yojson =
          map
            (fun v -> Repository_rule_tag_name_pattern v)
            (Githubc2_components_repository_rule_tag_name_pattern.of_yojson v));
+       (fun v ->
+         map
+           (fun v -> Repository_rule_file_path_restriction v)
+           (Githubc2_components_repository_rule_file_path_restriction.of_yojson v));
+       (fun v ->
+         map
+           (fun v -> Repository_rule_max_file_path_length v)
+           (Githubc2_components_repository_rule_max_file_path_length.of_yojson v));
+       (fun v ->
+         map
+           (fun v -> Repository_rule_file_extension_restriction v)
+           (Githubc2_components_repository_rule_file_extension_restriction.of_yojson v));
+       (fun v ->
+         map
+           (fun v -> Repository_rule_max_file_size v)
+           (Githubc2_components_repository_rule_max_file_size.of_yojson v));
+       (fun v ->
+         map
+           (fun v -> Repository_rule_workflows v)
+           (Githubc2_components_repository_rule_workflows.of_yojson v));
+       (fun v ->
+         map
+           (fun v -> Repository_rule_code_scanning v)
+           (Githubc2_components_repository_rule_code_scanning.of_yojson v));
      ])
 
 let to_yojson = function
@@ -89,6 +127,7 @@ let to_yojson = function
   | Repository_rule_deletion v -> Githubc2_components_repository_rule_deletion.to_yojson v
   | Repository_rule_required_linear_history v ->
       Githubc2_components_repository_rule_required_linear_history.to_yojson v
+  | Repository_rule_merge_queue v -> Githubc2_components_repository_rule_merge_queue.to_yojson v
   | Repository_rule_required_deployments v ->
       Githubc2_components_repository_rule_required_deployments.to_yojson v
   | Repository_rule_required_signatures v ->
@@ -108,3 +147,12 @@ let to_yojson = function
       Githubc2_components_repository_rule_branch_name_pattern.to_yojson v
   | Repository_rule_tag_name_pattern v ->
       Githubc2_components_repository_rule_tag_name_pattern.to_yojson v
+  | Repository_rule_file_path_restriction v ->
+      Githubc2_components_repository_rule_file_path_restriction.to_yojson v
+  | Repository_rule_max_file_path_length v ->
+      Githubc2_components_repository_rule_max_file_path_length.to_yojson v
+  | Repository_rule_file_extension_restriction v ->
+      Githubc2_components_repository_rule_file_extension_restriction.to_yojson v
+  | Repository_rule_max_file_size v -> Githubc2_components_repository_rule_max_file_size.to_yojson v
+  | Repository_rule_workflows v -> Githubc2_components_repository_rule_workflows.to_yojson v
+  | Repository_rule_code_scanning v -> Githubc2_components_repository_rule_code_scanning.to_yojson v

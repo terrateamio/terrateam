@@ -1,6 +1,7 @@
 module Primary = struct
   type t = {
     created_at : string;
+    dismissal_approved_by : Githubc2_components_nullable_simple_user.t option; [@default None]
     dismissed_at : string option;
     dismissed_by : Githubc2_components_nullable_simple_user.t option;
     dismissed_comment : string option; [@default None]

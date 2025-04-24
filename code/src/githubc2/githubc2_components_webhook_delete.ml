@@ -17,7 +17,7 @@ module Primary = struct
     ref_ : string; [@key "ref"]
     ref_type : Ref_type.t;
     repository : Githubc2_components_repository_webhooks.t;
-    sender : Githubc2_components_simple_user_webhooks.t;
+    sender : Githubc2_components_simple_user.t;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

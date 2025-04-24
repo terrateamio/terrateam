@@ -22,7 +22,7 @@ module Primary = struct
     expires_at : string option;
     fingerprint : string option;
     hashed_token : string option;
-    id : int;
+    id : int64;
     installation : Githubc2_components_nullable_scoped_installation.t option; [@default None]
     note : string option;
     note_url : string option;

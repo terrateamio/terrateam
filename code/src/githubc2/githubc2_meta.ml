@@ -130,13 +130,11 @@ module Get_zen = struct
   module Parameters = struct end
 
   module Responses = struct
-    module OK = struct
-      type t = string [@@deriving yojson { strict = false; meta = false }, show, eq]
-    end
+    module OK = struct end
 
-    type t = [ `OK of OK.t ] [@@deriving show, eq]
+    type t = [ `OK ] [@@deriving show, eq]
 
-    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
+    let t = [ ("200", fun _ -> Ok `OK) ]
   end
 
   let url = "/zen"

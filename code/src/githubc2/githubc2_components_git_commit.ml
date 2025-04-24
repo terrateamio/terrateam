@@ -61,6 +61,7 @@ module Primary = struct
         reason : string;
         signature : string option;
         verified : bool;
+        verified_at : string option;
       }
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end

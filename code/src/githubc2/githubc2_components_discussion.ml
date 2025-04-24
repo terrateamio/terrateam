@@ -34,6 +34,7 @@ module Primary = struct
         subscriptions_url : string option; [@default None]
         type_ : Type.t option; [@default None] [@key "type"]
         url : string option; [@default None]
+        user_view_type : string option; [@default None]
       }
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
@@ -75,6 +76,11 @@ module Primary = struct
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+  end
+
+  module Labels = struct
+    type t = Githubc2_components_label.t list
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Reactions = struct
@@ -145,7 +151,7 @@ module Primary = struct
         gists_url : string option; [@default None]
         gravatar_id : string option; [@default None]
         html_url : string option; [@default None]
-        id : int;
+        id : int64;
         login : string;
         name : string option; [@default None]
         node_id : string option; [@default None]
@@ -157,6 +163,7 @@ module Primary = struct
         subscriptions_url : string option; [@default None]
         type_ : Type.t option; [@default None] [@key "type"]
         url : string option; [@default None]
+        user_view_type : string option; [@default None]
       }
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
@@ -176,6 +183,7 @@ module Primary = struct
     created_at : string;
     html_url : string;
     id : int;
+    labels : Labels.t option; [@default None]
     locked : bool;
     node_id : string;
     number : int;

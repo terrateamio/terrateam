@@ -45,6 +45,7 @@ module Primary = struct
         type_ : string option; [@default None] [@key "type"]
         updated_at : string option; [@default None]
         url : string option; [@default None]
+        user_view_type : string option; [@default None]
         website_url : Website_url.t option; [@default None]
       }
       [@@deriving yojson { strict = false; meta = true }, show, eq]
@@ -98,7 +99,7 @@ module Primary = struct
     installation : Githubc2_components_simple_installation.t;
     organization : Githubc2_components_organization_simple_webhooks.t option; [@default None]
     repository : Githubc2_components_repository_webhooks.t option; [@default None]
-    sender : Githubc2_components_simple_user_webhooks.t option; [@default None]
+    sender : Githubc2_components_simple_user.t option; [@default None]
     target_type : string;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
