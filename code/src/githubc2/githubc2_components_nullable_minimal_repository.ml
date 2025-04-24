@@ -74,7 +74,7 @@ module Primary = struct
     homepage : string option; [@default None]
     hooks_url : string;
     html_url : string;
-    id : int;
+    id : int64;
     is_template : bool option; [@default None]
     issue_comment_url : string;
     issue_events_url : string;

@@ -1,4 +1,23 @@
 module Primary = struct
+  module Author = struct
+    type t =
+      | Simple_user of Githubc2_components_simple_user.t
+      | Empty_object of Githubc2_components_empty_object.t
+    [@@deriving show, eq]
+
+    let of_yojson =
+      Json_schema.any_of
+        (let open CCResult in
+         [
+           (fun v -> map (fun v -> Simple_user v) (Githubc2_components_simple_user.of_yojson v));
+           (fun v -> map (fun v -> Empty_object v) (Githubc2_components_empty_object.of_yojson v));
+         ])
+
+    let to_yojson = function
+      | Simple_user v -> Githubc2_components_simple_user.to_yojson v
+      | Empty_object v -> Githubc2_components_empty_object.to_yojson v
+  end
+
   module Commit_ = struct
     module Primary = struct
       module Tree = struct
@@ -26,6 +45,25 @@ module Primary = struct
     end
 
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+  end
+
+  module Committer = struct
+    type t =
+      | Simple_user of Githubc2_components_simple_user.t
+      | Empty_object of Githubc2_components_empty_object.t
+    [@@deriving show, eq]
+
+    let of_yojson =
+      Json_schema.any_of
+        (let open CCResult in
+         [
+           (fun v -> map (fun v -> Simple_user v) (Githubc2_components_simple_user.of_yojson v));
+           (fun v -> map (fun v -> Empty_object v) (Githubc2_components_empty_object.of_yojson v));
+         ])
+
+    let to_yojson = function
+      | Simple_user v -> Githubc2_components_simple_user.to_yojson v
+      | Empty_object v -> Githubc2_components_empty_object.to_yojson v
   end
 
   module Files = struct
@@ -64,10 +102,10 @@ module Primary = struct
   end
 
   type t = {
-    author : Githubc2_components_nullable_simple_user.t option;
+    author : Author.t option;
     comments_url : string;
     commit : Commit_.t;
-    committer : Githubc2_components_nullable_simple_user.t option;
+    committer : Committer.t option;
     files : Files.t option; [@default None]
     html_url : string;
     node_id : string;

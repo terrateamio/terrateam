@@ -107,6 +107,7 @@ module Primary = struct
 
       type t = {
         cvss : Cvss.t;
+        cvss_severities : Githubc2_components_cvss_severities.t option; [@default None]
         cwes : Cwes.t;
         description : string;
         ghsa_id : string;
@@ -132,7 +133,7 @@ module Primary = struct
     organization : Githubc2_components_organization_simple_webhooks.t option; [@default None]
     repository : Githubc2_components_repository_webhooks.t option; [@default None]
     security_advisory : Security_advisory.t;
-    sender : Githubc2_components_simple_user_webhooks.t option; [@default None]
+    sender : Githubc2_components_simple_user.t option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

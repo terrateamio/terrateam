@@ -80,6 +80,7 @@ module Primary = struct
     let t_of_yojson = function
       | `String "Repository" -> Ok "Repository"
       | `String "Organization" -> Ok "Organization"
+      | `String "Enterprise" -> Ok "Enterprise"
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
@@ -90,6 +91,8 @@ module Primary = struct
     let t_of_yojson = function
       | `String "branch" -> Ok "branch"
       | `String "tag" -> Ok "tag"
+      | `String "push" -> Ok "push"
+      | `String "repository" -> Ok "repository"
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])

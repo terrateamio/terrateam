@@ -18,7 +18,7 @@ module Primary = struct
     exclude_owner_projects : bool;
     exclude_releases : bool;
     guid : string;
-    id : int;
+    id : int64;
     lock_repositories : bool;
     node_id : string;
     org_metadata_only : bool;

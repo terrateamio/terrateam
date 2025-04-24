@@ -355,6 +355,34 @@ module Mark_thread_as_read = struct
       `Patch
 end
 
+module Mark_thread_as_done = struct
+  module Parameters = struct
+    type t = { thread_id : int } [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module No_content = struct end
+
+    type t = [ `No_content ] [@@deriving show, eq]
+
+    let t = [ ("204", fun _ -> Ok `No_content) ]
+  end
+
+  let url = "/notifications/threads/{thread_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("thread_id", Var (params.thread_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
 module Get_thread = struct
   module Parameters = struct
     type t = { thread_id : int } [@@deriving make, show, eq]
