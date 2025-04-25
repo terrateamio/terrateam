@@ -4763,20 +4763,23 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | [], `Auto ->
           Logs.info (fun m -> m "%s : NOOP : AUTOPLAN_NO_MATCHES" state.State.request_id);
           Abbs_future_combinators.Infix_result_app.(
-            (fun pull_request repo_config -> (pull_request, repo_config))
+            (fun pull_request repo_config matches -> (pull_request, repo_config, matches))
             <$> Dv.pull_request ctx state
-            <*> Dv.repo_config ctx state)
-          >>= fun (pull_request, repo_config) ->
+            <*> Dv.repo_config ctx state
+            <*> Dv.matches ctx state `Plan)
+          >>= fun (pull_request, repo_config, matches) ->
           Dv.client ctx state
           >>= fun client ->
-          H.maybe_create_completed_apply_check
-            state.State.request_id
-            (Ctx.config ctx)
-            client
-            (Event.account state.State.event)
-            repo_config
-            (Event.repo state.State.event)
-            pull_request
+          (if CCList.is_empty matches.Dv.Matches.all_unapplied_matches then
+             H.maybe_create_completed_apply_check
+               state.State.request_id
+               (Ctx.config ctx)
+               client
+               (Event.account state.State.event)
+               repo_config
+               (Event.repo state.State.event)
+               pull_request
+           else Abb.Future.return (Ok ()))
           >>= fun () -> Abb.Future.return (Error (`Noop state))
       | [], `Manual ->
           Logs.info (fun m -> m "%s : PLAN_NO_MATCHING_DIRSPACES" state.State.request_id);
