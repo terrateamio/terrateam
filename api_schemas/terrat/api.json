@@ -1276,6 +1276,25 @@
         ],
         "type": "object"
       },
+      "work-manifest-workspaces": {
+        "items": {
+          "additionalProperties": false,
+          "properties": {
+            "dir": {
+              "type": "string"
+            },
+            "workspace": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "dir",
+            "workspace"
+          ],
+          "type": "object"
+        },
+        "type": "array"
+      },
       "workflow-output-apply": {
         "additionalProperties": false,
         "properties": {
@@ -1853,6 +1872,33 @@
         },
         "responses": {
           "200": {},
+          "403": {}
+        }
+      }
+    },
+    "/api/github/v1/work-manifests/{work_manifest_id}/workspaces": {
+      "post": {
+        "operationId": "work-manifest/workspaces",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "work_manifest_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/work-manifest-workspaces"
+                }
+              }
+            }
+          },
           "403": {}
         }
       }

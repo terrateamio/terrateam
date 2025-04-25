@@ -32,4 +32,8 @@ module Make (P : Terrat_vcs_provider2_github.S) : sig
   module Access_token : sig
     val post : P.Api.Config.t -> Terrat_storage.t -> Uuidm.t -> Brtl_rtng.Handler.t
   end
+
+  module Workspaces : sig
+    val get : P.Api.Config.t -> Terrat_storage.t -> Uuidm.t -> Brtl_rtng.Handler.t
+  end
 end

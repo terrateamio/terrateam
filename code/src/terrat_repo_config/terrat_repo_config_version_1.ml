@@ -145,6 +145,7 @@ type t = {
   access_control : Terrat_repo_config_access_control.t option; [@default None]
   apply_requirements : Terrat_repo_config_apply_requirements.t option; [@default None]
   automerge : Terrat_repo_config_automerge.t option; [@default None]
+  batch_runs : Terrat_repo_config_batch_runs.t option; [@default None]
   checkout_strategy : Checkout_strategy.t; [@default "merge"]
   config_builder : Terrat_repo_config_config_builder.t option; [@default None]
   cost_estimation : Cost_estimation.t option; [@default None]

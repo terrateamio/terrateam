@@ -50,6 +50,8 @@ struct
           / "plans"
           /* Body.decode ~json:Terrat_api_work_manifest.Plan_create.Request_body.of_yojson ())
 
+      let work_manifest_workspaces base = Brtl_rtng.Route.(work_manifest base / "workspaces")
+
       let work_manifest_results base =
         Brtl_rtng.Route.(
           work_manifest base
@@ -62,6 +64,7 @@ struct
       let github_v1 () = Brtl_rtng.Route.(github () / "v1")
       let github_events () = Brtl_rtng.Route.(github_v1 () / "events")
       let github_work_manifest_plan () = work_manifest_plan github_v1
+      let github_work_manifest_workspaces () = work_manifest_workspaces github_v1
       let github_work_manifest_initiate () = work_manifest_initiate github_v1
       let github_work_manifest_results () = work_manifest_results github_v1
       let github_work_manifest_access_token () = work_manifest_access_token github_v1
@@ -91,6 +94,9 @@ struct
             ( `POST,
               Rt.github_work_manifest_access_token ()
               --> Work_manifest.Access_token.post config storage );
+            ( `GET,
+              Rt.github_work_manifest_workspaces () --> Work_manifest.Workspaces.get config storage
+            );
             (* Github *)
             (`POST, Rt.github_events () --> Events.post config storage);
             ( `GET,

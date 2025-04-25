@@ -785,6 +785,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Account_expired
       | All_layers_completed
       | Always_store_pull_request
+      | Batch_runs_disabled
+      | Batch_runs_enabled
       | Check_access_control_apply
       | Check_access_control_ci_change
       | Check_access_control_files
@@ -840,6 +842,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Store_pull_request
       | Synthesize_pull_request_sync
       | Test_account_status
+      | Test_batch_runs
       | Test_config_build_required
       | Test_event_kind
       | Test_index_required
@@ -860,6 +863,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Account_expired -> "account_expired"
       | All_layers_completed -> "all_layers_completed"
       | Always_store_pull_request -> "always_store_pull_request"
+      | Batch_runs_disabled -> "batch_runs_disabled"
+      | Batch_runs_enabled -> "batch_runs_enabled"
       | Check_access_control_apply -> "check_access_control_apply"
       | Check_access_control_ci_change -> "check_access_control_ci_change"
       | Check_access_control_files -> "check_access_control_files"
@@ -916,6 +921,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Store_pull_request -> "store_pull_request"
       | Synthesize_pull_request_sync -> "synthesize_pull_request_sync"
       | Test_account_status -> "test_account_status"
+      | Test_batch_runs -> "test_batch_runs"
       | Test_config_build_required -> "test_config_build_required"
       | Test_event_kind -> "test_event_kind"
       | Test_index_required -> "test_index_required"
@@ -935,6 +941,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | "account_expired" -> Some Account_expired
       | "all_layers_completed" -> Some All_layers_completed
       | "always_store_pull_request" -> Some Always_store_pull_request
+      | "batch_runs_disabled" -> Some Batch_runs_disabled
+      | "batch_runs_enabled" -> Some Batch_runs_enabled
       | "check_access_control_apply" -> Some Check_access_control_apply
       | "check_access_control_ci_change" -> Some Check_access_control_ci_change
       | "check_access_control_files" -> Some Check_access_control_files
@@ -991,6 +999,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | "store_pull_request" -> Some Store_pull_request
       | "synthesize_pull_request_sync" -> Some Synthesize_pull_request_sync
       | "test_account_status" -> Some Test_account_status
+      | "test_batch_runs" -> Some Test_batch_runs
       | "test_config_build_required" -> Some Test_config_build_required
       | "test_event_kind" -> Some Test_event_kind
       | "test_index_required" -> Some Test_index_required
@@ -3061,29 +3070,40 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           checks
       else Abb.Future.return (Ok ())
 
-    let partition_by_run_params dirspaceflows =
+    let partition_by_run_params ~max_workspaces_per_batch dirspaceflows =
       let module M = struct
         type t = string option * Yojson.Safe.t option [@@deriving eq]
       end in
       let module Dsf = Terrat_change.Dirspaceflow in
       let module We = Terrat_base_repo_config_v1.Workflows.Entry in
-      CCListLabels.fold_left
-        ~f:(fun acc dsf ->
-          let k =
-            match dsf with
-            | {
-             Dsf.workflow = Some { Dsf.Workflow.workflow = { We.environment; runs_on; _ }; _ };
-             _;
-            } -> (environment, runs_on)
-            | _ -> (None, None)
-          in
-          CCList.Assoc.update
-            ~eq:M.equal
-            ~f:(fun v -> Some (dsf :: CCOption.get_or ~default:[] v))
-            k
-            acc)
-        ~init:[]
-        dirspaceflows
+      let partitions =
+        CCListLabels.fold_left
+          ~f:(fun acc dsf ->
+            let k =
+              match dsf with
+              | {
+               Dsf.workflow = Some { Dsf.Workflow.workflow = { We.environment; runs_on; _ }; _ };
+               _;
+              } -> (environment, runs_on)
+              | _ -> (None, None)
+            in
+            CCList.Assoc.update
+              ~eq:M.equal
+              ~f:(fun v -> Some (dsf :: CCOption.get_or ~default:[] v))
+              k
+              acc)
+          ~init:[]
+          dirspaceflows
+      in
+      CCList.flat_map
+        (fun (k, dsfs) ->
+          dsfs
+          |> CCList.sort (fun l r ->
+                 (*Ensure chunks are sorted by dirspace so chunks are consistent between runs. *)
+                 Terrat_dirspace.compare (Dsf.to_dirspace l) (Dsf.to_dirspace r))
+          |> CCList.chunks max_workspaces_per_batch
+          |> CCList.map (fun chunk -> (k, chunk)))
+        partitions
 
     let create_op_commit_checks
         request_id
@@ -3330,7 +3350,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         (Event.repo state.State.event)
         all_dirspaceflows
       >>= fun () ->
-      let dirspaceflows_by_run_params = partition_by_run_params all_dirspaceflows in
+      let module V1 = Terrat_base_repo_config_v1 in
+      let max_workspaces_per_batch =
+        if (V1.batch_runs repo_config).V1.Batch_runs.enabled then
+          (V1.batch_runs repo_config).V1.Batch_runs.max_workspaces_per_batch
+        else CCInt.max_int
+      in
+      let dirspaceflows_by_run_params =
+        partition_by_run_params ~max_workspaces_per_batch all_dirspaceflows
+      in
       Abbs_future_combinators.List_result.map
         ~f:(fun ((environment, runs_on), dirspaceflows) ->
           let changes =
@@ -3423,7 +3451,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         (Event.repo state.State.event)
         all_dirspaceflows
       >>= fun () ->
-      let dirspaceflows_by_run_params = partition_by_run_params all_dirspaceflows in
+      let module V1 = Terrat_base_repo_config_v1 in
+      let max_workspaces_per_batch =
+        if (V1.batch_runs repo_config).V1.Batch_runs.enabled then
+          (V1.batch_runs repo_config).V1.Batch_runs.max_workspaces_per_batch
+        else CCInt.max_int
+      in
+      let dirspaceflows_by_run_params =
+        partition_by_run_params ~max_workspaces_per_batch all_dirspaceflows
+      in
       Abbs_future_combinators.List_result.map
         ~f:(fun ((environment, runs_on), dirspaceflows) ->
           let changes =
@@ -3541,6 +3577,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         dirspaceflows_by_run_params
 
     let run_op_work_manifest_iter_create op ctx state =
+      let module V1 = Terrat_base_repo_config_v1 in
       let module Wm = Terrat_work_manifest3 in
       let open Abbs_future_combinators.Infix_result_monad in
       Abbs_future_combinators.Infix_result_app.(
@@ -3583,7 +3620,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             { Wm.Deny.dirspace; policy })
           denied_dirspaces
       in
-      let dirspaceflows_by_run_params = partition_by_run_params dirspaceflows in
+      let module V1 = Terrat_base_repo_config_v1 in
+      let max_workspaces_per_batch =
+        if (V1.batch_runs repo_config).V1.Batch_runs.enabled then
+          (V1.batch_runs repo_config).V1.Batch_runs.max_workspaces_per_batch
+        else CCInt.max_int
+      in
+      let dirspaceflows_by_run_params =
+        partition_by_run_params ~max_workspaces_per_batch dirspaceflows
+      in
       Abbs_future_combinators.List_result.map
         ~f:(fun ((environment, runs_on), dirspaceflows) ->
           let changes =
@@ -3696,7 +3741,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             { Wm.Deny.dirspace; policy })
           denied_dirspaces
       in
-      let dirspaceflows_by_run_params = partition_by_run_params dirspaceflows in
+      let module V1 = Terrat_base_repo_config_v1 in
+      let max_workspaces_per_batch =
+        if (V1.batch_runs repo_config).V1.Batch_runs.enabled then
+          (V1.batch_runs repo_config).V1.Batch_runs.max_workspaces_per_batch
+        else CCInt.max_int
+      in
+      let dirspaceflows_by_run_params =
+        partition_by_run_params ~max_workspaces_per_batch dirspaceflows
+      in
       Abbs_future_combinators.List_result.map
         ~f:(fun ((environment, runs_on), dirspaceflows) ->
           let changes =
@@ -4555,6 +4608,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Event.Push _
       | Event.Run_scheduled_drift
       | Event.Run_drift _ -> Abb.Future.return (Ok state)
+
+    let test_batch_runs_enabled ctx state =
+      let module V1 = Terrat_base_repo_config_v1 in
+      let open Abbs_future_combinators.Infix_result_monad in
+      Dv.repo_config ctx state
+      >>= fun repo_config ->
+      let br = V1.batch_runs repo_config in
+      if br.V1.Batch_runs.enabled then Abb.Future.return (Ok (Id.Batch_runs_enabled, state))
+      else Abb.Future.return (Ok (Id.Batch_runs_disabled, state))
 
     let store_pull_request ctx state =
       let open Abbs_future_combinators.Infix_result_monad in
@@ -6549,6 +6611,29 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             Flow.Step.make ~id:Id.Complete_work_manifest ~f:(eval_step F.complete_work_manifest) ();
           ])
     in
+    let maybe_complete_work_manifest_flow =
+      Flow.Flow.(
+        choice
+          ~id:Id.Test_batch_runs
+          ~f:F.test_batch_runs_enabled
+          [
+            ( Id.Batch_runs_enabled,
+              action
+                [
+                  Flow.Step.make
+                    ~id:Id.Complete_work_manifest
+                    ~f:(eval_step F.complete_work_manifest)
+                    ();
+                  Flow.Step.make
+                    ~id:Id.Unset_work_manifest_id
+                    ~f:
+                      (eval_step (fun _ state ->
+                           Abb.Future.return (Ok { state with State.work_manifest_id = None })))
+                    ();
+                ] );
+            (Id.Batch_runs_disabled, action []);
+          ])
+    in
     let store_pull_request_flow =
       Flow.Flow.(
         action [ Flow.Step.make ~id:Id.Store_pull_request ~f:(eval_step F.store_pull_request) () ])
@@ -6560,13 +6645,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           ~f:F.test_tree_build_required
           [
             ( Id.Tree_build_required,
-              action
-                [
-                  Flow.Step.make
-                    ~id:Id.Run_work_manifest_iter
-                    ~f:(eval_step F.run_tree_builder_work_manifest_iter)
-                    ();
-                ] );
+              seq
+                (action
+                   [
+                     Flow.Step.make
+                       ~id:Id.Run_work_manifest_iter
+                       ~f:(eval_step F.run_tree_builder_work_manifest_iter)
+                       ();
+                   ])
+                maybe_complete_work_manifest_flow );
             (Id.Tree_build_not_required, action []);
           ])
     in
@@ -6577,13 +6664,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           ~f:F.test_config_build_required
           [
             ( Id.Config_build_required,
-              action
-                [
-                  Flow.Step.make
-                    ~id:Id.Run_work_manifest_iter
-                    ~f:(eval_step F.run_config_builder_work_manifest_iter)
-                    ();
-                ] );
+              seq
+                (action
+                   [
+                     Flow.Step.make
+                       ~id:Id.Run_work_manifest_iter
+                       ~f:(eval_step F.run_config_builder_work_manifest_iter)
+                       ();
+                   ])
+                maybe_complete_work_manifest_flow );
             (Id.Config_build_not_required, action []);
           ])
     in
@@ -6596,13 +6685,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
              ~f:F.test_index_required
              [
                ( Id.Index_required,
-                 action
-                   [
-                     Flow.Step.make
-                       ~id:Id.Run_work_manifest_iter
-                       ~f:(eval_step F.run_index_work_manifest_iter)
-                       ();
-                   ] );
+                 seq
+                   (action
+                      [
+                        Flow.Step.make
+                          ~id:Id.Run_work_manifest_iter
+                          ~f:(eval_step F.run_index_work_manifest_iter)
+                          ();
+                      ])
+                   maybe_complete_work_manifest_flow );
                (Id.Index_not_required, action []);
              ])
     in
