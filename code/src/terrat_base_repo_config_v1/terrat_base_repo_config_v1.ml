@@ -531,6 +531,10 @@ module Access_control = struct
 end
 
 module Apply_requirements = struct
+  module Apply_after_merge = struct
+    type t = { enabled : bool [@default false] } [@@deriving make, show, yojson, eq]
+  end
+
   module Approved = struct
     type t = {
       all_of : Access_control.Match_list.t; [@default []]
@@ -555,6 +559,7 @@ module Apply_requirements = struct
 
   module Check = struct
     type t = {
+      apply_after_merge : Apply_after_merge.t; [@default Apply_after_merge.make ()]
       approved : Approved.t; [@default Approved.make ()]
       merge_conflicts : Merge_conflicts.t; [@default Merge_conflicts.make ()]
       require_ready_for_review_pr : bool; [@default true]
@@ -1211,6 +1216,10 @@ let get_apply_requirements_checks_approved =
       >>= fun any_of ->
       Ok (Apply_requirements.Approved.make ~enabled ?all_of ?any_of ~any_of_count ())
 
+let get_apply_requirements_checks_apply_after_merge =
+  let module Afm = Terrat_repo_config_apply_requirements_checks_apply_after_merge in
+  fun { Afm.enabled } -> Ok (Apply_requirements.Apply_after_merge.make ~enabled ())
+
 let get_apply_requirements_checks_merge_conflicts =
   let module Mc = Terrat_repo_config_apply_requirements_checks_merge_conflicts in
   fun { Mc.enabled } -> Ok (Apply_requirements.Merge_conflicts.make ~enabled ())
@@ -1244,7 +1253,14 @@ let of_version_1_apply_requirements_checks =
       let open CCResult.Infix in
       let module I = C2.Items in
       CCResult.map_l
-        (fun { I.approved; merge_conflicts; require_ready_for_review_pr; status_checks; tag_query }
+        (fun {
+               I.apply_after_merge;
+               approved;
+               merge_conflicts;
+               require_ready_for_review_pr;
+               status_checks;
+               tag_query;
+             }
            ->
           CCResult.map_err
             (function
@@ -1261,10 +1277,13 @@ let of_version_1_apply_requirements_checks =
           >>= fun merge_conflicts ->
           map_opt get_apply_requirements_checks_status_checks status_checks
           >>= fun status_checks ->
+          map_opt get_apply_requirements_checks_apply_after_merge apply_after_merge
+          >>= fun apply_after_merge ->
           Ok
             (Ar.Check.make
                ~require_ready_for_review_pr
                ~tag_query
+               ?apply_after_merge
                ?approved
                ?merge_conflicts
                ?status_checks
@@ -2309,6 +2328,11 @@ let to_version_1_access_control ac =
     unlock = Some (to_version_1_match_list ac.Access_control.unlock);
   }
 
+let to_version_1_apply_requirements_apply_after_merge afm =
+  let module Afm = Terrat_repo_config.Apply_requirements_checks_apply_after_merge in
+  let { Apply_requirements.Apply_after_merge.enabled } = afm in
+  { Afm.enabled }
+
 let to_version_1_apply_requirements_approved approved =
   let module Ap = Terrat_repo_config.Apply_requirements_checks_approved_2 in
   let { Apply_requirements.Approved.all_of; any_of; any_of_count; enabled } = approved in
@@ -2334,7 +2358,8 @@ let to_version_1_apply_requirements_checks =
   CCList.map
     (fun
       {
-        Apply_requirements.Check.approved;
+        Apply_requirements.Check.apply_after_merge;
+        approved;
         merge_conflicts;
         require_ready_for_review_pr;
         status_checks;
@@ -2342,7 +2367,9 @@ let to_version_1_apply_requirements_checks =
       }
     ->
       {
-        C2.Items.approved = Some (to_version_1_apply_requirements_approved approved);
+        C2.Items.apply_after_merge =
+          Some (to_version_1_apply_requirements_apply_after_merge apply_after_merge);
+        approved = Some (to_version_1_apply_requirements_approved approved);
         merge_conflicts = Some (to_version_1_apply_requirements_merge_conflicts merge_conflicts);
         require_ready_for_review_pr;
         status_checks = Some (to_version_1_apply_requirements_status_checks status_checks);

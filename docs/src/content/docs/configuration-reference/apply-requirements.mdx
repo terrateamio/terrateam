@@ -13,6 +13,8 @@ apply_requirements:
   create_pending_apply_check: true
   checks:
     - tag_query: ''
+      apply_after_merge:
+        enabled: false
       approved:
         enabled: false
         any_of: []
@@ -46,6 +48,12 @@ The `tag_query` key is used to specify a [tag query](/advanced-workflows/tags/) 
 | Key | Type | Description |
 | --- | --- | --- |
 | tag_query | string | A tag query that specifies which directories and workspaces the apply requirements should be applied to. Default is "", which matches all directories and workspaces. |
+
+#### Apply After Merge
+The `apply_after_merge` key is used to specify whether the pull request must be merged before the `terrateam apply` command can be properly used.
+| Key | Type | Description |
+| --- | --- | --- |
+| enabled | boolean | Specifies whether the apply after merge check is enabled. Default is false. |
 
 #### Approved
 The `approved` key is used to specify the approval requirements for the pull request before an apply operation can be executed.
