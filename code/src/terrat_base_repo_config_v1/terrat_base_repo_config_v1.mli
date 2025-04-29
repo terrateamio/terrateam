@@ -614,12 +614,16 @@ module Workflows : sig
     end
 
     type t = {
-      apply : Op_list.t; [@default []]
+      apply : Op_list.t;
+          [@default
+            [ Op.Init (Workflow_step.Init.make ()); Op.Apply (Workflow_step.Apply.make ()) ]]
       engine : Engine.t; [@default Engine.(Terraform (Terraform.make ()))]
       environment : string option;
       integrations : Integrations.t; [@default Integrations.make ()]
       lock_policy : Lock_policy.t; [@default Lock_policy.Strict]
-      plan : Op_list.t; [@default []]
+      plan : Op_list.t;
+          [@default [ Op.Init (Workflow_step.Init.make ()); Op.Plan (Workflow_step.Plan.make ()) ]]
+      runs_on : Yojson.Safe.t option; [@default None]
       tag_query : Tag_query.t;
     }
     [@@deriving make, show, yojson, eq]

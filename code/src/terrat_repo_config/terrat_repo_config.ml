@@ -54,6 +54,7 @@ module Integrations = Terrat_repo_config_integrations
 module Permission = Terrat_repo_config_permission
 module Retry = Terrat_repo_config_retry
 module Run_on = Terrat_repo_config_run_on
+module Runs_on = Terrat_repo_config_runs_on
 module Storage_plan_cmd = Terrat_repo_config_storage_plan_cmd
 module Storage_plan_s3 = Terrat_repo_config_storage_plan_s3
 module Storage_plan_terrateam = Terrat_repo_config_storage_plan_terrateam

@@ -15,7 +15,8 @@ select
     gir.id,
     gir.owner,
     gir.name,
-    gwm.environment
+    gwm.environment,
+    gwm.runs_on
 from work_manifests as gwm
 inner join github_installation_repositories as gir
   on gir.id = gwm.repository

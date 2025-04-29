@@ -197,6 +197,9 @@ module Db = struct
         //
         (* environment *)
         Ret.(option text)
+        //
+        (* runs_on *)
+        Ret.(option (ud' (CCOption.wrap Yojson.Safe.from_string)))
         /^ select_work_manifest_query
         /% Var.uuid "id")
 
@@ -695,6 +698,7 @@ module Db = struct
                 owner
                 name
                 environment
+                runs_on
               ->
               {
                 Wm.account = Api.Account.make (CCInt64.to_int installation_id);
@@ -711,6 +715,7 @@ module Db = struct
                   | Some user -> Wm.Initiator.User user
                   | None -> Wm.Initiator.System);
                 run_id;
+                runs_on;
                 steps = [ run_type ];
                 state;
                 tag_query;
@@ -4686,7 +4691,8 @@ module Work_manifest = struct
         /% Var.(option (text "username"))
         /% Var.json "dirspaces"
         /% Var.text "run_kind"
-        /% Var.(option (text "environment")))
+        /% Var.(option (text "environment"))
+        /% Var.(option (json "runs_on")))
 
     let insert_work_manifest_access_control_denied_dirspace =
       Pgsql_io.Typed_sql.(
@@ -4943,9 +4949,13 @@ module Work_manifest = struct
                                                (Terrat_config.api_base (Api.Config.config config)
                                                ^ "/github") );
                                          ]
+                                        @ (match work_manifest.Wm.environment with
+                                          | Some env -> [ ("environment", `String env) ]
+                                          | None -> [])
                                         @
-                                        match work_manifest.Wm.environment with
-                                        | Some env -> [ ("environment", `String env) ]
+                                        match work_manifest.Wm.runs_on with
+                                        | Some runs_on ->
+                                            [ ("runs_on", `String (Yojson.Safe.to_string runs_on)) ]
                                         | None -> []);
                                   };
                           };
@@ -5135,7 +5145,8 @@ module Work_manifest = struct
             user
             dirspaces
             run_kind
-            work_manifest.Wm.environment)
+            work_manifest.Wm.environment
+            (CCOption.map Yojson.Safe.to_string work_manifest.Wm.runs_on))
       >>= function
       | [] -> assert false
       | (id, state, created_at) :: _ -> (
@@ -5231,6 +5242,7 @@ module Work_manifest = struct
                   | Some user -> Wm.Initiator.User user
                   | None -> Wm.Initiator.System);
                 run_id;
+                runs_on = None;
                 steps = [ run_type ];
                 state;
                 tag_query;

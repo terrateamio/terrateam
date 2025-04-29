@@ -74,6 +74,7 @@ type ('account, 'id, 'created_at, 'run_id, 'state, 'changes, 'denied_dirspaces, 
   id : 'id;
   initiator : Initiator.t;
   run_id : 'run_id;
+  runs_on : Yojson.Safe.t option;
   state : 'state;
   steps : Step.t list;
   tag_query : Terrat_tag_query.t;
