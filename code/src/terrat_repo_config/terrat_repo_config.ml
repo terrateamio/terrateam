@@ -5,6 +5,10 @@ module Apply_requirements = Terrat_repo_config_apply_requirements
 module Apply_requirements_checks = Terrat_repo_config_apply_requirements_checks
 module Apply_requirements_checks_1 = Terrat_repo_config_apply_requirements_checks_1
 module Apply_requirements_checks_2 = Terrat_repo_config_apply_requirements_checks_2
+
+module Apply_requirements_checks_apply_after_merge =
+  Terrat_repo_config_apply_requirements_checks_apply_after_merge
+
 module Apply_requirements_checks_approved = Terrat_repo_config_apply_requirements_checks_approved
 
 module Apply_requirements_checks_approved_1 =

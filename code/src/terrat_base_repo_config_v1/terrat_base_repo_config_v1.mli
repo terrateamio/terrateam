@@ -236,6 +236,10 @@ module Access_control : sig
 end
 
 module Apply_requirements : sig
+  module Apply_after_merge : sig
+    type t = { enabled : bool [@default false] } [@@deriving make, show, yojson, eq]
+  end
+
   module Approved : sig
     type t = {
       all_of : Access_control.Match_list.t; [@default []]
@@ -260,6 +264,7 @@ module Apply_requirements : sig
 
   module Check : sig
     type t = {
+      apply_after_merge : Apply_after_merge.t; [@default Apply_after_merge.make ()]
       approved : Approved.t; [@default Approved.make ()]
       merge_conflicts : Merge_conflicts.t; [@default Merge_conflicts.make ()]
       require_ready_for_review_pr : bool; [@default true]
