@@ -132,6 +132,7 @@ let migrations =
     ("refactor-rename-core-tables", run_file_sql "2025-04-21-refactor-rename-core-tables.sql");
     ( "refactor-remove-core-table-views",
       run_file_sql "2025-04-21-refactor-delete-core-table-views.sql" );
+    ("add-work-manifest-runs-on", run_file_sql "2025-04-29-add-work-manifest-runs-on.sql");
   ]
 
 let run config storage = Mig.run (config, storage) migrations
