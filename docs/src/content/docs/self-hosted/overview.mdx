@@ -129,40 +129,6 @@ Terrateam consists of two components:
 - PostgreSQL database (at least v14)
 
 #### PostgreSQL Database
-Set the host auth method to `md5`
-```sh
-echo "host all all all md5" >> pg_hba.conf
-```
-
-   :::note
-   If initializing a new database, then pass `initdb` the `--auth-host=md5` option
-   :::
-
-Create the Terrateam database
-```sql
-postgres=# create database terrateam;
-CREATE DATABASE
-postgres=#
-```
-
-Set the password authentication method
-```sql
-postgres=# ALTER SYSTEM SET password_encryption = 'md5';
-ALTER SYSTEM
-postgres=# SELECT pg_reload_conf();
-pg_reload_conf
-----------------
-t
-(1 row)
-
-postgres=# SHOW password_encryption;
-password_encryption 
----------------------
-md5
-(1 row)
-
-postgres=# 
-```
 
 Create the Terrateam user
 ```sql
