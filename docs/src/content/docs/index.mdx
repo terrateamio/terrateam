@@ -4,7 +4,7 @@ description: Terrateam documentation
 template: doc
 hero:
   title: Welcome to Terrateam
-  tagline: Terraform and OpenTofu GitOps CI/CD that enables teams to deliver infrastructure faster.
+  tagline: GitOps CI/CD for Terraform and OpenTofu that accelerates infrastructure delivery.
   image:
     file: ../../assets/logo.png
   actions:
@@ -18,100 +18,127 @@ import { LinkCard, CardGrid, Card } from '@astrojs/starlight/components';
 
 ## What is Terrateam?
 
-Terrateam is a powerful Terraform and OpenTofu GitOps CI/CD solution that seamlessly integrates with GitHub, enabling teams to deliver infrastructure faster and more efficiently. With Terrateam, you can easily manage your infrastructure as code, collaborate with your team, and automate your deployment processes.
+Terrateam is open-source GitOps CI/CD for Terraform and OpenTofu that integrates with GitHub. It enables teams to manage infrastructure changes through pull requests.
+
+With Terrateam, you can:
+  - Easily manage your infrastructure as code.
+  - Collaborate with your team.
+  - Automate your deployment processes.
+
+## Why Choose Terrateam?
 
 <CardGrid>
-	<Card title="Tight GitHub Integrations" icon="github">
-		Terrateam is built as a GitHub application and a GitHub Action, allowing you to manage your infrastructure directly from your GitHub repository.
+  <Card title="Team Collaboration" icon="approve-check">
+    Review infrastructure changes with intelligent locking to prevent conflicts.
+  </Card>
+
+  <Card title="Enhanced Security" icon="seti:lock">
+    Fine-grained access controls, policy enforcement, and OIDC authentication.
+  </Card>
+
+  <Card title="Ready-to-Use"  icon="laptop">
+    Skip building custom pipelines. Terrateam handles plan storage, locks, drift detection, and more.
+  </Card>
+
+  <Card title="Multi-Environment" icon="star">
+    Manage dev, staging, and production with consistent workflows.
+  </Card>
+</CardGrid>
+
+## Terrateam Features
+
+<CardGrid>
+	<Card title="GitHub-Native" icon="github">
+		Terrateam is built as a GitHub app and Action, making it easy to integrate directly with your repositories.
+    <LinkCard title="Installation" href="/quickstart-guide"  />
 	</Card>
 	<Card title="GitOps Workflow" icon="rocket">
-		Terraform operations are triggered by pull requests and comments, making it easy to review and approve changes before they are applied.
+      Manage infrastructure through pull requests, using automated plans and controlled applies.
+        <LinkCard title="Workflows" href="/getting-started/plan-and-apply" />
 	</Card>
-	<Card title="Secure Authentication" icon="sun">
-		Terrateam authenticates with your cloud provider using OIDC, which enhances security and reduces the exposure of user credentials.
+	<Card title="Enterprise Security" icon="sun">
+		Terrateam uses OIDC for cloud authentication, enhancing security and minimizing credential exposure.
+        <LinkCard title="Security" href="/security-and-compliance" />
 	</Card>
-	<Card title="Locks and Concurrency" icon="seti:lock">
-		When multiple team members are working on the same Terraform project, locks play a crucial role in coordinating their efforts and preventing conflicting changes.
+	<Card title="Resource Coordination" icon="seti:lock">
+		Smart locking prevents conflicts when multiple team members work simultaneously.
+        <LinkCard title="Locks" href="/advanced-workflows/locks-and-concurrency" />
 	</Card>
-	<Card title="Role-Based Access Control" icon="error">
-		With Terrateam, you can define fine-grained access control policies to manage who can perform specific operations on your infrastructure.
+	<Card title="Access Control" icon="error">
+		Define role-based policies to determine who can perform specific infrastructure operations.
+        <LinkCard title="RBAC" href="/security-and-compliance/role-based-access-control" />
 	</Card>
 	<Card title="Custom Workflows" icon="puzzle">
-		Terrateam enables custom Terraform workflows, such as automating Slack notifications post-apply, tailored to your team's needs.
+		Automate Terraform workflows, like post-apply Slack notifications, tailored to your team’s needs.
+        <LinkCard title="Custom Workflows" href="/configuration-reference/workflows" />
 	</Card>
-	<Card title="Multiple Environments" icon="star">
-		Easily manage multiple environments (e.g., development, staging, production) and multiple cloud providers with Terrateam's powerful configuration options.
+	<Card title="Multi-Environment" icon="star">
+		Manage enviroments (e.g., development, staging, and production) and cloud providers.
+        <LinkCard title="Environments" href="/advanced-workflows/multiple-environments" />
 	</Card>
 	<Card title="Policy Enforcement" icon="document">
-		Integrate policy testing with OPA Conftest to ensure your infrastructure changes adhere to best practices and compliance requirements.
+		Integrate OPA Conftest to enforce best practices and compliance in infrastructure changes.
+        <LinkCard title="OPA Integration" href="/security-and-compliance/policy-enforcement-with-opa" />
 	</Card>
 </CardGrid>
 
-## Terraform the GitOps Way
-<Steps>
-1. #### Create a Pull Request
+## How Terrateam Works
 
+Terrateam brings GitOps principles to Terraform workflows, making infrastructure changes visible, reviewable, and safe.
+
+The following steps explain how Terrateam processes your Terraform changes:
+
+<Steps>
+1. **Create a Pull Request with Terraform Changes**
+
+   When you create a pull request containing Terraform code changes, Terrateam automatically detects the modifications.
+   
    ![Terrateam pull request](../../assets/nibbler-pull-request.png)
 
-1. #### Terrateam will automatically run a Plan operation
+2. **Automatic Plan Operation**
 
+   Terrateam automatically runs `terraform plan` and comments the results directly in your pull request, allowing team members to review the proposed changes.
+   
    ![Terrateam plan](../../assets/nibbler-terrateam-plan.png)
 
-1. #### Apply your changes *before* or *after* you merge
+3. **Apply When Ready**
 
+   You can apply changes either before merging or after merging.
+   
    ![Terrateam Apply](../../assets/nibbler-terrateam-apply.png)
 
 </Steps>
-
-## Why Should I Use Terrateam?
-Terrateam provides a comprehensive set of features and best practices to streamline your infrastructure as code workflow, making it easier and safer to manage your Terraform projects.
-
-<CardGrid>
-  <Card title="Streamlined workflows" icon="laptop">
-    Terrateam takes care of the complex aspects of integrating Terraform with GitHub Actions, providing a seamless and efficient workflow out of the box. With Terrateam, you can focus on writing your Terraform code and let the tool handle the rest.
-  </Card>
-  <Card title="Get on the same page" icon="approve-check">
-    Terrateam enables effective collaboration among team members by providing a pull request-based workflow. Terrateam allows teams to review and discuss proposed changes before applying them. This ensures that everyone is on the same page and reduces the risk of errors and conflicts.
-  </Card>
-  <Card title="Safety and consistency" icon="star">
-    Terrateam incorporates sophisticated tracking mechanisms to store Terraform operational state and ensure the safety and consistency of your infrastructure. It intelligently handles dependencies and locks, preventing concurrent modifications and maintaining a reliable and accurate representation of your infrastructure.
-  </Card>
-  <Card title="Customized to your needs" icon="rocket">
-    Terrateam offers a wide range of configuration options and extensibility points, allowing you to tailor the tool to your specific needs and workflows. You can define custom plan and apply steps, configure notifications and integrations, and leverage Terrateam's powerful features like drift detection, cost estimation, and policy enforcement.
-  </Card>
-</CardGrid>
-
-## Why Build When You Can Leverage?
-Building and maintaining a homegrown Terraform solution can be time-consuming, resource-intensive, and prone to errors. For a safe and effective workflow, you must account for the following:
-- Plan file storage and cleanup
-- Approval steps between Plan and Apply
-- Multiple pull requests with overlapping resources
-- Drift Detection and Reconciliation
-- Failed Apply operations
-- Locks and Unlocks
-- Plan and Apply restrictions
-- Secure cloud integrations
-
-Terrateam offers a battle-tested, feature-rich, and actively maintained solution that you can leverage out of the box. By adopting Terrateam, you can focus on writing Terraform code and managing your infrastructure, while benefiting from the collective experience and best practices of the Terrateam community.
+<LinkCard title="Learn more about workflows" href="/getting-started/pull-requests-and-triggers" />
 
 ## Getting Started
-To start using Terrateam, follow these simple steps:
 
 <Steps>
-1. #### Installation
+1. **Install**
 
-   Install the Terrateam GitHub application on your repository. See the [Quickstart Guide](/quickstart-guide) for detailed instructions.
+   Add the Terrateam GitHub app to your repository.
+   
+   <LinkCard title="Installation Guide" href="/quickstart-guide" />
 
-2. #### Configuration
+2. **Configure**
 
-   Configure Terrateam using the `.terrateam/config.yml` file in your repository. Check out the [Configuration Reference](/configuration-reference) for more information on the available options.
+   Configure Terrateam using the `.terrateam/config.yml` file in your repository.
+   
+   <LinkCard title="Configuration" href="/getting-started/configuration" />
 
-3. #### Cloud Provider integration
+3. **Connect Cloud**
 
-   Set up authentication and authorization for your cloud provider. Terrateam supports various providers, including AWS, GCP, and Azure. See the [Cloud Providers](/cloud-providers) documentation for step-by-step instructions.
+   Set up secure OIDC authentication with your providers.
+   
+   <LinkCard title="Cloud Setup" href="/cloud-providers" />
 </Steps>
 
-## Learn More
-- Learn more about [Terrateam Concepts](/getting-started/concepts)
-- Dive into the [Configuration Reference](/configuration-reference) for a detailed look at the available options
-- Explore [Advanced Workflows](/advanced-workflows) and [Integrations](/integrations) to learn about complex use cases
+## Next Steps
+
+Now that you have an overview of Terrateam, explore the following sections to dive deeper into specific topics:
+
+<CardGrid>
+  <LinkCard title="Core Concepts" href="/getting-started/concepts" />
+  <LinkCard title="Configuration Reference" href="/configuration-reference" />
+  <LinkCard title="Advanced Workflows" href="/advanced-workflows" />
+  <LinkCard title="Integrations" href="/integrations" />
+</CardGrid>
