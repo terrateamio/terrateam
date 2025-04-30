@@ -23,12 +23,16 @@ let workflow_file =
   \       environment:\n\
   \         description: 'Environment in which to run the action'\n\
   \         type: environment\n\
+  \       runs_on:\n\
+  \         description: 'runs-on configuration'\n\
+  \         type: string\n\
+  \         default: ubuntu-latest\n\
   \ jobs:\n\
   \   terrateam:\n\
   \     permissions: # Required to pass credentials to the Terrateam action\n\
   \       id-token: write\n\
   \       contents: read\n\
-  \     runs-on: ubuntu-latest\n\
+  \     runs-on: ${{ fromJSON(github.event.inputs.runs_on) }}\n\
   \     timeout-minutes: 1440\n\
   \     name: Terrateam Action\n\
   \     environment: '${{ github.event.inputs.environment }}'\n\
