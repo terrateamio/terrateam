@@ -18,8 +18,6 @@ services:
       POSTGRES_PASSWORD: "terrateam"
       POSTGRES_USER: "terrateam"
       POSTGRES_DB: "terrateam"
-      POSTGRES_HOST_AUTH_METHOD: "md5"
-      POSTGRES_INITDB_ARGS: "--auth-host=md5"
     healthcheck:
       test: [ "CMD", "pg_isready", "-d", "terrateam", "-U", "terrateam" ]
       interval: 10s
