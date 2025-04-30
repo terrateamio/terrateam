@@ -1001,6 +1001,7 @@ module Workflows = struct
       lock_policy : Lock_policy.t; [@default Lock_policy.Strict]
       plan : Op_list.t;
           [@default [ Op.Init (Workflow_step.Init.make ()); Op.Plan (Workflow_step.Plan.make ()) ]]
+      runs_on : Yojson.Safe.t option; [@default None]
       tag_query : Tag_query.t;
     }
     [@@deriving make, show, yojson, eq]
@@ -2095,6 +2096,7 @@ let of_version_1_workflows default_engine default_integrations workflows =
            integrations;
            lock_policy;
            plan;
+           runs_on;
            tag_query;
            terraform_version;
            terragrunt;
@@ -2131,8 +2133,9 @@ let of_version_1_workflows default_engine default_integrations workflows =
            ?engine
            ?environment
            ?integrations
-           ~lock_policy
            ?plan
+           ~runs_on
+           ~lock_policy
            ~tag_query
            ()))
     workflows
@@ -2772,8 +2775,16 @@ let to_version_1_workflows_op =
 let to_version_1_workflows =
   CCList.map (fun entry ->
       let module E = Terrat_repo_config.Workflow_entry in
-      let { Workflows.Entry.apply; engine; environment; integrations; lock_policy; plan; tag_query }
-          =
+      let {
+        Workflows.Entry.apply;
+        engine;
+        environment;
+        integrations;
+        lock_policy;
+        plan;
+        tag_query;
+        runs_on;
+      } =
         entry
       in
       {
@@ -2788,6 +2799,7 @@ let to_version_1_workflows =
             integrations;
         lock_policy = Workflows.Entry.Lock_policy.to_string lock_policy;
         plan = Some (to_version_1_workflows_op plan);
+        runs_on;
         tag_query = Terrat_tag_query.to_string tag_query;
         terraform_version = None;
         terragrunt = false;

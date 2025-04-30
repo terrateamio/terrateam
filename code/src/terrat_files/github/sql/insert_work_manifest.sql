@@ -8,7 +8,8 @@ insert into work_manifests (
        username,
        dirspaces,
        run_kind,
-       environment
+       environment,
+       runs_on
 ) values (
        $base_sha,
        $pull_number,
@@ -19,6 +20,7 @@ insert into work_manifests (
        $username,
        $dirspaces,
        $run_kind,
-       $environment
+       $environment,
+       $runs_on
 )
 returning id, state, to_char(created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"')

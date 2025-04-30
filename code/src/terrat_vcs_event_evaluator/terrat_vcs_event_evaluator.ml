@@ -3061,16 +3061,28 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           checks
       else Abb.Future.return (Ok ())
 
-    let partition_by_environment dirspaceflows =
+    let partition_by_run_params dirspaceflows =
+      let module M = struct
+        type t = string option * Yojson.Safe.t option [@@deriving eq]
+      end in
       let module Dsf = Terrat_change.Dirspaceflow in
       let module We = Terrat_base_repo_config_v1.Workflows.Entry in
       CCListLabels.fold_left
         ~f:(fun acc dsf ->
-          match dsf with
-          | { Dsf.workflow = Some { Dsf.Workflow.workflow = { We.environment; _ }; _ }; _ } ->
-              Terrat_data.String_map.add_to_list (CCOption.get_or ~default:"" environment) dsf acc
-          | _ -> Terrat_data.String_map.add_to_list "" dsf acc)
-        ~init:Terrat_data.String_map.empty
+          let k =
+            match dsf with
+            | {
+             Dsf.workflow = Some { Dsf.Workflow.workflow = { We.environment; runs_on; _ }; _ };
+             _;
+            } -> (environment, runs_on)
+            | _ -> (None, None)
+          in
+          CCList.Assoc.update
+            ~eq:M.equal
+            ~f:(fun v -> Some (dsf :: CCOption.get_or ~default:[] v))
+            k
+            acc)
+        ~init:[]
         dirspaceflows
 
     let create_op_commit_checks
@@ -3195,15 +3207,16 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       create_commit_checks request_id client repo ref_ checks
 
     let make_work_manifest
-        state
-        base_ref
-        branch_ref
-        changes
-        denied_dirspaces
-        environment
-        tag_query
-        target
-        op =
+        ~state
+        ~base_ref
+        ~branch_ref
+        ~changes
+        ~denied_dirspaces
+        ~environment
+        ~tag_query
+        ~target
+        ~runs_on
+        ~op =
       let module Wm = Terrat_work_manifest3 in
       {
         Wm.account = Event.account state.State.event;
@@ -3217,6 +3230,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         id = ();
         initiator = Event.initiator state.State.event;
         run_id = ();
+        runs_on;
         state = ();
         steps =
           [
@@ -3316,9 +3330,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         (Event.repo state.State.event)
         all_dirspaceflows
       >>= fun () ->
-      let dirspaceflows_by_environment = partition_by_environment all_dirspaceflows in
+      let dirspaceflows_by_run_params = partition_by_run_params all_dirspaceflows in
       Abbs_future_combinators.List_result.map
-        ~f:(fun (environment, dirspaceflows) ->
+        ~f:(fun ((environment, runs_on), dirspaceflows) ->
           let changes =
             let module Dsf = Terrat_change.Dirspaceflow in
             CCList.map
@@ -3329,38 +3343,36 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                 })
               dirspaceflows
           in
-          let environment =
-            match environment with
-            | "" -> None
-            | env -> Some env
-          in
           Dv.target ctx state
           >>= fun target ->
           Dv.tag_query ctx state
           >>= fun tag_query ->
           let work_manifest =
             make_work_manifest
-              state
-              base_ref
-              working_branch_ref
-              changes
-              []
-              environment
-              tag_query
-              target
-              `Plan
+              ~state
+              ~base_ref
+              ~branch_ref:working_branch_ref
+              ~changes
+              ~denied_dirspaces:[]
+              ~environment
+              ~tag_query
+              ~target
+              ~runs_on
+              ~op:`Plan
           in
           create_work_manifest state.State.request_id (Ctx.storage ctx) work_manifest
           >>= fun work_manifest ->
           Logs.info (fun m ->
               m
-                "%s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s : env=%s"
+                "%s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s : env=%s : \
+                 runs_on=%s"
                 state.State.request_id
                 Uuidm.pp
                 work_manifest.Wm.id
                 (S.Api.Ref.to_string base_ref)
                 (S.Api.Ref.to_string branch_ref)
-                (CCOption.get_or ~default:"" work_manifest.Wm.environment));
+                (CCOption.get_or ~default:"" work_manifest.Wm.environment)
+                (CCOption.map_or ~default:"" Yojson.Safe.to_string work_manifest.Wm.runs_on));
           run_interactive ctx state (fun () ->
               Dv.client ctx state
               >>= fun client ->
@@ -3386,7 +3398,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                 (Terrat_base_repo_config_v1.apply_requirements repo_config)
               >>= fun () -> Abb.Future.return (Ok state))
           >>= fun _ -> Abb.Future.return (Ok work_manifest))
-        (Terrat_data.String_map.to_list dirspaceflows_by_environment)
+        dirspaceflows_by_run_params
 
     let run_drift_plan_op_work_manifest_iter_update ctx state work_manifest =
       let module Wm = Terrat_work_manifest3 in
@@ -3411,9 +3423,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         (Event.repo state.State.event)
         all_dirspaceflows
       >>= fun () ->
-      let dirspaceflows_by_environment = partition_by_environment all_dirspaceflows in
+      let dirspaceflows_by_run_params = partition_by_run_params all_dirspaceflows in
       Abbs_future_combinators.List_result.map
-        ~f:(fun (environment, dirspaceflows) ->
+        ~f:(fun ((environment, runs_on), dirspaceflows) ->
           let changes =
             let module Dsf = Terrat_change.Dirspaceflow in
             CCList.map
@@ -3423,11 +3435,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                   Dsf.workflow = CCOption.map (fun Dsf.Workflow.{ idx; _ } -> idx) workflow;
                 })
               dirspaceflows
-          in
-          let environment =
-            match environment with
-            | "" -> None
-            | env -> Some env
           in
           if CCOption.equal CCString.equal work_manifest.Wm.environment environment then
             let work_manifest =
@@ -3482,27 +3489,30 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             >>= fun tag_query ->
             let work_manifest =
               make_work_manifest
-                state
-                base_ref
-                working_branch_ref
-                changes
-                []
-                environment
-                tag_query
-                target
-                `Plan
+                ~state
+                ~base_ref
+                ~branch_ref:working_branch_ref
+                ~changes
+                ~denied_dirspaces:[]
+                ~environment
+                ~tag_query
+                ~target
+                ~runs_on
+                ~op:`Plan
             in
             create_work_manifest state.State.request_id (Ctx.storage ctx) work_manifest
             >>= fun work_manifest ->
             Logs.info (fun m ->
                 m
-                  "%s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s : env=%s"
+                  "%s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s : env=%s : \
+                   runs_on=%s"
                   state.State.request_id
                   Uuidm.pp
                   work_manifest.Wm.id
                   (S.Api.Ref.to_string base_ref)
                   (S.Api.Ref.to_string branch_ref)
-                  (CCOption.get_or ~default:"" work_manifest.Wm.environment));
+                  (CCOption.get_or ~default:"" work_manifest.Wm.environment)
+                  (CCOption.map_or ~default:"" Yojson.Safe.to_string work_manifest.Wm.runs_on));
             run_interactive ctx state (fun () ->
                 Dv.client ctx state
                 >>= fun client ->
@@ -3528,7 +3538,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                   (Terrat_base_repo_config_v1.apply_requirements repo_config)
                 >>= fun () -> Abb.Future.return (Ok state))
             >>= fun _ -> Abb.Future.return (Ok work_manifest))
-        (Terrat_data.String_map.to_list dirspaceflows_by_environment)
+        dirspaceflows_by_run_params
 
     let run_op_work_manifest_iter_create op ctx state =
       let module Wm = Terrat_work_manifest3 in
@@ -3573,9 +3583,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             { Wm.Deny.dirspace; policy })
           denied_dirspaces
       in
-      let dirspaceflows_by_environment = partition_by_environment dirspaceflows in
+      let dirspaceflows_by_run_params = partition_by_run_params dirspaceflows in
       Abbs_future_combinators.List_result.map
-        ~f:(fun (environment, dirspaceflows) ->
+        ~f:(fun ((environment, runs_on), dirspaceflows) ->
           let changes =
             let module Dsf = Terrat_change.Dirspaceflow in
             CCList.map
@@ -3586,38 +3596,36 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                 })
               dirspaceflows
           in
-          let environment =
-            match environment with
-            | "" -> None
-            | env -> Some env
-          in
           Dv.target ctx state
           >>= fun target ->
           Dv.tag_query ctx state
           >>= fun tag_query ->
           let work_manifest =
             make_work_manifest
-              state
-              base_ref
-              working_branch_ref
-              changes
-              denied_dirspaces
-              environment
-              tag_query
-              target
-              op
+              ~state
+              ~base_ref
+              ~branch_ref:working_branch_ref
+              ~changes
+              ~denied_dirspaces
+              ~environment
+              ~tag_query
+              ~target
+              ~runs_on
+              ~op
           in
           create_work_manifest state.State.request_id (Ctx.storage ctx) work_manifest
           >>= fun work_manifest ->
           Logs.info (fun m ->
               m
-                "%s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s : env=%s"
+                "%s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s : env=%s : \
+                 runs_on=%s"
                 state.State.request_id
                 Uuidm.pp
                 work_manifest.Wm.id
                 (S.Api.Ref.to_string base_ref)
                 (S.Api.Ref.to_string branch_ref)
-                (CCOption.get_or ~default:"" work_manifest.Wm.environment));
+                (CCOption.get_or ~default:"" work_manifest.Wm.environment)
+                (CCOption.map_or ~default:"" Yojson.Safe.to_string work_manifest.Wm.runs_on));
           run_interactive ctx state (fun () ->
               Dv.client ctx state
               >>= fun client ->
@@ -3643,7 +3651,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                 (Terrat_base_repo_config_v1.apply_requirements repo_config)
               >>= fun () -> Abb.Future.return (Ok state))
           >>= fun _ -> Abb.Future.return (Ok work_manifest))
-        (Terrat_data.String_map.to_list dirspaceflows_by_environment)
+        dirspaceflows_by_run_params
 
     let run_op_work_manifest_iter_update op ctx state work_manifest =
       let module Wm = Terrat_work_manifest3 in
@@ -3688,9 +3696,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             { Wm.Deny.dirspace; policy })
           denied_dirspaces
       in
-      let dirspaceflows_by_environment = partition_by_environment dirspaceflows in
+      let dirspaceflows_by_run_params = partition_by_run_params dirspaceflows in
       Abbs_future_combinators.List_result.map
-        ~f:(fun (environment, dirspaceflows) ->
+        ~f:(fun ((environment, runs_on), dirspaceflows) ->
           let changes =
             let module Dsf = Terrat_change.Dirspaceflow in
             CCList.map
@@ -3700,11 +3708,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                   Dsf.workflow = CCOption.map (fun Dsf.Workflow.{ idx; _ } -> idx) workflow;
                 })
               dirspaceflows
-          in
-          let environment =
-            match environment with
-            | "" -> None
-            | env -> Some env
           in
           if CCOption.equal CCString.equal work_manifest.Wm.environment environment then
             let work_manifest =
@@ -3772,27 +3775,30 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             >>= fun tag_query ->
             let work_manifest =
               make_work_manifest
-                state
-                base_ref
-                working_branch_ref
-                changes
-                denied_dirspaces
-                environment
-                tag_query
-                target
-                op
+                ~state
+                ~base_ref
+                ~branch_ref:working_branch_ref
+                ~changes
+                ~denied_dirspaces
+                ~environment
+                ~tag_query
+                ~target
+                ~runs_on
+                ~op
             in
             create_work_manifest state.State.request_id (Ctx.storage ctx) work_manifest
             >>= fun work_manifest ->
             Logs.info (fun m ->
                 m
-                  "%s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s : env=%s"
+                  "%s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s : env=%s : \
+                   runs_on=%s"
                   state.State.request_id
                   Uuidm.pp
                   work_manifest.Wm.id
                   (S.Api.Ref.to_string base_ref)
                   (S.Api.Ref.to_string branch_ref)
-                  (CCOption.get_or ~default:"" work_manifest.Wm.environment));
+                  (CCOption.get_or ~default:"" work_manifest.Wm.environment)
+                  (CCOption.map_or ~default:"" Yojson.Safe.to_string work_manifest.Wm.runs_on));
             run_interactive ctx state (fun () ->
                 Dv.client ctx state
                 >>= fun client ->
@@ -3818,7 +3824,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                   (Terrat_base_repo_config_v1.apply_requirements repo_config)
                 >>= fun () -> Abb.Future.return (Ok state))
             >>= fun _ -> Abb.Future.return (Ok work_manifest))
-        (Terrat_data.String_map.to_list dirspaceflows_by_environment)
+        dirspaceflows_by_run_params
 
     let run_op_work_manifest_iter_run_success op ctx state work_manifest =
       let open Abbs_future_combinators.Infix_result_monad in
@@ -4271,6 +4277,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               id = ();
               initiator = Event.initiator state.State.event;
               run_id = ();
+              runs_on = None;
               state = ();
               steps = [ Wm.Step.Index ];
               tag_query = Terrat_tag_query.any;
@@ -4298,12 +4305,13 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           >>= fun state ->
           Logs.info (fun m ->
               m
-                "%s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s"
+                "%s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s : runs_on=%s"
                 state.State.request_id
                 Uuidm.pp
                 work_manifest.Wm.id
                 (S.Api.Ref.to_string base_ref')
-                (S.Api.Ref.to_string working_branch_ref'));
+                (S.Api.Ref.to_string working_branch_ref')
+                (CCOption.map_or ~default:"" Yojson.Safe.to_string work_manifest.Wm.runs_on));
           Abb.Future.return (Ok [ work_manifest ]))
         ~update:(fun ctx state work_manifest ->
           let module Wm = Terrat_work_manifest3 in
@@ -5708,6 +5716,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               id = ();
               initiator = Event.initiator state.State.event;
               run_id = ();
+              runs_on = None;
               state = ();
               steps = [ Wm.Step.Build_tree ];
               tag_query = Terrat_tag_query.any;
@@ -5735,12 +5744,13 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           >>= fun state ->
           Logs.info (fun m ->
               m
-                "%s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s"
+                "%s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s : runs_on=%s"
                 state.State.request_id
                 Uuidm.pp
                 work_manifest.Wm.id
                 (S.Api.Ref.to_string base_ref')
-                (S.Api.Ref.to_string working_branch_ref'));
+                (S.Api.Ref.to_string working_branch_ref')
+                (CCOption.map_or ~default:"" Yojson.Safe.to_string work_manifest.Wm.runs_on));
           Abb.Future.return (Ok [ work_manifest ]))
         ~update:(fun ctx state work_manifest ->
           let module Wm = Terrat_work_manifest3 in
@@ -5992,6 +6002,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               id = ();
               initiator = Event.initiator state.State.event;
               run_id = ();
+              runs_on = None;
               state = ();
               steps = [ Wm.Step.Build_config ];
               tag_query = Terrat_tag_query.any;
@@ -6019,12 +6030,13 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           >>= fun state ->
           Logs.info (fun m ->
               m
-                "%s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s"
+                "%s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s : runs_on=%s"
                 state.State.request_id
                 Uuidm.pp
                 work_manifest.Wm.id
                 (S.Api.Ref.to_string base_ref')
-                (S.Api.Ref.to_string working_branch_ref'));
+                (S.Api.Ref.to_string working_branch_ref')
+                (CCOption.map_or ~default:"" Yojson.Safe.to_string work_manifest.Wm.runs_on));
           Abb.Future.return (Ok [ work_manifest ]))
         ~update:(fun ctx state work_manifest ->
           let module Wm = Terrat_work_manifest3 in
