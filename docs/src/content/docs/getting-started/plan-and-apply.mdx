@@ -69,17 +69,17 @@ Terrateam has a set of [Apply Requirements](/configuration-reference/apply-requi
 
 You can configure these requirements in your [Terrateam configuration file](/getting-started/configuration).
 ### Auto-Apply
-If you want to automatically apply changes when a pull request is merged, you can use the [When Modified](/configuration-reference/when-modified) feature. This is useful for repositories where merged changes are always expected to be applied, like production environments.
+If you want to automatically apply changes when a pull request is merged, you can use the [When Modified](/configuration-reference/when-modified) feature.
 ```yaml
 when_modified:
   autoapply: true
 ```
 :::note 
-   Auto-Apply is disabled by default to prevent accidental changes to your infrastructure.
+   Auto-Apply is disabled by default.
 :::
-## Apply Workflows: Pre-merge vs Post-merge
-Terrateam offers two primary workflows based on when changes are applied. These workflows determine the timing and process of applying changes to your infrastructure, providing flexibility to suit different environments and requirements.
+## Apply Before Merge vs. After Merge
+Terrateam supports two main approaches based on when infrastructure changes are applied, either before or after a pull request is merged. This flexibility lets you match your deployment process to your team's needs.
 
-Workflows in Terrateam define the sequence of steps that are executed during the Plan and Apply operations. They allow you to customize the behavior of these operations to fit your specific needs. 
+Terrateam lets you define the sequence of steps during Plan and Apply. You can customize these steps to enforce approvals, manage concurrency, or trigger applies at the right time.
 
-For stability-critical environments, consider a pre-merge workflow with [automerge](/configuration-reference/automerge) for balanced validation and efficiency.
+If you want to validate and apply changes before merging, you can use a pre-merge approach combined with [automerge](/configuration-reference/automerge) to apply changes automatically once checks pass.
