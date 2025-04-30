@@ -14,19 +14,19 @@ To effectively use Terrateam, it's important to understand its key concepts and 
 
 ## Dirspace
 
-In Terrateam, a Dirspace is a fundamental concept that defines the scope of Terraform operations. It uniquely combines a `repository`, a `directory` within that repository, and a Terraform `workspace`, represented as a tuple `(repository, directory, workspace)`. When the repository context is clear, it can be simplified to `(directory, workspace)`.
+In Terrateam, a Dirspace is a fundamental concept that defines the scope of Terraform operations. It uniquely combines a `repository`, a `directory` within that repository, and a Terraform `workspace`, represented as a tuple `(repository, directory, workspace)`.
 
 Dirspaces are automatically created when Terrateam detects Terraform configurations in your repository. Each directory containing Terraform files creates a Dirspace with either its explicitly configured workspace or the **default workspace** (created automatically when no specific workspace is defined).
 
 :::note
-Terrateam executes operations like plan and apply within the context of a Dirspace.
+Terrateam executes operations like plan and apply within the context of a Dirspace: a combination of directory and Terraform workspace.
 :::
 
 Consider you have a repository called `infra-repo` managing multiple environments:
 
 ![Dirspace Example](../../../assets/repo-chart.png)
 
-A **workspace** enables you to manage multiple states for the same directory, isolating environments like `dev`, `staging`, and `prod` within the same repository.
+Each environment (`dev`, `staging`, `prod`) lives in a separate directory and uses the default Terraform workspace:
 
 ```
 Repository: infra-repo
@@ -40,7 +40,6 @@ Repository: infra-repo
   |-- prod/
        |-- Workspace: default
 ```
-
 
 ## Changes and File Patterns
 
@@ -63,13 +62,14 @@ Terrateam provides automated Terraform execution workflows to simplify infrastru
 
 - **Auto-Plan**: Runs `terraform plan` automatically when a pull request is created or updated. Enable with:
   ```yaml
-  auto_plan: true  # Set to false to disable
+  when_modified:
+    autoplan: true  # Set to false to disable
   ```
 - **Auto-Apply**: Runs `terraform apply` post-merge. It is disabled by default. Enable with:
   ```yaml
-  auto_apply: true
+  when_modified:
+    autoapply: true
   ```
-These automated operations streamline workflows while maintaining control through configurable thresholds.
 
 ## Tags and Tag Sets
 
@@ -77,7 +77,7 @@ Terrateam uses [Tags](/advanced-workflows/tags) to organize Terraform resources 
 
 Tags in Terrateam can be both user-defined and automatically assigned. They are optional but provide significant benefits for organizing and managing infrastructure resources.
 :::note
-Users can define custom tags in their Terrateam configuration file (.terrateam/config.yml).
+Users can define custom tags in their Terrateam configuration file (`.terrateam/config.yml`).
 :::
 
 There are two types of Tags:
@@ -90,7 +90,7 @@ There are two types of Tags:
 Terrateam's locking system prevents concurrent modifications by ensuring only one change can be applied to a resource at a time. This prevents:
 
 - State file conflicts.
-- Resource modification races. 
+- Resource modification races.
 - Concurrent apply operations.
 
 Key behaviors:
@@ -106,5 +106,3 @@ workflows:
 ```
 
 For advanced configurations see our [Locks & Concurrency guide](/advanced-workflows/locks-and-concurrency).
-
-
