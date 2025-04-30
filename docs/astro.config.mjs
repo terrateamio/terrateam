@@ -58,7 +58,6 @@ export default defineConfig({
           ],
       sidebar: [
         { label: "Welcome", link: "/" },
-        { label: "Quickstart Guide", link: "/quickstart-guide" },
         { label: "How It Works", link: "/how-it-works" },
         {
           label: "Getting Started",
