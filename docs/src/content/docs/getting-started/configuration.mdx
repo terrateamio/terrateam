@@ -106,7 +106,7 @@ dirs:
       production:  # Workspace name
         tags: [production]  # Workspace-specific tags
     when_modified:
-      file_patterns: ["ec2/*.tf", "ec2/*.tfvars", "iam/*.tf", "iam/*.tfvars"]
+      file_patterns: ["${DIR}/*.tf", "${DIR}/*.tfvars", "iam/*.tf", "iam/*.tfvars"]
   iam:
     tags: [aws, iam]
 ```
@@ -217,7 +217,7 @@ Here's a complete example of a `config.yml` file containing a basic workflow tha
 # Basic Terrateam configuration example
 access_control:
   policies:
-    - tag_query: ''  # All directories
+    - tag_query: ''  # All directories and workspaces
       plan: ['*']    # Anyone can plan
       apply: ['team:infra', 'team:platform']  # Only specific teams can apply
 
