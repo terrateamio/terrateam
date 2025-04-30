@@ -12,10 +12,10 @@
   },
   "dependencies": {
     "@astrojs/check": "^0.9.3",
-    "@astrojs/starlight": "^0.34.1",
+    "@astrojs/starlight": "^0.26.1",
     "@expressive-code/plugin-line-numbers": "^0.35.6",
     "@fontsource/roboto": "^5.0.14",
-    "astro": "^5.7.9",
+    "astro": "^4.16.18",
     "playwright": "^1.51.0",
     "rehype-mermaid": "^3.0.0",
     "sharp": "^0.32.5",
