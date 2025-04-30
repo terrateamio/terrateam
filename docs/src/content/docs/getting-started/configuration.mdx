@@ -5,15 +5,10 @@ description: Understanding the Terrateam configuration file and how to customize
 
 import { Steps } from '@astrojs/starlight/components';
 
-The Terrateam configuration file (`config.yml`) is the primary way to customize how Terrateam interacts with your GitHub repository and Terraform code. This file is stored in the `.terrateam` directory at the root of your repository.
-:::note[Should i create the config.yml file?]
-Terrateam automatically checks if a config.yml exists, but the file is not required. If you don't create a config.yml file, Terrateam will use default settings.
-:::
-:::note
-Default settings work for most teams. Customize only if you need specific lock timing or policies.
-:::
-:::note
-The `.terrateam/config.yml` file is the source of truth for Terrateam's behavior in your repository.
+Terrateam uses a `.terrateam/config.yml` file to customize how it interacts with your GitHub repository and Terraform code.
+
+:::note[Do I need a config file?]
+Terrateam uses sensible defaults if `.terrateam/config.yml` doesn’t exist. Add a config file only if you need custom workflows, OIDC, policies, or other advanced settings.
 :::
 
 ## Basic Structure
@@ -30,7 +25,7 @@ dirs:
 hooks:
   # Executes custom commands before or after operations
 workflows:
-  # Configures specialized plan and apply processes
+  # Configures specialized plan and apply steps
 ```
 
 Each section serves a specific purpose in customizing Terrateam's behavior:
@@ -39,7 +34,7 @@ Each section serves a specific purpose in customizing Terrateam's behavior:
 - `apply_requirements`: Defines conditions that must be met before changes can be applied
 - `dirs`: Maps your repository's directory structure to Terrateam's concepts
 - `hooks`: Allows custom actions before or after operations
-- `workflows`: Creates specialized processing for different directories or environments
+- `workflows`: Creates specialized processing for different workspaces
 
 ## Access Control
 
@@ -50,7 +45,7 @@ Here's an example `access_control` configuration:
 ```yaml
 access_control:
   policies:
-    - tag_query: ''  # Empty string matches all directories
+    - tag_query: ''  # Empty string matches all workspaces
       plan: ['*']    # Anyone can plan
       apply: ['team:sre']  # Only SRE team members can apply
 ```
@@ -71,7 +66,7 @@ apply_requirements:
   create_pending_apply_check: true
   
   checks:
-    - tag_query: ""  # Apply to all directories
+    - tag_query: ""  # Apply to all workspaces
       
       # Requires PR approvals
       approved:
@@ -161,12 +156,11 @@ See [Hooks](/configuration-reference/hooks) for details.
 
 Workflows allow you to define custom steps for Terrateam's Plan and Apply operations. You can use Workflows to replace or augment the default behavior.
 
-
 Here's a basic workflow that slightly modifies the default behavior:
 
 ```yaml
 workflows:
-  # Apply to all directories
+  # Apply to all workspaces
   - tag_query: ""
     plan:
       - type: init  # Run terraform init
