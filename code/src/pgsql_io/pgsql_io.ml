@@ -376,6 +376,10 @@ module Typed_sql = struct
           match t xs with
           | Some (v, xs) -> Some (Some v, xs)
           | None -> None)
+
+    let debug f t v =
+      f v;
+      t v
   end
 
   type ('q, 'qr, 'p, 'pr) t =

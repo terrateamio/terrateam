@@ -115,6 +115,7 @@ module Typed_sql : sig
     val ud' : (string -> 'a option) -> 'a t
 
     val option : 'a t -> 'a option t
+    val debug : (string option list -> unit) -> 'a t -> 'a t
   end
 
   type ('q, 'qr, 'p, 'pr) t
