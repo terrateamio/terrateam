@@ -68,18 +68,25 @@ This hierarchy enables you to structure your Terraform code in a modular and reu
 
 Here's a high-level overview of how Terrateam works:
 <MermaidDiagram chart={`
-graph TD
-    Repository -->|Contains| Directory1
-    Repository -->|Contains| Directory2
-    Repository -->|Contains| DirectoryN
+sequenceDiagram
+    participant User
+    participant GitHub
+    participant TerrateamServer as Terrateam Server
+    participant TerrateamRunner as Terrateam Runner
 
-    Directory1 -->|Has| WorkspaceA
-    Directory1 -->|Has| WorkspaceB
+    User->>GitHub: (1) Opens PR, updates, or comments
+    GitHub->>TerrateamServer: Sends event payload
+    TerrateamServer->>TerrateamServer: (2) Evaluates event
 
-    Directory2 -->|Has| WorkspaceX
-    Directory2 -->|Has| WorkspaceY
+    alt Terraform operation required
+        TerrateamServer->>GitHub: Updates PR status (checks/comments)
+        TerrateamServer->>GitHub: (3) Dispatches GitHub Actions workflow
+        GitHub->>TerrateamRunner: Receives the workflow dispatch
+        TerrateamRunner->>TerrateamRunner: (4) Set up environment and run Terraform (plan/apply)
+        TerrateamRunner->>TerrateamServer: (5) Send execution results
+    end
 
-    DirectoryN -->|Has Default| DefaultWorkspace
+    TerrateamServer->>GitHub: (6) Updates PR with results (comments/status)
 `} />
 
 
