@@ -1,96 +1,142 @@
 ---
 title: Quickstart Guide
-description: Get up and running with Terrateam in minutes
+description: Get up and running with Terrateam in minutes.
 ---
-
 import { Steps } from '@astrojs/starlight/components';
 import { Icon } from '@astrojs/starlight/components';
-import { LinkCard } from '@astrojs/starlight/components';
+import { LinkCard, CardGrid, Card } from '@astrojs/starlight/components';
 
-Installing Terrateam is a straightforward process. By following these three easy steps, you'll have Terrateam up and running in your GitHub repository in no time.
+The following steps on this page will help you to set up Terrateam, integrate it with GitHub, and run your first Terraform deployment in just a few steps.
 
-## Terrateam Installation
+## Prerequisites
 
-#### Step 1. [Sign up and Install the Terrateam GitHub Application](https://terrateam.io/signup)
+Before getting started with Terrateam quickstart guide, make sure you have the following:
 
-   * **$149/mo unlimited. 14-day free trial. No credit card required.**
-   * Select any of your GitHub organizations and repositories that contain Terraform code.
-   * [Click here to sign up and install the Terrateam GitHub application](https://terrateam.io/signup)
-   ![GitHub application installation](../../assets/install-terrateam-github.png)
+- **A GitHub account** to fork the Terrateam [demo repository](https://github.com/terrateam-demo/kick-the-tires).
+- **GitHub Actions** enabled in your forked repository.
+- **Administrator access** to install the Terrateam GitHub app.
 
-#### Step 2. Add the Terrateam GitHub Actions Workflow
 
-    * **[Download terrateam.yml](https://raw.githubusercontent.com/terrateamio/terrateam-example/main/github/actions/workflows/default/terrateam.yml)**
-    * The Terrateam GitHub Actions workflow file (`.github/workflows/terrateam.yml`) must be stored in the default branch of your Terraform repository. The default branch is usually named `main` or `master`.
+## Demo Repository Workflow
 
-   :::note
-   Create the `.github/workflows` directory if it doesn't exist. This is done for you automatically if you're using the GitHub UI (GitHub.com in a browser).
-   :::
+To have an overview on how to use Terrateam, use the the Terrateam ready-to-use demo repository with pre-configured Terraform code. Follow these steps to quickly test Terrateam's capabilities.  
 
-   ![GitHub Actions Workflow File](../../assets/github-actions-workflow-file-location.png)
-
-#### Step 3. Start Using Terrateam
-   If you want to see how Terrateam works without connecting to your cloud provider, continue reading to deploy a simple `null_resource`. Otherwise, jump to [Cloud Providers
-](/cloud-providers).
-
-## Your First Terrateam Deployment
-
-:::tip[Did you know?]
-With Terrateam you can apply changes before or after merging a pull request.
-:::
-
-### Plan and Apply
-
-    We will now trigger our first Terrateam deployment by creating a simple pull request with a `null_resource`. The `null_resource` provider does not take any action against live environments
-    making it completely safe for our first deployment.
+<LinkCard
+  title="Terrateam Demo Repository"
+  href="https://github.com/terrateam-demo/kick-the-tires"
+/>
 
 <Steps>
+1. **Fork the Demo Repository**
 
-1.  #### New Branch
+   Click the link above to access our demo repository, then click the **Fork** button in the top-right corner of the page.
+   
+   ![Fork button on GitHub repository](../../assets/demo-fork.png)
+   
+   On the "Create a new fork" screen, keep the default settings and click "Create fork".
+   
+   ![Create a new fork](../../assets/demo-create-fork.png)
+   
 
-    Create a new branch against a repository with Terrateam installed.
+2. **Install the Terrateam GitHub Application (if you haven't already)**
 
-    ![Terrateam first run branch](../../assets/terrateam-first-run-branch.png)
+   Sign up for a Terrateam account and install the GitHub app. Then, select the organizations and repositories that contain your Terraform code.
+   
+   <LinkCard
+     title="Sign up for Terrateam"
+     href="https://terrateam.io/signup"
+   />
+   
+   ![Install Terrateam](../../assets/demo-install-terrateam-2.png)
+   
+   Once the installation is complete, access your [Terrateam dashboard](https://app.terrateam.io/). If the setup was successful, your forked repository will be listed there.  
 
-1.  #### Add Terraform Code
+   
+   ![Terrateam dashboard](../../assets/demo-terrateam-dashboard.png)
 
-    Create a new file called `main.tf` in any directory in the repository. [Download the code here](https://raw.githubusercontent.com/terrateamio/terrateam-example/main/main.tf).
+3. **Clone Your Forked Repository**
 
-    ![Terrateam main.tf](../../assets/nibbler-main-tf.png)
+   Clone the repository to your local machine and navigate to its directory:
+   
+   ```bash
+   git clone https://github.com/<your-username>/kick-the-tires.git
+   cd kick-the-tires
+   ```
+   
+   
+4. **Create a New Branch**
 
-1.  #### Pull Request
+   Create a branch to make your changes:
+   
+   ```bash
+   git checkout -b test-branch
+   ```
+   
+5. **Modify a Terraform File**
 
-    Commit and push `main.tf` to your branch and then create a pull request.
+   Let's modify a file to test the workflow, changes are detected automatically. Open `staging/compute/main.tf` and change the instance name.
+      
+   ```hcl {5}
+   module "staging_compute_instance" {
+     source = "../../modules/compute"
 
-    ![Terrateam pull request](../../assets/nibbler-pull-request.png)
+     instance_count = 0
+     instance_name  = "staging-instance-modified"
+     instance_zone  = "us-central1-a"
+     boot_disk_image = "debian-cloud/debian-11"
+     network_name    = "default"
+   }
+   ```
+   
+6. **Commit and Push Your Changes**
 
-1.  #### Terraform Plan
+   Commit your changes and push them to your branch:
+   
+   ```bash
+   git add .
+   git commit -m "Testing Terrateam workflow"
+   git push origin test-branch
+   ```
 
-    Terrateam will automatically trigger a `terraform plan`.
+7. **Create a Pull Request**
 
-    ![Terrateam plan](../../assets/nibbler-terrateam-plan.png)
+   Access your forked repository on GitHub. A prompt should appear, allowing you to create a pull request for your recently pushed branch.  
 
-1.  #### Terraform Apply
+   :::caution
+   Make sure to change the base repository to your fork instead of creating a PR on the original Terrateam repository. The base should be your `main` branch, and the compare should be your `test-branch`.
+    ![Creating a pull request with proper base repository](../../assets/demo-pr-2.png)
+   :::
+   
+  
+   
+   :::caution
+   Ensure that [workflows are enabled](https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-workflow-runs/disabling-and-enabling-a-workflow#enabling-a-workflow) on your forked repository. If GitHub Actions workflows are disabled, you'll need to enable them in the repository settings.
+   :::
 
-    Comment `terrateam apply` on the pull request. Terrateam will trigger a `terraform apply`.
+8. **Watch the Automatic Terraform Plan**
 
-    ![Terrateam Apply](../../assets/nibbler-terrateam-apply.png)
+   Once the pull request is created, Terrateam will automatically trigger a [`terraform plan`](/getting-started/plan-and-apply). This plan will appear as a comment on your pull request, showing what changes would be made.  
 
-1.  #### Merge
+   
+   ![Automatic Terraform plan in PR comments](../../assets/demo-plan-output.png)
+   
+   This plan is a preview of what will happen when you apply the changes.
 
-    Merge the pull request.
+9. **Apply the Changes**
 
-    ![Pull Request Merge](../../assets/nibbler-merge.png)
+   To execute the changes, comment `terrateam apply` on the pull request.
+   ![Apply the changes](../../assets/demo-pr-apply.png)
+   
+   After you add the comment, the Terrateam app will run the `terraform apply` command. This will apply the previous plan to the Terraform file, updating your infrastructure.
 
-    :::tip[Apply after merge]
-    [Click here to learn how to apply your changes after merging a pull request.](/advanced-workflows/apply-after-merge)
-    :::
+10. **Merge Your Changes**
 
+    Once applied and everything looks good, you can merge the pull request to incorporate the changes into your main branch.
 </Steps>
 
-### Bravo!
+### Next steps
 
-You've just completed your first Terrateam deployment.
-
-## Learn More
-See [Cloud Providers](/cloud-providers) to learn how to integrate Terrateam against AWS, GCP, Azure, and more.
+<CardGrid>
+  <LinkCard title="Learn how Terrateam works" href="/how-it-works" />
+  <LinkCard title="Explore key Terrateam concepts" href="/getting-started/concepts" />
+</CardGrid>
