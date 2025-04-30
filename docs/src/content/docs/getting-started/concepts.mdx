@@ -22,25 +22,6 @@ Dirspaces are discovered automatically by Terrateam whenever it detects Terrafor
 Terrateam executes operations like plan and apply within the context of a Dirspace which combines a directory and Terraform workspace.
 :::
 
-Consider you have a repository called `infra-repo` managing multiple environments:
-
-![Dirspace Example](../../../assets/repo-chart.png)
-
-Each environment (`dev`, `staging`, `prod`) lives in a separate directory and uses the default Terraform workspace:
-
-```
-Repository: infra-repo
-  |
-  |-- dev/
-  |    |-- Workspace: default
-  |
-  |-- staging/
-  |    |-- Workspace: default
-  |
-  |-- prod/
-       |-- Workspace: default
-```
-
 ## Changes and File Patterns
 
 When a pull request is opened or updated, Terrateam detects changes based on patterns defined in your `.terrateam/config.yml` file under the [`when_modified`](/configuration-reference/when-modified) configuration. The default configuration looks like:
