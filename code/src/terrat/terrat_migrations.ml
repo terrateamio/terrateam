@@ -145,6 +145,7 @@ let migrations =
     ("refactor-add-pkey-indexes", run_file_sql ~tx:false "2025-05-19-refactor-add-pkey-indexes.sql");
     ( "refactor-add-core-table-constraints",
       run_file_sql "2025-05-21-refactor-add-core-table-constraints.sql" );
+    ("refactor-swap-primary-keys", run_file_sql "2025-05-01-refactor-swap-primary-keys.sql");
   ]
 
 let run config storage = Mig.run (config, storage) migrations

@@ -146,6 +146,11 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         }
 
     module Sql = struct
+      let read fname =
+        CCOption.get_exn_or
+          fname
+          (CCOption.map Pgsql_io.clean_string (Terrat_files_github_sql.read fname))
+
       let select_encryption_key () =
         Pgsql_io.Typed_sql.(
           sql
@@ -169,9 +174,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
           //
           (* id *)
           Ret.bigint
-          /^ "select gir.installation_id from work_manifests as gwm inner join \
-              github_installation_repositories as gir on gwm.repository = gir.id where gwm.id = \
-              $id"
+          /^ read "select_installation_id_from_work_manifest.sql"
           /% Var.uuid "id")
     end
 

@@ -1,7 +1,5 @@
 insert into work_manifests (
        base_sha,
-       pull_number,
-       repository,
        run_type,
        sha,
        tag_query,
@@ -15,8 +13,6 @@ insert into work_manifests (
 )
 select
        $base_sha,
-       $pull_number,
-       $repository,
        $run_type,
        $sha,
        $tag_query,

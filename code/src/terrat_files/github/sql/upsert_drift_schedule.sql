@@ -1,7 +1,6 @@
 insert into drift_schedules as gds
-  (repository, schedule, reconcile, tag_query, updated_at, name, window_start, window_end, repo)
+  (schedule, reconcile, tag_query, updated_at, name, window_start, window_end, repo)
 select
-        $repo,
         $schedule,
         $reconcile,
         $tag_query,
@@ -12,7 +11,7 @@ select
         grm.core_id
 from github_repositories_map as grm
 where grm.repository_id = $repo
-on conflict on constraint drift_schedules_fut_pkey
+on conflict on constraint drift_schedules_pkey
 do update set
   (schedule,
    reconcile,
