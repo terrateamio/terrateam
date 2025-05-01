@@ -11,13 +11,10 @@ select
     gwm.tag_query,
     gwm.username,
     gwm.run_kind,
-    gir.installation_id,
-    gir.id,
-    gir.owner,
-    gir.name,
+    gwm.installation_id,
+    gwm.repo_owner,
+    gwm.repo_name,
     gwm.environment,
     gwm.runs_on
-from work_manifests as gwm
-inner join github_installation_repositories as gir
-  on gir.id = gwm.repository
+from github_work_manifests as gwm
 where gwm.id = $id

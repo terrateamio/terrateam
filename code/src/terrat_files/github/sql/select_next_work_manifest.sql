@@ -4,14 +4,14 @@ latest_unlocks as (
         repository,
         pull_number,
         max(unlocked_at) as unlocked_at
-    from pull_request_unlocks
+    from github_pull_request_unlocks
     group by repository, pull_number
 ),
 latest_drift_unlocks as (
     select
         repository,
         max(unlocked_at) as unlocked_at
-    from drift_unlocks
+    from github_drift_unlocks
     group by repository
 ),
 wms as (
@@ -33,7 +33,7 @@ wms as (
          when 'autoplan' then 1
          when 'plan' then 1
          end) as priority
-    from work_manifests as gwm
+    from github_work_manifests as gwm
     left join drift_work_manifests as gdwm
         on gdwm.work_manifest = gwm.id
     left join latest_unlocks as unlocks
@@ -111,8 +111,8 @@ next_work_manifests as (
     left join rejected_work_manifests as rwm on rwm.id = wms.id
     where wms.state = 'queued' and rwm.id is null
 )
-select gwm.id from work_manifests as gwm
-inner join next_work_manifests as nwm on nwm.id = gwm.id
-where nwm.rn = 1 and gwm.state = 'queued'
-for update of gwm skip locked
+select wm.id from work_manifests as wm
+inner join next_work_manifests as nwm on nwm.id = wm.id
+where nwm.rn = 1 and wm.state = 'queued'
+for update of wm skip locked
 limit 1

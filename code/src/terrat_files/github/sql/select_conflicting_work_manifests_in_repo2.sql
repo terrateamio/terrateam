@@ -7,14 +7,14 @@ latest_unlocks as (
         repository,
         pull_number,
         max(unlocked_at) as unlocked_at
-    from pull_request_unlocks
+    from github_pull_request_unlocks
     group by repository, pull_number
 ),
 latest_drift_unlocks as (
     select
         repository,
         max(unlocked_at) as unlocked_at
-    from drift_unlocks
+    from github_drift_unlocks
     group by repository
 ),
 work_manifests_for_dirspace as (
@@ -24,7 +24,7 @@ work_manifests_for_dirspace as (
 -- or it was created over 10 minutes ago
         ((gwm.run_id is null and (now() - gwm.created_at > interval '1 minutes'))
          or (gwm.run_id is not null and (now() - gwm.created_at > interval '1 hour'))) as maybe_stale
-    from work_manifests as gwm
+    from github_work_manifests as gwm
     inner join work_manifest_dirspaceflows as gwmdsfs
         on gwmdsfs.work_manifest = gwm.id
     inner join dirspaces
@@ -33,7 +33,7 @@ work_manifests_for_dirspace as (
 select
     gwm.id,
     work_manifests_for_dirspace.maybe_stale
-from work_manifests as gwm
+from github_work_manifests as gwm
 inner join work_manifests_for_dirspace
     on work_manifests_for_dirspace.id = gwm.id
 left join github_pull_requests as gpr

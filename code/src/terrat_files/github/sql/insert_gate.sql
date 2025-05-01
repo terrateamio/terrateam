@@ -19,7 +19,7 @@ select
         gprm.core_id
 from github_pull_requests_map as gprm
 where gprm.repository_id = $repository and gprm.pull_number = $pull_number
-on conflict (repository, pull_number, sha, dir, workspace, token)
+on conflict on constraint gates_fut_pkey
 do update set (
    gate,
    created_at
