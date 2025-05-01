@@ -61,7 +61,14 @@ export default defineConfig({
         { label: "How It Works", link: "/how-it-works" },
         {
           label: "Getting Started",
-          autogenerate: { directory: "getting-started" },
+          items: [
+            { label: "Quickstart Guide", link: "/getting-started/quickstart-guide" },
+            { label: "Concepts", link: "/getting-started/concepts" },
+            { label: "Plan And Apply", link: "/getting-started/plan-and-apply" },
+            { label: "Pull Requests and Triggers", link: "/getting-started/pull-requests-and-triggers" },
+            { label: "Secrets and Variables", link: "/getting-started/secrets-and-variables" },
+            { label: "Tag Queries", link: "/getting-started/tag-queries" },
+          ],
         },
         {
           label: "Cloud Providers",
