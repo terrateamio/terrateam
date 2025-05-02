@@ -146,6 +146,8 @@ let migrations =
     ( "refactor-add-core-table-constraints",
       run_file_sql "2025-05-21-refactor-add-core-table-constraints.sql" );
     ("refactor-swap-primary-keys", run_file_sql "2025-05-01-refactor-swap-primary-keys.sql");
+    ( "refactor-drop-legacy-github-columns",
+      run_file_sql "2025-05-02-refactor-remove-old-columns.sql" );
   ]
 
 let run config storage = Mig.run (config, storage) migrations

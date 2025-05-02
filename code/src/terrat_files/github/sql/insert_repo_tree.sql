@@ -14,7 +14,7 @@ from unnest(
 ) as x(installation_id, sha, path, changed, id)
 inner join github_installations_map as gim
       on gim.installation_id = x.installation_id
-on conflict on constraint repo_trees_fut_pkey
+on conflict on constraint repo_trees_pkey
 do update set (
    changed,
    id
