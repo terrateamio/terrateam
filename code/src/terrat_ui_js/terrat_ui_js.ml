@@ -6,8 +6,8 @@ let main_comp services state =
     | Terrat_ui_js_service.Service ((module M), s) :: services -> (
         M.is_logged_in s
         >>= function
-        | Ok _ -> M.Comp.Main.run (Brtl_js2.State.with_app_state s state)
-        | Error _ -> run services)
+        | Ok true -> M.Comp.Main.run (Brtl_js2.State.with_app_state s state)
+        | Ok false | Error _ -> run services)
     | [] -> Abb_js.Future.return (Brtl_js2.Output.navigate (Uri.of_string "/login"))
   in
   run services

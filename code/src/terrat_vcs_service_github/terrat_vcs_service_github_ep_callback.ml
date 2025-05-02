@@ -109,7 +109,19 @@ let perform_auth config storage code =
                     username
                   >>= fun () -> Abb.Future.return (Ok (Terrat_user.make ~id:user_id ())))
           | (user_id, _email, _name, _avatar_url) :: _ ->
-              Abb.Future.return (Ok (Terrat_user.make ~id:user_id ()))))
+              Pgsql_io.Prepared_stmt.execute
+                db
+                (Sql.insert_github_user2 ())
+                (Some avatar_url)
+                email
+                expiration
+                name
+                refresh_expiration
+                oauth.Oauth.refresh_token
+                oauth.Oauth.access_token
+                user_id
+                username
+              >>= fun () -> Abb.Future.return (Ok (Terrat_user.make ~id:user_id ()))))
 
 let get config storage code installation_id_opt ctx =
   let open Abb.Future.Infix_monad in
