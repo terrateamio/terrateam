@@ -20,6 +20,7 @@ module Apply_requirements_checks_status_checks =
   Terrat_repo_config_apply_requirements_checks_status_checks
 
 module Automerge = Terrat_repo_config_automerge
+module Batch_runs = Terrat_repo_config_batch_runs
 module Config_builder = Terrat_repo_config_config_builder
 module Custom_tags = Terrat_repo_config_custom_tags
 module Custom_tags_branch = Terrat_repo_config_custom_tags_branch

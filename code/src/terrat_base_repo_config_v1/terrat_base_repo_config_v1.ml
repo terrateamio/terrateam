@@ -584,6 +584,14 @@ module Automerge = struct
   [@@deriving make, show, yojson, eq]
 end
 
+module Batch_runs = struct
+  type t = {
+    enabled : bool; [@default false]
+    max_workspaces_per_batch : int; [@default 1]
+  }
+  [@@deriving make, show, yojson, eq]
+end
+
 module Config_builder = struct
   type t = {
     enabled : bool; [@default false]
@@ -1015,6 +1023,7 @@ module View = struct
     access_control : Access_control.t; [@default Access_control.make ()]
     apply_requirements : Apply_requirements.t; [@default Apply_requirements.make ()]
     automerge : Automerge.t; [@default Automerge.make ()]
+    batch_runs : Batch_runs.t; [@default Batch_runs.make ()]
     config_builder : Config_builder.t; [@default Config_builder.make ()]
     cost_estimation : Cost_estimation.t; [@default Cost_estimation.make ()]
     create_and_select_workspace : bool; [@default true]
@@ -1795,6 +1804,11 @@ let of_version_automerge automerge =
   let { Am.delete_branch; enabled } = automerge in
   Ok (Automerge.make ~delete_branch ~enabled ())
 
+let of_version_1_batch_runs batch_runs =
+  let module Br = Terrat_repo_config_batch_runs in
+  let { Br.enabled; max_workspaces_per_batch } = batch_runs in
+  Ok (Batch_runs.make ~enabled ~max_workspaces_per_batch ())
+
 let of_version_1_config_builder { Terrat_repo_config.Config_builder.enabled; script } =
   Ok (Config_builder.make ~enabled ?script ())
 
@@ -2145,6 +2159,7 @@ let of_version_1 v1 =
     V1.access_control;
     apply_requirements;
     automerge;
+    batch_runs;
     checkout_strategy = _;
     config_builder;
     cost_estimation;
@@ -2175,6 +2190,8 @@ let of_version_1 v1 =
   >>= fun apply_requirements ->
   map_opt of_version_automerge automerge
   >>= fun automerge ->
+  map_opt of_version_1_batch_runs batch_runs
+  >>= fun batch_runs ->
   map_opt of_version_1_config_builder config_builder
   >>= fun config_builder ->
   map_opt of_version_1_cost_estimation cost_estimation
@@ -2208,6 +2225,7 @@ let of_version_1 v1 =
        ?access_control
        ?apply_requirements
        ?automerge
+       ?batch_runs
        ?config_builder
        ?cost_estimation
        ~create_and_select_workspace
@@ -2351,6 +2369,11 @@ let to_version_1_automerge automerge =
   let module Am = Terrat_repo_config.Automerge in
   let { Automerge.delete_branch; enabled } = automerge in
   { Am.delete_branch; enabled }
+
+let to_version_1_batch_runs batch_runs =
+  let module Br = Terrat_repo_config.Batch_runs in
+  let { Batch_runs.enabled; max_workspaces_per_batch } = batch_runs in
+  { Br.enabled; max_workspaces_per_batch }
 
 let to_version_1_config_builder config_builder =
   let module Cb = Terrat_repo_config.Config_builder in
@@ -2810,6 +2833,7 @@ let to_version_1 t =
     View.access_control;
     apply_requirements;
     automerge;
+    batch_runs;
     config_builder;
     cost_estimation;
     create_and_select_workspace;
@@ -2846,6 +2870,11 @@ let to_version_1 t =
         CCFun.(Automerge.equal (Automerge.make ()) %> not)
         to_version_1_automerge
         automerge;
+    batch_runs =
+      map_opt_if_true
+        CCFun.(Batch_runs.equal (Batch_runs.make ()) %> not)
+        to_version_1_batch_runs
+        batch_runs;
     checkout_strategy = "merge";
     config_builder =
       map_opt_if_true
@@ -3190,6 +3219,7 @@ let derive ~ctx ~index ~file_list repo_config =
 let access_control t = t.View.access_control
 let apply_requirements t = t.View.apply_requirements
 let automerge t = t.View.automerge
+let batch_runs t = t.View.batch_runs
 let config_builder t = t.View.config_builder
 let cost_estimation t = t.View.cost_estimation
 let create_and_select_workspace t = t.View.create_and_select_workspace

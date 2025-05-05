@@ -322,4 +322,49 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
               Abb.Future.return
                 (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
   end
+
+  module Workspaces = struct
+    module Sql = struct
+      let dirspaces =
+        let module P = struct
+          type t = Terrat_api_components.Work_manifest_workspaces.t [@@deriving yojson]
+        end in
+        CCFun.(
+          CCOption.wrap Yojson.Safe.from_string
+          %> CCOption.map P.of_yojson
+          %> CCOption.flat_map CCResult.to_opt)
+
+      let select_workspaces =
+        Pgsql_io.Typed_sql.(
+          sql
+          //
+          (* dirspaces *)
+          Ret.(ud' dirspaces)
+          /^ "select dirspaces from work_manifests where id = $id and state in ('queued', \
+              'running')"
+          /% Var.uuid "id")
+    end
+
+    let get config storage work_manifest_id ctx =
+      let open Abb.Future.Infix_monad in
+      Pgsql_pool.with_conn storage ~f:(fun db ->
+          Pgsql_io.Prepared_stmt.fetch db Sql.select_workspaces ~f:CCFun.id work_manifest_id)
+      >>= function
+      | Ok [] ->
+          Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Not_found "") ctx)
+      | Ok (workspaces :: _) ->
+          let body =
+            Terrat_api_components.Work_manifest_workspaces.to_yojson workspaces
+            |> Yojson.Safe.to_string
+          in
+          Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK body) ctx)
+      | Error (#Pgsql_pool.err as err) ->
+          Logs.err (fun m -> m "%s : WORKSPACES : %a" (Brtl_ctx.token ctx) Pgsql_pool.pp_err err);
+          Abb.Future.return
+            (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m -> m "%s : WORKSPACES : %a" (Brtl_ctx.token ctx) Pgsql_io.pp_err err);
+          Abb.Future.return
+            (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+  end
 end

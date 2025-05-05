@@ -236,6 +236,20 @@
       },
       "type": "object"
     },
+    "batch-runs": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": false,
+          "type": "boolean"
+        },
+        "max_workspaces_per_batch": {
+          "default": 1,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
     "config-builder": {
       "additionalProperties": false,
       "properties": {
@@ -1109,6 +1123,9 @@
         },
         "automerge": {
           "$ref": "#/definitions/automerge"
+        },
+        "batch_runs": {
+          "$ref": "#/definitions/batch-runs"
         },
         "checkout_strategy": {
           "default": "merge",
