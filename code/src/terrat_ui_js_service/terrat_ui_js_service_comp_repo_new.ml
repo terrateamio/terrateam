@@ -26,7 +26,7 @@ let workflow_file =
   \       runs_on:\n\
   \         description: 'runs-on configuration'\n\
   \         type: string\n\
-  \         default: ubuntu-latest\n\
+  \         default: '\"ubuntu-latest\"'\n\
   \ jobs:\n\
   \   terrateam:\n\
   \     permissions: # Required to pass credentials to the Terrateam action\n\
