@@ -1765,6 +1765,7 @@ end
 module Apply_requirements = struct
   module Result = struct
     type result = {
+      apply_after_merge : bool option;
       approved : bool option;
       approved_reviews : Terrat_pull_request_review.t list;
       match_ : Terrat_change_match3.Dirspace_config.t;
@@ -1877,6 +1878,7 @@ module Apply_requirements = struct
     let module R = Terrat_base_repo_config_v1 in
     let module Ar = R.Apply_requirements in
     let module Abc = Ar.Check in
+    let module Afm = Ar.Apply_after_merge in
     let module Mc = Ar.Merge_conflicts in
     let module Sc = Ar.Status_checks in
     let module Ac = Ar.Approved in
@@ -1950,6 +1952,7 @@ module Apply_requirements = struct
             | Some
                 {
                   Abc.tag_query;
+                  apply_after_merge;
                   merge_conflicts;
                   status_checks;
                   approved;
@@ -2011,12 +2014,15 @@ module Apply_requirements = struct
                   || ((not approved.Ac.enabled) || approved_result)
                      && ((not merge_conflicts.Mc.enabled) || merge_result)
                      && ((not status_checks.Sc.enabled) || all_commit_check_success)
+                     && (not apply_after_merge.Afm.enabled)
                      && ready_for_review
                 in
                 let apply_requirements =
                   {
                     Result.passed;
                     match_;
+                    apply_after_merge =
+                      (if apply_after_merge.Afm.enabled then Some merged else None);
                     approved = (if approved.Ac.enabled then Some approved_result else None);
                     merge_conflicts =
                       (if merge_conflicts.Mc.enabled then Some merge_result else None);
@@ -2057,6 +2063,7 @@ module Apply_requirements = struct
                      {
                        Result.passed = false;
                        match_;
+                       apply_after_merge = None;
                        approved = None;
                        merge_conflicts = None;
                        ready_for_review = None;
@@ -4424,6 +4431,10 @@ module Comment (S : S) = struct
                              ("dir", string ar.Ar.match_.Dc.dirspace.Ds.dir);
                              ("workspace", string ar.Ar.match_.Dc.dirspace.Ds.workspace);
                              ("passed", bool ar.Ar.passed);
+                             ( "apply_after_merge_enabled",
+                               bool (CCOption.is_some ar.Ar.apply_after_merge) );
+                             ( "apply_after_merge_check",
+                               bool (CCOption.get_or ~default:false ar.Ar.apply_after_merge) );
                              ("approved_enabled", bool (CCOption.is_some ar.Ar.approved));
                              ("approved_check", bool (CCOption.get_or ~default:false ar.Ar.approved));
                              ( "merge_conflicts_enabled",

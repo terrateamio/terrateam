@@ -1,5 +1,7 @@
 module Items = struct
   type t = {
+    apply_after_merge : Terrat_repo_config_apply_requirements_checks_apply_after_merge.t option;
+        [@default None]
     approved : Terrat_repo_config_apply_requirements_checks_approved_2.t option; [@default None]
     merge_conflicts : Terrat_repo_config_apply_requirements_checks_merge_conflicts.t option;
         [@default None]
