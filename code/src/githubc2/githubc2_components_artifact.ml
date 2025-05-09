@@ -17,6 +17,7 @@ module Primary = struct
   type t = {
     archive_download_url : string;
     created_at : string option;
+    digest : string option; [@default None]
     expired : bool;
     expires_at : string option;
     id : int;

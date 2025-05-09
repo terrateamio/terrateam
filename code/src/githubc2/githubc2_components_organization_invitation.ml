@@ -4,7 +4,7 @@ module Primary = struct
     email : string option;
     failed_at : string option; [@default None]
     failed_reason : string option; [@default None]
-    id : int;
+    id : int64;
     invitation_source : string option; [@default None]
     invitation_teams_url : string;
     inviter : Githubc2_components_simple_user.t;

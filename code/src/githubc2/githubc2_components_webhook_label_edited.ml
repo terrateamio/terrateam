@@ -45,32 +45,15 @@ module Primary = struct
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
   end
 
-  module Label_ = struct
-    module Primary = struct
-      type t = {
-        color : string;
-        default : bool;
-        description : string option;
-        id : int;
-        name : string;
-        node_id : string;
-        url : string;
-      }
-      [@@deriving yojson { strict = false; meta = true }, show, eq]
-    end
-
-    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-  end
-
   type t = {
     action : Action.t;
     changes : Changes.t option; [@default None]
     enterprise : Githubc2_components_enterprise_webhooks.t option; [@default None]
     installation : Githubc2_components_simple_installation.t option; [@default None]
-    label : Label_.t;
+    label : Githubc2_components_webhooks_label.t;
     organization : Githubc2_components_organization_simple_webhooks.t option; [@default None]
     repository : Githubc2_components_repository_webhooks.t;
-    sender : Githubc2_components_simple_user_webhooks.t;
+    sender : Githubc2_components_simple_user.t;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

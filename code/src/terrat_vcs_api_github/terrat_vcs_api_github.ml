@@ -121,7 +121,7 @@ module Remote_repo = struct
           { R.Primary.id; owner = { U.primary = { U.Primary.login = owner; _ }; _ }; name; _ };
         _;
       } =
-    Repo.make ~id ~owner ~name ()
+    Repo.make ~id:(CCInt64.to_int id) ~owner ~name ()
 
   let default_branch t = t.R.primary.R.Primary.default_branch
 end
@@ -525,8 +525,11 @@ let fetch_pull_request' request_id account client repo pull_request_id =
                ~mergeable
                ~provisional_merge_ref:merge_commit_sha
                () ))
-  | (`Not_found _ | `Internal_server_error _ | `Not_modified | `Service_unavailable _) as err ->
-      Abb.Future.return (Error err)
+  | ( `Not_found _
+    | `Internal_server_error _
+    | `Not_modified
+    | `Service_unavailable _
+    | `Not_acceptable _ ) as err -> Abb.Future.return (Error err)
 
 let fetch_pull_request ~request_id account client repo pull_request_id =
   let open Abb.Future.Infix_monad in
@@ -535,8 +538,12 @@ let fetch_pull_request ~request_id account client repo pull_request_id =
     fetch ()
     >>= function
     | Ok ret -> Abb.Future.return (Ok ret)
-    | Error (`Not_found _ | `Internal_server_error _ | `Not_modified | `Service_unavailable _) as
-      err -> Abb.Future.return err
+    | Error
+        ( `Not_found _
+        | `Internal_server_error _
+        | `Not_modified
+        | `Service_unavailable _
+        | `Not_acceptable _ ) as err -> Abb.Future.return err
     | Error `Error ->
         Prmths.Counter.inc_one Metrics.github_errors_total;
         Logs.err (fun m -> m "%s : ERROR : repo=%s : ERROR" request_id (Repo.to_string repo));
@@ -572,6 +579,7 @@ let fetch_pull_request ~request_id account client repo pull_request_id =
   | Error (`Internal_server_error _)
   | Error `Not_modified
   | Error (`Service_unavailable _)
+  | Error (`Not_acceptable _)
   | Error `Error -> Abb.Future.return (Error `Error)
 
 let react_to_comment ~request_id client repo comment_id =
@@ -783,6 +791,17 @@ let delete_branch' request_id client repo branch =
             repo.Repo.name
             branch
             Githubc2_git.Delete_ref.Responses.Unprocessable_entity.pp
+            err);
+      Abb.Future.return (Ok ())
+  | `Conflict err ->
+      Logs.info (fun m ->
+          m
+            "%s : DELETE_PULL_REQUEST_BRANCH : %s : %s : %s : %a"
+            request_id
+            repo.Repo.owner
+            repo.Repo.name
+            branch
+            Githubc2_components.Basic_error.pp
             err);
       Abb.Future.return (Ok ())
 

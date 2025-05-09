@@ -63,6 +63,7 @@ type t = {
   cwe_ids : Cwe_ids.t option; [@default None]
   description : string;
   severity : Severity.t option; [@default None]
+  start_private_fork : bool; [@default false]
   summary : string;
   vulnerabilities : Vulnerabilities.t;
 }

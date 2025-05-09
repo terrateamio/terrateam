@@ -168,6 +168,10 @@ module Primary = struct
           | V1 v -> V1.to_yojson v
       end
 
+      module Custom_properties = struct
+        include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Json_schema.Obj)
+      end
+
       module License_ = struct
         module Primary = struct
           type t = {
@@ -218,6 +222,7 @@ module Primary = struct
             subscriptions_url : string option; [@default None]
             type_ : Type.t option; [@default None] [@key "type"]
             url : string option; [@default None]
+            user_view_type : string option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -302,6 +307,7 @@ module Primary = struct
         contents_url : string;
         contributors_url : string;
         created_at : Created_at.t;
+        custom_properties : Custom_properties.t option; [@default None]
         default_branch : string;
         delete_branch_on_merge : bool; [@default false]
         deployments_url : string;
@@ -327,7 +333,7 @@ module Primary = struct
         homepage : string option;
         hooks_url : string;
         html_url : string;
-        id : int;
+        id : int64;
         is_template : bool option; [@default None]
         issue_comment_url : string;
         issue_events_url : string;
@@ -397,7 +403,7 @@ module Primary = struct
     pusher : Pusher.t;
     ref_ : string; [@key "ref"]
     repository : Repository_.t;
-    sender : Githubc2_components_simple_user_webhooks.t option; [@default None]
+    sender : Githubc2_components_simple_user.t option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

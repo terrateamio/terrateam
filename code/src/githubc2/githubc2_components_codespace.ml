@@ -77,7 +77,7 @@ module Primary = struct
     display_name : string option; [@default None]
     environment_id : string option;
     git_status : Git_status.t;
-    id : int;
+    id : int64;
     idle_timeout_minutes : int option;
     idle_timeout_notice : string option; [@default None]
     last_known_stop_notice : string option; [@default None]

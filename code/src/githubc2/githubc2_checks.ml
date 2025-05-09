@@ -282,6 +282,9 @@ module Update = struct
             | `String "queued" -> Ok "queued"
             | `String "in_progress" -> Ok "in_progress"
             | `String "completed" -> Ok "completed"
+            | `String "waiting" -> Ok "waiting"
+            | `String "requested" -> Ok "requested"
+            | `String "pending" -> Ok "pending"
             | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
           type t = (string[@of_yojson t_of_yojson])
@@ -411,6 +414,9 @@ module Update = struct
             | `String "queued" -> Ok "queued"
             | `String "in_progress" -> Ok "in_progress"
             | `String "completed" -> Ok "completed"
+            | `String "waiting" -> Ok "waiting"
+            | `String "requested" -> Ok "requested"
+            | `String "pending" -> Ok "pending"
             | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
           type t = (string[@of_yojson t_of_yojson])

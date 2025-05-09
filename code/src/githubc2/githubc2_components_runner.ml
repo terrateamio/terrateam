@@ -6,6 +6,7 @@ module Primary = struct
 
   type t = {
     busy : bool;
+    ephemeral : bool option; [@default None]
     id : int;
     labels : Labels.t;
     name : string;

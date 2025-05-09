@@ -4,7 +4,7 @@ module Primary = struct
       module Repo = struct
         module Primary = struct
           type t = {
-            id : int;
+            id : int64;
             name : string;
             url : string;
           }
@@ -30,7 +30,7 @@ module Primary = struct
       module Repo = struct
         module Primary = struct
           type t = {
-            id : int;
+            id : int64;
             name : string;
             url : string;
           }
@@ -54,7 +54,7 @@ module Primary = struct
   type t = {
     base : Base.t;
     head : Head.t;
-    id : int;
+    id : int64;
     number : int;
     url : string;
   }

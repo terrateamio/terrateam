@@ -35,7 +35,7 @@ module Primary = struct
     body_text : string option; [@default None]
     commit_id : string option;
     html_url : string;
-    id : int;
+    id : int64;
     node_id : string;
     pull_request_url : string;
     state : string;

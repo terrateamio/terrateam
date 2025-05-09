@@ -927,12 +927,18 @@ module Follow = struct
       [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
+    module Unprocessable_entity = struct
+      type t = Githubc2_components.Validation_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
     type t =
       [ `No_content
       | `Not_modified
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
       ]
     [@@deriving show, eq]
 
@@ -943,6 +949,8 @@ module Follow = struct
         ("401", Openapi.of_json_body (fun v -> `Unauthorized v) Unauthorized.of_yojson);
         ("403", Openapi.of_json_body (fun v -> `Forbidden v) Forbidden.of_yojson);
         ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ( "422",
+          Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
       ]
   end
 
@@ -2110,6 +2118,64 @@ module Get_ssh_signing_key_for_authenticated_user = struct
       `Get
 end
 
+module Get_by_id = struct
+  module Parameters = struct
+    type t = { account_id : int } [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t =
+        | Private_user of Githubc2_components.Private_user.t
+        | Public_user of Githubc2_components.Public_user.t
+      [@@deriving show, eq]
+
+      let of_yojson =
+        Json_schema.one_of
+          (let open CCResult in
+           [
+             (fun v -> map (fun v -> Private_user v) (Githubc2_components.Private_user.of_yojson v));
+             (fun v -> map (fun v -> Public_user v) (Githubc2_components.Public_user.of_yojson v));
+           ])
+
+      let to_yojson = function
+        | Private_user v -> Githubc2_components.Private_user.to_yojson v
+        | Public_user v -> Githubc2_components.Public_user.to_yojson v
+    end
+
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_found of Not_found.t
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+      ]
+  end
+
+  let url = "/user/{account_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("account_id", Var (params.account_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
 module List = struct
   module Parameters = struct
     type t = {
@@ -2208,6 +2274,129 @@ module Get_by_username = struct
          let open Parameters in
          [ ("username", Var (params.username, String)) ])
       ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module List_attestations = struct
+  module Parameters = struct
+    type t = {
+      after : string option; [@default None]
+      before : string option; [@default None]
+      per_page : int; [@default 30]
+      predicate_type : string option; [@default None]
+      subject_digest : string;
+      username : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      module Primary = struct
+        module Attestations = struct
+          module Items = struct
+            module Primary = struct
+              module Bundle = struct
+                module Primary = struct
+                  module DsseEnvelope = struct
+                    include
+                      Json_schema.Additional_properties.Make
+                        (Json_schema.Empty_obj)
+                        (Json_schema.Obj)
+                  end
+
+                  module VerificationMaterial = struct
+                    include
+                      Json_schema.Additional_properties.Make
+                        (Json_schema.Empty_obj)
+                        (Json_schema.Obj)
+                  end
+
+                  type t = {
+                    dsseenvelope : DsseEnvelope.t option; [@default None] [@key "dsseEnvelope"]
+                    mediatype : string option; [@default None] [@key "mediaType"]
+                    verificationmaterial : VerificationMaterial.t option;
+                        [@default None] [@key "verificationMaterial"]
+                  }
+                  [@@deriving yojson { strict = false; meta = true }, show, eq]
+                end
+
+                include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+              end
+
+              type t = {
+                bundle : Bundle.t option; [@default None]
+                bundle_url : string option; [@default None]
+                repository_id : int option; [@default None]
+              }
+              [@@deriving yojson { strict = false; meta = true }, show, eq]
+            end
+
+            include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+          end
+
+          type t = Items.t list [@@deriving yojson { strict = false; meta = false }, show, eq]
+        end
+
+        type t = { attestations : Attestations.t option [@default None] }
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+    end
+
+    module Created = struct
+      type t = Githubc2_components.Empty_object.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module No_content = struct end
+
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    type t =
+      [ `OK of OK.t
+      | `Created of Created.t
+      | `No_content
+      | `Not_found of Not_found.t
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
+        ("204", fun _ -> Ok `No_content);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+      ]
+  end
+
+  let url = "/users/{username}/attestations/{subject_digest}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("username", Var (params.username, String));
+           ("subject_digest", Var (params.subject_digest, String));
+         ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("per_page", Var (params.per_page, Int));
+           ("before", Var (params.before, Option String));
+           ("after", Var (params.after, Option String));
+           ("predicate_type", Var (params.predicate_type, Option String));
+         ])
       ~url
       ~responses:Responses.t
       `Get

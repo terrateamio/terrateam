@@ -39,25 +39,6 @@ module List_global_advisories = struct
       type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
     end
 
-    module Ecosystem = struct
-      let t_of_yojson = function
-        | `String "actions" -> Ok "actions"
-        | `String "composer" -> Ok "composer"
-        | `String "erlang" -> Ok "erlang"
-        | `String "go" -> Ok "go"
-        | `String "maven" -> Ok "maven"
-        | `String "npm" -> Ok "npm"
-        | `String "nuget" -> Ok "nuget"
-        | `String "other" -> Ok "other"
-        | `String "pip" -> Ok "pip"
-        | `String "pub" -> Ok "pub"
-        | `String "rubygems" -> Ok "rubygems"
-        | `String "rust" -> Ok "rust"
-        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
-    end
-
     module Severity = struct
       let t_of_yojson = function
         | `String "unknown" -> Ok "unknown"
@@ -74,6 +55,8 @@ module List_global_advisories = struct
       let t_of_yojson = function
         | `String "updated" -> Ok "updated"
         | `String "published" -> Ok "published"
+        | `String "epss_percentage" -> Ok "epss_percentage"
+        | `String "epss_percentile" -> Ok "epss_percentile"
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
       type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
@@ -96,7 +79,9 @@ module List_global_advisories = struct
       cve_id : string option; [@default None]
       cwes : Cwes.t option; [@default None]
       direction : Direction.t; [@default "desc"]
-      ecosystem : Ecosystem.t option; [@default None]
+      ecosystem : Githubc2_components.Security_advisory_ecosystems.t option; [@default None]
+      epss_percentage : string option; [@default None]
+      epss_percentile : string option; [@default None]
       ghsa_id : string option; [@default None]
       is_withdrawn : bool option; [@default None]
       modified : string option; [@default None]
@@ -171,6 +156,8 @@ module List_global_advisories = struct
            ("published", Var (params.published, Option String));
            ("updated", Var (params.updated, Option String));
            ("modified", Var (params.modified, Option String));
+           ("epss_percentage", Var (params.epss_percentage, Option String));
+           ("epss_percentile", Var (params.epss_percentile, Option String));
            ("before", Var (params.before, Option String));
            ("after", Var (params.after, Option String));
            ("direction", Var (params.direction, String));
@@ -758,6 +745,81 @@ module Create_repository_advisory_cve_request = struct
   end
 
   let url = "/repos/{owner}/{repo}/security-advisories/{ghsa_id}/cve"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("owner", Var (params.owner, String));
+           ("repo", Var (params.repo, String));
+           ("ghsa_id", Var (params.ghsa_id, String));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module Create_fork = struct
+  module Parameters = struct
+    type t = {
+      ghsa_id : string;
+      owner : string;
+      repo : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module Accepted = struct
+      type t = Githubc2_components.Full_repository.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Bad_request = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Forbidden = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Unprocessable_entity = struct
+      type t = Githubc2_components.Validation_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    type t =
+      [ `Accepted of Accepted.t
+      | `Bad_request of Bad_request.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("202", Openapi.of_json_body (fun v -> `Accepted v) Accepted.of_yojson);
+        ("400", Openapi.of_json_body (fun v -> `Bad_request v) Bad_request.of_yojson);
+        ("403", Openapi.of_json_body (fun v -> `Forbidden v) Forbidden.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ( "422",
+          Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
+      ]
+  end
+
+  let url = "/repos/{owner}/{repo}/security-advisories/{ghsa_id}/forks"
 
   let make params =
     Openapi.Request.make

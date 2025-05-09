@@ -42,7 +42,7 @@ module Get_an_assignment = struct
       `Get
 end
 
-module List_accepted_assigments_for_an_assignment = struct
+module List_accepted_assignments_for_an_assignment = struct
   module Parameters = struct
     type t = {
       assignment_id : int;

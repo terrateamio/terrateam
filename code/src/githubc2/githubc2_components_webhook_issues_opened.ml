@@ -59,6 +59,7 @@ module Primary = struct
                 subscriptions_url : string option; [@default None]
                 type_ : Type.t option; [@default None] [@key "type"]
                 url : string option; [@default None]
+                user_view_type : string option; [@default None]
               }
               [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
@@ -102,6 +103,7 @@ module Primary = struct
                   subscriptions_url : string option; [@default None]
                   type_ : Type.t option; [@default None] [@key "type"]
                   url : string option; [@default None]
+                  user_view_type : string option; [@default None]
                 }
                 [@@deriving yojson { strict = false; meta = true }, show, eq]
               end
@@ -186,6 +188,7 @@ module Primary = struct
                     subscriptions_url : string option; [@default None]
                     type_ : Type.t option; [@default None] [@key "type"]
                     url : string option; [@default None]
+                    user_view_type : string option; [@default None]
                   }
                   [@@deriving yojson { strict = false; meta = true }, show, eq]
                 end
@@ -321,6 +324,7 @@ module Primary = struct
                     subscriptions_url : string option; [@default None]
                     type_ : Type.t option; [@default None] [@key "type"]
                     url : string option; [@default None]
+                    user_view_type : string option; [@default None]
                   }
                   [@@deriving yojson { strict = false; meta = true }, show, eq]
                 end
@@ -791,6 +795,19 @@ module Primary = struct
             [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
 
+          module Sub_issues_summary_ = struct
+            module Primary = struct
+              type t = {
+                completed : int;
+                percent_completed : int;
+                total : int;
+              }
+              [@@deriving yojson { strict = false; meta = true }, show, eq]
+            end
+
+            include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+          end
+
           module User = struct
             module Primary = struct
               module Type = struct
@@ -814,7 +831,7 @@ module Primary = struct
                 gists_url : string option; [@default None]
                 gravatar_id : string option; [@default None]
                 html_url : string option; [@default None]
-                id : int;
+                id : int64;
                 login : string;
                 name : string option; [@default None]
                 node_id : string option; [@default None]
@@ -826,6 +843,7 @@ module Primary = struct
                 subscriptions_url : string option; [@default None]
                 type_ : Type.t option; [@default None] [@key "type"]
                 url : string option; [@default None]
+                user_view_type : string option; [@default None]
               }
               [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
@@ -859,6 +877,7 @@ module Primary = struct
             repository_url : string;
             state : State.t option; [@default None]
             state_reason : string option; [@default None]
+            sub_issues_summary : Sub_issues_summary_.t option; [@default None]
             timeline_url : string option; [@default None]
             title : string;
             updated_at : string;
@@ -898,6 +917,10 @@ module Primary = struct
             let to_yojson = function
               | V0 v -> V0.to_yojson v
               | V1 v -> V1.to_yojson v
+          end
+
+          module Custom_properties = struct
+            include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Json_schema.Obj)
           end
 
           module License_ = struct
@@ -950,6 +973,7 @@ module Primary = struct
                 subscriptions_url : string option; [@default None]
                 type_ : Type.t option; [@default None] [@key "type"]
                 url : string option; [@default None]
+                user_view_type : string option; [@default None]
               }
               [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
@@ -1034,6 +1058,7 @@ module Primary = struct
             contents_url : string;
             contributors_url : string;
             created_at : Created_at.t;
+            custom_properties : Custom_properties.t option; [@default None]
             default_branch : string;
             delete_branch_on_merge : bool; [@default false]
             deployments_url : string;
@@ -1050,6 +1075,7 @@ module Primary = struct
             git_refs_url : string;
             git_tags_url : string;
             git_url : string;
+            has_discussions : bool option; [@default None]
             has_downloads : bool; [@default true]
             has_issues : bool; [@default true]
             has_pages : bool;
@@ -1058,7 +1084,7 @@ module Primary = struct
             homepage : string option;
             hooks_url : string;
             html_url : string;
-            id : int;
+            id : int64;
             is_template : bool option; [@default None]
             issue_comment_url : string;
             issue_events_url : string;
@@ -1104,6 +1130,7 @@ module Primary = struct
             visibility : Visibility.t;
             watchers : int;
             watchers_count : int;
+            web_commit_signoff_required : bool option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -1170,6 +1197,7 @@ module Primary = struct
             subscriptions_url : string option; [@default None]
             type_ : Type.t option; [@default None] [@key "type"]
             url : string option; [@default None]
+            user_view_type : string option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -1213,6 +1241,7 @@ module Primary = struct
               subscriptions_url : string option; [@default None]
               type_ : Type.t option; [@default None] [@key "type"]
               url : string option; [@default None]
+              user_view_type : string option; [@default None]
             }
             [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
@@ -1298,6 +1327,7 @@ module Primary = struct
                 subscriptions_url : string option; [@default None]
                 type_ : Type.t option; [@default None] [@key "type"]
                 url : string option; [@default None]
+                user_view_type : string option; [@default None]
               }
               [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
@@ -1436,6 +1466,7 @@ module Primary = struct
                 subscriptions_url : string option; [@default None]
                 type_ : Type.t option; [@default None] [@key "type"]
                 url : string option; [@default None]
+                user_view_type : string option; [@default None]
               }
               [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
@@ -1905,6 +1936,19 @@ module Primary = struct
         [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
+      module Sub_issues_summary_ = struct
+        module Primary = struct
+          type t = {
+            completed : int;
+            percent_completed : int;
+            total : int;
+          }
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
+        end
+
+        include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+      end
+
       module User = struct
         module Primary = struct
           module Type = struct
@@ -1928,7 +1972,7 @@ module Primary = struct
             gists_url : string option; [@default None]
             gravatar_id : string option; [@default None]
             html_url : string option; [@default None]
-            id : int;
+            id : int64;
             login : string;
             name : string option; [@default None]
             node_id : string option; [@default None]
@@ -1940,6 +1984,7 @@ module Primary = struct
             subscriptions_url : string option; [@default None]
             type_ : Type.t option; [@default None] [@key "type"]
             url : string option; [@default None]
+            user_view_type : string option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -1973,8 +2018,10 @@ module Primary = struct
         repository_url : string;
         state : State.t option; [@default None]
         state_reason : string option; [@default None]
+        sub_issues_summary : Sub_issues_summary_.t option; [@default None]
         timeline_url : string option; [@default None]
         title : string;
+        type_ : Githubc2_components_issue_type.t option; [@default None] [@key "type"]
         updated_at : string;
         url : string;
         user : User.t option;
@@ -1993,7 +2040,7 @@ module Primary = struct
     issue : Issue_.t;
     organization : Githubc2_components_organization_simple_webhooks.t option; [@default None]
     repository : Githubc2_components_repository_webhooks.t;
-    sender : Githubc2_components_simple_user_webhooks.t;
+    sender : Githubc2_components_simple_user.t;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

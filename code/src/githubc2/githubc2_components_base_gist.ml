@@ -3,6 +3,7 @@ module Primary = struct
     module Additional = struct
       module Primary = struct
         type t = {
+          encoding : string; [@default "utf-8"]
           filename : string option; [@default None]
           language : string option; [@default None]
           raw_url : string option; [@default None]
@@ -36,6 +37,7 @@ module Primary = struct
 
   type t = {
     comments : int;
+    comments_enabled : bool option; [@default None]
     comments_url : string;
     commits_url : string;
     created_at : string;

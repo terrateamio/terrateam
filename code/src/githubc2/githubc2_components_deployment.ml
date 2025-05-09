@@ -31,7 +31,7 @@ module Primary = struct
     creator : Githubc2_components_nullable_simple_user.t option;
     description : string option;
     environment : string;
-    id : int;
+    id : int64;
     node_id : string;
     original_environment : string option; [@default None]
     payload : Payload.t;

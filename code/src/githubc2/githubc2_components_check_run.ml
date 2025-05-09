@@ -47,6 +47,8 @@ module Primary = struct
       | `String "queued" -> Ok "queued"
       | `String "in_progress" -> Ok "in_progress"
       | `String "completed" -> Ok "completed"
+      | `String "waiting" -> Ok "waiting"
+      | `String "requested" -> Ok "requested"
       | `String "pending" -> Ok "pending"
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
@@ -64,7 +66,7 @@ module Primary = struct
     external_id : string option;
     head_sha : string;
     html_url : string option;
-    id : int;
+    id : int64;
     name : string;
     node_id : string;
     output : Output.t;
