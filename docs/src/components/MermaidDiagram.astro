@@ -1,0 +1,94 @@
+---
+interface Props {
+  chart: string;
+}
+
+const { chart } = Astro.props;
+---
+
+<div class="mermaid-wrapper">
+  <pre class="mermaid" data-source={chart}>
+    {chart}
+  </pre>
+</div>
+
+<script>
+  import mermaid from 'mermaid';
+
+  function initializeMermaid(isDark = document.documentElement.dataset.theme === 'dark') {
+    const config = {
+      startOnLoad: true,
+      theme: isDark ? 'dark' : 'default',
+      themeVariables: {
+        primaryColor: '#3b82f6',
+        primaryTextColor: isDark ? '#e2e8f0' : '#0f172a',
+        primaryBorderColor: isDark ? '#94a3b8' : '#64748b',
+        lineColor: isDark ? '#94a3b8' : '#64748b',
+        mainBkg: isDark ? '#1e293b' : '#ffffff',
+        secondBkg: isDark ? '#0f172a' : '#f8fafc',
+        nodeBkg: isDark ? '#1e293b' : '#f1f5f9',
+        nodeTextColor: isDark ? '#e2e8f0' : '#0f172a',
+        actorLineColor: isDark ? '#94a3b8' : '#475569',
+        activationBorderColor: isDark ? '#94a3b8' : '#475569',
+        activationBkgColor: isDark ? '#1e293b' : '#f1f5f9',
+        sequenceNumberColor: isDark ? '#e2e8f0' : '#0f172a',
+        actorBorder: isDark ? '#94a3b8' : '#475569',
+        actorBkg: isDark ? '#1e293b' : '#f8fafc',
+        actorTextColor: isDark ? '#e2e8f0' : '#0f172a',
+        signalColor: isDark ? '#94a3b8' : '#475569',
+        signalTextColor: isDark ? '#e2e8f0' : '#0f172a',
+        labelBoxBorderColor: isDark ? '#94a3b8' : '#475569',
+        labelBoxBkgColor: isDark ? '#1e293b' : '#f8fafc',
+        labelTextColor: isDark ? '#e2e8f0' : '#0f172a',
+        loopTextColor: isDark ? '#e2e8f0' : '#0f172a',
+        noteBorderColor: isDark ? '#94a3b8' : '#475569',
+        noteBkgColor: isDark ? '#1e293b' : '#f8fafc',
+        noteTextColor: isDark ? '#e2e8f0' : '#0f172a',
+        messageTextColor: isDark ? '#e2e8f0' : '#0f172a'
+      }
+    };
+
+    return mermaid.initialize(config);
+  }
+
+  // Initial render
+  initializeMermaid();
+
+  // Watch for theme changes
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.attributeName === 'data-theme') {
+        const isDark = document.documentElement.dataset.theme === 'dark';
+        
+        // Re-initialize with new theme
+        initializeMermaid(isDark);
+
+        // Re-render diagrams using original source
+        document.querySelectorAll('.mermaid').forEach(async (element) => {
+          const source = element.getAttribute('data-source');
+          if (source) {
+            element.textContent = source;
+            element.removeAttribute('data-processed');
+            await mermaid.run();
+          }
+        });
+      }
+    });
+  });
+
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-theme']
+  });
+</script>
+
+<style>
+  .mermaid-wrapper {
+    margin: 1rem 0;
+  }
+
+  :global(.mermaid svg) {
+    border-radius: 0.5rem;
+    padding: 1rem;
+  }
+</style>
