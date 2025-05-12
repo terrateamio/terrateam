@@ -237,9 +237,6 @@ let with_conn t ~f =
       | Error () -> Abb.Future.return (Error `Pgsql_pool_error))
     ~finally:(function
       | Ok conn -> (
-          (* Cleanup any prepared statements. *)
-          Pgsql_io.Prepared_stmt.execute conn Pgsql_io.Typed_sql.(sql /^ "DEALLOCATE")
-          >>= fun _ ->
           Abbs_channel.send t (Msg.Return conn)
           >>= function
           | `Ok () -> Abb.Future.return ()
