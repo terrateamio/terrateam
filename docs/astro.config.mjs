@@ -122,6 +122,7 @@ export default defineConfig({
     rehypePlugins: []
   },
   redirects: {
+    '/quickstart-guide': '/getting-started/quickstart-guide',
     '/security-and-compliance/plan-and-apply-permissions': '/security-and-compliance/role-based-access-control',
     '/configuration': '/getting-started/configuration',
     '/cloud-provider-setup/aws': '/cloud-providers/aws',
