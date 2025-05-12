@@ -56,14 +56,15 @@ module Cmdline = struct
     Logs.set_level level;
     let default_remove_loggers =
       [
-        "happy-eyeballs";
-        "dns_client";
-        "dns_cache";
         "abb.dns";
-        "cohttp_abb";
-        "cohttp_abb.io";
         "abb_curl";
         "abb_curl_easy";
+        "cohttp_abb";
+        "cohttp_abb.io";
+        "dns_cache";
+        "dns_client";
+        "happy-eyeballs";
+        "pgsql.pool";
       ]
     in
     let loggers =
