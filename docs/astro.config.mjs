@@ -2,8 +2,6 @@ import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 import starlightImageZoom from "starlight-image-zoom";
 import { pluginLineNumbers } from '@expressive-code/plugin-line-numbers';
-import rehypeMermaid from 'rehype-mermaid';
-import addMermaidClass from './add-mermaid-classname';
 
 export default defineConfig({
   vite: {
@@ -53,14 +51,24 @@ export default defineConfig({
       },
       customCss: process.env.NO_GRADIENTS
         ? []
-        : ["/src/assets/docs.css", "@fontsource/roboto"],
+        : [
+            "/src/assets/docs.css",
+            "@fontsource/roboto",
+            "/src/styles/mermaid.css"  
+          ],
       sidebar: [
         { label: "Welcome", link: "/" },
-        { label: "Quickstart Guide", link: "/quickstart-guide" },
         { label: "How It Works", link: "/how-it-works" },
         {
           label: "Getting Started",
-          autogenerate: { directory: "getting-started" },
+          items: [
+            { label: "Quickstart Guide", link: "/getting-started/quickstart-guide" },
+            { label: "Concepts", link: "/getting-started/concepts" },
+            { label: "Plan And Apply", link: "/getting-started/plan-and-apply" },
+            { label: "Pull Requests and Triggers", link: "/getting-started/pull-requests-and-triggers" },
+            { label: "Secrets and Variables", link: "/getting-started/secrets-and-variables" },
+            { label: "Tag Queries", link: "/getting-started/tag-queries" },
+          ],
         },
         {
           label: "Cloud Providers",
@@ -111,9 +119,10 @@ export default defineConfig({
     }),
   ],
   markdown: {
-    rehypePlugins: [addMermaidClass, rehypeMermaid],
+    rehypePlugins: []
   },
   redirects: {
+    '/quickstart-guide': '/getting-started/quickstart-guide',
     '/security-and-compliance/plan-and-apply-permissions': '/security-and-compliance/role-based-access-control',
     '/configuration': '/getting-started/configuration',
     '/cloud-provider-setup/aws': '/cloud-providers/aws',

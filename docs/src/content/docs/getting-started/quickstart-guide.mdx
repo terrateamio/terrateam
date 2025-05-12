@@ -31,11 +31,11 @@ To have an overview on how to use Terrateam, use the the Terrateam ready-to-use 
 
    Click the link above to access our demo repository, then click the **Fork** button in the top-right corner of the page.
    
-   ![Fork button on GitHub repository](../../assets/demo-fork.png)
+   ![Fork button on GitHub repository](../../../assets/demo-fork.png)
    
    On the "Create a new fork" screen, keep the default settings and click "Create fork".
    
-   ![Create a new fork](../../assets/demo-create-fork.png)
+   ![Create a new fork](../../../assets/demo-create-fork.png)
    
 
 2. **Install the Terrateam GitHub Application (if you haven't already)**
@@ -46,14 +46,11 @@ To have an overview on how to use Terrateam, use the the Terrateam ready-to-use 
      title="Sign up for Terrateam"
      href="https://terrateam.io/signup"
    />
-   
-   ![Install Terrateam](../../assets/demo-install-terrateam-2.png)
-   
-   Once the installation is complete, access your [Terrateam dashboard](https://app.terrateam.io/). If the setup was successful, your forked repository will be listed there.  
+   ![Install Terrateam](../../../assets/demo-install-terrateam-2.png)
+   After installation, go to [your Terrateam dashboard](https://app.terrateam.io/). Your forked repository should appear there.
+   ![Terrateam dashboard](../../../assets/demo-terrateam-dashboard.png)
 
    
-   ![Terrateam dashboard](../../assets/demo-terrateam-dashboard.png)
-
 3. **Clone Your Forked Repository**
 
    Clone the repository to your local machine and navigate to its directory:
@@ -100,14 +97,14 @@ To have an overview on how to use Terrateam, use the the Terrateam ready-to-use 
 
 7. **Create a Pull Request**
 
-   Access your forked repository on GitHub. A prompt should appear, allowing you to create a pull request for your recently pushed branch.  
-
-   :::caution
-   Make sure to change the base repository to your fork instead of creating a PR on the original Terrateam repository. The base should be your `main` branch, and the compare should be your `test-branch`.
-    ![Creating a pull request with proper base repository](../../assets/demo-pr-2.png)
+   Go to your forked repository on GitHub. You should see a prompt to create a pull request for your recently pushed branch.
+   ![Create a pull request](../../../assets/demo-pr.png)
+   
+   :::warning
+   Important: Make sure to change the base repository to your fork instead of creating a PR on the original Terrateam repository. The base should be your `main` branch, and the compare should be your `test-branch`.
    :::
    
-  
+   ![Creating a pull request with proper base repository](../../../assets/demo-pr-2.png)
    
    :::caution
    Ensure that [workflows are enabled](https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-workflow-runs/disabling-and-enabling-a-workflow#enabling-a-workflow) on your forked repository. If GitHub Actions workflows are disabled, you'll need to enable them in the repository settings.
@@ -118,14 +115,14 @@ To have an overview on how to use Terrateam, use the the Terrateam ready-to-use 
    Once the pull request is created, Terrateam will automatically trigger a [`terraform plan`](/getting-started/plan-and-apply). This plan will appear as a comment on your pull request, showing what changes would be made.  
 
    
-   ![Automatic Terraform plan in PR comments](../../assets/demo-plan-output.png)
+   ![Automatic Terraform plan in PR comments](../../../assets/demo-plan-output.png)
    
    This plan is a preview of what will happen when you apply the changes.
 
 9. **Apply the Changes**
 
    To execute the changes, comment `terrateam apply` on the pull request.
-   ![Apply the changes](../../assets/demo-pr-apply.png)
+   ![Apply the changes](../../../assets/demo-pr-apply.png)
    
    After you add the comment, the Terrateam app will run the `terraform apply` command. This will apply the previous plan to the Terraform file, updating your infrastructure.
 

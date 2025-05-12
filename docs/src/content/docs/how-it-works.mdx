@@ -5,6 +5,7 @@ description: Understanding the core concepts and inner workings of Terrateam
 
 import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 import { Steps } from '@astrojs/starlight/components';
+import MermaidDiagram from '../../components/MermaidDiagram.astro';
 
 Terrateam brings GitOps based infrastructure orchestration to your workflow. It supports Terraform, OpenTofu, Pulumi, CDKTF, and any command line driven tool, giving you full control over how infrastructure changes are executed from pull requests.
 
@@ -44,16 +45,49 @@ Terrateam operates on your Terraform code using the following hierarchy:
 - **Workspace**: Each directory can have one or more workspaces, allowing you to use the same Terraform code in different contexts (e.g., development, staging, production). If no workspace is specified, each directory has a default workspace.
 
 The following diagram presents the hierarchy Terrateam uses.
+<MermaidDiagram chart={`
+graph TD
+    Repository -->|Contains| Directory1
+    Repository -->|Contains| Directory2
+    Repository -->|Contains| DirectoryN
 
-![Repositories Hierarchy](../../assets/repository-flowchart.png)
+    Directory1 -->|Has| WorkspaceA
+    Directory1 -->|Has| WorkspaceB
+
+    Directory2 -->|Has| WorkspaceX
+    Directory2 -->|Has| WorkspaceY
+
+    DirectoryN -->|Has Default| DefaultWorkspace
+`} />
+
 
 This hierarchy enables you to structure your Terraform code in a modular and reusable way, making it easier to manage and maintain your infrastructure.
 
 ## Workflow
 
 Here's a high-level overview of how Terrateam works:
+<MermaidDiagram chart={`
+sequenceDiagram
+    participant User
+    participant GitHub
+    participant TerrateamServer as Terrateam Server
+    participant TerrateamRunner as Terrateam Runner
 
-![Workflow](../../assets/flow-flowchart.png)
+    User->>GitHub: (1) Opens PR, updates, or comments
+    GitHub->>TerrateamServer: Sends event payload
+    TerrateamServer->>TerrateamServer: (2) Evaluates event
+
+    alt Terraform operation required
+        TerrateamServer->>GitHub: Updates PR status (checks/comments)
+        TerrateamServer->>GitHub: (3) Dispatches GitHub Actions workflow
+        GitHub->>TerrateamRunner: Receives the workflow dispatch
+        TerrateamRunner->>TerrateamRunner: (4) Set up environment and run Terraform (plan/apply)
+        TerrateamRunner->>TerrateamServer: (5) Send execution results
+    end
+
+    TerrateamServer->>GitHub: (6) Updates PR with results (comments/status)
+`} />
+
 
 The following steps offer a more detailed explanation of each part of the diagram.
 
@@ -111,4 +145,5 @@ Continue learning about Terrateam on the following pages:
   <LinkCard title="Getting started pages" href="/getting-started" />
   <LinkCard title="Terrateam key concepts" href="/getting-started/concepts" />
   <LinkCard title="Configuring your project" href="/getting-started/configuration" />
+  <LinkCard title="Quickstart Guide" href="/getting-started/quickstart-guide" />
 </CardGrid>
