@@ -118,6 +118,16 @@
       },
       "type": "object"
     },
+    "apply-requirements-checks-apply-after-merge": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
     "apply-requirements-checks-2": {
       "items": {
         "additionalProperties": false,
@@ -127,6 +137,9 @@
           },
           "merge_conflicts": {
             "$ref": "#/definitions/apply-requirements-checks-merge-conflicts"
+          },
+          "apply_after_merge": {
+            "$ref": "#/definitions/apply-requirements-checks-apply-after-merge"
           },
           "require_ready_for_review_pr": {
             "default": true,
