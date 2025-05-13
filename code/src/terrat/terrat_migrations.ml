@@ -137,6 +137,7 @@ let migrations =
       run_file_sql "2025-04-28-refactor-prep-for-github-vcs-mapping.sql" );
     ( "refactor-fill-in-missing-github-maps",
       run_file_sql "2025-05-01-refactor-fill-in-missing-github-maps.sql" );
+    ("add-repo-tree-id-column", run_file_sql "2025-05-13-add-repo-tree-id-column.sql");
   ]
 
 let run config storage = Mig.run (config, storage) migrations
