@@ -31,7 +31,7 @@ module Workflow_step = struct
   end
 
   type t = { type_ : Type.t [@key "type"] }
-  [@@deriving yojson { strict = true; meta = true }, show, eq]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 type t = {
@@ -39,4 +39,4 @@ type t = {
   success : bool;
   workflow_step : Workflow_step.t;
 }
-[@@deriving yojson { strict = true; meta = true }, show, eq]
+[@@deriving yojson { strict = false; meta = true }, show, eq]

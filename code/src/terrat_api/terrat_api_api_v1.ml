@@ -3,7 +3,7 @@ module Client_id = struct
 
   module Responses = struct
     module OK = struct
-      type t = { client_id : string } [@@deriving yojson { strict = true; meta = true }, show, eq]
+      type t = { client_id : string } [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     module Forbidden = struct end

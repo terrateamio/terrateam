@@ -17,4 +17,4 @@ type t = {
   state : State.t;
   updated_at : string;
 }
-[@@deriving yojson { strict = true; meta = true }, show, eq]
+[@@deriving yojson { strict = false; meta = true }, show, eq]

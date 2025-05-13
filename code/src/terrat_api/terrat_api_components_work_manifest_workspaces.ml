@@ -3,7 +3,7 @@ module Items = struct
     dir : string;
     workspace : string;
   }
-  [@@deriving yojson { strict = true; meta = true }, show, eq]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
