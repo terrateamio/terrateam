@@ -14,11 +14,12 @@ const { chart } = Astro.props;
 
 <script>
   import mermaid from 'mermaid';
+  import type { MermaidConfig } from 'mermaid';
 
   function initializeMermaid(isDark = document.documentElement.dataset.theme === 'dark') {
-    const config = {
+    const config: MermaidConfig = {
       startOnLoad: true,
-      theme: isDark ? 'dark' : 'default',
+      theme: isDark ? 'dark' : 'neutral', 
       themeVariables: {
         primaryColor: '#3b82f6',
         primaryTextColor: isDark ? '#e2e8f0' : '#0f172a',
