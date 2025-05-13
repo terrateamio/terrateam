@@ -9,13 +9,21 @@ Terrateam's Auto-Apply-After-Merge functionality allows you to automatically app
 
 ## Enabling Auto-Apply-After-Merge
 
-To enable Auto-Apply-After-Merge, you need to configure the `when_modified.autoapply` setting in your Terrateam configuration file (`.terrateam/config.yml`).
+To enable Auto-Apply-After-Merge, you need to configure the `when_modified.autoapply` setting in your Terrateam configuration file. The `when_modified` section controls when and how Terrateam responds to changes in your repository.
+
+Add this to your `.terrateam/config.yml`:
 ```yaml
 when_modified:
+  # Enable auto-apply after merge
   autoapply: true
+  # Define which files trigger the automation
+  file_patterns: ["**/*.tf", "**/*.tfvars"]
+  # Other when_modified options remain at their defaults
+  autoplan: true
+  autoplan_draft_pr: true
 ```
 
-With `when_modified.autoapply` is set to `true`, Terrateam will automatically trigger an Apply operation after a pull request has been merged.
+See the [when_modified configuration reference](/configuration-reference/when-modified) for all available options.
 
 ## How It Works
 
@@ -40,41 +48,60 @@ With `when_modified.autoapply` is set to `true`, Terrateam will automatically tr
 
 If you want to enable Auto-Apply-After-Merge only for specific directories or workspaces, you can use [Dirs](/configuration-reference/dirs) and [Tags](/advanced-workflows/tags).
 
-For example, you could have a configuration like this:
+For example, in `.terrateam/config.yml`:
 ```yaml
 dirs:
   prod:
     tags: [prod]
     when_modified:
-      autoapply: true
+      autoapply: true  # Enable auto-apply for production
+      file_patterns: ["${DIR}/*.tf"]
   staging:
     tags: [staging]
     when_modified:
-      autoapply: false
+      autoapply: false  # Disable auto-apply for staging
+      file_patterns: ["${DIR}/*.tf"]
 ```
-
-In this case, Auto-Apply-After-Merge will only be enabled for the `prod` directory, while it will be disabled for the `staging` directory.
 
 ### Apply Requirements
 
-Terrateam has a set of [Apply Requirements](/configuration-reference/apply-requirements) that must be met before an Apply operation can be triggered, even with Auto-Apply-After-Merged enabled. These include:
-- Requiring a certain number of approvals on the pull request
-- Ensuring there are no merge conflicts
-- Checking that all status checks have passed
+Terrateam has a set of [Apply Requirements](/configuration-reference/apply-requirements) that must be met before an Apply operation can be triggered, even with Auto-Apply-After-Merge enabled.
 
-You can configure these requirements in your Terrateam configuration file to ensure that changes are only applied when specific conditions are met.
+Here's an example configuration in `.terrateam/config.yml`:
+```yaml
+apply_requirements:
+  create_pending_apply_check: true
+  checks:
+    - tag_query: ""  # Apply to all directories
+      approved:
+        enabled: true
+        any_of: ["team:infrastructure"]
+        any_of_count: 2  # Require 2 approvals
+      merge_conflicts:
+        enabled: true
+      status_checks:
+        enabled: true
+        ignore_matching: []
+```
+
+This configuration:
+- Requires 2 approvals from the infrastructure team
+- Ensures there are no merge conflicts
+- Verifies all status checks have passed
 
 ### Notifications
 
-When an Auto-Apply-After-Merge operation is triggered, Terrateam will comment on the merged pull request with the apply output. You can also configure additional notifications, such as sending a message to a Slack channel or triggering a webhook, using [Hooks](/configuration-reference/hooks).
+When an Auto-Apply-After-Merge operation is triggered, Terrateam will comment on the merged pull request with the apply output. You can also configure additional notifications using [Hooks](/configuration-reference/hooks).
 
-For example, you could add a post-apply hook to send a Slack message:
+Example hook configuration in `.terrateam/config.yml`:
 ```yaml
+# Add Slack notifications for auto-apply events
 hooks:
   apply:
     post:
       - type: run
-        cmd: ['curl', '-X', 'POST', '--data', '{"text":"Changes have been applied!"}', '${SLACK_WEBHOOK_URL}']
+        name: "Slack Notification"
+        cmd: ['curl', '-X', 'POST', '--data', '{"text":"🚀 Auto-apply completed for ${TERRATEAM_PR_TITLE}"}', '${SLACK_WEBHOOK_URL}']
 ```
 
 ## Considerations
