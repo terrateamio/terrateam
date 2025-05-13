@@ -102,6 +102,7 @@ export default defineConfig({
         },
         {
           label: "Self-Hosted",
+          collapsed: true,
           items: [
             { label: "Instructions", link: "/self-hosted/instructions" },
             { label: "Best Practices", link: "/self-hosted/best-practices" },
