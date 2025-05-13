@@ -1,11 +1,13 @@
 ---
-title: Overview
+title: Instructions
 description: Step-by-step guide to installing Terrateam Self-Hosted
 ---
 
 import { Steps } from '@astrojs/starlight/components';
 
-Terrateam Self-Hosted is the on-premise, privately hosted version of Terrateam.
+Terrateam Self-Hosted is the private, on-premises deployment option for running Terrateam in your own infrastructure. This guide covers installation using Kubernetes or a manual setup process.
+
+To deploy Terrateam with Docker Compose, refer to our [GitHub README](https://github.com/terrateamio/terrateam).
 
 ## Prerequisites
 Before you begin, ensure you have the following:
@@ -18,9 +20,7 @@ Terrateam Docker images are built for `linux/amd64`.
 
 ## Step 1: Create a Private Terrateam GitHub Application
 Terrateam Self-Hosted requires a new Terrateam GitHub application to be created.
-:::danger[IMPORTANT]
-Make sure the Terrateam server is running BEFORE you install your Terrateam GitHub application.
-:::
+
 1\. Clone the `terrateamio/terrateam` repository:
    ```sh
    git clone https://github.com/terrateamio/terrateam.git
@@ -41,26 +41,7 @@ Make sure the Terrateam server is running BEFORE you install your Terrateam GitH
 ## Step 2: Deploy the Terrateam Server
 Choose one of the following deployment methods based on your requirements and infrastructure setup:
 
-### Option 1: Docker Compose
-1\. Save your private Terrateam GitHub application settings file to `.env` in your `terrateam/docker/terrat` directory next to `docker-compose.yml`:
-   Your `.env` file should look like this but with actual values:
-   ```
-   GITHUB_APP_ID=""
-   GITHUB_APP_PEM=""
-   GITHUB_WEBHOOK_SECRET=""
-   GITHUB_APP_CLIENT_ID=""
-   GITHUB_APP_CLIENT_SECRET=""
-   ```
-2\. Register an [Ngrok](https://ngrok.com/) account and create an auth token.
-
-3\. Start Terrateam:
-   ```sh
-   NGROK_AUTHTOKEN=<YOUR-NGROK-AUTH-TOKEN> docker-compose up server -d
-   ```
-5\. When the Terrateam server starts up, it will try to update the GitHub application Webhook URL using the Ngrok endpoint, which in turn populates the TERRAT_API_BASE environment variable. To disable, set the GITHUB_WEBHOOK_URL_UPDATE environment variable to FALSE.
-
-
-### Option 2: Kubernetes
+### Kubernetes
 1\. Source your private Terrateam GitHub application settings file:
    ```sh
    source ./dotenv
@@ -122,7 +103,7 @@ Choose one of the following deployment methods based on your requirements and in
         ```
 6\. When the Terrateam server starts up, it will try to update the GitHub application Webhook URL using the Helm chart value `server.dns_name`, which in turn populates the `TERRAT_API_BASE` environment variable. To disable, set the `GITHUB_WEBHOOK_URL_UPDATE` environment variable to `FALSE`.
 
-### Option 3: Manual Instructions
+### Manual Instructions
 #### Components
 Terrateam consists of two components:
 - Terrateam server [ghcr.io/terrateamio/terrat-oss:latest](https://github.com/orgs/terrateamio/packages/container/package/terrateam)
@@ -179,7 +160,7 @@ include a trailing `/api/github/v1/events`.
 
 ## Step 4: Start Using Terrateam
 
-Terrateam is now set up and ready to use with your Terraform and OpenTofu repositories. Navigate to our [Quickstart Guide Step 2](/quickstart-guide#add-the-terrateam-github-actions-workflow-file) for next steps.
+Terrateam is now ready to run on your Terraform and OpenTofu repositories. Open a pull request with a change to try it out.
 
 ## Environment Variables
 Set the following environment variables in the Terrateam server container:
