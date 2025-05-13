@@ -1381,7 +1381,7 @@ module Db = struct
         Pgsql_io.Prepared_stmt.fetch
           db
           Sql.select_repo_tree
-          ~f:(fun path changed -> { I.changed; path })
+          ~f:(fun path changed -> { I.changed; id = None; path })
           (CCInt64.of_int @@ Api.Account.id account)
           (Api.Ref.to_string ref_))
     >>= function

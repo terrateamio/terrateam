@@ -2011,10 +2011,10 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             (fun built_tree ->
               CCList.filter_map
                 (function
-                  | { I.path; changed = Some true } ->
+                  | { I.path; changed = Some true; _ } ->
                       Some (Terrat_change.Diff.Change { filename = path })
-                  | { I.path; changed = None } when Terrat_data.String_set.mem path changed_files ->
-                      Some (Terrat_change.Diff.Change { filename = path })
+                  | { I.path; changed = None; _ } when Terrat_data.String_set.mem path changed_files
+                    -> Some (Terrat_change.Diff.Change { filename = path })
                   | _ -> None)
                 built_tree)
             built_repo_tree
