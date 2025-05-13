@@ -102,8 +102,11 @@ export default defineConfig({
         },
         {
           label: "Self-Hosted",
-          autogenerate: { directory: "self-hosted" },
-          collapsed: true,
+          items: [
+            { label: "Instructions", link: "/self-hosted/instructions" },
+            { label: "Best Practices", link: "/self-hosted/best-practices" },
+            { label: "Deployments with Docker Compose", link: "/self-hosted/deployments-with-docker-compose" },
+          ],
         },
         {
           label: "Guides",
@@ -133,5 +136,6 @@ export default defineConfig({
     '/company/cookies': 'https://terrateam.io/cookies',
     '/company/terms-of-service': 'https://terrateam.io/terms-of-service',
     '/company/security-and-data': 'https://terrateam.io/security',
+    '/self-hosted/overview': '/self-hosted/instructions',
   },
 });
