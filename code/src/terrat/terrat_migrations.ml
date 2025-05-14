@@ -135,6 +135,8 @@ let migrations =
     ("add-work-manifest-runs-on", run_file_sql "2025-04-29-add-work-manifest-runs-on.sql");
     ( "refactor-prep-github-vcs-mapping",
       run_file_sql "2025-04-28-refactor-prep-for-github-vcs-mapping.sql" );
+    ( "refactor-fill-in-missing-github-maps",
+      run_file_sql "2025-05-01-refactor-fill-in-missing-github-maps.sql" );
   ]
 
 let run config storage = Mig.run (config, storage) migrations
