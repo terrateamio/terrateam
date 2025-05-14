@@ -133,6 +133,8 @@ let migrations =
     ( "refactor-remove-core-table-views",
       run_file_sql "2025-04-21-refactor-delete-core-table-views.sql" );
     ("add-work-manifest-runs-on", run_file_sql "2025-04-29-add-work-manifest-runs-on.sql");
+    ( "refactor-prep-github-vcs-mapping",
+      run_file_sql "2025-04-28-refactor-prep-for-github-vcs-mapping.sql" );
   ]
 
 let run config storage = Mig.run (config, storage) migrations
