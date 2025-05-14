@@ -1,7 +1,15 @@
-insert into repo_trees (installation_id, sha, path, changed)
-select * from unnest(
+insert into repo_trees (installation_id, sha, path, changed, installation)
+select
+        x.installation_id,
+        x.sha,
+        x.path,
+        x.changed,
+        gim.core_id
+from unnest(
   $installation_ids,
   $shas,
   $paths,
   $changed
-)
+) as x(installation_id, sha, path, changed)
+inner join github_installations_map as gim
+      on gim.installation_id = x.installation_id

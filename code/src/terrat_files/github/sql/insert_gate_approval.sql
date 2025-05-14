@@ -3,14 +3,17 @@ insert into gate_approvals (
     token,
     repository,
     pull_number,
-    sha
+    sha,
+    pull_request
 )
-values (
-    $approver,
-    $token,
-    $repository,
-    $pull_number,
-    $sha
-)
+select
+        $approver,
+        $token,
+        $repository,
+        $pull_number,
+        $sha
+        gprm.core_id
+from github_pull_requests_map as gprm
+where gprm.repository_id = $repository and gprm.pull_number = $pull_number
 on conflict (repository, pull_number, sha, token, approver)
 do nothing

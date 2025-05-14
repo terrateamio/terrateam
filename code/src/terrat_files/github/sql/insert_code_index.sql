@@ -9,6 +9,8 @@ installation_id as (
     where gwm.id = $work_manifest
     limit 1
 )
-insert into code_indexes (sha, installation_id, index)
-select sha, installation_id, $index from installation_id
+insert into code_indexes (sha, installation_id, index, installation)
+select sha, installation_id.installation_id, $index, gim.core_id from installation_id
+inner join github_installations_map as gim
+      on gim.installation_id = installation_id.installation_id
 on conflict (installation_id, sha) do update set index = excluded.index
