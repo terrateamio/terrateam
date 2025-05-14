@@ -5,17 +5,20 @@ insert into gates (
     sha,
     dir,
     workspace,
-    token
+    token,
+    pull_request
 )
-values (
-    $gate,
-    $repository,
-    $pull_number,
-    $sha,
-    $dir,
-    $workspace,
-    $token
-)
+select
+        $gate,
+        $repository,
+        $pull_number,
+        $sha,
+        $dir,
+        $workspace,
+        $token,
+        gprm.core_id
+from github_pull_requests_map as gprm
+where gprm.repository_id = $repository and gprm.pull_number = $pull_number
 on conflict (repository, pull_number, sha, dir, workspace, token)
 do update set (
    gate,
