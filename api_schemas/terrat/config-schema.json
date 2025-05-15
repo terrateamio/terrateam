@@ -242,6 +242,10 @@
           "default": false,
           "type": "boolean"
         },
+        "merge_without_explicit_apply": {
+          "default": false,
+          "type": "boolean"
+        },
         "enabled": {
           "default": false,
           "type": "boolean"
