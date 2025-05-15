@@ -10,6 +10,49 @@ module Primary = struct
 
   module Alert = struct
     module Primary = struct
+      module Dismissal_approved_by = struct
+        module Primary = struct
+          module Type = struct
+            let t_of_yojson = function
+              | `String "Bot" -> Ok "Bot"
+              | `String "User" -> Ok "User"
+              | `String "Organization" -> Ok "Organization"
+              | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+            type t = (string[@of_yojson t_of_yojson])
+            [@@deriving yojson { strict = false; meta = true }, show, eq]
+          end
+
+          type t = {
+            avatar_url : string option; [@default None]
+            deleted : bool option; [@default None]
+            email : string option; [@default None]
+            events_url : string option; [@default None]
+            followers_url : string option; [@default None]
+            following_url : string option; [@default None]
+            gists_url : string option; [@default None]
+            gravatar_id : string option; [@default None]
+            html_url : string option; [@default None]
+            id : int;
+            login : string;
+            name : string option; [@default None]
+            node_id : string option; [@default None]
+            organizations_url : string option; [@default None]
+            received_events_url : string option; [@default None]
+            repos_url : string option; [@default None]
+            site_admin : bool option; [@default None]
+            starred_url : string option; [@default None]
+            subscriptions_url : string option; [@default None]
+            type_ : Type.t option; [@default None] [@key "type"]
+            url : string option; [@default None]
+            user_view_type : string option; [@default None]
+          }
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
+        end
+
+        include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+      end
+
       module Dismissed_by = struct
         module Primary = struct
           module Type = struct
@@ -45,6 +88,7 @@ module Primary = struct
             subscriptions_url : string option; [@default None]
             type_ : Type.t option; [@default None] [@key "type"]
             url : string option; [@default None]
+            user_view_type : string option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -61,6 +105,10 @@ module Primary = struct
 
         type t = (string[@of_yojson t_of_yojson])
         [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      module Fixed_at = struct
+        type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Most_recent_instance = struct
@@ -181,9 +229,12 @@ module Primary = struct
 
       type t = {
         created_at : string;
+        dismissal_approved_by : Dismissal_approved_by.t option; [@default None]
         dismissed_at : string;
         dismissed_by : Dismissed_by.t option;
+        dismissed_comment : string option; [@default None]
         dismissed_reason : Dismissed_reason.t option;
+        fixed_at : Fixed_at.t option; [@default None]
         html_url : string;
         most_recent_instance : Most_recent_instance.t option; [@default None]
         number : int;
@@ -207,7 +258,7 @@ module Primary = struct
     organization : Githubc2_components_organization_simple_webhooks.t option; [@default None]
     ref_ : string; [@key "ref"]
     repository : Githubc2_components_repository_webhooks.t;
-    sender : Githubc2_components_simple_user_webhooks.t;
+    sender : Githubc2_components_simple_user.t;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

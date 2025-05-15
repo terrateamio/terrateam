@@ -104,8 +104,10 @@ module Primary = struct
     repository_url : string;
     state : string;
     state_reason : State_reason.t option; [@default None]
+    sub_issues_summary : Githubc2_components_sub_issues_summary.t option; [@default None]
     timeline_url : string option; [@default None]
     title : string;
+    type_ : Githubc2_components_issue_type.t option; [@default None] [@key "type"]
     updated_at : string;
     url : string;
     user : Githubc2_components_nullable_simple_user.t option;

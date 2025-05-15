@@ -10,10 +10,11 @@ module Primary = struct
 
   type t = {
     action : Action.t;
-    installation : Githubc2_components_simple_installation.t;
+    enterprise : Githubc2_components_enterprise_webhooks.t option; [@default None]
+    installation : Githubc2_components_simple_installation.t option; [@default None]
     organization : Githubc2_components_organization_simple_webhooks.t;
     personal_access_token_request : Githubc2_components_personal_access_token_request.t;
-    sender : Githubc2_components_simple_user_webhooks.t;
+    sender : Githubc2_components_simple_user.t;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

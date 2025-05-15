@@ -13,7 +13,7 @@ module Primary = struct
     followers_url : string;
     following_url : string;
     gists_url : string;
-    hub_url : string;
+    hub_url : string option; [@default None]
     issue_search_url : string;
     issues_url : string;
     keys_url : string;

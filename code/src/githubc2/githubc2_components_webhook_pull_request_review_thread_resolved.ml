@@ -147,6 +147,7 @@ module Primary = struct
             subscriptions_url : string option; [@default None]
             type_ : Type.t option; [@default None] [@key "type"]
             url : string option; [@default None]
+            user_view_type : string option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -253,6 +254,7 @@ module Primary = struct
                 subscriptions_url : string option; [@default None]
                 type_ : Type.t option; [@default None] [@key "type"]
                 url : string option; [@default None]
+                user_view_type : string option; [@default None]
               }
               [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
@@ -364,6 +366,7 @@ module Primary = struct
                     subscriptions_url : string option; [@default None]
                     type_ : Type.t option; [@default None] [@key "type"]
                     url : string option; [@default None]
+                    user_view_type : string option; [@default None]
                   }
                   [@@deriving yojson { strict = false; meta = true }, show, eq]
                 end
@@ -474,7 +477,7 @@ module Primary = struct
                 homepage : string option;
                 hooks_url : string;
                 html_url : string;
-                id : int;
+                id : int64;
                 is_template : bool option; [@default None]
                 issue_comment_url : string;
                 issue_events_url : string;
@@ -551,7 +554,7 @@ module Primary = struct
                 gists_url : string option; [@default None]
                 gravatar_id : string option; [@default None]
                 html_url : string option; [@default None]
-                id : int;
+                id : int64;
                 login : string;
                 name : string option; [@default None]
                 node_id : string option; [@default None]
@@ -563,6 +566,7 @@ module Primary = struct
                 subscriptions_url : string option; [@default None]
                 type_ : Type.t option; [@default None] [@key "type"]
                 url : string option; [@default None]
+                user_view_type : string option; [@default None]
               }
               [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
@@ -664,6 +668,7 @@ module Primary = struct
                     subscriptions_url : string option; [@default None]
                     type_ : Type.t option; [@default None] [@key "type"]
                     url : string option; [@default None]
+                    user_view_type : string option; [@default None]
                   }
                   [@@deriving yojson { strict = false; meta = true }, show, eq]
                 end
@@ -774,7 +779,7 @@ module Primary = struct
                 homepage : string option;
                 hooks_url : string;
                 html_url : string;
-                id : int;
+                id : int64;
                 is_template : bool option; [@default None]
                 issue_comment_url : string;
                 issue_events_url : string;
@@ -851,7 +856,7 @@ module Primary = struct
                 gists_url : string option; [@default None]
                 gravatar_id : string option; [@default None]
                 html_url : string option; [@default None]
-                id : int;
+                id : int64;
                 login : string;
                 name : string option; [@default None]
                 node_id : string option; [@default None]
@@ -863,6 +868,7 @@ module Primary = struct
                 subscriptions_url : string option; [@default None]
                 type_ : Type.t option; [@default None] [@key "type"]
                 url : string option; [@default None]
+                user_view_type : string option; [@default None]
               }
               [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
@@ -941,6 +947,7 @@ module Primary = struct
                 subscriptions_url : string option; [@default None]
                 type_ : Type.t option; [@default None] [@key "type"]
                 url : string option; [@default None]
+                user_view_type : string option; [@default None]
               }
               [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
@@ -1020,6 +1027,7 @@ module Primary = struct
                 subscriptions_url : string option; [@default None]
                 type_ : Type.t option; [@default None] [@key "type"]
                 url : string option; [@default None]
+                user_view_type : string option; [@default None]
               }
               [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
@@ -1218,7 +1226,7 @@ module Primary = struct
             gists_url : string option; [@default None]
             gravatar_id : string option; [@default None]
             html_url : string option; [@default None]
-            id : int;
+            id : int64;
             login : string;
             name : string option; [@default None]
             node_id : string option; [@default None]
@@ -1230,6 +1238,7 @@ module Primary = struct
             subscriptions_url : string option; [@default None]
             type_ : Type.t option; [@default None] [@key "type"]
             url : string option; [@default None]
+            user_view_type : string option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -1416,7 +1425,7 @@ module Primary = struct
                   gists_url : string option; [@default None]
                   gravatar_id : string option; [@default None]
                   html_url : string option; [@default None]
-                  id : int;
+                  id : int64;
                   login : string;
                   name : string option; [@default None]
                   node_id : string option; [@default None]
@@ -1428,6 +1437,7 @@ module Primary = struct
                   subscriptions_url : string option; [@default None]
                   type_ : Type.t option; [@default None] [@key "type"]
                   url : string option; [@default None]
+                  user_view_type : string option; [@default None]
                 }
                 [@@deriving yojson { strict = false; meta = true }, show, eq]
               end
@@ -1490,7 +1500,7 @@ module Primary = struct
     organization : Githubc2_components_organization_simple_webhooks.t option; [@default None]
     pull_request : Pull_request_.t;
     repository : Githubc2_components_repository_webhooks.t;
-    sender : Githubc2_components_simple_user_webhooks.t option; [@default None]
+    sender : Githubc2_components_simple_user.t option; [@default None]
     thread : Thread_.t;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]

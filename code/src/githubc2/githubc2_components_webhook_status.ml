@@ -188,6 +188,7 @@ module Primary = struct
                 reason : Reason.t;
                 signature : string option;
                 verified : bool;
+                verified_at : string option;
               }
               [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
@@ -311,7 +312,7 @@ module Primary = struct
     name : string;
     organization : Githubc2_components_organization_simple_webhooks.t option; [@default None]
     repository : Githubc2_components_repository_webhooks.t;
-    sender : Githubc2_components_simple_user_webhooks.t;
+    sender : Githubc2_components_simple_user.t;
     sha : string;
     state : State.t;
     target_url : string option;

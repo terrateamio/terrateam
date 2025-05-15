@@ -32,12 +32,13 @@ module Primary = struct
     gravatar_id : string option;
     hireable : bool option;
     html_url : string;
-    id : int;
+    id : int64;
     ldap_dn : string option; [@default None]
     location : string option;
     login : string;
     name : string option;
     node_id : string;
+    notification_email : string option; [@default None]
     organizations_url : string;
     owned_private_repos : int;
     plan : Plan.t option; [@default None]
@@ -49,13 +50,13 @@ module Primary = struct
     site_admin : bool;
     starred_url : string;
     subscriptions_url : string;
-    suspended_at : string option; [@default None]
     total_private_repos : int;
     twitter_username : string option; [@default None]
     two_factor_authentication : bool;
     type_ : string; [@key "type"]
     updated_at : string;
     url : string;
+    user_view_type : string option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

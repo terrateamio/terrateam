@@ -26,6 +26,9 @@ module Primary = struct
       | `String "queued" -> Ok "queued"
       | `String "in_progress" -> Ok "in_progress"
       | `String "completed" -> Ok "completed"
+      | `String "waiting" -> Ok "waiting"
+      | `String "requested" -> Ok "requested"
+      | `String "pending" -> Ok "pending"
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
     type t = (string[@of_yojson t_of_yojson])
@@ -42,7 +45,7 @@ module Primary = struct
     head_branch : string option;
     head_commit : Githubc2_components_simple_commit.t;
     head_sha : string;
-    id : int;
+    id : int64;
     latest_check_runs_count : int;
     node_id : string;
     pull_requests : Pull_requests.t option;

@@ -12,7 +12,7 @@ module Primary = struct
 
   type t = {
     commit_message : string;
-    commit_title : string option; [@default None]
+    commit_title : string;
     enabled_by : Githubc2_components_simple_user.t;
     merge_method : Merge_method.t;
   }

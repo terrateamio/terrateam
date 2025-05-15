@@ -100,7 +100,6 @@ module Primary = struct
     tags_url : string;
     teams_url : string;
     temp_clone_token : string option; [@default None]
-    template_repository : Githubc2_components_nullable_repository.t option; [@default None]
     topics : Topics.t option; [@default None]
     trees_url : string;
     updated_at : string option;

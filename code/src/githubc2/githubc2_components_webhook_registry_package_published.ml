@@ -31,6 +31,7 @@ module Primary = struct
             subscriptions_url : string;
             type_ : string; [@key "type"]
             url : string;
+            user_view_type : string option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -61,6 +62,7 @@ module Primary = struct
                 subscriptions_url : string;
                 type_ : string; [@key "type"]
                 url : string;
+                user_view_type : string option; [@default None]
               }
               [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
@@ -568,6 +570,7 @@ module Primary = struct
                     subscriptions_url : string option; [@default None]
                     type_ : string option; [@default None] [@key "type"]
                     url : string option; [@default None]
+                    user_view_type : string option; [@default None]
                   }
                   [@@deriving yojson { strict = false; meta = true }, show, eq]
                 end
@@ -676,7 +679,7 @@ module Primary = struct
     organization : Githubc2_components_organization_simple_webhooks.t option; [@default None]
     registry_package : Registry_package.t;
     repository : Githubc2_components_repository_webhooks.t option; [@default None]
-    sender : Githubc2_components_simple_user_webhooks.t;
+    sender : Githubc2_components_simple_user.t;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
