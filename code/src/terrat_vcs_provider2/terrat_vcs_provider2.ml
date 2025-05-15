@@ -263,6 +263,7 @@ module type S = sig
       (Yojson.Safe.t option, [> `Error ]) result Abb.Future.t
 
     val query_repo_tree :
+      ?base_ref:Api.Ref.t ->
       request_id:string ->
       t ->
       Api.Account.t ->
