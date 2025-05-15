@@ -242,6 +242,10 @@
           "default": false,
           "type": "boolean"
         },
+        "require_explicit_apply": {
+          "default": false,
+          "type": "boolean"
+        },
         "enabled": {
           "default": false,
           "type": "boolean"

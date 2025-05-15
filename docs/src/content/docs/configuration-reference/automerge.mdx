@@ -10,6 +10,7 @@ The `automerge` configuration can be used to automatically merge the pull reques
 automerge:
   enabled: false
   delete_branch: false
+  require_explicit_apply: false
 ```
 
 ## Keys
@@ -17,6 +18,7 @@ automerge:
 | --- | --- | --- |
 | enabled | boolean | Specifies whether automerge is enabled. Default is false. |
 | delete_branch | boolean | Specifies whether the branch should be deleted after the PR is merged. Default is false. |
+| require_explicit_apply | boolean | Specifies whether an explicit "terrateam apply" is necessary for `automerge` functionality to be applied. Default is false. |
 
 ## Examples
 ### Enable Automerge

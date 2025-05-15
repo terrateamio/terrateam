@@ -5416,7 +5416,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               (CCList.filter_map
                  (fun { Terrat_pull_request_review.user; _ } -> user)
                  (S.Apply_requirements.Result.approved_reviews apply_requirements))
-        | (`Apply_autoapprove | `Apply_force) as op -> op
+        | (`Apply_autoapprove | `Apply_force | `Plan) as op -> op
       in
       Abbs_future_combinators.Infix_result_app.(
         (fun access_control matches client pull_request access_control_result ->
@@ -5600,8 +5600,10 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               Dv.repo_config ctx state
               >>= fun repo_config ->
               let module Am = Terrat_base_repo_config_v1.Automerge in
-              let { Am.enabled; delete_branch = delete_branch' } = automerge_config repo_config in
-              if enabled then
+              let { Am.enabled; delete_branch = delete_branch'; require_explicit_apply } =
+                automerge_config repo_config
+              in
+              if enabled && ((not require_explicit_apply) || op <> `Plan) then
                 let open Abb.Future.Infix_monad in
                 merge_pull_request state.State.request_id client pull_request
                 >>= function
