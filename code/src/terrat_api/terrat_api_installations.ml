@@ -32,7 +32,7 @@ module List_dirspaces = struct
       end
 
       type t = { dirspaces : Dirspaces.t }
-      [@@deriving yojson { strict = true; meta = true }, show, eq]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     module Bad_request = struct
@@ -40,7 +40,7 @@ module List_dirspaces = struct
         data : string option; [@default None]
         id : string;
       }
-      [@@deriving yojson { strict = true; meta = true }, show, eq]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     module Forbidden = struct end
@@ -106,7 +106,7 @@ module List_pull_requests = struct
       end
 
       type t = { pull_requests : Pull_requests.t }
-      [@@deriving yojson { strict = true; meta = true }, show, eq]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     module Forbidden = struct end
@@ -162,7 +162,7 @@ module List_repos = struct
       end
 
       type t = { repositories : Repositories.t }
-      [@@deriving yojson { strict = true; meta = true }, show, eq]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     module Forbidden = struct end
@@ -204,7 +204,7 @@ module Repo_refresh = struct
 
   module Responses = struct
     module OK = struct
-      type t = { id : string } [@@deriving yojson { strict = true; meta = true }, show, eq]
+      type t = { id : string } [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     module Forbidden = struct end
@@ -270,7 +270,7 @@ module List_work_manifests = struct
       end
 
       type t = { work_manifests : Work_manifests.t }
-      [@@deriving yojson { strict = true; meta = true }, show, eq]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     module Bad_request = struct
@@ -278,7 +278,7 @@ module List_work_manifests = struct
         data : string option; [@default None]
         id : string;
       }
-      [@@deriving yojson { strict = true; meta = true }, show, eq]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     module Forbidden = struct end
@@ -398,7 +398,7 @@ module Get_work_manifest_outputs = struct
         [@@deriving yojson { strict = false; meta = false }, show, eq]
       end
 
-      type t = { steps : Steps.t } [@@deriving yojson { strict = true; meta = true }, show, eq]
+      type t = { steps : Steps.t } [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     module Bad_request = struct
@@ -406,7 +406,7 @@ module Get_work_manifest_outputs = struct
         data : string option; [@default None]
         id : string;
       }
-      [@@deriving yojson { strict = true; meta = true }, show, eq]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     module Forbidden = struct end

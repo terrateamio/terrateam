@@ -5,7 +5,7 @@ module Additional = struct
         lnum : int option; [@default None]
         msg : string;
       }
-      [@@deriving yojson { strict = true; meta = true }, show, eq]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Additional)
@@ -19,7 +19,7 @@ module Additional = struct
     failures : Failures.t;
     modules : Modules.t;
   }
-  [@@deriving yojson { strict = true; meta = true }, show, eq]
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Additional)

@@ -8,4 +8,4 @@ module Type = struct
 end
 
 type t = { type_ : Type.t [@key "type"] }
-[@@deriving yojson { strict = true; meta = true }, show, eq]
+[@@deriving yojson { strict = false; meta = true }, show, eq]

@@ -873,6 +873,9 @@
                 "changed": {
                   "type": "boolean"
                 },
+                "id": {
+                  "type": "string"
+                },
                 "path": {
                   "type": "string"
                 }

@@ -319,7 +319,8 @@ module Db = struct
         /% Var.(array (bigint "installation_ids"))
         /% Var.(str_array (text "shas"))
         /% Var.(str_array (text "paths"))
-        /% Var.(array (option (boolean "changed"))))
+        /% Var.(array (option (boolean "changed")))
+        /% Var.(str_array (option (text "id"))))
 
     let upsert_flow_state_query = read "update_flow_state.sql"
 
@@ -420,7 +421,8 @@ module Db = struct
         Ret.(option boolean)
         /^ read "select_repo_tree.sql"
         /% Var.bigint "installation_id"
-        /% Var.text "sha")
+        /% Var.text "sha"
+        /% Var.(option (text "base_sha")))
 
     let select_next_work_manifest =
       Pgsql_io.Typed_sql.(
@@ -1006,7 +1008,8 @@ module Db = struct
               (CCList.replicate (CCList.length chunk) (Int64.of_int @@ Api.Account.id account))
               (CCList.replicate (CCList.length chunk) (Api.Ref.to_string ref_))
               (CCList.map (fun { I.path; _ } -> path) chunk)
-              (CCList.map (fun { I.changed; _ } -> changed) chunk)))
+              (CCList.map (fun { I.changed; _ } -> changed) chunk)
+              (CCList.map (fun { I.id; _ } -> id) chunk)))
       (CCList.chunks not_a_bad_chunk_size files)
     >>= function
     | Ok () -> Abb.Future.return (Ok ())
@@ -1374,16 +1377,22 @@ module Db = struct
         Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
 
-  let query_repo_tree ~request_id db account ref_ =
+  let query_repo_tree ?base_ref ~request_id db account ref_ =
     let module I = Terrat_api_components.Work_manifest_build_tree_result.Files.Items in
     let open Abb.Future.Infix_monad in
     Metrics.Psql_query_time.time (Metrics.psql_query_time "select_repo_tree") (fun () ->
         Pgsql_io.Prepared_stmt.fetch
           db
           Sql.select_repo_tree
-          ~f:(fun path changed -> { I.changed; path })
+          ~f:(fun path changed ->
+            (* We are being a bit lazy here and re-using the tree result object
+               for the response from the database.  We are setting [id] to
+               [None] because the query directly tells us if [changed] is true
+               or false. *)
+            { I.changed; path; id = None })
           (CCInt64.of_int @@ Api.Account.id account)
-          (Api.Ref.to_string ref_))
+          (Api.Ref.to_string ref_)
+          (CCOption.map Api.Ref.to_string base_ref))
     >>= function
     | Ok [] -> Abb.Future.return (Ok None)
     | Ok files -> Abb.Future.return (Ok (Some files))

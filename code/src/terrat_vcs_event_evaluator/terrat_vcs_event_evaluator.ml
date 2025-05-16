@@ -200,17 +200,18 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               time))
       (fun () -> S.Db.query_repo_config_json ~request_id db account ref_)
 
-  let query_repo_tree request_id db account ref_ =
+  let query_repo_tree request_id db account ref_ base_ref =
     Abbs_time_it.run
       (fun time ->
         Logs.info (fun m ->
             m
-              "%s : QUERY_REPO_TREE : account=%s : ref=%s : time=%f"
+              "%s : QUERY_REPO_TREE : account=%s : base_ref=%s : ref=%s : time=%f"
               request_id
               (S.Api.Account.to_string account)
+              (CCOption.map_or ~default:"" S.Api.Ref.to_string base_ref)
               (S.Api.Ref.to_string ref_)
               time))
-      (fun () -> S.Db.query_repo_tree ~request_id db account ref_)
+      (fun () -> S.Db.query_repo_tree ~request_id ?base_ref db account ref_)
 
   let store_repo_config_json request_id db account ref_ repo_config =
     Abbs_time_it.run
@@ -1709,6 +1710,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         (Ctx.storage ctx)
         (Event.account state.State.event)
         working_branch_ref'
+        None
 
     let repo_config_with_provenance ctx state =
       let account = Event.account state.State.event in
@@ -1779,6 +1781,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
 
     let query_repo_tree ctx state =
       let open Abbs_future_combinators.Infix_result_monad in
+      base_ref ctx state
+      >>= fun base_ref' ->
       working_branch_ref ctx state
       >>= fun working_branch_ref' ->
       query_repo_tree
@@ -1786,6 +1790,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         (Ctx.storage ctx)
         (Event.account state.State.event)
         working_branch_ref'
+        (Some base_ref')
 
     let tag_query ctx state =
       match state.State.event with
@@ -2011,10 +2016,10 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             (fun built_tree ->
               CCList.filter_map
                 (function
-                  | { I.path; changed = Some true } ->
+                  | { I.path; changed = Some true; _ } ->
                       Some (Terrat_change.Diff.Change { filename = path })
-                  | { I.path; changed = None } when Terrat_data.String_set.mem path changed_files ->
-                      Some (Terrat_change.Diff.Change { filename = path })
+                  | { I.path; changed = None; _ } when Terrat_data.String_set.mem path changed_files
+                    -> Some (Terrat_change.Diff.Change { filename = path })
                   | _ -> None)
                 built_tree)
             built_repo_tree

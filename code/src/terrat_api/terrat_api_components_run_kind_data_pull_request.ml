@@ -1,1 +1,1 @@
-type t = { id : string } [@@deriving yojson { strict = true; meta = true }, show, eq]
+type t = { id : string } [@@deriving yojson { strict = false; meta = true }, show, eq]

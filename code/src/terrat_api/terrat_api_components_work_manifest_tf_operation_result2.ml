@@ -12,4 +12,4 @@ type t = {
   gates : Gates.t option; [@default None]
   steps : Steps.t;
 }
-[@@deriving yojson { strict = true; meta = true }, show, eq]
+[@@deriving yojson { strict = false; meta = true }, show, eq]

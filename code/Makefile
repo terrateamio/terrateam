@@ -38,7 +38,7 @@ debug-terrat: debug_terrat_code_indexer
 
 terrat-api: release_openapi_cli
 	rm -f ./src/terrat_api/*.ml
-	env OCAMLRUNPARAM=b ./build/release/openapi_cli/openapi_cli.native convert --input ../api_schemas/terrat/api.json --name "terrat_api" --output-dir ./src/terrat_api
+	env OCAMLRUNPARAM=b ./build/release/openapi_cli/openapi_cli.native convert --non-strict-records --input ../api_schemas/terrat/api.json --name "terrat_api" --output-dir ./src/terrat_api
 	find src/terrat_api  -type f -exec ocamlformat -i '{}' \;
 	pds
 
