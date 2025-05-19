@@ -44,7 +44,8 @@ end
 
 module Mig = Data_mig.Make (Migrate)
 
-let run_file_sql fname (config, storage) =
+let run_file_sql ?(tx = true) fname (config, storage) =
+  let tx = if tx then fun db ~f -> Pgsql_io.tx db ~f else fun db ~f -> f () in
   match Terrat_files_migrations.read fname with
   | Some file ->
       let stmts =
@@ -53,7 +54,7 @@ let run_file_sql fname (config, storage) =
         |> CCList.filter CCFun.(CCString.trim %> CCString.is_empty %> not)
       in
       Pgsql_pool.with_conn storage ~f:(fun db ->
-          Pgsql_io.tx db ~f:(fun () ->
+          tx db ~f:(fun () ->
               Abbs_future_combinators.List_result.iter
                 ~f:(fun stmt ->
                   let open Pgsql_io in
@@ -139,6 +140,9 @@ let migrations =
       run_file_sql "2025-05-01-refactor-fill-in-missing-github-maps.sql" );
     ("add-repo-tree-id-column", run_file_sql "2025-05-13-add-repo-tree-id-column.sql");
     ("refactor-fill-in-missing-core-ids", Terrat_migrations_ex_150.fill_in_all);
+    ( "refactor-remove-null-constraints-on-core-tables",
+      run_file_sql "2025-05-19-refactor-remove-null-constraints.sql" );
+    ("refactor-add-pkey-indexes", run_file_sql ~tx:false "2025-05-19-refactor-add-pkey-indexes.sql");
   ]
 
 let run config storage = Mig.run (config, storage) migrations
