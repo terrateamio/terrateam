@@ -9,10 +9,8 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 Terrateam's custom plan and apply steps feature allows you to extend your Terraform workflows with additional automation steps. This feature is particularly useful when you need to:
 
 - Perform pre-validation checks before applying infrastructure changes
-- Update documentation or configuration files automatically 
 - Run security and compliance scans
 - Integrate with external monitoring or notification systems
-- Handle cross-team approvals and coordination
 
 ## Configuring Custom Steps
 
@@ -127,12 +125,12 @@ See [Workflows](/configuration-reference/workflows#oidc) for detailed OIDC confi
 
 ## Considerations
 - Scripts in custom steps can access sensitive information - ensure proper security measures and avoid exposing sensitive data in logs
-- Failed custom steps abort the workflow - Terrateam comments the error details on the pull request
+- Failed custom steps abort the workflow [by default (see `ignore_errors`)](/configuration-reference/workflows/#run)- Terrateam comments the error details on the pull request
 - Use [Dirs](/configuration-reference/dirs) and [Tags](/advanced-workflows/tags) to target specific directories with custom automation
 - Steps execute sequentially in the order defined - ensure dependencies are handled properly
 
 ## Best Practices
-- Use [Hooks](/configuration-reference/hooks) for event-specific automation
+- Use [Hooks](/configuration-reference/hooks) to run custom steps before or after specific operation, such as plan or apply.
 - Pass configuration through environment variables instead of hardcoding
 - Include proper error handling and logging in custom scripts
 - Document script dependencies and requirements
