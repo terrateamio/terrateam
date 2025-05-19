@@ -2894,16 +2894,10 @@ let to_version_1 t =
         apply_requirements;
     (* TODO #440: just a hacky test, remove this later *)
     automerge =
-      let open CCOption.Infix in
-        map_opt_if_true
-            CCFun.(Automerge.equal (Automerge.make ()) %> not)
-            to_version_1_automerge
-            automerge;
-        <*>
-        map_opt_if_true
-            CCFun.(When_modified.equal (When_modified.make ()) %> not)
-            to_version_1_when_modified
-            when_modified;
+      CCOption.map2 (&&) automerge when_modified
+      |> map_opt_if_true
+        CCFun.(Automerge.equal (Automerge.make ()) %> not)
+        to_version_1_automerge;
     batch_runs =
       map_opt_if_true
         CCFun.(Batch_runs.equal (Batch_runs.make ()) %> not)
