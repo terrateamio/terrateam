@@ -138,6 +138,7 @@ let migrations =
     ( "refactor-fill-in-missing-github-maps",
       run_file_sql "2025-05-01-refactor-fill-in-missing-github-maps.sql" );
     ("add-repo-tree-id-column", run_file_sql "2025-05-13-add-repo-tree-id-column.sql");
+    ("refactor-fill-in-missing-core-ids", Terrat_migrations_ex_150.fill_in_all);
   ]
 
 let run config storage = Mig.run (config, storage) migrations
