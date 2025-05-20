@@ -4,4 +4,4 @@ type t = {
   symlinks : Terrat_api_components_work_manifest_index_symlinks.t option; [@default None]
   version : int;
 }
-[@@deriving yojson { strict = true; meta = true }, show, eq]
+[@@deriving yojson { strict = false; meta = true }, show, eq]

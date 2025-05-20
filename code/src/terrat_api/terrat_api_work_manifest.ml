@@ -44,7 +44,7 @@ module Get_access_token = struct
   module Responses = struct
     module OK = struct
       type t = { access_token : string }
-      [@@deriving yojson { strict = true; meta = true }, show, eq]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     type t = [ `OK of OK.t ] [@@deriving show, eq]
@@ -163,7 +163,7 @@ module Plan_get = struct
 
   module Responses = struct
     module OK = struct
-      type t = { data : string } [@@deriving yojson { strict = true; meta = true }, show, eq]
+      type t = { data : string } [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     type t = [ `OK of OK.t ] [@@deriving show, eq]

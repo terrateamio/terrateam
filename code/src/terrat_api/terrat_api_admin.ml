@@ -15,13 +15,13 @@ module Drifts = struct
             state : string;
             unlocked : bool;
           }
-          [@@deriving yojson { strict = true; meta = true }, show, eq]
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
         type t = Items.t list [@@deriving yojson { strict = false; meta = false }, show, eq]
       end
 
-      type t = { results : Results.t } [@@deriving yojson { strict = true; meta = true }, show, eq]
+      type t = { results : Results.t } [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     type t = [ `OK of OK.t ] [@@deriving show, eq]

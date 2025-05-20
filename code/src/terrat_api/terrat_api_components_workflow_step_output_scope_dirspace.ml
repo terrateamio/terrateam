@@ -12,4 +12,4 @@ type t = {
   type_ : Type.t option; [@default None] [@key "type"]
   workspace : string;
 }
-[@@deriving yojson { strict = true; meta = true }, show, eq]
+[@@deriving yojson { strict = false; meta = true }, show, eq]
