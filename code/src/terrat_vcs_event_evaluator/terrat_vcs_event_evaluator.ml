@@ -5565,6 +5565,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               let { Am.enabled; delete_branch = delete_branch' } = automerge_config repo_config in
               if enabled then
                 let open Abb.Future.Infix_monad in
+                Abb.Future.return (Ok state)
+                (* TODO: #440 testing stuff
                 merge_pull_request state.State.request_id client pull_request
                 >>= function
                 | Ok () ->
@@ -5582,6 +5584,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                     H.maybe_publish_msg ctx state (Msg.Automerge_failure (pull_request, reason))
                     >>= fun () -> Abb.Future.return (Error (`Noop state))
                 | Error `Error as err -> Abb.Future.return err
+                *)
               else Abb.Future.return (Ok state)
           | None -> assert false)
       | Some work_manifest_id, unapplied_dirspaces ->
