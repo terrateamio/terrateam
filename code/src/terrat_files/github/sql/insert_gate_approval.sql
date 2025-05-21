@@ -11,7 +11,7 @@ select
         $token,
         $repository,
         $pull_number,
-        $sha
+        $sha,
         gprm.core_id
 from github_pull_requests_map as gprm
 where gprm.repository_id = $repository and gprm.pull_number = $pull_number
