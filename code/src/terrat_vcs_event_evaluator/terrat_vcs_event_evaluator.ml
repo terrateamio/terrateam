@@ -837,6 +837,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Record_feedback
       | Recover
       | Recover_noop
+      | Reset_ctx
       | Run_work_manifest_iter
       | Store_account_repository
       | Store_gate_approval
@@ -916,6 +917,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Record_feedback -> "record_feedback"
       | Recover -> "recover"
       | Recover_noop -> "recover_noop"
+      | Reset_ctx -> "reset_ctx"
       | Run_work_manifest_iter -> "run_work_manifest_iter"
       | Store_account_repository -> "store_account_repository"
       | Store_gate_approval -> "store_gate_approval"
@@ -994,6 +996,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | "record_feedback" -> Some Record_feedback
       | "recover" -> Some Recover
       | "recover_noop" -> Some Recover_noop
+      | "reset_ctx" -> Some Reset_ctx
       | "run_work_manifest_iter" -> Some Run_work_manifest_iter
       | "store_account_repository" -> Some Store_account_repository
       | "store_gate_approval" -> Some Store_gate_approval
@@ -1058,12 +1061,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             }
           | Work_manifest_failure of { p : (unit, [ `Error ]) result Abb.Future.Promise.t }
           | Checkpointed
+          | Tabula_rasa
       end
 
       module O = struct
         type 'a t =
           | Clone of 'a list
           | Checkpoint
+          | Reset_ctx
       end
     end
 
@@ -2418,6 +2423,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         | Plan_fetch _ -> "Plan_fetch"
         | Work_manifest_failure _ -> "Work_manifest_failure"
         | Checkpointed -> "Checkpointed"
+        | Tabula_rasa -> "Tabula_rasa"
       in
       Logs.err (fun m ->
           m
@@ -4233,7 +4239,34 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   end
 
   module F = struct
+    (* Checkpoint commits the existing transaction the flow is running in and
+       immediate creates a new one.  This is useful when cloning, to ensure each
+       clone gets its own transaction.  Additionally, it can be useful if a
+       value used by many transactions has been updated (for example something
+       an the installation level) but we do not want to hold up any other
+       transactions that may touch that value because we are done with it.
+
+       Some care does need to be taken with checkpoint.  We use transactions to
+       coordinate between requests for the same flow.  Checkpointing could let
+       other waiting transactions start even though the idea behind
+       checkpointing is to immediately start a new transaction in side the same
+       flow execution.  Now we have an unexpected interleaving between
+       transactions that we did not want.
+
+       As such, ensure that, when checkpointing, that the flow has not initiated
+       concurrent work that could intervleav unexpected.  That is, all compute
+       operations are either done or not started.
+
+       If the goal is to reset context (for example caches), look at returning a
+       [`Reset_ctx], which resets the context and resets caches. *)
     let checkpoint ctx state = Abb.Future.return (Error (`Checkpoint state))
+
+    let wait_for_initiate ctx state =
+      match state.State.input with
+      | Some (State.Io.I.Work_manifest_initiate _) -> Abb.Future.return (Ok state)
+      | _ ->
+          Abb.Future.return
+            (Error (`Yield { state with State.st = State.St.Waiting_for_work_manifest_initiate }))
 
     let store_account_repository ctx state =
       match state.State.event with
@@ -6497,7 +6530,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   let eval_step step ctx state =
     let open Abb.Future.Infix_monad in
     match state.State.input with
-    | Some State.Io.I.Checkpointed -> Abb.Future.return (`Success { state with State.input = None })
+    | Some State.Io.I.(Checkpointed | Tabula_rasa) ->
+        Abb.Future.return (`Success { state with State.input = None })
     | _ -> (
         step ctx state
         >>= function
@@ -6508,6 +6542,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             Abb.Future.return (`Yield { state with State.output = Some (State.Io.O.Clone v) })
         | Error (`Checkpoint state) ->
             Abb.Future.return (`Yield { state with State.output = Some State.Io.O.Checkpoint })
+        | Error (`Reset_ctx state) ->
+            Abb.Future.return (`Yield { state with State.output = Some State.Io.O.Reset_ctx })
         | Error `Error ->
             Logs.info (fun m -> m "%s" state.State.request_id);
             H.maybe_publish_msg ctx state Msg.Unexpected_temporary_err
@@ -6796,7 +6832,30 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                          ~id:Id.Run_work_manifest_iter
                          ~f:(eval_step F.run_plan_work_manifest_iter)
                          ();
-                       Flow.Step.make ~id:Id.Checkpoint ~f:(eval_step F.checkpoint) ();
+                       (* Wait for the initiate call to make the next steps. At
+                          this point we can have two active API calls happening:
+
+                          1. The RESULT API call, that we just handled.  We have
+                             responded to that API call and the compute layer (a
+                             GitHub Action, for example) is going to immediately
+                             make the request for the next piece of work...
+
+                          2. The INITIATE API call.  This is the compute layer
+                             asking what to do next.
+
+                          The API call that is hitting this piece of code is the
+                          RESULT.  So we will yield and wait for the API call
+                          for the INITIATE in order to continue.
+
+                          NOTE: This is actually not a great solution.  This
+                          flow abstraction doesn't deal with concurrency very
+                          well (two API calls impacting the same flow), so we
+                          are trying to avoid it by limiting concurrency.  But
+                          this is a hack.  For example, if the compute layer
+                          fails, we will never complete the work manifest, even
+                          though the work has been done.  Whether or not that is
+                          a bug depends on your perspective. *)
+                       Flow.Step.make ~id:Id.Reset_ctx ~f:(eval_step F.wait_for_initiate) ();
                        (* Complete any commit checks for dirspaces with no changes in them. *)
                        Flow.Step.make
                          ~id:Id.Complete_no_change_dirspaces
@@ -6856,11 +6915,29 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                    ~id:Id.Run_work_manifest_iter
                    ~f:(eval_step (F.run_apply_work_manifest_iter op))
                    ();
-                 (* Perform a checkpoint which clears any cached values.  We
-                    need to do this in order to test if all of dirspaces have
-                    been applied.  If we don't then we will get the cached
-                    values. *)
-                 Flow.Step.make ~id:Id.Checkpoint ~f:(eval_step F.checkpoint) ();
+                 (* Wait for the initiate call to make the next steps. At
+                    this point we can have two active API calls happening:
+
+                    1. The RESULT API call, that we just handled.  We have
+                       responded to that API call and the compute layer (a
+                       GitHub Action, for example) is going to immediately make
+                       the request for the next piece of work...
+
+                    2. The INITIATE API call.  This is the compute layer asking
+                       what to do next.
+
+                    The API call that is hitting this piece of code is the
+                    RESULT.  So we will yield and wait for the API call for the
+                    INITIATE in order to continue.
+
+                    NOTE: This is actually not a great solution.  This flow
+                    abstraction doesn't deal with concurrency very well (two API
+                    calls impacting the same flow), so we are trying to avoid it
+                    by limiting concurrency.  But this is a hack.  For example,
+                    if the compute layer fails, we will never complete the work
+                    manifest, even though the work has been done.  Whether or
+                    not that is a bug depends on your perspective. *)
+                 Flow.Step.make ~id:Id.Reset_ctx ~f:(eval_step F.wait_for_initiate) ();
                ])
             (layers_flow op (gen op_kind_plan_flow)))
       in
@@ -7073,6 +7150,28 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                 ctx
                 (Flow.Yield.set_state { state with State.input = None; output = None } resume')
               >>= fun vs -> Abb.Future.return (Ok (rets @ vs))
+          | Some State.Io.O.Reset_ctx ->
+              (* There are times when, inside of a single transaction, we want to
+                 reset the context.  This is likely to reset any caches, because
+                 maybe we suspect that the a remote object has changed due to
+                 something that we've done.  But we don't want to give up our
+                 ownership of the flow state yet.  Caches (in the [Dv] module)
+                 are keyed off of a context request id, so by changing the
+                 request id, we effectively clear the cache, as far as the flow
+                 is concerned. *)
+              let request_id = Ouuid.to_string (Ouuid.v4 ()) in
+              Logs.info (fun m ->
+                  m
+                    "%s : RESET_CTX : old=%s : new=%s"
+                    state.State.request_id
+                    (Ctx.request_id ctx)
+                    request_id);
+              let ctx = Ctx.set_request_id request_id ctx in
+              exec_flow
+                ctx
+                (Flow.Yield.set_state
+                   { state with State.input = Some State.Io.I.Tabula_rasa; output = None }
+                   resume')
           | Some _ | None -> (
               match state.State.work_manifest_id with
               | Some work_manifest_id ->
