@@ -15,6 +15,7 @@ export default defineConfig({
       title: "Terrateam",
       components: {
         Banner: './src/components/Banner.astro',
+        SiteTitle: './src/components/SiteTitle.astro',
       },
       plugins: [starlightImageZoom()],
       expressiveCode: {
@@ -28,7 +29,7 @@ export default defineConfig({
       },
       description: "Terraform and OpenTofu automation on GitHub",
       logo: {
-        src: "/src/assets/logo.png",
+        src: "/src/assets/logo-wordmark.svg",
         replacesTitle: true,
       },
       head: [
