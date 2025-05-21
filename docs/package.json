@@ -6,7 +6,7 @@
     "dev": "astro dev --host",
     "start": "astro dev --host",
     "generate-ph-init": "node generate-ph-init.js",
-    "build": "npm run generate-ph-init && astro check && astro build",
+    "build": "npm run generate-ph-init && astro check && NODE_OPTIONS='--max-old-space-size=4096' astro build",
     "preview": "astro preview",
     "astro": "astro"
   },
