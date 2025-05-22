@@ -1,4 +1,4 @@
-select distinct gwm.username, min(gwm.created_at) from work_manifests as gwm
+select distinct gwm.username, min(gwm.created_at) from github_work_manifests as gwm
 inner join github_installation_repositories as gir
   on gwm.repository = gir.id
 inner join github_installations as gi

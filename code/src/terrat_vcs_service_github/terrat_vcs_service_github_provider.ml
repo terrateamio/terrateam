@@ -186,9 +186,6 @@ module Db = struct
         (* installation_id *)
         Ret.bigint
         //
-        (* repo_id *)
-        Ret.bigint
-        //
         (* repo_owner *)
         Ret.text
         //
@@ -697,7 +694,7 @@ module Db = struct
                 completed_at
                 created_at
                 pull_request_id
-                repository
+                repo_id
                 run_id
                 run_type
                 branch_ref
@@ -706,7 +703,6 @@ module Db = struct
                 user
                 run_kind
                 installation_id
-                repo_id
                 owner
                 name
                 environment

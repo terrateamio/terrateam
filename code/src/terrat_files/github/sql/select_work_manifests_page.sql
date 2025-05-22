@@ -11,21 +11,21 @@ unified_run_types as (
            when 'index' then 'index'
            when 'build-config' then 'build-config'
            end) as run_type
-    from work_manifests as gwm
+    from github_work_manifests as gwm
 ),
 latest_unlocks as (
     select
         repository,
         pull_number,
         max(unlocked_at) as unlocked_at
-    from pull_request_unlocks
+    from github_pull_request_unlocks
     group by repository, pull_number
 ),
 latest_drift_unlocks as (
     select
         repository,
         max(unlocked_at) as unlocked_at
-    from drift_unlocks
+    from github_drift_unlocks
     group by repository
 ),
 q as (
@@ -47,8 +47,8 @@ q as (
         gwm.repository as repository,
         gwm.pull_number as pull_number,
         coalesce(gpr.base_branch, gdwm.branch) as base_branch,
-        gir.owner as owner,
-        gir.name as name,
+        gwm.repo_owner as owner,
+        gwm.repo_name as name,
         gwm.run_kind as kind,
         gpr.title as title,
         coalesce(gdwm.branch, gpr.branch) as branch,
@@ -58,11 +58,9 @@ q as (
         urt.run_type as unified_run_type,
         gwm.dirspaces as dirspaces,
         gwm.environment as environment
-    from work_manifests as gwm
-    inner join github_installation_repositories as gir
-        on gir.id = gwm.repository
+    from github_work_manifests as gwm
     inner join github_user_installations2 as gui
-        on gir.installation_id = gui.installation_id
+        on gwm.installation_id = gui.installation_id
     inner join unified_run_types as urt
         on urt.id = gwm.id
     left join github_pull_requests as gpr
@@ -73,7 +71,7 @@ q as (
         on lu.repository = gwm.repository and lu.pull_number = gwm.pull_number
     left join latest_drift_unlocks as ldu
         on ldu.repository = gwm.repository
-    where gir.installation_id = $installation_id
+    where gwm.installation_id = $installation_id
           and gui.user_id = $user
 )
 select

@@ -12,21 +12,21 @@ unified_run_types as (
            when 'build-config' then 'build-config'
            when 'build-tree' then 'build-tree'
            end) as run_type
-    from work_manifests as gwm
+    from github_work_manifests as gwm
 ),
 latest_unlocks as (
     select
         repository,
         pull_number,
         max(unlocked_at) as unlocked_at
-    from pull_request_unlocks
+    from github_pull_request_unlocks
     group by repository, pull_number
 ),
 latest_drift_unlocks as (
     select
         repository,
         max(unlocked_at) as unlocked_at
-    from drift_unlocks
+    from github_drift_unlocks
     group by repository
 ),
 q as (
@@ -74,7 +74,7 @@ q as (
         gwm.run_id as run_id,
         urt.run_type as unified_run_type,
         gwm.environment as environment
-    from work_manifests as gwm
+    from github_work_manifests as gwm
     inner join work_manifest_dirspaceflows as gwmds
         on gwmds.work_manifest = gwm.id
     inner join github_installation_repositories as gir

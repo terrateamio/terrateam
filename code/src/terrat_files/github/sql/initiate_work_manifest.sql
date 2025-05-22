@@ -1,10 +1,8 @@
-update work_manifests set
-       run_id = $run_id
-from work_manifests as gwm
-inner join github_installation_repositories as gir
-    on gwm.repository = gir.id
+update work_manifests as wm
+set run_id = $run_id
+from github_work_manifests as gwm
 left join github_pull_requests as gpr
-    on gir.id = gpr.repository and gwm.pull_number = gpr.pull_number
+    on gwm.id = gpr.repository and gwm.pull_number = gpr.pull_number
 left join drift_work_manifests as gdwm
     on gdwm.work_manifest = gwm.id
 left join index_work_manifests as giwm
@@ -27,9 +25,9 @@ returning
     gwm.repository,
     gwm.pull_number,
     coalesce(gpr.base_branch, gdwm.branch, giwm.branch),
-    gir.installation_id,
-    gir.owner,
-    gir.name,
+    gwm.installation_id,
+    gwm.repo_owner,
+    gwn.repo_name,
     extract(epoch from (now() - gwm.created_at)),
     gwm.run_kind,
     gwm.username

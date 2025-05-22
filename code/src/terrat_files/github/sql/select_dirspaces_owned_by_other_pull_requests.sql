@@ -7,7 +7,7 @@ latest_unlocks as (
         repository,
         pull_number,
         max(unlocked_at) as unlocked_at
-    from pull_request_unlocks
+    from github_pull_request_unlocks
     group by repository, pull_number
 ),
 -- First things we'll do is for each pull request determine all of the dirspaces
@@ -28,7 +28,7 @@ pull_request_applies_previous_commits as (
         gwmds.path as path,
         gwmds.workspace as workspace
     from github_pull_requests as gpr
-    inner join work_manifests as gwm
+    inner join github_work_manifests as gwm
         on gpr.repository = gwm.repository and gpr.pull_number = gwm.pull_number
     inner join work_manifest_dirspaceflows as gwmds
         on gwmds.work_manifest = gwm.id
@@ -58,7 +58,7 @@ unmerged_pull_requests_with_applies as (
         gpr.repository as repository,
         gpr.pull_number as pull_number
     from github_pull_requests as gpr
-    inner join work_manifests as gwm
+    inner join github_work_manifests as gwm
         on gwm.repository = gpr.repository and gwm.pull_number = gpr.pull_number
     left join latest_unlocks as gpru
         on gpru.repository = gpr.repository and gpru.pull_number = gpr.pull_number
@@ -101,7 +101,7 @@ applies_for_merged_pull_requests as (
         gwmds.path as path,
         gwmds.workspace as workspace
     from merged_pull_requests as mpr
-    inner join work_manifests as gwm
+    inner join github_work_manifests as gwm
         on mpr.repository = gwm.repository and mpr.pull_number = gwm.pull_number
            and gwm.base_sha = mpr.base_sha and (gwm.sha = mpr.sha or gwm.sha = mpr.merged_sha)
     inner join work_manifest_dirspaceflows as gwmds

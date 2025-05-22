@@ -12,7 +12,7 @@ select
         grm.core_id
 from github_repositories_map as grm
 where grm.repository_id = $repo
-on conflict (repository, name)
+on conflict on constraint drift_schedules_fut_pkey
 do update set
   (schedule,
    reconcile,
