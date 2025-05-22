@@ -8,127 +8,6 @@ module Primary = struct
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
-  module Approver = struct
-    module Primary = struct
-      type t = {
-        avatar_url : string option; [@default None]
-        events_url : string option; [@default None]
-        followers_url : string option; [@default None]
-        following_url : string option; [@default None]
-        gists_url : string option; [@default None]
-        gravatar_id : string option; [@default None]
-        html_url : string option; [@default None]
-        id : int option; [@default None]
-        login : string option; [@default None]
-        node_id : string option; [@default None]
-        organizations_url : string option; [@default None]
-        received_events_url : string option; [@default None]
-        repos_url : string option; [@default None]
-        site_admin : bool option; [@default None]
-        starred_url : string option; [@default None]
-        subscriptions_url : string option; [@default None]
-        type_ : string option; [@default None] [@key "type"]
-        url : string option; [@default None]
-      }
-      [@@deriving yojson { strict = false; meta = true }, show, eq]
-    end
-
-    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-  end
-
-  module Reviewers = struct
-    module Items = struct
-      module Primary = struct
-        module Reviewer = struct
-          module Primary = struct
-            module Type = struct
-              let t_of_yojson = function
-                | `String "Bot" -> Ok "Bot"
-                | `String "User" -> Ok "User"
-                | `String "Organization" -> Ok "Organization"
-                | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-              type t = (string[@of_yojson t_of_yojson])
-              [@@deriving yojson { strict = false; meta = true }, show, eq]
-            end
-
-            type t = {
-              avatar_url : string option; [@default None]
-              deleted : bool option; [@default None]
-              email : string option; [@default None]
-              events_url : string option; [@default None]
-              followers_url : string option; [@default None]
-              following_url : string option; [@default None]
-              gists_url : string option; [@default None]
-              gravatar_id : string option; [@default None]
-              html_url : string option; [@default None]
-              id : int;
-              login : string;
-              name : string option; [@default None]
-              node_id : string option; [@default None]
-              organizations_url : string option; [@default None]
-              received_events_url : string option; [@default None]
-              repos_url : string option; [@default None]
-              site_admin : bool option; [@default None]
-              starred_url : string option; [@default None]
-              subscriptions_url : string option; [@default None]
-              type_ : Type.t option; [@default None] [@key "type"]
-              url : string option; [@default None]
-            }
-            [@@deriving yojson { strict = false; meta = true }, show, eq]
-          end
-
-          include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-        end
-
-        module Type = struct
-          let t_of_yojson = function
-            | `String "User" -> Ok "User"
-            | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-          type t = (string[@of_yojson t_of_yojson])
-          [@@deriving yojson { strict = false; meta = true }, show, eq]
-        end
-
-        type t = {
-          reviewer : Reviewer.t option; [@default None]
-          type_ : Type.t option; [@default None] [@key "type"]
-        }
-        [@@deriving yojson { strict = false; meta = true }, show, eq]
-      end
-
-      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-    end
-
-    type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
-  end
-
-  module Workflow_job_run = struct
-    module Primary = struct
-      module Conclusion = struct
-        type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show, eq]
-      end
-
-      module Name = struct
-        type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show, eq]
-      end
-
-      type t = {
-        conclusion : Conclusion.t option;
-        created_at : string;
-        environment : string;
-        html_url : string;
-        id : int;
-        name : Name.t option;
-        status : string;
-        updated_at : string;
-      }
-      [@@deriving yojson { strict = false; meta = true }, show, eq]
-    end
-
-    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-  end
-
   module Workflow_job_runs = struct
     module Items = struct
       module Primary = struct
@@ -192,6 +71,7 @@ module Primary = struct
             subscriptions_url : string option; [@default None]
             type_ : Type.t option; [@default None] [@key "type"]
             url : string option; [@default None]
+            user_view_type : string option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -241,6 +121,7 @@ module Primary = struct
                 subscriptions_url : string option; [@default None]
                 type_ : string option; [@default None] [@key "type"]
                 url : string option; [@default None]
+                user_view_type : string option; [@default None]
               }
               [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
@@ -413,6 +294,7 @@ module Primary = struct
                 subscriptions_url : string option; [@default None]
                 type_ : string option; [@default None] [@key "type"]
                 url : string option; [@default None]
+                user_view_type : string option; [@default None]
               }
               [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
@@ -523,6 +405,7 @@ module Primary = struct
             subscriptions_url : string option; [@default None]
             type_ : Type.t option; [@default None] [@key "type"]
             url : string option; [@default None]
+            user_view_type : string option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -575,16 +458,16 @@ module Primary = struct
 
   type t = {
     action : Action.t;
-    approver : Approver.t option; [@default None]
+    approver : Githubc2_components_webhooks_approver.t option; [@default None]
     comment : string option; [@default None]
     enterprise : Githubc2_components_enterprise_webhooks.t option; [@default None]
     installation : Githubc2_components_simple_installation.t option; [@default None]
     organization : Githubc2_components_organization_simple_webhooks.t;
     repository : Githubc2_components_repository_webhooks.t;
-    reviewers : Reviewers.t option; [@default None]
-    sender : Githubc2_components_simple_user_webhooks.t;
+    reviewers : Githubc2_components_webhooks_reviewers.t option; [@default None]
+    sender : Githubc2_components_simple_user.t;
     since : string;
-    workflow_job_run : Workflow_job_run.t option; [@default None]
+    workflow_job_run : Githubc2_components_webhooks_workflow_job_run.t option; [@default None]
     workflow_job_runs : Workflow_job_runs.t option; [@default None]
     workflow_run : Workflow_run_.t option;
   }

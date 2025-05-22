@@ -210,9 +210,130 @@ module V1 = struct
     flat_map (fun _ -> T.of_yojson json) (All_of.of_yojson json)
 end
 
+module V2 = struct
+  module All_of = struct
+    module Primary = struct
+      module Ref_name = struct
+        module Primary = struct
+          module Exclude = struct
+            type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
+          end
+
+          module Include = struct
+            type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
+          end
+
+          type t = {
+            exclude : Exclude.t option; [@default None]
+            include_ : Include.t option; [@default None] [@key "include"]
+          }
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
+        end
+
+        include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+      end
+
+      module Repository_property = struct
+        module Primary = struct
+          module Exclude = struct
+            type t =
+              Githubc2_components_repository_ruleset_conditions_repository_property_spec.t list
+            [@@deriving yojson { strict = false; meta = true }, show, eq]
+          end
+
+          module Include = struct
+            type t =
+              Githubc2_components_repository_ruleset_conditions_repository_property_spec.t list
+            [@@deriving yojson { strict = false; meta = true }, show, eq]
+          end
+
+          type t = {
+            exclude : Exclude.t option; [@default None]
+            include_ : Include.t option; [@default None] [@key "include"]
+          }
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
+        end
+
+        include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+      end
+
+      type t = {
+        ref_name : Ref_name.t option; [@default None]
+        repository_property : Repository_property.t;
+      }
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
+    end
+
+    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+  end
+
+  module T = struct
+    module Primary = struct
+      module Ref_name = struct
+        module Primary = struct
+          module Exclude = struct
+            type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
+          end
+
+          module Include = struct
+            type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
+          end
+
+          type t = {
+            exclude : Exclude.t option; [@default None]
+            include_ : Include.t option; [@default None] [@key "include"]
+          }
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
+        end
+
+        include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+      end
+
+      module Repository_property = struct
+        module Primary = struct
+          module Exclude = struct
+            type t =
+              Githubc2_components_repository_ruleset_conditions_repository_property_spec.t list
+            [@@deriving yojson { strict = false; meta = true }, show, eq]
+          end
+
+          module Include = struct
+            type t =
+              Githubc2_components_repository_ruleset_conditions_repository_property_spec.t list
+            [@@deriving yojson { strict = false; meta = true }, show, eq]
+          end
+
+          type t = {
+            exclude : Exclude.t option; [@default None]
+            include_ : Include.t option; [@default None] [@key "include"]
+          }
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
+        end
+
+        include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+      end
+
+      type t = {
+        ref_name : Ref_name.t option; [@default None]
+        repository_property : Repository_property.t;
+      }
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
+    end
+
+    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+  end
+
+  type t = T.t [@@deriving yojson { strict = false; meta = true }, show, eq]
+
+  let of_yojson json =
+    let open CCResult in
+    flat_map (fun _ -> T.of_yojson json) (All_of.of_yojson json)
+end
+
 type t =
   | V0 of V0.t
   | V1 of V1.t
+  | V2 of V2.t
 [@@deriving show, eq]
 
 let of_yojson =
@@ -221,8 +342,10 @@ let of_yojson =
      [
        (fun v -> map (fun v -> V0 v) (V0.of_yojson v));
        (fun v -> map (fun v -> V1 v) (V1.of_yojson v));
+       (fun v -> map (fun v -> V2 v) (V2.of_yojson v));
      ])
 
 let to_yojson = function
   | V0 v -> V0.to_yojson v
   | V1 v -> V1.to_yojson v
+  | V2 v -> V2.to_yojson v

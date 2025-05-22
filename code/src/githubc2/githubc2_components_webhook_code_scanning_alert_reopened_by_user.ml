@@ -22,6 +22,10 @@ module Primary = struct
         type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
+      module Fixed_at = struct
+        type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
       module Most_recent_instance = struct
         module Primary = struct
           module Classifications = struct
@@ -131,12 +135,14 @@ module Primary = struct
         created_at : string;
         dismissed_at : Dismissed_at.t option;
         dismissed_by : Dismissed_by.t option;
+        dismissed_comment : string option; [@default None]
         dismissed_reason : Dismissed_reason.t option;
+        fixed_at : Fixed_at.t option; [@default None]
         html_url : string;
         most_recent_instance : Most_recent_instance.t option; [@default None]
         number : int;
         rule : Rule.t;
-        state : State.t;
+        state : State.t option;
         tool : Tool.t;
         url : string;
       }
@@ -155,7 +161,7 @@ module Primary = struct
     organization : Githubc2_components_organization_simple_webhooks.t option; [@default None]
     ref_ : string; [@key "ref"]
     repository : Githubc2_components_repository_webhooks.t;
-    sender : Githubc2_components_simple_user_webhooks.t;
+    sender : Githubc2_components_simple_user.t;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

@@ -52,6 +52,7 @@ module Primary = struct
               subscriptions_url : string option; [@default None]
               type_ : Type.t option; [@default None] [@key "type"]
               url : string option; [@default None]
+              user_view_type : string option; [@default None]
             }
             [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
@@ -133,7 +134,7 @@ module Primary = struct
           homepage : string option;
           hooks_url : string;
           html_url : string;
-          id : int;
+          id : int64;
           is_template : bool option; [@default None]
           issue_comment_url : string;
           issue_events_url : string;
@@ -239,6 +240,7 @@ module Primary = struct
               subscriptions_url : string option; [@default None]
               type_ : Type.t option; [@default None] [@key "type"]
               url : string option; [@default None]
+              user_view_type : string option; [@default None]
             }
             [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
@@ -320,7 +322,7 @@ module Primary = struct
           homepage : string option;
           hooks_url : string;
           html_url : string;
-          id : int;
+          id : int64;
           is_template : bool option; [@default None]
           issue_comment_url : string;
           issue_events_url : string;
@@ -387,7 +389,7 @@ module Primary = struct
     installation : Githubc2_components_simple_installation.t option; [@default None]
     organization : Githubc2_components_organization_simple_webhooks.t option; [@default None]
     repository : Githubc2_components_repository_webhooks.t;
-    sender : Githubc2_components_simple_user_webhooks.t;
+    sender : Githubc2_components_simple_user.t;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

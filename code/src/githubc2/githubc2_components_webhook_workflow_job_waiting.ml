@@ -109,7 +109,7 @@ module Primary = struct
     installation : Githubc2_components_simple_installation.t option; [@default None]
     organization : Githubc2_components_organization_simple_webhooks.t option; [@default None]
     repository : Githubc2_components_repository_webhooks.t;
-    sender : Githubc2_components_simple_user_webhooks.t;
+    sender : Githubc2_components_simple_user.t;
     workflow_job : Workflow_job.t;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]

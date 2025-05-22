@@ -30,7 +30,6 @@ module Primary = struct
 
         type t = {
           links_ : Links_.t; [@key "_links"]
-          content : string option; [@default None]
           download_url : string option;
           git_url : string option;
           html_url : string option;
@@ -52,7 +51,9 @@ module Primary = struct
 
   type t = {
     links_ : Links_.t; [@key "_links"]
+    content : string option; [@default None]
     download_url : string option;
+    encoding : string option; [@default None]
     entries : Entries.t option; [@default None]
     git_url : string option;
     html_url : string option;

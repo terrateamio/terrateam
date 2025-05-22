@@ -2,6 +2,7 @@ module Primary = struct
   module Languages = struct
     module Items = struct
       let t_of_yojson = function
+        | `String "actions" -> Ok "actions"
         | `String "c-cpp" -> Ok "c-cpp"
         | `String "csharp" -> Ok "csharp"
         | `String "go" -> Ok "go"
@@ -31,6 +32,16 @@ module Primary = struct
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
+  module Runner_type = struct
+    let t_of_yojson = function
+      | `String "standard" -> Ok "standard"
+      | `String "labeled" -> Ok "labeled"
+      | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+    type t = (string[@of_yojson t_of_yojson])
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
   module Schedule = struct
     let t_of_yojson = function
       | `String "weekly" -> Ok "weekly"
@@ -53,6 +64,8 @@ module Primary = struct
   type t = {
     languages : Languages.t option; [@default None]
     query_suite : Query_suite.t option; [@default None]
+    runner_label : string option; [@default None]
+    runner_type : Runner_type.t option; [@default None]
     schedule : Schedule.t option; [@default None]
     state : State.t option; [@default None]
     updated_at : string option; [@default None]

@@ -227,6 +227,7 @@ module Issues_and_pull_requests = struct
     end
 
     type t = {
+      advanced_search : string option; [@default None]
       order : Order.t; [@default "desc"]
       page : int; [@default 1]
       per_page : int; [@default 30]
@@ -315,6 +316,7 @@ module Issues_and_pull_requests = struct
            ("order", Var (params.order, String));
            ("per_page", Var (params.per_page, Int));
            ("page", Var (params.page, Int));
+           ("advanced_search", Var (params.advanced_search, Option String));
          ])
       ~url
       ~responses:Responses.t

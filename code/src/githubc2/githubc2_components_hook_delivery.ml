@@ -49,6 +49,7 @@ module Primary = struct
     response : Response.t;
     status : string;
     status_code : int;
+    throttled_at : string option; [@default None]
     url : string option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]

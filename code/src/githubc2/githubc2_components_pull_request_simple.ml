@@ -100,7 +100,7 @@ module Primary = struct
     draft : bool option; [@default None]
     head : Head.t;
     html_url : string;
-    id : int;
+    id : int64;
     issue_url : string;
     labels : Labels.t;
     locked : bool;

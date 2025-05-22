@@ -15,6 +15,7 @@ module Request : sig
       | Array : 'a v -> 'a list v
       | Option : 'a v -> 'a option v
       | Int : int v
+      | Int64 : int64 v
       | String : string v
       | Bool : bool v
       | Null : unit v

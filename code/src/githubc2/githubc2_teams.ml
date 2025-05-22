@@ -1398,7 +1398,7 @@ module Add_or_update_repo_permissions_in_org = struct
 
   module Request_body = struct
     module Primary = struct
-      type t = { permission : string [@default "push"] }
+      type t = { permission : string option [@default None] }
       [@@deriving make, yojson { strict = false; meta = true }, show, eq]
     end
 

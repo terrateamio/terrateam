@@ -97,7 +97,7 @@ let refresh_repos ~request_id ~config ~storage installation_id =
           Pgsql_io.Prepared_stmt.execute
             db
             (Sql.insert_installation_repos ())
-            (CCList.map (fun R.{ primary = Rp.{ id; _ }; _ } -> CCInt64.of_int id) repositories)
+            (CCList.map (fun R.{ primary = Rp.{ id; _ }; _ } -> id) repositories)
             (CCList.replicate (CCList.length repositories) installation_id)
             (CCList.map
                (fun R.{ primary = Rp.{ owner = U.{ primary = Up.{ login; _ }; _ }; _ }; _ } ->

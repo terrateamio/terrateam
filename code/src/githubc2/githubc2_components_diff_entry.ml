@@ -16,15 +16,15 @@ module Primary = struct
 
   type t = {
     additions : int;
-    blob_url : string option; [@default None]
+    blob_url : string;
     changes : int;
     contents_url : string;
     deletions : int;
     filename : string;
     patch : string option; [@default None]
     previous_filename : string option; [@default None]
-    raw_url : string option; [@default None]
-    sha : string option; [@default None]
+    raw_url : string;
+    sha : string;
     status : Status_.t;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
