@@ -25,6 +25,7 @@ module Run_type = Terrat_api_components_run_type
 module Server_config = Terrat_api_components_server_config
 module Server_config_github = Terrat_api_components_server_config_github
 module Task = Terrat_api_components_task
+module Tier = Terrat_api_components_tier
 module User = Terrat_api_components_user
 module Work_manifest = Terrat_api_components_work_manifest
 module Work_manifest_apply = Terrat_api_components_work_manifest_apply
