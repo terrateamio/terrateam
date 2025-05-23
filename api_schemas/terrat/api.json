@@ -128,17 +128,27 @@
       "installation": {
         "additionalProperties": false,
         "properties": {
+          "account_status": {
+            "type": "string"
+          },
           "id": {
             "type": "string"
           },
           "name": {
             "type": "string"
+          },
+          "tier": {
+            "$ref": "#/components/schemas/tier"
+          },
+          "trial_ends_at": {
+            "type": "string"
           }
         },
         "required": [
+          "account_status",
           "id",
           "name",
-          "type"
+          "tier"
         ],
         "type": "object"
       },
@@ -695,6 +705,28 @@
           "name",
           "state",
           "updated_at"
+        ],
+        "type": "object"
+      },
+      "tier": {
+        "additionalProperties": false,
+        "properties": {
+          "features": {
+            "additionalProperties": false,
+            "properties": {
+              "num_users_per_month": {
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "features",
+          "name"
         ],
         "type": "object"
       },
