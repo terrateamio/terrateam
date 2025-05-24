@@ -30,7 +30,7 @@
 /* === Global Font === */
 :root {
   --sl-font: 'Apertura', sans-serif;
-  --purple-hsl: 255, 60%, 60%;
+  --purple-hsl: 200, 60%, 60%;
   --overlay-blurple: hsla(var(--purple-hsl), 0.2);
 
   /* Dark mode colors. */
@@ -49,7 +49,7 @@
 
 /* Light mode overrides */
 :root[data-theme='light'] {
-  --purple-hsl: 255, 85%, 65%;
+  --purple-hsl: 200, 85%, 65%;
   --sl-color-accent-low: #cce9ff;
   --sl-color-accent: #008ae6;
   --sl-color-accent-high: #004c80;
