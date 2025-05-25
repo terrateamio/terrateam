@@ -2,14 +2,6 @@ with
 dirspaces as (
     select dir, workspace from unnest($dirs, $workspaces) as v(dir, workspace)
 ),
-latest_unlocks as (
-    select
-        repository,
-        pull_number,
-        max(unlocked_at) as unlocked_at
-    from github_pull_request_unlocks
-    group by repository, pull_number
-),
 -- First things we'll do is for each pull request determine all of the dirspaces
 -- that need to be applied.
 --
@@ -32,9 +24,11 @@ pull_request_applies_previous_commits as (
         on gpr.repository = gwm.repository and gpr.pull_number = gwm.pull_number
     inner join work_manifest_dirspaceflows as gwmds
         on gwmds.work_manifest = gwm.id
-    left join latest_unlocks as gpru
+    left join github_pull_request_latest_unlocks as gpru
         on gpru.repository = gpr.repository and gpru.pull_number = gpr.pull_number
-    where (gpr.base_sha <> gwm.base_sha or gpr.sha <> gwm.sha)
+    where gwm.repository = $repository
+          and gwm.pull_number = $pull_number
+          and (gpr.base_sha <> gwm.base_sha or gpr.sha <> gwm.sha)
           and gwm.run_type in ('apply', 'autoapply', 'unsafe-apply')
           and (gpru.unlocked_at is null or gpru.unlocked_at < gwm.created_at)
 ),
@@ -48,10 +42,13 @@ all_necessary_dirspaces as (
         coalesce(gds.workspace, prapc.workspace) as workspace,
         gds.lock_policy as lock_policy
     from github_pull_requests as gpr
-    inner join change_dirspaces as gds
-        on gds.base_sha = gpr.base_sha and (gds.sha = gpr.sha or gds.sha = gpr.merged_sha)
+    inner join github_change_dirspaces as gds
+        on gds.repository = gpr.repository
+           and gds.base_sha = gpr.base_sha
+           and (gds.sha = gpr.sha or gds.sha = gpr.merged_sha)
     left join pull_request_applies_previous_commits as prapc
         on gpr.repository = prapc.repository and gpr.pull_number = prapc.pull_number
+    where gpr.repository = $repository and gpr.pull_number = $pull_number
 ),
 unmerged_pull_requests_with_applies as (
     select distinct
@@ -60,9 +57,10 @@ unmerged_pull_requests_with_applies as (
     from github_pull_requests as gpr
     inner join github_work_manifests as gwm
         on gwm.repository = gpr.repository and gwm.pull_number = gpr.pull_number
-    left join latest_unlocks as gpru
+    left join github_pull_request_latest_unlocks as gpru
         on gpru.repository = gpr.repository and gpru.pull_number = gpr.pull_number
-    where gpr.state in ('open', 'closed') and gwm.run_type in ('apply', 'autoapply', 'unsafe-apply')
+    where gwm.repository = $repository
+          and gpr.state in ('open', 'closed') and gwm.run_type in ('apply', 'autoapply', 'unsafe-apply')
           and (gpru.unlocked_at is null or gpru.unlocked_at < gwm.created_at)
 ),
 -- All those dirspaces that are in a pull request that has at least one apply
@@ -89,9 +87,10 @@ merged_pull_requests as (
         gpr.sha as sha,
         gpr.merged_sha as merged_sha
     from github_pull_requests as gpr
-    left join latest_unlocks as unlocks
+    left join github_pull_request_latest_unlocks as unlocks
         on unlocks.repository = gpr.repository and unlocks.pull_number = gpr.pull_number
-    where gpr.state = 'merged'
+    where gpr.repository = $repository
+          and gpr.state = 'merged'
           and (unlocks.unlocked_at is null or unlocks.unlocked_at < gpr.merged_at)
 ),
 applies_for_merged_pull_requests as (
@@ -111,7 +110,8 @@ applies_for_merged_pull_requests as (
            and results.path = gwmds.path and results.workspace = gwmds.workspace
     left join plans as gtp
         on gtp.work_manifest = gwm.id and gtp.path = gwmds.path and gtp.workspace = gwmds.workspace
-    where (gwm.run_type in ('apply', 'autoapply', 'unsafe-apply') and results.success)
+    where gwm.repository = $repository
+          and (gwm.run_type in ('apply', 'autoapply', 'unsafe-apply') and results.success)
           or (gwm.run_type in ('autoplan', 'plan') and gtp.has_changes is not null and not gtp.has_changes)
 ),
 unapplied_dirspaces as (

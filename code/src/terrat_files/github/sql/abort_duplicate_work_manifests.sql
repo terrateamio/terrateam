@@ -2,21 +2,6 @@ with
 dirspaces as (
     select dir, workspace from unnest($dirs, $workspaces) as v(dir, workspace)
 ),
-latest_unlocks as (
-    select
-        repository,
-        pull_number,
-        max(unlocked_at) as unlocked_at
-    from github_pull_request_unlocks
-    group by repository, pull_number
-),
-latest_drift_unlocks as (
-    select
-        repository,
-        max(unlocked_at) as unlocked_at
-    from github_drift_unlocks
-    group by repository
-),
 work_manifests_for_dirspace as (
     select distinct
         gwm.id
@@ -25,8 +10,8 @@ work_manifests_for_dirspace as (
         on gwmdsfs.work_manifest = gwm.id
     inner join dirspaces
         on dirspaces.dir = gwmdsfs.path and dirspaces.workspace = gwmdsfs.workspace
-    where gwm.state in ('queued', 'running')
-          and gwm.repository = $repository
+    where gwm.repository = $repository
+          and gwm.state in ('queued', 'running')
           and gwm.pull_number = $pull_number
           and (gwm.run_type in ('autoplan', 'plan') and $run_type in ('autoplan', 'plan'))
 )
