@@ -1,12 +1,12 @@
 with
 rt1 as (
-    select * from repo_trees where installation_id = $installation_id and sha = $sha
+    select * from github_repo_trees where installation_id = $installation_id and sha = $sha
 ),
 base_sha_prs as (
     select * from github_pull_requests where sha = $base_sha or merged_sha = $base_sha
 ),
 rt2 as (
-    select * from repo_trees as rt
+    select * from github_repo_trees as rt
     inner join base_sha_prs as bsp
           on rt.sha in (bsp.sha, bsp.merged_sha)
     where rt.installation_id = $installation_id

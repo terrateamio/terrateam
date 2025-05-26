@@ -1,6 +1,5 @@
-insert into repo_trees (installation_id, sha, path, changed, id, installation)
+insert into repo_trees (sha, path, changed, id, installation)
 select
-        x.installation_id,
         x.sha,
         x.path,
         x.changed,
