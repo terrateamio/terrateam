@@ -1,19 +1,75 @@
+/* === Custom Fonts === */
+@font-face {
+  font-family: 'Apertura';
+  src: url('/fonts/Apertura_Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Apertura';
+  src: url('/fonts/Apertura_Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Apertura';
+  src: url('/fonts/Apertura_Obliq.otf') format('opentype');
+  font-weight: 400;
+  font-style: oblique;
+}
+
+@font-face {
+  font-family: 'Apertura';
+  src: url('/fonts/Apertura_Bold_Obliq.otf') format('opentype');
+  font-weight: 700;
+  font-style: oblique;
+}
+
+/* === Global Font === */
 :root {
-  --purple-hsl: 255, 60%, 60%;
+  --sl-font: 'Apertura', sans-serif;
+  --purple-hsl: 200, 60%, 60%;
   --overlay-blurple: hsla(var(--purple-hsl), 0.2);
+
+  /* Dark mode colors. */
+  --sl-color-accent-low: #003d66;
+  --sl-color-accent: #008ae6;
+  --sl-color-accent-high: #66c2ff;
+  --sl-color-white: #ffffff;
+  --sl-color-gray-1: #eceef2;
+  --sl-color-gray-2: #c0c2c7;
+  --sl-color-gray-3: #888b96;
+  --sl-color-gray-4: #545861;
+  --sl-color-gray-5: #353841;
+  --sl-color-gray-6: #24272f;
+  --sl-color-black: #17181c;
 }
 
-:root[data-theme="light"] {
-  --purple-hsl: 255, 85%, 65%;
+/* Light mode overrides */
+:root[data-theme='light'] {
+  --purple-hsl: 200, 85%, 65%;
+  --sl-color-accent-low: #cce9ff;
+  --sl-color-accent: #008ae6;
+  --sl-color-accent-high: #004c80;
+  --sl-color-white: #17181c;
+  --sl-color-gray-1: #24272f;
+  --sl-color-gray-2: #353841;
+  --sl-color-gray-3: #545861;
+  --sl-color-gray-4: #888b96;
+  --sl-color-gray-5: #c0c2c7;
+  --sl-color-gray-6: #eceef2;
+  --sl-color-gray-7: #f5f6f8;
+  --sl-color-black: #ffffff;
 }
 
+/* === Site Styles === */
 [data-has-hero] .page {
   background:
     linear-gradient(215deg, var(--overlay-blurple), transparent 40%),
-    radial-gradient(var(--overlay-blurple), transparent 40%) no-repeat -60vw -40vh /
-      105vw 200vh,
-    radial-gradient(var(--overlay-blurple), transparent 65%) no-repeat 50%
-      calc(100% + 20rem) / 60rem 30rem;
+    radial-gradient(var(--overlay-blurple), transparent 40%) no-repeat -60vw -40vh / 105vw 200vh,
+    radial-gradient(var(--overlay-blurple), transparent 65%) no-repeat 50% calc(100% + 20rem) / 60rem 30rem;
 }
 
 [data-has-hero] header {
@@ -48,7 +104,7 @@
 }
 
 .content-panel {
-  padding: 4.5rem var(--sl-content-pad-x);
+  padding: 1.5rem var(--sl-content-pad-x);
 }
 
 summary {
@@ -75,10 +131,6 @@ summary > * {
   padding-left: 1rem;
 }
 
-.content-panel {
-  padding: 1.5rem var(--sl-content-pad-x);
-}
-
 .sl-markdown-content :is(th, td):not(:where(.not-content *)) > code {
-    overflow-wrap: normal;
+  overflow-wrap: normal;
 }

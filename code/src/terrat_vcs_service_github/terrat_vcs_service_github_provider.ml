@@ -186,9 +186,6 @@ module Db = struct
         (* installation_id *)
         Ret.bigint
         //
-        (* repo_id *)
-        Ret.bigint
-        //
         (* repo_owner *)
         Ret.text
         //
@@ -366,7 +363,7 @@ module Db = struct
     let delete_drift_schedules =
       Pgsql_io.Typed_sql.(
         sql
-        /^ "delete from drift_schedules where repository = $repo_id and not (name = any($names))"
+        /^ read "delete_drift_schedules.sql"
         /% Var.bigint "repo_id"
         /% Var.(str_array (text "names")))
 
@@ -697,7 +694,7 @@ module Db = struct
                 completed_at
                 created_at
                 pull_request_id
-                repository
+                repo_id
                 run_id
                 run_type
                 branch_ref
@@ -706,7 +703,6 @@ module Db = struct
                 user
                 run_kind
                 installation_id
-                repo_id
                 owner
                 name
                 environment

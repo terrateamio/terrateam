@@ -9,14 +9,12 @@ select
     gwm.repository,
     gwm.pull_number,
     coalesce(gpr.base_branch, gdwm.branch),
-    gir.installation_id,
-    gir.owner,
-    gir.name,
+    gwm.installation_id,
+    gwm.repo_owner,
+    gwm.repo_name,
     gwm.run_kind,
     gwm.username
-from work_manifests as gwm
-inner join github_installation_repositories as gir
-    on gir.id = gwm.repository
+from github_work_manifests as gwm
 left join github_pull_requests as gpr
     on gwm.repository = gpr.repository and gwm.pull_number = gpr.pull_number
 left join drift_work_manifests as gdwm

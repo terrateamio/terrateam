@@ -6,7 +6,7 @@ pull_request_applies_previous_commits as (
         gwmds.path as path,
         gwmds.workspace as workspace
     from github_pull_requests as gpr
-    inner join work_manifests as gwm
+    inner join github_work_manifests as gwm
         on gpr.repository = gwm.repository and gpr.pull_number = gwm.pull_number
     inner join work_manifest_dirspaceflows as gwmds
         on gwmds.work_manifest = gwm.id
@@ -20,7 +20,7 @@ all_necessary_dirspaces as (
         coalesce(gds.path, prapc.path) as path,
         coalesce(gds.workspace, prapc.workspace) as workspace
     from github_pull_requests as gpr
-    inner join change_dirspaces as gds
+    inner join github_change_dirspaces as gds
         on gds.base_sha = gpr.base_sha and (gds.sha = gpr.sha or gds.sha = gpr.merged_sha)
     left join pull_request_applies_previous_commits as prapc
         on gpr.repository = prapc.repository and gpr.pull_number = prapc.pull_number
@@ -41,7 +41,7 @@ work_manifest_results as (
                                gwmr.path,
                                gwmr.workspace
                            order by gwm.completed_at desc) as rn
-    from work_manifests as gwm
+    from github_work_manifests as gwm
     inner join work_manifest_results as gwmr
         on gwmr.work_manifest = gwm.id
 ),

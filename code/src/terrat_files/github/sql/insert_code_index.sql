@@ -1,16 +1,14 @@
-with
-installation_id as (
-    select
-        gwm.sha as sha,
-        gir.installation_id as installation_id
-    from work_manifests as gwm
-    inner join github_installation_repositories as gir
-        on gir.id = gwm.repository
-    where gwm.id = $work_manifest
-    limit 1
-)
-insert into code_indexes (sha, installation_id, index, installation)
-select sha, installation_id.installation_id, $index, gim.core_id from installation_id
+insert into code_indexes (sha, index, installation)
+select
+        sha,
+        $index,
+        gim.core_id
+from work_manifests as wm
+inner join github_repositories_map as grm
+      on grm.core_id = wm.repo
+inner join github_installation_repositories as gir
+      on gir.id = grm.repository_id
 inner join github_installations_map as gim
-      on gim.installation_id = installation_id.installation_id
-on conflict (installation_id, sha) do update set index = excluded.index
+      on gim.installation_id = gir.installation_id
+where wm.id = $work_manifest
+on conflict on constraint code_indexes_pkey do update set index = excluded.index

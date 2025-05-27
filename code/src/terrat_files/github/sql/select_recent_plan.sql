@@ -1,10 +1,10 @@
 with
-work_manifest as (
+wm as (
      select
          gwm.id as id,
          gwm.repository as repository,
          gwm.pull_number as pull_number
-     from work_manifests as gwm
+     from github_work_manifests as gwm
      where gwm.id = $id and gwm.state = 'running'
 ),
 recent_completed_work_manifest as (
@@ -13,9 +13,9 @@ recent_completed_work_manifest as (
         gwmr.success as success,
         gtp.data as data
     from work_manifest_results as gwmr
-    inner join work_manifests as gwm
+    inner join github_work_manifests as gwm
         on gwm.id = gwmr.work_manifest
-    inner join work_manifest as wm
+    inner join wm
         on wm.repository = gwm.repository
     left join drift_work_manifests as gdwm
         on gdwm.work_manifest = gwmr.work_manifest

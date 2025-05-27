@@ -4,7 +4,7 @@ latest_unlocks as (
         repository,
         pull_number,
         max(unlocked_at) as unlocked_at
-    from pull_request_unlocks
+    from github_pull_request_unlocks
     where repository = $repository and pull_number = $pull_number
     group by repository, pull_number
 ),
@@ -12,7 +12,7 @@ latest_drift_unlocks as (
     select
         repository,
         max(unlocked_at) as unlocked_at
-    from drift_unlocks
+    from github_drift_unlocks
     where repository = $repository
     group by repository
 ),

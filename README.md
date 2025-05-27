@@ -1,6 +1,6 @@
 <picture width="400px" align="center">
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/terrateamio/brand-artifacts/a3a6f1818c60b3f14a982e30f93aa4dd9ca3e08e/terrateam-full-logo-white-text.svg">
-  <img alt="Terrateam" src="https://raw.githubusercontent.com/terrateamio/brand-artifacts/a3a6f1818c60b3f14a982e30f93aa4dd9ca3e08e/terrateam-full-logo.svg" width="400px" align="center">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/terrateamio/brand-artifacts/fa9cb8e10b09478065fc2566e486d4c65d1eb912/logos/wordmark/blue%3Awhite/terrateam_wordmark_blue-white.svg">
+  <img alt="Terrateam" src="https://raw.githubusercontent.com/terrateamio/brand-artifacts/fa9cb8e10b09478065fc2566e486d4c65d1eb912/logos/wordmark/blue%3Adark%20blue/terrateam_wordmark_blue-dark%20blue.svg" width="400px" align="center">
 </picture>
 
 [![Stars](https://img.shields.io/github/stars/terrateamio/terrateam)](https://github.com/terrateamio/terrateam/stargazers)
