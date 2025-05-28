@@ -3,17 +3,25 @@ title: Layered Runs
 description: Execute Terraform operations in a specific order across multiple layers of your infrastructure.  
 ---
 
+import MermaidDiagram from '../../../components/MermaidDiagram.astro';
+
 In complex infrastructure setups, certain Terraform operations cannot be executed in a single step. Instead, they require multiple plan and apply cycles across different layers of your infrastructure. Terrateam's Layered Runs feature allows you to define these dependencies and execute operations in the correct order, ensuring that each layer is applied only after its dependencies have been successfully applied.
 
 ## Understanding Layered Runs
+
 Layered Runs are designed to handle scenarios where infrastructure components are interdependent. For example, a network must be established before deploying a database that relies on that network, and the database must be set up before an application can connect to it. These layers must be applied in sequence to avoid errors and ensure a stable deployment.
 
 Terrateam helps manage these dependencies through the `depends_on` configuration, which specifies the relationship between different directories or environments in your repository.
 
+:::tip
+The `${DIR}` variable in `file_patterns` refers to the directory currently being matched by the `dirs` configuration. For example, if your dir key is `envs/asia/database`, `${DIR}` will expand to `envs/asia/database`. See [Dirs reference](/configuration-reference/dirs#globs) for more details.
+:::
+
 ### How It Works
+
 The `depends_on` key within the `when_modified` configuration allows you to specify dependencies between different layers of your infrastructure. When changes are detected in a lower layer, Terrateam ensures that the corresponding plan and apply operations are executed first. If the apply operation is successful, the next layer’s plan and apply operations are triggered.
 
-For example:
+**The following code block is a configuration snippet to be placed within your `.terrateam/config.yml` file:**
 
 ```yaml
 dirs:
@@ -35,13 +43,24 @@ This configuration ensures that:
 2. After the `network` apply is successful, the `database` layer is then planned and applied.
 3. Finally, if the `database` layer is successfully applied, the `application` layer is planned and applied.
 
+<MermaidDiagram chart={`
+flowchart LR
+  network["network"]
+  database["database"]
+  application["application"]
+  network --> database
+  database --> application
+`} />
+
 ### Advanced Dependency Configuration
+
 The `depends_on` key in your `when_modified` configuration allows for complex dependency management by using logical operators with tag queries, and directory references. Understanding these components will help you set up more flexible and powerful configurations.
 
 #### Logical Operators
+
 Logical operators such as `or` and `and` can be used to combine multiple dependencies within the `depends_on` key. This allows you to specify conditions where changes in any one of several directories will trigger the necessary plan and apply operations. See the [tag queries documentation](/advanced-workflows/tags/#tag-query-syntax) for details.
 
-Example:
+**Example snippet for `.terrateam/config.yml`:**
 ```yaml
 when_modified:
   depends_on: 'dir:network or dir:database'
@@ -49,31 +68,30 @@ when_modified:
 In this example, changes to either the `network` or `database` directory will trigger the operation.
 
 #### Directory References
-##### `dir:`
-This prefix is used to define an absolute path to a directory within your repository. It is useful when you have a clear and fixed structure for your directories.
 
-Example:
-```yaml
-when_modified:
-  depends_on: 'dir:network'
-```
-In this example, the `network` directory is referenced absolutely, and any changes here will affect dependent layers.
+- **`dir:`**  
+  This prefix is used to define an absolute path to a directory within your repository. It is useful when you have a clear and fixed structure for your directories.
 
-##### `relative_dir:`
-This prefix allows you to specify a path relative to the current directory. It is particularly useful when your directory structure might change, or when you need to maintain flexibility in your dependency definitions.
+  ```yaml
+  when_modified:
+    depends_on: 'dir:network'
+  ```
 
-Example:
-```yaml
-when_modified:
-  depends_on: 'relative_dir:../network'
-```
-In this example, the `network` directory is referenced relative to the current directory, allowing for more flexible configurations.
+- **`relative_dir:`**  
+  This prefix allows you to specify a path relative to the current directory. It is particularly useful when your directory structure might change, or when you need to maintain flexibility in your dependency definitions.
 
-### Use Cases
+  ```yaml
+  when_modified:
+    depends_on: 'relative_dir:../network'
+  ```
 
-#### Sequential Infrastructure Deployment
+## Use Cases
+
+### Sequential Infrastructure Deployment
+
 In scenarios where your infrastructure is composed of multiple interdependent layers (e.g., network, database, application), it is crucial to ensure that these layers are deployed in the correct sequence. This is necessary both when rebuilding the entire infrastructure from scratch (e.g., in a disaster recovery situation) and when making ongoing modifications to any of the layers.
 
+**Example snippet for `.terrateam/config.yml`:**
 ```yaml
 dirs:
   network:
@@ -89,11 +107,20 @@ dirs:
       file_patterns: ["${DIR}/*.tf"]
 ```
 
-This configuration triggers a plan operation for the `network` layer if changes are detected. If the apply for the `network` layer is successful, a plan operation will be triggered for the `database` layer, which depends on `network`. If the `database` layer's apply is successful, the process continues with a plan operation for the `application` layer, and so on. This ensures that the infrastructure is deployed or updated in the correct order, preventing errors and ensuring stable operations across all layers.
+<MermaidDiagram chart={`
+flowchart LR
+  network["network"]
+  database["database"]
+  application["application"]
+  network --> database
+  database --> application
+`} />
 
-#### Complex Dependency Management with Multiple Layers
+### Complex Dependency Management with Multiple Layers
+
 In more advanced setups, you might have multiple layers that depend on one or more preceding layers. For example, consider a scenario where two application environments (`app1` and `app2`) both depend on a shared `database`, which in turn depends on a `network` layer. Changes to the `network` layer should trigger updates to both `database` and subsequently both `app1` and `app2`.
 
+**Example snippet for `.terrateam/config.yml`:**
 ```yaml
 dirs:
   network:
@@ -117,18 +144,25 @@ dirs:
       file_patterns: ["${DIR}/*.tf"]
 ```
 
-In this configuration, any changes to the `network` layer will trigger a plan operation for the `network` layer first. If the apply for the `network` layer is successful, a plan operation will be triggered for the `database` layer. Following the successful application of the `database` layer, both `app1` and `app2` will trigger their respective plan and apply operations.
+<MermaidDiagram chart={`
+flowchart TD
+  network["network"]
+  database["database"]
+  app1["app1"]
+  app2["app2"]
+  shared_resources["shared_resources"]
+  network --> database
+  database --> app1
+  database --> app2
+  network --> shared_resources
+  database --> shared_resources
+`} />
 
-Additionally, the `shared_resources` directory will trigger a plan and apply operation if either the `network` or `database` layer is modified, ensuring that any shared infrastructure components are consistently updated in response to changes in either dependency.
+### Maximizing Reusable Configuration
 
-#### Maximizing Reusable Configuration
-By structuring the repository such that environments follow a common pattern,
-the Terrateam configuration can be simplified such that each layer is defined
-once.
+By structuring the repository such that environments follow a common pattern, the Terrateam configuration can be simplified such that each layer is defined once.
 
-For example, the following repository shows four environments, `asia`, `europe`,
-`us-east` and `us-west`.  Inside each of these directories are the services:
-`application`, `database`, `networking`, and `block_storage`.
+For example, the following repository shows four environments, `asia`, `europe`, `us-east`, and `us-west`. Inside each of these directories are the services: `application`, `database`, `networking`, and `block_storage`.
 
 ```
 .
@@ -173,8 +207,7 @@ We define the layers to be from bottom to top:
 2. `database` and `block_storage`
 3. `application`
 
-The following configuration will trigger each layer within the correct directory:
-
+**Example snippet for `.terrateam/config.yml`:**
 ```yaml
 dirs:
   'envs/*/database':
@@ -188,16 +221,24 @@ dirs:
       depends_on: 'relative_dir:../database or relative_dir:../block_storage'
 ```
 
-That is, if `envs/asia/database` changes, then the `envs/asia/application` layer
-will run.  If `us-west/networking` changes then the `us-west/database` and
-`us-west/block_storage` layer will be triggered followed by `us-west/application`.
+<MermaidDiagram chart={`
+flowchart TD
+  networking["networking"]
+  database["database"]
+  block_storage["block_storage"]
+  application["application"]
+  networking --> database
+  networking --> block_storage
+  database --> application
+  block_storage --> application
+`} />
 
-Structuring the repository this way allows for a single configuration to apply
-to every environment.  Note that not all environments have the same services,
-only two of them have `block_storage`, but that is not a problem because the
-configuration will only apply to those services that exist.
+That is, if `envs/asia/database` changes, then the `envs/asia/application` layer will run. If `us-west/networking` changes then the `us-west/database` and `us-west/block_storage` layers will be triggered, followed by `us-west/application`.
+
+Structuring the repository this way allows for a single configuration to apply to every environment. Note that not all environments have the same services, only two of them have `block_storage`, but that is not a problem because the configuration will only apply to those services that exist.
 
 ## Best Practices
+
 - Ensure that the `depends_on` relationships between layers are well-defined and reflect the true dependencies in your infrastructure. This helps avoid circular dependencies and ensures a smooth execution flow.
 - Utilize tag queries in conjunction with `depends_on` to target specific directories or environments, ensuring that only the necessary layers are triggered for a plan or apply operation.
 - Structure your infrastructure into distinct, modular layers that can be managed independently. This modularity simplifies dependency management and allows for more granular control over Terraform operations.
