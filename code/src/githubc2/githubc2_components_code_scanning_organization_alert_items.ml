@@ -1,6 +1,7 @@
 module Primary = struct
   type t = {
     created_at : string;
+    dismissal_approved_by : Githubc2_components_nullable_simple_user.t option; [@default None]
     dismissed_at : string option;
     dismissed_by : Githubc2_components_nullable_simple_user.t option;
     dismissed_comment : string option; [@default None]
@@ -11,7 +12,7 @@ module Primary = struct
     most_recent_instance : Githubc2_components_code_scanning_alert_instance.t;
     number : int;
     repository : Githubc2_components_simple_repository.t;
-    rule : Githubc2_components_code_scanning_alert_rule.t;
+    rule : Githubc2_components_code_scanning_alert_rule_summary.t;
     state : Githubc2_components_code_scanning_alert_state.t;
     tool : Githubc2_components_code_scanning_analysis_tool.t;
     updated_at : string option; [@default None]

@@ -42,7 +42,7 @@ module Primary = struct
     created_at : string;
     diff_hunk : string;
     html_url : string;
-    id : int;
+    id : int64;
     in_reply_to_id : int option; [@default None]
     line : int option; [@default None]
     node_id : string;
@@ -52,7 +52,7 @@ module Primary = struct
     original_start_line : int option; [@default None]
     path : string;
     position : int option;
-    pull_request_review_id : int option;
+    pull_request_review_id : int64 option;
     pull_request_url : string;
     reactions : Githubc2_components_reaction_rollup.t option; [@default None]
     side : Side.t; [@default "RIGHT"]

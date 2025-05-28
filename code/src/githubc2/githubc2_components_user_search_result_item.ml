@@ -15,7 +15,7 @@ module Primary = struct
     gravatar_id : string option;
     hireable : bool option; [@default None]
     html_url : string;
-    id : int;
+    id : int64;
     location : string option; [@default None]
     login : string;
     name : string option; [@default None]
@@ -34,6 +34,7 @@ module Primary = struct
     type_ : string; [@key "type"]
     updated_at : string option; [@default None]
     url : string;
+    user_view_type : string option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

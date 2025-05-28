@@ -9,7 +9,7 @@ module Primary = struct
     event : string;
     id : int;
     node_id : string;
-    performed_via_github_app : Githubc2_components_integration.t;
+    performed_via_github_app : Githubc2_components_integration.t option;
     url : string;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]

@@ -246,7 +246,7 @@ end
 module Update_review_comment = struct
   module Parameters = struct
     type t = {
-      comment_id : int;
+      comment_id : int64;
       owner : string;
       repo : string;
     }
@@ -285,7 +285,7 @@ module Update_review_comment = struct
          [
            ("owner", Var (params.owner, String));
            ("repo", Var (params.repo, String));
-           ("comment_id", Var (params.comment_id, Int));
+           ("comment_id", Var (params.comment_id, Int64));
          ])
       ~query_params:[]
       ~url
@@ -296,7 +296,7 @@ end
 module Delete_review_comment = struct
   module Parameters = struct
     type t = {
-      comment_id : int;
+      comment_id : int64;
       owner : string;
       repo : string;
     }
@@ -335,7 +335,7 @@ module Delete_review_comment = struct
          [
            ("owner", Var (params.owner, String));
            ("repo", Var (params.repo, String));
-           ("comment_id", Var (params.comment_id, Int));
+           ("comment_id", Var (params.comment_id, Int64));
          ])
       ~query_params:[]
       ~url
@@ -346,7 +346,7 @@ end
 module Get_review_comment = struct
   module Parameters = struct
     type t = {
-      comment_id : int;
+      comment_id : int64;
       owner : string;
       repo : string;
     }
@@ -388,7 +388,7 @@ module Get_review_comment = struct
          [
            ("owner", Var (params.owner, String));
            ("repo", Var (params.repo, String));
-           ("comment_id", Var (params.comment_id, Int));
+           ("comment_id", Var (params.comment_id, Int64));
          ])
       ~query_params:[]
       ~url
@@ -507,6 +507,11 @@ module Get = struct
       [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
+    module Not_acceptable = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
     module Internal_server_error = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show, eq]
@@ -529,6 +534,7 @@ module Get = struct
       [ `OK of OK.t
       | `Not_modified
       | `Not_found of Not_found.t
+      | `Not_acceptable of Not_acceptable.t
       | `Internal_server_error of Internal_server_error.t
       | `Service_unavailable of Service_unavailable.t
       ]
@@ -539,6 +545,7 @@ module Get = struct
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
         ("304", fun _ -> Ok `Not_modified);
         ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ("406", Openapi.of_json_body (fun v -> `Not_acceptable v) Not_acceptable.of_yojson);
         ( "500",
           Openapi.of_json_body (fun v -> `Internal_server_error v) Internal_server_error.of_yojson
         );
@@ -754,7 +761,7 @@ end
 module Create_reply_for_review_comment = struct
   module Parameters = struct
     type t = {
-      comment_id : int;
+      comment_id : int64;
       owner : string;
       pull_number : int;
       repo : string;
@@ -808,7 +815,7 @@ module Create_reply_for_review_comment = struct
            ("owner", Var (params.owner, String));
            ("repo", Var (params.repo, String));
            ("pull_number", Var (params.pull_number, Int));
-           ("comment_id", Var (params.comment_id, Int));
+           ("comment_id", Var (params.comment_id, Int64));
          ])
       ~query_params:[]
       ~url

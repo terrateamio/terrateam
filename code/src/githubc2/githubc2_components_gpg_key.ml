@@ -50,7 +50,7 @@ module Primary = struct
           created_at : string option; [@default None]
           emails : Emails.t option; [@default None]
           expires_at : string option; [@default None]
-          id : int option; [@default None]
+          id : int64 option; [@default None]
           key_id : string option; [@default None]
           primary_key_id : int option; [@default None]
           public_key : string option; [@default None]
@@ -75,7 +75,7 @@ module Primary = struct
     created_at : string;
     emails : Emails.t;
     expires_at : string option;
-    id : int;
+    id : int64;
     key_id : string;
     name : string option; [@default None]
     primary_key_id : int option;

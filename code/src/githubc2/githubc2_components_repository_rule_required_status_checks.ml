@@ -7,6 +7,7 @@ module Primary = struct
       end
 
       type t = {
+        do_not_enforce_on_create : bool option; [@default None]
         required_status_checks : Required_status_checks.t;
         strict_required_status_checks_policy : bool;
       }

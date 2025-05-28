@@ -1,7 +1,7 @@
 module Primary = struct
   type t = {
     created_at : string;
-    id : int;
+    id : int64;
     key : string;
     read_only : bool;
     title : string;

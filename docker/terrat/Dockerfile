@@ -50,8 +50,7 @@ WORKDIR /
 
 # Set up opam repositories and dependencies
 RUN eval $(opam env) && \
-    opam repository set-url --set-default default "https://github.com/jjm-enterprises/opam-repository.git#terrateam" && \
-    opam switch create -y 5.1.1 && \
+    opam switch create -y 5.3.0 && \
     eval $(opam env) && \
     opam repository add opam-acsl mono/opam && \
     opam pin add -y containers 3.12 && \

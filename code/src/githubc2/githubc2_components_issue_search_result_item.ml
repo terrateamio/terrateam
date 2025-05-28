@@ -40,6 +40,19 @@ module Primary = struct
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
   end
 
+  module Sub_issues_summary_ = struct
+    module Primary = struct
+      type t = {
+        completed : int;
+        percent_completed : int;
+        total : int;
+      }
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
+    end
+
+    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+  end
+
   type t = {
     active_lock_reason : string option; [@default None]
     assignee : Githubc2_components_nullable_simple_user.t option;
@@ -70,9 +83,11 @@ module Primary = struct
     score : float;
     state : string;
     state_reason : string option; [@default None]
+    sub_issues_summary : Sub_issues_summary_.t option; [@default None]
     text_matches : Githubc2_components_search_result_text_matches.t option; [@default None]
     timeline_url : string option; [@default None]
     title : string;
+    type_ : Githubc2_components_issue_type.t option; [@default None] [@key "type"]
     updated_at : string;
     url : string;
     user : Githubc2_components_nullable_simple_user.t option;

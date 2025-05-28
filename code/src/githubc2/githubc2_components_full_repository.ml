@@ -1,4 +1,8 @@
 module Primary = struct
+  module Custom_properties = struct
+    include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Json_schema.Obj)
+  end
+
   module Merge_commit_message = struct
     let t_of_yojson = function
       | `String "PR_BODY" -> Ok "PR_BODY"
@@ -82,6 +86,7 @@ module Primary = struct
     contents_url : string;
     contributors_url : string;
     created_at : string;
+    custom_properties : Custom_properties.t option; [@default None]
     default_branch : string;
     delete_branch_on_merge : bool option; [@default None]
     deployments_url : string;
@@ -99,7 +104,7 @@ module Primary = struct
     git_tags_url : string;
     git_url : string;
     has_discussions : bool;
-    has_downloads : bool;
+    has_downloads : bool option; [@default None]
     has_issues : bool;
     has_pages : bool;
     has_projects : bool;
@@ -107,7 +112,7 @@ module Primary = struct
     homepage : string option;
     hooks_url : string;
     html_url : string;
-    id : int;
+    id : int64;
     is_template : bool option; [@default None]
     issue_comment_url : string;
     issue_events_url : string;

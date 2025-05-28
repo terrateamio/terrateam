@@ -1,5 +1,6 @@
 module Primary = struct
   type t = {
+    commit_oid : string option; [@default None]
     content_type : string;
     created_at : string;
     id : int;

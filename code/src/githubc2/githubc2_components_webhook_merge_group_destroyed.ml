@@ -26,7 +26,7 @@ module Primary = struct
     organization : Githubc2_components_organization_simple_webhooks.t option; [@default None]
     reason : Reason.t option; [@default None]
     repository : Githubc2_components_repository_webhooks.t option; [@default None]
-    sender : Githubc2_components_simple_user_webhooks.t option; [@default None]
+    sender : Githubc2_components_simple_user.t option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

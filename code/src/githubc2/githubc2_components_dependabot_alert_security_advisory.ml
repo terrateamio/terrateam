@@ -68,8 +68,10 @@ end
 type t = {
   cve_id : string option;
   cvss : Cvss.t;
+  cvss_severities : Githubc2_components_cvss_severities.t option; [@default None]
   cwes : Cwes.t;
   description : string;
+  epss : Githubc2_components_security_advisory_epss.t option; [@default None]
   ghsa_id : string;
   identifiers : Identifiers.t;
   published_at : string;

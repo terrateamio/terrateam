@@ -1,5 +1,6 @@
 .PHONY: terrat-api terrat-repo-config terrat-webhooks
 .PHONY: terrat release-terrat debug-terrat
+.PHONY: pins-file
 
 all: .merlin
 
@@ -60,5 +61,10 @@ github-api: release_openapi_cli
 	env OCAMLRUNPARAM=b ./build/release/openapi_cli/openapi_cli.native convert --non-strict-records --input ../api_schemas/github_api/api.github.com.json --name "githubc2" --output-dir ./src/githubc2/
 	find src/githubc2/ -type f -exec ocamlformat -i '{}' \;
 	pds
+
+# This assumes that the necessary work has been done using hll generate to make
+# a package called monorepo that is available via opam
+pins-file:
+	opam list --required-by=monorepo --columns name,version --short | grep -v pds | grep -v ocurl | awk '{print $1, "=", "\"" $2 "\""}' | sort > hll.pins
 
 -include pds.mk

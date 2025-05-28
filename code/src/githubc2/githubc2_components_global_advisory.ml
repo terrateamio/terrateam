@@ -97,45 +97,18 @@ module Type = struct
 end
 
 module Vulnerabilities = struct
-  module Items = struct
-    module Primary = struct
-      module Package_ = struct
-        module Primary = struct
-          type t = {
-            ecosystem : Githubc2_components_security_advisory_ecosystems.t;
-            name : string option;
-          }
-          [@@deriving yojson { strict = false; meta = true }, show, eq]
-        end
-
-        include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-      end
-
-      module Vulnerable_functions = struct
-        type t = string list option [@@deriving yojson { strict = false; meta = true }, show, eq]
-      end
-
-      type t = {
-        first_patched_version : string option;
-        package : Package_.t option;
-        vulnerable_functions : Vulnerable_functions.t option;
-        vulnerable_version_range : string option;
-      }
-      [@@deriving yojson { strict = false; meta = true }, show, eq]
-    end
-
-    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-  end
-
-  type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
+  type t = Githubc2_components_vulnerability.t list
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 type t = {
   credits : Credits.t option;
   cve_id : string option;
   cvss : Cvss.t option;
+  cvss_severities : Githubc2_components_cvss_severities.t option; [@default None]
   cwes : Cwes.t option;
   description : string option;
+  epss : Githubc2_components_security_advisory_epss.t option; [@default None]
   ghsa_id : string;
   github_reviewed_at : string option;
   html_url : string;

@@ -107,6 +107,7 @@ module Get_for_repo = struct
   module Parameters = struct
     type t = {
       owner : string;
+      ref_ : string option; [@default None] [@key "ref"]
       repo : string;
     }
     [@@deriving make, show, eq]
@@ -118,9 +119,22 @@ module Get_for_repo = struct
       [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show, eq]
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
 
-    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
+    type t =
+      [ `OK of OK.t
+      | `Not_found of Not_found.t
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+      ]
   end
 
   let url = "/repos/{owner}/{repo}/license"
@@ -132,7 +146,10 @@ module Get_for_repo = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
-      ~query_params:[]
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("ref", Var (params.ref_, Option String)) ])
       ~url
       ~responses:Responses.t
       `Get

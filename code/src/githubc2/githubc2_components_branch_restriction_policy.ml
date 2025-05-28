@@ -32,6 +32,7 @@ module Primary = struct
               subscriptions_url : string option; [@default None]
               type_ : string option; [@default None] [@key "type"]
               url : string option; [@default None]
+              user_view_type : string option; [@default None]
             }
             [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
@@ -54,6 +55,7 @@ module Primary = struct
         end
 
         type t = {
+          client_id : string option; [@default None]
           created_at : string option; [@default None]
           description : string option; [@default None]
           events : Events.t option; [@default None]
@@ -114,7 +116,7 @@ module Primary = struct
           gists_url : string option; [@default None]
           gravatar_id : string option; [@default None]
           html_url : string option; [@default None]
-          id : int option; [@default None]
+          id : int64 option; [@default None]
           login : string option; [@default None]
           node_id : string option; [@default None]
           organizations_url : string option; [@default None]
@@ -125,6 +127,7 @@ module Primary = struct
           subscriptions_url : string option; [@default None]
           type_ : string option; [@default None] [@key "type"]
           url : string option; [@default None]
+          user_view_type : string option; [@default None]
         }
         [@@deriving yojson { strict = false; meta = true }, show, eq]
       end

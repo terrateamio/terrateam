@@ -1,7 +1,7 @@
 module Primary = struct
   module Permissions = struct
     module Primary = struct
-      module Organization_ = struct
+      module Organization = struct
         module Additional = struct
           type t = string [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -26,7 +26,7 @@ module Primary = struct
       end
 
       type t = {
-        organization : Organization_.t option; [@default None]
+        organization : Organization.t option; [@default None]
         other : Other.t option; [@default None]
         repository : Repository_.t option; [@default None]
       }
@@ -56,7 +56,9 @@ module Primary = struct
     repository_selection : Repository_selection.t;
     token_expired : bool;
     token_expires_at : string option;
+    token_id : int;
     token_last_used_at : string option;
+    token_name : string;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

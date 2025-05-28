@@ -22,7 +22,7 @@ module Primary = struct
     git_tags_url : string;
     hooks_url : string;
     html_url : string;
-    id : int;
+    id : int64;
     issue_comment_url : string;
     issue_events_url : string;
     issues_url : string;
