@@ -1,13 +1,4 @@
 with
-latest_unlocks as (
-    select
-        repository,
-        pull_number,
-        max(unlocked_at) as unlocked_at
-    from github_pull_request_unlocks
-    where repository = $repo_id and pull_number = $pull_number
-    group by repository, pull_number
-),
 wm as (
     select
         gwm.id as id,
@@ -22,9 +13,12 @@ wm as (
          end) as run_type,
         gwm.created_at as created_at
     from github_work_manifests as gwm
-    left join latest_unlocks as unlocks
+    left join github_pull_request_latest_unlocks as unlocks
         on unlocks.repository = gwm.repository and unlocks.pull_number = gwm.pull_number
-    where gwm.run_kind = 'pr' and (unlocks.unlocked_at is null or unlocks.unlocked_at < gwm.created_at)
+    where gwm.repository = $repo_id
+          and gwm.pull_number = $pull_number
+          and gwm.run_kind = 'pr'
+          and (unlocks.unlocked_at is null or unlocks.unlocked_at < gwm.created_at)
 ),
 --- In the case that the pull request being evaluated here is merged, we want to
 --- use the SHA information of the most recently merged pull request (because
@@ -51,13 +45,13 @@ work_manifest_results as (
         gwmr.workspace as workspace,
         gwmr.success as success,
         row_number() over (partition by
-                               gwm.repository,
                                gwmr.path,
                                gwmr.workspace
                            order by gwm.created_at desc) as rn
     from github_work_manifests as gwm
     inner join work_manifest_results as gwmr
         on gwmr.work_manifest = gwm.id
+    where gwm.repository = $repo_id and gwm.pull_number = $pull_number
     order by gwm.created_at desc
 ),
 plans_with_no_changes as (

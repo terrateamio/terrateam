@@ -2,7 +2,7 @@
 ARG BASE_IMAGE
 
 # Optional base setup stage if BASE_IMAGE is not provided
-FROM alpine:3.18 as build-base
+FROM alpine:3.18 AS build-base
 
 # Install base packages
 RUN apk add --no-cache \
@@ -76,14 +76,14 @@ RUN eval $(opam env) && \
     mv build /build-cache
 
 # Use provided BASE_IMAGE if specified, otherwise use the build-base stage
-FROM ${BASE_IMAGE:-build-base} as build-setup
+FROM ${BASE_IMAGE:-build-base} AS build-setup
 
 # Copy source files
 RUN rm -rfv /mono
 COPY ./ /mono
 
 # Build target for code-indexer
-FROM build-setup as code-indexer-build
+FROM build-setup AS code-indexer-build
 WORKDIR /mono/code
 RUN ulimit -s 524288 && ulimit -a && \
     mv /build-cache ./build && \
@@ -92,7 +92,7 @@ RUN ulimit -s 524288 && ulimit -a && \
     find . -name '*.tap' -exec cat '{}' \;
 
 # Build target for terrat-ee
-FROM build-setup as terrat-ee-build
+FROM build-setup AS terrat-ee-build
 WORKDIR /mono/code
 RUN ulimit -s 524288 && ulimit -a && \
     mv /build-cache ./build && \
@@ -102,7 +102,7 @@ RUN ulimit -s 524288 && ulimit -a && \
     find . -name '*.tap' -exec cat '{}' \;
 
 # Build target for terrat-oss
-FROM build-setup as terrat-oss-build
+FROM build-setup AS terrat-oss-build
 WORKDIR /mono/code
 RUN ulimit -s 524288 && ulimit -a && \
     mv /build-cache ./build && \
@@ -111,13 +111,13 @@ RUN ulimit -s 524288 && ulimit -a && \
     find . -name '*.tap' -exec cat '{}' \;
 
 # Final code-indexer image
-FROM alpine:3.18 as code-indexer
+FROM alpine:3.18 AS code-indexer
 COPY --from=code-indexer-build /mono/code/build/release/terrat_code_indexer/terrat_code_indexer.native /usr/local/bin/terrat_code_indexer
 WORKDIR /mnt
 ENTRYPOINT ["/usr/local/bin/terrat_code_indexer"]
 
 # Final terrat-ee image
-FROM alpine:3.18 as terrat-ee
+FROM alpine:3.18 AS terrat-ee
 RUN apk add --no-cache \
     bash \
     curl \
@@ -147,7 +147,7 @@ EXPOSE 8080
 CMD ["runsvdir", "/etc/service"]
 
 # Final terrat-oss image
-FROM alpine:3.18 as terrat-oss
+FROM alpine:3.18 AS terrat-oss
 RUN apk add --no-cache \
     bash \
     curl \
