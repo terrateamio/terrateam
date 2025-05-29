@@ -1,0 +1,743 @@
+module GetApiV3User = struct
+  module Parameters = struct end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v3/user"
+
+  let make () =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module GetApiV4UserActivities = struct
+  module Parameters = struct
+    type t = {
+      from : string; [@default "2024-09-05T09:41:43.021Z"]
+      page : int; [@default 1]
+      per_page : int; [@default 20]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/user/activities"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("from", Var (params.from, String));
+           ("page", Var (params.page, Int));
+           ("per_page", Var (params.per_page, Int));
+         ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PutApiV4UserAvatar = struct
+  module Parameters = struct
+    type t = {
+      putapiv4useravatar : Gitlabc_components.PutApiV4UserAvatar.t; [@key "putApiV4UserAvatar"]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/user/avatar"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Put
+end
+
+module PostApiV4UserEmails = struct
+  module Parameters = struct
+    type t = {
+      postapiv4useremails : Gitlabc_components.PostApiV4UserEmails.t; [@key "postApiV4UserEmails"]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+
+    type t = [ `Created ] [@@deriving show, eq]
+
+    let t = [ ("201", fun _ -> Ok `Created) ]
+  end
+
+  let url = "/api/v4/user/emails"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module GetApiV4UserEmails = struct
+  module Parameters = struct
+    type t = {
+      page : int; [@default 1]
+      per_page : int; [@default 20]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/user/emails"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module DeleteApiV4UserEmailsEmailId = struct
+  module Parameters = struct
+    type t = { email_id : int } [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module No_content = struct end
+
+    type t = [ `No_content ] [@@deriving show, eq]
+
+    let t = [ ("204", fun _ -> Ok `No_content) ]
+  end
+
+  let url = "/api/v4/user/emails/{email_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("email_id", Var (params.email_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
+module GetApiV4UserEmailsEmailId = struct
+  module Parameters = struct
+    type t = { email_id : int } [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/user/emails/{email_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("email_id", Var (params.email_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PostApiV4UserGpgKeys = struct
+  module Parameters = struct
+    type t = {
+      postapiv4usergpgkeys : Gitlabc_components.PostApiV4UserGpgKeys.t; [@key "postApiV4UserGpgKeys"]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+
+    type t = [ `Created ] [@@deriving show, eq]
+
+    let t = [ ("201", fun _ -> Ok `Created) ]
+  end
+
+  let url = "/api/v4/user/gpg_keys"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module GetApiV4UserGpgKeys = struct
+  module Parameters = struct
+    type t = {
+      page : int; [@default 1]
+      per_page : int; [@default 20]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/user/gpg_keys"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module DeleteApiV4UserGpgKeysKeyId = struct
+  module Parameters = struct
+    type t = { key_id : int } [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module No_content = struct end
+
+    type t = [ `No_content ] [@@deriving show, eq]
+
+    let t = [ ("204", fun _ -> Ok `No_content) ]
+  end
+
+  let url = "/api/v4/user/gpg_keys/{key_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("key_id", Var (params.key_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
+module GetApiV4UserGpgKeysKeyId = struct
+  module Parameters = struct
+    type t = { key_id : int } [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/user/gpg_keys/{key_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("key_id", Var (params.key_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PostApiV4UserGpgKeysKeyIdRevoke = struct
+  module Parameters = struct
+    type t = { key_id : int } [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+
+    type t = [ `Created ] [@@deriving show, eq]
+
+    let t = [ ("201", fun _ -> Ok `Created) ]
+  end
+
+  let url = "/api/v4/user/gpg_keys/{key_id}/revoke"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("key_id", Var (params.key_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module PostApiV4UserKeys = struct
+  module Parameters = struct
+    type t = {
+      postapiv4userkeys : Gitlabc_components.PostApiV4UserKeys.t; [@key "postApiV4UserKeys"]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+
+    type t = [ `Created ] [@@deriving show, eq]
+
+    let t = [ ("201", fun _ -> Ok `Created) ]
+  end
+
+  let url = "/api/v4/user/keys"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module GetApiV4UserKeys = struct
+  module Parameters = struct
+    type t = {
+      page : int; [@default 1]
+      per_page : int; [@default 20]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/user/keys"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module DeleteApiV4UserKeysKeyId = struct
+  module Parameters = struct
+    type t = { key_id : int } [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/user/keys/{key_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("key_id", Var (params.key_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
+module GetApiV4UserKeysKeyId = struct
+  module Parameters = struct
+    type t = { key_id : int } [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/user/keys/{key_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("key_id", Var (params.key_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PostApiV4UserPersonalAccessTokens = struct
+  module Parameters = struct
+    type t = {
+      postapiv4userpersonalaccesstokens : Gitlabc_components.PostApiV4UserPersonalAccessTokens.t;
+          [@key "postApiV4UserPersonalAccessTokens"]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+
+    type t = [ `Created ] [@@deriving show, eq]
+
+    let t = [ ("201", fun _ -> Ok `Created) ]
+  end
+
+  let url = "/api/v4/user/personal_access_tokens"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module PutApiV4UserPreferences = struct
+  module Parameters = struct
+    type t = {
+      putapiv4userpreferences : Gitlabc_components.PutApiV4UserPreferences.t;
+          [@key "putApiV4UserPreferences"]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/user/preferences"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Put
+end
+
+module GetApiV4UserPreferences = struct
+  module Parameters = struct end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/user/preferences"
+
+  let make () =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PostApiV4UserRunners = struct
+  module Parameters = struct
+    type t = {
+      postapiv4userrunners : Gitlabc_components.PostApiV4UserRunners.t; [@key "postApiV4UserRunners"]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+    module Bad_request = struct end
+    module Forbidden = struct end
+
+    type t =
+      [ `Created
+      | `Bad_request
+      | `Forbidden
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("201", fun _ -> Ok `Created);
+        ("400", fun _ -> Ok `Bad_request);
+        ("403", fun _ -> Ok `Forbidden);
+      ]
+  end
+
+  let url = "/api/v4/user/runners"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module PatchApiV4UserStatus = struct
+  module Parameters = struct
+    type t = {
+      patchapiv4userstatus : Gitlabc_components.PatchApiV4UserStatus.t; [@key "patchApiV4UserStatus"]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/user/status"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Patch
+end
+
+module PutApiV4UserStatus = struct
+  module Parameters = struct
+    type t = {
+      putapiv4userstatus : Gitlabc_components.PutApiV4UserStatus.t; [@key "putApiV4UserStatus"]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/user/status"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Put
+end
+
+module GetApiV4UserStatus = struct
+  module Parameters = struct end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/user/status"
+
+  let make () =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PostApiV4UserSupportPin = struct
+  module Parameters = struct end
+
+  module Responses = struct
+    module Created = struct end
+
+    type t = [ `Created ] [@@deriving show, eq]
+
+    let t = [ ("201", fun _ -> Ok `Created) ]
+  end
+
+  let url = "/api/v4/user/support_pin"
+
+  let make () =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module GetApiV4UserSupportPin = struct
+  module Parameters = struct end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/user/support_pin"
+
+  let make () =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PutApiV4UserUserIdCreditCardValidation = struct
+  module Parameters = struct
+    type t = {
+      putapiv4useruseridcreditcardvalidation :
+        Gitlabc_components.PutApiV4UserUserIdCreditCardValidation.t;
+          [@key "putApiV4UserUserIdCreditCardValidation"]
+      user_id : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/user/{user_id}/credit_card_validation"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("user_id", Var (params.user_id, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Put
+end

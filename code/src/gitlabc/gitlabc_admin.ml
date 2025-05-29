@@ -1,0 +1,687 @@
+module GetApiV4AdminBatchedBackgroundMigrations = struct
+  module Parameters = struct
+    module Database = struct
+      let t_of_yojson = function
+        | `String "main" -> Ok "main"
+        | `String "ci" -> Ok "ci"
+        | `String "sec" -> Ok "sec"
+        | `String "embedding" -> Ok "embedding"
+        | `String "geo" -> Ok "geo"
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+    end
+
+    type t = { database : Database.t [@default "main"] } [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Unauthorized = struct end
+    module Forbidden = struct end
+
+    type t =
+      [ `OK
+      | `Unauthorized
+      | `Forbidden
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK); ("401", fun _ -> Ok `Unauthorized); ("403", fun _ -> Ok `Forbidden);
+      ]
+  end
+
+  let url = "/api/v4/admin/batched_background_migrations"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("database", Var (params.database, String)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module GetApiV4AdminBatchedBackgroundMigrationsId = struct
+  module Parameters = struct
+    module Database = struct
+      let t_of_yojson = function
+        | `String "main" -> Ok "main"
+        | `String "ci" -> Ok "ci"
+        | `String "sec" -> Ok "sec"
+        | `String "embedding" -> Ok "embedding"
+        | `String "geo" -> Ok "geo"
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+    end
+
+    type t = {
+      database : Database.t; [@default "main"]
+      id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Unauthorized = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Unauthorized
+      | `Forbidden
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/admin/batched_background_migrations/{id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, Int)) ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("database", Var (params.database, String)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PutApiV4AdminBatchedBackgroundMigrationsIdPause = struct
+  module Parameters = struct
+    type t = {
+      id : int;
+      putapiv4adminbatchedbackgroundmigrationsidpause :
+        Gitlabc_components.PutApiV4AdminBatchedBackgroundMigrationsIdPause.t;
+          [@key "putApiV4AdminBatchedBackgroundMigrationsIdPause"]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Unauthorized = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+    module Unprocessable_entity = struct end
+
+    type t =
+      [ `OK
+      | `Unauthorized
+      | `Forbidden
+      | `Not_found
+      | `Unprocessable_entity
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+        ("422", fun _ -> Ok `Unprocessable_entity);
+      ]
+  end
+
+  let url = "/api/v4/admin/batched_background_migrations/{id}/pause"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Put
+end
+
+module PutApiV4AdminBatchedBackgroundMigrationsIdResume = struct
+  module Parameters = struct
+    type t = {
+      id : int;
+      putapiv4adminbatchedbackgroundmigrationsidresume :
+        Gitlabc_components.PutApiV4AdminBatchedBackgroundMigrationsIdResume.t;
+          [@key "putApiV4AdminBatchedBackgroundMigrationsIdResume"]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Unauthorized = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+    module Unprocessable_entity = struct end
+
+    type t =
+      [ `OK
+      | `Unauthorized
+      | `Forbidden
+      | `Not_found
+      | `Unprocessable_entity
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+        ("422", fun _ -> Ok `Unprocessable_entity);
+      ]
+  end
+
+  let url = "/api/v4/admin/batched_background_migrations/{id}/resume"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Put
+end
+
+module PostApiV4AdminCiVariables = struct
+  module Parameters = struct
+    type t = {
+      postapiv4admincivariables : Gitlabc_components.PostApiV4AdminCiVariables.t;
+          [@key "postApiV4AdminCiVariables"]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+    module Bad_request = struct end
+
+    type t =
+      [ `Created
+      | `Bad_request
+      ]
+    [@@deriving show, eq]
+
+    let t = [ ("201", fun _ -> Ok `Created); ("400", fun _ -> Ok `Bad_request) ]
+  end
+
+  let url = "/api/v4/admin/ci/variables"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module GetApiV4AdminCiVariables = struct
+  module Parameters = struct
+    type t = {
+      page : int; [@default 1]
+      per_page : int; [@default 20]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/admin/ci/variables"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module DeleteApiV4AdminCiVariablesKey = struct
+  module Parameters = struct
+    type t = { key : string } [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module No_content = struct end
+
+    type t = [ `No_content ] [@@deriving show, eq]
+
+    let t = [ ("204", fun _ -> Ok `No_content) ]
+  end
+
+  let url = "/api/v4/admin/ci/variables/{key}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("key", Var (params.key, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
+module PutApiV4AdminCiVariablesKey = struct
+  module Parameters = struct
+    type t = {
+      key : string;
+      putapiv4admincivariableskey : Gitlabc_components.PutApiV4AdminCiVariablesKey.t;
+          [@key "putApiV4AdminCiVariablesKey"]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
+  end
+
+  let url = "/api/v4/admin/ci/variables/{key}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("key", Var (params.key, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Put
+end
+
+module GetApiV4AdminCiVariablesKey = struct
+  module Parameters = struct
+    type t = { key : string } [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
+  end
+
+  let url = "/api/v4/admin/ci/variables/{key}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("key", Var (params.key, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module GetApiV4AdminClusters = struct
+  module Parameters = struct end
+
+  module Responses = struct
+    module OK = struct end
+    module Forbidden = struct end
+
+    type t =
+      [ `OK
+      | `Forbidden
+      ]
+    [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK); ("403", fun _ -> Ok `Forbidden) ]
+  end
+
+  let url = "/api/v4/admin/clusters"
+
+  let make () =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PostApiV4AdminClustersAdd = struct
+  module Parameters = struct
+    type t = {
+      postapiv4adminclustersadd : Gitlabc_components.PostApiV4AdminClustersAdd.t;
+          [@key "postApiV4AdminClustersAdd"]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+    module Bad_request = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `Created
+      | `Bad_request
+      | `Forbidden
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("201", fun _ -> Ok `Created);
+        ("400", fun _ -> Ok `Bad_request);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/admin/clusters/add"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module DeleteApiV4AdminClustersClusterId = struct
+  module Parameters = struct
+    type t = { cluster_id : int } [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module No_content = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `No_content
+      | `Forbidden
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("204", fun _ -> Ok `No_content);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/admin/clusters/{cluster_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("cluster_id", Var (params.cluster_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
+module PutApiV4AdminClustersClusterId = struct
+  module Parameters = struct
+    type t = {
+      cluster_id : int;
+      putapiv4adminclustersclusterid : Gitlabc_components.PutApiV4AdminClustersClusterId.t;
+          [@key "putApiV4AdminClustersClusterId"]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Bad_request = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Bad_request
+      | `Forbidden
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK);
+        ("400", fun _ -> Ok `Bad_request);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/admin/clusters/{cluster_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("cluster_id", Var (params.cluster_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Put
+end
+
+module GetApiV4AdminClustersClusterId = struct
+  module Parameters = struct
+    type t = { cluster_id : int } [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Forbidden
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [ ("200", fun _ -> Ok `OK); ("403", fun _ -> Ok `Forbidden); ("404", fun _ -> Ok `Not_found) ]
+  end
+
+  let url = "/api/v4/admin/clusters/{cluster_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("cluster_id", Var (params.cluster_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module GetApiV4AdminDatabasesDatabaseNameDictionaryTablesTableName = struct
+  module Parameters = struct
+    module Database_name = struct
+      let t_of_yojson = function
+        | `String "main" -> Ok "main"
+        | `String "ci" -> Ok "ci"
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+    end
+
+    type t = {
+      database_name : Database_name.t;
+      table_name : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Unauthorized = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Unauthorized
+      | `Forbidden
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/admin/databases/{database_name}/dictionary/tables/{table_name}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("database_name", Var (params.database_name, String));
+           ("table_name", Var (params.table_name, String));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PostApiV4AdminMigrationsTimestampMark = struct
+  module Parameters = struct
+    type t = {
+      postapiv4adminmigrationstimestampmark :
+        Gitlabc_components.PostApiV4AdminMigrationsTimestampMark.t;
+          [@key "postApiV4AdminMigrationsTimestampMark"]
+      timestamp : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+    module Unauthorized = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+    module Unprocessable_entity = struct end
+
+    type t =
+      [ `Created
+      | `Unauthorized
+      | `Forbidden
+      | `Not_found
+      | `Unprocessable_entity
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("201", fun _ -> Ok `Created);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+        ("422", fun _ -> Ok `Unprocessable_entity);
+      ]
+  end
+
+  let url = "/api/v4/admin/migrations/{timestamp}/mark"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("timestamp", Var (params.timestamp, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
