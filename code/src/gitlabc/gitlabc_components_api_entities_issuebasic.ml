@@ -1,0 +1,40 @@
+module Primary = struct
+  module Labels = struct
+    type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
+  type t = {
+    assignee : Gitlabc_components_api_entities_userbasic.t option; [@default None]
+    assignees : Gitlabc_components_api_entities_userbasic.t option; [@default None]
+    author : Gitlabc_components_api_entities_userbasic.t option; [@default None]
+    blocking_issues_count : string option; [@default None]
+    closed_at : string option; [@default None]
+    closed_by : Gitlabc_components_api_entities_userbasic.t option; [@default None]
+    confidential : bool option; [@default None]
+    created_at : string option; [@default None]
+    description : string option; [@default None]
+    discussion_locked : bool option; [@default None]
+    downvotes : string option; [@default None]
+    due_date : string option; [@default None]
+    id : int option; [@default None]
+    iid : int option; [@default None]
+    issue_type : string option; [@default None]
+    labels : Labels.t option; [@default None]
+    merge_requests_count : string option; [@default None]
+    milestone : Gitlabc_components_api_entities_milestone.t option; [@default None]
+    project_id : int option; [@default None]
+    state : string option; [@default None]
+    task_completion_status : string option; [@default None]
+    time_stats : Gitlabc_components_api_entities_issuabletimestats.t option; [@default None]
+    title : string option; [@default None]
+    type_ : string option; [@default None] [@key "type"]
+    updated_at : string option; [@default None]
+    upvotes : string option; [@default None]
+    user_notes_count : string option; [@default None]
+    web_url : string option; [@default None]
+    weight : string option; [@default None]
+  }
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
+end
+
+include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
