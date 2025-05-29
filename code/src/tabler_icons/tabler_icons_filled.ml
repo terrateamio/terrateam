@@ -107,6 +107,33 @@ let adjustments ?at () =
            </svg>"));
   el
 
+let aerial_lift ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-aerial-lift\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M19.876 2.008a1 1 0 1 1 .248 1.984l-7.124 .891v2.117h4.2a1 1 0 0 1 .688 \
+           .274l.087 .093c2.79 3.417 2.717 9.963 -.226 13.295a1 1 0 0 1 -.749 .338h-10.106a1 1 0 0 \
+           1 -.763 -.353c-2.86 -3.373 -2.86 -9.92 0 -13.294a1 1 0 0 1 .763 \
+           -.353h4.106v-1.867l-6.876 .86a1 1 0 0 1 -1.095 -.754l-.021 -.115a1 1 0 0 1 .868 \
+           -1.116l7.996 -1l.011 -.001l.008 -.001zm-8.876 6.992h-3.617l-.051 .072c-.718 1.042 \
+           -1.149 2.41 -1.292 3.844l-.008 .084h4.968zm5.698 0h-3.698v4h4.979l-.005 -.072c-.123 \
+           -1.436 -.533 -2.811 -1.232 -3.864z\" />\n\
+           </svg>"));
+  el
+
 let affiliate ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -130,6 +157,29 @@ let affiliate ?at () =
            -2.194 -2.304l-.006 -.178l.005 -.164a2.5 2.5 0 1 1 4.111 2.071l.787 2.625a5.475 5.475 0 \
            0 1 3.714 .936l4.555 -4.556a2.487 2.487 0 0 1 -.167 -.748l-.005 -.164l.005 -.164a2.5 \
            2.5 0 0 1 2.495 -2.336z\" />\n\
+           </svg>"));
+  el
+
+let air_balloon ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-air-balloon\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M13 18a2 2 0 0 1 2 2v1a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2v-1a2 2 0 0 1 2 \
+           -2z\" />\n\
+          \  <path d=\"M12 1a7 7 0 0 1 7 7c0 4.185 -3.297 9 -7 9s-7 -4.815 -7 -9a7 7 0 0 1 7 -7\" />\n\
            </svg>"));
   el
 
@@ -932,6 +982,173 @@ let arrow_autofit_content ?at () =
            1 0 0 1 1.32 -.083z\" />\n\
           \  <path d=\"M18 13h-12a3 3 0 0 0 -3 3v2a3 3 0 0 0 3 3h12a3 3 0 0 0 3 -3v-2a3 3 0 0 0 -3 \
            -3z\" />\n\
+           </svg>"));
+  el
+
+let arrow_autofit_down ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-arrow-autofit-down\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M14 3a1 1 0 0 1 1 1v11.001h-.092a3 3 0 0 0 -2.03 5.12a.515 .515 0 0 1 -.363 \
+           .879h-6.515a3 3 0 0 1 -3 -3v-12a3 3 0 0 1 3 -3z\" />\n\
+          \  <path d=\"M18 3a1 1 0 0 1 1 1v14.584l1.293 -1.291a1 1 0 0 1 1.32 -.083l.094 .083a1 1 \
+           0 0 1 0 1.414l-3 3a1 1 0 0 1 -.112 .097l-.11 .071l-.114 .054l-.105 .035l-.149 .03l-.117 \
+           .006l-.075 -.003l-.126 -.017l-.111 -.03l-.111 -.044l-.098 -.052l-.096 -.067l-.09 \
+           -.08l-3 -3a1 1 0 0 1 1.414 -1.414l1.293 1.293v-14.586a1 1 0 0 1 1 -1\" />\n\
+           </svg>"));
+  el
+
+let arrow_autofit_height ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-arrow-autofit-height\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12.879 3.879a3 3 0 0 0 0 4.242l.09 .085l.094 .083l.096 .08l.158 .115a3 3 0 \
+           0 0 1.59 .515l.093 -.001v6.003h-.092a3 3 0 0 0 -2.03 5.12a.514 .514 0 0 1 -.363 \
+           .878l-6.515 .001a3 3 0 0 1 -3 -3v-12a3 3 0 0 1 3 -3h6.514a.515 .515 0 0 1 .365 .879\" />\n\
+          \  <path d=\"M18 13a1 1 0 0 1 1 1v4.584l1.293 -1.291a1 1 0 0 1 1.32 -.083l.094 .083a1 1 \
+           0 0 1 0 1.414l-3 3a1 1 0 0 1 -.112 .097l-.11 .071l-.114 .054l-.105 .035l-.149 .03l-.117 \
+           .006l-.075 -.003l-.126 -.017l-.111 -.03l-.111 -.044l-.098 -.052l-.096 -.067l-.09 \
+           -.08l-3 -3a1 1 0 0 1 1.414 -1.414l1.293 1.293v-4.586a1 1 0 0 1 1 -1\" />\n\
+          \  <path d=\"M17.852 2.011l.058 -.007l.09 -.004l.075 .003l.126 .017l.111 .03l.111 \
+           .044l.098 .052l.104 .074l.082 .073l3 3a1 1 0 1 1 -1.414 1.414l-1.293 -1.292v4.585a1 1 0 \
+           0 1 -2 0v-4.585l-1.293 1.292a1 1 0 0 1 -1.32 .083l-.094 -.083a1 1 0 0 1 0 -1.414l3 -3q \
+           .053 -.054 .112 -.097l.11 -.071l.114 -.054l.105 -.035z\" />\n\
+           </svg>"));
+  el
+
+let arrow_autofit_left ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-arrow-autofit-left\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M21 14a1 1 0 0 1 -1 1h-11.001v-.092a3 3 0 0 0 -5.12 -2.03a.515 .515 0 0 1 \
+           -.879 -.363v-6.515a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3z\" />\n\
+          \  <path d=\"M21 18a1 1 0 0 1 -1 1h-14.584l1.291 1.293a1 1 0 0 1 .083 1.32l-.083 .094a1 \
+           1 0 0 1 -1.414 0l-3 -3a1 1 0 0 1 -.097 -.112l-.071 -.11l-.054 -.114l-.035 -.105l-.03 \
+           -.149l-.006 -.117l.003 -.075l.017 -.126l.03 -.111l.044 -.111l.052 -.098l.067 -.096l.08 \
+           -.09l3 -3a1 1 0 1 1 1.414 1.414l-1.293 1.293h14.586a1 1 0 0 1 1 1\" />\n\
+           </svg>"));
+  el
+
+let arrow_autofit_right ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-arrow-autofit-right\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M3 14a1 1 0 0 0 1 1h11.001v-.092a3 3 0 0 1 5.12 -2.03a.515 .515 0 0 0 .879 \
+           -.363v-6.515a3 3 0 0 0 -3 -3h-12a3 3 0 0 0 -3 3z\" />\n\
+          \  <path d=\"M3 18a1 1 0 0 0 1 1h14.584l-1.291 1.293a1 1 0 0 0 -.083 1.32l.083 .094a1 1 \
+           0 0 0 1.414 0l3 -3q .054 -.053 .097 -.112l.071 -.11l.054 -.114l.035 -.105l.03 \
+           -.149l.006 -.117l-.003 -.075l-.017 -.126l-.03 -.111l-.044 -.111l-.052 -.098l-.067 \
+           -.096l-.08 -.09l-3 -3a1 1 0 0 0 -1.414 1.414l1.293 1.293h-14.586a1 1 0 0 0 -1 1\" />\n\
+           </svg>"));
+  el
+
+let arrow_autofit_up ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-arrow-autofit-up\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M14 21a1 1 0 0 0 1 -1v-11.001h-.092a3 3 0 0 1 -2.03 -5.12a.515 .515 0 0 0 \
+           -.363 -.879h-6.515a3 3 0 0 0 -3 3v12a3 3 0 0 0 3 3z\" />\n\
+          \  <path d=\"M18 21a1 1 0 0 0 1 -1v-14.584l1.293 1.291a1 1 0 0 0 1.32 .083l.094 -.083a1 \
+           1 0 0 0 0 -1.414l-3 -3a1 1 0 0 0 -.112 -.097l-.11 -.071l-.114 -.054l-.105 -.035l-.149 \
+           -.03l-.117 -.006l-.075 .003l-.126 .017l-.111 .03l-.111 .044l-.098 .052l-.096 .067l-.09 \
+           .08l-3 3a1 1 0 1 0 1.414 1.414l1.293 -1.293v14.586a1 1 0 0 0 1 1\" />\n\
+           </svg>"));
+  el
+
+let arrow_autofit_width ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-arrow-autofit-width\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M20.121 12.879a3 3 0 0 0 -4.242 0l-.085 .09l-.083 .094l-.08 .096l-.115 \
+           .158a3 3 0 0 0 -.515 1.59l.001 .093h-6.003v-.092a3 3 0 0 0 -5.12 -2.03a.514 .514 0 0 1 \
+           -.878 -.363l-.001 -6.515a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v6.514a.515 .515 0 0 1 -.879 \
+           .365\" />\n\
+          \  <path d=\"M11 18a1 1 0 0 1 -1 1h-4.584l1.291 1.293a1 1 0 0 1 .083 1.32l-.083 .094a1 1 \
+           0 0 1 -1.414 0l-3 -3a1 1 0 0 1 -.097 -.112l-.071 -.11l-.054 -.114l-.035 -.105l-.03 \
+           -.149l-.006 -.117l.003 -.075l.017 -.126l.03 -.111l.044 -.111l.052 -.098l.067 -.096l.08 \
+           -.09l3 -3a1 1 0 0 1 1.414 1.414l-1.293 1.293h4.586a1 1 0 0 1 1 1m10.989 -.148l.007 \
+           .058l.004 .09l-.003 .075l-.017 .126l-.03 .111l-.044 .111l-.052 .098l-.074 .104l-.073 \
+           .082l-3 3a1 1 0 1 1 -1.414 -1.414l1.292 -1.293h-4.585a1 1 0 0 1 0 -2h4.585l-1.292 \
+           -1.293a1 1 0 0 1 -.083 -1.32l.083 -.094a1 1 0 0 1 1.414 0l3 3q .054 .053 .097 .112l.071 \
+           .11l.054 .114l.035 .105z\" />\n\
            </svg>"));
   el
 
@@ -3498,12 +3715,12 @@ let book ?at () =
           \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-book\"\n\
            >\n\
           \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
-          \  <path d=\"M12.088 4.82a10 10 0 0 1 9.412 .314a1 1 0 0 1 .493 .748l.007 .118v13a1 1 0 \
-           0 1 -1.5 .866a8 8 0 0 0 -8 0a1 1 0 0 1 -1 0a8 8 0 0 0 -7.733 -.148l-.327 .18l-.103 \
-           .044l-.049 .016l-.11 .026l-.061 .01l-.117 .006h-.042l-.11 -.012l-.077 -.014l-.108 \
-           -.032l-.126 -.056l-.095 -.056l-.089 -.067l-.06 -.056l-.073 -.082l-.064 -.089l-.022 \
-           -.036l-.032 -.06l-.044 -.103l-.016 -.049l-.026 -.11l-.01 -.061l-.004 -.049l-.002 \
-           -.068v-13a1 1 0 0 1 .5 -.866a10 10 0 0 1 9.412 -.314l.088 .044l.088 -.044z\" />\n\
+          \  <path d=\"M21.5 5.134a1 1 0 0 1 .493 .748l.007 .118v13a1 1 0 0 1 -1.5 .866a8 8 0 0 0 \
+           -7.5 -.266v-15.174a10 10 0 0 1 8.5 .708m-10.5 -.707l.001 15.174a8 8 0 0 0 -7.234 \
+           .117l-.327 .18l-.103 .044l-.049 .016l-.11 .026l-.061 .01l-.117 .006h-.042l-.11 \
+           -.012l-.077 -.014l-.108 -.032l-.126 -.056l-.095 -.056l-.089 -.067l-.06 -.056l-.073 \
+           -.082l-.064 -.089l-.022 -.036l-.032 -.06l-.044 -.103l-.016 -.049l-.026 -.11l-.01 \
+           -.061l-.004 -.049l-.002 -13.068a1 1 0 0 1 .5 -.866a10 10 0 0 1 8.5 -.707\" />\n\
            </svg>"));
   el
 
@@ -4082,6 +4299,32 @@ let box_multiple ?at () =
            </svg>"));
   el
 
+let brand_angular ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-brand-angular\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12.665 2.174l7.4 2.612a2 2 0 0 1 1.316 2.156l-1.323 9.703a2 2 0 0 1 -.99 \
+           1.468l-6.076 3.471a2 2 0 0 1 -1.984 0l-6.076 -3.47a2 2 0 0 1 -.96 -1.3l-.03 \
+           -.167l-1.322 -9.704a2 2 0 0 1 1.316 -2.156l7.4 -2.613a2 2 0 0 1 1.33 0m.271 4.475c-.324 \
+           -.865 -1.548 -.865 -1.872 0l-3 8a1 1 0 0 0 .585 1.287l.111 .035a1 1 0 0 0 1.176 \
+           -.62l.506 -1.351h3.113l.508 1.352a1 1 0 0 0 1.176 .62l.111 -.035a1 1 0 0 0 .585 \
+           -1.287zm-.937 3.199l.807 2.151h-1.614z\" />\n\
+           </svg>"));
+  el
+
 let brand_apple ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -4109,6 +4352,30 @@ let brand_apple ?at () =
            .508c.787 .374 .948 .44 1.009 .44h.016c.03 -.003 .128 -.047 1.056 -.457c1.061 -.467 \
            1.864 -.685 2.746 -.616l-.24 -.012z\" />\n\
           \  <path d=\"M14 1a1 1 0 0 1 1 1a3 3 0 0 1 -3 3a1 1 0 0 1 -1 -1a3 3 0 0 1 3 -3z\" />\n\
+           </svg>"));
+  el
+
+let brand_bitbucket ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-brand-bitbucket\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M3.661 3l16.68 .007c.484 -.005 .946 .203 1.262 .57c.316 .368 .454 .856 .364 \
+           1.396l-3.338 14.651a1.64 1.64 0 0 1 -1.629 1.376h-10.01c-.906 -.009 -1.678 -.668 -1.82 \
+           -1.517l-3.148 -14.576a1.64 1.64 0 0 1 1.639 -1.907m11.339 5h-6a1 1 0 0 0 -.986 1.164l1 \
+           6a1 1 0 0 0 .986 .836h4a1 1 0 0 0 .986 -.836l1 -6a1 1 0 0 0 -.986 -1.164\" />\n\
            </svg>"));
   el
 
@@ -4257,6 +4524,160 @@ let brand_google ?at () =
            </svg>"));
   el
 
+let brand_instagram ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-brand-instagram\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M16 3a5 5 0 0 1 5 5v8a5 5 0 0 1 -5 5h-8a5 5 0 0 1 -5 -5v-8a5 5 0 0 1 5 \
+           -5zm-4 5a4 4 0 0 0 -3.995 3.8l-.005 .2a4 4 0 1 0 4 -4m4.5 -1.5a1 1 0 0 0 -.993 \
+           .883l-.007 .127a1 1 0 0 0 1.993 .117l.007 -.127a1 1 0 0 0 -1 -1\" />\n\
+           </svg>"));
+  el
+
+let brand_kick ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-brand-kick\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M9 3a1 1 0 0 1 1 1v3h1v-1a1 1 0 0 1 .883 -.993l.117 -.007h1v-1a1 1 0 0 1 \
+           .883 -.993l.117 -.007h6a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-1v1a1 1 0 0 1 -.883 .993l-.117 \
+           .007h-1v2h1a1 1 0 0 1 .993 .883l.007 .117v1h1a1 1 0 0 1 .993 .883l.007 .117v4a1 1 0 0 1 \
+           -1 1h-6a1 1 0 0 1 -1 -1v-1h-1a1 1 0 0 1 -.993 -.883l-.007 -.117v-1h-1v3a1 1 0 0 1 -.883 \
+           .993l-.117 .007h-5a1 1 0 0 1 -1 -1v-16a1 1 0 0 1 1 -1z\" />\n\
+           </svg>"));
+  el
+
+let brand_linkedin ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-brand-linkedin\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 2a5 5 0 0 1 5 5v10a5 5 0 0 1 -5 5h-10a5 5 0 0 1 -5 -5v-10a5 5 0 0 1 5 \
+           -5zm-9 8a1 1 0 0 0 -1 1v5a1 1 0 0 0 2 0v-5a1 1 0 0 0 -1 -1m6 0a3 3 0 0 0 -1.168 \
+           .236l-.125 .057a1 1 0 0 0 -1.707 .707v5a1 1 0 0 0 2 0v-3a1 1 0 0 1 2 0v3a1 1 0 0 0 2 \
+           0v-3a3 3 0 0 0 -3 -3m-6 -3a1 1 0 0 0 -.993 .883l-.007 .127a1 1 0 0 0 1.993 .117l.007 \
+           -.127a1 1 0 0 0 -1 -1\" />\n\
+           </svg>"));
+  el
+
+let brand_messenger ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-brand-messenger\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M18.894 5.446c3.667 3.127 4.168 8.238 1.152 11.897c-2.842 3.447 -7.965 \
+           4.583 -12.231 2.805l-.233 -.101l-4.374 .931l-.033 .005l-.042 .008l-.031 .002l-.01 \
+           .003h-.018l-.052 .004l-.024 -.001l-.02 .001l-.033 -.003h-.035l-.022 -.004l-.022 \
+           -.002l-.035 -.007l-.034 -.005l-.016 -.004l-.024 -.005l-.049 -.016l-.024 -.005l-.011 \
+           -.005l-.022 -.007l-.045 -.02l-.03 -.012l-.011 -.006l-.014 -.006l-.031 -.018l-.045 \
+           -.024l-.016 -.011l-.037 -.026l-.04 -.027l-.015 -.013l-.043 -.04l-.025 -.02l-.062 \
+           -.07l-.013 -.013l-.011 -.014l-.027 -.04l-.026 -.035a1 1 0 0 1 -.054 -.095l-.006 \
+           -.013l-.019 -.045l-.02 -.042l-.004 -.016l-.004 -.01l-.011 -.04l-.013 -.04l-.002 \
+           -.014l-.005 -.019l-.005 -.033l-.008 -.042l-.002 -.031l-.003 -.026l-.004 -.054l.001 \
+           -.036l.001 -.023l.002 -.053l.004 -.025v-.019l.008 -.036l.005 -.033l.004 -.017l.005 \
+           -.023l.018 -.06l.003 -.013l1.15 -3.45l-.022 -.037c-2.21 -3.747 -1.209 -8.392 2.411 \
+           -11.118l.23 -.168c3.898 -2.766 9.469 -2.54 13.073 .535m-2.062 5a1 1 0 0 0 -1.387 \
+           -.278l-2.318 1.544l-1.42 -1.42a1 1 0 0 0 -1.262 -.124l-3 2a1 1 0 0 0 -.277 1.387l.07 \
+           .093a1 1 0 0 0 1.317 .184l2.317 -1.545l1.42 1.42a1 1 0 0 0 1.263 .125l3 -2a1 1 0 0 0 \
+           .277 -1.387\" />\n\
+           </svg>"));
+  el
+
+let brand_open_source ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-brand-open-source\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12.283 2.004a10 10 0 0 1 3.736 19.155a1 1 0 0 1 -1.332 -.551l-2.193 \
+           -5.602a1 1 0 0 1 .456 -1.245a2 2 0 1 0 -1.9 0a1 1 0 0 1 .457 1.244l-2.193 5.603a1 1 0 0 \
+           1 -1.332 .552a10 10 0 0 1 4.018 -19.16z\" />\n\
+           </svg>"));
+  el
+
+let brand_opera ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-brand-opera\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 3.34a10 10 0 1 1 -15 8.66l.005 -.324a10 10 0 0 1 14.995 -8.336m-5 \
+           2.66c-2.285 0 -3.915 2.619 -3.997 5.752l-.003 .248c0 3.242 1.655 6 4 6s4 -2.758 4 \
+           -6s-1.655 -6 -4 -6\" />\n\
+           </svg>"));
+  el
+
 let brand_patreon ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -4310,6 +4731,96 @@ let brand_paypal ?at () =
            </svg>"));
   el
 
+let brand_pinterest ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-brand-pinterest\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 3.34a10 10 0 0 1 -8.512 18.023l2.364 -5.315a3.5 3.5 0 0 0 2.398 \
+           .952c2.708 0 4.75 -2.089 4.75 -5a6 6 0 1 0 -11.64 2.041a1 1 0 1 0 1.88 -.682a4 4 0 1 1 \
+           7.76 -1.36c0 1.818 -1.156 3.001 -2.75 3.001c-.609 0 -1.153 -.361 -1.478 -1.022l1.142 \
+           -2.572a1 1 0 0 0 -1.828 -.812l-4.392 9.882a10 10 0 0 1 -4.694 -8.476l.005 -.324a10 10 0 \
+           0 1 14.995 -8.336\" />\n\
+           </svg>"));
+  el
+
+let brand_sketch ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-brand-sketch\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M7.554 3.004h8.929a2 2 0 0 1 1.647 .873l3.536 5.193a2.006 2.006 0 0 1 -.173 \
+           2.48l-8 8.79a2.007 2.007 0 0 1 -2.97 0l-8 -8.789a1 1 0 0 1 -.13 -.175l-.012 -.026l-.051 \
+           -.072a2.01 2.01 0 0 1 -.056 -2.063l.09 -.146l3.541 -5.193c.372 -.544 .987 -.87 1.649 \
+           -.872\" />\n\
+           </svg>"));
+  el
+
+let brand_snapchat ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-brand-snapchat\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 1.96a5.88 5.88 0 0 1 5.882 5.882c0 .618 .008 1.174 .03 1.678l.008 \
+           .21l.084 -.115q .46 -.627 1.102 -1.29l.187 -.19a1 1 0 0 1 1.414 1.415c-2.637 2.637 \
+           -2.51 3.795 .76 5.527l.048 .025a.98 .98 0 0 1 .46 .636l.004 .022l.003 .013l.006 \
+           .043l.006 .032v.009l.003 .025l.001 .051l.002 .026l-.001 .009v.025l-.003 .042l-.002 \
+           .034l-.002 .015l-.002 .02l-.004 .016l-.01 .06l-.007 .026l-.006 .02l-.016 .06l-.013 \
+           .029l-.005 .013l-.024 .062a1 1 0 0 1 -.197 .28l-.03 .025l-.016 .014l-.043 .039l-.013 \
+           .007l-.018 .015l-.051 .033l-.02 .014l-.008 .003l-.014 .01a1 1 0 0 1 -.098 .049l-.013 \
+           .003l-.146 .066c-.576 .255 -.81 .365 -1.008 .474l-.053 .03c-.27 .155 -.398 .277 -.558 \
+           .525c-.156 .245 -.293 .516 -.715 1.41a1 1 0 0 1 -.904 .573c-1.067 0 -1.798 .25 -2.879 \
+           .868l-.426 .246c-.176 .102 -.311 .178 -.447 .25c-.794 .423 -1.464 .636 -2.248 \
+           .636s-1.454 -.213 -2.248 -.636a15 15 0 0 1 -.447 -.25l-.426 -.246c-1.081 -.618 -1.812 \
+           -.868 -2.879 -.868a1 1 0 0 1 -.904 -.573c-.422 -.894 -.559 -1.165 -.715 -1.41a1.4 1.4 0 \
+           0 0 -.558 -.525c-.228 -.13 -.47 -.243 -1.227 -.577l.02 .007l-.013 -.003a1 1 0 0 1 -.098 \
+           -.05l-.014 -.009l-.028 -.017l-.051 -.033l-.018 -.015l-.013 -.007l-.043 -.039l-.012 \
+           -.01l-.004 -.004l-.03 -.025a1 1 0 0 1 -.197 -.28l-.024 -.062l-.005 -.013l-.013 \
+           -.028l-.016 -.061l-.005 -.012l-.008 -.035l-.01 -.059l-.004 -.016l-.002 -.02l-.002 \
+           -.015l-.002 -.035l-.004 -.041l.001 -.025l-.001 -.01l.002 -.025l.001 -.05l.003 \
+           -.026v-.01l.006 -.03l.006 -.044l.004 -.014l.002 -.021a.98 .98 0 0 1 .461 -.636l.048 \
+           -.025l.204 -.11c3.003 -1.635 3.132 -2.785 .72 -5.25l-.164 -.167a1 1 0 0 1 1.414 -1.414q \
+           .764 .763 1.289 1.479l.083 .115l.01 -.21q .025 -.628 .028 -1.374l.001 -.304a5.88 5.88 0 \
+           0 1 5.882 -5.882\" />\n\
+           </svg>"));
+  el
+
 let brand_spotify ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -4336,6 +4847,84 @@ let brand_spotify ?at () =
            </svg>"));
   el
 
+let brand_steam ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-brand-steam\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M16.5 4a5.5 5.5 0 1 1 -.309 10.992l-.078 -.007l-3.646 2.524l-.011 \
+           .094c-.267 1.775 -1.707 3.18 -3.571 3.38l-.209 .017h-.176a4 4 0 0 1 -3.756 -2.623l-.016 \
+           -.048l-2.122 -.91a1 1 0 0 1 -.599 -.8l-.007 -.119v-3.5a1 1 0 0 1 1.447 -.894l2.964 \
+           1.481l.174 -.1a4 4 0 0 1 2.15 -.482l.166 .014l2.126 -2.977l-.01 -.098a5.5 5.5 0 0 1 \
+           1.092 -3.758l.169 -.212a5.5 5.5 0 0 1 4.222 -1.974m0 3.5a2 2 0 1 0 0 4a2 2 0 0 0 0 -4\" \
+           />\n\
+           </svg>"));
+  el
+
+let brand_stripe ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-brand-stripe\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12.5 2c2.45 0 4.543 .44 5.928 1.096a1 1 0 0 1 .564 1.028l-.5 4a1 1 0 0 1 \
+           -1.429 .776c-1.047 -.509 -2.618 -.823 -4.168 -.823q -.206 .001 -.332 .026l.028 .024l.07 \
+           .047c.314 .207 .832 .437 1.672 .746c3.824 1.351 5.667 3.24 5.667 6.58c0 2.13 -.758 \
+           3.732 -2.295 4.924c-1.293 1.023 -3.422 1.576 -5.705 1.576c-2.4 0 -4.72 -.644 -6.486 \
+           -1.626a1 1 0 0 1 -.506 -.998l.5 -4a1 1 0 0 1 1.494 -.741c1.292 .75 3.64 1.365 4.998 \
+           1.365c.39 0 .704 -.147 .87 -.295l.035 -.035l-.09 -.035c-.167 -.06 -1.583 -.493 -2.153 \
+           -.694c-3.626 -1.304 -5.662 -3.609 -5.662 -6.941c0 -1.887 .882 -3.563 2.37 -4.777c1.22 \
+           -.987 2.517 -1.223 5.13 -1.223\" />\n\
+           </svg>"));
+  el
+
+let brand_tabler ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-brand-tabler\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 2a5 5 0 0 1 5 5v10a5 5 0 0 1 -5 5h-10a5 5 0 0 1 -5 -5v-10a5 5 0 0 1 5 \
+           -5zm-1 12h-3a1 1 0 0 0 0 2h3a1 1 0 0 0 0 -2m-7.293 -5.707a1 1 0 0 0 -1.414 0l-.083 \
+           .094a1 1 0 0 0 .083 1.32l2.292 2.293l-2.292 2.293a1 1 0 0 0 1.414 1.414l3 -3a1 1 0 0 0 \
+           0 -1.414z\" />\n\
+           </svg>"));
+  el
+
 let brand_tiktok ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -4358,6 +4947,54 @@ let brand_tiktok ?at () =
            0 0 0 7.257 -7.495v-2.7l.311 .153c1.122 .53 2.333 .868 3.59 .993a1 1 0 0 0 1.099 \
            -.996v-4.033a1 1 0 0 0 -.834 -.986a5.005 5.005 0 0 1 -4.097 -4.096a1 1 0 0 0 -.986 \
            -.835z\" />\n\
+           </svg>"));
+  el
+
+let brand_tinder ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-brand-tinder\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M11.595 2.13a1 1 0 0 1 1.455 -1.016c3.11 1.625 5.41 3.797 6.77 6.627l-.013 \
+           -.024l.01 .019l.115 .232c2.751 5.7 .088 12.587 -5.913 13.76l-.267 .049c-8.719 1.91 \
+           -14.455 -8.74 -7.97 -14.918c.466 -.46 1.28 -1.196 1.636 -1.45a1 1 0 0 1 1.582 .813c0 \
+           .311 .086 1.117 .205 1.694q .046 .215 .093 .383l.017 .058l.1 -.02c1.562 -.396 2.522 \
+           -3.021 2.21 -5.955z\" />\n\
+           </svg>"));
+  el
+
+let brand_tumblr ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-brand-tumblr\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M14 2a1 1 0 0 1 1 1v3h3a1 1 0 0 1 .993 .883l.007 .117v4a1 1 0 0 1 -1 \
+           1h-3v4h3a1 1 0 0 1 .993 .883l.007 .117v4a1 1 0 0 1 -1 1h-4a5 5 0 0 1 -5 -5v-5h-3a1 1 0 \
+           0 1 -.993 -.883l-.007 -.117v-4a1 1 0 0 1 1 -1h1a2 2 0 0 0 2 -2v-1a1 1 0 0 1 1 -1z\" />\n\
            </svg>"));
   el
 
@@ -4388,6 +5025,136 @@ let brand_twitter ?at () =
            -.166 -1.358 -.941 -1.358l-.122 .007a.997 .997 0 0 0 -.231 .057l-.086 .038a7.46 7.46 0 \
            0 1 -.88 .36l-.356 .115l-.271 .08l-.772 .214c-1.336 -1.118 -3.144 -1.254 -5.012 \
            -.554l-.211 .084z\" />\n\
+           </svg>"));
+  el
+
+let brand_vercel ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-brand-vercel\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M11.143 3.486a1 1 0 0 1 1.714 0l9 15a1 1 0 0 1 -.857 1.514h-18a1 1 0 0 1 \
+           -.857 -1.514z\" />\n\
+           </svg>"));
+  el
+
+let brand_vimeo ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-brand-vimeo\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M18.5 3c2.38 0 3.985 2.174 3.486 5.164c-.535 3.21 -2.25 6.074 -4.808 \
+           8.675c-1.277 1.298 -2.211 2.061 -4.112 3.485c-2.323 1.597 -4.408 .365 -5.47 \
+           -1.897c-.292 -.618 -.586 -1.724 -1.248 -4.477l-.03 -.126c-.483 -2.01 -.819 -3.319 -.982 \
+           -3.878l-.016 -.052l-.031 .013l-.13 .06l-.137 .07a4 4 0 0 0 -.43 .269a1 1 0 0 1 -1.3 \
+           -.099l-1 -1a1 1 0 0 1 -.124 -1.262a20 20 0 0 1 1.918 -2.382c.98 -1.037 1.955 -1.816 \
+           2.928 -2.233c.5 -.214 .996 -.33 1.486 -.33c2.237 0 3.02 1.588 3.567 4.963c.03 .183 .057 \
+           .359 .112 .709c.123 .784 .197 1.198 .292 1.588c.292 1.185 .528 1.984 .735 2.483l-.016 \
+           -.039l.096 -.107c.354 -.411 .757 -1.014 1.172 -1.771l.157 -.291c.391 -.745 .505 -1.528 \
+           .363 -1.9c-.028 -.073 .007 -.065 -.456 .218a1 1 0 0 1 -1.51 -1.013c.496 -3.053 2.745 \
+           -4.84 5.488 -4.84\" />\n\
+           </svg>"));
+  el
+
+let brand_weibo ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-brand-weibo\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M4.972 8.183c2.81 -2.987 6.162 -4.207 8.006 -2.24c.298 .316 .554 .773 .736 \
+           1.266l.127 -.031c2.064 -.469 4 1.287 3.817 3.544l-.005 .036l.15 .057c1.46 .574 2.14 \
+           1.355 2.193 3.081l.004 .231c0 3.776 -4.107 6.873 -9 6.873c-4.854 0 -9 -2.72 -9 -6.565c0 \
+           -2.04 1.068 -4.222 2.972 -6.252\" />\n\
+          \  <path d=\"M16 3a6 6 0 0 1 6 6v1a1 1 0 0 1 -2 0v-1a4 4 0 0 0 -4 -4h-1a1 1 0 0 1 0 \
+           -2z\" />\n\
+           </svg>"));
+  el
+
+let brand_whatsapp ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-brand-whatsapp\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M18.497 4.409a10 10 0 0 1 -10.36 16.828l-.223 -.098l-4.759 .849l-.11 .011a1 \
+           1 0 0 1 -.11 0l-.102 -.013l-.108 -.024l-.105 -.037l-.099 -.047l-.093 -.058l-.014 \
+           -.011l-.012 -.007l-.086 -.073l-.077 -.08l-.067 -.088l-.056 -.094l-.034 -.07l-.04 \
+           -.108l-.028 -.128l-.012 -.102a1 1 0 0 1 0 -.125l.012 -.1l.024 -.11l.045 -.122l1.433 \
+           -3.304l-.009 -.014a10 10 0 0 1 1.549 -12.454l.215 -.203a10 10 0 0 1 13.226 -.217m-8.997 \
+           3.09a1.5 1.5 0 0 0 -1.5 1.5v1a6 6 0 0 0 6 6h1a1.5 1.5 0 0 0 0 -3h-1l-.144 .007a1.5 1.5 \
+           0 0 0 -1.128 .697l-.042 .074l-.022 -.007a4.01 4.01 0 0 1 -2.435 -2.435l-.008 -.023l.075 \
+           -.041a1.5 1.5 0 0 0 .704 -1.272v-1a1.5 1.5 0 0 0 -1.5 -1.5\" />\n\
+           </svg>"));
+  el
+
+let brand_windows ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-brand-windows\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M21 13v5c0 1.57 -1.248 2.832 -2.715 2.923l-.113 .003l-.042 .018a1 1 0 0 1 \
+           -.336 .056l-.118 -.008l-4.676 -.585v-7.407zm-10 0v7.157l-5.3 -.662c-1.514 -.151 -2.7 \
+           -1.383 -2.7 -2.895v-3.6zm0 -9.158v7.158h-8v-3.6c0 -1.454 1.096 -2.648 2.505 -2.87zm10 \
+           2.058v5.1h-8v-7.409l4.717 -.589c1.759 -.145 3.283 1.189 3.283 2.898\" />\n\
            </svg>"));
   el
 
@@ -4632,6 +5399,33 @@ let brightness ?at () =
            </svg>"));
   el
 
+let bubble_text ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-bubble-text\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12.4 2l.253 .005a6.34 6.34 0 0 1 5.235 3.166l.089 .163l.178 .039a6.33 6.33 \
+           0 0 1 4.254 3.406l.105 .228a6.334 6.334 0 0 1 -5.74 8.865l-.144 -.002l-.037 .052a5.26 \
+           5.26 0 0 1 -5.458 1.926l-.186 -.051l-3.435 2.06a1 1 0 0 1 -1.508 -.743l-.006 \
+           -.114v-2.435l-.055 -.026a3.67 3.67 0 0 1 -1.554 -1.498l-.102 -.199a3.67 3.67 0 0 1 \
+           -.312 -2.14l.038 -.21l-.116 -.092a5.8 5.8 0 0 1 -1.887 -6.025l.071 -.238a5.8 5.8 0 0 1 \
+           5.42 -4.004h.157l.15 -.165a6.33 6.33 0 0 1 4.33 -1.963zm1.6 11h-5a1 1 0 0 0 0 2h5a1 1 0 \
+           0 0 0 -2m3 -4h-10a1 1 0 1 0 0 2h10a1 1 0 0 0 0 -2\" />\n\
+           </svg>"));
+  el
+
 let bubble ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -4747,6 +5541,31 @@ let bulb ?at () =
            </svg>"));
   el
 
+let bus ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-bus\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 4c3.4 0 6 3.64 6 8v5a1 1 0 0 1 -1 1h-1.171a3.001 3.001 0 0 1 -5.658 \
+           0h-6.342a3.001 3.001 0 0 1 -5.658 0h-1.171a1 1 0 0 1 -1 -1v-11a2 2 0 0 1 2 -2zm-11 12a1 \
+           1 0 1 0 0 2a1 1 0 0 0 0 -2m12 0a1 1 0 1 0 0 2a1 1 0 0 0 0 -2m-.76 -9.989l1.068 \
+           4.989h2.636c-.313 -2.756 -1.895 -4.82 -3.704 -4.989m-11.24 -.011h-3v3h3zm5 \
+           0h-3v3h3zm4.191 0h-2.191v3h2.834z\" />\n\
+           </svg>"));
+  el
+
 let butterfly ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -4823,6 +5642,95 @@ let calculator ?at () =
            -.883zm4 0a1 1 0 0 0 -1 1l.007 .127a1 1 0 0 0 1.993 -.117l-.007 -.127a1 1 0 0 0 -.993 \
            -.883zm4 0a1 1 0 0 0 -1 1l.007 .127a1 1 0 0 0 1.993 -.117l-.007 -.127a1 1 0 0 0 -.993 \
            -.883zm-1 -7h-6a2 2 0 0 0 -2 2v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2 -2v-1a2 2 0 0 0 -2 -2z\" />\n\
+           </svg>"));
+  el
+
+let calendar_event ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-calendar-event\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M16 2a1 1 0 0 1 .993 .883l.007 .117v1h1a3 3 0 0 1 2.995 2.824l.005 \
+           .176v12a3 3 0 0 1 -2.824 2.995l-.176 .005h-12a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-12a3 \
+           3 0 0 1 2.824 -2.995l.176 -.005h1v-1a1 1 0 0 1 1.993 -.117l.007 .117v1h6v-1a1 1 0 0 1 1 \
+           -1m3 7h-14v9.625c0 .705 .386 1.286 .883 1.366l.117 .009h12c.513 0 .936 -.53 .993 \
+           -1.215l.007 -.16z\" />\n\
+          \  <path d=\"M8 14h2v2h-2z\" />\n\
+           </svg>"));
+  el
+
+let calendar_month ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-calendar-month\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M8 12a1 1 0 0 1 1 1v4a1 1 0 0 1 -2 0v-4a1 1 0 0 1 1 -1\" />\n\
+          \  <path d=\"M12 12a1 1 0 0 1 1 1v4a1 1 0 0 1 -2 0v-4a1 1 0 0 1 1 -1\" />\n\
+          \  <path d=\"M16 12a1 1 0 0 1 1 1v4a1 1 0 0 1 -2 0v-4a1 1 0 0 1 1 -1\" />\n\
+          \  <path d=\"M16 2a1 1 0 0 1 .993 .883l.007 .117v1h1a3 3 0 0 1 2.995 2.824l.005 \
+           .176v12a3 3 0 0 1 -2.824 2.995l-.176 .005h-12a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-12a3 \
+           3 0 0 1 2.824 -2.995l.176 -.005h1v-1a1 1 0 0 1 1.993 -.117l.007 .117v1h6v-1a1 1 0 0 1 1 \
+           -1m3 7h-14v9.625c0 .705 .386 1.286 .883 1.366l.117 .009h12c.513 0 .936 -.53 .993 \
+           -1.215l.007 -.16z\" />\n\
+           </svg>"));
+  el
+
+let calendar_week ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-calendar-week\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M16 2c.183 0 .355 .05 .502 .135l.033 .02c.28 .177 .465 .49 .465 .845v1h1a3 \
+           3 0 0 1 2.995 2.824l.005 .176v12a3 3 0 0 1 -2.824 2.995l-.176 .005h-12a3 3 0 0 1 -2.995 \
+           -2.824l-.005 -.176v-12a3 3 0 0 1 2.824 -2.995l.176 -.005h1v-1a1 1 0 0 1 .514 -.874l.093 \
+           -.046l.066 -.025l.1 -.029l.107 -.019l.12 -.007q .083 0 .161 .013l.122 .029l.04 .012l.06 \
+           .023c.328 .135 .568 .44 .61 .806l.007 .117v1h6v-1a1 1 0 0 1 1 -1m3 7h-14v9.625c0 .705 \
+           .386 1.286 .883 1.366l.117 .009h12c.513 0 .936 -.53 .993 -1.215l.007 -.16z\" />\n\
+          \  <path d=\"M9.015 13a1 1 0 0 1 -1 1a1.001 1.001 0 1 1 -.005 -2c.557 0 1.005 .448 1.005 \
+           1\" />\n\
+          \  <path d=\"M13.015 13a1 1 0 0 1 -1 1a1.001 1.001 0 1 1 -.005 -2c.557 0 1.005 .448 \
+           1.005 1\" />\n\
+          \  <path d=\"M17.02 13a1 1 0 0 1 -1 1a1.001 1.001 0 1 1 -.005 -2c.557 0 1.005 .448 1.005 \
+           1\" />\n\
+          \  <path d=\"M12.02 15a1 1 0 0 1 0 2a1.001 1.001 0 1 1 -.005 -2z\" />\n\
+          \  <path d=\"M9.015 16a1 1 0 0 1 -1 1a1.001 1.001 0 1 1 -.005 -2c.557 0 1.005 .448 1.005 \
+           1\" />\n\
            </svg>"));
   el
 
@@ -4922,10 +5830,10 @@ let candle ?at () =
           \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-candle\"\n\
            >\n\
           \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
-          \  <path d=\"M14 10h-4a2 2 0 0 0 -2 2v9a1 1 0 0 0 1 1h6a1 1 0 0 0 1 -1v-9a2 2 0 0 0 -2 \
+          \  <path d=\"M14 9a2 2 0 0 1 2 2v10a1 1 0 0 1 -1 1h-6a1 1 0 0 1 -1 -1v-10a2 2 0 0 1 2 \
            -2z\" />\n\
-          \  <path d=\"M11.254 2.334l-1.55 1.737c-1.042 1.277 -.898 3.097 .296 4.166a3 3 0 0 0 \
-           4.196 -4.28l-1.452 -1.624a1 1 0 0 0 -1.491 .001z\" />\n\
+          \  <path d=\"M11.254 1.334a1 1 0 0 1 1.491 0l1.452 1.623a3 3 0 0 1 -4.196 4.28c-1.195 \
+           -1.07 -1.339 -2.889 -.297 -4.166z\" />\n\
            </svg>"));
   el
 
@@ -5059,6 +5967,33 @@ let car_4wd ?at () =
            </svg>"));
   el
 
+let car_crane ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-car-crane\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M3.06 5.66l.035 -.085l.07 -.125l.033 -.048l.063 -.075l.064 -.065l.098 \
+           -.079l.106 -.065l.067 -.033l.048 -.02l.139 -.041l18.053 -3.01a1 1 0 0 1 1.164 .986v2a1 \
+           1 0 0 1 -2 0v-.82l-13.802 2.3l1.25 .626a1 1 0 0 1 .552 .894l-.001 3h2.001v-4a1 1 0 0 1 \
+           1 -1h4a6 6 0 0 1 6 6v5a1 1 0 0 1 -1 1h-1.17a3.001 3.001 0 0 1 -5.66 0h-6.34a3.001 3.001 \
+           0 0 1 -5.83 -1v-5a1 1 0 0 1 1 -1v-4.99a1 1 0 0 1 .06 -.35m1.94 10.34a1 1 0 1 0 0 2a1 1 \
+           0 0 0 0 -2m12 0a1 1 0 1 0 .992 1.124l.008 -.132l-.007 -.109a1 1 0 0 0 -.993 -.883m-.652 \
+           -7.985l.895 2.985h2.63l-.042 -.155a4 4 0 0 0 -3.223 -2.8z\" />\n\
+           </svg>"));
+  el
+
 let car_fan ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -5081,6 +6016,62 @@ let car_fan ?at () =
            -1.363 .932l-4.912 -1.914a2.7 2.7 0 0 1 -.68 -4.646l3.045 -2.372h-6.09a1 1 0 0 1 -.932 \
            -1.363l1.914 -4.912a2.7 2.7 0 0 1 4.646 -.68l2.371 3.044l.001 -6.089a1 1 0 0 1 1.363 \
            -.932\" />\n\
+           </svg>"));
+  el
+
+let car_suv ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-car-suv\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M7 14a3 3 0 1 1 -3 3l.005 -.176a3 3 0 0 1 2.995 -2.824m11 0a3 3 0 1 1 -3 \
+           3l.005 -.176a3 3 0 0 1 2.995 -2.824m-11 2a1 1 0 1 0 0 2a1 1 0 0 0 0 -2m11 0a1 1 0 1 0 0 \
+           2a1 1 0 0 0 0 -2m-3.562 -12a3 3 0 0 1 2.91 2.272l.433 1.728h2.219a3 3 0 0 1 2.995 \
+           2.824l.005 .176v3.02l-.01 .117a1 1 0 0 1 -.286 .575l-.107 .091l-.07 .049l-.076 \
+           .042l-.106 .046l-.017 .005l-.047 .016l-.108 .025l-.118 .013l-.08 .002l-.122 -.012l-.148 \
+           -.033l-.063 -.022a1 1 0 0 1 -.362 -.24l-.08 -.094a4 4 0 0 0 -3.2 -1.6a4 4 0 0 0 -3.2 \
+           1.6a1 1 0 0 1 -.8 .4h-3a1 1 0 0 1 -.8 -.4a3.998 3.998 0 0 0 -6.402 .002a1 1 0 1 1 \
+           -1.602 -1.198c.493 -.66 1.11 -1.2 1.804 -1.602v-2.792a1 1 0 0 1 .06 -.35l.042 -.1l2.004 \
+           -4.007a1 1 0 0 1 .894 -.553zm-12.438 2a1 1 0 0 1 1 1v4a1 1 0 0 1 -2 0v-4a1 1 0 0 1 1 \
+           -1m12.438 0h-3.438v2h4.718l-.31 -1.243a1 1 0 0 0 -.97 -.757m-5.438 0h-1.382l-1.001 \
+           2h2.383z\" />\n\
+           </svg>"));
+  el
+
+let car ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-car\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M14 5a1 1 0 0 1 .694 .28l.087 .095l3.699 4.625h.52a3 3 0 0 1 2.995 \
+           2.824l.005 .176v4a1 1 0 0 1 -1 1h-1.171a3.001 3.001 0 0 1 -5.658 0h-4.342a3.001 3.001 0 \
+           0 1 -5.658 0h-1.171a1 1 0 0 1 -1 -1v-6l.007 -.117l.008 -.056l.017 -.078l.012 -.036l.014 \
+           -.05l2.014 -5.034a1 1 0 0 1 .928 -.629zm-7 11a1 1 0 1 0 0 2a1 1 0 0 0 0 -2m10 0a1 1 0 1 \
+           0 0 2a1 1 0 0 0 0 -2m-6 -9h-5.324l-1.2 3h6.524zm2.52 0h-.52v3h2.92z\" />\n\
            </svg>"));
   el
 
@@ -5107,6 +6098,31 @@ let carambola ?at () =
            -.326c1.184 -3.33 2.426 -5.085 4.027 -5.192l.156 -.005c1.674 0 2.957 1.76 4.182 \
            5.197l.114 .326l.204 .005c7.6 .218 8.61 3.428 2.553 8.065l-.102 .075l.055 .178c1.35 \
            4.512 1.04 7.137 -1.556 7.24l-.163 .003z\" />\n\
+           </svg>"));
+  el
+
+let caravan ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-caravan\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M15.949 3.684l.771 2.316h1.28a3 3 0 0 1 3 3v6h1a1 1 0 0 1 0 2h-1.17a3 3 0 0 \
+           1 -2.83 2h-6.17a3.001 3.001 0 0 1 -5.66 0h-1.17a3 3 0 0 1 -3 -3v-3.5a6.5 6.5 0 0 1 \
+           5.672 -6.448l6.934 -2.971a1 1 0 0 1 1.343 .603m-6.949 13.316a1 1 0 1 0 0 2a1 1 0 0 0 0 \
+           -2m5.5 -7h-1a1.5 1.5 0 0 0 -1.5 1.5v1a1.5 1.5 0 0 0 1.5 1.5h1a1.5 1.5 0 0 0 1.5 \
+           -1.5v-1a1.5 1.5 0 0 0 -1.5 -1.5m-.105 -4.653l-1.524 .653h1.742z\" />\n\
            </svg>"));
   el
 
@@ -5608,15 +6624,63 @@ let chart_donut ?at () =
           \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-chart-donut\"\n\
            >\n\
           \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
-          \  <path d=\"M9.883 2.207a1.9 1.9 0 0 1 2.087 1.522l.025 .167l.005 .104v4a1 1 0 0 1 \
-           -.641 .933l-.107 .035a3.1 3.1 0 1 0 3.73 3.953l.05 -.173a1 1 0 0 1 .855 -.742l.113 \
-           -.006h3.8a2 2 0 0 1 2 2a1 1 0 0 1 -.026 .226a10 10 0 1 1 -12.27 -11.933l.27 -.067l.11 \
-           -.02z\" />\n\
-          \  <path d=\"M14.775 2.526a.996 .996 0 0 1 .22 -.026l.122 .007l.112 .02l.103 .03a10 10 0 \
-           0 1 6.003 5.817l.108 .294a1 1 0 0 1 -.824 1.325l-.119 .007h-4.5a1 1 0 0 1 -.76 -.35a8 8 \
-           0 0 0 -.89 -.89a1 1 0 0 1 -.342 -.636l-.008 -.124v-4.495l.006 -.118c.005 -.042 .012 \
-           -.08 .02 -.116l.03 -.103a.998 .998 0 0 1 .168 -.299l.071 -.08c.03 -.028 .058 -.052 .087 \
-           -.075l.09 -.063l.088 -.05l.103 -.043l.112 -.032z\" />\n\
+          \  <path d=\"M11.292 2.61c.396 .318 .65 .78 .703 1.286l.005 .104v4a1 1 0 0 1 -.748 \
+           .968a3.1 3.1 0 1 0 3.78 3.78a1 1 0 0 1 .968 -.748h3.8a2 2 0 0 1 2 2a1 1 0 0 1 -.026 \
+           .226a10 10 0 1 1 -12 -12l.057 -.01l.052 -.01a1.9 1.9 0 0 1 1.409 .404m3.703 -.11l.045 \
+           .002l.067 .004l.081 .014l.032 .004l.072 .022l.04 .01a10 10 0 0 1 6.003 5.818l.108 \
+           .294a1 1 0 0 1 -.943 1.332h-4.5a1 1 0 0 1 -.76 -.35a8 8 0 0 0 -.89 -.89a1 1 0 0 1 -.35 \
+           -.76v-4.5q .001 -.119 .026 -.23l.03 -.102a1 1 0 0 1 .168 -.299l.03 -.033l.039 -.043a1 1 \
+           0 0 1 .089 -.08l.051 -.034l.03 -.023l.045 -.025l.052 -.03a1 1 0 0 1 .435 -.101\" />\n\
+           </svg>"));
+  el
+
+let chart_dots_2 ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-chart-dots-2\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M3 2a1 1 0 0 1 1 1v17h17a1 1 0 0 1 .993 .883l.007 .117a1 1 0 0 1 -1 1h-18a1 \
+           1 0 0 1 -1 -1v-18a1 1 0 0 1 1 -1m18.97 .757a1 1 0 0 1 -.727 1.213l-5.256 1.314a3 3 0 0 \
+           1 -.55 1.465l1.768 2.358a3.003 3.003 0 0 1 3.795 2.893a3 3 0 0 1 -5.436 1.751l-3.57 \
+           1.428a3 3 0 0 1 -5.994 -.179l.005 -.176a3 3 0 0 1 5.43 -1.576l3.57 -1.428l.015 -.17c.06 \
+           -.518 .253 -.996 .542 -1.4l-1.767 -2.357a3.003 3.003 0 0 1 -3.795 -2.893l.005 -.176a3 3 \
+           0 0 1 5.497 -1.48l5.255 -1.314a1 1 0 0 1 1.213 .727\" />\n\
+           </svg>"));
+  el
+
+let chart_dots_3 ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-chart-dots-3\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M18 2a4 4 0 1 1 -3.843 5.114l-6.295 .786a3 3 0 0 1 -.094 .257l6.446 4.431a3 \
+           3 0 1 1 -.695 4.099l-3.527 1.058q .008 .127 .008 .255a4 4 0 1 1 -8 0l.005 -.2a4 4 0 0 1 \
+           7.366 -1.954l3.64 -1.094l.01 -.102q .023 -.204 .074 -.4l-6.688 -4.6a3 3 0 0 1 -4.407 \
+           -2.65l.005 -.176a3 3 0 0 1 5.784 -.931l6.312 -.79a4 4 0 0 1 3.899 -3.103\" />\n\
            </svg>"));
   el
 
@@ -5642,6 +6706,29 @@ let chart_dots ?at () =
           \  <path d=\"M19 4a3 3 0 1 1 -.651 5.93l-2.002 3.202a3 3 0 1 1 -4.927 .337l-1.378 \
            -1.655a3 3 0 1 1 1.538 -1.282l1.378 1.654a2.994 2.994 0 0 1 1.693 -.115l2.002 -3.203a3 \
            3 0 0 1 2.347 -4.868z\" />\n\
+           </svg>"));
+  el
+
+let chart_funnel ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-chart-funnel\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17.72 16l-1.315 3.948a3 3 0 0 1 -2.847 2.052h-3.116a3 3 0 0 1 -2.847 \
+           -2.052l-1.315 -3.948zm2 -6l-1.333 4h-12.774l-1.333 -4zm-.106 -8a2 2 0 0 1 1.896 \
+           2.632l-1.123 3.368h-16.774l-1.123 -3.368a2 2 0 0 1 1.72 -2.624l.177 -.008z\" />\n\
            </svg>"));
   el
 
@@ -5677,6 +6764,75 @@ let chart_grid_dots ?at () =
            </svg>"));
   el
 
+let chart_pie_2 ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-chart-pie-2\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M11 2.05v9.95a1 1 0 0 0 1 1h9.95a10 10 0 0 1 -19.95 -1l.005 -.324a10 10 0 0 \
+           1 8.995 -9.626m6 1.29a10 10 0 0 1 4.95 7.66h-8.95v-8.95a10 10 0 0 1 4 1.29\" />\n\
+           </svg>"));
+  el
+
+let chart_pie_3 ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-chart-pie-3\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 20.66a10 10 0 0 1 -11.328 -.917l6.742 -6.743h9.536a10 10 0 0 1 -4.95 \
+           7.66m-6 -18.61v9.534l-6.743 6.744a10 10 0 0 1 -2.257 -6.328l.005 -.324a10 10 0 0 1 \
+           8.995 -9.626m6 1.29a10 10 0 0 1 4.95 7.66h-8.95v-8.95a10 10 0 0 1 4 1.29\" />\n\
+           </svg>"));
+  el
+
+let chart_pie_4 ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-chart-pie-4\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M11.844 13.57l4.843 7.264a10 10 0 0 1 -11.015 -1.09zm6.507 6.154l-4.481 \
+           -6.724h8.081a10 10 0 0 1 -3.348 6.511zm-7.35 -17.674v9.534l-6.744 6.744a10 10 0 0 1 \
+           -2.257 -6.328l.005 -.324a10 10 0 0 1 8.995 -9.626m6 1.29a10 10 0 0 1 4.95 \
+           7.66h-8.95v-8.95a10 10 0 0 1 4 1.29\" />\n\
+           </svg>"));
+  el
+
 let chart_pie ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -5699,6 +6855,32 @@ let chart_pie ?at () =
            -.067l.11 -.02z\" />\n\
           \  <path d=\"M14 3.5v5.5a1 1 0 0 0 1 1h5.5a1 1 0 0 0 .943 -1.332a10 10 0 0 0 -6.11 \
            -6.111a1 1 0 0 0 -1.333 .943z\" />\n\
+           </svg>"));
+  el
+
+let chef_hat ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-chef-hat\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M19 19.002v1.998a1 1 0 0 1 -.883 .993l-.117 .007h-12a1 1 0 0 1 -1 \
+           -1v-1.994a1 1 0 0 1 1 -1l12 -.004a1 1 0 0 1 1 1\" />\n\
+          \  <path d=\"M12 2a5 5 0 0 1 4.533 2.888l.06 .137l.136 -.009a5 5 0 0 1 4.99 3.477l.063 \
+           .213a5 5 0 0 1 -2.696 5.831l-.087 .037v1.428a1 1 0 0 1 -1 1l-12 .004a1 1 0 0 1 -.993 \
+           -.883l-.007 -.117v-1.433l-.123 -.055a5 5 0 0 1 -2.6 -3.001l-.064 -.223a5 5 0 0 1 5.193 \
+           -6.27l.066 -.142a5 5 0 0 1 4.302 -2.877z\" />\n\
            </svg>"));
   el
 
@@ -6122,6 +7304,98 @@ let circle_arrow_up ?at () =
            </svg>"));
   el
 
+let circle_caret_down ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-circle-caret-down\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 3.34a10 10 0 1 1 -15 8.66l.005 -.324a10 10 0 0 1 14.995 -8.336m-2 \
+           6.66h-6a1 1 0 0 0 -.708 1.707l3 3a1 1 0 0 0 1.415 0l3 -3a1 1 0 0 0 0 -1.414l-.094 \
+           -.083a1 1 0 0 0 -.613 -.21\" />\n\
+           </svg>"));
+  el
+
+let circle_caret_left ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-circle-caret-left\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2c5.523 0 10 4.477 10 10s-4.477 10 -10 10a10 10 0 1 1 0 -20m2 13v-6a1 1 \
+           0 0 0 -1.707 -.708l-3 3a1 1 0 0 0 0 1.415l3 3a1 1 0 0 0 1.414 0l.083 -.094c.14 -.18 .21 \
+           -.396 .21 -.613\" />\n\
+           </svg>"));
+  el
+
+let circle_caret_right ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-circle-caret-right\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 3.34a10 10 0 1 1 -15 8.66l.005 -.324a10 10 0 0 1 14.995 -8.336m-5.293 \
+           4.953a1 1 0 0 0 -1.707 .707v6c0 .217 .07 .433 .21 .613l.083 .094a1 1 0 0 0 1.414 0l3 \
+           -3a1 1 0 0 0 0 -1.414z\" />\n\
+           </svg>"));
+  el
+
+let circle_caret_up ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-circle-caret-up\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 3.34a10 10 0 1 1 -15 8.66l.005 -.324a10 10 0 0 1 14.995 -8.336m-4.293 \
+           5.953a1 1 0 0 0 -1.414 0l-3 3a1 1 0 0 0 .707 1.707h6c.217 0 .433 -.07 .613 -.21l.094 \
+           -.083a1 1 0 0 0 0 -1.414z\" />\n\
+           </svg>"));
+  el
+
 let circle_check ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -6143,6 +7417,201 @@ let circle_check ?at () =
            14.995 -8.336zm-1.293 5.953a1 1 0 0 0 -1.32 -.083l-.094 .083l-3.293 3.292l-1.293 \
            -1.292l-.094 -.083a1 1 0 0 0 -1.403 1.403l.083 .094l2 2l.094 .083a1 1 0 0 0 1.226 \
            0l.094 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z\" />\n\
+           </svg>"));
+  el
+
+let circle_chevron_down ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-circle-chevron-down\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2c5.523 0 10 4.477 10 10s-4.477 10 -10 10a10 10 0 1 1 0 -20m-2.293 \
+           8.293a1 1 0 0 0 -1.414 1.414l3 3a1 1 0 0 0 1.414 0l3 -3a1 1 0 0 0 0 -1.414l-.094 \
+           -.083a1 1 0 0 0 -1.32 .083l-2.294 2.292z\" />\n\
+           </svg>"));
+  el
+
+let circle_chevron_left ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-circle-chevron-left\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 3.34a10 10 0 0 1 5 8.66c0 5.523 -4.477 10 -10 10s-10 -4.477 -10 -10a10 \
+           10 0 0 1 15 -8.66m-3.293 4.953a1 1 0 0 0 -1.414 0l-3 3a1 1 0 0 0 0 1.414l3 3a1 1 0 0 0 \
+           1.414 0l.083 -.094a1 1 0 0 0 -.083 -1.32l-2.292 -2.293l2.292 -2.293a1 1 0 0 0 0 \
+           -1.414\" />\n\
+           </svg>"));
+  el
+
+let circle_chevron_right ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-circle-chevron-right\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2c5.523 0 10 4.477 10 10a10 10 0 0 1 -20 0c0 -5.523 4.477 -10 10 \
+           -10m-.293 6.293a1 1 0 0 0 -1.414 0l-.083 .094a1 1 0 0 0 .083 1.32l2.292 2.293l-2.292 \
+           2.293a1 1 0 0 0 1.414 1.414l3 -3a1 1 0 0 0 0 -1.414z\" />\n\
+           </svg>"));
+  el
+
+let circle_chevron_up ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-circle-chevron-up\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 3.34a10 10 0 1 1 -15 8.66l.005 -.324a10 10 0 0 1 14.995 -8.336m-4.293 \
+           5.953a1 1 0 0 0 -1.414 0l-3 3a1 1 0 0 0 0 1.414l.094 .083a1 1 0 0 0 1.32 -.083l2.293 \
+           -2.292l2.293 2.292a1 1 0 0 0 1.414 -1.414z\" />\n\
+           </svg>"));
+  el
+
+let circle_chevrons_down ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-circle-chevrons-down\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2c5.523 0 10 4.477 10 10s-4.477 10 -10 10a10 10 0 1 1 0 -20m-2.293 \
+           10.293a1 1 0 1 0 -1.414 1.414l3 3a1 1 0 0 0 1.414 0l3 -3a1 1 0 0 0 0 -1.414l-.094 \
+           -.083a1 1 0 0 0 -1.32 .083l-2.294 2.292zm0 -4a1 1 0 0 0 -1.414 1.414l3 3a1 1 0 0 0 \
+           1.414 0l3 -3a1 1 0 0 0 0 -1.414l-.094 -.083a1 1 0 0 0 -1.32 .083l-2.294 2.292z\" />\n\
+           </svg>"));
+  el
+
+let circle_chevrons_left ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-circle-chevrons-left\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M11.927 2.133c5.494 -.04 9.992 4.359 10.073 9.852v.295c-.081 5.493 -4.579 \
+           9.893 -10.073 9.852c-5.494 -.04 -9.926 -4.505 -9.926 -10c0 -5.494 4.432 -9.959 9.926 \
+           -10m3.78 6.16a1 1 0 0 0 -1.414 0l-3 3a1 1 0 0 0 0 1.414l3 3a1 1 0 0 0 1.414 0l.083 \
+           -.094a1 1 0 0 0 -.083 -1.32l-2.292 -2.292l2.292 -2.293a1 1 0 0 0 0 -1.414m-4 0a1 1 0 0 \
+           0 -1.414 0l-3 3a1 1 0 0 0 0 1.414l3 3a1 1 0 0 0 1.414 0l.083 -.094a1 1 0 0 0 -.083 \
+           -1.32l-2.292 -2.293l2.292 -2.293a1 1 0 0 0 0 -1.414\" />\n\
+           </svg>"));
+  el
+
+let circle_chevrons_right ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-circle-chevrons-right\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12.073 1.868c5.494 .04 9.926 4.505 9.926 10c0 5.494 -4.432 9.959 -9.926 \
+           10c-5.494 .04 -9.992 -4.36 -10.073 -9.853v-.295c.081 -5.493 4.579 -9.893 10.073 \
+           -9.852m-2.366 6.425a1 1 0 0 0 -1.414 0l-.083 .094a1 1 0 0 0 .083 1.32l2.292 \
+           2.293l-2.292 2.293a1 1 0 0 0 1.414 1.414l3 -3a1 1 0 0 0 0 -1.414zm4 0a1 1 0 0 0 -1.414 \
+           0l-.083 .094a1 1 0 0 0 .083 1.32l2.292 2.293l-2.292 2.293a1 1 0 0 0 1.414 1.414l3 -3a1 \
+           1 0 0 0 0 -1.414z\" />\n\
+           </svg>"));
+  el
+
+let circle_chevrons_up ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-circle-chevrons-up\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M11.867 2.001c5.495 0 9.96 4.432 10 9.926s-4.359 9.993 -9.852 \
+           10.073h-.295c-5.493 -.081 -9.893 -4.579 -9.852 -10.073c.04 -5.494 4.505 -9.926 10 \
+           -9.926m.84 9.292a1 1 0 0 0 -1.414 0l-3 3a1 1 0 0 0 0 1.414l.094 .083a1 1 0 0 0 1.32 \
+           -.083l2.292 -2.292l2.293 2.292a1 1 0 0 0 1.414 -1.414zm0 -4a1 1 0 0 0 -1.414 0l-3 3a1 1 \
+           0 0 0 0 1.414l.094 .083a1 1 0 0 0 1.32 -.083l2.292 -2.292l2.293 2.292a1 1 0 0 0 1.414 \
+           -1.414z\" />\n\
            </svg>"));
   el
 
@@ -7200,6 +8669,228 @@ let circles ?at () =
            </svg>"));
   el
 
+let clipboard_check ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-clipboard-check\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17.997 4.17a3 3 0 0 1 2.003 2.83v12a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 \
+           -3v-12a3 3 0 0 1 2.003 -2.83a4 4 0 0 0 3.997 3.83h4a4 4 0 0 0 3.98 -3.597zm-3.704 \
+           7.123l-3.293 3.292l-1.293 -1.292a1 1 0 1 0 -1.414 1.414l2 2a1 1 0 0 0 1.414 0l4 -4a1 1 \
+           0 0 0 -1.414 -1.414m-.293 -9.293a2 2 0 1 1 0 4h-4a2 2 0 1 1 0 -4z\" />\n\
+           </svg>"));
+  el
+
+let clipboard_data ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-clipboard-data\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17.997 4.17a3 3 0 0 1 2.003 2.83v12a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 \
+           -3v-12a3 3 0 0 1 2.003 -2.83a4 4 0 0 0 3.997 3.83h4a4 4 0 0 0 3.98 -3.597zm-8.997 \
+           7.83a1 1 0 0 0 -1 1v4a1 1 0 0 0 2 0v-4a1 1 0 0 0 -1 -1m3 3a1 1 0 0 0 -1 1v1a1 1 0 0 0 1 \
+           1l.117 -.007a1 1 0 0 0 .883 -.993v-1a1 1 0 0 0 -1 -1m3 -1a1 1 0 0 0 -1 1v2a1 1 0 0 0 2 \
+           0v-2a1 1 0 0 0 -1 -1m-1 -12a2 2 0 1 1 0 4h-4a2 2 0 1 1 0 -4z\" />\n\
+           </svg>"));
+  el
+
+let clipboard_list ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-clipboard-list\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17.997 4.17a3 3 0 0 1 2.003 2.83v12a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 \
+           -3v-12a3 3 0 0 1 2.003 -2.83a4 4 0 0 0 3.997 3.83h4a4 4 0 0 0 3.98 -3.597zm-8.987 \
+           10.83h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 0 0 0 -2m5.99 0h-2a1 1 0 0 0 0 2h2a1 1 \
+           0 0 0 0 -2m-5.99 -4h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 0 0 0 -2m5.99 0h-2a1 1 0 \
+           0 0 0 2h2a1 1 0 0 0 0 -2m-1 -9a2 2 0 1 1 0 4h-4a2 2 0 1 1 0 -4z\" />\n\
+           </svg>"));
+  el
+
+let clipboard_plus ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-clipboard-plus\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17.997 4.17a3 3 0 0 1 2.003 2.83v12a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 \
+           -3v-12a3 3 0 0 1 2.003 -2.83a4 4 0 0 0 3.997 3.83h4a4 4 0 0 0 3.98 -3.597zm-5.997 \
+           6.83a1 1 0 0 0 -1 1v1h-1a1 1 0 0 0 0 2h1v1a1 1 0 0 0 2 0v-1h1a1 1 0 0 0 0 -2h-1v-1a1 1 \
+           0 0 0 -1 -1m2 -9a2 2 0 1 1 0 4h-4a2 2 0 1 1 0 -4z\" />\n\
+           </svg>"));
+  el
+
+let clipboard_smile ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-clipboard-smile\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17.997 4.17a3 3 0 0 1 2.003 2.83v12a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 \
+           -3v-12a3 3 0 0 1 2.003 -2.83a4 4 0 0 0 3.997 3.83h4a4 4 0 0 0 3.98 -3.597zm-3.176 \
+           11.259a1 1 0 0 0 -1.392 -.25a2.5 2.5 0 0 1 -2.858 0a1 1 0 0 0 -1.142 1.642a4.5 4.5 0 0 \
+           0 5.142 0a1 1 0 0 0 .25 -1.392m-4.811 -3.429h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 \
+           0 0 0 -2m4 0h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 0 0 0 -2m-.01 -10a2 2 0 1 1 0 \
+           4h-4a2 2 0 1 1 0 -4z\" />\n\
+           </svg>"));
+  el
+
+let clipboard_text ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-clipboard-text\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17.997 4.17a3 3 0 0 1 2.003 2.83v12a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 \
+           -3v-12a3 3 0 0 1 2.003 -2.83a4 4 0 0 0 3.997 3.83h4a4 4 0 0 0 3.98 -3.597zm-2.997 \
+           10.83h-6a1 1 0 0 0 0 2h6a1 1 0 0 0 0 -2m0 -4h-6a1 1 0 0 0 0 2h6a1 1 0 0 0 0 -2m-1 -9a2 \
+           2 0 1 1 0 4h-4a2 2 0 1 1 0 -4z\" />\n\
+           </svg>"));
+  el
+
+let clipboard_typography ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-clipboard-typography\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17.997 4.17a3 3 0 0 1 2.003 2.83v12a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 \
+           -3v-12a3 3 0 0 1 2.003 -2.83a4 4 0 0 0 3.997 3.83h4a4 4 0 0 0 3.98 -3.597zm-2.997 \
+           5.83h-6a1 1 0 0 0 -1 1v1a1 1 0 0 0 2 0h1v4a1 1 0 0 0 0 2h2a1 1 0 0 0 0 -2v-4h1a1 1 0 0 \
+           0 2 0v-1a1 1 0 0 0 -1 -1m-1 -8a2 2 0 1 1 0 4h-4a2 2 0 1 1 0 -4z\" />\n\
+           </svg>"));
+  el
+
+let clipboard_x ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-clipboard-x\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17.997 4.17a3 3 0 0 1 2.003 2.83v12a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 \
+           -3v-12a3 3 0 0 1 2.003 -2.83a4 4 0 0 0 3.997 3.83h4a4 4 0 0 0 3.98 -3.597zm-7.29 \
+           7.123a1 1 0 0 0 -1.414 0l-.083 .094a1 1 0 0 0 .083 1.32l1.292 1.293l-1.292 1.293a1 1 0 \
+           0 0 0 1.414l.094 .083a1 1 0 0 0 1.32 -.083l1.293 -1.293l1.293 1.293a1 1 0 0 0 1.414 \
+           0l.083 -.094a1 1 0 0 0 -.083 -1.32l-1.293 -1.293l1.293 -1.293a1 1 0 0 0 0 -1.414l-.094 \
+           -.083a1 1 0 0 0 -1.32 .083l-1.293 1.292zm3.293 -9.293a2 2 0 1 1 0 4h-4a2 2 0 1 1 0 \
+           -4z\" />\n\
+           </svg>"));
+  el
+
+let clipboard ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-clipboard\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17.997 4.17a3 3 0 0 1 2.003 2.83v12a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 \
+           -3v-12a3 3 0 0 1 2.003 -2.83a4 4 0 0 0 3.997 3.83h4a4 4 0 0 0 3.98 -3.597zm-3.997 \
+           -2.17a2 2 0 1 1 0 4h-4a2 2 0 1 1 0 -4z\" />\n\
+           </svg>"));
+  el
+
 let clock_hour_1 ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -7509,6 +9200,58 @@ let clock ?at () =
            14.995 -8.336zm-5 2.66a1 1 0 0 0 -.993 .883l-.007 .117v5l.009 .131a1 1 0 0 0 .197 \
            .477l.087 .1l3 3l.094 .082a1 1 0 0 0 1.226 0l.094 -.083l.083 -.094a1 1 0 0 0 0 \
            -1.226l-.083 -.094l-2.707 -2.708v-4.585l-.007 -.117a1 1 0 0 0 -.993 -.883z\" />\n\
+           </svg>"));
+  el
+
+let cloud_computing ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-cloud-computing\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M9 20a2 2 0 0 1 -2 2h-4a1 1 0 0 1 0 -2h4v-2.997l-.343 .001a1 1 0 0 1 -.117 \
+           -.007l-.105 -.001c-2.94 -.11 -5.317 -2.399 -5.43 -5.263l-.005 -.216c0 -2.747 2.08 -5.01 \
+           4.784 -5.417l.114 -.016l.07 -.181c.663 -1.62 2.056 -2.906 3.829 -3.518l.244 -.08c2.194 \
+           -.667 4.614 -.224 6.36 1.176c1.385 1.108 2.187 2.686 2.25 4.34l.004 .212l.091 .003c2.3 \
+           .107 4.143 1.961 4.25 4.27l.004 .211c0 2.478 -1.997 4.487 -4.465 4.487h-1.535v2.996h4a1 \
+           1 0 0 1 0 2h-4a2 2 0 0 1 -2 -2v-2.997h-2v3.997a1 1 0 0 1 -2 0v-3.997h-2z\" />\n\
+           </svg>"));
+  el
+
+let cloud_data_connection ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-cloud-data-connection\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M15.262 4.087c.974 .768 1.566 1.848 1.678 2.997l.007 .107l.18 .025a3.42 \
+           3.42 0 0 1 2.867 3.184l.006 .188a3.42 3.42 0 0 1 -3.425 3.412h-3.575l.001 1.171a3 3 0 0 \
+           1 1.829 1.829h6.17a1 1 0 0 1 0 2h-6.17a3.001 3.001 0 0 1 -5.66 0h-6.17a1 1 0 0 1 0 \
+           -2h6.171a3 3 0 0 1 1.829 -1.83v-1.17h-2.74c-2.341 0 -4.26 -1.826 -4.26 -4.103c0 -2.001 \
+           1.481 -3.655 3.43 -4.026l.086 -.015l.049 -.112c.514 -1.124 1.508 -2.01 2.756 \
+           -2.447l.222 -.072c1.627 -.49 3.42 -.166 4.72 .862\" />\n\
            </svg>"));
   el
 
@@ -8420,6 +10163,31 @@ let cross ?at () =
            </svg>"));
   el
 
+let current_location ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-current-location\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 1a1 1 0 0 1 1 1v1.055a9.004 9.004 0 0 1 7.946 7.945h1.054a1 1 0 0 1 0 \
+           2h-1.055a9.004 9.004 0 0 1 -7.944 7.945l-.001 1.055a1 1 0 0 1 -2 0v-1.055a9.004 9.004 0 \
+           0 1 -7.945 -7.944l-1.055 -.001a1 1 0 0 1 0 -2h1.055a9.004 9.004 0 0 1 7.945 \
+           -7.945v-1.055a1 1 0 0 1 1 -1m0 4a7 7 0 1 0 0 14a7 7 0 0 0 0 -14m0 3a4 4 0 1 1 -4 4l.005 \
+           -.2a4 4 0 0 1 3.995 -3.8\" />\n\
+           </svg>"));
+  el
+
 let dashboard ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -8441,6 +10209,77 @@ let dashboard ?at () =
            -.622 -.217a10 10 0 0 1 6.222 -17.829m4.207 5.839a1 1 0 0 0 -1.414 0l-2.276 2.274a2.003 \
            2.003 0 0 0 -2.514 1.815l-.003 .118a2 2 0 1 0 3.933 -.517l2.274 -2.276a1 1 0 0 0 0 \
            -1.414\" />\n\
+           </svg>"));
+  el
+
+let device_cctv ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-device-cctv\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M20 8v6a8 8 0 1 1 -16 0v-6zm-8 2a4 4 0 0 0 -3.996 3.826l-.004 .174a4 4 0 1 \
+           0 4 -4m.01 3a1 1 0 0 1 .117 1.993l-.127 .007a1 1 0 0 1 -.117 -1.993zm-10.01 -8v-1a2 2 0 \
+           0 1 2 -2h16a2 2 0 0 1 2 2v1a2 2 0 0 1 -2 2h-16a2 2 0 0 1 -2 -2\" />\n\
+           </svg>"));
+  el
+
+let device_desktop ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-device-desktop\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M7 21a1 1 0 0 1 0 -2h1v-2h-4a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2h16a2 2 0 0 \
+           1 2 2v10a2 2 0 0 1 -2 2h-4v2h1a1 1 0 0 1 0 2zm7 -4h-4v2h4z\" />\n\
+           </svg>"));
+  el
+
+let device_gamepad_3 ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-device-gamepad-3\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12.707 14.293l3 3a1 1 0 0 1 .293 .707v2a2 2 0 0 1 -2 2h-4a2 2 0 0 1 -2 \
+           -2v-2a1 1 0 0 1 .293 -.707l3 -3a1 1 0 0 1 1.414 0m-6.707 -6.293a1 1 0 0 1 .707 .293l3 \
+           3a1 1 0 0 1 0 1.414l-3 3a1 1 0 0 1 -.707 .293h-2a2 2 0 0 1 -2 -2v-4a2 2 0 0 1 2 -2zm14 \
+           0a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-2a1 1 0 0 1 -.707 -.293l-3 -3a1 1 0 0 1 0 -1.414l3 \
+           -3a1 1 0 0 1 .707 -.293zm-6 -6a2 2 0 0 1 2 2v2a1 1 0 0 1 -.293 .707l-3 3a1 1 0 0 1 \
+           -1.414 0l-3 -3a1 1 0 0 1 -.293 -.707v-2a2 2 0 0 1 2 -2z\" />\n\
            </svg>"));
   el
 
@@ -8473,6 +10312,51 @@ let device_heart_monitor ?at () =
            </svg>"));
   el
 
+let device_imac ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-device-imac\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M8 22a1 1 0 0 1 0 -2h.616l.25 -2h-4.866a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 \
+           -2h16a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-4.867l.25 2h.617a1 1 0 0 1 0 2zm5.116 \
+           -4h-2.233l-.25 2h2.733z\" />\n\
+           </svg>"));
+  el
+
+let device_ipad ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-device-ipad\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M18 2a3 3 0 0 1 3 3v14a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-14a3 3 0 0 1 3 \
+           -3zm-3 16h-6a1 1 0 0 0 0 2h6a1 1 0 0 0 0 -2\" />\n\
+           </svg>"));
+  el
+
 let device_mobile ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -8495,6 +10379,56 @@ let device_mobile ?at () =
            14a1 1 0 0 0 -.993 .883l-.007 .117l.007 .127a1 1 0 0 0 1.986 0l.007 -.117l-.007 -.127a1 \
            1 0 0 0 -.993 -.883zm1 -12h-2l-.117 .007a1 1 0 0 0 0 1.986l.117 .007h2l.117 -.007a1 1 0 \
            0 0 0 -1.986l-.117 -.007z\" />\n\
+           </svg>"));
+  el
+
+let device_remote ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-device-remote\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M15 2a3 3 0 0 1 3 3v14a3 3 0 0 1 -3 3h-6a3 3 0 0 1 -3 -3v-14a3 3 0 0 1 3 \
+           -3h2v1a1 1 0 0 0 .883 .993l.117 .007a1 1 0 0 0 1 -1v-1zm-5 15a1 1 0 0 0 -1 1l.007 \
+           .127a1 1 0 0 0 1.993 -.117l-.007 -.127a1 1 0 0 0 -.993 -.883m4 0a1 1 0 0 0 -1 1l.007 \
+           .127a1 1 0 0 0 1.993 -.117l-.007 -.127a1 1 0 0 0 -.993 -.883m-4 -3a1 1 0 0 0 -1 1l.007 \
+           .127a1 1 0 0 0 1.993 -.117l-.007 -.127a1 1 0 0 0 -.993 -.883m4 0a1 1 0 0 0 -1 1l.007 \
+           .127a1 1 0 0 0 1.993 -.117l-.007 -.127a1 1 0 0 0 -.993 -.883m-2 -7a3 3 0 0 0 -2.995 \
+           2.824l-.005 .176a3 3 0 1 0 3 -3\" />\n\
+           </svg>"));
+  el
+
+let device_speaker ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-device-speaker\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 2a3 3 0 0 1 3 3v14a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 -3v-14a3 3 0 0 1 3 \
+           -3zm-5 9a4 4 0 0 0 -3.995 3.8l-.005 .2a4 4 0 1 0 4 -4m0 -5a1 1 0 0 0 -1 1v.01a1 1 0 0 0 \
+           2 0v-.01a1 1 0 0 0 -1 -1\" />\n\
            </svg>"));
   el
 
@@ -8521,6 +10455,57 @@ let device_tablet ?at () =
            </svg>"));
   el
 
+let device_tv_old ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-device-tv-old\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M8.707 2.293l3.293 3.292l3.293 -3.292a1 1 0 0 1 1.32 -.083l.094 .083a1 1 0 \
+           0 1 0 1.414l-2.293 2.293h4.586a3 3 0 0 1 3 3v9a3 3 0 0 1 -3 3h-14a3 3 0 0 1 -3 -3v-9a3 \
+           3 0 0 1 3 -3h4.585l-2.292 -2.293a1 1 0 0 1 1.414 -1.414m10.293 5.707h-2a1 1 0 0 0 -1 \
+           1v9a1 1 0 0 0 1 1h2a1 1 0 0 0 1 -1v-9a1 1 0 0 0 -1 -1\" />\n\
+          \  <path d=\"M18 14a1 1 0 0 1 .993 .883l.007 .127a1 1 0 0 1 -1.993 .117l-.007 -.127a1 1 \
+           0 0 1 1 -1\" />\n\
+          \  <path d=\"M18 11a1 1 0 0 1 .993 .883l.007 .127a1 1 0 0 1 -1.993 .117l-.007 -.127a1 1 \
+           0 0 1 1 -1\" />\n\
+           </svg>"));
+  el
+
+let device_tv ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-device-tv\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M8.707 2.293l3.293 3.292l3.293 -3.292a1 1 0 0 1 1.32 -.083l.094 .083a1 1 0 \
+           0 1 0 1.414l-2.293 2.293h4.586a3 3 0 0 1 3 3v9a3 3 0 0 1 -3 3h-14a3 3 0 0 1 -3 -3v-9a3 \
+           3 0 0 1 3 -3h4.585l-2.292 -2.293a1 1 0 0 1 1.414 -1.414\" />\n\
+           </svg>"));
+  el
+
 let device_unknown ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -8542,6 +10527,80 @@ let device_unknown ?at () =
            -3zm-5 13a1 1 0 0 0 -1 1v.01a1 1 0 0 0 2 0v-.01a1 1 0 0 0 -1 -1m1.368 -6.673a2.98 2.98 \
            0 0 0 -3.631 .728a1 1 0 0 0 1.526 1.292a.98 .98 0 0 1 1.195 -.239a1 1 0 0 1 -.455 \
            1.892a1 1 0 0 0 -.006 2a3 3 0 0 0 1.371 -5.673\" />\n\
+           </svg>"));
+  el
+
+let device_usb ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-device-usb\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M15 2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 1 1v8a6 6 0 1 1 -12 0v-8a1 1 0 0 1 1 \
+           -1h1v-4a1 1 0 0 1 1 -1zm-1 2h-4v3h4z\" />\n\
+           </svg>"));
+  el
+
+let device_vision_pro ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-device-vision-pro\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 6q 1.74 0 3.342 .106q 1.619 .107 2.973 .448q 1.388 .345 2.436 1.05a4.9 \
+           4.9 0 0 1 1.665 1.916c.397 .801 .584 1.769 .584 2.91c0 1.156 -.222 2.208 -.673 \
+           3.14c-.45 .934 -1.073 1.685 -1.868 2.236a4.7 4.7 0 0 1 -2.73 .839q -.932 .001 -1.703 \
+           -.263a7 7 0 0 1 -1.374 -.644a20 20 0 0 1 -1.107 -.736a8 8 0 0 0 -.901 -.567a1.4 1.4 0 0 \
+           0 -.643 -.174c-.209 0 -.426 .057 -.658 .18q -.42 .226 -.893 .564a20 20 0 0 1 -1.105 \
+           .733a6.8 6.8 0 0 1 -1.366 .642a5.2 5.2 0 0 1 -1.688 .264a4.7 4.7 0 0 1 -2.75 \
+           -.838c-.794 -.55 -1.418 -1.302 -1.868 -2.234q -.675 -1.407 -.673 -3.14c-.005 -1.135 \
+           .182 -2.105 .577 -2.9a4.9 4.9 0 0 1 1.673 -1.926c.699 -.47 1.511 -.816 2.442 -1.049a17 \
+           17 0 0 1 2.968 -.447q 1.599 -.11 3.34 -.11\" />\n\
+           </svg>"));
+  el
+
+let device_watch ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-device-watch\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M15 2a1 1 0 0 1 1 1v2.126c1.726 .445 3 2.01 3 3.874v6a4 4 0 0 1 -3 \
+           3.874v2.126a1 1 0 0 1 -1 1h-6a1 1 0 0 1 -1 -1v-2.126a4 4 0 0 1 -3 -3.874v-6a4 4 0 0 1 3 \
+           -3.874v-2.126a1 1 0 0 1 1 -1zm-1 17h-4v1h4zm0 -15h-4v1h4z\" />\n\
            </svg>"));
   el
 
@@ -8804,6 +10863,34 @@ let dice ?at () =
            </svg>"));
   el
 
+let direction_arrows ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-direction-arrows\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2c5.523 0 10 4.477 10 10a10 10 0 0 1 -20 0l.004 -.28c.148 -5.393 4.566 \
+           -9.72 9.996 -9.72m-.293 13.293a1 1 0 0 0 -1.414 1.414l1 1a1 1 0 0 0 1.414 0l1 -1a1 1 0 \
+           0 0 0 -1.414l-.094 -.083a1 1 0 0 0 -1.32 .083l-.293 .292zm-3 -5a1 1 0 0 0 -1.414 0l-1 \
+           1a1 1 0 0 0 0 1.414l1 1a1 1 0 0 0 1.414 0l.083 -.094a1 1 0 0 0 -.083 -1.32l-.292 \
+           -.293l.292 -.293a1 1 0 0 0 0 -1.414m8 0a1 1 0 0 0 -1.414 0l-.083 .094a1 1 0 0 0 .083 \
+           1.32l.292 .292l-.292 .294a1 1 0 0 0 1.414 1.414l1 -1a1 1 0 0 0 0 -1.414zm-4 -4a1 1 0 0 \
+           0 -1.414 0l-1 1a1 1 0 0 0 0 1.414l.094 .083a1 1 0 0 0 1.32 -.083l.293 -.292l.293 .292a1 \
+           1 0 0 0 1.414 -1.414z\" />\n\
+           </svg>"));
+  el
+
 let direction_sign ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -8829,6 +10916,102 @@ let direction_sign ?at () =
            0 0 1.226l.083 .094l1.792 1.793h-5.085l-.117 .007a1 1 0 0 0 0 1.986l.117 \
            .007h5.085l-1.792 1.793l-.083 .094a1 1 0 0 0 1.403 1.403l.094 -.083l3.5 -3.5l.097 \
            -.112l.05 -.074l.037 -.067l.05 -.112l.023 -.076l.025 -.117z\" />\n\
+           </svg>"));
+  el
+
+let directions ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-directions\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M10 22a1 1 0 0 1 0 -2h1v-2.001l-5 .001a1 1 0 0 1 -.707 -.293l-2 -2a1 1 0 0 \
+           1 0 -1.414l2 -2a1 1 0 0 1 .707 -.293l5 -.001v-1.999h-3a1 1 0 0 1 -1 -1v-4a1 1 0 0 1 1 \
+           -1h3v-1a1 1 0 0 1 2 0v1h6a1 1 0 0 1 .707 .293l2 2a1 1 0 0 1 0 1.414l-2 2a1 1 0 0 1 \
+           -.707 .293h-6v1.999l1 .001a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1l-1 -.001v2.001h1a1 1 0 0 1 0 \
+           2z\" />\n\
+           </svg>"));
+  el
+
+let disc ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-disc\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 3.34a10 10 0 1 1 -15 8.66l.005 -.324a10 10 0 0 1 14.995 -8.336m0 7.66a1 \
+           1 0 0 0 -1 1a4 4 0 0 1 -4 4a1 1 0 0 0 0 2a6 6 0 0 0 6 -6a1 1 0 0 0 -1 -1m-5 -1a2 2 0 0 \
+           0 -1.995 1.85l-.005 .15a2 2 0 1 0 2 -2m0 -4a6 6 0 0 0 -6 6a1 1 0 0 0 2 0a4 4 0 0 1 4 \
+           -4a1 1 0 0 0 0 -2\" />\n\
+           </svg>"));
+  el
+
+let discount ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-discount\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 3.34a10 10 0 1 1 -15 8.66l.005 -.324a10 10 0 0 1 14.995 -8.336m-2.5 \
+           9.66a1.5 1.5 0 1 0 0 3a1.5 1.5 0 0 0 0 -3m1.207 -4.707a1 1 0 0 0 -1.414 0l-6 6a1 1 0 0 \
+           0 1.414 1.414l6 -6a1 1 0 0 0 0 -1.414m-6.207 -.293a1.5 1.5 0 1 0 0 3a1.5 1.5 0 0 0 0 \
+           -3\" />\n\
+           </svg>"));
+  el
+
+let drop_circle ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-drop-circle\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 3.34a10 10 0 1 1 -15 8.66l.005 -.324a10 10 0 0 1 14.995 -8.336m-4.177 \
+           4.092a1 1 0 0 0 -1.646 0l-2.602 3.764c-1.022 1.67 -.634 3.736 .875 4.929a4.144 4.144 0 \
+           0 0 5.095 0c1.51 -1.191 1.897 -3.26 .904 -4.882z\" />\n\
            </svg>"));
   el
 
@@ -8907,6 +11090,164 @@ let droplet ?at () =
            </svg>"));
   el
 
+let droplets ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-droplets\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M6 12.003c.541 0 1.045 .273 1.342 .727l2.122 3.273a3.999 3.999 0 0 1 -6.035 \
+           5.063c-1.487 -1.248 -1.864 -3.382 -.867 -5.11l2.098 -3.226a1.6 1.6 0 0 1 1.34 -.727\" />\n\
+          \  <path d=\"M18 12.003c.541 0 1.045 .273 1.342 .727l2.122 3.273a3.999 3.999 0 0 1 \
+           -6.035 5.063c-1.487 -1.248 -1.864 -3.382 -.867 -5.11l2.098 -3.227a1.6 1.6 0 0 1 1.34 \
+           -.726\" />\n\
+          \  <path d=\"M12 2.003c.541 0 1.045 .273 1.342 .727l2.122 3.273a3.999 3.999 0 0 1 -6.035 \
+           5.063c-1.487 -1.248 -1.864 -3.382 -.867 -5.11l2.098 -3.226a1.6 1.6 0 0 1 1.34 -.727\" />\n\
+           </svg>"));
+  el
+
+let dual_screen ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-dual-screen\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M19 3a1 1 0 0 1 1 1v15a1 1 0 0 1 -1 1h-5v2a1 1 0 0 1 -1.351 .936l-8 -3a1 1 \
+           0 0 1 -.649 -.936v-15a1 1 0 0 1 .212 -.616l.068 -.079l.078 -.072l.066 -.05l.092 \
+           -.058l.065 -.033l.1 -.04l.099 -.028l.046 -.01l.108 -.013l.066 -.001zm-5.649 3.064a1 1 0 \
+           0 1 .649 .936v11h4v-13h-7.486z\" />\n\
+           </svg>"));
+  el
+
+let dumpling ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-dumpling\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M10.003 2.04a3.53 3.53 0 0 1 2.602 .62l.09 .07l.149 -.11a3.53 3.53 0 0 1 \
+           3.044 -.462l.207 .072a3.53 3.53 0 0 1 1.99 1.903l.014 .031l.045 -.004a3.53 3.53 0 0 1 \
+           2.624 .879l.153 .144l.358 .358c1.976 1.977 -.32 6.748 -4.655 11.083c-4.336 4.335 -9.106 \
+           6.632 -11.083 4.655l-.382 -.382l-.135 -.145a3.53 3.53 0 0 1 -.87 -2.556l.01 -.1l-.162 \
+           -.072a3.53 3.53 0 0 1 -1.838 -2.124l-.055 -.192a3.53 3.53 0 0 1 .56 -2.937l.062 \
+           -.079l-.07 -.092a3.53 3.53 0 0 1 -.644 -2.401l.025 -.2a3.53 3.53 0 0 1 1.707 \
+           -2.505l.046 -.026l-.005 -.14a3.53 3.53 0 0 1 .885 -2.345l.15 -.16l.159 -.149a3.53 3.53 \
+           0 0 1 2.346 -.884l.14 .004l.026 -.046a3.53 3.53 0 0 1 2.308 -1.67z\" />\n\
+           </svg>"));
+  el
+
+let ease_in_control_point ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-ease-in-control-point\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M19 16a3 3 0 1 1 -2.829 4h-1.171a1 1 0 0 1 0 -2h1.17a3 3 0 0 1 2.83 -2m2.53 \
+           -13.848a1 1 0 0 1 .318 1.378l-.286 .445l-.173 .264a73 73 0 0 1 -1.26 1.839a70 70 0 0 1 \
+           -4.376 5.58c-2.795 3.195 -5.544 5.638 -8.171 7.04c-1.593 .848 -3.123 1.302 -4.582 \
+           1.302a1 1 0 0 1 0 -2c1.097 0 2.317 -.361 3.64 -1.068c2.373 -1.265 4.958 -3.562 7.607 \
+           -6.59a68 68 0 0 0 4.25 -5.42a69 69 0 0 0 1.003 -1.456l.455 -.69q .133 -.204 .196 \
+           -.306a1 1 0 0 1 1.378 -.318m-9.529 15.848a1 1 0 0 1 0 2h-2a1 1 0 0 1 0 -2z\" />\n\
+           </svg>"));
+  el
+
+let ease_in_out_control_points ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-ease-in-out-control-points\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M19 17a3 3 0 1 1 -2.829 4h-1.171a1 1 0 0 1 0 -2h1.17a3 3 0 0 1 2.83 -2m-14 \
+           -16c1.306 0 2.418 .835 2.83 2h1.17a1 1 0 1 1 0 2h-1.171a3.001 3.001 0 1 1 -2.829 -4m9 \
+           2a1 1 0 0 1 0 2h-2a1 1 0 0 1 0 -2zm-2 16a1 1 0 0 1 0 2h-2a1 1 0 0 1 0 -2z\" />\n\
+          \  <path d=\"M21 3a1 1 0 0 1 0 2c-2.83 0 -4.6 1.845 -8.152 7.53c-3.947 6.315 -6.012 8.47 \
+           -9.848 8.47a1 1 0 0 1 0 -2c2.83 0 4.6 -1.845 8.152 -7.53c3.947 -6.315 6.012 -8.47 9.848 \
+           -8.47\" />\n\
+           </svg>"));
+  el
+
+let ease_out_control_point ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-ease-out-control-point\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M21 4a1 1 0 0 1 0 2c-1.097 0 -2.317 .361 -3.64 1.068c-2.373 1.265 -4.958 \
+           3.562 -7.607 6.59a68 68 0 0 0 -4.25 5.42a69 69 0 0 0 -1.003 1.456l-.455 .69q -.132 .204 \
+           -.196 .306a1 1 0 1 1 -1.696 -1.06l.286 -.445l.173 -.264a73 73 0 0 1 1.26 -1.839a70 70 0 \
+           0 1 4.376 -5.58c2.795 -3.195 5.544 -5.638 8.171 -7.04c1.592 -.848 3.122 -1.302 4.581 \
+           -1.302m-16 -2c1.306 0 2.418 .835 2.83 2h1.17a1 1 0 1 1 0 2h-1.171a3.001 3.001 0 1 1 \
+           -2.829 -4\" />\n\
+          \  <path d=\"M14 4a1 1 0 0 1 0 2h-2a1 1 0 0 1 0 -2z\" />\n\
+           </svg>"));
+  el
+
 let egg_cracked ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -8928,6 +11269,33 @@ let egg_cracked ?at () =
            1.974l-1.551 2.716a1 1 0 1 0 1.736 .992l2 -3.5l.052 -.105a1 1 0 0 0 -.339 -1.205l-2.918 \
            -2.085l1.623 -5.41c3.641 1.074 6.714 6.497 6.714 11.892c0 4.59 -3.273 7.71 -8 \
            7.917c-4.75 0 -8 -3.21 -8 -7.917c0 -5.654 3.372 -11.344 7.236 -12.017\" />\n\
+           </svg>"));
+  el
+
+let egg_fried ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-egg-fried\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M14.001 1.996q .06 0 .117 .007l.155 .003a6 6 0 0 1 4.25 2.05l.176 .21a6 6 0 \
+           0 1 1.296 4.014l-.018 .244l.106 .06a4 4 0 0 1 1.904 3.087l.011 .204a4 4 0 0 1 -1.392 \
+           3.161l-.085 .069l.083 .16a4 4 0 0 1 .239 2.848l-.065 .204a4 4 0 0 1 -6.257 1.824l-.115 \
+           -.096l-.092 .1a6 6 0 0 1 -4.022 1.787l-.257 .006a6 6 0 0 1 -5.644 -8.04l.034 \
+           -.089l-.155 -.12a6 6 0 0 1 -1.662 -7.256l.105 -.211a6 6 0 0 1 7.246 -2.894l.188 \
+           .068l.073 -.06a6 6 0 0 1 3.505 -1.334zm-2.001 7.004a3 3 0 0 0 -2.996 2.85l-.004 .15a3 3 \
+           0 1 0 3 -3\" />\n\
            </svg>"));
   el
 
@@ -8953,6 +11321,164 @@ let egg ?at () =
            </svg>"));
   el
 
+let elevator ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-elevator\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M18 3a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 \
+           -2zm-7.293 10.293a1 1 0 1 0 -1.414 1.414l2 2a1 1 0 0 0 1.414 0l2 -2a1 1 0 0 0 0 \
+           -1.414l-.094 -.083a1 1 0 0 0 -1.32 .083l-1.294 1.292zm2 -6a1 1 0 0 0 -1.414 0l-2 2a1 1 \
+           0 0 0 0 1.414l.094 .083a1 1 0 0 0 1.32 -.083l1.293 -1.292l1.293 1.292a1 1 0 0 0 1.414 \
+           -1.414z\" />\n\
+           </svg>"));
+  el
+
+let engine ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-engine\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M14 4a1 1 0 0 1 0 2h-1v1h.383a2 2 0 0 1 1.787 1.106l1.45 2.894h.38v-1a1 1 0 \
+           0 1 .883 -.993l.117 -.007h2a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-2a1 1 0 0 1 -1 -1v-1h-1v1a2 \
+           2 0 0 1 -1.85 1.995l-.15 .005h-3.465a2 2 0 0 1 -1.664 -.89l-1.407 -2.11h-1.464a1 1 0 0 \
+           1 -.993 -.883l-.007 -.117v-2h-1v2a1 1 0 0 1 -2 0v-6a1 1 0 1 1 2 0v2h1v-2a1 1 0 0 1 1 \
+           -1h1.584l1.709 -1.707a1 1 0 0 1 .576 -.284l.131 -.009h1v-1h-1a1 1 0 1 1 0 -2z\" />\n\
+           </svg>"));
+  el
+
+let escalator_down ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-escalator-down\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M7.233 6a3 3 0 0 1 2.006 .77l9.145 8.23h1.116a3.5 3.5 0 0 1 3.495 \
+           3.308l.005 .192a3.5 3.5 0 0 1 -3.5 3.5h-2.733a3 3 0 0 1 -2.006 -.77l-9.144 \
+           -8.23h-1.117a3.5 3.5 0 0 1 -3.495 -3.308l-.005 -.192a3.5 3.5 0 0 1 3.5 -3.5z\" />\n\
+          \  <path d=\"M18 2a1 1 0 0 1 1 1v4.584l1.293 -1.291a1 1 0 0 1 1.32 -.083l.094 .083a1 1 0 \
+           0 1 0 1.414l-3 3a1 1 0 0 1 -.112 .097l-.11 .071l-.114 .054l-.105 .035l-.149 .03l-.117 \
+           .006l-.075 -.003l-.126 -.017l-.111 -.03l-.111 -.044l-.098 -.052l-.096 -.067l-.09 \
+           -.08l-3 -3a1 1 0 1 1 1.414 -1.414l1.293 1.293v-4.586a1 1 0 0 1 1 -1\" />\n\
+           </svg>"));
+  el
+
+let escalator_up ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-escalator-up\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M19.5 6a3.5 3.5 0 0 1 0 7h-1.086l-8.12 8.121a3 3 0 0 1 -1.924 .872l-.198 \
+           .007h-3.672a3.5 3.5 0 0 1 0 -7h2.084l8.123 -8.121a3 3 0 0 1 1.923 -.872l.198 -.007z\" />\n\
+          \  <path d=\"M19.5 8h-2.672a1 1 0 0 0 -.707 .293l-8.414 8.414a1 1 0 0 1 -.707 \
+           .293h-2.5a1.5 1.5 0 0 0 0 3h3.672a1 1 0 0 0 .707 -.293l8.414 -8.414a1 1 0 0 1 .707 \
+           -.293h1.5a1.5 1.5 0 0 0 0 -3\" />\n\
+          \  <path d=\"M5.852 2.011l.058 -.007l.09 -.004l.075 .003l.126 .017l.111 .03l.111 \
+           .044l.098 .052l.104 .074l.082 .073l3 3a1 1 0 1 1 -1.414 1.414l-1.293 -1.292v4.585a1 1 0 \
+           0 1 -2 0v-4.585l-1.293 1.292a1 1 0 0 1 -1.32 .083l-.094 -.083a1 1 0 0 1 0 -1.414l3 -3q \
+           .053 -.054 .112 -.097l.11 -.071l.114 -.054l.105 -.035z\" />\n\
+           </svg>"));
+  el
+
+let escalator ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-escalator\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M19.5 4a3.5 3.5 0 0 1 0 7h-1.086l-8.12 8.121a3 3 0 0 1 -1.924 .872l-.198 \
+           .007h-3.672a3.5 3.5 0 0 1 0 -7h2.084l8.123 -8.121a3 3 0 0 1 1.923 -.872l.198 -.007z\" />\n\
+           </svg>"));
+  el
+
+let exchange ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-exchange\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M19 3a3 3 0 0 1 1 5.83v4.17a6 6 0 0 1 -6 6h-.585l1.292 1.293a1 1 0 0 1 .083 \
+           1.32l-.083 .094a1 1 0 0 1 -1.414 0l-2.959 -2.959a1 1 0 0 1 -.238 -.32l-.038 -.091l-.028 \
+           -.094a.98 .98 0 0 1 .187 -.866l.076 -.084l3 -3a1 1 0 0 1 1.414 1.414l-1.293 \
+           1.293h.586a4 4 0 0 0 3.995 -3.8l.005 -.2v-4.171a3 3 0 0 1 -2 -2.829l.005 -.176a3 3 0 0 \
+           1 2.995 -2.824m-8.293 -.707l3 3a.98 .98 0 0 1 .263 .95l-.01 .031l-.003 .018l-.008 \
+           .018l-.007 .027l-.016 .035l-.01 .032l-.007 .01l-.005 .014a1 1 0 0 1 -.232 .316l-2.965 \
+           2.963a1 1 0 0 1 -1.32 .083l-.094 -.083a1 1 0 0 1 0 -1.414l1.291 -1.293h-.584a4 4 0 0 0 \
+           -3.995 3.8l-.005 .2v4.171a3.001 3.001 0 1 1 -4 2.829l.005 -.176a3 3 0 0 1 1.995 \
+           -2.654v-4.17a6 6 0 0 1 6 -6h.585l-1.292 -1.293a1 1 0 0 1 -.083 -1.32l.083 -.094a1 1 0 0 \
+           1 1.414 0\" />\n\
+           </svg>"));
+  el
+
 let exclamation_circle ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -8973,6 +11499,81 @@ let exclamation_circle ?at () =
           \  <path d=\"M17 3.34a10 10 0 1 1 -15 8.66l.005 -.324a10 10 0 0 1 14.995 -8.336m-5 \
            11.66a1 1 0 0 0 -1 1v.01a1 1 0 0 0 2 0v-.01a1 1 0 0 0 -1 -1m0 -7a1 1 0 0 0 -1 1v4a1 1 0 \
            0 0 2 0v-4a1 1 0 0 0 -1 -1\" />\n\
+           </svg>"));
+  el
+
+let explicit ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-explicit\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 \
+           -2zm-5 4h-4a1 1 0 0 0 -1 1v8a1 1 0 0 0 1 1h4a1 1 0 0 0 1 -1l-.007 -.117a1 1 0 0 0 -.993 \
+           -.883h-3v-2h3a1 1 0 0 0 0 -2h-3v-2h3a1 1 0 0 0 0 -2\" />\n\
+           </svg>"));
+  el
+
+let exposure ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-exposure\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M19 2a3 3 0 0 1 3 3v14a3 3 0 0 1 -3 3h-14a3 3 0 0 1 -3 -3v-14a3 3 0 0 1 3 \
+           -3zm0 2h-14a1 1 0 0 0 -1 1v14c0 .29 .123 .55 .321 .732l1.61 -1.584a973 973 0 0 0 6.69 \
+           -6.675l7.094 -7.173a1 1 0 0 0 -.715 -.3m-1 11h-4a1 1 0 0 0 0 2h4a1 1 0 0 0 0 -2m-10 \
+           -10a1 1 0 0 1 1 1v1h1a1 1 0 0 1 .993 .883l.007 .117a1 1 0 0 1 -1 1h-1v1a1 1 0 0 1 -.883 \
+           .993l-.117 .007a1 1 0 0 1 -1 -1v-1h-1a1 1 0 0 1 -.993 -.883l-.007 -.117a1 1 0 0 1 1 \
+           -1h1v-1a1 1 0 0 1 .883 -.993z\" />\n\
+           </svg>"));
+  el
+
+let eye_table ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-eye-table\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M20 2a1 1 0 0 1 0 2v16a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-16a1 1 0 1 1 0 \
+           -2zm-12 15l-.128 .007a1 1 0 0 0 .118 1.993l.128 -.007a1 1 0 0 0 -.118 -1.993m4 0l-.128 \
+           .007a1 1 0 0 0 .118 1.993l.128 -.007a1 1 0 0 0 -.118 -1.993m4 0l-.128 .007a1 1 0 0 0 \
+           .118 1.993l.128 -.007a1 1 0 0 0 -.118 -1.993m-6 -3h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0 -2m5 \
+           0h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0 -2m-1 -8h-4a1 1 0 1 0 0 2h1v3a1 1 0 0 0 2 0v-3h1a1 1 0 \
+           0 0 0 -2\" />\n\
            </svg>"));
   el
 
@@ -9001,6 +11602,108 @@ let eye ?at () =
            </svg>"));
   el
 
+let eyeglass_2 ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-eyeglass-2\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M8 3a1 1 0 1 1 0 2h-1.257l-2.24 7.467a4.5 4.5 0 0 1 6.24 2.533h2.513a4.502 \
+           4.502 0 0 1 6.241 -2.534l-2.241 -7.466h-1.256a1 1 0 0 1 -.993 -.883l-.007 -.117a1 1 0 0 \
+           1 1 -1h2a1 1 0 0 1 .958 .713l3 10a1 1 0 0 1 .042 .287v2.5a4.5 4.5 0 0 1 -8.972 \
+           .5h-2.056a4.5 4.5 0 0 1 -8.972 -.5v-2.5a1 1 0 0 1 .042 -.287l3 -10a1 1 0 0 1 .958 \
+           -.713z\" />\n\
+           </svg>"));
+  el
+
+let eyeglass ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-eyeglass\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M6.5 21a4.5 4.5 0 0 1 -4.5 -4.5v-2.518l.004 -.071l.014 -.103l.018 \
+           -.076l3.006 -10.02a1 1 0 0 1 .958 -.712h2a1 1 0 1 1 0 2h-1.257l-2.4 8h5.657a1 1 0 0 1 1 \
+           1v1h2v-1a1 1 0 0 1 1 -1h5.656l-2.4 -8h-1.256a1 1 0 0 1 -.993 -.883l-.007 -.117a1 1 0 0 \
+           1 1 -1h2a1 1 0 0 1 .958 .713l3.01 10.036l.022 .112l.008 .08l.002 2.559a4.5 4.5 0 0 1 \
+           -8.972 .5h-2.056a4.5 4.5 0 0 1 -4.472 4\" />\n\
+           </svg>"));
+  el
+
+let face_mask ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-face-mask\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12.825 4.196l5 1.43a3 3 0 0 1 2.175 2.884v.065c1.7 .33 3 1.72 3 3.425s-1.3 \
+           3.095 -3 3.425v.066a3 3 0 0 1 -2.175 2.885l-5 1.428a3 3 0 0 1 -1.65 0l-5 -1.429a3 3 0 0 \
+           1 -2.17 -2.702l-.005 -.247c-1.7 -.33 -3 -1.72 -3 -3.426c0 -1.705 1.3 -3.096 3 \
+           -3.426v-.064a3 3 0 0 1 2.175 -2.884l5 -1.428a3 3 0 0 1 1.65 0m2.175 8.802h-6a1 1 0 0 0 \
+           0 2h6a1 1 0 0 0 0 -2m-11 -2.349c-.6 .248 -1 .77 -1 1.349c0 .578 .4 1.101 1 \
+           1.349zm16.001 0v2.697c.599 -.248 .999 -.77 .999 -1.348s-.4 -1.1 -.999 -1.348m-5.001 \
+           -1.652h-6a1 1 0 1 0 0 2h6a1 1 0 0 0 0 -2\" />\n\
+           </svg>"));
+  el
+
+let favicon ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-favicon\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M19 4a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-14a4 4 0 0 1 -4 -4v-8a4 4 0 0 1 4 \
+           -4zm-13 5a1 1 0 0 0 -1 1v4a1 1 0 0 0 2 0v-4a1 1 0 0 0 -1 -1m5 0a3 3 0 0 0 0 6a1 1 0 0 0 \
+           .117 -1.993l-.117 -.007a1 1 0 0 1 -.117 -1.993l.117 -.007a1 1 0 0 0 0 -2m5 0a3 3 0 0 0 \
+           -2.995 2.824l-.005 .176a3 3 0 1 0 3 -3\" />\n\
+          \  <path d=\"M16 11a1 1 0 1 0 0 2a1 1 0 0 0 0 -2\" />\n\
+           </svg>"));
+  el
+
 let feather ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -9026,6 +11729,805 @@ let feather ?at () =
           \  <path d=\"M13 4.586v4.998l-3 3v-4.999z\" />\n\
           \  <path d=\"M16.482 3a4.515 4.515 0 0 1 4.518 4.514a4.7 4.7 0 0 1 -.239 1.487l-5.761 \
            -.001v-5.76c.469 -.158 .968 -.24 1.482 -.24\" />\n\
+           </svg>"));
+  el
+
+let fence ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-fence\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M19 17v3a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-3z\" />\n\
+          \  <path d=\"M11 17v3a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-3z\" />\n\
+          \  <path d=\"M20 12a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 \
+           -1z\" />\n\
+          \  <path d=\"M8.707 3.293l2 2a1 1 0 0 1 .293 .707v5h-6v-5a1 1 0 0 1 .293 -.707l2 -2a1 1 \
+           0 0 1 1.414 0\" />\n\
+          \  <path d=\"M16.707 3.293l2 2a1 1 0 0 1 .293 .707v5h-6v-5a1 1 0 0 1 .293 -.707l2 -2a1 1 \
+           0 0 1 1.414 0\" />\n\
+           </svg>"));
+  el
+
+let ferry ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-ferry\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M22 12a1 1 0 0 1 .86 1.51l-2.202 3.709a4.06 4.06 0 0 1 -3.365 \
+           1.781h-15.293a1 1 0 0 1 -.957 -1.291l1.521 -5a1 1 0 0 1 .957 -.709zm-3 1a1 1 0 1 0 0 \
+           2a1 1 0 0 0 0 -2m-5.106 -7.447l.723 1.447h.874a1 1 0 0 1 .864 .497l2.037 \
+           3.503h-12.832l.973 -3.284a1 1 0 0 1 .958 -.716h4.89l-.275 -.553a1 1 0 0 1 1.788 -.894\" \
+           />\n\
+           </svg>"));
+  el
+
+let fidget_spinner ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-fidget-spinner\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 0a5 5 0 0 1 3.584 8.488l-.012 .012a5 5 0 0 1 1.33 2.517l.018 .101l.251 \
+           -.048q .15 -.025 .3 -.041l.304 -.024l.225 -.005a5 5 0 1 1 -4.89 6.046l-.032 -.164l-.24 \
+           .048a5 5 0 0 1 -.556 .062l-.282 .008q -.427 0 -.84 -.07l-.239 -.048l-.004 .025a5 5 0 0 \
+           1 -3.331 3.834l-.22 .068a5 5 0 1 1 -.461 -9.728l.173 .036l.019 -.102c.19 -.95 .653 \
+           -1.824 1.331 -2.516l-.05 -.052a5.02 5.02 0 0 1 -1.355 -2.978l-.018 -.244l-.005 -.225a5 \
+           5 0 0 1 5 -5m6 15a1 1 0 0 0 -1 1v.01a1 1 0 0 0 2 0v-.01a1 1 0 0 0 -1 -1m-12 0a1 1 0 0 0 \
+           -1 1v.01a1 1 0 0 0 2 0v-.01a1 1 0 0 0 -1 -1m6 -4.995c-1.1 0 -1.99 .891 -1.99 \
+           1.99v.02a1.99 1.99 0 0 0 3.98 0v-.02a1.99 1.99 0 0 0 -1.99 -1.99m0 -6.005a1 1 0 0 0 -1 \
+           1v.01a1 1 0 0 0 2 0v-.01a1 1 0 0 0 -1 -1\" />\n\
+           </svg>"));
+  el
+
+let file_analytics ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-file-analytics\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 \
+           1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 \
+           2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 \
+           -2.995l.176 -.005zm-3 10a1 1 0 0 0 -1 1v5a1 1 0 0 0 2 0v-5a1 1 0 0 0 -1 -1m3 4a1 1 0 0 \
+           0 -1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0 -1 -1m3 -2a1 1 0 0 0 -1 1v3a1 1 0 0 0 2 0v-3a1 1 0 \
+           0 0 -1 -1\" />\n\
+          \  <path d=\"M19 7h-4l-.001 -4.001z\" />\n\
+           </svg>"));
+  el
+
+let file_check ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-file-check\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 \
+           1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 \
+           2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 \
+           -2.995l.176 -.005zm3.707 10.293a1 1 0 0 0 -1.414 0l-3.293 3.292l-1.293 -1.292a1 1 0 1 0 \
+           -1.414 1.414l2 2a1 1 0 0 0 1.414 0l4 -4a1 1 0 0 0 0 -1.414m-.707 -9.294l4 4.001h-4z\" />\n\
+           </svg>"));
+  el
+
+let file_code_2 ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-file-code-2\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 \
+           1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 \
+           2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 \
+           -2.995l.176 -.005zm-2 9h-1a1 1 0 0 0 -1 1v5a1 1 0 0 0 1 1h1a1 1 0 0 0 1 -1l-.007 \
+           -.117a1 1 0 0 0 -.876 -.876l-.117 -.007v-3a1 1 0 0 0 0 -2m5 0h-1a1 1 0 0 0 0 2v3a1 1 0 \
+           0 0 0 2h1a1 1 0 0 0 1 -1v-5a1 1 0 0 0 -1 -1m-.001 -8.001l4.001 4.001h-4z\" />\n\
+           </svg>"));
+  el
+
+let file_code ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-file-code\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 \
+           1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 \
+           2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 \
+           -2.995l.176 -.005zm-1.553 11.106a1 1 0 0 0 -1.341 .447l-1 2a1 1 0 0 0 0 .894l1 2a1 1 0 \
+           0 0 1.341 .447l.102 -.058a1 1 0 0 0 .345 -1.283l-.776 -1.553l.776 -1.553a1 1 0 0 0 \
+           -.447 -1.341m4.447 .447a1 1 0 0 0 -1.341 -.447l-.102 .058a1 1 0 0 0 -.345 1.283l.774 \
+           1.553l-.775 1.553a1 1 0 0 0 1.788 .894l1 -2a1 1 0 0 0 0 -.894z\" />\n\
+          \  <path d=\"M19 7h-4l-.001 -4.001z\" />\n\
+           </svg>"));
+  el
+
+let file_cv ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-file-cv\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 \
+           1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 \
+           2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 \
+           -2.995l.176 -.005zm-2.5 8a2.5 2.5 0 0 0 -2.5 2.5v3a2.5 2.5 0 1 0 5 0a1 1 0 0 0 -2 0a.5 \
+           .5 0 1 1 -1 0v-3a.5 .5 0 1 1 1 0a1 1 0 0 0 2 0a2.5 2.5 0 0 0 -2.5 -2.5m6.743 .03a1 1 0 \
+           0 0 -1.213 .727l-.53 2.119l-.53 -2.119a1 1 0 1 0 -1.94 .486l1.5 6c.252 1.01 1.688 1.01 \
+           1.94 0l1.5 -6a1 1 0 0 0 -.727 -1.213m-1.244 -7.031l4.001 4.001h-4z\" />\n\
+           </svg>"));
+  el
+
+let file_delta ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-file-delta\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 \
+           1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 \
+           2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 \
+           -2.995l.176 -.005zm.894 8.553a1 1 0 0 0 -1.788 0l-3 6a1 1 0 0 0 .894 1.447h6a1 1 0 0 0 \
+           .894 -1.447zm-.894 2.683l1.381 2.764h-2.763zm2.999 -10.237l4.001 4.001h-4z\" />\n\
+           </svg>"));
+  el
+
+let file_description ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-file-description\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 \
+           1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 \
+           2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 \
+           -2.995l.176 -.005zm3 14h-6a1 1 0 0 0 0 2h6a1 1 0 0 0 0 -2m0 -4h-6a1 1 0 0 0 0 2h6a1 1 0 \
+           0 0 0 -2\" />\n\
+          \  <path d=\"M19 7h-4l-.001 -4.001z\" />\n\
+           </svg>"));
+  el
+
+let file_diff ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-file-diff\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 \
+           1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 \
+           2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 \
+           -2.995l.176 -.005zm2 15h-4a1 1 0 0 0 0 2h4a1 1 0 0 0 0 -2m-2 -7a1 1 0 0 0 -1 1v1h-1a1 1 \
+           0 0 0 0 2h1v1a1 1 0 0 0 2 0v-1h1a1 1 0 0 0 0 -2h-1v-1a1 1 0 0 0 -1 -1\" />\n\
+          \  <path d=\"M19 7h-4l-.001 -4.001z\" />\n\
+           </svg>"));
+  el
+
+let file_digit ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-file-digit\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 \
+           1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 \
+           2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 \
+           -2.995l.176 -.005zm-1 9h-1a2 2 0 0 0 -2 2v3a2 2 0 0 0 2 2h1a2 2 0 0 0 2 -2v-3a2 2 0 0 0 \
+           -2 -2m4 0a1 1 0 0 0 -1 1v5a1 1 0 0 0 2 0v-5a1 1 0 0 0 -1 -1m-4 2v3h-1v-3z\" />\n\
+          \  <path d=\"M19 7h-4l-.001 -4.001z\" />\n\
+           </svg>"));
+  el
+
+let file_dots ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-file-dots\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 \
+           1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 \
+           2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 \
+           -2.995l.176 -.005zm-3 12a1 1 0 0 0 -.993 .883l-.007 .127a1 1 0 0 0 1.993 .117l.007 \
+           -.127a1 1 0 0 0 -1 -1m3 0a1 1 0 0 0 -.993 .883l-.007 .127a1 1 0 0 0 1.993 .117l.007 \
+           -.127a1 1 0 0 0 -1 -1m3 0a1 1 0 0 0 -.993 .883l-.007 .127a1 1 0 0 0 1.993 .117l.007 \
+           -.127a1 1 0 0 0 -1 -1\" />\n\
+          \  <path d=\"M19 7h-4l-.001 -4.001z\" />\n\
+           </svg>"));
+  el
+
+let file_download ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-file-download\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 \
+           1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 \
+           2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 \
+           -2.995l.176 -.005zm0 8a1 1 0 0 0 -1 1v3.585l-.793 -.792a1 1 0 0 0 -1.32 -.083l-.094 \
+           .083a1 1 0 0 0 0 1.414l2.5 2.5l.044 .042l.068 .055l.11 .071l.114 .054l.105 .035l.15 \
+           .03l.116 .006l.117 -.007l.117 -.02l.108 -.033l.081 -.034l.098 -.052l.092 -.064l.094 \
+           -.083l2.5 -2.5a1 1 0 0 0 0 -1.414l-.094 -.083a1 1 0 0 0 -1.32 .083l-.793 .791v-3.584a1 \
+           1 0 0 0 -.883 -.993zm2.999 -7.001l4.001 4.001h-4z\" />\n\
+           </svg>"));
+  el
+
+let file_function_ ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-file-function\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 \
+           1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 \
+           2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 \
+           -2.995l.176 -.005zm1.5 9h-.333l-.16 .006c-.895 .07 -1.65 .732 -1.75 1.63l-.152 \
+           1.364h-.605a1 1 0 0 0 0 2h.382l-.111 1h-.271a1 1 0 0 0 0 2h.333l.16 -.006c.896 -.071 \
+           1.652 -.733 1.75 -1.632l.151 -1.362h.606a1 1 0 0 0 0 -2h-.383l.111 -1h.272a1 1 0 0 0 0 \
+           -2\" />\n\
+          \  <path d=\"M19 7h-4l-.001 -4.001z\" />\n\
+           </svg>"));
+  el
+
+let file_horizontal ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-file-horizontal\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M22 12l-.007 -.117a1 1 0 0 0 -.876 -.876l-.117 -.007h-4l-.15 -.005a2 2 0 0 \
+           1 -1.844 -1.838l-.006 -.157v-4l-.007 -.117a1 1 0 0 0 -.876 -.876l-.117 -.007h-9a3 3 0 0 \
+           0 -2.995 2.824l-.005 .176v10a3 3 0 0 0 2.824 2.995l.176 .005h14a3 3 0 0 0 2.995 \
+           -2.824l.005 -.176z\" />\n\
+          \  <path d=\"M17 5v4l4.001 .001z\" />\n\
+           </svg>"));
+  el
+
+let file_info ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-file-info\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 \
+           1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 \
+           2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 \
+           -2.995l.176 -.005zm0 12h-1a1 1 0 0 0 0 2v3a1 1 0 0 0 1 1h1a1 1 0 0 0 1 -1l-.007 -.117a1 \
+           1 0 0 0 -.876 -.876l-.117 -.007v-3a1 1 0 0 0 -1 -1m.01 -3h-.01a1 1 0 0 0 -.117 \
+           1.993l.127 .007a1 1 0 0 0 0 -2\" />\n\
+          \  <path d=\"M19 7h-4l-.001 -4.001z\" />\n\
+           </svg>"));
+  el
+
+let file_invoice ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-file-invoice\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 \
+           1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 \
+           2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 \
+           -2.995l.176 -.005zm4 15h-2a1 1 0 0 0 0 2h2a1 1 0 0 0 0 -2m0 -4h-8a1 1 0 0 0 0 2h8a1 1 0 \
+           0 0 0 -2m-7 -7h-1a1 1 0 1 0 0 2h1a1 1 0 1 0 0 -2\" />\n\
+          \  <path d=\"M19 7h-4l-.001 -4.001z\" />\n\
+           </svg>"));
+  el
+
+let file_lambda ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-file-lambda\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 \
+           1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 \
+           2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 \
+           -2.995l.176 -.005zm-2 8a1 1 0 0 0 -.117 1.993l.117 .007c.342 0 .662 .362 1.166 \
+           1.445l-1.998 3a1 1 0 0 0 1.664 1.11l1.29 -1.934c.825 1.738 1.508 2.379 2.878 2.379a1 1 \
+           0 0 0 .117 -1.993l-.117 -.007c-.39 0 -.75 -.47 -1.387 -1.938l-.415 -.976c-.985 -2.274 \
+           -1.656 -3.086 -3.198 -3.086m4.999 -7.001l4.001 4.001h-4z\" />\n\
+           </svg>"));
+  el
+
+let file_minus ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-file-minus\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 \
+           1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 \
+           2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 \
+           -2.995l.176 -.005zm3 11h-6a1 1 0 0 0 0 2h6a1 1 0 0 0 0 -2\" />\n\
+          \  <path d=\"M19 7h-4l-.001 -4.001z\" />\n\
+           </svg>"));
+  el
+
+let file_neutral ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-file-neutral\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 \
+           1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 \
+           2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 \
+           -2.995l.176 -.005zm2 14h-4a1 1 0 0 0 0 2h4a1 1 0 0 0 0 -2m-3.995 -4h-.01a1 1 0 0 0 0 \
+           2h.01a1 1 0 0 0 0 -2m4 0h-.01a1 1 0 0 0 0 2h.01a1 1 0 0 0 0 -2\" />\n\
+          \  <path d=\"M19 7h-4l-.001 -4.001z\" />\n\
+           </svg>"));
+  el
+
+let file_percent ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-file-percent\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 \
+           1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 \
+           2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 \
+           -2.995l.176 -.005zm2.01 14h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 0 0 0 -2m.697 \
+           -3.707a1 1 0 0 0 -1.414 0l-4 4a1 1 0 0 0 1.414 1.414l4 -4a1 1 0 0 0 0 -1.414m-4.697 \
+           -.293h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 0 0 0 -2m4.989 -9.001l4.001 \
+           4.001h-4z\" />\n\
+           </svg>"));
+  el
+
+let file_phone ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-file-phone\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 \
+           1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 \
+           2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 \
+           -2.995l.176 -.005zm-2.5 7.5a1.5 1.5 0 0 0 -1.5 1.5v1a6 6 0 0 0 6 6h1a1.5 1.5 0 0 0 0 \
+           -3h-1l-.144 .007a1.5 1.5 0 0 0 -1.128 .697l-.042 .074l-.022 -.007a4.01 4.01 0 0 1 \
+           -2.435 -2.435l-.008 -.023l.075 -.041a1.5 1.5 0 0 0 .704 -1.272v-1a1.5 1.5 0 0 0 -1.5 \
+           -1.5m5.499 -6.501l4.001 4.001h-4z\" />\n\
+           </svg>"));
+  el
+
+let file_power ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-file-power\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 \
+           1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 \
+           2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 \
+           -2.995l.176 -.005zm.555 9.168a1 1 0 0 0 -1.387 .277l-2 3l-.057 .097a1 1 0 0 0 .889 \
+           1.458h2.13l-.962 1.445a1 1 0 1 0 1.664 1.11l2 -3l.057 -.097a1 1 0 0 0 -.889 \
+           -1.458h-2.132l.964 -1.445a1 1 0 0 0 -.277 -1.387\" />\n\
+          \  <path d=\"M19 7h-4l-.001 -4.001z\" />\n\
+           </svg>"));
+  el
+
+let file_rss ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-file-rss\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 \
+           1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 \
+           2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 \
+           -2.995l.176 -.005zm-3 11a1 1 0 0 0 0 2a2 2 0 0 1 1.995 1.85l.005 .15a1 1 0 0 0 2 0a4 4 \
+           0 0 0 -4 -4m0 -3a1 1 0 0 0 0 2a5 5 0 0 1 5 5a1 1 0 0 0 2 0a7 7 0 0 0 -7 -7m.01 6h-.01a1 \
+           1 0 0 0 -.117 1.993l.127 .007a1 1 0 0 0 0 -2m5.989 -13.001l4.001 4.001h-4z\" />\n\
+           </svg>"));
+  el
+
+let file_sad ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-file-sad\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 \
+           1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 \
+           2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 \
+           -2.995l.176 -.005zm2.571 15.18a4.5 4.5 0 0 0 -5.142 0a1 1 0 1 0 1.142 1.64a2.5 2.5 0 0 \
+           1 2.858 0a1 1 0 0 0 1.142 -1.64m-4.565 -5.18h-.011a1 1 0 0 0 0 2h.01a1 1 0 0 0 0 -2m4 \
+           0h-.011a1 1 0 0 0 0 2h.01a1 1 0 0 0 0 -2\" />\n\
+          \  <path d=\"M19 7h-4l-.001 -4.001z\" />\n\
+           </svg>"));
+  el
+
+let file_smile ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-file-smile\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 \
+           1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 \
+           2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 \
+           -2.995l.176 -.005zm2.82 14.429a1 1 0 0 0 -1.391 -.25a2.5 2.5 0 0 1 -2.858 0a1 1 0 0 0 \
+           -1.142 1.642a4.5 4.5 0 0 0 5.142 0a1 1 0 0 0 .25 -1.392m-4.815 -4.429h-.01a1 1 0 0 0 0 \
+           2h.01a1 1 0 0 0 0 -2m4 0h-.01a1 1 0 0 0 0 2h.01a1 1 0 0 0 0 -2\" />\n\
+          \  <path d=\"M19 7h-4l-.001 -4.001z\" />\n\
+           </svg>"));
+  el
+
+let file_star ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-file-star\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 \
+           1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 \
+           2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 \
+           -2.995l.176 -.005zm-.2 9a.39 .39 0 0 0 -.351 .217l-1.086 2.193l-2.428 .352a.389 .389 0 \
+           0 0 -.217 .665l1.757 1.707l-.415 2.411a.392 .392 0 0 0 .568 .41l2.172 -1.138l2.172 \
+           1.138a.39 .39 0 0 0 .567 -.411l-.414 -2.41l1.757 -1.707a.39 .39 0 0 0 -.217 \
+           -.665l-2.428 -.352l-1.086 -2.193a.39 .39 0 0 0 -.351 -.217\" />\n\
+          \  <path d=\"M19 7h-4l-.001 -4.001z\" />\n\
+           </svg>"));
+  el
+
+let file_text ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-file-text\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 \
+           1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 \
+           2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 \
+           -2.995l.176 -.005zm3 14h-6a1 1 0 0 0 0 2h6a1 1 0 0 0 0 -2m0 -4h-6a1 1 0 0 0 0 2h6a1 1 0 \
+           0 0 0 -2m-5 -4h-1a1 1 0 1 0 0 2h1a1 1 0 0 0 0 -2\" />\n\
+          \  <path d=\"M19 7h-4l-.001 -4.001z\" />\n\
+           </svg>"));
+  el
+
+let file_typography ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-file-typography\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2l.117 .007a1 1 0 0 1 .876 .876l.007 .117v4l.005 .15a2 2 0 0 0 1.838 \
+           1.844l.157 .006h4l.117 .007a1 1 0 0 1 .876 .876l.007 .117v9a3 3 0 0 1 -2.824 \
+           2.995l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-14a3 3 0 0 1 2.824 \
+           -2.995l.176 -.005zm3 9h-6a1 1 0 0 0 -1 1v1a1 1 0 0 0 2 0h1v5a1 1 0 0 0 0 2h2a1 1 0 0 0 \
+           0 -2v-5h1a1 1 0 0 0 2 0v-1a1 1 0 0 0 -1 -1\" />\n\
+          \  <path d=\"M19 7h-4l-.001 -4.001z\" />\n\
            </svg>"));
   el
 
@@ -9105,6 +12607,60 @@ let filter ?at () =
            </svg>"));
   el
 
+let filters ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-filters\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M19.396 11.056a6 6 0 0 1 -5.647 10.506q .206 -.21 .396 -.44a8 8 0 0 0 1.789 \
+           -6.155a8.02 8.02 0 0 0 3.462 -3.911\" />\n\
+          \  <path d=\"M4.609 11.051a7.99 7.99 0 0 0 9.386 4.698a6 6 0 1 1 -9.534 -4.594z\" />\n\
+          \  <path d=\"M12 2a6 6 0 1 1 -6 6l.004 -.225a6 6 0 0 1 5.996 -5.775\" />\n\
+           </svg>"));
+  el
+
+let fish_bone ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-fish-bone\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M16.675 6.44l.118 .005a1 1 0 0 1 .232 .052l.032 .015l.273 .103c1.936 .771 \
+           3.69 2.27 5.253 4.476l.245 .355a1 1 0 0 1 0 1.12c-1.702 2.519 -3.636 4.176 -5.792 \
+           4.947a1 1 0 0 1 -1.093 -.288a7.97 7.97 0 0 1 -1.883 -4.225h-2.06v3a1 1 0 0 1 -2 \
+           0v-3h-2v1a1 1 0 0 1 -2 0v-1h-1.166l-.335 .324a39 39 0 0 0 -1.751 1.846a1 1 0 0 1 -1.496 \
+           -1.328q .593 -.667 1.214 -1.308l.522 -.528l-.523 -.529a42 42 0 0 1 -.613 -.648l-.6 \
+           -.661a1 1 0 1 1 1.496 -1.328a40 40 0 0 0 2.069 2.161l1.183 -.001v-1a1 1 0 1 1 2 \
+           0v1h2v-3a1 1 0 0 1 2 0v3h2.062a7.97 7.97 0 0 1 1.656 -3.953l.196 -.24l.075 -.081l.105 \
+           -.088l.068 -.048l.097 -.052l.069 -.03l.138 -.042l.091 -.017q .059 -.007 .118 \
+           -.009m1.325 3.56a1 1 0 0 0 -.993 .883l-.007 .127a1 1 0 0 0 1.993 .117l.007 -.127a1 1 0 \
+           0 0 -1 -1\" />\n\
+           </svg>"));
+  el
+
 let flag_2 ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -9172,6 +12728,54 @@ let flag ?at () =
            0l.249 -.227c.61 -.483 1.527 -.097 1.61 .676l.005 .113v9a1 1 0 0 1 -.3 .714a6 6 0 0 1 \
            -8.213 .176l-.351 -.328a4 4 0 0 0 -5.136 -.114v6.552a1 1 0 0 1 -1.993 .117l-.007 \
            -.117v-16z\" />\n\
+           </svg>"));
+  el
+
+let flame ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-flame\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M10 2c0 -.88 1.056 -1.331 1.692 -.722c1.958 1.876 3.096 5.995 1.75 \
+           9.12l-.08 .174l.012 .003c.625 .133 1.203 -.43 2.303 -2.173l.14 -.224a1 1 0 0 1 1.582 \
+           -.153c1.334 1.435 2.601 4.377 2.601 6.27c0 4.265 -3.591 7.705 -8 7.705s-8 -3.44 -8 \
+           -7.706c0 -2.252 1.022 -4.716 2.632 -6.301l.605 -.589c.241 -.236 .434 -.43 .618 \
+           -.624c1.43 -1.512 2.145 -2.924 2.145 -4.78\" />\n\
+           </svg>"));
+  el
+
+let flare ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-flare\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M11.106 2.553a1 1 0 0 1 1.788 0l2.851 5.701l5.702 2.852a1 1 0 0 1 .11 \
+           1.725l-.11 .063l-5.702 2.851l-2.85 5.702a1 1 0 0 1 -1.726 .11l-.063 -.11l-2.852 \
+           -5.702l-5.701 -2.85a1 1 0 0 1 -.11 -1.726l.11 -.063l5.701 -2.852z\" />\n\
            </svg>"));
   el
 
@@ -9270,6 +12874,30 @@ let folder ?at () =
           \  <path d=\"M9 3a1 1 0 0 1 .608 .206l.1 .087l2.706 2.707h6.586a3 3 0 0 1 2.995 \
            2.824l.005 .176v8a3 3 0 0 1 -2.824 2.995l-.176 .005h-14a3 3 0 0 1 -2.995 -2.824l-.005 \
            -.176v-11a3 3 0 0 1 2.824 -2.995l.176 -.005h4z\" />\n\
+           </svg>"));
+  el
+
+let folders ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-folders\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2a1 1 0 0 1 .707 .293l1.708 1.707h4.585a3 3 0 0 1 2.995 2.824l.005 \
+           .176v7a3 3 0 0 1 -3 3h-1v1a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 -3v-9a3 3 0 0 1 3 -3h1v-1a3 \
+           3 0 0 1 3 -3zm-6 6h-1a1 1 0 0 0 -1 1v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1 -1v-1h-7a3 3 0 0 1 \
+           -3 -3z\" />\n\
            </svg>"));
   el
 
@@ -9374,6 +13002,57 @@ let function_ ?at () =
            </svg>"));
   el
 
+let garden_cart ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-garden-cart\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M3.324 3a2 2 0 0 1 1.855 1.258l1.097 2.742h14.724a1 1 0 0 1 .94 1.341l-.046 \
+           .106l-2.934 5.871a3.5 3.5 0 1 1 -4.96 3.182l.005 -.192a3.5 3.5 0 0 1 .499 -1.618l-2.446 \
+           -.258l-3.446 4.75a2 2 0 0 1 -2.08 .762l-.154 -.044a2 2 0 0 1 -1.378 -1.9v-9.804l-1.679 \
+           -4.196h-1.321a1 1 0 0 1 -.993 -.883l-.007 -.117a1 1 0 0 1 1 -1zm14.176 13a1.5 1.5 0 1 0 \
+           0 3a1.5 1.5 0 0 0 0 -3m-10.5 -2.498l-.002 5.498l2.783 -3.833a5 5 0 0 1 -2.614 -1.474z\" \
+           />\n\
+           </svg>"));
+  el
+
+let gas_station ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-gas-station\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M3 21a1 1 0 0 1 0 -2v-13a3 3 0 0 1 3 -3h6a3 3 0 0 1 3 3v4a3 3 0 0 1 3 \
+           3v3a.5 .5 0 1 0 1 0v-6a2 2 0 0 1 -2 -2v-.585l-.707 -.708a1 1 0 0 1 -.083 -1.32l.083 \
+           -.094a1 1 0 0 1 1.414 0l3.003 3.002l.095 .112l.028 .04l.044 .073l.052 .11l.031 .09l.02 \
+           .076l.012 .078l.008 .126v7a2.5 2.5 0 1 1 -5 0v-3a1 1 0 0 0 -1 -1v7a1 1 0 0 1 0 2zm9 \
+           -16h-6a1 1 0 0 0 -1 1v4h8v-4a1 1 0 0 0 -1 -1\" />\n\
+           </svg>"));
+  el
+
 let gauge ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -9423,6 +13102,31 @@ let ghost_2 ?at () =
            10.001a2 2 0 0 0 -2 2a1 1 0 0 0 1 1h2a1 1 0 0 0 1 -1a2 2 0 0 0 -2 -2zm-1.99 -4l-.127 \
            .007a1 1 0 0 0 .117 1.993l.127 -.007a1 1 0 0 0 -.117 -1.993zm4 0l-.127 .007a1 1 0 0 0 \
            .117 1.993l.127 -.007a1 1 0 0 0 -.117 -1.993z\" />\n\
+           </svg>"));
+  el
+
+let ghost_3 ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-ghost-3\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 3a8 8 0 0 1 8 8v6.954l.009 .103a2.78 2.78 0 0 1 -1.468 2.618l-.163 \
+           .08c-1.111 .502 -2.42 .22 -3.266 -.74a.65 .65 0 0 0 -1.024 0a2.65 2.65 0 0 1 -4.176 \
+           0a.65 .65 0 0 0 -.512 -.249c-.2 0 -.389 .092 -.55 .296a2.78 2.78 0 0 1 -4.859 \
+           -2.005l.01 -.104l.007 -.077l-.008 .074v-6.95l.004 -.25a8 8 0 0 1 7.747 -7.746zm-1.99 \
+           6h-.01a1 1 0 1 0 0 2h.01a1 1 0 0 0 0 -2m4 0h-.01a1 1 0 0 0 0 2h.01a1 1 0 0 0 0 -2\" />\n\
            </svg>"));
   el
 
@@ -9593,6 +13297,33 @@ let globe ?at () =
            </svg>"));
   el
 
+let golf ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-golf\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M11 3a1 1 0 0 1 1.496 -.868l7 4a1 1 0 0 1 0 1.736l-6.496 3.712v6.42a1 1 0 0 \
+           1 -.883 .993l-.117 .007a1 1 0 0 1 -1 -1z\" />\n\
+          \  <path d=\"M14.135 17.168a1 1 0 0 1 1.367 -.363c.916 .532 1.498 1.291 1.498 2.195c0 \
+           1.84 -2.319 3 -5 3s-5 -1.16 -5 -3c0 -.911 .577 -1.66 1.498 -2.195a1 1 0 1 1 1.004 \
+           1.73c-.365 .212 -.502 .39 -.502 .465c0 .086 .179 .296 .622 .518c.6 .3 1.456 .482 2.378 \
+           .482s1.777 -.182 2.378 -.482c.443 -.222 .622 -.432 .622 -.518c0 -.07 -.142 -.256 -.502 \
+           -.465a1 1 0 0 1 -.363 -1.367\" />\n\
+           </svg>"));
+  el
+
 let gps ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -9637,6 +13368,33 @@ let graph ?at () =
            -3h12zm-2.293 6.293a1 1 0 0 0 -1.414 0l-2.293 2.292l-1.293 -1.292a1 1 0 0 0 -1.414 0l-3 \
            3a1 1 0 0 0 0 1.414l.094 .083a1 1 0 0 0 1.32 -.083l2.293 -2.292l1.293 1.292l.094 .083a1 \
            1 0 0 0 1.32 -.083l2.293 -2.292l1.293 1.292a1 1 0 0 0 1.414 -1.414l-2 -2z\" />\n\
+           </svg>"));
+  el
+
+let grid_pattern ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-grid-pattern\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M18 3a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12a3 3 0 0 1 3 \
+           -3zm-4 4a1 1 0 0 0 -1 1v1h-2v-1a1 1 0 0 0 -.883 -.993l-.117 -.007a1 1 0 0 0 -1 1v1h-1a1 \
+           1 0 0 0 -.993 .883l-.007 .117a1 1 0 0 0 1 1h1v2h-1a1 1 0 0 0 -.993 .883l-.007 .117a1 1 \
+           0 0 0 1 1h1v1a1 1 0 0 0 .883 .993l.117 .007a1 1 0 0 0 1 -1v-1h2v1a1 1 0 0 0 .883 \
+           .993l.117 .007a1 1 0 0 0 1 -1v-1h1a1 1 0 0 0 .993 -.883l.007 -.117a1 1 0 0 0 -1 \
+           -1h-1v-2h1a1 1 0 0 0 .993 -.883l.007 -.117a1 1 0 0 0 -1 -1h-1v-1a1 1 0 0 0 -.883 \
+           -.993zm-1 4v2h-2v-2z\" />\n\
            </svg>"));
   el
 
@@ -9716,6 +13474,31 @@ let headphones ?at () =
            </svg>"));
   el
 
+let heart_broken ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-heart-broken\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M11.001 3.8l-.001 1.963l-1.894 3.79l-.047 .11a1 1 0 0 0 .341 1.137l3.332 \
+           2.499l-1.626 3.254a1 1 0 0 0 -.106 .447v3.417l-7.197 -7.127a6 6 0 0 1 6.956 \
+           -9.621zm5.77 -.739l.246 .037a6 6 0 0 1 3.184 10.193l-.044 .037l-7.157 \
+           7.088v-3.181l1.894 -3.788l.047 -.11a1 1 0 0 0 -.341 -1.137l-3.333 -2.5l1.627 -3.253a1 1 \
+           0 0 0 .106 -.447v-2.187a6 6 0 0 1 3.77 -.752\" />\n\
+           </svg>"));
+  el
+
 let heart ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -9736,6 +13519,54 @@ let heart ?at () =
           \  <path d=\"M6.979 3.074a6 6 0 0 1 4.988 1.425l.037 .033l.034 -.03a6 6 0 0 1 4.733 \
            -1.44l.246 .036a6 6 0 0 1 3.364 10.008l-.18 .185l-.048 .041l-7.45 7.379a1 1 0 0 1 \
            -1.313 .082l-.094 -.082l-7.493 -7.422a6 6 0 0 1 3.176 -10.215z\" />\n\
+           </svg>"));
+  el
+
+let helicopter_landing ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-helicopter-landing\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M19 2a3 3 0 0 1 3 3v14a3 3 0 0 1 -3 3h-14a3 3 0 0 1 -3 -3v-14a3 3 0 0 1 3 \
+           -3zm-4 5a1 1 0 0 0 -1 1v3h-4v-3a1 1 0 0 0 -.883 -.993l-.117 -.007a1 1 0 0 0 -1 1v8a1 1 \
+           0 0 0 2 0v-3h4v3a1 1 0 0 0 .883 .993l.117 .007a1 1 0 0 0 1 -1v-8a1 1 0 0 0 -1 -1\" />\n\
+           </svg>"));
+  el
+
+let helicopter ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-helicopter\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M20 5a1 1 0 0 1 0 2h-6v1c4.642 0 8 2.218 8 6a3 3 0 0 1 -3 3h-3v1h3a1 1 0 0 \
+           1 0 2h-8a1 1 0 0 1 0 -2h3v-1h-2c-1.652 0 -3 -1.348 -3 -3v-1.001l-6 .001a1 1 0 0 1 -.894 \
+           -.553l-1 -2a1 1 0 0 1 1.788 -.894l.724 1.447l5.382 -.001l.005 -.175a3 3 0 0 1 2.995 \
+           -2.824v-1h-7a1 1 0 1 1 0 -2zm-3.999 5.174l-.001 1.826h3.36c-.665 -.906 -1.825 -1.539 \
+           -3.359 -1.826\" />\n\
            </svg>"));
   el
 
@@ -11012,6 +14843,35 @@ let hourglass ?at () =
            </svg>"));
   el
 
+let icons ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-icons\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M4.25 2.603a4.5 4.5 0 1 1 -2.25 3.897l.006 -.229a4.5 4.5 0 0 1 2.244 \
+           -3.668\" />\n\
+          \  <path d=\"M5.632 13.504a1 1 0 0 1 1.736 0l4 7a1 1 0 0 1 -.868 1.496h-8a1 1 0 0 1 \
+           -.868 -1.496z\" />\n\
+          \  <path d=\"M13.293 2.293a1 1 0 0 1 1.414 0l7 7a1 1 0 1 1 -1.414 1.414l-7 -7a1 1 0 0 1 \
+           0 -1.414\" />\n\
+          \  <path d=\"M20.293 2.293a1 1 0 0 1 1.414 1.414l-7 7a1 1 0 0 1 -1.414 -1.414z\" />\n\
+          \  <path d=\"M21 13a1 1 0 0 1 1 1v7a1 1 0 0 1 -1 1h-7a1 1 0 0 1 -1 -1v-7a1 1 0 0 1 1 \
+           -1z\" />\n\
+           </svg>"));
+  el
+
 let info_circle ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -11369,6 +15229,106 @@ let inner_shadow_top ?at () =
            </svg>"));
   el
 
+let ironing_1 ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-ironing-1\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M16.459 5a4 4 0 0 1 3.945 3.343l1.387 8.329a2 2 0 0 1 -1.971 2.328h-16.82a1 \
+           1 0 0 1 -1 -1a8 8 0 0 1 8 -8h8.652l-.22 -1.329a2 2 0 0 0 -1.811 -1.665l-.162 \
+           -.006h-7.459a1 1 0 1 1 0 -2zm-4.449 9h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 0 0 0 \
+           -2\" />\n\
+           </svg>"));
+  el
+
+let ironing_2 ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-ironing-2\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M16.459 5a4 4 0 0 1 3.945 3.343l1.387 8.329a2 2 0 0 1 -1.971 2.328h-16.82a1 \
+           1 0 0 1 -1 -1a8 8 0 0 1 8 -8h8.652l-.22 -1.329a2 2 0 0 0 -1.811 -1.665l-.162 \
+           -.006h-7.459a1 1 0 1 1 0 -2zm-6.449 9h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 0 0 0 \
+           -2m4 0h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 0 0 0 -2\" />\n\
+           </svg>"));
+  el
+
+let ironing_3 ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-ironing-3\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M16.459 5a4 4 0 0 1 3.945 3.343l1.387 8.329a2 2 0 0 1 -1.971 2.328h-16.82a1 \
+           1 0 0 1 -1 -1a8 8 0 0 1 8 -8h8.652l-.22 -1.329a2 2 0 0 0 -1.811 -1.665l-.162 \
+           -.006h-7.459a1 1 0 1 1 0 -2zm-4.449 9h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 0 0 0 \
+           -2m-3 0h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 0 0 0 -2m6 0h-.01a1 1 0 0 0 -.117 \
+           1.993l.127 .007a1 1 0 0 0 0 -2\" />\n\
+           </svg>"));
+  el
+
+let ironing_steam ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-ironing-steam\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 18a1 1 0 0 1 1 1v2a1 1 0 0 1 -2 0v-2a1 1 0 0 1 1 -1\" />\n\
+          \  <path d=\"M16.459 3a4 4 0 0 1 3.945 3.343l.577 3.464l.81 4.865a2 2 0 0 1 -1.971 \
+           2.328h-16.82a1 1 0 0 1 -1 -1a8 8 0 0 1 8 -8h8.652l-.22 -1.329a2 2 0 0 0 -1.811 \
+           -1.665l-.162 -.006h-7.459a1 1 0 1 1 0 -2z\" />\n\
+          \  <path d=\"M7.106 18.553a1 1 0 0 1 1.788 .894l-1 2a1 1 0 0 1 -1.788 -.894z\" />\n\
+          \  <path d=\"M15.553 18.106a1 1 0 0 1 1.341 .447l1 2a1 1 0 0 1 -1.788 .894l-1 -2a1 1 0 0 \
+           1 .447 -1.341\" />\n\
+           </svg>"));
+  el
+
 let ironing ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -11470,6 +15430,32 @@ let key ?at () =
            -1.469l-.076 -.103a3.9 3.9 0 0 1 -.678 -1.963l-.007 -.236c0 -1.029 .409 -2.015 1.136 \
            -2.742l2.643 -2.643a3.88 3.88 0 0 1 2.741 -1.136m.495 5h-.02a2 2 0 1 0 0 4h.02a2 2 0 1 \
            0 0 -4\" />\n\
+           </svg>"));
+  el
+
+let keyboard ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-keyboard\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M20 5a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-16a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 \
+           -3zm-14 8a1 1 0 0 0 -1 1v.01a1 1 0 0 0 2 0v-.01a1 1 0 0 0 -1 -1m12 0a1 1 0 0 0 -1 \
+           1v.01a1 1 0 0 0 2 0v-.01a1 1 0 0 0 -1 -1m-7.998 0a1 1 0 0 0 -.004 2l4 .01a1 1 0 0 0 \
+           .005 -2zm-4.002 -4a1 1 0 0 0 -1 1v.01a1 1 0 0 0 2 0v-.01a1 1 0 0 0 -1 -1m4 0a1 1 0 0 0 \
+           -1 1v.01a1 1 0 0 0 2 0v-.01a1 1 0 0 0 -1 -1m4 0a1 1 0 0 0 -1 1v.01a1 1 0 0 0 2 0v-.01a1 \
+           1 0 0 0 -1 -1m4 0a1 1 0 0 0 -1 1v.01a1 1 0 0 0 2 0v-.01a1 1 0 0 0 -1 -1\" />\n\
            </svg>"));
   el
 
@@ -11679,6 +15665,189 @@ let lasso_polygon ?at () =
            -7a1 1 0 0 1 1.543 -.539m-.009 2.451l-1.528 5.348l.642 2.031q .155 -.016 .314 -.016a3 3 \
            0 0 1 3 2.995l3.957 .965l7.96 -2.654l-.769 -6.919l-6.797 2.55a1 1 0 0 1 -.827 \
            -.058l-.105 -.065z\" />\n\
+           </svg>"));
+  el
+
+let laurel_wreath_1 ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-laurel-wreath-1\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M16.956 2.057c.355 .124 .829 .375 1.303 .796a3.77 3.77 0 0 1 1.246 \
+           2.204c.173 .989 -.047 1.894 -.519 2.683l-.123 .194q -.097 .147 -.196 .272q .066 .234 \
+           .117 .471q .26 -.178 .545 -.307c.851 -.389 1.727 -.442 2.527 -.306q .226 .04 .346 \
+           .076a1 1 0 0 1 .689 .712l.029 .13q .015 .08 .03 .18a4.45 4.45 0 0 1 -.324 2.496a3.94 \
+           3.94 0 0 1 -1.71 1.85l-.242 .12a4.23 4.23 0 0 1 -2.234 .349a9 9 0 0 1 -.443 1.023c.37 \
+           .016 .748 .093 1.128 .24c.732 .28 1.299 .758 1.711 1.367a3.95 3.95 0 0 1 .654 1.613a1 1 \
+           0 0 1 -.356 .917a3.8 3.8 0 0 1 -.716 .443c-.933 .455 -1.978 .588 -3.043 .179l-.032 \
+           -.015l-.205 -.086a3.6 3.6 0 0 1 -1.33 -1.069l-.143 -.197a4 4 0 0 1 -.26 -.433a6 6 0 0 1 \
+           -.927 .511q .18 .262 .337 .56a7.4 7.4 0 0 1 .66 1.747a1 1 0 0 1 -1.95 .444l-.028 -.11a6 \
+           6 0 0 0 -.449 -1.143c-.342 -.645 -.71 -.968 -1.048 -.968s-.706 .323 -1.048 .969a5.6 5.6 \
+           0 0 0 -.367 .874l-.082 .269l-.028 .11a1 1 0 0 1 -1.95 -.444a7.3 7.3 0 0 1 .66 -1.747q \
+           .158 -.298 .337 -.561a6.4 6.4 0 0 1 -.93 -.508a4 4 0 0 1 -.256 .43c-.366 .541 -.855 .98 \
+           -1.473 1.267l-.238 .1c-.994 .382 -1.97 .292 -2.855 -.091l-.188 -.087a3.8 3.8 0 0 1 \
+           -.716 -.443a1 1 0 0 1 -.356 -.917a3.95 3.95 0 0 1 .654 -1.613a3.6 3.6 0 0 1 1.71 \
+           -1.368c.38 -.146 .758 -.223 1.13 -.24a9 9 0 0 1 -.445 -1.023a4.23 4.23 0 0 1 -2.233 \
+           -.348a4 4 0 0 1 -.916 -.587l-.207 -.191a4 4 0 0 1 -.724 -.977l-.105 -.216a4.45 4.45 0 0 \
+           1 -.265 -2.806a1 1 0 0 1 .69 -.712q .119 -.036 .345 -.076c.801 -.135 1.678 -.082 2.53 \
+           .308q .283 .129 .545 .304q .048 -.235 .112 -.47a5 5 0 0 1 -.194 -.272c-.556 -.832 -.83 \
+           -1.806 -.642 -2.877l.05 -.242a3.75 3.75 0 0 1 1.027 -1.803l.169 -.159a4 4 0 0 1 1.303 \
+           -.796a1 1 0 0 1 .975 .178c.2 .168 .462 .446 .719 .83c.556 .833 .83 1.807 .642 \
+           2.878a3.77 3.77 0 0 1 -1.246 2.204c-.303 .27 -.607 .47 -.879 .61a7.5 7.5 0 0 0 -.255 \
+           1.971c0 3.502 2.285 6.272 5 6.272s5 -2.77 5 -6.276a7.6 7.6 0 0 0 -.253 -1.967a4.3 4.3 0 \
+           0 1 -.881 -.61a3.77 3.77 0 0 1 -1.246 -2.204c-.188 -1.07 .086 -2.045 .642 -2.877c.257 \
+           -.385 .52 -.663 .72 -.831a1 1 0 0 1 .974 -.178m-3.956 5.943v6a1 1 0 0 1 -2 \
+           0v-4.002h-.059a1 1 0 0 1 -.554 -.208l-.094 -.083a1 1 0 0 1 0 -1.414l1 -1c.63 -.63 1.707 \
+           -.184 1.707 .707\" />\n\
+           </svg>"));
+  el
+
+let laurel_wreath_2 ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-laurel-wreath-2\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M16.956 2.057c.355 .124 .829 .375 1.303 .796a3.77 3.77 0 0 1 1.246 \
+           2.204c.173 .989 -.047 1.894 -.519 2.683l-.123 .194q -.097 .147 -.196 .272q .066 .234 \
+           .117 .471q .26 -.178 .545 -.307c.851 -.389 1.727 -.442 2.527 -.306q .226 .04 .346 \
+           .076a1 1 0 0 1 .689 .712l.029 .13q .015 .08 .03 .18a4.45 4.45 0 0 1 -.324 2.496a3.94 \
+           3.94 0 0 1 -1.71 1.85l-.242 .12a4.23 4.23 0 0 1 -2.234 .349a9 9 0 0 1 -.443 1.023c.37 \
+           .016 .748 .093 1.128 .24c.732 .28 1.299 .758 1.711 1.367a3.95 3.95 0 0 1 .654 1.613a1 1 \
+           0 0 1 -.356 .917a3.8 3.8 0 0 1 -.716 .443c-.933 .455 -1.978 .588 -3.043 .179l-.032 \
+           -.015l-.205 -.086a3.6 3.6 0 0 1 -1.33 -1.069l-.143 -.197a4 4 0 0 1 -.26 -.433a6 6 0 0 1 \
+           -.927 .511q .18 .262 .337 .56a7.4 7.4 0 0 1 .66 1.747a1 1 0 0 1 -1.95 .444l-.028 -.11a6 \
+           6 0 0 0 -.449 -1.143c-.342 -.645 -.71 -.968 -1.048 -.968s-.706 .323 -1.048 .969a5.6 5.6 \
+           0 0 0 -.367 .874l-.082 .269l-.028 .11a1 1 0 0 1 -1.95 -.444a7.3 7.3 0 0 1 .66 -1.747q \
+           .158 -.298 .337 -.561a6.4 6.4 0 0 1 -.93 -.508a4 4 0 0 1 -.256 .43c-.366 .541 -.855 .98 \
+           -1.473 1.267l-.238 .1c-.994 .382 -1.97 .292 -2.855 -.091l-.188 -.087a3.8 3.8 0 0 1 \
+           -.716 -.443a1 1 0 0 1 -.356 -.917a3.95 3.95 0 0 1 .654 -1.613a3.6 3.6 0 0 1 1.71 \
+           -1.368c.38 -.146 .758 -.223 1.13 -.24a9 9 0 0 1 -.445 -1.023a4.23 4.23 0 0 1 -2.233 \
+           -.348a4 4 0 0 1 -.916 -.587l-.207 -.191a4 4 0 0 1 -.724 -.977l-.105 -.216a4.45 4.45 0 0 \
+           1 -.265 -2.806a1 1 0 0 1 .69 -.712q .119 -.036 .345 -.076c.801 -.135 1.678 -.082 2.53 \
+           .308q .283 .129 .545 .304q .048 -.235 .112 -.47a5 5 0 0 1 -.194 -.272c-.556 -.832 -.83 \
+           -1.806 -.642 -2.877l.05 -.242a3.75 3.75 0 0 1 1.027 -1.803l.169 -.159a4 4 0 0 1 1.303 \
+           -.796a1 1 0 0 1 .975 .178c.2 .168 .462 .446 .719 .83c.556 .833 .83 1.807 .642 \
+           2.878a3.77 3.77 0 0 1 -1.246 2.204c-.303 .27 -.607 .47 -.879 .61a7.5 7.5 0 0 0 -.255 \
+           1.971c0 3.502 2.285 6.272 5 6.272s5 -2.77 5 -6.276a7.6 7.6 0 0 0 -.253 -1.967a4.3 4.3 0 \
+           0 1 -.881 -.61a3.77 3.77 0 0 1 -1.246 -2.204c-.188 -1.07 .086 -2.045 .642 -2.877c.257 \
+           -.385 .52 -.663 .72 -.831a1 1 0 0 1 .974 -.178m-4.356 4.943a2 2 0 0 1 2 2v1a2 2 0 0 1 \
+           -2 2h-1v1h2a1 1 0 0 1 0 2h-2a2 2 0 0 1 -2 -2v-1a2 2 0 0 1 2 -2h1v-1h-2a1 1 0 0 1 0 \
+           -2z\" />\n\
+           </svg>"));
+  el
+
+let laurel_wreath_3 ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-laurel-wreath-3\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M16.956 2.057c.355 .124 .829 .375 1.303 .796a3.77 3.77 0 0 1 1.246 \
+           2.204c.173 .989 -.047 1.894 -.519 2.683l-.123 .194q -.097 .147 -.196 .272q .066 .234 \
+           .117 .471q .26 -.178 .545 -.307c.851 -.389 1.727 -.442 2.527 -.306q .226 .04 .346 \
+           .076a1 1 0 0 1 .689 .712l.029 .13q .015 .08 .03 .18a4.45 4.45 0 0 1 -.324 2.496a3.94 \
+           3.94 0 0 1 -1.71 1.85l-.242 .12a4.23 4.23 0 0 1 -2.234 .349a9 9 0 0 1 -.443 1.023c.37 \
+           .016 .748 .093 1.128 .24c.732 .28 1.299 .758 1.711 1.367a3.95 3.95 0 0 1 .654 1.613a1 1 \
+           0 0 1 -.356 .917a3.8 3.8 0 0 1 -.716 .443c-.933 .455 -1.978 .588 -3.043 .179l-.032 \
+           -.015l-.205 -.086a3.6 3.6 0 0 1 -1.33 -1.069l-.143 -.197a4 4 0 0 1 -.26 -.433a6 6 0 0 1 \
+           -.927 .511q .18 .262 .337 .56a7.4 7.4 0 0 1 .66 1.747a1 1 0 0 1 -1.95 .444l-.028 -.11a6 \
+           6 0 0 0 -.449 -1.143c-.342 -.645 -.71 -.968 -1.048 -.968s-.706 .323 -1.048 .969a5.6 5.6 \
+           0 0 0 -.367 .874l-.082 .269l-.028 .11a1 1 0 0 1 -1.95 -.444a7.3 7.3 0 0 1 .66 -1.747q \
+           .158 -.298 .337 -.561a6.4 6.4 0 0 1 -.93 -.508a4 4 0 0 1 -.256 .43c-.366 .541 -.855 .98 \
+           -1.473 1.267l-.238 .1c-.994 .382 -1.97 .292 -2.855 -.091l-.188 -.087a3.8 3.8 0 0 1 \
+           -.716 -.443a1 1 0 0 1 -.356 -.917a3.95 3.95 0 0 1 .654 -1.613a3.6 3.6 0 0 1 1.71 \
+           -1.368c.38 -.146 .758 -.223 1.13 -.24a9 9 0 0 1 -.445 -1.023a4.23 4.23 0 0 1 -2.233 \
+           -.348a4 4 0 0 1 -.916 -.587l-.207 -.191a4 4 0 0 1 -.724 -.977l-.105 -.216a4.45 4.45 0 0 \
+           1 -.265 -2.806a1 1 0 0 1 .69 -.712q .119 -.036 .345 -.076c.801 -.135 1.678 -.082 2.53 \
+           .308q .283 .129 .545 .304q .048 -.235 .112 -.47a5 5 0 0 1 -.194 -.272c-.556 -.832 -.83 \
+           -1.806 -.642 -2.877l.05 -.242a3.75 3.75 0 0 1 1.027 -1.803l.169 -.159a4 4 0 0 1 1.303 \
+           -.796a1 1 0 0 1 .975 .178c.2 .168 .462 .446 .719 .83c.556 .833 .83 1.807 .642 \
+           2.878a3.77 3.77 0 0 1 -1.246 2.204c-.303 .27 -.607 .47 -.879 .61a7.5 7.5 0 0 0 -.255 \
+           1.971c0 3.502 2.285 6.272 5 6.272s5 -2.77 5 -6.276a7.6 7.6 0 0 0 -.253 -1.967a4.3 4.3 0 \
+           0 1 -.881 -.61a3.77 3.77 0 0 1 -1.246 -2.204c-.188 -1.07 .086 -2.045 .642 -2.877c.257 \
+           -.385 .52 -.663 .72 -.831a1 1 0 0 1 .974 -.178m-4.956 4.943a2.5 2.5 0 0 1 2.125 \
+           3.817l-.125 .183l.019 .024c.273 .372 .445 .823 .477 1.312l.005 .164a2.5 2.5 0 0 1 \
+           -2.501 2.5h-1.5a1 1 0 0 1 0 -2h1.5a.5 .5 0 1 0 0 -1h-1l-.133 -.007c-1.199 -.129 -1.154 \
+           -1.993 .133 -1.993h1l.09 -.008a.5 .5 0 0 0 -.09 -.992h-1.5a1 1 0 1 1 0 -2z\" />\n\
+           </svg>"));
+  el
+
+let laurel_wreath ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-laurel-wreath\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M16.956 2.057c.355 .124 .829 .375 1.303 .796a3.77 3.77 0 0 1 1.246 \
+           2.204c.173 .989 -.047 1.894 -.519 2.683l-.123 .194q -.097 .147 -.196 .272q .066 .234 \
+           .117 .471q .26 -.178 .545 -.307c.851 -.389 1.727 -.442 2.527 -.306q .226 .04 .346 \
+           .076a1 1 0 0 1 .689 .712l.029 .13q .015 .08 .03 .18a4.45 4.45 0 0 1 -.324 2.496a3.94 \
+           3.94 0 0 1 -1.71 1.85l-.242 .12a4.23 4.23 0 0 1 -2.234 .349a9 9 0 0 1 -.443 1.023c.37 \
+           .016 .748 .093 1.128 .24c.732 .28 1.299 .758 1.711 1.367a3.95 3.95 0 0 1 .654 1.613a1 1 \
+           0 0 1 -.356 .917a3.8 3.8 0 0 1 -.716 .443c-.933 .455 -1.978 .588 -3.043 .179l-.032 \
+           -.015l-.205 -.086a3.6 3.6 0 0 1 -1.33 -1.069l-.143 -.197a4 4 0 0 1 -.26 -.433a6 6 0 0 1 \
+           -.927 .511q .18 .262 .337 .56a7.4 7.4 0 0 1 .66 1.747a1 1 0 0 1 -1.95 .444l-.028 -.11a6 \
+           6 0 0 0 -.449 -1.143c-.342 -.645 -.71 -.968 -1.048 -.968s-.706 .323 -1.048 .969a5.6 5.6 \
+           0 0 0 -.367 .874l-.082 .269l-.028 .11a1 1 0 0 1 -1.95 -.444a7.3 7.3 0 0 1 .66 -1.747q \
+           .158 -.298 .337 -.561a6.4 6.4 0 0 1 -.93 -.508a4 4 0 0 1 -.256 .43c-.366 .541 -.855 .98 \
+           -1.473 1.267l-.238 .1c-.994 .382 -1.97 .292 -2.855 -.091l-.188 -.087a3.8 3.8 0 0 1 \
+           -.716 -.443a1 1 0 0 1 -.356 -.917a3.95 3.95 0 0 1 .654 -1.613a3.6 3.6 0 0 1 1.71 \
+           -1.368c.38 -.146 .758 -.223 1.13 -.24a9 9 0 0 1 -.445 -1.023a4.23 4.23 0 0 1 -2.233 \
+           -.348a4 4 0 0 1 -.916 -.587l-.207 -.191a4 4 0 0 1 -.724 -.977l-.105 -.216a4.45 4.45 0 0 \
+           1 -.265 -2.806a1 1 0 0 1 .69 -.712q .119 -.036 .345 -.076c.801 -.135 1.678 -.082 2.53 \
+           .308q .283 .129 .545 .304q .048 -.235 .112 -.47a5 5 0 0 1 -.194 -.272c-.556 -.832 -.83 \
+           -1.806 -.642 -2.877l.05 -.242a3.75 3.75 0 0 1 1.027 -1.803l.169 -.159a4 4 0 0 1 1.303 \
+           -.796a1 1 0 0 1 .975 .178c.2 .168 .462 .446 .719 .83c.556 .833 .83 1.807 .642 \
+           2.878a3.77 3.77 0 0 1 -1.246 2.204c-.303 .27 -.607 .47 -.879 .61a7.5 7.5 0 0 0 -.255 \
+           1.971c0 3.502 2.285 6.272 5 6.272s5 -2.77 5 -6.276a7.6 7.6 0 0 0 -.253 -1.967a4.3 4.3 0 \
+           0 1 -.881 -.61a3.77 3.77 0 0 1 -1.246 -2.204c-.188 -1.07 .086 -2.045 .642 -2.877c.257 \
+           -.385 .52 -.663 .72 -.831a1 1 0 0 1 .974 -.178\" />\n\
            </svg>"));
   el
 
@@ -12373,6 +16542,58 @@ let lego ?at () =
            </svg>"));
   el
 
+let lemon_2 ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-lemon-2\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M18 3a3 3 0 0 1 2.443 4.742l-.06 .076l.037 .087c1.269 3.187 .428 7.084 \
+           -2.203 9.872l-.217 .223c-2.8 2.8 -6.823 3.723 -10.095 2.42l-.087 -.036l-.133 .098a3 3 0 \
+           0 1 -2.11 .488l-.205 -.036a3 3 0 0 1 -1.852 -4.62l.098 -.134l-.036 -.085c-1.269 -3.187 \
+           -.428 -7.084 2.203 -9.872l.217 -.223c2.8 -2.8 6.823 -3.723 10.095 -2.42l.085 .037l.124 \
+           -.091a3 3 0 0 1 1.493 -.52z\" />\n\
+           </svg>"));
+  el
+
+let lifebuoy ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-lifebuoy\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M14.757 16.172l3.571 3.571a10.004 10.004 0 0 1 -12.656 0l3.57 -3.571a5 5 0 \
+           0 0 2.758 .828c1.02 0 1.967 -.305 2.757 -.828m-10.5 -10.5l3.571 3.57a5 5 0 0 0 -.828 \
+           2.758c0 1.02 .305 1.967 .828 2.757l-3.57 3.572a10 10 0 0 1 -2.258 -6.329l.005 -.324a10 \
+           10 0 0 1 2.252 -6.005m17.743 6.329c0 2.343 -.82 4.57 -2.257 6.328l-3.571 -3.57a5 5 0 0 \
+           0 .828 -2.758c0 -1.02 -.305 -1.967 -.828 -2.757l3.571 -3.57a10 10 0 0 1 2.257 6.327m-5 \
+           -8.66q .707 .41 1.33 .918l-3.573 3.57a5 5 0 0 0 -2.757 -.828c-1.02 0 -1.967 .305 -2.757 \
+           .828l-3.573 -3.57a10 10 0 0 1 11.33 -.918\" />\n\
+           </svg>"));
+  el
+
 let live_photo ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -12405,6 +16626,40 @@ let live_photo ?at () =
            1 -1.993 .117l-.007 -.127a1 1 0 0 1 1 -1m3.14 2.5a1 1 0 0 1 .993 .883l.007 .127a1 1 0 0 \
            1 -1.993 .117l-.007 -.127a1 1 0 0 1 1 -1m3.9 .89a1 1 0 0 1 .993 .883l.007 .127a1 1 0 0 \
            1 -1.993 .117l-.007 -.127a1 1 0 0 1 1 -1\" />\n\
+           </svg>"));
+  el
+
+let live_view ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-live-view\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M8 3a1 1 0 1 1 0 2h-2a1 1 0 0 0 -1 1v2a1 1 0 1 1 -2 0v-2a3 3 0 0 1 3 -3z\" />\n\
+          \  <path d=\"M4 15a1 1 0 0 1 1 1v2a1 1 0 0 0 1 1h2a1 1 0 0 1 0 2h-2a3 3 0 0 1 -3 -3v-2a1 \
+           1 0 0 1 1 -1\" />\n\
+          \  <path d=\"M18 3a3 3 0 0 1 3 3v2a1 1 0 0 1 -2 0v-2a1 1 0 0 0 -1 -1h-2a1 1 0 0 1 0 \
+           -2z\" />\n\
+          \  <path d=\"M20 15a1 1 0 0 1 1 1v2a3 3 0 0 1 -3 3h-2a1 1 0 0 1 0 -2h2a1 1 0 0 0 1 \
+           -1v-2a1 1 0 0 1 1 -1\" />\n\
+          \  <path d=\"M15.19 7.214a5 5 0 0 1 1.185 6.27l-.056 .09l-3.484 4.976a1 1 0 0 1 -.077 \
+           .103l-.017 .019l-.057 .056l-.012 .013l-.019 .017a1 1 0 0 1 -.096 .073l-.053 .03l-.038 \
+           .024l-.011 .005a1 1 0 0 1 -.223 .083l-.045 .008l-.066 .012a1 1 0 0 1 -.242 0l-.061 \
+           -.011l-.05 -.01a1 1 0 0 1 -.234 -.087l-.047 -.028l-.044 -.026l-.011 -.008l-.032 \
+           -.025l-.053 -.04l-.01 -.01l-.009 -.007l-.034 -.035l-.035 -.034l-.007 -.01l-.01 \
+           -.009l-.037 -.05l-.024 -.03l-3.5 -5l-.056 -.089a5 5 0 0 1 7.566 -6.27m-3.191 2.786a1 1 \
+           0 0 0 -1 1v.01a1 1 0 0 0 2 0v-.01a1 1 0 0 0 -1 -1\" />\n\
            </svg>"));
   el
 
@@ -12717,6 +16972,35 @@ let medical_cross ?at () =
            </svg>"));
   el
 
+let meeple ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-meeple\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2c2.486 0 3.713 1.766 3.955 4.1l.01 .124l.129 .036c3.17 .928 5.754 \
+           2.487 5.9 4.556l.006 .184c0 1.427 -1.297 2.322 -2.871 2.733l-.201 .049l.026 .03c.244 \
+           .276 .532 .603 .7 .797l.057 .066c.49 .573 .884 1.073 1.216 1.56c.69 1.01 1.073 1.904 \
+           1.073 2.765a2 2 0 0 1 -2 2h-5c-1.043 0 -1.344 -.453 -2.394 -2.553c-.29 -.58 -.448 -.882 \
+           -.593 -1.118l-.013 -.022l-.013 .022c-.129 .21 -.268 .472 -.5 .935l-.093 .183c-1.05 2.1 \
+           -1.351 2.553 -2.394 2.553h-5a2 2 0 0 1 -2 -2c0 -.86 .384 -1.755 1.073 -2.765a18 18 0 0 \
+           1 1.216 -1.56c.152 -.178 .482 -.553 .757 -.863l.025 -.03l-.2 -.049c-1.506 -.393 -2.758 \
+           -1.23 -2.864 -2.55l-.007 -.183c0 -2.16 2.643 -3.785 5.906 -4.74l.128 -.036l.011 \
+           -.124c.235 -2.26 1.394 -3.99 3.726 -4.095z\" />\n\
+           </svg>"));
+  el
+
 let melon ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -12738,6 +17022,29 @@ let melon ?at () =
            -4.925 10.999 -10.999 10.999a10.97 10.97 0 0 1 -7.684 -3.127a1 1 0 0 1 .008 \
            -1.438l4.343 -4.153a1 1 0 0 1 1.352 -.027a3 3 0 0 0 4.32 -4.133a1 1 0 0 1 .088 -1.35z\" \
            />\n\
+           </svg>"));
+  el
+
+let message_2 ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-message-2\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M18 3a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-2.586l-2.707 2.707a1 1 0 0 1 -1.32 \
+           .083l-.094 -.083l-2.708 -2.707h-2.585a4 4 0 0 1 -3.995 -3.8l-.005 -.2v-8a4 4 0 0 1 4 \
+           -4zm-4 9h-6a1 1 0 0 0 0 2h6a1 1 0 0 0 0 -2m2 -4h-8a1 1 0 1 0 0 2h8a1 1 0 0 0 0 -2\" />\n\
            </svg>"));
   el
 
@@ -12943,6 +17250,31 @@ let microphone ?at () =
           \  <path d=\"M19 9a1 1 0 0 1 1 1a8 8 0 0 1 -6.999 7.938l-.001 2.062h3a1 1 0 0 1 0 2h-8a1 \
            1 0 0 1 0 -2h3v-2.062a8 8 0 0 1 -7 -7.938a1 1 0 1 1 2 0a6 6 0 0 0 12 0a1 1 0 0 1 1 \
            -1m-7 -8a4 4 0 0 1 4 4v5a4 4 0 1 1 -8 0v-5a4 4 0 0 1 4 -4\" />\n\
+           </svg>"));
+  el
+
+let microscope ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-microscope\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M15.707 4.293l3 3a1 1 0 0 1 0 1.414l-1.553 1.555a7 7 0 0 1 -.256 9.74l2.102 \
+           -.002a1 1 0 0 1 0 2h-14a1 1 0 0 1 0 -2h1v-1a1 1 0 0 1 0 -2h2a1 1 0 0 1 0 2v1h4a5 5 0 0 \
+           0 3.737 -8.323l-3.03 3.03a1 1 0 0 1 -1.414 0l-.793 -.792l-.793 .792a1 1 0 1 1 -1.414 \
+           -1.414l.792 -.793l-.792 -.793a1 1 0 0 1 0 -1.414l6 -6a1 1 0 0 1 1.414 0m2 -2l3 3a1 1 0 \
+           1 1 -1.414 1.414l-3 -3a1 1 0 1 1 1.414 -1.414\" />\n\
            </svg>"));
   el
 
@@ -13310,6 +17642,31 @@ let moon ?at () =
            </svg>"));
   el
 
+let motorbike ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-motorbike\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M15 5a1 1 0 0 1 .894 .553l3.225 6.449l.08 .003a4 4 0 1 1 -4.199 3.995l.005 \
+           -.2a4 4 0 0 1 2.111 -3.33l-.557 -1.115l-3.352 3.352a1 1 0 0 1 -.707 .293h-3.626q .124 \
+           .481 .126 1a4 4 0 1 1 -8 0l.005 -.2a4 4 0 0 1 6.33 -3.049l1.749 -1.751h-3.084a1 1 0 0 1 \
+           -.993 -.883l-.007 -.117a1 1 0 0 1 1 -1h9.381l-1 -2h-1.381a1 1 0 0 1 -.993 -.883l-.007 \
+           -.117a1 1 0 0 1 1 -1z\" />\n\
+           </svg>"));
+  el
+
 let mountain ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -13430,6 +17787,31 @@ let navigation ?at () =
            </svg>"));
   el
 
+let nurse ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-nurse\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12.002 4c2.866 0 6.7 1.365 9.532 3.155a1 1 0 0 1 .45 1.024l-2 11a1 1 0 0 1 \
+           -.984 .821h-14a1 1 0 0 1 -.984 -.821l-2 -11a1 1 0 0 1 .45 -1.024c2.834 -1.792 6.724 \
+           -3.16 9.536 -3.155m-.002 5a1 1 0 0 0 -1 1v1h-1a1 1 0 0 0 -.993 .883l-.007 .117a1 1 0 0 \
+           0 1 1h1v1a1 1 0 0 0 .883 .993l.117 .007a1 1 0 0 0 1 -1v-1h1a1 1 0 0 0 .993 -.883l.007 \
+           -.117a1 1 0 0 0 -1 -1h-1v-1a1 1 0 0 0 -.883 -.993z\" />\n\
+           </svg>"));
+  el
+
 let octagon ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -13522,6 +17904,32 @@ let paint ?at () =
            -.005v-1a1 1 0 0 1 .883 -.993l.117 -.007h5a4 4 0 0 0 4 -4a1 1 0 0 0 -.883 -.993l-.117 \
            -.007l-.005 .176a3 3 0 0 1 -2.819 2.819l-.176 .005h-10a3 3 0 0 1 -2.995 -2.824l-.005 \
            -.176v-2a3 3 0 0 1 2.824 -2.995l.176 -.005h10z\" />\n\
+           </svg>"));
+  el
+
+let palette ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-palette\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 2c5.498 0 10 4.002 10 9c0 1.351 -.6 2.64 -1.654 3.576c-1.03 .914 -2.412 \
+           1.424 -3.846 1.424h-2.516a1 1 0 0 0 -.5 1.875a1 1 0 0 1 .194 .14a2.3 2.3 0 0 1 -1.597 \
+           3.99l-.156 -.009l.068 .004l-.273 -.004c-5.3 -.146 -9.57 -4.416 -9.716 -9.716l-.004 \
+           -.28c0 -5.523 4.477 -10 10 -10m-3.5 6.5a2 2 0 0 0 -1.995 1.85l-.005 .15a2 2 0 1 0 2 \
+           -2m8 0a2 2 0 0 0 -1.995 1.85l-.005 .15a2 2 0 1 0 2 -2m-4 -3a2 2 0 0 0 -1.995 1.85l-.005 \
+           .15a2 2 0 1 0 2 -2\" />\n\
            </svg>"));
   el
 
@@ -13808,6 +18216,33 @@ let picture_in_picture ?at () =
            </svg>"));
   el
 
+let pig ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-pig\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M15.999 2a1 1 0 0 1 1.001 1v3.255l.026 .018a7 7 0 0 1 2.204 2.537l.092 \
+           .19h.676a2 2 0 0 1 1.995 1.85l.005 .15v2a2 2 0 0 1 -2 2h-.676l-.104 .213a7 7 0 0 1 \
+           -1.097 1.558l-.123 .125v1.604a2.5 2.5 0 0 1 -2.336 2.495l-.162 .005c-1.16 0 -2.135 -.79 \
+           -2.418 -1.86l-.032 -.141l-4.05 .001l-.05 -.002l-.032 .141a2.5 2.5 0 0 1 -2.254 \
+           1.856l-.164 .005a2.5 2.5 0 0 1 -2.5 -2.5v-1.602l-.056 -.055a7 7 0 0 1 -1.576 \
+           -7.085l.092 -.256a7 7 0 0 1 6.539 -4.502h2.196l4.25 -2.832a1 1 0 0 1 .436 -.161zm-.999 \
+           8a1 1 0 0 0 -.993 .883l-.007 .127a1 1 0 0 0 1.993 .117l.007 -.127a1 1 0 0 0 -1 -1\" />\n\
+           </svg>"));
+  el
+
 let pill ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -13904,6 +18339,381 @@ let pizza ?at () =
            0 1 -6.37 -1.318m5.174 -4.192a1 1 0 0 0 -1 1l.007 .127a1 1 0 0 0 1.993 -.117l-.007 \
            -.127a1 1 0 0 0 -.993 -.883m2 -2.99a1 1 0 0 0 -1 1l.007 .127a1 1 0 0 0 1.993 \
            -.117l-.007 -.127a1 1 0 0 0 -.993 -.883\" />\n\
+           </svg>"));
+  el
+
+let play_card_1 ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-play-card-1\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 2a3 3 0 0 1 3 3v14a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 -3v-14a3 3 0 0 1 3 \
+           -3zm.01 16h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 0 0 0 -2m-5.01 -10a1 1 0 0 0 -1 \
+           1v6a1 1 0 0 0 2 0v-6a1 1 0 0 0 -1 -1m-4.99 -4h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 \
+           0 1 0 0 -2\" />\n\
+           </svg>"));
+  el
+
+let play_card_10 ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-play-card-10\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 2a3 3 0 0 1 3 3v14a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 -3v-14a3 3 0 0 1 3 \
+           -3zm.01 16h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 0 0 0 -2m-8.01 -10a1 1 0 0 0 -1 \
+           1v6a1 1 0 0 0 2 0v-6a1 1 0 0 0 -1 -1m4.5 0c-1.453 0 -2.5 1.395 -2.5 3v2c0 1.605 1.047 3 \
+           2.5 3s2.5 -1.395 2.5 -3v-2c0 -1.605 -1.047 -3 -2.5 -3m0 2c.203 0 .5 .395 .5 1v2c0 .605 \
+           -.297 1 -.5 1s-.5 -.395 -.5 -1v-2c0 -.605 .297 -1 .5 -1m-6.49 -6h-.01a1 1 0 0 0 -.117 \
+           1.993l.127 .007a1 1 0 1 0 0 -2\" />\n\
+           </svg>"));
+  el
+
+let play_card_2 ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-play-card-2\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 2a3 3 0 0 1 3 3v14a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 -3v-14a3 3 0 0 1 3 \
+           -3zm.01 16h-.01a1 1 0 0 0 0 2h.01a1 1 0 0 0 0 -2m-4.01 -10h-3a1 1 0 1 0 0 2h3v1h-2a2 2 \
+           0 0 0 -2 2v1a2 2 0 0 0 2 2h3a1 1 0 0 0 0 -2h-3v-1h2a2 2 0 0 0 2 -2v-1a2 2 0 0 0 -2 \
+           -2m-5.99 -4h-.01a1 1 0 1 0 0 2h.01a1 1 0 1 0 0 -2\" />\n\
+           </svg>"));
+  el
+
+let play_card_3 ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-play-card-3\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 2a3 3 0 0 1 3 3v14a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 -3v-14a3 3 0 0 1 3 \
+           -3zm.01 16h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 0 0 0 -2m-4.51 -10h-2.5a1 1 0 1 0 \
+           0 2h2.5a.5 .5 0 0 1 .09 .992l-.09 .008h-1.5c-1.287 0 -1.332 1.864 -.133 1.993l.133 \
+           .007h1.5a.5 .5 0 1 1 0 1h-2.5a1 1 0 0 0 0 2h2.5a2.5 2.5 0 0 0 2.5 -2.5l-.005 -.164a2.5 \
+           2.5 0 0 0 -.477 -1.312l-.019 -.024l.019 -.024a2.5 2.5 0 0 0 -2.018 -3.976m-5.49 \
+           -4h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 1 0 0 -2\" />\n\
+           </svg>"));
+  el
+
+let play_card_4 ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-play-card-4\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 2a3 3 0 0 1 3 3v14a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 -3v-14a3 3 0 0 1 3 \
+           -3zm.01 16h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 0 0 0 -2m-3.01 -10a1 1 0 0 0 -1 \
+           1v2h-2v-2a1 1 0 0 0 -2 0v2a2 2 0 0 0 2 2h2v2a1 1 0 0 0 .883 .993l.117 .007a1 1 0 0 0 1 \
+           -1v-6a1 1 0 0 0 -1 -1m-6.99 -4h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 1 0 0 -2\" />\n\
+           </svg>"));
+  el
+
+let play_card_5 ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-play-card-5\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 2a3 3 0 0 1 3 3v14a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 -3v-14a3 3 0 0 1 3 \
+           -3zm.01 16h-.01a1 1 0 0 0 0 2h.01a1 1 0 0 0 0 -2m-3.01 -10h-4a1 1 0 0 0 -1 1v3a1 1 0 0 \
+           0 1 1h3v1h-3a1 1 0 0 0 0 2h3a2 2 0 0 0 2 -2v-1l-.005 -.15a2 2 0 0 0 -1.995 \
+           -1.85h-2v-1h3a1 1 0 0 0 0 -2m-6.99 -4h-.01a1 1 0 1 0 0 2h.01a1 1 0 1 0 0 -2\" />\n\
+           </svg>"));
+  el
+
+let play_card_6 ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-play-card-6\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 2a3 3 0 0 1 3 3v14a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 -3v-14a3 3 0 0 1 3 \
+           -3zm.01 16h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 0 0 0 -2m-3.01 -10h-3a2 2 0 0 0 \
+           -2 2v4a2 2 0 0 0 2 2h2a2 2 0 0 0 2 -2v-1l-.005 -.15a2 2 0 0 0 -1.995 -1.85h-2v-1h3a1 1 \
+           0 0 0 0 -2m-1 5v1h-2v-1zm-5.99 -9h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 1 0 0 -2\" \
+           />\n\
+           </svg>"));
+  el
+
+let play_card_7 ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-play-card-7\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 2a3 3 0 0 1 3 3v14a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 -3v-14a3 3 0 0 1 3 \
+           -3zm.01 16h-.01a1 1 0 0 0 0 2h.01a1 1 0 0 0 0 -2m-3.01 -10h-4a1 1 0 0 0 -1 1l.007 \
+           .117a1 1 0 0 0 .993 .883h2.612l-1.56 4.684a1 1 0 1 0 1.897 .632l2 -6a1 1 0 0 0 -.949 \
+           -1.316m-6.99 -4h-.01a1 1 0 1 0 0 2h.01a1 1 0 1 0 0 -2\" />\n\
+           </svg>"));
+  el
+
+let play_card_8 ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-play-card-8\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 2a3 3 0 0 1 3 3v14a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 -3v-14a3 3 0 0 1 3 \
+           -3zm.01 16h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 0 0 0 -2m-4.01 -10h-2a2 2 0 0 0 \
+           -2 2v1c0 .365 .098 .707 .268 1.001c-.17 .293 -.268 .635 -.268 .999v1a2 2 0 0 0 2 2h2a2 \
+           2 0 0 0 2 -2v-1a2 2 0 0 0 -.268 -1c.17 -.293 .268 -.635 .268 -1v-1a2 2 0 0 0 -2 -2m0 \
+           5v1h-2v-1zm0 -3v1h-2v-1zm-5.99 -6h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 1 0 0 -2\" \
+           />\n\
+           </svg>"));
+  el
+
+let play_card_9 ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-play-card-9\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 2a3 3 0 0 1 3 3v14a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 -3v-14a3 3 0 0 1 3 \
+           -3zm.01 16h-.01a1 1 0 0 0 0 2h.01a1 1 0 0 0 0 -2m-4.01 -10h-2a2 2 0 0 0 -2 2v1l.005 \
+           .15a2 2 0 0 0 1.995 1.85h2v1h-3a1 1 0 0 0 0 2h3a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2m0 \
+           2v1h-2v-1zm-5.99 -6h-.01a1 1 0 1 0 0 2h.01a1 1 0 1 0 0 -2\" />\n\
+           </svg>"));
+  el
+
+let play_card_a ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-play-card-a\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 2a3 3 0 0 1 3 3v14a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 -3v-14a3 3 0 0 1 3 \
+           -3zm.01 16h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 0 0 0 -2m-5.01 -10a3 3 0 0 0 -3 \
+           3v4a1 1 0 0 0 2 0v-1h2v1a1 1 0 0 0 .883 .993l.117 .007a1 1 0 0 0 1 -1v-4a3 3 0 0 0 -3 \
+           -3m0 2a1 1 0 0 1 1 1v1h-2v-1a1 1 0 0 1 .883 -.993zm-4.99 -6h-.01a1 1 0 0 0 -.117 \
+           1.993l.127 .007a1 1 0 1 0 0 -2\" />\n\
+           </svg>"));
+  el
+
+let play_card_j ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-play-card-j\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 2a3 3 0 0 1 3 3v14a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 -3v-14a3 3 0 0 1 3 \
+           -3zm.01 16h-.01a1 1 0 0 0 0 2h.01a1 1 0 0 0 0 -2m-3.01 -10h-4a1 1 0 0 0 -1 1l.007 \
+           .117a1 1 0 0 0 .993 .883h3v3a1 1 0 0 1 -2 0a1 1 0 0 0 -2 0a3 3 0 0 0 6 0v-4a1 1 0 0 0 \
+           -1 -1m-6.99 -4h-.01a1 1 0 1 0 0 2h.01a1 1 0 1 0 0 -2\" />\n\
+           </svg>"));
+  el
+
+let play_card_k ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-play-card-k\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 2a3 3 0 0 1 3 3v14a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 -3v-14a3 3 0 0 1 3 \
+           -3zm.01 16h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 0 0 0 -2m-7.01 -10a1 1 0 0 0 -1 \
+           1v6a1 1 0 0 0 2 0v-1.585l2.293 2.292a1 1 0 0 0 1.32 .083l.094 -.083l.083 -.094a1 1 0 0 \
+           0 -.083 -1.32l-2.292 -2.293l2.292 -2.293a1 1 0 1 0 -1.414 -1.414l-2.293 2.291v-1.584a1 \
+           1 0 0 0 -.883 -.993zm-2.99 -4h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 1 0 0 -2\" />\n\
+           </svg>"));
+  el
+
+let play_card_q ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-play-card-q\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 2a3 3 0 0 1 3 3v14a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 -3v-14a3 3 0 0 1 3 \
+           -3zm.01 16h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 0 0 0 -2m-5.01 -10a3 3 0 0 0 -3 \
+           3v2a3 3 0 0 0 4.293 2.708l.5 .5a1 1 0 0 0 1.414 -1.415l-.499 -.5c.187 -.392 .292 -.83 \
+           .292 -1.293v-2a3 3 0 0 0 -3 -3m0 2a1 1 0 0 1 1 1v2a1 1 0 0 1 -2 0v-2a1 1 0 0 1 1 \
+           -1m-4.99 -6h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 1 0 0 -2\" />\n\
+           </svg>"));
+  el
+
+let play_card_star ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-play-card-star\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M17 2a3 3 0 0 1 3 3v14a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 -3v-14a3 3 0 0 1 3 \
+           -3zm.01 16h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 1 0 0 0 0 -2m-4.98 -9.5l-.115 \
+           .005c-.384 .04 -.724 .273 -.898 .623l-.51 1.027l-1.138 .166c-.423 .059 -.78 .357 -.914 \
+           .768l-.033 .125a1.13 1.13 0 0 0 .322 1.039l.82 .797l-.194 1.127c-.07 .432 .107 .857 \
+           .454 1.108l.107 .068a1.13 1.13 0 0 0 1.078 .018l1.022 -.536l1.019 .535c.377 .2 .84 .168 \
+           1.19 -.086l.1 -.08c.281 -.259 .416 -.645 .35 -1.028l-.194 -1.126l.823 -.799c.31 -.302 \
+           .42 -.752 .287 -1.161l-.042 -.11a1.13 1.13 0 0 0 -.873 -.659l-1.138 -.166l-.508 \
+           -1.026a1.13 1.13 0 0 0 -1.014 -.63m-5.021 -4.499h-.01a1 1 0 0 0 -.117 1.993l.127 .007a1 \
+           1 0 1 0 0 -2\" />\n\
            </svg>"));
   el
 
@@ -14302,6 +19112,32 @@ let puzzle ?at () =
            </svg>"));
   el
 
+let quote ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-quote\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M9 5a2 2 0 0 1 2 2v6c0 3.13 -1.65 5.193 -4.757 5.97a1 1 0 1 1 -.486 \
+           -1.94c2.227 -.557 3.243 -1.827 3.243 -4.03v-1h-3a2 2 0 0 1 -1.995 -1.85l-.005 -.15v-3a2 \
+           2 0 0 1 2 -2z\" />\n\
+          \  <path d=\"M18 5a2 2 0 0 1 2 2v6c0 3.13 -1.65 5.193 -4.757 5.97a1 1 0 1 1 -.486 \
+           -1.94c2.227 -.557 3.243 -1.827 3.243 -4.03v-1h-3a2 2 0 0 1 -1.995 -1.85l-.005 -.15v-3a2 \
+           2 0 0 1 2 -2z\" />\n\
+           </svg>"));
+  el
+
 let radar ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -14546,6 +19382,34 @@ let replace ?at () =
            </svg>"));
   el
 
+let rollercoaster ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-rollercoaster\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M21 8a1 1 0 0 1 0 2v11a1 1 0 0 1 -2 0v-11h-1.675q -.163 0 -.325 \
+           .007v10.993a1 1 0 0 1 -2 0v-10.645a7.8 7.8 0 0 0 -2 .959v9.686a1 1 0 0 1 -2 \
+           0v-7.748a7.8 7.8 0 0 0 -1.051 2.064l-.735 2.205a7 7 0 0 1 -.213 .553l-.001 2.926a1 1 0 \
+           0 1 -2 0l.001 -.364a6.54 6.54 0 0 1 -4.001 1.364a1 1 0 0 1 0 -2a4.55 4.55 0 0 0 4.316 \
+           -3.111l.735 -2.205a9.775 9.775 0 0 1 9.274 -6.684zm-10.22 -3.625l2 2.5a1 1 0 0 1 -.18 \
+           1.425l-4 3a1 1 0 0 1 -.868 .164l-1.8 -.5a1 1 0 0 1 -.727 -.864l-.2 -2a1 1 0 0 1 .395 \
+           -.9l4 -3a1 1 0 0 1 1.38 .175m9.22 -2.375a1 1 0 0 1 1 1v3a1 1 0 0 1 -1 1h-5a1 1 0 0 1 -1 \
+           -1v-3a1 1 0 0 1 1 -1z\" />\n\
+           </svg>"));
+  el
+
 let rosette_discount_check ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -14717,7 +19581,7 @@ let section ?at () =
            </svg>"));
   el
 
-let seeding ?at () =
+let seedling ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
   Jv.set
@@ -14731,7 +19595,7 @@ let seeding ?at () =
           \  height=\"24\"\n\
           \  viewBox=\"0 0 24 24\"\n\
           \  fill=\"currentColor\"\n\
-          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-seeding\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-seedling\"\n\
            >\n\
           \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
           \  <path d=\"M6 3a7 7 0 0 1 6.95 6.155a6.97 6.97 0 0 1 5.05 -2.155h3a1 1 0 0 1 1 1v1a7 7 \
@@ -14996,6 +19860,35 @@ let sign_right ?at () =
            </svg>"));
   el
 
+let sitemap ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-sitemap\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M2 16.667a2.667 2.667 0 0 1 2.667 -2.667h2.666a2.667 2.667 0 0 1 2.667 \
+           2.667v2.666a2.667 2.667 0 0 1 -2.667 2.667h-2.666a2.667 2.667 0 0 1 -2.667 -2.667z\" />\n\
+          \  <path d=\"M14 16.667a2.667 2.667 0 0 1 2.667 -2.667h2.666a2.667 2.667 0 0 1 2.667 \
+           2.667v2.666a2.667 2.667 0 0 1 -2.667 2.667h-2.666a2.667 2.667 0 0 1 -2.667 -2.667z\" />\n\
+          \  <path d=\"M8 4.667a2.667 2.667 0 0 1 2.667 -2.667h2.666a2.667 2.667 0 0 1 2.667 \
+           2.667v2.666a2.667 2.667 0 0 1 -2.667 2.667h-2.666a2.667 2.667 0 0 1 -2.667 -2.667z\" />\n\
+          \  <path d=\"M12 8a1 1 0 0 0 -1 1v2h-3c-1.645 0 -3 1.355 -3 3v1a1 1 0 0 0 1 1a1 1 0 0 0 \
+           1 -1v-1c0 -.564 .436 -1 1 -1h8c.564 0 1 .436 1 1v1a1 1 0 0 0 1 1a1 1 0 0 0 1 -1v-1c0 \
+           -1.645 -1.355 -3 -3 -3h-3v-2a1 1 0 0 0 -1 -1z\" />\n\
+           </svg>"));
+  el
+
 let sort_ascending_2 ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -15158,6 +20051,58 @@ let spade ?at () =
            1.574l.246 -.037l-.706 2.118a1 1 0 0 0 .949 1.316h6l.118 -.007a1 1 0 0 0 .83 \
            -1.31l-.688 -2.065l.104 .02c1.589 .25 3.262 -.387 4.32 -1.785a6.527 6.527 0 0 0 -.311 \
            -8.243a31.787 31.787 0 0 0 -1.76 -1.83l-4.938 -4.518a1 1 0 0 0 -1.348 -.001z\" />\n\
+           </svg>"));
+  el
+
+let speedboat ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-speedboat\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M14 7a1 1 0 0 1 .832 .445l1.702 2.555h5.466a1 1 0 0 1 .833 1.554l-3.1 \
+           4.66a4 4 0 0 1 -3.333 1.786h-14.4a1 1 0 0 1 -.936 -1.351l1.5 -4a1 1 0 0 1 .936 \
+           -.649h1.756l.9 -3h-.156a1 1 0 0 1 -.993 -.883l-.007 -.117a1 1 0 0 1 1 -1zm-6.657 \
+           5h1.887c.383 0 .762 -.074 1.12 -.219l3.557 -1.418q .186 -.075 .377 -.135l-.82 \
+           -1.228h-5.22z\" />\n\
+           </svg>"));
+  el
+
+let spider ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-spider\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M19 3a1 1 0 0 1 1 1v2a1 1 0 0 1 -.293 .707l-3.293 3.293h3.17l1.209 -1.207a1 \
+           1 0 0 1 1.414 1.414l-1.5 1.5a1 1 0 0 1 -.707 .293h-3.585l4.292 4.293a1 1 0 0 1 .293 \
+           .707v2a1 1 0 0 1 -2 0v-1.585l-2.016 -2.016a5 5 0 0 1 -9.968 0l-2.016 2.015v1.586a1 1 0 \
+           0 1 -.883 .993l-.117 .007a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 .293 -.707l4.291 -4.293h-3.584a1 \
+           1 0 0 1 -.707 -.293l-1.5 -1.5a1 1 0 0 1 1.414 -1.414l1.208 1.207h3.17l-3.292 -3.293a1 1 \
+           0 0 1 -.293 -.707v-2a1 1 0 1 1 2 0v1.585l3.025 3.025a3 3 0 0 1 5.95 0l3.025 \
+           -3.026v-1.584a1 1 0 0 1 .883 -.993z\" />\n\
            </svg>"));
   el
 
@@ -18542,6 +23487,63 @@ let steering_wheel ?at () =
            </svg>"));
   el
 
+let sun_high ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-sun-high\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 19a1 1 0 0 1 1 1v2a1 1 0 0 1 -2 0v-2a1 1 0 0 1 1 -1m-4.95 -2.05a1 1 0 0 \
+           1 0 1.414l-1.414 1.414a1 1 0 1 1 -1.414 -1.414l1.414 -1.414a1 1 0 0 1 1.414 0m11.314 \
+           0l1.414 1.414a1 1 0 0 1 -1.414 1.414l-1.414 -1.414a1 1 0 0 1 1.414 -1.414m-5.049 \
+           -9.836a5 5 0 1 1 -2.532 9.674a5 5 0 0 1 2.532 -9.674m-9.315 3.886a1 1 0 0 1 0 2h-2a1 1 \
+           0 0 1 0 -2zm18 0a1 1 0 0 1 0 2h-2a1 1 0 0 1 0 -2zm-16.364 -6.778l1.414 1.414a1 1 0 0 1 \
+           -1.414 1.414l-1.414 -1.414a1 1 0 0 1 1.414 -1.414m14.142 0a1 1 0 0 1 0 1.414l-1.414 \
+           1.414a1 1 0 0 1 -1.414 -1.414l1.414 -1.414a1 1 0 0 1 1.414 0m-7.778 -3.222a1 1 0 0 1 1 \
+           1v2a1 1 0 0 1 -2 0v-2a1 1 0 0 1 1 -1\" />\n\
+           </svg>"));
+  el
+
+let sun_low ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-sun-low\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M18.407 16.993l.01 .01a1 1 0 0 1 -1.32 1.497l-.104 -.093a1 1 0 0 1 1.414 \
+           -1.414m-11.4 0l.01 .01a1 1 0 0 1 -1.32 1.497l-.104 -.093a1 1 0 0 1 1.414 -1.414m4.993 \
+           -9.993a5 5 0 1 1 -5 5l.005 -.217a5 5 0 0 1 4.995 -4.783m-4.993 -1.407l.01 .01a1 1 0 0 1 \
+           -1.32 1.497l-.104 -.093a1 1 0 0 1 1.414 -1.414m11.4 0l.01 .01a1 1 0 0 1 -1.32 \
+           1.497l-.104 -.093a1 1 0 1 1 1.414 -1.414m-14.397 5.407a1 1 0 0 1 .117 1.993l-.127 \
+           .007a1 1 0 0 1 -.117 -1.993zm7.99 -8a1 1 0 0 1 .993 .883l.007 .127a1 1 0 0 1 -1.993 \
+           .117l-.007 -.127a1 1 0 0 1 1 -1m8.01 8a1 1 0 0 1 .117 1.993l-.127 .007a1 1 0 0 1 -.117 \
+           -1.993zm-8.01 8a1 1 0 0 1 .993 .883l.007 .127a1 1 0 0 1 -1.993 .117l-.007 -.127a1 1 0 0 \
+           1 1 -1\" />\n\
+           </svg>"));
+  el
+
 let sun ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -18602,6 +23604,99 @@ let sunglasses ?at () =
            .958 .713l3.01 10.036l.022 .112l.008 .08l.002 2.559a4.5 4.5 0 0 1 -8.972 .5h-2.056a4.5 \
            4.5 0 0 1 -8.972 -.5v-2.518l.004 -.071l.014 -.103l.018 -.076l3.006 -10.02a1 1 0 0 1 \
            .958 -.712z\" />\n\
+           </svg>"));
+  el
+
+let sunrise ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-sunrise\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M4 16a1 1 0 0 1 0 2h-1a1 1 0 0 1 0 -2z\" />\n\
+          \  <path d=\"M12 12a5 5 0 0 1 5 5a1 1 0 0 1 -1 1h-8a1 1 0 0 1 -1 -1a5 5 0 0 1 5 -5\" />\n\
+          \  <path d=\"M21 16a1 1 0 0 1 0 2h-1a1 1 0 0 1 0 -2z\" />\n\
+          \  <path d=\"M6.307 9.893l.7 .7a1 1 0 0 1 -1.414 1.414l-.7 -.7a1 1 0 0 1 1.414 -1.414\" />\n\
+          \  <path d=\"M19.107 9.893a1 1 0 0 1 0 1.414l-.7 .7a1 1 0 0 1 -1.414 -1.414l.7 -.7a1 1 0 \
+           0 1 1.414 0\" />\n\
+          \  <path d=\"M12.707 2.293l3 3a1 1 0 1 1 -1.414 1.414l-1.293 -1.292v3.585a1 1 0 0 1 \
+           -.883 .993l-.117 .007a1 1 0 0 1 -1 -1v-3.586l-1.293 1.293a1 1 0 0 1 -1.414 -1.414l2.958 \
+           -2.96a1 1 0 0 1 .15 -.135l.127 -.08l.068 -.033l.11 -.041l.12 -.029c.3 -.055 .627 .024 \
+           .881 .278\" />\n\
+          \  <path d=\"M3 20h18a1 1 0 0 1 0 2h-18a1 1 0 0 1 0 -2\" />\n\
+          \  <path d=\"M12 12a5 5 0 0 1 4.583 7.002h-9.166a5 5 0 0 1 4.583 -7.002\" />\n\
+           </svg>"));
+  el
+
+let sunset_2 ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-sunset-2\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M4 12a1 1 0 0 1 0 2h-1a1 1 0 0 1 0 -2z\" />\n\
+          \  <path d=\"M21 12a1 1 0 0 1 0 2h-1a1 1 0 0 1 0 -2z\" />\n\
+          \  <path d=\"M6.307 5.893l.7 .7a1 1 0 0 1 -1.414 1.414l-.7 -.7a1 1 0 0 1 1.414 -1.414\" />\n\
+          \  <path d=\"M19.107 5.893a1 1 0 0 1 0 1.414l-.7 .7a1 1 0 0 1 -1.414 -1.414l.7 -.7a1 1 0 \
+           0 1 1.414 0\" />\n\
+          \  <path d=\"M12 3a1 1 0 0 1 1 1v1a1 1 0 0 1 -2 0v-1a1 1 0 0 1 1 -1\" />\n\
+          \  <path d=\"M3 16h18a1 1 0 0 1 0 2h-18a1 1 0 0 1 0 -2\" />\n\
+          \  <path d=\"M12 8a5 5 0 0 1 4.583 7.002h-9.166a5 5 0 0 1 4.583 -7.002\" />\n\
+          \  <path d=\"M12 19a1 1 0 0 1 0 2h-5a1 1 0 0 1 0 -2z\" />\n\
+          \  <path d=\"M17 19a1 1 0 0 1 0 2h-1a1 1 0 0 1 0 -2z\" />\n\
+           </svg>"));
+  el
+
+let sunset ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-sunset\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M4 16a1 1 0 0 1 0 2h-1a1 1 0 0 1 0 -2z\" />\n\
+          \  <path d=\"M21 16a1 1 0 0 1 0 2h-1a1 1 0 0 1 0 -2z\" />\n\
+          \  <path d=\"M6.307 9.893l.7 .7a1 1 0 0 1 -1.414 1.414l-.7 -.7a1 1 0 0 1 1.414 -1.414\" />\n\
+          \  <path d=\"M19.107 9.893a1 1 0 0 1 0 1.414l-.7 .7a1 1 0 0 1 -1.414 -1.414l.7 -.7a1 1 0 \
+           0 1 1.414 0\" />\n\
+          \  <path d=\"M12 2a1 1 0 0 1 1 1v3.584l1.293 -1.291a1 1 0 0 1 1.32 -.083l.094 .083a1 1 0 \
+           0 1 0 1.414l-3 3a.98 .98 0 0 1 -.767 .293l-.124 -.017l-.127 -.032l-.104 -.04l-.115 \
+           -.063a1 1 0 0 1 -.151 -.114l-3.026 -3.027a1 1 0 0 1 1.414 -1.414l1.293 1.292v-3.585a1 1 \
+           0 0 1 1 -1\" />\n\
+          \  <path d=\"M3 20h18a1 1 0 0 1 0 2h-18a1 1 0 0 1 0 -2\" />\n\
+          \  <path d=\"M12 12a5 5 0 0 1 4.583 7.002h-9.166a5 5 0 0 1 4.583 -7.002\" />\n\
            </svg>"));
   el
 
@@ -18779,6 +23874,53 @@ let tags ?at () =
           \  <path d=\"M14.293 5.293a1 1 0 0 1 1.414 0l4.593 4.592a5.82 5.82 0 0 1 0 8.23l-1.592 \
            1.592a1 1 0 0 1 -1.414 -1.414l1.592 -1.592a3.82 3.82 0 0 0 0 -5.402l-4.592 -4.592a1 1 0 \
            0 1 0 -1.414\" />\n\
+           </svg>"));
+  el
+
+let temperature_minus ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-temperature-minus\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M10 2a3 3 0 0 1 3 3v7.965l.075 .056a5 5 0 0 1 1.81 5.01l-.055 .227a5 5 0 1 \
+           1 -7.905 -5.237l.075 -.056v-7.965a3 3 0 0 1 2.824 -2.995zm12 6a1 1 0 0 1 0 2h-6a1 1 0 0 \
+           1 0 -2zm-12 -4a1 1 0 0 0 -1 1v4h2v-4a1 1 0 0 0 -1 -1\" />\n\
+           </svg>"));
+  el
+
+let temperature_plus ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-temperature-plus\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M10 2a3 3 0 0 1 3 3v7.965l.075 .056a5 5 0 0 1 1.81 5.01l-.055 .227a5 5 0 1 \
+           1 -7.905 -5.237l.075 -.056v-7.965a3 3 0 0 1 2.824 -2.995zm9 3a1 1 0 0 1 1 1v2h2a1 1 0 0 \
+           1 0 2h-2v2a1 1 0 0 1 -2 0v-2h-2a1 1 0 0 1 0 -2h2v-2a1 1 0 0 1 1 -1m-9 -1a1 1 0 0 0 -1 \
+           1v4h2v-4a1 1 0 0 0 -1 -1\" />\n\
            </svg>"));
   el
 
@@ -18960,6 +24102,30 @@ let toggle_right ?at () =
           \  <path d=\"M16 9a3 3 0 1 1 -3 3l.005 -.176a3 3 0 0 1 2.995 -2.824\" />\n\
           \  <path d=\"M16 5a7 7 0 0 1 0 14h-8a7 7 0 0 1 0 -14zm0 2h-8a5 5 0 1 0 0 10h8a5 5 0 0 0 \
            0 -10\" />\n\
+           </svg>"));
+  el
+
+let train ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-train\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M11 5c6.634 0 10.853 3.11 10.996 7.754l.004 .246a3 3 0 0 1 -3 3h-16a1 1 0 0 \
+           1 -1 -1v-9a1 1 0 0 1 1 -1zm-4 2h-3v3h3zm4 0h-2v3h3v-2.974a19 19 0 0 0 -1 -.026m3.001 \
+           .257l-.001 2.743h5.04c-.979 -1.337 -2.689 -2.306 -5.039 -2.743m6.999 10.743a1 1 0 0 1 0 \
+           2h-18a1 1 0 0 1 0 -2z\" />\n\
            </svg>"));
   el
 
@@ -19222,6 +24388,32 @@ let triangle ?at () =
            </svg>"));
   el
 
+let trolley ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-trolley\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M20.555 4.168a1 1 0 0 1 .277 1.387l-2.621 3.932l1.236 .619a1 1 0 0 1 -.894 \
+           1.788l-1.46 -.73l-3.876 5.815a3 3 0 1 1 -5.217 2.021l.005 -.176q .008 -.135 .027 \
+           -.267l-2.587 -1.725a1 1 0 0 1 1.11 -1.664l2.424 1.615a2.99 2.99 0 0 1 2.464 -.75l7.725 \
+           -11.588a1 1 0 0 1 1.387 -.277m-10.567 -.399l.14 .082l3.307 2.104a2.3 2.3 0 0 1 .7 \
+           3.185l-3.094 4.81a2.3 2.3 0 0 1 -3.17 .698l-3.306 -2.104a2.3 2.3 0 0 1 -.7 -3.185l3.094 \
+           -4.81a2.3 2.3 0 0 1 3.029 -.78\" />\n\
+           </svg>"));
+  el
+
 let trophy ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -19244,6 +24436,62 @@ let trophy ?at () =
            -.007h3v-2.083a6.002 6.002 0 0 1 -4.996 -5.692l-.004 -.225v-.171a3 3 0 0 1 -3.996 \
            -2.653l-.003 -.176l.005 -.176a3 3 0 0 1 3.995 -2.654l-.001 -2.17a1 1 0 0 1 1 -1h10zm-12 \
            5a1 1 0 1 0 0 2a1 1 0 0 0 0 -2zm14 0a1 1 0 1 0 0 2a1 1 0 0 0 0 -2z\" />\n\
+           </svg>"));
+  el
+
+let truck ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-truck\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M13 4a1 1 0 0 1 1 1h4a1 1 0 0 1 .783 .378l.074 .108l3 5l.055 .103l.04 \
+           .107l.029 .109l.016 .11l.003 .085v6a1 1 0 0 1 -1 1h-1.171a3.001 3.001 0 0 1 -5.658 \
+           0h-4.342a3.001 3.001 0 0 1 -5.658 0h-1.171a1 1 0 0 1 -1 -1v-11a2 2 0 0 1 2 -2zm-6 12a1 \
+           1 0 1 0 0 2a1 1 0 0 0 0 -2m10 0a1 1 0 1 0 0 2a1 1 0 0 0 0 -2m.434 -9h-3.434v3h5.234z\" \
+           />\n\
+           </svg>"));
+  el
+
+let ufo ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-ufo\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M12 3c3.067 0 5.6 2.29 5.957 5.246c3.067 .903 5.043 2.476 5.043 4.478c0 2.3 \
+           -2.653 4.053 -6.427 4.833l1.26 1.888a1 1 0 1 1 -1.665 1.11l-1.78 -2.67c-.77 .076 -1.57 \
+           .115 -2.388 .115c-.966 0 -1.905 -.055 -2.801 -.16l-1.305 2.607a1 1 0 0 1 -1.788 \
+           -.894l1.028 -2.06c-3.618 -.807 -6.134 -2.529 -6.134 -4.768c0 -1.999 1.981 -3.58 5.044 \
+           -4.483c.36 -2.955 2.89 -5.242 5.956 -5.242m.01 10l-.127 .007a1 1 0 0 0 .117 1.993l.127 \
+           -.007a1 1 0 0 0 -.117 -1.993m-5 -1l-.127 .007a1 1 0 0 0 .117 1.993l.127 -.007a1 1 0 0 0 \
+           -.117 -1.993m10 0l-.127 .007a1 1 0 0 0 .117 1.993l.127 -.007a1 1 0 0 0 -.117 \
+           -1.993m-5.01 -7c-2.11 0 -3.835 1.618 -3.989 3.667a1 1 0 0 1 .057 .4c.104 .087 .348 .251 \
+           .768 .419c.806 .322 1.94 .514 3.164 .514s2.358 -.192 3.164 -.514c.445 -.178 .693 -.352 \
+           .789 -.435l-.003 -.051q 0 -.113 .029 -.229l.014 -.046c-.125 -2.076 -1.864 -3.725 -3.993 \
+           -3.725\" />\n\
            </svg>"));
   el
 
@@ -19319,6 +24567,30 @@ let versions ?at () =
            </svg>"));
   el
 
+let video ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-video\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M20.117 7.625a1 1 0 0 0 -.564 .1l-4.553 2.275v4l4.553 2.275a1 1 0 0 0 1.447 \
+           -.892v-6.766a1 1 0 0 0 -.883 -.992z\" />\n\
+          \  <path d=\"M5 5c-1.645 0 -3 1.355 -3 3v8c0 1.645 1.355 3 3 3h8c1.645 0 3 -1.355 3 \
+           -3v-8c0 -1.645 -1.355 -3 -3 -3z\" />\n\
+           </svg>"));
+  el
+
 let windmill ?at () =
   let el = Brtl_js2.Brr.El.div ?at [] in
   let el_jv = Brtl_js2.Brr.El.to_jv el in
@@ -19340,6 +24612,29 @@ let windmill ?at () =
            1 1c0 3.292 -2.435 6 -5.5 6c-1.336 0 -2.553 -.515 -3.5 -1.368v4.368a1 1 0 0 1 -1 \
            1c-3.292 0 -6 -2.435 -6 -5.5c0 -1.336 .515 -2.553 1.368 -3.5h-4.368a1 1 0 0 1 -1 -1c0 \
            -3.292 2.435 -6 5.5 -6c1.337 0 2.554 .515 3.5 1.369v-4.369a1 1 0 0 1 1 -1z\" />\n\
+           </svg>"));
+  el
+
+let windsock ?at () =
+  let el = Brtl_js2.Brr.El.div ?at [] in
+  let el_jv = Brtl_js2.Brr.El.to_jv el in
+  Jv.set
+    el_jv
+    "innerHTML"
+    (Jv.of_jstr
+       (Jstr.v
+          "<svg\n\
+          \  xmlns=\"http://www.w3.org/2000/svg\"\n\
+          \  width=\"24\"\n\
+          \  height=\"24\"\n\
+          \  viewBox=\"0 0 24 24\"\n\
+          \  fill=\"currentColor\"\n\
+          \  class=\"icon icon-tabler icons-tabler-filled icon-tabler-windsock\"\n\
+           >\n\
+          \  <path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"/>\n\
+          \  <path d=\"M6 2a1 1 0 0 1 1 1v1.079l11.083 .924a1 1 0 0 1 .917 .997v4a1 1 0 0 1 -.917 \
+           .997l-11.083 .923v8.08h1a1 1 0 0 1 0 2h-4a1 1 0 0 1 0 -2h1v-17a1 1 0 0 1 1 -1m1 \
+           4.086v3.827l3 -.25v-3.327zm7 .584v2.659l3 -.25v-2.159z\" />\n\
            </svg>"));
   el
 
