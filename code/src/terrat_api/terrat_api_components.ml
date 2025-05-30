@@ -24,6 +24,7 @@ module Run_kind_data_pull_request = Terrat_api_components_run_kind_data_pull_req
 module Run_type = Terrat_api_components_run_type
 module Server_config = Terrat_api_components_server_config
 module Server_config_github = Terrat_api_components_server_config_github
+module Server_config_gitlab = Terrat_api_components_server_config_gitlab
 module Task = Terrat_api_components_task
 module Tier = Terrat_api_components_tier
 module User = Terrat_api_components_user
