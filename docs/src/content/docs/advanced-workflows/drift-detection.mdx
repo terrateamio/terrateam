@@ -10,6 +10,11 @@ Infrastructure drift is a common challenge when managing infrastructure as code.
 ## What is Drift Detection?
 Drift Detection in Terrateam automatically runs a plan operation against all [dirspaces](/getting-started/concepts#dirspace) in your repository on a predefined schedule. It compares the current state of your infrastructure with the desired state defined in your Terraform code. If any discrepancies are found, Terrateam creates a GitHub Issue in your repository, notifying you of the detected drift.
 
+
+:::note
+Drift Detection must be enabled by a user with admin access to your repository, as it requires changes to the `.terrateam/config.yml` configuration file.
+:::
+
 ## Enabling Drift Detection
 To enable drift detection in Terrateam, you need to configure it in your `.terrateam/config.yml` file. Here's an example configuration:
 ```yaml
@@ -18,6 +23,10 @@ drift:
   schedule: daily
 ```
 In this example, drift detection is enabled and set to run on a daily schedule. You can choose from `hourly`, `daily`, `weekly`, or `monthly` schedules based on your requirements.
+
+:::caution
+Running drift detection frequently (such as hourly) can increase usage of compute resources and API calls, which may result in higher costs or rate limiting from your cloud provider. Consider your organization's needs and budget before setting a frequent schedule.
+:::
 
 ## Drift Reconciliation
 In addition to detecting drift, Terrateam can also automatically reconcile the differences by applying the necessary changes to your infrastructure. This feature is called Drift Reconciliation.
@@ -33,6 +42,9 @@ With `reconcile` set to `true`, Terrateam will automatically run an `apply` oper
 Enabling automatic reconciliation should be done with caution. Ensure that you have appropriate safeguards and testing in place before enabling this feature, as changes will be applied without manual review or approval.
 :::
 
+:::tip
+Reconciliation means Terrateam will "automatically fix" any detected drift by updating your infrastructure to match your Terraform configuration.
+:::
 ## Limiting Drift Detection Scope
 If you have a large repository with multiple directories and workspaces, you may want to limit the scope of drift detection to specific parts of your infrastructure. Terrateam allows you to use tag queries to specify which directories and workspaces should be included in the drift detection process.
 Here's an example configuration that limits drift detection to the `production` directory using a [tag query](/advanced-workflows/tags/):
