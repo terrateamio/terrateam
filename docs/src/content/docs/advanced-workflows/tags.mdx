@@ -62,36 +62,24 @@ Tag queries are powerful expressions that allow you to match and filter resource
 Tag queries are boolean expressions that use a combination of tags, operators, and parentheses to define the matching criteria.
 
 #### Supported Operators and Features
-##### `and`
-Matches resources that have all the specified tags. This is the default operator if none is specified.
 
-##### `or`
-Matches resources that have at least one of the specified tags.
+| Operator      | Description                                                                                 | Example                        |
+|---------------|---------------------------------------------------------------------------------------------|--------------------------------|
+| `and`         | Matches resources that have all the specified tags. This is the default if none is specified. | `prod and api`                 |
+| `or`          | Matches resources that have at least one of the specified tags.                             | `staging or dev`               |
+| `not`         | Matches resources that do not have the specified tag.                                       | `not deprecated`               |
+| `in`          | Matches resources that have the specified tag as a fragment in their path or name.           | `app in dir`                   |
+| Parentheses   | Used to group and prioritize expressions.                                                   | `(web or api) and prod`        |
 
-##### `not`
-Matches resources that do not have the specified tag.
+#### Example Queries
 
-##### `in`
-Matches resources that have the specified tag as a fragment in their path or name.
-
-##### Parentheses
-Used to group and prioritize expressions.
-
-#### Examples Queries
-##### `prod and api`
-Matches resources that have both the `prod` and `api` tags.
-
-##### `staging or dev`
-Matches resources that have either the `staging` or `dev` tags.
-
-##### `not deprecated`
-Matches resources that do not have the `deprecated` tag.
-
-##### `app in dir`
-Matches resources that have the `app` tag as a fragment in their directory path.
-
-##### `(web or api) and prod`
-Matches resources that have either the `web` or `api` tags, and also have the `prod` tag.
+| Query                        | Description                                                                 |
+|------------------------------|-----------------------------------------------------------------------------|
+| `prod and api`               | Matches resources that have both the `prod` and `api` tags.                  |
+| `staging or dev`             | Matches resources that have either the `staging` or `dev` tags.              |
+| `not deprecated`             | Matches resources that do not have the `deprecated` tag.                     |
+| `app in dir`                 | Matches resources that have the `app` tag as a fragment in their directory path. |
+| `(web or api) and prod`      | Matches resources that have either the `web` or `api` tags, and also have the `prod` tag. |
 
 ### Combining Top-level and Directory-level Tags
 You can create even more targeted tag queries by combining tags defined at the top level with tags assigned to directories. This allows you to match resources based on both dynamic criteria (destination branch) and static directory assignments.
