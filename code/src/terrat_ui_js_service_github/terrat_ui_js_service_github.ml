@@ -204,7 +204,7 @@ module Comp = struct
     let is_enabled =
       let module C = Terrat_api_components.Server_config in
       function
-      | { C.github } -> github
+      | { C.github; _ } -> github
 
     let run config state =
       let module C = Terrat_api_components.Server_config_github in
