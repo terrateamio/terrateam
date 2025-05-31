@@ -36,7 +36,7 @@
     }
 
     a:hover {
-        @apply text-blue-700 cursor-pointer;
+        @apply cursor-pointer;
     }
 
     select {
@@ -916,14 +916,6 @@
         @apply py-4 text-2xl font-semibold text-center;
     }
 
-    .getting-started {
-        @apply flex flex-col text-2xl text-center gap-y-4 py-8;
-    }
-
-    .getting-started > div > a {
-        @apply px-2;
-    }
-
     .billing-info {
         @apply w-full lg:w-2/3 mx-auto;
         @apply justify-around justify-items-center;
@@ -1087,6 +1079,116 @@
         @apply border-2 border-slate-500;
         @apply rounded;
         @apply hover:bg-slate-100;
+    }
+
+    .quickstart-page {
+        @apply flex flex-col items-center justify-center;
+        @apply max-w-6xl mx-auto;
+        @apply py-8 px-4;
+    }
+
+    .quickstart-header {
+        @apply text-center mb-12;
+        @apply flex flex-col items-center justify-center;
+    }
+
+    .quickstart-logo {
+        @apply h-16;
+    }
+
+    .quickstart-welcome {
+        @apply text-4xl font-bold text-gray-900 mb-4;
+    }
+
+    .quickstart-subtitle {
+        @apply text-xl text-gray-600 max-w-2xl;
+    }
+
+    .quickstart-options {
+        @apply grid grid-cols-1 lg:grid-cols-2 gap-8;
+        @apply w-full max-w-4xl;
+    }
+
+    .quickstart-option {
+        @apply bg-white rounded-lg border border-gray-200 shadow-lg;
+        @apply flex flex-col;
+        @apply transition-all hover:shadow-xl hover:border-blue-300;
+    }
+
+    .quickstart-option-content {
+        @apply p-8 flex-grow;
+    }
+
+    .quickstart-option-header {
+        @apply flex items-center gap-4 mb-6;
+    }
+
+    .quickstart-icon {
+        @apply text-blue-600 text-3xl;
+    }
+
+    .quickstart-title {
+        @apply text-2xl font-bold text-gray-900;
+    }
+
+    .quickstart-description {
+        @apply text-lg text-gray-700 mb-6;
+    }
+
+    .quickstart-features {
+        @apply space-y-3 mb-6;
+    }
+
+    .quickstart-features li {
+        @apply flex items-center gap-3;
+    }
+
+    .feature-check {
+        @apply text-green-600 text-xl;
+    }
+
+    .quickstart-meta {
+        @apply flex justify-between items-center;
+        @apply text-sm text-gray-500;
+    }
+
+    .quickstart-note {
+        @apply bg-gray-100 px-3 py-1 rounded-full;
+    }
+
+    .quickstart-time {
+        @apply bg-blue-100 text-blue-800 px-3 py-1 rounded-full;
+        @apply font-medium;
+    }
+
+    .quickstart-option-footer {
+        @apply p-6 bg-gray-50 border-t border-gray-100;
+    }
+
+    .quickstart-button {
+        @apply w-full py-3 px-6;
+        @apply bg-blue-600 hover:bg-blue-700 text-white;
+        @apply rounded-lg font-semibold;
+        @apply flex items-center justify-center gap-2;
+        @apply transition-colors;
+        @apply no-underline;
+    }
+
+    .quickstart-button-secondary {
+        @apply w-full py-3 px-6;
+        @apply bg-slate-200 hover:bg-slate-300 text-black;
+        @apply rounded-lg font-semibold;
+        @apply flex items-center justify-center gap-2;
+        @apply transition-colors;
+        @apply no-underline;
+    }
+
+    .quickstart-button:hover {
+        @apply text-white no-underline;
+    }
+
+    .button-icon {
+        @apply text-lg;
     }
 }
 
