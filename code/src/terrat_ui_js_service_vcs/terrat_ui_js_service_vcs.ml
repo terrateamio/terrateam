@@ -110,6 +110,10 @@ module type S = sig
     module Add_installation : sig
       val run : t Brtl_js2.Comp.t
     end
+
+    module Getting_started : sig
+      val run : t Brtl_js2.Comp.t
+    end
   end
 
   module User : sig
