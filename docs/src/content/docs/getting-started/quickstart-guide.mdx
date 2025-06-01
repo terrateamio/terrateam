@@ -97,20 +97,38 @@ Ready to use Terrateam with your existing Terraform code? Here's how to get star
      href="https://github.com/apps/terrateam-action"
    />
 
-2. **Configure your repository**
+2. **Add the GitHub Actions Workflow**
+
+   **Critical:** The workflow file must be in your default branch (`main` or `master`)
+
+   ```bash
+   # Quick setup - copy/paste this entire block
+   git checkout -b add-terrateam-workflow && \
+   mkdir -p .github/workflows && \
+   curl -o .github/workflows/terrateam.yml https://raw.githubusercontent.com/terrateamio/terrateam-example/refs/heads/main/github/actions/workflows/default/terrateam.yml && \
+   git add .github/workflows/terrateam.yml && \
+   git commit -m "Add Terrateam workflow" && \
+   git push -u origin add-terrateam-workflow
+   ```
+
+   **Alternative:** Manually create `.github/workflows/terrateam.yml` and copy the contents from [this workflow file](https://raw.githubusercontent.com/terrateamio/terrateam-example/refs/heads/main/github/actions/workflows/default/terrateam.yml).
+
+   **Next:** Create a pull request and merge it into your default branch to activate the workflow.
+
+3. **Configure your repository**
 
    Terrateam works automatically with most Terraform repositories. Simply ensure your repository has:
    - `.tf` files in your project
    - A valid Terraform configuration
    - Proper cloud provider credentials (configured as GitHub secrets or environment variables)
 
-3. **Create your first pull request**
+4. **Create your first pull request**
 
    - Make changes to any `.tf` file
    - Create a pull request
    - Terrateam will automatically run `terraform plan` and comment on your PR
 
-4. **Apply Changes**
+5. **Apply Changes**
 
    Comment `terrateam apply` on your PR to execute the planned changes.
 </Steps>
