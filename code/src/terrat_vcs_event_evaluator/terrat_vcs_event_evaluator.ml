@@ -259,17 +259,17 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               time))
       (fun () -> S.Api.fetch_pull_request ~request_id account client repo pull_request_id)
 
-  let react_to_comment request_id client repo comment_id =
+  let react_to_comment request_id client pull_request comment_id =
     Abbs_time_it.run
       (fun time ->
         Logs.info (fun m ->
             m
               "%s : REACT_TO_COMMENT : repo=%s : comment_id=%d : time=%f"
               request_id
-              (S.Api.Repo.to_string repo)
+              (S.Api.Repo.to_string @@ Terrat_pull_request.repo pull_request)
               comment_id
               time))
-      (fun () -> S.Api.react_to_comment ~request_id client repo comment_id)
+      (fun () -> S.Api.react_to_comment ~request_id client pull_request comment_id)
 
   let query_next_pending_work_manifest request_id db =
     Abbs_time_it.run
@@ -4633,11 +4633,13 @@ module Make (S : Terrat_vcs_provider2.S) = struct
 
     let react_to_comment ctx state =
       match state.State.event with
-      | Event.Pull_request_comment { account; repo; comment_id; _ } ->
+      | Event.Pull_request_comment { comment_id; _ } ->
           let open Abbs_future_combinators.Infix_result_monad in
           Dv.client ctx state
           >>= fun client ->
-          react_to_comment state.State.request_id client repo comment_id
+          Dv.pull_request ctx state
+          >>= fun pull_request ->
+          react_to_comment state.State.request_id client pull_request comment_id
           >>= fun () -> Abb.Future.return (Ok state)
       | Event.Pull_request_open _
       | Event.Pull_request_close _
