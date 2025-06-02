@@ -92,7 +92,7 @@ end
 
 module Client = struct
   type t = unit
-  type native = Gitlabc_abb.t
+  type native = Openapic_abb.t
 
   let make ~account ~client ~config () = raise (Failure "nyi")
   let to_native t = raise (Failure "nyi")
