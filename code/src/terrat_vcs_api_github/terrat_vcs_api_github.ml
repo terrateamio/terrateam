@@ -415,7 +415,8 @@ let comment_on_pull_request ~request_id client pull_request body =
   | Ok () -> Abb.Future.return (Ok ())
   | Error (#Terrat_github.publish_comment_err as err) ->
       Prmths.Counter.inc_one Metrics.github_errors_total;
-      Logs.err (fun m -> m "%s : ERROR : %a" request_id Terrat_github.pp_publish_comment_err err);
+      Logs.err (fun m ->
+          m "%s : COMMENT_ON_PULL_REQUEST : %a" request_id Terrat_github.pp_publish_comment_err err);
       Abb.Future.return (Error `Error)
 
 let diff_of_github_diff =
@@ -454,82 +455,74 @@ let fetch_pull_request' request_id account client repo pull_request_id =
           ~pull_number:pull_request_id
           client.Client.client
     <*> fetch_diff ~client ~owner ~repo:repo_name pull_request_id)
-  >>= fun (resp, diff) ->
+  >>= fun (pr, diff) ->
   let module Ghc_comp = Githubc2_components in
   let module Pr = Ghc_comp.Pull_request in
   let module Head = Pr.Primary.Head in
   let module Base = Pr.Primary.Base in
   let module User = Ghc_comp.Simple_user in
-  match Openapi.Response.value resp with
-  | `OK
+  let {
+    Ghc_comp.Pull_request.primary =
       {
-        Ghc_comp.Pull_request.primary =
-          {
-            Ghc_comp.Pull_request.Primary.head;
-            base;
-            state;
-            merged;
-            merged_at;
-            merge_commit_sha;
-            mergeable_state;
-            mergeable;
-            draft;
-            title;
-            user = User.{ primary = Primary.{ login; _ }; _ };
-            _;
-          };
+        Ghc_comp.Pull_request.Primary.head;
+        base;
+        state;
+        merged;
+        merged_at;
+        merge_commit_sha;
+        mergeable_state;
+        mergeable;
+        draft;
+        title;
+        user = User.{ primary = Primary.{ login; _ }; _ };
         _;
-      } ->
-      let base_branch_name = Base.(base.primary.Primary.ref_) in
-      let base_sha = Base.(base.primary.Primary.sha) in
-      let head_sha = Head.(head.primary.Primary.sha) in
-      let branch_name = Head.(head.primary.Primary.ref_) in
-      let draft = CCOption.get_or ~default:false draft in
-      Prmths.Counter.inc_one (Metrics.pull_request_mergeable_state_count mergeable_state);
-      Logs.info (fun m ->
-          m
-            "%s : MERGEABLE : merged=%s : mergeable_state=%s : merge_commit_sha=%s"
-            request_id
-            (Bool.to_string merged)
-            mergeable_state
-            (CCOption.get_or ~default:"" merge_commit_sha));
-      Abb.Future.return
-        (Ok
-           ( mergeable_state,
-             Terrat_pull_request.make
-               ~base_branch_name
-               ~base_ref:base_sha
-               ~branch_name
-               ~branch_ref:head_sha
-               ~id:pull_request_id
-               ~state:
-                 (match (merge_commit_sha, state, merged, merged_at) with
-                 | Some _, "open", _, _ -> Terrat_pull_request.State.(Open Open_status.Mergeable)
-                 | None, "open", _, _ -> Terrat_pull_request.State.(Open Open_status.Merge_conflict)
-                 | Some merge_commit_sha, "closed", true, Some merged_at ->
-                     Terrat_pull_request.State.(
-                       Merged Merged.{ merged_hash = merge_commit_sha; merged_at })
-                 | _, "closed", false, _ -> Terrat_pull_request.State.Closed
-                 | _, _, _, _ -> assert false)
-               ~title:(Some title)
-               ~user:(Some login)
-               ~repo
-               ~checks:
-                 (merged
-                 || CCList.mem
-                      ~eq:CCString.equal
-                      mergeable_state
-                      [ "clean"; "unstable"; "has_hooks" ])
-               ~diff
-               ~draft
-               ~mergeable
-               ~provisional_merge_ref:merge_commit_sha
-               () ))
-  | ( `Not_found _
-    | `Internal_server_error _
-    | `Not_modified
-    | `Service_unavailable _
-    | `Not_acceptable _ ) as err -> Abb.Future.return (Error err)
+      };
+    _;
+  } =
+    pr
+  in
+  let base_branch_name = Base.(base.primary.Primary.ref_) in
+  let base_sha = Base.(base.primary.Primary.sha) in
+  let head_sha = Head.(head.primary.Primary.sha) in
+  let branch_name = Head.(head.primary.Primary.ref_) in
+  let draft = CCOption.get_or ~default:false draft in
+  Prmths.Counter.inc_one (Metrics.pull_request_mergeable_state_count mergeable_state);
+  Logs.info (fun m ->
+      m
+        "%s : MERGEABLE : merged=%s : mergeable_state=%s : merge_commit_sha=%s"
+        request_id
+        (Bool.to_string merged)
+        mergeable_state
+        (CCOption.get_or ~default:"" merge_commit_sha));
+  Abb.Future.return
+    (Ok
+       ( mergeable_state,
+         Terrat_pull_request.make
+           ~base_branch_name
+           ~base_ref:base_sha
+           ~branch_name
+           ~branch_ref:head_sha
+           ~id:pull_request_id
+           ~state:
+             (match (merge_commit_sha, state, merged, merged_at) with
+             | Some _, "open", _, _ -> Terrat_pull_request.State.(Open Open_status.Mergeable)
+             | None, "open", _, _ -> Terrat_pull_request.State.(Open Open_status.Merge_conflict)
+             | Some merge_commit_sha, "closed", true, Some merged_at ->
+                 Terrat_pull_request.State.(
+                   Merged Merged.{ merged_hash = merge_commit_sha; merged_at })
+             | _, "closed", false, _ -> Terrat_pull_request.State.Closed
+             | _, _, _, _ -> assert false)
+           ~title:(Some title)
+           ~user:(Some login)
+           ~repo
+           ~checks:
+             (merged
+             || CCList.mem ~eq:CCString.equal mergeable_state [ "clean"; "unstable"; "has_hooks" ])
+           ~diff
+           ~draft
+           ~mergeable
+           ~provisional_merge_ref:merge_commit_sha
+           () ))
 
 let fetch_pull_request ~request_id account client repo pull_request_id =
   let open Abb.Future.Infix_monad in
@@ -548,14 +541,14 @@ let fetch_pull_request ~request_id account client repo pull_request_id =
         Prmths.Counter.inc_one Metrics.github_errors_total;
         Logs.err (fun m -> m "%s : ERROR : repo=%s : ERROR" request_id (Repo.to_string repo));
         Abb.Future.return (Error `Error)
-    | Error (#Terrat_github.compare_commits_err as err) ->
+    | Error (#Terrat_github.fetch_pull_request_err as err) ->
         Prmths.Counter.inc_one Metrics.github_errors_total;
         Logs.err (fun m ->
             m
               "%s : ERROR : repo=%s : %a"
               request_id
               (Repo.to_string repo)
-              Terrat_github.pp_compare_commits_err
+              Terrat_github.pp_fetch_pull_request_err
               err);
         Abb.Future.return (Error `Error)
   in
@@ -582,8 +575,9 @@ let fetch_pull_request ~request_id account client repo pull_request_id =
   | Error (`Not_acceptable _)
   | Error `Error -> Abb.Future.return (Error `Error)
 
-let react_to_comment ~request_id client repo comment_id =
+let react_to_comment ~request_id client pull_request comment_id =
   let open Abb.Future.Infix_monad in
+  let repo = Terrat_pull_request.repo pull_request in
   Terrat_github.react_to_comment
     ~owner:(Repo.owner repo)
     ~repo:(Repo.name repo)

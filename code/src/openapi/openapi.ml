@@ -91,6 +91,7 @@ module Request = struct
 
   let with_base_url url t = { t with url = Uri.(of_string (to_string url ^ to_string t.url)) }
   let with_url url t = { t with url }
+  let url t = t.url
   let add_headers headers t = { t with headers = headers @ t.headers }
 end
 
