@@ -585,6 +585,7 @@ module Automerge = struct
   type t = {
     delete_branch : bool; [@default false]
     enabled : bool; [@default false]
+    require_explicit_apply: bool; [@default false]
   }
   [@@deriving make, show, yojson, eq]
 end
@@ -1820,8 +1821,8 @@ let of_version_1_apply_requirements apply_requirements =
 
 let of_version_automerge automerge =
   let module Am = Terrat_repo_config_automerge in
-  let { Am.delete_branch; enabled } = automerge in
-  Ok (Automerge.make ~delete_branch ~enabled ())
+  let { Am.delete_branch; enabled; require_explicit_apply } = automerge in
+  Ok (Automerge.make ~delete_branch ~enabled ~require_explicit_apply ())
 
 let of_version_1_batch_runs batch_runs =
   let module Br = Terrat_repo_config_batch_runs in
@@ -2394,8 +2395,8 @@ let to_version_1_apply_requirements ar =
 
 let to_version_1_automerge automerge =
   let module Am = Terrat_repo_config.Automerge in
-  let { Automerge.delete_branch; enabled } = automerge in
-  { Am.delete_branch; enabled }
+  let { Automerge.delete_branch; enabled; require_explicit_apply  } = automerge in
+  { Am.delete_branch; enabled; require_explicit_apply }
 
 let to_version_1_batch_runs batch_runs =
   let module Br = Terrat_repo_config.Batch_runs in
