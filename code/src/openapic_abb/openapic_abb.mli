@@ -13,19 +13,28 @@ type call_err =
   ]
 [@@deriving show]
 
+module Page : sig
+  type 'a t = 'a Openapi.Request.t -> 'a Openapi.Response.t -> 'a Openapi.Request.t option
+
+  val github : 'a t
+  val gitlab : 'a t
+end
+
 type t
 
-val create : ?user_agent:string -> ?base_url:Uri.t -> ?call_timeout:float -> Authorization.t -> t
+val create : ?user_agent:string -> ?call_timeout:float -> base_url:Uri.t -> Authorization.t -> t
 val call : t -> 'a Openapi.Request.t -> ('a Openapi.Response.t, [> call_err ]) result Abb.Future.t
 
 (** Iterate all of the pages in a paginated response and combine them. They are returned in the
     order they were received. *)
 val collect_all :
+  page:([> `OK of 'a list ] as 'b) Page.t ->
   t ->
-  [> `OK of 'a list ] Openapi.Request.t ->
+  'b Openapi.Request.t ->
   ('a list, [> call_err | `Error ]) result Abb.Future.t
 
 val fold :
+  page:'b Page.t ->
   t ->
   init:'a ->
   f:('a -> 'b Openapi.Response.t -> ('a, ([> call_err ] as 'e)) result Abb.Future.t) ->

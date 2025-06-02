@@ -1,7 +1,5 @@
 module Http = Abb_curl.Make (Abb)
 
-let base_url = Uri.of_string "https://gitlab.com/"
-
 module Io = struct
   type 'a t = 'a Abb.Future.t
   type err = Http.request_err
@@ -47,6 +45,57 @@ type call_err =
   ]
 [@@deriving show]
 
+module Page = struct
+  type 'a t = 'a Openapi.Request.t -> 'a Openapi.Response.t -> 'a Openapi.Request.t option
+
+  let github req resp =
+    let parse_link s =
+      let open CCOption.Infix in
+      CCString.Split.left ~by:"; " s
+      >>= fun (link, rel) ->
+      let uri = Uri.of_string (String.sub link 1 (String.length link - 2)) in
+      CCString.Split.left ~by:"=" rel
+      >>= function
+      | "rel", n ->
+          let name = String.sub n 1 (String.length n - 2) in
+          Some (name, uri)
+      | _ -> None
+    in
+    let rec parse_links s =
+      if String.length s > 0 then
+        let open CCOption.Infix in
+        match CCString.Split.left ~by:", " s with
+        | Some (left, right) ->
+            parse_link left >>= fun link -> parse_links right >>= fun rest -> Some (link :: rest)
+        | None -> parse_link s >>= fun link -> Some [ link ]
+      else Some []
+    in
+    let links resp =
+      CCOption.get_or
+        ~default:[]
+        (parse_links
+           (CCOption.get_or
+              ~default:""
+              (Http.Headers.get "link" (Http.Headers.of_list (Openapi.Response.headers resp)))))
+    in
+    match List.assoc_opt "next" (links resp) with
+    | Some next -> Some (Openapi.Request.with_url next req)
+    | None -> None
+
+  let gitlab req resp =
+    match
+      Http.Headers.get "x-next-page" @@ Http.Headers.of_list @@ Openapi.Response.headers resp
+    with
+    | Some "" | None -> None
+    | Some next_page ->
+        req
+        |> Openapi.Request.url
+        |> CCFun.flip Uri.remove_query_param "page"
+        |> CCFun.flip Uri.add_query_param' ("page", next_page)
+        |> CCFun.flip Openapi.Request.with_url req
+        |> CCOption.return
+end
+
 type t = {
   auth : Authorization.t;
   base_url : Uri.t;
@@ -54,7 +103,7 @@ type t = {
   call_timeout : float option;
 }
 
-let create ?(user_agent = "Gitlabc_abb") ?(base_url = base_url) ?call_timeout auth =
+let create ?(user_agent = "Openapic_abb") ?call_timeout ~base_url auth =
   let base_url =
     base_url
     |> Uri.to_string
@@ -88,48 +137,17 @@ let call t req =
         (Api.call Openapi.Request.(req |> with_base_url t.base_url |> add_headers t.headers))
       >>= fun (r, fut) -> Abb.Future.abort fut >>= fun () -> Abb.Future.return r
 
-let parse_link s =
-  let open CCOption.Infix in
-  CCString.Split.left ~by:"; " s
-  >>= fun (link, rel) ->
-  let uri = Uri.of_string (String.sub link 1 (String.length link - 2)) in
-  CCString.Split.left ~by:"=" rel
-  >>= function
-  | "rel", n ->
-      let name = String.sub n 1 (String.length n - 2) in
-      Some (name, uri)
-  | _ -> None
-
-let rec parse_links s =
-  if String.length s > 0 then
-    let open CCOption.Infix in
-    match CCString.Split.left ~by:", " s with
-    | Some (left, right) ->
-        parse_link left >>= fun link -> parse_links right >>= fun rest -> Some (link :: rest)
-    | None -> parse_link s >>= fun link -> Some [ link ]
-  else Some []
-
-let links resp =
-  CCOption.get_or
-    ~default:[]
-    (parse_links
-       (CCOption.get_or
-          ~default:""
-          (Http.Headers.get "link" (Http.Headers.of_list (Openapi.Response.headers resp)))))
-
-let rec fold' t ~init ~f req =
+let rec fold' page t ~init ~f req =
   let open Abbs_future_combinators.Infix_result_monad in
   Api.call Openapi.Request.(req |> add_headers t.headers)
   >>= fun resp ->
   f init resp
   >>= fun init ->
-  match List.assoc_opt "next" (links resp) with
-  | Some next ->
-      let req = Openapi.Request.with_url next req in
-      fold' t ~init ~f req
+  match page req resp with
+  | Some req -> fold' page t ~init ~f req
   | None -> Abb.Future.return (Ok init)
 
-let fold t ~init ~f req =
+let fold ~page t ~init ~f req =
   let open Abbs_future_combinators.Infix_result_monad in
   (* With the initial call we want a standard call, with all URL replacement
      operations.  However on the next call we want to use the exact URL that we
@@ -138,15 +156,14 @@ let fold t ~init ~f req =
   >>= fun resp ->
   f init resp
   >>= fun init ->
-  match List.assoc_opt "next" (links resp) with
-  | Some next ->
-      let req = Openapi.Request.with_url next req in
-      fold' t ~init ~f req
+  match page req resp with
+  | Some req -> fold' page t ~init ~f req
   | None -> Abb.Future.return (Ok init)
 
-let collect_all t req =
+let collect_all ~page t req =
   let open Abbs_future_combinators.Infix_result_monad in
   fold
+    ~page
     ~init:[]
     ~f:(fun acc resp ->
       match Openapi.Response.value resp with

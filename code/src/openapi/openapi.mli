@@ -37,6 +37,7 @@ module Request : sig
 
   val with_base_url : Uri.t -> 'a t -> 'a t
   val with_url : Uri.t -> 'a t -> 'a t
+  val url : 'a t -> Uri.t
   val add_headers : (string * string) list -> 'a t -> 'a t
 end
 
