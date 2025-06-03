@@ -1,0 +1,57 @@
+= Annex
+
+== Github 
+
+Github gives us two options:
+
+* The GraphQL API supports https://docs.github.com/en/graphql/reference/mutations#minimizecomment[minimizeComment] and https://docs.github.com/en/graphql/reference/mutations#unminimizecomment[unminimizeComment], which can help our noise reduction effort by minimizing outdated comments.
+* The REST API does not support these `minimize`/`unminimize` mutations, but allows for https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#update-an-issue-comment[updating comments], which can be used to maintain an "anchor" comment that is continuously updated with the latest status.
+
+The following example is a proof-of-concept bash script on how to update a comment via the GitHub REST API.
+
+=== Comment Update Implementation
+
+[source,bash]
+----
+#!/usr/bin/env bash
+
+GITHUB_TOKEN=$1
+# org/repo
+REPO=$2
+# int
+PR_NUMBER=$3
+ORIGINAL_COMMENT="foo"
+UPDATED_COMMENT="<details><summary>Generation 1</summary>$ORIGINAL_COMMENT</details>\n✅ LATEST COMMENT!"
+
+response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+    -H "Accept: application/vnd.github+json" \
+    -X POST \
+    -d "{\"body\": \"$ORIGINAL_COMMENT\"}" \
+    "https://api.github.com/repos/$REPO/issues/$PR_NUMBER/comments")
+
+comment_id=$(echo "$response" | jq -r '.id')
+
+if [ "$comment_id" == "null" ]; then
+  echo "ERROR: $response"
+  exit 1
+fi
+
+echo "Comment ID: $comment_id"
+
+sleep 5
+
+echo "Updating comment..."
+update_response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+    -H "Accept: application/vnd.github+json" \
+    -X PATCH \
+    -d "{\"body\": \"$UPDATED_COMMENT\"}" \
+    "https://api.github.com/repos/$REPO/issues/comments/$comment_id")
+
+if echo "$update_response" | jq -e '.id' >/dev/null; then
+  echo "Comment updated successfully."
+else
+  echo "ERROR: $update_response"
+  exit 1
+fi
+----
+
