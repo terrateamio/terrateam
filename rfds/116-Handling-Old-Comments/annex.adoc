@@ -1,0 +1,209 @@
+= Annex
+
+== Storage
+
+For starters, we can leverage basic SQL enums to encode different entities:
+
+[source,sql]
+----
+-- Creating a test schema so people can easily nuke
+-- this after testing it out.
+-- DROP SCHEMA test_schema CASCADE
+CREATE SCHEMA IF NOT EXISTS test_schema;
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+
+-- Custom Types
+CREATE TYPE test_schema.github_update_strategy AS ENUM (
+    'append',
+    'delete',
+    'minimize',
+    'update'
+);
+----
+
+Then we setup the following tables to hold:
+
+* Policy metadata
+* Comment metadata
+* Link comments to `work_manifests`
+* Save a list of comments that depend on one another
+
+[source,sql]
+----
+-- Tables
+CREATE TABLE IF NOT EXISTS test_schema.github_notification_policy(
+    -- TODO: proper way to generate this (automatically)
+    id BIGINT CONSTRAINT id_is_always_positive CHECK (id > 0) NOT NULL,
+    strategy test_schema.github_update_strategy NOT NULL,
+    enable_summary BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    -- Not sure if a composite key is really needed
+    PRIMARY KEY (id)
+);
+
+-- Unfortunately, GIST does not support ENUMs yet, so you need
+-- to work around in this crappy way, using OIDs to make ENUM
+-- comparisson behave in a IMMUTABLE way.
+-- https://www.postgresql.org/message-id/CAMjNa7dGN-DZjbMn5sY52ACR_Np9Kx8F6Pf%3Dc5k0%2Bd1f_hZU%3Dg%40mail.gmail.com
+CREATE TABLE IF NOT EXISTS test_schema.github_work_manifest_comment(
+    -- The original id github gave us
+    id BIGINT NOT NULL CONSTRAINT id_is_always_positive CHECK (id > 0),
+    -- This will link with the work_manifest
+    work_manifest_id UUID NOT NULL,
+    work_manifest_state TEXT NOT NULL,
+    run_type TEXT NOT NULL,
+    pr_number BIGINT NOT NULL,
+    repository BIGINT NOT NULL,
+    policy BIGINT NOT NULL,
+    comment_type BIGINT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    -- For a given comment, there can be no overwrites if the run types
+    -- differ, i.e. if a comment with ID = X was originally the output of a
+    -- 'terrateam plan', it cannot hold the output of a 'terrateam apply',
+    -- and vice-versa. It can still be overwritten by an upsert with the same
+    -- type, but that will depend on the selected policy.
+    EXCLUDE USING GIST (id WITH =, run_type WITH <>),
+    -- Commented some FKs, just to make it easier to test (below)
+    -- FOREIGN KEY (pr_number) REFERENCES github_pull_requests (pull_number),
+    -- FOREIGN KEY (repository) REFERENCES github_pull_requests (repository),
+    FOREIGN KEY (policy) REFERENCES test_schema.github_notification_policy(id),
+    FOREIGN KEY (work_manifest_id, work_manifest_state, run_type) REFERENCES test_schema.github_comment_type(id, state, run_type),
+    PRIMARY KEY (id)
+);
+
+-- TODO: Improve this
+CREATE TABLE IF NOT EXISTS test_schema.github_summary_comment(
+    id BIGINT NOT NULL CONSTRAINT id_is_always_positive CHECK (id > 0),
+    pr_number BIGINT NOT NULL,
+    repository BIGINT NOT NULL,
+    -- Commented some FKs, just to make it easier to test (below)
+    -- FOREIGN KEY (pr_number) REFERENCES github_pull_requests (pull_number),
+    -- FOREIGN KEY (repository) REFERENCES github_pull_requests (repository),
+    FOREIGN KEY (work_manifest_id, work_manifest_state) REFERENCES work_manifests(id, state)
+    PRIMARY KEY (id)
+);
+
+-- This is a proposal to help "traverse" big comments that got broken
+-- into smaller chunks.
+CREATE TABLE IF NOT EXISTS test_schema.github_comment_chain(
+    id INTEGER REFERENCES test_schema.github_comment(id),
+    next INTEGER REFERENCES test_schema.github_comment(id),
+    PRIMARY KEY (id)
+);
+----
+
+A quick test run to check if the schema is behaving correctly:
+
+[source,sql]
+----
+-- Test Data
+INSERT INTO test_schema.github_comment_type(name)
+VALUES ('plan'), ('apply'), ('summary');
+
+INSERT INTO test_schema.github_notification_policy(id, strategy, enable_summary)
+VALUES 
+    (1, 'append', true),
+    (2, 'minimize', true);
+
+INSERT INTO test_schema.github_comment(id, pr_number, repository, policy, comment_type)
+VALUES 
+    (1, 1, 1, 1, 1),
+    (2, 1, 1, 1, 1),
+    (3, 1, 1, 1, 2);
+
+INSERT INTO test_schema.github_comment_chain(id, next)
+VALUES 
+    (1, 2),
+    (2, 2);
+----
+
+Here are some example queries, which can be turned into prepared statements (or functions) later:
+
+[source,sql]
+----
+
+-- Example Queries
+
+WITH RECURSIVE comment_chain AS (
+  SELECT
+    id
+  , next
+  FROM test_schema.github_comment_chain c
+  -- Recursion base case
+  WHERE id=1
+
+  UNION ALL
+
+  SELECT
+    c.id
+  , c.next
+  FROM comment_chain cc
+  JOIN test_schema.github_comment_chain c ON cc.next = c.id
+  WHERE c.next <> cc.id
+)
+SELECT *
+FROM comment_chain;
+----
+
+=== Github Implementation
+
+== External References
+
+== Github 
+
+Github gives us two options:
+
+* The GraphQL API supports https://docs.github.com/en/graphql/reference/mutations#minimizecomment[minimizeComment] and https://docs.github.com/en/graphql/reference/mutations#unminimizecomment[unminimizeComment], which can help our noise reduction effort by minimizing outdated comments.
+* The REST API does not support these `minimize`/`unminimize` mutations, but allows for https://docs.github.com/en/rest/issues/comments?apiVersion=2022-11-28#update-an-issue-comment[updating comments], which can be used to maintain an "anchor" comment that is continuously updated with the latest status.
+
+The following example is a proof-of-concept bash script on how to update a comment via the GitHub REST API.
+
+=== Comment Update Implementation
+
+[source,bash]
+----
+#!/usr/bin/env bash
+
+GITHUB_TOKEN=$1
+# org/repo
+REPO=$2
+# int
+PR_NUMBER=$3
+ORIGINAL_COMMENT="foo"
+UPDATED_COMMENT="<details><summary>Generation 1</summary>$ORIGINAL_COMMENT</details>\n✅ LATEST COMMENT!"
+
+response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+    -H "Accept: application/vnd.github+json" \
+    -X POST \
+    -d "{\"body\": \"$ORIGINAL_COMMENT\"}" \
+    "https://api.github.com/repos/$REPO/issues/$PR_NUMBER/comments")
+
+comment_id=$(echo "$response" | jq -r '.id')
+
+if [ "$comment_id" == "null" ]; then
+  echo "ERROR: $response"
+  exit 1
+fi
+
+echo "Comment ID: $comment_id"
+
+sleep 5
+
+echo "Updating comment..."
+update_response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+    -H "Accept: application/vnd.github+json" \
+    -X PATCH \
+    -d "{\"body\": \"$UPDATED_COMMENT\"}" \
+    "https://api.github.com/repos/$REPO/issues/comments/$comment_id")
+
+if echo "$update_response" | jq -e '.id' >/dev/null; then
+  echo "Comment updated successfully."
+else
+  echo "ERROR: $update_response"
+  exit 1
+fi
+----
+
+NOTE: For context, we are currently using the REST API because there is a JSON schema for it and we create its OCaml module in a automated fashion. The GraphQL tooling is not the most awesome yet in OCaml, however it uses the same authentication token from the REST API, so we we can just write a function in `terrat_github` that does this one GraphQL call. 
