@@ -12,15 +12,23 @@ Terrateam's locks and concurrency feature ensures that changes to your infrastru
 Suppose Alice and Bob both open pull requests that modify the same Terraform resource. Without locks, both could apply their changes independently, leading to a situation where the real infrastructure state no longer matches the code in your main branch. Locks prevent this by ensuring only one change can be applied at a time.
 
 <MermaidDiagram chart={`
-sequenceDiagram
-    participant Alice as Alice (PR1)
-    participant Bob as Bob (PR2)
-    participant Infra as Infrastructure
+flowchart TD
+    T1["Alice"] --> A1["Alice PR<br>plan"]
+    T2["Bob"] --> B1["Bob PR<br>plan"]
 
-    Alice->>Infra: terrateam apply (acquires lock)
-    Bob->>Infra: terrateam apply (blocked, lock held by Alice)
-    Alice->>Infra: merge PR1 (releases lock)
-    Bob->>Infra: terrateam apply (now possible, but must re-plan)
+    A2["Alice PR<br>apply (acquire lock)"]
+    A3["Alice PR<br>infra update"]
+    A4["Alice PR<br>release lock"]
+
+    B2["Bob PR<br>apply (blocked)"]
+    B3["Bob PR<br>re-plan"]
+    B4["Bob PR<br>apply (acquire lock)"]
+    B5["Bob PR<br>infra update"]
+    B6["Bob PR<br>release lock"]
+
+    A1 --> A2 --> A3 --> A4 --> B3
+    B1 --> B2
+    B3 --> B4 --> B5 --> B6
 `} />
 
 ## Concurrent Collaboration
@@ -69,10 +77,10 @@ Consider a pull request with changes in `dir1` and `dir2` (using only the `defau
 
 <MermaidDiagram chart={`
 flowchart TD
-    PR["PR opened: changes in dir1, dir2"]
+    PR["PR opened: changes in <br>dir1, dir2"]
     Plan["terrateam plan"]
     Apply["terrateam apply dir:dir1"]
-    Locks["Locks acquired: (dir1, default), (dir2, default)"]
+    Locks["Locks acquired: <br>(dir1, default), (dir2, default)"]
     PR --> Plan --> Apply --> Locks
 `} />
 
@@ -112,26 +120,6 @@ The `lock_policy` option under workflows in your Terrateam configuration file in
 | `apply`  | Acquire a lock only if the directory has been applied in Terrateam. Lock is released once the change is merged.     | Standard apply/merge workflows      |
 | `merge`  | Acquire a lock only if the directory has been merged. Lock is released when the change is applied.                  | Dev/playground branches             |
 | `none`   | Never acquire a lock.                                                                                               | Special cases, not recommended      |
-
-## Example Scenario
-
-Consider the following scenario:
-- A repository named `repo`
-- Alice creates pull request `PR1` against `repo`
-- Bob creates pull request `PR2` against `repo`
-- Both pull requests have a change in directory `dir` (using only the `default` workspace)
-
-<MermaidDiagram chart={`
-sequenceDiagram
-    participant Alice as Alice (PR1)
-    participant Bob as Bob (PR2)
-    participant Infra as Infrastructure
-
-    Alice->>Infra: terrateam apply (acquires lock)
-    Bob->>Infra: terrateam apply (blocked, lock held by Alice)
-    Alice->>Infra: merge PR1 (releases lock)
-    Bob->>Infra: terrateam apply (must re-plan, as state has changed)
-`} />
 
 ## Best Practices
 
