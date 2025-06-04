@@ -44,10 +44,10 @@ engine:
 
 ## Custom Engine
 
-Use a custom engine when you need to perform tasks outside of standard Terraform or OpenTofu workflows, or when integrating with other infrastructure tools (e.g., Pulumi, custom wrappers, or legacy systems). Custom engines are also useful for advanced scenarios such as running policy checks, orchestrating multiple tools, or supporting non-standard workflows.
+Use a custom engine when you need to perform tasks outside of standard Terraform or OpenTofu workflows, or when integrating with other infrastructure tools (e.g., custom wrappers, or legacy systems).
 
 :::note[About TERRATEAM_PLAN_FILE]
-When using a custom engine, Terrateam sets the `TERRATEAM_PLAN_FILE` environment variable to the path where your plan step must write the plan file. This is the only required environment variable that must be written to by your custom plan step. Terrateam will use this file for subsequent apply and diff steps.
+When using a custom engine, Terrateam sets the `TERRATEAM_PLAN_FILE` environment variable to the path where your plan step must write the plan file. This is the only required environment variable that must be written to by your custom plan step. Terrateam will use this file for subsequent apply and diff steps. The file must be created, but it can be empty.
 :::
 
 ### Example: Custom Engine
