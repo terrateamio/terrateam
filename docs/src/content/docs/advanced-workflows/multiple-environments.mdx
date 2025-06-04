@@ -121,10 +121,6 @@ In this example, we'll use a shared Terraform state file for all environments.
 
 #### Backend Configuration
 
-:::caution
-For production environments, always use a remote backend (such as S3, GCS, or Azure Storage) to store your Terraform state. Remote backends provide durability, enable team collaboration, and help prevent state corruption or loss. The `local` backend is only suitable for development or testing purposes and should not be used in production.
-:::
-
 Define a single Terraform state file using the `local` backend in your `main.tf` file:
 ```hcl
 terraform {
@@ -309,9 +305,3 @@ Terrateam supports several strategies for managing multiple environments. Here i
 | **Separate Directories**      | Clear separation of code/resources; Easy to manage state per env; Simple to understand | Can lead to code duplication; Harder to share modules/logic  |
 | **Directories + Workspaces**  | Reduces code duplication; Easier to share logic; Flexible        | Workspace management can be confusing; State file must be managed carefully |
 | **tfvars Files**              | Centralizes code, only variables differ; Easy to add new environments | Risk of state file overlap if not careful; Can be harder to audit changes per env |
-| **Separate State Files**      | Isolates state per environment; Reduces risk of cross-env impact      | More config overhead; Can be harder to keep configs in sync  |
-
-**Which should you use?**
-- For small teams or simple projects, separate directories are easy and clear.
-- For larger teams or when sharing logic is important, directories + workspaces or tfvars files with separate state are more scalable.
-- Always use a remote backend for production to ensure safety and collaboration.
