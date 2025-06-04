@@ -70,8 +70,8 @@ tags:
     staging: '^staging$'
     dev: '^dev$'
 ```
-- **What it does:**  
-  This creates a `dest_branch` tag that matches your main, staging, and dev branches.
+**What it does:**
+- This creates a `dest_branch` tag that matches your main, staging, and dev branches.
 
 ### 2. Destination Branches
 
@@ -86,10 +86,10 @@ destination_branches:
   - branch: dev
     source_branches: ['*', '!main', '!staging']
 ```
-- **What it does:**  
-  - Only `staging` can merge into `main`.
-  - Only `dev` can merge into `staging`.
-  - Any branch except `main` or `staging` can merge into `dev` (e.g., features).
+**What it does:**
+- Only `staging` can merge into `main`.
+- Only `dev` can merge into `staging`.
+- Any branch except `main` or `staging` can merge into `dev` (e.g., features).
 
 ### 3. Workflows
 
@@ -137,9 +137,9 @@ workflows:
       - type: init
       - type: apply
 ```
-- **What it does:**  
-  - Runs different Terraform workflows depending on the destination branch.
-  - Sets an environment variable for each environment, then runs `init`, `plan`, and `apply` as appropriate.
+**What it does:**
+- Runs different Terraform workflows depending on the destination branch.
+- Sets an environment variable for each environment, then runs `init`, `plan`, and `apply` as appropriate.
 
 <details>
 <summary>Full Example: Complete .terrateam/config.yml for Gitflow</summary>
@@ -240,4 +240,3 @@ When implementing a Gitflow workflow with Terrateam, consider the following best
 - Ensure that your destination branches and tags configuration accurately reflects your desired branching model and workflow.
 - Use descriptive and meaningful names for your branches, following the Gitflow naming conventions.
 - Regularly update your `dev` branch with the latest changes from `main` to keep it in sync.
-
