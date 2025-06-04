@@ -9,7 +9,6 @@ In some cases, you may want to prevent Terrateam from running plans or applies w
 
 **Why ignore directories or files?**  
 This is especially useful for:
-- Directories containing only documentation, static assets, or test code that doesn't directly affect infrastructure provisioning.
 - Directories with Terraform modules that are not meant to be deployed directly (for example, shared modules or templates).
 - Supporting files or folders that match Terraform file patterns (like `.tf`), but should not trigger infrastructure changes.
 
@@ -48,18 +47,18 @@ You can also ignore specific files by using their path as a key in the `dirs` se
 **Example: Ignore a specific file**
 ```yaml
 dirs:
-  README.md:
+  foobar.tf:
     when_modified:
       file_patterns: []
 ```
 
 :::tip
-You can use glob patterns to ignore groups of files, such as all Markdown files:
+You can use glob patterns to ignore groups of files, such as all dev.*.tfvars files:
 :::
 
 ```yaml
 dirs:
-  "*.md":
+  "dev.*.tfvars":
     when_modified:
       file_patterns: []
 ```
