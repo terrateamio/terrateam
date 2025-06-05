@@ -1,6 +1,6 @@
 = Writing a Request For Discussion
 :authors: Malcolm Matalka
-:state: discussion
+:state: committed
 :labels: meta, processes
 :source-highlighter: highlight.js
 :toc:
