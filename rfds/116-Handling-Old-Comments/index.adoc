@@ -1,7 +1,7 @@
 = Handling Old Comments
 :authors: Marcos Benevides
 :state: ideation
-:labels: pull_requests
+:labels: database,github,pull_requests
 :source-highlighter: highlight.js
 :toc:
 
@@ -21,9 +21,10 @@ Ideation.
 Currently, the Terrateam application posts comments in response to specific user events (triggered by commands such as `terrateam plan`, `terrateam apply`) on pull requests.
 
 . Application comments are not currently tracked or stored in our systems; we rely solely on GitHub/GitLab as the source of truth.
-. For multiple directories, each `terrateam plan` generates a distinct comment, leading to potential comment sprawl.
+. There are ways for a change with multiple directories to cause comment sprawl over a pull request.
+. We are still unsure on how to relate comments with `work_manifests`
 . There used to be a mechanism to deal with oversized comments, but it seems to be disabled now.
-. Environments or batch builds produce multiple independent comments with no grouping, we have no mechanisms to group related comments together nor can we provide a consolidated summary.
+. We have no mechanisms to group related comments together nor can we provide a consolidated summary.
 
 === Community Suggestions
 
@@ -56,7 +57,7 @@ Currently, we do not store comment data in PostgreSQL. To implement any of the s
 
 as for now we have the following tables tracking:
 
-. `github_pull_requests`
+* `github_pull_requests`
 
 [source,sql]
 ----
@@ -77,7 +78,7 @@ terrateam=> \d github_pull_requests
  username    | text                     |           |          | 
 ----
 
-. `github_pull_requests_map`
+* `github_pull_requests_map`
 
 [source,sql]
 ----
@@ -99,46 +100,142 @@ terrateam=> \d github_pull_requests_map
 
 === Storage
 
-First, we must have a way to store and link comments.
+First, we must have a way to:
+
+. Store and link comments to Repos & Pull Requests
+. Link existing comments to `work_manifests`
+. Build a history of comment modification (for the anchor/summary comment)
+
+==== First Proposal
+
+This first proposal aims to use no extra extensions and leverages at least two tables that holds comment data.
+
+TODO Add better comments to the source code.
 
 [source,sql]
 ----
-CREATE TYPE github_comment_status AS ENUM (
+-- CREATING A SCHEMA SO WE CAN EASILY DROP THIS
+-- DROP SCHEMA test_schame CASCADE
+CREATE SCHEMA IF NOT EXISTS test_schema;
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- Custom Types
+CREATE TYPE test_schema.github_comment_status AS ENUM (
     'active',
-    'superseded',
+    'overwritten',
     'minimized'
 );
 
-CREATE TYPE github_comment_type AS ENUM (
-    'summary',
+CREATE TYPE test_schema.github_comment_type AS ENUM (
+    'summary'
 );
 
--- Should we have our own ID as well?
-CREATE TABLE IF NOT EXISTS github_comment(
+-- Tables
+CREATE TABLE IF NOT EXISTS test_schema.github_comment(
     -- The original id github gave uses
-    id BIGINT CONSTRAINT id_is_always_positive CHECK github_comment_id > 0
-    pr_number BIGINT CONSTRAINT pr_num_is_always_positive CHECK github_comment_id > 0 NOT NULL
-    version BIGINT CONSTRAINT version_is_always_positive CHECK github_comment_id > 0 NOT NULL
+    id BIGINT CONSTRAINT id_is_always_positive CHECK (id > 0) NOT NULL,
+    --Commented to make testing this easier
+    --pr_number BIGINT REFERENCES github_pull_requests (pull_number),
+    --repository BIGINT REFERENCES github_pull_requests (repository),
+    status test_schema.github_comment_status NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    --PRIMARY KEY (repository, pr_number, id)
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS test_schema.github_comment_history (
+    id BIGINT REFERENCES test_schema.github_comment(id),
+    status test_schema.github_comment_status NOT NULL,
     content TEXT CONSTRAINT content_length_upper_bound CHECK (
         LENGTH(content) <= 4096
     ) NOT NULL,
-    status github_comment_status NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (id, pr_number, version),
-    PRIMARY KEY (github_comment_id)
+    content_digest TEXT GENERATED ALWAYS AS (encode(digest(content, 'sha256'), 'hex')) STORED,
+    modified_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id, content_digest)
 );
 
-CREATE UNIQUE INDEX pr_comments_idx
-ON github_comment USING BTREE(pr_number)
--- Should we include the content as well?
-INCLUDE(id, status, version);
+CREATE TABLE IF NOT EXISTS test_schema.github_comment_with_work_manifest(
+    comment_id BIGINT REFERENCES test_schema.github_comment(id),
+    work_manifest_id UUID REFERENCES work_manifests(id),
+    PRIMARY KEY (comment_id)
+);
 
--- To speed up queries that only look for 
--- active comments in a PR
-CREATE UNIQUE INDEX pr_comments_active_idx
-ON github_comment USING BTREE(pr_number)
-WHERE status = 'active';
+-- Views
+-- Main
+CREATE OR REPLACE VIEW test_schema.github_comments_view AS 
+SELECT 
+    --gc.repository,
+    --gc.pr_number,
+    gc.id,
+    gch.status,
+    gch.content,
+    ROW_NUMBER() OVER w AS version
+FROM test_schema.github_comment gc
+JOIN test_schema.github_comment_history gch ON gc.id = gch.id
+WINDOW w AS (PARTITION BY gc.id ORDER BY gch.modified_at);
+
+-- Functions & Triggers
+CREATE OR REPLACE FUNCTION test_schema.upsert_github_comment() 
+RETURNS trigger LANGUAGE plpgsql AS $$	
+BEGIN	
+  -- Upsert the main comment table
+  INSERT INTO test_schema.github_comment (id, status)
+  VALUES (NEW.id, NEW.status)
+  ON CONFLICT (id)
+  DO UPDATE 
+    SET 
+      status = EXCLUDED.status;
+  
+  -- Insert new version into the comment history
+  INSERT INTO test_schema.github_comment_history (id, status, content)
+  VALUES (NEW.id, NEW.status, NEW.content);
+  
+  RETURN NULL;
+END $$;
+  
+CREATE OR REPLACE TRIGGER upsert_github_comment_trigger 
+INSTEAD OF INSERT ON test_schema.github_comments_view
+FOR EACH ROW EXECUTE FUNCTION test_schema.upsert_github_comment(); 
+
+-- Indexes
+-- Leave other indexes for later
+--CREATE INDEX idx_github_pr_comments
+--ON test_schema.github_comment USING BTREE(repository, pr_number)
+--INCLUDE(id, status);
+
+CREATE INDEX idx_github_pr_comment_modification_history
+ON test_schema.github_comment_history USING BTREE(id)
+INCLUDE(status, content);
 ----
+
+Here's an example on how the updatable views can be leveraged to not expose the structure behind the internal tables:
+
+[source,sql]
+----
+INSERT INTO test_schema.github_comments_view(id, status, content)
+VALUES 
+    (1, 'active', 'foo'),
+    (1, 'overwritten', 'bar'),
+    (1, 'minimized', 'foobar');
+----
+
+The `OCaml` codebase could focus only on inserting and reading from a view, the remaining machinery (and how it is supposed to work) can be kept consistent behind a view.
+
+[source,sql]
+----
+terrateam=> SELECT * FROM test_schema.github_comments_view;
+ id |   status    | content | version 
+----+-------------+---------+---------
+  1 | active      | foo     |       1
+  1 | overwritten | bar     |       2
+  1 | minimized   | foobar  |       3
+(3 rows)
+----
+
+==== Second Proposal
+
+This second proposal tries to leverage some of the SQL temporality features provider by some extensions, like https://github.com/xocolatl/periods[periods] or https://github.com/arkhipov/temporal_tables[temporal_tables]. This will work similarly to the previous approach, with the advantage that we can just leverage a single table.
 
 === Github Implementation
 
@@ -193,8 +290,9 @@ else
 fi
 ----
 
-NOTE: Using REST limits our ability to minimize old comments, as it's clunkier than GraphQL, but totally achievable.
+NOTE: For context, we are currently using the REST API because there is a JSON schema for it and we create its OCaml module in a automated fashion. The GraphQL tooling is not the most awesome yet in OCaml, however it uses the same authentication token from the REST API, so we we can just write a function in `terrat_github` that does this one GraphQL call. 
 
 === Terrateam Configuration
+
 
 == External References
