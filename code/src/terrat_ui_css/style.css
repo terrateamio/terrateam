@@ -918,10 +918,32 @@
 
     .getting-started {
         @apply flex flex-col text-2xl text-center gap-y-4 py-8;
+        @apply items-center justify-items-center;
+    }
+
+    .getting-started h1 {
+        @apply text-3xl;
+        @apply font-semibold;
+    }
+
+    .getting-started h2 {
+        @apply text-2xl;
+        @apply font-semibold;
     }
 
     .getting-started > div > a {
         @apply px-2;
+    }
+
+    .getting-started ul {
+        @apply w-full md:w-2/5
+    }
+
+    .getting-started ul li {
+        @apply py-8;
+        @apply border-b-2 border-slate-400;
+        @apply flex flex-col gap-2;
+        @apply items-center justify-items-center;
     }
 
     a.setup-repo {

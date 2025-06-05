@@ -245,4 +245,125 @@ module Comp = struct
   module Add_installation = struct
     let run = No_installations.run
   end
+
+  module Getting_started = struct
+    let run state =
+      Abb_js.Future.return
+      @@ Brtl_js2.Output.const
+      @@ Brtl_js2.Brr.El.
+           [
+             h1 [ txt' "Get Started with Terrateam" ];
+             ul
+               [
+                 li
+                   [
+                     h1 [ txt' "1" ];
+                     h2 [ txt' "Choose a repository" ];
+                     div
+                       [
+                         txt'
+                           "If you don't have an existing infrastructure repository or want to try \
+                            out Terrateam in a brand new repository first, clone the ";
+                         a
+                           ~at:
+                             At.
+                               [
+                                 v (Jstr.v "target") (Jstr.v "_blank");
+                                 href @@ Jstr.v "https://github.com/terrateam-demo/kick-the-tires";
+                               ]
+                           [ txt' "demo repository" ];
+                         txt' ".";
+                       ];
+                   ];
+                 li
+                   [
+                     h1 [ txt' "2" ];
+                     h2 [ txt' "Add the workflow file" ];
+                     div
+                       [
+                         txt' "The workflow file must exist in ";
+                         span
+                           ~at:At.[ class' @@ Jstr.v "font-mono" ]
+                           [ txt' ".github/workflows/terrateam.yml" ];
+                       ];
+                     div
+                       [
+                         a
+                           ~at:
+                             At.
+                               [
+                                 v (Jstr.v "target") (Jstr.v "_blank");
+                                 href
+                                 @@ Jstr.v
+                                      "https://raw.githubusercontent.com/terrateam-demo/kick-the-tires/refs/heads/main/.github/workflows/terrateam.yml";
+                               ]
+                           [ txt' "Workflow file" ];
+                       ];
+                     div
+                       [
+                         txt'
+                           "The workflow file must be in the default branch.  It is necessary for \
+                            Terrateam to perform operations.";
+                       ];
+                   ];
+                 li
+                   [
+                     h1 [ txt' "3" ];
+                     h2 [ txt' "Configure credentials for your cloud account" ];
+                     div
+                       [
+                         txt' "Find documentation for configuring your cloud account ";
+                         a
+                           ~at:
+                             At.
+                               [
+                                 v (Jstr.v "target") (Jstr.v "_blank");
+                                 href @@ Jstr.v "https://docs.terrateam.io/cloud-providers/aws/";
+                               ]
+                           [ txt' "here." ];
+                       ];
+                   ];
+                 li
+                   [
+                     h1 [ txt' "4" ];
+                     h2 [ txt' "Run your first plan & apply" ];
+                     div
+                       [
+                         txt' "For more details, follow the quick start guide ";
+                         a
+                           ~at:
+                             At.
+                               [
+                                 v (Jstr.v "target") (Jstr.v "_blank");
+                                 href
+                                 @@ Jstr.v
+                                      "https://docs.terrateam.io/getting-started/quickstart-guide";
+                               ]
+                           [ txt' "here" ];
+                         txt' ".";
+                       ];
+                   ];
+                 li
+                   [
+                     h1 [ txt' "5" ];
+                     h2 [ txt' "Configure Terrateam" ];
+                     div
+                       [
+                         txt' "Read the ";
+                         a
+                           ~at:
+                             At.
+                               [
+                                 v (Jstr.v "target") (Jstr.v "_blank");
+                                 href @@ Jstr.v "https://docs.terrateam.io/";
+                               ]
+                           [ txt' "documentation" ];
+                         txt'
+                           " for how to configure Terrateam for your specific repository and \
+                            workflow.";
+                       ];
+                   ];
+               ];
+           ]
+  end
 end
