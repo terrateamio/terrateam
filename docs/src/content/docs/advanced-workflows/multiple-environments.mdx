@@ -120,6 +120,7 @@ In this example, we'll use a shared Terraform state file for all environments.
 ```
 
 #### Backend Configuration
+
 Define a single Terraform state file using the `local` backend in your `main.tf` file:
 ```hcl
 terraform {
@@ -294,3 +295,13 @@ terrateam apply aws production
 - Use a consistent naming convention for your directories, workspaces, and `.tfvars` files to make it easy to identify which environment they belong to.
 - Use tags and tag queries to target specific environments when running Terrateam operations, making it easy to manage multiple environments within a single repository.
 - Consider using separate Terraform state files for each environment to reduce the risk of accidental changes affecting multiple environments.
+
+## Comparing Approaches for Managing Multiple Environments
+
+Terrateam supports several strategies for managing multiple environments. Here is a comparison of the main approaches:
+
+| Approach                      | Advantages                                                                 | Disadvantages                                                      |
+|-------------------------------|----------------------------------------------------------------------------|--------------------------------------------------------------------|
+| **Separate Directories**      | Clear separation of code/resources; Easy to manage state per env; Simple to understand | Can lead to code duplication; Harder to share modules/logic  |
+| **Directories + Workspaces**  | Reduces code duplication; Easier to share logic; Flexible        | Workspace management can be confusing; State file must be managed carefully |
+| **tfvars Files**              | Centralizes code, only variables differ; Easy to add new environments | Risk of state file overlap if not careful; Can be harder to audit changes per env |
