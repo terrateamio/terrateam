@@ -86,6 +86,10 @@ Each key corresponds to a step in the Terrateam workflow:
 
 Only define the steps that make sense for your use case. All others can be omitted.
 
+:::note
+The exit code of the `plan` script is important.  Custom engine uses the OpenTofu detailed exit code standard in that an exit code of `0` means there are changes in the plan and `2` means the plan was successful but there are no changes.  Any other exit code is considered a failure.
+:::
+
 ## Per Workflow Engines
 If you have different workflows (for example, dev and prod), you can override the engine configuration per workflow. Just nest the `engine` block inside a workflow definition.
 
