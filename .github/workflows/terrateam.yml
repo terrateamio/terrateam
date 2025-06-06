@@ -1,0 +1,42 @@
+##########################################################################
+# DO NOT MODIFY
+#
+# THIS FILE SHOULD LIVE IN .github/workflows/terrateam.yml
+#
+# Looking for the Terrateam configuration file? .terrateam/config.yml.
+#
+# See https://terrateam.io/docs
+##########################################################################
+ name: 'Terrateam Workflow'
+ on:
+   workflow_dispatch:
+     inputs:
+       # The work-token and api-base-url are automatically passed in by the Terrateam server
+       work-token:
+         description: 'Work Token'
+         required: true
+       api-base-url:
+         description: 'API Base URL'
+       environment:
+         description: 'Environment in which to run the action'
+         type: environment
+ jobs:
+   terrateam:
+     permissions: # Required to pass credentials to the Terrateam action
+       id-token: write
+       contents: read
+     runs-on: ubuntu-latest
+     timeout-minutes: 1440
+     name: Terrateam Action
+     environment: '${{ github.event.inputs.environment }}'
+     steps:
+       - uses: actions/checkout@v4
+       - name: Run Terrateam Action
+         id: terrateam
+         uses: terrateamio/action@v1
+         with:
+           work-token: '${{ github.event.inputs.work-token }}'
+           api-base-url: '${{ github.event.inputs.api-base-url }}'
+         env:
+           SECRETS_CONTEXT: ${{ toJson(secrets) }}
+           VARIABLES_CONTEXT: ${{ toJson(vars) }}
