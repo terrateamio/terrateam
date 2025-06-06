@@ -1,0 +1,20 @@
+#! /usr/bin/env bash
+
+set -e
+
+if [[ -f 'index.adoc' ]]; then
+    if grep -qE '^\:state\: (committed|abandoned)$' index.adoc; then
+        echo "Mergeable"
+    else
+        echo "Does not have mergable state"
+        exit 1
+    fi
+elif [[ -f 'index.md' ]]; then
+    if grep -qE '^state\: (committed|abandoned)$' index.md; then
+        echo "Mergeable"
+    else
+        echo "Does not have mergable state"
+        exit 1
+    fi
+fi
+

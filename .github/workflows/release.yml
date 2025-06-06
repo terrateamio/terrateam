@@ -6,6 +6,7 @@ on:
       - main
     paths-ignore:
       - 'docs/**'
+      - 'rfds/**'
   workflow_dispatch:
     inputs:
       environment:
