@@ -1,3 +1,6 @@
+apply_requirements:
+  create_completed_apply_check_on_noop: true
+
 when_modified:
   file_patterns: []
 
@@ -6,6 +9,10 @@ dirs:
     tags: ['rfd']
     when_modified:
       file_patterns: ['${DIR}/*']
+  'code':
+    tags: ['code']
+    when_modified:
+      file_patterns: ['${DIR}/**/*']
 
 workflows:
   - tag_query: rfd
@@ -19,6 +26,17 @@ workflows:
       - type: run
         cmd: ['${TERRATEAM_ROOT}/rfds/bin/validate-state']
       - type: plan
+  - tag_query: code
+    lock_policy: none
+    engine:
+      name: custom
+      # If plan runs successfully, report no changes.  We are only really
+      # interested in the workflows section being called.
+      plan: ['bash', '-c', 'echo "{}" > $TERRATEAM_PLAN_FILE; exit 2']
+    plan:
+      - type: run
+        cmd: ['${TERRATEAM_ROOT}/bin/verify-commit-msg']
+      - type: plan    
 
 cost_estimation:
   enabled: false
