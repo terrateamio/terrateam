@@ -1,4 +1,4 @@
-insert into github_installation_repositories (
+insert into gitlab_installation_repositories (
   id,
   installation_id,
   owner,

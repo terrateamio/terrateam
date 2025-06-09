@@ -1,3 +1,3 @@
-insert into github_installations_map (installation_id)
+insert into gitlab_installations_map (installation_id)
 values ($installation)
 on conflict (installation_id) do nothing

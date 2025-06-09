@@ -6,15 +6,17 @@ wm as (
          gwm.pull_number as pull_number,
          gwm.sha as sha,
          gwm.base_sha as base_sha
-     from github_work_manifests as gwm
+     from gitlab_work_manifests as gwm
      where gwm.id = $id and gwm.state = 'running' and gwm.run_type in ('autoapply', 'apply')
 ),
 recent_completed_work_manifest as (
     select
-      gwm.completed_at as completed_at,
-      gwmr.success as success,
-      plans.data as data
-    from github_work_manifests as gwm
+        gwm.run_type as run_type,
+        gwmr.success as success,
+        gtp.data as data
+    from work_manifest_results as gwmr
+    inner join gitlab_work_manifests as gwm
+        on gwm.id = gwmr.work_manifest
     inner join wm
         on wm.repository = gwm.repository
     inner join work_manifest_results as gwmr

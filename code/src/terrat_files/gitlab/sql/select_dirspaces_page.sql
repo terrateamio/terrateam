@@ -12,21 +12,21 @@ unified_run_types as (
            when 'build-config' then 'build-config'
            when 'build-tree' then 'build-tree'
            end) as run_type
-    from github_work_manifests as gwm
+    from gitlab_work_manifests as gwm
 ),
 latest_unlocks as (
     select
         repository,
         pull_number,
         max(unlocked_at) as unlocked_at
-    from github_pull_request_unlocks
+    from gitlab_pull_request_unlocks
     group by repository, pull_number
 ),
 latest_drift_unlocks as (
     select
         repository,
         max(unlocked_at) as unlocked_at
-    from github_drift_unlocks
+    from gitlab_drift_unlocks
     group by repository
 ),
 q as (
@@ -74,18 +74,18 @@ q as (
         gwm.run_id as run_id,
         urt.run_type as unified_run_type,
         gwm.environment as environment
-    from github_work_manifests as gwm
+    from gitlab_work_manifests as gwm
     inner join work_manifest_dirspaceflows as gwmds
         on gwmds.work_manifest = gwm.id
-    inner join github_installation_repositories as gir
+    inner join gitlab_installation_repositories as gir
         on gir.id = gwm.repository
-    inner join github_user_installations2 as gui
+    inner join gitlab_user_installations2 as gui
         on gir.installation_id = gui.installation_id
     inner join unified_run_types as urt
         on urt.id = gwm.id
     left join work_manifest_results as gwmr
         on gwm.id = gwmr.work_manifest and gwmds.path = gwmr.path and gwmds.workspace = gwmr.workspace
-    left join github_pull_requests as gpr
+    left join gitlab_pull_requests as gpr
         on gwm.repository = gpr.repository and gwm.pull_number = gpr.pull_number
     left join drift_work_manifests as gdwm
         on gwm.id = gdwm.work_manifest

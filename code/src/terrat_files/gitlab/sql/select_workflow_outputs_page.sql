@@ -12,9 +12,9 @@ q as (
        else 'failure'
        end) as state
   from workflow_step_outputs as gwso
-  inner join github_work_manifests as gwm
+  inner join gitlab_work_manifests as gwm
       on gwm.id = gwso.work_manifest
-  inner join github_user_installations2 as gui
+  inner join gitlab_user_installations2 as gui
       on gwm.installation_id = gui.installation_id
   where gui.user_id = $user and gui.installation_id = $installation_id and gwm.id = $work_manifest_id
 )

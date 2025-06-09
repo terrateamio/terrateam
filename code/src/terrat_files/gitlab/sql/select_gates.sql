@@ -7,8 +7,8 @@ select
   gate,
   gg.dir,
   gg.workspace
-from github_gates as gg
-inner join github_pull_requests as gpr
+from gitlab_gates as gg
+inner join gitlab_pull_requests as gpr
   on (gpr.repository = gg.repository and gpr.pull_number = gg.pull_number
       and (gpr.sha = gg.sha or gpr.merged_sha = gg.sha))
 left join dirspaces as ds

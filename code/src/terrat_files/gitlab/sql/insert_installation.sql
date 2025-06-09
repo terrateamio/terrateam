@@ -1,4 +1,4 @@
-insert into github_installations (
+insert into gitlab_installations (
     id,
     login,
     org,
