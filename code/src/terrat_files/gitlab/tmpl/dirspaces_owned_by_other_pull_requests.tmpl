@@ -1,0 +1,21 @@
+## Changes owned by other pull requests :heavy_multiplication_x:
+
+Cannot perform action because some directories and workspaces are owned by other pull requests.
+
+| Dir | Workspace | Owner |
+| --- | --------- | ----- |
+@#dirspaces-@
+| `@dir@` | `@workspace@` | #@pull_request_id@ |
+@/dirspaces-@
+
+To unlock these pull requests, comment in any pull request:
+
+```
+terrateam unlock@-#unique_pull_request_ids@ @id@@/unique_pull_request_ids@
+```
+
+After resolving the issue, perform the apply operation again by commenting:
+
+```
+terrateam apply
+```

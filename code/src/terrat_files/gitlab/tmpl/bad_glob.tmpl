@@ -1,0 +1,8 @@
+## Malformed Glob
+
+There is an error in the repository configuration with a malformed glob, either in a `dirs` specification or a `file_patterns`.  Note, if you're using using `${DIR}`, it must be written with the `{` and `}`.
+
+
+The malformed glob is `@glob@`.
+
+Characters other than `0-9`, `A-Z`, `a-z`, `_`, `-`, `.`, and ` ` must be escaped with with `\`.  For example, the glob `prod/@@vars/*.tf` would be written `prod/\@@vars/*.tf`.
