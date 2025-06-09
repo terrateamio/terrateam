@@ -9,6 +9,11 @@ github_sql_files := $(wildcard $(SRC_DIR)/github/sql/*.sql)
 
 github_tmpl_files := $(wildcard $(SRC_DIR)/github/tmpl/*.tmpl)
 
+gitlab_sql_files := $(wildcard $(SRC_DIR)/gitlab/sql/*.sql)
+
+gitlab_tmpl_files := $(wildcard $(SRC_DIR)/gitlab/tmpl/*.tmpl)
+
+
 # Since we are generating this .ml file, there is no source to in the predfined
 # SRC_DIR, so we set it to someplace else since the source dir cannot be
 # modified by the build system.
@@ -18,7 +23,9 @@ NON_LIB_MODULES = \
 	terrat_files.ml \
 	terrat_files_migrations.ml \
 	terrat_files_github_sql.ml \
-        terrat_files_github_tmpl.ml
+        terrat_files_github_tmpl.ml \
+	terrat_files_gitlab_sql.ml \
+        terrat_files_gitlab_tmpl.ml
 
 $(SRC_DIR)/terrat_files.ml:
 	mkdir -p "$(SRC_DIR)"
@@ -45,10 +52,26 @@ $(SRC_DIR)/terrat_files_github_tmpl.ml: $(github_tmpl_files)
 	cp $^ github/tmpl/
 	ocaml-crunch -m plain github/tmpl/ > $@
 
+$(SRC_DIR)/terrat_files_gitlab_sql.ml: $(gitlab_sql_files)
+	mkdir -p "$(SRC_DIR)"
+	-rm -rf gitlab/sql
+	mkdir -p gitlab/sql
+	cp $^ gitlab/sql/
+	ocaml-crunch -m plain gitlab/sql/ > $@
+
+$(SRC_DIR)/terrat_files_gitlab_tmpl.ml: $(gitlab_tmpl_files)
+	mkdir -p "$(SRC_DIR)"
+	-rm -rf gitlab/tmpl
+	mkdir -p gitlab/tmpl
+	cp $^ gitlab/tmpl/
+	ocaml-crunch -m plain gitlab/tmpl/ > $@
+
 clean: clean_files
 
 clean_files:
 	rm "$(SRC_DIR)/terrat_files.ml" \
 	   "$(SRC_DIR)/terrat_files_migrations.ml" \
 	   "$(SRC_DIR)/terrat_files_github_sql.ml" \
-           "$(SRC_DIR)/terrat_files_github_tmpl.ml"
+           "$(SRC_DIR)/terrat_files_github_tmpl.ml" \
+	   "$(SRC_DIR)/terrat_files_gitlab_sql.ml" \
+           "$(SRC_DIR)/terrat_files_gitlab_tmpl.ml"
