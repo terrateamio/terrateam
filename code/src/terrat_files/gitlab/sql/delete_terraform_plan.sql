@@ -1,13 +1,13 @@
 with
 wm as (
      select repository, pull_number, created_at
-     from github_work_manifests as gwm
+     from gitlab_work_manifests as gwm
      where gwm.id = $id
 ),
 deletable_plans as (
     select work_manifest, path, workspace
     from plans as gtp
-    inner join github_work_manifests as gwm
+    inner join gitlab_work_manifests as gwm
        on gwm.id = gtp.work_manifest
     inner join wm
        on gwm.repository = wm.repository and gwm.pull_number = wm.pull_number

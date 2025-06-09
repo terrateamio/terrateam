@@ -1,4 +1,4 @@
-insert into github_pull_requests (
+insert into gitlab_pull_requests (
     base_branch,
     base_sha,
     branch,

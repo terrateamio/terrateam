@@ -1,4 +1,4 @@
-insert into github_users2 (
+insert into gitlab_users2 (
   avatar_url,
   email,
   expiration,

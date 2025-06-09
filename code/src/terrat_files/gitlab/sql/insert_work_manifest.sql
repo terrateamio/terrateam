@@ -23,8 +23,8 @@ select
        $runs_on,
        gprm.core_id,
        grm.core_id
-from github_repositories_map as grm
-left join github_pull_requests_map as gprm
+from gitlab_repositories_map as grm
+left join gitlab_pull_requests_map as gprm
      on gprm.repository_id = grm.repository_id
         and gprm.pull_number = $pull_number
 where grm.repository_id = $repository

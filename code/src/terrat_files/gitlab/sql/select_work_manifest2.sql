@@ -16,5 +16,5 @@ select
     gwm.repo_name,
     gwm.environment,
     gwm.runs_on
-from github_work_manifests as gwm
+from gitlab_work_manifests as gwm
 where gwm.id = $id

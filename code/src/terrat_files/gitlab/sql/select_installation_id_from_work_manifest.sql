@@ -1,4 +1,4 @@
 select
         gwm.installation_id
-from github_work_manifests as gwm
+from gitlab_work_manifests as gwm
 where gwm.id = $id

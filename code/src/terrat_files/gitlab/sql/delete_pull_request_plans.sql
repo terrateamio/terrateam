@@ -2,9 +2,9 @@ with
 deletable_plans as (
     select work_manifest, path, workspace
     from plans as gtp
-    inner join github_work_manifests as gwm
+    inner join gitlab_work_manifests as gwm
         on gwm.id = gtp.work_manifest
-    inner join github_installation_repositories as gir
+    inner join gitlab_installation_repositories as gir
         on gir.id = gwm.repository
     where gwm.repository = $repo_id and gwm.pull_number = $pull_number
 )

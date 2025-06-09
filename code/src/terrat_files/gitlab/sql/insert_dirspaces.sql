@@ -8,6 +8,6 @@ select
         grm.core_id
 from unnest($base_sha, $path, $repository, $sha, $workspace, $lock_policy) as
      x(base_sha, path, repository, sha, workspace, lock_policy)
-inner join github_repositories_map as grm
+inner join gitlab_repositories_map as grm
       on grm.repository_id = x.repository
 on conflict on constraint change_dirspaces_pkey do nothing
