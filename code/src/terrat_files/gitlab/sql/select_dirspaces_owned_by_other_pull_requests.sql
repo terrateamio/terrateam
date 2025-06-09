@@ -19,12 +19,12 @@ pull_request_applies_previous_commits as (
         gwm.pull_number as pull_number,
         gwmds.path as path,
         gwmds.workspace as workspace
-    from github_pull_requests as gpr
-    inner join github_work_manifests as gwm
+    from gitlab_pull_requests as gpr
+    inner join gitlab_work_manifests as gwm
         on gpr.repository = gwm.repository and gpr.pull_number = gwm.pull_number
     inner join work_manifest_dirspaceflows as gwmds
         on gwmds.work_manifest = gwm.id
-    left join github_pull_request_latest_unlocks as gpru
+    left join gitlab_pull_request_latest_unlocks as gpru
         on gpru.repository = gpr.repository and gpru.pull_number = gpr.pull_number
     where gwm.repository = $repository
           and gwm.pull_number = $pull_number
@@ -41,8 +41,8 @@ all_necessary_dirspaces as (
         coalesce(gds.path, prapc.path) as path,
         coalesce(gds.workspace, prapc.workspace) as workspace,
         gds.lock_policy as lock_policy
-    from github_pull_requests as gpr
-    inner join github_change_dirspaces as gds
+    from gitlab_pull_requests as gpr
+    inner join gitlab_change_dirspaces as gds
         on gds.repository = gpr.repository
            and gds.base_sha = gpr.base_sha
            and (gds.sha = gpr.sha or gds.sha = gpr.merged_sha)
@@ -54,8 +54,8 @@ overlapping_pull_requests as (
     select
         gpr.repository as repository,
         gpr.pull_number as pull_number
-    from github_pull_requests as gpr
-    inner join github_change_dirspaces as gcds
+    from gitlab_pull_requests as gpr
+    inner join gitlab_change_dirspaces as gcds
         on gcds.repository = gpr.repository
            and gcds.base_sha = gpr.base_sha
            and gcds.sha = gpr.sha
@@ -93,12 +93,12 @@ dirspace_ops_for_pull_requests as (
                            order by gwm.created_at desc) as rn
 -- We want access to all the information in the pull request table, so select it
 -- and then narrow it to over our overlapping pull requests.
-    from github_pull_requests as gpr
+    from gitlab_pull_requests as gpr
     inner join overlapping_pull_requests as opr
         on opr.repository = gpr.repository
            and opr.pull_number = gpr.pull_number
 -- We want the work manifests that ran against the overlapping PR
-    left join github_work_manifests as gwm
+    left join gitlab_work_manifests as gwm
         on gwm.repository = gpr.repository
            and gwm.pull_number = gpr.pull_number
 -- The change dirspaces table contains the list of dirspaces in a specific
@@ -113,7 +113,7 @@ dirspace_ops_for_pull_requests as (
 -- It also gets any change dirspaces for the shas for the pull request.  This is
 -- so we also find those dirspaces that have no runs associated at all, just a
 -- pull request that was merged.
-    inner join github_change_dirspaces as gcds
+    inner join gitlab_change_dirspaces as gcds
         on (gcds.repository = gwm.repository
             and gcds.base_sha = gwm.base_sha)
            or (gcds.repository = gpr.repository
@@ -138,7 +138,7 @@ dirspace_ops_for_pull_requests as (
            and plans.path = wmr.path
            and plans.workspace = wmr.workspace
 -- And of course, if any unlocks happened, that invalidated the work manifest.
-    left join github_pull_request_latest_unlocks as unlocks
+    left join gitlab_pull_request_latest_unlocks as unlocks
         on unlocks.repository = gpr.repository
            and unlocks.pull_number = gpr.pull_number
 -- This check for repository is not strictly necessary, but just adding it to be
@@ -197,7 +197,7 @@ select distinct on (adds.path, adds.workspace, adds.pull_number)
     gpr.state as state,
     gpr.title as title,
     gpr.username as username
-from github_pull_requests as gpr
+from gitlab_pull_requests as gpr
 inner join dangling_dirspaces as adds
     on gpr.repository = adds.repository and gpr.pull_number = adds.pull_number
 inner join dirspaces as ds on adds.path = ds.dir and adds.workspace = ds.workspace

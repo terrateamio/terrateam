@@ -14,8 +14,8 @@ select
     gwm.repo_name,
     gwm.run_kind,
     gwm.username
-from github_work_manifests as gwm
-left join github_pull_requests as gpr
+from gitlab_work_manifests as gwm
+left join gitlab_pull_requests as gpr
     on gwm.repository = gpr.repository and gwm.pull_number = gpr.pull_number
 left join drift_work_manifests as gdwm
     on gwm.id = gdwm.work_manifest

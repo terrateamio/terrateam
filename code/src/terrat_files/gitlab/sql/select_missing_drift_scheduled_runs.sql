@@ -14,7 +14,7 @@ ds as (
          updated_at,
          (current_date + window_start at time zone current_setting('timezone')) as window_start,
          (current_date + window_end at time zone current_setting('timezone')) as window_end
-    from github_drift_schedules
+    from gitlab_drift_schedules
     where schedule in ('hourly', 'daily', 'weekly', 'monthly')
     for update skip locked
 ),
@@ -22,7 +22,7 @@ latest_drift_unlocks as (
     select
         repository,
         max(unlocked_at) as unlocked_at
-    from github_drift_unlocks
+    from gitlab_drift_unlocks
     group by repository
 ),
 dwms as (
@@ -32,7 +32,7 @@ dwms as (
         gwm.state as state,
         row_number() over (partition by gwm.repository order by gwm.created_at desc) as rn
     from drift_work_manifests as dwm
-    inner join github_work_manifests as gwm
+    inner join gitlab_work_manifests as gwm
         on gwm.id = dwm.work_manifest
     left join latest_drift_unlocks
         on latest_drift_unlocks.repository = gwm.repository
@@ -64,9 +64,9 @@ select
     dsw.window_start,
     dsw.window_end
 from ds
-inner join github_installation_repositories as gir
+inner join gitlab_installation_repositories as gir
     on gir.id = ds.repository
-inner join github_installations as gi
+inner join gitlab_installations as gi
     on gi.id = gir.installation_id
 left join latest_drift_manifests as ldm
     on ldm.repository = ds.repository

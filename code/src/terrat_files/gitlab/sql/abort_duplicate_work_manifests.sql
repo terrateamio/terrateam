@@ -5,7 +5,7 @@ dirspaces as (
 work_manifests_for_dirspace as (
     select distinct
         gwm.id
-    from github_work_manifests as gwm
+    from gitlab_work_manifests as gwm
     inner join work_manifest_dirspaceflows as gwmdsfs
         on gwmdsfs.work_manifest = gwm.id
     inner join dirspaces

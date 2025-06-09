@@ -1,4 +1,4 @@
-update github_users2 set
+update gitlab_users2 set
   token = $token,
   expiration = $expiration,
   refresh_token = $refresh_token,

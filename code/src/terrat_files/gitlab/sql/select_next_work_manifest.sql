@@ -4,14 +4,14 @@ latest_unlocks as (
         repository,
         pull_number,
         max(unlocked_at) as unlocked_at
-    from github_pull_request_unlocks
+    from gitlab_pull_request_unlocks
     group by repository, pull_number
 ),
 latest_drift_unlocks as (
     select
         repository,
         max(unlocked_at) as unlocked_at
-    from github_drift_unlocks
+    from gitlab_drift_unlocks
     group by repository
 ),
 wms as (
@@ -33,7 +33,7 @@ wms as (
          when 'autoplan' then 1
          when 'plan' then 1
          end) as priority
-    from github_work_manifests as gwm
+    from gitlab_work_manifests as gwm
     left join drift_work_manifests as gdwm
         on gdwm.work_manifest = gwm.id
     left join latest_unlocks as unlocks

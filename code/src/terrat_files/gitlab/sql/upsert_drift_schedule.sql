@@ -9,7 +9,7 @@ select
         $window_start,
         $window_end,
         grm.core_id
-from github_repositories_map as grm
+from gitlab_repositories_map as grm
 where grm.repository_id = $repo
 on conflict on constraint drift_schedules_pkey
 do update set

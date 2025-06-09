@@ -12,8 +12,8 @@ wm as (
            else gwm.run_type
          end) as run_type,
         gwm.created_at as created_at
-    from github_work_manifests as gwm
-    left join github_pull_request_latest_unlocks as unlocks
+    from gitlab_work_manifests as gwm
+    left join gitlab_pull_request_latest_unlocks as unlocks
         on unlocks.repository = gwm.repository and unlocks.pull_number = gwm.pull_number
     where gwm.repository = $repo_id
           and gwm.pull_number = $pull_number
@@ -28,7 +28,7 @@ latest_merged_pull_request as (
         repository,
         pull_number,
         merged_sha
-    from github_pull_requests as gpr
+    from gitlab_pull_requests as gpr
     where state = 'merged' and repository = $repo_id
     order by merged_at desc
     limit 1
@@ -48,7 +48,7 @@ work_manifest_results as (
                                gwmr.path,
                                gwmr.workspace
                            order by gwm.created_at desc) as rn
-    from github_work_manifests as gwm
+    from gitlab_work_manifests as gwm
     inner join work_manifest_results as gwmr
         on gwmr.work_manifest = gwm.id
     where gwm.repository = $repo_id and gwm.pull_number = $pull_number
@@ -60,7 +60,7 @@ plans_with_no_changes as (
         gpr.pull_number as pull_number,
         results.path as path,
         results.workspace as workspace
-    from github_pull_requests as gpr
+    from gitlab_pull_requests as gpr
     left join latest_merged_pull_request as lmpr
         on gpr.repository = lmpr.repository
     left join work_manifest_results as results
@@ -77,7 +77,7 @@ applied_dirspaces as (
         gpr.pull_number as pull_number,
         results.path as path,
         results.workspace as workspace
-    from github_pull_requests as gpr
+    from gitlab_pull_requests as gpr
     left join latest_merged_pull_request as lmpr
         on gpr.repository = lmpr.repository
     left join work_manifest_results as results
@@ -89,8 +89,8 @@ applied_dirspaces as (
 select distinct
     applied.path,
     applied.workspace
-from github_pull_requests as gpr
-inner join github_installation_repositories as gir
+from gitlab_pull_requests as gpr
+inner join gitlab_installation_repositories as gir
     on gir.id = gpr.repository
 left join applied_dirspaces as applied
     on gpr.repository = applied.repository and gpr.pull_number = applied.pull_number
@@ -101,8 +101,8 @@ UNION
 select distinct
     pwnc.path,
     pwnc.workspace
-from github_pull_requests as gpr
-inner join github_installation_repositories as gir
+from gitlab_pull_requests as gpr
+inner join gitlab_installation_repositories as gir
     on gir.id = gpr.repository
 left join plans_with_no_changes as pwnc
     on pwnc.repository = gpr.repository and pwnc.pull_number = gpr.pull_number

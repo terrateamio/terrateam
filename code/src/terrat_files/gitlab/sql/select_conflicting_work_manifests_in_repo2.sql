@@ -5,10 +5,10 @@ dirspaces as (
 wm as (
    select
      gwm.*
-   from github_work_manifests as gwm
-   left join github_pull_request_latest_unlocks as latest_unlocks
+   from gitlab_work_manifests as gwm
+   left join gitlab_pull_request_latest_unlocks as latest_unlocks
         on latest_unlocks.repository = gwm.repository and latest_unlocks.pull_number = gwm.pull_number
-   left join github_drift_latest_unlocks as latest_drift_unlocks
+   left join gitlab_drift_latest_unlocks as latest_drift_unlocks
         on latest_drift_unlocks.repository = gwm.repository
    where gwm.repository = $repository
          and gwm.state in ('queued', 'running')
@@ -36,11 +36,11 @@ select
 from wm as gwm
 inner join work_manifests_for_dirspace
     on work_manifests_for_dirspace.id = gwm.id
-left join github_pull_request_latest_unlocks as latest_unlocks
+left join gitlab_pull_request_latest_unlocks as latest_unlocks
     on latest_unlocks.repository = gwm.repository and latest_unlocks.pull_number = gwm.pull_number
 left join drift_work_manifests as gdwm
     on gdwm.work_manifest = gwm.id
-left join github_drift_latest_unlocks as latest_drift_unlocks
+left join gitlab_drift_latest_unlocks as latest_drift_unlocks
     on latest_drift_unlocks.repository = gwm.repository
 where gwm.repository = $repository
       and gwm.state in ('queued', 'running')

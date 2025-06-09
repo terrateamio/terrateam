@@ -4,7 +4,7 @@ latest_unlocks as (
         repository,
         pull_number,
         max(unlocked_at) as unlocked_at
-    from github_pull_request_unlocks
+    from gitlab_pull_request_unlocks
     where repository = $repository and pull_number = $pull_number
     group by repository, pull_number
 ),
@@ -12,7 +12,7 @@ latest_drift_unlocks as (
     select
         repository,
         max(unlocked_at) as unlocked_at
-    from github_drift_unlocks
+    from gitlab_drift_unlocks
     where repository = $repository
     group by repository
 ),
@@ -27,7 +27,7 @@ latest_merged_pull_request as (
         repository,
         pull_number,
         merged_sha
-    from github_pull_requests as gpr
+    from gitlab_pull_requests as gpr
     where state = 'merged' and repository = $repository
     order by merged_at desc
     limit 1
@@ -48,7 +48,7 @@ all_completed_runs as (
          when 'plan' then 'plan'
          end) as unified_run_type,
         gwm.completed_at as completed_at
-    from github_pull_requests as gpr
+    from gitlab_pull_requests as gpr
     left join latest_unlocks
         on latest_unlocks.repository = gpr.repository and latest_unlocks.pull_number = gpr.pull_number
     left join latest_merged_pull_request as lmpr

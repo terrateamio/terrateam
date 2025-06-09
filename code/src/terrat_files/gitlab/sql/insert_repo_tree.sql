@@ -12,7 +12,7 @@ from unnest(
   $changed,
   $id
 ) as x(installation_id, sha, path, changed, id)
-inner join github_installations_map as gim
+inner join gitlab_installations_map as gim
       on gim.installation_id = x.installation_id
 on conflict on constraint repo_trees_pkey
 do update set (

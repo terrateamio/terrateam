@@ -1,7 +1,7 @@
 update work_manifests as wm
 set run_id = $run_id
-from github_work_manifests as gwm
-left join github_pull_requests as gpr
+from gitlab_work_manifests as gwm
+left join gitlab_pull_requests as gpr
     on gwm.id = gpr.repository and gwm.pull_number = gpr.pull_number
 left join drift_work_manifests as gdwm
     on gdwm.work_manifest = gwm.id

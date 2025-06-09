@@ -1,4 +1,4 @@
-insert into github_user_installations2 (
+insert into gitlab_user_installations2 (
   user_id,
   installation_id
 )

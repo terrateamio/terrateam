@@ -1,4 +1,4 @@
-insert into github_installation_repositories as r (
+insert into gitlab_installation_repositories as r (
        id,
        installation_id,
        name,
