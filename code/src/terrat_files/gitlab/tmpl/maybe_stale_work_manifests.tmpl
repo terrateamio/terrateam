@@ -1,0 +1,32 @@
+# Potentially Stale Operations Detected
+Terrateam has identified potentially stale operations whose current status cannot be determined. This occurs when GitHub fails to provide status updates. **These are blocking the execution of this operation**.
+
+## What to Do Next
+- **If the operations are still in progress**, no immediate action is necessary. This operation will run automatically when they complete.
+- **If the operations have encountered failures**, follow the instructions below to unlock them, this operation will resume automatically.
+
+<details>
+   <summary><h3>Potentially Stale Operations</h3></summary>
+
+| Pull Request | Operation | State | Created At |
+| --- | --- | --- | --- |
+@#work_manifests-@
+| @?is_pr-@ #@id@ @-/is_pr@@!is_pr-@ @id@ @-/is_pr@ | @run_type@ | @state@ | @created_at@ UTC |
+@/work_manifests-@
+
+If these appear to be stuck, unlock them by commenting in any pull request:
+
+```
+terrateam unlock@-#work_manifests@ @id@@/work_manifests@
+```
+
+**Be careful when unlocking.**  Make sure that these runs are actually stuck by verifying if there are any running GitHub Actions workflows.
+
+If this persists, verify the GitHub Action workflow matches the [documentation](https://terrateam.io/docs/getting-started).
+
+For further support:
+
+- Join our [Slack community](https://slack.terrateam.io/) (Fastest)
+- Email us directly at support@@terrateam.io
+
+</details>
