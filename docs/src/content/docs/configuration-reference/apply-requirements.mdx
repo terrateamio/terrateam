@@ -2,6 +2,7 @@
 title: apply_requirements
 description: The apply_requirements configuration reference
 ---
+import { Aside } from '@astrojs/starlight/components';
 
 The `apply_requirements` configuration allow you to define a set of conditions that must be met before an apply operation can be executed on a pull request. These requirements help ensure that changes to your infrastructure are properly reviewed and approved before being applied.
 
@@ -26,6 +27,10 @@ apply_requirements:
         enabled: true
         ignore_matching: []
 ```
+
+<Aside type="note" title="No-Op Applies">
+In this context, "noop" (no operation) means there are no Terraform or OpenTofu changes in the pull request. If `create_completed_apply_check_on_noop` is set to `true`, Terrateam will still create and mark the apply status check as complete, even when there is nothing to apply. [Learn more about no-op](https://en.wikipedia.org/wiki/NOP_(code))
+</Aside>
 
 ## Keys
 | Key | Type | Description |

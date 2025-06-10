@@ -18,7 +18,7 @@ checkout_strategy: merge
 ### Values
 | Value | Description |
 | --- | --- |
-| merge | (Default) Terrateam will perform a merge of the pull request's head commit into the base branch. This is equivalent to running git checkout \<base_branch\> followed by git merge \<head_commit>\. |
+| merge | (Default) Terrateam will merge the pull request's head commit into the base branch to include all changes during deployment. |
 | head | Terrateam will checkout the pull request's head commit directly. This is equivalent to running git checkout \<head_commit\>. |
 
 ## Examples
