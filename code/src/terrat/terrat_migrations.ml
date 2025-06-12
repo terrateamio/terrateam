@@ -59,7 +59,7 @@ let run_file_sql ?(tx = true) fname (config, storage) =
                 ~f:(fun stmt ->
                   let open Pgsql_io in
                   Logs.info (fun m -> m "Performing SQL operation: %s" stmt);
-                  let stmt_sql = Typed_sql.(sql /^ Pgsql_io.clean_string stmt) in
+                  let stmt_sql = Typed_sql.(sql /^ stmt) in
                   Prepared_stmt.execute db stmt_sql)
                 stmts))
   | None -> failwith ("Could not load file: " ^ fname)
@@ -148,7 +148,6 @@ let migrations =
     ("refactor-swap-primary-keys", run_file_sql "2025-05-01-refactor-swap-primary-keys.sql");
     ( "refactor-drop-legacy-github-columns",
       run_file_sql "2025-05-02-refactor-remove-old-columns.sql" );
-    ("fix-slow-applied-dirspace-query", run_file_sql "2025-05-25-fix-slow-queries.sql");
   ]
 
 let run config storage = Mig.run (config, storage) migrations
