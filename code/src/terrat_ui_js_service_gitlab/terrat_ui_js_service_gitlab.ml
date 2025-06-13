@@ -1,13 +1,54 @@
 module At = Brtl_js2.Brr.At
 
-type t = unit
+module Client = struct
+  module Http = Abb_js_fetch
 
-let create () = Abb_js.Future.return (Ok ())
+  module Io = struct
+    type 'a t = 'a Abb_js.Future.t
+    type err = Jv.Error.t
 
-module User = struct
+    let ( >>= ) = Abb_js.Future.Infix_monad.( >>= )
+    let return = Abb_js.Future.return
+
+    let call ?body ~headers ~meth url =
+      let url = Uri.to_string url in
+      let meth =
+        match meth with
+        | `Get -> `GET
+        | `Delete -> `DELETE
+        | `Patch -> assert false
+        | `Put -> `PUT
+        | `Post -> `POST
+      in
+      Http.fetch ?body ~headers ~meth ~url ()
+      >>= function
+      | Ok resp ->
+          return
+            (Ok
+               (Openapi.Response.make
+                  ~headers:(Http.Response.headers resp)
+                  ~status:(Http.Response.status resp)
+                  (Http.Response.text resp)))
+      | Error (`Js_err err) -> return (Error (`Io_err err))
+  end
+
+  module Api = Openapi.Make (Io)
+
   type t = unit
 
-  let avatar_url t = raise (Failure "nyi")
+  let call = Api.call
+end
+
+type t = { client : Client.t }
+
+let create () = Abb_js.Future.return (Ok { client = () })
+
+module User = struct
+  module U = Terrat_api_components.Gitlab_user
+
+  type t = U.t
+
+  let avatar_url { U.avatar_url; _ } = CCOption.get_or ~default:"" avatar_url
 end
 
 module Server_config = struct
@@ -21,10 +62,20 @@ module Installation = struct
 
   let id t = raise (Failure "nyi")
   let name t = raise (Failure "nyi")
+  let tier_name t = raise (Failure "nyi")
+  let tier_features t = raise (Failure "nyi")
+  let trial_ends_at t = raise (Failure "nyi")
 end
 
 module Api = struct
-  let whoami t = raise (Failure "nyi")
+  let whoami t =
+    let open Abb_js_future_combinators.Infix_result_monad in
+    Client.call (Terrat_api_gitlab_user.Whoami.make ())
+    >>= fun resp ->
+    match Openapi.Response.value resp with
+    | `OK user -> Abb_js.Future.return (Ok user)
+    | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
+
   let server_config t = raise (Failure "nyi")
   let installations t = raise (Failure "nyi")
   let work_manifests ?tz ?page ?limit ?q ?dir ~installation_id t = raise (Failure "nyi")

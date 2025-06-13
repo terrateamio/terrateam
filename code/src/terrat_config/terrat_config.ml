@@ -29,7 +29,7 @@ module Github = struct
 end
 
 module Gitlab = struct
-  let default_gitlab_api_base_url = Uri.of_string "https://api.gitlab.com"
+  let default_gitlab_api_base_url = Uri.of_string "https://gitlab.com"
   let default_gitlab_web_base_url = Uri.of_string "https://gitlab.com"
 
   type t = {

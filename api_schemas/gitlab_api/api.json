@@ -4575,11 +4575,8 @@
         "type": "object"
       },
       "API_Entities_Member": {
-        "description": "API_Entities_Member model",
         "additionalProperties": false,
-        "required": [
-          "access_level"
-        ],
+        "description": "API_Entities_Member model",
         "properties": {
           "access_level": {
             "type": "integer"
@@ -4650,6 +4647,9 @@
             "type": "string"
           }
         },
+        "required": [
+          "access_level"
+        ],
         "type": "object"
       },
       "API_Entities_Membership": {
@@ -9490,6 +9490,7 @@
         "type": "object"
       },
       "API_Entities_UserPublic": {
+        "additionalProperties": false,
         "description": "API_Entities_UserPublic model",
         "properties": {
           "avatar_path": {
@@ -9504,7 +9505,7 @@
             "type": "string"
           },
           "bot": {
-            "type": "string"
+            "type": "boolean"
           },
           "can_create_group": {
             "example": true,
@@ -9549,7 +9550,7 @@
             "type": "string"
           },
           "external": {
-            "type": "string"
+            "type": "boolean"
           },
           "extra_shared_runners_minutes_limit": {
             "type": "string"
@@ -9566,7 +9567,10 @@
             "type": "integer"
           },
           "identities": {
-            "$ref": "#/components/schemas/API_Entities_Identity"
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/API_Entities_Identity"
+            }
           },
           "is_followed": {
             "type": "string"
@@ -9619,7 +9623,10 @@
             "type": "string"
           },
           "scim_identities": {
-            "$ref": "#/components/schemas/API_Entities_ScimIdentity"
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/API_Entities_ScimIdentity"
+            }
           },
           "shared_runners_minutes_limit": {
             "type": "string"
@@ -9658,6 +9665,11 @@
             "type": "string"
           }
         },
+        "required": [
+          "created_at",
+          "id",
+          "username"
+        ],
         "type": "object"
       },
       "API_Entities_UserSafe": {
@@ -26184,10 +26196,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Get the currently authenticated user",
-            "schema": {
-              "$ref": "#/components/schemas/API_Entities_UserPublic"
-            }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/API_Entities_UserPublic"
+                }
+              }
+            },
+            "description": "Get the currently authenticated user"
           }
         },
         "tags": [
@@ -36242,14 +36258,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Gets a member of a group or project, including those who gained membership through ancestor group",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/API_Entities_Member"
                 }
               }
-            }
+            },
+            "description": "Gets a member of a group or project, including those who gained membership through ancestor group"
           },
           "404": {}
         },
@@ -57098,14 +57114,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Gets a member of a group or project, including those who gained membership through ancestor group",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/API_Entities_Member"
                 }
               }
-            }
+            },
+            "description": "Gets a member of a group or project, including those who gained membership through ancestor group"
           },
           "404": {}
         },
@@ -59568,14 +59584,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Merge a merge request",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/API_Entities_MergeRequest"
                 }
               }
-            }
+            },
+            "description": "Merge a merge request"
           },
           "400": {
             "description": "Bad request"
@@ -83837,17 +83853,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Get the list of users",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/API_Entities_UserBasic"
-                  }
+                  },
+                  "type": "array"
                 }
               }
-            }
+            },
+            "description": "Get the list of users"
           }
         },
         "tags": [
