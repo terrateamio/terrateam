@@ -74,6 +74,21 @@
         ],
         "type": "object"
       },
+      "gitlab-user": {
+        "additionalProperties": false,
+        "properties": {
+          "avatar_url": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "username"
+        ],
+        "type": "object"
+      },
       "hook-outputs": {
         "additionalProperties": false,
         "properties": {
@@ -2594,6 +2609,26 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/github-user"
+                }
+              }
+            }
+          },
+          "403": {
+            "content": {}
+          }
+        }
+      }
+    },
+    "/api/v1/gitlab/whoami": {
+      "get": {
+        "operationId": "gitlab-user/whoami",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/gitlab-user"
                 }
               }
             }

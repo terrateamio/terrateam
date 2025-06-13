@@ -23,6 +23,7 @@ struct
       let api_v1 () = Brtl_rtng.Route.(api () / "v1")
       let gitlab () = Brtl_rtng.Route.(api () / "gitlab")
       let gitlab_v1 () = Brtl_rtng.Route.(gitlab () / "v1")
+      let gitlab_whoami () = Brtl_rtng.Route.(api_v1 () / "gitlab" / "whoami")
 
       let gitlab_callback () =
         Brtl_rtng.Route.(
@@ -35,6 +36,8 @@ struct
           [
             ( `GET,
               Rt.gitlab_callback () --> Terrat_vcs_service_gitlab_ep_callback.get config storage );
+            ( `GET,
+              Rt.gitlab_whoami () --> Terrat_vcs_service_gitlab_ep_user.Whoami.get config storage );
           ]
   end
 
