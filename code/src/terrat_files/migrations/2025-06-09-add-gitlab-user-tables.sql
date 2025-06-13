@@ -1,4 +1,4 @@
-create table if not exists github_users2 (
+create table if not exists gitlab_users2 (
     avatar_url text,
     created_at timestamp with time zone not null default (now()),
     email text,
