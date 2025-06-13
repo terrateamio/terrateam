@@ -50,103 +50,94 @@ all_necessary_dirspaces as (
         on gpr.repository = prapc.repository and gpr.pull_number = prapc.pull_number
     where gpr.repository = $repository and gpr.pull_number = $pull_number
 ),
-unmerged_pull_requests_with_applies as (
-    select distinct
+overlapping_pull_requests as (
+    select
         gpr.repository as repository,
         gpr.pull_number as pull_number
     from github_pull_requests as gpr
-    inner join github_work_manifests as gwm
-        on gwm.repository = gpr.repository and gwm.pull_number = gpr.pull_number
-    left join github_pull_request_latest_unlocks as gpru
-        on gpru.repository = gpr.repository and gpru.pull_number = gpr.pull_number
-    where gwm.repository = $repository
-          and gpr.state in ('open', 'closed') and gwm.run_type in ('apply', 'autoapply', 'unsafe-apply')
-          and (gpru.unlocked_at is null or gpru.unlocked_at < gwm.created_at)
+    inner join github_change_dirspaces as gcds
+        on gcds.repository = gpr.repository
+           and gcds.base_sha = gpr.base_sha
+           and gcds.sha = gpr.sha
+    inner join all_necessary_dirspaces as ands
+        on ands.path = gcds.path
+           and ands.workspace = gcds.workspace
+    where gpr.repository = $repository
+    group by gpr.repository, gpr.pull_number
 ),
--- All those dirspaces that are in a pull request that has at least one apply
--- and not merged.
+incomplete_dirspaces_for_pull_requests as (
+    select
+        gpr.repository as repository,
+        gpr.pull_number as pull_number,
+        gpr.merged_at is not null as is_merged,
+        ands.path as path,
+        ands.workspace as workspace,
+        gwm.run_type as run_type,
+        (plans.has_changes is not null and plans.has_changes) as has_changes,
+        wmr.success as success,
+        row_number() over (partition by gwm.repository,
+                                        gwm.pull_number,
+                                        ands.path,
+                                        ands.workspace
+                           order by gwm.created_at desc) as rn
+    from github_pull_requests as gpr
+    inner join overlapping_pull_requests as opr
+        on opr.repository = gpr.repository
+           and opr.pull_number = gpr.pull_number
+    inner join github_change_dirspaces as gcds
+        on gcds.repository = gpr.repository
+           and gcds.base_sha = gpr.base_sha
+           and gcds.sha = gpr.sha
+    left join all_necessary_dirspaces as ands
+        on ands.path = gcds.path
+           and ands.workspace = gcds.workspace
+    left join github_work_manifests as gwm
+        on gwm.repository = gpr.repository
+           and gwm.pull_number = gpr.pull_number
+           and ((gpr.merged_at is not null and gwm.created_at >= gpr.merged_at)
+                or (gwm.base_sha = gpr.base_sha
+                    and (gwm.sha in (gpr.sha, gpr.merged_sha))))
+    left join work_manifest_results as wmr
+        on wmr.work_manifest = gwm.id
+           and wmr.path = ands.path
+           and wmr.workspace = ands.workspace
+    left join plans
+        on plans.work_manifest = gwm.id
+           and plans.path = ands.path
+           and plans.workspace = ands.workspace
+    left join github_pull_request_latest_unlocks as unlocks
+        on unlocks.repository = gpr.repository
+           and unlocks.pull_number = gpr.pull_number
+    where gpr.repository = $repository
+          and ands.path is not null
+          and ands.workspace is not null
+          and (gpr.merged_at is not null
+               and (unlocks.unlocked_at is null or unlocks.unlocked_at < gpr.merged_at)
+               and (gwm.id is null
+                    or (gwm.state = 'completed'
+                        and (unlocks.unlocked_at is null or unlocks.unlocked_at < gwm.created_at)
+                        and (gwm.run_type in ('autoapply', 'apply', 'autoplan', 'plan'))
+                        and ands.lock_policy in ('strict', 'merge'))))
+               or (gpr.merged_at is null
+                   and gwm.id is not null
+                   and (unlocks.unlocked_at is null or unlocks.unlocked_at < gwm.created_at)
+                   and gwm.run_type in ('autoapply', 'apply')
+                   and ands.lock_policy in ('strict', 'apply'))
+),
 dangling_dirspaces as (
     select
-        ands.repository as repository,
-        ands.pull_number as pull_number,
-        ands.path as path,
-        ands.workspace as workspace
-    from unmerged_pull_requests_with_applies as uprwa
-    inner join all_necessary_dirspaces as ands
-        on ands.repository = uprwa.repository and ands.pull_number = uprwa.pull_number
-    where ands.lock_policy in ('strict', 'apply')
-),
--- For all required dirspaces we will find only those pull requests which have
---  been merged and then of those merge applies we want those necessary
---  directories that do not appear in the merged list.
-merged_pull_requests as (
-    select
-        gpr.repository as repository,
-        gpr.pull_number as pull_number,
-        gpr.base_sha as base_sha,
-        gpr.sha as sha,
-        gpr.merged_sha as merged_sha
-    from github_pull_requests as gpr
-    left join github_pull_request_latest_unlocks as unlocks
-        on unlocks.repository = gpr.repository and unlocks.pull_number = gpr.pull_number
-    where gpr.repository = $repository
-          and gpr.state = 'merged'
-          and (unlocks.unlocked_at is null or unlocks.unlocked_at < gpr.merged_at)
-),
-applies_for_merged_pull_requests as (
-    select distinct
-        mpr.repository as repository,
-        mpr.pull_number as pull_number,
-        gwmds.path as path,
-        gwmds.workspace as workspace
-    from merged_pull_requests as mpr
-    inner join github_work_manifests as gwm
-        on mpr.repository = gwm.repository and mpr.pull_number = gwm.pull_number
-           and gwm.base_sha = mpr.base_sha and (gwm.sha = mpr.sha or gwm.sha = mpr.merged_sha)
-    inner join work_manifest_dirspaceflows as gwmds
-        on gwmds.work_manifest = gwm.id
-    inner join work_manifest_results as results
-        on results.work_manifest = gwm.id
-           and results.path = gwmds.path and results.workspace = gwmds.workspace
-    left join plans as gtp
-        on gtp.work_manifest = gwm.id and gtp.path = gwmds.path and gtp.workspace = gwmds.workspace
-    where gwm.repository = $repository
-          and (gwm.run_type in ('apply', 'autoapply', 'unsafe-apply') and results.success)
-          or (gwm.run_type in ('autoplan', 'plan') and gtp.has_changes is not null and not gtp.has_changes)
-),
-unapplied_dirspaces as (
-    select
-        ands.repository as repository,
-        ands.pull_number as pull_number,
-        ands.path as path,
-        ands.workspace as workspace
-    from all_necessary_dirspaces as ands
-    inner join merged_pull_requests as merged
-        on merged.repository = ands.repository and merged.pull_number = ands.pull_number
-    left join applies_for_merged_pull_requests as applies
-        on applies.repository = ands.repository and applies.pull_number = ands.pull_number
-           and applies.path = ands.path and applies.workspace = ands.workspace
-    where applies.path is null and ands.lock_policy in ('strict', 'merge')
-),
--- And now combine our two lists of dirspaces:
---
--- 1. The dirspaces that a merged PR needs to be applied but haven't.
---
--- 2. The dirspaces for any PRs that have not been merged but have applies.
-all_dangling_dirspaces as (
-    select distinct
-        gpr.repository as repository,
-        gpr.pull_number as pull_number,
-        coalesce(uds.path, dds.path) as path,
-        coalesce(uds.workspace, dds.workspace) as workspace
-    from github_pull_requests as gpr
-    left join unapplied_dirspaces as uds
-        on uds.repository = gpr.repository and uds.pull_number = gpr.pull_number
-    left join dangling_dirspaces as dds
-        on dds.repository = gpr.repository and dds.pull_number = gpr.pull_number
-    where uds.repository is not null or dds.repository is not null
+        *
+    from incomplete_dirspaces_for_pull_requests as idspr
+    where idspr.rn = 1
+          and path is not null
+          and workspace is not null
+          and ((not is_merged
+                and run_type in ('autoapply', 'apply'))
+               or (is_merged
+                   and ((run_type in ('autoapply', 'apply') and not success)
+                        or (run_type in ('autoplan', 'plan') and success and has_changes))))
 )
-select distinct
+select distinct on (adds.path, adds.workspace, adds.pull_number)
     adds.path as path,
     adds.workspace as workspace,
     gpr.base_branch as base_branch,
@@ -160,7 +151,8 @@ select distinct
     gpr.title as title,
     gpr.username as username
 from github_pull_requests as gpr
-inner join all_dangling_dirspaces as adds
+inner join dangling_dirspaces as adds
     on gpr.repository = adds.repository and gpr.pull_number = adds.pull_number
 inner join dirspaces as ds on adds.path = ds.dir and adds.workspace = ds.workspace
 where gpr.repository = $repository and gpr.pull_number <> $pull_number
+order by adds.path, adds.workspace, adds.pull_number
