@@ -4,7 +4,13 @@
 :labels: database,github,pull_requests
 :source-highlighter: highlight.js
 :toc:
-:stem: latexmath
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
 
 == Status
 
@@ -178,13 +184,13 @@ Every `update_strategy` will obey a certain set of primitive operations, which i
 
 Multi-Comment Outputs :: How to proceed if the combined output of a comment is larger than a single comment, but individually they fit in a single comment.
 
-This will operate independent of the chosen strategy. Given stem:[N] dirspaces, each generating an output stem:[O_i], stem:[i \in \{1..n\}], and a limit stem:[L] for a comment on particular VCS platform. We must proceed with the following steps:
+This will operate independent of the chosen strategy. Given _N_ dirspaces, each generating an output O_i, where i ∈ {1 ... n}, and a limit stem:[L] for a comment on particular VCS platform. We must proceed with the following steps:
 
 . Sort all outputs, priotize based on this tuple `(success, directory, workspace)`, and where `false > true` (for brevity, we call this structure `S`).
 . Pick a subset of `S` and fit as many sorted outputs in a comment that make the combined output of this subset < L.
 . If we get remaining sorted outputs, create a new comment, repeat step 2 until we exhaust the list of sorted results.
 
-NOTE: For Github, a comment is limited to 65 kb.
+TIP: For Github, a comment is limited to 65 kb.
 
 TODO: Handle the scenario where a SINGLE dirspace can't be output into a single comment
 
