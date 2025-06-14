@@ -3,6 +3,7 @@ create table if not exists gitlab_users2 (
     created_at timestamp with time zone not null default (now()),
     email text,
     expiration timestamp with time zone,
+    gitlab_user_id bigint not null,
     name text,
     refresh_expiration timestamp with time zone,
     refresh_token text,

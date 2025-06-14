@@ -3,7 +3,7 @@ type err = [ `Error of string ]
 module Response : sig
   type 'a t [@@deriving show]
 
-  val make : headers:(string * string) list -> status:int -> 'a -> 'a t
+  val make : headers:(string * string) list -> request_uri:Uri.t -> status:int -> 'a -> 'a t
   val value : 'a t -> 'a
   val headers : 'a t -> (string * string) list
   val status : 'a t -> int

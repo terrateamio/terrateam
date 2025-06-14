@@ -1,4 +1,4 @@
-.PHONY: terrat-api terrat-repo-config terrat-webhooks
+.PHONY: terrat-api terrat-repo-config terrat-webhooks gitlab-webhooks
 .PHONY: gitlab-api github-api
 .PHONY: terrat release-terrat debug-terrat
 .PHONY: pins-file
@@ -12,7 +12,7 @@ all: .merlin
 pds.mk: pds.conf $(wildcard src/*/*) $(wildcard test/*/*)
 	pds -d
 
-terrat-schemas: terrat-api terrat-repo-config terrat-webhooks
+terrat-schemas: terrat-api terrat-repo-config terrat-webhooks gitlab-api gitlab-webhooks
 
 terrat: release-terrat debug-terrat
 
@@ -44,33 +44,33 @@ terrat-api: debug_openapi_cli
 	rm -f ./src/terrat_api/*.ml
 	env OCAMLRUNPARAM=b ./build/debug/openapi_cli/openapi_cli.native convert --non-strict-records --input ../api_schemas/terrat/api.json --name "terrat_api" --output-dir ./src/terrat_api
 	find src/terrat_api  -type f -exec ocamlformat -i '{}' \;
-	pds
 
 terrat-repo-config: debug_json_schema_hooks_cli
 	rm -f ./src/terrat_repo_config/*.ml
 	env OCAMLRUNPARAM=b ./build/debug/json_schema_hooks_cli/json_schema_hooks_cli.native convert --input ../api_schemas/terrat/config-schema.json --name terrat_repo_config --output-dir=./src/terrat_repo_config/
 	find src/terrat_repo_config/ -type f -exec ocamlformat -i '{}' \;
-	pds
 
 terrat-webhooks: debug_json_schema_hooks_cli
 	rm -f ./src/terrat_github_webhooks/*.ml
 	env OCAMLRUNPARAM=b ./build/debug/json_schema_hooks_cli/json_schema_hooks_cli.native convert -i ../api_schemas/github_webhooks/terrat-schema.json -n terrat_github_webhooks --output-dir ./src/terrat_github_webhooks/ --non-strict-records
 	find src/terrat_github_webhooks/ -type f -exec ocamlformat -i '{}' \;
-	pds
 
 github-api: debug_openapi_cli
 	rm -rf src/githubc2
 	mkdir -p src/githubc2
 	env OCAMLRUNPARAM=b ./build/debug/openapi_cli/openapi_cli.native convert --non-strict-records --input ../api_schemas/github_api/api.github.com.json --name "githubc2" --output-dir ./src/githubc2/
 	find src/githubc2/ -type f -exec ocamlformat -i '{}' \;
-	pds
 
 gitlab-api: debug_openapi_cli
 	rm -rf src/gitlabc
 	mkdir -p src/gitlabc
 	env OCAMLRUNPARAM=b ./build/debug/openapi_cli/openapi_cli.native convert --non-strict-records --input ../api_schemas/gitlab_api/api.json --name "gitlabc" --output-dir ./src/gitlabc/
 	find src/gitlabc/ -type f -exec ocamlformat -i '{}' \;
-	pds
+
+gitlab-webhooks: debug_json_schema_hooks_cli
+	rm -f ./src/gitlab_webhooks/*.ml
+	env OCAMLRUNPARAM=b ./build/debug/json_schema_hooks_cli/json_schema_hooks_cli.native convert -i ../api_schemas/gitlab_api/webhooks.json -n gitlab_webhooks --output-dir ./src/gitlab_webhooks/ --non-strict-records
+	find src/gitlab_webhooks/ -type f -exec ocamlformat -i '{}' \;
 
 # This assumes that the necessary work has been done using hll generate to make
 # a package called monorepo that is available via opam

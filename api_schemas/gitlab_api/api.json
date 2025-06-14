@@ -3528,8 +3528,12 @@
         "type": "object"
       },
       "API_Entities_Group": {
+        "additionalProperties": false,
         "description": "API_Entities_Group model",
         "properties": {
+          "archived": {
+            "type": "boolean"
+          },
           "auto_devops_enabled": {
             "type": "string"
           },
@@ -3546,10 +3550,10 @@
             "type": "string"
           },
           "default_branch_protection": {
-            "type": "string"
+            "type": null
           },
           "default_branch_protection_defaults": {
-            "type": "string"
+            "type": null
           },
           "description": {
             "type": "string"
@@ -3573,10 +3577,10 @@
             "type": "string"
           },
           "id": {
-            "type": "string"
+            "type": "integer"
           },
           "ldap_access": {
-            "type": "string"
+            "type": "boolean"
           },
           "ldap_cn": {
             "type": "string"
@@ -3585,10 +3589,10 @@
             "$ref": "#/components/schemas/EE_API_Entities_LdapGroupLink"
           },
           "lfs_enabled": {
-            "type": "string"
+            "type": "boolean"
           },
           "lock_duo_features_enabled": {
-            "type": "string"
+            "type": "boolean"
           },
           "lock_math_rendering_limits_enabled": {
             "type": "boolean"
@@ -3604,16 +3608,16 @@
             "type": "integer"
           },
           "mentions_disabled": {
-            "type": "string"
+            "type": null
           },
           "name": {
             "type": "string"
           },
           "organization_id": {
-            "type": "string"
+            "type": "integer"
           },
           "parent_id": {
-            "type": "string"
+            "type": null
           },
           "path": {
             "type": "string"
@@ -3625,19 +3629,19 @@
             "type": "string"
           },
           "request_access_enabled": {
-            "type": "string"
+            "type": "boolean"
           },
           "require_two_factor_authentication": {
-            "type": "string"
+            "type": "boolean"
           },
           "root_storage_statistics": {
-            "$ref": "#/components/schemas/API_Entities_Namespace_RootStorageStatistics"
+            "type": null
           },
           "saml_group_links": {
-            "$ref": "#/components/schemas/EE_API_Entities_SamlGroupLink"
+            "type": null
           },
           "share_with_group_lock": {
-            "type": "string"
+            "type": "boolean"
           },
           "shared_runners_setting": {
             "type": "string"
@@ -3678,7 +3682,7 @@
             "type": "string"
           },
           "two_factor_grace_period": {
-            "type": "string"
+            "type": "integer"
           },
           "visibility": {
             "type": "string"
@@ -3690,6 +3694,11 @@
             "type": "string"
           }
         },
+        "required": [
+          "created_at",
+          "id",
+          "name"
+        ],
         "type": "object"
       },
       "API_Entities_GroupAccess": {
@@ -3704,16 +3713,20 @@
         "type": "object"
       },
       "API_Entities_GroupDetail": {
+        "additionalProperties": false,
         "description": "API_Entities_GroupDetail model",
         "properties": {
           "allowed_email_domains_list": {
             "type": "string"
           },
+          "archived": {
+            "type": "boolean"
+          },
           "auto_ban_user_on_excessive_projects_download": {
             "type": "string"
           },
           "auto_devops_enabled": {
-            "type": "string"
+            "type": null
           },
           "avatar_url": {
             "type": "string"
@@ -3722,16 +3735,16 @@
             "type": "string"
           },
           "custom_attributes": {
-            "$ref": "#/components/schemas/API_Entities_CustomAttribute"
+            "type": null
           },
           "default_branch": {
             "type": "string"
           },
           "default_branch_protection": {
-            "type": "string"
+            "type": "integer"
           },
           "default_branch_protection_defaults": {
-            "type": "string"
+            "type": null
           },
           "description": {
             "type": "string"
@@ -3746,10 +3759,10 @@
             "type": "boolean"
           },
           "enabled_git_access_protocol": {
-            "type": "string"
+            "type": null
           },
           "extra_shared_runners_minutes_limit": {
-            "type": "string"
+            "type": null
           },
           "file_template_project_id": {
             "type": "string"
@@ -3761,7 +3774,7 @@
             "type": "string"
           },
           "id": {
-            "type": "string"
+            "type": "integer"
           },
           "ip_restriction_ranges": {
             "type": "string"
@@ -3773,10 +3786,10 @@
             "type": "string"
           },
           "ldap_group_links": {
-            "$ref": "#/components/schemas/EE_API_Entities_LdapGroupLink"
+            "type": null
           },
           "lfs_enabled": {
-            "type": "string"
+            "type": "boolean"
           },
           "lock_duo_features_enabled": {
             "type": "string"
@@ -3795,61 +3808,64 @@
             "type": "integer"
           },
           "membership_lock": {
-            "type": "string"
+            "type": "boolean"
           },
           "mentions_disabled": {
-            "type": "string"
+            "type": null
           },
           "name": {
             "type": "string"
           },
           "organization_id": {
-            "type": "string"
+            "type": "integer"
           },
           "parent_id": {
-            "type": "string"
+            "type": null
           },
           "path": {
             "type": "string"
           },
           "prevent_forking_outside_group": {
-            "type": "string"
+            "type": null
           },
           "prevent_sharing_groups_outside_hierarchy": {
-            "type": "string"
+            "type": "boolean"
           },
           "project_creation_level": {
             "type": "string"
           },
           "projects": {
-            "$ref": "#/components/schemas/API_Entities_Project"
+            "items": {
+              "type": null
+            },
+            "type": "array"
           },
           "repository_storage": {
             "type": "string"
           },
           "request_access_enabled": {
-            "type": "string"
+            "type": "boolean"
           },
           "require_two_factor_authentication": {
-            "type": "string"
+            "type": "boolean"
           },
           "root_storage_statistics": {
-            "$ref": "#/components/schemas/API_Entities_Namespace_RootStorageStatistics"
+            "type": null
           },
           "runners_token": {
             "type": "string"
           },
           "saml_group_links": {
-            "$ref": "#/components/schemas/EE_API_Entities_SamlGroupLink"
+            "type": null
           },
           "service_access_tokens_expiration_enforced": {
             "type": "string"
           },
           "share_with_group_lock": {
-            "type": "string"
+            "type": "boolean"
           },
           "shared_projects": {
-            "$ref": "#/components/schemas/API_Entities_Project"
+            "type": null
           },
           "shared_runners_minutes_limit": {
             "type": "string"
@@ -3858,45 +3874,16 @@
             "type": "string"
           },
           "shared_with_groups": {
-            "type": "string"
+            "type": null
           },
           "statistics": {
-            "properties": {
-              "job_artifacts_size": {
-                "type": "string"
-              },
-              "lfs_objects_size": {
-                "type": "string"
-              },
-              "packages_size": {
-                "type": "string"
-              },
-              "pipeline_artifacts_size": {
-                "type": "string"
-              },
-              "repository_size": {
-                "type": "string"
-              },
-              "snippets_size": {
-                "type": "string"
-              },
-              "storage_size": {
-                "type": "string"
-              },
-              "uploads_size": {
-                "type": "string"
-              },
-              "wiki_size": {
-                "type": "string"
-              }
-            },
-            "type": "object"
+            "type": null
           },
           "subgroup_creation_level": {
             "type": "string"
           },
           "two_factor_grace_period": {
-            "type": "string"
+            "type": "integer"
           },
           "unique_project_download_limit": {
             "type": "string"
@@ -3920,6 +3907,11 @@
             "type": "string"
           }
         },
+        "required": [
+          "created_at",
+          "id",
+          "name"
+        ],
         "type": "object"
       },
       "API_Entities_Identity": {
@@ -9567,10 +9559,10 @@
             "type": "integer"
           },
           "identities": {
-            "type": "array",
             "items": {
               "$ref": "#/components/schemas/API_Entities_Identity"
-            }
+            },
+            "type": "array"
           },
           "is_followed": {
             "type": "string"
@@ -9623,10 +9615,10 @@
             "type": "string"
           },
           "scim_identities": {
-            "type": "array",
             "items": {
               "$ref": "#/components/schemas/API_Entities_ScimIdentity"
-            }
+            },
+            "type": "array"
           },
           "shared_runners_minutes_limit": {
             "type": "string"
@@ -12853,6 +12845,7 @@
         "type": "object"
       },
       "postApiV4ProjectsIdHooks": {
+        "additionalProperties": false,
         "description": "Add project hook",
         "properties": {
           "branch_filter_strategy": {
@@ -27220,13 +27213,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Get a groups list",
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/API_Entities_Group"
-              },
-              "type": "array"
-            }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/API_Entities_Group"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Get a groups list"
           }
         },
         "tags": [
@@ -27434,10 +27431,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Get a single group, with containing projects.",
-            "schema": {
-              "$ref": "#/components/schemas/API_Entities_GroupDetail"
-            }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/API_Entities_GroupDetail"
+                }
+              }
+            },
+            "description": "Get a single group, with containing projects."
           }
         },
         "tags": [
@@ -50442,25 +50443,27 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "in": "body",
-            "name": "postApiV4ProjectsIdHooks",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/postApiV4ProjectsIdHooks"
-            }
           }
         ],
-        "produces": [
-          "application/json"
-        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/postApiV4ProjectsIdHooks"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
-            "description": "Add project hook",
-            "schema": {
-              "$ref": "#/components/schemas/API_Entities_ProjectHook"
-            }
+            "contents": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/API_Entities_ProjectHook"
+                }
+              }
+            },
+            "description": "Add project hook"
           },
           "400": {
             "description": "Validation error"

@@ -24,6 +24,9 @@ module Whoami = struct
         //
         (* avatar_url *)
         Ret.(option text)
+        //
+        (* gitlab user id *)
+        Ret.bigint
         /^ read "select_gitlab_user2_by_user_id.sql"
         /% Var.uuid "user_id")
   end
@@ -38,7 +41,7 @@ module Whoami = struct
               Pgsql_io.Prepared_stmt.fetch
                 db
                 (Sql.select_gitlab_user ())
-                ~f:(fun username _ _ avatar_url -> (username, avatar_url))
+                ~f:(fun username _ _ avatar_url _ -> (username, avatar_url))
                 (Terrat_user.id user))
           >>= fun res -> Abb.Future.return (Ok (CCOption.of_list res))
         in
@@ -68,4 +71,20 @@ module Whoami = struct
             Logs.err (fun m -> m "%s : WHOAMI : %a" (Brtl_ctx.token ctx) Pgsql_io.pp_err err);
             Abb.Future.return
               (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)))
+end
+
+module Whoareyou = struct
+  module U = Gitlabc_components.API_Entities_UserPublic
+
+  let get { U.id; username; _ } config storage =
+    Brtl_ep.run_result ~f:(fun ctx ->
+        let open Abbs_future_combinators.Infix_result_monad in
+        Terrat_session.with_session ctx
+        >>= fun user ->
+        let open Abb.Future.Infix_monad in
+        let body =
+          Terrat_api_components.Gitlab_whoareyou.(
+            { id; username } |> to_yojson |> Yojson.Safe.to_string)
+        in
+        Abb.Future.return (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK body) ctx)))
 end
