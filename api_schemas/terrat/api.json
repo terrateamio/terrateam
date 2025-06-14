@@ -74,6 +74,37 @@
         ],
         "type": "object"
       },
+      "gitlab-group": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "gitlab-user": {
+        "additionalProperties": false,
+        "properties": {
+          "avatar_url": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "username"
+        ],
+        "type": "object"
+      },
       "hook-outputs": {
         "additionalProperties": false,
         "properties": {
@@ -649,6 +680,9 @@
         "properties": {
           "github": {
             "$ref": "#/components/schemas/server-config-github"
+          },
+          "gitlab": {
+            "$ref": "#/components/schemas/server-config-gitlab"
           }
         },
         "type": "object"
@@ -673,6 +707,30 @@
           "api_base_url",
           "app_client_id",
           "app_url",
+          "web_base_url"
+        ],
+        "type": "object"
+      },
+      "server-config-gitlab": {
+        "additionalProperties": false,
+        "properties": {
+          "api_base_url": {
+            "type": "string"
+          },
+          "app_id": {
+            "type": "string"
+          },
+          "redirect_url": {
+            "type": "string"
+          },
+          "web_base_url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "api_base_url",
+          "app_id",
+          "redirect_url",
           "web_base_url"
         ],
         "type": "object"
@@ -2567,6 +2625,46 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/github-user"
+                }
+              }
+            }
+          },
+          "403": {
+            "content": {}
+          }
+        }
+      }
+    },
+    "/api/v1/gitlab/groups": {
+      "get": {
+        "operationId": "gitlab-groups/list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/gitlab-group"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gitlab/whoami": {
+      "get": {
+        "operationId": "gitlab-user/whoami",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/gitlab-user"
                 }
               }
             }
