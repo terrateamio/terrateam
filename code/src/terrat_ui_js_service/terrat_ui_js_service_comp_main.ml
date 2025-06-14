@@ -249,7 +249,7 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
     @@ [
          Brtl_js2.Router_output.create
            state
-           (Brtl_js2.Brr.Document.body Brtl_js2.Brr.G.document)
+           Brtl_js2.Brr.El.(div ~at:At.[ class' (Jstr.v "w-full") ] [])
            Brtl_js2_rtng.
              [
                installation_rt () --> Installation.run;

@@ -195,7 +195,7 @@ module type S = sig
       Abb_js.Future.t
 
     val repos_refresh :
-      installation_id:string -> t -> (string, [> Api.api_err ]) result Abb_js.Future.t
+      installation_id:string -> t -> (string option, [> Api.api_err ]) result Abb_js.Future.t
 
     val task :
       id:string -> t -> (Terrat_api_components.Task.t, [> Api.api_err ]) result Abb_js.Future.t

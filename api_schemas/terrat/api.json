@@ -74,6 +74,22 @@
         ],
         "type": "object"
       },
+      "gitlab-group": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
       "gitlab-user": {
         "additionalProperties": false,
         "properties": {
@@ -85,6 +101,41 @@
           }
         },
         "required": [
+          "username"
+        ],
+        "type": "object"
+      },
+      "gitlab-webhook": {
+        "additionalProperties": false,
+        "properties": {
+          "state": {
+            "type": "string"
+          },
+          "webhook_secret": {
+            "type": "string"
+          },
+          "webhook_url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "state",
+          "webhook_url"
+        ],
+        "type": "object"
+      },
+      "gitlab-whoareyou": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "username": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
           "username"
         ],
         "type": "object"
@@ -2619,6 +2670,171 @@
         }
       }
     },
+    "/api/v1/gitlab/groups": {
+      "get": {
+        "operationId": "gitlab-groups/list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/gitlab-group"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gitlab/groups/{id}/is-member": {
+      "get": {
+        "operationId": "gitlab-groups/is-member",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "result": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "result"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gitlab/installations": {
+      "get": {
+        "operationId": "gitlab-installations/list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "installations": {
+                      "items": {
+                        "$ref": "#/components/schemas/installation"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "installations"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "content": {}
+          }
+        }
+      }
+    },
+    "/api/v1/gitlab/installations/{installation_id}/repos": {
+      "get": {
+        "operationId": "gitlab-installations/list-repos",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "installation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "repositories": {
+                      "items": {
+                        "$ref": "#/components/schemas/installation-repo"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "repositories"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "content": {}
+          }
+        }
+      }
+    },    
+    "/api/v1/gitlab/installations/{id}/webhook": {
+      "get": {
+        "operationId": "gitlab-installations/get-webhook",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/gitlab-webhook"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/gitlab/whoami": {
       "get": {
         "operationId": "gitlab-user/whoami",
@@ -2635,6 +2851,23 @@
           },
           "403": {
             "content": {}
+          }
+        }
+      }
+    },
+    "/api/v1/gitlab/whoareyou": {
+      "get": {
+        "operationId": "gitlab-user/whoareyou",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/gitlab-whoareyou"
+                }
+              }
+            }
           }
         }
       }

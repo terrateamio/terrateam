@@ -50,8 +50,8 @@ module Io = struct
   let ( >>= ) = Abb_js.Future.Infix_monad.( >>= )
   let return = Abb_js.Future.return
 
-  let call ?body ~headers ~meth url =
-    let url = Uri.to_string url in
+  let call ?body ~headers ~meth uri =
+    let url = Uri.to_string uri in
     let meth =
       match meth with
       | `Get -> `GET
@@ -67,6 +67,7 @@ module Io = struct
           (Ok
              (Openapi.Response.make
                 ~headers:(Http.Response.headers resp)
+                ~request_uri:uri
                 ~status:(Http.Response.status resp)
                 (Http.Response.text resp)))
     | Error (`Js_err err) -> return (Error (`Io_err err))
