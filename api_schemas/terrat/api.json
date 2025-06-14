@@ -74,6 +74,22 @@
         ],
         "type": "object"
       },
+      "gitlab-group": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
       "gitlab-user": {
         "additionalProperties": false,
         "properties": {
@@ -2615,6 +2631,26 @@
           },
           "403": {
             "content": {}
+          }
+        }
+      }
+    },
+    "/api/v1/gitlab/groups": {
+      "get": {
+        "operationId": "gitlab-groups/list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/gitlab-group"
+                  },
+                  "type": "array"
+                }
+              }
+            }
           }
         }
       }

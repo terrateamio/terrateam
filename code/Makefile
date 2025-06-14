@@ -1,4 +1,4 @@
-.PHONY: terrat-api terrat-repo-config terrat-webhooks
+.PHONY: terrat-api terrat-repo-config terrat-webhooks gitlab-webhooks
 .PHONY: gitlab-api github-api
 .PHONY: terrat release-terrat debug-terrat
 .PHONY: pins-file
@@ -12,7 +12,7 @@ all: .merlin
 pds.mk: pds.conf $(wildcard src/*/*) $(wildcard test/*/*)
 	pds -d
 
-terrat-schemas: terrat-api terrat-repo-config terrat-webhooks
+terrat-schemas: terrat-api terrat-repo-config terrat-webhooks gitlab-api gitlab-webhooks
 
 terrat: release-terrat debug-terrat
 
@@ -71,6 +71,13 @@ gitlab-api: debug_openapi_cli
 	env OCAMLRUNPARAM=b ./build/debug/openapi_cli/openapi_cli.native convert --non-strict-records --input ../api_schemas/gitlab_api/api.json --name "gitlabc" --output-dir ./src/gitlabc/
 	find src/gitlabc/ -type f -exec ocamlformat -i '{}' \;
 	pds
+
+gitlab-webhooks: debug_json_schema_hooks_cli
+	rm -f ./src/gitlab_webhooks/*.ml
+	env OCAMLRUNPARAM=b ./build/debug/json_schema_hooks_cli/json_schema_hooks_cli.native convert -i ../api_schemas/gitlab_api/webhooks.json -n gitlab_webhooks --output-dir ./src/gitlab_webhooks/ --non-strict-records
+	find src/gitlab_webhooks/ -type f -exec ocamlformat -i '{}' \;
+	pds
+
 
 # This assumes that the necessary work has been done using hll generate to make
 # a package called monorepo that is available via opam

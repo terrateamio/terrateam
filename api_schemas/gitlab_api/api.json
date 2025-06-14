@@ -3528,8 +3528,12 @@
         "type": "object"
       },
       "API_Entities_Group": {
+        "additionalProperties": false,
         "description": "API_Entities_Group model",
         "properties": {
+          "archived": {
+            "type": "boolean"
+          },
           "auto_devops_enabled": {
             "type": "string"
           },
@@ -3546,10 +3550,10 @@
             "type": "string"
           },
           "default_branch_protection": {
-            "type": "string"
+            "type": null
           },
           "default_branch_protection_defaults": {
-            "type": "string"
+            "type": null
           },
           "description": {
             "type": "string"
@@ -3573,10 +3577,10 @@
             "type": "string"
           },
           "id": {
-            "type": "string"
+            "type": "integer"
           },
           "ldap_access": {
-            "type": "string"
+            "type": "boolean"
           },
           "ldap_cn": {
             "type": "string"
@@ -3585,10 +3589,10 @@
             "$ref": "#/components/schemas/EE_API_Entities_LdapGroupLink"
           },
           "lfs_enabled": {
-            "type": "string"
+            "type": "boolean"
           },
           "lock_duo_features_enabled": {
-            "type": "string"
+            "type": "boolean"
           },
           "lock_math_rendering_limits_enabled": {
             "type": "boolean"
@@ -3604,16 +3608,16 @@
             "type": "integer"
           },
           "mentions_disabled": {
-            "type": "string"
+            "type": null
           },
           "name": {
             "type": "string"
           },
           "organization_id": {
-            "type": "string"
+            "type": "integer"
           },
           "parent_id": {
-            "type": "string"
+            "type": null
           },
           "path": {
             "type": "string"
@@ -3625,19 +3629,19 @@
             "type": "string"
           },
           "request_access_enabled": {
-            "type": "string"
+            "type": "boolean"
           },
           "require_two_factor_authentication": {
-            "type": "string"
+            "type": "boolean"
           },
           "root_storage_statistics": {
-            "$ref": "#/components/schemas/API_Entities_Namespace_RootStorageStatistics"
+            "type": null
           },
           "saml_group_links": {
-            "$ref": "#/components/schemas/EE_API_Entities_SamlGroupLink"
+            "type": null
           },
           "share_with_group_lock": {
-            "type": "string"
+            "type": "boolean"
           },
           "shared_runners_setting": {
             "type": "string"
@@ -3678,7 +3682,7 @@
             "type": "string"
           },
           "two_factor_grace_period": {
-            "type": "string"
+            "type": "integer"
           },
           "visibility": {
             "type": "string"
@@ -3690,6 +3694,11 @@
             "type": "string"
           }
         },
+        "required": [
+          "created_at",
+          "id",
+          "name"
+        ],
         "type": "object"
       },
       "API_Entities_GroupAccess": {
@@ -9567,10 +9576,10 @@
             "type": "integer"
           },
           "identities": {
-            "type": "array",
             "items": {
               "$ref": "#/components/schemas/API_Entities_Identity"
-            }
+            },
+            "type": "array"
           },
           "is_followed": {
             "type": "string"
@@ -9623,10 +9632,10 @@
             "type": "string"
           },
           "scim_identities": {
-            "type": "array",
             "items": {
               "$ref": "#/components/schemas/API_Entities_ScimIdentity"
-            }
+            },
+            "type": "array"
           },
           "shared_runners_minutes_limit": {
             "type": "string"
@@ -12854,6 +12863,7 @@
       },
       "postApiV4ProjectsIdHooks": {
         "description": "Add project hook",
+        "additionalProperties": false,
         "properties": {
           "branch_filter_strategy": {
             "description": "Filter push events by branch. Possible values are `wildcard` (default), `regex`, and `all_branches`",
@@ -27220,13 +27230,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Get a groups list",
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/API_Entities_Group"
-              },
-              "type": "array"
-            }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/API_Entities_Group"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Get a groups list"
           }
         },
         "tags": [
@@ -50442,25 +50456,27 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "in": "body",
-            "name": "postApiV4ProjectsIdHooks",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/postApiV4ProjectsIdHooks"
-            }
           }
         ],
-        "produces": [
-          "application/json"
-        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/postApiV4ProjectsIdHooks"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
-            "description": "Add project hook",
-            "schema": {
-              "$ref": "#/components/schemas/API_Entities_ProjectHook"
-            }
+            "contents": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/API_Entities_ProjectHook"
+                }
+              }
+            },
+            "description": "Add project hook"
           },
           "400": {
             "description": "Validation error"
