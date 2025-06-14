@@ -136,21 +136,29 @@ struct
   let maybe_start_github config storage =
     let open Abb.Future.Infix_monad in
     match Terrat_config.github config with
-    | Some github ->
+    | Some github -> (
         Logs.info (fun m -> m "Starting GitHub Service");
         Github.Service.start config github storage
-        >>= fun service ->
-        Abb.Future.return (Some (Terrat_vcs_service.Service ((module Github), service)))
+        >>= function
+        | Ok service ->
+            Abb.Future.return (Some (Terrat_vcs_service.Service ((module Github), service)))
+        | Error `Error ->
+            Logs.err (fun m -> m "Failed to start GitHub Service");
+            exit 1)
     | None -> Abb.Future.return None
 
   let maybe_start_gitlab config storage =
     let open Abb.Future.Infix_monad in
     match Terrat_config.gitlab config with
-    | Some gitlab ->
+    | Some gitlab -> (
         Logs.info (fun m -> m "Starting GitLab Service");
         Gitlab.Service.start config gitlab storage
-        >>= fun service ->
-        Abb.Future.return (Some (Terrat_vcs_service.Service ((module Gitlab), service)))
+        >>= function
+        | Ok service ->
+            Abb.Future.return (Some (Terrat_vcs_service.Service ((module Gitlab), service)))
+        | Error `Error ->
+            Logs.err (fun m -> m "Failed to start GitLab Service");
+            exit 1)
     | None -> Abb.Future.return None
 
   let server () =

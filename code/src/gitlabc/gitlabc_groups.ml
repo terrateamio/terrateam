@@ -81,11 +81,14 @@ module GetApiV4Groups = struct
   end
 
   module Responses = struct
-    module OK = struct end
+    module OK = struct
+      type t = Gitlabc_components.API_Entities_Group.t list
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
 
-    type t = [ `OK ] [@@deriving show, eq]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
-    let t = [ ("200", fun _ -> Ok `OK) ]
+    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
   let url = "/api/v4/groups"
@@ -263,11 +266,14 @@ module GetApiV4GroupsId = struct
   end
 
   module Responses = struct
-    module OK = struct end
+    module OK = struct
+      type t = Gitlabc_components.API_Entities_GroupDetail.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
 
-    type t = [ `OK ] [@@deriving show, eq]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
-    let t = [ ("200", fun _ -> Ok `OK) ]
+    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
   let url = "/api/v4/groups/{id}"

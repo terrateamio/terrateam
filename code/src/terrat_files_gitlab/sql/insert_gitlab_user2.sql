@@ -7,7 +7,8 @@ insert into gitlab_users2 (
   refresh_token,
   token,
   user_id,
-  username
+  username,
+  gitlab_user_id
 ) VALUES (
   $avatar_url,
   $email,
@@ -17,7 +18,8 @@ insert into gitlab_users2 (
   $refresh_token,
   $token,
   $user_id,
-  $username
+  $username,
+  $gitlab_user_id
 ) on conflict (username) do update set (
   avatar_url,
   email,

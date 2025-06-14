@@ -3,12 +3,13 @@ type err = [ `Error of string ]
 module Response = struct
   type 'a t = {
     headers : (string * string) list;
+    request_uri : Uri.t;
     status : int;
     value : 'a;
   }
   [@@deriving show]
 
-  let make ~headers ~status value = { headers; status; value }
+  let make ~headers ~request_uri ~status value = { headers; request_uri; status; value }
   let value t = t.value
   let headers t = t.headers
   let status t = t.status
