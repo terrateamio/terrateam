@@ -1,0 +1,9 @@
+name: Documentation Update
+description: Suggest an improvement or addition to the documentation
+labels: documentation
+
+body:
+  - type: textarea
+    attributes:
+      label: What documentation should be added or improved?
+      description: Describe what’s missing, unclear, or should be created from scratch.
