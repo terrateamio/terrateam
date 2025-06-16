@@ -34,7 +34,8 @@ recent_completed_work_manifest as (
 -- be the most recent run for that dirspace in that PR.  Or it's not (drift) in
 -- which case if it is the most recent run for the exact same head and base sha
 -- as the current work manifest.
-          and (gpr.pull_number is not null or wm.base_sha = gwm.base_sha and wm.sha = gwm.sha)
+          and ((wm.pull_number is not null and wm.pull_number = gwm.pull_number)
+               or (wm.pull_number is null and gwm.pull_number is null and wm.base_sha = gwm.base_sha and wm.sha = gwm.sha))
     order by gwm.created_at desc
     limit 1
 )
