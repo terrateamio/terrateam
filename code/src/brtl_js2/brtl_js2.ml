@@ -282,6 +282,34 @@ module State = struct
   let with_app_state app_state t = { t with app_state }
 end
 
+module Path = struct
+  let rec chop_dir path =
+    match CCString.Split.right ~by:"/" path with
+    | Some (dir, "") -> chop_dir path
+    | Some (dir, _) -> dir
+    | None -> "/"
+
+  let rel t path =
+    let consumed_path =
+      match State.consumed_path t with
+      | "" -> "/"
+      | path -> path
+    in
+    CCList.fold_left
+      (fun path frag ->
+        match frag with
+        | "." -> path
+        | ".." -> chop_dir path
+        | frag when CCString.ends_with ~suffix:"/" path -> path ^ frag
+        | frag -> path ^ "/" ^ frag)
+      consumed_path
+      path
+
+  let abs t = function
+    | [] -> "/"
+    | path -> CCList.fold_left (fun path frag -> path ^ "/" ^ frag) "" path
+end
+
 module Output = struct
   type t =
     | Render of {
