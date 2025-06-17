@@ -2,9 +2,12 @@
 title: automerge
 description: The automerge configuration reference
 ---
+import { Aside } from '@astrojs/starlight/components';
 
 The `automerge` configuration can be used to automatically merge the pull request after all directories have been successfully applied.
-
+<Aside type="caution" title="Branch Protection Rules">
+Automerge will respect any branch protection rules configured in your repository. If a pull request cannot be merged due to branch protection rules, automerge will not force the merge.
+</Aside>
 ## Default Configuration
 ```yaml
 automerge:
