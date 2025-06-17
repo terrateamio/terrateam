@@ -49,7 +49,7 @@ http {
 
             root /usr/local/share/terrat/ui/assets/;
             index index.html index.htm;
-            try_files $uri $uri/ /index.html;
+            try_files $uri $uri/ /index.html =404;
             add_header Content-Security-Policy "default-src 'self' https://*.posthog.com; img-src 'self' https://avatars.githubusercontent.com; script-src 'self' 'nonce-$cspNonce' https://*.posthog.com; style-src 'self'; object-src 'none'; connect-src 'self' https://*.posthog.com";
         }
 

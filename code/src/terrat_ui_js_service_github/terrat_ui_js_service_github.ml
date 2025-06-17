@@ -64,11 +64,18 @@ end
 
 module Installation = struct
   module I = Terrat_api_components.Installation
+  module T = Terrat_api_components_tier
 
   type t = I.t [@@deriving eq]
 
   let id { I.id; _ } = id
   let name { I.name; _ } = name
+  let tier_name { I.tier = { T.name; _ }; _ } = name
+
+  let tier_features { I.tier = { T.features = { T.Features.num_users_per_month; _ }; _ }; _ } =
+    { Terrat_ui_js_service_vcs.Tier.num_users_per_month }
+
+  let trial_ends_at { I.trial_ends_at; _ } = CCOption.map Brtl_js2_datetime.of_string trial_ends_at
 end
 
 module Api = struct

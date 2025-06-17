@@ -21,6 +21,7 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
     module Repo_new = Terrat_ui_js_service_comp_repo_new.Make (Vcs)
     module Repos_refresh = Terrat_ui_js_service_comp_repos_refresh.Make (Vcs)
     module Repos = Terrat_ui_js_service_comp_repos.Make (Vcs)
+    module Billing = Terrat_ui_js_service_comp_billing.Make (Vcs)
     module Notifications = Terrat_ui_js_service_comp_notifications
 
     module Rt = struct
@@ -32,6 +33,7 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
       let repos_refresh consumed_path = Brtl_js2_rtng.(root consumed_path / "repos" / "refresh")
       let runs consumed_path = Brtl_js2_rtng.(root consumed_path / "runs")
       let runs_detail consumed_path = Brtl_js2_rtng.(root consumed_path / "runs" /% Path.string)
+      let billing consumed_path = Brtl_js2_rtng.(root consumed_path / "billing")
     end
 
     let installation_sel state =
@@ -60,8 +62,17 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
                [
                  create ~value:`Repos Brtl_js2.Brr.El.[ txt' "Repos" ] consumed_path;
                  create ~value:`Runs Brtl_js2.Brr.El.[ txt' "Runs" ] (consumed_path ^ "/runs");
+                 create
+                   ~value:`Billing
+                   Brtl_js2.Brr.El.[ txt' "Billing" ]
+                   (consumed_path ^ "/billing");
                ]
-           Brtl_js2_rtng.[ Rt.runs consumed_path --> `Runs; Rt.main consumed_path --> `Repos ]
+           Brtl_js2_rtng.
+             [
+               Rt.runs consumed_path --> `Runs;
+               Rt.billing consumed_path --> `Billing;
+               Rt.main consumed_path --> `Repos;
+             ]
            state);
       nav_bar_div
 
@@ -162,6 +173,7 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
                          Rt.runs consumed_path --> Runs.run;
                          Rt.repo_new consumed_path --> Repo_new.run;
                          Rt.repos_refresh consumed_path --> Repos_refresh.run;
+                         Rt.billing consumed_path --> Billing.run;
                          Rt.main consumed_path --> Repos.run;
                        ];
                  ];
