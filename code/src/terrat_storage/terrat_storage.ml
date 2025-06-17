@@ -1,3 +1,7 @@
+let src = Logs.Src.create "storage"
+
+module Logs = (val Logs.src_log src : Logs.LOG)
+
 module Metrics = struct
   let namespace = "terrat"
   let subsystem = "storage"
@@ -19,6 +23,7 @@ let metrics Pgsql_pool.Metrics.{ num_conns; idle_conns } =
   Abbs_future_combinators.unit
 
 let create config =
+  let open Abb.Future.Infix_monad in
   let tls_config =
     let cfg = Otls.Tls_config.create () in
     Otls.Tls_config.insecure_noverifycert cfg;
@@ -35,3 +40,16 @@ let create config =
     ~max_conns:(Terrat_config.db_max_pool_size config)
     ~connect_timeout:(Terrat_config.db_connect_timeout config)
     (Terrat_config.db config)
+  >>= fun storage ->
+  Pgsql_pool.with_conn storage ~f:(fun db ->
+      Pgsql_io.Prepared_stmt.execute
+        db
+        Pgsql_io.Typed_sql.(sql /^ "create extension if not exists pgcrypto"))
+  >>= function
+  | Ok () -> Abb.Future.return storage
+  | Error (#Pgsql_io.err as err) ->
+      Logs.err (fun m -> m "%a" Pgsql_io.pp_err err);
+      raise (Failure "could not create storage")
+  | Error (#Pgsql_pool.err as err) ->
+      Logs.err (fun m -> m "%a" Pgsql_pool.pp_err err);
+      raise (Failure "could not create storage")
