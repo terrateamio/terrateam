@@ -90,6 +90,10 @@ module Page = struct
     | None -> Brtl_js2_page.Page.make elts
 end
 
+module Tier = struct
+  type t = { num_users_per_month : int option }
+end
+
 module type S = sig
   type t
 
@@ -129,6 +133,9 @@ module type S = sig
 
     val id : t -> string
     val name : t -> string
+    val tier_name : t -> string
+    val tier_features : t -> Tier.t
+    val trial_ends_at : t -> Brtl_js2_datetime.t option
   end
 
   module Api : sig

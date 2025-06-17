@@ -924,6 +924,31 @@
         @apply px-2;
     }
 
+    .billing-info {
+        @apply w-full lg:w-2/3 mx-auto;
+        @apply justify-around justify-items-center;
+        @apply flex flex-row flex-wrap;
+        @apply text-slate-800;
+    }
+
+    .billing-info .item {
+        @apply flex flex-col gap-2;
+        @apply text-center;
+    }
+
+    .billing-info .item > div:first-child {
+        @apply font-semibold;
+    }
+
+    .billing-info .item > div {
+        @apply flex flex-row justify-center justify-items-center;
+    }
+
+    .billing-link {
+        @apply flex flex-row gap-2;
+        @apply text-center;
+    }
+
     a.setup-repo {
         @apply flex flex-row items-center justify-end;
     }
