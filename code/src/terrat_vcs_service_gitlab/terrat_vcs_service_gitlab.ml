@@ -17,6 +17,9 @@ module Make
         with type Api.Config.t = Terrat_vcs_service_gitlab_provider.Api.Config.t)
     (Routes : ROUTES with type config = Provider.Api.Config.t) =
 struct
+  module Ep_events = Terrat_vcs_service_gitlab_ep_events.Make (Provider)
+  module Work_manifest = Terrat_vcs_service_gitlab_ep_work_manifest.Make (Provider)
+
   type t = {
     config : Provider.Api.Config.t;
     storage : Terrat_storage.t;
@@ -27,11 +30,50 @@ struct
     module Rt = struct
       let api () = Brtl_rtng.Route.(rel / "api")
       let api_v1 () = Brtl_rtng.Route.(api () / "v1")
-      let gitlab () = Brtl_rtng.Route.(api () / "gitlab")
       let gitlab_v1 () = Brtl_rtng.Route.(api_v1 () / "gitlab")
       let gitlab_whoami () = Brtl_rtng.Route.(gitlab_v1 () / "whoami")
       let gitlab_whoareyou () = Brtl_rtng.Route.(gitlab_v1 () / "whoareyou")
       let gitlab_events () = Brtl_rtng.Route.(gitlab_v1 () / "events")
+
+      (* Pipeline api base *)
+      let gitlab_pipeline () = Brtl_rtng.Route.(api () / "gitlab")
+      let gitlab_pipeline_v1 () = Brtl_rtng.Route.(gitlab_pipeline () / "v1")
+
+      (* Work manifests *)
+      let work_manifest_root base = Brtl_rtng.Route.(base () / "work-manifests")
+      let work_manifest base = Brtl_rtng.Route.(work_manifest_root base /% Path.ud Uuidm.of_string)
+
+      let work_manifest_initiate base =
+        Brtl_rtng.Route.(
+          work_manifest base
+          / "initiate"
+          /* Body.decode ~json:Terrat_api_work_manifest.Initiate.Request_body.of_yojson ())
+
+      let work_manifest_plan base =
+        Brtl_rtng.Route.(
+          work_manifest base
+          / "plans"
+          /* Body.decode ~json:Terrat_api_work_manifest.Plan_create.Request_body.of_yojson ())
+
+      let work_manifest_workspaces base = Brtl_rtng.Route.(work_manifest base / "workspaces")
+
+      let work_manifest_results base =
+        Brtl_rtng.Route.(
+          work_manifest base
+          /* Body.decode ~json:Terrat_api_work_manifest.Results.Request_body.of_yojson ())
+
+      (* This is the other group of URLs, which are [/api/gitlab/v1] *)
+      let gitlab_work_manifest_plan () = work_manifest_plan gitlab_pipeline_v1
+      let gitlab_work_manifest_workspaces () = work_manifest_workspaces gitlab_pipeline_v1
+      let gitlab_work_manifest_initiate () = work_manifest_initiate gitlab_pipeline_v1
+      let gitlab_work_manifest_results () = work_manifest_results gitlab_pipeline_v1
+
+      let gitlab_get_work_manifest_plan () =
+        Brtl_rtng.Route.(
+          work_manifest gitlab_pipeline_v1
+          / "plans"
+          /? Query.string "path"
+          /? Query.string "workspace")
 
       let gitlab_callback () =
         Brtl_rtng.Route.(gitlab_v1 () / "callback" /? Query.string "code" /? Query.string "state")
@@ -61,7 +103,16 @@ struct
       Routes.routes config storage
       @ Brtl_rtng.Route.
           [
-            (`POST, Rt.gitlab_events () --> Terrat_vcs_service_gitlab_ep_events.post config storage);
+            (* Work manifests *)
+            (`POST, Rt.gitlab_work_manifest_plan () --> Work_manifest.Plans.post config storage);
+            (`GET, Rt.gitlab_get_work_manifest_plan () --> Work_manifest.Plans.get config storage);
+            (`PUT, Rt.gitlab_work_manifest_results () --> Work_manifest.Results.put config storage);
+            ( `POST,
+              Rt.gitlab_work_manifest_initiate () --> Work_manifest.Initiate.post config storage );
+            ( `GET,
+              Rt.gitlab_work_manifest_workspaces () --> Work_manifest.Workspaces.get config storage
+            );
+            (`POST, Rt.gitlab_events () --> Ep_events.post config storage);
             ( `GET,
               Rt.gitlab_installations_repos ()
               --> Terrat_vcs_service_gitlab_ep_installations.List_repos.get config storage );

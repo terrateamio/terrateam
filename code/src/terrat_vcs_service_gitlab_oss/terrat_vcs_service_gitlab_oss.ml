@@ -1,4 +1,4 @@
-module Provider : module type of Terrat_vcs_service_gitlab_provider = struct
+module Provider : Terrat_vcs_provider2_gitlab.S = struct
   module Api = Terrat_vcs_api_gitlab
   module Unlock_id = Terrat_vcs_service_gitlab_provider.Unlock_id
   module Db = Terrat_vcs_service_gitlab_provider.Db

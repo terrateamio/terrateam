@@ -28,6 +28,7 @@ module Object_attributes = struct
   type t = {
     action : Action.t;
     id : int;
+    iid : int;
   }
   [@@deriving yojson { strict = false; meta = true }, make, show, eq]
 end
