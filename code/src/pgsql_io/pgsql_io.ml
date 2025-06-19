@@ -456,6 +456,11 @@ module Typed_sql = struct
           Buffer.add_char buf '\\';
           Buffer.add_char buf query.[idx + 1];
           replace_variables vars query buf (idx + 2) len
+      | '$' when idx + 1 < len && query.[idx + 1] = '$' ->
+          (* Variables start with $ but $$ unchanged, since it is used in
+             postgresql for dollar-quoted string delims *)
+          Buffer.add_string buf "$$";
+          replace_variables vars query buf (idx + 2) len
       | '$' -> replace_variable_name vars query buf (idx + 1) len
       | ch ->
           Buffer.add_char buf ch;
