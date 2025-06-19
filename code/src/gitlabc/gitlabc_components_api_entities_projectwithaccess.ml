@@ -20,6 +20,22 @@ module Ci_id_token_sub_claim_components = struct
   type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
+module Compliance_frameworks = struct
+  type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show, eq]
+end
+
+module Container_expiration_policy = struct
+  type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show, eq]
+end
+
+module Custom_attributes = struct
+  type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show, eq]
+end
+
+module Forked_from_project = struct
+  type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show, eq]
+end
+
 module Permissions = struct
   module Primary = struct
     type t = {
@@ -72,15 +88,14 @@ type t = {
   ci_push_repository_for_job_token_allowed : bool option; [@default None]
   ci_restrict_pipeline_cancellation_role : string option; [@default None]
   ci_separated_caches : bool option; [@default None]
-  compliance_frameworks : string option; [@default None]
-  container_expiration_policy : Gitlabc_components_api_entities_containerexpirationpolicy.t option;
-      [@default None]
+  compliance_frameworks : Compliance_frameworks.t option; [@default None]
+  container_expiration_policy : Container_expiration_policy.t option; [@default None]
   container_registry_access_level : string option; [@default None]
   container_registry_enabled : bool option; [@default None]
   container_registry_image_prefix : string option; [@default None]
   created_at : string option; [@default None]
   creator_id : int option; [@default None]
-  custom_attributes : Gitlabc_components_api_entities_customattribute.t option; [@default None]
+  custom_attributes : Custom_attributes.t option; [@default None]
   default_branch : string;
   description : string option; [@default None]
   description_html : string option; [@default None]
@@ -91,8 +106,7 @@ type t = {
   environments_access_level : string option; [@default None]
   external_authorization_classification_label : string option; [@default None]
   feature_flags_access_level : string option; [@default None]
-  forked_from_project : Gitlabc_components_api_entities_basicprojectdetails.t option;
-      [@default None]
+  forked_from_project : Forked_from_project.t option; [@default None]
   forking_access_level : string option; [@default None]
   forks_count : int option; [@default None]
   group_runners_enabled : bool option; [@default None]
@@ -136,7 +150,7 @@ type t = {
   name_with_namespace : string option; [@default None]
   namespace : Gitlabc_components_api_entities_namespacebasic.t option; [@default None]
   only_allow_merge_if_all_discussions_are_resolved : bool option; [@default None]
-  only_allow_merge_if_all_status_checks_passed : string option; [@default None]
+  only_allow_merge_if_all_status_checks_passed : bool option; [@default None]
   only_allow_merge_if_pipeline_succeeds : bool option; [@default None]
   only_mirror_protected_branches : string option; [@default None]
   open_issues_count : int option; [@default None]
@@ -158,14 +172,14 @@ type t = {
   repository_storage : string option; [@default None]
   request_access_enabled : bool option; [@default None]
   requirements_access_level : string option; [@default None]
-  requirements_enabled : string option; [@default None]
+  requirements_enabled : bool option; [@default None]
   resolve_outdated_diff_discussions : bool option; [@default None]
   restrict_user_defined_variables : bool option; [@default None]
   runner_token_expiration_interval : int option; [@default None]
   runners_token : string option; [@default None]
   secret_push_protection_enabled : bool option; [@default None]
   security_and_compliance_access_level : string option; [@default None]
-  security_and_compliance_enabled : string option; [@default None]
+  security_and_compliance_enabled : bool option; [@default None]
   service_desk_address : string option; [@default None]
   service_desk_enabled : bool option; [@default None]
   shared_runners_enabled : bool option; [@default None]

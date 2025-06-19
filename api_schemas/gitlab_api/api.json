@@ -1089,6 +1089,7 @@
         "type": "object"
       },
       "API_Entities_Ci_Pipeline": {
+        "additionalProperties": false,
         "description": "API_Entities_Ci_Pipeline model",
         "properties": {
           "before_sha": {
@@ -3704,10 +3705,10 @@
       "API_Entities_GroupAccess": {
         "properties": {
           "access_level": {
-            "type": "string"
+            "type": "integer"
           },
           "notification_level": {
-            "type": "string"
+            "type": "integer"
           }
         },
         "type": "object"
@@ -4679,7 +4680,10 @@
             "$ref": "#/components/schemas/API_Entities_UserBasic"
           },
           "assignees": {
-            "$ref": "#/components/schemas/API_Entities_UserBasic"
+            "items": {
+              "$ref": "#/components/schemas/API_Entities_UserBasic"
+            },
+            "type": "array"
           },
           "author": {
             "$ref": "#/components/schemas/API_Entities_UserBasic"
@@ -4721,7 +4725,7 @@
             "type": "string"
           },
           "downvotes": {
-            "type": "string"
+            "type": "integer"
           },
           "draft": {
             "type": "boolean"
@@ -4752,7 +4756,7 @@
             "type": "integer"
           },
           "imported": {
-            "type": "string"
+            "type": "boolean"
           },
           "imported_from": {
             "example": "bitbucket",
@@ -4818,7 +4822,10 @@
             "$ref": "#/components/schemas/API_Entities_IssuableReferences"
           },
           "reviewers": {
-            "$ref": "#/components/schemas/API_Entities_UserBasic"
+            "items": {
+              "$ref": "#/components/schemas/API_Entities_UserBasic"
+            },
+            "type": "array"
           },
           "sha": {
             "type": "string"
@@ -4830,16 +4837,16 @@
             "type": "string"
           },
           "source_project_id": {
-            "type": "string"
+            "type": "integer"
           },
           "squash": {
-            "type": "string"
+            "type": "boolean"
           },
           "squash_commit_sha": {
             "type": "string"
           },
           "squash_on_merge": {
-            "type": "string"
+            "type": "boolean"
           },
           "state": {
             "example": "closed",
@@ -4852,10 +4859,10 @@
             "type": "string"
           },
           "target_project_id": {
-            "type": "string"
+            "type": "integer"
           },
           "task_completion_status": {
-            "type": "string"
+            "type": null
           },
           "time_stats": {
             "$ref": "#/components/schemas/API_Entities_IssuableTimeStats"
@@ -4873,18 +4880,18 @@
             "type": "string"
           },
           "upvotes": {
-            "type": "string"
+            "type": "integer"
           },
           "user": {
             "properties": {
               "can_merge": {
-                "type": "string"
+                "type": "boolean"
               }
             },
             "type": "object"
           },
           "user_notes_count": {
-            "type": "string"
+            "type": "integer"
           },
           "web_url": {
             "type": "string"
@@ -4899,7 +4906,6 @@
           "id",
           "iid",
           "project_id",
-          "sha",
           "source_branch",
           "state",
           "target_branch",
@@ -7706,10 +7712,10 @@
             "type": "boolean"
           },
           "compliance_frameworks": {
-            "type": "string"
+            "type": null
           },
           "container_expiration_policy": {
-            "$ref": "#/components/schemas/API_Entities_ContainerExpirationPolicy"
+            "type": null
           },
           "container_registry_access_level": {
             "example": "enabled",
@@ -7733,7 +7739,7 @@
             "type": "integer"
           },
           "custom_attributes": {
-            "$ref": "#/components/schemas/API_Entities_CustomAttribute"
+            "type": null
           },
           "default_branch": {
             "example": "main",
@@ -7770,7 +7776,7 @@
             "type": "string"
           },
           "forked_from_project": {
-            "$ref": "#/components/schemas/API_Entities_BasicProjectDetails"
+            "type": null
           },
           "forking_access_level": {
             "example": "enabled",
@@ -7927,7 +7933,7 @@
             "type": "boolean"
           },
           "only_allow_merge_if_all_status_checks_passed": {
-            "type": "string"
+            "type": "boolean"
           },
           "only_allow_merge_if_pipeline_succeeds": {
             "type": "boolean"
@@ -8011,7 +8017,7 @@
             "type": "string"
           },
           "requirements_enabled": {
-            "type": "string"
+            "type": "boolean"
           },
           "resolve_outdated_diff_discussions": {
             "type": "boolean"
@@ -8036,7 +8042,7 @@
             "type": "string"
           },
           "security_and_compliance_enabled": {
-            "type": "string"
+            "type": "boolean"
           },
           "service_desk_address": {
             "example": "address@example.com",
@@ -9209,6 +9215,7 @@
         "type": "object"
       },
       "API_Entities_Trigger": {
+        "applicationProperties": false,
         "description": "API_Entities_Trigger model",
         "properties": {
           "created_at": {
@@ -12091,6 +12098,7 @@
         "type": "object"
       },
       "postApiV4ProjectsId(refRef)triggerPipeline": {
+        "additionalProperties": false,
         "description": "Trigger a GitLab project pipeline",
         "properties": {
           "token": {
@@ -13764,6 +13772,7 @@
         "type": "object"
       },
       "postApiV4ProjectsIdPipeline": {
+        "additionalProperties": false,
         "description": "Create a new pipeline",
         "properties": {
           "ref": {
@@ -13774,6 +13783,7 @@
           "variables": {
             "description": "Array of variables available in the pipeline",
             "items": {
+              "additionalProperties": false,
               "properties": {
                 "key": {
                   "description": "The key of the variable",
@@ -13795,6 +13805,10 @@
                   "type": "string"
                 }
               },
+              "required": [
+                "key",
+                "value"
+              ],
               "type": "object"
             },
             "type": "array"
@@ -59757,6 +59771,24 @@
         ],
         "responses": {
           "200": {},
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
           "404": {}
         }
       }
@@ -67658,36 +67690,70 @@
               "example": 11,
               "type": "string"
             }
-          },
-          {
-            "in": "body",
-            "name": "postApiV4ProjectsIdPipeline",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/postApiV4ProjectsIdPipeline"
-            }
           }
         ],
         "produces": [
           "application/json"
         ],
-        "responses": {
-          "201": {
-            "description": "Create a new pipeline",
-            "schema": {
-              "$ref": "#/components/schemas/API_Entities_Ci_Pipeline"
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/postApiV4ProjectsIdPipeline"
+              }
             }
           },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/API_Entities_Ci_Pipeline"
+                }
+              }
+            },
+            "description": "Create a new pipeline"
+          },
           "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": null
+                }
+              }
+            },
             "description": "Bad request"
           },
           "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": null
+                }
+              }
+            },
             "description": "Unauthorized"
           },
           "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": null
+                }
+              }
+            },
             "description": "Forbidden"
           },
           "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": null
+                }
+              }
+            },
             "description": "Not found"
           }
         },
@@ -69838,19 +69904,20 @@
               "example": "develop",
               "type": "string"
             }
-          },
-          {
-            "in": "body",
-            "name": "postApiV4ProjectsId(refRef)triggerPipeline",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/postApiV4ProjectsId(refRef)triggerPipeline"
-            }
           }
         ],
         "produces": [
           "application/json"
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/postApiV4ProjectsId(refRef)triggerPipeline"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
             "description": "Trigger a GitLab project pipeline",
@@ -80485,13 +80552,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Get trigger tokens list",
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/API_Entities_Trigger"
-              },
-              "type": "array"
-            }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/API_Entities_Trigger"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Get trigger tokens list"
           },
           "401": {
             "description": "Unauthorized"

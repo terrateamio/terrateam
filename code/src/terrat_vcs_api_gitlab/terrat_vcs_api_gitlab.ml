@@ -37,6 +37,16 @@ let fetch_pull_request_tries = 6
 let one_minute = Duration.(to_f (of_min 1))
 let call_timeout = Duration.(to_f (of_sec 10))
 
+let log_call = function
+  | `Req req ->
+      Logs.debug (fun m ->
+          m "req = %a" (Openapi.Request.pp (fun fmt _ -> Format.fprintf fmt "<opaque>")) req)
+  | `Resp resp ->
+      Logs.debug (fun m ->
+          m "resp = %a" (Openapi.Response.pp (fun fmt _ -> Format.fprintf fmt "<opaque>")) resp)
+  | `Err (#Openapic_abb.call_err as err) ->
+      Logs.debug (fun m -> m "err = %a" Openapic_abb.pp_call_err err)
+
 let rate_limit_wait resp =
   let headers = Openapi.Response.headers resp in
   let get k = CCList.Assoc.get ~eq:CCString.equal_caseless k headers in
@@ -143,17 +153,17 @@ end
 
 module Account = struct
   module Id = struct
-    type t = unit [@@deriving yojson, show, eq]
+    type t = int [@@deriving yojson, show, eq]
 
-    let of_string s = raise (Failure "nyi")
-    let to_string t = raise (Failure "nyi")
+    let of_string = CCInt.of_string
+    let to_string = CCInt.to_string
   end
 
-  type t = unit [@@deriving yojson, eq]
+  type t = { installation_id : int } [@@deriving make, yojson, eq]
 
-  let make id = raise (Failure "nyi")
-  let id t = raise (Failure "nyi")
-  let to_string t = raise (Failure "nyi")
+  let make installation_id = { installation_id }
+  let id t = t.installation_id
+  let to_string t = CCInt.to_string t.installation_id
 end
 
 module Repo = struct
@@ -273,7 +283,7 @@ let fetch_file ~request_id client repo ref_ path =
 let fetch_remote_repo' ~request_id client repo =
   let module Gl = Gitlabc_projects.GetApiV4ProjectsId in
   let open Abbs_future_combinators.Infix_result_monad in
-  let id = Uri.pct_encode @@ Repo.to_string repo in
+  let id = CCInt.to_string @@ Repo.id repo in
   call client.Client.client Gl.(make (Parameters.make ~id ()))
   >>= fun resp ->
   match Openapi.Response.value resp with
@@ -314,7 +324,15 @@ let fetch_centralized_repo ~request_id client owner =
             err);
       Abb.Future.return (Error `Error)
 
-let create_client ~request_id config account = raise (Failure "nyi")
+let create_client ~request_id config account =
+  let vcs_config = Config.vcs_config config in
+  let gitlab_client =
+    Openapic_abb.create
+      ~user_agent:"Terrateam"
+      ~base_url:(Terrat_config.Gitlab.api_base_url vcs_config)
+      (`Bearer (Terrat_config.Gitlab.access_token vcs_config))
+  in
+  Abb.Future.return (Ok (Client.make ~account ~config ~client:gitlab_client ()))
 
 let fetch_tree ~request_id client repo ref_ =
   let module Gl = Gitlabc_projects_repository.GetApiV4ProjectsIdRepositoryTree in
@@ -368,6 +386,7 @@ let comment_on_pull_request ~request_id client pull_request body =
     >>= fun resp ->
     match Openapi.Response.value resp with
     | `OK -> Abb.Future.return (Ok ())
+    | `Created _ -> Abb.Future.return (Ok ())
     | `Not_found -> Abb.Future.return (Error `Not_found)
   in
   let open Abb.Future.Infix_monad in
@@ -484,12 +503,10 @@ let fetch_pull_request ~request_id account client repo merge_request_iid =
     let provisional_merge_ref = None in
     Logs.info (fun m ->
         m
-          "%s : MERGEABLE : detailed_merge_status=%a : merge_commit_sha=%a"
+          "%s : MERGEABLE : detailed_merge_status=%s : merge_commit_sha=%s"
           request_id
-          (CCOption.pp CCString.pp)
-          detailed_merge_status
-          (CCOption.pp CCString.pp)
-          merge_commit_sha);
+          (CCOption.get_or ~default:"" detailed_merge_status)
+          (CCOption.get_or ~default:"" merge_commit_sha));
     Abb.Future.return
       (Ok
          (Terrat_pull_request.make

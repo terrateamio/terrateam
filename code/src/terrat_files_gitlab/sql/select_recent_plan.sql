@@ -11,17 +11,15 @@ wm as (
 ),
 recent_completed_work_manifest as (
     select
-        gwm.run_type as run_type,
-        gwmr.success as success,
-        gtp.data as data
-    from work_manifest_results as gwmr
-    inner join gitlab_work_manifests as gwm
-        on gwm.id = gwmr.work_manifest
+      gwm.completed_at as completed_at,
+      gwmr.success as success,
+      plans.data as data
+    from gitlab_work_manifests as gwm
     inner join wm
         on wm.repository = gwm.repository
     inner join work_manifest_results as gwmr
         on gwmr.work_manifest = gwm.id
-    left join github_pull_requests as gpr
+    left join gitlab_pull_requests as gpr
         on gpr.repository = gwm.repository
            and gpr.pull_number = gwm.pull_number
     left join plans

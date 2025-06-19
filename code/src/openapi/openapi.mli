@@ -23,7 +23,7 @@ module Request : sig
     type t = Var : ('a * 'a v) -> t
   end
 
-  type 'a t
+  type 'a t [@@deriving show]
 
   val make :
     ?body:Yojson.Safe.t ->
