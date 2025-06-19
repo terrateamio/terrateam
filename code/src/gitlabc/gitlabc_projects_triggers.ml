@@ -60,13 +60,17 @@ module GetApiV4ProjectsIdTriggers = struct
   end
 
   module Responses = struct
-    module OK = struct end
+    module OK = struct
+      type t = Gitlabc_components.API_Entities_Trigger.t list
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
     module Unauthorized = struct end
     module Forbidden = struct end
     module Not_found = struct end
 
     type t =
-      [ `OK
+      [ `OK of OK.t
       | `Unauthorized
       | `Forbidden
       | `Not_found
@@ -75,7 +79,7 @@ module GetApiV4ProjectsIdTriggers = struct
 
     let t =
       [
-        ("200", fun _ -> Ok `OK);
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
         ("401", fun _ -> Ok `Unauthorized);
         ("403", fun _ -> Ok `Forbidden);
         ("404", fun _ -> Ok `Not_found);

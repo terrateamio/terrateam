@@ -45,6 +45,9 @@ type call_err =
   ]
 [@@deriving show]
 
+type 'a log =
+  [ `Req of 'a Openapi.Request.t | `Resp of 'a Openapi.Response.t | `Err of call_err ] -> unit
+
 module Page = struct
   type 'a t = 'a Openapi.Request.t -> 'a Openapi.Response.t -> 'a Openapi.Request.t option
 
@@ -127,15 +130,33 @@ let create ?(user_agent = "Openapic_abb") ?call_timeout ~base_url auth =
     call_timeout;
   }
 
-let call t req =
+let call ?log t req =
+  let open Abb.Future.Infix_monad in
+  CCOption.iter (fun f -> f (`Req req)) log;
   match t.call_timeout with
-  | None -> Api.call Openapi.Request.(req |> with_base_url t.base_url |> add_headers t.headers)
-  | Some timeout ->
-      let open Abb.Future.Infix_monad in
+  | None -> (
+      Api.call Openapi.Request.(req |> with_base_url t.base_url |> add_headers t.headers)
+      >>= function
+      | Ok resp ->
+          CCOption.iter (fun f -> f (`Resp resp)) log;
+          Abb.Future.return (Ok resp)
+      | Error (#call_err as call_err) ->
+          CCOption.iter (fun f -> f (`Err call_err)) log;
+          Abb.Future.return (Error call_err))
+  | Some timeout -> (
       Abbs_future_combinators.first
         (Abb.Sys.sleep timeout >>= fun () -> Abb.Future.return (Error `Timeout))
         (Api.call Openapi.Request.(req |> with_base_url t.base_url |> add_headers t.headers))
-      >>= fun (r, fut) -> Abb.Future.abort fut >>= fun () -> Abb.Future.return r
+      >>= fun (r, fut) ->
+      Abb.Future.abort fut
+      >>= fun () ->
+      match r with
+      | Ok resp ->
+          CCOption.iter (fun f -> f (`Resp resp)) log;
+          Abb.Future.return (Ok resp)
+      | Error (#call_err as call_err) ->
+          CCOption.iter (fun f -> f (`Err call_err)) log;
+          Abb.Future.return (Error call_err))
 
 let rec fold' page t ~init ~f req =
   let open Abbs_future_combinators.Infix_result_monad in

@@ -10,6 +10,9 @@
         "id": {
           "type": "integer"
         },
+        "iid": {
+          "type": "integer"
+        },
         "source": {
           "$ref": "#/definitions/project"
         },
@@ -123,11 +126,15 @@
             },
             "id": {
               "type": "integer"
+            },
+            "iid": {
+              "type": "integer"
             }
           },
           "required": [
             "action",
-            "id"
+            "id",
+            "iid"
           ],
           "type": "object"
         },
@@ -158,6 +165,9 @@
     "project": {
       "additionalProperties": false,
       "properties": {
+        "default_branch": {
+          "type": "string"
+        },
         "id": {
           "type": "integer"
         },
@@ -172,6 +182,7 @@
         }
       },
       "required": [
+        "default_branch",
         "id",
         "name",
         "namespace",

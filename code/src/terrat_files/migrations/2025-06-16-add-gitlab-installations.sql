@@ -8,12 +8,16 @@ insert into gitlab_installation_states (id) values ('pending'), ('active');
 
 -- Installations in GitLab correspond to groups
 create table if not exists gitlab_installations (
+    account_status text not null default ('active'),
     created_at timestamp with time zone not null default (now()),
     id bigint not null,
     name text not null,
     state text not null default ('pending'),
+    tier text not null default ('unlimited'),
+    trial_ends_at timestamp with time zone,
     webhook_secret text not null default (encode(gen_random_bytes(32), 'hex')),
-    primary key (id)
+    primary key (id),
+    foreign key (tier) references tiers (id)
 );
 
 create unique index gitlab_installations_webhook_secrets_idx
@@ -47,17 +51,22 @@ insert into gitlab_pull_request_states values
     ('closed'),
     ('merged');
 
-create table if not exists gitlab_pull_requests (
-       base_branch text not null,
-       base_sha text not null,
-       branch text not null,
-       pull_number bigint not null,
-       repository bigint not null,
-       sha text not null,
-       state text not null,
+create table gitlab_pull_requests (
+       base_branch text NOT NULL,
+       base_sha text NOT NULL,
+       branch text NOT NULL,
+       merged_at timestamp with time zone,
+       merged_sha text,
+       pull_number bigint NOT NULL,
+       repository bigint NOT NULL,
+       sha text NOT NULL,
+       state text NOT NULL,
+       title text,
+       username text,
        primary key (repository, pull_number),
        foreign key (repository) references gitlab_installation_repositories (id),
-       foreign key (state) references gitlab_pull_request_states (id)
+       foreign key (state) references gitlab_pull_request_states (id),
+       constraint gitlab_pull_requests_check check ((((state = 'merged') and (merged_sha is not null) and (merged_at is not null)) or (state <> 'merged')))
 );
 
 create table gitlab_repositories_map (
@@ -178,13 +187,14 @@ create view gitlab_repo_configs as
        inner join gitlab_installations_map as gim
              on rc.installation = gim.core_id;
 
-create view gitlab_repo_trees as
+create or replace view gitlab_repo_trees as
        select
         gim.installation_id as installation_id,
         rt.sha as sha,
         rt.created_at as created_at,
         rt.path as path,
-        rt.changed as changed
+        rt.changed as changed,
+        rt.id as id
        from repo_trees as rt
        inner join gitlab_installations_map as gim
              on rt.installation = gim.core_id;
@@ -262,3 +272,19 @@ create or replace trigger trigger_insert_gitlab_pull_requests_map
 after insert on gitlab_pull_requests
 for each row
 execute function insert_gitlab_pull_requests_map();
+
+-- Latest unlock views
+create view gitlab_pull_request_latest_unlocks as
+    select
+        repository,
+        pull_number,
+        max(unlocked_at) as unlocked_at
+    from gitlab_pull_request_unlocks
+    group by repository, pull_number;
+
+create view gitlab_drift_latest_unlocks as
+    select
+        repository,
+        max(unlocked_at) as unlocked_at
+    from gitlab_drift_unlocks
+    group by repository;

@@ -1803,15 +1803,26 @@ module PostApiV4ProjectsIdMergeRequestsMergeRequestIidNotesNotesId = struct
 
   module Responses = struct
     module OK = struct end
+
+    module Created = struct
+      type t = { id : int } [@@deriving yojson { strict = false; meta = true }, show, eq]
+    end
+
     module Not_found = struct end
 
     type t =
       [ `OK
+      | `Created of Created.t
       | `Not_found
       ]
     [@@deriving show, eq]
 
-    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
+    let t =
+      [
+        ("200", fun _ -> Ok `OK);
+        ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
+        ("404", fun _ -> Ok `Not_found);
+      ]
   end
 
   let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/notes"

@@ -13,6 +13,9 @@ type call_err =
   ]
 [@@deriving show]
 
+type 'a log =
+  [ `Req of 'a Openapi.Request.t | `Resp of 'a Openapi.Response.t | `Err of call_err ] -> unit
+
 module Page : sig
   type 'a t = 'a Openapi.Request.t -> 'a Openapi.Response.t -> 'a Openapi.Request.t option
 
@@ -23,7 +26,12 @@ end
 type t
 
 val create : ?user_agent:string -> ?call_timeout:float -> base_url:Uri.t -> Authorization.t -> t
-val call : t -> 'a Openapi.Request.t -> ('a Openapi.Response.t, [> call_err ]) result Abb.Future.t
+
+val call :
+  ?log:'a log ->
+  t ->
+  'a Openapi.Request.t ->
+  ('a Openapi.Response.t, [> call_err ]) result Abb.Future.t
 
 (** Iterate all of the pages in a paginated response and combine them. They are returned in the
     order they were received. *)

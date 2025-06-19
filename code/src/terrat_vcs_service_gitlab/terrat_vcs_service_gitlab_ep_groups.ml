@@ -66,7 +66,7 @@ module Is_member = struct
 
   let get' user_id config group_id =
     let module Glg = Gitlabc_groups_members.GetApiV4GroupsIdMembersAllUserId in
-    let vcs_config = Terrat_vcs_api_gitlab.Config.vcs_config config in
+    let vcs_config = Terrat_vcs_service_gitlab_provider.Api.Config.vcs_config config in
     let open Abbs_future_combinators.Infix_result_monad in
     let client =
       Openapic_abb.create

@@ -55,6 +55,7 @@ module Request = struct
     body : string option;
     responses : (string * (string -> ('a, string) result)) list;
   }
+  [@@deriving show]
 
   let make ?body ~headers ~url_params ~query_params ~url ~responses meth =
     let body = CCOption.map Yojson.Safe.to_string body in
