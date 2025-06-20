@@ -67,13 +67,6 @@ module Db : sig
     Terrat_change.Dirspaceflow.Workflow.t Terrat_change.Dirspaceflow.t list ->
     (unit, [> `Error ]) result Abb.Future.t
 
-  val store_tf_operation_result :
-    request_id:string ->
-    t ->
-    Uuidm.t ->
-    Terrat_api_components_work_manifest_tf_operation_result.t ->
-    (unit, [> `Error ]) result Abb.Future.t
-
   val store_tf_operation_result2 :
     request_id:string ->
     t ->
@@ -317,10 +310,6 @@ module Work_manifest : sig
     Uuidm.t ->
     Terrat_work_manifest3.Step.t list ->
     (unit, [> `Error ]) result Abb.Future.t
-
-  val result :
-    Terrat_api_components_work_manifest_tf_operation_result.t ->
-    Terrat_vcs_provider2.Work_manifest_result.t
 
   val result2 :
     Terrat_api_components_work_manifest_tf_operation_result2.t ->
