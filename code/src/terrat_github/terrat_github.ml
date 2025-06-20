@@ -676,7 +676,7 @@ module Commit_status = struct
   end
 
   let create ~owner ~repo ~sha ~creates client =
-    let max_parallel = 20 in
+    let max_parallel = 10 in
     let open Abb.Future.Infix_monad in
     Abbs_future_combinators.List.map_par
       ~f:(fun creates ->
