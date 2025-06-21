@@ -16,6 +16,10 @@ module Rt = struct
   (* Tasks API *)
   let tasks_api_rt () = Brtl_rtng.Route.(api_v1 () / "tasks")
   let task_rt () = Brtl_rtng.Route.(tasks_api_rt () /% Path.ud Uuidm.of_string)
+
+  (* Tenv *)
+  let tenv_rt () =
+    Brtl_rtng.Route.(rel / "api" /% Path.string / "tenv" /% Path.ud Uuidm.of_string /% Path.any)
 end
 
 let response_404 ctx =
@@ -53,6 +57,8 @@ let rtng config storage services =
         ]
         @ routes
         @ [
+            (* Tenv *)
+            (`GET, Rt.tenv_rt () --> Terrat_ep_tenv.get config storage);
             (* User *)
             (`GET, Rt.whoami () --> Terrat_ep_whoami.get config storage services);
             (`POST, Rt.logout () --> Terrat_ep_logout.post storage);
