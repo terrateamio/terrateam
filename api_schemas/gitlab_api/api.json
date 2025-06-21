@@ -80039,14 +80039,6 @@
               "example": "18f3e63d05582537db6d183d9d557be09e1f90c8",
               "type": "string"
             }
-          },
-          {
-            "in": "body",
-            "name": "postApiV4ProjectsIdStatusesSha",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/postApiV4ProjectsIdStatusesSha"
-            }
           }
         ],
         "produces": [
@@ -80064,8 +80056,12 @@
         },
         "responses": {
           "201": {
-            "schema": {
-              "$ref": "#/components/schemas/API_Entities_CommitStatus"
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/API_Entities_CommitStatus"
+                }
+              }
             },
             "description": "Post status to a commit"
           },
