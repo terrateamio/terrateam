@@ -1,0 +1,100 @@
+module PostApiV4UsersIdEmails = struct
+  module Parameters = struct
+    type t = {
+      id : int;
+      postapiv4usersidemails : Gitlabc_components.PostApiV4UsersIdEmails.t;
+          [@key "postApiV4UsersIdEmails"]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+
+    type t = [ `Created ] [@@deriving show, eq]
+
+    let t = [ ("201", fun _ -> Ok `Created) ]
+  end
+
+  let url = "/api/v4/users/{id}/emails"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module GetApiV4UsersIdEmails = struct
+  module Parameters = struct
+    type t = {
+      id : int;
+      page : int; [@default 1]
+      per_page : int; [@default 20]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/users/{id}/emails"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, Int)) ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module DeleteApiV4UsersIdEmailsEmailId = struct
+  module Parameters = struct
+    type t = {
+      email_id : int;
+      id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/users/{id}/emails/{email_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, Int)); ("email_id", Var (params.email_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end

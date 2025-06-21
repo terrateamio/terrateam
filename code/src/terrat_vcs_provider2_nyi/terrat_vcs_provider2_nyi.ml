@@ -8,18 +8,6 @@ module Unlock_id = struct
   let to_string t = raise (Failure "nyi")
 end
 
-module Pull_request = struct
-  type t
-
-  let base_branch_name t = raise (Failure "nyi")
-  let base_ref t = raise (Failure "nyi")
-  let branch_name t = raise (Failure "nyi")
-  let branch_ref t = raise (Failure "nyi")
-  let id t = raise (Failure "nyi")
-  let repo t = raise (Failure "nyi")
-  let state t = raise (Failure "nyi")
-end
-
 module Db = struct
   type t = Pgsql_io.t
 

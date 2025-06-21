@@ -72,6 +72,13 @@ let test_to_query_closed_double_quote =
       let s = Ts.to_query query in
       assert (s = Ok "SELECT foo, bar FROM baz WHERE x = \"\""))
 
+let test_to_query_dollar_quoted_string_delim =
+  Oth.test ~desc:"Test to_query dollar-quoted string delim" ~name:"to_query dollar quoted" (fun _ ->
+      let module Ts = Pgsql_io.Typed_sql in
+      let query = Ts.(sql /^ "select $$ foo $$") in
+      let s = Ts.to_query query in
+      assert (s = Ok "select $$ foo $$"))
+
 let test =
   Oth.parallel
     [
@@ -84,6 +91,7 @@ let test =
       test_to_query_unclosed_double_quote;
       test_to_query_closed_single_quote;
       test_to_query_closed_double_quote;
+      test_to_query_dollar_quoted_string_delim;
     ]
 
 let () = Oth.run test

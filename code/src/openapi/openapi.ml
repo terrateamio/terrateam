@@ -3,12 +3,13 @@ type err = [ `Error of string ]
 module Response = struct
   type 'a t = {
     headers : (string * string) list;
+    request_uri : Uri.t;
     status : int;
     value : 'a;
   }
   [@@deriving show]
 
-  let make ~headers ~status value = { headers; status; value }
+  let make ~headers ~request_uri ~status value = { headers; request_uri; status; value }
   let value t = t.value
   let headers t = t.headers
   let status t = t.status
@@ -54,6 +55,7 @@ module Request = struct
     body : string option;
     responses : (string * (string -> ('a, string) result)) list;
   }
+  [@@deriving show]
 
   let make ?body ~headers ~url_params ~query_params ~url ~responses meth =
     let body = CCOption.map Yojson.Safe.to_string body in
@@ -91,6 +93,7 @@ module Request = struct
 
   let with_base_url url t = { t with url = Uri.(of_string (to_string url ^ to_string t.url)) }
   let with_url url t = { t with url }
+  let url t = t.url
   let add_headers headers t = { t with headers = headers @ t.headers }
 end
 

@@ -28,6 +28,26 @@ module Github = struct
   let webhook_secret t = t.webhook_secret
 end
 
+module Gitlab = struct
+  let default_gitlab_api_base_url = Uri.of_string "https://gitlab.com"
+  let default_gitlab_web_base_url = Uri.of_string "https://gitlab.com"
+
+  type t = {
+    access_token : (string[@opaque]);
+    api_base_url : Uri.t;
+    app_id : string;
+    app_secret : (string[@opaque]);
+    web_base_url : Uri.t;
+  }
+  [@@deriving show]
+
+  let access_token t = t.access_token
+  let api_base_url t = t.api_base_url
+  let app_id t = t.app_id
+  let app_secret t = t.app_secret
+  let web_base_url t = t.web_base_url
+end
+
 module Telemetry = struct
   type t =
     | Disabled
@@ -54,6 +74,7 @@ type t = {
   db_user : string;
   default_tier : string;
   github : Github.t option;
+  gitlab : Gitlab.t option;
   infracost : Infracost.t option;
   nginx_status_uri : Uri.t option;
   port : int;
@@ -132,6 +153,25 @@ let load_github () =
            })
   | None -> Ok None
 
+let load_gitlab () =
+  let open CCResult.Infix in
+  match Sys.getenv_opt "GITLAB_APP_ID" with
+  | Some app_id ->
+      env_str "GITLAB_APP_SECRET"
+      >>= fun app_secret ->
+      let api_base_url =
+        CCOption.map_or ~default:Gitlab.default_gitlab_api_base_url Uri.of_string
+        @@ Sys.getenv_opt "GITLAB_API_BASE_URL"
+      in
+      let web_base_url =
+        CCOption.map_or ~default:Gitlab.default_gitlab_web_base_url Uri.of_string
+        @@ Sys.getenv_opt "GITLAB_WEB_BASE_URL"
+      in
+      env_str "GITLAB_ACCESS_TOKEN"
+      >>= fun access_token ->
+      Ok (Some { Gitlab.access_token; api_base_url; app_id; app_secret; web_base_url })
+  | None -> Ok None
+
 let create () =
   let open CCResult.Infix in
   of_opt
@@ -185,6 +225,8 @@ let create () =
   in
   load_github ()
   >>= fun github ->
+  load_gitlab ()
+  >>= fun gitlab ->
   let default_tier = CCOption.get_or ~default:"unlimited" @@ Sys.getenv_opt "TERRAT_DEFAULT_TIER" in
   Ok
     {
@@ -198,6 +240,7 @@ let create () =
       db_user;
       default_tier;
       github;
+      gitlab;
       infracost;
       nginx_status_uri;
       port;
@@ -217,6 +260,7 @@ let db_password t = t.db_password
 let db_user t = t.db_user
 let default_tier t = t.default_tier
 let github t = t.github
+let gitlab t = t.gitlab
 let infracost t = t.infracost
 let nginx_status_uri t = t.nginx_status_uri
 let port t = t.port
