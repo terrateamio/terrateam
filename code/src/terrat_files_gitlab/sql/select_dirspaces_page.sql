@@ -45,7 +45,7 @@ q as (
                and gwm.created_at <= ldu.unlocked_at) then ldu.unlocked_at
         else null
         end) as completed_at,
-        created_at,
+        gwm.created_at,
         gwm.sha as branch_ref,
         gwm.run_type as run_type,
         (case

@@ -539,7 +539,7 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
 
       let format_err =
         let module El = Brtl_js2.Brr.El in
-        let module Br = Terrat_api_installations.List_dirspaces.Responses.Bad_request in
+        let module Br = Terrat_api_components_bad_request_err in
         function
         | `Bad_request Br.{ id = "IN_DIR_NOT_SUPPORTED"; _ } ->
             El.[ txt' "The 'in dir' operator is not supported" ]

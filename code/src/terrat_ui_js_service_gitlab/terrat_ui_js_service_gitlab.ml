@@ -107,12 +107,73 @@ module Api = struct
     | `OK { R.installations } -> Abb_js.Future.return (Ok installations)
     | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
 
-  let work_manifests ?tz ?page ?limit ?q ?dir ~installation_id t = raise (Failure "nyi")
+  let work_manifests ?tz ?page ?limit ?q ?dir ~installation_id t =
+    let open Abb_js_future_combinators.Infix_result_monad in
+    let module R = Terrat_api_gitlab_installations.List_work_manifests.Responses.OK in
+    Client.call
+      Terrat_api_gitlab_installations.List_work_manifests.(
+        make
+          Parameters.(
+            make
+              ~d:
+                (CCOption.map
+                   (function
+                     | `Asc -> "asc"
+                     | `Desc -> "desc")
+                   dir)
+              ~page
+              ~limit
+              ~q
+              ~tz
+              ~installation_id
+              ()))
+    >>= fun resp ->
+    match Openapi.Response.value resp with
+    | `OK R.{ work_manifests } ->
+        Abb_js.Future.return (Ok (Terrat_ui_js_service_vcs.Page.of_response resp work_manifests))
+    | `Bad_request _ as err -> Abb_js.Future.return (Error err)
+    | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
 
   let work_manifest_outputs ?tz ?page ?limit ?q ?lite ~installation_id ~work_manifest_id t =
-    raise (Failure "nyi")
+    let open Abb_js_future_combinators.Infix_result_monad in
+    let module R = Terrat_api_gitlab_installations.Get_work_manifest_outputs.Responses.OK in
+    Client.call
+      Terrat_api_gitlab_installations.Get_work_manifest_outputs.(
+        make Parameters.(make ~page ~limit ~q ~tz ?lite ~installation_id ~work_manifest_id ()))
+    >>= fun resp ->
+    match Openapi.Response.value resp with
+    | `OK { R.steps } ->
+        Abb_js.Future.return (Ok (Terrat_ui_js_service_vcs.Page.of_response resp steps))
+    | `Bad_request _ as err -> Abb_js.Future.return (Error err)
+    | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
+    | `Not_found -> Abb_js.Future.return (Error `Not_found)
 
-  let dirspaces ?tz ?page ?limit ?q ?dir ~installation_id t = raise (Failure "nyi")
+  let dirspaces ?tz ?page ?limit ?q ?dir ~installation_id t =
+    let open Abb_js_future_combinators.Infix_result_monad in
+    let module R = Terrat_api_gitlab_installations.List_dirspaces.Responses.OK in
+    Client.call
+      Terrat_api_gitlab_installations.List_dirspaces.(
+        make
+          Parameters.(
+            make
+              ~d:
+                (CCOption.map
+                   (function
+                     | `Asc -> "asc"
+                     | `Desc -> "desc")
+                   dir)
+              ~page
+              ~limit
+              ~q
+              ~tz
+              ~installation_id
+              ()))
+    >>= fun resp ->
+    match Openapi.Response.value resp with
+    | `OK { R.dirspaces } ->
+        Abb_js.Future.return (Ok (Terrat_ui_js_service_vcs.Page.of_response resp dirspaces))
+    | `Bad_request _ as err -> Abb_js.Future.return (Error err)
+    | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
 
   let repos ?page ~installation_id t =
     let open Abb_js_future_combinators.Infix_result_monad in

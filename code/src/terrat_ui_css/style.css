@@ -1190,6 +1190,42 @@
     .button-icon {
         @apply text-lg;
     }
+
+    .gitlab-add-installation {
+        @apply w-full;
+        @apply justify-center items-center;
+        @apply flex flex-col;
+        @apply gap-y-8;
+        @apply mx-auto;
+    }
+
+    .gitlab-add-installation ol {
+        @apply list-disc;
+    }
+
+    .gitlab-add-installation li {
+        @apply hover:bg-slate-200;
+        @apply px-4 py-2;
+        @apply rounded-md;
+    }
+
+    .gitlab-add-installation h1 {
+        @apply text-2xl font-semibold;
+    }
+
+    .gitlab-add-installation h2 {
+        @apply text-xl font-semibold;
+    }
+
+    .gitlab-add-installation .movement-btns {
+        @apply flex flex-row;
+        @apply gap-x-8;
+    }
+
+    .gitlab-add-installation .movement-btns button {
+        @apply text-lg;
+        @apply py-2 px-3;
+    }
 }
 
 @tailwind utilities;
