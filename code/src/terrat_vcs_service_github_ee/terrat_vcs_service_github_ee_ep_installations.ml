@@ -225,9 +225,7 @@ module Work_manifests = struct
 
       let rspnc_of_err ~token = function
         | `Statement_timeout ->
-            let module Bad_request =
-              Terrat_api_installations.List_work_manifests.Responses.Bad_request
-            in
+            let module Bad_request = Terrat_api_components_bad_request_err in
             Logs.err (fun m -> m "%s : ERROR : STATEMENT_TIMEOUT" token);
             let body =
               Bad_request.(
@@ -245,9 +243,7 @@ module Work_manifests = struct
     module Paginate = Brtl_ep_paginate.Make (Page)
 
     let get config storage installation_id work_manifest_id query timezone page limit lite =
-      let module Bad_request =
-        Terrat_api_installations.Get_work_manifest_outputs.Responses.Bad_request
-      in
+      let module Bad_request = Terrat_api_components_bad_request_err in
       Brtl_ep.run_result ~f:(fun ctx ->
           let open Abbs_future_combinators.Infix_result_monad in
           Terrat_session.with_session ctx
@@ -577,9 +573,7 @@ module Work_manifests = struct
 
     let rspnc_of_err ~token = function
       | `Statement_timeout ->
-          let module Bad_request =
-            Terrat_api_installations.List_work_manifests.Responses.Bad_request
-          in
+          let module Bad_request = Terrat_api_components_bad_request_err in
           Logs.err (fun m -> m "%s : ERROR : STATEMENT_TIMEOUT" token);
           let body =
             Bad_request.(
@@ -597,7 +591,7 @@ module Work_manifests = struct
   module Paginate = Brtl_ep_paginate.Make (Page)
 
   let get config storage installation_id query timezone page limit =
-    let module Bad_request = Terrat_api_installations.List_work_manifests.Responses.Bad_request in
+    let module Bad_request = Terrat_api_components_bad_request_err in
     Brtl_ep.run_result ~f:(fun ctx ->
         let open Abbs_future_combinators.Infix_result_monad in
         Terrat_session.with_session ctx
@@ -923,7 +917,7 @@ module Dirspaces = struct
 
     let rspnc_of_err ~token = function
       | `Statement_timeout ->
-          let module Bad_request = Terrat_api_installations.List_dirspaces.Responses.Bad_request in
+          let module Bad_request = Terrat_api_components_bad_request_err in
           Logs.err (fun m -> m "%s : ERROR : STATEMENT_TIMEOUT" token);
           let body =
             Bad_request.(
@@ -941,7 +935,7 @@ module Dirspaces = struct
   module Paginate = Brtl_ep_paginate.Make (Page)
 
   let get config storage installation_id query timezone page limit =
-    let module Bad_request = Terrat_api_installations.List_dirspaces.Responses.Bad_request in
+    let module Bad_request = Terrat_api_components_bad_request_err in
     Brtl_ep.run_result ~f:(fun ctx ->
         let open Abbs_future_combinators.Infix_result_monad in
         Terrat_session.with_session ctx

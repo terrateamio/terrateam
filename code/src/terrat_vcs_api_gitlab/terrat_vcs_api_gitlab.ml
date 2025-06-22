@@ -451,6 +451,7 @@ let fetch_pull_request' ~request_id ~client ~repo merge_request_iid =
         | Ok resp -> (
             match Openapi.Response.value resp with
             | `OK { Mr.diff_refs = None; _ } -> true
+            | `OK { Mr.detailed_merge_status = Some "checking"; _ } -> true
             | _ -> false)
         | Error _ -> true))
     ~betwixt:
@@ -511,7 +512,7 @@ let fetch_pull_request ~request_id account client repo merge_request_iid =
     let provisional_merge_ref = None in
     Logs.info (fun m ->
         m
-          "%s : MERGEABLE : detailed_merge_status=%s : merge_commit_sha=%s"
+          "%s : MERGEABLE : detailed_merge_status=%s : merge_commit_sha=%s "
           request_id
           (CCOption.get_or ~default:"" detailed_merge_status)
           (CCOption.get_or ~default:"" merge_commit_sha));

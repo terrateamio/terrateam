@@ -88,6 +88,7 @@ struct
       let gitlab_installations_webhook () =
         Brtl_rtng.Route.(gitlab_installations () /% Path.int / "webhook")
 
+      (* Installations *)
       let gitlab_installations_repos () =
         Brtl_rtng.Route.(
           gitlab_installations ()
@@ -95,6 +96,48 @@ struct
           / "repos"
           /? Query.(option (ud_array "page" Brtl_ep_paginate.Param.(of_param Typ.string)))
           /? Query.(option_default 20 (int "limit")))
+
+      let gitlab_installation_dirspaces () =
+        Brtl_rtng.Route.(
+          gitlab_installations ()
+          /% Path.int
+          / "dirspaces"
+          /? Query.(option (string "q"))
+          /? Query.(option (string "tz"))
+          /? Query.(
+               option
+                 (ud_array
+                    "page"
+                    Brtl_ep_paginate.Param.(
+                      of_param Typ.(tuple4 (string, string, string, ud' Uuidm.of_string)))))
+          /? Query.(option_default 20 (Query.int "limit")))
+
+      let gitlab_installation_work_manifests () =
+        Brtl_rtng.Route.(
+          gitlab_installations ()
+          /% Path.int
+          / "work-manifests"
+          /? Query.(option (string "q"))
+          /? Query.(option (string "tz"))
+          /? Query.(
+               option
+                 (ud_array
+                    "page"
+                    Brtl_ep_paginate.Param.(of_param Typ.(tuple (string, ud' Uuidm.of_string)))))
+          /? Query.(option_default 20 (Query.int "limit")))
+
+      let gitlab_installation_work_manifest_outputs () =
+        Brtl_rtng.Route.(
+          gitlab_installations ()
+          /% Path.int
+          / "work-manifests"
+          /% Path.ud Uuidm.of_string
+          / "outputs"
+          /? Query.(option (string "q"))
+          /? Query.(option (string "tz"))
+          /? Query.(option (ud_array "page" Brtl_ep_paginate.Param.(of_param Typ.int)))
+          /? Query.(option_default 20 (Query.int "limit"))
+          /? Query.(option_default false (Query.bool "lite")))
     end
 
     let routes t =
@@ -103,6 +146,22 @@ struct
       Routes.routes config storage
       @ Brtl_rtng.Route.
           [
+            (* Installations *)
+            ( `GET,
+              Rt.gitlab_installation_dirspaces ()
+              --> Terrat_vcs_service_gitlab_ep_installations.List_dirspaces.get config storage );
+            ( `GET,
+              Rt.gitlab_installations_repos ()
+              --> Terrat_vcs_service_gitlab_ep_installations.List_repos.get config storage );
+            ( `GET,
+              Rt.gitlab_installation_work_manifests ()
+              --> Terrat_vcs_service_gitlab_ep_installations.List_work_manifests.get config storage
+            );
+            ( `GET,
+              Rt.gitlab_installation_work_manifest_outputs ()
+              --> Terrat_vcs_service_gitlab_ep_installations.List_work_manifest_outputs.get
+                    config
+                    storage );
             (* Work manifests *)
             (`POST, Rt.gitlab_work_manifest_plan () --> Work_manifest.Plans.post config storage);
             (`GET, Rt.gitlab_get_work_manifest_plan () --> Work_manifest.Plans.get config storage);
@@ -113,9 +172,6 @@ struct
               Rt.gitlab_work_manifest_workspaces () --> Work_manifest.Workspaces.get config storage
             );
             (`POST, Rt.gitlab_events () --> Ep_events.post config storage);
-            ( `GET,
-              Rt.gitlab_installations_repos ()
-              --> Terrat_vcs_service_gitlab_ep_installations.List_repos.get config storage );
             ( `GET,
               Rt.gitlab_installations ()
               --> Terrat_vcs_service_gitlab_ep_installations.List.get config storage );

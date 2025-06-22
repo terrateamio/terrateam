@@ -28,19 +28,19 @@ module Api = struct
 
   type work_manifests_err =
     [ api_err
-    | `Bad_request of Terrat_api_installations.List_work_manifests.Responses.Bad_request.t
+    | `Bad_request of Terrat_api_components_bad_request_err.t
     ]
   [@@deriving show]
 
   type work_manifest_outputs_err =
     [ api_err
-    | `Bad_request of Terrat_api_installations.Get_work_manifest_outputs.Responses.Bad_request.t
+    | `Bad_request of Terrat_api_components_bad_request_err.t
     ]
   [@@deriving show]
 
   type dirspaces_err =
     [ api_err
-    | `Bad_request of Terrat_api_installations.List_dirspaces.Responses.Bad_request.t
+    | `Bad_request of Terrat_api_components_bad_request_err.t
     ]
   [@@deriving show]
 end

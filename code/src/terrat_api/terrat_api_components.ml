@@ -1,3 +1,4 @@
+module Bad_request_err = Terrat_api_components_bad_request_err
 module Dirspace_state = Terrat_api_components_dirspace_state
 module Error = Terrat_api_components_error
 module Gate = Terrat_api_components_gate

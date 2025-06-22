@@ -14,6 +14,21 @@
         ],
         "type": "string"
       },
+      "bad-request-err": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ]
+      },
       "error": {
         "additionalProperties": false,
         "properties": {
@@ -2211,19 +2226,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "data": {
-                      "type": "string"
-                    },
-                    "id": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "id"
-                  ],
-                  "type": "object"
+                  "$ref": "#/components/schemas/bad-request-err"
                 }
               }
             }
@@ -2470,19 +2473,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "data": {
-                      "type": "string"
-                    },
-                    "id": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "id"
-                  ],
-                  "type": "object"
+                  "$ref": "#/components/schemas/bad-request-err"
                 }
               }
             }
@@ -2624,19 +2615,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "data": {
-                      "type": "string"
-                    },
-                    "id": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "id"
-                  ],
-                  "type": "object"
+                  "$ref": "#/components/schemas/bad-request-err"
                 }
               }
             }
@@ -2757,6 +2736,129 @@
         }
       }
     },
+    "/api/v1/gitlab/installations/{id}/webhook": {
+      "get": {
+        "operationId": "gitlab-installations/get-webhook",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/gitlab-webhook"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gitlab/installations/{installation_id}/dirspaces": {
+      "get": {
+        "operationId": "gitlab-installations/list-dirspaces",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "installation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "d",
+            "required": false,
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tz",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "dirspaces": {
+                      "items": {
+                        "$ref": "#/components/schemas/installation-dirspace"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "dirspaces"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/bad-request-err"
+                }
+              }
+            }
+          },
+          "403": {
+            "content": {}
+          }
+        }
+      }
+    },
     "/api/v1/gitlab/installations/{installation_id}/repos": {
       "get": {
         "operationId": "gitlab-installations/list-repos",
@@ -2808,15 +2910,207 @@
           }
         }
       }
-    },    
-    "/api/v1/gitlab/installations/{id}/webhook": {
+    },
+    "/api/v1/gitlab/installations/{installation_id}/work-manifests/{work_manifest_id}": {
       "get": {
-        "operationId": "gitlab-installations/get-webhook",
+        "operationId": "gitlab-installations/get-work-manifest",
         "parameters": [
           {
             "in": "path",
-            "name": "id",
+            "name": "installation_id",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "work_manifest_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/installation-work-manifest"
+                }
+              }
+            }
+          },
+          "403": {
+            "content": {}
+          },
+          "404": {
+            "content": {}
+          }
+        }
+      }
+    },
+    "/api/v1/gitlab/installations/{installation_id}/work-manifests/{work_manifest_id}/outputs": {
+      "get": {
+        "operationId": "gitlab-installations/get-work-manifest-outputs",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "installation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "work_manifest_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tz",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lite",
+            "required": false,
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "steps": {
+                      "items": {
+                        "$ref": "#/components/schemas/installation-workflow-step-output"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "steps"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/bad-request-err"
+                }
+              }
+            }
+          },
+          "403": {
+            "content": {}
+          },
+          "404": {
+            "content": {}
+          }
+        }
+      }
+    },
+    "/api/v1/gitlab/installations/{installation_id}/work-manifests": {
+      "get": {
+        "operationId": "gitlab-installations/list-work-manifests",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "installation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "d",
+            "required": false,
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tz",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
             "schema": {
               "type": "integer"
             }
@@ -2827,10 +3121,34 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/gitlab-webhook"
+                  "additionalProperties": false,
+                  "properties": {
+                    "work_manifests": {
+                      "items": {
+                        "$ref": "#/components/schemas/installation-work-manifest"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "work_manifests"
+                  ],
+                  "type": "object"
                 }
               }
             }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/bad-request-err"
+                }
+              }
+            }
+          },
+          "403": {
+            "content": {}
           }
         }
       }
