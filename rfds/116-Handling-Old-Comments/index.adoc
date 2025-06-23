@@ -119,7 +119,6 @@ terrateam=> \d github_pull_requests_map
 
 . Codebase
 .. https://github.com/terrateamio/terrateam/blob/bcfa762ba02eadcad84ced6e5455950f66fbc21e/code/src/terrat_vcs_service_github/terrat_vcs_service_github_provider.ml#L3770[`publish_comment`] will need to (optionally) get `dirspace` info
-.. Anything with `*_tf_operations` v1 can be nuked (v2 is already the standard).
 
 == Proposals
 

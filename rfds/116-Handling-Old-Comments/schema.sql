@@ -8,10 +8,10 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS btree_gist;
 
 -- Custom Types
---CREATE TYPE test_schema.github_comment_class AS ENUM (
---    'singleton',
---    'part'
---);
+CREATE TYPE test_schema.github_output_type AS ENUM (
+    'apply',
+    'plan'
+);
 
 CREATE TYPE test_schema.github_policy_update_strategy AS ENUM (
     'append',
@@ -24,28 +24,26 @@ CREATE TYPE test_schema.github_policy_update_strategy AS ENUM (
 
 -- tag::tables[] 
 -- Tables
+CREATE TABLE IF NOT EXISTS test_schema.github_output(
+    -- The original id github gave us
+    id BIGINT NOT NULL CONSTRAINT id_is_always_positive CHECK (id > 0),
+    -- It's always at least 1
+    idx BIGINT NOT NULL CONSTRAINT idx_is_always_positive CHECK (idx > 0),
+    type test_schema.github_output_type NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+);
 
 CREATE TABLE IF NOT EXISTS test_schema.github_comment(
     -- The original id github gave us
     id BIGINT NOT NULL CONSTRAINT id_is_always_positive CHECK (id > 0),
     pull_request BIGINT NOT NULL,
     repo BIGINT NOT NULL,
-    --run_type TEXT NOT NULL,
-    -- This will link with the work_manifest (Optional)
-    work_manifest_id UUID,
-    -- If idx
-    idx BIGINT NOT NULL CONSTRAINT idx_is_non_negative CHECK (idx >= 0),
+    output_id BIGINT NOT NULL,
     strategy test_schema.github_policy_update_strategy NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    -- For a given comment, there can be no overwrites if the run types
-    -- differ, i.e. if a comment with ID = X was originally the output of a
-    -- 'terrateam plan', it cannot hold the output of a 'terrateam apply',
-    -- and vice-versa. It can still be overwritten by an upsert with the same
-    -- type, but that will depend on the selected policy.
-    -- EXCLUDE USING GIST (id WITH =, run_type WITH <>),
-    -- Commented some FKs, just to make it easier to test (below)
-    --FOREIGN KEY (repo, pull_request) REFERENCES github_pull_requests (repository, pull_number),
-    FOREIGN KEY (work_manifest_id) REFERENCES work_manifests(id),
+    FOREIGN KEY (repo, pull_request) REFERENCES github_pull_requests (repository, pull_number),
+    FOREIGN KEY (output_id) REFERENCES test_schema.github_output (id),
     PRIMARY KEY (id)
 );
 
@@ -55,41 +53,26 @@ CREATE TABLE IF NOT EXISTS test_schema.github_comment(
 -- https://www.postgresql.org/message-id/CAMjNa7dGN-DZjbMn5sY52ACR_Np9Kx8F6Pf%3Dc5k0%2Bd1f_hZU%3Dg%40mail.gmail.com
 CREATE TABLE IF NOT EXISTS test_schema.github_work_manifest_comment(
     -- The original id github gave us
-    id BIGINT NOT NULL CONSTRAINT id_is_always_positive CHECK (id > 0),
+    comment_id BIGINT NOT NULL,
     -- This will link with the work_manifest
     work_manifest_id UUID NOT NULL,
-    pr_number BIGINT NOT NULL,
-    repository BIGINT NOT NULL,
-    run_type TEXT NOT NULL,
-    policy BIGINT NOT NULL,
-    class test_schema.github_comment_class,
+    -- I'm assuming this can come from the manifest itself, so I'm not using a FK to
+    -- its proper table.
+    run_type TEXT NOT NULL CONSTRAINT run_type_restriction CHECK (run_type IN ('autoapply', 'autoplan', 'apply', 'plan')),
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     -- For a given comment, there can be no overwrites if the run types
     -- differ, i.e. if a comment with ID = X was originally the output of a
     -- 'terrateam plan', it cannot hold the output of a 'terrateam apply',
     -- and vice-versa. It can still be overwritten by an upsert with the same
     -- type, but that will depend on the selected policy.
-    EXCLUDE USING GIST (id WITH =, run_type WITH <>),
-    -- Commented some FKs, just to make it easier to test (below)
-    -- FOREIGN KEY (pr_number) REFERENCES github_pull_requests (pull_number),
-    -- FOREIGN KEY (repository) REFERENCES github_pull_requests (repository),
+    EXCLUDE USING GIST (comment_id WITH =, work_manifest_id WITH =, run_type WITH <>),
+    FOREIGN KEY (comment_id) REFERENCES test_schema.github_comment(id),
     FOREIGN KEY (work_manifest_id) REFERENCES work_manifests(id),
-    PRIMARY KEY (id)
+    PRIMARY KEY (comment_id, work_manifest_id)
 );
 
--- TODO: Improve this
-CREATE TABLE IF NOT EXISTS test_schema.github_summary_comment(
-    id BIGINT NOT NULL CONSTRAINT id_is_always_positive CHECK (id > 0),
-    pr_number BIGINT NOT NULL,
-    repository BIGINT NOT NULL,
-    -- Commented some FKs, just to make it easier to test (below)
-    -- FOREIGN KEY (pr_number) REFERENCES github_pull_requests (pull_number),
-    -- FOREIGN KEY (repository) REFERENCES github_pull_requests (repository),
-    PRIMARY KEY (id)
-);
-
--- This is a proposal to help "traverse" big comments that got broken
--- into smaller chunks.
+-- This is a proposal to help "traverse" linked comments that hold multiple
+-- chunks for either a single output (or multiple ones as well).
 CREATE TABLE IF NOT EXISTS test_schema.github_work_manifest_comment_chain(
     id INTEGER REFERENCES test_schema.github_work_manifest_comment(id),
     next INTEGER REFERENCES test_schema.github_work_manifest_comment(id),
