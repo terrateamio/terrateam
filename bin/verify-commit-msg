@@ -8,7 +8,7 @@ DEFAULT_BRANCH=origin/main
 
 # Verify that every commit for a file in the current working directory matches
 # the below pattern pattern.
-if git log "${DEFAULT_BRANCH}"..HEAD --pretty=%s . \
+if git log --no-merges "${DEFAULT_BRANCH}"..HEAD --pretty=%s . \
         | grep -vE '^(([a-zA-Z0-9/.-_]+)?#[0-9]+ )+(ADD|REFACTOR|FIX|UPDATE|REMOVE) .*$' \
         | grep -q .; then
     echo "Not all commit messages match the required structure"

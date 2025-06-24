@@ -3,6 +3,7 @@ apply_requirements:
 
 when_modified:
   file_patterns: []
+  autoplan_draft_pr: false
 
 dirs:
   'rfds/**/index*':
