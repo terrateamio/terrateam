@@ -4871,11 +4871,29 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | [], `Auto ->
           Logs.info (fun m -> m "%s : NOOP : AUTOPLAN_NO_MATCHES" state.State.request_id);
           Abbs_future_combinators.Infix_result_app.(
-            (fun pull_request repo_config matches -> (pull_request, repo_config, matches))
+            (fun pull_request repo_config matches base_ref branch_ref ->
+              (pull_request, repo_config, matches, base_ref, branch_ref))
             <$> Dv.pull_request ctx state
             <*> Dv.repo_config ctx state
-            <*> Dv.matches ctx state `Plan)
-          >>= fun (pull_request, repo_config, matches) ->
+            <*> Dv.matches ctx state `Plan
+            <*> Dv.base_ref ctx state
+            <*> Dv.branch_ref ctx state)
+          >>= fun (pull_request, repo_config, matches, base_ref, branch_ref) ->
+          Abb.Future.return
+            (H.dirspaceflows_of_changes repo_config (CCList.flatten matches.Dv.Matches.all_matches))
+          >>= fun all_dirspaceflows ->
+          (* Ensure that even if we don't run anything, all of the dirspace
+             flows are stored.  This is important if autoplan is off but the
+             pull request is merged, we need the record that there were changes
+             we want to act on in the change. *)
+          store_dirspaceflows
+            ~base_ref
+            ~branch_ref
+            state.State.request_id
+            (Ctx.storage ctx)
+            (Event.repo state.State.event)
+            all_dirspaceflows
+          >>= fun () ->
           Dv.client ctx state
           >>= fun client ->
           (if CCList.is_empty matches.Dv.Matches.all_unapplied_matches then
