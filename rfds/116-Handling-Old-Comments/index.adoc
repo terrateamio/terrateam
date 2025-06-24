@@ -72,8 +72,8 @@ TODO We are working on https://github.com/terrateamio/terrateam/issues/150[suppo
 Currently, we do not store comment data in PostgreSQL. To implement any of the suggested solutions we would have to at least store:
 
 . The Comment ID and its PR number.
-. The status of a comment (e.g., active, superseded, minimized).
-. Track the generation/version of a comment to maintain its modificatio history.
+. The kind of strategy being used.
+. Track when a comment is part of a larger output that got broken in smaller chunks.
 
 as for now we have the following tables tracking:
 
@@ -110,6 +110,8 @@ terrateam=> \d github_pull_requests_map
  pull_number   | bigint |           | not null | 
  core_id       | uuid   |           | not null | gen_random_uuid()
 ----
+
+* `work_manifests`
 
 === Terrateam Changes
 
