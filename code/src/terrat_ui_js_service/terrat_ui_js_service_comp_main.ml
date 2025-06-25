@@ -16,6 +16,7 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
   let create vcs = Abb_js.Future.return (Ok { State.vcs; v = () })
 
   module Installation = struct
+    module Quickstart = Terrat_ui_js_service_comp_quickstart.Make (Vcs)
     module Runs_detail = Terrat_ui_js_service_comp_runs_detail.Make (Vcs)
     module Runs = Terrat_ui_js_service_comp_runs.Make (Vcs)
     module Repo_new = Terrat_ui_js_service_comp_repo_new.Make (Vcs)
@@ -34,6 +35,7 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
       let runs consumed_path = Brtl_js2_rtng.(root consumed_path / "runs")
       let runs_detail consumed_path = Brtl_js2_rtng.(root consumed_path / "runs" /% Path.string)
       let billing consumed_path = Brtl_js2_rtng.(root consumed_path / "billing")
+      let quickstart consumed_path = Brtl_js2_rtng.(root consumed_path / "quickstart")
     end
 
     let installation_sel state =
@@ -169,6 +171,7 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
                      (div ~at:At.[ class' (Jstr.v "main-content") ] [])
                      Brtl_js2_rtng.
                        [
+                         Rt.quickstart consumed_path --> Quickstart.run;
                          Rt.runs_detail consumed_path --> Runs_detail.run;
                          Rt.runs consumed_path --> Runs.run;
                          Rt.repo_new consumed_path --> Repo_new.run;
@@ -214,7 +217,7 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
 
   let new_installation_install installation_id state =
     Abb_js.Future.return
-      (Brtl_js2.Output.navigate (Uri.of_string ("/i/" ^ installation_id ^ "/repos/refresh")))
+      (Brtl_js2.Output.navigate (Uri.of_string ("/i/" ^ installation_id ^ "/quickstart")))
 
   let no_installation state =
     let open Abb_js.Future.Infix_monad in
