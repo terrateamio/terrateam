@@ -36,7 +36,13 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
                 div
                   [
                     a
-                      ~at:At.[ class' (Jstr.v "billing-link"); href (Jstr.v stripe_portal) ]
+                      ~at:
+                        At.
+                          [
+                            class' (Jstr.v "billing-link");
+                            href (Jstr.v stripe_portal);
+                            v (Jstr.v "target") (Jstr.v "_blank");
+                          ]
                       [ txt' "Stripe"; Tabler_icons_outline.external_link () ];
                   ];
               ];
