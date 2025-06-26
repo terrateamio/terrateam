@@ -508,6 +508,18 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               time))
       (fun () -> S.Db.store_plan ~request_id db work_manifest_id dirspace data has_changes)
 
+  let store_tf_operation_result request_id db work_manifest_id result =
+    Abbs_time_it.run
+      (fun time ->
+        Logs.info (fun m ->
+            m
+              "%s : STORE_TF_OPERATION_RESULT : id=%a : time=%f"
+              request_id
+              Uuidm.pp
+              work_manifest_id
+              time))
+      (fun () -> S.Db.store_tf_operation_result ~request_id db work_manifest_id result)
+
   let store_tf_operation_result2 request_id db work_manifest_id result =
     Abbs_time_it.run
       (fun time ->
@@ -3029,6 +3041,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                 [ check ]
               >>= fun () -> Abb.Future.return (Ok state))
           >>= fun _ -> Abb.Future.return (Ok ())
+      | Terrat_api_components_work_manifest_result.Work_manifest_tf_operation_result _ ->
+          assert false
       | Terrat_api_components_work_manifest_result.Work_manifest_tf_operation_result2 _ ->
           assert false
       | Terrat_api_components_work_manifest_result.Work_manifest_build_config_result _ ->
@@ -4151,6 +4165,52 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                       {
                         account_status;
                         config = Ctx.config ctx;
+                        is_layered_run = CCList.length matches.Dv.Matches.all_matches > 1;
+                        remaining_layers = matches.Dv.Matches.all_unapplied_matches;
+                        result;
+                        work_manifest;
+                      })
+                 >>= fun () -> Abb.Future.return (Ok state))
+           else Abb.Future.return (Ok state))
+          >>= fun state ->
+          let module Wmr = Terrat_vcs_provider2.Work_manifest_result in
+          if not work_manifest_result.Wmr.overall_success then
+            (* If the run failed, then we're done. *)
+            Abb.Future.return (Error (`Noop state))
+          else Abb.Future.return (Ok ())
+      | Terrat_api_components_work_manifest_result.Work_manifest_tf_operation_result result ->
+          Dv.client ctx state
+          >>= fun client ->
+          Dv.matches ctx state op
+          >>= fun matches ->
+          let work_manifest_result = S.Work_manifest.result result in
+          store_tf_operation_result
+            state.State.request_id
+            (Ctx.storage ctx)
+            work_manifest.Wm.id
+            result
+          >>= fun () ->
+          (if work_manifest.Wm.state <> Wm.State.Aborted then
+             run_interactive ctx state (fun () ->
+                 Dv.pull_request ctx state
+                 >>= fun pull_request ->
+                 create_op_commit_checks_of_result
+                   state.State.request_id
+                   (Ctx.config ctx)
+                   client
+                   work_manifest.Wm.account
+                   (S.Api.Pull_request.repo pull_request)
+                   (S.Api.Pull_request.branch_ref pull_request)
+                   work_manifest
+                   work_manifest_result
+                 >>= fun () ->
+                 publish_msg
+                   state.State.request_id
+                   client
+                   (S.Api.User.to_string @@ Event.user state.State.event)
+                   pull_request
+                   (Msg.Tf_op_result
+                      {
                         is_layered_run = CCList.length matches.Dv.Matches.all_matches > 1;
                         remaining_layers = matches.Dv.Matches.all_unapplied_matches;
                         result;
@@ -6008,6 +6068,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               fail (Msg.Build_tree_failure msg)
               >>= fun () -> Abb.Future.return (Error (`Noop state))
           | Wmr.Work_manifest_build_config_result _ -> assert false
+          | Terrat_api_components_work_manifest_result.Work_manifest_tf_operation_result _ ->
+              assert false
           | Terrat_api_components_work_manifest_result.Work_manifest_tf_operation_result2 _ ->
               assert false
           | Terrat_api_components_work_manifest_result.Work_manifest_index_result _ -> assert false)
@@ -6328,6 +6390,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               fail (Msg.Build_config_failure msg)
               >>= fun () -> Abb.Future.return (Error (`Noop state))
           | Wmr.Work_manifest_build_tree_result _ -> assert false
+          | Terrat_api_components_work_manifest_result.Work_manifest_tf_operation_result _ ->
+              assert false
           | Terrat_api_components_work_manifest_result.Work_manifest_tf_operation_result2 _ ->
               assert false
           | Terrat_api_components_work_manifest_result.Work_manifest_index_result _ -> assert false)

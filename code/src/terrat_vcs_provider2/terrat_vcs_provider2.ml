@@ -136,6 +136,12 @@ module Msg = struct
     | Repo_config_parse_failure of string * string
     | Run_work_manifest_err of [ `Failed_to_start | `Missing_workflow ]
     | Tag_query_err of Terrat_tag_query_ast.err
+    | Tf_op_result of {
+        is_layered_run : bool;
+        remaining_layers : Terrat_change_match3.Dirspace_config.t list list;
+        result : Terrat_api_components_work_manifest_tf_operation_result.t;
+        work_manifest : ('account, 'target) Terrat_work_manifest3.Existing.t;
+      }
     | Tf_op_result2 of {
         account_status : Account_status.t;
         config : 'config;
@@ -216,6 +222,13 @@ module type S = sig
       t ->
       Api.Repo.t ->
       Terrat_change.Dirspaceflow.Workflow.t Terrat_change.Dirspaceflow.t list ->
+      (unit, [> `Error ]) result Abb.Future.t
+
+    val store_tf_operation_result :
+      request_id:string ->
+      t ->
+      Uuidm.t ->
+      Terrat_api_components_work_manifest_tf_operation_result.t ->
       (unit, [> `Error ]) result Abb.Future.t
 
     val store_tf_operation_result2 :
@@ -519,6 +532,8 @@ module type S = sig
       Uuidm.t ->
       Terrat_work_manifest3.Step.t list ->
       (unit, [> `Error ]) result Abb.Future.t
+
+    val result : Terrat_api_components_work_manifest_tf_operation_result.t -> Work_manifest_result.t
 
     val result2 :
       Terrat_api_components_work_manifest_tf_operation_result2.t -> Work_manifest_result.t
