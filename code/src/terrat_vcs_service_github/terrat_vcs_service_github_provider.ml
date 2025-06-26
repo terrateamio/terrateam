@@ -1063,6 +1063,52 @@ module Db = struct
         Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
 
+  let store_tf_operation_result ~request_id db work_manifest_id result =
+    let module Rb = Terrat_api_components_work_manifest_tf_operation_result in
+    let open Abb.Future.Infix_monad in
+    Prmths.Counter.inc_one
+      (Metrics.run_overall_result_count (Bool.to_string result.Rb.overall.Rb.Overall.success));
+    Abbs_time_it.run
+      (fun time -> Logs.info (fun m -> m "%s : DIRSPACE_RESULT_STORE : time=%f" request_id time))
+      (fun () ->
+        let module Wmr = Terrat_api_components.Work_manifest_dirspace_result in
+        CCList.iter
+          (fun result ->
+            Logs.info (fun m ->
+                m
+                  "%s : RESULT_STORE : id=%a : dir=%s : workspace=%s : result=%s"
+                  request_id
+                  Uuidm.pp
+                  work_manifest_id
+                  result.Wmr.path
+                  result.Wmr.workspace
+                  (if result.Wmr.success then "SUCCESS" else "FAILURE")))
+          result.Rb.dirspaces;
+        Abbs_future_combinators.List_result.iter
+          ~f:(fun chunk ->
+            let work_manifest_id = CCList.replicate (CCList.length chunk) work_manifest_id in
+            let dir = CCList.map (fun result -> result.Wmr.path) chunk in
+            let workspace = CCList.map (fun result -> result.Wmr.workspace) chunk in
+            let success = CCList.map (fun result -> result.Wmr.success) chunk in
+            Metrics.Psql_query_time.time
+              (Metrics.psql_query_time "insert_github_work_manifest_result")
+              (fun () ->
+                Pgsql_io.Prepared_stmt.execute
+                  db
+                  Sql.insert_github_work_manifest_result
+                  work_manifest_id
+                  dir
+                  workspace
+                  success))
+          (CCList.chunks not_a_bad_chunk_size result.Rb.dirspaces))
+    >>= function
+    | Ok () -> Abb.Future.return (Ok ())
+    | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+        Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+    | Error `Error -> Abb.Future.return (Error `Error)
+
   let maybe_store_gates ~request_id db work_manifest_id = function
     | Some [] | None -> Abb.Future.return (Ok ())
     | Some gates -> (
@@ -3159,6 +3205,297 @@ module Comment (S : S) = struct
                Plan.{ outputs = Some (Plan.Outputs.Output_plan Output_plan.{ has_changes; _ }); _ }
              -> Some has_changes
            | _ -> None)
+
+    let create_run_output
+        ~view
+        request_id
+        is_layered_run
+        remaining_dirspace_configs
+        results
+        work_manifest =
+      let module Wm = Terrat_work_manifest3 in
+      let module Wmr = Terrat_api_components.Work_manifest_dirspace_result in
+      let module R = Terrat_api_components_work_manifest_tf_operation_result in
+      let dirspaces =
+        let module Cmp = struct
+          type t = bool * bool * string * string [@@deriving ord]
+        end in
+        results.R.dirspaces
+        |> CCList.sort
+             (fun
+               Wmr.{ path = p1; workspace = w1; success = s1; outputs = outputs1; _ }
+               Wmr.{ path = p2; workspace = w2; success = s2; outputs = outputs2; _ }
+             ->
+               (* Sort the results by dirspace and whether or not it has
+                    changes.  We want those dirspaces that have no changes
+                    last. *)
+               let has_changes1 =
+                 CCOption.get_or ~default:true (has_changes_of_workflow_outputs outputs1)
+               in
+               let has_changes2 =
+                 CCOption.get_or ~default:true (has_changes_of_workflow_outputs outputs2)
+               in
+               (* Negate has_changes because the order of [bool] is [false]
+                    before [true]. *)
+               Cmp.compare (not has_changes1, s1, p1, w1) (not has_changes2, s2, p2, w2))
+      in
+      let maybe_credentials_error =
+        dirspaces
+        |> CCList.exists (fun Wmr.{ outputs; _ } ->
+               let module Text = Terrat_api_components_output_text in
+               let texts = workflow_output_texts outputs in
+               CCList.exists
+                 (fun Workflow_step_output.{ text; _ } ->
+                   CCList.exists
+                     (fun sub -> CCString.find ~sub text <> -1)
+                     maybe_credential_error_strings)
+                 texts)
+      in
+      let module Hook_outputs = Terrat_api_components.Hook_outputs in
+      let pre = results.R.overall.R.Overall.outputs.Hook_outputs.pre in
+      let post = results.R.overall.R.Overall.outputs.Hook_outputs.post in
+      let cost_estimation =
+        let module Wce = Terrat_api_components_workflow_output_cost_estimation in
+        let module Ce = Terrat_api_components_output_cost_estimation in
+        pre
+        |> CCList.filter_map (function
+             | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_cost_estimation
+                 {
+                   Wce.outputs = Wce.Outputs.Output_cost_estimation Ce.{ cost_estimation; _ };
+                   success = true;
+                   _;
+                 } -> Some cost_estimation
+             | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_run _
+             | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_oidc _
+             | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_env _
+             | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_checkout _
+             | Terrat_api_components.Hook_outputs.Pre.Items.Workflow_output_cost_estimation _ ->
+                 None)
+        |> CCOption.of_list
+        |> CCOption.map (function
+               | Ce.Cost_estimation.
+                   { currency; total_monthly_cost; prev_monthly_cost; diff_monthly_cost; dirspaces }
+               ->
+               Snabela.Kv.(
+                 Map.of_list
+                   [
+                     ("prev_monthly_cost", float prev_monthly_cost);
+                     ("total_monthly_cost", float total_monthly_cost);
+                     ("diff_monthly_cost", float diff_monthly_cost);
+                     ("currency", string currency);
+                     ( "dirspaces",
+                       list
+                         (CCList.map
+                            (fun Ce.Cost_estimation.Dirspaces.Items.
+                                   {
+                                     path;
+                                     workspace;
+                                     total_monthly_cost;
+                                     prev_monthly_cost;
+                                     diff_monthly_cost;
+                                   }
+                               ->
+                              Map.of_list
+                                [
+                                  ("dir", string path);
+                                  ("workspace", string workspace);
+                                  ("prev_monthly_cost", float prev_monthly_cost);
+                                  ("total_monthly_cost", float total_monthly_cost);
+                                  ("diff_monthly_cost", float diff_monthly_cost);
+                                ])
+                            dirspaces) );
+                   ]))
+      in
+      let kv_of_workflow_step steps =
+        Snabela.Kv.(
+          list
+            (CCList.map
+               (fun Workflow_step_output.{ key; text; success; step_type; details } ->
+                 Map.of_list
+                   (CCList.concat
+                      [
+                        [
+                          ("text", string text);
+                          ("success", bool success);
+                          ("step_type", string step_type);
+                        ]
+                        @ CCOption.map_or ~default:[] (fun key -> [ (key, bool true) ]) key
+                        @ CCOption.map_or
+                            ~default:[]
+                            (fun details ->
+                              [
+                                ( "details",
+                                  string
+                                    (match step_type with
+                                    | "run" -> "`" ^ details ^ "`"
+                                    | _ -> details) );
+                              ])
+                            details;
+                      ]))
+               steps))
+      in
+      let num_remaining_layers = CCList.length remaining_dirspace_configs in
+      let kv =
+        Snabela.Kv.(
+          Map.of_list
+            (CCList.flatten
+               [
+                 CCOption.map_or
+                   ~default:[]
+                   (fun cost_estimation -> [ ("cost_estimation", list [ cost_estimation ]) ])
+                   cost_estimation;
+                 CCOption.map_or
+                   ~default:[]
+                   (fun env -> [ ("environment", string env) ])
+                   work_manifest.Wm.environment;
+                 [
+                   ("is_layered_run", bool is_layered_run);
+                   ("is_last_layer", bool (num_remaining_layers = 0));
+                   ("num_more_layers", int num_remaining_layers);
+                   ("maybe_credentials_error", bool maybe_credentials_error);
+                   ("overall_success", bool results.R.overall.R.Overall.success);
+                   ("pre_hooks", kv_of_workflow_step (pre_hook_output_texts pre));
+                   ("post_hooks", kv_of_workflow_step (post_hook_output_texts post));
+                   ("compact_view", bool (view = `Compact));
+                   ("compact_dirspaces", bool (CCList.length dirspaces > 5));
+                   ( "results",
+                     list
+                       (CCList.map
+                          (fun Wmr.{ path; workspace; success; outputs; _ } ->
+                            let module Text = Terrat_api_components_output_text in
+                            Map.of_list
+                              (CCList.flatten
+                                 [
+                                   [
+                                     ("dir", string path);
+                                     ("workspace", string workspace);
+                                     ("success", bool success);
+                                     ("outputs", kv_of_workflow_step (workflow_output_texts outputs));
+                                   ]
+                                   @ CCOption.map_or
+                                       ~default:[]
+                                       (fun has_changes -> [ ("has_changes", bool has_changes) ])
+                                       (has_changes_of_workflow_outputs outputs);
+                                 ]))
+                          dirspaces) );
+                 ];
+                 (match work_manifest.Wm.denied_dirspaces with
+                 | [] -> []
+                 | dirspaces ->
+                     [
+                       ( "denied_dirspaces",
+                         list
+                           (CCList.map
+                              (fun {
+                                     Wm.Deny.dirspace = { Terrat_change.Dirspace.dir; workspace };
+                                     policy;
+                                   }
+                                 ->
+                                Map.of_list
+                                  (CCList.flatten
+                                     [
+                                       [ ("dir", string dir); ("workspace", string workspace) ];
+                                       (match policy with
+                                       | Some policy ->
+                                           [
+                                             ( "policy",
+                                               list
+                                                 (CCList.map
+                                                    (fun p ->
+                                                      Map.of_list
+                                                        [
+                                                          ( "item",
+                                                            string
+                                                              (Terrat_base_repo_config_v1
+                                                               .Access_control
+                                                               .Match
+                                                               .to_string
+                                                                 p) );
+                                                        ])
+                                                    policy) );
+                                           ]
+                                       | None -> []);
+                                     ]))
+                              dirspaces) );
+                     ]);
+               ]))
+      in
+      let tmpl =
+        match CCList.rev work_manifest.Wm.steps with
+        | [] | Wm.Step.Index :: _ | Wm.Step.Build_config :: _ | Wm.Step.Build_tree :: _ ->
+            assert false
+        | Wm.Step.Plan :: _ -> Tmpl.plan_complete
+        | Wm.Step.(Apply | Unsafe_apply) :: _ -> Tmpl.apply_complete
+      in
+      match Snabela.apply tmpl kv with
+      | Ok body -> body
+      | Error (#Snabela.err as err) ->
+          Logs.err (fun m -> m "%s : ERROR : %a" request_id Snabela.pp_err err);
+          assert false
+
+    let rec iterate_comment_posts
+        ?(view = `Full)
+        request_id
+        client
+        is_layered_run
+        remaining_layers
+        results
+        pull_request
+        work_manifest =
+      let module Wm = Terrat_work_manifest3 in
+      let output =
+        create_run_output ~view request_id is_layered_run remaining_layers results work_manifest
+      in
+      let open Abb.Future.Infix_monad in
+      Api.comment_on_pull_request ~request_id client pull_request output
+      >>= function
+      | Ok () -> Abb.Future.return (Ok ())
+      | Error `Error -> (
+          match
+            (view, results.Terrat_api_components_work_manifest_tf_operation_result.dirspaces)
+          with
+          | _, [] -> assert false
+          | `Full, _ ->
+              iterate_comment_posts
+                ~view:`Compact
+                request_id
+                client
+                is_layered_run
+                remaining_layers
+                results
+                pull_request
+                work_manifest
+          | `Compact, [ _ ] ->
+              (* If we're in compact view but there is only one dirspace, then
+                   that means there is no way to make the comment smaller. *)
+              let kv = Snabela.Kv.(Map.of_list []) in
+              apply_template_and_publish
+                ~request_id
+                client
+                pull_request
+                "ITERATE_COMMENT_POST"
+                Tmpl.comment_too_large
+                kv
+          | `Compact, dirspaces ->
+              Abbs_future_combinators.List_result.iter
+                ~f:(fun dirspace ->
+                  let results =
+                    {
+                      results with
+                      Terrat_api_components_work_manifest_tf_operation_result.dirspaces =
+                        [ dirspace ];
+                    }
+                  in
+                  iterate_comment_posts
+                    ~view:`Full
+                    request_id
+                    client
+                    is_layered_run
+                    remaining_layers
+                    results
+                    pull_request
+                    work_manifest)
+                dirspaces)
   end
 
   let repo_config_failure ~request_id ~client ~pull_request ~title err =
@@ -4273,6 +4610,19 @@ module Comment (S : S) = struct
           "TAG_QUERY_ERR"
           Tmpl.tag_query_error
           kv
+    | Msg.Tf_op_result { is_layered_run; remaining_layers; result; work_manifest } -> (
+        let open Abb.Future.Infix_monad in
+        Result_publisher.iterate_comment_posts
+          request_id
+          client
+          is_layered_run
+          remaining_layers
+          result
+          pull_request
+          work_manifest
+        >>= function
+        | Ok () -> Abb.Future.return (Ok ())
+        | Error _ -> Abb.Future.return (Error `Error))
     | Msg.Tf_op_result2
         { account_status; config; is_layered_run; remaining_layers; result; work_manifest } -> (
         let open Abb.Future.Infix_monad in
@@ -4847,6 +5197,54 @@ module Work_manifest = struct
         Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
+
+  let result result =
+    let module Wmr = Terrat_api_components.Work_manifest_dirspace_result in
+    let module R = Terrat_api_components_work_manifest_tf_operation_result in
+    let module Hooks_output = Terrat_api_components.Hook_outputs in
+    let success = result.R.overall.R.Overall.success in
+    let pre_hooks_status =
+      let module Run = Terrat_api_components.Workflow_output_run in
+      let module Env = Terrat_api_components.Workflow_output_env in
+      let module Checkout = Terrat_api_components.Workflow_output_checkout in
+      let module Ce = Terrat_api_components.Workflow_output_cost_estimation in
+      let module Oidc = Terrat_api_components.Workflow_output_oidc in
+      result.R.overall.R.Overall.outputs.Hooks_output.pre
+      |> CCList.for_all
+           Hooks_output.Pre.Items.(
+             function
+             | Workflow_output_run Run.{ success; _ }
+             | Workflow_output_env Env.{ success; _ }
+             | Workflow_output_checkout Checkout.{ success; _ }
+             | Workflow_output_cost_estimation Ce.{ success; _ }
+             | Workflow_output_oidc Oidc.{ success; _ } -> success)
+    in
+    let post_hooks_status =
+      let module Run = Terrat_api_components.Workflow_output_run in
+      let module Env = Terrat_api_components.Workflow_output_env in
+      let module Oidc = Terrat_api_components.Workflow_output_oidc in
+      let module Drift_create_issue = Terrat_api_components.Workflow_output_drift_create_issue in
+      result.R.overall.R.Overall.outputs.Hooks_output.post
+      |> CCList.for_all
+           Hooks_output.Post.Items.(
+             function
+             | Workflow_output_run Run.{ success; _ }
+             | Workflow_output_env Env.{ success; _ }
+             | Workflow_output_oidc Oidc.{ success; _ }
+             | Workflow_output_drift_create_issue Drift_create_issue.{ success; _ } -> success)
+    in
+    let dirspaces_success =
+      CCList.map
+        (fun Wmr.{ path; workspace; success; _ } ->
+          ({ Terrat_change.Dirspace.dir = path; workspace }, success))
+        result.R.dirspaces
+    in
+    {
+      Terrat_vcs_provider2.Work_manifest_result.overall_success = success;
+      pre_hooks_success = pre_hooks_status;
+      post_hooks_success = post_hooks_status;
+      dirspaces_success;
+    }
 
   let result2 result =
     let module O = Terrat_api_components.Workflow_step_output in
