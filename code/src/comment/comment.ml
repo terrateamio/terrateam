@@ -1,4 +1,4 @@
-module type ID = sig
+module type Id = sig
   type t [@@deriving yojson, eq, show]
 
   val of_string : string -> t option
@@ -8,8 +8,10 @@ end
 module type Settings = sig
   type t = {
     limit : int;
-    max_requests : int;
+    max_requests_limit : int;
   }
+
+  val default : unit -> t
 end
 
 module type Strategy = sig
@@ -19,26 +21,29 @@ module type Strategy = sig
     | Minimize
 end
 
-(* TODO: Find a better name for this *)
-module Output = struct
+module type Output = sig
+  module Id : Id
+
   type t = {
-    title : string;
-    subtitle : string;
+    id : Id.t;
     content : string;
   }
 end
 
-(* TODO: Make Settings a module's argument *)
 module type Protocol = sig
-  module Id : ID
+  module O: Output
+  module Id : Id
   module S : Settings
   module St : Strategy
 
-  val break : Id.t -> S.t -> string -> string list
-  val combine : S.t -> string list -> string list
+  (** Breaks a sigle output into one or more chunks *)
+  val break : O.t -> S.t -> string list
+
+  (** Combines multiple outputs while respecting a particular strategy. *)
+  val combine : S.t -> St.t -> string list -> string list
 end
 
-module Make (I : ID) (S : Settings) (St : Strategy) :
+module Make (I : Id) (S : Settings) (St : Strategy) :
   Protocol with module Id = I and module S = S and module St = St = struct
   module Id = I
   module S = S
@@ -55,7 +60,7 @@ module Make (I : ID) (S : Settings) (St : Strategy) :
     in
     loop output id []
 
-  let combine settings outputs =
+  let combine settings strategy outputs =
     let id =
       match Id.of_string "test" with
       | Some id -> id
