@@ -1078,6 +1078,9 @@ module Db = struct
               gates
         | Some _ | None -> Abb.Future.return (Ok ()))
 
+  let store_tf_operation_result ~request_id db work_manifest_id result =
+    raise (Failure "NOT SUPPORTED")
+
   let store_tf_operation_result2 ~request_id db work_manifest_id result =
     let module R2 = Terrat_api_components_work_manifest_tf_operation_result2 in
     let open Abb.Future.Infix_monad in
@@ -4253,6 +4256,7 @@ module Comment = struct
           "TAG_QUERY_ERR"
           Tmpl.tag_query_error
           kv
+    | Msg.Tf_op_result _ -> raise (Failure "NOT SUPPORTED")
     | Msg.Tf_op_result2
         { account_status; config; is_layered_run; remaining_layers; result; work_manifest } -> (
         let open Abb.Future.Infix_monad in
@@ -4919,6 +4923,8 @@ module Work_manifest = struct
         Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
+
+  let result rest = raise (Failure "NOT SUPPORTED")
 
   let result2 result =
     let module O = Terrat_api_components.Workflow_step_output in
