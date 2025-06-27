@@ -4,6 +4,7 @@ module Status = struct
     | Running
     | Completed
     | Failed
+    | Canceled
   [@@deriving show, eq]
 end
 

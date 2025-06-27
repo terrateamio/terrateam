@@ -4861,7 +4861,24 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       match S.Api.Pull_request.state pull_request with
       | Terrat_pull_request.State.Closed ->
           Logs.info (fun m -> m "%s : NOOP : PR_CLOSED" state.State.request_id);
-          Abb.Future.return (Error (`Noop state))
+          let repo = Event.repo state.State.event in
+          Dv.client ctx state
+          >>= fun client ->
+          Dv.branch_ref ctx state
+          >>= fun ref_ ->
+          fetch_commit_checks state.State.request_id client repo ref_
+          >>= fun commit_checks ->
+          let module Ch = Terrat_commit_check in
+          let unfinished_checks =
+            CCList.filter_map
+              (function
+                | { Ch.status = Ch.Status.(Completed | Failed | Canceled); _ } -> None
+                | { Ch.status = Ch.Status.(Queued | Running); _ } as c ->
+                    Some { c with Ch.status = Ch.Status.Canceled })
+              commit_checks
+          in
+          create_commit_checks state.State.request_id client repo ref_ unfinished_checks
+          >>= fun () -> Abb.Future.return (Error (`Noop state))
       | Terrat_pull_request.State.(Open _ | Merged _) -> Abb.Future.return (Ok state)
 
     let check_non_empty_matches ctx state =

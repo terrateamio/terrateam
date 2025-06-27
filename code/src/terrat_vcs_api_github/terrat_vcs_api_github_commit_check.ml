@@ -28,7 +28,8 @@ let create ~owner ~repo ~ref_ ~checks client =
                  match status with
                  | Queued | Running -> "pending"
                  | Completed -> "success"
-                 | Failed -> "failure")
+                 | Failed -> "failure"
+                 | Canceled -> "failure")
              ())
          checks)
     client
