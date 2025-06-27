@@ -1,0 +1,204 @@
+module Links_ = struct
+  module Primary = struct
+    type t = {
+      cluster_agents : string option; [@default None]
+      events : string option; [@default None]
+      issues : string option; [@default None]
+      labels : string option; [@default None]
+      members : string option; [@default None]
+      merge_requests : string option; [@default None]
+      repo_branches : string option; [@default None]
+      self : string option; [@default None]
+    }
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
+  include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+end
+
+module Ci_id_token_sub_claim_components = struct
+  type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
+end
+
+module Compliance_frameworks = struct
+  type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show, eq]
+end
+
+module Container_expiration_policy = struct
+  type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show, eq]
+end
+
+module Custom_attributes = struct
+  type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show, eq]
+end
+
+module Forked_from_project = struct
+  type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show, eq]
+end
+
+module Permissions = struct
+  module Primary = struct
+    type t = {
+      group_access : Gitlabc_components_api_entities_groupaccess.t option; [@default None]
+      project_access : Gitlabc_components_api_entities_projectaccess.t option; [@default None]
+    }
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
+  include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+end
+
+module Shared_with_groups = struct
+  type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
+end
+
+module Tag_list = struct
+  type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
+end
+
+module Topics = struct
+  type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
+end
+
+type t = {
+  links_ : Links_.t option; [@default None] [@key "_links"]
+  allow_merge_on_skipped_pipeline : bool option; [@default None]
+  allow_pipeline_trigger_approve_deployment : bool option; [@default None]
+  analytics_access_level : string option; [@default None]
+  approvals_before_merge : string option; [@default None]
+  archived : bool option; [@default None]
+  auto_cancel_pending_pipelines : string option; [@default None]
+  auto_devops_deploy_strategy : string option; [@default None]
+  auto_devops_enabled : bool option; [@default None]
+  autoclose_referenced_issues : bool option; [@default None]
+  avatar_url : string option; [@default None]
+  build_git_strategy : string option; [@default None]
+  build_timeout : int option; [@default None]
+  builds_access_level : string option; [@default None]
+  can_create_merge_request_in : bool option; [@default None]
+  ci_allow_fork_pipelines_to_run_in_parent_project : bool option; [@default None]
+  ci_config_path : string option; [@default None]
+  ci_default_git_depth : int option; [@default None]
+  ci_delete_pipelines_in_seconds : int option; [@default None]
+  ci_forward_deployment_enabled : bool option; [@default None]
+  ci_forward_deployment_rollback_allowed : bool option; [@default None]
+  ci_id_token_sub_claim_components : Ci_id_token_sub_claim_components.t option; [@default None]
+  ci_job_token_scope_enabled : bool option; [@default None]
+  ci_pipeline_variables_minimum_override_role : string option; [@default None]
+  ci_push_repository_for_job_token_allowed : bool option; [@default None]
+  ci_restrict_pipeline_cancellation_role : string option; [@default None]
+  ci_separated_caches : bool option; [@default None]
+  compliance_frameworks : Compliance_frameworks.t option; [@default None]
+  container_expiration_policy : Container_expiration_policy.t option; [@default None]
+  container_registry_access_level : string option; [@default None]
+  container_registry_enabled : bool option; [@default None]
+  container_registry_image_prefix : string option; [@default None]
+  created_at : string option; [@default None]
+  creator_id : int option; [@default None]
+  custom_attributes : Custom_attributes.t option; [@default None]
+  default_branch : string;
+  description : string option; [@default None]
+  description_html : string option; [@default None]
+  emails_disabled : bool option; [@default None]
+  emails_enabled : bool option; [@default None]
+  empty_repo : bool option; [@default None]
+  enforce_auth_checks_on_uploads : bool option; [@default None]
+  environments_access_level : string option; [@default None]
+  external_authorization_classification_label : string option; [@default None]
+  feature_flags_access_level : string option; [@default None]
+  forked_from_project : Forked_from_project.t option; [@default None]
+  forking_access_level : string option; [@default None]
+  forks_count : int option; [@default None]
+  group_runners_enabled : bool option; [@default None]
+  http_url_to_repo : string option; [@default None]
+  id : int;
+  import_error : string option; [@default None]
+  import_status : string option; [@default None]
+  import_type : string option; [@default None]
+  import_url : string option; [@default None]
+  infrastructure_access_level : string option; [@default None]
+  issue_branch_template : string option; [@default None]
+  issues_access_level : string option; [@default None]
+  issues_enabled : bool option; [@default None]
+  issues_template : string option; [@default None]
+  jobs_enabled : bool option; [@default None]
+  keep_latest_artifact : bool option; [@default None]
+  last_activity_at : string option; [@default None]
+  lfs_enabled : bool option; [@default None]
+  license : Gitlabc_components_api_entities_licensebasic.t option; [@default None]
+  license_url : string option; [@default None]
+  marked_for_deletion_at : string option; [@default None]
+  marked_for_deletion_on : string option; [@default None]
+  max_artifacts_size : int option; [@default None]
+  merge_commit_template : string option; [@default None]
+  merge_method : string option; [@default None]
+  merge_pipelines_enabled : string option; [@default None]
+  merge_requests_access_level : string option; [@default None]
+  merge_requests_enabled : bool option; [@default None]
+  merge_requests_template : string option; [@default None]
+  merge_trains_enabled : string option; [@default None]
+  merge_trains_skip_train_allowed : string option; [@default None]
+  mirror : string option; [@default None]
+  mirror_overwrites_diverged_branches : string option; [@default None]
+  mirror_trigger_builds : string option; [@default None]
+  mirror_user_id : string option; [@default None]
+  model_experiments_access_level : string option; [@default None]
+  model_registry_access_level : string option; [@default None]
+  monitor_access_level : string option; [@default None]
+  mr_default_target_self : bool option; [@default None]
+  name : string option; [@default None]
+  name_with_namespace : string option; [@default None]
+  namespace : Gitlabc_components_api_entities_namespacebasic.t option; [@default None]
+  only_allow_merge_if_all_discussions_are_resolved : bool option; [@default None]
+  only_allow_merge_if_all_status_checks_passed : bool option; [@default None]
+  only_allow_merge_if_pipeline_succeeds : bool option; [@default None]
+  only_mirror_protected_branches : string option; [@default None]
+  open_issues_count : int option; [@default None]
+  owner : Gitlabc_components_api_entities_userbasic.t option; [@default None]
+  packages_enabled : bool option; [@default None]
+  pages_access_level : string option; [@default None]
+  path : string option; [@default None]
+  path_with_namespace : string;
+  permissions : Permissions.t option; [@default None]
+  pre_receive_secret_detection_enabled : bool option; [@default None]
+  prevent_merge_without_jira_issue : string option; [@default None]
+  printing_merge_request_link_enabled : bool option; [@default None]
+  public_jobs : bool option; [@default None]
+  readme_url : string option; [@default None]
+  releases_access_level : string option; [@default None]
+  remove_source_branch_after_merge : bool option; [@default None]
+  repository_access_level : string option; [@default None]
+  repository_object_format : string option; [@default None]
+  repository_storage : string option; [@default None]
+  request_access_enabled : bool option; [@default None]
+  requirements_access_level : string option; [@default None]
+  requirements_enabled : bool option; [@default None]
+  resolve_outdated_diff_discussions : bool option; [@default None]
+  restrict_user_defined_variables : bool option; [@default None]
+  runner_token_expiration_interval : int option; [@default None]
+  runners_token : string option; [@default None]
+  secret_push_protection_enabled : bool option; [@default None]
+  security_and_compliance_access_level : string option; [@default None]
+  security_and_compliance_enabled : bool option; [@default None]
+  service_desk_address : string option; [@default None]
+  service_desk_enabled : bool option; [@default None]
+  shared_runners_enabled : bool option; [@default None]
+  shared_with_groups : Shared_with_groups.t option; [@default None]
+  snippets_access_level : string option; [@default None]
+  snippets_enabled : bool option; [@default None]
+  squash_commit_template : string option; [@default None]
+  squash_option : string option; [@default None]
+  ssh_url_to_repo : string option; [@default None]
+  star_count : int option; [@default None]
+  statistics : Gitlabc_components_api_entities_projectstatistics.t option; [@default None]
+  suggestion_commit_message : string option; [@default None]
+  tag_list : Tag_list.t option; [@default None]
+  topics : Topics.t option; [@default None]
+  updated_at : string option; [@default None]
+  visibility : string option; [@default None]
+  warn_about_potentially_unwanted_characters : bool option; [@default None]
+  web_url : string option; [@default None]
+  wiki_access_level : string option; [@default None]
+  wiki_enabled : bool option; [@default None]
+}
+[@@deriving yojson { strict = false; meta = true }, show, eq]

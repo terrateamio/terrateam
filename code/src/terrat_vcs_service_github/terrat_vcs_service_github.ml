@@ -181,7 +181,7 @@ struct
         <*> Abb.Future.fork (repo_config_cleanup config storage))
       >>= fun (drift, flow_state_cleanup, plan_cleanup, repo_config_cleanup) ->
       Abb.Future.return
-        { config; storage; drift; flow_state_cleanup; plan_cleanup; repo_config_cleanup }
+        (Ok { config; storage; drift; flow_state_cleanup; plan_cleanup; repo_config_cleanup })
 
     let stop t =
       let open Abb.Future.Infix_monad in

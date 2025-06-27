@@ -125,19 +125,40 @@ let exec_duration duration =
   Metrics.Exec_duration_histogram.observe Metrics.exec_duration duration;
   if duration >= 0.5 then Logs.info (fun m -> m "EXEC_DURATION : %f" duration)
 
-module Make (Github : Terrat_vcs_service.S with type Service.vcs_config = Terrat_config.Github.t) =
+module Make
+    (Github : Terrat_vcs_service.S with type Service.vcs_config = Terrat_config.Github.t)
+    (Gitlab : Terrat_vcs_service.S with type Service.vcs_config = Terrat_config.Gitlab.t) =
 struct
+  let src = Logs.Src.create "terrat"
+
+  module Logs = (val Logs.src_log src : Logs.LOG)
+
   let maybe_start_github config storage =
     let open Abb.Future.Infix_monad in
     match Terrat_config.github config with
-    | Some github ->
+    | Some github -> (
+        Logs.info (fun m -> m "Starting GitHub Service");
         Github.Service.start config github storage
-        >>= fun service ->
-        Abb.Future.return
-          (Some
-             (Terrat_vcs_service.Service
-                ( (module Github : Terrat_vcs_service.S with type Service.t = Github.Service.t),
-                  (service : Github.Service.t) )))
+        >>= function
+        | Ok service ->
+            Abb.Future.return (Some (Terrat_vcs_service.Service ((module Github), service)))
+        | Error `Error ->
+            Logs.err (fun m -> m "Failed to start GitHub Service");
+            exit 1)
+    | None -> Abb.Future.return None
+
+  let maybe_start_gitlab config storage =
+    let open Abb.Future.Infix_monad in
+    match Terrat_config.gitlab config with
+    | Some gitlab -> (
+        Logs.info (fun m -> m "Starting GitLab Service");
+        Gitlab.Service.start config gitlab storage
+        >>= function
+        | Ok service ->
+            Abb.Future.return (Some (Terrat_vcs_service.Service ((module Gitlab), service)))
+        | Error `Error ->
+            Logs.err (fun m -> m "Failed to start GitLab Service");
+            exit 1)
     | None -> Abb.Future.return None
 
   let server () =
@@ -150,7 +171,9 @@ struct
           >>= fun storage ->
           maybe_start_github config storage
           >>= fun github_service ->
-          let services = CCOption.to_list github_service in
+          maybe_start_gitlab config storage
+          >>= fun gitlab_service ->
+          let services = CCOption.to_list github_service @ CCOption.to_list gitlab_service in
           Terrat_server.run config storage services
       | Error err ->
           Logs.err (fun m -> m "CONFIG : ERROR : %s" (Terrat_config.show_err err));

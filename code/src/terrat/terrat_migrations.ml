@@ -149,6 +149,8 @@ let migrations =
     ( "refactor-drop-legacy-github-columns",
       run_file_sql "2025-05-02-refactor-remove-old-columns.sql" );
     ("fix-slow-applied-dirspace-query", run_file_sql "2025-05-25-fix-slow-queries.sql");
+    ("add-gitlab-user-tables", run_file_sql "2025-06-09-add-gitlab-user-tables.sql");
+    ("add-gitlab-installations", run_file_sql "2025-06-16-add-gitlab-installations.sql");
   ]
 
 let run config storage = Mig.run (config, storage) migrations
