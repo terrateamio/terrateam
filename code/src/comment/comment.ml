@@ -1,11 +1,18 @@
-module Settings = struct
+module type ID = sig
+  type t [@@deriving yojson, eq, show]
+
+  val of_string : string -> t option
+  val to_string : t -> string
+end
+
+module type Settings = sig
   type t = {
-    limit: int;
-    max_requests: int;
+    limit : int;
+    max_requests : int;
   }
 end
 
-module Strategy = struct
+module type Strategy = sig
   type t =
     | Append
     | Delete
@@ -15,37 +22,46 @@ end
 (* TODO: Find a better name for this *)
 module Output = struct
   type t = {
-    title: string;
-    subtitle: string;
-    content: string;
+    title : string;
+    subtitle : string;
+    content : string;
   }
 end
 
 (* TODO: Make Settings a module's argument *)
 module type Protocol = sig
-  (* Breaks larger content into smaller chunks, each chunk
-     shares the original's ID, so it is assembled back
-     later. *)
-  (* TODO: The ID will be moved later to a record type *)
-  val break : string -> Settings.t -> string -> string list
+  module Id : ID
+  module S : Settings
+  module St : Strategy
 
-  val combine : Settings.t -> string list -> string list
+  val break : Id.t -> S.t -> string -> string list
+  val combine : S.t -> string list -> string list
 end
 
-module Make : Protocol = struct
+module Make (I : ID) (S : Settings) (St : Strategy) :
+  Protocol with module Id = I and module S = S and module St = St = struct
+  module Id = I
+  module S = S
+  module St = St
+
   let break id settings output =
     let rec loop remaining id acc =
-      let limit = settings.Settings.limit in
+      let limit = settings.S.limit in
       let len = CCString.length remaining in
-      if len <= limit then
-        CCList.append acc [remaining]
+      if len <= limit then CCList.append acc [ remaining ]
       else
         let part = CCString.sub remaining 0 limit in
-        loop (CCString.drop limit remaining) id (CCList.append acc [part])
+        loop (CCString.drop limit remaining) id (CCList.append acc [ part ])
     in
     loop output id []
 
-  let combine settings outputs = CCList.flat_map (break "ID" settings) outputs
+  let combine settings outputs =
+    let id =
+      match Id.of_string "test" with
+      | Some id -> id
+      | None -> failwith "Could not create ID"
+    in
+    CCList.flat_map (break id settings) outputs
 end
 
 (*
