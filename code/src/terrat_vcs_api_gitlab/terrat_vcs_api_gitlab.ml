@@ -625,7 +625,8 @@ let create_commit_checks ~request_id client repo ref_ checks =
               | C.Status.Queued -> "pending"
               | C.Status.Running -> "running"
               | C.Status.Completed -> "success"
-              | C.Status.Failed -> "failed");
+              | C.Status.Failed -> "failed"
+              | C.Status.Canceled -> "canceled");
             target_url = None;
           }
         in
