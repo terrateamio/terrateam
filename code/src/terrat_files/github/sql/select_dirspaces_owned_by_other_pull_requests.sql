@@ -62,7 +62,7 @@ overlapping_pull_requests as (
     inner join all_necessary_dirspaces as ands
         on ands.path = gcds.path
            and ands.workspace = gcds.workspace
-    where gpr.repository = $repository
+    where gpr.repository = $repository and not gpr.all_dirspaces_applied
     group by gpr.repository, gpr.pull_number
 ),
 -- This query does the heavy lifting.
