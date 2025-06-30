@@ -94,13 +94,5 @@ http {
             allow 172.17.0.0/24;
             deny all;
         }
-
-        location /install {
-            return 301 https://github.com/apps/terrateam-action;
-        }
-
-        location /install/github {
-            return 301 https://github.com/apps/terrateam-action;
-        }
     }
 }
