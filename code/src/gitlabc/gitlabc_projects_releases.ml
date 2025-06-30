@@ -1,0 +1,596 @@
+module PostApiV4ProjectsIdReleases = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      postapiv4projectsidreleases : Gitlabc_components.PostApiV4ProjectsIdReleases.t;
+          [@key "postApiV4ProjectsIdReleases"]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+    module Bad_request = struct end
+    module Unauthorized = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+    module Conflict = struct end
+    module Unprocessable_entity = struct end
+
+    type t =
+      [ `Created
+      | `Bad_request
+      | `Unauthorized
+      | `Forbidden
+      | `Not_found
+      | `Conflict
+      | `Unprocessable_entity
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("201", fun _ -> Ok `Created);
+        ("400", fun _ -> Ok `Bad_request);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+        ("409", fun _ -> Ok `Conflict);
+        ("422", fun _ -> Ok `Unprocessable_entity);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/releases"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module GetApiV4ProjectsIdReleases = struct
+  module Parameters = struct
+    module Order_by = struct
+      let t_of_yojson = function
+        | `String "released_at" -> Ok "released_at"
+        | `String "created_at" -> Ok "created_at"
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+    end
+
+    module Sort = struct
+      let t_of_yojson = function
+        | `String "asc" -> Ok "asc"
+        | `String "desc" -> Ok "desc"
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+    end
+
+    type t = {
+      id : string;
+      include_html_description : bool option; [@default None]
+      order_by : Order_by.t; [@default "released_at"]
+      page : int; [@default 1]
+      per_page : int; [@default 20]
+      sort : Sort.t; [@default "desc"]
+      updated_after : string option; [@default None]
+      updated_before : string option; [@default None]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/projects/{id}/releases"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)) ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("page", Var (params.page, Int));
+           ("per_page", Var (params.per_page, Int));
+           ("order_by", Var (params.order_by, String));
+           ("sort", Var (params.sort, String));
+           ("include_html_description", Var (params.include_html_description, Option Bool));
+           ("updated_before", Var (params.updated_before, Option String));
+           ("updated_after", Var (params.updated_after, Option String));
+         ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module DeleteApiV4ProjectsIdReleasesTagName = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      tag_name : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module No_content = struct end
+    module Bad_request = struct end
+    module Unauthorized = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `No_content
+      | `Bad_request
+      | `Unauthorized
+      | `Forbidden
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("204", fun _ -> Ok `No_content);
+        ("400", fun _ -> Ok `Bad_request);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/releases/{tag_name}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)); ("tag_name", Var (params.tag_name, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
+module PutApiV4ProjectsIdReleasesTagName = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      putapiv4projectsidreleasestagname : Gitlabc_components.PutApiV4ProjectsIdReleasesTagName.t;
+          [@key "putApiV4ProjectsIdReleasesTagName"]
+      tag_name : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Bad_request = struct end
+    module Unauthorized = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Bad_request
+      | `Unauthorized
+      | `Forbidden
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK);
+        ("400", fun _ -> Ok `Bad_request);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/releases/{tag_name}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)); ("tag_name", Var (params.tag_name, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Put
+end
+
+module GetApiV4ProjectsIdReleasesTagName = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      include_html_description : bool option; [@default None]
+      tag_name : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Unauthorized
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK); ("401", fun _ -> Ok `Unauthorized); ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/releases/{tag_name}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)); ("tag_name", Var (params.tag_name, String)) ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("include_html_description", Var (params.include_html_description, Option Bool)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PostApiV4ProjectsIdReleasesTagNameAssetsLinks = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      postapiv4projectsidreleasestagnameassetslinks :
+        Gitlabc_components.PostApiV4ProjectsIdReleasesTagNameAssetsLinks.t;
+          [@key "postApiV4ProjectsIdReleasesTagNameAssetsLinks"]
+      tag_name : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+    module Bad_request = struct end
+    module Unauthorized = struct end
+
+    type t =
+      [ `Created
+      | `Bad_request
+      | `Unauthorized
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("201", fun _ -> Ok `Created);
+        ("400", fun _ -> Ok `Bad_request);
+        ("401", fun _ -> Ok `Unauthorized);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/releases/{tag_name}/assets/links"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)); ("tag_name", Var (params.tag_name, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module GetApiV4ProjectsIdReleasesTagNameAssetsLinks = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      page : int; [@default 1]
+      per_page : int; [@default 20]
+      tag_name : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Unauthorized
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK); ("401", fun _ -> Ok `Unauthorized); ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/releases/{tag_name}/assets/links"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)); ("tag_name", Var (params.tag_name, String)) ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module DeleteApiV4ProjectsIdReleasesTagNameAssetsLinksLinkId = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      link_id : int;
+      tag_name : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module No_content = struct end
+    module Unauthorized = struct end
+
+    type t =
+      [ `No_content
+      | `Unauthorized
+      ]
+    [@@deriving show, eq]
+
+    let t = [ ("204", fun _ -> Ok `No_content); ("401", fun _ -> Ok `Unauthorized) ]
+  end
+
+  let url = "/api/v4/projects/{id}/releases/{tag_name}/assets/links/{link_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("tag_name", Var (params.tag_name, String));
+           ("link_id", Var (params.link_id, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
+module PutApiV4ProjectsIdReleasesTagNameAssetsLinksLinkId = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      link_id : int;
+      putapiv4projectsidreleasestagnameassetslinkslinkid :
+        Gitlabc_components.PutApiV4ProjectsIdReleasesTagNameAssetsLinksLinkId.t;
+          [@key "putApiV4ProjectsIdReleasesTagNameAssetsLinksLinkId"]
+      tag_name : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Bad_request = struct end
+    module Unauthorized = struct end
+
+    type t =
+      [ `OK
+      | `Bad_request
+      | `Unauthorized
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK);
+        ("400", fun _ -> Ok `Bad_request);
+        ("401", fun _ -> Ok `Unauthorized);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/releases/{tag_name}/assets/links/{link_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("tag_name", Var (params.tag_name, String));
+           ("link_id", Var (params.link_id, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Put
+end
+
+module GetApiV4ProjectsIdReleasesTagNameAssetsLinksLinkId = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      link_id : int;
+      tag_name : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Unauthorized
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK); ("401", fun _ -> Ok `Unauthorized); ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/releases/{tag_name}/assets/links/{link_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("tag_name", Var (params.tag_name, String));
+           ("link_id", Var (params.link_id, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module GetApiV4ProjectsIdReleasesTagNameDownloads_directAssetPath = struct
+  module Parameters = struct
+    type t = {
+      direct_asset_path : string;
+      id : string;
+      tag_name : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Unauthorized
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK); ("401", fun _ -> Ok `Unauthorized); ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/releases/{tag_name}/downloads/*direct_asset_path"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)); ("tag_name", Var (params.tag_name, String)) ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("direct_asset_path", Var (params.direct_asset_path, String)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PostApiV4ProjectsIdReleasesTagNameEvidence = struct
+  module Parameters = struct
+    type t = {
+      id : int;
+      tag_name : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `Created
+      | `Unauthorized
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("201", fun _ -> Ok `Created);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/releases/{tag_name}/evidence"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("tag_name", Var (params.tag_name, String)); ("id", Var (params.id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end

@@ -4,6 +4,7 @@ module Status : sig
     | Running
     | Completed
     | Failed
+    | Canceled
   [@@deriving show, eq]
 end
 

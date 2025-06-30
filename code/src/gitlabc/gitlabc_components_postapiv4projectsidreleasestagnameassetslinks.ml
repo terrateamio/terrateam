@@ -1,0 +1,24 @@
+module Primary = struct
+  module Link_type = struct
+    let t_of_yojson = function
+      | `String "other" -> Ok "other"
+      | `String "runbook" -> Ok "runbook"
+      | `String "image" -> Ok "image"
+      | `String "package" -> Ok "package"
+      | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+    type t = (string[@of_yojson t_of_yojson])
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
+  type t = {
+    direct_asset_path : string option; [@default None]
+    filepath : string option; [@default None]
+    link_type : Link_type.t; [@default "other"]
+    name : string;
+    url : string;
+  }
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
+end
+
+include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)

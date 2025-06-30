@@ -36,11 +36,8 @@ module List_dirspaces = struct
     end
 
     module Bad_request = struct
-      type t = {
-        data : string option; [@default None]
-        id : string;
-      }
-      [@@deriving yojson { strict = false; meta = true }, show, eq]
+      type t = Terrat_api_components.Bad_request_err.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Forbidden = struct end
@@ -274,11 +271,8 @@ module List_work_manifests = struct
     end
 
     module Bad_request = struct
-      type t = {
-        data : string option; [@default None]
-        id : string;
-      }
-      [@@deriving yojson { strict = false; meta = true }, show, eq]
+      type t = Terrat_api_components.Bad_request_err.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Forbidden = struct end
@@ -402,11 +396,8 @@ module Get_work_manifest_outputs = struct
     end
 
     module Bad_request = struct
-      type t = {
-        data : string option; [@default None]
-        id : string;
-      }
-      [@@deriving yojson { strict = false; meta = true }, show, eq]
+      type t = Terrat_api_components.Bad_request_err.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
     module Forbidden = struct end

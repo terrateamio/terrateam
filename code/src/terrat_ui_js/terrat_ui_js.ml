@@ -1,4 +1,5 @@
 module Github_service = Terrat_ui_js_service.Make (Terrat_ui_js_service_github)
+module Gitlab_service = Terrat_ui_js_service.Make (Terrat_ui_js_service_gitlab)
 
 let main_comp services state =
   let open Abb_js.Future.Infix_monad in
@@ -18,9 +19,15 @@ let init state =
     let login_rt () = Brtl_js2_rtng.(root "" / "login") in
     let logout_rt () = Brtl_js2_rtng.(root "" / "logout") in
     let main_rt () = Brtl_js2_rtng.(root "") in
-    Github_service.create ()
-    >>= fun github ->
-    let services = [ Terrat_ui_js_service.Service ((module Github_service), github) ] in
+    Abb_js_future_combinators.Infix_result_app.(
+      (fun github gitlab ->
+        [
+          Terrat_ui_js_service.Service ((module Github_service), github);
+          Terrat_ui_js_service.Service ((module Gitlab_service), gitlab);
+        ])
+      <$> Github_service.create ()
+      <*> Gitlab_service.create ())
+    >>= fun services ->
     ignore
       (Brtl_js2.Router_output.create
          state

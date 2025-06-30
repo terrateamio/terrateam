@@ -1,0 +1,42 @@
+# Configuration Merge Error
+
+## What is the error?
+
+Terrateam was unable to merge two configuration files because the types for the same key do not match.
+
+## Why did the error happen?
+
+The most likely cause is a central configuration or the configuration in the default branch uses a different type for a configuration than in the feature branch.  For example, one configuration file might specify a `list` but the feature branch uses an `object`.  The two keys must be specified as the same type.
+
+## What can be done to resolve the error?
+
+Modify the configuration file such that the values for the key have the same type.
+
+## Error details
+
+### Base Configuration
+
+@#base-@
+* `@name@`
+@/base-@
+
+
+### Configuration
+
+`@src@`
+
+### Key
+
+`@key@`
+
+### Base value
+
+```yaml
+@base_value@
+```
+
+### Configuration value
+
+```yaml
+@src_value@
+```

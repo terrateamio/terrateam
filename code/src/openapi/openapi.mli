@@ -3,7 +3,7 @@ type err = [ `Error of string ]
 module Response : sig
   type 'a t [@@deriving show]
 
-  val make : headers:(string * string) list -> status:int -> 'a -> 'a t
+  val make : headers:(string * string) list -> request_uri:Uri.t -> status:int -> 'a -> 'a t
   val value : 'a t -> 'a
   val headers : 'a t -> (string * string) list
   val status : 'a t -> int
@@ -23,7 +23,7 @@ module Request : sig
     type t = Var : ('a * 'a v) -> t
   end
 
-  type 'a t
+  type 'a t [@@deriving show]
 
   val make :
     ?body:Yojson.Safe.t ->
@@ -37,6 +37,7 @@ module Request : sig
 
   val with_base_url : Uri.t -> 'a t -> 'a t
   val with_url : Uri.t -> 'a t -> 'a t
+  val url : 'a t -> Uri.t
   val add_headers : (string * string) list -> 'a t -> 'a t
 end
 

@@ -11,6 +11,16 @@ module Github : sig
   val webhook_secret : t -> string option
 end
 
+module Gitlab : sig
+  type t [@@deriving show]
+
+  val access_token : t -> string
+  val api_base_url : t -> Uri.t
+  val app_id : t -> string
+  val app_secret : t -> string
+  val web_base_url : t -> Uri.t
+end
+
 type t [@@deriving show]
 
 type err =
@@ -43,6 +53,7 @@ val db_password : t -> string
 val db_user : t -> string
 val default_tier : t -> string
 val github : t -> Github.t option
+val gitlab : t -> Gitlab.t option
 val infracost : t -> Infracost.t option
 val nginx_status_uri : t -> Uri.t option
 val port : t -> int

@@ -576,7 +576,8 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
             maybe_set_body_writer handle body
         | `POST body ->
             Curl.set_post handle true;
-            maybe_set_body_writer handle body
+            (* Ensure that a post always has a body, requests seem to hang otherwise. *)
+            maybe_set_body_writer handle @@ Some (CCOption.get_or ~default:"" body)
         | `DELETE body ->
             Curl.set_customrequest handle "DELETE";
             maybe_set_body_writer handle body

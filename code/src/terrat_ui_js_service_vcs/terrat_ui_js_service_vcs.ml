@@ -28,19 +28,19 @@ module Api = struct
 
   type work_manifests_err =
     [ api_err
-    | `Bad_request of Terrat_api_installations.List_work_manifests.Responses.Bad_request.t
+    | `Bad_request of Terrat_api_components_bad_request_err.t
     ]
   [@@deriving show]
 
   type work_manifest_outputs_err =
     [ api_err
-    | `Bad_request of Terrat_api_installations.Get_work_manifest_outputs.Responses.Bad_request.t
+    | `Bad_request of Terrat_api_components_bad_request_err.t
     ]
   [@@deriving show]
 
   type dirspaces_err =
     [ api_err
-    | `Bad_request of Terrat_api_installations.List_dirspaces.Responses.Bad_request.t
+    | `Bad_request of Terrat_api_components_bad_request_err.t
     ]
   [@@deriving show]
 end
@@ -195,7 +195,7 @@ module type S = sig
       Abb_js.Future.t
 
     val repos_refresh :
-      installation_id:string -> t -> (string, [> Api.api_err ]) result Abb_js.Future.t
+      installation_id:string -> t -> (string option, [> Api.api_err ]) result Abb_js.Future.t
 
     val task :
       id:string -> t -> (Terrat_api_components.Task.t, [> Api.api_err ]) result Abb_js.Future.t

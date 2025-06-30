@@ -1,3 +1,4 @@
 docs/dist/
 code/build/
 node_modules/
+*~

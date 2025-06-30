@@ -10,8 +10,8 @@ module Client = struct
     let ( >>= ) = Abb_js.Future.Infix_monad.( >>= )
     let return = Abb_js.Future.return
 
-    let call ?body ~headers ~meth url =
-      let url = Uri.to_string url in
+    let call ?body ~headers ~meth uri =
+      let url = Uri.to_string uri in
       let meth =
         match meth with
         | `Get -> `GET
@@ -27,6 +27,7 @@ module Client = struct
             (Ok
                (Openapi.Response.make
                   ~headers:(Http.Response.headers resp)
+                  ~request_uri:uri
                   ~status:(Http.Response.status resp)
                   (Http.Response.text resp)))
       | Error (`Js_err err) -> return (Error (`Io_err err))
@@ -192,7 +193,7 @@ module Api = struct
     Client.call Terrat_api_installations.Repo_refresh.(make Parameters.(make ~installation_id))
     >>= fun resp ->
     match Openapi.Response.value resp with
-    | `OK R.{ id } -> Abb_js.Future.return (Ok id)
+    | `OK R.{ id } -> Abb_js.Future.return (Ok (Some id))
     | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
 
   let task ~id t =
@@ -211,7 +212,7 @@ module Comp = struct
     let is_enabled =
       let module C = Terrat_api_components.Server_config in
       function
-      | { C.github } -> github
+      | { C.github; _ } -> github
 
     let run config state =
       let module C = Terrat_api_components.Server_config_github in

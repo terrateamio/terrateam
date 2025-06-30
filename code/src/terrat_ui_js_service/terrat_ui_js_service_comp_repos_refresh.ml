@@ -39,14 +39,21 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
     let module T = Terrat_api_components.Task in
     Vcs.Api.repos_refresh ~installation_id vcs
     >>= function
-    | Ok task_id -> (
+    | Ok (Some task_id) -> (
         wait_for_task vcs task_id
         >>= function
         | Ok T.{ state = "completed"; _ } ->
             Abb_js.Future.return
-              (Brtl_js2.Output.navigate (Uri.of_string ("/i/" ^ installation_id)))
+            @@ Brtl_js2.Output.navigate
+            @@ Uri.of_string
+            @@ Brtl_js2.Path.abs state [ "i"; installation_id ]
         | Ok task -> failwith "nyi"
         | Error _ -> failwith "nyi")
+    | Ok None ->
+        Abb_js.Future.return
+        @@ Brtl_js2.Output.navigate
+        @@ Uri.of_string
+        @@ Brtl_js2.Path.abs state [ "i"; installation_id ]
     | Error _ -> failwith "nyi"
 
   let run = Brtl_js2.Ph.create ph_loading run'

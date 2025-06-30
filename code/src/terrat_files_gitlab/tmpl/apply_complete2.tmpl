@@ -1,0 +1,143 @@
+@-?overall_success-@
+## Applies :white_check_mark:
+@?account_status=trial_ending-@
+> [!WARNING]
+> Your Terrateam trial ends in **@trial_end_days@ days**.  To avoid an interruption in service, please reach out to support@@terrateam.io or contact us on [our Slack](https://terrateam.io/slack).
+
+@/account_status=trial_ending-@
+@^work_manifest_url-@
+
+Outputs can be viewed in the Terrateam Console [here](@work_manifest_url@).
+
+@/work_manifest_url-@
+@^denied_dirspaces-@
+<details open>
+  <summary><h2>Access Control :no_entry:</h2></summary>
+
+Not all [dirspaces](https://docs.terrateam.io/getting-started/concepts/#dirspace) were run because the user did not have access.  The following dirspaces were not run:
+
+| Dir | Workspace | Policy |
+| --- | --------- | ------ |
+@#denied_dirspaces-@
+| `@dir@` | `@workspace@` | @^policy@@#policy@`@item@` @/policy-@@/policy@@^!policy@**No matching policy**@/policy@ |
+@/denied_dirspaces-@
+</details>
+@/denied_dirspaces-@
+@?is_layered_run-@
+@!num_more_layers=1-@
+> [!NOTE]
+> This is a **layered run** with @num_more_layers | minus_one@ @?num_more_layers=2@layer@/num_more_layers=2@@!num_more_layers=2@layers@/num_more_layers=2@ remaining to plan and apply.  Layered runs require multiple rounds of planning  and applying.
+
+
+> [!IMPORTANT]
+> Any workspaces in the next layer that have autoplan enabled will be automatically be planned. Comment `terrateam plan` to explicitly plan the next layer.
+
+@/num_more_layers=1-@
+@/is_layered_run-@
+
+## Terrateam Apply Output@^environment@: @environment@@/environment@ :white_check_mark:
+<details>
+  <summary>Expand for apply output details</summary>
+
+@-/overall_success-@
+@-!overall_success-@
+## Applies :heavy_multiplication_x:
+@^work_manifest_url-@
+
+Outputs can be viewed in the Terrateam Console [here](@work_manifest_url@).
+
+@/work_manifest_url-@
+
+Running plans **FAILED**.  See **Terrateam Apply Output**.
+
+## Terrateam Apply Output@^environment@: @environment@@/environment@ :heavy_multiplication_x:
+
+<details>
+  <summary>Expand for apply output details</summary>
+@/overall_success-@
+@#?pre_hooks-@
+<details>
+  <summary><h3>Pre Hooks</h3></summary>
+
+@-#pre_hooks-@
+**Step**: @name@
+@-?success-@
+**Success**: :white_check_mark:
+@-/success-@
+@-!success-@
+**Success**: :heavy_multiplication_x:
+@-/success-@
+@^cmd-@
+**Command**: `@cmd@`
+@/cmd-@
+@^details-@
+**Details**: @details@
+@/details-@
+```
+@text@
+```
+@-/pre_hooks-@
+</details>
+@/pre_hooks-@
+@#?post_hooks-@
+<details>
+  <summary><h3>Post Hooks</h3></summary>
+
+@-#post_hooks-@
+**Step**: @name@
+@-?success-@
+**Success**: :white_check_mark:
+@-/success-@
+@-!success-@
+**Success**: :heavy_multiplication_x:
+@-/success-@
+@^cmd-@
+**Command**: `@cmd@`
+@/cmd-@
+@^details-@
+**Details**: @details@
+@/details-@
+```
+@text@
+```
+@-/post_hooks-@
+</details>
+@/post_hooks-@
+@-#dirspaces-@
+
+## @dir@ @?success@:white_check_mark:@/success@@!success@:heavy_multiplication_x:@/success@
+@?compact_dirspaces-@
+<details>
+  <summary>Expand for details</summary>
+
+---
+
+@/compact_dirspaces-@
+**Dir**: @dir@
+**Workspace**: @workspace@
+**Success**: @?success@:white_check_mark:@/success@@!success@:heavy_multiplication_x:@/success@
+
+@-#steps-@
+**Step**: @name@
+@-?success-@
+**Success**: :white_check_mark:
+@-/success-@
+@-!success-@
+**Success**: :heavy_multiplication_x:
+@-/success-@
+@^cmd-@
+**Command**: `@cmd@`
+@/cmd-@
+@^details-@
+**Details**: @details@
+@/details-@
+```
+@text@
+```
+@-/steps-@
+@?compact_dirspaces-@
+</details>
+@/compact_dirspaces-@
+@-/dirspaces-@
+
+</details>
