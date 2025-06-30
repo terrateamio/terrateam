@@ -32,8 +32,8 @@ q as (
     select
         gwm.id as id,
         gwm.base_sha as base_sha,
-        completed_at,
-        created_at,
+        gwm.completed_at,
+        gwm.created_at,
         gwm.run_type as run_type,
         (case
          when gwm.state not in ('running', 'queued') then gwm.state
