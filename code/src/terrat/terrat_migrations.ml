@@ -153,6 +153,8 @@ let migrations =
     ("add-gitlab-installations", run_file_sql "2025-06-16-add-gitlab-installations.sql");
     ( "add-pull-request-complete-column",
       run_file_sql "2025-06-30-add-pull-request-complete-column.sql" );
+    ( "add-pull-request-query-indices",
+      run_file_sql ~tx:false "2025-07-01-add-pull-request-query-indices.sql" );
   ]
 
 let run config storage = Mig.run (config, storage) migrations
