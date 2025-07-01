@@ -31,9 +31,9 @@ module type Output = sig
   type t = {
     id : string;
     index : int;
-    dirspace: string;
+    dirspace : string;
     (* Replace this boolean value with DU *)
-    is_error: bool;
+    is_error : bool;
     content : string;
   }
 end
@@ -42,8 +42,8 @@ module Output : Output = struct
   type t = {
     id : string;
     index : int;
-    dirspace: string;
-    is_error: bool;
+    dirspace : string;
+    is_error : bool;
     content : string;
   }
 end
@@ -63,15 +63,18 @@ module type Protocol = sig
   val combine : S.t -> St.t -> input list -> 'a t
 
   (** Queries an output with certain id, sorted by the indexes *)
-  val query: string -> 'a t
+  val query : string -> 'a t
 
   (** Publishes an output *)
-  val publish: string -> unit
+  val publish : string -> unit
 end
 
 module Make (O : Output) (S : Settings) (St : Strategy) :
-  Protocol with module S = S and module St = St and type input = string * string * bool and type 'a t = O.t list =
-struct
+  Protocol
+    with module S = S
+     and module St = St
+     and type input = string * string * bool
+     and type 'a t = O.t list = struct
   module S = S
   module St = St
   module O = O
@@ -95,14 +98,28 @@ struct
     loop i 1 []
 
   let combine settings strategy inputs =
-    match strategy with
-    | St.Append -> CCList.flat_map (break settings) inputs
-    | St.Delete -> []
-    | St.Minimize -> []
-    |> CCList.sort (fun (a: O.t) (b: O.t) -> (Bool.compare a.is_error b.is_error) + Int.abs(a.index - b.index))
+    let compare (a : O.t) (b : O.t) =
+      let id_cmp = String.compare a.id b.id in
+      let error_cmp = Bool.compare a.is_error b.is_error in
+      let dirspace_cmp = String.compare a.dirspace b.dirspace in
+      let index_cmp = Int.compare a.index b.index in
+
+      match (id_cmp, error_cmp, dirspace_cmp, index_cmp) with
+      | id, _, _, _ when id <> 0 -> id
+      | _, err, _, _ when err <> 0 -> err
+      | _, _, dir, _ when dir <> 0 -> dir
+      | _, _, _, idx when idx <> 0 -> idx
+      | _ -> -1
+    in
+    let out =
+      match strategy with
+      | St.Append -> CCList.flat_map (break settings) inputs
+      | St.Delete -> []
+      | St.Minimize -> []
+    in
+    CCList.sort compare out
 
   let query _ = []
-
   let publish _ = ()
 end
 
@@ -116,8 +133,9 @@ open Comment;;
 let s = Settings.{ max_length = 10; max_requests = 3};;
 let st = Strategy.Append;;
 let c1 = CCString.init 15 (fun _ -> 'a') ^ CCString.init 15 (fun _ -> 'b') ^ CCString.init 17 (fun _ -> 'c');;
+let i1 = ("a", c1, true);;
 module P = Make(Output)(Settings)(Strategy);;
-P.break s c1;;
-let c2 = [CCString.init 5 (fun _ -> 'a')] @ [CCString.init 15 (fun _ -> 'b')] @ [CCString.init 17 (fun _ -> 'c')];;
-P.combine s st c2;;
+P.break s i1;;
+let i2 = [("a", CCString.init 5 (fun _ -> 'a'), true); ("b", CCString.init 15 (fun _ -> 'b'), false); ("c", CCString.init 17 (fun _ -> 'c'), true)];;
+P.combine s st i2;;
 *)
