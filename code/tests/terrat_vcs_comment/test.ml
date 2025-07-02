@@ -8,6 +8,7 @@ type comment_status =
 module Fake_db = struct
   type db_comment = {
     comment_id : int;
+    elements : int list;
     index : int;
     content : string;
     status : comment_status;
@@ -16,6 +17,9 @@ module Fake_db = struct
   type db = { rows : db_comment list }
 
   let init () = { rows = [] }
+
+  let find_comment db comment_id =
+    List.find_opt (fun comment -> comment.comment_id = comment_id) db.rows
 end
 
 module Fake_api = struct
@@ -28,14 +32,14 @@ end
 (* This modules represents a synthetic VCS *)
 module Synthetic = struct
   type t = {
-    api : Fake_api.api;
-    db : Fake_db.db;
+    mutable api : Fake_api.api;
+    mutable db : Fake_db.db;
   }
 
   type el = {
+    id : int;
     content : string;
     dirspace : string;
-    status : comment_status;
   }
 
   type comment_id = int
@@ -43,25 +47,85 @@ module Synthetic = struct
   let query_comment_id t el =
     Abb.Future.return
       (try
-         Ok (None)
-       with
-      | Not_found -> Ok None
-      | _ -> Error `Error)
+         let c = CCList.find_opt (fun c -> CCList.mem el.id c.Fake_db.elements) t.db.rows in
+         match c with
+         | Some comment -> Ok (Some comment.comment_id)
+         | None -> Ok None
+       with _ -> Error `Error)
 
-  let upsert_comment_id t els cid = raise (Failure "nyi")
-  let delete_comment _ _ = raise (Failure "nyi")
-  let minimize_comment _ _ = raise (Failure "nyi")
+  let upsert_comment_id t els cid =
+    Abb.Future.return
+      (try
+         let eids = CCList.map (fun el -> el.id) els in
+         let content = CCString.concat "\n" (List.map (fun el -> el.content) els) in
+
+         match Fake_db.find_comment t.db cid with
+         | Some _ ->
+             let updated_rows =
+               CCList.map
+                 (fun comment ->
+                   if comment.Fake_db.comment_id = cid then
+                     { comment with elements = eids; content }
+                   else comment)
+                 t.db.rows
+             in
+             t.db <- { rows = updated_rows };
+             Ok ()
+         | None ->
+             let new_id = t.api.next_id in
+             let new_comment =
+               { Fake_db.comment_id = new_id; elements = eids; index = 1; content; status = Active }
+             in
+             t.api <- Fake_api.next t.api;
+             t.db <- { rows = new_comment :: t.db.rows };
+             Ok ()
+       with _ -> Error `Error)
+
+  let delete_comment t cid =
+    Abb.Future.return
+      (try
+         let updated_rows =
+           CCList.map
+             (fun comment ->
+               if comment.Fake_db.comment_id = cid then { comment with status = Deleted }
+               else comment)
+             t.db.rows
+         in
+
+         t.db <- { rows = updated_rows };
+         Ok ()
+       with _ -> Error `Error)
+
+  let minimize_comment t cid =
+    Abb.Future.return
+      (try
+         let updated_rows =
+           CCList.map
+             (fun comment ->
+               if comment.Fake_db.comment_id = cid then { comment with status = Minimized }
+               else comment)
+             t.db.rows
+         in
+
+         t.db <- { rows = updated_rows };
+         Ok ()
+       with _ -> Error `Error)
+
+  (* TODO: Set a comments status to minimized *)
   let post_comment _ _ = raise (Failure "nyi")
-  let rendered_length _ = raise (Failure "nyi")
+
+  (* TODO: Take the length out of an element content *)
+  let rendered_length el = raise (Failure "nyi")
   let max_comment_length = 100
-  let strategy _ _ = raise (Failure "nyi")
+  let strategy t el = raise (Failure "nyi")
 end
 
 let test_basic =
   Oth_abb.test ~name:"Basic Flow" (fun () ->
       let module C = Terrat_vcs_comment.Make (Synthetic) in
+      let t : Synthetic.t = { api = Fake_api.init (); db = Fake_db.init () } in
       let open Abb.Future.Infix_monad in
-      C.run () [] >>= fun _ -> Abb.Future.return ())
+      C.run t [] >>= fun _ -> Abb.Future.return ())
 
 let test = Oth_abb.(to_sync_test (parallel [ test_basic ]))
 
