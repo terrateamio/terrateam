@@ -1,3 +1,30 @@
+module Strategy = struct
+  type t =
+    | Append
+    | Delete
+    | Minimize
+end
+
+module type S = sig
+  type t
+  type el
+  type comment_id
+
+  val query_comment_id : t -> el -> (comment_id option, [> `Error ]) result Abb.Future.t
+  val upsert_comment_id : t -> el list -> comment_id -> (unit, [> `Error ]) result Abb.Future.t
+  val delete_comment : t -> comment_id -> (unit, [> `Error ]) result Abb.Future.t
+  val minimize_comment : t -> comment_id -> (unit, [> `Error ]) result Abb.Future.t
+  val post_comment : t -> el list -> (comment_id, [> `Error ]) result Abb.Future.t
+  val rendered_length : el -> int
+  val max_comment_length : int
+  val strategy : t -> el -> (Strategy.t, [> `Error ]) result Abb.Future.t
+end
+
+module Make (M : S) = struct
+  let run t els = raise (Failure "nyi")
+end
+
+(*
 type input = {
   dirspace : string;
   is_error : bool;
@@ -23,6 +50,12 @@ type output = {
   is_error : bool;
   content : string;
 }
+
+module type Db = sig
+  type t = Pgsql_io.t
+
+  val store_comment: comment_id:string -> t -> (unit, [> `Error ]) result Abb.Future.t
+end
 
 module type Protocol = sig
   type i
@@ -70,6 +103,7 @@ module Make :
     loop id input.dirspace input.is_error input.content 1 []
 
   let combine settings strategy inputs =
+    (* TODO: refactor this *)
     let compare (a : output) (b : output) =
       let id_cmp = String.compare a.id b.id in
       let error_cmp = Bool.compare a.is_error b.is_error in
@@ -94,6 +128,7 @@ module Make :
   let query _ = []
   let publish _ = ()
 end
+*)
 
 (*
 #require "containers";;
