@@ -1,34 +1,39 @@
 module Oth_abb = Oth_abb.Make (Abb)
 
-type comment_status =
-  | Active
-  | Minimized
-  | Deleted
-
 module Fake_db = struct
   type db_comment = {
-    comment_id : int;
+    id : int;
     elements : int list;
     index : int;
     content : string;
-    status : comment_status;
+    strategy : Terrat_vcs_comment.Strategy.t;
   }
 
-  type db = { rows : db_comment list }
+  type db_elements = {
+    id : int;
+    content : string;
+    dirspace : string;
+  }
 
-  let init () = { rows = [] }
+  type db = {
+    mutable comments : db_comment list;
+    mutable elements : db_elements list;
+  }
 
-  let find_by_id db comment_id =
-    List.find_opt (fun comment -> comment.comment_id = comment_id) db.rows
+  let init () = { comments = []; elements = [] }
+  let find_by_comment_id db id = CCList.find_opt (fun (c : db_comment) -> c.id = id) db.comments
 
-  let find_by_status db status = List.filter (fun comment -> comment.status = status) db.rows
+  let find_by_element_id db id =
+    CCList.find_opt (fun (c : db_comment) -> CCList.mem id c.elements) db.comments
+
+  let insert_comment db comment = db.comments <- comment :: db.comments
 end
 
 module Fake_api = struct
   type api = { mutable next_id : int }
 
   let init () = { next_id = 1 }
-  let next s = { next_id = s.next_id + 1 }
+  let next api = api.next_id <- api.next_id + 1
 end
 
 (* This modules represents a synthetic VCS *)
@@ -49,42 +54,44 @@ module Synthetic = struct
   let query_comment_id t el =
     let module F = Fake_db in
     Abb.Future.return
-      (try
-         let rows = t.db.F.rows in
-         let c = CCList.find_opt (fun c -> CCList.mem el.id c.F.elements) rows in
-         match c with
-         | Some comment -> Ok (Some comment.F.comment_id)
-         | None -> Ok None
-       with _ -> Error `Error)
+      (match F.find_by_element_id t.db el.id with
+      | Some c -> Ok (Some c.F.id)
+      | None -> Ok None)
+
+  let query_els_for_comment_id t comment_id =
+    let module F = Fake_db in
+    Abb.Future.return
+      (match F.find_by_element_id t.db comment_id with
+      | Some comment -> Ok (Some [])
+      | None -> Ok None)
 
   let upsert_comment_id t els cid =
+    let open Abb.Future.Infix_monad in
     let module A = Fake_api in
     let module F = Fake_db in
     Abb.Future.return
-      (try
-         let eids = CCList.map (fun el -> el.id) els in
-         let content = CCString.concat "\n" (List.map (fun el -> el.content) els) in
+      (let eids = CCList.map (fun el -> el.id) els in
+       let content = CCString.concat "\n" (List.map (fun el -> el.content) els) in
 
-         match Fake_db.find_by_id t.db cid with
-         | Some _ ->
-             let updated_rows =
-               CCList.map
-                 (fun comment ->
-                   if comment.F.comment_id = cid then { comment with F.elements = eids; content }
-                   else comment)
-                 t.db.F.rows
-             in
-             t.db <- { F.rows = updated_rows };
-             Ok ()
-         | None ->
-             let new_id = t.api.A.next_id in
-             let new_comment =
-               { F.comment_id = new_id; F.elements = eids; F.index = 1; content; F.status = Active }
-             in
-             t.api <- A.next t.api;
-             t.db <- { F.rows = new_comment :: t.db.F.rows };
-             Ok ()
-       with _ -> Error `Error)
+       match F.find_by_comment_id t.db cid with
+       | Some _ ->
+           let updated_rows =
+             CCList.map
+               (fun comment ->
+                 if comment.F.comment_id = cid then { comment with F.elements = eids; content }
+                 else comment)
+               t.db.F.rows
+           in
+           t.db <- { F.rows = updated_rows };
+           Ok ()
+       | None ->
+           let new_id = t.api.A.next_id in
+           let new_comment =
+             { F.comment_id = new_id; F.elements = eids; F.index = 1; content; F.status = Active }
+           in
+           A.next t.api;
+           t.db <- { F.rows = new_comment :: t.db.F.rows };
+           Ok ())
 
   let delete_comment t cid =
     let module F = Fake_db in

@@ -18,6 +18,8 @@ module type S = sig
   (** DB/Persistence operations *)
   val query_comment_id : t -> el -> (comment_id option, [> `Error ]) result Abb.Future.t
 
+  val query_els_for_comment_id : t -> comment_id -> (el list, [> `Error ]) result Abb.Future.t
+
   val upsert_comment_id : t -> el list -> comment_id -> (unit, [> `Error ]) result Abb.Future.t
 
   (** Modify existing comments from a VCS provider *)

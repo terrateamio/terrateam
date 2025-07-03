@@ -11,6 +11,7 @@ module type S = sig
   type comment_id
 
   val query_comment_id : t -> el -> (comment_id option, [> `Error ]) result Abb.Future.t
+  val query_els_for_comment_id : t -> comment_id -> (el list, [> `Error ]) result Abb.Future.t
   val upsert_comment_id : t -> el list -> comment_id -> (unit, [> `Error ]) result Abb.Future.t
   val delete_comment : t -> comment_id -> (unit, [> `Error ]) result Abb.Future.t
   val minimize_comment : t -> comment_id -> (unit, [> `Error ]) result Abb.Future.t
@@ -21,6 +22,22 @@ module type S = sig
 end
 
 module Make (M : S) = struct
+
+  let break settings (input : input) =
+    let limit = M.max_comment_length in
+    let id = Ouuid.to_string (Ouuid.v4 ()) in
+    let rec loop id dirspace is_error content index acc =
+      if CCString.length content <= limit then
+        let o : output = { id; index; dirspace; is_error; content } in
+        acc @ [ o ]
+      else
+        let part = CCString.sub content 0 limit in
+        let o : output = { id; index; dirspace; is_error; content = part } in
+        let updated = acc @ [ o ] in
+        loop id dirspace is_error (CCString.drop limit content) (index + 1) updated
+    in
+    loop id input.dirspace input.is_error input.content 1 []
+
   let run t els = raise (Failure "nyi")
 end
 
