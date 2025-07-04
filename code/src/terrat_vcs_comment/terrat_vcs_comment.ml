@@ -17,26 +17,21 @@ module type S = sig
   val minimize_comment : t -> comment_id -> (unit, [> `Error ]) result Abb.Future.t
   val post_comment : t -> el list -> (comment_id, [> `Error ]) result Abb.Future.t
   val rendered_length : el -> int
-  val max_comment_length : int
+  val content : el -> string
   val strategy : t -> el -> (Strategy.t, [> `Error ]) result Abb.Future.t
+  val max_comment_length : int
 end
 
 module Make (M : S) = struct
-
-  let break settings (input : input) =
+  let break (e : M.el) =
     let limit = M.max_comment_length in
-    let id = Ouuid.to_string (Ouuid.v4 ()) in
-    let rec loop id dirspace is_error content index acc =
-      if CCString.length content <= limit then
-        let o : output = { id; index; dirspace; is_error; content } in
-        acc @ [ o ]
+    let rec loop len curr acc =
+      if len <= limit then acc @ [ curr ]
       else
-        let part = CCString.sub content 0 limit in
-        let o : output = { id; index; dirspace; is_error; content = part } in
-        let updated = acc @ [ o ] in
-        loop id dirspace is_error (CCString.drop limit content) (index + 1) updated
+        let part, remaining = CCString.take_drop limit curr in
+        loop (CCString.length remaining) remaining (acc @ [ part ])
     in
-    loop id input.dirspace input.is_error input.content 1 []
+    loop (M.rendered_length e) (M.content e) []
 
   let run t els = raise (Failure "nyi")
 end

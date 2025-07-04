@@ -5,14 +5,18 @@ module Strategy : sig
     | Minimize
 end
 
-(** Primitives operations *)
+(** Primitive operations *)
 module type S = sig
-  (** Contains DB connections, API stuff, whatever we need to communicate with external systems *)
+  (** Contains DB connection, API-related data, whatever 
+      we need to communicate with external systems *)
   type t
 
-  (** Corresponds to the actual content of the comment: workspaces, metadata, comment status. *)
+  (** Corresponds to the actual content of an output like
+      workspaces, dirspaces, metadata, etc. *)
   type el
 
+  (** The Id that we are going to get from the VCS, on
+      GitHub this is an uint64. *)
   type comment_id
 
   (** DB/Persistence operations *)
@@ -28,11 +32,13 @@ module type S = sig
   val minimize_comment : t -> comment_id -> (unit, [> `Error ]) result Abb.Future.t
   val post_comment : t -> el list -> (comment_id, [> `Error ]) result Abb.Future.t
 
-  (** Constraints *)
+  (** Element primitives *)
   val rendered_length : el -> int
-
-  val max_comment_length : int
+  val content: el -> string
   val strategy : t -> el -> (Strategy.t, [> `Error ]) result Abb.Future.t
+
+  (** Constraints *)
+  val max_comment_length : int
 end
 
 module Make (M : S) : sig

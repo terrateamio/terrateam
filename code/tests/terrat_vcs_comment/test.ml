@@ -101,8 +101,8 @@ module Synthetic = struct
             |> CCList.map (fun (e : F.db_element) ->
                    { id = e.id; content = c.content; dirspace = e.dirspace })
           in
-          Ok (Some els)
-      | None -> Ok None)
+          Ok els
+      | None -> Ok [])
 
   let upsert_comment_id t els cid =
     let open Abb.Future.Infix_monad in
@@ -163,7 +163,7 @@ module Synthetic = struct
     let module F = Fake_db in
     Abb.Future.return
       (match F.find_by_element_id t.db el.id with
-      | Some c -> Ok (c.F.strategy)
+      | Some c -> Ok c.F.strategy
       | None -> Error `Error)
 end
 
