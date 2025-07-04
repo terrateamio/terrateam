@@ -25,6 +25,8 @@ workflows:
       plan: ['bash', '-c', 'echo "{}" > $TERRATEAM_PLAN_FILE; exit 2']
     plan:
       - type: run
+        cmd: ['${TERRATEAM_ROOT}/bin/verify-commit-msg']
+      - type: run
         cmd: ['${TERRATEAM_ROOT}/rfds/bin/validate-state']
       - type: plan
   - tag_query: code
