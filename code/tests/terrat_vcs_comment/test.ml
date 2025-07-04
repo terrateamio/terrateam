@@ -14,7 +14,7 @@ module Fake_db = struct
     id : int;
     content : string;
     is_error : bool;
-    dirspace : string;
+    dirspace : Terrat_dirspace.t;
   }
 
   type db = {
@@ -81,7 +81,7 @@ module Synthetic = struct
     id : int;
     content : string;
     is_error : bool;
-    dirspace : string;
+    dirspace : Terrat_dirspace.t;
   }
 
   type comment_id = int
@@ -95,13 +95,14 @@ module Synthetic = struct
 
   let query_els_for_comment_id t comment_id =
     let module F = Fake_db in
+    let module D = Terrat_dirspace in
     Abb.Future.return
       (match F.find_by_comment_id t.db comment_id with
       | Some c ->
           let els =
             F.fetch_elements t.db c
             |> CCList.map (fun (e : F.db_element) ->
-                   { id = e.id; content = c.content; is_error = e.is_error; dirspace = e.dirspace })
+                   { id = e.id; content = c.content; is_error = e.is_error; dirspace = e.dirspace})
           in
           Ok els
       | None -> Ok [])

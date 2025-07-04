@@ -18,7 +18,7 @@ module type S = sig
   val post_comment : t -> el list -> (comment_id, [> `Error ]) result Abb.Future.t
   val rendered_length : el -> int
   val content : el -> string
-  val dirspace : el -> string
+  val dirspace : el -> Terrat_dirspace.t
   val is_from_error_report : el -> bool
   val strategy : t -> el -> (Strategy.t, [> `Error ]) result Abb.Future.t
   val max_comment_length : int
@@ -37,6 +37,9 @@ module Make (M : S) = struct
 
   let group (els : M.el list) =
     let e, s = CCList.partition M.is_from_error_report els in
+    let rec aggregate idx len els acc =
+        
+        []
     []
 
   let combine (els : M.el list) =
