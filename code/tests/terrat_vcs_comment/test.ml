@@ -13,6 +13,7 @@ module Fake_db = struct
   type db_element = {
     id : int;
     content : string;
+    is_error : bool;
     dirspace : string;
   }
 
@@ -79,6 +80,7 @@ module Synthetic = struct
   type el = {
     id : int;
     content : string;
+    is_error : bool;
     dirspace : string;
   }
 
@@ -99,7 +101,7 @@ module Synthetic = struct
           let els =
             F.fetch_elements t.db c
             |> CCList.map (fun (e : F.db_element) ->
-                   { id = e.id; content = c.content; dirspace = e.dirspace })
+                   { id = e.id; content = c.content; is_error = e.is_error; dirspace = e.dirspace })
           in
           Ok els
       | None -> Ok [])
@@ -154,10 +156,15 @@ module Synthetic = struct
     let module F = Fake_db in
     let module A = Fake_api in
     let id = t.api.A.next_id in
-    upsert_comment_id t els id >>= fun _ -> Abb.Future.return (Ok id)
+    let content = CCString.concat "\n" (CCList.map (fun el -> el.content) els) in
+    let c : A.vcs_comment = { id; content; index = 0; strategy = C.Strategy.Append } in
+    A.add t.api c;
+    Abb.Future.return (Ok id)
 
   let rendered_length el = CCString.length el.content
-  let max_comment_length = 100
+  let content el = el.content
+  let dirspace el = el.dirspace
+  let is_from_error_report el = el.is_error
 
   let strategy t el =
     let module F = Fake_db in
@@ -165,6 +172,8 @@ module Synthetic = struct
       (match F.find_by_element_id t.db el.id with
       | Some c -> Ok c.F.strategy
       | None -> Error `Error)
+
+  let max_comment_length = 100
 end
 
 let test_basic =

@@ -35,6 +35,9 @@ module type S = sig
   (** Element primitives *)
   val rendered_length : el -> int
   val content: el -> string
+  (** val dirspace : el -> Terrat_dirspace.t *)
+  val dirspace : el -> string
+  val is_from_error_report: el -> bool
   val strategy : t -> el -> (Strategy.t, [> `Error ]) result Abb.Future.t
 
   (** Constraints *)
