@@ -1,15 +1,16 @@
 module Oth_abb = Oth_abb.Make (Abb)
+module El_set = Set.Make (Int)
 
 module Fake_db = struct
   type db_comment = {
     id : int;
-    elements : int list;
+    elements : El_set.t;
     index : int;
     content : string;
     strategy : Terrat_vcs_comment.Strategy.t;
   }
 
-  type db_elements = {
+  type db_element = {
     id : int;
     content : string;
     dirspace : string;
@@ -17,23 +18,55 @@ module Fake_db = struct
 
   type db = {
     mutable comments : db_comment list;
-    mutable elements : db_elements list;
+    mutable elements : db_element list;
   }
 
   let init () = { comments = []; elements = [] }
   let find_by_comment_id db id = CCList.find_opt (fun (c : db_comment) -> c.id = id) db.comments
 
   let find_by_element_id db id =
-    CCList.find_opt (fun (c : db_comment) -> CCList.mem id c.elements) db.comments
+    CCList.find_opt (fun (c : db_comment) -> El_set.mem id c.elements) db.comments
+
+  let fetch_elements db (c : db_comment) =
+    CCList.filter (fun (e : db_element) -> El_set.mem e.id c.elements) db.elements
 
   let insert_comment db comment = db.comments <- comment :: db.comments
+
+  let update_comment db id (f : db_comment -> db_comment) =
+    let cs = CCList.map (fun (c : db_comment) -> if c.id = id then f c else c) db.comments in
+    db.comments <- cs
+
+  let update_comment_elements db id els =
+    update_comment db id (fun c -> { c with elements = El_set.union els c.elements })
+
+  let update_comment_strategy db id st = update_comment db id (fun c -> { c with strategy = st })
 end
 
 module Fake_api = struct
-  type api = { mutable next_id : int }
+  type vcs_comment = {
+    id : int;
+    index : int;
+    content : string;
+    strategy : Terrat_vcs_comment.Strategy.t;
+  }
 
-  let init () = { next_id = 1 }
-  let next api = api.next_id <- api.next_id + 1
+  type api = {
+    mutable comments : vcs_comment list;
+    mutable next_id : int;
+  }
+
+  let init () = { comments = []; next_id = 1 }
+
+  let next api =
+    let n = api.next_id in
+    api.next_id <- api.next_id + 1;
+    n
+
+  let add api c = api.comments <- c :: api.comments
+
+  let show api =
+    let module C = Terrat_vcs_comment in
+    CCList.filter (fun c -> c.strategy <> C.Strategy.Delete) api.comments
 end
 
 (* This modules represents a synthetic VCS *)
@@ -61,8 +94,14 @@ module Synthetic = struct
   let query_els_for_comment_id t comment_id =
     let module F = Fake_db in
     Abb.Future.return
-      (match F.find_by_element_id t.db comment_id with
-      | Some comment -> Ok (Some [])
+      (match F.find_by_comment_id t.db comment_id with
+      | Some c ->
+          let els =
+            F.fetch_elements t.db c
+            |> CCList.map (fun (e : F.db_element) ->
+                   { id = e.id; content = c.content; dirspace = e.dirspace })
+          in
+          Ok (Some els)
       | None -> Ok None)
 
   let upsert_comment_id t els cid =
@@ -70,66 +109,62 @@ module Synthetic = struct
     let module A = Fake_api in
     let module F = Fake_db in
     Abb.Future.return
-      (let eids = CCList.map (fun el -> el.id) els in
-       let content = CCString.concat "\n" (List.map (fun el -> el.content) els) in
-
+      (let eids = CCList.map (fun el -> el.id) els |> El_set.of_list in
+       let content = CCString.concat "\n" (CCList.map (fun el -> el.content) els) in
        match F.find_by_comment_id t.db cid with
        | Some _ ->
-           let updated_rows =
-             CCList.map
-               (fun comment ->
-                 if comment.F.comment_id = cid then { comment with F.elements = eids; content }
-                 else comment)
-               t.db.F.rows
-           in
-           t.db <- { F.rows = updated_rows };
+           F.update_comment_elements t.db cid eids;
            Ok ()
        | None ->
-           let new_id = t.api.A.next_id in
-           let new_comment =
-             { F.comment_id = new_id; F.elements = eids; F.index = 1; content; F.status = Active }
+           let id = A.next t.api in
+           let c =
+             F.
+               {
+                 id;
+                 elements = eids;
+                 index = 1;
+                 content;
+                 strategy = Terrat_vcs_comment.Strategy.Append;
+               }
            in
-           A.next t.api;
-           t.db <- { F.rows = new_comment :: t.db.F.rows };
+           F.insert_comment t.db c;
            Ok ())
 
   let delete_comment t cid =
+    let module C = Terrat_vcs_comment in
     let module F = Fake_db in
     Abb.Future.return
       (try
-         let updated_rows =
-           CCList.map
-             (fun comment ->
-               if comment.F.comment_id = cid then { comment with F.status = Deleted } else comment)
-             t.db.F.rows
-         in
-
-         t.db <- { F.rows = updated_rows };
+         F.update_comment_strategy t.db cid C.Strategy.Delete;
          Ok ()
        with _ -> Error `Error)
 
   let minimize_comment t cid =
+    let module C = Terrat_vcs_comment in
     let module F = Fake_db in
     Abb.Future.return
       (try
-         let updated_rows =
-           CCList.map
-             (fun comment ->
-               if comment.F.comment_id = cid then { comment with F.status = Minimized } else comment)
-             t.db.F.rows
-         in
-
-         t.db <- { F.rows = updated_rows };
+         F.update_comment_strategy t.db cid C.Strategy.Minimize;
          Ok ()
        with _ -> Error `Error)
 
-  (* TODO: Set a comments status to minimized *)
-  let post_comment _ _ = raise (Failure "nyi")
+  let post_comment t els =
+    let open Abb.Future.Infix_monad in
+    let module C = Terrat_vcs_comment in
+    let module F = Fake_db in
+    let module A = Fake_api in
+    let id = t.api.A.next_id in
+    upsert_comment_id t els id >>= fun _ -> Abb.Future.return (Ok id)
 
-  (* TODO: Take the length out of an element content *)
-  let rendered_length el = raise (Failure "nyi")
+  let rendered_length el = CCString.length el.content
   let max_comment_length = 100
-  let strategy t el = raise (Failure "nyi")
+
+  let strategy t el =
+    let module F = Fake_db in
+    Abb.Future.return
+      (match F.find_by_element_id t.db el.id with
+      | Some c -> Ok (c.F.strategy)
+      | None -> Error `Error)
 end
 
 let test_basic =
