@@ -25,7 +25,16 @@ module type S = sig
 end
 
 module Make (M : S) = struct
-  let break (e : M.el) =
+  (* Like, el, but with extra metadata *)
+  type el_meta = {
+    element : M.el;
+    group_id : int;
+    length : int;
+  }
+
+  type comment = { elements: M.el list; order: int }
+
+  let break e =
     let limit = M.max_comment_length in
     let rec loop len curr acc =
       if len <= limit then acc @ [ curr ]
@@ -35,16 +44,40 @@ module Make (M : S) = struct
     in
     loop (M.rendered_length e) (M.content e) []
 
-  let group (els : M.el list) =
-    let e, s = CCList.partition M.is_from_error_report els in
-    let rec aggregate idx len els acc =
-        
-        []
-    []
+  let partition predicate els =
+    CCList.map (fun el -> { element = el; length = M.rendered_length el; group_id = 0 }) els
+    |> CCList.sort (fun g1 g2 -> compare g1.length g2.length)
+    |> CCList.partition predicate
 
-  let combine (els : M.el list) =
+  let group ems =
+    let rec loop curr group_id prev_sum acc =
+      match curr with
+      | [] -> acc
+      (* Happy path, all items we've consumed so far are smaller
+         than the VCS limit *)
+      | g :: gs when prev_sum + g.length + 1 <= M.max_comment_length ->
+          let cut = [ curr @ [ { g with group_id } ] ] in
+          loop gs group_id (prev_sum + g.length + 1) (acc @ cut)
+      (* If we ever hit somethig that is single-handedly bigger
+         than the VCS limit. Cut the previous accumulated state,
+         set a group just for the big element and move on. *)
+      | g :: gs when g.length + 1 > M.max_comment_length ->
+          let cut = [ curr ] @ [ [ { g with group_id } ] ] in
+          loop gs (group_id + 1) 0 (acc @ cut)
+      (* Wrap thing into a new group and move on to the next *)
+      | g :: gs ->
+          let cut = [ curr @ [ { g with group_id } ] ] in
+          loop gs (group_id + 1) 0 (acc @ cut)
+    in
+    loop ems 0 0 []
+
+  let combine (ems: el_meta list list) =
+
+  let aggregate (els : M.el list) =
     let n = CCList.length els in
     let total = CCList.fold_left (fun acc e -> M.rendered_length e + acc) 0 els in
+    let errors = CCList.sort sort_by_length e in
+    let successes = CCList.sort sort_by_length s in
     match (total / M.max_comment_length) + 1 with
     | x when x <= n -> CCList.flat_map break els
     | _ -> []
@@ -53,43 +86,3 @@ module Make (M : S) = struct
     let open Abb.Future.Infix_monad in
     raise (Failure "nyi")
 end
-
-(*
-let combine settings strategy inputs =
-  (* TODO: refactor this *)
-  let compare (a : output) (b : output) =
-    let id_cmp = String.compare a.id b.id in
-    let error_cmp = Bool.compare a.is_error b.is_error in
-    let dirspace_cmp = String.compare a.dirspace b.dirspace in
-    let index_cmp = Int.compare a.index b.index in
-
-    match (id_cmp, error_cmp, dirspace_cmp, index_cmp) with
-    | id, _, _, _ when id <> 0 -> id
-    | _, err, _, _ when err <> 0 -> err
-    | _, _, dir, _ when dir <> 0 -> dir
-    | _, _, _, idx when idx <> 0 -> idx
-    | _ -> -1
-  in
-  let out =
-    match strategy with
-    | Append -> CCList.flat_map (break settings) inputs
-    | Delete -> []
-    | Minimize -> []
-  in
-  CCList.sort compare out
-
-#require "containers";;
-#require "uuidm";;
-#mod_use "src/ouuid/ouuid.ml";;
-#mod_use "src/comment/comment.ml";;
-open Comment;;
-
-let s = Settings.{ max_length = 10; max_requests = 3};;
-let st = Strategy.Append;;
-let c1 = CCString.init 15 (fun _ -> 'a') ^ CCString.init 15 (fun _ -> 'b') ^ CCString.init 17 (fun _ -> 'c');;
-let i1 = ("a", c1, true);;
-module P = Make(Output)(Settings)(Strategy);;
-P.break s i1;;
-let i2 = [("a", CCString.init 5 (fun _ -> 'a'), true); ("b", CCString.init 15 (fun _ -> 'b'), false); ("c", CCString.init 17 (fun _ -> 'c'), true)];;
-P.combine s st i2;;
-*)
