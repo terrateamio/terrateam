@@ -28,11 +28,16 @@ module Make (M : S) = struct
   (* Like, el, but with extra metadata *)
   type el_meta = {
     element : M.el;
-    group_id : int;
     length : int;
   }
 
-  type comment = { elements: M.el list; order: int }
+  module Pack = CCMap.Make (Int)
+
+  type comment = {
+    content : string;
+    group_id : int;
+    index : int;
+  }
 
   let break e =
     let limit = M.max_comment_length in
@@ -45,33 +50,42 @@ module Make (M : S) = struct
     loop (M.rendered_length e) (M.content e) []
 
   let partition predicate els =
-    CCList.map (fun el -> { element = el; length = M.rendered_length el; group_id = 0 }) els
+    CCList.map (fun el -> { element = el; length = M.rendered_length el }) els
     |> CCList.sort (fun g1 g2 -> compare g1.length g2.length)
     |> CCList.partition predicate
 
   let group ems =
+    let map : string list Pack.t = Pack.empty in
+    let update map new_item = function
+      | None -> Some new_item
+      | Some curr -> Some (curr @ new_item)
+    in
     let rec loop curr group_id prev_sum acc =
       match curr with
       | [] -> acc
       (* Happy path, all items we've consumed so far are smaller
          than the VCS limit *)
       | g :: gs when prev_sum + g.length + 1 <= M.max_comment_length ->
-          let cut = [ curr @ [ { g with group_id } ] ] in
-          loop gs group_id (prev_sum + g.length + 1) (acc @ cut)
+          let content = break g.element in
+          let map = Pack.update group_id (update group_id content) map in
+          loop gs group_id (prev_sum + g.length + 1) map
       (* If we ever hit somethig that is single-handedly bigger
          than the VCS limit. Cut the previous accumulated state,
          set a group just for the big element and move on. *)
       | g :: gs when g.length + 1 > M.max_comment_length ->
-          let cut = [ curr ] @ [ [ { g with group_id } ] ] in
-          loop gs (group_id + 1) 0 (acc @ cut)
-      (* Wrap thing into a new group and move on to the next *)
+          let content = break g.element in
+          let map = Pack.update (group_id + 1) (update group_id content) map in
+          loop gs (group_id + 2) 0 map
+      (* Wrap everything into a new group and move on to the 
+         next one *)
       | g :: gs ->
-          let cut = [ curr @ [ { g with group_id } ] ] in
-          loop gs (group_id + 1) 0 (acc @ cut)
+          let content = break g.element in
+          let map = Pack.update (group_id + 1) (update group_id content) map in
+          loop gs (group_id + 1) 0 map
     in
-    loop ems 0 0 []
+    loop ems 0 0 map
 
-  let combine (ems: el_meta list list) =
+  (* let combine (ems : el_meta list list) = CCList.mapi (fun i es -> to_comment (i + 1) es) ems *)
 
   let aggregate (els : M.el list) =
     let n = CCList.length els in
@@ -79,7 +93,9 @@ module Make (M : S) = struct
     let errors = CCList.sort sort_by_length e in
     let successes = CCList.sort sort_by_length s in
     match (total / M.max_comment_length) + 1 with
-    | x when x <= n -> CCList.flat_map break els
+    | x when x <= n ->
+        (* So everything can be aggregated into a single comment *)
+        CCList.flat_map break els
     | _ -> []
 
   let run t els =
