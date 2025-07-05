@@ -65,6 +65,7 @@ export default defineConfig({
           items: [
             { label: "Quickstart Guide", link: "/getting-started/quickstart-guide" },
             { label: "Concepts", link: "/getting-started/concepts" },
+            { label: "Configuration", link: "/getting-started/configuration" },
             { label: "Plan And Apply", link: "/getting-started/plan-and-apply" },
             { label: "Pull Requests and Triggers", link: "/getting-started/pull-requests-and-triggers" },
             { label: "Secrets and Variables", link: "/getting-started/secrets-and-variables" },
