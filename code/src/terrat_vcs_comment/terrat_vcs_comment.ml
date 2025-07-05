@@ -39,6 +39,11 @@ module Make (M : S) = struct
     index : int;
   }
 
+  let partition predicate els =
+    CCList.map (fun el -> { element = el; length = M.rendered_length el }) els
+    |> CCList.sort (fun g1 g2 -> compare g1.length g2.length)
+    |> CCList.partition predicate
+
   let break e =
     let limit = M.max_comment_length in
     let rec loop idx len curr acc =
@@ -48,11 +53,6 @@ module Make (M : S) = struct
         loop (idx + 1) (len - limit) remaining (acc @ [ (idx, part) ])
     in
     loop 1 (M.rendered_length e) (M.content e) []
-
-  let partition predicate els =
-    CCList.map (fun el -> { element = el; length = M.rendered_length el }) els
-    |> CCList.sort (fun g1 g2 -> compare g1.length g2.length)
-    |> CCList.partition predicate
 
   let group ems =
     let map : M.el list Pack.t = Pack.empty in
@@ -82,7 +82,7 @@ module Make (M : S) = struct
     in
     loop ems 0 0 map
 
-  let assemble_comments group_id (els : M.el list) =
+  let assemble_comments group_id els =
     let open CCFun.Infix in
     let create (index, content) = { group_id; content; index } in
     match els with
@@ -92,7 +92,14 @@ module Make (M : S) = struct
         let open CCFun.Infix in
         CCList.flat_map (CCList.map create % break) es
 
+  let pipeline els =
+    let gs = group els in
+    CCList.flat_map (fun (group_id, els) -> assemble_comments group_id els) (Pack.bindings gs)
+
   let run t els =
     let open Abb.Future.Infix_monad in
+    let error_els, succ_els = partition (fun x -> M.is_from_error_report x.element) els in
+    let _errors = pipeline error_els in
+    let _successes = pipeline succ_els in
     raise (Failure "nyi")
 end
