@@ -1,7 +1,7 @@
 = Refactoring Dirspace Locking
 :authors: Malcolm Matalka
-:state: discussion
-:labels: meta, processes
+:state: committed
+:labels: dirspaces, locking, pull requests
 :source-highlighter: highlight.js
 :toc:
 
@@ -215,6 +215,9 @@ the repository, not explicit state that needs to be tracked over time.  This
 means that the locks are always correct.
 
 == Proposal
+
+CAUTION:: All SQL in this RFD is for demonstration purposes, see the actual code
+changes for the SQL.
 
 The fundamental contribution of this proposal is that rather than locking being
 an emergent behaviour of the state of the database, locks will be explicitly
@@ -641,7 +644,7 @@ dirspace can be replaced with:
 ----
 select
     dsprl.path as path,
-    disprl.workspace as workspace,
+    dsprl.workspace as workspace,
     gpr.base_branch as base_branch,
     gpr.branch as branch_name,
     gpr.base_sha as bash_hash,
@@ -671,11 +674,13 @@ where our_pr.repository = $repository
 
 Migrating to this will be implemented over the following phases:
 
-. Introduce tables plus triggers.  This step is necessary for SaaS because we
-have so many pull requests we cannot migrate them over in one large batch,
-instead we must do them incrementally.
+. Introduce tables plus triggers.  This gets the tracking of locks going as we
+begin to transition over.
 ** Add dirspace locking table.
 ** Add triggers to maintain table.
+. Incrementally migrate over.  This is necessary for SaaS because the amount of
+pull request to check locks on is too expensive to do in on step.  We add some
+code to the server to do it in a loop.
 ** Add a table to track which pull requests have been migrated to new locking.
 ** Insert all pull requests into tracking table.
 ** Add migration code to run in the server (not during migration) to batch-based
@@ -685,10 +690,9 @@ This is necessary for users who are self-hosted.  This will consume any elements
 in the migration table created in the previous step.
 ** Remove the server code to run the incremental migration.
 ** Add migration script to do the equivalent of the incremental migration but in
-   one big run.
+   one big run (for SaaS this will be a noop, for other users this will be a
+   big batch operation).
 ** Remove big query to test for locking and replace with query using the
    dirspaces table.
 . Clean up
 ** Drop the migration table.
-** Delete any functions created just for migration process.
-
