@@ -33,7 +33,6 @@ services:
     pull_policy: always
     platform: linux/amd64
     environment:
-      TERRAT_API_BASE: "${TERRAT_API_BASE}"
       DB_HOST: "db"
       DB_PORT: "5432"
       DB_USER: "terrateam"
