@@ -167,10 +167,32 @@ struct
            (Evaluator.Ctx.make ~config ~storage ~request_id:(Ouuid.to_string (Ouuid.v4 ())) ()))
       >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> repo_config_cleanup config storage
 
+    let migrate config storage =
+      let open Abb.Future.Infix_monad in
+      Logs.info (fun m -> m "MIGRATION : START : 568");
+      Abbs_future_combinators.with_finally
+        (fun () ->
+          Terrat_migrations_ex_568.run (config, storage)
+          >>= function
+          | Ok () ->
+              Logs.info (fun m -> m "MIGRATION : COMPLETED : 568");
+              Abb.Future.return ()
+          | Error (#Pgsql_io.err as err) ->
+              Logs.err (fun m -> m "MIGRATION : ERROR : 568 : %a" Pgsql_io.pp_err err);
+              Abb.Future.return ()
+          | Error (#Pgsql_pool.err as err) ->
+              Logs.err (fun m -> m "MIGRATION : ERROR : 568 : %a" Pgsql_pool.pp_err err);
+              Abb.Future.return ())
+        ~finally:(fun () ->
+          Logs.info (fun m -> m "MIGRATION : DONE : 568");
+          Abb.Future.return ())
+
     let name _ = "github"
 
     let start config vcs_config storage =
       let open Abb.Future.Infix_monad in
+      Abb.Future.fork (migrate config storage)
+      >>= fun _ ->
       let config = Provider.Api.Config.make ~config ~vcs_config () in
       Abb.Future.Infix_app.(
         (fun drift flow_state_cleanup plan_cleanup repo_config_cleanup ->
