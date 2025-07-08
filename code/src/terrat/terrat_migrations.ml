@@ -159,6 +159,9 @@ let migrations =
       run_file_sql "2025-07-07-refactor-github-dirspace-locking-phase-1.sql" );
     ( "refactor-github-dirspace-locking-phase-2",
       run_file_sql "2025-07-07-refactor-github-dirspace-locking-phase-2.sql" );
+    ("refactor-github-dirspace-locking-phase-3.1", Terrat_migrations_ex_568.run);
+    ( "refactor-gihtub-dirspace-locking-phase-3.2",
+      run_file_sql "2025-07-09-refactor-github-dirspace-locking-phase-3.sql" );
   ]
 
 let run config storage = Mig.run (config, storage) migrations
