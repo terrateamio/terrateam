@@ -30,9 +30,10 @@ services:
 
   server:
     image: ghcr.io/terrateamio/terrat-oss:latest
+    pull_policy: always
     platform: linux/amd64
     environment:
-      NGROK_ENDPOINT: "http://ngrok:4040"
+      TERRAT_API_BASE: "${TERRAT_API_BASE}"
       DB_HOST: "db"
       DB_PORT: "5432"
       DB_USER: "terrateam"
@@ -52,23 +53,20 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      ngrok:
-        condition: service_healthy
     networks:
       - terrateam
 
-  ngrok:
-    image: ngrok/ngrok:3
-    healthcheck:
-      test: /bin/bash -c "</dev/tcp/localhost/4040"
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    command: ["http", "http://server:8080"]
+  terratunnel:
+    image: ghcr.io/terrateamio/terratunnel:latest
+    pull_policy: always
+    command: ["client", "--local-endpoint", "http://localhost:8081", "--update-github-webhook"]
+    environment:
+      TERRATUNNEL_LOCAL_ENDPOINT: "http://server:8080"
+      GITHUB_APP_ID: "${GITHUB_APP_ID}"
+      GITHUB_APP_PEM: "${GITHUB_APP_PEM}"
+      WEBHOOK_PATH: "/api/github/v1/events"
     networks:
       - terrateam
-    environment:
-      NGROK_AUTHTOKEN: "${NGROK_AUTHTOKEN}"
 
 networks:
   terrateam:
