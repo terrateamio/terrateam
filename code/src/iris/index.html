@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Favicons -->
+    <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png" />
+    <link rel="icon" type="image/svg+xml" href="/assets/images/logo-symbol.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Terrateam</title>
+    
+    <!-- Environment Configuration -->
+    <script>
+      // Inject environment configuration from server/build process
+      window.terrateamConfig = {
+        ui_analytics: '%TERRATEAM_UI_ANALYTICS%',
+        ui_subscription: '%TERRATEAM_UI_SUBSCRIPTION%'
+      };
+      
+      // Handle template replacement fallbacks for development
+      Object.keys(window.terrateamConfig).forEach(key => {
+        const value = window.terrateamConfig[key];
+        if (value && typeof value === 'string' && value.startsWith('%') && value.endsWith('%')) {
+          // Template replacement didn't happen - set development defaults
+          switch(key) {
+            case 'ui_analytics':
+              window.terrateamConfig[key] = 'disabled'; // Default to disabled for safety
+              break;
+            case 'ui_subscription':
+              window.terrateamConfig[key] = 'oss'; // Default to OSS mode
+              break;
+          }
+        }
+      });
+      
+      // Note: In development, Vite environment variables (VITE_TERRATEAM_UI_*) 
+      // are handled by the environment.ts module at runtime
+      
+    </script>
+    
+    <!-- PostHog Analytics - Loaded dynamically by main.js based on analytics settings -->
+    <script>
+      // PostHog will be loaded dynamically by main.js to properly handle Vite env vars
+      // This section creates a stub and will be replaced if analytics are enabled
+      window.posthog = {
+        init: function(){},
+        capture: function(){},
+        identify: function(){},
+        setPersonProperties: function(){},
+        reset: function(){}
+      };
+      
+      // Store PostHog initialization function for main.js to call
+      window.initPostHog = function() {
+        !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]);t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url opt_in_to_session_recording opt_out_of_session_recording has_opted_in_to_session_recording has_opted_out_of_session_recording clear_opt_in_out_of_session_recording debug".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+        posthog.init('phc_fsKOHuZf9KUckG2XylWf4f8hMae2BujybE2nvzxqxX5',{
+          api_host:'https://eu.i.posthog.com', 
+          person_profiles: 'always',
+          autocapture: true,
+          capture_pageview: true,
+          capture_pageleave: true,
+          disable_session_recording: false,
+          session_recording: {
+            // Mask sensitive inputs but allow other form interactions
+            maskAllInputs: false,
+            maskInputOptions: {
+              password: true,
+              hidden: true,
+              search: false,
+              email: false,
+              tel: false,
+              text: false
+            },
+            // Block sensitive selectors
+            blockSelector: '[data-sensitive]',
+            // Mask text containing sensitive patterns
+            maskTextSelector: '[data-mask], .password-field, .secret-field',
+            maskAllText: false
+          },
+          // Don't mask all text, but be selective
+          mask_all_text: false,
+          mask_all_element_attributes: false,
+          // Respect user privacy preferences
+          respect_dnt: true,
+          secure_cookie: true,
+          cross_subdomain_cookie: true,
+          capture_performance: true,
+          // Disable console log capture to avoid logging sensitive debug info
+          disable_external_dependency_loading: false
+        });
+      };
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

@@ -30,6 +30,7 @@ RUN apk add --no-cache \
     pkgconf \
     py3-yaml \
     python3 \
+    rsync \
     sqlite-dev \
     yj \
     zlib-dev
@@ -87,17 +88,22 @@ WORKDIR /mono/code
 RUN ulimit -s 524288 && ulimit -a && \
     mv /build-cache ./build && \
     eval $(opam env) && pds && \
-    (time make -j$(nproc --all) release_terrat_code_indexer test || time make -j1 release_terrat_code_indexer test) && \
+    (time make -j$(nproc --all) -k release_terrat_code_indexer test \
+        || time make -j1 release_terrat_code_indexer test) && \
     find . -name '*.tap' -exec cat '{}' \;
 
 # Build target for terrat-ee
 FROM build-setup AS terrat-ee-build
 WORKDIR /mono/code
+RUN apk add --no-cache rsync
 RUN ulimit -s 524288 && ulimit -a && \
     mv /build-cache ./build && \
     eval $(opam env) && pds && \
-    (time make -j$(nproc --all) test release_terrat_ee release_terrat_ui_files \
-     || time make -j1 test release_terrat_ee release_terrat_ui_files) && \
+    (time  env \
+        VITE_TERRATEAM_UI_ANALYTICS=enabled \
+        VITE_TERRATEAM_UI_SUBSCRIPTION=saas \
+        make -j$(nproc --all) -k test release_terrat_ee release_iris \
+     || time make -j1 test release_terrat_ee release_iris) && \
     find . -name '*.tap' -exec cat '{}' \;
 
 # Build target for terrat-oss
@@ -106,7 +112,10 @@ WORKDIR /mono/code
 RUN ulimit -s 524288 && ulimit -a && \
     mv /build-cache ./build && \
     eval $(opam env) && pds && \
-    (time make -j$(nproc --all) test release_terrat_oss || time make -j1 test release_terrat_oss) && \
+    (time env \
+        VITE_TERRATEAM_UI_ANALYTICS=enabled \
+        VITE_TERRATEAM_UI_SUBSCRIPTION=saas \
+        make -j$(nproc --all) -k test release_terrat_oss || time make -j1 test release_terrat_oss) && \
     find . -name '*.tap' -exec cat '{}' \;
 
 # Final code-indexer image
@@ -141,7 +150,7 @@ COPY docker/terrat/nginx.conf.template /etc/nginx/nginx.conf.template
 COPY --from=terrat-ee-build /usr/lib/libkqueue.so /usr/lib/libkqueue.so
 COPY --from=terrat-ee-build /usr/lib/libkqueue.so.0 /usr/lib/libkqueue.so.0
 COPY --from=terrat-ee-build /mono/code/build/release/terrat_ee/terrat_ee.native /usr/local/bin/terrat
-COPY --from=terrat-ee-build /mono/code/build/release/terrat_ui_files/assets /usr/local/share/terrat/ui/assets/
+COPY --from=terrat-ee-build /mono/code/build/release/iris/dist/ /usr/local/share/terrat/ui/assets/
 EXPOSE 8080
 CMD ["runsvdir", "/etc/service"]
 
