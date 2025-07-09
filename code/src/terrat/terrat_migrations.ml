@@ -157,6 +157,8 @@ let migrations =
       run_file_sql ~tx:false "2025-07-01-add-pull-request-query-indices.sql" );
     ( "refactor-github-dirspace-locking-phase-1",
       run_file_sql "2025-07-07-refactor-github-dirspace-locking-phase-1.sql" );
+    ( "refactor-github-dirspace-locking-phase-2",
+      run_file_sql "2025-07-07-refactor-github-dirspace-locking-phase-2.sql" );
   ]
 
 let run config storage = Mig.run (config, storage) migrations
