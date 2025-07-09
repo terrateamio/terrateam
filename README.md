@@ -26,7 +26,7 @@ Terrateam automates Terraform plans and applies in pull requests. Open source, i
 ---
 
 <div align="center" style="font-weight: 600; font-size: 14px; margin-bottom: 12px;">
-  GitHub PR comment + Terrateam UI
+  Terraform plan in a PR + optional Terrateam UI
 </div>
 
 <table align="center">
@@ -49,7 +49,7 @@ Terrateam automates Terraform plans and applies in pull requests. Open source, i
         loading="lazy"
         style="border-radius:6px; border:1px solid #ccc; box-shadow: 0 2px 6px rgba(0,0,0,0.06);"
       ><br>
-      <div style="font-size: 13px; margin-top: 6px;">Terrateam Console output</div>
+      <div style="font-size: 13px; margin-top: 6px;">Terrateam Run Dashboard</div>
     </td>
   </tr>
 </table>
