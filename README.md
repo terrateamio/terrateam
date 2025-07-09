@@ -110,7 +110,7 @@ Configure workflows via `.terrateam/config.yml`. See [Configuration Reference](h
 ## Resources
 
 * [Documentation](https://docs.terrateam.io)
-* [Quickstart Guide](https://docs.terrateam.io/quickstart)
+* [Quickstart Guide](https://docs.terrateam.io/getting-started/quickstart-guide)
 * [Blog](https://terrateam.io/blog)
 * [Configuration Reference](https://docs.terrateam.io/configuration-reference)
 * [Community Slack](https://terrateam.io/slack)
