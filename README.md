@@ -16,7 +16,7 @@
 
 ## Open-Source Terraform automation in pull requests
 
-Terrateam is an open-source infrastructure orchestration engine that automates Terraform plans and applies through pull requests.
+Terrateam automates Terraform plans and applies in pull requests. Open source, integrates with GitHub and GitLab, and easy to self-host.
 
 * Infrastructure as Code automation for Terraform, OpenTofu, Terragrunt, CDKTF, Pulumi, any CLI
 * Flexible policies, approvals, and cost checks
@@ -61,8 +61,8 @@ Terrateam is an open-source infrastructure orchestration engine that automates T
 * **GitOps**: Runs `terraform plan` and `apply` in pull requests. Controlled by a `.terrateam/config.yml` file that maps directories, tags, policies, and approvals.
 * **Flexible**: Works with any Terraform-compatible CLI: OpenTofu, Terragrunt, CDKTF, Pulumi, and more. Fully configured through YAML.
 * **Policies**: Enforce rules with Rego, Checkov, or built-in policies. Require approvals by team, role, or user.
-* **Self-hostable and open source**: Use existing runners with Terrateam and self-host the Terrateam server.
-
+* **Drift and cost detection**: Catch infrastructure drift and show cost estimates in pull requests automatically.
+* **Self-hostable and horizontally scalable**: Stateless by design. Deploy Terrateam on your infrastructure and scale out using standard Postgres and CI runners.
 ---
 
 ## Try Terrateam
@@ -111,6 +111,7 @@ Configure workflows via `.terrateam/config.yml`. See [Configuration Reference](h
 
 * [Documentation](https://docs.terrateam.io)
 * [Quickstart Guide](https://docs.terrateam.io/quickstart)
+* [Blog](https://terrateam.io/blog)
 * [Configuration Reference](https://docs.terrateam.io/configuration-reference)
 * [Community Slack](https://terrateam.io/slack)
 
