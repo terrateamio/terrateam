@@ -453,7 +453,6 @@ module Typed_sql = struct
           Buffer.add_char buf ch;
           consume_until ch vars query buf (idx + 1) len
       | '\\' ->
-          Buffer.add_char buf '\\';
           Buffer.add_char buf query.[idx + 1];
           replace_variables vars query buf (idx + 2) len
       | '$' when idx + 1 < len && query.[idx + 1] = '$' ->
