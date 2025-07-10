@@ -17,6 +17,7 @@ Each directory consists of the directory's name as a key and a map as a value. T
 | Key | Type | Description |
 | --- | --- | --- |
 | create_and_select_workspace | boolean | Create and select the workspace defined in the workspaces configuration. Default is true. |
+| lock_branch_target | string | Defines when using `destination_branches` if this directory should be locked on a per-destination branch bases or all branches.  `all` means that if two pull requests modify the same workspace, their locks will conflict with each other based on the destination branch name.  `dest_branch` means that only pull requests modifying the same workspace targeting the same destination branch will conflict.  Default is `all`. |
 | tags | list | List of tags to assign the directory. |
 | workspaces | object | Workspace configuration. |
 | when_modified | when_modified | Configuration to override when to match pull request file changes with autoplan and autoapply. |
