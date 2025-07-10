@@ -105,11 +105,19 @@ module Db = struct
         %> CCOption.map P.of_yojson
         %> CCOption.flat_map CCResult.to_opt)
 
-    let lock_policy = function
-      | Terrat_base_repo_config_v1.Workflows.Entry.Lock_policy.Apply -> "apply"
-      | Terrat_base_repo_config_v1.Workflows.Entry.Lock_policy.Merge -> "merge"
-      | Terrat_base_repo_config_v1.Workflows.Entry.Lock_policy.None -> "none"
-      | Terrat_base_repo_config_v1.Workflows.Entry.Lock_policy.Strict -> "strict"
+    let lock_policy =
+      let open Terrat_base_repo_config_v1.Workflows.Entry.Lock_policy in
+      function
+      | Apply -> "apply"
+      | Merge -> "merge"
+      | None -> "none"
+      | Strict -> "strict"
+
+    let branch_target =
+      let open Terrat_base_repo_config_v1.Dirs.Dir.Branch_target in
+      function
+      | All -> "all"
+      | Dest_branch -> "dest_branch"
 
     let select_work_manifest_dirspaceflows =
       Pgsql_io.Typed_sql.(
@@ -333,7 +341,8 @@ module Db = struct
         /% Var.(array (bigint "repository"))
         /% Var.(str_array (text "sha"))
         /% Var.(str_array (text "workspace"))
-        /% Var.(str_array (ud (text "lock_policy") lock_policy)))
+        /% Var.(str_array (ud (text "lock_policy") lock_policy))
+        /% Var.(str_array (ud (text "branch_target") branch_target)))
 
     let insert_workflow_step_output =
       let query = read "insert_workflow_step_output.sql" in
@@ -1044,13 +1053,17 @@ module Db = struct
                      workspace)
                    dirspaceflows)
                 (CCList.map
-                   (fun Terrat_change.{ Dirspaceflow.workflow; _ } ->
+                   (fun Terrat_change.{ Dirspaceflow.workflow = _, workflow; _ } ->
                      let module Dfwf = Terrat_change.Dirspaceflow.Workflow in
                      let module Wf = Terrat_base_repo_config_v1.Workflows.Entry in
                      CCOption.map_or
                        ~default:Terrat_base_repo_config_v1.Workflows.Entry.Lock_policy.Strict
                        (fun { Dfwf.workflow = { Wf.lock_policy; _ }; _ } -> lock_policy)
                        workflow)
+                   dirspaceflows)
+                (CCList.map
+                   (fun Terrat_change.{ Dirspaceflow.workflow = lock_branch_target, _; _ } ->
+                     lock_branch_target)
                    dirspaceflows)))
         (CCList.chunks not_a_bad_chunk_size dirspaceflows)
     in

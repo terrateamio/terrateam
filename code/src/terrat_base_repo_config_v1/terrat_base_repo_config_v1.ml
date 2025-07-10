@@ -585,7 +585,7 @@ module Automerge = struct
   type t = {
     delete_branch : bool; [@default false]
     enabled : bool; [@default false]
-    require_explicit_apply: bool; [@default false]
+    require_explicit_apply : bool; [@default false]
   }
   [@@deriving make, show, yojson, eq]
 end
@@ -737,8 +737,16 @@ module Dirs = struct
   end
 
   module Dir = struct
+    module Branch_target = struct
+      type t =
+        | All
+        | Dest_branch
+      [@@deriving show, yojson, eq]
+    end
+
     type t = {
       create_and_select_workspace : bool; [@default true]
+      lock_branch_target : Branch_target.t; [@default Branch_target.All]
       stacks : Workspace.t String_map.t; [@default String_map.empty]
       tags : string list; [@default []]
       workspaces : Workspace.t String_map.t;
@@ -1895,7 +1903,16 @@ let of_version_1_dirs default_when_modified { V1.Dirs.additional; _ } =
       (Json_schema.String_map.to_list additional)
   in
   CCResult.map_l
-    (fun (dir, { D.create_and_select_workspace; stacks; tags; when_modified; workspaces }) ->
+    (fun ( dir,
+           {
+             D.create_and_select_workspace;
+             lock_branch_target;
+             stacks;
+             tags;
+             when_modified;
+             workspaces;
+           } )
+       ->
       map_opt (of_version_1_dirs_when_modified default_when_modified) when_modified
       >>= fun when_modified ->
       let when_modified = CCOption.or_ ~else_:default_when_modified when_modified in
@@ -1912,7 +1929,23 @@ let of_version_1_dirs default_when_modified { V1.Dirs.additional; _ } =
       >>= fun stacks ->
       map_opt (of_workspace when_modified) workspaces
       >>= fun workspaces ->
-      Ok (dir, Dirs.Dir.make ~create_and_select_workspace ?stacks ?tags ?workspaces ()))
+      let lock_branch_target =
+        CCOption.map
+          (function
+            | "all" -> Dirs.Dir.Branch_target.All
+            | "dest_branch" -> Dirs.Dir.Branch_target.Dest_branch
+            | _ -> assert false)
+          lock_branch_target
+      in
+      Ok
+        ( dir,
+          Dirs.Dir.make
+            ~create_and_select_workspace
+            ?lock_branch_target
+            ?stacks
+            ?tags
+            ?workspaces
+            () ))
     (Json_schema.String_map.to_list additional)
   >>= fun dirs -> Ok (String_map.of_list dirs)
 
@@ -2395,7 +2428,7 @@ let to_version_1_apply_requirements ar =
 
 let to_version_1_automerge automerge =
   let module Am = Terrat_repo_config.Automerge in
-  let { Automerge.delete_branch; enabled; require_explicit_apply  } = automerge in
+  let { Automerge.delete_branch; enabled; require_explicit_apply } = automerge in
   { Am.delete_branch; enabled; require_explicit_apply }
 
 let to_version_1_batch_runs batch_runs =
@@ -2462,11 +2495,17 @@ let to_version_1_dirs_dir dirs =
   let module D = Terrat_repo_config.Dir in
   String_map.fold
     (fun k v acc ->
-      let { Dirs.Dir.create_and_select_workspace; stacks; tags; workspaces } = v in
+      let { Dirs.Dir.create_and_select_workspace; lock_branch_target; stacks; tags; workspaces } =
+        v
+      in
       Json_schema.String_map.add
         k
         {
           D.create_and_select_workspace;
+          lock_branch_target =
+            (match lock_branch_target with
+            | Dirs.Dir.Branch_target.All -> Some "all"
+            | Dirs.Dir.Branch_target.Dest_branch -> Some "dest_branch");
           stacks =
             (if String_map.is_empty stacks then None
              else Some (to_version_1_dirs_dir_workspaces stacks));

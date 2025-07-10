@@ -11,6 +11,7 @@ module Dirspace_config = struct
   type t = {
     dirspace : Terrat_dirspace.t;
     file_pattern_matcher : string -> bool; [@opque]
+    lock_branch_target : Terrat_base_repo_config_v1.Dirs.Dir.Branch_target.t;
     tags : Terrat_tag_set.t;
     when_modified : Terrat_base_repo_config_v1.When_modified.t;
   }
@@ -123,6 +124,7 @@ let synthesize_config ~index repo_config =
                      file_pattern_matcher =
                        compile_file_pattern_matcher
                          workspace_config.Ws.when_modified.Wm.file_patterns;
+                     lock_branch_target = config.D.lock_branch_target;
                      tags = Terrat_tag_set.of_list workspace_config.Ws.tags;
                      when_modified = workspace_config.Ws.when_modified;
                    } ))

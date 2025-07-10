@@ -118,28 +118,18 @@
       },
       "type": "object"
     },
-    "apply-requirements-checks-apply-after-merge": {
-      "additionalProperties": false,
-      "properties": {
-        "enabled": {
-          "default": false,
-          "type": "boolean"
-        }
-      },
-      "type": "object"
-    },
     "apply-requirements-checks-2": {
       "items": {
         "additionalProperties": false,
         "properties": {
+          "apply_after_merge": {
+            "$ref": "#/definitions/apply-requirements-checks-apply-after-merge"
+          },
           "approved": {
             "$ref": "#/definitions/apply-requirements-checks-approved-2"
           },
           "merge_conflicts": {
             "$ref": "#/definitions/apply-requirements-checks-merge-conflicts"
-          },
-          "apply_after_merge": {
-            "$ref": "#/definitions/apply-requirements-checks-apply-after-merge"
           },
           "require_ready_for_review_pr": {
             "default": true,
@@ -158,6 +148,16 @@
         "type": "object"
       },
       "type": "array"
+    },
+    "apply-requirements-checks-apply-after-merge": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "type": "object"
     },
     "apply-requirements-checks-approved": {
       "oneOf": [
@@ -242,11 +242,11 @@
           "default": false,
           "type": "boolean"
         },
-        "require_explicit_apply": {
+        "enabled": {
           "default": false,
           "type": "boolean"
         },
-        "enabled": {
+        "require_explicit_apply": {
           "default": false,
           "type": "boolean"
         }
@@ -326,6 +326,13 @@
         "create_and_select_workspace": {
           "default": true,
           "type": "boolean"
+        },
+        "lock_branch_target": {
+          "enum": [
+            "all",
+            "dest_branch"
+          ],
+          "type": "string"
         },
         "stacks": {
           "$ref": "#/definitions/workspaces"
@@ -568,7 +575,6 @@
       "type": "object"
     },
     "engine-other": {
-      "type": null
     },
     "engine-pulumi": {
       "additionalProperties": false,
@@ -702,7 +708,6 @@
           "type": "string"
         }
       },
-      "required": [],
       "type": "object"
     },
     "hook-op-env-exec": {
@@ -886,7 +891,6 @@
         },
         "on_error": {
           "items": {
-            "type": null
           },
           "type": "array"
         },
@@ -1007,7 +1011,6 @@
       "type": "string"
     },
     "runs-on": {
-      "type": null
     },
     "storage-plan-cmd": {
       "additionalProperties": false,
@@ -1245,7 +1248,6 @@
               "type": "boolean"
             }
           },
-          "required": [],
           "type": "object"
         },
         "integrations": {
@@ -1623,7 +1625,6 @@
             "$ref": "#/definitions/when-modified-nullable"
           }
         },
-        "required": [],
         "type": "object"
       },
       "type": "object"

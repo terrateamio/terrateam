@@ -62,7 +62,7 @@ module New : sig
       unit,
       unit,
       unit,
-      int Terrat_change.Dirspaceflow.t list,
+      int option Terrat_change.Dirspaceflow.t list,
       Deny.t list,
       'target )
     t
@@ -76,7 +76,7 @@ module Existing : sig
       string,
       string option,
       State.t,
-      int Terrat_change.Dirspaceflow.t list,
+      int option Terrat_change.Dirspaceflow.t list,
       Deny.t list,
       'target )
     t

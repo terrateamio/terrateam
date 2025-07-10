@@ -2294,18 +2294,18 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         Abb.Future.return
           (Ok
              (CCList.map
-                (fun Terrat_change.{ Dirspaceflow.dirspace = Dirspace.{ dir; workspace }; workflow }
+                (fun Terrat_change.
+                       { Dirspaceflow.dirspace = { Dirspace.dir; workspace }; workflow; _ }
                    ->
-                  Terrat_api_components.Work_manifest_dir.
-                    {
-                      path = dir;
-                      workspace;
-                      workflow =
-                        CCOption.map
-                          (fun Terrat_change.Dirspaceflow.Workflow.{ idx; _ } -> idx)
-                          workflow;
-                      rank = 0;
-                    })
+                  {
+                    Terrat_api_components.Work_manifest_dir.path = dir;
+                    workspace;
+                    workflow =
+                      CCOption.map
+                        (fun Terrat_change.Dirspaceflow.Workflow.{ idx; _ } -> idx)
+                        workflow;
+                    rank = 0;
+                  })
                 dirspaceflows))
       in
       client ctx state
@@ -2875,22 +2875,33 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | (`Missing_workflow | `Failed_to_start) as err ->
           publish_msg request_id client user pull_request (Msg.Run_work_manifest_err err)
 
-    let dirspaceflows_of_changes repo_config changes =
+    let dirspaceflows_of_changes_with_branch_target repo_config changes =
       let module R = Terrat_base_repo_config_v1 in
       let workflows = R.workflows repo_config in
       Ok
         (CCList.map
-           (fun ({ Terrat_change_match3.Dirspace_config.dirspace; _ }, workflow) ->
-             Terrat_change.Dirspaceflow.
-               {
-                 dirspace;
-                 workflow =
-                   CCOption.map (fun (idx, workflow) -> Workflow.{ idx; workflow }) workflow;
-               })
+           (fun ({ Terrat_change_match3.Dirspace_config.dirspace; lock_branch_target; _ }, workflow)
+              ->
+             let module Dsf = Terrat_change.Dirspaceflow in
+             {
+               Dsf.dirspace;
+               workflow =
+                 ( lock_branch_target,
+                   CCOption.map (fun (idx, workflow) -> { Dsf.Workflow.idx; workflow }) workflow );
+             })
            (match_tag_queries
               ~accessor:(fun { R.Workflows.Entry.tag_query; _ } -> tag_query)
               ~changes
               workflows))
+
+    let strip_lock_branch_target dsfs =
+      let module Dsf = Terrat_change.Dirspaceflow in
+      CCList.map (fun ({ Dsf.workflow = _, workflow; _ } as dsf) -> { dsf with Dsf.workflow }) dsfs
+
+    let dirspaceflows_of_changes repo_config changes =
+      let open CCResult.Infix in
+      dirspaceflows_of_changes_with_branch_target repo_config changes
+      >>= fun dirspaceflows -> Ok (strip_lock_branch_target dirspaceflows)
 
     let generate_index_run_dirs ctx state wm =
       let module Wm = Terrat_work_manifest3 in
@@ -2939,7 +2950,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       let changes =
         CCList.map
           (fun ({ Dsf.workflow; _ } as dsf) ->
-            { dsf with Dsf.workflow = CCOption.map (fun Dsf.Workflow.{ idx; _ } -> idx) workflow })
+            { dsf with Dsf.workflow = CCOption.map (fun { Dsf.Workflow.idx; _ } -> idx) workflow })
           dirspaceflows
       in
       Abb.Future.return (Ok { wm with Wm.changes })
@@ -3351,7 +3362,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         <*> Dv.matches ctx state `Plan)
       >>= fun (repo_config, base_ref, branch_ref, working_branch_ref, matches) ->
       let all_matches = CCList.flatten matches.Dv.Matches.all_tag_query_matches in
-      Abb.Future.return (dirspaceflows_of_changes repo_config all_matches)
+      Abb.Future.return (dirspaceflows_of_changes_with_branch_target repo_config all_matches)
       >>= fun all_dirspaceflows ->
       store_dirspaceflows
         ~base_ref
@@ -3361,6 +3372,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         (Event.repo state.State.event)
         all_dirspaceflows
       >>= fun () ->
+      let all_dirspaceflows = strip_lock_branch_target all_dirspaceflows in
       let module V1 = Terrat_base_repo_config_v1 in
       let max_workspaces_per_batch =
         if (V1.batch_runs repo_config).V1.Batch_runs.enabled then
@@ -3452,7 +3464,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         <*> Dv.matches ctx state `Plan)
       >>= fun (repo_config, base_ref, branch_ref, working_branch_ref, matches) ->
       let all_matches = CCList.flatten matches.Dv.Matches.all_matches in
-      Abb.Future.return (dirspaceflows_of_changes repo_config all_matches)
+      Abb.Future.return (dirspaceflows_of_changes_with_branch_target repo_config all_matches)
       >>= fun all_dirspaceflows ->
       store_dirspaceflows
         ~base_ref
@@ -3462,6 +3474,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         (Event.repo state.State.event)
         all_dirspaceflows
       >>= fun () ->
+      let all_dirspaceflows = strip_lock_branch_target all_dirspaceflows in
       let module V1 = Terrat_base_repo_config_v1 in
       let max_workspaces_per_batch =
         if (V1.batch_runs repo_config).V1.Batch_runs.enabled then
@@ -3611,7 +3624,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         access_control_results
       in
       Abb.Future.return
-        (dirspaceflows_of_changes repo_config (CCList.flatten matches.Dv.Matches.all_matches))
+        (dirspaceflows_of_changes_with_branch_target
+           repo_config
+           (CCList.flatten matches.Dv.Matches.all_matches))
       >>= fun all_dirspaceflows ->
       store_dirspaceflows
         ~base_ref
@@ -3621,6 +3636,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         (Event.repo state.State.event)
         all_dirspaceflows
       >>= fun () ->
+      let all_dirspaceflows = strip_lock_branch_target all_dirspaceflows in
       Abb.Future.return (dirspaceflows_of_changes repo_config passed_dirspaces)
       >>= fun dirspaceflows ->
       let denied_dirspaces =
@@ -3732,7 +3748,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         access_control_results
       in
       Abb.Future.return
-        (dirspaceflows_of_changes repo_config (CCList.flatten matches.Dv.Matches.all_matches))
+        (dirspaceflows_of_changes_with_branch_target
+           repo_config
+           (CCList.flatten matches.Dv.Matches.all_matches))
       >>= fun all_dirspaceflows ->
       store_dirspaceflows
         ~base_ref
@@ -3742,6 +3760,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         (Event.repo state.State.event)
         all_dirspaceflows
       >>= fun () ->
+      let all_dirspaceflows = strip_lock_branch_target all_dirspaceflows in
       Abb.Future.return (dirspaceflows_of_changes repo_config passed_dirspaces)
       >>= fun dirspaceflows ->
       let denied_dirspaces =
@@ -4899,7 +4918,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             <*> Dv.branch_ref ctx state)
           >>= fun (pull_request, repo_config, matches, base_ref, branch_ref) ->
           Abb.Future.return
-            (H.dirspaceflows_of_changes repo_config (CCList.flatten matches.Dv.Matches.all_matches))
+            (H.dirspaceflows_of_changes_with_branch_target
+               repo_config
+               (CCList.flatten matches.Dv.Matches.all_matches))
           >>= fun all_dirspaceflows ->
           (* Ensure that even if we don't run anything, all of the dirspace
              flows are stored.  This is important if autoplan is off but the
@@ -4913,6 +4934,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             (Event.repo state.State.event)
             all_dirspaceflows
           >>= fun () ->
+          let all_dirspaceflows = H.strip_lock_branch_target all_dirspaceflows in
           Dv.client ctx state
           >>= fun client ->
           (if CCList.is_empty matches.Dv.Matches.all_unapplied_matches then

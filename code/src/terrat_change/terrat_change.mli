@@ -24,7 +24,7 @@ module Dirspaceflow : sig
 
   type 'a t = {
     dirspace : Dirspace.t;
-    workflow : 'a option;
+    workflow : 'a;
   }
   [@@deriving eq, show]
 
