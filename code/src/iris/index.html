@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Favicons -->
+    <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicon-16x16.png" />
+    <link rel="icon" type="image/svg+xml" href="/assets/images/logo-symbol.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Terrateam</title>
+    
+    <!-- Environment Configuration -->
+    <script nonce="NGINX_CSP_NONCE">
+      // Inject environment configuration from server/build process
+      window.terrateamConfig = {
+        ui_analytics: '%TERRATEAM_UI_ANALYTICS%',
+        ui_subscription: '%TERRATEAM_UI_SUBSCRIPTION%',
+        maintenanceMode: '%TERRATEAM_MAINTENANCE%',
+        maintenanceMessage: '%TERRATEAM_MAINTENANCE_MESSAGE%'
+      };
+      
+      // Handle template replacement fallbacks for development
+      Object.keys(window.terrateamConfig).forEach(key => {
+        const value = window.terrateamConfig[key];
+        if (value && typeof value === 'string' && value.startsWith('%') && value.endsWith('%')) {
+          // Template replacement didn't happen - set development defaults
+          switch(key) {
+            case 'ui_analytics':
+              window.terrateamConfig[key] = 'disabled'; // Default to disabled for safety
+              break;
+            case 'ui_subscription':
+              window.terrateamConfig[key] = 'oss'; // Default to OSS mode
+              break;
+            case 'maintenanceMode':
+              window.terrateamConfig[key] = 'false'; // Default to not in maintenance
+              break;
+            case 'maintenanceMessage':
+              window.terrateamConfig[key] = ''; // Default to empty message
+              break;
+          }
+        }
+      });
+      
+    </script>
+    
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

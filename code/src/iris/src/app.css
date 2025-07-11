@@ -1,0 +1,483 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Apertura';
+  src: url('/assets/fonts/Apertura_Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Apertura';
+  src: url('/assets/fonts/Apertura_Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Apertura';
+  src: url('/assets/fonts/Apertura_Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Apertura';
+  src: url('/assets/fonts/Apertura_Black.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+}
+
+/* Hide scrollbars for horizontal tab navigation */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+
+:root {
+  /* Brand Colors */
+  --color-primary: #009bff;
+  --color-secondary: #12223f;
+  --color-accent: #e7f67e;
+  --color-alert: #f44e27;
+  
+  /* Light Theme Colors */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f3f4f6;
+  --bg-tertiary: #f9fafb;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
+  --border-primary: #d1d5db;
+  --border-secondary: #e5e7eb;
+}
+
+.dark {
+  /* Dark Theme Colors */
+  --bg-primary: #12223f;
+  --bg-secondary: #1f2937;
+  --bg-tertiary: #374151;
+  --text-primary: #f9fafb;
+  --text-secondary: #d1d5db;
+  --text-tertiary: #9ca3af;
+  --border-primary: #4b5563;
+  --border-secondary: #374151;
+}
+
+body {
+  font-family: 'Apertura', sans-serif;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+/* Brand-specific utility classes */
+.bg-brand-primary { background-color: var(--bg-primary); }
+.bg-brand-secondary { background-color: var(--bg-secondary); }
+.bg-brand-tertiary { background-color: var(--bg-tertiary); }
+
+.text-brand-primary { color: var(--text-primary); }
+.text-brand-secondary { color: var(--text-secondary); }
+.text-brand-tertiary { color: var(--text-tertiary); }
+
+.border-brand-primary { border-color: var(--border-primary); }
+.border-brand-secondary { border-color: var(--border-secondary); }
+
+.accent-bg { 
+  background-color: var(--color-accent); 
+  color: var(--color-secondary);
+}
+
+.primary-bg { 
+  background-color: var(--color-primary); 
+  color: white;
+}
+
+.sidebar-bg {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-secondary);
+}
+
+.card-bg {
+  background-color: var(--bg-primary);
+  border-color: var(--border-secondary);
+}
+
+/* Hover state utilities to replace onmouseover/onmouseout */
+.accent-bg:hover {
+  background-color: #d4e668 !important;
+}
+
+.accent-link {
+  color: #009bff;
+  transition: color 0.2s ease;
+}
+
+.accent-link:hover {
+  color: #0086d9 !important;
+}
+
+.slack-button {
+  background-color: #4A154B;
+  color: white;
+  transition: background-color 0.2s ease;
+}
+
+.slack-button:hover {
+  background-color: #3d1140 !important;
+}
+
+.slack-icon-bg {
+  background-color: #4A154B;
+}
+
+/* Component-specific styles extracted from individual components */
+
+/* Button Component Styles */
+.accent-bg {
+  background-color: var(--color-accent);
+  color: var(--color-secondary);
+}
+
+.accent-bg:hover,
+.bg-accent-hover {
+  background-color: #d4e668;
+}
+
+/* Code/Monospace Styles */
+.code-font {
+  font-family: 'Courier New', Courier, monospace;
+}
+
+/* Animation Utilities */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-down {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Toast Notification Styles */
+.toast-notification {
+  animation: slide-up 0.3s ease-out;
+}
+
+.toast-notification.closing {
+  animation: slide-down 0.3s ease-out;
+}
+
+/* Standard Component Patterns */
+
+/* Card variants */
+.card-hover {
+  transition: all 0.2s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.card-interactive {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.card-interactive:hover {
+  background-color: rgba(59, 130, 246, 0.05);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.card-interactive:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Button variants */
+.btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: #0086d9;
+}
+
+.btn-primary:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.btn-secondary {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background-color: var(--bg-tertiary);
+}
+
+.btn-accent {
+  background-color: var(--color-accent);
+  color: var(--color-secondary);
+  transition: all 0.2s ease;
+}
+
+.btn-accent:hover {
+  background-color: #d4e668;
+}
+
+/* Form element styles */
+.form-input {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  color: var(--text-primary);
+  transition: border-color 0.2s ease;
+}
+
+.form-input:focus {
+  border-color: var(--color-primary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 155, 255, 0.1);
+}
+
+.form-label {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* Status indicator styles */
+.status-success {
+  background-color: #10b981;
+  color: white;
+}
+
+.status-error {
+  background-color: #ef4444;
+  color: white;
+}
+
+.status-warning {
+  background-color: #f59e0b;
+  color: white;
+}
+
+.status-info {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+/* Loading states */
+.loading-overlay {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.dark .loading-overlay {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+/* Accessibility improvements */
+.focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Sidebar active menu item styles */
+.sidebar-active-item {
+  color: #009bff;
+  background-color: rgba(0, 155, 255, 0.1);
+}
+
+/* Brand-colored icon backgrounds */
+.brand-icon-bg {
+  background-color: rgba(0, 155, 255, 0.1);
+}
+
+.brand-icon-color {
+  color: #009bff;
+}
+
+/* Screen reader only content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Component-specific styles extracted from GitLabSetup.svelte */
+
+/* GitLabSetup code elements */
+.gitlab-code {
+  font-family: 'Courier New', Courier, monospace;
+}
+
+/* Component-specific styles extracted from Configuration.svelte */
+
+/* Configuration toast notification animation */
+@keyframes config-slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.config-animate-slide-up {
+  animation: config-slide-up 0.3s ease-out;
+}
+
+/* Configuration syntax highlighting overrides */
+.config-hljs {
+  background: transparent !important;
+  color: inherit;
+}
+
+/* Light mode syntax colors for Configuration - Fixed for YAML */
+.config-hljs .hljs-comment,
+.config-hljs .hljs-quote {
+  color: #6a737d !important;
+}
+
+.config-hljs .hljs-keyword,
+.config-hljs .hljs-selector-tag,
+.config-hljs .hljs-addition,
+.config-hljs .hljs-meta {
+  color: #d73a49 !important;
+}
+
+.config-hljs .hljs-number,
+.config-hljs .hljs-literal,
+.config-hljs .hljs-doctag,
+.config-hljs .hljs-regexp {
+  color: #005cc5 !important;
+}
+
+/* Fix for YAML string values that were showing as light blue */
+.config-hljs .hljs-string,
+.config-hljs .hljs-meta .hljs-string {
+  color: #032f62 !important;  /* Dark blue instead of light blue */
+}
+
+.config-hljs .hljs-title,
+.config-hljs .hljs-section,
+.config-hljs .hljs-name,
+.config-hljs .hljs-selector-id,
+.config-hljs .hljs-selector-class,
+.config-hljs .hljs-built_in {
+  color: #6f42c1 !important;
+}
+
+.config-hljs .hljs-attribute,
+.config-hljs .hljs-attr,
+.config-hljs .hljs-variable,
+.config-hljs .hljs-template-variable,
+.config-hljs .hljs-class .hljs-title,
+.config-hljs .hljs-type {
+  color: #e36209 !important;
+}
+
+/* YAML-specific: property names */
+.config-hljs .hljs-attr {
+  color: #005cc5 !important;  /* Darker blue for better visibility */
+}
+
+/* Dark mode syntax colors for Configuration */
+.dark .config-hljs .hljs-comment,
+.dark .config-hljs .hljs-quote {
+  color: #8b949e !important;
+}
+
+.dark .config-hljs .hljs-keyword,
+.dark .config-hljs .hljs-selector-tag,
+.dark .config-hljs .hljs-addition,
+.dark .config-hljs .hljs-meta {
+  color: #ff7b72 !important;
+}
+
+.dark .config-hljs .hljs-number,
+.dark .config-hljs .hljs-string,
+.dark .config-hljs .hljs-meta .hljs-string,
+.dark .config-hljs .hljs-literal,
+.dark .config-hljs .hljs-doctag,
+.dark .config-hljs .hljs-regexp {
+  color: #a5d6ff !important;
+}
+
+.dark .config-hljs .hljs-title,
+.dark .config-hljs .hljs-section,
+.dark .config-hljs .hljs-name,
+.dark .config-hljs .hljs-selector-id,
+.dark .config-hljs .hljs-selector-class,
+.dark .config-hljs .hljs-built_in {
+  color: #d2a8ff !important;
+}
+
+.dark .config-hljs .hljs-attribute,
+.dark .config-hljs .hljs-attr,
+.dark .config-hljs .hljs-variable,
+.dark .config-hljs .hljs-template-variable,
+.dark .config-hljs .hljs-class .hljs-title,
+.dark .config-hljs .hljs-type {
+  color: #ffa657 !important;
+}
+
+.modal-open {
+  overflow: hidden;
+}
+
+.block {
+  display: block;
+}
+
+.hidden {
+  display: none;
+}
