@@ -1,17 +1,21 @@
 /// <reference types="vite/client" />
 
-interface ImportMetaEnv {
+// Runtime configuration injected by the server
+interface TerrateamConfig {
   // Analytics configuration
-  readonly VITE_TERRATEAM_UI_ANALYTICS?: 'enabled' | 'disabled';
+  ui_analytics?: 'enabled' | 'disabled';
   
   // Subscription UI mode
-  readonly VITE_TERRATEAM_UI_SUBSCRIPTION?: 'disabled' | 'oss' | 'saas';
+  ui_subscription?: 'disabled' | 'oss' | 'saas';
   
   // Maintenance mode
-  readonly VITE_TERRATEAM_MAINTENANCE?: string;
-  readonly VITE_TERRATEAM_MAINTENANCE_MESSAGE?: string;
+  maintenanceMode?: boolean | 'true' | 'false';
+  maintenanceMessage?: string;
 }
 
-interface ImportMeta {
-  readonly env: ImportMetaEnv;
+// Extend Window interface to include runtime config
+declare global {
+  interface Window {
+    terrateamConfig?: TerrateamConfig;
+  }
 }

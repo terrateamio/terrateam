@@ -3,18 +3,10 @@ import App from './App.svelte'
 
 // Check for maintenance mode before any initialization
 function checkMaintenanceMode() {
-  // Check runtime config first (injected by server)
+  // Check runtime config (injected by server)
   if (typeof window !== 'undefined' && window.terrateamConfig) {
     const config = window.terrateamConfig;
     if (config.maintenanceMode === true || config.maintenanceMode === 'true') {
-      return true;
-    }
-  }
-  
-  // Fallback to Vite build-time environment variables
-  if (typeof import.meta !== 'undefined' && import.meta.env) {
-    const viteMaintenanceMode = import.meta.env.VITE_TERRATEAM_MAINTENANCE;
-    if (viteMaintenanceMode === 'true' || viteMaintenanceMode === true) {
       return true;
     }
   }
@@ -33,22 +25,8 @@ if (isMaintenanceMode) {
 
 // Conditionally import and initialize analytics (PostHog & Sentry)
 async function initializeAnalytics() {
-  // Check if analytics are enabled
-  let analyticsEnabled = false;
-  
-  // In development, prioritize Vite environment variables
-  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV) {
-    const viteAnalytics = import.meta.env.VITE_TERRATEAM_UI_ANALYTICS;
-    if (viteAnalytics) {
-      analyticsEnabled = viteAnalytics === 'enabled';
-    } else {
-      // Fallback to window.terrateamConfig in development if Vite var not set
-      analyticsEnabled = window.terrateamConfig?.ui_analytics === 'enabled';
-    }
-  } else {
-    // Production: Check window.terrateamConfig (set by index.html template replacement)
-    analyticsEnabled = window.terrateamConfig?.ui_analytics === 'enabled';
-  }
+  // Check if analytics are enabled from runtime config
+  const analyticsEnabled = window.terrateamConfig?.ui_analytics === 'enabled';
   
   if (analyticsEnabled) {
     // Initialize PostHog using the NPM package

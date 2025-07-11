@@ -6,19 +6,10 @@ export type SubscriptionMode = 'disabled' | 'oss' | 'saas';
 
 /**
  * Check if analytics (PostHog, Sentry) should be enabled
- * Controlled by VITE_TERRATEAM_UI_ANALYTICS environment variable
+ * Controlled by runtime configuration
  */
 export function isAnalyticsEnabled(): boolean {
-  // In development, prioritize Vite environment variables
-  if (typeof import.meta !== 'undefined' && import.meta.env.DEV) {
-    const viteAnalytics = import.meta.env.VITE_TERRATEAM_UI_ANALYTICS;
-    if (viteAnalytics) {
-      const enabled = viteAnalytics === 'enabled';
-      return enabled;
-    }
-  }
-  
-  // Production: Check window.terrateamConfig (set by index.html template replacement)
+  // Check window.terrateamConfig (set by index.html template replacement)
   if (typeof window !== 'undefined' && window.terrateamConfig?.ui_analytics) {
     const enabled = window.terrateamConfig.ui_analytics === 'enabled';
     return enabled;
@@ -30,18 +21,10 @@ export function isAnalyticsEnabled(): boolean {
 
 /**
  * Get the subscription UI mode
- * Controlled by VITE_TERRATEAM_UI_SUBSCRIPTION environment variable
+ * Controlled by runtime configuration
  */
 export function getSubscriptionMode(): SubscriptionMode {
-  // In development, prioritize Vite environment variables
-  if (typeof import.meta !== 'undefined' && import.meta.env.DEV) {
-    const viteSubscription = import.meta.env.VITE_TERRATEAM_UI_SUBSCRIPTION;
-    if (viteSubscription && (viteSubscription === 'disabled' || viteSubscription === 'oss' || viteSubscription === 'saas')) {
-      return viteSubscription as SubscriptionMode;
-    }
-  }
-  
-  // Production: Check window.terrateamConfig (set by index.html template replacement)
+  // Check window.terrateamConfig (set by index.html template replacement)
   if (typeof window !== 'undefined' && window.terrateamConfig?.ui_subscription) {
     const mode = window.terrateamConfig.ui_subscription;
     if (mode === 'disabled' || mode === 'oss' || mode === 'saas') {
