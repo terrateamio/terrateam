@@ -1,6 +1,5 @@
 <script lang="ts">
   export let size: 'sm' | 'md' | 'lg' = 'md';
-  export let color: string = '#009bff';
   export let centered: boolean = true;
 
   const sizeClasses = {
@@ -13,8 +12,5 @@
 </script>
 
 <div class={containerClasses}>
-  <div 
-    class="animate-spin rounded-full border-b-2 {sizeClasses[size]}" 
-    style="border-color: {color};"
-  ></div>
+  <div class="animate-spin rounded-full border-b-2 border-brand-primary {sizeClasses[size]}"></div>
 </div>

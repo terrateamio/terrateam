@@ -23,7 +23,7 @@
     <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
       {#if isLoading}
         <div class="text-center">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto" style="border-color: #009bff;"></div>
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto border-brand-primary"></div>
           <p class="mt-4 text-sm text-gray-600">Completing authentication...</p>
         </div>
       {:else if error}

@@ -231,7 +231,7 @@
       </div>
     </div>
     
-    <pre class="text-xs bg-gray-900 text-gray-100 p-3 rounded overflow-x-auto whitespace-pre-wrap font-mono" style="max-height: {showFullContent ? 'none' : '24rem'}">
+    <pre class="text-xs bg-gray-900 text-gray-100 p-3 rounded overflow-x-auto whitespace-pre-wrap font-mono {showFullContent ? '' : 'max-h-96'}">
       {showFullContent ? content : previewContent}
     </pre>
     

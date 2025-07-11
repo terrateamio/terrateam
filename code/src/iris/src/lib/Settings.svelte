@@ -72,7 +72,7 @@
     <main class="flex-1 p-6">
       <div class="max-w-4xl mx-auto">
         <!-- Success Message (hidden by default) -->
-        <div id="success-message" class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4" style="display: none;">
+        <div id="success-message" class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4 hidden">
           <div class="flex items-center">
             <svg class="w-5 h-5 text-green-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -85,8 +85,8 @@
         <div class="card-bg rounded-lg shadow border mb-6">
           <div class="px-6 py-8">
             <!-- Settings Icon -->
-            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-6" style="background-color: rgba(0, 155, 255, 0.1);">
-              <svg class="w-8 h-8" style="color: #009bff;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-6 brand-icon-bg">
+              <svg class="w-8 h-8 brand-icon-color" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
@@ -179,8 +179,8 @@
         <Card padding="lg" class="mb-6">
           <div class="flex items-center justify-between mb-6">
             <div class="flex items-center">
-              <div class="inline-flex items-center justify-center w-12 h-12 rounded-lg mr-4" style="background-color: rgba(0, 155, 255, 0.1);">
-                <svg class="w-6 h-6" style="color: #009bff;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="inline-flex items-center justify-center w-12 h-12 rounded-lg mr-4 brand-icon-bg">
+                <svg class="w-6 h-6 brand-icon-color" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
               </div>
@@ -380,7 +380,7 @@
         <div class="bg-brand-tertiary rounded-lg p-6 border border-brand-secondary">
           <div class="flex items-start">
             <div class="flex-shrink-0">
-              <svg class="w-6 h-6" style="color: #009bff;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-6 h-6 brand-icon-color" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
