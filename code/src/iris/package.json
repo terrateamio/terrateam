@@ -40,6 +40,7 @@
     "highlight.js": "^11.11.1",
     "iconify-icon": "^3.0.0",
     "js-yaml": "^4.1.0",
+    "posthog-js": "^1.257.0",
     "svelte-spa-router": "^4.0.1",
     "zod": "^3.25.67"
   }
