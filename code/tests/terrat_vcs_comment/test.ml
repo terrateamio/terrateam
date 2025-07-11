@@ -384,7 +384,45 @@ let test_append_strategy =
             | Error _ -> assert false)
         | Error _ -> assert false)
   in
-  Oth_abb.parallel [ multiple_small; multiple_big; multiple_mixed; scenario_03; scenario_07 ]
+  let scenario_08 =
+    Oth_abb.test
+      ~desc:"User runs 'terrateam plan A', then proceeds to run 'terrateam plan B'"
+      ~name:"[Append] Scenario #08"
+      (fun () ->
+        let open Abb.Future.Infix_monad in
+        let module C = Terrat_vcs_comment in
+        let module D = Terrat_dirspace in
+        let module Cm = Terrat_vcs_comment.Make (H) in
+        let len = H.max_comment_length / 10 in
+        let st = C.Strategy.Append in
+        let el1 = Shared.create_el "A" "A" false len st in
+        let els = [ el1 ] in
+        let counter = API_id.create 0 in
+        let cid1 = API_id.next counter in
+        let t =
+          ref [ Eh.Post_comment (els, Ok cid1); Eh.Upsert_comment_id ([ el1 ], cid1, Ok ()) ]
+        in
+        Make_wrapper.run t els
+        >>= function
+        | Ok r -> (
+            assert (r = ());
+            let el2 = Shared.create_el "B" "B" true len st in
+            let els2 = [ el2 ] in
+            let cid2 = API_id.next counter in
+            let t2 =
+              ref [ Eh.Post_comment (els2, Ok cid2); Eh.Upsert_comment_id (els2, cid2, Ok ()) ]
+            in
+            Make_wrapper.run t2 els2
+            >>= fun r ->
+            match r with
+            | Ok r ->
+                assert (r = ());
+                Abb.Future.return ()
+            | Error _ -> assert false)
+        | Error _ -> assert false)
+  in
+  Oth_abb.parallel
+    [ multiple_small; multiple_big; multiple_mixed; scenario_03; scenario_07; scenario_08 ]
 
 let test = Oth_abb.(to_sync_test (parallel [ test_basic; test_errors; test_append_strategy ]))
 
