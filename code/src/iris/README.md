@@ -69,14 +69,14 @@ Enable maintenance mode to display a static page during downtime:
 ### Environment Variables (Recommended)
 ```bash
 # Enable maintenance mode
-VITE_TERRATEAM_MAINTENANCE=true
+TERRATEAM_MAINTENANCE=true
 
 # Optional: Custom message
-VITE_TERRATEAM_MAINTENANCE_MESSAGE="Scheduled maintenance. Back at 3PM EST."
+TERRATEAM_MAINTENANCE_MESSAGE="Scheduled maintenance. Back at 3PM EST."
 
 # Examples:
-VITE_TERRATEAM_MAINTENANCE=true npm run build
-VITE_TERRATEAM_MAINTENANCE=true npm run dev
+TERRATEAM_MAINTENANCE=true npm run build
+TERRATEAM_MAINTENANCE=true npm run dev
 ```
 
 ### Runtime Configuration

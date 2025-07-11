@@ -99,10 +99,7 @@ RUN apk add --no-cache rsync
 RUN ulimit -s 524288 && ulimit -a && \
     mv /build-cache ./build && \
     eval $(opam env) && pds && \
-    (time  env \
-        VITE_TERRATEAM_UI_ANALYTICS=enabled \
-        VITE_TERRATEAM_UI_SUBSCRIPTION=saas \
-        make -j$(nproc --all) -k test release_terrat_ee release_iris \
+    (time make -j$(nproc --all) -k test release_terrat_ee release_iris \
      || time make -j1 test release_terrat_ee release_iris) && \
     find . -name '*.tap' -exec cat '{}' \;
 
@@ -112,10 +109,7 @@ WORKDIR /mono/code
 RUN ulimit -s 524288 && ulimit -a && \
     mv /build-cache ./build && \
     eval $(opam env) && pds && \
-    (time env \
-        VITE_TERRATEAM_UI_ANALYTICS=enabled \
-        VITE_TERRATEAM_UI_SUBSCRIPTION=saas \
-        make -j$(nproc --all) -k test release_terrat_oss || time make -j1 test release_terrat_oss) && \
+    (time make -j$(nproc --all) -k test release_terrat_oss || time make -j1 test release_terrat_oss) && \
     find . -name '*.tap' -exec cat '{}' \;
 
 # Final code-indexer image
