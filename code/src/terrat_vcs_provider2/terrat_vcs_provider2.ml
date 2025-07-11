@@ -221,7 +221,10 @@ module type S = sig
       branch_ref:Api.Ref.t ->
       t ->
       Api.Repo.t ->
-      Terrat_change.Dirspaceflow.Workflow.t Terrat_change.Dirspaceflow.t list ->
+      (Terrat_base_repo_config_v1.Dirs.Dir.Branch_target.t
+      * Terrat_change.Dirspaceflow.Workflow.t option)
+      Terrat_change.Dirspaceflow.t
+      list ->
       (unit, [> `Error ]) result Abb.Future.t
 
     val store_tf_operation_result :
@@ -516,7 +519,7 @@ module type S = sig
       request_id:string ->
       Db.t ->
       Uuidm.t ->
-      int Terrat_change.Dirspaceflow.t list ->
+      int option Terrat_change.Dirspaceflow.t list ->
       (unit, [> `Error ]) result Abb.Future.t
 
     val update_denied_dirspaces :
