@@ -300,10 +300,11 @@ let test_append_strategy =
             Abb.Future.return ()
         | Error _ -> assert false)
   in
-  let post_comment_sequence =
+  let scenario_03 =
     Oth_abb.test
-      ~desc:"A sequence of post comments is appended separately"
-      ~name:"[Append] Check post_comment #1"
+      ~desc:
+        "A sequence of post comments is appended separately, a subset of dirspaces is then re-run."
+      ~name:"[Append] Scenario #03"
       (fun () ->
         let open Abb.Future.Infix_monad in
         let open Abbs_future_combinators.Infix_result_app in
@@ -314,23 +315,23 @@ let test_append_strategy =
         let st = C.Strategy.Append in
         let el1 = Shared.create_el "A" "A" false len st in
         let el2 = Shared.create_el "B" "B" true len st in
-        let els = [ el1; el2 ] in
+        let el3 = Shared.create_el "C" "C" true len st in
+        let els = [ el1; el2; el3 ] in
         let counter = API_id.create 0 in
         let cid1 = API_id.next counter in
         let t =
           ref
             [
-              Eh.Post_comment ([ el1; el2 ], Ok cid1);
-              Eh.Upsert_comment_id ([ el1; el2 ], cid1, Ok ());
+              Eh.Post_comment (els, Ok cid1); Eh.Upsert_comment_id ([ el1; el2; el3 ], cid1, Ok ());
             ]
         in
         Make_wrapper.run t els
         >>= function
         | Ok r -> (
             assert (r = ());
-            let el3 = Shared.create_el "A" "A" true len st in
-            let el4 = Shared.create_el "B" "B" false len st in
-            let els2 = [ el3; el4 ] in
+            let el1 = Shared.create_el "A" "A" true len st in
+            let el2 = Shared.create_el "B" "B" false len st in
+            let els2 = [ el1; el2 ] in
             let cid2 = API_id.next counter in
             let t2 =
               ref [ Eh.Post_comment (els2, Ok cid2); Eh.Upsert_comment_id (els2, cid2, Ok ()) ]
@@ -344,7 +345,46 @@ let test_append_strategy =
             | Error _ -> assert false)
         | Error _ -> assert false)
   in
-  Oth_abb.parallel [ multiple_small; multiple_big; multiple_mixed; post_comment_sequence ]
+  let scenario_07 =
+    Oth_abb.test
+      ~desc:"User runs 'terrateam plan A B', then proceeds to run 'terrateam plan B C'"
+      ~name:"[Append] Scenario #07"
+      (fun () ->
+        let open Abb.Future.Infix_monad in
+        let module C = Terrat_vcs_comment in
+        let module D = Terrat_dirspace in
+        let module Cm = Terrat_vcs_comment.Make (H) in
+        let len = H.max_comment_length / 10 in
+        let st = C.Strategy.Append in
+        let el1 = Shared.create_el "A" "A" false len st in
+        let el2 = Shared.create_el "B" "B" true len st in
+        let els = [ el1; el2 ] in
+        let counter = API_id.create 0 in
+        let cid1 = API_id.next counter in
+        let t =
+          ref [ Eh.Post_comment (els, Ok cid1); Eh.Upsert_comment_id ([ el1; el2 ], cid1, Ok ()) ]
+        in
+        Make_wrapper.run t els
+        >>= function
+        | Ok r -> (
+            assert (r = ());
+            let el1 = Shared.create_el "B" "B" true len st in
+            let el2 = Shared.create_el "C" "C" false len st in
+            let els2 = [ el1; el2 ] in
+            let cid2 = API_id.next counter in
+            let t2 =
+              ref [ Eh.Post_comment (els2, Ok cid2); Eh.Upsert_comment_id (els2, cid2, Ok ()) ]
+            in
+            Make_wrapper.run t2 els2
+            >>= fun r ->
+            match r with
+            | Ok r ->
+                assert (r = ());
+                Abb.Future.return ()
+            | Error _ -> assert false)
+        | Error _ -> assert false)
+  in
+  Oth_abb.parallel [ multiple_small; multiple_big; multiple_mixed; scenario_03; scenario_07 ]
 
 let test = Oth_abb.(to_sync_test (parallel [ test_basic; test_errors; test_append_strategy ]))
 
