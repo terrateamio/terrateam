@@ -69,7 +69,7 @@
     }
     showExtendTrialModal = true;
     // Prevent body scroll when modal is open
-    document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open');
   }
 
   function closeExtendTrialModal(): void {
@@ -77,7 +77,7 @@
     trialExtensionSuccess = false;
     trialExtensionError = null;
     // Restore body scroll
-    document.body.style.overflow = '';
+    document.body.classList.remove('modal-open');
   }
 
   async function submitTrialExtension(): Promise<void> {
