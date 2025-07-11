@@ -31,9 +31,9 @@ if (isMaintenanceMode) {
   });
 } else {
 
-// Conditionally import and initialize Sentry only if analytics are enabled
-async function initializeSentry() {
-  // Check if analytics (including Sentry) are enabled
+// Conditionally import and initialize analytics (PostHog & Sentry)
+async function initializeAnalytics() {
+  // Check if analytics are enabled
   let analyticsEnabled = false;
   
   // In development, prioritize Vite environment variables
@@ -51,10 +51,46 @@ async function initializeSentry() {
   }
   
   if (analyticsEnabled) {
-    // Initialize PostHog first
-    if (window.initPostHog) {
-      window.initPostHog();
-    }
+    // Initialize PostHog using the NPM package
+    const posthog = await import('posthog-js');
+    posthog.default.init('phc_fsKOHuZf9KUckG2XylWf4f8hMae2BujybE2nvzxqxX5', {
+      api_host: 'https://eu.i.posthog.com',
+      person_profiles: 'always',
+      autocapture: true,
+      capture_pageview: true,
+      capture_pageleave: true,
+      disable_session_recording: false,
+      session_recording: {
+        // Mask sensitive inputs but allow other form interactions
+        maskAllInputs: false,
+        maskInputOptions: {
+          password: true,
+          hidden: true,
+          search: false,
+          email: false,
+          tel: false,
+          text: false
+        },
+        // Block sensitive selectors
+        blockSelector: '[data-sensitive]',
+        // Mask text containing sensitive patterns
+        maskTextSelector: '[data-mask], .password-field, .secret-field',
+        maskAllText: false
+      },
+      // Don't mask all text, but be selective
+      mask_all_text: false,
+      mask_all_element_attributes: false,
+      // Respect user privacy preferences
+      respect_dnt: true,
+      secure_cookie: true,
+      cross_subdomain_cookie: true,
+      capture_performance: true,
+      // Disable console log capture to avoid logging sensitive debug info
+      disable_external_dependency_loading: false
+    });
+
+    // Store PostHog reference globally for backward compatibility
+    window.posthog = posthog.default;
     
     const Sentry = await import("@sentry/svelte");
     
@@ -122,6 +158,19 @@ async function initializeSentry() {
     
     return Sentry;
   } else {
+    // Create stub PostHog object when analytics are disabled
+    window.posthog = {
+      init: () => {},
+      capture: () => {},
+      identify: () => {},
+      setPersonProperties: () => {},
+      reset: () => {},
+      get_distinct_id: () => 'stub-id',
+      isFeatureEnabled: () => false,
+      getFeatureFlag: () => undefined,
+      onFeatureFlags: () => {},
+      reloadFeatureFlags: () => {}
+    };
     
     // Return a stub Sentry object for development
     return {
@@ -136,8 +185,8 @@ async function initializeSentry() {
   }
 }
 
-// Initialize Sentry first, then start the app
-initializeSentry().then(async () => {
+// Initialize analytics (PostHog & Sentry), then start the app
+initializeAnalytics().then(async () => {
   // Also initialize the Sentry service reference
   const { initSentryReference } = await import('./lib/sentry.ts');
   await initSentryReference();
