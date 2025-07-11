@@ -585,7 +585,7 @@
     modalOutputTitle = title;
     showOutputModal = true;
     // Prevent body scroll when modal is open
-    document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open');
   }
 
   function closeOutputModal() {
@@ -593,7 +593,7 @@
     modalOutputContent = '';
     modalOutputTitle = '';
     // Restore body scroll
-    document.body.style.overflow = '';
+    document.body.classList.remove('modal-open');
   }
 
   // Close modal on Escape key

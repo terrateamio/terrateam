@@ -35,9 +35,11 @@
     // Show success message briefly
     const successEl = document.getElementById('success-message');
     if (successEl) {
-      successEl.style.display = 'block';
+      successEl.classList.add('block');
+      successEl.classList.remove('hidden');
       setTimeout(() => {
-        successEl.style.display = 'none';
+        successEl.classList.remove('block');
+        successEl.classList.add('hidden');
       }, 3000);
     }
   }

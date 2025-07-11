@@ -450,3 +450,15 @@ body {
 .dark .config-hljs .hljs-type {
   color: #ffa657 !important;
 }
+
+.modal-open {
+  overflow: hidden;
+}
+
+.block {
+  display: block;
+}
+
+.hidden {
+  display: none;
+}
