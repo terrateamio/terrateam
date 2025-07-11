@@ -15,7 +15,9 @@
       // Inject environment configuration from server/build process
       window.terrateamConfig = {
         ui_analytics: '%TERRATEAM_UI_ANALYTICS%',
-        ui_subscription: '%TERRATEAM_UI_SUBSCRIPTION%'
+        ui_subscription: '%TERRATEAM_UI_SUBSCRIPTION%',
+        maintenanceMode: '%TERRATEAM_MAINTENANCE%',
+        maintenanceMessage: '%TERRATEAM_MAINTENANCE_MESSAGE%'
       };
       
       // Handle template replacement fallbacks for development
@@ -30,12 +32,15 @@
             case 'ui_subscription':
               window.terrateamConfig[key] = 'oss'; // Default to OSS mode
               break;
+            case 'maintenanceMode':
+              window.terrateamConfig[key] = 'false'; // Default to not in maintenance
+              break;
+            case 'maintenanceMessage':
+              window.terrateamConfig[key] = ''; // Default to empty message
+              break;
           }
         }
       });
-      
-      // Note: In development, Vite environment variables (VITE_TERRATEAM_UI_*) 
-      // are handled by the environment.ts module at runtime
       
     </script>
     
