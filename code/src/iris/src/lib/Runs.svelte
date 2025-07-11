@@ -1281,7 +1281,7 @@
         <!-- Repository List -->
         {#if isLoadingMetrics}
           <div class="flex justify-center py-12">
-            <div class="animate-spin rounded-full h-6 w-6 border-b-2" style="border-color: #009bff;"></div>
+            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-brand-primary"></div>
           </div>
         {:else if paginatedRepoMetrics.length === 0 && filteredRepoMetrics.length === 0 && hasLoadedMetrics}
           <div class="text-center py-12 card-bg rounded-lg shadow">
@@ -1798,7 +1798,7 @@
         <!-- Search Results -->
         {#if isLoadingWorkManifests}
           <div class="flex justify-center py-12">
-            <div class="animate-spin rounded-full h-6 w-6 border-b-2" style="border-color: #009bff;"></div>
+            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-brand-primary"></div>
           </div>
         {:else if workManifests.length === 0}
           <div class="text-center py-12 card-bg rounded-lg shadow">

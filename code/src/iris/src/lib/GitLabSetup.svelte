@@ -162,11 +162,11 @@
             {#if index < 1}
               <div class="flex-1 mx-4">
                 <div class="h-1 bg-gray-300 dark:bg-gray-600 rounded-full">
-                  <div class="h-1 rounded-full {
+                  <div class="h-1 rounded-full w-full {
                     (stepInfo.step === 'add-user' && currentStep === 'configure-webhook')
                       ? 'bg-green-600' 
                       : 'bg-transparent'
-                  }" style="width: 100%;"></div>
+                  }"></div>
                 </div>
               </div>
             {/if}

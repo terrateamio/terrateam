@@ -95,8 +95,8 @@
       <div class="max-w-4xl mx-auto">
         <!-- Support Overview -->
         <div class="text-center mb-12">
-          <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-6" style="background-color: rgba(0, 155, 255, 0.1);">
-            <svg class="w-8 h-8" style="color: #009bff;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-6 brand-icon-bg">
+            <svg class="w-8 h-8 brand-icon-color" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
@@ -238,8 +238,7 @@
                     bind:value={formData.email}
                     placeholder="your.email@company.com"
                     required
-                    class="w-full px-4 py-3 border border-brand-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-brand-primary text-brand-primary placeholder-gray-500 dark:placeholder-gray-400"
-                    style="focus:ring-color: #009bff;"
+                    class="w-full px-4 py-3 border border-brand-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent bg-brand-primary text-brand-primary placeholder-gray-500 dark:placeholder-gray-400"
                   />
                 </div>
 
@@ -249,8 +248,7 @@
                   <select
                     id="priority"
                     bind:value={formData.priority}
-                    class="w-full px-4 py-3 border border-brand-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-brand-primary text-brand-primary"
-                    style="focus:ring-color: #009bff;"
+                    class="w-full px-4 py-3 border border-brand-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent bg-brand-primary text-brand-primary"
                   >
                     <option value="low">Low - General question</option>
                     <option value="normal">Normal - Standard support</option>
@@ -268,8 +266,7 @@
                     bind:value={formData.subject}
                     placeholder="Brief description of your issue"
                     required
-                    class="w-full px-4 py-3 border border-brand-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-brand-primary text-brand-primary placeholder-gray-500 dark:placeholder-gray-400"
-                    style="focus:ring-color: #009bff;"
+                    class="w-full px-4 py-3 border border-brand-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent bg-brand-primary text-brand-primary placeholder-gray-500 dark:placeholder-gray-400"
                   />
                 </div>
 
@@ -282,8 +279,7 @@
                     placeholder="Describe your issue in detail. Include any error messages, steps to reproduce, and your current setup."
                     required
                     rows="6"
-                    class="w-full px-4 py-3 border border-brand-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-brand-primary text-brand-primary placeholder-gray-500 dark:placeholder-gray-400 resize-vertical"
-                    style="focus:ring-color: #009bff;"
+                    class="w-full px-4 py-3 border border-brand-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent bg-brand-primary text-brand-primary placeholder-gray-500 dark:placeholder-gray-400 resize-vertical"
                   ></textarea>
                 </div>
 
@@ -318,7 +314,7 @@
               <div class="text-center mb-6">
                 <h3 class="text-2xl font-bold text-brand-primary mb-4">Join Our Slack Community</h3>
                 <div class="flex items-center justify-center mb-4">
-                  <div class="inline-flex items-center justify-center w-16 h-16 rounded-full" style="background-color: #4A154B;">
+                  <div class="inline-flex items-center justify-center w-16 h-16 rounded-full slack-icon-bg">
                     <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M5.042 15.165a2.528 2.528 0 0 0-2.52 2.523A2.528 2.528 0 0 0 5.042 20.21a2.528 2.528 0 0 0 2.52-2.522 2.528 2.528 0 0 0-2.52-2.523zM17.5 15.165a2.528 2.528 0 0 0-2.52 2.523A2.528 2.528 0 0 0 17.5 20.21a2.528 2.528 0 0 0 2.52-2.522 2.528 2.528 0 0 0-2.52-2.523z"/>
                       <path d="M17.5 11.014a4.6 4.6 0 0 0-2.778-4.231 4.6 4.6 0 0 0-4.834.635A4.6 4.6 0 0 0 5.042 11.5a4.6 4.6 0 0 0 4.635 4.635 4.6 4.6 0 0 0 4.236-2.777 4.6 4.6 0 0 0 3.587-4.344z"/>
@@ -334,7 +330,6 @@
                 <button
                   on:click={handleJoinSlack}
                   class="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold rounded-lg transition-colors shadow-lg slack-button"
-                  style="background-color: #4A154B; color: white;"
                 >
                   <svg class="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M5.042 15.165a2.528 2.528 0 0 0-2.52 2.523A2.528 2.528 0 0 0 5.042 20.21a2.528 2.528 0 0 0 2.52-2.522 2.528 2.528 0 0 0-2.52-2.523zM17.5 15.165a2.528 2.528 0 0 0-2.52 2.523A2.528 2.528 0 0 0 17.5 20.21a2.528 2.528 0 0 0 2.52-2.522 2.528 2.528 0 0 0-2.52-2.523z"/>
@@ -350,8 +345,8 @@
             <div class="grid md:grid-cols-2 gap-6 mt-8 max-w-4xl mx-auto">
               <!-- GitHub Issues -->
               <div class="card-bg rounded-lg p-8 shadow border text-center">
-                <div class="inline-flex items-center justify-center w-12 h-12 rounded-lg mb-6" style="background-color: rgba(0, 155, 255, 0.1);">
-                  <svg class="w-6 h-6" style="color: #009bff;" fill="currentColor" viewBox="0 0 24 24">
+                <div class="inline-flex items-center justify-center w-12 h-12 rounded-lg mb-6 brand-icon-bg">
+                  <svg class="w-6 h-6 brand-icon-color" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
                   </svg>
                 </div>
@@ -372,8 +367,8 @@
 
               <!-- GitHub Discussions -->
               <div class="card-bg rounded-lg p-8 shadow border text-center">
-                <div class="inline-flex items-center justify-center w-12 h-12 rounded-lg mb-6" style="background-color: rgba(0, 155, 255, 0.1);">
-                  <svg class="w-6 h-6" style="color: #009bff;" fill="currentColor" viewBox="0 0 24 24">
+                <div class="inline-flex items-center justify-center w-12 h-12 rounded-lg mb-6 brand-icon-bg">
+                  <svg class="w-6 h-6 brand-icon-color" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M1.75 1h12.5c.966 0 1.75.784 1.75 1.75v9.5A1.75 1.75 0 0114.25 14H8.061l-2.574 2.573A1.458 1.458 0 013 15.543V14H1.75A1.75 1.75 0 010 12.25v-9.5C0 1.784.784 1 1.75 1zM1.5 2.75v9.5c0 .138.112.25.25.25h2a.75.75 0 01.75.75v2.19l2.72-2.72a.75.75 0 01.53-.22h6.5a.25.25 0 00.25-.25v-9.5a.25.25 0 00-.25-.25H1.75a.25.25 0 00-.25.25z"/>
                     <path d="M22.5 8.75a.25.25 0 00-.25-.25h-3.5a.75.75 0 010-1.5h3.5c.966 0 1.75.784 1.75 1.75v9.5A1.75 1.75 0 0122.25 20H21v1.543a1.458 1.458 0 01-2.487 1.03L15.939 20H10.75A1.75 1.75 0 019 18.25v-1.465a.75.75 0 011.5 0v1.465c0 .138.112.25.25.25h5.5a.75.75 0 01.53.22l2.72 2.72v-2.19a.75.75 0 01.75-.75h2a.25.25 0 00.25-.25v-9.5z"/>
                   </svg>
@@ -407,8 +402,8 @@
             <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
               <!-- Documentation -->
               <div class="card-bg rounded-lg p-8 shadow border text-center">
-                <div class="inline-flex items-center justify-center w-12 h-12 rounded-lg mb-6" style="background-color: rgba(0, 155, 255, 0.1);">
-                  <svg class="w-6 h-6" style="color: #009bff;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="inline-flex items-center justify-center w-12 h-12 rounded-lg mb-6 brand-icon-bg">
+                  <svg class="w-6 h-6 brand-icon-color" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                   </svg>
                 </div>
@@ -429,8 +424,8 @@
 
               <!-- Schedule a Call -->
               <div class="card-bg rounded-lg p-8 shadow border text-center">
-                <div class="inline-flex items-center justify-center w-12 h-12 rounded-lg mb-6" style="background-color: rgba(0, 155, 255, 0.1);">
-                  <svg class="w-6 h-6" style="color: #009bff;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="inline-flex items-center justify-center w-12 h-12 rounded-lg mb-6 brand-icon-bg">
+                  <svg class="w-6 h-6 brand-icon-color" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
@@ -461,8 +456,8 @@
             </div>
             
             <div class="card-bg rounded-lg shadow-lg border p-8 max-w-3xl mx-auto text-center">
-              <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-6" style="background-color: rgba(0, 155, 255, 0.1);">
-                <svg class="w-8 h-8" style="color: #009bff;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-6 brand-icon-bg">
+                <svg class="w-8 h-8 brand-icon-color" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>

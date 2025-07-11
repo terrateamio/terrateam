@@ -131,6 +131,10 @@ body {
   background-color: #3d1140 !important;
 }
 
+.slack-icon-bg {
+  background-color: #4A154B;
+}
+
 /* Component-specific styles extracted from individual components */
 
 /* Button Component Styles */
@@ -316,6 +320,21 @@ body {
 .focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
+}
+
+/* Sidebar active menu item styles */
+.sidebar-active-item {
+  color: #009bff;
+  background-color: rgba(0, 155, 255, 0.1);
+}
+
+/* Brand-colored icon backgrounds */
+.brand-icon-bg {
+  background-color: rgba(0, 155, 255, 0.1);
+}
+
+.brand-icon-color {
+  color: #009bff;
 }
 
 /* Screen reader only content */

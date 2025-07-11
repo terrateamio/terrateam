@@ -108,7 +108,7 @@
     <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
       {#if isLoading}
         <div class="flex justify-center py-12">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2" style="border-color: #009bff;"></div>
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary"></div>
         </div>
       {:else if error}
         <div class="bg-red-50 border border-red-200 rounded-md p-4 mb-6">

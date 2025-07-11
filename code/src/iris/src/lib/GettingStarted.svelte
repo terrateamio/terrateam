@@ -753,13 +753,12 @@
       </div>
       <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
         <div 
-          class="bg-blue-600 h-2 rounded-full transition-all duration-300"
-          style="width: {
-            currentStep === 'assessment' ? '10%' :
-            currentStep === 'path-selection' ? '25%' :
-            currentStep === 'github-demo-setup' || currentStep === 'gitlab-demo-setup' || currentStep === 'github-repo-setup' || currentStep === 'gitlab-setup' ? '60%' :
-            currentStep === 'validation' ? '80%' :
-            '100%'
+          class="bg-blue-600 h-2 rounded-full transition-all duration-300 {
+            currentStep === 'assessment' ? 'w-[10%]' :
+            currentStep === 'path-selection' ? 'w-1/4' :
+            currentStep === 'github-demo-setup' || currentStep === 'gitlab-demo-setup' || currentStep === 'github-repo-setup' || currentStep === 'gitlab-setup' ? 'w-[60%]' :
+            currentStep === 'validation' ? 'w-4/5' :
+            'w-full'
           }"
         ></div>
       </div>

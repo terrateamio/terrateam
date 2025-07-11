@@ -315,6 +315,7 @@ npm run build
 ## 📋 Quick Navigation
 - [TypeScript & Type Safety Rules](#typescript--type-safety-rules)
 - [Component Development Standards](#component-development-standards)
+- [Styling & CSP Compliance Rules](#styling--csp-compliance-rules)
 - [Accessibility (A11y) Requirements](#accessibility-a11y-requirements)
 - [API Integration Requirements](#api-integration-requirements)
 - [Code Organization Rules](#code-organization-rules)
@@ -433,6 +434,137 @@ src/lib/
 2. ✅ Can existing components be extended or composed?
 3. ✅ Will this component be reused in 2+ places?
 4. ✅ Does it follow the established design patterns?
+
+---
+
+## 🎨 Styling & CSP Compliance Rules
+
+### **MANDATORY STYLING REQUIREMENTS**
+
+> **All styling MUST be CSP-compliant. Inline styles are FORBIDDEN to ensure Content Security Policy compliance.**
+
+#### **✅ MUST DO - Use CSS Classes:**
+```svelte
+<!-- ✅ Use Tailwind CSS classes -->
+<div class="bg-brand-primary text-white p-4">Content</div>
+
+<!-- ✅ Use conditional classes for dynamic styling -->
+<div class="{isActive ? 'bg-blue-500' : 'bg-gray-300'} p-4">
+  Dynamic content
+</div>
+
+<!-- ✅ Use custom CSS classes for complex styles -->
+<div class="sidebar-active-item">Active item</div>
+
+<!-- ✅ For spinners, use border utility classes -->
+<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary"></div>
+```
+
+#### **❌ NEVER DO - Inline Styles:**
+```svelte
+<!-- ❌ NEVER use inline style attributes -->
+<div style="background-color: #009bff;">Bad</div>
+
+<!-- ❌ NEVER use style bindings -->
+<div style="width: {progress}%">Bad</div>
+
+<!-- ❌ NEVER use element.style in JavaScript -->
+<script>
+  element.style.display = 'none'; // FORBIDDEN
+  element.style.backgroundColor = '#009bff'; // FORBIDDEN
+</script>
+
+<!-- ❌ NEVER use dynamic style attributes -->
+<div style={dynamicStyles}>Bad</div>
+```
+
+#### **✅ ALTERNATIVES for Dynamic Styles:**
+
+**1. For dynamic widths/heights:**
+```svelte
+<!-- ✅ Use Tailwind's arbitrary value support -->
+<div class="w-[{progress}%]">Progress bar</div>
+
+<!-- ✅ Or use predefined width classes -->
+<div class="{progress < 25 ? 'w-1/4' : progress < 50 ? 'w-1/2' : progress < 75 ? 'w-3/4' : 'w-full'}">
+  Progress bar
+</div>
+```
+
+**2. For showing/hiding elements:**
+```svelte
+<!-- ✅ Use class toggling -->
+<div class="{isVisible ? 'block' : 'hidden'}">Content</div>
+
+<!-- ✅ Or use Svelte's conditional rendering -->
+{#if isVisible}
+  <div>Content</div>
+{/if}
+```
+
+**3. For dynamic colors:**
+```svelte
+<!-- ✅ Define color classes in CSS -->
+<style>
+  .status-success { color: #10b981; }
+  .status-error { color: #ef4444; }
+  .status-warning { color: #f59e0b; }
+</style>
+
+<div class="status-{status}">Status message</div>
+```
+
+**4. For animations and transitions:**
+```svelte
+<!-- ✅ Use CSS classes and animations -->
+<div class="transition-all duration-300 {expanded ? 'max-h-96' : 'max-h-0'}">
+  Expandable content
+</div>
+```
+
+### **Custom CSS Classes**
+
+When Tailwind doesn't provide what you need, add custom classes to `app.css`:
+
+```css
+/* Brand-specific utility classes */
+.brand-icon-bg {
+  background-color: rgba(0, 155, 255, 0.1);
+}
+
+.brand-icon-color {
+  color: #009bff;
+}
+
+.sidebar-active-item {
+  color: #009bff;
+  background-color: rgba(0, 155, 255, 0.1);
+}
+```
+
+### **JavaScript Style Manipulation**
+
+When you need to manipulate styles via JavaScript:
+
+```javascript
+// ✅ Use classList API
+element.classList.add('hidden');
+element.classList.remove('hidden');
+element.classList.toggle('active');
+
+// ❌ NEVER use style property
+element.style.display = 'none'; // FORBIDDEN
+element.style.color = 'red'; // FORBIDDEN
+```
+
+### **CSP Compliance Checklist**
+
+Before committing any styling changes:
+1. ✅ No `style=""` attributes in HTML/Svelte files
+2. ✅ No `element.style` assignments in JavaScript
+3. ✅ No `style:` directives in Svelte files
+4. ✅ All dynamic styling uses class toggling
+5. ✅ Custom styles are defined in CSS files, not inline
 
 ---
 
@@ -1083,6 +1215,7 @@ When working on this codebase:
 8. ❌ **NO clickable divs** - Use `ClickableCard` or proper semantic elements
 9. ❌ **NO missing ARIA labels** - All interactive elements need accessible names
 10. ❌ **NO keyboard inaccessible elements** - Everything must be keyboard navigable
+11. ❌ **NO inline styles** - Use CSS classes only (CSP compliance)
 
 ### **Quality Gates**
 Before any code change:
@@ -1091,6 +1224,7 @@ Before any code change:
 - ✅ Is this type-safe and validated?
 - ✅ Is this accessible to users with disabilities?
 - ✅ Can this be used with keyboard-only navigation?
+- ✅ Does this use CSS classes instead of inline styles?
 - ✅ Will this be maintainable in 6 months?
 - ✅ Have I checked existing codebase for similar functionality?
 
