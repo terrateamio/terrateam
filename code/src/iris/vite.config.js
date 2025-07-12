@@ -10,6 +10,7 @@ export default defineConfig({
       }),
     }),
   ],
+  assetsInclude: ['**/*.svg'],
   resolve: {
     alias: {
       $lib: new URL('./src/lib', import.meta.url).pathname,
