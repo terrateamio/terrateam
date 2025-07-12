@@ -49,10 +49,10 @@ module Make (Abb : Abb_intf.S) = struct
         | Ok addrs -> (
             addrs
             |> CCList.flat_map (function
-                   | Abb_intf.Socket.(Addrinfo.{ addr = Sockaddr.(Inet { addr; _ }); _ }) ->
-                       CCOption.to_list
-                         (CCOption.of_result (Ipaddr.V4.of_string (Unix.string_of_inet_addr addr)))
-                   | _ -> assert false)
+                 | Abb_intf.Socket.(Addrinfo.{ addr = Sockaddr.(Inet { addr; _ }); _ }) ->
+                     CCOption.to_list
+                       (CCOption.of_result (Ipaddr.V4.of_string (Unix.string_of_inet_addr addr)))
+                 | _ -> assert false)
             |> Ipaddr.V4.Set.of_list
             |> function
             | set when Ipaddr.V4.Set.is_empty set ->
@@ -69,32 +69,31 @@ module Make (Abb : Abb_intf.S) = struct
         | Ok addrs -> (
             addrs
             |> CCList.flat_map (function
-                   | Abb_intf.Socket.(Addrinfo.{ addr = Sockaddr.(Inet { addr; _ }); _ }) ->
-                       CCOption.to_list
-                         (CCOption.of_result (Ipaddr.V6.of_string (Unix.string_of_inet_addr addr)))
-                   | _ -> assert false)
+                 | Abb_intf.Socket.(Addrinfo.{ addr = Sockaddr.(Inet { addr; _ }); _ }) ->
+                     CCOption.to_list
+                       (CCOption.of_result (Ipaddr.V6.of_string (Unix.string_of_inet_addr addr)))
+                 | _ -> assert false)
             |> Ipaddr.V6.Set.of_list
             |> function
             | set when Ipaddr.V6.Set.is_empty set ->
                 `Event (Happy_eyeballs.Resolved_aaaa_failed (host, "no IPv6 addresses found"))
             | set -> `Event (Happy_eyeballs.Resolved_aaaa (host, set))))
-    | Happy_eyeballs.Connect (host, id, (ip, port)) -> (
+    | Happy_eyeballs.Connect (host, id, _attempt, (ip, port)) -> (
         try_connect ip port
         >>= function
         | Ok tcp -> Abb.Future.return (`Ok ((ip, port), tcp))
         | Error (#Abb_intf.Errors.tcp_sock_connect as err) ->
             Abb.Future.return
               (`Event
-                (Happy_eyeballs.Connection_failed
-                   (host, id, (ip, port), Abb_intf.Errors.show_tcp_sock_connect err)))
+                 (Happy_eyeballs.Connection_failed
+                    (host, id, (ip, port), Abb_intf.Errors.show_tcp_sock_connect err)))
         | Error (#Abb_intf.Errors.sock_create as err) ->
             Abb.Future.return
               (`Event
-                (Happy_eyeballs.Connection_failed
-                   (host, id, (ip, port), Abb_intf.Errors.show_sock_create err))))
+                 (Happy_eyeballs.Connection_failed
+                    (host, id, (ip, port), Abb_intf.Errors.show_sock_create err))))
     | Happy_eyeballs.Connect_failed (domain, _, msg) ->
         Abb.Future.return (`He_connect_err (Domain_name.to_string domain, msg))
-    | Happy_eyeballs.Connect_cancelled (_, _) -> Abb.Future.return `He_cancelled_err
 
   (* Each action is a future whose result is the application of {!act}.  We wait
      for the first response, and depending on what that is, we continue on
