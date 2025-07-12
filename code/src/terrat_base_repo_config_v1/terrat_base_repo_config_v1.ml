@@ -2,6 +2,8 @@ module V1 = Terrat_repo_config.Version_1
 module String_map = Terrat_data.String_map
 module String_set = Terrat_data.String_set
 
+let config_schema = [%blob "../../../../api_schemas/terrat/config-schema.json"]
+
 let timezone_abbreviations =
   String_set.of_list
     [
