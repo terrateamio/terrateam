@@ -53,11 +53,6 @@ http {
             add_header Content-Security-Policy "default-src 'self' https://*.posthog.com; img-src 'self' https://avatars.githubusercontent.com; script-src 'self' 'nonce-$cspNonce' https://*.posthog.com; style-src 'self'; object-src 'none'; connect-src 'self' https://*.posthog.com";
         }
 
-        location /assets {
-            root /usr/local/share/terrat/ui/;
-            tcp_nodelay on;
-        }
-
         location /api {
             # Limit the proxy to a lower number of concurrent requests to keep
             # the underlying application happy.

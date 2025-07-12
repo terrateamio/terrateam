@@ -1,0 +1,27 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "src/main.js",
+    "src/App.svelte"
+  ],
+  "project": [
+    "src/**/*.{js,ts,svelte}"
+  ],
+  "ignore": [
+    "src/lib/api-types-generated.ts"
+  ],
+  "ignoreExportsUsedInFile": true,
+  "ignoreDependencies": [],
+  "ignoreWorkspaces": [],
+  "exclude": [
+    "duplicates"
+  ],
+  "rules": {
+    "files": "error",
+    "dependencies": "error", 
+    "devDependencies": "error",
+    "exports": "off",
+    "types": "off",
+    "duplicates": "off"
+  }
+}
