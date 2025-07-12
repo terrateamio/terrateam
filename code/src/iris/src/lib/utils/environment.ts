@@ -15,8 +15,8 @@ export function isAnalyticsEnabled(): boolean {
     return enabled;
   }
   
-  // Default to disabled for safety
-  return false;
+  // Default to enabled
+  return true;
 }
 
 /**
@@ -32,8 +32,8 @@ export function getSubscriptionMode(): SubscriptionMode {
     }
   }
   
-  // Default to OSS mode (shows self-hosted/enterprise contact info)
-  return 'oss';
+  // Default to SaaS mode (shows SaaS billing and payment options)
+  return 'saas';
 }
 
 /**
