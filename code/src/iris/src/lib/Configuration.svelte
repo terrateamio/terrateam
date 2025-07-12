@@ -2,7 +2,7 @@
   // Auth handled by PageLayout
   import PageLayout from './components/layout/PageLayout.svelte';
   import { selectedInstallation, installations } from './stores';
-  import 'iconify-icon';
+  import { Icon } from './components';
   import hljs from 'highlight.js/lib/core';
   import yamlLang from 'highlight.js/lib/languages/yaml';
   import 'highlight.js/styles/github-dark.css';
@@ -231,7 +231,7 @@
             <div class="flex items-start gap-4">
               <div class="flex-shrink-0">
                 <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
-                  <iconify-icon icon="mdi:headset" width="24" height="24" class="text-blue-600 dark:text-blue-400"></iconify-icon>
+                  <Icon icon="mdi:headset" width="24" height="24" class="text-blue-600 dark:text-blue-400" />
                 </div>
               </div>
               <div>
@@ -246,7 +246,7 @@
                 on:click={() => window.open('https://calendly.com/terrateam/30-minute-chat', '_blank')}
                 class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-lg transition-colors"
               >
-                <iconify-icon icon="mdi:calendar-clock" width="20" height="20" class="mr-2"></iconify-icon>
+                <Icon icon="mdi:calendar-clock" width="20" height="20" class="mr-2" />
                 Schedule a Call
               </button>
             </div>
@@ -266,7 +266,7 @@
               <!-- Card content -->
               <div class="relative">
                 <div class="mb-4 transform group-hover:scale-110 transition-transform duration-200">
-                  <iconify-icon icon={preset.icon} width="32" height="32" class="text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors"></iconify-icon>
+                  <Icon icon={preset.icon} width="32" height="32" class="text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
                 </div>
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                   {preset.name}
@@ -326,7 +326,7 @@
             <!-- Card content -->
             <div class="relative">
               <div class="mb-4 transform group-hover:scale-110 transition-transform duration-200">
-                <iconify-icon icon="mdi:tools" width="32" height="32" class="text-gray-600 dark:text-gray-400 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors"></iconify-icon>
+                <Icon icon="mdi:tools" width="32" height="32" class="text-gray-600 dark:text-gray-400 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors" />
               </div>
               <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                 Custom
@@ -359,7 +359,7 @@
           <!-- Left column: Visual guide -->
           <div class="xl:col-span-2 bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
             <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-              <iconify-icon icon="mdi:book-open-variant" width="20" height="20" class="mr-2 text-gray-600 dark:text-gray-400"></iconify-icon>
+              <Icon icon="mdi:book-open-variant" width="20" height="20" class="mr-2 text-gray-600 dark:text-gray-400" />
               How it Works
             </h3>
             
@@ -368,28 +368,28 @@
               <h4 class="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Repository Structure</h4>
               <div class="bg-white dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700 font-mono text-xs">
                 <div class="flex items-center text-gray-700 dark:text-gray-300 mb-1">
-                  <iconify-icon icon="mdi:github" width="16" height="16" class="mr-2"></iconify-icon>
+                  <Icon icon="mdi:github" width="16" height="16" class="mr-2" />
                   <span class="font-semibold">my-terraform-repo</span>
                 </div>
                 <div class="border-l-2 border-gray-300 dark:border-gray-600 ml-2 pl-3">
                   <div class="flex items-center text-gray-600 dark:text-gray-400">
-                    <iconify-icon icon="mdi:folder" width="16" height="16" class="mr-2"></iconify-icon>
+                    <Icon icon="mdi:folder" width="16" height="16" class="mr-2" />
                     <span>.terrateam/</span>
                   </div>
                   <div class="ml-4 mt-1">
                     <div class="flex items-center text-green-600 dark:text-green-400 font-semibold">
-                      <iconify-icon icon="mdi:file-code" width="16" height="16" class="mr-2"></iconify-icon>
+                      <Icon icon="mdi:file-code" width="16" height="16" class="mr-2" />
                       <span>config.yml</span>
                       <span class="ml-2 text-xs font-normal text-gray-500">← Your config</span>
                     </div>
                   </div>
                   <div class="flex items-center text-gray-600 dark:text-gray-400 mt-1">
-                    <iconify-icon icon="mdi:folder" width="16" height="16" class="mr-2"></iconify-icon>
+                    <Icon icon="mdi:folder" width="16" height="16" class="mr-2" />
                     <span>terraform/</span>
                   </div>
                   <div class="ml-4 mt-1">
                     <div class="flex items-center text-gray-500 dark:text-gray-500">
-                      <iconify-icon icon="mdi:file" width="16" height="16" class="mr-2"></iconify-icon>
+                      <Icon icon="mdi:file" width="16" height="16" class="mr-2" />
                       <span>main.tf</span>
                     </div>
                   </div>
@@ -488,7 +488,7 @@
                   class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium flex items-center"
                 >
                   View all features in documentation
-                  <iconify-icon icon="mdi:open-in-new" width="14" height="14" class="ml-1"></iconify-icon>
+                  <Icon icon="mdi:open-in-new" width="14" height="14" class="ml-1" />
                 </a>
               </div>
             </div>
@@ -533,7 +533,7 @@
           <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 p-6 mb-6">
             <div class="flex items-start space-x-4">
               <div>
-                <iconify-icon icon={CONFIG_PRESETS[selectedPreset].icon} width="48" height="48" class="text-blue-600 dark:text-blue-400"></iconify-icon>
+                <Icon icon={CONFIG_PRESETS[selectedPreset].icon} width="48" height="48" class="text-blue-600 dark:text-blue-400" />
               </div>
               <div class="flex-1">
                 <h3 class="text-xl font-bold text-blue-900 dark:text-blue-100 mb-2">
@@ -561,16 +561,16 @@
                             }"
                           >
                             {#if provider === 'none'}
-                              <iconify-icon icon="mdi:wrench-outline" width="24" height="24" class="mx-auto text-gray-600 dark:text-gray-400"></iconify-icon>
+                              <Icon icon="mdi:wrench-outline" width="24" height="24" class="mx-auto text-gray-600 dark:text-gray-400" />
                               <div class="text-xs mt-1">None</div>
                             {:else if provider === 'aws'}
-                              <iconify-icon icon="logos:aws" width="24" height="24" class="mx-auto"></iconify-icon>
+                              <Icon icon="logos:aws" width="24" height="24" class="mx-auto" />
                               <div class="text-xs mt-1">AWS</div>
                             {:else if provider === 'gcp'}
-                              <iconify-icon icon="logos:google-cloud" width="24" height="24" class="mx-auto"></iconify-icon>
+                              <Icon icon="logos:google-cloud" width="24" height="24" class="mx-auto" />
                               <div class="text-xs mt-1">GCP</div>
                             {:else if provider === 'azure'}
-                              <iconify-icon icon="logos:microsoft-azure" width="24" height="24" class="mx-auto"></iconify-icon>
+                              <Icon icon="logos:microsoft-azure" width="24" height="24" class="mx-auto" />
                               <div class="text-xs mt-1">Azure</div>
                             {/if}
                           </button>
@@ -582,7 +582,7 @@
                         <div class="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                           <div class="flex items-center justify-between">
                             <div class="flex items-center text-sm text-blue-700 dark:text-blue-300">
-                              <iconify-icon icon="mdi:information-outline" width="16" height="16" class="mr-2"></iconify-icon>
+                              <Icon icon="mdi:information-outline" width="16" height="16" class="mr-2" />
                               <span>
                                 Setup requires adding secrets to your GitHub repository
                               </span>
@@ -595,7 +595,7 @@
                               on:click|stopPropagation
                             >
                               View Setup Guide
-                              <iconify-icon icon="mdi:open-in-new" width="14" height="14" class="ml-1"></iconify-icon>
+                              <Icon icon="mdi:open-in-new" width="14" height="14" class="ml-1" />
                             </a>
                           </div>
                         </div>
@@ -617,7 +617,7 @@
                                 : 'border-gray-300 dark:border-gray-600 hover:border-blue-300'
                             }"
                           >
-                            <iconify-icon icon="mdi:key-outline" width="24" height="24" class="text-gray-600 dark:text-gray-400 mb-1"></iconify-icon>
+                            <Icon icon="mdi:key-outline" width="24" height="24" class="text-gray-600 dark:text-gray-400 mb-1" />
                             <div class="text-sm font-medium">Static Secrets</div>
                             <div class="text-xs text-gray-600 dark:text-gray-400">Easier setup</div>
                           </button>
@@ -632,7 +632,7 @@
                                   : 'border-gray-300 dark:border-gray-600 hover:border-blue-300'
                             }"
                           >
-                            <iconify-icon icon="mdi:shield-lock-outline" width="24" height="24" class="text-gray-600 dark:text-gray-400 mb-1"></iconify-icon>
+                            <Icon icon="mdi:shield-lock-outline" width="24" height="24" class="text-gray-600 dark:text-gray-400 mb-1" />
                             <div class="text-sm font-medium">OIDC</div>
                             <div class="text-xs text-gray-600 dark:text-gray-400">
                               {configOptions.provider === 'azure' ? 'Coming soon' : 'More secure'}
@@ -645,7 +645,7 @@
                           <div class="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                             <div class="flex items-center justify-between">
                               <div class="flex items-center text-sm text-blue-700 dark:text-blue-300">
-                                <iconify-icon icon="mdi:information-outline" width="16" height="16" class="mr-2"></iconify-icon>
+                                <Icon icon="mdi:information-outline" width="16" height="16" class="mr-2" />
                                 <span>
                                   {#if configOptions.authMethod === 'static'}
                                     Setup requires adding secrets to your GitHub repository
@@ -662,7 +662,7 @@
                                 on:click|stopPropagation
                               >
                                 View Setup Guide
-                                <iconify-icon icon="mdi:open-in-new" width="14" height="14" class="ml-1"></iconify-icon>
+                                <Icon icon="mdi:open-in-new" width="14" height="14" class="ml-1" />
                               </a>
                             </div>
                           </div>
@@ -702,7 +702,7 @@
                         }"
                       >
                         {#if provider.icon.includes(':')}
-                          <iconify-icon icon={provider.icon} width="32" height="32" class="mx-auto mb-1"></iconify-icon>
+                          <Icon icon={provider.icon} width="32" height="32" class="mx-auto mb-1" />
                         {:else}
                           <div class="text-2xl mb-1">{provider.icon}</div>
                         {/if}
@@ -727,7 +727,7 @@
                             : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
                         }"
                       >
-                        <iconify-icon icon="mdi:key-outline" width="24" height="24" class="text-gray-600 dark:text-gray-400 mb-1"></iconify-icon>
+                        <Icon icon="mdi:key-outline" width="24" height="24" class="text-gray-600 dark:text-gray-400 mb-1" />
                         <div class="text-sm font-medium">Static Secrets</div>
                         <div class="text-xs text-gray-600 dark:text-gray-400">GitHub secrets</div>
                       </button>
@@ -742,7 +742,7 @@
                               : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
                         }"
                       >
-                        <iconify-icon icon="mdi:shield-lock-outline" width="24" height="24" class="text-gray-600 dark:text-gray-400 mb-1"></iconify-icon>
+                        <Icon icon="mdi:shield-lock-outline" width="24" height="24" class="text-gray-600 dark:text-gray-400 mb-1" />
                         <div class="text-sm font-medium">OIDC</div>
                         <div class="text-xs text-gray-600 dark:text-gray-400">
                           {configOptions.provider === 'azure' ? 'Coming soon' : 'Recommended'}
@@ -755,7 +755,7 @@
                       <div class="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                         <div class="flex items-center justify-between">
                           <div class="flex items-center text-sm text-blue-700 dark:text-blue-300">
-                            <iconify-icon icon="mdi:information-outline" width="16" height="16" class="mr-2"></iconify-icon>
+                            <Icon icon="mdi:information-outline" width="16" height="16" class="mr-2" />
                             <span>
                               {#if configOptions.authMethod === 'static'}
                                 Setup requires adding secrets to your GitHub repository
@@ -772,7 +772,7 @@
                             on:click|stopPropagation
                           >
                             View Setup Guide
-                            <iconify-icon icon="mdi:open-in-new" width="14" height="14" class="ml-1"></iconify-icon>
+                            <Icon icon="mdi:open-in-new" width="14" height="14" class="ml-1" />
                           </a>
                         </div>
                       </div>
@@ -835,7 +835,7 @@
                               class="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                               title="Learn more about Multiple Environments (opens in new tab)"
                             >
-                              <iconify-icon icon="mdi:open-in-new" width="16" height="16"></iconify-icon>
+                              <Icon icon="mdi:open-in-new" width="16" height="16" />
                             </a>
                           </div>
                         </div>
@@ -880,7 +880,7 @@
                             class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center font-medium"
                           >
                             Setup Guide
-                            <iconify-icon icon="mdi:open-in-new" width="14" height="14" class="ml-1"></iconify-icon>
+                            <Icon icon="mdi:open-in-new" width="14" height="14" class="ml-1" />
                           </a>
                         </div>
                       </div>
@@ -898,7 +898,7 @@
                 {#each Object.entries(featureCategories) as [, category]}
                   <div class="mb-6 last:mb-0">
                     <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
-                      <iconify-icon icon={category.iconName} width="20" height="20" class="mr-2 text-gray-600 dark:text-gray-400"></iconify-icon>
+                      <Icon icon={category.iconName} width="20" height="20" class="mr-2 text-gray-600 dark:text-gray-400" />
                       {category.name}
                     </h4>
                     <div class="space-y-2">
@@ -922,7 +922,7 @@
                                   class="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                                   title="Learn more about {featureInfo[feature].name} (opens in new tab)"
                                 >
-                                  <iconify-icon icon="mdi:open-in-new" width="16" height="16"></iconify-icon>
+                                  <Icon icon="mdi:open-in-new" width="16" height="16" />
                                 </a>
                               </div>
                               <div class="text-xs text-gray-600 dark:text-gray-400">
@@ -960,7 +960,7 @@
         <div class="bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 p-6">
           <div class="flex items-start">
             <div class="flex-shrink-0">
-              <iconify-icon icon="mdi:check-circle" width="24" height="24" class="text-green-600 dark:text-green-400"></iconify-icon>
+              <Icon icon="mdi:check-circle" width="24" height="24" class="text-green-600 dark:text-green-400" />
             </div>
             <div class="ml-3">
               <h3 class="text-lg font-semibold text-green-900 dark:text-green-100 mb-2">
@@ -994,7 +994,7 @@
         <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 p-6">
           <div class="flex items-start">
             <div class="flex-shrink-0">
-              <iconify-icon icon="mdi:cloud-check" width="24" height="24" class="text-blue-600 dark:text-blue-400"></iconify-icon>
+              <Icon icon="mdi:cloud-check" width="24" height="24" class="text-blue-600 dark:text-blue-400" />
             </div>
             <div class="ml-3">
               <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
@@ -1038,7 +1038,7 @@
                   class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium flex items-center"
                 >
                   {configOptions.provider.toUpperCase()} Setup Guide
-                  <iconify-icon icon="mdi:open-in-new" width="14" height="14" class="ml-1"></iconify-icon>
+                  <Icon icon="mdi:open-in-new" width="14" height="14" class="ml-1" />
                 </a>
               </div>
             </div>

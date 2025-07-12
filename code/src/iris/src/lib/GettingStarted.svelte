@@ -3,7 +3,7 @@
   import { api, isApiError } from './api';
   import { onMount } from 'svelte';
   import type { Installation, Repository, GitLabGroup } from './types';
-  import 'iconify-icon';
+  import { Icon } from './components';
   import { currentVCSProvider } from './stores';
   import { get } from 'svelte/store';
   import { VCS_PROVIDERS } from './vcs/providers';
@@ -778,7 +778,7 @@
         <!-- Assessment Step -->
         <div class="text-center py-12">
           <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full mb-6">
-            <iconify-icon icon="mdi:magnify" class="text-blue-600 dark:text-blue-400" width="32"></iconify-icon>
+            <Icon icon="mdi:magnify" class="text-blue-600 dark:text-blue-400" width="32" />
           </div>
           <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Analyzing Your Setup</h2>
           <p class="text-gray-600 dark:text-gray-400 mb-6">We're checking your current Terrateam configuration...</p>
@@ -812,17 +812,17 @@
                 <h3 class="font-medium text-blue-900 dark:text-blue-100 mb-2">What we found:</h3>
                 <div class="space-y-1 text-sm text-blue-800 dark:text-blue-200">
                   <div class="flex items-center">
-                    <iconify-icon icon={hasInstallations ? "mdi:check" : "mdi:close"} 
+                    <Icon icon={hasInstallations ? "mdi:check" : "mdi:close"} 
                                   class={hasInstallations ? "text-green-600" : "text-gray-400"} 
-                                  width="16"></iconify-icon>
+                                  width="16" />
                     <span class="ml-2">
                       {hasInstallations ? `Found ${installations.length} ${VCS_PROVIDERS[currentProvider].displayName} installation${installations.length > 1 ? 's' : ''}` : `No ${VCS_PROVIDERS[currentProvider].displayName} installations found`}
                     </span>
                   </div>
                   <div class="flex items-center">
-                    <iconify-icon icon={hasConfiguredRepos ? "mdi:check" : "mdi:close"} 
+                    <Icon icon={hasConfiguredRepos ? "mdi:check" : "mdi:close"} 
                                   class={hasConfiguredRepos ? "text-green-600" : "text-gray-400"} 
-                                  width="16"></iconify-icon>
+                                  width="16" />
                     <span class="ml-2">
                       {hasConfiguredRepos ? 'Found configured repositories' : 'No configured repositories found'}
                     </span>
@@ -831,12 +831,12 @@
                 
                 {#if recommendedPath === 'demo'}
                   <p class="mt-3 text-sm font-medium text-blue-900 dark:text-blue-100 flex items-center">
-                    <iconify-icon icon="mdi:lightbulb" class="text-yellow-500 mr-2" width="16"></iconify-icon>
+                    <Icon icon="mdi:lightbulb" class="text-yellow-500 mr-2" width="16" />
                   We recommend starting with the demo to learn how Terrateam works
                 </p>
               {:else}
                 <p class="mt-3 text-sm font-medium text-blue-900 dark:text-blue-100 flex items-center">
-                  <iconify-icon icon="mdi:lightbulb" class="text-yellow-500 mr-2" width="16"></iconify-icon>
+                  <Icon icon="mdi:lightbulb" class="text-yellow-500 mr-2" width="16" />
                   We recommend setting up your existing repository
                 </p>
               {/if}
@@ -853,7 +853,7 @@
           >
             <div class="flex items-center justify-between mb-4">
               <div class="flex items-center justify-center w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                <iconify-icon icon="mdi:flash" class="text-green-600 dark:text-green-400" width="20"></iconify-icon>
+                <Icon icon="mdi:flash" class="text-green-600 dark:text-green-400" width="20" />
               </div>
               {#if recommendedPath === 'demo'}
                 <span class="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded-full font-medium">Recommended</span>
@@ -867,15 +867,15 @@
             
             <div class="space-y-2">
               <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                <iconify-icon icon="mdi:check" class="text-green-500 mr-2" width="16"></iconify-icon>
+                <Icon icon="mdi:check" class="text-green-500 mr-2" width="16" />
                 No cloud setup required
               </div>
               <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                <iconify-icon icon="mdi:check" class="text-green-500 mr-2" width="16"></iconify-icon>
+                <Icon icon="mdi:check" class="text-green-500 mr-2" width="16" />
                 See Terraform plans instantly
               </div>
               <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                <iconify-icon icon="mdi:check" class="text-green-500 mr-2" width="16"></iconify-icon>
+                <Icon icon="mdi:check" class="text-green-500 mr-2" width="16" />
                 2-3 minutes to complete
               </div>
             </div>
@@ -888,7 +888,7 @@
           >
             <div class="flex items-center justify-between mb-4">
               <div class="flex items-center justify-center w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                <iconify-icon icon="mdi:source-repository" class="text-blue-600 dark:text-blue-400" width="20"></iconify-icon>
+                <Icon icon="mdi:source-repository" class="text-blue-600 dark:text-blue-400" width="20" />
               </div>
               {#if recommendedPath === 'repo'}
                 <span class="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded-full font-medium">Recommended</span>
@@ -902,15 +902,15 @@
             
             <div class="space-y-2">
               <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                <iconify-icon icon="mdi:check" class="text-green-500 mr-2" width="16"></iconify-icon>
+                <Icon icon="mdi:check" class="text-green-500 mr-2" width="16" />
                 Works with existing repos
               </div>
               <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                <iconify-icon icon="mdi:check" class="text-green-500 mr-2" width="16"></iconify-icon>
+                <Icon icon="mdi:check" class="text-green-500 mr-2" width="16" />
                 Real infrastructure automation
               </div>
               <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                <iconify-icon icon="mdi:check" class="text-green-500 mr-2" width="16"></iconify-icon>
+                <Icon icon="mdi:check" class="text-green-500 mr-2" width="16" />
                 5-10 minutes to complete
               </div>
             </div>
@@ -927,7 +927,7 @@
               on:click={goBack}
               class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center"
             >
-              <iconify-icon icon="mdi:arrow-left" class="mr-1" width="16"></iconify-icon>
+              <Icon icon="mdi:arrow-left" class="mr-1" width="16" />
               Back
             </button>
           </div>
@@ -961,7 +961,7 @@
                          (stepInfo.step === 'enable-actions' && demoStepCompleted['enable-actions']) ||
                          (stepInfo.step === 'install-app' && demoStepCompleted['install-app']) ||
                          (stepInfo.step === 'make-changes' && demoStepCompleted['make-changes'])}
-                      <iconify-icon icon="mdi:check" class="text-white" width="16"></iconify-icon>
+                      <Icon icon="mdi:check" class="text-white" width="16" />
                     {:else}
                       {stepInfo.label}
                     {/if}
@@ -988,7 +988,7 @@
               <div class="flex items-start">
                 <div class="flex-shrink-0">
                   <div class="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
-                    <iconify-icon icon="mdi:download" class="text-white" width="20"></iconify-icon>
+                    <Icon icon="mdi:download" class="text-white" width="20" />
                   </div>
                 </div>
                 <div class="ml-4 flex-1">
@@ -1000,7 +1000,7 @@
                   {#if hasInstallations}
                     <div class="bg-green-100 dark:bg-green-900/30 rounded-lg p-4 mb-4 border border-green-200 dark:border-green-700">
                       <div class="flex items-center">
-                        <iconify-icon icon="mdi:check-circle" class="text-green-600 mr-2" width="20"></iconify-icon>
+                        <Icon icon="mdi:check-circle" class="text-green-600 mr-2" width="20" />
                         <span class="text-green-800 dark:text-green-200 font-medium">
                           Great! We detected {installations.length} GitHub installation{installations.length > 1 ? 's' : ''}.
                         </span>
@@ -1013,14 +1013,14 @@
                           <div class="font-medium text-gray-900 dark:text-gray-100">Terrateam GitHub App</div>
                           <div class="text-sm text-gray-600 dark:text-gray-400">Enables Terraform automation in your repositories</div>
                         </div>
-                        <iconify-icon icon="mdi:github" class="text-gray-400" width="24"></iconify-icon>
+                        <Icon icon="mdi:github" class="text-gray-400" width="24" />
                       </div>
                     </div>
                   {/if}
 
                   <div class="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 mb-4 border border-blue-200 dark:border-blue-700">
                     <div class="flex items-start">
-                      <iconify-icon icon="mdi:information" class="text-blue-600 dark:text-blue-400 mr-2 mt-0.5" width="20"></iconify-icon>
+                      <Icon icon="mdi:information" class="text-blue-600 dark:text-blue-400 mr-2 mt-0.5" width="20" />
                       <div class="text-sm text-blue-800 dark:text-blue-200">
                         <p class="font-medium mb-1">Demo in a different organization?</p>
                         <p>You can install the app on any organization where you want to run the demo.</p>
@@ -1033,7 +1033,7 @@
                       on:click={() => openExternalLink('https://github.com/apps/terrateam-action')}
                       class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center"
                     >
-                      <iconify-icon icon="mdi:download" class="mr-2" width="16"></iconify-icon>
+                      <Icon icon="mdi:download" class="mr-2" width="16" />
                       Install GitHub App
                     </button>
                     <button
@@ -1042,7 +1042,7 @@
                       class="border border-green-600 text-green-600 dark:text-green-400 px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-50 dark:hover:bg-green-900/30 disabled:opacity-50"
                     >
                       {#if checkingAppInstallation}
-                        <iconify-icon icon="mdi:loading" class="animate-spin mr-2" width="16"></iconify-icon>
+                        <Icon icon="mdi:loading" class="animate-spin mr-2" width="16" />
                         Checking...
                       {:else if hasInstallations}
                         Continue
@@ -1060,7 +1060,7 @@
               <div class="flex items-start">
                 <div class="flex-shrink-0">
                   <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                    <iconify-icon icon="mdi:source-fork" class="text-white" width="20"></iconify-icon>
+                    <Icon icon="mdi:source-fork" class="text-white" width="20" />
                   </div>
                 </div>
                 <div class="ml-4 flex-1">
@@ -1075,7 +1075,7 @@
                         <div class="font-medium text-gray-900 dark:text-gray-100">terrateam-demo/kick-the-tires</div>
                         <div class="text-sm text-gray-600 dark:text-gray-400">Safe demo repository with null resources</div>
                       </div>
-                      <iconify-icon icon="mdi:github" class="text-gray-400" width="24"></iconify-icon>
+                      <Icon icon="mdi:github" class="text-gray-400" width="24" />
                     </div>
                   </div>
 
@@ -1089,7 +1089,7 @@
                       }}
                       class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center"
                     >
-                      <iconify-icon icon="mdi:source-fork" class="mr-2" width="16"></iconify-icon>
+                      <Icon icon="mdi:source-fork" class="mr-2" width="16" />
                       Fork {terminology.repository}
                     </button>
                     <button
@@ -1114,7 +1114,7 @@
               <div class="flex items-start">
                 <div class="flex-shrink-0">
                   <div class="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center">
-                    <iconify-icon icon="mdi:play-circle" class="text-white" width="20"></iconify-icon>
+                    <Icon icon="mdi:play-circle" class="text-white" width="20" />
                   </div>
                 </div>
                 <div class="ml-4 flex-1">
@@ -1126,15 +1126,15 @@
                   <div class="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4 border border-orange-200 dark:border-orange-700">
                     <div class="space-y-2 text-sm">
                       <div class="flex items-center">
-                        <iconify-icon icon="mdi:numeric-1-circle" class="text-orange-600 mr-2" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-1-circle" class="text-orange-600 mr-2" width="16" />
                         <span class="text-gray-700 dark:text-gray-300">Go to your forked repository</span>
                       </div>
                       <div class="flex items-center">
-                        <iconify-icon icon="mdi:numeric-2-circle" class="text-orange-600 mr-2" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-2-circle" class="text-orange-600 mr-2" width="16" />
                         <span class="text-gray-700 dark:text-gray-300">Click the <strong>Actions</strong> tab</span>
                       </div>
                       <div class="flex items-center">
-                        <iconify-icon icon="mdi:numeric-3-circle" class="text-orange-600 mr-2" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-3-circle" class="text-orange-600 mr-2" width="16" />
                         <span class="text-gray-700 dark:text-gray-300">Click <strong>"I understand my workflows, go ahead and enable them"</strong></span>
                       </div>
                     </div>
@@ -1163,7 +1163,7 @@
               <div class="flex items-start">
                 <div class="flex-shrink-0">
                   <div class="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
-                    <iconify-icon icon="mdi:file-edit" class="text-white" width="20"></iconify-icon>
+                    <Icon icon="mdi:file-edit" class="text-white" width="20" />
                   </div>
                 </div>
                 <div class="ml-4 flex-1">
@@ -1175,22 +1175,22 @@
                   <div class="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4 border border-purple-200 dark:border-purple-700">
                     <div class="space-y-3 text-sm">
                       <div class="flex items-start">
-                        <iconify-icon icon="mdi:numeric-1-circle" class="text-purple-600 mr-2 mt-0.5" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-1-circle" class="text-purple-600 mr-2 mt-0.5" width="16" />
                         <div>
                           <div class="text-gray-700 dark:text-gray-300">Edit <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">dev/main.tf</code></div>
                           <div class="text-gray-500 dark:text-gray-400 text-xs">Change <code>null_resource_count = 0</code> to <code>null_resource_count = 1</code></div>
                         </div>
                       </div>
                       <div class="flex items-center">
-                        <iconify-icon icon="mdi:numeric-2-circle" class="text-purple-600 mr-2" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-2-circle" class="text-purple-600 mr-2" width="16" />
                         <span class="text-gray-700 dark:text-gray-300">Create a new branch and push your changes</span>
                       </div>
                       <div class="flex items-center">
-                        <iconify-icon icon="mdi:numeric-3-circle" class="text-purple-600 mr-2" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-3-circle" class="text-purple-600 mr-2" width="16" />
                         <span class="text-gray-700 dark:text-gray-300">Open a pull request</span>
                       </div>
                       <div class="flex items-center">
-                        <iconify-icon icon="mdi:numeric-4-circle" class="text-purple-600 mr-2" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-4-circle" class="text-purple-600 mr-2" width="16" />
                         <span class="text-gray-700 dark:text-gray-300">Watch Terrateam automatically comment with the plan!</span>
                       </div>
                     </div>
@@ -1198,7 +1198,7 @@
 
                   <div class="bg-blue-50 dark:bg-blue-900/30 rounded p-3 mb-4">
                     <div class="flex items-start">
-                      <iconify-icon icon="mdi:lightbulb" class="text-blue-600 mr-2 mt-0.5" width="16"></iconify-icon>
+                      <Icon icon="mdi:lightbulb" class="text-blue-600 mr-2 mt-0.5" width="16" />
                       <div class="text-sm text-blue-800 dark:text-blue-200">
                         <strong>Pro tip:</strong> When you're ready to apply the changes, comment <code class="bg-blue-100 dark:bg-blue-800 px-1 rounded">terrateam apply</code> on your PR.
                       </div>
@@ -1226,10 +1226,10 @@
           {:else if currentDemoStep === 'success'}
             <div class="text-center py-12">
               <div class="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full mb-6">
-                <iconify-icon icon="mdi:check-circle" class="text-green-600 dark:text-green-400" width="32"></iconify-icon>
+                <Icon icon="mdi:check-circle" class="text-green-600 dark:text-green-400" width="32" />
               </div>
               <h3 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center justify-center">
-                <iconify-icon icon="mdi:party-popper" class="text-purple-600 dark:text-purple-400 mr-2" width="28"></iconify-icon>
+                <Icon icon="mdi:party-popper" class="text-purple-600 dark:text-purple-400 mr-2" width="28" />
                 Demo Complete!
               </h3>
               <p class="text-gray-600 dark:text-gray-400 mb-6">
@@ -1240,15 +1240,15 @@
                 <h4 class="font-semibold text-green-900 dark:text-green-100 mb-3">What you've learned:</h4>
                 <div class="space-y-2 text-sm text-green-800 dark:text-green-200">
                   <div class="flex items-center">
-                    <iconify-icon icon="mdi:check" class="text-green-600 mr-2" width="16"></iconify-icon>
+                    <Icon icon="mdi:check" class="text-green-600 mr-2" width="16" />
                     How to set up Terrateam with GitHub
                   </div>
                   <div class="flex items-center">
-                    <iconify-icon icon="mdi:check" class="text-green-600 mr-2" width="16"></iconify-icon>
+                    <Icon icon="mdi:check" class="text-green-600 mr-2" width="16" />
                     Automatic Terraform plans on PRs
                   </div>
                   <div class="flex items-center">
-                    <iconify-icon icon="mdi:check" class="text-green-600 mr-2" width="16"></iconify-icon>
+                    <Icon icon="mdi:check" class="text-green-600 mr-2" width="16" />
                     How to apply changes with commands
                   </div>
                 </div>
@@ -1281,7 +1281,7 @@
               on:click={goBack}
               class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center"
             >
-              <iconify-icon icon="mdi:arrow-left" class="mr-1" width="16"></iconify-icon>
+              <Icon icon="mdi:arrow-left" class="mr-1" width="16" />
               Back
             </button>
           </div>
@@ -1315,7 +1315,7 @@
                          (stepInfo.step === 'configure-webhook' && gitlabDemoStepCompleted['configure-webhook']) ||
                          (stepInfo.step === 'configure-variables' && gitlabDemoStepCompleted['configure-variables']) ||
                          (stepInfo.step === 'make-changes' && gitlabDemoStepCompleted['make-changes'])}
-                      <iconify-icon icon="mdi:check" width="16"></iconify-icon>
+                      <Icon icon="mdi:check" width="16" />
                     {:else}
                       {stepInfo.label}
                     {/if}
@@ -1367,7 +1367,7 @@
               {:else if gitlabDemoGroups.length === 0}
                 <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
                   <div class="flex items-start">
-                    <iconify-icon icon="mdi:alert" class="text-yellow-600 dark:text-yellow-400 mr-2 mt-0.5" width="20"></iconify-icon>
+                    <Icon icon="mdi:alert" class="text-yellow-600 dark:text-yellow-400 mr-2 mt-0.5" width="20" />
                     <div>
                       <p class="text-yellow-800 dark:text-yellow-200 text-sm font-medium mb-1">
                         No GitLab groups found
@@ -1390,7 +1390,7 @@
                                : 'border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-gray-50 dark:hover:bg-gray-700'}"
                     >
                       <div class="flex items-center">
-                        <iconify-icon icon="mdi:folder-account" class="text-blue-600 mr-3" width="20"></iconify-icon>
+                        <Icon icon="mdi:folder-account" class="text-blue-600 mr-3" width="20" />
                         <span class="font-medium text-gray-900 dark:text-gray-100">{group.name}</span>
                       </div>
                     </button>
@@ -1404,7 +1404,7 @@
               <div class="flex items-start">
                 <div class="flex-shrink-0">
                   <div class="flex items-center justify-center w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                    <iconify-icon icon="mdi:source-fork" class="text-blue-600 dark:text-blue-400" width="20"></iconify-icon>
+                    <Icon icon="mdi:source-fork" class="text-blue-600 dark:text-blue-400" width="20" />
                   </div>
                 </div>
                 <div class="ml-4 flex-1">
@@ -1421,7 +1421,7 @@
                         on:click={() => openExternalLink('https://gitlab.com/terrateam-demo/kick-the-tires')}
                         class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center"
                       >
-                        <iconify-icon icon="mdi:source-fork" class="mr-2" width="16"></iconify-icon>
+                        <Icon icon="mdi:source-fork" class="mr-2" width="16" />
                         Fork Project
                       </button>
                     </div>
@@ -1461,7 +1461,7 @@
               <div class="flex items-start">
                 <div class="flex-shrink-0">
                   <div class="flex items-center justify-center w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                    <iconify-icon icon="mdi:robot" class="text-green-600 dark:text-green-400" width="20"></iconify-icon>
+                    <Icon icon="mdi:robot" class="text-green-600 dark:text-green-400" width="20" />
                   </div>
                 </div>
                 <div class="ml-4 flex-1">
@@ -1483,7 +1483,7 @@
                           class="inline-flex items-center font-medium text-green-700 dark:text-green-300 underline hover:text-green-600 dark:hover:text-green-200"
                         >
                           Open your group members page
-                          <iconify-icon icon="mdi:open-in-new" class="ml-1" width="16"></iconify-icon>
+                          <Icon icon="mdi:open-in-new" class="ml-1" width="16" />
                         </a>
                       </li>
                       <li>Click <strong>Invite members</strong></li>
@@ -1496,7 +1496,7 @@
                   {#if botVerificationError}
                     <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4 mb-4">
                       <div class="flex items-start">
-                        <iconify-icon icon="mdi:alert-circle" class="text-red-600 dark:text-red-400 mr-2 mt-0.5" width="20"></iconify-icon>
+                        <Icon icon="mdi:alert-circle" class="text-red-600 dark:text-red-400 mr-2 mt-0.5" width="20" />
                         <p class="text-sm text-red-800 dark:text-red-200">{botVerificationError}</p>
                       </div>
                     </div>
@@ -1515,7 +1515,7 @@
                         </svg>
                         Checking...
                       {:else}
-                        <iconify-icon icon="mdi:check" class="mr-2" width="16"></iconify-icon>
+                        <Icon icon="mdi:check" class="mr-2" width="16" />
                         Verify Bot Added
                       {/if}
                     </button>
@@ -1535,7 +1535,7 @@
               <div class="flex items-start">
                 <div class="flex-shrink-0">
                   <div class="flex items-center justify-center w-10 h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
-                    <iconify-icon icon="mdi:webhook" class="text-yellow-600 dark:text-yellow-400" width="20"></iconify-icon>
+                    <Icon icon="mdi:webhook" class="text-yellow-600 dark:text-yellow-400" width="20" />
                   </div>
                 </div>
                 <div class="ml-4 flex-1">
@@ -1557,7 +1557,7 @@
                           class="inline-flex items-center font-medium text-yellow-700 dark:text-yellow-300 underline hover:text-yellow-600 dark:hover:text-yellow-200"
                         >
                           Open your project webhooks
-                          <iconify-icon icon="mdi:open-in-new" class="ml-1" width="16"></iconify-icon>
+                          <Icon icon="mdi:open-in-new" class="ml-1" width="16" />
                         </a>
                       </li>
                       <li>Click <strong>Add new webhook</strong></li>
@@ -1577,7 +1577,7 @@
                   {#if webhookVerificationError}
                     <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4 mb-4">
                       <div class="flex items-start">
-                        <iconify-icon icon="mdi:alert-circle" class="text-red-600 dark:text-red-400 mr-2 mt-0.5" width="20"></iconify-icon>
+                        <Icon icon="mdi:alert-circle" class="text-red-600 dark:text-red-400 mr-2 mt-0.5" width="20" />
                         <p class="text-sm text-red-800 dark:text-red-200">{webhookVerificationError}</p>
                       </div>
                     </div>
@@ -1596,7 +1596,7 @@
                         </svg>
                         Checking...
                       {:else}
-                        <iconify-icon icon="mdi:check" class="mr-2" width="16"></iconify-icon>
+                        <Icon icon="mdi:check" class="mr-2" width="16" />
                         Verify Webhook
                       {/if}
                     </button>
@@ -1616,7 +1616,7 @@
               <div class="flex items-start">
                 <div class="flex-shrink-0">
                   <div class="flex items-center justify-center w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                    <iconify-icon icon="mdi:cog" class="text-purple-600 dark:text-purple-400" width="20"></iconify-icon>
+                    <Icon icon="mdi:cog" class="text-purple-600 dark:text-purple-400" width="20" />
                   </div>
                 </div>
                 <div class="ml-4 flex-1">
@@ -1638,7 +1638,7 @@
                           class="inline-flex items-center font-medium text-purple-700 dark:text-purple-300 underline hover:text-purple-600 dark:hover:text-purple-200"
                         >
                           Open your project CI/CD settings
-                          <iconify-icon icon="mdi:open-in-new" class="ml-1" width="16"></iconify-icon>
+                          <Icon icon="mdi:open-in-new" class="ml-1" width="16" />
                         </a>
                       </li>
                       <li>Expand the <strong>Variables</strong> section</li>
@@ -1650,7 +1650,7 @@
 
                   <div class="bg-amber-50 dark:bg-amber-900/30 rounded p-3 mb-4">
                     <div class="flex items-start">
-                      <iconify-icon icon="mdi:shield-lock" class="text-amber-600 mr-2 mt-0.5" width="16"></iconify-icon>
+                      <Icon icon="mdi:shield-lock" class="text-amber-600 mr-2 mt-0.5" width="16" />
                       <div class="text-sm text-amber-800 dark:text-amber-200">
                         <strong>Why this is needed:</strong> This setting allows the Terrateam bot (which has Developer role) to run pipelines with variables that contain your cloud credentials and Terraform configuration.
                       </div>
@@ -1662,7 +1662,7 @@
                       on:click={() => markGitLabDemoStepComplete('configure-variables')}
                       class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center"
                     >
-                      <iconify-icon icon="mdi:check" class="mr-2" width="16"></iconify-icon>
+                      <Icon icon="mdi:check" class="mr-2" width="16" />
                       Variables Configured
                     </button>
                     <button
@@ -1681,7 +1681,7 @@
               <div class="flex items-start">
                 <div class="flex-shrink-0">
                   <div class="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
-                    <iconify-icon icon="mdi:file-edit" class="text-white" width="20"></iconify-icon>
+                    <Icon icon="mdi:file-edit" class="text-white" width="20" />
                   </div>
                 </div>
                 <div class="ml-4 flex-1">
@@ -1701,7 +1701,7 @@
                   <div class="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4 border border-purple-200 dark:border-purple-700">
                     <div class="space-y-3 text-sm">
                       <div class="flex items-start">
-                        <iconify-icon icon="mdi:numeric-1-circle" class="text-purple-600 mr-2 mt-0.5" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-1-circle" class="text-purple-600 mr-2 mt-0.5" width="16" />
                         <div>
                           <div class="text-gray-700 dark:text-gray-300">
                             Edit 
@@ -1712,22 +1712,22 @@
                               class="inline-flex items-center font-mono bg-purple-100 dark:bg-purple-900/30 px-2 py-0.5 rounded text-purple-700 dark:text-purple-300 underline hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
                             >
                               dev/main.tf
-                              <iconify-icon icon="mdi:open-in-new" class="ml-1" width="14"></iconify-icon>
+                              <Icon icon="mdi:open-in-new" class="ml-1" width="14" />
                             </a>
                           </div>
                           <div class="text-gray-500 dark:text-gray-400 text-xs">Change <code>null_resource_count = 0</code> to <code>null_resource_count = 1</code></div>
                         </div>
                       </div>
                       <div class="flex items-center">
-                        <iconify-icon icon="mdi:numeric-2-circle" class="text-purple-600 mr-2" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-2-circle" class="text-purple-600 mr-2" width="16" />
                         <span class="text-gray-700 dark:text-gray-300">Create a new branch and push your changes</span>
                       </div>
                       <div class="flex items-center">
-                        <iconify-icon icon="mdi:numeric-3-circle" class="text-purple-600 mr-2" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-3-circle" class="text-purple-600 mr-2" width="16" />
                         <span class="text-gray-700 dark:text-gray-300">Open a merge request</span>
                       </div>
                       <div class="flex items-center">
-                        <iconify-icon icon="mdi:numeric-4-circle" class="text-purple-600 mr-2" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-4-circle" class="text-purple-600 mr-2" width="16" />
                         <span class="text-gray-700 dark:text-gray-300">Watch Terrateam automatically comment with the plan!</span>
                       </div>
                     </div>
@@ -1735,7 +1735,7 @@
 
                   <div class="bg-blue-50 dark:bg-blue-900/30 rounded p-3 mb-4">
                     <div class="flex items-start">
-                      <iconify-icon icon="mdi:lightbulb" class="text-blue-600 mr-2 mt-0.5" width="16"></iconify-icon>
+                      <Icon icon="mdi:lightbulb" class="text-blue-600 mr-2 mt-0.5" width="16" />
                       <div class="text-sm text-blue-800 dark:text-blue-200">
                         <strong>Pro tip:</strong> When you're ready to apply the changes, comment <code class="bg-blue-100 dark:bg-blue-800 px-1 rounded">terrateam apply</code> on your MR.
                       </div>
@@ -1763,11 +1763,11 @@
           {:else if currentGitLabDemoStep === 'success'}
             <div class="text-center py-12">
               <div class="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full mb-6">
-                <iconify-icon icon="mdi:check-circle" class="text-green-600 dark:text-green-400" width="32"></iconify-icon>
+                <Icon icon="mdi:check-circle" class="text-green-600 dark:text-green-400" width="32" />
               </div>
               
               <h3 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center justify-center">
-                <iconify-icon icon="mdi:party-popper" class="mr-2 text-green-600 dark:text-green-400" width="28"></iconify-icon>
+                <Icon icon="mdi:party-popper" class="mr-2 text-green-600 dark:text-green-400" width="28" />
                 GitLab Demo Complete!
               </h3>
               
@@ -1779,19 +1779,19 @@
                 <h4 class="font-semibold text-green-900 dark:text-green-100 mb-3">What you've learned:</h4>
                 <div class="space-y-2 text-sm text-green-800 dark:text-green-200">
                   <div class="flex items-center">
-                    <iconify-icon icon="mdi:check" class="text-green-600 mr-2 flex-shrink-0" width="16"></iconify-icon>
+                    <Icon icon="mdi:check" class="text-green-600 mr-2 flex-shrink-0" width="16" />
                     How to set up Terrateam with GitLab
                   </div>
                   <div class="flex items-center">
-                    <iconify-icon icon="mdi:check" class="text-green-600 mr-2 flex-shrink-0" width="16"></iconify-icon>
+                    <Icon icon="mdi:check" class="text-green-600 mr-2 flex-shrink-0" width="16" />
                     Automatic plans on merge requests
                   </div>
                   <div class="flex items-center">
-                    <iconify-icon icon="mdi:check" class="text-green-600 mr-2 flex-shrink-0" width="16"></iconify-icon>
+                    <Icon icon="mdi:check" class="text-green-600 mr-2 flex-shrink-0" width="16" />
                     GitLab CI/CD integration
                   </div>
                   <div class="flex items-center">
-                    <iconify-icon icon="mdi:check" class="text-green-600 mr-2 flex-shrink-0" width="16"></iconify-icon>
+                    <Icon icon="mdi:check" class="text-green-600 mr-2 flex-shrink-0" width="16" />
                     Bot-managed Terraform workflows
                   </div>
                 </div>
@@ -1824,7 +1824,7 @@
               on:click={goBack}
               class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center"
             >
-              <iconify-icon icon="mdi:arrow-left" class="mr-1" width="16"></iconify-icon>
+              <Icon icon="mdi:arrow-left" class="mr-1" width="16" />
               Back
             </button>
           </div>
@@ -1855,7 +1855,7 @@
                          (stepInfo.step === 'add-workflow' && repoStepCompleted['add-workflow']) ||
                          (stepInfo.step === 'configure' && repoStepCompleted.configure) ||
                          (stepInfo.step === 'test' && repoStepCompleted.test)}
-                      <iconify-icon icon="mdi:check" class="text-white" width="16"></iconify-icon>
+                      <Icon icon="mdi:check" class="text-white" width="16" />
                     {:else}
                       {stepInfo.label}
                     {/if}
@@ -1883,7 +1883,7 @@
               <div class="flex items-start">
                 <div class="flex-shrink-0">
                   <div class="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
-                    <iconify-icon icon="mdi:download" class="text-white" width="20"></iconify-icon>
+                    <Icon icon="mdi:download" class="text-white" width="20" />
                   </div>
                 </div>
                 <div class="ml-4 flex-1">
@@ -1895,7 +1895,7 @@
                   {#if hasInstallations}
                     <div class="bg-green-100 dark:bg-green-900/30 rounded-lg p-4 mb-4 border border-green-200 dark:border-green-700">
                       <div class="flex items-center">
-                        <iconify-icon icon="mdi:check-circle" class="text-green-600 mr-2" width="20"></iconify-icon>
+                        <Icon icon="mdi:check-circle" class="text-green-600 mr-2" width="20" />
                         <span class="text-green-800 dark:text-green-200 font-medium">
                           Great! We detected {installations.length} GitHub installation{installations.length > 1 ? 's' : ''}.
                         </span>
@@ -1908,14 +1908,14 @@
                           <div class="font-medium text-gray-900 dark:text-gray-100">Terrateam GitHub App</div>
                           <div class="text-sm text-gray-600 dark:text-gray-400">Enables Terraform automation in your repositories</div>
                         </div>
-                        <iconify-icon icon="mdi:github" class="text-gray-400" width="24"></iconify-icon>
+                        <Icon icon="mdi:github" class="text-gray-400" width="24" />
                       </div>
                     </div>
                   {/if}
 
                   <div class="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 mb-4 border border-blue-200 dark:border-blue-700">
                     <div class="flex items-start">
-                      <iconify-icon icon="mdi:information" class="text-blue-600 dark:text-blue-400 mr-2 mt-0.5" width="20"></iconify-icon>
+                      <Icon icon="mdi:information" class="text-blue-600 dark:text-blue-400 mr-2 mt-0.5" width="20" />
                       <div class="text-sm text-blue-800 dark:text-blue-200">
                         <p class="font-medium mb-1">Repository in a different organization?</p>
                         <p>You can install the app on any organization where your repository is located.</p>
@@ -1928,7 +1928,7 @@
                       on:click={() => openExternalLink('https://github.com/apps/terrateam-action')}
                       class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center"
                     >
-                      <iconify-icon icon="mdi:download" class="mr-2" width="16"></iconify-icon>
+                      <Icon icon="mdi:download" class="mr-2" width="16" />
                       Install GitHub App
                     </button>
                     <button
@@ -1937,7 +1937,7 @@
                       class="border border-green-600 text-green-600 dark:text-green-400 px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-50 dark:hover:bg-green-900/30 disabled:opacity-50"
                     >
                       {#if checkingAppInstallation}
-                        <iconify-icon icon="mdi:loading" class="animate-spin mr-2" width="16"></iconify-icon>
+                        <Icon icon="mdi:loading" class="animate-spin mr-2" width="16" />
                         Checking...
                       {:else if hasInstallations}
                         Continue
@@ -1955,7 +1955,7 @@
               <div class="flex items-start">
                 <div class="flex-shrink-0">
                   <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                    <iconify-icon icon="mdi:source-repository" class="text-white" width="20"></iconify-icon>
+                    <Icon icon="mdi:source-repository" class="text-white" width="20" />
                   </div>
                 </div>
                 <div class="ml-4 flex-1">
@@ -1988,7 +1988,7 @@
                     {/if}
                     <div class="bg-blue-100 dark:bg-blue-900/30 rounded-lg p-3 mb-4 border border-blue-200 dark:border-blue-700">
                       <div class="flex items-center">
-                        <iconify-icon icon="mdi:github" class="text-blue-600 mr-2" width="16"></iconify-icon>
+                        <Icon icon="mdi:github" class="text-blue-600 mr-2" width="16" />
                         <span class="text-blue-800 dark:text-blue-200 font-medium">{installations[0].name}</span>
                       </div>
                     </div>
@@ -2009,7 +2009,7 @@
                       
                       <div class="bg-blue-100 dark:bg-blue-900/30 rounded-lg p-3 mb-3 border border-blue-200 dark:border-blue-700">
                         <div class="flex items-start">
-                          <iconify-icon icon="mdi:information" class="text-blue-600 dark:text-blue-400 mr-2 mt-0.5" width="16"></iconify-icon>
+                          <Icon icon="mdi:information" class="text-blue-600 dark:text-blue-400 mr-2 mt-0.5" width="16" />
                           <div class="text-sm text-blue-800 dark:text-blue-200">
                             <p class="font-medium mb-1">Repository Access</p>
                             <p>Only repositories where the GitHub app is installed and enabled will appear here. If you don't see your repository, you may need to <button on:click={() => openExternalLink('https://github.com/apps/terrateam-action')} class="font-medium text-blue-700 dark:text-blue-300 underline hover:text-blue-600 dark:hover:text-blue-200">configure app access</button> first.</p>
@@ -2028,7 +2028,7 @@
                       {:else if repositories.length === 0}
                         <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
                           <div class="flex items-start">
-                            <iconify-icon icon="mdi:alert" class="text-yellow-600 mr-3 mt-0.5" width="20"></iconify-icon>
+                            <Icon icon="mdi:alert" class="text-yellow-600 mr-3 mt-0.5" width="20" />
                             <div class="flex-1">
                               <p class="text-yellow-800 dark:text-yellow-200 text-sm font-medium mb-2">No repositories found</p>
                               <p class="text-yellow-700 dark:text-yellow-300 text-sm mb-3">
@@ -2038,7 +2038,7 @@
                                 on:click={() => openExternalLink('https://github.com/apps/terrateam-action')}
                                 class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded text-sm font-medium flex items-center"
                               >
-                                <iconify-icon icon="mdi:cog" class="mr-2" width="16"></iconify-icon>
+                                <Icon icon="mdi:cog" class="mr-2" width="16" />
                                 Configure App Access
                               </button>
                             </div>
@@ -2057,7 +2057,7 @@
                                   <div class="text-sm text-gray-600 dark:text-gray-400">Repository setup: {repo.setup ? 'Complete' : 'Pending'}</div>
                                 </div>
                                 {#if selectedRepository?.id === repo.id}
-                                  <iconify-icon icon="mdi:check-circle" class="text-blue-600" width="20"></iconify-icon>
+                                  <Icon icon="mdi:check-circle" class="text-blue-600" width="20" />
                                 {/if}
                               </div>
                             </button>
@@ -2092,7 +2092,7 @@
               <div class="flex items-start">
                 <div class="flex-shrink-0">
                   <div class="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center">
-                    <iconify-icon icon="mdi:file-plus" class="text-white" width="20"></iconify-icon>
+                    <Icon icon="mdi:file-plus" class="text-white" width="20" />
                   </div>
                 </div>
                 <div class="ml-4 flex-1">
@@ -2104,7 +2104,7 @@
                   <div class="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4 border border-orange-200 dark:border-orange-700">
                     <div class="space-y-3 text-sm">
                       <div class="flex items-start">
-                        <iconify-icon icon="mdi:numeric-1-circle" class="text-orange-600 mr-2 mt-0.5" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-1-circle" class="text-orange-600 mr-2 mt-0.5" width="16" />
                         <div>
                           <div class="text-gray-700 dark:text-gray-300">Create a new branch in <strong>{selectedRepository?.name}</strong></div>
                           <code class="block bg-gray-100 dark:bg-gray-700 p-2 rounded mt-1 text-xs">
@@ -2114,7 +2114,7 @@
                       </div>
                       
                       <div class="flex items-start">
-                        <iconify-icon icon="mdi:numeric-2-circle" class="text-orange-600 mr-2 mt-0.5" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-2-circle" class="text-orange-600 mr-2 mt-0.5" width="16" />
                         <div>
                           <div class="text-gray-700 dark:text-gray-300">Create the workflow directory and file</div>
                           <code class="block bg-gray-100 dark:bg-gray-700 p-2 rounded mt-1 text-xs">
@@ -2125,7 +2125,7 @@
                       </div>
                       
                       <div class="flex items-start">
-                        <iconify-icon icon="mdi:numeric-3-circle" class="text-orange-600 mr-2 mt-0.5" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-3-circle" class="text-orange-600 mr-2 mt-0.5" width="16" />
                         <div>
                           <div class="text-gray-700 dark:text-gray-300">Commit and push the workflow</div>
                           <code class="block bg-gray-100 dark:bg-gray-700 p-2 rounded mt-1 text-xs">
@@ -2137,7 +2137,7 @@
                       </div>
                       
                       <div class="flex items-start">
-                        <iconify-icon icon="mdi:numeric-4-circle" class="text-orange-600 mr-2 mt-0.5" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-4-circle" class="text-orange-600 mr-2 mt-0.5" width="16" />
                         <div>
                           <div class="text-gray-700 dark:text-gray-300">Create a pull request and merge it to your default branch</div>
                         </div>
@@ -2147,7 +2147,7 @@
 
                   <div class="bg-blue-50 dark:bg-blue-900/30 rounded p-3 mb-4">
                     <div class="flex items-start">
-                      <iconify-icon icon="mdi:information" class="text-blue-600 mr-2 mt-0.5" width="16"></iconify-icon>
+                      <Icon icon="mdi:information" class="text-blue-600 mr-2 mt-0.5" width="16" />
                       <div class="text-sm text-blue-800 dark:text-blue-200">
                         <strong>Important:</strong> The workflow file must be in your default branch (usually <code>main</code> or <code>master</code>) to be active.
                       </div>
@@ -2177,7 +2177,7 @@
               <div class="flex items-start">
                 <div class="flex-shrink-0">
                   <div class="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
-                    <iconify-icon icon="mdi:cog" class="text-white" width="20"></iconify-icon>
+                    <Icon icon="mdi:cog" class="text-white" width="20" />
                   </div>
                 </div>
                 <div class="ml-4 flex-1">
@@ -2189,7 +2189,7 @@
                   <div class="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4 border border-purple-200 dark:border-purple-700">
                     <div class="space-y-3 text-sm">
                       <div class="flex items-start">
-                        <iconify-icon icon="mdi:numeric-1-circle" class="text-purple-600 mr-2 mt-0.5" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-1-circle" class="text-purple-600 mr-2 mt-0.5" width="16" />
                         <div>
                           <div class="text-gray-700 dark:text-gray-300">Go to your repository settings</div>
                           <div class="text-gray-500 dark:text-gray-400 text-xs">Settings → Secrets and variables → Actions</div>
@@ -2197,7 +2197,7 @@
                       </div>
                       
                       <div class="flex items-start">
-                        <iconify-icon icon="mdi:numeric-2-circle" class="text-purple-600 mr-2 mt-0.5" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-2-circle" class="text-purple-600 mr-2 mt-0.5" width="16" />
                         <div>
                           <div class="text-gray-700 dark:text-gray-300">Add your cloud provider credentials as repository secrets</div>
                           <div class="text-gray-500 dark:text-gray-400 text-xs">
@@ -2209,7 +2209,7 @@
                       </div>
                       
                       <div class="flex items-start">
-                        <iconify-icon icon="mdi:numeric-3-circle" class="text-purple-600 mr-2 mt-0.5" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-3-circle" class="text-purple-600 mr-2 mt-0.5" width="16" />
                         <div>
                           <div class="text-gray-700 dark:text-gray-300">Make sure your Terraform configurations are ready</div>
                           <div class="text-gray-500 dark:text-gray-400 text-xs">Valid .tf files with proper provider configurations</div>
@@ -2220,7 +2220,7 @@
 
                   <div class="bg-amber-50 dark:bg-amber-900/30 rounded p-3 mb-4">
                     <div class="flex items-start">
-                      <iconify-icon icon="mdi:shield-lock" class="text-amber-600 mr-2 mt-0.5" width="16"></iconify-icon>
+                      <Icon icon="mdi:shield-lock" class="text-amber-600 mr-2 mt-0.5" width="16" />
                       <div class="text-sm text-amber-800 dark:text-amber-200">
                         <strong>Security tip:</strong> Consider using OIDC for enhanced security instead of static credentials. Check our cloud provider guides for OIDC setup instructions.
                       </div>
@@ -2250,7 +2250,7 @@
               <div class="flex items-start">
                 <div class="flex-shrink-0">
                   <div class="w-10 h-10 bg-teal-600 rounded-lg flex items-center justify-center">
-                    <iconify-icon icon="mdi:test-tube" class="text-white" width="20"></iconify-icon>
+                    <Icon icon="mdi:test-tube" class="text-white" width="20" />
                   </div>
                 </div>
                 <div class="ml-4 flex-1">
@@ -2262,7 +2262,7 @@
                   <div class="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4 border border-teal-200 dark:border-teal-700">
                     <div class="space-y-3 text-sm">
                       <div class="flex items-start">
-                        <iconify-icon icon="mdi:numeric-1-circle" class="text-teal-600 mr-2 mt-0.5" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-1-circle" class="text-teal-600 mr-2 mt-0.5" width="16" />
                         <div>
                           <div class="text-gray-700 dark:text-gray-300">Make a change to any <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">.tf</code> file in your repository</div>
                           <div class="text-gray-500 dark:text-gray-400 text-xs">Even a small comment change will work for testing</div>
@@ -2270,7 +2270,7 @@
                       </div>
                       
                       <div class="flex items-start">
-                        <iconify-icon icon="mdi:numeric-2-circle" class="text-teal-600 mr-2 mt-0.5" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-2-circle" class="text-teal-600 mr-2 mt-0.5" width="16" />
                         <div>
                           <div class="text-gray-700 dark:text-gray-300">Create a new branch and commit your changes</div>
                           <code class="block bg-gray-100 dark:bg-gray-700 p-2 rounded mt-1 text-xs">
@@ -2283,7 +2283,7 @@
                       </div>
                       
                       <div class="flex items-start">
-                        <iconify-icon icon="mdi:numeric-3-circle" class="text-teal-600 mr-2 mt-0.5" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-3-circle" class="text-teal-600 mr-2 mt-0.5" width="16" />
                         <div>
                           <div class="text-gray-700 dark:text-gray-300">Open a pull request</div>
                           <div class="text-gray-500 dark:text-gray-400 text-xs">Terrateam should automatically comment with the terraform plan!</div>
@@ -2291,7 +2291,7 @@
                       </div>
                       
                       <div class="flex items-start">
-                        <iconify-icon icon="mdi:numeric-4-circle" class="text-teal-600 mr-2 mt-0.5" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-4-circle" class="text-teal-600 mr-2 mt-0.5" width="16" />
                         <div>
                           <div class="text-gray-700 dark:text-gray-300">If you want to apply the changes, comment <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">terrateam apply</code></div>
                         </div>
@@ -2301,7 +2301,7 @@
 
                   <div class="bg-green-50 dark:bg-green-900/30 rounded p-3 mb-4">
                     <div class="flex items-start">
-                      <iconify-icon icon="mdi:lightbulb" class="text-green-600 mr-2 mt-0.5" width="16"></iconify-icon>
+                      <Icon icon="mdi:lightbulb" class="text-green-600 mr-2 mt-0.5" width="16" />
                       <div class="text-sm text-green-800 dark:text-green-200">
                         <strong>Success indicators:</strong> Look for Terrateam's bot comment with the terraform plan output and green status checks.
                       </div>
@@ -2329,10 +2329,10 @@
           {:else if currentRepoStep === 'success'}
             <div class="text-center py-12">
               <div class="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full mb-6">
-                <iconify-icon icon="mdi:check-circle" class="text-green-600 dark:text-green-400" width="32"></iconify-icon>
+                <Icon icon="mdi:check-circle" class="text-green-600 dark:text-green-400" width="32" />
               </div>
               <h3 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center justify-center">
-                <iconify-icon icon="mdi:party-popper" class="text-purple-600 dark:text-purple-400 mr-2" width="28"></iconify-icon>
+                <Icon icon="mdi:party-popper" class="text-purple-600 dark:text-purple-400 mr-2" width="28" />
                 Repository Setup Complete!
               </h3>
               <p class="text-gray-600 dark:text-gray-400 mb-6">
@@ -2343,19 +2343,19 @@
                 <h4 class="font-semibold text-green-900 dark:text-green-100 mb-3">What you've set up:</h4>
                 <div class="space-y-2 text-sm text-green-800 dark:text-green-200">
                   <div class="flex items-center">
-                    <iconify-icon icon="mdi:check" class="text-green-600 mr-2" width="16"></iconify-icon>
+                    <Icon icon="mdi:check" class="text-green-600 mr-2" width="16" />
                     GitHub App installed and configured
                   </div>
                   <div class="flex items-center">
-                    <iconify-icon icon="mdi:check" class="text-green-600 mr-2" width="16"></iconify-icon>
+                    <Icon icon="mdi:check" class="text-green-600 mr-2" width="16" />
                     Terrateam workflow active in your repository
                   </div>
                   <div class="flex items-center">
-                    <iconify-icon icon="mdi:check" class="text-green-600 mr-2" width="16"></iconify-icon>
+                    <Icon icon="mdi:check" class="text-green-600 mr-2" width="16" />
                     Cloud credentials securely configured
                   </div>
                   <div class="flex items-center">
-                    <iconify-icon icon="mdi:check" class="text-green-600 mr-2" width="16"></iconify-icon>
+                    <Icon icon="mdi:check" class="text-green-600 mr-2" width="16" />
                     Automated Terraform plans on pull requests
                   </div>
                 </div>
@@ -2363,7 +2363,7 @@
 
               <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 mb-6 max-w-md mx-auto">
                 <h4 class="font-semibold text-blue-900 dark:text-blue-100 mb-3 flex items-center">
-                  <iconify-icon icon="mdi:rocket-launch" class="text-blue-600 dark:text-blue-400 mr-2" width="20"></iconify-icon>
+                  <Icon icon="mdi:rocket-launch" class="text-blue-600 dark:text-blue-400 mr-2" width="20" />
                   Ready for Advanced Configuration?
                 </h4>
                 <p class="text-sm text-blue-800 dark:text-blue-200 mb-4">
@@ -2374,7 +2374,7 @@
                   on:click={openConfigurationWizard}
                   class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg text-sm font-medium flex items-center justify-center"
                 >
-                  <iconify-icon icon="mdi:auto-fix" class="mr-2" width="20"></iconify-icon>
+                  <Icon icon="mdi:auto-fix" class="mr-2" width="20" />
                   Open Configuration Wizard
                 </button>
               </div>
@@ -2406,7 +2406,7 @@
               on:click={goBack}
               class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center"
             >
-              <iconify-icon icon="mdi:arrow-left" class="mr-1" width="16"></iconify-icon>
+              <Icon icon="mdi:arrow-left" class="mr-1" width="16" />
               Back
             </button>
           </div>
@@ -2440,7 +2440,7 @@
                          (stepInfo.step === 'configure-webhook' && gitlabStepCompleted['configure-webhook']) ||
                          (stepInfo.step === 'configure-variables' && gitlabStepCompleted['configure-variables']) ||
                          (stepInfo.step === 'add-pipeline' && gitlabStepCompleted['add-pipeline'])}
-                      <iconify-icon icon="mdi:check" class="text-white" width="16"></iconify-icon>
+                      <Icon icon="mdi:check" class="text-white" width="16" />
                     {:else}
                       {stepInfo.label}
                     {/if}
@@ -2469,7 +2469,7 @@
               <div class="flex items-start">
                 <div class="flex-shrink-0">
                   <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                    <iconify-icon icon="mdi:account-group" class="text-white" width="20"></iconify-icon>
+                    <Icon icon="mdi:account-group" class="text-white" width="20" />
                   </div>
                 </div>
                 <div class="ml-4 flex-1">
@@ -2512,7 +2512,7 @@
                               <div class="font-medium text-gray-900 dark:text-gray-100">{group.name}</div>
                             </div>
                             {#if selectedGitLabGroup?.id === group.id}
-                              <iconify-icon icon="mdi:check-circle" class="text-blue-600" width="20"></iconify-icon>
+                              <Icon icon="mdi:check-circle" class="text-blue-600" width="20" />
                             {/if}
                           </div>
                         </button>
@@ -2539,7 +2539,7 @@
               <div class="flex items-start">
                 <div class="flex-shrink-0">
                   <div class="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
-                    <iconify-icon icon="mdi:source-repository" class="text-white" width="20"></iconify-icon>
+                    <Icon icon="mdi:source-repository" class="text-white" width="20" />
                   </div>
                 </div>
                 <div class="ml-4 flex-1">
@@ -2551,7 +2551,7 @@
                   {#if selectedGitLabGroup}
                     <div class="bg-green-100 dark:bg-green-900/30 rounded-lg p-3 mb-4 border border-green-200 dark:border-green-700">
                       <div class="flex items-center">
-                        <iconify-icon icon="mdi:account-group" class="text-green-600 mr-2" width="16"></iconify-icon>
+                        <Icon icon="mdi:account-group" class="text-green-600 mr-2" width="16" />
                         <span class="text-green-800 dark:text-green-200 font-medium">{selectedGitLabGroup.name}</span>
                       </div>
                     </div>
@@ -2617,7 +2617,7 @@
               <div class="flex items-start">
                 <div class="flex-shrink-0">
                   <div class="flex items-center justify-center w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                    <iconify-icon icon="mdi:robot" class="text-green-600 dark:text-green-400" width="20"></iconify-icon>
+                    <Icon icon="mdi:robot" class="text-green-600 dark:text-green-400" width="20" />
                   </div>
                 </div>
                 <div class="ml-4 flex-1">
@@ -2639,7 +2639,7 @@
                           class="inline-flex items-center font-medium text-green-700 dark:text-green-300 underline hover:text-green-600 dark:hover:text-green-200"
                         >
                           Open your group members page
-                          <iconify-icon icon="mdi:open-in-new" class="ml-1" width="16"></iconify-icon>
+                          <Icon icon="mdi:open-in-new" class="ml-1" width="16" />
                         </a>
                       </li>
                       <li>Click <strong>Invite members</strong></li>
@@ -2652,7 +2652,7 @@
                   {#if gitlabBotError}
                     <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4 mb-4">
                       <div class="flex items-start">
-                        <iconify-icon icon="mdi:alert-circle" class="text-red-600 dark:text-red-400 mr-2 mt-0.5" width="20"></iconify-icon>
+                        <Icon icon="mdi:alert-circle" class="text-red-600 dark:text-red-400 mr-2 mt-0.5" width="20" />
                         <p class="text-sm text-red-800 dark:text-red-200">{gitlabBotError}</p>
                       </div>
                     </div>
@@ -2671,7 +2671,7 @@
                         </svg>
                         Checking...
                       {:else}
-                        <iconify-icon icon="mdi:check" class="mr-2" width="16"></iconify-icon>
+                        <Icon icon="mdi:check" class="mr-2" width="16" />
                         Verify Bot Added
                       {/if}
                     </button>
@@ -2697,7 +2697,7 @@
               <div class="flex items-start">
                 <div class="flex-shrink-0">
                   <div class="flex items-center justify-center w-10 h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
-                    <iconify-icon icon="mdi:webhook" class="text-yellow-600 dark:text-yellow-400" width="20"></iconify-icon>
+                    <Icon icon="mdi:webhook" class="text-yellow-600 dark:text-yellow-400" width="20" />
                   </div>
                 </div>
                 <div class="ml-4 flex-1">
@@ -2719,7 +2719,7 @@
                           class="inline-flex items-center font-medium text-yellow-700 dark:text-yellow-300 underline hover:text-yellow-600 dark:hover:text-yellow-200"
                         >
                           Open your project webhooks
-                          <iconify-icon icon="mdi:open-in-new" class="ml-1" width="16"></iconify-icon>
+                          <Icon icon="mdi:open-in-new" class="ml-1" width="16" />
                         </a>
                       </li>
                       <li>Click <strong>Add new webhook</strong></li>
@@ -2739,7 +2739,7 @@
                   {#if webhookVerificationError}
                     <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4 mb-4">
                       <div class="flex items-start">
-                        <iconify-icon icon="mdi:alert-circle" class="text-red-600 dark:text-red-400 mr-2 mt-0.5" width="20"></iconify-icon>
+                        <Icon icon="mdi:alert-circle" class="text-red-600 dark:text-red-400 mr-2 mt-0.5" width="20" />
                         <p class="text-sm text-red-800 dark:text-red-200">{webhookVerificationError}</p>
                       </div>
                     </div>
@@ -2758,7 +2758,7 @@
                         </svg>
                         Checking...
                       {:else}
-                        <iconify-icon icon="mdi:check" class="mr-2" width="16"></iconify-icon>
+                        <Icon icon="mdi:check" class="mr-2" width="16" />
                         Verify Webhook
                       {/if}
                     </button>
@@ -2778,7 +2778,7 @@
               <div class="flex items-start">
                 <div class="flex-shrink-0">
                   <div class="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
-                    <iconify-icon icon="mdi:cog" class="text-white" width="20"></iconify-icon>
+                    <Icon icon="mdi:cog" class="text-white" width="20" />
                   </div>
                 </div>
                 <div class="ml-4 flex-1">
@@ -2790,7 +2790,7 @@
                   <div class="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4 border border-purple-200 dark:border-purple-700">
                     <div class="space-y-3 text-sm">
                       <div class="flex items-start">
-                        <iconify-icon icon="mdi:numeric-1-circle" class="text-purple-600 mr-2 mt-0.5" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-1-circle" class="text-purple-600 mr-2 mt-0.5" width="16" />
                         <div>
                           <div class="text-gray-700 dark:text-gray-300">Go to your GitLab project CI/CD settings</div>
                           <div class="text-gray-500 dark:text-gray-400 text-xs">
@@ -2802,7 +2802,7 @@
                                 class="inline-flex items-center text-purple-600 dark:text-purple-400 hover:underline"
                               >
                                 Project → Settings → CI/CD
-                                <iconify-icon icon="mdi:open-in-new" class="ml-1" width="12"></iconify-icon>
+                                <Icon icon="mdi:open-in-new" class="ml-1" width="12" />
                               </a>
                             {:else}
                               Project → Settings → CI/CD
@@ -2812,21 +2812,21 @@
                       </div>
                       
                       <div class="flex items-start">
-                        <iconify-icon icon="mdi:numeric-2-circle" class="text-purple-600 mr-2 mt-0.5" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-2-circle" class="text-purple-600 mr-2 mt-0.5" width="16" />
                         <div>
                           <div class="text-gray-700 dark:text-gray-300">Expand the <strong>Variables</strong> section</div>
                         </div>
                       </div>
                       
                       <div class="flex items-start">
-                        <iconify-icon icon="mdi:numeric-3-circle" class="text-purple-600 mr-2 mt-0.5" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-3-circle" class="text-purple-600 mr-2 mt-0.5" width="16" />
                         <div>
                           <div class="text-gray-700 dark:text-gray-300">Find <strong>"Minimum role to use pipeline variables"</strong></div>
                         </div>
                       </div>
                       
                       <div class="flex items-start">
-                        <iconify-icon icon="mdi:numeric-4-circle" class="text-purple-600 mr-2 mt-0.5" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-4-circle" class="text-purple-600 mr-2 mt-0.5" width="16" />
                         <div>
                           <div class="text-gray-700 dark:text-gray-300">Select <strong>Developer</strong> from the dropdown</div>
                           <div class="text-gray-500 dark:text-gray-400 text-xs">This allows the Terrateam bot to use pipeline variables</div>
@@ -2834,7 +2834,7 @@
                       </div>
                       
                       <div class="flex items-start">
-                        <iconify-icon icon="mdi:numeric-5-circle" class="text-purple-600 mr-2 mt-0.5" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-5-circle" class="text-purple-600 mr-2 mt-0.5" width="16" />
                         <div>
                           <div class="text-gray-700 dark:text-gray-300">Click <strong>Save changes</strong></div>
                         </div>
@@ -2844,7 +2844,7 @@
 
                   <div class="bg-amber-50 dark:bg-amber-900/30 rounded p-3 mb-4">
                     <div class="flex items-start">
-                      <iconify-icon icon="mdi:shield-lock" class="text-amber-600 mr-2 mt-0.5" width="16"></iconify-icon>
+                      <Icon icon="mdi:shield-lock" class="text-amber-600 mr-2 mt-0.5" width="16" />
                       <div class="text-sm text-amber-800 dark:text-amber-200">
                         <strong>Important:</strong> This allows the Terrateam bot to run pipelines with variables containing your cloud credentials and Terraform configuration.
                       </div>
@@ -2874,7 +2874,7 @@
               <div class="flex items-start">
                 <div class="flex-shrink-0">
                   <div class="w-10 h-10 bg-teal-600 rounded-lg flex items-center justify-center">
-                    <iconify-icon icon="mdi:file-code" class="text-white" width="20"></iconify-icon>
+                    <Icon icon="mdi:file-code" class="text-white" width="20" />
                   </div>
                 </div>
                 <div class="ml-4 flex-1">
@@ -2886,7 +2886,7 @@
                   <div class="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4 border border-teal-200 dark:border-teal-700">
                     <div class="space-y-3 text-sm">
                       <div class="flex items-start">
-                        <iconify-icon icon="mdi:numeric-1-circle" class="text-teal-600 mr-2 mt-0.5" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-1-circle" class="text-teal-600 mr-2 mt-0.5" width="16" />
                         <div>
                           <div class="text-gray-700 dark:text-gray-300">
                             Create or edit <code class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">.gitlab-ci.yml</code> in 
@@ -2898,7 +2898,7 @@
                                 class="inline-flex items-center font-medium text-teal-700 dark:text-teal-300 underline hover:text-teal-600 dark:hover:text-teal-200"
                               >
                                 your repository root
-                                <iconify-icon icon="mdi:open-in-new" class="ml-1" width="14"></iconify-icon>
+                                <Icon icon="mdi:open-in-new" class="ml-1" width="14" />
                               </a>
                             {:else}
                               your repository root
@@ -2908,7 +2908,7 @@
                       </div>
                       
                       <div class="flex items-start">
-                        <iconify-icon icon="mdi:numeric-2-circle" class="text-teal-600 mr-2 mt-0.5" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-2-circle" class="text-teal-600 mr-2 mt-0.5" width="16" />
                         <div>
                           <div class="text-gray-700 dark:text-gray-300">Add this content:</div>
                           <div class="mt-2 bg-gray-50 dark:bg-gray-700 p-3 rounded border relative">
@@ -2931,7 +2931,7 @@ terrateam_job:
                               }}
                               class="absolute top-2 right-2 px-2 py-1 {copiedYaml ? 'bg-green-600' : 'bg-teal-600 hover:bg-teal-700'} text-white rounded text-xs flex items-center transition-colors"
                             >
-                              <iconify-icon icon={copiedYaml ? "mdi:check" : "mdi:content-copy"} class="mr-1" width="14"></iconify-icon>
+                              <Icon icon={copiedYaml ? "mdi:check" : "mdi:content-copy"} class="mr-1" width="14" />
                               {copiedYaml ? 'Copied!' : 'Copy'}
                             </button>
                             <pre class="text-xs text-gray-800 dark:text-gray-200 overflow-x-auto pr-16"><code># .gitlab-ci.yml - Using the terrateam template
@@ -2950,7 +2950,7 @@ terrateam_job:
                       </div>
                       
                       <div class="flex items-start">
-                        <iconify-icon icon="mdi:numeric-3-circle" class="text-teal-600 mr-2 mt-0.5" width="16"></iconify-icon>
+                        <Icon icon="mdi:numeric-3-circle" class="text-teal-600 mr-2 mt-0.5" width="16" />
                         <div>
                           <div class="text-gray-700 dark:text-gray-300">Commit and push to your default branch</div>
                         </div>
@@ -2960,7 +2960,7 @@ terrateam_job:
 
                   <div class="bg-blue-50 dark:bg-blue-900/30 rounded p-3 mb-4">
                     <div class="flex items-start">
-                      <iconify-icon icon="mdi:information" class="text-blue-600 mr-2 mt-0.5" width="16"></iconify-icon>
+                      <Icon icon="mdi:information" class="text-blue-600 mr-2 mt-0.5" width="16" />
                       <div class="text-sm text-blue-800 dark:text-blue-200">
                         <strong>Note:</strong> If you already have a .gitlab-ci.yml file, you'll need to integrate these rules with your existing jobs. Contact support for help with complex setups.
                       </div>
@@ -2988,10 +2988,10 @@ terrateam_job:
           {:else if currentGitLabStep === 'success'}
             <div class="text-center py-12">
               <div class="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full mb-6">
-                <iconify-icon icon="mdi:check-circle" class="text-green-600 dark:text-green-400" width="32"></iconify-icon>
+                <Icon icon="mdi:check-circle" class="text-green-600 dark:text-green-400" width="32" />
               </div>
               <h3 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center justify-center">
-                <iconify-icon icon="mdi:party-popper" class="text-purple-600 dark:text-purple-400 mr-2" width="28"></iconify-icon>
+                <Icon icon="mdi:party-popper" class="text-purple-600 dark:text-purple-400 mr-2" width="28" />
                 GitLab Setup Complete!
               </h3>
               <p class="text-gray-600 dark:text-gray-400 mb-6">
@@ -3002,23 +3002,23 @@ terrateam_job:
                 <h4 class="font-semibold text-green-900 dark:text-green-100 mb-3">What you've set up:</h4>
                 <div class="space-y-2 text-sm text-green-800 dark:text-green-200">
                   <div class="flex items-center">
-                    <iconify-icon icon="mdi:check" class="text-green-600 mr-2 flex-shrink-0" width="16"></iconify-icon>
+                    <Icon icon="mdi:check" class="text-green-600 mr-2 flex-shrink-0" width="16" />
                     GitLab group selected and configured
                   </div>
                   <div class="flex items-center">
-                    <iconify-icon icon="mdi:check" class="text-green-600 mr-2 flex-shrink-0" width="16"></iconify-icon>
+                    <Icon icon="mdi:check" class="text-green-600 mr-2 flex-shrink-0" width="16" />
                     Terrateam bot added as Developer
                   </div>
                   <div class="flex items-center">
-                    <iconify-icon icon="mdi:check" class="text-green-600 mr-2 flex-shrink-0" width="16"></iconify-icon>
+                    <Icon icon="mdi:check" class="text-green-600 mr-2 flex-shrink-0" width="16" />
                     Webhook configured for events
                   </div>
                   <div class="flex items-center">
-                    <iconify-icon icon="mdi:check" class="text-green-600 mr-2 flex-shrink-0" width="16"></iconify-icon>
+                    <Icon icon="mdi:check" class="text-green-600 mr-2 flex-shrink-0" width="16" />
                     CI/CD variables configured
                   </div>
                   <div class="flex items-center">
-                    <iconify-icon icon="mdi:check" class="text-green-600 mr-2 flex-shrink-0" width="16"></iconify-icon>
+                    <Icon icon="mdi:check" class="text-green-600 mr-2 flex-shrink-0" width="16" />
                     GitLab CI pipeline added
                   </div>
                 </div>

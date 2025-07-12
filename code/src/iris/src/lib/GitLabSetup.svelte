@@ -5,7 +5,7 @@
   import Button from './components/ui/Button.svelte';
   import Card from './components/ui/Card.svelte';
   import ErrorMessage from './components/ui/ErrorMessage.svelte';
-  import 'iconify-icon';
+  import { Icon } from './components';
 
   export let onComplete: (groupId: number) => void = () => {};
   export let onCancel: () => void = () => {};
@@ -153,7 +153,7 @@
                   ? 'bg-green-600 text-white' 
                   : 'bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400'
               }">
-                <iconify-icon icon={stepInfo.icon} width="20"></iconify-icon>
+                <Icon icon={stepInfo.icon} width="20" />
               </div>
               <span class="ml-2 text-sm font-medium {
                 currentStep === stepInfo.step ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'
@@ -200,7 +200,7 @@
     {:else if groups.length === 0}
       <Card padding="lg">
         <div class="text-center">
-          <iconify-icon icon="mdi:folder-alert-outline" class="text-6xl text-gray-400 mb-4"></iconify-icon>
+          <Icon icon="mdi:folder-alert-outline" class="text-6xl text-gray-400 mb-4" />
           <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
             No GitLab Groups Found
           </h3>
@@ -223,14 +223,14 @@
           >
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-3">
-                <iconify-icon icon="mdi:folder-account" class="text-2xl text-blue-600"></iconify-icon>
+                <Icon icon="mdi:folder-account" class="text-2xl text-blue-600" />
                 <div>
                   <h3 class="font-semibold text-gray-900 dark:text-gray-100">
                     {group.name}
                   </h3>
                 </div>
               </div>
-              <iconify-icon icon="mdi:chevron-right" class="text-gray-400"></iconify-icon>
+              <Icon icon="mdi:chevron-right" class="text-gray-400" />
             </div>
           </Card>
         {/each}
@@ -284,7 +284,7 @@
         {#if botUserVerified}
           <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-4">
             <div class="flex items-center">
-              <iconify-icon icon="mdi:check-circle" class="text-green-600 text-xl mr-2"></iconify-icon>
+              <Icon icon="mdi:check-circle" class="text-green-600 text-xl mr-2" />
               <span class="text-green-800 dark:text-green-200">
                 Bot user verified! Click Next to continue.
               </span>
@@ -366,7 +366,7 @@
         {#if webhookVerified}
           <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-4">
             <div class="flex items-center">
-              <iconify-icon icon="mdi:check-circle" class="text-green-600 text-xl mr-2"></iconify-icon>
+              <Icon icon="mdi:check-circle" class="text-green-600 text-xl mr-2" />
               <span class="text-green-800 dark:text-green-200">
                 Webhook verified! Click Next to complete setup.
               </span>

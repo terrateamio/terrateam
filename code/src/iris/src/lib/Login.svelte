@@ -5,7 +5,7 @@
   import type { VCSProvider } from './vcs/types';
   import { VCS_PROVIDERS } from './vcs/providers';
   import { setVCSProvider } from './stores';
-  import 'iconify-icon';
+  import { Icon } from './components';
   
   let isLoading: boolean = true;
   let error: string | null = null;
@@ -141,7 +141,7 @@
               disabled={!serverConfig?.github}
               class="w-full flex justify-center items-center px-4 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <iconify-icon icon="mdi:github" class="mr-3" width="20"></iconify-icon>
+              <Icon icon="mdi:github" class="mr-3" width="20" />
               Sign in with GitHub
             </button>
           {:else if availableProviders[0] === 'gitlab'}
@@ -150,7 +150,7 @@
               disabled={!serverConfig?.gitlab}
               class="w-full flex justify-center items-center px-4 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <iconify-icon icon="mdi:gitlab" class="mr-3" width="20"></iconify-icon>
+              <Icon icon="mdi:gitlab" class="mr-3" width="20" />
               Sign in with GitLab
             </button>
           {/if}
@@ -165,7 +165,7 @@
               on:click={() => handleProviderLogin(provider)}
               class="w-full flex justify-center items-center px-4 py-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-colors"
             >
-              <iconify-icon icon={config.icon} class="mr-3" width="20"></iconify-icon>
+              <Icon icon={config.icon} class="mr-3" width="20" />
               Sign in with {config.displayName}
             </button>
           {/each}
