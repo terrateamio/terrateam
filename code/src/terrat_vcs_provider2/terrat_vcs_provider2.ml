@@ -9,7 +9,7 @@ type premium_feature_err = [ `Premium_feature_err of premium_features ] [@@deriv
 
 type fetch_repo_config_with_provenance_err =
   [ Terrat_base_repo_config_v1.of_version_1_err
-  | `Repo_config_parse_err of string * string
+  | `Repo_config_schema_err of string * Jsonschema_check.Validation_err.t list
   | `Config_merge_err of (string * string) * (string option * Yojson.Safe.t * Yojson.Safe.t)
   | `Json_decode_err of string * string
   | `Unexpected_err of string
@@ -111,7 +111,7 @@ module Msg = struct
     | Automerge_failure of ('pull_request * string)
     | Bad_custom_branch_tag_pattern of (string * string)
     | Bad_glob of string
-    | Build_config_err of Terrat_base_repo_config_v1.of_version_1_err
+    | Build_config_err of Terrat_base_repo_config_v1.of_version_1_json_err
     | Build_config_failure of string
     | Build_tree_failure of string
     | Conflicting_work_manifests of ('account, 'target) Terrat_work_manifest3.Existing.t list
@@ -134,6 +134,7 @@ module Msg = struct
     | Repo_config_failure of string
     | Repo_config_merge_err of ((string * string) * (string option * Yojson.Safe.t * Yojson.Safe.t))
     | Repo_config_parse_failure of string * string
+    | Repo_config_schema_err of (string * Jsonschema_check.Validation_err.t list)
     | Run_work_manifest_err of [ `Failed_to_start | `Missing_workflow ]
     | Tag_query_err of Terrat_tag_query_ast.err
     | Tf_op_result of {
