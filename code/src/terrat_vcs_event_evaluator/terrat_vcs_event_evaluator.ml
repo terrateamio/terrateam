@@ -4523,6 +4523,11 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         ~result:H.generate_index_work_manifest_result
         ~fallthrough:H.log_state_err_iter
 
+    (* This is run for its side effect.  If the repo config is not valid, the surrounding [eval_step] will publish the error. *)
+    let test_repo_config_validity ctx state =
+      let open Abbs_future_combinators.Infix_result_monad in
+      Dv.repo_config ctx state >>= fun _ -> Abb.Future.return (Ok state)
+
     let publish_repo_config ctx state =
       let run =
         let open Abbs_future_combinators.Infix_result_monad in
@@ -6440,9 +6445,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                   let open Abbs_future_combinators.Infix_result_monad in
                   fail (Msg.Build_config_err err)
                   >>= fun () -> Abb.Future.return (Error (`Noop state))
-              | Error (`Repo_config_parse_err msg) ->
+              | Error (`Repo_config_schema_err _ as err) ->
                   let open Abbs_future_combinators.Infix_result_monad in
-                  fail (Msg.Build_config_failure msg)
+                  fail (Msg.Build_config_err err)
                   >>= fun () -> Abb.Future.return (Error (`Noop state)))
           | Wmr.Work_manifest_build_result_failure { Bf.msg } ->
               let open Abbs_future_combinators.Infix_result_monad in
@@ -6624,11 +6629,11 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                   err);
             H.maybe_publish_msg ctx state (Msg.Repo_config_err err)
             >>= fun () -> Abb.Future.return (`Failure `Error)
-        | Error
-            ( `Json_decode_err (fname, err)
-            | `Yaml_decode_err (fname, err)
-            | `Repo_config_parse_err (fname, err) ) ->
+        | Error (`Json_decode_err (fname, err) | `Yaml_decode_err (fname, err)) ->
             H.maybe_publish_msg ctx state (Msg.Repo_config_parse_failure (fname, err))
+            >>= fun () -> Abb.Future.return (`Failure `Error)
+        | Error (`Repo_config_schema_err (fname, err)) ->
+            H.maybe_publish_msg ctx state (Msg.Repo_config_schema_err (fname, err))
             >>= fun () -> Abb.Future.return (`Failure `Error)
         | Error (`Premium_feature_err feature as err) ->
             Logs.info (fun m ->
@@ -7086,8 +7091,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     let event_kind_repo_config_flow =
       Flow.Flow.(
         seq
-          index_flow
           (action
+             [
+               Flow.Step.make
+                 ~id:Id.Publish_repo_config
+                 ~f:(eval_step F.test_repo_config_validity)
+                 ();
+             ])
+        @@ seq index_flow
+        @@ action
              [
                Flow.Step.make ~id:Id.React_to_comment ~f:(eval_step F.react_to_comment) ();
                Flow.Step.make
@@ -7095,7 +7107,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                  ~f:(eval_step F.complete_work_manifest)
                  ();
                Flow.Step.make ~id:Id.Publish_repo_config ~f:(eval_step F.publish_repo_config) ();
-             ]))
+             ])
     in
     let event_kind_index_flow =
       Flow.Flow.(

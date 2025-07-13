@@ -20,6 +20,10 @@ test-terrat: test-release-terrat test-debug-terrat
 
 release-terrat: release_terrat_oss release_terrat_ee release_iris
 
+# This ensures that iris is built last, if you're doing backend development this
+# is nice for speeding up the feedback loop.
+release_iris: release_terrat_oss release_terrat_ee
+
 release-terrat: release_terrat_vcs_api_nyi release_terrat_vcs_provider2_nyi release_terrat_vcs_service_nyi
 
 debug-terrat: debug_terrat_oss debug_terrat_ee debug_iris

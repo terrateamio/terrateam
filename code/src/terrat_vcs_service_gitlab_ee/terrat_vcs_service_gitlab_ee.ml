@@ -175,7 +175,7 @@ module Provider : module type of Terrat_vcs_service_gitlab_provider = struct
             ->
       let wrap_err fname =
         Abbs_future_combinators.Result.map_err ~f:(function
-          | `Repo_config_parse_err err -> `Repo_config_parse_err (fname, err)
+          | `Repo_config_schema_err err -> `Repo_config_schema_err (fname, err)
           | #Terrat_base_repo_config_v1.of_version_1_err as err -> err)
       in
       let validate_configs =

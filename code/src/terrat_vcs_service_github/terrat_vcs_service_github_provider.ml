@@ -2297,6 +2297,7 @@ module Comment (S : S) = struct
     let depends_on_cycle = read "depends_on_cycle.tmpl"
     let maybe_stale_work_manifests = read "maybe_stale_work_manifests.tmpl"
     let repo_config_parse_failure = read "repo_config_parse_failure.tmpl"
+    let repo_config_schema_err = read "repo_config_schema_err.tmpl"
     let repo_config_generic_failure = read "repo_config_generic_failure.tmpl"
     let pull_request_not_appliable = read "pull_request_not_appliable.tmpl"
     let pull_request_not_mergeable = read "pull_request_not_mergeable.tmpl"
@@ -3779,6 +3780,23 @@ module Comment (S : S) = struct
           "WORKFLOWS_TAG_QUERY_PARSE_ERR"
           Tmpl.repo_config_err_workflows_tag_query_parse_err
           kv
+    | `Repo_config_schema_err errs ->
+        let errors =
+          CCList.map
+            (fun { Jsonschema_check.Validation_err.msg; path } ->
+              Snabela.Kv.(Map.of_list [ ("msg", string msg); ("path", string path) ]))
+            errs
+        in
+        let kv =
+          Snabela.Kv.(Map.of_list [ ("fname", string "repo_config"); ("errors", list errors) ])
+        in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "REPO_CONFIG_SCHEMA_ERR"
+          Tmpl.repo_config_schema_err
+          kv
 
   let publish_comment ~request_id client user pull_request =
     let module Msg = Terrat_vcs_provider2.Msg in
@@ -4595,6 +4613,21 @@ module Comment (S : S) = struct
           pull_request
           "REPO_CONFIG_PARSE_FAILURE"
           Tmpl.repo_config_parse_failure
+          kv
+    | Msg.Repo_config_schema_err (fname, errs) ->
+        let errors =
+          CCList.map
+            (fun { Jsonschema_check.Validation_err.msg; path } ->
+              Snabela.Kv.(Map.of_list [ ("msg", string msg); ("path", string path) ]))
+            errs
+        in
+        let kv = Snabela.Kv.(Map.of_list [ ("fname", string fname); ("errors", list errors) ]) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "REPO_CONFIG_SCHEMA_ERR"
+          Tmpl.repo_config_schema_err
           kv
     | Msg.Run_work_manifest_err `Failed_to_start ->
         let kv = Snabela.Kv.(Map.of_list []) in
