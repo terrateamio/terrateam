@@ -41,12 +41,10 @@ module Provider :
       | Some (_, content) when CCString.is_empty (CCString.trim content) ->
           Abb.Future.return (Ok None)
       | Some (fname, content) ->
-          Abbs_future_combinators.Result.map_err
-            ~f:(function
-              | `Json_decode_err err -> `Json_decode_err (fname, err)
-              | `Unexpected_err -> `Unexpected_err fname
-              | `Yaml_decode_err err -> `Yaml_decode_err (fname, err))
-            (Jsonu.of_yaml_string content)
+          Abb.Future.return
+          @@ CCResult.map_err
+               (fun (`Yaml_decode_err err) -> `Yaml_decode_err (fname, err))
+               (Jsonu.of_yaml_string content)
           >>= fun json -> Abb.Future.return (Ok (Some (fname, json)))
 
     let repo_config_system_defaults system_defaults =
