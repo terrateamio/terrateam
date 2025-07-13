@@ -15,8 +15,8 @@ export function isAnalyticsEnabled(): boolean {
     return enabled;
   }
   
-  // Default to enabled
-  return true;
+  // Default to disabled
+  return false;
 }
 
 /**
@@ -32,8 +32,8 @@ export function getSubscriptionMode(): SubscriptionMode {
     }
   }
   
-  // Default to SaaS mode (shows SaaS billing and payment options)
-  return 'saas';
+  // Default to OSS mode
+  return 'oss';
 }
 
 /**
