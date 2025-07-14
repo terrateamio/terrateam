@@ -138,12 +138,20 @@ end
 
 module Make_wrapper = struct
   let run t els =
+    let open Abb.Future.Infix_monad in
     let module C = Terrat_vcs_comment in
     let module D = Terrat_dirspace in
     let module Cm = Terrat_vcs_comment.Make (H) in
-    match !t with
-    | [] -> Abb.Future.return (Ok ())
-    | s -> Cm.run t els
+    Cm.run t els
+    >>= function
+    | Ok r -> (
+        assert (r = ());
+        match !t with
+        | [] -> Abb.Future.return (Ok r)
+        | es -> 
+            Printf.printf "\n\tCOMMAND LOG: %s%!\n" (Eh.show_commands es);
+            assert false)
+    | Error e -> Abb.Future.return (Error e)
 end
 
 let test_basic =
@@ -155,9 +163,7 @@ let test_basic =
         let t = ref [] in
         Make_wrapper.run t els
         >>= function
-        | Ok r ->
-            assert (r = ());
-            Abb.Future.return ()
+        | Ok r -> Abb.Future.return ()
         | Error _ -> assert false)
   in
   let simple_post =
@@ -171,9 +177,7 @@ let test_basic =
         let t = ref [ Eh.Post_comment (els, Ok cid1); Eh.Upsert_comment_id (els, cid1, Ok ()) ] in
         Make_wrapper.run t els
         >>= function
-        | Ok r ->
-            assert (r = ());
-            Abb.Future.return ()
+        | Ok r -> Abb.Future.return ()
         | Error _ -> assert false)
   in
   Oth_abb.parallel [ empty_els; simple_post ]
@@ -231,9 +235,7 @@ let test_append_strategy =
         in
         Make_wrapper.run t els
         >>= function
-        | Ok r ->
-            assert (r = ());
-            Abb.Future.return ()
+        | Ok r -> Abb.Future.return ()
         | Error _ -> assert false)
   in
   let multiple_big =
@@ -258,9 +260,7 @@ let test_append_strategy =
         let t = ref [ Eh.Post_comment (els, Ok cid1); Eh.Upsert_comment_id (els, cid1, Ok ()) ] in
         Make_wrapper.run t els
         >>= function
-        | Ok r ->
-            assert (r = ());
-            Abb.Future.return ()
+        | Ok r -> Abb.Future.return ()
         | Error _ -> assert false)
   in
   let multiple_mixed =
@@ -295,9 +295,7 @@ let test_append_strategy =
         in
         Make_wrapper.run t els
         >>= function
-        | Ok r ->
-            assert (r = ());
-            Abb.Future.return ()
+        | Ok r -> Abb.Future.return ()
         | Error _ -> assert false)
   in
   let scenario_03 =
