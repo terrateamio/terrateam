@@ -109,7 +109,8 @@ WORKDIR /mono/code
 RUN ulimit -s 524288 && ulimit -a && \
     mv /build-cache ./build && \
     eval $(opam env) && pds && \
-    (time make -j$(nproc --all) -k test release_terrat_oss || time make -j1 test release_terrat_oss) && \
+    (time make -j$(nproc --all) -k test release_terrat_oss release_iris \
+     || time make -j1 test release_terrat_oss release_iris) && \
     find . -name '*.tap' -exec cat '{}' \;
 
 # Final code-indexer image
@@ -174,5 +175,6 @@ COPY docker/terrat/nginx.conf.template /etc/nginx/nginx.conf.template
 COPY --from=terrat-oss-build /usr/lib/libkqueue.so /usr/lib/libkqueue.so
 COPY --from=terrat-oss-build /usr/lib/libkqueue.so.0 /usr/lib/libkqueue.so.0
 COPY --from=terrat-oss-build /mono/code/build/release/terrat_oss/terrat_oss.native /usr/local/bin/terrat
+COPY --from=terrat-oss-build /mono/code/build/release/iris/dist/ /usr/local/share/terrat/ui/assets/
 EXPOSE 8080
 CMD ["runsvdir", "/etc/service"]
