@@ -11,6 +11,12 @@ module S = struct
 
   type comment_id = int
 
+  let query_comment_id t el = 1000
+  let query_els_for_comment_id t cid = []
+  let upsert_comment_id t els cid = Abb.Future.return (Ok ())
+  let delete_comment t comment_id = Abb.Future.return (Ok ())
+  let minimize_comment t comment_id = Abb.Future.return (Ok ())
+  let post_comment t els = Abb.Future.return (Ok 1)
   let rendered_length els = CCList.fold_left (fun acc el -> acc + CCString.length el.content) 0 els
   let dirspace el = el.dirspace
   let is_success el = el.is_success
