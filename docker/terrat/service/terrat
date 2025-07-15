@@ -1,19 +1,14 @@
 #! /usr/bin/env python3
 
-import jwt
 import os
-import requests
 import subprocess
 import sys
 import time
-
+import requests
 
 TERRAT_API_BASE = 'TERRAT_API_BASE'
 GITHUB_API_BASE_URL = 'GITHUB_API_BASE_URL'
-NGROK_ENDPOINT = 'NGROK_ENDPOINT'
-FLY_APP_NAME = 'FLY_APP_NAME'
 REQUIRED_ENV_KEYS = ['GITHUB_APP_PEM']
-
 
 def setup_environment():
     if os.getenv('CUSTOM_CA_CERT'):
@@ -33,11 +28,9 @@ def setup_environment():
     os.environ['OCAMLRUNPARAM'] = 'b'
     os.environ['NGINX_STATUS_URI'] = 'http://localhost:8080/nginx_status'
     os.environ['TERRAT_PORT'] = '8180'
-    os.environ.setdefault('GITHUB_WEBHOOK_URL_UPDATE', 'TRUE')
     os.environ.setdefault(GITHUB_API_BASE_URL, 'https://api.github.com')
     os.environ.setdefault('INFRACOST_PRICING_API_ENDPOINT', '')
     os.environ.setdefault('SELF_HOSTED_INFRACOST_API_KEY', '')
-
 
 def assert_required_env_keys():
     missing_keys = [
@@ -47,76 +40,25 @@ def assert_required_env_keys():
 
     if missing_keys:
         print('Missing environment variables: {}'.format(' '.join(missing_keys)))
-        print('Please see https://terrateam.io/docs/self-hosted for what variables are required')
+        print('Please see https://docs.terrateam.io/self-hosted for what variables are required')
         sys.exit(1)
 
+def get_tunnel_hostname(terratunnel_endpoint):
+    try:
+        response = requests.get(f"{terratunnel_endpoint}/status", timeout=5)
+        response.raise_for_status()
+        data = response.json()
+        if data.get('connected') and data.get('tunnel_hostname'):
+            return data['tunnel_hostname']
+    except Exception as e:
+        print(f"Failed to fetch tunnel hostname: {e}")
+    return None
 
 def assert_run_mode():
-    if os.environ.get(FLY_APP_NAME) and os.environ.get(NGROK_ENDPOINT):
-        print('Must specify either FLY_APP_NAME or NGROK_ENDPOINT, but not both')
-        print('Please see https://terrateam.io/docs/self-hosted on setting the run mode')
+    if not os.environ.get(TERRAT_API_BASE):
+        print('TERRAT_API_BASE must be set')
+        print('Please see https://docs.terrateam.io/self-hosted for more information')
         sys.exit(1)
-    elif (not os.environ.get(TERRAT_API_BASE)
-          and not os.environ.get(FLY_APP_NAME)
-          and not os.environ.get(NGROK_ENDPOINT)):
-        print('Either TERRAT_API_BASE, or FLY_APPNAME, or NGROK_ENDPOINT must be set')
-        print('Please see https://terrateam.io/docs/self-hosted for more information')
-        sys.exit(1)
-
-
-def run_mode_docker_compose():
-    print('TERRAT_API_BASE is unset, polling ngrok for a public url...')
-    headers = {'Accept': 'application/json'}
-    try:
-        for n in range(20):
-            r = requests.get(os.environ[NGROK_ENDPOINT] + "/api/tunnels", headers=headers)
-            tunnels = r.json()['tunnels']
-            if tunnels:
-                ngrok_public_url = tunnels[0]['public_url']
-                if ngrok_public_url and ngrok_public_url != "null":
-                    os.environ[TERRAT_API_BASE] = ngrok_public_url + '/api'
-                    break
-                print('No ngrok public url found, trying again in 3 seconds...')
-                time.sleep(3)
-    except Exception:
-        print('Ngrok configuration chosen however Terrateam failed to find the ngrok public tunnel')
-        sys.exit(1)
-
-
-def run_mode_fly_app():
-    print('TERRAT_API_BASE is unset, using FLY_APP_NAME')
-    os.environ[TERRAT_API_BASE] = 'https://{}.fly.dev/api'.format(os.environ[FLY_APP_NAME])
-
-
-def update_github_webhook_url():
-    try:
-        print('Updating the GitHub application webhook url')
-        webhook_url = os.environ[TERRAT_API_BASE] + "/github/v1/events"
-        current_time = int(time.time())
-        payload = {
-            'iat': current_time,
-            'exp': current_time + (5 * 60),
-            'iss': os.getenv('GITHUB_APP_ID'),
-        }
-        private_key = os.getenv('GITHUB_APP_PEM').encode()
-        encoded = jwt.encode(payload, private_key, algorithm='RS256')
-        headers = {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer {}'.format(encoded)
-        }
-        payload = {
-            'content_type': 'json',
-            'url': webhook_url
-        }
-        r = requests.patch(os.environ[GITHUB_API_BASE_URL] + '/app/hook/config',
-                           json=payload,
-                           headers=headers)
-        print(r.content)
-    except Exception as e:
-        print('Failed to update github webhook')
-        print(e)
-        sys.exit(1)
-
 
 def main():
     print('Starting...')
@@ -125,20 +67,20 @@ def main():
     time.sleep(3)
 
     assert_required_env_keys()
+
+    # Try to set TERRAT_API_BASE from terratunnel if not already set
+    if not os.environ.get(TERRAT_API_BASE) and os.environ.get('TERRATUNNEL_API_ENDPOINT'):
+        print('TERRAT_API_BASE not set, attempting to fetch from terratunnel...')
+        tunnel_hostname = get_tunnel_hostname(os.environ['TERRATUNNEL_API_ENDPOINT'])
+        if tunnel_hostname:
+            os.environ[TERRAT_API_BASE] = f"https://{tunnel_hostname}/api"
+            print(f"Set TERRAT_API_BASE to: {os.environ[TERRAT_API_BASE]}")
+        else:
+            print("Failed to get tunnel hostname from terratunnel")
+
     assert_run_mode()
 
     setup_environment()
-
-    if not os.environ.get(TERRAT_API_BASE):
-        if os.environ.get(NGROK_ENDPOINT):
-            run_mode_docker_compose()
-        elif os.environ.get(FLY_APP_NAME):
-            run_mode_fly_app()
-        else:
-            raise Exception('TERRAT_API_BASE, NGROK_ENDPOINT, or FLY_APP_NAME must be specified')
-
-    if os.environ.get('GITHUB_WEBHOOK_URL_UPDATE', '').upper() == 'TRUE':
-        update_github_webhook_url()
 
     # Run db migration
     subprocess.check_call(['/usr/local/bin/terrat', 'migrate', '--verbosity=debug'])
@@ -160,7 +102,6 @@ def main():
                  ])
     else:
         os.execv('/usr/local/bin/terrat', ['/usr/local/bin/terrat', 'server', '--verbosity=debug'])
-
 
 if __name__ == '__main__':
     main()
