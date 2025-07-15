@@ -6,6 +6,11 @@ type err =
 [@@deriving show]
 
 module Sql = struct
+  let read fname =
+    CCOption.get_exn_or
+      fname
+      (CCOption.map Pgsql_io.clean_string (Terrat_files_github_sql.read fname))
+
   let select_user_token () =
     Pgsql_io.Typed_sql.(
       sql
@@ -18,22 +23,17 @@ module Sql = struct
       //
       (* refresh_token *)
       Ret.text
-      /^ "select token, (expiration < now()), refresh_token from github_users where id = $user_id \
-          order by refresh_expiration desc"
+      /^ read "select_github_user2_tokens.sql"
       /% Var.uuid "user_id")
 
-  let insert_github_user () =
+  let update_github_user2_tokens () =
     Pgsql_io.Typed_sql.(
       sql
-      /^ "insert into github_users (id, token, expiration, refresh_token, refresh_expiration) \
-          values ($user_id, $token, $expiration, $refresh_token, $refresh_expiration) on conflict \
-          (id) do update set (token, expiration, refresh_token, refresh_expiration) = \
-          (excluded.token, excluded.expiration, excluded.refresh_token, \
-          excluded.refresh_expiration)"
+      /^ read "update_github_user2_tokens.sql"
       /% Var.uuid "user_id"
       /% Var.text "token"
-      /% Var.(option (text "refresh_token"))
       /% Var.(option (timestamptz "expiration"))
+      /% Var.(option (text "refresh_token"))
       /% Var.(option (timestamptz "refresh_expiration")))
 end
 
@@ -68,11 +68,11 @@ let get_token config storage user =
       Pgsql_pool.with_conn storage ~f:(fun db ->
           Pgsql_io.Prepared_stmt.execute
             db
-            (Sql.insert_github_user ())
+            (Sql.update_github_user2_tokens ())
             (Terrat_user.id user)
             oauth.Oauth.access_token
-            oauth.Oauth.refresh_token
             expiration
+            oauth.Oauth.refresh_token
             refresh_expiration
           >>= fun () -> Abb.Future.return (Ok oauth.Oauth.access_token))
   | (token, false, _) :: _ -> Abb.Future.return (Ok token)
