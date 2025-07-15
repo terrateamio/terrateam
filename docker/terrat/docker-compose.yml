@@ -29,7 +29,7 @@ services:
       - terrateam
 
   server:
-    image: ghcr.io/terrateamio/terrat-ee-dev:20250715-580-add-terratunnel-docker-compose-9f0a9cf-amd64
+    image: ghcr.io/terrateamio/terrat-oss:latest
     pull_policy: always
     platform: linux/amd64
     environment:
