@@ -20,8 +20,8 @@ services:
       POSTGRES_DB: "terrateam"
     healthcheck:
       test: [ "CMD", "pg_isready", "-d", "terrateam", "-U", "terrateam" ]
-      interval: 10s
-      timeout: 5s
+      interval: 3s
+      timeout: 3s
       retries: 5
     volumes:
       - db:/var/lib/postgresql/data/
@@ -29,7 +29,7 @@ services:
       - terrateam
 
   server:
-    image: ghcr.io/terrateamio/terrat-oss:latest
+    image: ghcr.io/terrateamio/terrat-ee-dev:20250715-580-add-terratunnel-docker-compose-9f0a9cf-amd64
     pull_policy: always
     platform: linux/amd64
     environment:
@@ -46,10 +46,9 @@ services:
       TERRATUNNEL_API_ENDPOINT: "http://terratunnel:8081"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 60s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
+      interval: 3s
+      timeout: 3s
+      retries: 10
     depends_on:
       db:
         condition: service_healthy
@@ -71,8 +70,7 @@ services:
       test: ["CMD", "wget", "--spider", "-q", "http://terratunnel:8081/health"]
       interval: 10s
       timeout: 5s
-      retries: 5
-      start_period: 10s
+      retries: 10
     networks:
       - terrateam
 
