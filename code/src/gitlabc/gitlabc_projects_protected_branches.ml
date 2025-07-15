@@ -1,12 +1,11 @@
 module PostApiV4ProjectsIdProtectedBranches = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      postapiv4projectsidprotectedbranches :
-        Gitlabc_components.PostApiV4ProjectsIdProtectedBranches.t;
-          [@key "postApiV4ProjectsIdProtectedBranches"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdProtectedBranches.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -37,8 +36,10 @@ module PostApiV4ProjectsIdProtectedBranches = struct
 
   let url = "/api/v4/projects/{id}/protected_branches"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -106,11 +107,13 @@ module PatchApiV4ProjectsIdProtectedBranchesName = struct
     type t = {
       id : string;
       name : string;
-      patchapiv4projectsidprotectedbranchesname :
-        Gitlabc_components.PatchApiV4ProjectsIdProtectedBranchesName.t;
-          [@key "patchApiV4ProjectsIdProtectedBranchesName"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PatchApiV4ProjectsIdProtectedBranchesName.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -141,8 +144,10 @@ module PatchApiV4ProjectsIdProtectedBranchesName = struct
 
   let url = "/api/v4/projects/{id}/protected_branches/{name}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

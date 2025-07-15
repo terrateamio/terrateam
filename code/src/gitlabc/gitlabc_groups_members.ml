@@ -1,11 +1,11 @@
 module PostApiV4GroupsIdMembers = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      postapiv4groupsidmembers : Gitlabc_components.PostApiV4GroupsIdMembers.t;
-          [@key "postApiV4GroupsIdMembers"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4GroupsIdMembers.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -18,8 +18,10 @@ module PostApiV4GroupsIdMembers = struct
 
   let url = "/api/v4/groups/{id}/members"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -296,11 +298,14 @@ module PutApiV4GroupsIdMembersUserId = struct
   module Parameters = struct
     type t = {
       id : string;
-      putapiv4groupsidmembersuserid : Gitlabc_components.PutApiV4GroupsIdMembersUserId.t;
-          [@key "putApiV4GroupsIdMembersUserId"]
       user_id : int;
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4GroupsIdMembersUserId.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -313,8 +318,10 @@ module PutApiV4GroupsIdMembersUserId = struct
 
   let url = "/api/v4/groups/{id}/members/{user_id}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -426,11 +433,14 @@ module PutApiV4GroupsIdMembersUserIdState = struct
   module Parameters = struct
     type t = {
       id : string;
-      putapiv4groupsidmembersuseridstate : Gitlabc_components.PutApiV4GroupsIdMembersUserIdState.t;
-          [@key "putApiV4GroupsIdMembersUserIdState"]
       user_id : int;
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4GroupsIdMembersUserIdState.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -443,8 +453,10 @@ module PutApiV4GroupsIdMembersUserIdState = struct
 
   let url = "/api/v4/groups/{id}/members/{user_id}/state"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

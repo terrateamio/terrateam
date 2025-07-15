@@ -542,10 +542,13 @@ module PostApiV4ProjectsIdJobsJobIdPlay = struct
     type t = {
       id : int;
       job_id : int;
-      postapiv4projectsidjobsjobidplay : Gitlabc_components.PostApiV4ProjectsIdJobsJobIdPlay.t;
-          [@key "postApiV4ProjectsIdJobsJobIdPlay"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdJobsJobIdPlay.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -576,8 +579,10 @@ module PostApiV4ProjectsIdJobsJobIdPlay = struct
 
   let url = "/api/v4/projects/{id}/jobs/{job_id}/play"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

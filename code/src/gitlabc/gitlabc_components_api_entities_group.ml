@@ -43,7 +43,7 @@ end
 
 type t = {
   archived : bool option; [@default None]
-  auto_devops_enabled : string option; [@default None]
+  auto_devops_enabled : bool option; [@default None]
   avatar_url : string option; [@default None]
   created_at : string;
   custom_attributes : Gitlabc_components_api_entities_customattribute.t option; [@default None]
@@ -51,7 +51,7 @@ type t = {
   default_branch_protection : Default_branch_protection.t option; [@default None]
   default_branch_protection_defaults : Default_branch_protection_defaults.t option; [@default None]
   description : string option; [@default None]
-  duo_features_enabled : string option; [@default None]
+  duo_features_enabled : bool option; [@default None]
   emails_disabled : bool option; [@default None]
   emails_enabled : bool option; [@default None]
   file_template_project_id : string option; [@default None]

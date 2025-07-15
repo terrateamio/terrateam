@@ -1,11 +1,11 @@
 module PatchApiV4ProjectsIdJobTokenScope = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      patchapiv4projectsidjobtokenscope : Gitlabc_components.PatchApiV4ProjectsIdJobTokenScope.t;
-          [@key "patchApiV4ProjectsIdJobTokenScope"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PatchApiV4ProjectsIdJobTokenScope.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -36,8 +36,10 @@ module PatchApiV4ProjectsIdJobTokenScope = struct
 
   let url = "/api/v4/projects/{id}/job_token_scope"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -94,13 +96,12 @@ end
 
 module PostApiV4ProjectsIdJobTokenScopeAllowlist = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      postapiv4projectsidjobtokenscopeallowlist :
-        Gitlabc_components.PostApiV4ProjectsIdJobTokenScopeAllowlist.t;
-          [@key "postApiV4ProjectsIdJobTokenScopeAllowlist"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdJobTokenScopeAllowlist.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -134,8 +135,10 @@ module PostApiV4ProjectsIdJobTokenScopeAllowlist = struct
 
   let url = "/api/v4/projects/{id}/job_token_scope/allowlist"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -252,13 +255,12 @@ end
 
 module PostApiV4ProjectsIdJobTokenScopeGroupsAllowlist = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      postapiv4projectsidjobtokenscopegroupsallowlist :
-        Gitlabc_components.PostApiV4ProjectsIdJobTokenScopeGroupsAllowlist.t;
-          [@key "postApiV4ProjectsIdJobTokenScopeGroupsAllowlist"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdJobTokenScopeGroupsAllowlist.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -292,8 +294,10 @@ module PostApiV4ProjectsIdJobTokenScopeGroupsAllowlist = struct
 
   let url = "/api/v4/projects/{id}/job_token_scope/groups_allowlist"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

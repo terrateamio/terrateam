@@ -1,11 +1,11 @@
 module PostApiV4ProjectsIdEnvironments = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      postapiv4projectsidenvironments : Gitlabc_components.PostApiV4ProjectsIdEnvironments.t;
-          [@key "postApiV4ProjectsIdEnvironments"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdEnvironments.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -33,8 +33,10 @@ module PostApiV4ProjectsIdEnvironments = struct
 
   let url = "/api/v4/projects/{id}/environments"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -172,13 +174,12 @@ end
 
 module PostApiV4ProjectsIdEnvironmentsStopStale = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      postapiv4projectsidenvironmentsstopstale :
-        Gitlabc_components.PostApiV4ProjectsIdEnvironmentsStopStale.t;
-          [@key "postApiV4ProjectsIdEnvironmentsStopStale"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdEnvironmentsStopStale.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -203,8 +204,10 @@ module PostApiV4ProjectsIdEnvironmentsStopStale = struct
 
   let url = "/api/v4/projects/{id}/environments/stop_stale"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -265,11 +268,13 @@ module PutApiV4ProjectsIdEnvironmentsEnvironmentId = struct
     type t = {
       environment_id : int;
       id : string;
-      putapiv4projectsidenvironmentsenvironmentid :
-        Gitlabc_components.PutApiV4ProjectsIdEnvironmentsEnvironmentId.t;
-          [@key "putApiV4ProjectsIdEnvironmentsEnvironmentId"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdEnvironmentsEnvironmentId.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -297,8 +302,10 @@ module PutApiV4ProjectsIdEnvironmentsEnvironmentId = struct
 
   let url = "/api/v4/projects/{id}/environments/{environment_id}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -357,11 +364,13 @@ module PostApiV4ProjectsIdEnvironmentsEnvironmentIdStop = struct
     type t = {
       environment_id : int;
       id : string;
-      postapiv4projectsidenvironmentsenvironmentidstop :
-        Gitlabc_components.PostApiV4ProjectsIdEnvironmentsEnvironmentIdStop.t;
-          [@key "postApiV4ProjectsIdEnvironmentsEnvironmentIdStop"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdEnvironmentsEnvironmentIdStop.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -386,8 +395,10 @@ module PostApiV4ProjectsIdEnvironmentsEnvironmentIdStop = struct
 
   let url = "/api/v4/projects/{id}/environments/{environment_id}/stop"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

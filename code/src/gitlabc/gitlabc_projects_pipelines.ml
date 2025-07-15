@@ -492,11 +492,13 @@ module PutApiV4ProjectsIdPipelinesPipelineIdMetadata = struct
     type t = {
       id : string;
       pipeline_id : int;
-      putapiv4projectsidpipelinespipelineidmetadata :
-        Gitlabc_components.PutApiV4ProjectsIdPipelinesPipelineIdMetadata.t;
-          [@key "putApiV4ProjectsIdPipelinesPipelineIdMetadata"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdPipelinesPipelineIdMetadata.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -527,8 +529,10 @@ module PutApiV4ProjectsIdPipelinesPipelineIdMetadata = struct
 
   let url = "/api/v4/projects/{id}/pipelines/{pipeline_id}/metadata"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

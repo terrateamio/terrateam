@@ -1,7 +1,9 @@
 module PostApiV4Groups = struct
-  module Parameters = struct
-    type t = { postapiv4groups : Gitlabc_components.PostApiV4Groups.t [@key "postApiV4Groups"] }
-    [@@deriving make, show, eq]
+  module Parameters = struct end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4Groups.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -14,8 +16,10 @@ module PostApiV4Groups = struct
 
   let url = "/api/v4/groups"
 
-  let make params =
+  let make ?body =
+   fun () ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:[]
       ~query_params:[]
@@ -225,11 +229,12 @@ end
 
 module PutApiV4GroupsId = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      putapiv4groupsid : Gitlabc_components.PutApiV4GroupsId.t; [@key "putApiV4GroupsId"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4GroupsId.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -242,8 +247,10 @@ module PutApiV4GroupsId = struct
 
   let url = "/api/v4/groups/{id}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -299,13 +306,12 @@ end
 
 module PostApiV4GroupsIdDebianDistributions = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      postapiv4groupsiddebiandistributions :
-        Gitlabc_components.PostApiV4GroupsIdDebianDistributions.t;
-          [@key "postApiV4GroupsIdDebianDistributions"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4GroupsIdDebianDistributions.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -336,8 +342,10 @@ module PostApiV4GroupsIdDebianDistributions = struct
 
   let url = "/api/v4/groups/{id}/-/debian_distributions"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -512,11 +520,13 @@ module PutApiV4GroupsIdDebianDistributionsCodename = struct
     type t = {
       codename : string;
       id : string;
-      putapiv4groupsiddebiandistributionscodename :
-        Gitlabc_components.PutApiV4GroupsIdDebianDistributionsCodename.t;
-          [@key "putApiV4GroupsIdDebianDistributionsCodename"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4GroupsIdDebianDistributionsCodename.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -547,8 +557,10 @@ module PutApiV4GroupsIdDebianDistributionsCodename = struct
 
   let url = "/api/v4/groups/{id}/-/debian_distributions/{codename}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1572,12 +1584,14 @@ module PutApiV4GroupsIdPackagesNpmPackage_packageNameDistTagsTag = struct
   module Parameters = struct
     type t = {
       id : string;
-      putapiv4groupsidpackagesnpmpackage_packagenamedisttagstag :
-        Gitlabc_components.PutApiV4GroupsIdPackagesNpmPackage_packageNameDistTagsTag.t;
-          [@key "putApiV4GroupsIdPackagesNpmPackage*packageNameDistTagsTag"]
       tag : string;
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4GroupsIdPackagesNpmPackage_packageNameDistTagsTag.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -1608,8 +1622,10 @@ module PutApiV4GroupsIdPackagesNpmPackage_packageNameDistTagsTag = struct
 
   let url = "/api/v4/groups/{id}/-/packages/npm/-/package/*package_name/dist-tags/{tag}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

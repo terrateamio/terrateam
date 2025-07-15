@@ -113,13 +113,12 @@ end
 
 module PostApiV4ProjectsIdRepositoryBranches = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      postapiv4projectsidrepositorybranches :
-        Gitlabc_components.PostApiV4ProjectsIdRepositoryBranches.t;
-          [@key "postApiV4ProjectsIdRepositoryBranches"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdRepositoryBranches.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -137,8 +136,10 @@ module PostApiV4ProjectsIdRepositoryBranches = struct
 
   let url = "/api/v4/projects/{id}/repository/branches"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -298,11 +299,13 @@ module PutApiV4ProjectsIdRepositoryBranchesBranchProtect = struct
     type t = {
       branch : string;
       id : string;
-      putapiv4projectsidrepositorybranchesbranchprotect :
-        Gitlabc_components.PutApiV4ProjectsIdRepositoryBranchesBranchProtect.t;
-          [@key "putApiV4ProjectsIdRepositoryBranchesBranchProtect"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdRepositoryBranchesBranchProtect.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -320,8 +323,10 @@ module PutApiV4ProjectsIdRepositoryBranchesBranchProtect = struct
 
   let url = "/api/v4/projects/{id}/repository/branches/{branch}/protect"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -372,13 +377,12 @@ end
 
 module PostApiV4ProjectsIdRepositoryChangelog = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      postapiv4projectsidrepositorychangelog :
-        Gitlabc_components.PostApiV4ProjectsIdRepositoryChangelog.t;
-          [@key "postApiV4ProjectsIdRepositoryChangelog"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdRepositoryChangelog.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -391,8 +395,10 @@ module PostApiV4ProjectsIdRepositoryChangelog = struct
 
   let url = "/api/v4/projects/{id}/repository/changelog"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -453,13 +459,12 @@ end
 
 module PostApiV4ProjectsIdRepositoryCommits = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      postapiv4projectsidrepositorycommits :
-        Gitlabc_components.PostApiV4ProjectsIdRepositoryCommits.t;
-          [@key "postApiV4ProjectsIdRepositoryCommits"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdRepositoryCommits.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -490,8 +495,10 @@ module PostApiV4ProjectsIdRepositoryCommits = struct
 
   let url = "/api/v4/projects/{id}/repository/commits"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -631,12 +638,14 @@ module PostApiV4ProjectsIdRepositoryCommitsShaCherryPick = struct
   module Parameters = struct
     type t = {
       id : string;
-      postapiv4projectsidrepositorycommitsshacherrypick :
-        Gitlabc_components.PostApiV4ProjectsIdRepositoryCommitsShaCherryPick.t;
-          [@key "postApiV4ProjectsIdRepositoryCommitsShaCherryPick"]
       sha : string;
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdRepositoryCommitsShaCherryPick.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -659,8 +668,10 @@ module PostApiV4ProjectsIdRepositoryCommitsShaCherryPick = struct
 
   let url = "/api/v4/projects/{id}/repository/commits/{sha}/cherry_pick"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -676,12 +687,14 @@ module PostApiV4ProjectsIdRepositoryCommitsShaComments = struct
   module Parameters = struct
     type t = {
       id : string;
-      postapiv4projectsidrepositorycommitsshacomments :
-        Gitlabc_components.PostApiV4ProjectsIdRepositoryCommitsShaComments.t;
-          [@key "postApiV4ProjectsIdRepositoryCommitsShaComments"]
       sha : string;
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdRepositoryCommitsShaComments.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -704,8 +717,10 @@ module PostApiV4ProjectsIdRepositoryCommitsShaComments = struct
 
   let url = "/api/v4/projects/{id}/repository/commits/{sha}/comments"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -909,12 +924,14 @@ module PostApiV4ProjectsIdRepositoryCommitsShaRevert = struct
   module Parameters = struct
     type t = {
       id : string;
-      postapiv4projectsidrepositorycommitssharevert :
-        Gitlabc_components.PostApiV4ProjectsIdRepositoryCommitsShaRevert.t;
-          [@key "postApiV4ProjectsIdRepositoryCommitsShaRevert"]
       sha : string;
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdRepositoryCommitsShaRevert.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -937,8 +954,10 @@ module PostApiV4ProjectsIdRepositoryCommitsShaRevert = struct
 
   let url = "/api/v4/projects/{id}/repository/commits/{sha}/revert"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1279,11 +1298,13 @@ module PostApiV4ProjectsIdRepositoryFilesFilePath = struct
     type t = {
       file_path : string;
       id : string;
-      postapiv4projectsidrepositoryfilesfilepath :
-        Gitlabc_components.PostApiV4ProjectsIdRepositoryFilesFilePath.t;
-          [@key "postApiV4ProjectsIdRepositoryFilesFilePath"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdRepositoryFilesFilePath.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -1296,8 +1317,10 @@ module PostApiV4ProjectsIdRepositoryFilesFilePath = struct
 
   let url = "/api/v4/projects/{id}/repository/files/{file_path}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1314,11 +1337,13 @@ module PutApiV4ProjectsIdRepositoryFilesFilePath = struct
     type t = {
       file_path : string;
       id : string;
-      putapiv4projectsidrepositoryfilesfilepath :
-        Gitlabc_components.PutApiV4ProjectsIdRepositoryFilesFilePath.t;
-          [@key "putApiV4ProjectsIdRepositoryFilesFilePath"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdRepositoryFilesFilePath.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -1331,8 +1356,10 @@ module PutApiV4ProjectsIdRepositoryFilesFilePath = struct
 
   let url = "/api/v4/projects/{id}/repository/files/{file_path}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1568,12 +1595,14 @@ module PutApiV4ProjectsIdRepositorySubmodulesSubmodule = struct
   module Parameters = struct
     type t = {
       id : string;
-      putapiv4projectsidrepositorysubmodulessubmodule :
-        Gitlabc_components.PutApiV4ProjectsIdRepositorySubmodulesSubmodule.t;
-          [@key "putApiV4ProjectsIdRepositorySubmodulesSubmodule"]
       submodule : string;
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdRepositorySubmodulesSubmodule.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -1601,8 +1630,10 @@ module PutApiV4ProjectsIdRepositorySubmodulesSubmodule = struct
 
   let url = "/api/v4/projects/{id}/repository/submodules/{submodule}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1616,12 +1647,12 @@ end
 
 module PostApiV4ProjectsIdRepositoryTags = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      postapiv4projectsidrepositorytags : Gitlabc_components.PostApiV4ProjectsIdRepositoryTags.t;
-          [@key "postApiV4ProjectsIdRepositoryTags"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdRepositoryTags.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -1649,8 +1680,10 @@ module PostApiV4ProjectsIdRepositoryTags = struct
 
   let url = "/api/v4/projects/{id}/repository/tags"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

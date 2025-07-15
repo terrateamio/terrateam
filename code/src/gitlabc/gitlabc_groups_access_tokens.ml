@@ -1,11 +1,11 @@
 module PostApiV4GroupsIdAccessTokens = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      postapiv4groupsidaccesstokens : Gitlabc_components.PostApiV4GroupsIdAccessTokens.t;
-          [@key "postApiV4GroupsIdAccessTokens"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4GroupsIdAccessTokens.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -18,8 +18,10 @@ module PostApiV4GroupsIdAccessTokens = struct
 
   let url = "/api/v4/groups/{id}/access_tokens"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -77,13 +79,12 @@ end
 
 module PostApiV4GroupsIdAccessTokensSelfRotate = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      postapiv4groupsidaccesstokensselfrotate :
-        Gitlabc_components.PostApiV4GroupsIdAccessTokensSelfRotate.t;
-          [@key "postApiV4GroupsIdAccessTokensSelfRotate"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4GroupsIdAccessTokensSelfRotate.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -114,8 +115,10 @@ module PostApiV4GroupsIdAccessTokensSelfRotate = struct
 
   let url = "/api/v4/groups/{id}/access_tokens/self/rotate"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -207,12 +210,14 @@ module PostApiV4GroupsIdAccessTokensTokenIdRotate = struct
   module Parameters = struct
     type t = {
       id : string;
-      postapiv4groupsidaccesstokenstokenidrotate :
-        Gitlabc_components.PostApiV4GroupsIdAccessTokensTokenIdRotate.t;
-          [@key "postApiV4GroupsIdAccessTokensTokenIdRotate"]
       token_id : string;
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4GroupsIdAccessTokensTokenIdRotate.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -225,8 +230,10 @@ module PostApiV4GroupsIdAccessTokensTokenIdRotate = struct
 
   let url = "/api/v4/groups/{id}/access_tokens/{token_id}/rotate"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

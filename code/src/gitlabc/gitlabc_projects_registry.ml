@@ -1,12 +1,11 @@
 module PostApiV4ProjectsIdRegistryProtectionRepositoryRules = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      postapiv4projectsidregistryprotectionrepositoryrules :
-        Gitlabc_components.PostApiV4ProjectsIdRegistryProtectionRepositoryRules.t;
-          [@key "postApiV4ProjectsIdRegistryProtectionRepositoryRules"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdRegistryProtectionRepositoryRules.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -40,8 +39,10 @@ module PostApiV4ProjectsIdRegistryProtectionRepositoryRules = struct
 
   let url = "/api/v4/projects/{id}/registry/protection/repository/rules"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -100,12 +101,15 @@ module PatchApiV4ProjectsIdRegistryProtectionRepositoryRulesProtectionRuleId = s
   module Parameters = struct
     type t = {
       id : string;
-      patchapiv4projectsidregistryprotectionrepositoryrulesprotectionruleid :
-        Gitlabc_components.PatchApiV4ProjectsIdRegistryProtectionRepositoryRulesProtectionRuleId.t;
-          [@key "patchApiV4ProjectsIdRegistryProtectionRepositoryRulesProtectionRuleId"]
       protection_rule_id : int;
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t =
+      Gitlabc_components.PatchApiV4ProjectsIdRegistryProtectionRepositoryRulesProtectionRuleId.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -139,8 +143,10 @@ module PatchApiV4ProjectsIdRegistryProtectionRepositoryRulesProtectionRuleId = s
 
   let url = "/api/v4/projects/{id}/registry/protection/repository/rules/{protection_rule_id}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

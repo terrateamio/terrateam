@@ -1,11 +1,11 @@
 module PostApiV4ProjectsIdSnippets = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      postapiv4projectsidsnippets : Gitlabc_components.PostApiV4ProjectsIdSnippets.t;
-          [@key "postApiV4ProjectsIdSnippets"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdSnippets.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -33,8 +33,10 @@ module PostApiV4ProjectsIdSnippets = struct
 
   let url = "/api/v4/projects/{id}/snippets"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -135,12 +137,14 @@ module PutApiV4ProjectsIdSnippetsSnippetId = struct
   module Parameters = struct
     type t = {
       id : string;
-      putapiv4projectsidsnippetssnippetid :
-        Gitlabc_components.PutApiV4ProjectsIdSnippetsSnippetId.t;
-          [@key "putApiV4ProjectsIdSnippetsSnippetId"]
       snippet_id : int;
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdSnippetsSnippetId.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -168,8 +172,10 @@ module PutApiV4ProjectsIdSnippetsSnippetId = struct
 
   let url = "/api/v4/projects/{id}/snippets/{snippet_id}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -222,12 +228,14 @@ module PostApiV4ProjectsIdSnippetsSnippetIdAwardEmoji = struct
   module Parameters = struct
     type t = {
       id : int;
-      postapiv4projectsidsnippetssnippetidawardemoji :
-        Gitlabc_components.PostApiV4ProjectsIdSnippetsSnippetIdAwardEmoji.t;
-          [@key "postApiV4ProjectsIdSnippetsSnippetIdAwardEmoji"]
       snippet_id : int;
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdSnippetsSnippetIdAwardEmoji.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -252,8 +260,10 @@ module PostApiV4ProjectsIdSnippetsSnippetIdAwardEmoji = struct
 
   let url = "/api/v4/projects/{id}/snippets/{snippet_id}/award_emoji"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -447,12 +457,14 @@ module PostApiV4ProjectsIdSnippetsSnippetIdNotesNoteIdAwardEmoji = struct
     type t = {
       id : int;
       note_id : int;
-      postapiv4projectsidsnippetssnippetidnotesnoteidawardemoji :
-        Gitlabc_components.PostApiV4ProjectsIdSnippetsSnippetIdNotesNoteIdAwardEmoji.t;
-          [@key "postApiV4ProjectsIdSnippetsSnippetIdNotesNoteIdAwardEmoji"]
       snippet_id : int;
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdSnippetsSnippetIdNotesNoteIdAwardEmoji.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -477,8 +489,10 @@ module PostApiV4ProjectsIdSnippetsSnippetIdNotesNoteIdAwardEmoji = struct
 
   let url = "/api/v4/projects/{id}/snippets/{snippet_id}/notes/{note_id}/award_emoji"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

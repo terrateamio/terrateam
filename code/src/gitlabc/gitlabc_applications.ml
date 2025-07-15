@@ -1,10 +1,9 @@
 module PostApiV4Applications = struct
-  module Parameters = struct
-    type t = {
-      postapiv4applications : Gitlabc_components.PostApiV4Applications.t;
-          [@key "postApiV4Applications"]
-    }
-    [@@deriving make, show, eq]
+  module Parameters = struct end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4Applications.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -17,8 +16,10 @@ module PostApiV4Applications = struct
 
   let url = "/api/v4/applications"
 
-  let make params =
+  let make ?body =
+   fun () ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:[]
       ~query_params:[]

@@ -38,13 +38,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsAppleAppStore = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsappleappstore :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsAppleAppStore.t;
-          [@key "putApiV4ProjectsIdIntegrationsAppleAppStore"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsAppleAppStore.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -75,8 +74,10 @@ module PutApiV4ProjectsIdIntegrationsAppleAppStore = struct
 
   let url = "/api/v4/projects/{id}/integrations/apple-app-store"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -90,12 +91,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsAsana = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsasana : Gitlabc_components.PutApiV4ProjectsIdIntegrationsAsana.t;
-          [@key "putApiV4ProjectsIdIntegrationsAsana"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsAsana.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -126,8 +127,10 @@ module PutApiV4ProjectsIdIntegrationsAsana = struct
 
   let url = "/api/v4/projects/{id}/integrations/asana"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -141,13 +144,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsAssembla = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsassembla :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsAssembla.t;
-          [@key "putApiV4ProjectsIdIntegrationsAssembla"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsAssembla.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -178,8 +180,10 @@ module PutApiV4ProjectsIdIntegrationsAssembla = struct
 
   let url = "/api/v4/projects/{id}/integrations/assembla"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -193,13 +197,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsBamboo = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsbamboo :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsBamboo.t;
-          [@key "putApiV4ProjectsIdIntegrationsBamboo"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsBamboo.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -230,8 +233,10 @@ module PutApiV4ProjectsIdIntegrationsBamboo = struct
 
   let url = "/api/v4/projects/{id}/integrations/bamboo"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -245,13 +250,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsBugzilla = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsbugzilla :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsBugzilla.t;
-          [@key "putApiV4ProjectsIdIntegrationsBugzilla"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsBugzilla.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -282,8 +286,10 @@ module PutApiV4ProjectsIdIntegrationsBugzilla = struct
 
   let url = "/api/v4/projects/{id}/integrations/bugzilla"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -297,13 +303,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsBuildkite = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsbuildkite :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsBuildkite.t;
-          [@key "putApiV4ProjectsIdIntegrationsBuildkite"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsBuildkite.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -334,8 +339,10 @@ module PutApiV4ProjectsIdIntegrationsBuildkite = struct
 
   let url = "/api/v4/projects/{id}/integrations/buildkite"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -349,13 +356,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsCampfire = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationscampfire :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsCampfire.t;
-          [@key "putApiV4ProjectsIdIntegrationsCampfire"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsCampfire.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -386,8 +392,10 @@ module PutApiV4ProjectsIdIntegrationsCampfire = struct
 
   let url = "/api/v4/projects/{id}/integrations/campfire"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -401,13 +409,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsClickup = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsclickup :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsClickup.t;
-          [@key "putApiV4ProjectsIdIntegrationsClickup"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsClickup.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -438,8 +445,10 @@ module PutApiV4ProjectsIdIntegrationsClickup = struct
 
   let url = "/api/v4/projects/{id}/integrations/clickup"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -453,13 +462,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsConfluence = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsconfluence :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsConfluence.t;
-          [@key "putApiV4ProjectsIdIntegrationsConfluence"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsConfluence.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -490,8 +498,10 @@ module PutApiV4ProjectsIdIntegrationsConfluence = struct
 
   let url = "/api/v4/projects/{id}/integrations/confluence"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -505,13 +515,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsCustomIssueTracker = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationscustomissuetracker :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsCustomIssueTracker.t;
-          [@key "putApiV4ProjectsIdIntegrationsCustomIssueTracker"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsCustomIssueTracker.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -542,8 +551,10 @@ module PutApiV4ProjectsIdIntegrationsCustomIssueTracker = struct
 
   let url = "/api/v4/projects/{id}/integrations/custom-issue-tracker"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -557,13 +568,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsDatadog = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsdatadog :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsDatadog.t;
-          [@key "putApiV4ProjectsIdIntegrationsDatadog"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsDatadog.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -594,8 +604,10 @@ module PutApiV4ProjectsIdIntegrationsDatadog = struct
 
   let url = "/api/v4/projects/{id}/integrations/datadog"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -609,13 +621,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsDiffblueCover = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsdiffbluecover :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsDiffblueCover.t;
-          [@key "putApiV4ProjectsIdIntegrationsDiffblueCover"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsDiffblueCover.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -646,8 +657,10 @@ module PutApiV4ProjectsIdIntegrationsDiffblueCover = struct
 
   let url = "/api/v4/projects/{id}/integrations/diffblue-cover"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -661,13 +674,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsDiscord = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsdiscord :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsDiscord.t;
-          [@key "putApiV4ProjectsIdIntegrationsDiscord"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsDiscord.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -698,8 +710,10 @@ module PutApiV4ProjectsIdIntegrationsDiscord = struct
 
   let url = "/api/v4/projects/{id}/integrations/discord"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -713,13 +727,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsDroneCi = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsdroneci :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsDroneCi.t;
-          [@key "putApiV4ProjectsIdIntegrationsDroneCi"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsDroneCi.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -750,8 +763,10 @@ module PutApiV4ProjectsIdIntegrationsDroneCi = struct
 
   let url = "/api/v4/projects/{id}/integrations/drone-ci"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -765,13 +780,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsEmailsOnPush = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsemailsonpush :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsEmailsOnPush.t;
-          [@key "putApiV4ProjectsIdIntegrationsEmailsOnPush"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsEmailsOnPush.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -802,8 +816,10 @@ module PutApiV4ProjectsIdIntegrationsEmailsOnPush = struct
 
   let url = "/api/v4/projects/{id}/integrations/emails-on-push"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -817,12 +833,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsEwm = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsewm : Gitlabc_components.PutApiV4ProjectsIdIntegrationsEwm.t;
-          [@key "putApiV4ProjectsIdIntegrationsEwm"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsEwm.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -853,8 +869,10 @@ module PutApiV4ProjectsIdIntegrationsEwm = struct
 
   let url = "/api/v4/projects/{id}/integrations/ewm"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -868,13 +886,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsExternalWiki = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsexternalwiki :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsExternalWiki.t;
-          [@key "putApiV4ProjectsIdIntegrationsExternalWiki"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsExternalWiki.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -905,8 +922,10 @@ module PutApiV4ProjectsIdIntegrationsExternalWiki = struct
 
   let url = "/api/v4/projects/{id}/integrations/external-wiki"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -920,13 +939,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsGitGuardian = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsgitguardian :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsGitGuardian.t;
-          [@key "putApiV4ProjectsIdIntegrationsGitGuardian"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsGitGuardian.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -957,8 +975,10 @@ module PutApiV4ProjectsIdIntegrationsGitGuardian = struct
 
   let url = "/api/v4/projects/{id}/integrations/git-guardian"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -972,13 +992,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsGithub = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsgithub :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsGithub.t;
-          [@key "putApiV4ProjectsIdIntegrationsGithub"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsGithub.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -1009,8 +1028,10 @@ module PutApiV4ProjectsIdIntegrationsGithub = struct
 
   let url = "/api/v4/projects/{id}/integrations/github"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1024,13 +1045,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsGitlabSlackApplication = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsgitlabslackapplication :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsGitlabSlackApplication.t;
-          [@key "putApiV4ProjectsIdIntegrationsGitlabSlackApplication"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsGitlabSlackApplication.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -1061,8 +1081,10 @@ module PutApiV4ProjectsIdIntegrationsGitlabSlackApplication = struct
 
   let url = "/api/v4/projects/{id}/integrations/gitlab-slack-application"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1076,13 +1098,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsGoogleCloudPlatformArtifactRegistry = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsgooglecloudplatformartifactregistry :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsGoogleCloudPlatformArtifactRegistry.t;
-          [@key "putApiV4ProjectsIdIntegrationsGoogleCloudPlatformArtifactRegistry"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsGoogleCloudPlatformArtifactRegistry.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -1113,8 +1134,10 @@ module PutApiV4ProjectsIdIntegrationsGoogleCloudPlatformArtifactRegistry = struc
 
   let url = "/api/v4/projects/{id}/integrations/google-cloud-platform-artifact-registry"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1128,15 +1151,14 @@ end
 
 module PutApiV4ProjectsIdIntegrationsGoogleCloudPlatformWorkloadIdentityFederation = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsgooglecloudplatformworkloadidentityfederation :
-        Gitlabc_components
-        .PutApiV4ProjectsIdIntegrationsGoogleCloudPlatformWorkloadIdentityFederation
-        .t;
-          [@key "putApiV4ProjectsIdIntegrationsGoogleCloudPlatformWorkloadIdentityFederation"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t =
+      Gitlabc_components.PutApiV4ProjectsIdIntegrationsGoogleCloudPlatformWorkloadIdentityFederation
+      .t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -1167,8 +1189,10 @@ module PutApiV4ProjectsIdIntegrationsGoogleCloudPlatformWorkloadIdentityFederati
 
   let url = "/api/v4/projects/{id}/integrations/google-cloud-platform-workload-identity-federation"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1182,13 +1206,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsGooglePlay = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsgoogleplay :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsGooglePlay.t;
-          [@key "putApiV4ProjectsIdIntegrationsGooglePlay"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsGooglePlay.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -1219,8 +1242,10 @@ module PutApiV4ProjectsIdIntegrationsGooglePlay = struct
 
   let url = "/api/v4/projects/{id}/integrations/google-play"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1234,13 +1259,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsHangoutsChat = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationshangoutschat :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsHangoutsChat.t;
-          [@key "putApiV4ProjectsIdIntegrationsHangoutsChat"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsHangoutsChat.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -1271,8 +1295,10 @@ module PutApiV4ProjectsIdIntegrationsHangoutsChat = struct
 
   let url = "/api/v4/projects/{id}/integrations/hangouts-chat"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1286,13 +1312,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsHarbor = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsharbor :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsHarbor.t;
-          [@key "putApiV4ProjectsIdIntegrationsHarbor"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsHarbor.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -1323,8 +1348,10 @@ module PutApiV4ProjectsIdIntegrationsHarbor = struct
 
   let url = "/api/v4/projects/{id}/integrations/harbor"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1338,12 +1365,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsIrker = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsirker : Gitlabc_components.PutApiV4ProjectsIdIntegrationsIrker.t;
-          [@key "putApiV4ProjectsIdIntegrationsIrker"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsIrker.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -1374,8 +1401,10 @@ module PutApiV4ProjectsIdIntegrationsIrker = struct
 
   let url = "/api/v4/projects/{id}/integrations/irker"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1389,13 +1418,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsJenkins = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsjenkins :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsJenkins.t;
-          [@key "putApiV4ProjectsIdIntegrationsJenkins"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsJenkins.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -1426,8 +1454,10 @@ module PutApiV4ProjectsIdIntegrationsJenkins = struct
 
   let url = "/api/v4/projects/{id}/integrations/jenkins"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1441,12 +1471,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsJira = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsjira : Gitlabc_components.PutApiV4ProjectsIdIntegrationsJira.t;
-          [@key "putApiV4ProjectsIdIntegrationsJira"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsJira.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -1477,8 +1507,10 @@ module PutApiV4ProjectsIdIntegrationsJira = struct
 
   let url = "/api/v4/projects/{id}/integrations/jira"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1492,13 +1524,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsJiraCloudApp = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsjiracloudapp :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsJiraCloudApp.t;
-          [@key "putApiV4ProjectsIdIntegrationsJiraCloudApp"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsJiraCloudApp.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -1529,8 +1560,10 @@ module PutApiV4ProjectsIdIntegrationsJiraCloudApp = struct
 
   let url = "/api/v4/projects/{id}/integrations/jira-cloud-app"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1544,13 +1577,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsMatrix = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsmatrix :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsMatrix.t;
-          [@key "putApiV4ProjectsIdIntegrationsMatrix"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsMatrix.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -1581,8 +1613,10 @@ module PutApiV4ProjectsIdIntegrationsMatrix = struct
 
   let url = "/api/v4/projects/{id}/integrations/matrix"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1596,13 +1630,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsMattermost = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsmattermost :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsMattermost.t;
-          [@key "putApiV4ProjectsIdIntegrationsMattermost"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsMattermost.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -1633,8 +1666,10 @@ module PutApiV4ProjectsIdIntegrationsMattermost = struct
 
   let url = "/api/v4/projects/{id}/integrations/mattermost"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1648,13 +1683,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsMattermostSlashCommands = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsmattermostslashcommands :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsMattermostSlashCommands.t;
-          [@key "putApiV4ProjectsIdIntegrationsMattermostSlashCommands"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsMattermostSlashCommands.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -1685,8 +1719,10 @@ module PutApiV4ProjectsIdIntegrationsMattermostSlashCommands = struct
 
   let url = "/api/v4/projects/{id}/integrations/mattermost-slash-commands"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1700,13 +1736,12 @@ end
 
 module PostApiV4ProjectsIdIntegrationsMattermostSlashCommandsTrigger = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      postapiv4projectsidintegrationsmattermostslashcommandstrigger :
-        Gitlabc_components.PostApiV4ProjectsIdIntegrationsMattermostSlashCommandsTrigger.t;
-          [@key "postApiV4ProjectsIdIntegrationsMattermostSlashCommandsTrigger"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdIntegrationsMattermostSlashCommandsTrigger.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -1731,8 +1766,10 @@ module PostApiV4ProjectsIdIntegrationsMattermostSlashCommandsTrigger = struct
 
   let url = "/api/v4/projects/{id}/integrations/mattermost_slash_commands/trigger"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1746,13 +1783,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsMicrosoftTeams = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsmicrosoftteams :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsMicrosoftTeams.t;
-          [@key "putApiV4ProjectsIdIntegrationsMicrosoftTeams"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsMicrosoftTeams.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -1783,8 +1819,10 @@ module PutApiV4ProjectsIdIntegrationsMicrosoftTeams = struct
 
   let url = "/api/v4/projects/{id}/integrations/microsoft-teams"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1798,13 +1836,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsMockCi = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsmockci :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsMockCi.t;
-          [@key "putApiV4ProjectsIdIntegrationsMockCi"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsMockCi.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -1835,8 +1872,10 @@ module PutApiV4ProjectsIdIntegrationsMockCi = struct
 
   let url = "/api/v4/projects/{id}/integrations/mock-ci"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1850,13 +1889,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsMockMonitoring = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsmockmonitoring :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsMockMonitoring.t;
-          [@key "putApiV4ProjectsIdIntegrationsMockMonitoring"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsMockMonitoring.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -1887,8 +1925,10 @@ module PutApiV4ProjectsIdIntegrationsMockMonitoring = struct
 
   let url = "/api/v4/projects/{id}/integrations/mock-monitoring"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1902,13 +1942,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsPackagist = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationspackagist :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsPackagist.t;
-          [@key "putApiV4ProjectsIdIntegrationsPackagist"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsPackagist.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -1939,8 +1978,10 @@ module PutApiV4ProjectsIdIntegrationsPackagist = struct
 
   let url = "/api/v4/projects/{id}/integrations/packagist"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1954,13 +1995,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsPhorge = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsphorge :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsPhorge.t;
-          [@key "putApiV4ProjectsIdIntegrationsPhorge"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsPhorge.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -1991,8 +2031,10 @@ module PutApiV4ProjectsIdIntegrationsPhorge = struct
 
   let url = "/api/v4/projects/{id}/integrations/phorge"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2006,13 +2048,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsPipelinesEmail = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationspipelinesemail :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsPipelinesEmail.t;
-          [@key "putApiV4ProjectsIdIntegrationsPipelinesEmail"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsPipelinesEmail.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -2043,8 +2084,10 @@ module PutApiV4ProjectsIdIntegrationsPipelinesEmail = struct
 
   let url = "/api/v4/projects/{id}/integrations/pipelines-email"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2058,13 +2101,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsPivotaltracker = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationspivotaltracker :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsPivotaltracker.t;
-          [@key "putApiV4ProjectsIdIntegrationsPivotaltracker"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsPivotaltracker.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -2095,8 +2137,10 @@ module PutApiV4ProjectsIdIntegrationsPivotaltracker = struct
 
   let url = "/api/v4/projects/{id}/integrations/pivotaltracker"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2110,13 +2154,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsPumble = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationspumble :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsPumble.t;
-          [@key "putApiV4ProjectsIdIntegrationsPumble"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsPumble.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -2147,8 +2190,10 @@ module PutApiV4ProjectsIdIntegrationsPumble = struct
 
   let url = "/api/v4/projects/{id}/integrations/pumble"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2162,13 +2207,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsPushover = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationspushover :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsPushover.t;
-          [@key "putApiV4ProjectsIdIntegrationsPushover"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsPushover.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -2199,8 +2243,10 @@ module PutApiV4ProjectsIdIntegrationsPushover = struct
 
   let url = "/api/v4/projects/{id}/integrations/pushover"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2214,13 +2260,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsRedmine = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsredmine :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsRedmine.t;
-          [@key "putApiV4ProjectsIdIntegrationsRedmine"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsRedmine.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -2251,8 +2296,10 @@ module PutApiV4ProjectsIdIntegrationsRedmine = struct
 
   let url = "/api/v4/projects/{id}/integrations/redmine"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2266,12 +2313,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsSlack = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsslack : Gitlabc_components.PutApiV4ProjectsIdIntegrationsSlack.t;
-          [@key "putApiV4ProjectsIdIntegrationsSlack"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsSlack.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -2302,8 +2349,10 @@ module PutApiV4ProjectsIdIntegrationsSlack = struct
 
   let url = "/api/v4/projects/{id}/integrations/slack"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2317,13 +2366,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsSlackSlashCommands = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsslackslashcommands :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsSlackSlashCommands.t;
-          [@key "putApiV4ProjectsIdIntegrationsSlackSlashCommands"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsSlackSlashCommands.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -2354,8 +2402,10 @@ module PutApiV4ProjectsIdIntegrationsSlackSlashCommands = struct
 
   let url = "/api/v4/projects/{id}/integrations/slack-slash-commands"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2369,13 +2419,12 @@ end
 
 module PostApiV4ProjectsIdIntegrationsSlackSlashCommandsTrigger = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      postapiv4projectsidintegrationsslackslashcommandstrigger :
-        Gitlabc_components.PostApiV4ProjectsIdIntegrationsSlackSlashCommandsTrigger.t;
-          [@key "postApiV4ProjectsIdIntegrationsSlackSlashCommandsTrigger"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdIntegrationsSlackSlashCommandsTrigger.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -2400,8 +2449,10 @@ module PostApiV4ProjectsIdIntegrationsSlackSlashCommandsTrigger = struct
 
   let url = "/api/v4/projects/{id}/integrations/slack_slash_commands/trigger"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2415,13 +2466,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsSquashTm = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationssquashtm :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsSquashTm.t;
-          [@key "putApiV4ProjectsIdIntegrationsSquashTm"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsSquashTm.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -2452,8 +2502,10 @@ module PutApiV4ProjectsIdIntegrationsSquashTm = struct
 
   let url = "/api/v4/projects/{id}/integrations/squash-tm"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2467,13 +2519,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsTeamcity = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsteamcity :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsTeamcity.t;
-          [@key "putApiV4ProjectsIdIntegrationsTeamcity"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsTeamcity.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -2504,8 +2555,10 @@ module PutApiV4ProjectsIdIntegrationsTeamcity = struct
 
   let url = "/api/v4/projects/{id}/integrations/teamcity"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2519,13 +2572,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsTelegram = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationstelegram :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsTelegram.t;
-          [@key "putApiV4ProjectsIdIntegrationsTelegram"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsTelegram.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -2556,8 +2608,10 @@ module PutApiV4ProjectsIdIntegrationsTelegram = struct
 
   let url = "/api/v4/projects/{id}/integrations/telegram"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2571,13 +2625,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsUnifyCircuit = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsunifycircuit :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsUnifyCircuit.t;
-          [@key "putApiV4ProjectsIdIntegrationsUnifyCircuit"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsUnifyCircuit.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -2608,8 +2661,10 @@ module PutApiV4ProjectsIdIntegrationsUnifyCircuit = struct
 
   let url = "/api/v4/projects/{id}/integrations/unify-circuit"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2623,13 +2678,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsWebexTeams = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationswebexteams :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsWebexTeams.t;
-          [@key "putApiV4ProjectsIdIntegrationsWebexTeams"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsWebexTeams.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -2660,8 +2714,10 @@ module PutApiV4ProjectsIdIntegrationsWebexTeams = struct
 
   let url = "/api/v4/projects/{id}/integrations/webex-teams"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2675,13 +2731,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsYoutrack = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationsyoutrack :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsYoutrack.t;
-          [@key "putApiV4ProjectsIdIntegrationsYoutrack"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsYoutrack.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -2712,8 +2767,10 @@ module PutApiV4ProjectsIdIntegrationsYoutrack = struct
 
   let url = "/api/v4/projects/{id}/integrations/youtrack"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2727,13 +2784,12 @@ end
 
 module PutApiV4ProjectsIdIntegrationsZentao = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4projectsidintegrationszentao :
-        Gitlabc_components.PutApiV4ProjectsIdIntegrationsZentao.t;
-          [@key "putApiV4ProjectsIdIntegrationsZentao"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdIntegrationsZentao.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -2764,8 +2820,10 @@ module PutApiV4ProjectsIdIntegrationsZentao = struct
 
   let url = "/api/v4/projects/{id}/integrations/zentao"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

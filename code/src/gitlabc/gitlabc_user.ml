@@ -62,11 +62,11 @@ module GetApiV4UserActivities = struct
 end
 
 module PutApiV4UserAvatar = struct
-  module Parameters = struct
-    type t = {
-      putapiv4useravatar : Gitlabc_components.PutApiV4UserAvatar.t; [@key "putApiV4UserAvatar"]
-    }
-    [@@deriving make, show, eq]
+  module Parameters = struct end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4UserAvatar.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -79,8 +79,10 @@ module PutApiV4UserAvatar = struct
 
   let url = "/api/v4/user/avatar"
 
-  let make params =
+  let make ?body =
+   fun () ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:[]
       ~query_params:[]
@@ -90,11 +92,11 @@ module PutApiV4UserAvatar = struct
 end
 
 module PostApiV4UserEmails = struct
-  module Parameters = struct
-    type t = {
-      postapiv4useremails : Gitlabc_components.PostApiV4UserEmails.t; [@key "postApiV4UserEmails"]
-    }
-    [@@deriving make, show, eq]
+  module Parameters = struct end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4UserEmails.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -107,8 +109,10 @@ module PostApiV4UserEmails = struct
 
   let url = "/api/v4/user/emails"
 
-  let make params =
+  let make ?body =
+   fun () ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:[]
       ~query_params:[]
@@ -206,11 +210,11 @@ module GetApiV4UserEmailsEmailId = struct
 end
 
 module PostApiV4UserGpgKeys = struct
-  module Parameters = struct
-    type t = {
-      postapiv4usergpgkeys : Gitlabc_components.PostApiV4UserGpgKeys.t; [@key "postApiV4UserGpgKeys"]
-    }
-    [@@deriving make, show, eq]
+  module Parameters = struct end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4UserGpgKeys.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -223,8 +227,10 @@ module PostApiV4UserGpgKeys = struct
 
   let url = "/api/v4/user/gpg_keys"
 
-  let make params =
+  let make ?body =
+   fun () ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:[]
       ~query_params:[]
@@ -350,11 +356,11 @@ module PostApiV4UserGpgKeysKeyIdRevoke = struct
 end
 
 module PostApiV4UserKeys = struct
-  module Parameters = struct
-    type t = {
-      postapiv4userkeys : Gitlabc_components.PostApiV4UserKeys.t; [@key "postApiV4UserKeys"]
-    }
-    [@@deriving make, show, eq]
+  module Parameters = struct end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4UserKeys.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -367,8 +373,10 @@ module PostApiV4UserKeys = struct
 
   let url = "/api/v4/user/keys"
 
-  let make params =
+  let make ?body =
+   fun () ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:[]
       ~query_params:[]
@@ -466,12 +474,11 @@ module GetApiV4UserKeysKeyId = struct
 end
 
 module PostApiV4UserPersonalAccessTokens = struct
-  module Parameters = struct
-    type t = {
-      postapiv4userpersonalaccesstokens : Gitlabc_components.PostApiV4UserPersonalAccessTokens.t;
-          [@key "postApiV4UserPersonalAccessTokens"]
-    }
-    [@@deriving make, show, eq]
+  module Parameters = struct end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4UserPersonalAccessTokens.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -484,8 +491,10 @@ module PostApiV4UserPersonalAccessTokens = struct
 
   let url = "/api/v4/user/personal_access_tokens"
 
-  let make params =
+  let make ?body =
+   fun () ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:[]
       ~query_params:[]
@@ -495,12 +504,11 @@ module PostApiV4UserPersonalAccessTokens = struct
 end
 
 module PutApiV4UserPreferences = struct
-  module Parameters = struct
-    type t = {
-      putapiv4userpreferences : Gitlabc_components.PutApiV4UserPreferences.t;
-          [@key "putApiV4UserPreferences"]
-    }
-    [@@deriving make, show, eq]
+  module Parameters = struct end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4UserPreferences.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -513,8 +521,10 @@ module PutApiV4UserPreferences = struct
 
   let url = "/api/v4/user/preferences"
 
-  let make params =
+  let make ?body =
+   fun () ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:[]
       ~query_params:[]
@@ -547,11 +557,11 @@ module GetApiV4UserPreferences = struct
 end
 
 module PostApiV4UserRunners = struct
-  module Parameters = struct
-    type t = {
-      postapiv4userrunners : Gitlabc_components.PostApiV4UserRunners.t; [@key "postApiV4UserRunners"]
-    }
-    [@@deriving make, show, eq]
+  module Parameters = struct end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4UserRunners.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -576,8 +586,10 @@ module PostApiV4UserRunners = struct
 
   let url = "/api/v4/user/runners"
 
-  let make params =
+  let make ?body =
+   fun () ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:[]
       ~query_params:[]
@@ -587,11 +599,11 @@ module PostApiV4UserRunners = struct
 end
 
 module PatchApiV4UserStatus = struct
-  module Parameters = struct
-    type t = {
-      patchapiv4userstatus : Gitlabc_components.PatchApiV4UserStatus.t; [@key "patchApiV4UserStatus"]
-    }
-    [@@deriving make, show, eq]
+  module Parameters = struct end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PatchApiV4UserStatus.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -604,8 +616,10 @@ module PatchApiV4UserStatus = struct
 
   let url = "/api/v4/user/status"
 
-  let make params =
+  let make ?body =
+   fun () ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:[]
       ~query_params:[]
@@ -615,11 +629,11 @@ module PatchApiV4UserStatus = struct
 end
 
 module PutApiV4UserStatus = struct
-  module Parameters = struct
-    type t = {
-      putapiv4userstatus : Gitlabc_components.PutApiV4UserStatus.t; [@key "putApiV4UserStatus"]
-    }
-    [@@deriving make, show, eq]
+  module Parameters = struct end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4UserStatus.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -632,8 +646,10 @@ module PutApiV4UserStatus = struct
 
   let url = "/api/v4/user/status"
 
-  let make params =
+  let make ?body =
+   fun () ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:[]
       ~query_params:[]

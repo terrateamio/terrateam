@@ -1,11 +1,11 @@
 module PostApiV4ProjectsIdRemoteMirrors = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      postapiv4projectsidremotemirrors : Gitlabc_components.PostApiV4ProjectsIdRemoteMirrors.t;
-          [@key "postApiV4ProjectsIdRemoteMirrors"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdRemoteMirrors.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -33,8 +33,10 @@ module PostApiV4ProjectsIdRemoteMirrors = struct
 
   let url = "/api/v4/projects/{id}/remote_mirrors"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -144,11 +146,13 @@ module PutApiV4ProjectsIdRemoteMirrorsMirrorId = struct
     type t = {
       id : string;
       mirror_id : string;
-      putapiv4projectsidremotemirrorsmirrorid :
-        Gitlabc_components.PutApiV4ProjectsIdRemoteMirrorsMirrorId.t;
-          [@key "putApiV4ProjectsIdRemoteMirrorsMirrorId"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdRemoteMirrorsMirrorId.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -176,8 +180,10 @@ module PutApiV4ProjectsIdRemoteMirrorsMirrorId = struct
 
   let url = "/api/v4/projects/{id}/remote_mirrors/{mirror_id}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

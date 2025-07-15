@@ -1,11 +1,11 @@
 module PostApiV4ProjectsIdVariables = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      postapiv4projectsidvariables : Gitlabc_components.PostApiV4ProjectsIdVariables.t;
-          [@key "postApiV4ProjectsIdVariables"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdVariables.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -23,8 +23,10 @@ module PostApiV4ProjectsIdVariables = struct
 
   let url = "/api/v4/projects/{id}/variables"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -118,10 +120,13 @@ module PutApiV4ProjectsIdVariablesKey = struct
     type t = {
       id : string;
       key : string;
-      putapiv4projectsidvariableskey : Gitlabc_components.PutApiV4ProjectsIdVariablesKey.t;
-          [@key "putApiV4ProjectsIdVariablesKey"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdVariablesKey.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -139,8 +144,10 @@ module PutApiV4ProjectsIdVariablesKey = struct
 
   let url = "/api/v4/projects/{id}/variables/{key}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

@@ -1,23 +1,19 @@
-module Primary = struct
-  type t = {
-    auto_stop_at : string option; [@default None]
-    auto_stop_setting : string option; [@default None]
-    cluster_agent : Gitlabc_components_api_entities_clusters_agent.t option; [@default None]
-    created_at : string option; [@default None]
-    description : string option; [@default None]
-    external_url : string option; [@default None]
-    flux_resource_path : string option; [@default None]
-    id : int option; [@default None]
-    kubernetes_namespace : string option; [@default None]
-    last_deployment : Gitlabc_components_api_entities_deployment.t option; [@default None]
-    name : string option; [@default None]
-    project : Gitlabc_components_api_entities_basicprojectdetails.t option; [@default None]
-    slug : string option; [@default None]
-    state : string option; [@default None]
-    tier : string option; [@default None]
-    updated_at : string option; [@default None]
-  }
-  [@@deriving yojson { strict = false; meta = true }, show, eq]
-end
-
-include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+type t = {
+  auto_stop_at : string option; [@default None]
+  auto_stop_setting : string option; [@default None]
+  cluster_agent : Gitlabc_components_api_entities_clusters_agent.t option; [@default None]
+  created_at : string option; [@default None]
+  description : string option; [@default None]
+  external_url : string option; [@default None]
+  flux_resource_path : string option; [@default None]
+  id : int option; [@default None]
+  kubernetes_namespace : string option; [@default None]
+  last_deployment : Gitlabc_components_api_entities_deployment.t option; [@default None]
+  name : string option; [@default None]
+  project : Gitlabc_components_api_entities_basicprojectdetails.t option; [@default None]
+  slug : string option; [@default None]
+  state : string option; [@default None]
+  tier : string option; [@default None]
+  updated_at : string option; [@default None]
+}
+[@@deriving yojson { strict = false; meta = true }, show, eq]

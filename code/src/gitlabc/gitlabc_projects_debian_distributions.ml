@@ -1,12 +1,11 @@
 module PostApiV4ProjectsIdDebianDistributions = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      postapiv4projectsiddebiandistributions :
-        Gitlabc_components.PostApiV4ProjectsIdDebianDistributions.t;
-          [@key "postApiV4ProjectsIdDebianDistributions"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdDebianDistributions.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -37,8 +36,10 @@ module PostApiV4ProjectsIdDebianDistributions = struct
 
   let url = "/api/v4/projects/{id}/debian_distributions"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -213,11 +214,13 @@ module PutApiV4ProjectsIdDebianDistributionsCodename = struct
     type t = {
       codename : string;
       id : string;
-      putapiv4projectsiddebiandistributionscodename :
-        Gitlabc_components.PutApiV4ProjectsIdDebianDistributionsCodename.t;
-          [@key "putApiV4ProjectsIdDebianDistributionsCodename"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdDebianDistributionsCodename.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -248,8 +251,10 @@ module PutApiV4ProjectsIdDebianDistributionsCodename = struct
 
   let url = "/api/v4/projects/{id}/debian_distributions/{codename}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

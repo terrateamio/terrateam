@@ -32,9 +32,11 @@ module DeleteApiV4Runners = struct
 end
 
 module PostApiV4Runners = struct
-  module Parameters = struct
-    type t = { postapiv4runners : Gitlabc_components.PostApiV4Runners.t [@key "postApiV4Runners"] }
-    [@@deriving make, show, eq]
+  module Parameters = struct end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4Runners.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -62,8 +64,10 @@ module PostApiV4Runners = struct
 
   let url = "/api/v4/runners"
 
-  let make params =
+  let make ?body =
+   fun () ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:[]
       ~query_params:[]
@@ -328,13 +332,11 @@ module DeleteApiV4RunnersManagers = struct
 end
 
 module PostApiV4RunnersResetAuthenticationToken = struct
-  module Parameters = struct
-    type t = {
-      postapiv4runnersresetauthenticationtoken :
-        Gitlabc_components.PostApiV4RunnersResetAuthenticationToken.t;
-          [@key "postApiV4RunnersResetAuthenticationToken"]
-    }
-    [@@deriving make, show, eq]
+  module Parameters = struct end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4RunnersResetAuthenticationToken.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -352,8 +354,10 @@ module PostApiV4RunnersResetAuthenticationToken = struct
 
   let url = "/api/v4/runners/reset_authentication_token"
 
-  let make params =
+  let make ?body =
+   fun () ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:[]
       ~query_params:[]
@@ -391,12 +395,11 @@ module PostApiV4RunnersResetRegistrationToken = struct
 end
 
 module PostApiV4RunnersVerify = struct
-  module Parameters = struct
-    type t = {
-      postapiv4runnersverify : Gitlabc_components.PostApiV4RunnersVerify.t;
-          [@key "postApiV4RunnersVerify"]
-    }
-    [@@deriving make, show, eq]
+  module Parameters = struct end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4RunnersVerify.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -421,8 +424,10 @@ module PostApiV4RunnersVerify = struct
 
   let url = "/api/v4/runners/verify"
 
-  let make params =
+  let make ?body =
+   fun () ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:[]
       ~query_params:[]
@@ -479,11 +484,12 @@ end
 
 module PutApiV4RunnersId = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4runnersid : Gitlabc_components.PutApiV4RunnersId.t; [@key "putApiV4RunnersId"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4RunnersId.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -514,8 +520,10 @@ module PutApiV4RunnersId = struct
 
   let url = "/api/v4/runners/{id}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

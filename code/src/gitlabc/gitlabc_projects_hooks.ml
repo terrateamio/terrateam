@@ -121,10 +121,13 @@ module PutApiV4ProjectsIdHooksHookId = struct
     type t = {
       hook_id : int;
       id : string;
-      putapiv4projectsidhookshookid : Gitlabc_components.PutApiV4ProjectsIdHooksHookId.t;
-          [@key "putApiV4ProjectsIdHooksHookId"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdHooksHookId.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -152,8 +155,10 @@ module PutApiV4ProjectsIdHooksHookId = struct
 
   let url = "/api/v4/projects/{id}/hooks/{hook_id}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -245,11 +250,13 @@ module PutApiV4ProjectsIdHooksHookIdCustomHeadersKey = struct
       hook_id : int;
       id : int;
       key : string;
-      putapiv4projectsidhookshookidcustomheaderskey :
-        Gitlabc_components.PutApiV4ProjectsIdHooksHookIdCustomHeadersKey.t;
-          [@key "putApiV4ProjectsIdHooksHookIdCustomHeadersKey"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdHooksHookIdCustomHeadersKey.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -262,8 +269,10 @@ module PutApiV4ProjectsIdHooksHookIdCustomHeadersKey = struct
 
   let url = "/api/v4/projects/{id}/hooks/{hook_id}/custom_headers/{key}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -586,11 +595,13 @@ module PutApiV4ProjectsIdHooksHookIdUrlVariablesKey = struct
       hook_id : int;
       id : int;
       key : string;
-      putapiv4projectsidhookshookidurlvariableskey :
-        Gitlabc_components.PutApiV4ProjectsIdHooksHookIdUrlVariablesKey.t;
-          [@key "putApiV4ProjectsIdHooksHookIdUrlVariablesKey"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdHooksHookIdUrlVariablesKey.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -603,8 +614,10 @@ module PutApiV4ProjectsIdHooksHookIdUrlVariablesKey = struct
 
   let url = "/api/v4/projects/{id}/hooks/{hook_id}/url_variables/{key}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

@@ -1,11 +1,11 @@
 module PostApiV4GroupsIdBadges = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      postapiv4groupsidbadges : Gitlabc_components.PostApiV4GroupsIdBadges.t;
-          [@key "postApiV4GroupsIdBadges"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4GroupsIdBadges.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -18,8 +18,10 @@ module PostApiV4GroupsIdBadges = struct
 
   let url = "/api/v4/groups/{id}/badges"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -147,10 +149,13 @@ module PutApiV4GroupsIdBadgesBadgeId = struct
     type t = {
       badge_id : int;
       id : string;
-      putapiv4groupsidbadgesbadgeid : Gitlabc_components.PutApiV4GroupsIdBadgesBadgeId.t;
-          [@key "putApiV4GroupsIdBadgesBadgeId"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4GroupsIdBadgesBadgeId.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -163,8 +168,10 @@ module PutApiV4GroupsIdBadgesBadgeId = struct
 
   let url = "/api/v4/groups/{id}/badges/{badge_id}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

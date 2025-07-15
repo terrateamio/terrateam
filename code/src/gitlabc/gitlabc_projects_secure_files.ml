@@ -1,11 +1,11 @@
 module PostApiV4ProjectsIdSecureFiles = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      postapiv4projectsidsecurefiles : Gitlabc_components.PostApiV4ProjectsIdSecureFiles.t;
-          [@key "postApiV4ProjectsIdSecureFiles"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdSecureFiles.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -23,8 +23,10 @@ module PostApiV4ProjectsIdSecureFiles = struct
 
   let url = "/api/v4/projects/{id}/secure_files"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
