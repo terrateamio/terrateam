@@ -61,14 +61,14 @@ services:
   terratunnel:
     image: ghcr.io/terrateamio/terratunnel:latest
     pull_policy: always
-    command: ["client", "--local-endpoint", "http://localhost:8081", "--update-github-webhook"]
+    command: ["client", "--local-endpoint", "http://server:8080", "--update-github-webhook"]
     environment:
       TERRATUNNEL_LOCAL_ENDPOINT: "http://server:8080"
       GITHUB_APP_ID: "${GITHUB_APP_ID}"
       GITHUB_APP_PEM: "${GITHUB_APP_PEM}"
       WEBHOOK_PATH: "/api/github/v1/events"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      test: ["CMD", "wget", "--spider", "-q", "http://terratunnel:8081/health"]
       interval: 10s
       timeout: 5s
       retries: 5
