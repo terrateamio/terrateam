@@ -43,6 +43,7 @@ services:
       GITHUB_APP_CLIENT_ID: "${GITHUB_APP_CLIENT_ID}"
       GITHUB_APP_ID: "${GITHUB_APP_ID}"
       GITHUB_APP_PEM: "${GITHUB_APP_PEM}"
+      TERRATUNNEL_API_ENDPOINT: "http://terratunnel:8081"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 60s
@@ -51,6 +52,8 @@ services:
       start_period: 10s
     depends_on:
       db:
+        condition: service_healthy
+      terratunnel:
         condition: service_healthy
     networks:
       - terrateam
@@ -64,6 +67,12 @@ services:
       GITHUB_APP_ID: "${GITHUB_APP_ID}"
       GITHUB_APP_PEM: "${GITHUB_APP_PEM}"
       WEBHOOK_PATH: "/api/github/v1/events"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
       - terrateam
 
