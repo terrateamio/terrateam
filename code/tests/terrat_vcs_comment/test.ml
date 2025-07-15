@@ -148,9 +148,9 @@ module Make_wrapper = struct
         assert (r = ());
         match !t with
         | [] -> Abb.Future.return (Ok r)
-        | es -> 
-            Printf.printf "\n\tCOMMAND LOG: %s%!\n" (Eh.show_commands es);
-            assert false)
+        | es ->
+            t := es;
+            Cm.run t els)
     | Error e -> Abb.Future.return (Error e)
 end
 
