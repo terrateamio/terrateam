@@ -151,11 +151,12 @@
   function handleLegacyUrlRedirect() {
     const path = window.location.pathname;
     
-    // Check for other potential legacy patterns
-    // Example: /i/{installation_id} → #/dashboard
-    const legacyInstallationMatch = path.match(/^\/i\/(\d+)\/?$/i);
+    // Check for installation-scoped URLs (both shallow and deep)
+    // Example: /i/{installation_id} → #/i/{installation_id}/dashboard
+    // Example: /i/{installation_id}/runs/{run_id} → #/i/{installation_id}/runs/{run_id}
+    const legacyInstallationMatch = path.match(/^\/i\/(\d+)(\/.*)?$/i);
     if (legacyInstallationMatch) {
-      const [, installationId] = legacyInstallationMatch;
+      const [, installationId, restOfPath] = legacyInstallationMatch;
       
       // Store installation ID for auto-selection
       try {
@@ -164,7 +165,13 @@
         console.warn('Could not store installation ID in session storage:', e);
       }
       
-      window.location.replace(`${window.location.origin}/#/`);
+      // If there's a deeper path (like /runs/xxx), preserve it in the hash
+      if (restOfPath && restOfPath !== '/') {
+        window.location.replace(`${window.location.origin}/#/i/${installationId}${restOfPath}`);
+      } else {
+        // Just /i/{id} or /i/{id}/ - redirect to root and let auto-redirect handle it
+        window.location.replace(`${window.location.origin}/#/`);
+      }
       return true;
     }
     
