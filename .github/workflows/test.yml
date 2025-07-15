@@ -88,7 +88,6 @@ jobs:
           platforms: linux/amd64
 
   build-test-arm64:
-    if: false
     runs-on: ubuntu-22.04-arm64
     permissions:
       contents: read
