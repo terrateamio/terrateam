@@ -82,9 +82,6 @@ def main():
 
     setup_environment()
 
-    if not os.environ.get(TERRAT_API_BASE):
-        raise Exception('TERRAT_API_BASE must be specified')
-
     # Run db migration
     subprocess.check_call(['/usr/local/bin/terrat', 'migrate', '--verbosity=debug'])
 
