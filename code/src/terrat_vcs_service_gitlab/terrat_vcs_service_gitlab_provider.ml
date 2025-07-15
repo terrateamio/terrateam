@@ -2234,6 +2234,7 @@ module Comment = struct
     let depends_on_cycle = read "depends_on_cycle.tmpl"
     let maybe_stale_work_manifests = read "maybe_stale_work_manifests.tmpl"
     let repo_config_parse_failure = read "repo_config_parse_failure.tmpl"
+    let repo_config_schema_err = read "repo_config_schema_err.tmpl"
     let repo_config_generic_failure = read "repo_config_generic_failure.tmpl"
     let pull_request_not_appliable = read "pull_request_not_appliable.tmpl"
     let pull_request_not_mergeable = read "pull_request_not_mergeable.tmpl"
@@ -3425,6 +3426,23 @@ module Comment = struct
           "WORKFLOWS_TAG_QUERY_PARSE_ERR"
           Tmpl.repo_config_err_workflows_tag_query_parse_err
           kv
+    | `Repo_config_schema_err errs ->
+        let errors =
+          CCList.map
+            (fun { Jsonschema_check.Validation_err.msg; path } ->
+              Snabela.Kv.(Map.of_list [ ("msg", string msg); ("path", string path) ]))
+            errs
+        in
+        let kv =
+          Snabela.Kv.(Map.of_list [ ("fname", string "repo_config"); ("errors", list errors) ])
+        in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "REPO_CONFIG_SCHEMA_ERR"
+          Tmpl.repo_config_schema_err
+          kv
 
   let publish_comment ~request_id client user pull_request =
     let module Msg = Terrat_vcs_provider2.Msg in
@@ -4164,75 +4182,47 @@ module Comment = struct
           "PULL_REQUEST_NOT_MERGEABLE"
           Tmpl.pull_request_not_mergeable
           kv
-    | Msg.Repo_config (provenance, repo_config) -> (
-        let ret =
-          let open Abbs_future_combinators.Infix_result_monad in
-          let repo_config_json =
-            Terrat_repo_config.Version_1.to_yojson
-              (Terrat_base_repo_config_v1.to_version_1 repo_config)
-          in
-          Jsonu.to_yaml_string repo_config_json
-          >>= fun repo_config_yaml ->
-          let kv =
-            Snabela.Kv.(
-              Map.of_list
-                [
-                  ("repo_config", string repo_config_yaml);
-                  ( "provenance",
-                    list (CCList.map (fun src -> Map.of_list [ ("src", string src) ]) provenance) );
-                ])
-          in
-          Abb.Future.return (Ok kv)
+    | Msg.Repo_config (provenance, repo_config) ->
+        let repo_config_json =
+          Terrat_repo_config.Version_1.to_yojson
+            (Terrat_base_repo_config_v1.to_version_1 repo_config)
         in
-        let open Abb.Future.Infix_monad in
-        ret
-        >>= function
-        | Ok kv ->
-            apply_template_and_publish
-              ~request_id
-              client
-              pull_request
-              "REPO_CONFIG"
-              Tmpl.repo_config
-              kv
-        | Error (#Jsonu.to_yaml_string_err as err) ->
-            Logs.err (fun m -> m "%s : TO_YAML : %a" request_id Jsonu.pp_to_yaml_string_err err);
-            Abb.Future.return (Error `Error))
+        let repo_config_yaml = Jsonu.to_yaml_string repo_config_json in
+        let kv =
+          Snabela.Kv.(
+            Map.of_list
+              [
+                ("repo_config", string repo_config_yaml);
+                ( "provenance",
+                  list (CCList.map (fun src -> Map.of_list [ ("src", string src) ]) provenance) );
+              ])
+        in
+        apply_template_and_publish ~request_id client pull_request "REPO_CONFIG" Tmpl.repo_config kv
     | Msg.Repo_config_err err -> repo_config_err ~request_id ~client ~pull_request ~title:"" err
     | Msg.Repo_config_failure err ->
         repo_config_failure ~request_id ~client ~pull_request ~title:"Terrateam repository" err
-    | Msg.Repo_config_merge_err ((base, src), (key, base_value, src_value)) -> (
-        let open Abb.Future.Infix_monad in
-        Abbs_future_combinators.Infix_result_app.(
-          (fun base_value src_value -> (base_value, src_value))
-          <$> Jsonu.to_yaml_string base_value
-          <*> Jsonu.to_yaml_string src_value)
-        >>= function
-        | Ok (base_value, src_value) ->
-            let bases = CCList.filter (( <> ) "") @@ CCString.split ~by:"," base in
-            let kv =
-              Snabela.Kv.(
-                Map.of_list
-                  [
-                    ( "base",
-                      list (CCList.map (fun name -> Map.of_list [ ("name", string name) ]) bases) );
-                    ("src", string src);
-                    ("key", string (CCOption.get_or ~default:"<unknown>" key));
-                    ("base_value", string base_value);
-                    ("src_value", string src_value);
-                  ])
-            in
-            apply_template_and_publish
-              ~request_id
-              client
-              pull_request
-              "REPO_CONFIG_MERGE_ERR"
-              Tmpl.repo_config_merge_err
-              kv
-        | Error (#Jsonu.to_yaml_string_err as err) ->
-            Logs.err (fun m ->
-                m "%s : REPO_CONFIG_MERGE_ERR : %a" request_id Jsonu.pp_to_yaml_string_err err);
-            Abb.Future.return (Error `Error))
+    | Msg.Repo_config_merge_err ((base, src), (key, base_value, src_value)) ->
+        let base_value = Jsonu.to_yaml_string base_value in
+        let src_value = Jsonu.to_yaml_string src_value in
+        let bases = CCList.filter (( <> ) "") @@ CCString.split ~by:"," base in
+        let kv =
+          Snabela.Kv.(
+            Map.of_list
+              [
+                ("base", list (CCList.map (fun name -> Map.of_list [ ("name", string name) ]) bases));
+                ("src", string src);
+                ("key", string (CCOption.get_or ~default:"<unknown>" key));
+                ("base_value", string base_value);
+                ("src_value", string src_value);
+              ])
+        in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "REPO_CONFIG_MERGE_ERR"
+          Tmpl.repo_config_merge_err
+          kv
     | Msg.Repo_config_parse_failure (fname, err) ->
         let kv = Snabela.Kv.(Map.of_list [ ("fname", string fname); ("msg", string err) ]) in
         apply_template_and_publish
@@ -4241,6 +4231,21 @@ module Comment = struct
           pull_request
           "REPO_CONFIG_PARSE_FAILURE"
           Tmpl.repo_config_parse_failure
+          kv
+    | Msg.Repo_config_schema_err (fname, errs) ->
+        let errors =
+          CCList.map
+            (fun { Jsonschema_check.Validation_err.msg; path } ->
+              Snabela.Kv.(Map.of_list [ ("msg", string msg); ("path", string path) ]))
+            errs
+        in
+        let kv = Snabela.Kv.(Map.of_list [ ("fname", string fname); ("errors", list errors) ]) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "REPO_CONFIG_SCHEMA_ERR"
+          Tmpl.repo_config_schema_err
           kv
     | Msg.Run_work_manifest_err `Failed_to_start ->
         let kv = Snabela.Kv.(Map.of_list []) in
@@ -4352,12 +4357,10 @@ module Repo_config = struct
     | Some (_, content) when CCString.is_empty (CCString.trim content) ->
         Abb.Future.return (Ok None)
     | Some (fname, content) ->
-        Abbs_future_combinators.Result.map_err
-          ~f:(function
-            | `Json_decode_err err -> `Json_decode_err (fname, err)
-            | `Unexpected_err -> `Unexpected_err fname
-            | `Yaml_decode_err err -> `Yaml_decode_err (fname, err))
-          (Jsonu.of_yaml_string content)
+        Abb.Future.return
+        @@ CCResult.map_err
+             (fun (`Yaml_decode_err err) -> `Yaml_decode_err (fname, err))
+             (Jsonu.of_yaml_string content)
         >>= fun json -> Abb.Future.return (Ok (Some (fname, json)))
 
   let repo_config_system_defaults system_defaults =
@@ -4392,7 +4395,7 @@ module Repo_config = struct
     >>= fun (default_repo_config, repo_config) ->
     let wrap_err fname =
       Abbs_future_combinators.Result.map_err ~f:(function
-        | `Repo_config_parse_err err -> `Repo_config_parse_err (fname, err)
+        | `Repo_config_schema_err err -> `Repo_config_schema_err (fname, err)
         | #Terrat_base_repo_config_v1.of_version_1_err as err -> err)
     in
     let validate_configs =

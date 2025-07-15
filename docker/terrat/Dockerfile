@@ -2,13 +2,14 @@
 ARG BASE_IMAGE
 
 # Optional base setup stage if BASE_IMAGE is not provided
-FROM alpine:3.18 AS build-base
+FROM alpine:3.22 AS build-base
 
 # Install base packages
 RUN apk add --no-cache \
     bash \
     bsd-compat-headers \
     ca-certificates \
+    cargo \
     clang \
     cmake \
     coreutils \
@@ -31,8 +32,8 @@ RUN apk add --no-cache \
     py3-yaml \
     python3 \
     rsync \
+    rust \
     sqlite-dev \
-    yj \
     zlib-dev
 
 # Initialize opam
@@ -95,7 +96,6 @@ RUN ulimit -s 524288 && ulimit -a && \
 # Build target for terrat-ee
 FROM build-setup AS terrat-ee-build
 WORKDIR /mono/code
-RUN apk add --no-cache rsync
 RUN ulimit -s 524288 && ulimit -a && \
     mv /build-cache ./build && \
     eval $(opam env) && pds && \

@@ -29,7 +29,8 @@ end
 module Document = struct
   type t = {
     definitions : Json_schema_conv.Schema.t Json_schema_conv.Properties.t;
-    one_of : Json_schema_conv.Schema.t list; [@key "oneOf"]
+    one_of : Json_schema_conv.Schema.t list option; [@key "oneOf"] [@default None]
+    ref_ : string option; [@key "$ref"] [@default None]
   }
   [@@deriving yojson { strict = false }, show]
 end
@@ -179,9 +180,17 @@ let convert_def strict_records definitions module_base def =
        ())
     def
 
-let convert_document strict_records output_dir output_name { Document.definitions; one_of } =
+let convert_document strict_records output_dir output_name { Document.definitions; one_of; ref_ } =
   let module_base = CCString.capitalize_ascii output_name in
-  let event = Json_schema_conv.{ (Schema.make_t_ ()) with Schema.one_of = Some one_of } in
+  let event =
+    match (one_of, ref_) with
+    | Some one_of, _ -> Json_schema_conv.{ (Schema.make_t_ ()) with Schema.one_of = Some one_of }
+    | None, Some ref_ ->
+        (* This is a bit of a hack to support a ref as a hook entrypoint.  Using
+           a $ref gets translated to a singular oneOf. *)
+        Json_schema_conv.{ (Schema.make_t_ ()) with Schema.one_of = Some [ Value.Ref ref_ ] }
+    | None, None -> assert false
+  in
   Json_schema_conv.String_map.iter
     (fun name def ->
       match def with

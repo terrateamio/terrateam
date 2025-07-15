@@ -1630,9 +1630,5 @@
       "type": "object"
     }
   },
-  "oneOf": [
-    {
-      "$ref": "#/definitions/version-1"
-    }
-  ]
+  "$ref": "#/definitions/version-1"
 }

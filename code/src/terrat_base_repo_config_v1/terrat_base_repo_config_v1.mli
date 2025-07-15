@@ -741,14 +741,17 @@ type of_version_1_err =
   ]
 [@@deriving show]
 
+type of_version_1_json_err =
+  [ of_version_1_err
+  | `Repo_config_schema_err of Jsonschema_check.Validation_err.t list
+  ]
+[@@deriving show]
+
 val of_view : View.t -> raw t
 val to_view : 'a t -> View.t
 val default : raw t
 val of_version_1 : Terrat_repo_config.Version_1.t -> (raw t, [> of_version_1_err ]) result
-
-val of_version_1_json :
-  Yojson.Safe.t -> (raw t, [> of_version_1_err | `Repo_config_parse_err of string ]) result
-
+val of_version_1_json : Yojson.Safe.t -> (raw t, [> of_version_1_json_err ]) result
 val to_version_1 : 'a t -> Terrat_repo_config.Version_1.t
 val merge_with_default_branch_config : default:'a t -> 'a t -> 'a t
 

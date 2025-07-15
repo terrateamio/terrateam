@@ -2,6 +2,8 @@ module V1 = Terrat_repo_config.Version_1
 module String_map = Terrat_data.String_map
 module String_set = Terrat_data.String_set
 
+let config_schema = [%blob "../../../../api_schemas/terrat/config-schema.json"]
+
 let timezone_abbreviations =
   String_set.of_list
     [
@@ -1116,6 +1118,12 @@ type of_version_1_err =
   | `Workflows_plan_unknown_run_on_err of Terrat_repo_config_run_on.t
   | `Workflows_plan_unknown_visible_on_err of string
   | `Workflows_tag_query_parse_err of string * string
+  ]
+[@@deriving show]
+
+type of_version_1_json_err =
+  [ of_version_1_err
+  | `Repo_config_schema_err of Jsonschema_check.Validation_err.t list
   ]
 [@@deriving show]
 
@@ -2301,17 +2309,12 @@ let of_version_1 v1 =
 let of_version_1_json json =
   match Terrat_repo_config.Version_1.of_yojson json with
   | Ok config -> of_version_1 config
-  | Error err ->
-      (* This is a cheap trick but we just want to make the error message a
-         little bit more friendly to users by replacing the parts of the error
-         message that are specific to the implementation. *)
-      Error
-        (`Repo_config_parse_err
-           ("Failed to parse repo config: "
-           ^ (err
-             |> CCString.replace ~sub:"Terrat_repo_config." ~by:""
-             |> CCString.replace ~sub:".t" ~by:""
-             |> CCString.lowercase_ascii)))
+  | Error _ -> (
+      match
+        Jsonschema_check.validate_json_schema ~schema:config_schema (Yojson.Safe.to_string json)
+      with
+      | Ok () -> assert false
+      | Error errors -> Error (`Repo_config_schema_err errors))
 
 let to_version_1_match_list =
   CCList.map (function
