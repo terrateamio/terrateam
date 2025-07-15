@@ -40,14 +40,18 @@ module Make (M : S) = struct
 
   let partition_by_strategy els = By_strategy.group els
   let compare e1 e2 = Cmp.compare (M.is_success e1, M.dirspace e1) (M.is_success e2, M.dirspace e2)
+  let compact e = if M.rendered_length [ e ] < M.max_comment_length then e else M.compact e
 
   let split_by_size els =
     let combine (groups, curr_acc) r =
       if M.rendered_length (r :: curr_acc) < M.max_comment_length then (groups, r :: curr_acc)
-      else (curr_acc :: groups, [ r ])
+      else (CCList.rev curr_acc :: groups, [ r ])
     in
     let groups, rest = CCList.fold_left combine ([], []) els in
-    CCList.rev (rest :: groups) |> CCList.filter CCFun.(CCList.is_empty %> not)
+    let x =
+      CCList.rev (CCList.rev rest :: groups) |> CCList.filter CCFun.(CCList.is_empty %> not)
+    in
+    x
 
   let append_single t (els : M.el list) =
     let open Abbs_future_combinators.Infix_result_monad in
@@ -62,7 +66,7 @@ module Make (M : S) = struct
   let run t els =
     let open Abb.Future.Infix_monad in
     let module Alr = Abbs_future_combinators.List_result in
-    let compressed = CCList.map M.compact els in
+    let compressed = CCList.map compact els in
     let sorted = CCList.sort compare compressed in
     let groups = partition_by_strategy sorted in
     let split = CCList.map (fun (k, v) -> (k, split_by_size v)) groups in

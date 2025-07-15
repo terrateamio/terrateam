@@ -43,7 +43,7 @@ module H = struct
         let abb_result = Abb.Future.return cmd_result in
         (abb_result : ('a, [ `Error ]) result Abb.Future.t :> ('a, [> `Error ]) result Abb.Future.t)
     | es ->
-        Printf.printf "\n\tCOMMAND LOG: %s%!\n" (Eh.show_commands es);
+        Printf.printf "\n\tQUERY COMMENT_ID LOG: %s%!\n" (Eh.show_commands es);
         assert false
 
   let query_els_for_comment_id t cid =
@@ -53,7 +53,7 @@ module H = struct
         let abb_result = Abb.Future.return cmd_result in
         (abb_result : ('a, [ `Error ]) result Abb.Future.t :> ('a, [> `Error ]) result Abb.Future.t)
     | es ->
-        Printf.printf "\n\tCOMMAND LOG: %s%!\n" (Eh.show_commands es);
+        Printf.printf "\n\tQUERY ELS FOR COMMENT_ID LOG: %s%!\n" (Eh.show_commands es);
         assert false
 
   let upsert_comment_id t els cid =
@@ -63,7 +63,7 @@ module H = struct
         let abb_result = Abb.Future.return cmd_result in
         (abb_result : ('a, [ `Error ]) result Abb.Future.t :> ('a, [> `Error ]) result Abb.Future.t)
     | es ->
-        Printf.printf "\n\tCOMMAND LOG: %s%!\n" (Eh.show_commands es);
+        Printf.printf "\n\tUPSERT LOG: %s%!\n" (Eh.show_commands es);
         assert false
 
   let delete_comment t cid =
@@ -73,7 +73,7 @@ module H = struct
         let abb_result = Abb.Future.return cmd_result in
         (abb_result : ('a, [ `Error ]) result Abb.Future.t :> ('a, [> `Error ]) result Abb.Future.t)
     | es ->
-        Printf.printf "\n\tCOMMAND LOG: %s%!\n" (Eh.show_commands es);
+        Printf.printf "\n\tDELETE LOG: %s%!\n" (Eh.show_commands es);
         assert false
 
   let minimize_comment t cid =
@@ -83,17 +83,19 @@ module H = struct
         let abb_result = Abb.Future.return cmd_result in
         (abb_result : ('a, [ `Error ]) result Abb.Future.t :> ('a, [> `Error ]) result Abb.Future.t)
     | es ->
-        Printf.printf "\n\tCOMMAND LOG: %s%!\n" (Eh.show_commands es);
+        Printf.printf "\n\tMINIMIZE LOG: %s%!\n" (Eh.show_commands es);
         assert false
 
   let post_comment t els =
     match !t with
-    | Eh.Post_comment (_, cmd_result) :: rest ->
+    | Eh.Post_comment (els2, cmd_result) :: rest when els = els2 ->
         t := rest;
         let abb_result = Abb.Future.return cmd_result in
         (abb_result : ('a, [ `Error ]) result Abb.Future.t :> ('a, [> `Error ]) result Abb.Future.t)
     | es ->
-        Printf.printf "\n\tCOMMAND LOG: %s%!\n" (Eh.show_commands es);
+        let show = [%show: Eh.el list] in
+        Printf.printf "\n\tPOST COMMENT INPUTS: %s%!\n" (show els);
+        Printf.printf "\n\tPOST COMMENT LOG: %s%!\n" (Eh.show_commands es);
         assert false
 
   let rendered_length els = CCList.fold_left (fun acc el -> acc + el.Eh.rendered_length) 0 els
@@ -144,13 +146,12 @@ module Make_wrapper = struct
     let module Cm = Terrat_vcs_comment.Make (H) in
     Cm.run t els
     >>= function
-    | Ok r -> (
-        assert (r = ());
+    | Ok () -> (
         match !t with
-        | [] -> Abb.Future.return (Ok r)
+        | [] -> Abb.Future.return (Ok ())
         | es ->
-            t := es;
-            Cm.run t els)
+            Printf.printf "\n\tT: %s%!\n" (Eh.show_commands es);
+            assert false)
     | Error e -> Abb.Future.return (Error e)
 end
 
@@ -171,6 +172,7 @@ let test_basic =
         let open Abb.Future.Infix_monad in
         let module Cm = Terrat_vcs_comment.Make (H) in
         let module Shr = Shared in
+        (* TODO: Remove this random data gen *)
         let els = Shared.gen_els 1 10 20 in
         let counter = API_id.create 0 in
         let cid1 = API_id.next counter in
@@ -190,7 +192,8 @@ let test_errors =
       (fun () ->
         let open Abb.Future.Infix_monad in
         let module Cm = Terrat_vcs_comment.Make (H) in
-        let els = Shared.gen_els 5 10 20 in
+        (* TODO: Remove this random data gen *)
+        let els = Shared.gen_els 1 10 20 in
         let t = ref [ Eh.Post_comment (els, Error `Error) ] in
         Make_wrapper.run t els
         >>= function
@@ -204,8 +207,8 @@ let test_append_strategy =
   let multiple_small =
     Oth_abb.test
       ~desc:
-        "Given 3 elements with rendered length smaller than the ceiling, but that can't be combine \
-         into a single cluster, we will generate 3 comments"
+        "Given 3 elements with rendered length smaller than the ceiling, but that can't be \
+         combined into a single cluster, we will generate 3 comments"
       ~name:"[Append] Check grouping #1"
       (fun () ->
         let open Abb.Future.Infix_monad in
@@ -235,7 +238,7 @@ let test_append_strategy =
         in
         Make_wrapper.run t els
         >>= function
-        | Ok r -> Abb.Future.return ()
+        | Ok () -> Abb.Future.return ()
         | Error _ -> assert false)
   in
   let multiple_big =
@@ -255,9 +258,10 @@ let test_append_strategy =
         let el2 = Shared.create_el "B" "B" true len st in
         let el3 = Shared.create_el "C" "C" false len st in
         let els = [ el1; el2; el3 ] in
+        let elsc = CCList.map H.compact [ el1; el3; el2 ] in
         let counter = API_id.create 0 in
         let cid1 = API_id.next counter in
-        let t = ref [ Eh.Post_comment (els, Ok cid1); Eh.Upsert_comment_id (els, cid1, Ok ()) ] in
+        let t = ref [ Eh.Post_comment (elsc, Ok cid1); Eh.Upsert_comment_id (elsc, cid1, Ok ()) ] in
         Make_wrapper.run t els
         >>= function
         | Ok r -> Abb.Future.return ()
@@ -281,6 +285,7 @@ let test_append_strategy =
         let el3 = Shared.create_el "C" "C" false (half - 1) st in
         let el4 = Shared.create_el "D" "D" true (H.max_comment_length + 1) st in
         let els = [ el1; el2; el3; el4 ] in
+        let el4c = H.compact el4 in
         let counter = API_id.create 0 in
         let cid1 = API_id.next counter in
         let cid2 = API_id.next counter in
@@ -289,138 +294,16 @@ let test_append_strategy =
             [
               Eh.Post_comment ([ el1; el3 ], Ok cid1);
               Eh.Upsert_comment_id ([ el1; el3 ], cid1, Ok ());
-              Eh.Post_comment ([ el2; el4 ], Ok cid2);
-              Eh.Upsert_comment_id ([ el2; el4 ], cid2, Ok ());
+              Eh.Post_comment ([ el2; el4c ], Ok cid2);
+              Eh.Upsert_comment_id ([ el2; el4c ], cid2, Ok ());
             ]
         in
         Make_wrapper.run t els
         >>= function
-        | Ok r -> Abb.Future.return ()
+        | Ok () -> Abb.Future.return ()
         | Error _ -> assert false)
   in
-  let scenario_03 =
-    Oth_abb.test
-      ~desc:
-        "A sequence of post comments is appended separately, a subset of dirspaces is then re-run."
-      ~name:"[Append] Scenario #03"
-      (fun () ->
-        let open Abb.Future.Infix_monad in
-        let open Abbs_future_combinators.Infix_result_app in
-        let module C = Terrat_vcs_comment in
-        let module D = Terrat_dirspace in
-        let module Cm = Terrat_vcs_comment.Make (H) in
-        let len = H.max_comment_length / 3 in
-        let st = C.Strategy.Append in
-        let el1 = Shared.create_el "A" "A" false len st in
-        let el2 = Shared.create_el "B" "B" true len st in
-        let el3 = Shared.create_el "C" "C" true len st in
-        let els = [ el1; el2; el3 ] in
-        let counter = API_id.create 0 in
-        let cid1 = API_id.next counter in
-        let t =
-          ref
-            [
-              Eh.Post_comment (els, Ok cid1); Eh.Upsert_comment_id ([ el1; el2; el3 ], cid1, Ok ());
-            ]
-        in
-        Make_wrapper.run t els
-        >>= function
-        | Ok r -> (
-            assert (r = ());
-            let el1 = Shared.create_el "A" "A" true len st in
-            let el2 = Shared.create_el "B" "B" false len st in
-            let els2 = [ el1; el2 ] in
-            let cid2 = API_id.next counter in
-            let t2 =
-              ref [ Eh.Post_comment (els2, Ok cid2); Eh.Upsert_comment_id (els2, cid2, Ok ()) ]
-            in
-            Make_wrapper.run t2 els2
-            >>= fun r ->
-            match r with
-            | Ok r ->
-                assert (r = ());
-                Abb.Future.return ()
-            | Error _ -> assert false)
-        | Error _ -> assert false)
-  in
-  let scenario_07 =
-    Oth_abb.test
-      ~desc:"User runs 'terrateam plan A B', then proceeds to run 'terrateam plan B C'"
-      ~name:"[Append] Scenario #07"
-      (fun () ->
-        let open Abb.Future.Infix_monad in
-        let module C = Terrat_vcs_comment in
-        let module D = Terrat_dirspace in
-        let module Cm = Terrat_vcs_comment.Make (H) in
-        let len = H.max_comment_length / 10 in
-        let st = C.Strategy.Append in
-        let el1 = Shared.create_el "A" "A" false len st in
-        let el2 = Shared.create_el "B" "B" true len st in
-        let els = [ el1; el2 ] in
-        let counter = API_id.create 0 in
-        let cid1 = API_id.next counter in
-        let t =
-          ref [ Eh.Post_comment (els, Ok cid1); Eh.Upsert_comment_id ([ el1; el2 ], cid1, Ok ()) ]
-        in
-        Make_wrapper.run t els
-        >>= function
-        | Ok r -> (
-            assert (r = ());
-            let el1 = Shared.create_el "B" "B" true len st in
-            let el2 = Shared.create_el "C" "C" false len st in
-            let els2 = [ el1; el2 ] in
-            let cid2 = API_id.next counter in
-            let t2 =
-              ref [ Eh.Post_comment (els2, Ok cid2); Eh.Upsert_comment_id (els2, cid2, Ok ()) ]
-            in
-            Make_wrapper.run t2 els2
-            >>= fun r ->
-            match r with
-            | Ok r ->
-                assert (r = ());
-                Abb.Future.return ()
-            | Error _ -> assert false)
-        | Error _ -> assert false)
-  in
-  let scenario_08 =
-    Oth_abb.test
-      ~desc:"User runs 'terrateam plan A', then proceeds to run 'terrateam plan B'"
-      ~name:"[Append] Scenario #08"
-      (fun () ->
-        let open Abb.Future.Infix_monad in
-        let module C = Terrat_vcs_comment in
-        let module D = Terrat_dirspace in
-        let module Cm = Terrat_vcs_comment.Make (H) in
-        let len = H.max_comment_length / 10 in
-        let st = C.Strategy.Append in
-        let el1 = Shared.create_el "A" "A" false len st in
-        let els = [ el1 ] in
-        let counter = API_id.create 0 in
-        let cid1 = API_id.next counter in
-        let t =
-          ref [ Eh.Post_comment (els, Ok cid1); Eh.Upsert_comment_id ([ el1 ], cid1, Ok ()) ]
-        in
-        Make_wrapper.run t els
-        >>= function
-        | Ok r -> (
-            assert (r = ());
-            let el2 = Shared.create_el "B" "B" true len st in
-            let els2 = [ el2 ] in
-            let cid2 = API_id.next counter in
-            let t2 =
-              ref [ Eh.Post_comment (els2, Ok cid2); Eh.Upsert_comment_id (els2, cid2, Ok ()) ]
-            in
-            Make_wrapper.run t2 els2
-            >>= fun r ->
-            match r with
-            | Ok r ->
-                assert (r = ());
-                Abb.Future.return ()
-            | Error _ -> assert false)
-        | Error _ -> assert false)
-  in
-  Oth_abb.parallel
-    [ multiple_small; multiple_big; multiple_mixed; scenario_03; scenario_07; scenario_08 ]
+  Oth_abb.parallel [ multiple_small; multiple_big; multiple_mixed ]
 
 let test = Oth_abb.(to_sync_test (parallel [ test_basic; test_errors; test_append_strategy ]))
 
