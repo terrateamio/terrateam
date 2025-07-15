@@ -5,6 +5,7 @@ select
         x.sha,
         x.workspace,
         x.lock_policy,
+        x.branch_target,
         grm.core_id
 from unnest($base_sha, $path, $repository, $sha, $workspace, $lock_policy, $branch_target) as
      x(base_sha, path, repository, sha, workspace, lock_policy, branch_target)
