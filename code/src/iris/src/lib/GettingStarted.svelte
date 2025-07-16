@@ -99,7 +99,6 @@
   let isLoadingGitLabSetupGroups = false;
   let gitlabSetupGroupsError: string | null = null;
   let gitlabRepos: Repository[] = [];
-  let gitlabReposError: string | null = null;
   let manualGitLabProject = '';
   let isAddingGitLabProject = false;
   let checkingGitLabBot = false;
@@ -626,11 +625,10 @@
         // Auto-advance to the next step
         markGitLabStepComplete('select-repo');
       } else {
-        gitlabReposError = 'This repository is already in the list';
+        // Repository already exists in the list
       }
     } catch (error) {
       console.error('Failed to add GitLab project:', error);
-      gitlabReposError = 'Failed to add project. Please try again.';
     } finally {
       isAddingGitLabProject = false;
     }
