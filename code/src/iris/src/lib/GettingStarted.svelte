@@ -567,11 +567,6 @@
       currentGitLabStep = steps[currentIndex + 1];
     }
     
-    // Load repositories when entering select-repo step
-    if (currentGitLabStep === 'select-repo' && selectedGitLabGroup) {
-      loadGitLabRepos();
-    }
-    
     // Load webhook config when entering configure-webhook step
     if (currentGitLabStep === 'configure-webhook' && selectedGitLabGroup) {
       loadGitLabWebhookConfig();
@@ -602,30 +597,12 @@
     markGitLabStepComplete('select-group');
   }
 
-  async function loadGitLabRepos(): Promise<void> {
-    if (!selectedGitLabGroup) return;
-    
-    try {
-      gitlabReposError = null;
-      
-      // Use the installation repos endpoint for GitLab with the group ID
-      const reposResponse = await api.getInstallationRepos(selectedGitLabGroup.id.toString(), undefined, 'gitlab');
-      gitlabRepos = reposResponse.repositories || [];
-    } catch (error) {
-      console.error('Failed to load GitLab repositories:', error);
-      gitlabRepos = [];
-      gitlabReposError = 'Failed to load repositories. Please try again.';
-    } finally {
-      // Loading complete
-    }
-  }
 
   async function addGitLabProject(): Promise<void> {
     if (!manualGitLabProject.trim() || !selectedGitLabGroup) return;
     
     try {
       isAddingGitLabProject = true;
-      gitlabReposError = null;
       
       // Construct the full repository path
       const repoName = manualGitLabProject.trim();
@@ -2599,11 +2576,6 @@
                     </div>
                   {/if}
 
-                  {#if gitlabReposError}
-                    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
-                      <p class="text-red-800 dark:text-red-200 text-sm">{gitlabReposError}</p>
-                    </div>
-                  {/if}
 
                   <div class="flex items-center space-x-3 mt-4">
                     <button
