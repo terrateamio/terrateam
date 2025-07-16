@@ -1,9 +1,5 @@
-module Primary = struct
-  type t = {
-    count : int option; [@default None]
-    date : string option; [@default None]
-  }
-  [@@deriving yojson { strict = false; meta = true }, show, eq]
-end
-
-include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+type t = {
+  count : int option; [@default None]
+  date : string option; [@default None]
+}
+[@@deriving yojson { strict = false; meta = true }, show, eq]

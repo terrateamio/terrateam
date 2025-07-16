@@ -1,11 +1,11 @@
 module PostApiV4ProjectsIdMergeRequests = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      postapiv4projectsidmergerequests : Gitlabc_components.PostApiV4ProjectsIdMergeRequests.t;
-          [@key "postApiV4ProjectsIdMergeRequests"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdMergeRequests.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -39,8 +39,10 @@ module PostApiV4ProjectsIdMergeRequests = struct
 
   let url = "/api/v4/projects/{id}/merge_requests"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -426,11 +428,13 @@ module PutApiV4ProjectsIdMergeRequestsMergeRequestIid = struct
     type t = {
       id : string;
       merge_request_iid : int;
-      putapiv4projectsidmergerequestsmergerequestiid :
-        Gitlabc_components.PutApiV4ProjectsIdMergeRequestsMergeRequestIid.t;
-          [@key "putApiV4ProjectsIdMergeRequestsMergeRequestIid"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdMergeRequestsMergeRequestIid.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -461,8 +465,10 @@ module PutApiV4ProjectsIdMergeRequestsMergeRequestIid = struct
 
   let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -540,11 +546,13 @@ module PostApiV4ProjectsIdMergeRequestsMergeRequestIidAddSpentTime = struct
     type t = {
       id : string;
       merge_request_iid : int;
-      postapiv4projectsidmergerequestsmergerequestiidaddspenttime :
-        Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidAddSpentTime.t;
-          [@key "postApiV4ProjectsIdMergeRequestsMergeRequestIidAddSpentTime"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidAddSpentTime.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -569,8 +577,10 @@ module PostApiV4ProjectsIdMergeRequestsMergeRequestIidAddSpentTime = struct
 
   let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/add_spent_time"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -625,11 +635,13 @@ module PostApiV4ProjectsIdMergeRequestsMergeRequestIidApprovals = struct
     type t = {
       id : string;
       merge_request_iid : int;
-      postapiv4projectsidmergerequestsmergerequestiidapprovals :
-        Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidApprovals.t;
-          [@key "postApiV4ProjectsIdMergeRequestsMergeRequestIidApprovals"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidApprovals.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -642,8 +654,10 @@ module PostApiV4ProjectsIdMergeRequestsMergeRequestIidApprovals = struct
 
   let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/approvals"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -702,11 +716,13 @@ module PostApiV4ProjectsIdMergeRequestsMergeRequestIidApprove = struct
     type t = {
       id : int;
       merge_request_iid : int;
-      postapiv4projectsidmergerequestsmergerequestiidapprove :
-        Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidApprove.t;
-          [@key "postApiV4ProjectsIdMergeRequestsMergeRequestIidApprove"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidApprove.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -731,8 +747,10 @@ module PostApiV4ProjectsIdMergeRequestsMergeRequestIidApprove = struct
 
   let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/approve"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -751,11 +769,13 @@ module PostApiV4ProjectsIdMergeRequestsMergeRequestIidAwardEmoji = struct
     type t = {
       id : int;
       merge_request_iid : int;
-      postapiv4projectsidmergerequestsmergerequestiidawardemoji :
-        Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidAwardEmoji.t;
-          [@key "postApiV4ProjectsIdMergeRequestsMergeRequestIidAwardEmoji"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidAwardEmoji.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -780,8 +800,10 @@ module PostApiV4ProjectsIdMergeRequestsMergeRequestIidAwardEmoji = struct
 
   let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/award_emoji"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1185,11 +1207,13 @@ module PostApiV4ProjectsIdMergeRequestsMergeRequestIidContextCommits = struct
     type t = {
       id : string;
       merge_request_iid : int;
-      postapiv4projectsidmergerequestsmergerequestiidcontextcommits :
-        Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidContextCommits.t;
-          [@key "postApiV4ProjectsIdMergeRequestsMergeRequestIidContextCommits"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidContextCommits.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -1214,8 +1238,10 @@ module PostApiV4ProjectsIdMergeRequestsMergeRequestIidContextCommits = struct
 
   let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/context_commits"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1336,11 +1362,13 @@ module PostApiV4ProjectsIdMergeRequestsMergeRequestIidDraftNotes = struct
     type t = {
       id : string;
       merge_request_iid : int;
-      postapiv4projectsidmergerequestsmergerequestiiddraftnotes :
-        Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidDraftNotes.t;
-          [@key "postApiV4ProjectsIdMergeRequestsMergeRequestIidDraftNotes"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidDraftNotes.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -1365,8 +1393,10 @@ module PostApiV4ProjectsIdMergeRequestsMergeRequestIidDraftNotes = struct
 
   let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/draft_notes"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1521,11 +1551,14 @@ module PutApiV4ProjectsIdMergeRequestsMergeRequestIidDraftNotesDraftNoteId = str
       draft_note_id : int;
       id : string;
       merge_request_iid : int;
-      putapiv4projectsidmergerequestsmergerequestiiddraftnotesdraftnoteid :
-        Gitlabc_components.PutApiV4ProjectsIdMergeRequestsMergeRequestIidDraftNotesDraftNoteId.t;
-          [@key "putApiV4ProjectsIdMergeRequestsMergeRequestIidDraftNotesDraftNoteId"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t =
+      Gitlabc_components.PutApiV4ProjectsIdMergeRequestsMergeRequestIidDraftNotesDraftNoteId.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -1548,8 +1581,10 @@ module PutApiV4ProjectsIdMergeRequestsMergeRequestIidDraftNotesDraftNoteId = str
 
   let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/draft_notes/{draft_note_id}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2276,11 +2311,13 @@ module PostApiV4ProjectsIdMergeRequestsMergeRequestIidPipelines = struct
     type t = {
       id : string;
       merge_request_iid : int;
-      postapiv4projectsidmergerequestsmergerequestiidpipelines :
-        Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidPipelines.t;
-          [@key "postApiV4ProjectsIdMergeRequestsMergeRequestIidPipelines"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidPipelines.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -2308,8 +2345,10 @@ module PostApiV4ProjectsIdMergeRequestsMergeRequestIidPipelines = struct
 
   let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/pipelines"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2412,11 +2451,13 @@ module PutApiV4ProjectsIdMergeRequestsMergeRequestIidRebase = struct
     type t = {
       id : string;
       merge_request_iid : int;
-      putapiv4projectsidmergerequestsmergerequestiidrebase :
-        Gitlabc_components.PutApiV4ProjectsIdMergeRequestsMergeRequestIidRebase.t;
-          [@key "putApiV4ProjectsIdMergeRequestsMergeRequestIidRebase"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdMergeRequestsMergeRequestIidRebase.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -2444,8 +2485,10 @@ module PutApiV4ProjectsIdMergeRequestsMergeRequestIidRebase = struct
 
   let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/rebase"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -2691,11 +2734,13 @@ module PostApiV4ProjectsIdMergeRequestsMergeRequestIidTimeEstimate = struct
     type t = {
       id : string;
       merge_request_iid : int;
-      postapiv4projectsidmergerequestsmergerequestiidtimeestimate :
-        Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidTimeEstimate.t;
-          [@key "postApiV4ProjectsIdMergeRequestsMergeRequestIidTimeEstimate"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidTimeEstimate.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -2723,8 +2768,10 @@ module PostApiV4ProjectsIdMergeRequestsMergeRequestIidTimeEstimate = struct
 
   let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/time_estimate"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

@@ -208,11 +208,13 @@ module PostApiV4ProjectsIdTerraformStateNameLock = struct
     type t = {
       id_ : string;
       name : int;
-      postapiv4projectsidterraformstatenamelock :
-        Gitlabc_components.PostApiV4ProjectsIdTerraformStateNameLock.t;
-          [@key "postApiV4ProjectsIdTerraformStateNameLock"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdTerraformStateNameLock.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -243,8 +245,10 @@ module PostApiV4ProjectsIdTerraformStateNameLock = struct
 
   let url = "/api/v4/projects/{id_}/terraform/state/{name}/lock"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

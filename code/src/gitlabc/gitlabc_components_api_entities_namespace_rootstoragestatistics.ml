@@ -1,19 +1,15 @@
-module Primary = struct
-  type t = {
-    build_artifacts_size : int option; [@default None]
-    container_registry_size : int option; [@default None]
-    container_registry_size_is_estimated : bool option; [@default None]
-    dependency_proxy_size : int option; [@default None]
-    lfs_objects_size : int option; [@default None]
-    packages_size : int option; [@default None]
-    pipeline_artifacts_size : int option; [@default None]
-    repository_size : int option; [@default None]
-    snippets_size : int option; [@default None]
-    storage_size : int option; [@default None]
-    uploads_size : int option; [@default None]
-    wiki_size : int option; [@default None]
-  }
-  [@@deriving yojson { strict = false; meta = true }, show, eq]
-end
-
-include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+type t = {
+  build_artifacts_size : int option; [@default None]
+  container_registry_size : int option; [@default None]
+  container_registry_size_is_estimated : bool option; [@default None]
+  dependency_proxy_size : int option; [@default None]
+  lfs_objects_size : int option; [@default None]
+  packages_size : int option; [@default None]
+  pipeline_artifacts_size : int option; [@default None]
+  repository_size : int option; [@default None]
+  snippets_size : int option; [@default None]
+  storage_size : int option; [@default None]
+  uploads_size : int option; [@default None]
+  wiki_size : int option; [@default None]
+}
+[@@deriving yojson { strict = false; meta = true }, show, eq]

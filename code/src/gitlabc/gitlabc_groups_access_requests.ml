@@ -98,12 +98,14 @@ module PutApiV4GroupsIdAccessRequestsUserIdApprove = struct
   module Parameters = struct
     type t = {
       id : string;
-      putapiv4groupsidaccessrequestsuseridapprove :
-        Gitlabc_components.PutApiV4GroupsIdAccessRequestsUserIdApprove.t;
-          [@key "putApiV4GroupsIdAccessRequestsUserIdApprove"]
       user_id : int;
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4GroupsIdAccessRequestsUserIdApprove.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -116,8 +118,10 @@ module PutApiV4GroupsIdAccessRequestsUserIdApprove = struct
 
   let url = "/api/v4/groups/{id}/access_requests/{user_id}/approve"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

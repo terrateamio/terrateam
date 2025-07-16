@@ -1,7 +1,5 @@
 type t = {
-  allow_failure : bool option; [@default None]
   author : Gitlabc_components_api_entities_userbasic.t option; [@default None]
-  coverage : float option; [@default None]
   created_at : string option; [@default None]
   description : string option; [@default None]
   finished_at : string option; [@default None]

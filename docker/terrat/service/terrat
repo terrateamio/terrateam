@@ -8,7 +8,7 @@ import requests
 
 TERRAT_API_BASE = 'TERRAT_API_BASE'
 GITHUB_API_BASE_URL = 'GITHUB_API_BASE_URL'
-REQUIRED_ENV_KEYS = ['GITHUB_APP_PEM']
+REQUIRED_ENV_KEYS = []
 
 def setup_environment():
     if os.getenv('CUSTOM_CA_CERT'):
@@ -23,7 +23,8 @@ def setup_environment():
         subprocess.check_call(['update-ca-certificates'])
         os.environ['CERTS_DIR'] = '/etc/ssl/certs'
         print(f"Self-signed certificate installed to {cert_path}")
-    os.environ['GITHUB_APP_PEM'] = os.environ['GITHUB_APP_PEM'].replace('\\n', '\n')
+    if 'GITHUB_APP_PEM' in os.environ:
+        os.environ['GITHUB_APP_PEM'] = os.environ['GITHUB_APP_PEM'].replace('\\n', '\n')
     os.environ['TERRAT_PYTHON_EXEC'] = '/usr/bin/python3'
     os.environ['OCAMLRUNPARAM'] = 'b'
     os.environ['NGINX_STATUS_URI'] = 'http://localhost:8080/nginx_status'

@@ -1,11 +1,11 @@
 module PostApiV4ProjectsIdWikis = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      postapiv4projectsidwikis : Gitlabc_components.PostApiV4ProjectsIdWikis.t;
-          [@key "postApiV4ProjectsIdWikis"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdWikis.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -33,8 +33,10 @@ module PostApiV4ProjectsIdWikis = struct
 
   let url = "/api/v4/projects/{id}/wikis"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -88,12 +90,12 @@ end
 
 module PostApiV4ProjectsIdWikisAttachments = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      postapiv4projectsidwikisattachments : Gitlabc_components.PostApiV4ProjectsIdWikisAttachments.t;
-          [@key "postApiV4ProjectsIdWikisAttachments"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdWikisAttachments.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -111,8 +113,10 @@ module PostApiV4ProjectsIdWikisAttachments = struct
 
   let url = "/api/v4/projects/{id}/wikis/attachments"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -172,11 +176,14 @@ module PutApiV4ProjectsIdWikisSlug = struct
   module Parameters = struct
     type t = {
       id : int;
-      putapiv4projectsidwikisslug : Gitlabc_components.PutApiV4ProjectsIdWikisSlug.t;
-          [@key "putApiV4ProjectsIdWikisSlug"]
       slug : int;
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdWikisSlug.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -204,8 +211,10 @@ module PutApiV4ProjectsIdWikisSlug = struct
 
   let url = "/api/v4/projects/{id}/wikis/{slug}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

@@ -1,11 +1,7 @@
-module Primary = struct
-  type t = {
-    approved : bool option; [@default None]
-    approved_by : Gitlabc_components_api_entities_approvals.t option; [@default None]
-    user_can_approve : bool option; [@default None]
-    user_has_approved : bool option; [@default None]
-  }
-  [@@deriving yojson { strict = false; meta = true }, show, eq]
-end
-
-include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+type t = {
+  approved : bool option; [@default None]
+  approved_by : Gitlabc_components_api_entities_approvals.t option; [@default None]
+  user_can_approve : bool option; [@default None]
+  user_has_approved : bool option; [@default None]
+}
+[@@deriving yojson { strict = false; meta = true }, show, eq]

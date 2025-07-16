@@ -1,11 +1,11 @@
 module PostApiV4ProjectsIdFreezePeriods = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      postapiv4projectsidfreezeperiods : Gitlabc_components.PostApiV4ProjectsIdFreezePeriods.t;
-          [@key "postApiV4ProjectsIdFreezePeriods"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdFreezePeriods.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -30,8 +30,10 @@ module PostApiV4ProjectsIdFreezePeriods = struct
 
   let url = "/api/v4/projects/{id}/freeze_periods"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -133,11 +135,13 @@ module PutApiV4ProjectsIdFreezePeriodsFreezePeriodId = struct
     type t = {
       freeze_period_id : int;
       id : string;
-      putapiv4projectsidfreezeperiodsfreezeperiodid :
-        Gitlabc_components.PutApiV4ProjectsIdFreezePeriodsFreezePeriodId.t;
-          [@key "putApiV4ProjectsIdFreezePeriodsFreezePeriodId"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdFreezePeriodsFreezePeriodId.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -162,8 +166,10 @@ module PutApiV4ProjectsIdFreezePeriodsFreezePeriodId = struct
 
   let url = "/api/v4/projects/{id}/freeze_periods/{freeze_period_id}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

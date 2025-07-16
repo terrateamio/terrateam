@@ -1,11 +1,11 @@
 module PostApiV4UsersIdEmails = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      postapiv4usersidemails : Gitlabc_components.PostApiV4UsersIdEmails.t;
-          [@key "postApiV4UsersIdEmails"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4UsersIdEmails.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -18,8 +18,10 @@ module PostApiV4UsersIdEmails = struct
 
   let url = "/api/v4/users/{id}/emails"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

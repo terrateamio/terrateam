@@ -1,11 +1,11 @@
 module PostApiV4GroupsIdVariables = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      postapiv4groupsidvariables : Gitlabc_components.PostApiV4GroupsIdVariables.t;
-          [@key "postApiV4GroupsIdVariables"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4GroupsIdVariables.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -23,8 +23,10 @@ module PostApiV4GroupsIdVariables = struct
 
   let url = "/api/v4/groups/{id}/variables"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -114,10 +116,13 @@ module PutApiV4GroupsIdVariablesKey = struct
     type t = {
       id : string;
       key : string;
-      putapiv4groupsidvariableskey : Gitlabc_components.PutApiV4GroupsIdVariablesKey.t;
-          [@key "putApiV4GroupsIdVariablesKey"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4GroupsIdVariablesKey.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -140,8 +145,10 @@ module PutApiV4GroupsIdVariablesKey = struct
 
   let url = "/api/v4/groups/{id}/variables/{key}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

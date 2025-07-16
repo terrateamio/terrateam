@@ -1,9 +1,5 @@
-module Primary = struct
-  type t = {
-    developers_can_merge : bool option; [@default None]
-    developers_can_push : bool option; [@default None]
-  }
-  [@@deriving yojson { strict = false; meta = true }, show, eq]
-end
-
-include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+type t = {
+  developers_can_merge : bool option; [@default None]
+  developers_can_push : bool option; [@default None]
+}
+[@@deriving yojson { strict = false; meta = true }, show, eq]

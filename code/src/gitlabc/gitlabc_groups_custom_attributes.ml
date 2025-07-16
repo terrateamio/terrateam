@@ -63,10 +63,13 @@ module PutApiV4GroupsIdCustomAttributesKey = struct
     type t = {
       id : int;
       key : string;
-      putapiv4groupsidcustomattributeskey : Gitlabc_components.PutApiV4GroupsIdCustomAttributesKey.t;
-          [@key "putApiV4GroupsIdCustomAttributesKey"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4GroupsIdCustomAttributesKey.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -79,8 +82,10 @@ module PutApiV4GroupsIdCustomAttributesKey = struct
 
   let url = "/api/v4/groups/{id}/custom_attributes/{key}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

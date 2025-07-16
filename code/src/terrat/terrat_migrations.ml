@@ -167,6 +167,8 @@ let migrations =
     ("refactor-gitlab-dirspace-locking-phase-2", Terrat_migrations_ex_568.run_gitlab);
     ( "refactor-gitlab-dirspace-locking-phase-3",
       run_file_sql "2025-07-14-refactor-gitlab-dirspace-locking-phase-3.sql" );
+    ( "fix-make-gitlab-tables-closer-to-github",
+      run_file_sql "2025-07-15-fix-make-gitlab-tables-match-github-closer.sql" );
   ]
 
 let run config storage = Mig.run (config, storage) migrations

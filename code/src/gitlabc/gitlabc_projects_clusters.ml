@@ -41,12 +41,12 @@ end
 
 module PostApiV4ProjectsIdClustersUser = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      postapiv4projectsidclustersuser : Gitlabc_components.PostApiV4ProjectsIdClustersUser.t;
-          [@key "postApiV4ProjectsIdClustersUser"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdClustersUser.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -74,8 +74,10 @@ module PostApiV4ProjectsIdClustersUser = struct
 
   let url = "/api/v4/projects/{id}/clusters/user"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -136,10 +138,13 @@ module PutApiV4ProjectsIdClustersClusterId = struct
     type t = {
       cluster_id : int;
       id : string;
-      putapiv4projectsidclustersclusterid : Gitlabc_components.PutApiV4ProjectsIdClustersClusterId.t;
-          [@key "putApiV4ProjectsIdClustersClusterId"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdClustersClusterId.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -167,8 +172,10 @@ module PutApiV4ProjectsIdClustersClusterId = struct
 
   let url = "/api/v4/projects/{id}/clusters/{cluster_id}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

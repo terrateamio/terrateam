@@ -3,11 +3,13 @@ module PostApiV4GroupsIdEpicsEpicIidAwardEmoji = struct
     type t = {
       epic_iid : int;
       id : int;
-      postapiv4groupsidepicsepiciidawardemoji :
-        Gitlabc_components.PostApiV4GroupsIdEpicsEpicIidAwardEmoji.t;
-          [@key "postApiV4GroupsIdEpicsEpicIidAwardEmoji"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4GroupsIdEpicsEpicIidAwardEmoji.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -32,8 +34,10 @@ module PostApiV4GroupsIdEpicsEpicIidAwardEmoji = struct
 
   let url = "/api/v4/groups/{id}/epics/{epic_iid}/award_emoji"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -184,11 +188,13 @@ module PostApiV4GroupsIdEpicsEpicIidNotesNoteIdAwardEmoji = struct
       epic_iid : int;
       id : int;
       note_id : int;
-      postapiv4groupsidepicsepiciidnotesnoteidawardemoji :
-        Gitlabc_components.PostApiV4GroupsIdEpicsEpicIidNotesNoteIdAwardEmoji.t;
-          [@key "postApiV4GroupsIdEpicsEpicIidNotesNoteIdAwardEmoji"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4GroupsIdEpicsEpicIidNotesNoteIdAwardEmoji.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -213,8 +219,10 @@ module PostApiV4GroupsIdEpicsEpicIidNotesNoteIdAwardEmoji = struct
 
   let url = "/api/v4/groups/{id}/epics/{epic_iid}/notes/{note_id}/award_emoji"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

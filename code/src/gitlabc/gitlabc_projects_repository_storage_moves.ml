@@ -1,12 +1,11 @@
 module PostApiV4ProjectsIdRepositoryStorageMoves = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      postapiv4projectsidrepositorystoragemoves :
-        Gitlabc_components.PostApiV4ProjectsIdRepositoryStorageMoves.t;
-          [@key "postApiV4ProjectsIdRepositoryStorageMoves"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdRepositoryStorageMoves.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -19,8 +18,10 @@ module PostApiV4ProjectsIdRepositoryStorageMoves = struct
 
   let url = "/api/v4/projects/{id}/repository_storage_moves"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

@@ -112,13 +112,12 @@ end
 
 module PutApiV4AdminBatchedBackgroundMigrationsIdPause = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4adminbatchedbackgroundmigrationsidpause :
-        Gitlabc_components.PutApiV4AdminBatchedBackgroundMigrationsIdPause.t;
-          [@key "putApiV4AdminBatchedBackgroundMigrationsIdPause"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4AdminBatchedBackgroundMigrationsIdPause.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -149,8 +148,10 @@ module PutApiV4AdminBatchedBackgroundMigrationsIdPause = struct
 
   let url = "/api/v4/admin/batched_background_migrations/{id}/pause"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -164,13 +165,12 @@ end
 
 module PutApiV4AdminBatchedBackgroundMigrationsIdResume = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      putapiv4adminbatchedbackgroundmigrationsidresume :
-        Gitlabc_components.PutApiV4AdminBatchedBackgroundMigrationsIdResume.t;
-          [@key "putApiV4AdminBatchedBackgroundMigrationsIdResume"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4AdminBatchedBackgroundMigrationsIdResume.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -201,8 +201,10 @@ module PutApiV4AdminBatchedBackgroundMigrationsIdResume = struct
 
   let url = "/api/v4/admin/batched_background_migrations/{id}/resume"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -215,12 +217,11 @@ module PutApiV4AdminBatchedBackgroundMigrationsIdResume = struct
 end
 
 module PostApiV4AdminCiVariables = struct
-  module Parameters = struct
-    type t = {
-      postapiv4admincivariables : Gitlabc_components.PostApiV4AdminCiVariables.t;
-          [@key "postApiV4AdminCiVariables"]
-    }
-    [@@deriving make, show, eq]
+  module Parameters = struct end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4AdminCiVariables.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -238,8 +239,10 @@ module PostApiV4AdminCiVariables = struct
 
   let url = "/api/v4/admin/ci/variables"
 
-  let make params =
+  let make ?body =
+   fun () ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:[]
       ~query_params:[]
@@ -310,12 +313,12 @@ end
 
 module PutApiV4AdminCiVariablesKey = struct
   module Parameters = struct
-    type t = {
-      key : string;
-      putapiv4admincivariableskey : Gitlabc_components.PutApiV4AdminCiVariablesKey.t;
-          [@key "putApiV4AdminCiVariablesKey"]
-    }
-    [@@deriving make, show, eq]
+    type t = { key : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4AdminCiVariablesKey.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -333,8 +336,10 @@ module PutApiV4AdminCiVariablesKey = struct
 
   let url = "/api/v4/admin/ci/variables/{key}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -408,12 +413,11 @@ module GetApiV4AdminClusters = struct
 end
 
 module PostApiV4AdminClustersAdd = struct
-  module Parameters = struct
-    type t = {
-      postapiv4adminclustersadd : Gitlabc_components.PostApiV4AdminClustersAdd.t;
-          [@key "postApiV4AdminClustersAdd"]
-    }
-    [@@deriving make, show, eq]
+  module Parameters = struct end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4AdminClustersAdd.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -441,8 +445,10 @@ module PostApiV4AdminClustersAdd = struct
 
   let url = "/api/v4/admin/clusters/add"
 
-  let make params =
+  let make ?body =
+   fun () ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:[]
       ~query_params:[]
@@ -493,12 +499,12 @@ end
 
 module PutApiV4AdminClustersClusterId = struct
   module Parameters = struct
-    type t = {
-      cluster_id : int;
-      putapiv4adminclustersclusterid : Gitlabc_components.PutApiV4AdminClustersClusterId.t;
-          [@key "putApiV4AdminClustersClusterId"]
-    }
-    [@@deriving make, show, eq]
+    type t = { cluster_id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4AdminClustersClusterId.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -526,8 +532,10 @@ module PutApiV4AdminClustersClusterId = struct
 
   let url = "/api/v4/admin/clusters/{cluster_id}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -636,13 +644,12 @@ end
 
 module PostApiV4AdminMigrationsTimestampMark = struct
   module Parameters = struct
-    type t = {
-      postapiv4adminmigrationstimestampmark :
-        Gitlabc_components.PostApiV4AdminMigrationsTimestampMark.t;
-          [@key "postApiV4AdminMigrationsTimestampMark"]
-      timestamp : int;
-    }
-    [@@deriving make, show, eq]
+    type t = { timestamp : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4AdminMigrationsTimestampMark.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -673,8 +680,10 @@ module PostApiV4AdminMigrationsTimestampMark = struct
 
   let url = "/api/v4/admin/migrations/{timestamp}/mark"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
