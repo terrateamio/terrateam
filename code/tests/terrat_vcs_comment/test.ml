@@ -36,6 +36,10 @@ module H = struct
   type el = Eh.el
   type comment_id = Eh.comment_id
 
+  module Cmp = struct
+    type t = bool * Terrat_dirspace.t [@@deriving ord]
+  end
+
   let query_comment_id t el1 =
     match !t with
     | Eh.Query_comment_id (el2, cmd_result) :: rest when el1 = el2 ->
@@ -103,6 +107,7 @@ module H = struct
   let is_success el = el.Eh.is_success
   let strategy el = el.Eh.strategy
   let compact el = { el with Eh.rendered_length = 1 }
+  let compare el1 el2 = Cmp.compare (is_success el1, dirspace el1) (is_success el2, dirspace el2)
   let max_comment_length = 100
 end
 

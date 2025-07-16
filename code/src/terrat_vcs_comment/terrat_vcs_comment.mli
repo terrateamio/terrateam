@@ -42,6 +42,7 @@ module type S = sig
       way that redirects people to our UI. Instead of working within the 
       limitations of certain version control systems. *)
   val compact : el -> el
+  val compare_el : el -> el -> int
 
   (** Constraints *)
   val max_comment_length : int

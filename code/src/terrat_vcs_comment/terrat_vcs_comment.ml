@@ -22,6 +22,7 @@ module type S = sig
   val is_success : el -> bool
   val strategy : el -> Strategy.t
   val compact : el -> el
+  val compare_el : el -> el -> int
   val max_comment_length : int
 end
 
@@ -34,12 +35,7 @@ module Make (M : S) = struct
     let compare = Strategy.compare
   end)
 
-  module Cmp = struct
-    type t = bool * Terrat_dirspace.t [@@deriving ord]
-  end
-
   let partition_by_strategy els = By_strategy.group els
-  let compare e1 e2 = Cmp.compare (M.is_success e1, M.dirspace e1) (M.is_success e2, M.dirspace e2)
   let compact e = if M.rendered_length [ e ] < M.max_comment_length then e else M.compact e
 
   let split_by_size els =
@@ -67,7 +63,7 @@ module Make (M : S) = struct
     let open Abb.Future.Infix_monad in
     let module Alr = Abbs_future_combinators.List_result in
     let compressed = CCList.map compact els in
-    let sorted = CCList.sort compare compressed in
+    let sorted = CCList.sort M.compare_el compressed in
     let groups = partition_by_strategy sorted in
     let split = CCList.map (fun (k, v) -> (k, split_by_size v)) groups in
     Abbs_future_combinators.List_result.iter
