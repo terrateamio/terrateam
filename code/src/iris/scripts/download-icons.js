@@ -3,98 +3,103 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { glob } from 'glob';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// List of all icons used in the project
-const ICONS = [
-  // MDI icons
+const ICONS_DIR = path.join(__dirname, '..', 'src', 'lib', 'icons');
+const SRC_DIR = path.join(__dirname, '..', 'src');
+
+// Regex patterns to find icon usage
+const ICON_PATTERNS = [
+  // <Icon icon="mdi:something" />
+  /icon\s*=\s*["']([a-zA-Z0-9-]+:[a-zA-Z0-9-]+)["']/g,
+  // icon: 'mdi:something' or icon: "mdi:something"
+  /icon\s*:\s*["']([a-zA-Z0-9-]+:[a-zA-Z0-9-]+)["']/g,
+  // iconName: 'mdi:something'
+  /iconName\s*:\s*["']([a-zA-Z0-9-]+:[a-zA-Z0-9-]+)["']/g,
+  // Dynamic icon usage: icon={condition ? "mdi:check" : "mdi:close"}
+  /\?\s*["']([a-zA-Z0-9-]+:[a-zA-Z0-9-]+)["']\s*:/g,
+  /:\s*["']([a-zA-Z0-9-]+:[a-zA-Z0-9-]+)["']\s*\}/g,
+];
+
+// Fallback list of core icons (in case scanning fails or for initial setup)
+const CORE_ICONS = [
   'mdi:github',
-  'mdi:gitlab',
   'mdi:check',
   'mdi:check-circle',
-  'mdi:magnify',
-  'mdi:lightbulb',
-  'mdi:download',
-  'mdi:loading',
-  'mdi:source-fork',
-  'mdi:source-repository',
-  'mdi:play-circle',
-  'mdi:file-edit',
-  'mdi:arrow-left',
-  'mdi:open-in-new',
-  'mdi:numeric-1-circle',
-  'mdi:numeric-2-circle',
-  'mdi:numeric-3-circle',
-  'mdi:numeric-4-circle',
-  'mdi:party-popper',
-  'mdi:flash',
+  'mdi:close',
   'mdi:alert',
   'mdi:alert-circle',
-  'mdi:folder-account',
-  'mdi:robot',
-  'mdi:webhook',
-  'mdi:cog',
-  'mdi:shield-lock',
   'mdi:information',
-  'mdi:headset',
-  'mdi:calendar-clock',
-  'mdi:tools',
-  'mdi:book-open-variant',
-  'mdi:folder',
-  'mdi:file-code',
-  'mdi:file',
-  'mdi:wrench-outline',
-  'mdi:key-outline',
-  'mdi:shield-lock-outline',
-  'mdi:account-plus',
-  'mdi:folder-alert-outline',
-  'mdi:chevron-right',
-  'mdi:cloud-check',
-  'mdi:test-tube',
-  'mdi:plus',
-  'mdi:check-all',
-  'mdi:check-underline',
-  'mdi:arrow-up',
-  'mdi:arrow-down',
-  'mdi:clock-outline',
-  'mdi:information-outline',
-  'mdi:link',
-  'mdi:power',
-  'mdi:star',
-  'mdi:star-outline',
-  'mdi:run',
-  'mdi:weather-cloudy',
-  'mdi:close-circle',
-  'mdi:cancel',
-  'mdi:delete',
-  'mdi:message-text',
-  'mdi:sync',
-  'mdi:help-circle',
-  'mdi:close',
-  'mdi:refresh',
-  'mdi:earth',
-  'mdi:chevron-down',
-  'mdi:account',
-  'mdi:city',
-  'mdi:email',
-  'mdi:phone',
-  'mdi:briefcase',
-  'mdi:cash',
-  'mdi:clock',
-  'mdi:alert-octagon',
-  'mdi:export',
-  'mdi:login',
-  'mdi:logout',
-  
-  // Logos
+  'mdi:loading',
   'logos:aws',
   'logos:google-cloud',
   'logos:microsoft-azure'
 ];
 
-const ICONS_DIR = path.join(__dirname, '..', 'src', 'lib', 'icons');
+async function scanForIcons() {
+  console.log('Scanning for icon usage in codebase...\n');
+  
+  const foundIcons = new Set();
+  
+  try {
+    // Find all Svelte and TypeScript files
+    const files = await glob('**/*.{svelte,ts,js}', {
+      cwd: SRC_DIR,
+      ignore: ['**/node_modules/**', '**/dist/**', '**/build/**', 'lib/icons/**'],
+      absolute: true
+    });
+    
+    console.log(`Found ${files.length} files to scan\n`);
+    
+    // Scan each file for icon usage
+    for (const file of files) {
+      try {
+        const content = await fs.readFile(file, 'utf-8');
+        
+        // Apply all regex patterns
+        for (const pattern of ICON_PATTERNS) {
+          const matches = [...content.matchAll(pattern)];
+          for (const match of matches) {
+            if (match[1]) {
+              foundIcons.add(match[1]);
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`Error reading ${file}:`, error.message);
+      }
+    }
+    
+    // Convert to sorted array
+    const iconsList = Array.from(foundIcons).sort();
+    console.log(`Found ${iconsList.length} unique icons used in the codebase\n`);
+    
+    return iconsList;
+  } catch (error) {
+    console.error('Error scanning for icons:', error.message);
+    console.log('Falling back to core icons list\n');
+    return CORE_ICONS;
+  }
+}
+
+async function getExistingIcons() {
+  try {
+    const indexPath = path.join(ICONS_DIR, 'index.ts');
+    const content = await fs.readFile(indexPath, 'utf-8');
+    
+    // Extract icon names from the index file
+    const iconPattern = /['"]([a-zA-Z0-9-]+:[a-zA-Z0-9-]+)['"]\s*:/g;
+    const matches = [...content.matchAll(iconPattern)];
+    
+    return matches.map(match => match[1]);
+  } catch (error) {
+    // If index doesn't exist, no icons are downloaded yet
+    return [];
+  }
+}
 
 async function downloadIcon(iconName) {
   const [prefix, name] = iconName.split(':');
@@ -124,12 +129,12 @@ async function downloadIcon(iconName) {
   }
 }
 
-async function generateIconIndex() {
+async function generateIconIndex(icons) {
   const indexContent = `// Auto-generated icon index
 // DO NOT EDIT MANUALLY - Generated by scripts/download-icons.js
 
 export const iconMap = {
-${ICONS.map(icon => {
+${icons.map(icon => {
   const [prefix, name] = icon.split(':');
   return `  '${icon}': () => import('./${prefix}/${name}.svg?raw')`;
 }).join(',\n')}
@@ -143,25 +148,111 @@ export type IconName = keyof typeof iconMap;
 }
 
 async function main() {
-  console.log('Downloading Iconify icons...\n');
+  console.log('Icon Management Script\n');
+  console.log('This script automatically scans your codebase for icon usage');
+  console.log('and downloads any missing icons from Iconify.\n');
   
-  // Create icons directory
-  await fs.mkdir(ICONS_DIR, { recursive: true });
-  
-  // Download all icons
-  const results = await Promise.all(ICONS.map(downloadIcon));
-  
-  // Generate index file
-  await generateIconIndex();
-  
-  // Summary
-  const successful = results.filter(r => r.success).length;
-  const failed = results.filter(r => !r.success).length;
-  
-  console.log(`\n✅ Successfully downloaded ${successful} icons`);
-  if (failed > 0) {
-    console.log(`❌ Failed to download ${failed} icons`);
+  try {
+    // Create icons directory
+    await fs.mkdir(ICONS_DIR, { recursive: true });
+    
+    // Scan for all icons used in codebase
+    const usedIcons = await scanForIcons();
+    
+    // Get existing icons
+    const existingIcons = await getExistingIcons();
+    
+    if (existingIcons.length > 0) {
+      console.log(`${existingIcons.length} icons already downloaded\n`);
+    }
+    
+    // Determine which icons to download
+    let iconsToDownload = [];
+    
+    if (process.argv.includes('--all')) {
+      // Download all used icons (refresh mode)
+      iconsToDownload = usedIcons;
+      console.log('Refreshing all icons...\n');
+    } else {
+      // Only download missing icons
+      iconsToDownload = usedIcons.filter(icon => !existingIcons.includes(icon));
+      
+      if (iconsToDownload.length === 0) {
+        console.log('✅ All icons are already downloaded!');
+        return;
+      }
+      
+      console.log(`Found ${iconsToDownload.length} missing icons to download:\n`);
+      iconsToDownload.forEach(icon => console.log(`  - ${icon}`));
+    }
+    
+    console.log('\nDownloading icons...\n');
+    
+    // Download icons
+    const results = await Promise.all(iconsToDownload.map(downloadIcon));
+    
+    // Regenerate index with all icons
+    const allIcons = [...new Set([...existingIcons, ...usedIcons])].sort();
+    await generateIconIndex(allIcons);
+    
+    // Summary
+    const successful = results.filter(r => r.success).length;
+    const failed = results.filter(r => !r.success).length;
+    
+    console.log(`\n✅ Successfully downloaded ${successful} icons`);
+    if (failed > 0) {
+      console.log(`❌ Failed to download ${failed} icons`);
+      const failedIcons = results.filter(r => !r.success);
+      failedIcons.forEach(r => console.log(`  - ${r.iconName}: ${r.error}`));
+    }
+    
+    console.log(`\n📊 Total icons available: ${allIcons.length}`);
+    
+  } catch (error) {
+    console.error('Error:', error);
+    process.exit(1);
   }
 }
 
-main().catch(console.error);
+// Handle command line arguments
+const args = process.argv.slice(2);
+
+if (args.includes('--help')) {
+  console.log(`
+Icon Download Script
+
+Usage:
+  npm run download-icons              Download only missing icons
+  npm run download-icons -- --all     Re-download all icons
+  npm run download-icons -- --scan    Show icon usage without downloading
+  npm run download-icons -- --help    Show this help message
+
+This script automatically:
+1. Scans your codebase for icon usage
+2. Compares with existing downloaded icons
+3. Downloads any missing icons from Iconify
+4. Updates the icon index file
+`);
+  process.exit(0);
+}
+
+if (args.includes('--scan')) {
+  // Just scan and show results
+  scanForIcons().then(async (icons) => {
+    const existing = await getExistingIcons();
+    const missing = icons.filter(icon => !existing.includes(icon));
+    
+    console.log(`\n📊 Icon Usage Summary:`);
+    console.log(`   Total used: ${icons.length}`);
+    console.log(`   Downloaded: ${existing.length}`);
+    console.log(`   Missing: ${missing.length}`);
+    
+    if (missing.length > 0) {
+      console.log(`\nMissing icons:`);
+      missing.forEach(icon => console.log(`  - ${icon}`));
+      console.log('\n(Run without --scan to download missing icons)');
+    }
+  });
+} else {
+  main().catch(console.error);
+}
