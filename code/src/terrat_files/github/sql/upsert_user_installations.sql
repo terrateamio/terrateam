@@ -15,7 +15,7 @@ inserted as (
 )
 select
     gi.id,
-    gi.name,
+    gi.login,
     gi.state
 from all_installation_ids as ai
 inner join github_installations as gi
