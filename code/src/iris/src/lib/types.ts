@@ -21,6 +21,7 @@ export type ServerConfig = ApiSchemas['server-config'];
 export type GitLabGroup = ApiSchemas['gitlab-group'];
 export type GitLabUser = ApiSchemas['gitlab-user'];
 export type GitLabWebhook = ApiSchemas['gitlab-webhook'];
+export type GitLabWhoAreYou = ApiSchemas['gitlab-whoareyou'];
 
 // Zod validation schemas matching the API specification
 export const InstallationSchema = z.object({
@@ -158,6 +159,10 @@ export const GitLabWebhookSchema = z.object({
   webhook_url: z.string(),
   webhook_secret: z.string().optional(),
 });
+export const GitLabWhoAreYouSchema = z.object({
+  id: z.number(),
+  username: z.string(),
+});
 
 // API Response wrapper schemas
 export const ApiResponseSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
@@ -243,6 +248,9 @@ export function validateGitLabUser(data: unknown): GitLabUser {
 
 export function validateGitLabWebhook(data: unknown): GitLabWebhook {
   return GitLabWebhookSchema.parse(data);
+}
+export function validateGitLabWhoAreYou(data: unknown): GitLabWhoAreYou {
+  return GitLabWhoAreYouSchema.parse(data);
 }
 
 // Legacy/Additional types for compatibility
