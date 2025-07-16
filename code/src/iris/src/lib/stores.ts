@@ -1,4 +1,4 @@
-import { writable, get, type Writable } from 'svelte/store';
+import { writable, type Writable } from 'svelte/store';
 import type { Installation, Repository, ThemeStore, ThemeMode } from './types';
 import type { VCSProvider } from './vcs/types';
 
@@ -12,9 +12,92 @@ export const selectedInstallation: Writable<Installation | null> = writable(null
 export const installationsLoading: Writable<boolean> = writable(false);
 export const installationsError: Writable<string | null> = writable(null);
 
-// Repository caching to avoid redundant API calls
-export const repositoryCache: Writable<Record<string, Repository[]>> = writable({});
-export const repositoriesLoading: Writable<Record<string, boolean>> = writable({});
+// Global repository cache for the current installation with persistence
+function createPersistentRepositoryCache() {
+  const { subscribe, set, update } = writable<Repository[]>([]);
+  
+  // Cache key includes installation ID to keep caches separate
+  const getCacheKey = (installationId: string) => `repositories-cache-${installationId}`;
+  
+  return {
+    subscribe,
+    set: (value: Repository[], installationId?: string) => {
+      set(value);
+      if (installationId && typeof window !== 'undefined') {
+        try {
+          const cacheData = {
+            repositories: value,
+            timestamp: Date.now()
+          };
+          localStorage.setItem(getCacheKey(installationId), JSON.stringify(cacheData));
+        } catch (e) {
+          console.warn('Failed to save repositories to localStorage:', e);
+        }
+      }
+    },
+    update,
+    loadFromCache: (installationId: string): Repository[] => {
+      if (typeof window === 'undefined') return [];
+      
+      try {
+        const cached = localStorage.getItem(getCacheKey(installationId));
+        if (cached) {
+          const cacheData = JSON.parse(cached);
+          
+          // Handle both old format (direct array) and new format (with timestamp)
+          const repositories = Array.isArray(cacheData) ? cacheData : cacheData.repositories;
+          const timestamp = Array.isArray(cacheData) ? null : cacheData.timestamp;
+          
+          // Check if cache is expired (24 hours)
+          if (timestamp) {
+            const cacheAge = Date.now() - timestamp;
+            const twentyFourHours = 24 * 60 * 60 * 1000;
+            if (cacheAge > twentyFourHours) {
+              // Cache is expired, clear it
+              localStorage.removeItem(getCacheKey(installationId));
+              return [];
+            }
+          }
+          
+          if (repositories && Array.isArray(repositories)) {
+            set(repositories);
+            return repositories;
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to load repositories from localStorage:', e);
+      }
+      return [];
+    },
+    clearCache: (installationId: string) => {
+      set([]);
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.removeItem(getCacheKey(installationId));
+        } catch (e) {
+          console.warn('Failed to clear repositories cache:', e);
+        }
+      }
+    },
+    getCacheTimestamp: (installationId: string): number | null => {
+      if (typeof window === 'undefined') return null;
+      
+      try {
+        const cached = localStorage.getItem(getCacheKey(installationId));
+        if (cached) {
+          const cacheData = JSON.parse(cached);
+          return cacheData.timestamp || null;
+        }
+      } catch (e) {
+        console.warn('Failed to get cache timestamp:', e);
+      }
+      return null;
+    }
+  };
+}
+
+export const cachedRepositories = createPersistentRepositoryCache();
+export const repositoriesCacheLoading: Writable<boolean> = writable(false);
 
 // Settings state
 export const defaultInstallationId: Writable<string | null> = writable(
@@ -89,41 +172,6 @@ function applyTheme(theme: ThemeMode): void {
 
 export const theme = createThemeStore();
 
-// Repository loading helper with caching
-export async function loadRepositoriesForInstallation(installationId: string): Promise<Repository[]> {
-  const { api } = await import('./api');
-  
-  // Check if already loading
-  const currentLoading = get(repositoriesLoading);
-  if (currentLoading[installationId]) {
-    return []; // Return empty array if already loading
-  }
-  
-  // Check cache first
-  const currentCache = get(repositoryCache);
-  if (currentCache[installationId]) {
-    return currentCache[installationId];
-  }
-  
-  // Mark as loading
-  repositoriesLoading.update(loading => ({ ...loading, [installationId]: true }));
-  
-  try {
-    const response = await api.getInstallationRepos(installationId);
-    const repos = response && (response as any).repositories ? (response as any).repositories : [];
-    
-    // Update cache
-    repositoryCache.update(cache => ({ ...cache, [installationId]: repos }));
-    
-    return repos;
-  } catch (error) {
-    console.error('Error loading repositories:', error);
-    return [];
-  } finally {
-    // Clear loading state
-    repositoriesLoading.update(loading => ({ ...loading, [installationId]: false }));
-  }
-}
 
 // Auto-update theme when system preference changes
 if (typeof window !== 'undefined') {

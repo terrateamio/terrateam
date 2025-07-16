@@ -360,8 +360,8 @@
   $: lastApplyRun = allWorkspaceRuns.find(run => run.run_type === 'apply');
   $: lastPlanRun = allWorkspaceRuns.find(run => run.run_type === 'plan');
   
-  // Tab state
-  let activeTab: 'history' | 'outputs' = 'history';
+  // Tab state - removed 'outputs' tab
+  let activeTab: 'history' = 'history';
 </script>
 
 <PageLayout 
@@ -646,34 +646,11 @@
 
     <!-- Tabbed Content -->
     <Card padding="none" class="mb-6">
-      <!-- Tab Navigation -->
-      <div class="border-b border-gray-200 dark:border-gray-600">
-        <nav class="flex space-x-8 px-6 py-3">
-          <button
-            on:click={() => activeTab = 'history'}
-            class={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-              activeTab === 'history'
-                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500'
-            }`}
-          >
-            📈 Recent Run History
-          </button>
-          
-          {#if outputs.length > 0}
-            <button
-              on:click={() => activeTab = 'outputs'}
-              class={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'outputs'
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500'
-              }`}
-            >
-              📤 Recent Outputs ({outputs.length})
-            </button>
-          {/if}
-          
-        </nav>
+      <!-- Tab Navigation - Single tab now, so just show as header -->
+      <div class="border-b border-gray-200 dark:border-gray-600 px-6 py-3">
+        <h3 class="font-medium text-lg text-gray-900 dark:text-gray-100">
+          📈 Recent Run History
+        </h3>
       </div>
       
       <!-- Tab Content -->
@@ -711,51 +688,6 @@
               {/each}
             </div>
           {/if}
-        
-        {:else if activeTab === 'outputs' && outputs.length > 0}
-          <!-- Recent Outputs -->
-          <div class="space-y-4">
-            {#each outputs.slice(0, 5) as output}
-              {@const outputType = output?.step || 'unknown'}
-              {@const outputContent = (output?.payload && typeof output.payload === 'object' && 'text' in output.payload && typeof output.payload.text === 'string') ? output.payload.text : 'No content'}
-              
-              <div class="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
-                <div class="bg-gray-50 dark:bg-gray-700 px-4 py-2 border-b border-gray-200 dark:border-gray-600">
-                  <div class="flex justify-between items-center">
-                    <span class="font-medium text-sm">
-                      {#if outputType === 'tf/plan'}
-                        📋 Terraform Plan
-                      {:else if outputType === 'tf/apply'}
-                        🚀 Terraform Apply
-                      {:else if outputType === 'tf/init'}
-                        🔧 Terraform Init
-                      {:else}
-                        📄 {outputType}
-                      {/if}
-                    </span>
-                    <span class="text-xs text-gray-500 dark:text-gray-400">
-                      {output?.scope?.dir || workspace.dir} / {output?.scope?.workspace || workspace.workspace}
-                    </span>
-                  </div>
-                </div>
-                <div class="p-4">
-                  <div class="bg-gray-900 text-green-400 p-3 rounded text-xs font-mono max-h-40 overflow-y-auto">
-                    {outputContent.length > 500 ? outputContent.substring(0, 500) + '...' : outputContent}
-                  </div>
-                  {#if outputContent.length > 500}
-                    <div class="mt-2">
-                      <button
-                        on:click={() => workspace && navigateToRun(workspace.id)}
-                        class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium"
-                      >
-                        View Full Output →
-                      </button>
-                    </div>
-                  {/if}
-                </div>
-              </div>
-            {/each}
-          </div>
         
         {/if}
       </div>

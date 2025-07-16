@@ -3,6 +3,7 @@
   // Auth handled by PageLayout
   import { api } from './api';
   import { selectedInstallation, installationsLoading, currentVCSProvider } from './stores';
+  import { repositoryService } from './services/repository-service';
   import PageLayout from './components/layout/PageLayout.svelte';
   import { navigateToWorkspace } from './utils/navigation';
   import LoadingSpinner from './components/ui/LoadingSpinner.svelte';
@@ -16,8 +17,17 @@
   $: terminology = VCS_PROVIDERS[currentProvider]?.terminology || VCS_PROVIDERS.github.terminology;
   
   let repositories: Repository[] = [];
+  let filteredRepositories: Repository[] = [];
   let isLoadingRepositories: boolean = false;
   let error: string | null = null;
+  
+  // Pagination state
+  let currentPage: number = 1;
+  let itemsPerPage: number = 20;
+  let totalPages: number = 1;
+  
+  // Search state
+  let searchQuery: string = '';
 
   // Repository workspaces - lazy loaded per repo
   let repoWorkspaces: Record<string, Dirspace[]> = {};
@@ -31,6 +41,32 @@
   
   // Summary stats
   let totalWorkspaceCount: number = 0;
+  
+  // Update filtered repositories when search query changes
+  $: {
+    if (searchQuery.trim() === '') {
+      filteredRepositories = repositories;
+    } else {
+      const query = searchQuery.toLowerCase();
+      filteredRepositories = repositories.filter(repo => 
+        repo.name.toLowerCase().includes(query)
+      );
+    }
+    // Reset to first page when search changes
+    currentPage = 1;
+  }
+  
+  // Calculate pagination
+  $: totalPages = Math.ceil(filteredRepositories.length / itemsPerPage);
+  $: paginatedRepositories = filteredRepositories.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+  
+  // Reset page if it exceeds total pages
+  $: if (currentPage > totalPages && totalPages > 0) {
+    currentPage = 1;
+  }
   
   const DIRSPACES_PER_REQUEST = 1000; // Load many dirspaces to find all unique workspaces
 
@@ -57,27 +93,18 @@
     error = null;
     
     try {
-      let hasMore = true;
-      let cursor: string | undefined = undefined;
+      const result = await repositoryService.loadRepositories($selectedInstallation);
+      repositories = result.repositories;
       
-      // Load all repositories using pagination
-      while (hasMore) {
-        const response = await api.getInstallationRepos($selectedInstallation.id, { cursor });
-        
-        if (response && response.repositories) {
-          repositories = [...repositories, ...response.repositories];
-          cursor = response.nextCursor;
-          hasMore = response.hasMore;
-        } else {
-          hasMore = false;
-        }
+      if (result.error) {
+        error = result.error;
+      } else {
+        // Initialize all repos as collapsed by default
+        repositories.forEach(repo => {
+          collapsedRepos.add(repo.name);
+        });
+        collapsedRepos = new Set(collapsedRepos); // Trigger reactivity
       }
-
-      // Initialize all repos as collapsed by default
-      repositories.forEach(repo => {
-        collapsedRepos.add(repo.name);
-      });
-      collapsedRepos = new Set(collapsedRepos); // Trigger reactivity
       
     } catch (err) {
       console.error('Error loading repositories:', err);
@@ -236,6 +263,14 @@
   $: successfulWorkspaces = allWorkspaces.filter(ws => ws.state === 'success').length;
   $: failedWorkspaces = allWorkspaces.filter(ws => ws.state === 'failure').length;
   
+  function goToPage(page: number): void {
+    if (page >= 1 && page <= totalPages) {
+      currentPage = page;
+      // Scroll to top of repository list
+      document.getElementById('repository-list')?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+  
 </script>
 
 <PageLayout 
@@ -263,8 +298,56 @@
     </Card>
   </div>
 
+  <!-- Search Bar and Controls -->
+  {#if repositories.length > 0}
+    <div class="mb-6 space-y-4">
+      <!-- Search Input -->
+      <div class="relative">
+        <input
+          type="text"
+          bind:value={searchQuery}
+          placeholder="Search repositories..."
+          class="w-full px-4 py-2 pl-10 pr-4 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-colors"
+          aria-label="Search repositories"
+        />
+        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        {#if searchQuery}
+          <button
+            on:click={() => searchQuery = ''}
+            class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            aria-label="Clear search"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        {/if}
+      </div>
+      
+      <!-- Results Info and Pagination Info -->
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+        <div>
+          {#if searchQuery}
+            <p>Found {filteredRepositories.length} repositor{filteredRepositories.length === 1 ? 'y' : 'ies'} matching "{searchQuery}"</p>
+          {:else}
+            <p>Showing {paginatedRepositories.length} of {repositories.length} repositor{repositories.length === 1 ? 'y' : 'ies'}</p>
+          {/if}
+        </div>
+        {#if totalPages > 1}
+          <div>
+            Page {currentPage} of {totalPages}
+          </div>
+        {/if}
+      </div>
+    </div>
+  {/if}
+  
   <!-- Lazy loading info -->
-  {#if repositories.length > 0 && totalWorkspaceCount === 0 && !isLoadingRepositories}
+  {#if paginatedRepositories.length > 0 && totalWorkspaceCount === 0 && !isLoadingRepositories}
     <div class="mb-6 text-sm text-gray-600 dark:text-gray-400 text-center">
       <p>Click on a repository below to load its workspaces</p>
     </div>
@@ -331,7 +414,7 @@
     </div>
   {:else if error}
     <ErrorMessage type="error" message={error} />
-  {:else if repositories.length === 0}
+  {:else if repositories.length === 0 && !searchQuery}
     <Card padding="lg" class="text-center">
       <div class="text-6xl mb-4">📦</div>
       <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">No Repositories Found</h3>
@@ -339,10 +422,24 @@
         No repositories are connected to this installation yet.
       </p>
     </Card>
+  {:else if filteredRepositories.length === 0 && searchQuery}
+    <Card padding="lg" class="text-center">
+      <div class="text-6xl mb-4">🔍</div>
+      <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">No Repositories Found</h3>
+      <p class="text-gray-600 dark:text-gray-400 mb-6">
+        No repositories match your search "{searchQuery}".
+      </p>
+      <button
+        on:click={() => searchQuery = ''}
+        class="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-blue-700 transition-colors"
+      >
+        Clear Search
+      </button>
+    </Card>
   {:else}
     <!-- Repository Listings -->
-    <div class="space-y-6">
-      {#each repositories as repository}
+    <div id="repository-list" class="space-y-6">
+      {#each paginatedRepositories as repository}
         {@const repoName = repository.name}
         {@const workspaces = repoWorkspaces[repoName] || []}
         {@const isLoading = loadingRepos.has(repoName)}
@@ -474,5 +571,116 @@
         </Card>
       {/each}
     </div>
+    
+    <!-- Pagination Controls -->
+    {#if totalPages > 1}
+      <div class="mt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
+        <nav class="flex items-center space-x-2" aria-label="Pagination">
+          <!-- Previous Button -->
+          <button
+            on:click={() => goToPage(currentPage - 1)}
+            disabled={currentPage === 1}
+            class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-label="Previous page"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          
+          <!-- Page Numbers -->
+          {#if totalPages <= 7}
+            {#each Array(totalPages) as _, i}
+              <button
+                on:click={() => goToPage(i + 1)}
+                class="px-3 py-2 text-sm font-medium rounded-lg transition-colors {
+                  currentPage === i + 1
+                    ? 'bg-brand-primary text-white'
+                    : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }"
+                aria-label="Go to page {i + 1}"
+                aria-current={currentPage === i + 1 ? 'page' : undefined}
+              >
+                {i + 1}
+              </button>
+            {/each}
+          {:else}
+            <!-- Smart pagination for many pages -->
+            {#if currentPage > 3}
+              <button
+                on:click={() => goToPage(1)}
+                class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                aria-label="Go to page 1"
+              >
+                1
+              </button>
+              {#if currentPage > 4}
+                <span class="px-2 text-gray-500">...</span>
+              {/if}
+            {/if}
+            
+            {#each Array(5) as _, i}
+              {@const pageNum = currentPage - 2 + i}
+              {#if pageNum > 0 && pageNum <= totalPages}
+                <button
+                  on:click={() => goToPage(pageNum)}
+                  class="px-3 py-2 text-sm font-medium rounded-lg transition-colors {
+                    currentPage === pageNum
+                      ? 'bg-brand-primary text-white'
+                      : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }"
+                  aria-label="Go to page {pageNum}"
+                  aria-current={currentPage === pageNum ? 'page' : undefined}
+                >
+                  {pageNum}
+                </button>
+              {/if}
+            {/each}
+            
+            {#if currentPage < totalPages - 2}
+              {#if currentPage < totalPages - 3}
+                <span class="px-2 text-gray-500">...</span>
+              {/if}
+              <button
+                on:click={() => goToPage(totalPages)}
+                class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                aria-label="Go to page {totalPages}"
+              >
+                {totalPages}
+              </button>
+            {/if}
+          {/if}
+          
+          <!-- Next Button -->
+          <button
+            on:click={() => goToPage(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            class="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-label="Next page"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </nav>
+        
+        <!-- Items per page selector -->
+        <div class="flex items-center gap-2 text-sm">
+          <label for="items-per-page" class="text-gray-700 dark:text-gray-300">Show:</label>
+          <select
+            id="items-per-page"
+            bind:value={itemsPerPage}
+            on:change={() => currentPage = 1}
+            class="px-3 py-1 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+          >
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+          <span class="text-gray-700 dark:text-gray-300">per page</span>
+        </div>
+      </div>
+    {/if}
   {/if}
 </PageLayout>

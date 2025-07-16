@@ -3,6 +3,7 @@
   import { api, isApiError } from './api';
   import { onMount } from 'svelte';
   import type { Installation, Repository, GitLabGroup } from './types';
+  import { repositoryService } from './services/repository-service';
   import { Icon } from './components';
   import { currentVCSProvider } from './stores';
   import { get } from 'svelte/store';
@@ -437,16 +438,20 @@
     currentRepoStep = step;
   }
 
-  async function loadRepositories(): Promise<void> {
+  async function loadRepositories(forceRefresh: boolean = false): Promise<void> {
     if (!selectedInstallation) return;
     
     try {
       isLoadingRepos = true;
       repoLoadError = null;
       
-      // First try to get existing repositories
-      const reposResponse = await api.getInstallationRepos(selectedInstallation.id);
-      repositories = reposResponse.repositories || [];
+      // Load repositories from centralized service
+      const result = await repositoryService.loadRepositories(selectedInstallation, forceRefresh);
+      repositories = result.repositories;
+      
+      if (result.error) {
+        repoLoadError = result.error;
+      }
       
     } catch (error) {
       console.error('Failed to load repositories:', error);
@@ -477,8 +482,8 @@
           const taskStatus = await api.getTask(refreshResponse.id);
           
           if (taskStatus.state === 'completed') {
-            // Refresh completed successfully, reload repositories
-            await loadRepositories();
+            // Refresh completed successfully, reload repositories with force refresh
+            await loadRepositories(true);
             break;
           } else if (taskStatus.state === 'failed' || taskStatus.state === 'aborted') {
             throw new Error(`Repository refresh ${taskStatus.state}`);
@@ -493,7 +498,7 @@
       
       if (attempts >= maxAttempts) {
         // Timeout - still reload repositories as they might have been updated
-        await loadRepositories();
+        await loadRepositories(true);
       }
     } catch (err) {
       console.error('Error refreshing repositories:', err);
