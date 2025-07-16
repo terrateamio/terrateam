@@ -187,14 +187,14 @@
       const costResponse = await api.getWorkManifestOutputs(
         $selectedInstallation.id, 
         runId,
-        { q: 'step:tf/cost-estimation', limit: 100, lite: true }
+        { q: 'step:tf/cost-estimation', limit: 100, lite: false }
       );
       
       // The outputs are already in the correct lite mode format from the filtering above
       outputs = liteOutputsResponse.outputs || [];
       allOutputs = allLiteOutputsResponse.outputs || []; // Store all outputs for Raw Steps tab
       
-      // Cost estimation gets full data immediately since it's controlled and never too large
+      // Cost estimation always gets full data
       costEstimation = (costResponse.outputs || []).map(output => output as OutputItem);
 
     } catch (err) {
@@ -642,6 +642,26 @@
     const shouldShow = shouldShowStep(output);
     return isFailed && shouldShow;
   }) as OutputItem[];
+  
+  // Group failed outputs by dirspace
+  interface DirspaceGroup {
+    dir: string;
+    workspace: string;
+    outputs: OutputItem[];
+  }
+  
+  $: failedByDirspace = failedOutputs.reduce<Record<string, DirspaceGroup>>((acc, output) => {
+    const key = getDirspaceKey(output?.scope?.dir || 'unknown', output?.scope?.workspace || 'unknown');
+    if (!acc[key]) {
+      acc[key] = {
+        dir: output?.scope?.dir || 'unknown',
+        workspace: output?.scope?.workspace || 'unknown',
+        outputs: []
+      };
+    }
+    acc[key].outputs.push(output);
+    return acc;
+  }, {});
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
@@ -1335,33 +1355,112 @@
             </div>
           {:else}
             <div class="space-y-4">
-              {#each failedOutputs as output}
-                {@const typedOutput = output}
-                <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                  <div class="flex items-center space-x-2 mb-2">
-                    <span class="text-lg">❌</span>
-                    <span class="font-medium text-red-800 dark:text-red-400">{getStepLabel(typedOutput?.step || 'Unknown Step')}</span>
-                    <span class="text-sm text-red-600 dark:text-red-400">({typedOutput?.scope?.dir || 'unknown'}:{typedOutput?.scope?.workspace || 'unknown'})</span>
-                    <span class="text-xs text-gray-500">idx: {typedOutput?.idx}</span>
-                  </div>
-                  
-                  {#if typedOutput?.payload?.text}
-                    <!-- Display actual error output content from payload.text -->
-                    <div class="mt-3">
-                      <div class="flex items-center justify-between mb-1">
-                        <div class="text-xs text-red-700 dark:text-red-400">Error Output:</div>
-                        <button 
-                          class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 px-2 py-1 border border-blue-200 dark:border-blue-600 rounded hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
-                          on:click={() => openOutputModal(typedOutput.payload?.text || '', `Failed: ${getStepLabel(typedOutput?.step || 'Unknown Step')} - ${typedOutput?.scope?.dir || 'unknown'}:${typedOutput?.scope?.workspace || 'unknown'}`)}
-                        >
-                          🔍 Expand
-                        </button>
+              {#each Object.entries(failedByDirspace) as [dirspaceKey, dirspaceData]}
+                {@const isExpanded = expandedDirspaces.has(dirspaceKey)}
+                
+                <div class="border border-red-200 dark:border-red-800 rounded-lg bg-red-50/50 dark:bg-red-900/10">
+                  <button 
+                    on:click={() => toggleDirspaceExpansion(dirspaceKey)}
+                    class="w-full flex items-center justify-between p-4 text-left hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-inset"
+                  >
+                    <div class="flex items-center space-x-3 flex-1 min-w-0">
+                      <div class="flex-shrink-0">
+                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
                       </div>
-                      <pre class="text-sm bg-white dark:bg-gray-800 p-3 rounded border border-gray-200 dark:border-gray-600 overflow-x-auto text-gray-800 dark:text-gray-200 max-h-60 whitespace-pre-wrap font-mono">{typedOutput.payload?.text || ''}</pre>
+                      <div class="flex-1 min-w-0">
+                        <div class="font-medium text-red-900 dark:text-red-100">{dirspaceData.dir}</div>
+                        <div class="text-sm text-red-700 dark:text-red-300">Workspace: {dirspaceData.workspace}</div>
+                      </div>
                     </div>
-                  {:else}
-                    <!-- Fallback to JSON -->
-                    <pre class="text-sm bg-white dark:bg-gray-800 p-3 rounded border border-gray-200 dark:border-gray-600 overflow-x-auto text-gray-800 dark:text-gray-200 max-h-60">{JSON.stringify(output, null, 2)}</pre>
+                    <div class="flex items-center space-x-2 flex-shrink-0">
+                      <span class="text-sm text-red-600 dark:text-red-400">{dirspaceData.outputs.length} failed step{dirspaceData.outputs.length !== 1 ? 's' : ''}</span>
+                      <svg class="w-5 h-5 text-red-400 dark:text-red-500 transform transition-transform {isExpanded ? 'rotate-180' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </button>
+                  
+                  {#if isExpanded}
+                    <div class="border-t border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20">
+                      <div class="p-4 space-y-3">
+                        {#each dirspaceData.outputs as output ((output.step || 'unknown') + (output.payload?._loadTimestamp || ''))}
+                          {@const typedOutput = output}
+                          {@const displayState = getDisplayState(typedOutput)}
+                          <div class="bg-white dark:bg-gray-800 border border-red-200 dark:border-red-600 rounded p-3">
+                            <div class="flex items-center space-x-2 mb-2">
+                              <span>❌</span>
+                              <span class="font-medium text-red-900 dark:text-red-100">{getStepLabel(typedOutput?.step || 'Unknown Step')}</span>
+                              {#if typedOutput?.state}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {displayState.color}">
+                                  {displayState.state}
+                                </span>
+                              {/if}
+                              <span class="text-xs text-gray-500">idx: {typedOutput?.idx}</span>
+                            </div>
+                            {#if typedOutput?.payload?.text}
+                              <!-- Output not loaded - click to view -->
+                              {#if typedOutput.payload._isLiteMode}
+                                <div class="mt-3">
+                                  <div class="text-xs text-red-700 dark:text-red-400 mb-2">Error Output:</div>
+                                  <div class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-600 rounded-lg p-4">
+                                    <div class="flex items-center justify-between">
+                                      <div class="flex items-center">
+                                        <svg class="w-5 h-5 text-red-500 dark:text-red-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                        <span class="text-sm text-red-600 dark:text-red-400">Click to view error output</span>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        on:click={() => loadFullOutput(typedOutput)}
+                                        class="inline-flex items-center px-3 py-2 border border-red-300 dark:border-red-600 text-sm font-medium rounded-md text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
+                                      >
+                                        <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                        View Output
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              {:else}
+                                <!-- Display actual step output content with safe loading -->
+                                <div class="mt-3">
+                                  <div class="text-xs text-red-700 dark:text-red-400 mb-2">Error Output:
+                                    {#if typedOutput.payload._wasLoadedOnDemand}
+                                      <span class="ml-2 text-green-600 font-medium">(loaded on demand)</span>
+                                    {/if}
+                                  </div>
+                                  <SafeOutput 
+                                    content={typedOutput.payload.text}
+                                    title={`Failed: ${getStepLabel(typedOutput?.step || 'Unknown Step')} - ${typedOutput?.scope?.dir || 'unknown'}:${typedOutput?.scope?.workspace || 'unknown'}`}
+                                    githubUrl={run?.owner && run?.repo && run?.run_id ? getGitHubActionsUrl(run.owner, run.repo, run.run_id) : ''}
+                                    orgName={run?.owner || ''}
+                                    repoName={run?.repo || ''}
+                                    prNumber={typeof run?.kind === 'object' && run.kind?.pull_number ? run.kind.pull_number : ''}
+                                    runType={run?.run_type || ''}
+                                    stepName={typedOutput?.step || ''}
+                                    on:expand={(e) => openOutputModal(e.detail.content, e.detail.title)}
+                                  />
+                                </div>
+                              {/if}
+                            {:else if typedOutput?.step === 'auth/update-terrateam-github-token' || typedOutput?.step === 'auth/oidc'}
+                              <!-- Hide debug for auth steps - no meaningful output to show -->
+                              <div class="mt-3 text-xs text-gray-500 dark:text-gray-400 italic">
+                                Authentication step failed
+                              </div>
+                            {:else}
+                              <!-- Fallback to JSON for other steps if no payload.text found -->
+                              <div class="mt-3 text-xs text-gray-600 dark:text-gray-400">
+                                No output content available for this step type
+                              </div>
+                            {/if}
+                          </div>
+                        {/each}
+                      </div>
+                    </div>
                   {/if}
                 </div>
               {/each}
@@ -1381,12 +1480,12 @@
           <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-3">Identifiers</h4>
           <div class="space-y-2 text-sm">
             <div class="flex justify-between">
-              <span class="text-gray-600 dark:text-gray-400">Run ID:</span>
+              <span class="text-gray-600 dark:text-gray-400">Work Manifest ID:</span>
               <span class="font-mono text-xs bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1 rounded">{run.id}</span>
             </div>
             {#if run.run_id}
               <div class="flex justify-between">
-                <span class="text-gray-600 dark:text-gray-400">Run ID:</span>
+                <span class="text-gray-600 dark:text-gray-400">GitHub Actions ID:</span>
                 <span class="font-mono text-xs bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1 rounded">{run.run_id}</span>
               </div>
             {/if}
