@@ -3,6 +3,7 @@
   // Auth handled by PageLayout
   import { api } from './api';
   import { selectedInstallation, installationsLoading, currentVCSProvider } from './stores';
+  import { repositoryService } from './services/repository-service';
   import PageLayout from './components/layout/PageLayout.svelte';
   import Card from './components/ui/Card.svelte';
   import ClickableCard from './components/ui/ClickableCard.svelte';
@@ -265,11 +266,11 @@
     
     isLoadingRepos = true;
     try {
-      const response = await api.getInstallationRepos($selectedInstallation.id);
-      if (response && 'repositories' in response) {
-        repositories = response.repositories as Repository[];
-      } else {
-        repositories = [];
+      const result = await repositoryService.loadRepositories($selectedInstallation);
+      repositories = result.repositories;
+      
+      if (result.error) {
+        console.error('Error loading repositories:', result.error);
       }
     } catch (err) {
       console.error('Error loading repositories:', err);
@@ -297,16 +298,13 @@
         limit: 100 // API appears to cap at 100 results regardless of limit requested
       };
 
-      // Run both API calls in parallel for better performance
-      const [reposResponse, response] = await Promise.all([
-        api.getInstallationRepos($selectedInstallation.id),
+      // Load repositories from cache and dirspaces in parallel
+      const [reposResult, response] = await Promise.all([
+        repositoryService.loadRepositories($selectedInstallation),
         api.getInstallationDirspaces($selectedInstallation.id, params)
       ]);
       
-      let allRepos: Repository[] = [];
-      if (reposResponse && 'repositories' in reposResponse) {
-        allRepos = reposResponse.repositories as Repository[];
-      }
+      const allRepos = reposResult.repositories;
       
       // Initialize metrics for ALL repositories (even if no runs)
       const metricsMap = new Map<string, RepoMetrics>();

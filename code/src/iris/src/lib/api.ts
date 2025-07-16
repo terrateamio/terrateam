@@ -55,6 +55,8 @@ export class ValidatedApiClient {
     return getProviderApiPath(currentProvider);
   }
 
+  private lastResponseHeaders: Headers | null = null;
+  
   private async request<T>(
     endpoint: string,
     options: ApiRequestOptions = {}
@@ -90,6 +92,10 @@ export class ValidatedApiClient {
     try {
       
       const response = await fetch(url, requestOptions);
+      
+      // Store headers for pagination
+      this.lastResponseHeaders = response.headers;
+      
       const responseText = await response.text();
 
       // Add breadcrumb for all API calls
@@ -255,18 +261,25 @@ export class ValidatedApiClient {
   // Repositories with cursor-based pagination
   async getInstallationRepos(
     installationId: string, 
-    params?: { cursor?: string },
+    params?: { cursor?: string; page?: number },
     provider?: VCSProvider
   ): Promise<{ repositories: Repository[]; nextCursor?: string; hasMore: boolean }> {
     const providerPath = this.getProviderPath(provider);
-    const queryParams: Record<string, string> = {};
     
-    // Use cursor-based pagination if provided
+    // Build the URL manually to avoid encoding issues with the cursor
+    let endpoint = `${providerPath}/installations/${installationId}/repos`;
+    
     if (params?.cursor) {
-      queryParams.page = params.cursor;
+      // The API expects the cursor value without URL encoding
+      // So we build the URL manually instead of using URLSearchParams
+      endpoint += `?page=${params.cursor}`;
     }
     
-    const response = await this.get(`${providerPath}/installations/${installationId}/repos`, queryParams);
+    // Use the endpoint directly without additional params
+    const response = await this.request(endpoint, { method: 'GET' });
+    
+    // Check Link header for pagination
+    const linkHeader = this.lastResponseHeaders?.get('Link') || this.lastResponseHeaders?.get('link');
     
     // Validate the response structure
     if (!response || typeof response !== 'object' || !('repositories' in response)) {
@@ -275,27 +288,102 @@ export class ValidatedApiClient {
 
     const repositories = validateRepositories(response.repositories);
     
-    // Extract pagination info from response
+    // Extract pagination info from Link header
     let nextCursor: string | undefined;
     let hasMore = false;
     
-    // Check for pagination metadata in response
-    if ('pagination' in response && response.pagination && typeof response.pagination === 'object') {
-      const pagination = response.pagination as { next_cursor?: string };
-      nextCursor = pagination.next_cursor;
-      hasMore = !!nextCursor;
+    // Parse Link header for pagination (RFC 5988)
+    if (linkHeader) {
+      const links = this.parseLinkHeader(linkHeader);
+      
+      if (links.next) {
+        // Extract page parameter from next URL
+        try {
+          // The URL might be relative, so we need to handle it carefully
+          const nextUrl = links.next.startsWith('http') 
+            ? new URL(links.next)
+            : new URL(links.next, 'https://app.terrateam.io');
+          
+          nextCursor = nextUrl.searchParams.get('page') || undefined;
+          hasMore = true;
+        } catch (e) {
+          console.error('Failed to parse next URL from Link header:', e);
+        }
+      }
     }
-    // Fallback: check for next_page or similar fields
-    else if ('next_cursor' in response) {
-      nextCursor = response.next_cursor as string | undefined;
-      hasMore = !!nextCursor;
-    }
-    // If no pagination info, assume no more pages
-    else {
-      hasMore = false;
+    
+    // Only check response body for pagination if we didn't find it in Link headers
+    if (!nextCursor && !hasMore) {
+      // Check for various pagination field formats
+      // 1. Check for pagination metadata object
+      if ('pagination' in response && response.pagination && typeof response.pagination === 'object') {
+        const pagination = response.pagination as Record<string, any>;
+        nextCursor = pagination.next_cursor || pagination.nextCursor || pagination.next || pagination.cursor;
+        hasMore = pagination.has_more !== undefined ? pagination.has_more : 
+                  pagination.hasMore !== undefined ? pagination.hasMore : !!nextCursor;
+      }
+      // 2. Check for next_cursor at top level
+      else if ('next_cursor' in response || 'nextCursor' in response) {
+        const resp = response as any;
+        nextCursor = (resp.next_cursor || resp.nextCursor) as string | undefined;
+        hasMore = !!nextCursor;
+      }
+      // 3. Check for next_page at top level
+      else if ('next_page' in response || 'nextPage' in response) {
+        const resp = response as any;
+        nextCursor = (resp.next_page || resp.nextPage) as string | undefined;
+        hasMore = !!nextCursor;
+      }
+      // 4. Check for next at top level
+      else if ('next' in response) {
+        nextCursor = response.next as string | undefined;
+        hasMore = !!nextCursor;
+      }
+      // 5. Check for page_info object
+      else if ('page_info' in response || 'pageInfo' in response) {
+        const resp = response as any;
+        const pageInfo = (resp.page_info || resp.pageInfo) as Record<string, any>;
+        nextCursor = pageInfo.next_cursor || pageInfo.nextCursor || pageInfo.endCursor;
+        hasMore = pageInfo.has_next_page !== undefined ? pageInfo.has_next_page : 
+                  pageInfo.hasNextPage !== undefined ? pageInfo.hasNextPage : !!nextCursor;
+      }
+      // 6. Check meta/metadata
+      else if ('meta' in response || 'metadata' in response) {
+        const resp = response as any;
+        const meta = (resp.meta || resp.metadata) as Record<string, any>;
+        nextCursor = meta.next_cursor || meta.nextCursor || meta.next;
+        hasMore = meta.has_more !== undefined ? meta.has_more : !!nextCursor;
+      }
+      // No pagination info found
+      else {
+        // If we didn't find pagination info and got exactly 20 repositories, assume there might be more
+        if (repositories.length === 20) {
+          hasMore = true;
+        }
+      }
     }
     
     return { repositories, nextCursor, hasMore };
+  }
+  
+  // Parse Link header according to RFC 5988
+  private parseLinkHeader(header: string): Record<string, string> {
+    const links: Record<string, string> = {};
+    
+    // The API returns Link headers in RFC 5988 format
+    // Example: <https://app.terrateam.io//api/v1/github/installations/48988185/repos?page=n,perderlo>; rel="next"
+    
+    // Use a more robust regex that captures the entire link structure
+    // This handles URLs with commas in query parameters
+    const linkRegex = /<([^>]+)>;\s*rel="([^"]+)"/g;
+    let match;
+    
+    while ((match = linkRegex.exec(header)) !== null) {
+      const [, url, rel] = match;
+      links[rel] = url;
+    }
+    
+    return links;
   }
 
   async getRepository(installationId: string, repoId: string, provider?: VCSProvider): Promise<Repository> {

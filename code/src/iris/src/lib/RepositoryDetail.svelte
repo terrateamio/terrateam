@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { Repository } from './types';
   // Auth handled by PageLayout
-  import { api } from './api';
   import { selectedInstallation, currentVCSProvider } from './stores';
+  import { repositoryService } from './services/repository-service';
   import PageLayout from './components/layout/PageLayout.svelte';
   import { navigateToRuns, navigateToRepositories } from './utils/navigation';
   import { VCS_PROVIDERS } from './vcs/providers';
@@ -14,37 +14,43 @@
   $: terminology = VCS_PROVIDERS[currentProvider]?.terminology || VCS_PROVIDERS.github.terminology;
   
   let repository: Repository | null = null;
-  let isLoadingRepo: boolean = false;
   let error: string | null = null;
+  let isLoading: boolean = false;
   
-  
-  // Load repository data when params change
+  // Load repository when params or installation changes
   $: if (params.id && $selectedInstallation) {
-    loadRepositoryData(params.id);
+    loadRepository(params.id, $selectedInstallation.id);
   }
   
-  async function loadRepositoryData(repoId: string): Promise<void> {
-    if (!$selectedInstallation) return;
-    
+  async function loadRepository(repoId: string, installationId: string): Promise<void> {
     error = null;
-    isLoadingRepo = true;
+    isLoading = true;
     
     try {
-      // Find the repository in the current installation
-      const reposResponse = await api.getInstallationRepos($selectedInstallation.id);
-      if (reposResponse && (reposResponse as any).repositories) {
-        repository = (reposResponse as any).repositories.find((repo: Repository) => repo.id === repoId) || null;
-        if (!repository) {
-          error = 'Repository not found';
+      // First check if it's in cache
+      repository = repositoryService.getRepositoryFromCache(installationId, repoId);
+      
+      if (!repository) {
+        // Not in cache, need to load repositories
+        const result = await repositoryService.loadRepositories($selectedInstallation!);
+        
+        if (result.error) {
+          error = result.error;
           return;
         }
+        
+        // Now try to find it again
+        repository = repositoryService.getRepositoryFromCache(installationId, repoId);
+        
+        if (!repository) {
+          error = 'Repository not found in the current installation';
+        }
       }
-      
     } catch (err) {
-      error = 'Failed to load repository data';
-      console.error('Error loading repository data:', err);
+      error = 'Failed to load repository';
+      console.error('Error loading repository:', err);
     } finally {
-      isLoadingRepo = false;
+      isLoading = false;
     }
   }
   
@@ -77,9 +83,10 @@
       Back to Repositories
     </button>
   </div>
-      {#if isLoadingRepo}
+      {#if isLoading}
         <div class="flex justify-center py-12">
           <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary"></div>
+          <span class="ml-3 text-gray-600 dark:text-gray-400">Loading repository data...</span>
         </div>
       {:else if error}
         <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4">

@@ -3,6 +3,7 @@
   // Auth handled by PageLayout
   import { api } from './api';
   import { selectedInstallation } from './stores';
+  import { repositoryService } from './services/repository-service';
   import PageLayout from './components/layout/PageLayout.svelte';
   import Card from './components/ui/Card.svelte';
   import LoadingSpinner from './components/ui/LoadingSpinner.svelte';
@@ -166,9 +167,15 @@
     if (!$selectedInstallation) return;
 
     isLoadingRepos = true;
+    error = null;
+    
     try {
-      const response = await api.getInstallationRepos($selectedInstallation.id);
-      repositories = response.repositories || [];
+      const result = await repositoryService.loadRepositories($selectedInstallation);
+      repositories = result.repositories;
+      
+      if (result.error) {
+        error = result.error;
+      }
     } catch (err) {
       console.error('Error loading repositories:', err);
       error = err instanceof Error ? err.message : 'Failed to load repositories';
