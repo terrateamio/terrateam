@@ -110,18 +110,21 @@ module Installations = struct
         /^ read "select_user_installations.sql"
         /% Var.(array (bigint "installation_ids")))
 
-    let insert_user_installations () =
+    let upsert_user_installations () =
       Pgsql_io.Typed_sql.(
         sql
+        //
+        (* installation_id *)
+        Ret.bigint
+        //
+        (* name *)
+        Ret.text
+        //
+        (* state *)
+        Ret.text
         /^ read "upsert_user_installations.sql"
-        /% Var.(array (uuid "user"))
-        /% Var.(array (bigint "installation")))
-
-    let delete_user_installations () =
-      Pgsql_io.Typed_sql.(
-        sql
-        /^ "delete from github_user_installations2 where user_id = $user_id"
-        /% Var.uuid "user_id")
+        /% Var.(uuid "user_id")
+        /% Var.(array (bigint "installation_ids")))
   end
 
   let get' config storage user =
@@ -135,14 +138,13 @@ module Installations = struct
     >>= fun installations ->
     Pgsql_pool.with_conn storage ~f:(fun db ->
         let module I = Githubc2_components.Installation in
-        Pgsql_io.Prepared_stmt.execute db (Sql.delete_user_installations ()) (Terrat_user.id user)
-        >>= fun () ->
-        Pgsql_io.Prepared_stmt.execute
+        Pgsql_io.Prepared_stmt.fetch
           db
-          (Sql.insert_user_installations ())
-          (CCList.replicate (CCList.length installations) (Terrat_user.id user))
-          (CCList.map (fun I.{ primary = Primary.{ id; _ }; _ } -> Int64.of_int id) installations)
-        >>= fun () ->
+          ~f:(fun _ _ _ -> ())
+          (Sql.upsert_user_installations ())
+          (Terrat_user.id user)
+          (CCList.map (fun { I.primary = { I.Primary.id; _ }; _ } -> Int64.of_int id) installations)
+        >>= fun _ ->
         Pgsql_io.Prepared_stmt.fetch
           db
           (Sql.select_installations ())
