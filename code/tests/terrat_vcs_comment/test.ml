@@ -107,7 +107,7 @@ module H = struct
   let is_success el = el.Eh.is_success
   let strategy el = el.Eh.strategy
   let compact el = { el with Eh.rendered_length = 1 }
-  let compare el1 el2 = Cmp.compare (is_success el1, dirspace el1) (is_success el2, dirspace el2)
+  let compare_el el1 el2 = Cmp.compare (is_success el1, dirspace el1) (is_success el2, dirspace el2)
   let max_comment_length = 100
 end
 
