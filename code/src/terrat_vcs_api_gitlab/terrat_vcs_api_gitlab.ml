@@ -37,15 +37,15 @@ let fetch_pull_request_tries = 6
 let one_minute = Duration.(to_f (of_min 1))
 let call_timeout = Duration.(to_f (of_sec 10))
 
-let log_call = function
-  | `Req req ->
-      Logs.debug (fun m ->
-          m "req = %a" (Openapi.Request.pp (fun fmt _ -> Format.fprintf fmt "<opaque>")) req)
-  | `Resp resp ->
-      Logs.debug (fun m ->
-          m "resp = %a" (Openapi.Response.pp (fun fmt _ -> Format.fprintf fmt "<opaque>")) resp)
-  | `Err (#Openapic_abb.call_err as err) ->
-      Logs.debug (fun m -> m "err = %a" Openapic_abb.pp_call_err err)
+(* let log_call = function *)
+(*   | `Req req -> *)
+(*       Logs.debug (fun m -> *)
+(*           m "req = %a" (Openapi.Request.pp (fun fmt _ -> Format.fprintf fmt "<opaque>")) req) *)
+(*   | `Resp resp -> *)
+(*       Logs.debug (fun m -> *)
+(*           m "resp = %a" (Openapi.Response.pp (fun fmt _ -> Format.fprintf fmt "<opaque>")) resp) *)
+(*   | `Err (#Openapic_abb.call_err as err) -> *)
+(*       Logs.debug (fun m -> m "err = %a" Openapic_abb.pp_call_err err) *)
 
 let rate_limit_wait resp =
   let headers = Openapi.Response.headers resp in
