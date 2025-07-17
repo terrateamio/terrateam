@@ -7,6 +7,7 @@ import time
 import requests
 
 TERRAT_API_BASE = 'TERRAT_API_BASE'
+TERRAT_UI_BASE = 'TERRAT_UI_BASE'
 GITHUB_API_BASE_URL = 'GITHUB_API_BASE_URL'
 REQUIRED_ENV_KEYS = []
 
@@ -55,6 +56,34 @@ def get_tunnel_hostname(terratunnel_endpoint):
         print(f"Failed to fetch tunnel hostname: {e}")
     return None
 
+def set_terrat_env_from_tunnel():
+    """Set TERRAT_API_BASE and TERRAT_UI_BASE from terratunnel if not already set"""
+    if not os.environ.get('TERRATUNNEL_API_ENDPOINT'):
+        return
+
+    tunnel_hostname = None
+
+    # Set TERRAT_API_BASE if not already set
+    if not os.environ.get(TERRAT_API_BASE):
+        print('TERRAT_API_BASE not set, attempting to fetch from terratunnel...')
+        tunnel_hostname = get_tunnel_hostname(os.environ['TERRATUNNEL_API_ENDPOINT'])
+        if tunnel_hostname:
+            os.environ[TERRAT_API_BASE] = f"https://{tunnel_hostname}/api"
+            print(f"Set TERRAT_API_BASE to: {os.environ[TERRAT_API_BASE]}")
+        else:
+            print("Failed to get tunnel hostname from terratunnel")
+
+    # Set TERRAT_UI_BASE if not already set
+    if not os.environ.get(TERRAT_UI_BASE):
+        print('TERRAT_UI_BASE not set, attempting to fetch from terratunnel...')
+        if tunnel_hostname is None:
+            tunnel_hostname = get_tunnel_hostname(os.environ['TERRATUNNEL_API_ENDPOINT'])
+        if tunnel_hostname:
+            os.environ[TERRAT_UI_BASE] = f"https://{tunnel_hostname}/"
+            print(f"Set TERRAT_UI_BASE to: {os.environ[TERRAT_UI_BASE]}")
+        else:
+            print("Failed to get tunnel hostname from terratunnel")
+
 def assert_run_mode():
     if not os.environ.get(TERRAT_API_BASE):
         print('TERRAT_API_BASE must be set')
@@ -69,15 +98,8 @@ def main():
 
     assert_required_env_keys()
 
-    # Try to set TERRAT_API_BASE from terratunnel if not already set
-    if not os.environ.get(TERRAT_API_BASE) and os.environ.get('TERRATUNNEL_API_ENDPOINT'):
-        print('TERRAT_API_BASE not set, attempting to fetch from terratunnel...')
-        tunnel_hostname = get_tunnel_hostname(os.environ['TERRATUNNEL_API_ENDPOINT'])
-        if tunnel_hostname:
-            os.environ[TERRAT_API_BASE] = f"https://{tunnel_hostname}/api"
-            print(f"Set TERRAT_API_BASE to: {os.environ[TERRAT_API_BASE]}")
-        else:
-            print("Failed to get tunnel hostname from terratunnel")
+    # Set TERRAT_API_BASE and TERRAT_UI_BASE from terratunnel if not already set
+    set_terrat_env_from_tunnel()
 
     assert_run_mode()
 
