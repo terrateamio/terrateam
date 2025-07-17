@@ -44,6 +44,7 @@ services:
       GITHUB_APP_ID: "${GITHUB_APP_ID}"
       GITHUB_APP_PEM: "${GITHUB_APP_PEM}"
       TERRATUNNEL_API_ENDPOINT: "http://terratunnel:8081"
+      TERRAT_UI_BASE: "${TERRAT_UI_BASE}"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 3s
