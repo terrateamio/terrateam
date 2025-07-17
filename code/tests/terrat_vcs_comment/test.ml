@@ -103,11 +103,11 @@ module H = struct
         assert false
 
   let rendered_length els = CCList.fold_left (fun acc el -> acc + el.Eh.rendered_length) 0 els
-  let dirspace el = el.Eh.dirspace
-  let is_success el = el.Eh.is_success
   let strategy el = el.Eh.strategy
   let compact el = { el with Eh.rendered_length = 1 }
-  let compare_el el1 el2 = Cmp.compare (is_success el1, dirspace el1) (is_success el2, dirspace el2)
+  let compare_el el1 el2 =
+    Cmp.compare (el1.Eh.is_success, el1.dirspace) (el2.Eh.is_success, el2.dirspace)
+
   let max_comment_length = 100
 end
 

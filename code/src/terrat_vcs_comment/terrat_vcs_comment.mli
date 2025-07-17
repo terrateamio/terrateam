@@ -35,9 +35,6 @@ module type S = sig
 
   (** Element primitives *)
   val rendered_length : el list -> int
-  val dirspace : el -> Terrat_dirspace.t
-  val is_success: el -> bool
-  val has_changes: el -> bool
   val strategy : el -> Strategy.t
   (** When an el is too big to fit in a comment, compact formats it in a
       way that redirects people to our UI. Instead of working within the 
