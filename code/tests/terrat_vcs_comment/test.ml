@@ -107,7 +107,7 @@ module H = struct
   let compact el = { el with Eh.rendered_length = 1 }
 
   let compare_el el1 el2 =
-    Cmp.compare (el1.Eh.is_success, el1.dirspace) (el2.Eh.is_success, el2.dirspace)
+    Cmp.compare (el1.Eh.is_success, el1.Eh.dirspace) (el2.Eh.is_success, el2.Eh.dirspace)
 
   let max_comment_length = 100
 end
