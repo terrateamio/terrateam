@@ -3011,6 +3011,7 @@ module Comment = struct
         let open Abb.Future.Infix_monad in
         let module Wm = Terrat_work_manifest3 in
         let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
+        let module Gh = Terrat_vcs_service_github_comment in
         let module Gcm = Terrat_vcs_comment.Make (Terrat_vcs_service_github_comment.S) in
         let by_scope = By_scope.group results.R2.steps in
         let gates = results.R2.gates in
@@ -3024,22 +3025,15 @@ module Comment = struct
                | _ -> None)
         in
         let st = Terrat_vcs_comment.Strategy.Append in
-        (* let els =
-            dirspaces_with_steps
-            |> CCList.map (fun (hc, s, d) -> {Terrat_vcs_service_github_comment.S.el.dirspace = d; is_success = s; has_changes = hc; rendered_length = 1024; strategy = st}) *)
-        let output =
-          create_run_output
-            ~view
-            request_id
-            account_status
-            config
-            is_layered_run
-            remaining_layers
-            by_scope
-            gates
-            work_manifest
-        in
-        Abb.Future.return (Ok ())
+        dirspaces_with_steps
+        |> CCList.map (fun (hc, s, d) ->
+               {
+                 Gh.S.dirspace = d;
+                 is_success = s;
+                 has_changed = hc;
+                 rendered_length = 1024;
+                 strategy = st;
+               })
     end
   end
 
