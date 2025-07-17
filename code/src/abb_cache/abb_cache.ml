@@ -249,15 +249,17 @@ module Make (Abb : Abb_intf.S) = struct
       ]
     [@@deriving show]
 
-    type opts = {
+    type 'v opts = {
       on_hit : unit -> unit;
       on_miss : unit -> unit;
       on_evict : unit -> unit;
       path : string;
+      to_string : 'v -> string;
+      of_string : string -> 'v option;
     }
 
-    module Make (M : S with type k = string and type v = string) = struct
-      type nonrec opts = opts
+    module Make (M : S with type k = string) = struct
+      type nonrec opts = M.v opts
       type k = M.k
       type args = M.args
       type v = M.v
@@ -285,13 +287,18 @@ module Make (Abb : Abb_intf.S) = struct
               M.fetch args
               >>= function
               | Ok v as r -> (
-                  Abb_io_file.write_file ~fname:(filename ^ ".tmp") v
+                  let str = t.opts.to_string v in
+                  let run =
+                    let open Fut_comb.Infix_result_monad in
+                    Abb_io_file.write_file ~fname:(filename ^ ".tmp") str
+                    >>= fun () ->
+                    Fut_comb.to_result
+                    @@ Fut_comb.ignore
+                    @@ Abb.File.rename ~src:(filename ^ ".tmp") ~dst:filename
+                  in
+                  run
                   >>= function
                   | Ok () ->
-                      Abb_io_file.write_file ~fname:(filename ^ ".key") k
-                      >>= fun _ ->
-                      Abb.File.rename ~src:(filename ^ ".tmp") ~dst:filename
-                      >>= fun _ ->
                       Hashtbl.remove t.cache k;
                       Abb.Future.return r
                   | Error (#Abb_io_file.with_file_err as err) ->
@@ -307,17 +314,36 @@ module Make (Abb : Abb_intf.S) = struct
         Hashtbl.replace t.cache k run;
         Abb.Future.fork run >>= fun _ -> run
 
+      let read_keys filename keys =
+        let open Fut_comb.Infix_result_monad in
+        Fut_comb.List_result.map
+          ~f:(fun k ->
+            Abb_io_file.read_file (filename ^ "." ^ k)
+            >>= fun content -> Abb.Future.return (Ok (k, content)))
+          keys
+
       let fetch t k args =
         let open Abb.Future.Infix_monad in
         let filename = Filename.concat t.opts.path @@ id_of_k k in
         if Sys.file_exists filename then
-          Abb_io_file.read_file filename
+          let run =
+            let open Fut_comb.Infix_result_monad in
+            Abb_io_file.read_file filename
+            >>= fun contents ->
+            match t.opts.of_string contents with
+            | Some v -> Abb.Future.return (Ok v)
+            | None ->
+                t.opts.on_miss ();
+                fetch' t k filename args
+          in
+          run
           >>= function
           | Ok contents ->
               t.opts.on_hit ();
               Abb.Future.return (Ok contents)
           | Error (#Abb_intf.Errors.read as err) -> Abb.Future.return (Error (`Cache_err err))
           | Error (#Abb_io_file.with_file_err as err) -> Abb.Future.return (Error (`Cache_err err))
+          | Error (`Fetch_err _ | `Cache_err _) as err -> Abb.Future.return err
         else (
           t.opts.on_miss ();
           fetch' t k filename args)
