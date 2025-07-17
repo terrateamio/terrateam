@@ -1,0 +1,93 @@
+---
+title: Custom File Discovery with Tree Builder
+description: Learn how to implement custom file discovery and change detection strategies for complex Terraform workflows
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+import MermaidDiagram from "../../../components/MermaidDiagram.astro";
+
+Terrateam's [tree builder](/configuration-reference/tree-builder) feature enables you to customize how files are discovered and tracked in your repository. This powerful capability allows you to implement custom change detection logic, work with dynamically generated Terraform files, and handle complex monorepo dependencies.
+
+## When to Use Tree Builder
+
+Tree builder is particularly useful when Git's standard file tracking doesn't meet your needs. Consider using tree builder when you have:
+
+:::tip[Common Use Cases]
+- **Dynamic Infrastructure** - Terraform files generated from templates or code
+- **Complex Dependencies** - Changes in shared libraries should trigger dependent services
+- **Custom Change Logic** - Business rules that determine what counts as a "change"
+- **Non-standard Workflows** - Infrastructure patterns that don't fit traditional file tracking
+:::
+
+## How Tree Builder Works
+
+Tree builder acts as a custom file discovery layer between your repository and Terrateam's workflow engine. Instead of relying solely on Git to determine which files exist and have changed, your custom script provides this information.
+
+<MermaidDiagram chart={`
+flowchart LR
+  A[Git Repository] --> B[Tree Builder Script]
+  B --> C[Custom File List]
+  C --> D[Terrateam Workflow]
+  D --> E[Plan/Apply Operations]
+  
+  style B fill:#f9f,stroke:#333,stroke-width:2px
+  style C fill:#9ff,stroke:#333,stroke-width:2px
+`} />
+
+Your tree builder script:
+1. Analyzes the repository state
+2. Applies custom logic to determine files and changes
+3. Outputs a JSON structure that Terrateam uses for workflow decisions
+
+## Getting Started
+
+<Steps>
+1. **Enable tree builder in your configuration**
+   
+   Add the following to your `.terrateam/config.yml`:
+   ```yaml
+   tree_builder:
+     enabled: true
+     script: "./scripts/discover_files.sh"
+   ```
+
+2. **Create your discovery script**
+   
+   Your script must output JSON to stdout with this structure:
+   ```json
+   {
+     "files": [
+       {
+         "path": "environments/prod/main.tf",
+         "changed": true
+       },
+       {
+         "path": "environments/staging/main.tf",
+         "changed": false
+       }
+     ]
+   }
+   ```
+
+3. **Test your script locally**
+   
+   Before deploying, ensure your script produces valid JSON:
+   ```bash
+   ./scripts/discover_files.sh | jq '.'
+   ```
+
+4. **Deploy and monitor**
+   
+   Push your changes and watch Terrateam use your custom file discovery in pull requests.
+</Steps>
+
+## Best Practices
+
+:::caution[Security Considerations]
+- Validate all inputs to your script
+- Avoid executing untrusted code
+- Use secure file operations
+- Restrict who can modify tree builder scripts using [`access_control`](/configuration-reference/access-control)
+:::
+
+For detailed configuration options, see the [tree builder configuration reference](/configuration-reference/tree-builder).
