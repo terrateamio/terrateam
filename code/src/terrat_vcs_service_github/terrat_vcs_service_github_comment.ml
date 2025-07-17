@@ -17,8 +17,8 @@ module S = struct
     type t = bool * bool * Terrat_dirspace.t [@@deriving ord]
   end
 
-  let query_comment_id t el = 1000
-  let query_els_for_comment_id t cid = []
+  let query_comment_id t el = Abb.Future.return (Ok (Some 1000))
+  let query_els_for_comment_id t cid = Abb.Future.return (Ok [])
   let upsert_comment_id t els cid = Abb.Future.return (Ok ())
   let delete_comment t comment_id = Abb.Future.return (Ok ())
   let minimize_comment t comment_id = Abb.Future.return (Ok ())
