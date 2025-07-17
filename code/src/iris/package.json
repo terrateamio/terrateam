@@ -18,6 +18,7 @@
     "pre-commit": "npm run type-check && npm run check-api-types && npm run knip",
     "quality-check": "npm run pre-commit",
     "knip": "knip",
+    "test": "npm run type-check && npm run check-api-types && npm run check && npm run knip",
     "download-icons": "node scripts/download-icons.js"
   },
   "devDependencies": {
