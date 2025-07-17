@@ -19,7 +19,6 @@ module type S = sig
   val post_comment : t -> el list -> (comment_id, [> `Error ]) result Abb.Future.t
   val rendered_length : el list -> int
   val dirspace : el -> Terrat_dirspace.t
-  val is_success : el -> bool
   val strategy : el -> Strategy.t
   val compact : el -> el
   val compare_el : el -> el -> int
@@ -44,10 +43,7 @@ module Make (M : S) = struct
       else (CCList.rev curr_acc :: groups, [ r ])
     in
     let groups, rest = CCList.fold_left combine ([], []) els in
-    let x =
-      CCList.rev (CCList.rev rest :: groups) |> CCList.filter CCFun.(CCList.is_empty %> not)
-    in
-    x
+    CCList.rev (CCList.rev rest :: groups) |> CCList.filter CCFun.(CCList.is_empty %> not)
 
   let append_single t (els : M.el list) =
     let open Abbs_future_combinators.Infix_result_monad in

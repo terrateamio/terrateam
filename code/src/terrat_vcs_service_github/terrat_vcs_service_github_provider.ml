@@ -2711,6 +2711,15 @@ module Comment = struct
              before [true]. *)
         Cmp.compare (not has_changes1, success1, dirspace1) (not has_changes2, success2, dirspace2)
 
+      (* TODO: Replace the previous dirspace_compare function *)
+      let dirspace_compare2 (hc1, s1, d1) (hc2, s2, d2) =
+        let module Cmp = struct
+          type t = bool * bool * Terrat_dirspace.t [@@deriving ord]
+        end in
+        (* Negate has_changes because the order of [bool] is [false]
+             before [true]. *)
+        Cmp.compare (not hc2, s1, d1) (not hc2, s2, d2)
+
       let create_run_output
           ~view
           request_id
@@ -2932,6 +2941,13 @@ module Comment = struct
         let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
         let by_scope = By_scope.group results.R2.steps in
         let gates = results.R2.gates in
+        let dirspaces =
+          CCList.filter
+            (function
+              | Scope.Dirspace _, _ -> true
+              | _ -> false)
+            by_scope
+        in
         let output =
           create_run_output
             ~view
@@ -2949,13 +2965,6 @@ module Comment = struct
         >>= function
         | Ok () -> Abb.Future.return (Ok ())
         | Error `Error -> (
-            let dirspaces =
-              CCList.filter
-                (function
-                  | Scope.Dirspace _, _ -> true
-                  | _ -> false)
-                by_scope
-            in
             match (view, dirspaces) with
             | _, [] -> assert false
             | `Full, _ ->
@@ -2987,6 +2996,45 @@ module Comment = struct
                   "ITERATE_COMMENT_POST2"
                   Tmpl.comment_too_large
                   kv)
+
+      let rec iterate_comment_posts2
+          ?(view = `Full)
+          request_id
+          account_status
+          config
+          client
+          is_layered_run
+          remaining_layers
+          results
+          pull_request
+          work_manifest =
+        let open Abb.Future.Infix_monad in
+        let module Wm = Terrat_work_manifest3 in
+        let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
+        let by_scope = By_scope.group results.R2.steps in
+        let gates = results.R2.gates in
+        let dirspaces_with_steps =
+          by_scope
+          |> CCList.filter_map (function
+               | Scope.Dirspace dirspace, steps ->
+                   let success = steps_success steps in
+                   let has_changes = steps_has_changes steps in
+                   Some (has_changes, success, dirspace)
+               | _ -> None)
+        in
+        let output =
+          create_run_output
+            ~view
+            request_id
+            account_status
+            config
+            is_layered_run
+            remaining_layers
+            by_scope
+            gates
+            work_manifest
+        in
+        Abb.Future.return (Ok ())
     end
   end
 
