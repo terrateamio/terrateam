@@ -140,6 +140,16 @@ module Webhook = struct
         /% Var.text "name")
   end
 
+  (* let log_call = function *)
+  (*   | `Req req -> *)
+  (*       Logs.debug (fun m -> *)
+  (*           m "req = %a" (Openapi.Request.pp (fun fmt _ -> Format.fprintf fmt "<opaque>")) req) *)
+  (*   | `Resp resp -> *)
+  (*       Logs.debug (fun m -> *)
+  (*           m "resp = %a" (Openapi.Response.pp (fun fmt _ -> Format.fprintf fmt "<opaque>")) resp) *)
+  (*   | `Err (#Openapic_abb.call_err as err) -> *)
+  (*       Logs.debug (fun m -> m "err = %a" Openapic_abb.pp_call_err err) *)
+
   let affirm_is_admin client installation_id user_id =
     let open Abbs_future_combinators.Infix_result_monad in
     let module G = Gitlabc_groups_members.GetApiV4GroupsIdMembersAllUserId in

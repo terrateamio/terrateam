@@ -24,7 +24,7 @@ module List = struct
     >>= fun groups ->
     let module G = Gitlabc_components_api_entities_group in
     let module R = Terrat_api_components_gitlab_group in
-    Abb.Future.return (Ok (CCList.map (fun { G.id; name; _ } -> { R.id; name }) groups))
+    Abb.Future.return (Ok (CCList.map (fun { G.id; full_name = name; _ } -> { R.id; name }) groups))
 
   let get config storage =
     Brtl_ep.run_result ~f:(fun ctx ->

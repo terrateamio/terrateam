@@ -13,7 +13,7 @@
   import { VCS_PROVIDERS } from './vcs/providers';
   
   // Router props (external reference only)
-  export const params = {};
+  export let params = {};
   
   // Repository cache - stores ALL repositories once loaded
   let allRepositories: RepositoryWithStats[] = [];
@@ -177,8 +177,19 @@
     repoError = null;
     
     try {
-      // Call the refresh endpoint - this triggers a background job to sync with GitHub
-      const refreshResponse = await api.refreshInstallationRepos($selectedInstallation.id);
+      // Check if this is a GitLab installation
+      const currentProvider = $currentVCSProvider;
+      
+      if (currentProvider === 'gitlab') {
+        // GitLab doesn't have a refresh endpoint, just reload the repositories
+        await loadRepositories($selectedInstallation, true);
+        lastRefreshedAt = new Date();
+        isRefreshing = false;
+        return;
+      }
+      
+      // Call the refresh endpoint for GitHub - this triggers a background job to sync
+      const refreshResponse = await api.refreshInstallationRepos($selectedInstallation.id, currentProvider);
       
       // Poll the task status
       let attempts = 0;

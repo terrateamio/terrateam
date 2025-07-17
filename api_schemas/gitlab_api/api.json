@@ -3608,17 +3608,11 @@
           "archived": {
             "type": "boolean"
           },
-          "auto_devops_enabled": {
-            "type": "boolean"
-          },
           "avatar_url": {
             "type": "string"
           },
           "created_at": {
             "type": "string"
-          },
-          "custom_attributes": {
-            "$ref": "#/components/schemas/API_Entities_CustomAttribute"
           },
           "default_branch": {
             "type": "string"
@@ -3632,18 +3626,6 @@
           "description": {
             "type": "string"
           },
-          "duo_features_enabled": {
-            "type": "boolean"
-          },
-          "emails_disabled": {
-            "type": "boolean"
-          },
-          "emails_enabled": {
-            "type": "boolean"
-          },
-          "file_template_project_id": {
-            "type": "string"
-          },
           "full_name": {
             "type": "string"
           },
@@ -3652,37 +3634,6 @@
           },
           "id": {
             "type": "integer"
-          },
-          "ldap_access": {
-            "type": "boolean"
-          },
-          "ldap_cn": {
-            "type": "string"
-          },
-          "ldap_group_links": {
-            "$ref": "#/components/schemas/EE_API_Entities_LdapGroupLink"
-          },
-          "lfs_enabled": {
-            "type": "boolean"
-          },
-          "lock_duo_features_enabled": {
-            "type": "boolean"
-          },
-          "lock_math_rendering_limits_enabled": {
-            "type": "boolean"
-          },
-          "marked_for_deletion_on": {
-            "type": "string"
-          },
-          "math_rendering_limits_enabled": {
-            "type": "boolean"
-          },
-          "max_artifacts_size": {
-            "format": "int32",
-            "type": "integer"
-          },
-          "mentions_disabled": {
-            "type": null
           },
           "name": {
             "type": "string"
@@ -3696,81 +3647,17 @@
           "path": {
             "type": "string"
           },
-          "project_creation_level": {
-            "type": "string"
-          },
-          "repository_storage": {
-            "type": "string"
-          },
-          "request_access_enabled": {
-            "type": "boolean"
-          },
-          "require_two_factor_authentication": {
-            "type": "boolean"
-          },
-          "root_storage_statistics": {
-            "type": null
-          },
-          "saml_group_links": {
-            "type": null
-          },
-          "share_with_group_lock": {
-            "type": "boolean"
-          },
-          "shared_runners_setting": {
-            "type": "string"
-          },
-          "statistics": {
-            "properties": {
-              "job_artifacts_size": {
-                "type": "string"
-              },
-              "lfs_objects_size": {
-                "type": "string"
-              },
-              "packages_size": {
-                "type": "string"
-              },
-              "pipeline_artifacts_size": {
-                "type": "string"
-              },
-              "repository_size": {
-                "type": "string"
-              },
-              "snippets_size": {
-                "type": "string"
-              },
-              "storage_size": {
-                "type": "string"
-              },
-              "uploads_size": {
-                "type": "string"
-              },
-              "wiki_size": {
-                "type": "string"
-              }
-            },
-            "type": "object"
-          },
-          "subgroup_creation_level": {
-            "type": "string"
-          },
-          "two_factor_grace_period": {
-            "type": "integer"
-          },
           "visibility": {
             "type": "string"
           },
           "web_url": {
-            "type": "string"
-          },
-          "wiki_access_level": {
             "type": "string"
           }
         },
         "required": [
           "created_at",
           "id",
+          "full_name",
           "name"
         ],
         "type": "object"

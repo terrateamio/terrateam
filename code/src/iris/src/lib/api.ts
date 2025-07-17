@@ -12,6 +12,7 @@ import {
   type GitLabGroup,
   type GitLabUser,
   type GitLabWebhook,
+  type GitLabWhoAreYou,
   validateRepository,
   validateUser,
   validateDirspace,
@@ -23,6 +24,7 @@ import {
   validateGitLabGroups,
   validateGitLabUser,
   validateGitLabWebhook,
+  validateGitLabWhoAreYou,
 } from './types';
 import { sentryService } from './sentry';
 import { get } from 'svelte/store';
@@ -633,6 +635,12 @@ export class ValidatedApiClient {
   async getGitLabUser(): Promise<GitLabUser> {
     const response = await this.get('/api/v1/gitlab/whoami');
     return validateGitLabUser(response);
+  }
+
+  // Get GitLab bot information
+  async getGitLabBotInfo(): Promise<GitLabWhoAreYou> {
+    const response = await this.get('/api/v1/gitlab/whoareyou');
+    return validateGitLabWhoAreYou(response);
   }
 
 }
