@@ -59,9 +59,9 @@ module Sql = struct
       /^ read "select_installation_by_webhook_secret.sql"
       /% Var.text "webhook_secret")
 
-  let update_installation_to_active () =
+  let update_installation_to_installed () =
     Pgsql_io.Typed_sql.(
-      sql /^ read "update_installation_to_active.sql" /% Var.bigint "installation_id")
+      sql /^ read "update_installation_to_installed.sql" /% Var.bigint "installation_id")
 
   let insert_installation_repository () =
     Pgsql_io.Typed_sql.(
@@ -189,7 +189,10 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
         Logs.info (fun m ->
             m "%s : EVENT : PING : installation_id=%Ld" (Brtl_ctx.token ctx) installation_id);
         Pgsql_pool.with_conn storage ~f:(fun db ->
-            Pgsql_io.Prepared_stmt.execute db (Sql.update_installation_to_active ()) installation_id)
+            Pgsql_io.Prepared_stmt.execute
+              db
+              (Sql.update_installation_to_installed ())
+              installation_id)
         >>= fun () ->
         Abb.Future.return @@ decode ctx
         >>= fun event ->

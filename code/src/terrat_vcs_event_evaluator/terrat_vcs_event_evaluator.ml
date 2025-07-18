@@ -1,6 +1,3 @@
-let src = Logs.Src.create "vcs_event_evaluator"
-
-module Logs = (val Logs.src_log src : Logs.LOG)
 module Msg = Terrat_vcs_provider2.Msg
 
 let cache_capacity_mb_in_kb = ( * ) 1024
@@ -66,6 +63,10 @@ module Tag_query = struct
 end
 
 module Make (S : Terrat_vcs_provider2.S) = struct
+  let src = Logs.Src.create ("vcs_event_evaluator_" ^ S.name)
+
+  module Logs = (val Logs.src_log src : Logs.LOG)
+
   (* Logging wrappers *)
   let log_time ?m request_id name t =
     Logs.info (fun m -> m "%s : %s : time=%f" request_id name t);

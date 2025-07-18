@@ -82,9 +82,12 @@ let retry_wait default_wait resp =
   rate_limit_wait resp
   >>= function
   | Some retry_after ->
+      Logs.debug (fun m -> m "RATE_LIMIT : wait=%f" retry_after);
       Metrics.Call_retry_wait_histograph.observe Metrics.rate_limit_retry_wait_seconds retry_after;
       Abb.Future.return retry_after
-  | None -> Abb.Future.return default_wait
+  | None ->
+      Logs.debug (fun m -> m "RATE_LIMIT : wait=%f" default_wait);
+      Abb.Future.return default_wait
 
 let call ?(tries = 3) t req =
   Abbs_future_combinators.retry
