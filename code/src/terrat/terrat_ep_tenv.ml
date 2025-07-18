@@ -33,14 +33,22 @@ module Sql = struct
       /% Var.uuid "id")
 end
 
+module V = struct
+  type t = {
+    headers : (string * string) list;
+    body : string;
+  }
+  [@@deriving yojson]
+end
+
 module Tenv_cache = Cache.Filesystem.Make (struct
   type k = string [@@deriving eq]
-  type v = string
+  type v = V.t
   type err = Http.request_err
   type args = unit -> (v, err) result Abb.Future.t
 
   let fetch f = f ()
-  let weight = CCString.length
+  let weight = CCFun.(V.to_yojson %> Yojson.Safe.to_string %> CCString.length)
 end)
 
 let on_hit fn () = Prmths.Counter.inc_one (Metrics.cache_fn_call_count ~l:"global" ~fn "hit")
@@ -57,6 +65,11 @@ let tenv_cache =
         Filename.concat
           (CCOption.get_or ~default:"/tmp" @@ Sys.getenv_opt "TERRAT_CACHE_DIR")
           "tenv";
+      to_string = CCFun.(V.to_yojson %> Yojson.Safe.pretty_to_string);
+      of_string =
+        CCFun.(
+          CCOption.wrap Yojson.Safe.from_string
+          %> CCOption.flat_map (V.of_yojson %> CCOption.of_result));
     }
 
 let get config storage _origin work_manifest_id path ctx =
@@ -69,12 +82,23 @@ let get config storage _origin work_manifest_id path ctx =
       let fetch () =
         let open Abbs_future_combinators.Infix_result_monad in
         let url = Uri.with_path (Uri.of_string "https://github.com") path in
-        Http.get url >>= fun (resp, body) -> Abb.Future.return (Ok body)
+        Http.get url
+        >>= fun (resp, body) ->
+        let headers = Http.Response.headers resp in
+        let headers_of_interest =
+          CCList.filter_map
+            (fun h -> CCOption.map (fun v -> (h, v)) @@ Http.Headers.get h headers)
+            [ "content-length"; "content-type" ]
+        in
+        Abb.Future.return (Ok { V.body; headers = headers_of_interest })
       in
       Tenv_cache.fetch tenv_cache path fetch
       >>= function
-      | Ok body ->
-          Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK body) ctx)
+      | Ok v ->
+          let headers = Cohttp.Header.of_list v.V.headers in
+          let body = v.V.body in
+          Abb.Future.return
+            (Brtl_ctx.set_response (Brtl_rspnc.create ~headers ~status:`OK body) ctx)
       | Error (`Cache_err (#Cache.Filesystem.cache_err as err)) ->
           Logs.err (fun m ->
               m "%s : GET : %a" (Brtl_ctx.token ctx) Cache.Filesystem.pp_cache_err err);

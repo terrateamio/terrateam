@@ -375,14 +375,15 @@ let comment_on_pull_request ~request_id client pull_request body =
   in
   let run =
     let open Abbs_future_combinators.Infix_result_monad in
+    let body = { Gl.Request_body.body } in
     call
       client.Client.client
       Gl.(
         make
+          ~body
           (Parameters.make
              ~id:(CCInt.to_string @@ Repo.id @@ Terrat_pull_request.repo pull_request)
-             ~merge_request_iid:(Terrat_pull_request.id pull_request)
-             ~body))
+             ~merge_request_iid:(Terrat_pull_request.id pull_request)))
     >>= fun resp ->
     match Openapi.Response.value resp with
     | `OK -> Abb.Future.return (Ok ())

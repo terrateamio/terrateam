@@ -59772,16 +59772,24 @@
               "format": "int32",
               "type": "integer"
             }
-          },
-          {
-            "in": "query",
-            "name": "body",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "body": {
+                    "type": "string"
+                  }
+                },
+                "required": ["body"]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {},
           "201": {

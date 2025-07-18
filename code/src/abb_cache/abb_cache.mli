@@ -92,16 +92,18 @@ module Make (Abb : Abb_intf.S) : sig
       ]
     [@@deriving show]
 
-    type opts = {
+    type 'v opts = {
       on_hit : unit -> unit;
       on_miss : unit -> unit;
       on_evict : unit -> unit;
       path : string;
+      to_string : 'v -> string;
+      of_string : string -> 'v option;
     }
 
-    module Make (M : S with type k = string and type v = string) :
+    module Make (M : S with type k = string) :
       SRC
-        with type opts = opts
+        with type opts = M.v opts
          and type k = M.k
          and type args = M.args
          and type v = M.v

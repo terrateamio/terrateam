@@ -157,6 +157,8 @@ module Msg = struct
 end
 
 module type S = sig
+  val name : string
+
   module Api : Terrat_vcs_api.S
 
   module Unlock_id : sig
