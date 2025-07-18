@@ -1829,11 +1829,14 @@ end
 module PostApiV4ProjectsIdMergeRequestsMergeRequestIidNotesNotesId = struct
   module Parameters = struct
     type t = {
-      body : string;
       id : string;
       merge_request_iid : int;
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = { body : string } [@@deriving make, yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -1862,8 +1865,10 @@ module PostApiV4ProjectsIdMergeRequestsMergeRequestIidNotesNotesId = struct
 
   let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/notes"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -1872,10 +1877,7 @@ module PostApiV4ProjectsIdMergeRequestsMergeRequestIidNotesNotesId = struct
            ("id", Var (params.id, String));
            ("merge_request_iid", Var (params.merge_request_iid, Int));
          ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("body", Var (params.body, String)) ])
+      ~query_params:[]
       ~url
       ~responses:Responses.t
       `Post
