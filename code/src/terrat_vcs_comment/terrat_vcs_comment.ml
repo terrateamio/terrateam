@@ -17,7 +17,7 @@ module type S = sig
   val delete_comment : t -> comment_id -> (unit, [> `Error ]) result Abb.Future.t
   val minimize_comment : t -> comment_id -> (unit, [> `Error ]) result Abb.Future.t
   val post_comment : t -> el list -> (comment_id, [> `Error ]) result Abb.Future.t
-  val rendered_length : el list -> int
+  val rendered_length : t -> el list -> int
   val strategy : el -> Strategy.t
   val compact : el -> el
   val compare_el : el -> el -> int
@@ -34,11 +34,11 @@ module Make (M : S) = struct
   end)
 
   let partition_by_strategy els = By_strategy.group els
-  let compact e = if M.rendered_length [ e ] < M.max_comment_length then e else M.compact e
+  let compact t e = if M.rendered_length t [ e ] < M.max_comment_length then e else M.compact e
 
-  let split_by_size els =
+  let split_by_size t els =
     let combine (groups, curr_acc) r =
-      if M.rendered_length (r :: curr_acc) < M.max_comment_length then (groups, r :: curr_acc)
+      if M.rendered_length t (r :: curr_acc) < M.max_comment_length then (groups, r :: curr_acc)
       else (CCList.rev curr_acc :: groups, [ r ])
     in
     let groups, rest = CCList.fold_left combine ([], []) els in
@@ -57,10 +57,10 @@ module Make (M : S) = struct
   let run t els =
     let open Abb.Future.Infix_monad in
     let module Alr = Abbs_future_combinators.List_result in
-    let compressed = CCList.map compact els in
+    let compressed = CCList.map (compact t) els in
     let sorted = CCList.sort M.compare_el compressed in
     let groups = partition_by_strategy sorted in
-    let split = CCList.map (fun (k, v) -> (k, split_by_size v)) groups in
+    let split = CCList.map (fun (k, v) -> (k, split_by_size t v)) groups in
     Abbs_future_combinators.List_result.iter
       ~f:(function
         | Strategy.Append, els -> append t els

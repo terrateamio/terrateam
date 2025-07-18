@@ -34,7 +34,7 @@ module type S = sig
   val post_comment : t -> el list -> (comment_id, [> `Error ]) result Abb.Future.t
 
   (** Element primitives *)
-  val rendered_length : el list -> int
+  val rendered_length : t -> el list -> int
   val strategy : el -> Strategy.t
   (** When an el is too big to fit in a comment, compact formats it in a
       way that redirects people to our UI. Instead of working within the 

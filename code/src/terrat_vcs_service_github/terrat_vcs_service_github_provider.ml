@@ -2997,6 +2997,23 @@ module Comment = struct
                   Tmpl.comment_too_large
                   kv)
 
+      let to_dirspace_output
+          has_changes
+          success
+          overall_success
+          { Terrat_dirspace.dir; workspace }
+          steps =
+        Snabela.Kv.(
+          Map.of_list
+            [
+              ("dir", string dir);
+              ("workspace", string workspace);
+              ("success", bool success);
+              ( "steps",
+                list (kv_of_outputs (Output.filter ~overall_success (output_of_steps steps))) );
+              ("has_changes", bool has_changes);
+            ])
+
       let create_els
           ?(view = `Full)
           request_id
@@ -3011,29 +3028,21 @@ module Comment = struct
         let open Abb.Future.Infix_monad in
         let module Wm = Terrat_work_manifest3 in
         let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
+        let module O = Terrat_api_components.Workflow_step_output in
         let module Gh = Terrat_vcs_service_github_comment in
         let module Gcm = Terrat_vcs_comment.Make (Terrat_vcs_service_github_comment.S) in
+        let module Tcm = Terrat_vcs_service_github_comment in
         let by_scope = By_scope.group results.R2.steps in
-        let gates = results.R2.gates in
-        let dirspaces_with_steps =
-          by_scope
-          |> CCList.filter_map (function
-               | Scope.Dirspace dirspace, steps ->
-                   let success = steps_success steps in
-                   let has_changes = steps_has_changes steps in
-                   Some (has_changes, success, dirspace)
-               | _ -> None)
-        in
-        let st = Terrat_vcs_comment.Strategy.Append in
-        dirspaces_with_steps
-        |> CCList.map (fun (hc, s, d) ->
-               {
-                 Gh.S.dirspace = d;
-                 is_success = s;
-                 has_changed = hc;
-                 rendered_length = 1024;
-                 strategy = st;
-               })
+        (*         let gates = results.R2.gates in *)
+        let strategy = Terrat_vcs_comment.Strategy.Append in
+        by_scope
+        |> CCList.map (function
+             | Scope.Dirspace d, steps ->
+                 let scope = Tcm.Scope.Dirspace d in
+                 { Tcm.S.scope; steps; strategy }
+             | Scope.Run { flow; subflow }, steps ->
+                 let scope = Tcm.Scope.Run { flow; subflow } in
+                 { Tcm.S.scope; steps; strategy })
     end
   end
 
