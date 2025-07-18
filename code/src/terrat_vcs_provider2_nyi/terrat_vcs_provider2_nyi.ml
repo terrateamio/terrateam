@@ -1,3 +1,5 @@
+let name = "nyi"
+
 module Api = Terrat_vcs_api_nyi
 
 module Unlock_id = struct
