@@ -2478,6 +2478,55 @@ module Comment = struct
       let module O = Terrat_api_components.Workflow_step_output in
       CCList.for_all (fun { O.success; ignore_errors; _ } -> success || ignore_errors) steps
 
+    module Publisher3 = struct
+      module Gcm = Terrat_vcs_comment.Make (Terrat_vcs_service_github_comment.S)
+
+      let create_els results =
+        let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
+        let module Tcm = Terrat_vcs_service_github_comment in
+        let by_scope = By_scope.group results.R2.steps in
+        let strategy = Terrat_vcs_comment.Strategy.Append in
+        by_scope
+        |> CCList.map (function
+             | Scope.Dirspace d, steps ->
+                 let scope = Tcm.Scope.Dirspace d in
+                 { Tcm.S.scope; steps; strategy }
+             | Scope.Run { flow; subflow }, steps ->
+                 let scope = Tcm.Scope.Run { flow; subflow } in
+                 { Tcm.S.scope; steps; strategy })
+
+      let post_comment
+          request_id
+          account_status
+          config
+          client
+          is_layered_run
+          remaining_layers
+          result
+          pull_request
+          work_manifest =
+        let module Tcm = Terrat_vcs_service_github_comment in
+        let pull_request =
+          Api.Pull_request.set_diff () pull_request |> Api.Pull_request.set_checks ()
+        in
+        let work_manifest = { work_manifest with Terrat_work_manifest3.target = () } in
+        let t =
+          {
+            Tcm.S.request_id;
+            account_status;
+            config;
+            client;
+            is_layered_run;
+            remaining_layers;
+            result;
+            pull_request;
+            work_manifest;
+          }
+        in
+        let els = create_els result in
+        Gcm.run t els
+    end
+
     module Publisher2 = struct
       module Visible_on = Terrat_base_repo_config_v1.Workflow_step.Visible_on
 
@@ -2996,53 +3045,6 @@ module Comment = struct
                   "ITERATE_COMMENT_POST2"
                   Tmpl.comment_too_large
                   kv)
-
-      let to_dirspace_output
-          has_changes
-          success
-          overall_success
-          { Terrat_dirspace.dir; workspace }
-          steps =
-        Snabela.Kv.(
-          Map.of_list
-            [
-              ("dir", string dir);
-              ("workspace", string workspace);
-              ("success", bool success);
-              ( "steps",
-                list (kv_of_outputs (Output.filter ~overall_success (output_of_steps steps))) );
-              ("has_changes", bool has_changes);
-            ])
-
-      let create_els
-          ?(view = `Full)
-          request_id
-          account_status
-          config
-          client
-          is_layered_run
-          remaining_layers
-          results
-          pull_request
-          work_manifest =
-        let open Abb.Future.Infix_monad in
-        let module Wm = Terrat_work_manifest3 in
-        let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
-        let module O = Terrat_api_components.Workflow_step_output in
-        let module Gh = Terrat_vcs_service_github_comment in
-        let module Gcm = Terrat_vcs_comment.Make (Terrat_vcs_service_github_comment.S) in
-        let module Tcm = Terrat_vcs_service_github_comment in
-        let by_scope = By_scope.group results.R2.steps in
-        (*         let gates = results.R2.gates in *)
-        let strategy = Terrat_vcs_comment.Strategy.Append in
-        by_scope
-        |> CCList.map (function
-             | Scope.Dirspace d, steps ->
-                 let scope = Tcm.Scope.Dirspace d in
-                 { Tcm.S.scope; steps; strategy }
-             | Scope.Run { flow; subflow }, steps ->
-                 let scope = Tcm.Scope.Run { flow; subflow } in
-                 { Tcm.S.scope; steps; strategy })
     end
   end
 
@@ -4714,7 +4716,7 @@ module Comment = struct
     | Msg.Tf_op_result2
         { account_status; config; is_layered_run; remaining_layers; result; work_manifest } -> (
         let open Abb.Future.Infix_monad in
-        Result.Publisher2.iterate_comment_posts
+        Result.Publisher3.post_comment
           request_id
           account_status
           config

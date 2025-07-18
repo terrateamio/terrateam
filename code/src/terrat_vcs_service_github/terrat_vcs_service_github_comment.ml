@@ -689,22 +689,38 @@ module S = struct
     strategy : Terrat_vcs_comment.Strategy.t;
   }
 
-  type comment_id = int
+  (*TODO: fix this later*)
+  type comment_id = unit
 
   module Cmp = struct
     type t = bool * bool * Terrat_dirspace.t [@@deriving ord]
   end
 
-  let query_comment_id t el = Abb.Future.return (Ok (Some 1000))
-  let query_els_for_comment_id t cid = Abb.Future.return (Ok [])
+  let query_comment_id t el = failwith "nyi"
+  let query_els_for_comment_id t cid = failwith "nyi"
   let upsert_comment_id t els cid = Abb.Future.return (Ok ())
-  let delete_comment t comment_id = Abb.Future.return (Ok ())
-  let minimize_comment t comment_id = Abb.Future.return (Ok ())
+  let delete_comment t comment_id = failwith "nyi"
+  let minimize_comment t comment_id = failwith "nyi"
 
   let post_comment t els =
     let module Gh = Terrat_vcs_api_github in
-    let _request_id = "test" in
-    Abb.Future.return (Ok 1)
+    let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
+    let gates = t.result.R2.gates in
+    let by_scope = CCList.map (fun el -> (el.scope, el.steps)) els in
+    let body =
+      create_run_output
+        ~view:`Full
+        t.request_id
+        t.account_status
+        t.config
+        t.is_layered_run
+        t.remaining_layers
+        by_scope
+        gates
+        t.work_manifest
+    in
+    let request_id = t.request_id in
+    Api.comment_on_pull_request ~request_id t.client t.pull_request body
 
   (*   let rendered_length els = CCList.fold_left (fun acc el -> acc + el.rendered_length) 0 els *)
   let rendered_length t els =
@@ -730,8 +746,8 @@ module S = struct
   (* TODO: For testing purposes only, will change this later *)
   (* TODO: Wirte with proper templates on Tmpl later *)
   (*   let compact el = { el with rendered_length = 2048 } *)
-  let compact el = failwith "nyi"
-  let compare_el el1 el2 = failwith "nyi"
+  let compact el = el
+  let compare_el el1 el2 = Scope.compare el1.scope el2.scope
 
   (* Github Limits it to 2^16 = 65536
      https://github.com/mshick/add-pr-comment/issues/93#issuecomment-1531415467
