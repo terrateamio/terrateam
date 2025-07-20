@@ -1,11 +1,27 @@
 module type S = sig
+  module Key_repr : sig
+    type t
+
+    val equal : t -> t -> bool
+  end
+
   type 'v k
+
+  val key_repr_of_key : 'a k -> Key_repr.t
 
   module C : sig
     type 'a t
 
     val return : 'a -> 'a t
     val ( >>= ) : 'a t -> ('a -> 'b t) -> 'b t
+  end
+
+  module Notify : sig
+    type t
+
+    val create : unit -> t
+    val notify : t -> unit C.t
+    val wait : t -> unit C.t
   end
 
   module State : sig
@@ -71,10 +87,27 @@ module Make (M : S) :
   end
 
   module St = struct
-    type t = { state : M.State.t }
+    type t = {
+      state : M.State.t;
+      mutable running : M.Key_repr.t list;
+      notify : M.Notify.t;
+    }
 
-    let create state = { state }
+    let create state = { state; running = []; notify = M.Notify.create () }
     let get_state t = t.state
+
+    let rec block_k t k f =
+      let repr = M.key_repr_of_key k in
+      if CCList.mem ~eq:M.Key_repr.equal repr t.running then
+        let open M.C in
+        M.Notify.wait t.notify >>= fun () -> block_k t k f
+      else
+        let open M.C in
+        t.running <- repr :: t.running;
+        f ()
+        >>= fun ret ->
+        t.running <- CCList.remove ~eq:M.Key_repr.equal ~key:repr t.running;
+        M.Notify.notify t.notify >>= fun () -> M.C.return ret
   end
 
   let build rebuilder tasks k st =
@@ -84,13 +117,14 @@ module Make (M : S) :
       tasks.Tasks.get (St.get_state st) k
       >>= function
       | None -> M.State.get_k (St.get_state st) k
-      | Some task -> (
-          M.State.get_k_opt (St.get_state st) k
-          >>= function
-          | Some v -> rebuilder.Rebuilder.run (St.get_state st) k v task { Fetcher.fetch }
-          | None ->
-              task (St.get_state st) { Fetcher.fetch }
-              >>= fun v -> M.State.set_k (St.get_state st) k v >>= fun () -> return v)
+      | Some task ->
+          St.block_k st k (fun () ->
+              M.State.get_k_opt (St.get_state st) k
+              >>= function
+              | Some v -> rebuilder.Rebuilder.run (St.get_state st) k v task { Fetcher.fetch }
+              | None ->
+                  task (St.get_state st) { Fetcher.fetch }
+                  >>= fun v -> M.State.set_k (St.get_state st) k v >>= fun () -> return v)
     in
     fetch k
 end

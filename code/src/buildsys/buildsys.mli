@@ -1,11 +1,27 @@
 module type S = sig
+  module Key_repr : sig
+    type t
+
+    val equal : t -> t -> bool
+  end
+
   type 'v k
+
+  val key_repr_of_key : 'a k -> Key_repr.t
 
   module C : sig
     type 'a t
 
     val return : 'a -> 'a t
     val ( >>= ) : 'a t -> ('a -> 'b t) -> 'b t
+  end
+
+  module Notify : sig
+    type t
+
+    val create : unit -> t
+    val notify : t -> unit C.t
+    val wait : t -> unit C.t
   end
 
   module State : sig

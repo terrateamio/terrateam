@@ -1,11 +1,27 @@
 module Excel = struct
+  module Key_repr = struct
+    type t = Hmap.Key.t
+
+    let equal = Hmap.Key.equal
+  end
+
   type 'v k = 'v Hmap.key
+
+  let key_repr_of_key = Hmap.Key.hide_type
 
   module C = struct
     type 'a t = 'a
 
     let return = CCFun.id
     let ( >>= ) v f = f v
+  end
+
+  module Notify = struct
+    type t = unit
+
+    let create () = ()
+    let notify () = C.return ()
+    let wait () = C.return ()
   end
 
   module State = struct
