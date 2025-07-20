@@ -1,5 +1,13 @@
 module Excel = struct
+  module Key_repr = struct
+    type t = Hmap.Key.t
+
+    let equal = Hmap.Key.equal
+  end
+
   type 'v k = 'v Hmap.key
+
+  let key_repr_of_key = Hmap.Key.hide_type
 
   module C = struct
     type 'a t = 'a
@@ -7,6 +15,14 @@ module Excel = struct
     let return = CCFun.id
     let ( >>= ) v f = f v
     let protect f = f ()
+  end
+
+  module Notify = struct
+    type t = unit
+
+    let create () = ()
+    let notify () = C.return ()
+    let wait () = C.return ()
   end
 
   module State = struct
@@ -22,7 +38,7 @@ module Bs = Buildsys.Make (Excel)
 
 external coerce : 'a Hmap.key -> 'a Bs.Task.t Hmap.key = "%identity"
 
-let rebuilder = { Bs.Rebuilder.run = (fun st _k _v task fetcher -> task st fetcher) }
+let rebuilder = { Bs.Rebuilder.run = (fun st _k _v -> false) }
 
 let test_const =
   Oth.test ~name:"const" (fun _ ->
