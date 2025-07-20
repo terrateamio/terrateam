@@ -1,5 +1,13 @@
 module type S = sig
+  module Key_repr : sig
+    type t
+
+    val equal : t -> t -> bool
+  end
+
   type 'v k
+
+  val key_repr_of_key : 'a k -> Key_repr.t
 
   module C : sig
     type 'a t
@@ -10,6 +18,14 @@ module type S = sig
     (** In case the compute model has failure, protect guarantees an un-failed compute result that
         wraps a (possibly) failed result. The inner [t] must be completely executed to continue. *)
     val protect : (unit -> 'a t) -> 'a t t
+  end
+
+  module Notify : sig
+    type t
+
+    val create : unit -> t
+    val notify : t -> unit C.t
+    val wait : t -> unit C.t
   end
 
   module State : sig
@@ -39,7 +55,7 @@ module type T = sig
   end
 
   module Rebuilder : sig
-    type t = { run : 'v. state -> 'v k -> 'v -> 'v Task.t -> Fetcher.t -> 'v c }
+    type t = { run : 'v. state -> 'v k -> 'v -> bool c }
   end
 
   module St : sig
