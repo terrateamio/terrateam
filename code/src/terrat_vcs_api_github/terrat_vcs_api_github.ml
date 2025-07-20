@@ -582,7 +582,15 @@ let fetch_pull_request' request_id account client repo pull_request_id =
 
 let fetch_pull_request ~request_id account client repo pull_request_id =
   let open Abb.Future.Infix_monad in
-  let fetch () = fetch_pull_request' request_id account client repo pull_request_id in
+  let fetch () =
+    Logs.info (fun m ->
+        m
+          "%s : FETCH_PULL_REQUEST : repo=%s : pull_request_id=%s"
+          request_id
+          (Repo.to_string repo)
+          (Pull_request.Id.to_string pull_request_id));
+    fetch_pull_request' request_id account client repo pull_request_id
+  in
   let f () =
     fetch ()
     >>= function
