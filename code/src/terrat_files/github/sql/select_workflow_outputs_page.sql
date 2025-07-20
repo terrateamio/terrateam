@@ -8,7 +8,7 @@ q as (
       gwso.scope as scope,
       gwso.step as step,
       (case
-       when success then 'success'
+       when gwso.success then 'success'
        else 'failure'
        end) as state
   from workflow_step_outputs as gwso

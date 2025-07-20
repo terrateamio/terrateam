@@ -3,7 +3,8 @@ let src = Logs.Src.create "vcs_service_gitlab_ep_work_manifest"
 module Logs = (val Logs.src_log src : Logs.LOG)
 
 module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
-  module Evaluator = Terrat_vcs_event_evaluator.Make (P)
+  (* module Evaluator = Terrat_vcs_event_evaluator.Make (P) *)
+  module Evaluator2 = Terrat_vcs_event_evaluator2.Make (P)
 
   module Sql = struct
     let select_encryption_key () =
@@ -47,20 +48,13 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
     module I = Terrat_api_components_work_manifest_initiate
 
     let post' config storage work_manifest_id initiate ctx =
-      let open Abbs_future_combinators.Infix_result_monad in
-      (* TODO: Remove. We do not require this anymore *)
-      Pgsql_pool.with_conn storage ~f:(fun db ->
-          Pgsql_io.Prepared_stmt.fetch db (Sql.select_encryption_key ()) ~f:CCFun.id)
-      >>= function
-      | [] -> assert false
-      | encryption_key :: _ ->
-          let request_id = Brtl_ctx.token ctx in
-          Evaluator.run_work_manifest_initiate
-            ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
-            ~encryption_key
-            work_manifest_id
-            initiate
-          >>= fun r -> Abb.Future.return (Ok r)
+      let request_id = Brtl_ctx.token ctx in
+      Evaluator2.compute_node_poll
+        ~request_id
+        ~config
+        ~storage
+        ~compute_node_id:work_manifest_id
+        initiate
 
     let post config storage work_manifest_id initiate =
       let open Abbs_future_combinators.Infix_result_monad in
@@ -69,12 +63,12 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
              manifest it's calling more, so enforce that they have access to the
              work manifest, pretending we got a token with the work manifest as
              the access token. *)
-          enforce_work_manifest_access (Some work_manifest_id) work_manifest_id storage ctx
-          >>= fun () ->
+          (* enforce_work_manifest_access (Some work_manifest_id) work_manifest_id storage ctx *)
+          (* >>= fun () -> *)
           let open Abb.Future.Infix_monad in
           post' config storage work_manifest_id initiate ctx
           >>= function
-          | Ok (Some response) ->
+          | Ok response ->
               let body =
                 response
                 |> Terrat_api_work_manifest.Initiate.Responses.OK.to_yojson
@@ -82,9 +76,6 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
               in
               Abb.Future.return
                 (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK body) ctx))
-          | Ok None ->
-              Abb.Future.return
-                (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Not_found "") ctx))
           | Error `Forbidden ->
               Logs.err (fun m -> m "%s : ACCESS_TOKEN : FORBIDDEN" (Brtl_ctx.token ctx));
               Abb.Future.return
@@ -124,17 +115,24 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
           >>= fun () ->
           let open Abb.Future.Infix_monad in
           let request_id = Brtl_ctx.token ctx in
-          Evaluator.run_plan_store
-            ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
-            work_manifest_id
-            plan
+          Pgsql_pool.with_conn storage ~f:(fun db ->
+              let module Pc = Terrat_api_components.Plan_create in
+              let { Pc.path; workspace; plan_data; has_changes } = plan in
+              P.Db.store_plan
+                ~request_id
+                db
+                work_manifest_id
+                { Terrat_dirspace.dir = path; workspace }
+                (Base64.decode_exn plan_data)
+                has_changes)
           >>= function
           | Ok () ->
               Abb.Future.return (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx))
+          | Error (#Pgsql_pool.err as err) ->
+              Logs.err (fun m -> m "%s : %a" request_id Pgsql_pool.pp_err err);
+              Abb.Future.return (Error (Brtl_ctx.set_response `Internal_server_error ctx))
           | Error `Error ->
-              Abb.Future.return
-                (Ok
-                   (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)))
+              Abb.Future.return (Error (Brtl_ctx.set_response `Internal_server_error ctx)))
 
     let get config storage work_manifest_id dir workspace =
       Brtl_ep.run_result_json ~f:(fun ctx ->
@@ -152,10 +150,9 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
           >>= fun () ->
           let open Abb.Future.Infix_monad in
           let request_id = Brtl_ctx.token ctx in
-          Evaluator.run_plan_fetch
-            ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
-            work_manifest_id
-            { Terrat_dirspace.dir; workspace }
+          Pgsql_pool.with_conn storage ~f:(fun db ->
+              let module Pc = Terrat_api_components.Plan_create in
+              P.Db.query_plan ~request_id db work_manifest_id { Terrat_dirspace.dir; workspace })
           >>= function
           | Ok (Some data) ->
               let response =
@@ -167,10 +164,11 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
           | Ok None ->
               Abb.Future.return
                 (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Not_found "") ctx))
+          | Error (#Pgsql_pool.err as err) ->
+              Logs.err (fun m -> m "%s : %a" request_id Pgsql_pool.pp_err err);
+              Abb.Future.return (Error (Brtl_ctx.set_response `Internal_server_error ctx))
           | Error `Error ->
-              Abb.Future.return
-                (Ok
-                   (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)))
+              Abb.Future.return (Error (Brtl_ctx.set_response `Internal_server_error ctx)))
   end
 
   module Results = struct
@@ -186,14 +184,17 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
           (*   storage *)
           (*   ctx *)
           (* >>= fun () -> *)
+          let request_id = Brtl_ctx.token ctx in
+          Logs.info (fun m ->
+              m
+                "%s : WORK_MANIFEST_RESULT : work_manifest_id=%a"
+                request_id
+                Uuidm.pp
+                work_manifest_id);
           enforce_work_manifest_access (Some work_manifest_id) work_manifest_id storage ctx
           >>= fun () ->
           let open Abb.Future.Infix_monad in
-          let request_id = Brtl_ctx.token ctx in
-          Evaluator.run_work_manifest_result
-            ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
-            work_manifest_id
-            result
+          Evaluator2.work_manifest_result ~request_id ~config ~storage ~work_manifest_id result
           >>= fun r ->
           match r with
           | Ok () ->

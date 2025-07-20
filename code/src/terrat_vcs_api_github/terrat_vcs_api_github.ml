@@ -490,7 +490,31 @@ let diff_of_github_diff =
             { Primary.filename; status = "renamed"; previous_filename = Some previous_filename; _ };
           _;
         } -> Terrat_change.Diff.Move { filename; previous_filename }
-      | _ -> failwith "nyi1")
+      | _ -> assert false)
+
+let fetch_diff_files ~request_id ~base_ref ~branch_ref repo client =
+  let run =
+    let open Abbs_future_combinators.Infix_result_monad in
+    Terrat_github.fetch_diff_files
+      ~owner:(Repo.owner repo)
+      ~repo:(Repo.name repo)
+      ~base_ref:(Ref.to_string base_ref)
+      ~branch_ref:(Ref.to_string branch_ref)
+      client.Client.client
+    >>= fun github_diff ->
+    (* TODO: Unique the diff?  Not sure if this is necessary? *)
+    let diff = diff_of_github_diff github_diff in
+    Abb.Future.return (Ok diff)
+  in
+  let open Abb.Future.Infix_monad in
+  run
+  >>= function
+  | Ok _ as r -> Abb.Future.return r
+  | Error `Error -> Abb.Future.return (Error `Error)
+  | Error (#Terrat_github.fetch_diff_files_err as err) ->
+      Logs.info (fun m ->
+          m "%s : FETCH_DIFF_FILES : %a" request_id Terrat_github.pp_fetch_diff_files_err err);
+      Abb.Future.return (Error `Error)
 
 let fetch_diff ~client ~owner ~repo pull_number =
   let open Abbs_future_combinators.Infix_result_monad in
@@ -589,7 +613,15 @@ let fetch_pull_request' request_id account client repo pull_request_id =
 
 let fetch_pull_request ~request_id account client repo pull_request_id =
   let open Abb.Future.Infix_monad in
-  let fetch () = fetch_pull_request' request_id account client repo pull_request_id in
+  let fetch () =
+    Logs.info (fun m ->
+        m
+          "%s : FETCH_PULL_REQUEST : repo=%s : pull_request_id=%s"
+          request_id
+          (Repo.to_string repo)
+          (Pull_request.Id.to_string pull_request_id));
+    fetch_pull_request' request_id account client repo pull_request_id
+  in
   let f () =
     fetch ()
     >>= function

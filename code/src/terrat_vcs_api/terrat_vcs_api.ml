@@ -179,6 +179,14 @@ module type S = sig
     Client.t ->
     (Terrat_base_repo_config_v1.Access_control.Match.t list, [> `Error ]) result Abb.Future.t
 
+  val fetch_diff_files :
+    request_id:string ->
+    base_ref:Ref.t ->
+    branch_ref:Ref.t ->
+    Repo.t ->
+    Client.t ->
+    (Terrat_change.Diff.t list, [> `Error ]) result Abb.Future.t
+
   val react_to_comment :
     request_id:string ->
     Client.t ->

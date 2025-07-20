@@ -341,6 +341,41 @@ let fetch_centralized_repo ~request_id client owner =
             err);
       Abb.Future.return (Error `Error)
 
+let fetch_diff_files ~request_id ~base_ref ~branch_ref repo client =
+  let module R = Gitlabc_projects_repository.GetApiV4ProjectsIdRepositoryCompare in
+  let run =
+    let open Abbs_future_combinators.Infix_result_monad in
+    let id = CCInt.to_string @@ Repo.id repo in
+    call client.Client.client R.(make (Parameters.make ~from:base_ref ~to_:branch_ref ~id ()))
+    >>= fun resp ->
+    let module C = Gitlabc_components.API_Entities_Compare in
+    let module Tcd = Terrat_change.Diff in
+    let module D = Gitlabc_components_api_entities_diff in
+    let (`OK compare) = Openapi.Response.value resp in
+    let diff = CCOption.get_or ~default:[] compare.C.diffs in
+    Abb.Future.return
+      (Ok
+         (CCList.map
+            (function
+              | { D.old_path = filename; deleted_file = true; _ } -> Tcd.Remove { filename }
+              | { D.old_path = previous_filename; new_path = filename; _ }
+                when not (CCString.equal previous_filename filename) ->
+                  Tcd.Move { previous_filename; filename }
+              | { D.new_path = filename; new_file = true; _ } -> Tcd.Add { filename }
+              | { D.new_path = filename; _ } -> Tcd.Change { filename })
+            diff))
+  in
+  let open Abb.Future.Infix_monad in
+  run
+  >>= function
+  | Ok _ as r -> Abb.Future.return r
+  | Error `Error ->
+      Logs.err (fun m -> m "%s : FETCH_DIFF_FILES" request_id);
+      Abb.Future.return (Error `Error)
+  | Error (#Openapic_abb.call_err as err) ->
+      Logs.err (fun m -> m "%s : FETCH_DIFF_FILES : %a" request_id Openapic_abb.pp_call_err err);
+      Abb.Future.return (Error `Error)
+
 let create_client ~request_id config account db =
   let open Abb.Future.Infix_monad in
   let vcs_config = Config.vcs_config config in

@@ -678,6 +678,7 @@ module Provider :
   module Commit_check = Terrat_vcs_service_github_provider.Commit_check
   module Ui = Terrat_vcs_service_github_provider.Ui
   module Comment = Terrat_vcs_service_github_provider.Comment
+  module Job_context = Terrat_vcs_service_github_provider.Job_context
   module Stacks = Terrat_vcs_service_github_provider.Stacks
 end
 
