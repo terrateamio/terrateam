@@ -2,6 +2,7 @@
 export { default as Button } from './ui/Button.svelte';
 export { default as Card } from './ui/Card.svelte';
 export { default as ClickableCard } from './ui/ClickableCard.svelte';
+export { default as LinkCard } from './ui/LinkCard.svelte';
 export { default as CursorPagination } from './ui/CursorPagination.svelte';
 export { default as ErrorMessage } from './ui/ErrorMessage.svelte';
 export { default as Icon } from './ui/Icon.svelte';

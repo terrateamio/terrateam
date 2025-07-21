@@ -7,6 +7,7 @@
   import PageLayout from './components/layout/PageLayout.svelte';
   import Card from './components/ui/Card.svelte';
   import ClickableCard from './components/ui/ClickableCard.svelte';
+  import LinkCard from './components/ui/LinkCard.svelte';
   import { onMount, onDestroy } from 'svelte';
   import { navigateToRun as navigateToRunUtil, navigateToRuns } from './utils/navigation';
   import { VCS_PROVIDERS } from './vcs/providers';
@@ -692,18 +693,20 @@
     return `${seconds}s`;
   }
 
-  function formatRelativeTime(dateString: string): string {
+  function formatDateTime(dateString: string): string {
     const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    return `${diffDays}d ago`;
+    // Format: "Dec 25, 2024 3:45 PM"
+    const options: Intl.DateTimeFormatOptions = {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    };
+    
+    return date.toLocaleString('en-US', options);
   }
 
   function getStateColor(state: string): string {
@@ -839,6 +842,14 @@
       return `#/i/${$selectedInstallation.id}/runs?q=${encodeURIComponent(query)}`;
     }
     return `#/runs?q=${encodeURIComponent(query)}`;
+  }
+  
+  // Generate installation-scoped href for run detail
+  function getRunDetailHref(runId: string): string {
+    if ($selectedInstallation) {
+      return `#/i/${$selectedInstallation.id}/runs/${runId}`;
+    }
+    return `#/runs/${runId}`;
   }
   
 </script>
@@ -1040,10 +1051,18 @@
                     {@const now = new Date()}
                     {@const duration = now.getTime() - createdAt.getTime()}
                     
-                    <ClickableCard
+                    <LinkCard
+                      href={getRunDetailHref(operation.id)}
                       padding="md"
                       hover={true}
-                      on:click={() => navigateToRunUtil(operation.id)}
+                      on:click={(e) => {
+                        // Allow middle-click and Ctrl/Cmd+click to open in new tab
+                        if (e.button !== 0 || e.ctrlKey || e.metaKey) {
+                          return;
+                        }
+                        e.preventDefault();
+                        navigateToRunUtil(operation.id);
+                      }}
                       aria-label="View operation {operation.run_type} in {operation.repo}/{operation.dir}"
                       class="bg-gray-50 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600"
                     >
@@ -1059,7 +1078,7 @@
                           </div>
                           
                           <div class="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                            Started {formatRelativeTime(operation.created_at)}
+                            Started {formatDateTime(operation.created_at)}
                             • Duration: {formatDuration(duration)}
                             {#if operation.workspace && operation.workspace !== 'default'}
                               • Workspace: {operation.workspace}
@@ -1074,7 +1093,7 @@
                           </svg>
                         </div>
                       </div>
-                    </ClickableCard>
+                    </LinkCard>
                   {/each}
                 </div>
               {:else}
@@ -1115,9 +1134,17 @@
               {:else}
                 <div class="space-y-3">
                   {#each recentFailures.slice(0, 5) as failure}
-                    <button 
-                      on:click={() => navigateToRun(failure.id)}
-                      class="block w-full text-left p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 hover:border-red-300 dark:hover:border-red-700 transition-colors"
+                    <a 
+                      href={getRunDetailHref(failure.id)}
+                      on:click={(e) => {
+                        // Allow middle-click and Ctrl/Cmd+click to open in new tab
+                        if (e.button !== 0 || e.ctrlKey || e.metaKey) {
+                          return;
+                        }
+                        e.preventDefault();
+                        navigateToRun(failure.id);
+                      }}
+                      class="block w-full text-left p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 hover:border-red-300 dark:hover:border-red-700 transition-colors cursor-pointer"
                     >
                       <div class="flex items-center justify-between">
                         <div class="flex-1">
@@ -1151,7 +1178,7 @@
                             {/if}
                           </div>
                           <div class="text-xs text-red-600 dark:text-red-400">
-                            Failed {formatRelativeTime(failure.created_at)}
+                            Failed {formatDateTime(failure.created_at)}
                             {#if failure.user}
                               • by {failure.user}
                             {/if}
@@ -1166,7 +1193,7 @@
                           </svg>
                         </div>
                       </div>
-                    </button>
+                    </a>
                   {/each}
                 </div>
               {/if}
@@ -1200,9 +1227,17 @@
               {:else}
                 <div class="space-y-3">
                   {#each recentSuccesses.slice(0, 5) as success}
-                    <button 
-                      on:click={() => navigateToRun(success.id)}
-                      class="block w-full text-left p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 hover:border-green-300 dark:hover:border-green-700 transition-colors"
+                    <a 
+                      href={getRunDetailHref(success.id)}
+                      on:click={(e) => {
+                        // Allow middle-click and Ctrl/Cmd+click to open in new tab
+                        if (e.button !== 0 || e.ctrlKey || e.metaKey) {
+                          return;
+                        }
+                        e.preventDefault();
+                        navigateToRun(success.id);
+                      }}
+                      class="block w-full text-left p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 hover:border-green-300 dark:hover:border-green-700 transition-colors cursor-pointer"
                     >
                       <div class="flex items-center justify-between">
                         <div class="flex-1">
@@ -1237,7 +1272,7 @@
                           </div>
                           <!-- Terraform summary removed for memory safety -->
                           <div class="text-xs text-green-600 dark:text-green-400">
-                            Completed {formatRelativeTime(success.created_at)}
+                            Completed {formatDateTime(success.created_at)}
                             {#if success.user}
                               • by {success.user}
                             {/if}
@@ -1252,7 +1287,7 @@
                           </svg>
                         </div>
                       </div>
-                    </button>
+                    </a>
                   {/each}
                 </div>
               {/if}
@@ -1352,7 +1387,7 @@
                     <div class="col-span-2 text-center">
                       {#if repo.lastApplied}
                         <div class="text-sm">
-                          <div class="font-medium text-gray-900 dark:text-gray-100">{formatRelativeTime(repo.lastApplied.date)}</div>
+                          <div class="font-medium text-gray-900 dark:text-gray-100">{formatDateTime(repo.lastApplied.date)}</div>
                           <div class="text-xs text-gray-500 dark:text-gray-400">by {repo.lastApplied.user}</div>
                         </div>
                       {:else}
@@ -1854,9 +1889,17 @@
                 {#if !collapsedRepos.has(repoName)}
                   <div class="divide-y divide-gray-200 dark:divide-gray-700">
                     {#each groupedRuns[repoName] as run}
-                      <button 
-                        on:click={() => navigateToRun(run.id)}
-                        class="block w-full text-left p-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      <a 
+                        href={getRunDetailHref(run.id)}
+                        on:click={(e) => {
+                          // Allow middle-click and Ctrl/Cmd+click to open in new tab
+                          if (e.button !== 0 || e.ctrlKey || e.metaKey) {
+                            return;
+                          }
+                          e.preventDefault();
+                          navigateToRun(run.id);
+                        }}
+                        class="block w-full text-left p-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
                       >
                         <div class="flex items-center justify-between">
                           <div class="flex-1">
@@ -1895,7 +1938,7 @@
                             </div>
                             <!-- Terraform summary removed for memory safety -->
                             <div class="text-xs text-gray-500 dark:text-gray-400">
-                              {formatRelativeTime(run.created_at)}
+                              {formatDateTime(run.created_at)}
                               {#if run.user}
                                 • by {run.user}
                               {/if}
@@ -1910,7 +1953,7 @@
                             </svg>
                           </div>
                         </div>
-                      </button>
+                      </a>
                     {/each}
                   </div>
                 {/if}
