@@ -2,7 +2,7 @@
   import PageLayout from './components/layout/PageLayout.svelte';
   import { api, isApiError } from './api';
   import { onMount } from 'svelte';
-  import type { Installation, Repository, GitLabGroup } from './types';
+  import type { Installation, Repository, GitLabGroup, ServerConfig } from './types';
   import { repositoryService } from './services/repository-service';
   import { Icon } from './components';
   import { currentVCSProvider } from './stores';
@@ -22,6 +22,10 @@
   let currentGitLabDemoStep: GitLabDemoStep = 'select-group';
   let currentRepoStep: RepoStep = 'install-app';
   let currentGitLabStep: GitLabStep = 'select-group';
+
+  // Server configuration
+  let serverConfig: ServerConfig | null = null;
+  let githubAppUrl: string = 'https://github.com/apps/terrateam-action'; // fallback URL
 
   // API data
   let installations: Installation[] = [];
@@ -115,6 +119,17 @@
   let pushTestSuccess = false;
 
   onMount(async () => {
+    // Fetch server config first to get GitHub app URL
+    try {
+      serverConfig = await api.getServerConfig();
+      if (serverConfig?.github?.app_url) {
+        githubAppUrl = serverConfig.github.app_url;
+      }
+    } catch (error) {
+      console.error('Failed to fetch server config:', error);
+      // Will use fallback URL
+    }
+
     await runSmartAssessment();
     // Fetch GitLab bot username if we're showing GitLab setup
     if (get(currentVCSProvider) === 'gitlab') {
@@ -1154,7 +1169,7 @@
 
                   <div class="flex items-center space-x-3">
                     <button
-                      on:click={() => openExternalLink('https://github.com/apps/terrateam-action')}
+                      on:click={() => openExternalLink(githubAppUrl)}
                       class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center"
                     >
                       <Icon icon="mdi:download" class="mr-2" width="16" />
@@ -2132,7 +2147,7 @@
 
                   <div class="flex items-center space-x-3">
                     <button
-                      on:click={() => openExternalLink('https://github.com/apps/terrateam-action')}
+                      on:click={() => openExternalLink(githubAppUrl)}
                       class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center"
                     >
                       <Icon icon="mdi:download" class="mr-2" width="16" />
@@ -2219,7 +2234,7 @@
                           <Icon icon="mdi:information" class="text-blue-600 dark:text-blue-400 mr-2 mt-0.5" width="16" />
                           <div class="text-sm text-blue-800 dark:text-blue-200">
                             <p class="font-medium mb-1">Repository Access</p>
-                            <p>Only repositories where the GitHub app is installed and enabled will appear here. If you don't see your repository, you may need to <button on:click={() => openExternalLink('https://github.com/apps/terrateam-action')} class="font-medium text-blue-700 dark:text-blue-300 underline hover:text-blue-600 dark:hover:text-blue-200">configure app access</button> first.</p>
+                            <p>Only repositories where the GitHub app is installed and enabled will appear here. If you don't see your repository, you may need to <button on:click={() => openExternalLink(githubAppUrl)} class="font-medium text-blue-700 dark:text-blue-300 underline hover:text-blue-600 dark:hover:text-blue-200">configure app access</button> first.</p>
                           </div>
                         </div>
                       </div>
@@ -2242,7 +2257,7 @@
                                 The GitHub App doesn't have access to any repositories in this organization. You may need to configure repository access.
                               </p>
                               <button
-                                on:click={() => openExternalLink('https://github.com/apps/terrateam-action')}
+                                on:click={() => openExternalLink(githubAppUrl)}
                                 class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded text-sm font-medium flex items-center"
                               >
                                 <Icon icon="mdi:cog" class="mr-2" width="16" />

@@ -43,6 +43,7 @@ services:
       GITHUB_APP_CLIENT_ID: "${GITHUB_APP_CLIENT_ID}"
       GITHUB_APP_ID: "${GITHUB_APP_ID}"
       GITHUB_APP_PEM: "${GITHUB_APP_PEM}"
+      GITHUB_APP_URL: "${GITHUB_APP_URL}"
       TERRATUNNEL_API_ENDPOINT: "http://terratunnel:8081"
       TERRAT_UI_BASE: "${TERRAT_UI_BASE}"
     healthcheck:
