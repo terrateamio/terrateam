@@ -27,7 +27,6 @@
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^24.0.7",
     "autoprefixer": "^10.4.16",
-    "glob": "^10.3.10",
     "knip": "^5.61.3",
     "openapi-typescript": "^7.8.0",
     "postcss": "^8.4.32",
