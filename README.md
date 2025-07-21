@@ -25,34 +25,15 @@ Terrateam automates Terraform plans and applies in pull requests. Open source, i
 
 ---
 
-<div align="center" style="font-weight: 600; font-size: 14px; margin-bottom: 12px;">
-  Terraform plan in a PR + optional Terrateam UI
+<div align="center">
+  <img
+    src="assets/terrateam-ui.png"
+    alt="Terrateam UI - Run Dashboard"
+    width="800"
+    loading="lazy"
+    style="border-radius:8px; border:1px solid #ddd; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin: 20px 0;"
+  >
 </div>
-
-<table align="center">
-  <tr>
-    <td align="center" style="vertical-align: top;">
-      <img
-        src="assets/terrateam-pr-comment.png"
-        alt="Terrateam PR comment screenshot"
-        width="340"
-        loading="lazy"
-        style="border-radius:6px; border:1px solid #ccc; box-shadow: 0 2px 6px rgba(0,0,0,0.06);"
-      ><br>
-      <div style="font-size: 13px; margin-top: 6px;">Terrateam PR comment</div>
-    </td>
-    <td align="center" style="padding-left: 24px; vertical-align: top;">
-      <img
-        src="assets/terrateam-ui.png"
-        alt="Terrateam UI screenshot"
-        width="400"
-        loading="lazy"
-        style="border-radius:6px; border:1px solid #ccc; box-shadow: 0 2px 6px rgba(0,0,0,0.06);"
-      ><br>
-      <div style="font-size: 13px; margin-top: 6px;">Terrateam Run Dashboard</div>
-    </td>
-  </tr>
-</table>
 
 
 
