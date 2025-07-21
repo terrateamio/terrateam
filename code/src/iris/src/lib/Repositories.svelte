@@ -14,7 +14,7 @@
   import { onMount } from 'svelte';
   
   // Router props (external reference only)
-  export let params = {};
+  export const params = {};
   
   // Server configuration
   let serverConfig: ServerConfig | null = null;
