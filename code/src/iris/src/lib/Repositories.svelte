@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Installation } from './types';
+  import type { Installation, ServerConfig } from './types';
   // Auth handled by PageLayout
   import { installations, selectedInstallation, installationsLoading, installationsError, currentVCSProvider } from './stores';
   import { repositoryService, type RepositoryWithStats } from './services/repository-service';
@@ -11,9 +11,14 @@
   import ErrorMessage from './components/ui/ErrorMessage.svelte';
   import { navigateToRepository } from './utils/navigation';
   import { VCS_PROVIDERS } from './vcs/providers';
+  import { onMount } from 'svelte';
   
   // Router props (external reference only)
   export let params = {};
+  
+  // Server configuration
+  let serverConfig: ServerConfig | null = null;
+  let githubAppUrl: string = 'https://github.com/apps/terrateam-action'; // fallback URL
   
   // Repository cache - stores ALL repositories once loaded
   let allRepositories: RepositoryWithStats[] = [];
@@ -38,6 +43,19 @@
   // Get current VCS provider terminology
   $: currentProvider = $currentVCSProvider || 'github';
   $: terminology = VCS_PROVIDERS[currentProvider]?.terminology || VCS_PROVIDERS.github.terminology;
+  
+  onMount(async () => {
+    // Fetch server config to get GitHub app URL
+    try {
+      serverConfig = await api.getServerConfig();
+      if (serverConfig?.github?.app_url) {
+        githubAppUrl = serverConfig.github.app_url;
+      }
+    } catch (error) {
+      console.error('Failed to fetch server config:', error);
+      // Will use fallback URL
+    }
+  });
   
   // Filter and sort repositories from cache
   $: {
@@ -283,7 +301,7 @@
         Install the Terrateam GitHub App to connect your repositories and start managing infrastructure.
       </p>
       <button
-        on:click={() => window.open('https://github.com/apps/terrateam-action', '_blank')}
+        on:click={() => window.open(githubAppUrl, '_blank')}
         class="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
       >
         Install {VCS_PROVIDERS[currentProvider].displayName} App
