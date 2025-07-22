@@ -61,9 +61,6 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         /% Var.text "target_type"
         /% Var.text "tier")
 
-    let insert_installation_map =
-      Pgsql_io.Typed_sql.(sql /^ read "insert_installation_map.sql" /% Var.bigint "installation")
-
     let update_github_installation_unsuspend =
       Pgsql_io.Typed_sql.(
         sql
@@ -160,11 +157,6 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
                       org_id
                       installation.Gw.Installation.account.Gw.User.type_
                       (Terrat_config.default_tier @@ P.Api.Config.config config)
-                    >>= fun () ->
-                    Pgsql_io.Prepared_stmt.execute
-                      db
-                      Sql.insert_installation_map
-                      (Int64.of_int installation.Gw.Installation.id)
                 | [] -> assert false)
             | _ :: _ -> Abb.Future.return (Ok ()))
     | Gw.Installation_event.Installation_deleted deleted ->
