@@ -336,12 +336,17 @@ let test_delete_strategy =
         let t =
           ref
             [
+              Eh.Query_comment_id (el1, Ok None);
               Eh.Post_comment ([ el1 ], Ok cid1);
               Eh.Upsert_comment_id ([ el1 ], cid1, Ok ());
-              Eh.Post_comment ([ el3 ], Ok cid2);
-              Eh.Upsert_comment_id ([ el3 ], cid2, Ok ());
-              Eh.Post_comment ([ el2 ], Ok cid3);
-              Eh.Upsert_comment_id ([ el2 ], cid3, Ok ());
+
+              Eh.Query_comment_id (el3, Ok None);
+              Eh.Post_comment ([ el3 ], Ok cid3);
+              Eh.Upsert_comment_id ([ el3 ], cid3, Ok ());
+
+              Eh.Query_comment_id (el2, Ok None);
+              Eh.Post_comment ([ el2 ], Ok cid2);
+              Eh.Upsert_comment_id ([ el2 ], cid2, Ok ());
             ]
         in
         Make_wrapper.run t els
@@ -376,12 +381,17 @@ let test_minimize_strategy =
         let t =
           ref
             [
+              Eh.Query_comment_id (el1, Ok None);
               Eh.Post_comment ([ el1 ], Ok cid1);
               Eh.Upsert_comment_id ([ el1 ], cid1, Ok ());
-              Eh.Post_comment ([ el3 ], Ok cid2);
-              Eh.Upsert_comment_id ([ el3 ], cid2, Ok ());
-              Eh.Post_comment ([ el2 ], Ok cid3);
-              Eh.Upsert_comment_id ([ el2 ], cid3, Ok ());
+
+              Eh.Query_comment_id (el3, Ok None);
+              Eh.Post_comment ([ el3 ], Ok cid3);
+              Eh.Upsert_comment_id ([ el3 ], cid3, Ok ());
+
+              Eh.Query_comment_id (el2, Ok None);
+              Eh.Post_comment ([ el2 ], Ok cid2);
+              Eh.Upsert_comment_id ([ el2 ], cid2, Ok ());
             ]
         in
         Make_wrapper.run t els
@@ -390,6 +400,7 @@ let test_minimize_strategy =
         | Error _ -> assert false)
   in
   Oth_abb.parallel [ multiple_small ]
+
 
 let test =
   Oth_abb.(
