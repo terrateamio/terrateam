@@ -42,7 +42,8 @@ module H = struct
 
   let query_comment_id t el1 =
     match !t with
-    | Eh.Query_comment_id (el2, cmd_result) :: rest when el1 = el2 ->
+    (* | Eh.Query_comment_id (el2, cmd_result) :: rest when el1 = el2 -> *)
+    | Eh.Query_comment_id (el2, cmd_result) :: rest ->
         t := rest;
         let abb_result = Abb.Future.return cmd_result in
         (abb_result : ('a, [ `Error ]) result Abb.Future.t :> ('a, [> `Error ]) result Abb.Future.t)
@@ -215,7 +216,7 @@ let test_append_strategy =
       ~desc:
         "Given 3 elements with rendered length smaller than the ceiling, but that can't be \
          combined into a single cluster, we will generate 3 comments"
-      ~name:"[Append] Check grouping #1"
+      ~name:"[Append] Check grouping #1 - Multiple Small"
       (fun () ->
         let open Abb.Future.Infix_monad in
         let module C = Terrat_vcs_comment in
@@ -252,7 +253,7 @@ let test_append_strategy =
       ~desc:
         "Given 3 elements with rendered length bigger than the ceiling, but will be compacted to \
          fit into a single cluster, generate a single comment"
-      ~name:"[Append] Check grouping #2"
+      ~name:"[Append] Check grouping #2 - Multiple Big"
       (fun () ->
         let open Abb.Future.Infix_monad in
         let module C = Terrat_vcs_comment in
@@ -278,7 +279,7 @@ let test_append_strategy =
       ~desc:
         "Given 4 elements with mixed rendered lengths, get smaller comments into a single cluster, \
          compact the big ones and also fit them into a smaller cluster"
-      ~name:"[Append] Check grouping #3"
+      ~name:"[Append] Check grouping #3 - Mixed"
       (fun () ->
         let open Abb.Future.Infix_monad in
         let module C = Terrat_vcs_comment in
@@ -317,7 +318,7 @@ let test_delete_strategy =
       ~desc:
         "Given 3 elements with rendered length smaller than the ceiling, but that can't be \
          combined into a single cluster, we will generate 3 comments"
-      ~name:"[Delete] Check grouping #1"
+      ~name:"[Delete] Check grouping #1 - Multiple Small"
       (fun () ->
         let open Abb.Future.Infix_monad in
         let module C = Terrat_vcs_comment in
@@ -339,11 +340,9 @@ let test_delete_strategy =
               Eh.Query_comment_id (el1, Ok None);
               Eh.Post_comment ([ el1 ], Ok cid1);
               Eh.Upsert_comment_id ([ el1 ], cid1, Ok ());
-
               Eh.Query_comment_id (el3, Ok None);
               Eh.Post_comment ([ el3 ], Ok cid3);
               Eh.Upsert_comment_id ([ el3 ], cid3, Ok ());
-
               Eh.Query_comment_id (el2, Ok None);
               Eh.Post_comment ([ el2 ], Ok cid2);
               Eh.Upsert_comment_id ([ el2 ], cid2, Ok ());
@@ -354,7 +353,82 @@ let test_delete_strategy =
         | Ok () -> Abb.Future.return ()
         | Error _ -> assert false)
   in
-  Oth_abb.parallel [ multiple_small ]
+  let multiple_big =
+    Oth_abb.test
+      ~desc:
+        "Given 3 elements with rendered length bigger than the ceiling, but will be compacted to \
+         fit into a single cluster, generate a single comment"
+      ~name:"[Delete] Check grouping #2 - Multiple Big"
+      (fun () ->
+        let open Abb.Future.Infix_monad in
+        let module C = Terrat_vcs_comment in
+        let module D = Terrat_dirspace in
+        let module Cm = Terrat_vcs_comment.Make (H) in
+        let len = H.max_comment_length + 1 in
+        let st = C.Strategy.Delete in
+        let el1 = Shared.create_el "A" "A" false len st in
+        let el2 = Shared.create_el "B" "B" true len st in
+        let el3 = Shared.create_el "C" "C" false len st in
+        let els = [ el1; el2; el3 ] in
+        let elsc = CCList.map H.compact [ el1; el3; el2 ] in
+        let counter = API_id.create 0 in
+        let cid1 = API_id.next counter in
+        let t =
+          ref
+            [
+              Eh.Query_comment_id (el1, Ok None);
+              Eh.Query_comment_id (el3, Ok None);
+              Eh.Query_comment_id (el2, Ok None);
+              Eh.Post_comment (elsc, Ok cid1);
+              Eh.Upsert_comment_id (elsc, cid1, Ok ());
+            ]
+        in
+        Make_wrapper.run t els
+        >>= function
+        | Ok r -> Abb.Future.return ()
+        | Error _ -> assert false)
+  in
+  let multiple_mixed =
+    Oth_abb.test
+      ~desc:
+        "Given 4 elements with mixed rendered lengths, get smaller comments into a single cluster, \
+         compact the big ones and also fit them into a smaller cluster"
+      ~name:"[Delete] Check grouping #3 - Mixed"
+      (fun () ->
+        let open Abb.Future.Infix_monad in
+        let module C = Terrat_vcs_comment in
+        let module D = Terrat_dirspace in
+        let module Cm = Terrat_vcs_comment.Make (H) in
+        let half = H.max_comment_length / 2 in
+        let st = C.Strategy.Delete in
+        let el1 = Shared.create_el "A" "A" false half st in
+        let el2 = Shared.create_el "B" "B" true (half - 1) st in
+        let el3 = Shared.create_el "C" "C" false (half - 1) st in
+        let el4 = Shared.create_el "D" "D" true (H.max_comment_length + 1) st in
+        let els = [ el1; el2; el3; el4 ] in
+        let el4c = H.compact el4 in
+        let counter = API_id.create 0 in
+        let cid1 = API_id.next counter in
+        let cid2 = API_id.next counter in
+        let t =
+          ref
+            [
+              Eh.Query_comment_id (el1, Ok None);
+              Eh.Query_comment_id (el3, Ok None);
+              Eh.Post_comment ([ el1; el3 ], Ok cid1);
+              Eh.Upsert_comment_id ([ el1; el3 ], cid1, Ok ());
+              Eh.Query_comment_id (el2, Ok None);
+              Eh.Query_comment_id (el4, Ok None);
+              Eh.Post_comment ([ el2; el4c ], Ok cid2);
+              Eh.Upsert_comment_id ([ el2; el4c ], cid2, Ok ());
+            ]
+        in
+        Make_wrapper.run t els
+        >>= function
+        | Ok () -> Abb.Future.return ()
+        | Error _ -> assert false)
+  in
+  Oth_abb.parallel [ multiple_small; multiple_big; multiple_mixed ]
 
 let test_minimize_strategy =
   let multiple_small =
@@ -362,7 +436,7 @@ let test_minimize_strategy =
       ~desc:
         "Given 3 elements with rendered length smaller than the ceiling, but that can't be \
          combined into a single cluster, we will generate 3 comments"
-      ~name:"[Minimize] Check grouping #1"
+      ~name:"[Minimize] Check grouping #1 - Multiple Small"
       (fun () ->
         let open Abb.Future.Infix_monad in
         let module C = Terrat_vcs_comment in
@@ -384,11 +458,9 @@ let test_minimize_strategy =
               Eh.Query_comment_id (el1, Ok None);
               Eh.Post_comment ([ el1 ], Ok cid1);
               Eh.Upsert_comment_id ([ el1 ], cid1, Ok ());
-
               Eh.Query_comment_id (el3, Ok None);
               Eh.Post_comment ([ el3 ], Ok cid3);
               Eh.Upsert_comment_id ([ el3 ], cid3, Ok ());
-
               Eh.Query_comment_id (el2, Ok None);
               Eh.Post_comment ([ el2 ], Ok cid2);
               Eh.Upsert_comment_id ([ el2 ], cid2, Ok ());
@@ -400,7 +472,6 @@ let test_minimize_strategy =
         | Error _ -> assert false)
   in
   Oth_abb.parallel [ multiple_small ]
-
 
 let test =
   Oth_abb.(
