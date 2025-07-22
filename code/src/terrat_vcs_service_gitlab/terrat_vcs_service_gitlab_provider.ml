@@ -2144,20 +2144,6 @@ module Gate = struct
 end
 
 module Comment = struct
-  let comment_on_pull_request ~request_id client pull_request msg_type body =
-    let open Abbs_future_combinators.Infix_result_monad in
-    Api.comment_on_pull_request ~request_id client pull_request body
-    >>= fun () ->
-    Logs.info (fun m -> m "%s : PUBLISHED_COMMENT : %s" request_id msg_type);
-    Abb.Future.return (Ok ())
-
-  let apply_template_and_publish ~request_id client pull_request msg_type template kv =
-    match Snabela.apply template kv with
-    | Ok body -> comment_on_pull_request ~request_id client pull_request msg_type body
-    | Error (#Snabela.err as err) ->
-        Logs.err (fun m -> m "%s : TEMPLATE_ERROR : %a" request_id Snabela.pp_err err);
-        Abb.Future.return (Error `Error)
-
   module Result = struct
     let steps_has_changes steps =
       let module P = struct
@@ -2200,6 +2186,7 @@ module Comment = struct
           work_manifest =
         let module Wm = Terrat_work_manifest3 in
         let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
+        let module Comment_api = Terrat_vcs_service_gitlab_publishers.Comment_api in
         let module Publisher_tools = Terrat_vcs_service_gitlab_publishers.Publisher_tools in
         let by_scope = By_scope.group results.R2.steps in
         let gates = results.R2.gates in
@@ -2251,7 +2238,7 @@ module Comment = struct
                     (*     [ ("work_manifest_url", string (Uri.to_string work_manifest_url)) ]) *)
                     (*   (S.work_manifest_url config work_manifest.Wm.account work_manifest) *))
                 in
-                apply_template_and_publish
+                Comment_api.apply_template_and_publish
                   ~request_id
                   client
                   pull_request
@@ -2509,9 +2496,10 @@ module Comment = struct
   let repo_config_failure ~request_id ~client ~pull_request ~title err =
     (* A bit of a cheap trick here to make it look like a code section in this
          context *)
+    let module Comment_api = Terrat_vcs_service_gitlab_publishers.Comment_api in
     let err = "```\n" ^ err ^ "\n```" in
     let kv = Snabela.Kv.(Map.of_list [ ("title", string title); ("msg", string err) ]) in
-    apply_template_and_publish
+    Comment_api.apply_template_and_publish
       ~request_id
       client
       pull_request
@@ -2520,6 +2508,7 @@ module Comment = struct
       kv
 
   let repo_config_err ~request_id ~client ~pull_request ~title err =
+    let open Terrat_vcs_service_gitlab_publishers.Comment_api in
     match err with
     | `Access_control_ci_config_update_match_parse_err m ->
         let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
@@ -2793,6 +2782,7 @@ module Comment = struct
           kv
 
   let publish_comment ~request_id client user pull_request =
+    let open Terrat_vcs_service_gitlab_publishers.Comment_api in
     let module Msg = Terrat_vcs_provider2.Msg in
     function
     | Msg.Access_control_denied (default_branch, `All_dirspaces denies) ->

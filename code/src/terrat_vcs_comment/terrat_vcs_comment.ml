@@ -36,6 +36,10 @@ module Make (M : S) = struct
   let partition_by_strategy els = By_strategy.group els
   let compact t e = if M.rendered_length t [ e ] < M.max_comment_length then e else M.compact e
 
+  let find_existing_comments_for_el t els =
+    let module Alr = Abbs_future_combinators.List_result in
+    Alr.filter_map ~f:(fun el -> M.query_comment_id t el) els
+
   let split_by_size t els =
     let combine (groups, curr_acc) r =
       if M.rendered_length t (r :: curr_acc) < M.max_comment_length then (groups, r :: curr_acc)
@@ -44,15 +48,38 @@ module Make (M : S) = struct
     let groups, rest = CCList.fold_left combine ([], []) els in
     CCList.rev (CCList.rev rest :: groups) |> CCList.filter CCFun.(CCList.is_empty %> not)
 
-  let append_single t (els : M.el list) =
-    let open Abbs_future_combinators.Infix_result_monad in
-    let module Alr = Abbs_future_combinators.List_result in
-    M.post_comment t els >>= fun cid -> M.upsert_comment_id t els cid
-
   let append t (elss : M.el list list) =
     let open Abbs_future_combinators.Infix_result_monad in
     let module Alr = Abbs_future_combinators.List_result in
+    let append_single t (els : M.el list) =
+      M.post_comment t els >>= fun cid -> M.upsert_comment_id t els cid
+    in
+
     Abbs_future_combinators.List_result.iter ~f:(append_single t) elss
+
+  let delete t (elss : M.el list list) =
+    let open Abbs_future_combinators.Infix_result_monad in
+    let module Alr = Abbs_future_combinators.List_result in
+    let delete_if_comment_exists (els : M.el list) =
+      find_existing_comments_for_el t els
+      >>= fun cids ->
+      Alr.iter ~f:(M.delete_comment t) cids
+      >>= fun () -> M.post_comment t els >>= fun new_cid -> M.upsert_comment_id t els new_cid
+    in
+
+    Alr.iter ~f:delete_if_comment_exists elss
+
+  let minimize t (elss : M.el list list) =
+    let open Abbs_future_combinators.Infix_result_monad in
+    let module Alr = Abbs_future_combinators.List_result in
+    let minimize_single (els : M.el list) =
+      find_existing_comments_for_el t els
+      >>= fun cids ->
+      Alr.iter ~f:(M.minimize_comment t) cids
+      >>= fun () -> M.post_comment t els >>= fun new_cid -> M.upsert_comment_id t els new_cid
+    in
+
+    Alr.iter ~f:minimize_single elss
 
   let run t els =
     let open Abb.Future.Infix_monad in
@@ -64,6 +91,7 @@ module Make (M : S) = struct
     Abbs_future_combinators.List_result.iter
       ~f:(function
         | Strategy.Append, els -> append t els
-        | _, els -> raise (Failure "nyi"))
+        | Strategy.Delete, els -> delete t els
+        | Strategy.Minimize, els -> delete t els)
       split
 end

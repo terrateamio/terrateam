@@ -311,7 +311,97 @@ let test_append_strategy =
   in
   Oth_abb.parallel [ multiple_small; multiple_big; multiple_mixed ]
 
-let test = Oth_abb.(to_sync_test (parallel [ test_basic; test_errors; test_append_strategy ]))
+let test_delete_strategy =
+  let multiple_small =
+    Oth_abb.test
+      ~desc:
+        "Given 3 elements with rendered length smaller than the ceiling, but that can't be \
+         combined into a single cluster, we will generate 3 comments"
+      ~name:"[Delete] Check grouping #1"
+      (fun () ->
+        let open Abb.Future.Infix_monad in
+        let module C = Terrat_vcs_comment in
+        let module D = Terrat_dirspace in
+        let module Cm = Terrat_vcs_comment.Make (H) in
+        let len = H.max_comment_length - 1 in
+        let st = C.Strategy.Delete in
+        let el1 = Shared.create_el "A" "A" false len st in
+        let el2 = Shared.create_el "B" "B" true len st in
+        let el3 = Shared.create_el "C" "C" false len st in
+        let els = [ el1; el2; el3 ] in
+        let counter = API_id.create 0 in
+        let cid1 = API_id.next counter in
+        let cid2 = API_id.next counter in
+        let cid3 = API_id.next counter in
+        let t =
+          ref
+            [
+              Eh.Post_comment ([ el1 ], Ok cid1);
+              Eh.Upsert_comment_id ([ el1 ], cid1, Ok ());
+              Eh.Post_comment ([ el3 ], Ok cid2);
+              Eh.Upsert_comment_id ([ el3 ], cid2, Ok ());
+              Eh.Post_comment ([ el2 ], Ok cid3);
+              Eh.Upsert_comment_id ([ el2 ], cid3, Ok ());
+            ]
+        in
+        Make_wrapper.run t els
+        >>= function
+        | Ok () -> Abb.Future.return ()
+        | Error _ -> assert false)
+  in
+  Oth_abb.parallel [ multiple_small ]
+
+let test_minimize_strategy =
+  let multiple_small =
+    Oth_abb.test
+      ~desc:
+        "Given 3 elements with rendered length smaller than the ceiling, but that can't be \
+         combined into a single cluster, we will generate 3 comments"
+      ~name:"[Minimize] Check grouping #1"
+      (fun () ->
+        let open Abb.Future.Infix_monad in
+        let module C = Terrat_vcs_comment in
+        let module D = Terrat_dirspace in
+        let module Cm = Terrat_vcs_comment.Make (H) in
+        let len = H.max_comment_length - 1 in
+        let st = C.Strategy.Minimize in
+        let el1 = Shared.create_el "A" "A" false len st in
+        let el2 = Shared.create_el "B" "B" true len st in
+        let el3 = Shared.create_el "C" "C" false len st in
+        let els = [ el1; el2; el3 ] in
+        let counter = API_id.create 0 in
+        let cid1 = API_id.next counter in
+        let cid2 = API_id.next counter in
+        let cid3 = API_id.next counter in
+        let t =
+          ref
+            [
+              Eh.Post_comment ([ el1 ], Ok cid1);
+              Eh.Upsert_comment_id ([ el1 ], cid1, Ok ());
+              Eh.Post_comment ([ el3 ], Ok cid2);
+              Eh.Upsert_comment_id ([ el3 ], cid2, Ok ());
+              Eh.Post_comment ([ el2 ], Ok cid3);
+              Eh.Upsert_comment_id ([ el2 ], cid3, Ok ());
+            ]
+        in
+        Make_wrapper.run t els
+        >>= function
+        | Ok () -> Abb.Future.return ()
+        | Error _ -> assert false)
+  in
+  Oth_abb.parallel [ multiple_small ]
+
+let test =
+  Oth_abb.(
+    to_sync_test
+      (parallel
+         [
+           test_basic;
+           test_errors;
+           test_append_strategy;
+           test_delete_strategy;
+           test_minimize_strategy;
+         ]))
 
 let () =
   Random.self_init ();

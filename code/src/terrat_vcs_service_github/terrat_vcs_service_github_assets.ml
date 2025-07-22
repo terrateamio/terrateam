@@ -185,6 +185,7 @@ end
 
 module Ui = struct
   module Api = Terrat_vcs_api_github
+
   let work_manifest_url config account work_manifest =
     let module Wm = Terrat_work_manifest3 in
     Some
@@ -195,4 +196,3 @@ module Ui = struct
             (Api.Account.id account)
             (Uuidm.to_string work_manifest.Wm.id)))
 end
-
