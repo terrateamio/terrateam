@@ -216,7 +216,7 @@ let test_append_strategy =
       ~desc:
         "Given 3 elements with rendered length smaller than the ceiling, but that can't be \
          combined into a single cluster, we will generate 3 comments"
-      ~name:"[Append] Check grouping #1 - Multiple Small"
+      ~name:"[Append] Multiple Small #1"
       (fun () ->
         let open Abb.Future.Infix_monad in
         let module C = Terrat_vcs_comment in
@@ -253,7 +253,7 @@ let test_append_strategy =
       ~desc:
         "Given 3 elements with rendered length bigger than the ceiling, but will be compacted to \
          fit into a single cluster, generate a single comment"
-      ~name:"[Append] Check grouping #2 - Multiple Big"
+      ~name:"[Append] Multiple Big #1"
       (fun () ->
         let open Abb.Future.Infix_monad in
         let module C = Terrat_vcs_comment in
@@ -279,7 +279,7 @@ let test_append_strategy =
       ~desc:
         "Given 4 elements with mixed rendered lengths, get smaller comments into a single cluster, \
          compact the big ones and also fit them into a smaller cluster"
-      ~name:"[Append] Check grouping #3 - Mixed"
+      ~name:"[Append] Mixed #1"
       (fun () ->
         let open Abb.Future.Infix_monad in
         let module C = Terrat_vcs_comment in
@@ -318,7 +318,7 @@ let test_delete_strategy =
       ~desc:
         "Given 3 elements with rendered length smaller than the ceiling, but that can't be \
          combined into a single cluster, we will generate 3 comments"
-      ~name:"[Delete] Check grouping #1 - Multiple Small"
+      ~name:"[Delete] Multiple Small #1"
       (fun () ->
         let open Abb.Future.Infix_monad in
         let module C = Terrat_vcs_comment in
@@ -358,7 +358,7 @@ let test_delete_strategy =
       ~desc:
         "Given 3 elements with rendered length bigger than the ceiling, but will be compacted to \
          fit into a single cluster, generate a single comment"
-      ~name:"[Delete] Check grouping #2 - Multiple Big"
+      ~name:"[Delete] Multiple Big #2"
       (fun () ->
         let open Abb.Future.Infix_monad in
         let module C = Terrat_vcs_comment in
@@ -393,7 +393,7 @@ let test_delete_strategy =
       ~desc:
         "Given 4 elements with mixed rendered lengths, get smaller comments into a single cluster, \
          compact the big ones and also fit them into a smaller cluster"
-      ~name:"[Delete] Check grouping #3 - Mixed"
+      ~name:"[Delete] Mixed #1"
       (fun () ->
         let open Abb.Future.Infix_monad in
         let module C = Terrat_vcs_comment in
@@ -436,7 +436,7 @@ let test_minimize_strategy =
       ~desc:
         "Given 3 elements with rendered length smaller than the ceiling, but that can't be \
          combined into a single cluster, we will generate 3 comments"
-      ~name:"[Minimize] Check grouping #1 - Multiple Small"
+      ~name:"[Minimize] Multiple Small #1"
       (fun () ->
         let open Abb.Future.Infix_monad in
         let module C = Terrat_vcs_comment in
