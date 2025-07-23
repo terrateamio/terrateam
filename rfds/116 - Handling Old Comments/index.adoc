@@ -196,13 +196,13 @@ notifications:
     # Default configuration
     - tag_query: ""
       # append, delete, minimize
-      update_strategy: minimize
+      comment_strategy: minimize
 
     # Extra suggested options (for a future RFD)
     - tag_query: ""
       group_id: "A"
       # append, delete, minimize
-      update_strategy: minimize
+      comment_strategy: minimize
       # enabled, disabled
       commit_status: "disabled"
 ----

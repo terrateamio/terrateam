@@ -574,8 +574,7 @@
       ],
       "type": "object"
     },
-    "engine-other": {
-    },
+    "engine-other": {},
     "engine-pulumi": {
       "additionalProperties": false,
       "properties": {
@@ -890,8 +889,7 @@
           "type": "boolean"
         },
         "on_error": {
-          "items": {
-          },
+          "items": {},
           "type": "array"
         },
         "run_on": {
@@ -961,6 +959,39 @@
       },
       "type": "object"
     },
+    "notification-policy": {
+      "additionalProperties": false,
+      "properties": {
+        "comment_strategy": {
+          "default": "append",
+          "enum": [
+            "append",
+            "delete",
+            "minimize"
+          ],
+          "type": "string"
+        },
+        "tag_query": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "tag_query"
+      ],
+      "type": "object"
+    },
+    "notifications": {
+      "additionalProperties": false,
+      "properties": {
+        "policies": {
+          "items": {
+            "$ref": "#/definitions/notification-policy"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
     "permission": {
       "items": {
         "additionalProperties": false,
@@ -1010,8 +1041,7 @@
       ],
       "type": "string"
     },
-    "runs-on": {
-    },
+    "runs-on": {},
     "storage-plan-cmd": {
       "additionalProperties": false,
       "properties": {
@@ -1252,6 +1282,9 @@
         },
         "integrations": {
           "$ref": "#/definitions/integrations"
+        },
+        "notifications": {
+          "$ref": "#/definitions/notifications"
         },
         "parallel_runs": {
           "default": 3,
@@ -1630,5 +1663,9 @@
       "type": "object"
     }
   },
-  "$ref": "#/definitions/version-1"
+  "oneOf": [
+    {
+      "$ref": "#/definitions/version-1"
+    }
+  ]
 }

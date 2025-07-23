@@ -925,6 +925,27 @@ module Integrations = struct
   [@@deriving make, show, yojson, eq]
 end
 
+module Notifications = struct
+  module Policy = struct
+    module Strategy = struct
+      type t =
+        | Append
+        | Delete
+        | Minimize
+      [@@deriving show, yojson, eq]
+    end
+
+    type t = {
+      tag_query : Tag_query.t;
+      comment_strategy : Strategy.t; [@default Strategy.Append]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  type t = { policies : Policy.t list [@default [ Policy.make ~tag_query:Tag_query.any () ]] }
+  [@@deriving make, show, yojson, eq]
+end
+
 module Storage = struct
   module Plans = struct
     module Cmd = struct
@@ -2714,6 +2735,22 @@ let to_version_1_integrations integrations =
   in
   { I.resourcely = Some { I.Resourcely.enabled; extra_args = Some [] } }
 
+let to_version_1_notification_policy policy =
+  let module P = Terrat_repo_config_notification_policy in
+  let { Notifications.Policy.tag_query; comment_strategy } = policy in
+  let comment_strategy =
+    match comment_strategy with
+    | Notifications.Policy.Strategy.Append -> "append"
+    | Notifications.Policy.Strategy.Delete -> "delete"
+    | Notifications.Policy.Strategy.Minimize -> "minimize"
+  in
+  { P.tag_query = Terrat_tag_query.to_string tag_query; comment_strategy }
+
+let to_version_1_notifications notifications =
+  let module N = Terrat_repo_config.Notifications in
+  let { Notifications.policies } = notifications in
+  { N.policies = CCList.map to_version_1_notification_policy policies }
+
 let to_version_1_storage_plans plans =
   match plans with
   | Storage.Plans.Terrateam ->
@@ -2915,6 +2952,7 @@ let to_version_1 t =
     hooks;
     indexer;
     integrations;
+    notifications;
     parallel_runs;
     storage;
     tags;
@@ -2976,6 +3014,11 @@ let to_version_1 t =
         CCFun.(Integrations.equal (Integrations.make ()) %> not)
         to_version_1_integrations
         integrations;
+    notifications =
+      map_opt_if_true
+        CCFun.(Notificiations.equal (Notifications.make ()) %> not)
+        to_version_1_notifications
+        notifications;
     parallel_runs;
     storage =
       map_opt_if_true CCFun.(Storage.equal (Storage.make ()) %> not) to_version_1_storage storage;

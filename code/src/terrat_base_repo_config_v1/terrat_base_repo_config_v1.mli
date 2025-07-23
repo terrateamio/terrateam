@@ -551,6 +551,27 @@ module Integrations : sig
   [@@deriving make, show, yojson, eq]
 end
 
+module Notifications : sig
+  module Policy : sig
+    module Strategy : sig
+      type t =
+        | Append
+        | Delete
+        | Minimize
+      [@@deriving show, yojson, eq]
+    end
+
+    type t = {
+      tag_query : Tag_query.t;
+      comment_strategy : Strategy.t; [@default Strategy.Append]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  type t = { policies : Policy.t list [@default [ Policy.make ~tag_query:Tag_query.any () ]] }
+  [@@deriving make, show, yojson, eq]
+end
+
 module Storage : sig
   module Plans : sig
     module Cmd : sig
