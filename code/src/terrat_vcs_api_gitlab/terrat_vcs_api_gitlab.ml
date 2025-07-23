@@ -731,12 +731,24 @@ let merge_pull_request ~request_id client pull_request =
           (Parameters.make
              ~id:(CCInt.to_string @@ Repo.id @@ Terrat_pull_request.repo pull_request)
              ~merge_request_iid:(Terrat_pull_request.id pull_request)))
-    >>= fun resp -> raise (Failure "nyi")
+    >>= fun resp ->
+    match Openapi.Response.value resp with
+    | `OK _ -> Abb.Future.return (Ok ())
+    | #Gl.Responses.t as err -> Abb.Future.return (Error err)
   in
   let open Abb.Future.Infix_monad in
   run
   >>= function
   | Ok _ as r -> Abb.Future.return r
+  | Error
+      (( `Bad_request json
+       | `Unauthorized json
+       | `Not_found json
+       | `Method_not_allowed json
+       | `Conflict json
+       | `Unprocessable_entity json ) as err) ->
+      Logs.err (fun m -> m "%s : MERGE_PULL_REQUEST : %a" request_id Gl.Responses.pp err);
+      Abb.Future.return (Error (`Merge_err (Yojson.Safe.pretty_to_string json)))
   | Error (#Gl.Responses.t as err) ->
       Logs.err (fun m -> m "%s : MERGE_PULL_REQUEST : %a" request_id Gl.Responses.pp err);
       Abb.Future.return (Error `Error)

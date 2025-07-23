@@ -3,17 +3,6 @@
     "parameters": {},
     "responses": {},
     "schemas": {
-      "dirspace-state": {
-        "enum": [
-          "aborted",
-          "failure",
-          "queued",
-          "running",
-          "success",
-          "unknown"
-        ],
-        "type": "string"
-      },
       "bad-request-err": {
         "additionalProperties": false,
         "properties": {
@@ -24,10 +13,21 @@
             "type": "string"
           }
         },
-        "type": "object",
         "required": [
           "id"
-        ]
+        ],
+        "type": "object"
+      },
+      "dirspace-state": {
+        "enum": [
+          "aborted",
+          "failure",
+          "queued",
+          "running",
+          "success",
+          "unknown"
+        ],
+        "type": "string"
       },
       "error": {
         "additionalProperties": false,
@@ -2911,6 +2911,103 @@
         }
       }
     },
+    "/api/v1/gitlab/installations/{installation_id}/work-manifests": {
+      "get": {
+        "operationId": "gitlab-installations/list-work-manifests",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "installation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "d",
+            "required": false,
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tz",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "work_manifests": {
+                      "items": {
+                        "$ref": "#/components/schemas/installation-work-manifest"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "work_manifests"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/bad-request-err"
+                }
+              }
+            }
+          },
+          "403": {
+            "content": {}
+          }
+        }
+      }
+    },
     "/api/v1/gitlab/installations/{installation_id}/work-manifests/{work_manifest_id}": {
       "get": {
         "operationId": "gitlab-installations/get-work-manifest",
@@ -3051,103 +3148,6 @@
             "content": {}
           },
           "404": {
-            "content": {}
-          }
-        }
-      }
-    },
-    "/api/v1/gitlab/installations/{installation_id}/work-manifests": {
-      "get": {
-        "operationId": "gitlab-installations/list-work-manifests",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "installation_id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "page",
-            "required": false,
-            "schema": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            }
-          },
-          {
-            "in": "query",
-            "name": "q",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "d",
-            "required": false,
-            "schema": {
-              "enum": [
-                "asc",
-                "desc"
-              ],
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "tz",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "required": false,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "work_manifests": {
-                      "items": {
-                        "$ref": "#/components/schemas/installation-work-manifest"
-                      },
-                      "type": "array"
-                    }
-                  },
-                  "required": [
-                    "work_manifests"
-                  ],
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/bad-request-err"
-                }
-              }
-            }
-          },
-          "403": {
             "content": {}
           }
         }

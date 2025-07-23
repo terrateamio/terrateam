@@ -1,4 +1,5 @@
 {
+  "$ref": "#/definitions/version-1",
   "$schema": "http://json-schema.org/draft-04/schema#",
   "definitions": {
     "access-control": {
@@ -574,8 +575,7 @@
       ],
       "type": "object"
     },
-    "engine-other": {
-    },
+    "engine-other": {},
     "engine-pulumi": {
       "additionalProperties": false,
       "properties": {
@@ -890,8 +890,7 @@
           "type": "boolean"
         },
         "on_error": {
-          "items": {
-          },
+          "items": {},
           "type": "array"
         },
         "run_on": {
@@ -1010,8 +1009,7 @@
       ],
       "type": "string"
     },
-    "runs-on": {
-    },
+    "runs-on": {},
     "storage-plan-cmd": {
       "additionalProperties": false,
       "properties": {
@@ -1629,6 +1627,5 @@
       },
       "type": "object"
     }
-  },
-  "$ref": "#/definitions/version-1"
+  }
 }

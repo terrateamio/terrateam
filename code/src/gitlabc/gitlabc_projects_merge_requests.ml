@@ -1712,33 +1712,51 @@ module PutApiV4ProjectsIdMergeRequestsMergeRequestIidMerge = struct
       [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    module Bad_request = struct end
-    module Unauthorized = struct end
-    module Not_found = struct end
-    module Method_not_allowed = struct end
-    module Conflict = struct end
-    module Unprocessable_entity = struct end
+    module Bad_request = struct
+      type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Unauthorized = struct
+      type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Not_found = struct
+      type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Method_not_allowed = struct
+      type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Conflict = struct
+      type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Unprocessable_entity = struct
+      type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
 
     type t =
       [ `OK of OK.t
-      | `Bad_request
-      | `Unauthorized
-      | `Not_found
-      | `Method_not_allowed
-      | `Conflict
-      | `Unprocessable_entity
+      | `Bad_request of Bad_request.t
+      | `Unauthorized of Unauthorized.t
+      | `Not_found of Not_found.t
+      | `Method_not_allowed of Method_not_allowed.t
+      | `Conflict of Conflict.t
+      | `Unprocessable_entity of Unprocessable_entity.t
       ]
     [@@deriving show, eq]
 
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
-        ("400", fun _ -> Ok `Bad_request);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("404", fun _ -> Ok `Not_found);
-        ("405", fun _ -> Ok `Method_not_allowed);
-        ("409", fun _ -> Ok `Conflict);
-        ("422", fun _ -> Ok `Unprocessable_entity);
+        ("400", Openapi.of_json_body (fun v -> `Bad_request v) Bad_request.of_yojson);
+        ("401", Openapi.of_json_body (fun v -> `Unauthorized v) Unauthorized.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ("405", Openapi.of_json_body (fun v -> `Method_not_allowed v) Method_not_allowed.of_yojson);
+        ("409", Openapi.of_json_body (fun v -> `Conflict v) Conflict.of_yojson);
+        ( "422",
+          Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
       ]
   end
 
