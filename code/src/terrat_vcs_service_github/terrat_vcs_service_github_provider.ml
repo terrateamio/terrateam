@@ -264,9 +264,6 @@ module Db = struct
         /% Var.text "owner"
         /% Var.text "name")
 
-    let insert_repository_map =
-      Pgsql_io.Typed_sql.(sql /^ read "insert_repository_map.sql" /% Var.bigint "repository")
-
     let insert_pull_request =
       Pgsql_io.Typed_sql.(
         sql
@@ -282,13 +279,6 @@ module Db = struct
         /% Var.text "state"
         /% Var.(option (text "title"))
         /% Var.(option (text "username")))
-
-    let insert_pull_request_map =
-      Pgsql_io.Typed_sql.(
-        sql
-        /^ read "insert_pull_request_map.sql"
-        /% Var.bigint "repository"
-        /% Var.bigint "pull_number")
 
     let insert_index_query = read "insert_code_index.sql"
 
@@ -826,12 +816,7 @@ module Db = struct
           (CCInt64.of_int (Api.Repo.id repo))
           (CCInt64.of_int (Api.Account.id account))
           (Api.Repo.owner repo)
-          (Api.Repo.name repo)
-        >>= fun () ->
-        Pgsql_io.Prepared_stmt.execute
-          db
-          Sql.insert_repository_map
-          (CCInt64.of_int (Api.Repo.id repo)))
+          (Api.Repo.name repo))
     >>= function
     | Ok () -> Abb.Future.return (Ok ())
     | Error (#Pgsql_io.err as err) ->
@@ -851,7 +836,6 @@ module Db = struct
           (Some merged_hash, Some merged_at, "merged")
     in
     Metrics.Psql_query_time.time (Metrics.psql_query_time "insert_pull_request") (fun () ->
-        let open Abbs_future_combinators.Infix_result_monad in
         Pgsql_io.Prepared_stmt.execute
           db
           Sql.insert_pull_request
@@ -865,13 +849,7 @@ module Db = struct
           merged_at
           state
           (Pr.title pull_request)
-          (Pr.user pull_request)
-        >>= fun () ->
-        Pgsql_io.Prepared_stmt.execute
-          db
-          Sql.insert_pull_request_map
-          (CCInt64.of_int @@ Api.Repo.id @@ Pr.repo pull_request)
-          (CCInt64.of_int @@ Pr.id pull_request))
+          (Pr.user pull_request))
     >>= function
     | Ok () -> Abb.Future.return (Ok ())
     | Error (#Pgsql_io.err as err) ->
