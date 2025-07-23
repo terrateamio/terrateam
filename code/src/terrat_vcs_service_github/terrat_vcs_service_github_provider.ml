@@ -3175,6 +3175,8 @@ module Comment = struct
           "REPO_CONFIG_SCHEMA_ERR"
           Tmpl.repo_config_schema_err
           kv
+    | `Notification_policy_comment_strategy_err err -> raise (Failure "nyi")
+    | `Notification_policy_tag_query_err err -> raise (Failure "nyi")
 
   let publish_comment ~request_id client user pull_request =
     let module Msg = Terrat_vcs_provider2.Msg in

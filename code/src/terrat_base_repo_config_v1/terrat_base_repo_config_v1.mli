@@ -692,6 +692,7 @@ module View : sig
     hooks : Hooks.t; [@default Hooks.make ()]
     indexer : Indexer.t; [@default Indexer.make ()]
     integrations : Integrations.t; [@default Integrations.make ()]
+    notifications: Notifications.t; [@default Notifications.make ()]
     parallel_runs : int; [@default 3]
     storage : Storage.t; [@default Storage.make ()]
     tags : Tags.t; [@default Tags.make ()]
@@ -750,6 +751,8 @@ type of_version_1_err =
   | `Glob_parse_err of string * string
   | `Hooks_unknown_run_on_err of Terrat_repo_config_run_on.t
   | `Hooks_unknown_visible_on_err of string
+  | `Notification_policy_comment_strategy_err of string
+  | `Notification_policy_tag_query_err of string * string
   | `Pattern_parse_err of string
   | `Unknown_lock_policy_err of string
   | `Unknown_plan_mode_err of string

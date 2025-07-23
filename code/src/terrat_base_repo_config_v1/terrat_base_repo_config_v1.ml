@@ -1072,6 +1072,7 @@ module View = struct
     hooks : Hooks.t; [@default Hooks.make ()]
     indexer : Indexer.t; [@default Indexer.make ()]
     integrations : Integrations.t; [@default Integrations.make ()]
+    notifications : Notifications.t; [@default Notifications.make ()]
     parallel_runs : int; [@default 3]
     storage : Storage.t; [@default Storage.make ()]
     tags : Tags.t; [@default Tags.make ()]
@@ -1130,6 +1131,8 @@ type of_version_1_err =
   | `Glob_parse_err of string * string
   | `Hooks_unknown_run_on_err of Terrat_repo_config_run_on.t
   | `Hooks_unknown_visible_on_err of string
+  | `Notification_policy_comment_strategy_err of string
+  | `Notification_policy_tag_query_err of string * string
   | `Pattern_parse_err of string
   | `Unknown_lock_policy_err of string
   | `Unknown_plan_mode_err of string
@@ -2110,6 +2113,31 @@ let of_version_1_integrations integrations =
   in
   Ok { Integrations.resourcely }
 
+let of_version_1_notification_policy policy =
+  let open CCResult.Infix in
+  let module P = Terrat_repo_config_notification_policy in
+  let module Policy = Notifications.Policy in
+  let { P.tag_query; comment_strategy } = policy in
+  CCResult.map_err
+    (function
+      | `Tag_query_error err -> `Notification_policy_tag_query_err err)
+    (Terrat_tag_query.of_string tag_query)
+  >>= fun tag_query ->
+  (match comment_strategy with
+  | "append" -> Ok Policy.Strategy.Append
+  | "delete" -> Ok Policy.Strategy.Delete
+  | "minimize" -> Ok Policy.Strategy.Minimize
+  | err -> Error (`Notification_policy_comment_strategy_err err))
+  >>= fun comment_strategy -> Ok { Policy.tag_query; comment_strategy }
+
+let of_version_1_notifications notifications =
+  let open CCResult.Infix in
+  let module N = Terrat_repo_config_notifications in
+  let { N.policies } = notifications in
+  let policies = CCOption.get_or ~default:[] policies in
+  CCResult.map_l of_version_1_notification_policy policies
+  >>= fun policies -> Ok { Notifications.policies }
+
 let of_version_1_storage storage =
   let open CCResult.Infix in
   let { V1.Storage.plans } = storage in
@@ -2255,6 +2283,7 @@ let of_version_1 v1 =
     hooks;
     indexer;
     integrations;
+    notifications;
     parallel_runs;
     storage;
     tags;
@@ -2294,6 +2323,8 @@ let of_version_1 v1 =
   >>= fun indexer ->
   map_opt of_version_1_integrations integrations
   >>= fun integrations ->
+  map_opt of_version_1_notifications notifications
+  >>= fun notifications ->
   map_opt of_version_1_storage storage
   >>= fun storage ->
   map_opt of_version_1_tags tags
@@ -2749,7 +2780,7 @@ let to_version_1_notification_policy policy =
 let to_version_1_notifications notifications =
   let module N = Terrat_repo_config.Notifications in
   let { Notifications.policies } = notifications in
-  { N.policies = CCList.map to_version_1_notification_policy policies }
+  { N.policies = Some (CCList.map to_version_1_notification_policy policies) }
 
 let to_version_1_storage_plans plans =
   match plans with
@@ -3016,7 +3047,7 @@ let to_version_1 t =
         integrations;
     notifications =
       map_opt_if_true
-        CCFun.(Notificiations.equal (Notifications.make ()) %> not)
+        CCFun.(Notifications.equal (Notifications.make ()) %> not)
         to_version_1_notifications
         notifications;
     parallel_runs;
