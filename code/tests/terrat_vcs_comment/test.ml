@@ -88,7 +88,7 @@ module H = struct
         let abb_result = Abb.Future.return cmd_result in
         (abb_result : ('a, [ `Error ]) result Abb.Future.t :> ('a, [> `Error ]) result Abb.Future.t)
     | es ->
-        Printf.printf "\n\tMINIMIZE LOG: %s%!\n" (Eh.show_commands es);
+        Printf.printf "\n\tMINIMIZE LOG: %s%!\nCID_INPUT=%d\n%!" (Eh.show_commands es) cid;
         assert false
 
   let post_comment t els =
@@ -505,17 +505,22 @@ let test_minimize_strategy =
         Make_wrapper.run t1 els1
         >>= function
         | Ok () -> (
-            let el3 = Shared.create_el "A" "A" false len st in
+            (* Dirspace A/A is re-run and now evaluates to true *)
+            let el3 = Shared.create_el "A" "A" true len st in
+            (* TODO: Check if we really repost C2 as well? *)
             let els2 = [ el3; el2 ] in
             let cid3 = API_id.next counter in
             let t2 =
               ref
                 [
+                  (* Check that C1 is already posted, minimize it *)
                   Eh.Query_comment_id (el3, Ok (Some cid1));
                   Eh.Minimize_comment (cid1, Ok ());
                   Eh.Post_comment ([ el3 ], Ok cid3);
                   Eh.Upsert_comment_id ([ el3 ], cid3, Ok ());
-                  Eh.Query_comment_id (el2, Ok None);
+                  (* Re-Post C2 *)
+                  Eh.Query_comment_id (el2, Ok (Some cid2));
+                  Eh.Minimize_comment (cid2, Ok ());
                   Eh.Post_comment ([ el2 ], Ok cid2);
                   Eh.Upsert_comment_id ([ el2 ], cid2, Ok ());
                 ]
@@ -529,8 +534,8 @@ let test_minimize_strategy =
   let multiple_big =
     Oth_abb.test
       ~desc:
-        "Given 3 elements with rendered length bigger than the ceiling, but will be compacted to \
-         fit into a single cluster, generate a single comment"
+        "Given 3 elements with rendered length bigger than the ceiling, but that will be compacted \
+         to fit into a single cluster, generate a single comment"
       ~name:"[Minimize] Multiple Big #1"
       (fun () ->
         let open Abb.Future.Infix_monad in
@@ -559,6 +564,66 @@ let test_minimize_strategy =
         Make_wrapper.run t els
         >>= function
         | Ok r -> Abb.Future.return ()
+        | Error _ -> assert false)
+  in
+  let multiple_big_with_old_comment =
+    Oth_abb.test
+      ~desc:
+        "Given 3 elements with rendered length bigger than the ceiling, but that will be compacted \
+         to fit into a single cluster, generate a single comment"
+      ~name:"[Minimize] Multiple Big #2"
+      (fun () ->
+        let open Abb.Future.Infix_monad in
+        let module C = Terrat_vcs_comment in
+        let module D = Terrat_dirspace in
+        let module Cm = Terrat_vcs_comment.Make (H) in
+        let len = H.max_comment_length + 1 in
+        let st = C.Strategy.Minimize in
+        let el1 = Shared.create_el "A" "A" false len st in
+        let el2 = Shared.create_el "B" "B" true len st in
+        let el3 = Shared.create_el "C" "C" false len st in
+        let els1 = [ el1; el2; el3 ] in
+        let elsc = CCList.map H.compact [ el1; el3; el2 ] in
+        let counter = API_id.create 0 in
+        let cid1 = API_id.next counter in
+        let t1 =
+          ref
+            [
+              Eh.Query_comment_id (el1, Ok None);
+              Eh.Query_comment_id (el3, Ok None);
+              Eh.Query_comment_id (el2, Ok None);
+              Eh.Post_comment (elsc, Ok cid1);
+              Eh.Upsert_comment_id (elsc, cid1, Ok ());
+            ]
+        in
+        Make_wrapper.run t1 els1
+        >>= function
+        | Ok () -> (
+            (* Dirspaces A/A and C/C are re-run and now evaluate to true *)
+            let el1t = Shared.create_el "A" "A" true len st in
+            let el3t = Shared.create_el "C" "C" true len st in
+            (* TODO: Check how we are supposed to "assemble" C2 back *)
+            let els2 = [ el1t; el2; el3t ] in
+            let els_expected = [ el1t; el2; el3t ] in
+            let els2c = CCList.map H.compact els_expected in
+            let cid2 = API_id.next counter in
+            let t2 =
+              ref
+                [
+                  (* New Elements, but this does not make sense *)
+                  Eh.Query_comment_id (el1t, Ok (Some cid1));
+                  Eh.Query_comment_id (el2, Ok (Some cid1));
+                  Eh.Query_comment_id (el3t, Ok (Some cid1));
+                  (* Minimize old compacted comment *)
+                  Eh.Minimize_comment (cid1, Ok ());
+                  Eh.Post_comment (els2c, Ok cid2);
+                  Eh.Upsert_comment_id (els2c, cid2, Ok ());
+                ]
+            in
+            Make_wrapper.run t2 els2
+            >>= function
+            | Ok () -> Abb.Future.return ()
+            | Error _ -> assert false)
         | Error _ -> assert false)
   in
   let multiple_mixed =
@@ -601,7 +666,14 @@ let test_minimize_strategy =
         | Ok () -> Abb.Future.return ()
         | Error _ -> assert false)
   in
-  Oth_abb.parallel [ multiple_small; multiple_small_with_old_comment; multiple_big; multiple_mixed ]
+  Oth_abb.parallel
+    [
+      multiple_small;
+      multiple_small_with_old_comment;
+      multiple_big;
+      multiple_big_with_old_comment;
+      multiple_mixed;
+    ]
 
 let test =
   Oth_abb.(

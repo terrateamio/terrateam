@@ -63,7 +63,8 @@ module Make (M : S) = struct
     let delete_if_comment_exists (els : M.el list) =
       find_existing_comments_for_el t els
       >>= fun cids ->
-      Alr.iter ~f:(M.delete_comment t) cids
+      let uniq = CCList.uniq ~eq:(fun cid1 cid2 -> cid1 = cid2) cids in
+      Alr.iter ~f:(M.delete_comment t) uniq
       >>= fun () -> M.post_comment t els >>= fun new_cid -> M.upsert_comment_id t els new_cid
     in
 
@@ -75,7 +76,8 @@ module Make (M : S) = struct
     let minimize_single (els : M.el list) =
       find_existing_comments_for_el t els
       >>= fun cids ->
-      Alr.iter ~f:(M.minimize_comment t) cids
+      let uniq = CCList.uniq ~eq:(fun cid1 cid2 -> cid1 = cid2) cids in
+      Alr.iter ~f:(M.minimize_comment t) uniq
       >>= fun () -> M.post_comment t els >>= fun new_cid -> M.upsert_comment_id t els new_cid
     in
 
