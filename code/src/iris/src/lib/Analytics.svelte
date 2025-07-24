@@ -216,7 +216,7 @@
           const rawResponse: { dirspaces: Dirspace[] } = await fetchResponse.json();
           
           // Parse Link headers from the response
-          const linkHeader = fetchResponse.headers.get('Link') || fetchResponse.headers.get('link');
+          const linkHeader = fetchResponse.headers.get('Link');
           let linkHeaders: Record<string, string> | null = null;
           if (linkHeader) {
             linkHeaders = {};
@@ -295,7 +295,7 @@
           const rawResponse: { dirspaces: Dirspace[] } = await fetchResponse.json();
           
           // Parse Link headers from the response
-          const linkHeader = fetchResponse.headers.get('Link') || fetchResponse.headers.get('link');
+          const linkHeader = fetchResponse.headers.get('Link');
           let linkHeaders: Record<string, string> | null = null;
           if (linkHeader) {
             linkHeaders = {};

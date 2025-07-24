@@ -530,7 +530,7 @@
         };
       } else {
         // Build query for initial load
-        let query = searchQuery.trim() || '';
+        let query = searchQuery.trim();
         
         const params: Record<string, unknown> = { 
           tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
