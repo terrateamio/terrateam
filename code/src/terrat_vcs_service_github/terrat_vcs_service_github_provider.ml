@@ -5172,3 +5172,200 @@ module Work_manifest = struct
       dirspaces_success;
     }
 end
+
+module Job_context = struct
+  module Tjc = Terrat_job_context
+
+  module Tag_query = struct
+    type t = Terrat_tag_query.t
+
+    let to_yojson = CCFun.(Terrat_tag_query.to_string %> [%to_yojson: string])
+
+    let of_yojson json =
+      let open CCResult.Infix in
+      [%of_yojson: string] json
+      >>= fun tag_query ->
+      CCResult.map_err Terrat_tag_query_ast.show_err (Terrat_tag_query.of_string tag_query)
+  end
+
+  module Parameters = struct
+    type t = { tag_query : Tag_query.t option } [@@deriving yojson]
+  end
+
+  module Sql = struct
+    let read fname =
+      CCOption.get_exn_or
+        fname
+        (CCOption.map Pgsql_io.clean_string (Terrat_files_github_sql.read fname))
+
+    let select_or_insert_pull_request_context =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* id *)
+        Ret.uuid
+        //
+        (* created_at *)
+        Ret.text
+        //
+        (* updated_at *)
+        Ret.text
+        //
+        (* is_setup *)
+        Ret.boolean
+        /^ read "select_or_insert_pull_request_context.sql"
+        /% Var.bigint "repo_id"
+        /% Var.bigint "pull_number")
+
+    let string_of_type = function
+      | Tjc.Job.Type_.Apply _ -> "apply"
+      | Tjc.Job.Type_.Autoapply -> "autoapply"
+      | Tjc.Job.Type_.Autoplan -> "autoplan"
+      | Tjc.Job.Type_.Plan _ -> "plan"
+      | Tjc.Job.Type_.Repo_config -> "repo_config"
+      | Tjc.Job.Type_.Unlock -> "unlock"
+
+    let string_of_state = function
+      | Tjc.Job.State.Running -> "running"
+      | Tjc.Job.State.Completed -> "completed"
+      | Tjc.Job.State.Failed -> "failed"
+
+    let json_of_parameters = CCFun.(Parameters.to_yojson %> Yojson.Safe.to_string)
+
+    let insert_job =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* id *)
+        Ret.uuid
+        //
+        (* created_at *)
+        Ret.text
+        //
+        (* updated_at *)
+        Ret.text
+        /^ read "insert_job.sql"
+        /% Var.uuid "context_id"
+        /% Var.ud (Var.text "type") string_of_type
+        /% Var.ud (Var.text "state") string_of_state
+        /% Var.ud (Var.json "parameters") json_of_parameters
+        /% Var.option (Var.text "initiator"))
+
+    let update_context_for_pull_request =
+      Pgsql_io.Typed_sql.(
+        sql
+        /^ read "update_context_for_pull_request.sql"
+        /% Var.uuid "context_id"
+        /% Var.bigint "repo_id"
+        /% Var.bigint "pull_number")
+  end
+
+  let create_or_get_for_pull_request ~request_id db _account repo pull_request_id =
+    let run =
+      let open Abbs_future_combinators.Infix_result_monad in
+      Pgsql_io.Prepared_stmt.fetch
+        db
+        Sql.select_or_insert_pull_request_context
+        ~f:(fun id created_at updated_at is_setup -> (id, created_at, updated_at, is_setup))
+        (CCInt64.of_int @@ Api.Repo.id repo)
+        (CCInt64.of_int @@ pull_request_id)
+      >>= function
+      | [] -> assert false
+      | (id, created_at, updated_at, is_setup) :: _ ->
+          Abb.Future.return
+            (Ok
+               {
+                 Tjc.Context.created_at;
+                 id;
+                 scope =
+                   (if is_setup then Tjc.Context.Scope.Setup
+                    else Tjc.Context.Scope.Pull_request pull_request_id);
+                 updated_at;
+               })
+    in
+    let open Abb.Future.Infix_monad in
+    run
+    >>= function
+    | Ok _ as ret -> Abb.Future.return ret
+    | Error (#Pgsql_io.err as err) ->
+        Logs.err (fun m ->
+            m
+              "%s : JOB_CONTEXT : CREATE_OR_GET_FOR_PULL_REQUEST : %a"
+              request_id
+              Pgsql_io.pp_err
+              err);
+        Abb.Future.return (Error `Error)
+
+  let update_for_pull_request ~request_id db ~context_id repo pull_request_id =
+    let open Abb.Future.Infix_monad in
+    Pgsql_io.Prepared_stmt.execute
+      db
+      Sql.update_context_for_pull_request
+      context_id
+      (CCInt64.of_int @@ Api.Repo.id repo)
+      (CCInt64.of_int pull_request_id)
+    >>= function
+    | Ok () -> Abb.Future.return (Ok ())
+    | Error (#Pgsql_io.err as err) ->
+        Logs.err (fun m ->
+            m "%s : CONTEXT : UPDATE_FOR_PULL_REQUEST : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
+  let create ~request_id db account repo scope = raise (Failure "nyi")
+  let query ~request_id db id = raise (Failure "nyi")
+
+  module Job = struct
+    let create ~request_id db type_ context initiator =
+      let run =
+        let open Abbs_future_combinators.Infix_result_monad in
+        let parameters =
+          match type_ with
+          | Tjc.Job.Type_.Apply { tag_query } -> { Parameters.tag_query = Some tag_query }
+          | Tjc.Job.Type_.Autoapply -> { Parameters.tag_query = None }
+          | Tjc.Job.Type_.Autoplan -> { Parameters.tag_query = None }
+          | Tjc.Job.Type_.Plan { tag_query } -> { Parameters.tag_query = Some tag_query }
+          | Tjc.Job.Type_.Repo_config -> { Parameters.tag_query = None }
+          | Tjc.Job.Type_.Unlock -> { Parameters.tag_query = None }
+        in
+        Pgsql_io.Prepared_stmt.fetch
+          db
+          Sql.insert_job
+          ~f:(fun id created_at updated_at -> (id, created_at, updated_at))
+          context.Tjc.Context.id
+          type_
+          Tjc.Job.State.Running
+          parameters
+          (CCOption.map Api.User.to_string initiator)
+        >>= function
+        | [] -> assert false
+        | (id, created_at, updated_at) :: _ ->
+            Abb.Future.return
+              (Ok
+                 {
+                   Tjc.Job.completed_at = None;
+                   context;
+                   created_at;
+                   id;
+                   initiator;
+                   state = Tjc.Job.State.Running;
+                   type_;
+                   updated_at = created_at;
+                 })
+      in
+      let open Abb.Future.Infix_monad in
+      run
+      >>= function
+      | Ok _ as r -> Abb.Future.return r
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m -> m "%s : JOB : CREATE : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
+
+    let query ~request_id db ~job_id = raise (Failure "nyi")
+    let query_all_by_context_id ~request_id db ~context_id () = raise (Failure "nyi")
+    let query_pending_by_context_id ~request_id db ~context_id () = raise (Failure "nyi")
+    let query_by_work_manifest_id ~request_id db ~work_manifest_id () = raise (Failure "nyi")
+    let update_state ~request_id db ~job_id state = raise (Failure "nyi")
+    let add_work_manifest ~request_id db ~job_id ~work_manifest_id () = raise (Failure "nyi")
+    let query_work_manifests ~request_id db ~job_id () = raise (Failure "nyi")
+  end
+end

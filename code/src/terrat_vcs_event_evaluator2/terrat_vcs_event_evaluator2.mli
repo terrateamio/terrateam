@@ -12,14 +12,17 @@ module Make (S : Terrat_vcs_provider2.S) : sig
     | `Closed
     | repo_config_fetch_err
     | Terrat_change_match3.synthesize_config_err
+    | `Require_event_err of string
+    | Pgsql_io.err
+    | Pgsql_pool.err
     ]
   [@@deriving show]
 
-  val pull_request_comment :
+  val publish_repo_config :
+    request_id:string ->
     config:S.Api.Config.t ->
     storage:Terrat_storage.t ->
     account:S.Api.Account.t ->
-    comment:Terrat_comment.t ->
     repo:S.Api.Repo.t ->
     pull_request_id:S.Api.Pull_request.Id.t ->
     comment_id:int ->
