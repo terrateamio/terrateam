@@ -127,3 +127,25 @@ end
 module Ui = struct
   let work_manifest_url config account = raise (Failure "nyi")
 end
+
+module Job_context = struct
+  let create_or_get_for_pull_request ~request_id db account repo pull_request_id =
+    raise (Failure "nyi")
+
+  let update_for_pull_request ~request_id db ~context_id repo pull_request_id =
+    raise (Failure "nyi")
+
+  let create ~request_id db account repo scope = raise (Failure "nyi")
+  let query ~request_id db id = raise (Failure "nyi")
+
+  module Job = struct
+    let create ~request_id db type_ context initiator = raise (Failure "nyi")
+    let query ~request_id db ~job_id = raise (Failure "nyi")
+    let query_all_by_context_id ~request_id db ~context_id () = raise (Failure "nyi")
+    let query_pending_by_context_id ~request_id db ~context_id () = raise (Failure "nyi")
+    let query_by_work_manifest_id ~request_id db ~work_manifest_id () = raise (Failure "nyi")
+    let update_state ~request_id db ~job_id state = raise (Failure "nyi")
+    let add_work_manifest ~request_id db ~job_id ~work_manifest_id () = raise (Failure "nyi")
+    let query_work_manifests ~request_id db ~job_id () = raise (Failure "nyi")
+  end
+end
