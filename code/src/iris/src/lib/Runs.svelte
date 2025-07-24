@@ -16,9 +16,6 @@
   // Large terraform outputs could crash browsers during summary extraction
   // TODO: Re-implement when server-side summary computation is available
   
-  // Router props (external reference only)
-  export let params = {};
-  
   let workManifests: Dirspace[] = [];
   let repositories: Repository[] = [];
   let isLoadingWorkManifests: boolean = false;
@@ -642,7 +639,6 @@
     dateRangeMode = 'preset';
     customStartDate = '';
     customEndDate = '';
-    advancedDateQuery = '';
     resetPagination();
     updateURLWithQuery('');
     loadRuns(false);
@@ -835,7 +831,6 @@
     dateRangeMode = 'preset';
     customStartDate = '';
     customEndDate = '';
-    advancedDateQuery = '';
     
     searchQuery = '';
     resetPagination();

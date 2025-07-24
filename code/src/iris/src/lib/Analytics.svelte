@@ -2,7 +2,6 @@
   import { onMount } from 'svelte';
   // Auth handled by PageLayout
   import { api } from './api';
-  import type { LinkHeader } from './api';
   import { selectedInstallation } from './stores';
   import { repositoryService } from './services/repository-service';
   import PageLayout from './components/layout/PageLayout.svelte';
@@ -208,13 +207,13 @@
         
         if (nextPageUrl) {
           // Use the URL from Link header directly
-          const fetchResponse = await fetch(nextPageUrl, {
+          const fetchResponse: Response = await fetch(nextPageUrl, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
           });
           
-          const rawResponse = await fetchResponse.json();
+          const rawResponse: { dirspaces: Dirspace[] } = await fetchResponse.json();
           
           // Parse Link headers from the response
           const linkHeader = fetchResponse.headers.get('Link') || fetchResponse.headers.get('link');
@@ -287,13 +286,13 @@
         
         if (nextPageUrl) {
           // Use the URL from Link header directly
-          const fetchResponse = await fetch(nextPageUrl, {
+          const fetchResponse: Response = await fetch(nextPageUrl, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
           });
           
-          const rawResponse = await fetchResponse.json();
+          const rawResponse: { dirspaces: Dirspace[] } = await fetchResponse.json();
           
           // Parse Link headers from the response
           const linkHeader = fetchResponse.headers.get('Link') || fetchResponse.headers.get('link');
