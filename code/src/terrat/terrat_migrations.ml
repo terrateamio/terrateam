@@ -256,6 +256,7 @@ let migrations =
     ("add-stacks", run_file_sql "2025-10-22-add-stacks.sql");
     ("add-plans-cleanup-idx", run_file_sql "2025-11-04-add-plans-cleanup-idx.sql");
     ("add-kv-store-caps", run_file_sql "2025-11-05-add-kv-store-caps.sql");
+    ("add-builder-tables", run_file_sql "2025-07-24-add-builder-tables.sql");
   ]
 
 let run config storage = Mig.run { Migrate.config; storage; tx = () } migrations
