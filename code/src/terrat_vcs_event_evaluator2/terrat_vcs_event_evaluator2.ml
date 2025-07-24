@@ -1,6 +1,7 @@
 module Ira = Abbs_future_combinators.Infix_result_app
 module Irm = Abbs_future_combinators.Infix_result_monad
 module Serializer = Abb_service_serializer.Make (Abb.Future)
+module Tjc = Terrat_job_context
 module Msg = Terrat_vcs_provider2.Msg
 
 module Hmap = Hmap.Make (struct
@@ -27,8 +28,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     | `Closed
     | repo_config_fetch_err
     | Terrat_change_match3.synthesize_config_err
+    | `Require_event_err of string
+    | Pgsql_io.err
+    | Pgsql_pool.err
     ]
   [@@deriving show]
+
+  type context = (S.Api.Pull_request.Id.t, S.Api.Ref.t) Terrat_job_context.Context.t
+  type job = (S.Api.Pull_request.Id.t, S.Api.Ref.t, S.Api.User.t option) Terrat_job_context.Job.t
 
   module B = struct
     module Key_repr = struct
@@ -72,12 +79,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
 
     module State = struct
       type t = {
-        job_id : string;
+        context : context;
+        job : job;
         config : S.Api.Config.t;
         storage : Terrat_storage.t;
         db : Pgsql_io.t Serializer.Mutex.t;
         mutable store : Hmap.t;
       }
+
+      let job_id t = Uuidm.to_string t.job.Tjc.Job.id
 
       let set_k t k v =
         t.store <- Hmap.add k v t.store;
@@ -94,55 +104,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
 
   module Bs = Buildsys.Make (B)
 
-  let run_db db_mutex ~f =
+  let run_db s ~f =
     let open Abb.Future.Infix_monad in
-    Serializer.Mutex.run db_mutex ~f
+    Serializer.Mutex.run s.B.State.db ~f
     >>= function
     | `Ok (Ok v) -> Abb.Future.return (Ok v)
     | `Ok (Error err) -> Abb.Future.return (Error err)
     | `Closed -> Abb.Future.return (Error `Closed)
 
   external coerce : 'a B.k -> 'a Bs.Task.t B.k = "%identity"
-
-  module Event = struct
-    type t =
-      | Pull_request_open of {
-          account : S.Api.Account.t;
-          user : S.Api.User.t;
-          repo : S.Api.Repo.t;
-          pull_request_id : S.Api.Pull_request.Id.t;
-        }
-      | Pull_request_close of {
-          account : S.Api.Account.t;
-          user : S.Api.User.t;
-          repo : S.Api.Repo.t;
-          pull_request_id : S.Api.Pull_request.Id.t;
-        }
-      | Pull_request_sync of {
-          account : S.Api.Account.t;
-          user : S.Api.User.t;
-          repo : S.Api.Repo.t;
-          pull_request_id : S.Api.Pull_request.Id.t;
-        }
-      | Pull_request_ready_for_review of {
-          account : S.Api.Account.t;
-          user : S.Api.User.t;
-          repo : S.Api.Repo.t;
-          pull_request_id : S.Api.Pull_request.Id.t;
-        }
-      | Pull_request_comment of { comment : Terrat_comment.t }
-      | Push of {
-          account : S.Api.Account.t;
-          user : S.Api.User.t;
-          repo : S.Api.Repo.t;
-          branch : S.Api.Ref.t;
-        }
-      | Run_scheduled_drift
-      | Initiate of {
-          work_manifest_id : Uuidm.t;
-          sha : string;
-        }
-  end
 
   module Keys = struct
     let account : S.Api.Account.t Hmap.key = Hmap.Key.create "account"
@@ -152,7 +122,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     let branch_ref : S.Api.Ref.t Hmap.key = Hmap.Key.create "branch_ref"
     let dest_branch_ref : S.Api.Ref.t Hmap.key = Hmap.Key.create "dest_branch_ref"
     let client : S.Api.Client.t Hmap.key = Hmap.Key.create "client"
-    let event : Event.t Hmap.key = Hmap.Key.create "event"
     let repo_tree_dest_branch : string list Hmap.key = Hmap.Key.create "repo_tree_dest_branch"
     let repo_tree_branch : string list Hmap.key = Hmap.Key.create "repo_tree_branch"
 
@@ -172,7 +141,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       Hmap.Key.create "repo_config"
 
     let publish_repo_config : unit Hmap.key = Hmap.Key.create "publish_repo_config"
-    let evaluate_event : unit Hmap.key = Hmap.Key.create "evaluate_event"
     let comment_id : int Hmap.key = Hmap.Key.create "comment_id"
     let pull_request_id : S.Api.Pull_request.Id.t Hmap.key = Hmap.Key.create "pull_request_id"
 
@@ -182,24 +150,56 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     let user : S.Api.User.t Hmap.key = Hmap.Key.create "user"
     let repo : S.Api.Repo.t Hmap.key = Hmap.Key.create "repo"
     let react_to_comment : unit Hmap.key = Hmap.Key.create "react_to_comment"
+
+    (* Repo tree work manifest *)
+    let repo_tree_wm_create = Hmap.Key.create "repo_tree_wm_create_or_update"
+    let repo_tree_wm_initiate = Hmap.Key.create "repo_tree_wm_initiate"
+    let repo_tree_wm_result = Hmap.Key.create "repo_tree_wm_result"
+    let repo_tree_wm_completed = Hmap.Key.create "repo_tree_wm_completed"
+    let built_repo_tree_branch : string list Hmap.key = Hmap.Key.create "built_repo_tree_branch"
+
+    (* Context management *)
+    let store_repository : unit Hmap.key = Hmap.Key.create "store_repository"
+    let store_pull_request : unit Hmap.key = Hmap.Key.create "store_pull_request"
+    let tag_query : Terrat_tag_query.t Hmap.key = Hmap.Key.create "tag_query"
+
+    let job :
+        (S.Api.Pull_request.Id.t, S.Api.Ref.t, S.Api.User.t option) Terrat_job_context.Job.t
+        Hmap.key =
+      Hmap.Key.create "job"
+
+    (* API facing targets *)
+    let update_context_for_pull_request : unit Hmap.key =
+      Hmap.Key.create "update_context_for_pull_request"
+
+    let eval_job : unit Hmap.key = Hmap.Key.create "eval_job"
   end
 
   module Tasks = struct
-    let run ~name f st fetcher =
+    let run ~name f s fetcher =
       Abbs_time_it.run
         (fun t ->
-          Logs.info (fun m -> m "%s: TASK : END : name=%s : time=%f" st.B.State.job_id name t))
+          Logs.info (fun m -> m "%s: TASK : TIME : name=%s : time=%f" (B.State.job_id s) name t))
         (fun () ->
-          Logs.info (fun m -> m "%s : TASK : START : name=%s" st.B.State.job_id name);
-          f st fetcher)
+          let open Abb.Future.Infix_monad in
+          Logs.info (fun m -> m "%s : TASK : START : name=%s" (B.State.job_id s) name);
+          f s fetcher
+          >>= function
+          | Ok _ as r ->
+              Logs.info (fun m -> m "%s : TASK : END : SUCCESS : name=%s" (B.State.job_id s) name);
+              Abb.Future.return r
+          | Error (#err as err) ->
+              Logs.err (fun m ->
+                  m "%s : TASK : END : FAILURE : name=%s : %a" (B.State.job_id s) name pp_err err);
+              Abb.Future.return (Error err))
 
     let account_status =
       run ~name:"account_status" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
           fetch Keys.account
           >>= fun account ->
-          run_db s.B.State.db ~f:(fun db ->
-              S.Db.query_account_status ~request_id:s.B.State.job_id db account))
+          run_db s ~f:(fun db ->
+              S.Db.query_account_status ~request_id:(B.State.job_id s) db account))
 
     let branch_name =
       run ~name:"branch_name" (fun s { Bs.Fetcher.fetch } ->
@@ -233,18 +233,44 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           let open Irm in
           fetch Keys.account
           >>= fun account ->
-          S.Api.create_client ~request_id:s.B.State.job_id s.B.State.config account)
+          S.Api.create_client ~request_id:(B.State.job_id s) s.B.State.config account)
+
+    let built_repo_tree_branch =
+      run ~name:"built_repo_tree_branch" (fun s { Bs.Fetcher.fetch } ->
+          let open Irm in
+          fetch Keys.account
+          >>= fun account ->
+          fetch Keys.branch_ref
+          >>= fun branch_ref ->
+          fetch Keys.dest_branch_ref
+          >>= fun dest_branch_ref ->
+          run_db s ~f:(fun db ->
+              S.Db.query_repo_tree
+                ~request_id:(B.State.job_id s)
+                ~base_ref:dest_branch_ref
+                db
+                account
+                branch_ref)
+          >>= function
+          | Some tree -> Abb.Future.return (Ok tree)
+          | None -> raise (Failure "nyi"))
 
     let repo_tree_branch =
       run ~name:"repo_tree_branch" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
-          Ira.(
-            (fun client repo branch_ref -> (client, repo, branch_ref))
-            <$> fetch Keys.client
-            <*> fetch Keys.repo
-            <*> fetch Keys.branch_ref)
-          >>= fun (client, repo, branch_ref) ->
-          S.Api.fetch_tree ~request_id:s.B.State.job_id client repo branch_ref)
+          let module V1 = Terrat_base_repo_config_v1 in
+          fetch Keys.repo_config_raw
+          >>= fun (_, repo_config_raw) ->
+          let tree_builder = V1.tree_builder repo_config_raw in
+          if tree_builder.V1.Tree_builder.enabled then fetch Keys.built_repo_tree_branch
+          else
+            Ira.(
+              (fun client repo branch_ref -> (client, repo, branch_ref))
+              <$> fetch Keys.client
+              <*> fetch Keys.repo
+              <*> fetch Keys.branch_ref)
+            >>= fun (client, repo, branch_ref) ->
+            S.Api.fetch_tree ~request_id:(B.State.job_id s) client repo branch_ref)
 
     let repo_tree_dest_branch =
       run ~name:"repo_tree_dest_branch" (fun s { Bs.Fetcher.fetch } ->
@@ -255,7 +281,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             <*> fetch Keys.repo
             <*> fetch Keys.dest_branch_ref)
           >>= fun (client, repo, dest_branch_ref) ->
-          S.Api.fetch_tree ~request_id:s.B.State.job_id client repo dest_branch_ref)
+          S.Api.fetch_tree ~request_id:(B.State.job_id s) client repo dest_branch_ref)
 
     let repo_config_system_defaults =
       run ~name:"repo_config_system_defaults" (fun s _ ->
@@ -284,7 +310,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           >>= fun (client, branch_ref, system_defaults, repo) ->
           S.Repo_config.fetch_with_provenance
             ~system_defaults
-            s.B.State.job_id
+            (B.State.job_id s)
             client
             repo
             branch_ref)
@@ -303,7 +329,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           Abbs_time_it.run
             (fun t ->
               Logs.info (fun m ->
-                  m "%s : repo_config_with_provenance : derive : time=%f" s.B.State.job_id t))
+                  m "%s : repo_config_with_provenance : derive : time=%f" (B.State.job_id s) t))
             (fun () ->
               Abbs_future_combinators.to_result
               @@ Abb.Thread.run (fun () ->
@@ -334,8 +360,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     let publish_repo_config =
       run ~name:"publish_repo_config" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
-          fetch Keys.react_to_comment
-          >>= fun () ->
           Ira.(
             (fun client pull_request repo_config_with_provenance user () ->
               (client, pull_request, repo_config_with_provenance, user))
@@ -346,27 +370,11 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             <*> fetch Keys.react_to_comment)
           >>= fun (client, pull_request, repo_config_with_provenance, user) ->
           S.Comment.publish_comment
-            ~request_id:s.B.State.job_id
+            ~request_id:(B.State.job_id s)
             client
             (S.Api.User.to_string user)
             pull_request
             (Msg.Repo_config repo_config_with_provenance))
-
-    let evaluate_event =
-      run ~name:"evaluate_event" (fun s { Bs.Fetcher.fetch } ->
-          let open Irm in
-          fetch Keys.event
-          >>= function
-          | Event.Pull_request_open _ -> raise (Failure "nyi")
-          | Event.Pull_request_close _ -> raise (Failure "nyi")
-          | Event.Pull_request_sync _ -> raise (Failure "nyi")
-          | Event.Pull_request_ready_for_review _ -> raise (Failure "nyi")
-          | Event.Pull_request_comment { comment = Terrat_comment.Repo_config; _ } ->
-              fetch Keys.publish_repo_config
-          | Event.Pull_request_comment _ -> raise (Failure "nyi")
-          | Event.Push _ -> raise (Failure "nyi")
-          | Event.Run_scheduled_drift -> raise (Failure "nyi")
-          | Event.Initiate _ -> raise (Failure "nyi"))
 
     let react_to_comment =
       run ~name:"react_to_comment" (fun s { Bs.Fetcher.fetch } ->
@@ -381,7 +389,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                 <*> fetch Keys.pull_request
                 <*> fetch Keys.client)
               >>= fun (comment_id, pull_request, client) ->
-              S.Api.react_to_comment ~request_id:s.B.State.job_id client pull_request comment_id
+              S.Api.react_to_comment ~request_id:(B.State.job_id s) client pull_request comment_id
           | Error (`Missing_dep_err "comment_id") ->
               (* It's OK if no comment_id exists, this is an error we'll just ignore. *)
               Abb.Future.return (Ok ())
@@ -397,7 +405,61 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             <*> fetch Keys.client
             <*> fetch Keys.pull_request_id)
           >>= fun (account, repo, client, pull_request_id) ->
-          S.Api.fetch_pull_request ~request_id:s.B.State.job_id account client repo pull_request_id)
+          S.Api.fetch_pull_request
+            ~request_id:(B.State.job_id s)
+            account
+            client
+            repo
+            pull_request_id)
+
+    let store_repository =
+      run ~name:"store_repository" (fun s { Bs.Fetcher.fetch } ->
+          let open Irm in
+          fetch Keys.account
+          >>= fun account ->
+          fetch Keys.repo
+          >>= fun repo ->
+          run_db s ~f:(fun db ->
+              S.Db.store_account_repository ~request_id:(B.State.job_id s) db account repo))
+
+    let store_pull_request =
+      run ~name:"store_pull_request" (fun s { Bs.Fetcher.fetch } ->
+          let open Irm in
+          fetch Keys.pull_request
+          >>= fun pull_request ->
+          run_db s ~f:(fun db ->
+              S.Db.store_pull_request ~request_id:(B.State.job_id s) db pull_request))
+
+    (* User facing tasks *)
+    let update_context_for_pull_request =
+      run ~name:"update_context_for_pull_request" (fun s { Bs.Fetcher.fetch } ->
+          let open Irm in
+          Ira.((fun () () -> ()) <$> fetch Keys.store_repository <*> fetch Keys.store_pull_request)
+          >>= fun () ->
+          fetch Keys.repo
+          >>= fun repo ->
+          fetch Keys.pull_request
+          >>= fun pull_request ->
+          run_db s ~f:(fun db ->
+              S.Job_context.update_for_pull_request
+                ~request_id:(B.State.job_id s)
+                ~context_id:s.B.State.context.Tjc.Context.id
+                db
+                repo
+                (S.Api.Pull_request.id pull_request)))
+
+    let eval_job =
+      run ~name:"eval_job" (fun s { Bs.Fetcher.fetch } ->
+          let open Irm in
+          fetch Keys.job
+          >>= fun job ->
+          match job.Tjc.Job.type_ with
+          | Tjc.Job.Type_.Apply { tag_query } -> raise (Failure "nyi")
+          | Tjc.Job.Type_.Autoapply -> raise (Failure "nyi")
+          | Tjc.Job.Type_.Autoplan -> raise (Failure "nyi")
+          | Tjc.Job.Type_.Plan { tag_query } -> raise (Failure "nyi")
+          | Tjc.Job.Type_.Repo_config -> fetch Keys.publish_repo_config
+          | Tjc.Job.Type_.Unlock -> raise (Failure "nyi"))
   end
 
   let tasks_map =
@@ -415,20 +477,135 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     |> Hmap.add (coerce Keys.repo_config_with_provenance) Tasks.repo_config_with_provenance
     |> Hmap.add (coerce Keys.repo_config) Tasks.repo_config
     |> Hmap.add (coerce Keys.publish_repo_config) Tasks.publish_repo_config
-    |> Hmap.add (coerce Keys.evaluate_event) Tasks.evaluate_event
     |> Hmap.add (coerce Keys.react_to_comment) Tasks.react_to_comment
     |> Hmap.add (coerce Keys.pull_request) Tasks.pull_request
+    |> Hmap.add (coerce Keys.update_context_for_pull_request) Tasks.update_context_for_pull_request
+    |> Hmap.add (coerce Keys.store_repository) Tasks.store_repository
+    |> Hmap.add (coerce Keys.store_pull_request) Tasks.store_pull_request
+    |> Hmap.add (coerce Keys.eval_job) Tasks.eval_job
 
   let tasks =
     { Bs.Tasks.get = (fun s k -> Abb.Future.return (Ok (Hmap.find (coerce k) tasks_map))) }
 
   let rebuilder = { Bs.Rebuilder.run = (fun _s _k v _task _fetcher -> Abb.Future.return (Ok v)) }
 
-  let pull_request_comment
+  let log_err ~request_id fut =
+    let open Abb.Future.Infix_monad in
+    Abb.Future.await_bind
+      (function
+        | `Det (Ok ()) -> Abb.Future.return (Ok ())
+        | `Det (Error (#err as err)) ->
+            Logs.err (fun m -> m "%s : %a" request_id pp_err err);
+            Abb.Future.return (Error err)
+        | `Exn (exn, bt_opt) ->
+            Logs.err (fun m -> m "%s : %s" request_id (Printexc.to_string exn));
+            CCOption.iter
+              (fun bt ->
+                Logs.err (fun m ->
+                    m "%s : BACKTRACE: %s" request_id (Printexc.raw_backtrace_to_string bt)))
+              bt_opt;
+            Abb.Future.return (Error `Error)
+        | `Aborted ->
+            Logs.err (fun m -> m "%s : ABORTED" request_id);
+            Abb.Future.return (Error `Error))
+      fut
+
+  let run_pull_request_context
+      ~request_id
       ~config
       ~storage
       ~account
-      ~comment
+      ~repo
+      ~pull_request_id
+      ~user
+      ~type_
+      ~store
+      () =
+    Abbs_future_combinators.ignore
+    @@ log_err ~request_id
+    @@ Pgsql_pool.with_conn storage ~f:(fun db ->
+           Pgsql_io.tx db ~f:(fun () ->
+               let open Irm in
+               S.Job_context.create_or_get_for_pull_request
+                 ~request_id
+                 db
+                 account
+                 repo
+                 pull_request_id
+               >>= fun context ->
+               S.Job_context.Job.create ~request_id db type_ context (Some user)
+               >>= fun job ->
+               Logs.info (fun m ->
+                   m
+                     "%s : target=%s : context_id=%a : job_id=%a"
+                     request_id
+                     (Hmap.Key.info Keys.eval_job)
+                     Uuidm.pp
+                     context.Tjc.Context.id
+                     Uuidm.pp
+                     job.Tjc.Job.id);
+               let open Abb.Future.Infix_monad in
+               Serializer.create ()
+               >>= fun serializer ->
+               let db = Serializer.Mutex.create serializer db in
+               let store = Hmap.add Keys.job job store in
+               let s = { B.State.context; job; config; store; storage; db } in
+               match context.Tjc.Context.scope with
+               | Tjc.Context.Scope.Setup ->
+                   let open Irm in
+                   Logs.info (fun m ->
+                       m
+                         "%s : SETUP_CONTEXT : context=%a"
+                         (B.State.job_id s)
+                         Uuidm.pp
+                         context.Tjc.Context.id);
+                   Bs.build rebuilder tasks Keys.update_context_for_pull_request (Bs.St.create s)
+                   >>= fun () ->
+                   Logs.info (fun m ->
+                       m "%s : target=%s" (B.State.job_id s) (Hmap.Key.info Keys.eval_job));
+                   Bs.build rebuilder tasks Keys.eval_job (Bs.St.create s)
+               | _ ->
+                   Logs.info (fun m ->
+                       m "%s : target=%s" (B.State.job_id s) (Hmap.Key.info Keys.eval_job));
+                   Bs.build rebuilder tasks Keys.eval_job (Bs.St.create s)))
+
+  let resume_job_from_work_manifest_id ~request_id ~config ~storage ~store ~work_manifest_id () =
+    Abbs_future_combinators.ignore
+    @@ log_err ~request_id
+    @@ Pgsql_pool.with_conn storage ~f:(fun db ->
+           Pgsql_io.tx db ~f:(fun () ->
+               let open Irm in
+               S.Job_context.Job.query_by_work_manifest_id ~request_id db ~work_manifest_id ()
+               >>= function
+               | None ->
+                   Logs.err (fun m -> m "AHHH");
+                   raise (Failure "nyi")
+               | Some job ->
+                   let context = job.Tjc.Job.context in
+                   Logs.info (fun m ->
+                       m
+                         "%s : target=%s : context_id=%a : job_id=%a"
+                         request_id
+                         (Hmap.Key.info Keys.eval_job)
+                         Uuidm.pp
+                         context.Tjc.Context.id
+                         Uuidm.pp
+                         job.Tjc.Job.id);
+                   let open Abb.Future.Infix_monad in
+                   Serializer.create ()
+                   >>= fun serializer ->
+                   let db = Serializer.Mutex.create serializer db in
+                   let store = Hmap.add Keys.job job store in
+                   let s = { B.State.context; job; config; store; storage; db } in
+                   Logs.info (fun m ->
+                       m "%s : target=%s" (B.State.job_id s) (Hmap.Key.info Keys.eval_job));
+                   Bs.build rebuilder tasks Keys.eval_job (Bs.St.create s)))
+
+  let publish_repo_config
+      ~request_id
+      ~config
+      ~storage
+      ~account
       ~repo
       ~pull_request_id
       ~comment_id
@@ -441,20 +618,108 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       |> Hmap.add Keys.pull_request_id pull_request_id
       |> Hmap.add Keys.user user
       |> Hmap.add Keys.repo repo
-      |> Hmap.add Keys.event (Event.Pull_request_comment { comment })
     in
     Abbs_future_combinators.ignore
-    @@ Pgsql_pool.with_conn storage ~f:(fun db ->
-           let open Abb.Future.Infix_monad in
-           Serializer.create ()
-           >>= fun serializer ->
-           Pgsql_io.tx db ~f:(fun () ->
-               let db = Serializer.Mutex.create serializer db in
-               let s = { B.State.job_id = "REPLACE ME JOB ID"; config; store; storage; db } in
-               Bs.build rebuilder tasks Keys.evaluate_event (Bs.St.create s)
-               >>= function
-               | Ok () -> Abb.Future.return (Ok ())
-               | Error (#err as err) ->
-                   Logs.err (fun m -> m "%s : ERROR : %a" s.B.State.job_id pp_err err);
-                   Abb.Future.return (Error err)))
+    @@ Abb.Future.fork
+    @@ run_pull_request_context
+         ~request_id
+         ~config
+         ~storage
+         ~account
+         ~repo
+         ~pull_request_id
+         ~user
+         ~type_:Terrat_job_context.Job.Type_.Repo_config
+         ~store
+         ()
+
+  let autoplan ~request_id ~config ~storage ~account ~repo ~pull_request_id ~user () =
+    let store =
+      Hmap.empty
+      |> Hmap.add Keys.account account
+      |> Hmap.add Keys.pull_request_id pull_request_id
+      |> Hmap.add Keys.user user
+      |> Hmap.add Keys.repo repo
+    in
+    Abbs_future_combinators.ignore
+    @@ Abb.Future.fork
+    @@ run_pull_request_context
+         ~request_id
+         ~config
+         ~storage
+         ~account
+         ~repo
+         ~pull_request_id
+         ~user
+         ~type_:Terrat_job_context.Job.Type_.Autoplan
+         ~store
+         ()
+
+  let plan
+      ~request_id
+      ~config
+      ~storage
+      ~account
+      ~repo
+      ~pull_request_id
+      ~comment_id
+      ~user
+      ~tag_query
+      () =
+    let store =
+      Hmap.empty
+      |> Hmap.add Keys.account account
+      |> Hmap.add Keys.comment_id comment_id
+      |> Hmap.add Keys.pull_request_id pull_request_id
+      |> Hmap.add Keys.user user
+      |> Hmap.add Keys.repo repo
+      |> Hmap.add Keys.tag_query tag_query
+    in
+    Abbs_future_combinators.ignore
+    @@ Abb.Future.fork
+    @@ run_pull_request_context
+         ~request_id
+         ~config
+         ~storage
+         ~account
+         ~repo
+         ~pull_request_id
+         ~user
+         ~type_:(Terrat_job_context.Job.Type_.Plan { tag_query })
+         ~store
+         ()
+
+  let apply
+      ~request_id
+      ~config
+      ~storage
+      ~account
+      ~repo
+      ~pull_request_id
+      ~comment_id
+      ~user
+      ~tag_query
+      () =
+    let store =
+      Hmap.empty
+      |> Hmap.add Keys.account account
+      |> Hmap.add Keys.comment_id comment_id
+      |> Hmap.add Keys.pull_request_id pull_request_id
+      |> Hmap.add Keys.user user
+      |> Hmap.add Keys.repo repo
+      |> Hmap.add Keys.tag_query tag_query
+    in
+    Abbs_future_combinators.ignore
+    @@ Abb.Future.fork
+    @@ run_pull_request_context
+         ~request_id
+         ~config
+         ~storage
+         ~account
+         ~repo
+         ~pull_request_id
+         ~user
+         ~type_:(Terrat_job_context.Job.Type_.Apply { tag_query })
+         ~store
+         ()
 end
