@@ -37,17 +37,18 @@ let write_response oc rspnc =
 
 let run_handler hndlr ctx =
   let open Abb.Future.Infix_monad in
-  Abb.Future.await (Fut_comb.on_failure (fun () -> hndlr ctx) ~failure:(fun () -> Fut_comb.unit))
-  >>= function
-  | `Det v -> Abb.Future.return v
-  | `Aborted ->
-      Abb.Future.return (Ctx.set_response (Rspnc.create ~status:`Internal_server_error "") ctx)
-  | `Exn (exn, bt_opt) ->
-      Logs.err (fun m -> m "Exception: %s" (Printexc.to_string exn));
-      CCOption.iter
-        (fun bt -> Logs.err (fun m -> m "Backtrace: %s" (Printexc.raw_backtrace_to_string bt)))
-        bt_opt;
-      Abb.Future.return (Ctx.set_response (Rspnc.create ~status:`Internal_server_error "") ctx)
+  Abb.Future.await_bind
+    (function
+      | `Det v -> Abb.Future.return v
+      | `Aborted ->
+          Abb.Future.return (Ctx.set_response (Rspnc.create ~status:`Internal_server_error "") ctx)
+      | `Exn (exn, bt_opt) ->
+          Logs.err (fun m -> m "Exception: %s" (Printexc.to_string exn));
+          CCOption.iter
+            (fun bt -> Logs.err (fun m -> m "Backtrace: %s" (Printexc.raw_backtrace_to_string bt)))
+            bt_opt;
+          Abb.Future.return (Ctx.set_response (Rspnc.create ~status:`Internal_server_error "") ctx))
+    (Fut_comb.on_failure (fun () -> hndlr ctx) ~failure:(fun () -> Fut_comb.unit))
 
 let compute_remote_addr conn =
   match Abb.Socket.getpeername conn with
