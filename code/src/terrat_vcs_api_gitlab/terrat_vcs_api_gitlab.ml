@@ -591,6 +591,13 @@ let create_commit_checks ~request_id client repo ref_ checks =
     let open Abbs_future_combinators.Infix_result_monad in
     let module Glg = Gitlabc_projects_repository.GetApiV4ProjectsIdRepositoryCommitsShaStatuses in
     let module Glc = Gitlabc_components_api_entities_commitstatus in
+    let module Tcc = Terrat_commit_check in
+    (* For GitLab, we only care about the terrateam apply status checks.  Status
+       checks do not show the same as in GitHub, so creating the extras is not
+       valuable. *)
+    let checks =
+      CCList.filter (fun { Tcc.title; _ } -> CCString.equal title "terrateam apply") checks
+    in
     Openapic_abb.collect_all
       ~page:Openapic_abb.Page.gitlab
       client.Client.client

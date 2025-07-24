@@ -71,6 +71,15 @@ module Sql = struct
       /% Var.bigint "installation_id"
       /% Var.text "owner"
       /% Var.text "name")
+
+  let select_work_manifest_by_run_id =
+    Pgsql_io.Typed_sql.(
+      sql
+      //
+      (* id *)
+      Ret.uuid
+      /^ "select id from work_manifests where run_id = $run_id"
+      /% Var.text "run_id")
 end
 
 module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
@@ -180,12 +189,35 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
         | "merge" | "close" ->
             Evaluator.run_pull_request_close ~ctx ~account ~user ~repo ~pull_request_id ()
         | any -> raise (Failure "nyi"))
-    | E.Pipeline_event event ->
-        Logs.info (fun m -> m "PIPELINE EVENT : %a" Pipee.pp event);
-        Abb.Future.return (Ok ())
-    | E.Job_event event ->
-        Logs.info (fun m -> m "JOB EVENT : %a" Je.pp event);
-        Abb.Future.return (Ok ())
+    | E.Pipeline_event _ -> Abb.Future.return (Ok ())
+    | E.Job_event
+        {
+          Je.build_id = run_id;
+          build_status = "failed";
+          project = { Pr.id = repp_id; path_with_namespace; _ };
+          _;
+        } -> (
+        let open Abbs_future_combinators.Infix_result_monad in
+        Pgsql_pool.with_conn storage ~f:(fun db ->
+            Pgsql_io.Prepared_stmt.fetch
+              db
+              Sql.select_work_manifest_by_run_id
+              ~f:CCFun.id
+              (CCInt.to_string run_id)
+            >>= function
+            | work_manifest_id :: _ -> Abb.Future.return (Ok (Some work_manifest_id))
+            | [] -> Abb.Future.return (Ok None))
+        >>= function
+        | Some work_manifest_id -> Evaluator.run_work_manifest_failure ~ctx work_manifest_id
+        | None ->
+            Logs.info (fun m ->
+                m
+                  "%s : WORK_MANIFEST_FAILURE : NOT_FOUND : account=%d : run_id=%d"
+                  (Evaluator.Ctx.request_id ctx)
+                  installation_id
+                  run_id);
+            Abb.Future.return (Ok ()))
+    | E.Job_event _ -> Abb.Future.return (Ok ())
 
   let post' config storage webhook_secret ctx =
     let open Abbs_future_combinators.Infix_result_monad in
