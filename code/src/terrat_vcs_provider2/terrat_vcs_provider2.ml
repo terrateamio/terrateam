@@ -549,4 +549,113 @@ module type S = sig
     val work_manifest_url :
       Api.Config.t -> Api.Account.t -> ('a, 'b) Terrat_work_manifest3.Existing.t -> Uri.t option
   end
+
+  module Job_context : sig
+    val create_or_get_for_pull_request :
+      request_id:string ->
+      Db.t ->
+      Api.Account.t ->
+      Api.Repo.t ->
+      Api.Pull_request.Id.t ->
+      ((Api.Pull_request.Id.t, Api.Ref.t) Terrat_job_context.Context.t, [> `Error ]) result
+      Abb.Future.t
+
+    val update_for_pull_request :
+      request_id:string ->
+      Db.t ->
+      context_id:Uuidm.t ->
+      Api.Repo.t ->
+      Api.Pull_request.Id.t ->
+      (unit, [> `Error ]) result Abb.Future.t
+
+    val create :
+      request_id:string ->
+      Db.t ->
+      Api.Account.t ->
+      Api.Repo.t ->
+      (Api.Pull_request.Id.t, Api.Ref.t) Terrat_job_context.Context.Scope.t ->
+      ((Api.Pull_request.Id.t, Api.Ref.t) Terrat_job_context.Context.t, [> `Error ]) result
+      Abb.Future.t
+
+    val query :
+      request_id:string ->
+      Db.t ->
+      Uuidm.t ->
+      ((Api.Pull_request.Id.t, Api.Ref.t) Terrat_job_context.Context.t option, [> `Error ]) result
+      Abb.Future.t
+
+    module Job : sig
+      val create :
+        request_id:string ->
+        Db.t ->
+        Terrat_job_context.Job.Type_.t ->
+        (Api.Pull_request.Id.t, Api.Ref.t) Terrat_job_context.Context.t ->
+        Api.User.t option ->
+        ( (Api.Pull_request.Id.t, Api.Ref.t, Api.User.t option) Terrat_job_context.Job.t,
+          [> `Error ] )
+        result
+        Abb.Future.t
+
+      val query :
+        request_id:string ->
+        Db.t ->
+        job_id:Uuidm.t ->
+        ( (Api.Pull_request.Id.t, Api.Ref.t, Api.User.t option) Terrat_job_context.Job.t option,
+          [> `Error ] )
+        result
+        Abb.Future.t
+
+      val query_all_by_context_id :
+        request_id:string ->
+        Db.t ->
+        context_id:Uuidm.t ->
+        unit ->
+        ( (Api.Pull_request.Id.t, Api.Ref.t, Api.User.t option) Terrat_job_context.Job.t list,
+          [> `Error ] )
+        result
+        Abb.Future.t
+
+      val query_pending_by_context_id :
+        request_id:string ->
+        Db.t ->
+        context_id:Uuidm.t ->
+        unit ->
+        ( (Api.Pull_request.Id.t, Api.Ref.t, Api.User.t option) Terrat_job_context.Job.t list,
+          [> `Error ] )
+        result
+        Abb.Future.t
+
+      val query_by_work_manifest_id :
+        request_id:string ->
+        Db.t ->
+        work_manifest_id:Uuidm.t ->
+        unit ->
+        ( (Api.Pull_request.Id.t, Api.Ref.t, Api.User.t option) Terrat_job_context.Job.t option,
+          [> `Error ] )
+        result
+        Abb.Future.t
+
+      val update_state :
+        request_id:string ->
+        Db.t ->
+        job_id:Uuidm.t ->
+        Terrat_job_context.Job.State.t ->
+        (unit, [> `Error ]) result Abb.Future.t
+
+      val add_work_manifest :
+        request_id:string ->
+        Db.t ->
+        job_id:Uuidm.t ->
+        work_manifest_id:Uuidm.t ->
+        unit ->
+        (unit, [> `Error ]) result Abb.Future.t
+
+      val query_work_manifests :
+        request_id:string ->
+        Db.t ->
+        job_id:Uuidm.t ->
+        unit ->
+        (Uuidm.t list, [> `Error ]) result Abb.Future.t
+    end
+  end
 end

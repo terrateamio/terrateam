@@ -464,7 +464,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
               repository.Gw.Repository.name
               sender.Gw.User.login);
         match Terrat_comment.parse comment_body with
-        | Ok (Terrat_comment.Repo_config as comment) ->
+        | Ok Terrat_comment.Repo_config ->
             let account = P.Api.Account.make installation_id in
             let user = P.Api.User.make sender.Gw.User.login in
             let repo =
@@ -475,11 +475,11 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
                 ()
             in
             Abbs_future_combinators.to_result
-            @@ Evaluator2.pull_request_comment
+            @@ Evaluator2.publish_repo_config
+                 ~request_id
                  ~config
                  ~storage
                  ~account
-                 ~comment
                  ~repo
                  ~pull_request_id
                  ~comment_id
