@@ -16,6 +16,9 @@
   // Large terraform outputs could crash browsers during summary extraction
   // TODO: Re-implement when server-side summary computation is available
   
+  // Router props (external reference only)
+  export let params = {};
+  
   let workManifests: Dirspace[] = [];
   let repositories: Repository[] = [];
   let isLoadingWorkManifests: boolean = false;
@@ -60,7 +63,8 @@
   let pageSize: number = 20; // Runs per request
   let hasMoreResults: boolean = false;
   let isLoadingMore: boolean = false;
-  let totalLoadedResults: number = 0;
+  let nextPageUrl: string | null = null; // URL for next page from Link header
+  let allLoadedIds: Set<string> = new Set(); // Track all loaded IDs to prevent duplicates
   
   // Basic mode filter state
   let basicFilters = {
@@ -75,10 +79,9 @@
   };
   
   // Enhanced date range state
-  let dateRangeMode: 'preset' | 'custom' | 'advanced' = 'preset';
+  let dateRangeMode: 'preset' | 'custom' = 'preset';
   let customStartDate: string = '';
   let customEndDate: string = '';
-  let advancedDateQuery: string = '';
   
   // Repository grouping for non-overwhelming display
   let groupedRuns: Record<string, Dirspace[]> = {};
@@ -482,53 +485,111 @@
       // Reset for new search
       currentPage = 1;
       hasMoreResults = false;
-      totalLoadedResults = 0;
+      nextPageUrl = null;
+      allLoadedIds.clear();
     }
     error = null;
     
     try {
-      // Build query: use searchQuery from URL
-      let query = searchQuery.trim() || '';
-
-      // Request more than pageSize to detect if there are more results
-      const requestLimit = pageSize + 1;
-      const params: Record<string, unknown> = { 
-        tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        limit: requestLimit,
-        offset: loadMore ? totalLoadedResults : 0
-      };
+      let response;
       
-      if (query) {
-        params.q = query;
+      if (loadMore && nextPageUrl) {
+        // Use the next page URL directly from the Link header
+        // Make direct fetch request to the URL provided by Link header
+        const fetchResponse = await fetch(nextPageUrl, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
+        
+        if (!fetchResponse.ok) {
+          throw new Error(`HTTP ${fetchResponse.status}: ${fetchResponse.statusText}`);
+        }
+        
+        const rawResponse = await fetchResponse.json();
+        
+        // Parse Link headers from the response
+        const linkHeader = fetchResponse.headers.get('Link') || fetchResponse.headers.get('link');
+        let linkHeaders: Record<string, string> | null = null;
+        if (linkHeader) {
+          // Simple parsing of Link header
+          linkHeaders = {};
+          const parts = linkHeader.split(/,\s*(?=<)/);
+          for (const part of parts) {
+            const match = part.match(/<([^>]+)>;\s*rel="([^"]+)"/);
+            if (match) {
+              linkHeaders[match[2]] = match[1];
+            }
+          }
+        }
+        
+        // Format response to match our expected structure
+        response = {
+          dirspaces: rawResponse.dirspaces || [],
+          hasMore: linkHeaders?.next !== undefined,
+          linkHeaders
+        };
+      } else {
+        // Build query for initial load
+        let query = searchQuery.trim() || '';
+        
+        const params: Record<string, unknown> = { 
+          tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          limit: pageSize
+        };
+        
+        if (query) {
+          params.q = query;
+        }
+        
+        response = await api.getInstallationDirspaces($selectedInstallation.id, params);
       }
-      
-      const response = await api.getInstallationDirspaces($selectedInstallation.id, params);
       
       if (response && 'dirspaces' in response) {
         const dirspaces = response.dirspaces as Dirspace[];
         
-        // Check if there are more results
-        hasMoreResults = dirspaces.length > pageSize;
         
-        // Remove the extra item if we got it (it was just for detection)
-        const actualResults = hasMoreResults ? dirspaces.slice(0, pageSize) : dirspaces;
+        // Use Link header to determine if there are more results
+        hasMoreResults = response.hasMore;
+        
+        // Fix double slash issue in the URL if present
+        if (response.linkHeaders?.next) {
+          nextPageUrl = response.linkHeaders.next.replace('//api/', '/api/');
+        } else {
+          nextPageUrl = null;
+        }
+        
+        const actualResults = dirspaces;
         
         if (loadMore) {
+          // With proper Link header pagination, we shouldn't get duplicates
+          // but let's still check just in case
+          const newResults = actualResults.filter(r => !allLoadedIds.has(r.id));
+          
+          
+          // Add new IDs to our tracking set
+          newResults.forEach(r => allLoadedIds.add(r.id));
+          
           // Append to existing results
-          workManifests = [...workManifests, ...actualResults];
+          workManifests = [...workManifests, ...newResults];
         } else {
           // Replace results for new search
           workManifests = actualResults;
+          
+          // Reset and track IDs
+          allLoadedIds.clear();
+          actualResults.forEach(r => allLoadedIds.add(r.id));
         }
         
-        totalLoadedResults = workManifests.length;
         currentPage = loadMore ? currentPage + 1 : 1;
+        
 
       } else {
         if (!loadMore) {
           workManifests = [];
           hasMoreResults = false;
-          totalLoadedResults = 0;
         }
       }
       
@@ -538,7 +599,6 @@
       if (!loadMore) {
         workManifests = [];
         hasMoreResults = false;
-        totalLoadedResults = 0;
       }
     } finally {
       if (loadMore) {
@@ -666,17 +726,40 @@
           break;
       }
     } else if (dateRangeMode === 'custom' && (customStartDate || customEndDate)) {
-      // Custom date range
-      if (customStartDate && customEndDate) {
-        filters.push(`created_at:${customStartDate}..${customEndDate}`);
-      } else if (customStartDate) {
-        filters.push(`created_at:${customStartDate}..`);
-      } else if (customEndDate) {
-        filters.push(`created_at:..${customEndDate}`);
+      // Custom date range - handle datetime-local format
+      let startStr = '';
+      let endStr = '';
+      
+      if (customStartDate) {
+        // datetime-local format is YYYY-MM-DDTHH:MM
+        // Convert to API format: YYYY-MM-DD HH:MM
+        startStr = customStartDate.replace('T', ' ');
       }
-    } else if (dateRangeMode === 'advanced' && advancedDateQuery.trim()) {
-      // Advanced date query - user provides full syntax
-      filters.push(advancedDateQuery.trim());
+      
+      if (customEndDate) {
+        endStr = customEndDate.replace('T', ' ');
+      }
+      
+      if (startStr && endStr) {
+        // Use quotes when time is included
+        if (startStr.includes(' ') || endStr.includes(' ')) {
+          filters.push(`"created_at:${startStr}..${endStr}"`);
+        } else {
+          filters.push(`created_at:${startStr}..${endStr}`);
+        }
+      } else if (startStr) {
+        if (startStr.includes(' ')) {
+          filters.push(`"created_at:${startStr}.."`);
+        } else {
+          filters.push(`created_at:${startStr}..`);
+        }
+      } else if (endStr) {
+        if (endStr.includes(' ')) {
+          filters.push(`"created_at:..${endStr}"`);
+        } else {
+          filters.push(`created_at:..${endStr}`);
+        }
+      }
     }
     
     return filters.join(' and ');
@@ -696,7 +779,7 @@
   function formatDateTime(dateString: string): string {
     const date = new Date(dateString);
     
-    // Format: "Dec 25, 2024 3:45 PM"
+    // Format: "Jan 24, 2025 3:45 PM"
     const options: Intl.DateTimeFormatOptions = {
       month: 'short',
       day: 'numeric',
@@ -822,6 +905,9 @@
   // Reset pagination when search query changes
   function resetPagination(): void {
     currentPage = 1;
+    hasMoreResults = false;
+    nextPageUrl = null;
+    allLoadedIds.clear();
   }
 
   // Store search context when navigating to run detail
@@ -1068,13 +1154,15 @@
                     >
                       <div class="flex items-center justify-between">
                         <div class="flex-1 min-w-0">
-                          <div class="flex items-center gap-2 mb-2">
-                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border {getStateColor(operation.state)}">
-                              {getStateIcon(operation.state)} {operation.state.toUpperCase()}
-                            </span>
-                            <span class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                              {operation.run_type} - {operation.repo}/{operation.dir}
-                            </span>
+                          <div class="mb-2">
+                            <div class="flex items-start gap-2">
+                              <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border flex-shrink-0 {getStateColor(operation.state)}">
+                                {getStateIcon(operation.state)} {operation.state.toUpperCase()}
+                              </span>
+                              <div class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all">
+                                {operation.run_type} - {operation.repo}/{operation.dir}
+                              </div>
+                            </div>
                           </div>
                           
                           <div class="text-xs text-gray-500 dark:text-gray-400 mb-2">
@@ -1565,20 +1653,13 @@
                     >
                       Custom
                     </button>
-                    <button
-                      type="button"
-                      on:click={() => dateRangeMode = 'advanced'}
-                      class="px-2 py-1 text-xs border rounded {dateRangeMode === 'advanced' ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-300' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}"
-                    >
-                      Advanced
-                    </button>
                     
                     <!-- Preset Dropdown (inline with buttons) -->
                     {#if dateRangeMode === 'preset'}
                       <select bind:value={basicFilters.dateRange} class="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500">
                         <option value="">All time</option>
-                        <option value="today">Today</option>
-                        <option value="yesterday">Yesterday</option>
+                        <option value="today">Last 24 hours</option>
+                        <option value="yesterday">Last 48 hours</option>
                         <option value="week">Last 7 days</option>
                         <option value="month">Last 30 days</option>
                         <option value="3months">Last 3 months</option>
@@ -1591,47 +1672,27 @@
                   {#if dateRangeMode === 'custom'}
                     <div class="space-y-2">
                       <div>
-                        <label for="custom-start-date" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">From (optional)</label>
+                        <label for="custom-start-date" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">From date & time (optional)</label>
                         <input
                           id="custom-start-date"
-                          type="date"
+                          type="datetime-local"
                           bind:value={customStartDate}
                           class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                       </div>
                       <div>
-                        <label for="custom-end-date" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">To (optional)</label>
+                        <label for="custom-end-date" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">To date & time (optional)</label>
                         <input
                           id="custom-end-date"
-                          type="date"
+                          type="datetime-local"
                           bind:value={customEndDate}
                           class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                       </div>
                       <div class="text-xs text-gray-500 dark:text-gray-400">
-                        Leave blank for open-ended ranges
+                        <p>Leave blank for open-ended ranges</p>
+                        <p class="mt-1">Examples: 2024-01-15 14:30 or just 2024-01-15</p>
                       </div>
-                    </div>
-                  {/if}
-                  
-                  <!-- Advanced Mode -->
-                  {#if dateRangeMode === 'advanced'}
-                    <div class="space-y-2">
-                      <input
-                        type="text"
-                        bind:value={advancedDateQuery}
-                        placeholder="e.g., created_at:2024-01-01..2024-01-31"
-                        class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                      <details class="text-xs text-gray-500 dark:text-gray-400">
-                        <summary class="cursor-pointer hover:text-gray-700 dark:hover:text-gray-300">Examples</summary>
-                        <div class="mt-1 space-y-1">
-                          <div><code>created_at:2024-01-01..</code> - From Jan 1st onwards</div>
-                          <div><code>created_at:..2024-01-31</code> - Up to Jan 31st</div>
-                          <div><code>created_at:2024-01-01..2024-01-31</code> - January 2024</div>
-                          <div><code>"created_at:2024-01-01 12:00..2024-01-01 18:00"</code> - With time</div>
-                        </div>
-                      </details>
                     </div>
                   {/if}
                 </div>
@@ -1903,38 +1964,43 @@
                       >
                         <div class="flex items-center justify-between">
                           <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-2">
-                              <!-- Plan/Apply Visual Indicator -->
-                              {#if run.run_type === 'plan'}
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700">
-                                  📋 Plan
-                                </span>
-                              {:else if run.run_type === 'apply'}
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700">
-                                  🚀 Apply
-                                </span>
-                              {:else}
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
-                                  {run.run_type}
-                                </span>
-                              {/if}
-                              
-                              <!-- Drift Detection Indicator -->
-                              {#if run.kind === 'drift'}
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-700">
-                                  🔍 Drift
-                                </span>
-                              {/if}
-                              <span class="text-xs text-gray-400 dark:text-gray-500">•</span>
-                              <span class="text-sm text-gray-700 dark:text-gray-300">{run.branch}</span>
-                              {#if run.dir}
-                                <span class="text-xs text-gray-400 dark:text-gray-500">•</span>
-                                <span class="text-xs text-gray-600 dark:text-gray-400 font-mono">{run.dir}</span>
-                              {/if}
-                              {#if run.workspace && run.workspace !== 'default'}
-                                <span class="text-xs text-gray-400 dark:text-gray-500">•</span>
-                                <span class="text-xs text-gray-600 dark:text-gray-400">workspace: {run.workspace}</span>
-                              {/if}
+                            <div class="mb-2">
+                              <div class="flex items-start gap-2 flex-wrap">
+                                <!-- Plan/Apply Visual Indicator -->
+                                {#if run.run_type === 'plan'}
+                                  <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700 flex-shrink-0">
+                                    📋 Plan
+                                  </span>
+                                {:else if run.run_type === 'apply'}
+                                  <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700 flex-shrink-0">
+                                    🚀 Apply
+                                  </span>
+                                {:else}
+                                  <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 flex-shrink-0">
+                                    {run.run_type}
+                                  </span>
+                                {/if}
+                                
+                                <!-- Drift Detection Indicator -->
+                                {#if run.kind === 'drift'}
+                                  <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-700 flex-shrink-0">
+                                    🔍 Drift
+                                  </span>
+                                {/if}
+                                
+                                <!-- Path and details on separate line if needed -->
+                                <div class="flex items-center gap-1 flex-wrap">
+                                  <span class="text-sm text-gray-700 dark:text-gray-300">{run.branch}</span>
+                                  {#if run.dir}
+                                    <span class="text-xs text-gray-400 dark:text-gray-500">•</span>
+                                    <span class="text-xs text-gray-600 dark:text-gray-400 font-mono break-all">{run.dir}</span>
+                                  {/if}
+                                  {#if run.workspace && run.workspace !== 'default'}
+                                    <span class="text-xs text-gray-400 dark:text-gray-500">•</span>
+                                    <span class="text-xs text-gray-600 dark:text-gray-400">workspace: {run.workspace}</span>
+                                  {/if}
+                                </div>
+                              </div>
                             </div>
                             <!-- Terraform summary removed for memory safety -->
                             <div class="text-xs text-gray-500 dark:text-gray-400">

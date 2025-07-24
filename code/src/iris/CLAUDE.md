@@ -113,6 +113,40 @@ Advanced Features:
 - Controls repository access and billing
 - Enables multi-tenant operation
 
+### API Pagination
+
+**Link Header Pagination (RFC 5988)**
+
+The Terrateam API uses Link header pagination for all endpoints that return lists. This follows the same pattern as GitHub's API.
+
+**How it works:**
+- Pagination links are provided in the `Link` response header
+- The header contains comma-separated links in the format: `<url>; rel="rel"`
+- Common relations: `next` (next page), `prev` (previous page), `first`, `last`
+- If a relation is not present in the header, that page doesn't exist
+
+**Example Link Header:**
+```
+Link: <https://app.terrateam.io/api/v1/github/installations/123/dirspaces?page=2>; rel="next",
+      <https://app.terrateam.io/api/v1/github/installations/123/dirspaces?page=1>; rel="prev"
+```
+
+**Implementation in API Client:**
+```typescript
+// Parse Link headers
+const linkHeaders = api.getLastLinkHeaders();
+if (linkHeaders?.next) {
+  // Load next page using the provided URL
+  const nextPageData = await api.get(linkHeaders.next);
+}
+```
+
+**Benefits:**
+- Server controls pagination logic
+- Supports complex filtering without offset calculation issues
+- Consistent with GitHub API patterns
+- Prevents duplicate entries when data changes between requests
+
 ## Tag Query Language Integration
 
 ### Overview
