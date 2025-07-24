@@ -59,15 +59,17 @@ Your tree builder script:
      "files": [
        {
          "path": "environments/prod/main.tf",
-         "changed": true
+         "id": "a1b2c3d4e5f6789"
        },
        {
          "path": "environments/staging/main.tf",
-         "changed": false
+         "id": "f9e8d7c6b5a4321"
        }
      ]
    }
    ```
+
+   The `id` field is an opaque string that uniquely identifies each file (typically a hash of the file contents). Terrateam uses this identifier to determine if a file has changed by comparing the ID in the source branch with the ID in the destination branch. If the IDs differ, the file is considered changed.
 
 3. **Test your script locally**
    

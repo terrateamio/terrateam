@@ -32,11 +32,11 @@ The script must output valid JSON to stdout with the following structure
   "files": [
     {
       "path": "path/to/file1.tf",
-      "changed": true
+      "id": "abc123def456"
     },
     {
-      "path": "path/to/file2.tf", 
-      "changed": false
+      "path": "path/to/file2.tf",
+      "id": "789ghi012jkl"
     }
   ]
 }
@@ -48,5 +48,4 @@ The script must output valid JSON to stdout with the following structure
 | --- | --- | --- | --- |
 | files | Array | Yes | Array of file objects |
 | files[].path | String | Yes | Relative path from repository root |
-| files[].changed | Boolean | No | Whether the file has changed (defaults to true if omitted) |
-| files[].id | String | No | Optional unique identifier for the file |
+| files[].id | String | Yes | Unique identifier for the file (typically a hash). Terrateam compares IDs between branches to detect changes |
