@@ -471,6 +471,61 @@ let test_minimize_strategy =
         | Ok () -> Abb.Future.return ()
         | Error _ -> assert false)
   in
+  let multiple_small_with_old_comment =
+    Oth_abb.test
+      ~desc:
+        "Given 2 elements with rendered length smaller than the ceiling, but that can't be \
+         combined into a single cluster, and 1 comment that is an older version of the first one, \
+         We'll generate two new comments and minimize the old one."
+      ~name:"[Minimize] Multiple Small #2"
+      (fun () ->
+        let open Abb.Future.Infix_monad in
+        let module C = Terrat_vcs_comment in
+        let module D = Terrat_dirspace in
+        let module Cm = Terrat_vcs_comment.Make (H) in
+        let len = H.max_comment_length - 1 in
+        let st = C.Strategy.Minimize in
+        let el1 = Shared.create_el "A" "A" false len st in
+        let el2 = Shared.create_el "B" "B" true len st in
+        let els1 = [ el1; el2 ] in
+        let counter = API_id.create 0 in
+        let cid1 = API_id.next counter in
+        let cid2 = API_id.next counter in
+        let t1 =
+          ref
+            [
+              Eh.Query_comment_id (el1, Ok None);
+              Eh.Post_comment ([ el1 ], Ok cid1);
+              Eh.Upsert_comment_id ([ el1 ], cid1, Ok ());
+              Eh.Query_comment_id (el2, Ok None);
+              Eh.Post_comment ([ el2 ], Ok cid2);
+              Eh.Upsert_comment_id ([ el2 ], cid2, Ok ());
+            ]
+        in
+        Make_wrapper.run t1 els1
+        >>= function
+        | Ok () -> (
+            let el3 = Shared.create_el "A" "A" false len st in
+            let els2 = [ el3; el2 ] in
+            let cid3 = API_id.next counter in
+            let t2 =
+              ref
+                [
+                  Eh.Query_comment_id (el3, Ok (Some cid1));
+                  Eh.Minimize_comment (cid1, Ok ());
+                  Eh.Post_comment ([ el3 ], Ok cid3);
+                  Eh.Upsert_comment_id ([ el3 ], cid3, Ok ());
+                  Eh.Query_comment_id (el2, Ok None);
+                  Eh.Post_comment ([ el2 ], Ok cid2);
+                  Eh.Upsert_comment_id ([ el2 ], cid2, Ok ());
+                ]
+            in
+            Make_wrapper.run t2 els2
+            >>= function
+            | Ok () -> Abb.Future.return ()
+            | Error _ -> assert false)
+        | Error _ -> assert false)
+  in
   let multiple_big =
     Oth_abb.test
       ~desc:
@@ -546,7 +601,7 @@ let test_minimize_strategy =
         | Ok () -> Abb.Future.return ()
         | Error _ -> assert false)
   in
-    Oth_abb.parallel [ multiple_small; multiple_big; multiple_mixed ]
+  Oth_abb.parallel [ multiple_small; multiple_small_with_old_comment; multiple_big; multiple_mixed ]
 
 let test =
   Oth_abb.(

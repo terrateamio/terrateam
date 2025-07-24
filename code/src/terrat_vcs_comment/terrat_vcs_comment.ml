@@ -92,6 +92,6 @@ module Make (M : S) = struct
       ~f:(function
         | Strategy.Append, els -> append t els
         | Strategy.Delete, els -> delete t els
-        | Strategy.Minimize, els -> delete t els)
+        | Strategy.Minimize, els -> minimize t els)
       split
 end
