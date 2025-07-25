@@ -171,7 +171,13 @@
         };
       } else {
         const query = buildSearchQuery();
-        const params: any = {
+        const params: {
+          tz: string;
+          limit: number;
+          d: string;
+          lite: boolean;
+          q?: string;
+        } = {
           tz: timezone,
           limit: 50,
           d: 'desc',
