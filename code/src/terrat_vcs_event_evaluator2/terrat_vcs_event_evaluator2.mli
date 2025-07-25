@@ -1,23 +1,4 @@
 module Make (S : Terrat_vcs_provider2.S) : sig
-  module Key : sig
-    type 'a t
-  end
-
-  type repo_config_fetch_err = Terrat_vcs_provider2.fetch_repo_config_with_provenance_err
-  [@@deriving show]
-
-  type err =
-    [ `Missing_dep_err of string
-    | `Error
-    | `Closed
-    | repo_config_fetch_err
-    | Terrat_change_match3.synthesize_config_err
-    | `Require_event_err of string
-    | Pgsql_io.err
-    | Pgsql_pool.err
-    ]
-  [@@deriving show]
-
   val publish_repo_config :
     request_id:string ->
     config:S.Api.Config.t ->
