@@ -51,8 +51,8 @@ When a pull request is opened or updated, Terrateam detects changes based on pat
 ```yaml
 when_modified:
   file_patterns:
-    - '**/*.tf'
-    - '**/*.tfvars'
+    - '${DIR}/*.tf'
+    - '${DIR}/*.tfvars'
 ```
 
 This configuration instructs Terrateam to monitor changes to any files with `.tf` or `.tfvars` extensions. Adjust these patterns in your configuration file to align with your project's structure.
