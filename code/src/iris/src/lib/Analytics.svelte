@@ -21,7 +21,7 @@
   let error: string | null = null;
 
   // Shared filtering
-  let dateRange = '30'; // days
+  let dateRange = '7'; // days
   let selectedRepo = '';
 
   // Repository Analytics state
@@ -194,13 +194,70 @@
       const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
       const dateFilter = startDate.toISOString().split('T')[0];
 
-      const response = await api.getInstallationDirspaces($selectedInstallation.id, {
-        q: `created_at:${dateFilter}..`,
-        tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        limit: 200
-      });
+      // Load a reasonable sample for analytics (up to 10 pages / 500 runs)
+      const allDirspaces: Dirspace[] = [];
+      let hasMore = true;
+      let nextPageUrl: string | null = null;
+      let pagesLoaded = 0;
+      const maxPages = 10;  // Limit to 10 pages for performance
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      
+      while (hasMore && pagesLoaded < maxPages) {
+        let response;
+        
+        if (nextPageUrl) {
+          // Use the URL from Link header directly
+          const fetchResponse: Response = await fetch(nextPageUrl, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+          });
+          
+          const rawResponse: { dirspaces: Dirspace[] } = await fetchResponse.json();
+          
+          // Parse Link headers from the response
+          const linkHeader = fetchResponse.headers.get('Link');
+          let linkHeaders: Record<string, string> | null = null;
+          if (linkHeader) {
+            linkHeaders = {};
+            const parts = linkHeader.split(/,\s*(?=<)/);
+            for (const part of parts) {
+              const match = part.match(/<([^>]+)>;\s*rel="([^"]+)"/);
+              if (match) {
+                linkHeaders[match[2]] = match[1];
+              }
+            }
+          }
+          
+          response = {
+            dirspaces: rawResponse.dirspaces || [],
+            linkHeaders
+          };
+        } else {
+          // Initial request
+          response = await api.getInstallationDirspaces($selectedInstallation.id, {
+            q: `created_at:${dateFilter}..`,
+            tz: timezone,
+            limit: 50
+          });
+        }
+        
+        if (response && response.dirspaces) {
+          allDirspaces.push(...response.dirspaces);
+        }
+        
+        pagesLoaded++;
+        
+        // Check for next page
+        if (response.linkHeaders?.next && pagesLoaded < maxPages) {
+          nextPageUrl = response.linkHeaders.next.replace('//api/', '/api/');
+          hasMore = true;
+        } else {
+          hasMore = false;
+        }
+      }
 
-      dirspaces = response.dirspaces || [];
+      dirspaces = allDirspaces;
     } catch (err) {
       console.error('Error loading dirspaces:', err);
       error = err instanceof Error ? err.message : 'Failed to load run data';
@@ -216,15 +273,70 @@
     driftError = null;
     
     try {
+      // Load a reasonable sample for analytics (up to 5 pages / 250 drift operations)
+      const allDriftOperations: Dirspace[] = [];
+      let hasMore = true;
+      let nextPageUrl: string | null = null;
+      let pagesLoaded = 0;
+      const maxPages = 5;  // Fewer pages for drift since it's less common
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       
-      // Use the dirspaces API with kind:drift filter 
-      const response = await api.getInstallationDirspaces($selectedInstallation.id, {
-        q: 'kind:drift',
-        tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        limit: 100 // Get more drift operations for better analytics
-      });
+      while (hasMore && pagesLoaded < maxPages) {
+        let response;
+        
+        if (nextPageUrl) {
+          // Use the URL from Link header directly
+          const fetchResponse: Response = await fetch(nextPageUrl, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+          });
+          
+          const rawResponse: { dirspaces: Dirspace[] } = await fetchResponse.json();
+          
+          // Parse Link headers from the response
+          const linkHeader = fetchResponse.headers.get('Link');
+          let linkHeaders: Record<string, string> | null = null;
+          if (linkHeader) {
+            linkHeaders = {};
+            const parts = linkHeader.split(/,\s*(?=<)/);
+            for (const part of parts) {
+              const match = part.match(/<([^>]+)>;\s*rel="([^"]+)"/);
+              if (match) {
+                linkHeaders[match[2]] = match[1];
+              }
+            }
+          }
+          
+          response = {
+            dirspaces: rawResponse.dirspaces || [],
+            linkHeaders
+          };
+        } else {
+          // Initial request
+          response = await api.getInstallationDirspaces($selectedInstallation.id, {
+            q: 'kind:drift',
+            tz: timezone,
+            limit: 50
+          });
+        }
+        
+        if (response && response.dirspaces) {
+          allDriftOperations.push(...response.dirspaces);
+        }
+        
+        pagesLoaded++;
+        
+        // Check for next page
+        if (response.linkHeaders?.next && pagesLoaded < maxPages) {
+          nextPageUrl = response.linkHeaders.next.replace('//api/', '/api/');
+          hasMore = true;
+        } else {
+          hasMore = false;
+        }
+      }
       
-      driftOperations = response.dirspaces || [];
+      driftOperations = allDriftOperations;
     } catch (err) {
       console.error('❌ Error loading drift operations:', err);
       driftError = err instanceof Error ? err.message : 'Failed to load drift operations';
@@ -742,7 +854,7 @@
   });
 </script>
 
-<PageLayout activeItem="analytics" title="Analytics" subtitle="Repository health and workflow performance insights based on the most recent 100 operations">
+<PageLayout activeItem="analytics" title="Analytics" subtitle="Repository health and workflow performance insights">
   
   <!-- Tab Navigation -->
   <div class="mb-6">
@@ -883,7 +995,7 @@
       <Card padding="lg" class="text-center">
         <div class="text-3xl font-bold text-green-600 dark:text-green-400">{overallMetrics.totalRuns}</div>
         <div class="text-sm text-green-700 dark:text-green-300 mt-1">Total Runs</div>
-        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Last {dateRange} days (max 100)</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Last {dateRange} days (up to 500 runs)</div>
       </Card>
       
       <Card padding="lg" class="text-center">
@@ -906,7 +1018,7 @@
       <div class="flex items-center justify-between mb-6">
         <div>
           <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Repository Performance</h3>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Based on the most recent 100 runs from the selected time range</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Based on a sample of recent runs from the selected time range</p>
         </div>
         
         <!-- Repository Tab Controls -->
@@ -1069,7 +1181,7 @@
       <div class="flex items-center justify-between mb-6">
         <div>
           <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Step-by-Step Analysis</h3>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Based on the most recent 100 runs from the selected time range</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Based on a sample of recent runs from the selected time range</p>
         </div>
         {#if selectedStepType || selectedRepo}
           <div class="text-xs text-gray-600 dark:text-gray-400">
@@ -1560,7 +1672,7 @@
         <div class="flex items-center justify-between mb-6">
           <div>
             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Drift Detections</h3>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Based on the most recent 100 drift operations</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Based on recent drift operations</p>
           </div>
           <div class="text-xs text-gray-600 dark:text-gray-400">
             Showing {Math.min(20, driftOperations.length)} of {driftOperations.length} drift operations

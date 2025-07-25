@@ -44,6 +44,14 @@ class ApiError extends Error {
   }
 }
 
+// Helper type for parsed Link headers
+export interface LinkHeader {
+  next?: string;
+  prev?: string;
+  first?: string;
+  last?: string;
+}
+
 export class ValidatedApiClient {
   private baseUrl: string;
 
@@ -58,6 +66,30 @@ export class ValidatedApiClient {
   }
 
   private lastResponseHeaders: Headers | null = null;
+  
+  // Parse Link header according to RFC 5988
+  private parseLinkHeader(linkHeader: string): LinkHeader {
+    const links: LinkHeader = {};
+    
+    // Split by comma, but be careful of commas within URLs
+    const parts = linkHeader.split(/,\s*(?=<)/);
+    
+    for (const part of parts) {
+      const match = part.match(/<([^>]+)>;\s*rel="([^"]+)"/);
+      if (match) {
+        const [, url, rel] = match;
+        links[rel as keyof LinkHeader] = url;
+      }
+    }
+    
+    return links;
+  }
+  
+  // Get parsed Link headers from last response
+  public getLastLinkHeaders(): LinkHeader | null {
+    const linkHeader = this.lastResponseHeaders?.get('Link') || this.lastResponseHeaders?.get('link');
+    return linkHeader ? this.parseLinkHeader(linkHeader) : null;
+  }
   
   private async request<T>(
     endpoint: string,
@@ -178,6 +210,54 @@ export class ValidatedApiClient {
   // Utility methods
   async get<T>(endpoint: string, params?: Record<string, string>): Promise<T> {
     return this.request<T>(endpoint, { method: 'GET', params });
+  }
+  
+  // Get raw response from a full URL (for pagination)
+  async getFromUrl<T>(fullUrl: string): Promise<T> {
+    try {
+      // Fix double slash issue if present
+      const fixedUrl = fullUrl.replace('//api/', '/api/');
+      
+      const response = await fetch(fixedUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+      
+      // Store headers for pagination
+      this.lastResponseHeaders = response.headers;
+      
+      const responseText = await response.text();
+      
+      if (!response.ok) {
+        let errorData: unknown;
+        try {
+          errorData = responseText ? JSON.parse(responseText) : null;
+        } catch {
+          errorData = responseText;
+        }
+        
+        throw new ApiError(
+          `HTTP ${response.status}: ${response.statusText}`,
+          response.status,
+          response,
+          errorData
+        );
+      }
+      
+      return responseText ? JSON.parse(responseText) : ({} as T);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      console.error('API request failed:', error);
+      throw new ApiError(
+        error instanceof Error ? error.message : 'Network error',
+        0
+      );
+    }
   }
 
   async post<T>(endpoint: string, data?: unknown): Promise<T> {
@@ -301,10 +381,13 @@ export class ValidatedApiClient {
       if (links.next) {
         // Extract page parameter from next URL
         try {
+          // Fix double slash issue if present
+          const fixedUrl = links.next.replace('//api/', '/api/');
+          
           // The URL might be relative, so we need to handle it carefully
-          const nextUrl = links.next.startsWith('http') 
-            ? new URL(links.next)
-            : new URL(links.next, 'https://app.terrateam.io');
+          const nextUrl = fixedUrl.startsWith('http') 
+            ? new URL(fixedUrl)
+            : new URL(fixedUrl, 'https://app.terrateam.io');
           
           nextCursor = nextUrl.searchParams.get('page') || undefined;
           hasMore = true;
@@ -368,25 +451,6 @@ export class ValidatedApiClient {
     return { repositories, nextCursor, hasMore };
   }
   
-  // Parse Link header according to RFC 5988
-  private parseLinkHeader(header: string): Record<string, string> {
-    const links: Record<string, string> = {};
-    
-    // The API returns Link headers in RFC 5988 format
-    // Example: <https://app.terrateam.io//api/v1/github/installations/48988185/repos?page=n,perderlo>; rel="next"
-    
-    // Use a more robust regex that captures the entire link structure
-    // This handles URLs with commas in query parameters
-    const linkRegex = /<([^>]+)>;\s*rel="([^"]+)"/g;
-    let match;
-    
-    while ((match = linkRegex.exec(header)) !== null) {
-      const [, url, rel] = match;
-      links[rel] = url;
-    }
-    
-    return links;
-  }
 
   async getRepository(installationId: string, repoId: string, provider?: VCSProvider): Promise<Repository> {
     const providerPath = this.getProviderPath(provider);
@@ -411,7 +475,7 @@ export class ValidatedApiClient {
     installationId: string, 
     params?: { q?: string; tz?: string; limit?: number; d?: string; page?: string[] },
     provider?: VCSProvider
-  ): Promise<{ dirspaces: Dirspace[]; nextCursor?: string; hasMore: boolean }> {
+  ): Promise<{ dirspaces: Dirspace[]; nextCursor?: string; hasMore: boolean; linkHeaders?: LinkHeader }> {
     const providerPath = this.getProviderPath(provider);
     
     // Always use dirspaces endpoint - it handles all Tag Query Language queries including repo: filters
@@ -444,10 +508,12 @@ export class ValidatedApiClient {
 
     if ('dirspaces' in response) {
       const dirspaces = validateDirspaces(response.dirspaces);
+      
+      // Get Link headers for pagination
+      const linkHeaders = this.getLastLinkHeaders() || undefined;
+      const hasMore = linkHeaders?.next !== undefined;
 
-      // The dirspaces API doesn't return pagination metadata
-      // The caller should use date-based pagination with created_at filters
-      return { dirspaces, hasMore: false };
+      return { dirspaces, hasMore, linkHeaders };
     } else {
       throw new ApiError('Invalid dirspaces response format - expected dirspaces', 422);
     }
