@@ -48,3 +48,32 @@ module Job = struct
   }
   [@@deriving show, eq]
 end
+
+module Compute_node = struct
+  module State = struct
+    type t =
+      | Starting
+      | Running
+      | Terminated
+  end
+
+  module Capabilities = struct
+    module Flags = struct
+      type t = One_shot [@@deriving yojson, show, eq]
+    end
+
+    type t = {
+      flags : Flags.t list; [@default [ Flags.One_shot ]]
+      sha : string;
+    }
+    [@@deriving yojson, show, eq]
+  end
+
+  type t = {
+    id : Uuidm.t;
+    state : State.t;
+    capabilities : Capabilities.t;
+    created_at : string;
+    updated_at : string;
+  }
+end
