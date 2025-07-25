@@ -101,8 +101,8 @@ This example demonstrates:
 ### When Modified
 The `when_modified` configuration can be set at multiple levels within the `dirs` directive:
 
-1. **Directory level**: `dirs.<directory>.when_modified` - Overrides global settings for all workspaces in that directory
-2. **Workspace level**: `dirs.<directory>.workspaces.<workspace>.when_modified` - Overrides both global and directory-level settings for a specific workspace
+1. **Directory level**: `dirs.<directory>.when_modified` - Applies to ALL workspaces within that directory, overriding the global `when_modified` settings
+2. **Workspace level**: `dirs.<directory>.workspaces.<workspace>.when_modified` - The most specific level, applies only to that individual workspace, overriding both global and directory-level settings
 
 | Key | Type | Description |
 | --- | --- | --- |
