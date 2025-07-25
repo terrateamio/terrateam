@@ -96,7 +96,7 @@ dirs:
 This example demonstrates:
 - Directory-level tags (`aws`) apply to all workspaces
 - Each workspace has its own tags (`critical`/`prod` vs `non-critical`/`staging`)
-- Each workspace has custom `when_modified` rules (production monitors more files and has auto-apply enabled)
+- Each workspace has custom `when_modified` rules (production is triggered by more file patterns and has auto-apply enabled)
 
 ### When Modified
 The `when_modified` configuration can be set at multiple levels within the `dirs` directive:
