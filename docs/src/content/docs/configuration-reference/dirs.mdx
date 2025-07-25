@@ -111,7 +111,7 @@ The `when_modified` configuration can be set at multiple levels within the `dirs
 #### Configuration Hierarchy
 - The `when_modified` configuration syntax is identical across all levels (global, directory, and workspace)
 - More specific configurations override broader ones: workspace > directory > global
-- Each level inherits from the level above it, with individual keys that can be overridden
+- Individual keys can be overridden at each level (e.g., you can set only `autoapply: true` at the workspace level while other settings come from higher levels)
 - The `file_patterns` default value is set to the path of the directory specified in the `dirs` object
 - The `file_patterns` list is always relative to the root of the repository
 - The `${DIR}` variable specified in `file_patterns` is always relative to the root of the repository and can be used to specify the directory that Terrateam is working against
