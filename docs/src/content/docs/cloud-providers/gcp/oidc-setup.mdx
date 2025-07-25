@@ -1,0 +1,278 @@
+---
+title: OIDC Setup
+description: Set up GCP OIDC authentication for Terrateam - recommended for production
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import { Card } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<Card title="What is OIDC?" icon="information">
+OpenID Connect (OIDC) allows your GitHub Actions workflows to access GCP resources without storing any credentials as long-lived GitHub secrets. GCP implements this through Workload Identity. This is the most secure authentication method for production environments.
+</Card>
+
+## Setup Methods
+
+Choose your preferred method for setting up OIDC authentication:
+
+### Automated Setup
+
+Use our Terraform module to automatically create all required GCP resources:
+
+<Tabs>
+  <TabItem label="Terraform">
+
+Use our [Terraform module](https://github.com/terrateamio/terraform-gcp-terrateam-setup) to create all GCP resources that Terrateam requires.
+
+:::caution[Run this locally]
+This setup should be run **locally on your workstation**, not through Terrateam. You'll need:
+- Terraform installed locally
+- GCP credentials configured locally (gcloud CLI)
+- This is a one-time setup to give Terrateam access to your GCP project
+:::
+
+<Steps>
+
+1. ### Create `main.tf` on your workstation
+
+   :::note
+   Replace `GITHUB_ORG` with your GitHub organization name or username and `PROJECT_ID` with your GCP project ID.
+   :::
+
+   ```hcl
+   module "terraform_gcp_terrateam_setup" {
+     source                        = "github.com/terrateamio/terraform-gcp-terrateam-setup"
+     github_org                    = "GITHUB_ORG" # GitHub organization or username
+     project_id                    = "PROJECT_ID"
+     service_account_description   = "Terrateam service account"
+     workload_identity_pool_id     = "terrateam-pool"
+     workload_identity_provider    = "terrateam-provider"
+     service_account_name          = "terrateam"
+     service_account_role          = "roles/editor"
+   }
+
+   output "google_iam_workload_identity_pool_provider_github_provider_name" {
+     value = module.terraform_gcp_terrateam_setup
+   }
+   ```
+
+   :::tip[Role Choice]
+   `roles/editor` is suggested for quick setup. Replace with any IAM role that fits your security requirements.
+   :::
+
+2. ### Apply changes locally
+
+   ```sh
+   terraform apply
+   ```
+
+3. ### Note the output
+
+   Save the output value `google_iam_workload_identity_pool_provider_github_provider_name` - you'll need it for Terrateam configuration.
+
+</Steps>
+
+  </TabItem>
+</Tabs>
+
+## Configure Terrateam for OIDC
+
+After setting up GCP resources, configure Terrateam to use OIDC authentication:
+
+<Steps>
+
+1. ### Create Configuration File
+
+   Create the `.terrateam/config.yml` configuration file at the root of your Terraform repository.
+
+2. ### Add OIDC Hook
+
+   :::note
+   Replace `PROJECT_ID` with your GCP project ID and `WORKLOAD_IDENTITY_PROVIDER` with the output value from the Terraform setup.
+   :::
+
+   ```yml
+   hooks:
+     all:
+       pre:
+         - type: oidc
+           provider: gcp
+           service_account: "terrateam@PROJECT_ID.iam.gserviceaccount.com"
+           workload_identity_provider: "WORKLOAD_IDENTITY_PROVIDER"
+   ```
+
+</Steps>
+
+## Testing Your Setup
+
+Test that OIDC authentication is working:
+
+1. Create a simple Terraform configuration in your repository
+2. Open a pull request with the changes
+3. Comment `terrateam plan` on the pull request
+4. Terrateam should successfully authenticate using OIDC and show the plan output
+
+### Manual Setup
+
+For custom configurations or when you need to understand exactly what resources are being created:
+
+<details>
+  <summary>Need to set up OIDC manually? Expand for step-by-step instructions</summary>
+
+<Steps>
+
+1. ### Create Service Account
+
+   Create a Terrateam service account:
+
+   :::note
+   Replace `PROJECT_ID` with your actual value.
+   :::
+
+   ```sh
+   gcloud iam service-accounts create terrateam \
+   --description="Terrateam service account" \
+   --display-name="Terrateam" \
+   --project="PROJECT_ID"
+   ```
+
+2. ### Create Workload Identity Pool
+
+   Create the workload identity pool:
+
+   :::note
+   Replace `PROJECT_ID` with your actual value.
+   :::
+
+   ```sh
+   gcloud iam workload-identity-pools create "terrateam-pool" \
+     --project="PROJECT_ID" \
+     --location="global" \
+     --display-name="Terrateam pool"
+   ```
+
+3. ### Create OIDC Provider
+
+   Create the OIDC provider in the workload identity pool:
+
+   :::note
+   Replace `PROJECT_ID` and `GITHUB_ORG` with your actual values. `GITHUB_ORG` is case-sensitive and represents your GitHub organization name or username.
+   :::
+
+   ```sh
+   gcloud iam workload-identity-pools providers create-oidc "terrateam-provider" \
+     --project="PROJECT_ID" \
+     --location="global" \
+     --workload-identity-pool="terrateam-pool" \
+     --display-name="Terrateam provider" \
+     --issuer-uri="https://token.actions.githubusercontent.com" \
+     --attribute-mapping="google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository,attribute.repository_owner=assertion.repository_owner" \
+     --attribute-condition="assertion.repository_owner == 'GITHUB_ORG'"
+   ```
+
+4. ### Create IAM Policy Bindings
+
+   Allow the workload identity pool to impersonate the service account:
+
+   :::note
+   Replace `PROJECT_ID` and `GITHUB_ORG` with your actual values. `GITHUB_ORG` is case-sensitive and represents your GitHub organization name or username.
+
+   Get your project number by running:
+   ```
+   gcloud projects describe PROJECT_ID--format="value(projectNumber)
+   ```
+   :::
+
+   ```sh
+   gcloud iam service-accounts add-iam-policy-binding "terrateam@PROJECT_ID.iam.gserviceaccount.com" \
+     --project="PROJECT_ID" \
+     --role="roles/iam.workloadIdentityUser" \
+     --member="principalSet://iam.googleapis.com/projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/terrateam-pool/attribute.repository_owner/GITHUB_ORG"
+   ```
+
+5. ### Attach IAM Role
+
+   Attach an IAM role to give the service account necessary permissions. We suggest `roles/editor` as a starting point:
+
+   ```sh
+   gcloud projects add-iam-policy-binding PROJECT_ID \
+   --member="serviceAccount:terrateam@PROJECT_ID.iam.gserviceaccount.com" \
+   --role='roles/editor'
+   ```
+
+   :::note[Choose Your Role]
+   `roles/editor` is just a suggestion. Choose the role that best fits your security requirements:
+   - **roles/editor** - Broad permissions, good for testing
+   - **Custom roles** - More restrictive, recommended for production
+   - **Other predefined roles** - Based on your specific needs
+   :::
+
+6. ### Get Workload Identity Provider Name
+
+   Get the full workload identity provider name for Terrateam configuration:
+
+   ```sh
+   gcloud iam workload-identity-pools providers describe "terrateam-provider" \
+     --project="PROJECT_ID" \
+     --location="global" \
+     --workload-identity-pool="terrateam-pool" \
+     --format="value(name)"
+   ```
+
+7. ### Configure Terrateam
+
+   Follow the [Configure Terrateam for OIDC](#configure-terrateam-for-oidc) section above to complete your setup.
+
+</Steps>
+
+</details>
+
+## Advanced Configuration
+
+:::tip[Multiple Environments]
+You can use different service accounts for different environments and operations. For example:
+
+```yml
+workflows:
+  - tag_query: "dir:terraform/production/**"
+    plan:
+      - type: oidc
+        provider: gcp
+        service_account: "terrateam-prod@prod-project.iam.gserviceaccount.com"
+        workload_identity_provider: "projects/123456789/locations/global/workloadIdentityPools/terrateam-pool/providers/terrateam-provider"
+      - type: init
+      - type: plan
+    apply:
+      - type: oidc
+        provider: gcp
+        service_account: "terrateam-prod@prod-project.iam.gserviceaccount.com"
+        workload_identity_provider: "projects/123456789/locations/global/workloadIdentityPools/terrateam-pool/providers/terrateam-provider"
+      - type: init
+      - type: apply
+  - tag_query: "dir:terraform/staging/**"
+    plan:
+      - type: oidc
+        provider: gcp
+        service_account: "terrateam-staging@staging-project.iam.gserviceaccount.com"
+        workload_identity_provider: "projects/123456789/locations/global/workloadIdentityPools/terrateam-pool/providers/terrateam-provider"
+      - type: init
+      - type: plan
+    apply:
+      - type: oidc
+        provider: gcp
+        service_account: "terrateam-staging@staging-project.iam.gserviceaccount.com"
+        workload_identity_provider: "projects/123456789/locations/global/workloadIdentityPools/terrateam-pool/providers/terrateam-provider"
+      - type: init
+      - type: apply
+```
+
+For more details, read the [Cloud Credentials documentation](/advanced-workflows/cloud-credentials).
+:::
+
+## Next Steps
+
+Now that you have GCP authentication configured, you are now able to use Terrateam for plan and apply operations against GCP resources.
+
+- Learn about [advanced workflows](/advanced-workflows/) for complex setups
+- Configure [multiple environments](/advanced-workflows/multiple-environments)
+- Set up [apply requirements](/security-and-compliance/apply-requirements-and-overrides) for additional security
