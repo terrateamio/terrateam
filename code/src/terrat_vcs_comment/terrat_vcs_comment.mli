@@ -18,7 +18,7 @@ module type S = sig
 
   (** The Id that we are going to get from the VCS, on
       GitHub this is an uint64. *)
-  type comment_id
+  type comment_id [@@deriving ord, show]
 
   (** DB/Persistence operations *)
   val query_comment_id : t -> el -> (comment_id option, [> `Error ]) result Abb.Future.t

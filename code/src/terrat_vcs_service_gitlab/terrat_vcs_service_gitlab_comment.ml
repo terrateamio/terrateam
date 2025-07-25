@@ -8,7 +8,6 @@ module Ui = Terrat_vcs_service_gitlab_assets.Ui
 module Visible_on = Terrat_base_repo_config_v1.Workflow_step.Visible_on
 
 module S = struct
-
   type t = {
     account_status : Terrat_vcs_provider2.Account_status.t;
     client : Api.Client.t;
@@ -28,7 +27,7 @@ module S = struct
   }
 
   (*TODO: fix this later*)
-  type comment_id = unit
+  type comment_id = unit [@@deriving ord, show]
 
   module Cmp = struct
     type t = bool * bool * Terrat_dirspace.t [@@deriving ord]
@@ -62,7 +61,7 @@ module S = struct
     let open Abbs_future_combinators.Infix_result_monad in
     Api.comment_on_pull_request ~request_id t.client t.pull_request body
     >>= fun () ->
-    Logs.info (fun m -> m "%s : PUBLISHED_COMMENT : %s" request_id msg_type );
+    Logs.info (fun m -> m "%s : PUBLISHED_COMMENT : %s" request_id msg_type);
     Abb.Future.return (Ok ())
 
   let rendered_length t els =

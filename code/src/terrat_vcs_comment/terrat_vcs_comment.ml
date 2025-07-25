@@ -9,7 +9,7 @@ end
 module type S = sig
   type t
   type el
-  type comment_id
+  type comment_id [@@deriving ord, show]
 
   val query_comment_id : t -> el -> (comment_id option, [> `Error ]) result Abb.Future.t
   val query_els_for_comment_id : t -> comment_id -> (el list, [> `Error ]) result Abb.Future.t
@@ -33,14 +33,38 @@ module Make (M : S) = struct
     let compare = Strategy.compare
   end)
 
-  (* module El_set = CCSet. *)
+  module Id_set = Set.Make (struct
+    type t = M.comment_id
+
+    let compare = M.compare_comment_id
+  end)
+
+  module El_set = Set.Make (struct
+    type t = M.el
+
+    let compare = M.compare_el
+  end)
 
   let partition_by_strategy els = By_strategy.group els
   let compact t e = if M.rendered_length t [ e ] < M.max_comment_length then e else M.compact e
 
   let find_existing_comments_for_el t els =
+    let open Abbs_future_combinators.Infix_result_monad in
     let module Alr = Abbs_future_combinators.List_result in
     Alr.filter_map ~f:(fun el -> M.query_comment_id t el) els
+    >>= fun cids ->
+    let uniq = Id_set.of_list cids |> Id_set.to_list in
+    Abb.Future.return (Ok uniq)
+
+  let find_all_els_from t comment_ids =
+    let open Abbs_future_combinators.Infix_result_monad in
+    let module Alr = Abbs_future_combinators.List_result in
+    Alr.map ~f:(M.query_els_for_comment_id t) comment_ids
+    >>= fun elss ->
+    let flat = CCList.flatten elss in
+    let set = El_set.of_list flat in
+    let list = El_set.to_list set in
+    Abb.Future.return (Ok list)
 
   let split_by_size t els =
     let combine (groups, curr_acc) r =
@@ -65,9 +89,10 @@ module Make (M : S) = struct
     let delete_if_comment_exists (els : M.el list) =
       find_existing_comments_for_el t els
       >>= fun cids ->
-      let uniq = CCList.uniq ~eq:(fun cid1 cid2 -> cid1 = cid2) cids in
-      Alr.iter ~f:(M.delete_comment t) uniq
-      >>= fun () -> M.post_comment t els >>= fun new_cid -> M.upsert_comment_id t els new_cid
+      Alr.iter ~f:(M.delete_comment t) cids
+      >>= fun () ->
+      find_all_els_from t cids
+      >>= fun els -> M.post_comment t els >>= fun new_cid -> M.upsert_comment_id t els new_cid
     in
 
     Alr.iter ~f:delete_if_comment_exists elss

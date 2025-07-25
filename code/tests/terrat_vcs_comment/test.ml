@@ -9,7 +9,7 @@ module Eh = struct
   }
   [@@deriving show]
 
-  type comment_id = int [@@deriving show]
+  type comment_id = int [@@deriving ord, show]
 
   type t =
     | Query_comment_id of el * (comment_id option, [ `Error ]) result
@@ -34,7 +34,7 @@ end
 module H = struct
   type t = Eh.commands ref
   type el = Eh.el
-  type comment_id = Eh.comment_id
+  type comment_id = Eh.comment_id [@@deriving ord, show]
 
   module Cmp = struct
     type t = bool * Terrat_dirspace.t [@@deriving ord]
