@@ -57,6 +57,15 @@ when_modified:
 
 This configuration instructs Terrateam to monitor changes to any files with `.tf` or `.tfvars` extensions. Adjust these patterns in your configuration file to align with your project's structure.
 
+:::tip[Configuration Flexibility]
+The `when_modified` configuration can be set at three levels:
+- **Global** - Applied to all directories
+- **Directory** - Under `dirs.<directory>.when_modified`
+- **Workspace** - Under `dirs.<directory>.workspaces.<workspace>.when_modified`
+
+All three levels use identical syntax. More specific configurations override broader ones.
+:::
+
 Terrateam maps detected changes to their appropriate [Dirspaces](/getting-started/concepts#dirspace). These mapped Dirspaces are referred to as Changes. When executing operations, Terrateam only considers Dirspaces with modified files in the pull request.
 
 ## Auto-Plan and Auto-Apply

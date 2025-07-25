@@ -5,6 +5,16 @@ description: The when_modified configuration reference
 
 The `when_modified` configuration allows you to configure autoplan and autoapply operations based on pull request file changes. This enables you to automatically trigger plan and apply operations when specific files are modified in your repository.
 
+## Configuration Levels
+
+The `when_modified` configuration can be set at three different levels, all using the same syntax:
+
+1. **Global level** - Applied to all directories unless overridden
+2. **Directory level** - Set under `dirs.<directory>.when_modified` to override global settings for a specific directory
+3. **Workspace level** - Set under `dirs.<directory>.workspaces.<workspace>.when_modified` to override settings for a specific workspace
+
+All three levels support the exact same configuration options. More specific configurations override broader ones (workspace > directory > global).
+
 ## Default Configuration
 ```yaml
 when_modified:
@@ -43,9 +53,44 @@ The `depends_on` key allows you to specify dependencies on other directories wit
 - Layered Operations: Supports multi-layered operations, where each layer depends on the successful apply of the previous one.
 - Dependency Management: Automatically triggers plan and apply operations based on changes in the lowest layer, and cascades through dependent layers.
 
-While it's technically possible to specify dependencies using the `depends_on` key at a global level, it is recommended to define them within the `dirs.when_modified` configuration for better granularity and control. The `dirs.when_modified` configuration supports the same keys as the global `when_modified` configuration.
+While the `depends_on` key can be specified in the top-level `when_modified` configuration (which would make ALL directories depend on the specified directories), it is strongly recommended to define dependencies at the directory or workspace level for better control. Use `dirs.<directory>.when_modified.depends_on` or `dirs.<directory>.workspaces.<workspace>.when_modified.depends_on` instead.
 
-## Examples
+## Configuration Examples
+
+### Same Configuration at Different Levels
+
+The following three configurations achieve the same result for the `production` directory/workspace:
+
+#### 1. Global Level Configuration
+```yaml
+when_modified:
+  file_patterns: ["**/*.tf", "**/*.tfvars"]
+  autoplan: true
+  autoapply: false
+```
+
+#### 2. Directory Level Configuration
+```yaml
+dirs:
+  production:
+    when_modified:
+      file_patterns: ["**/*.tf", "**/*.tfvars"]
+      autoplan: true
+      autoapply: false
+```
+
+#### 3. Workspace Level Configuration
+```yaml
+dirs:
+  production:
+    workspaces:
+      default:
+        when_modified:
+          file_patterns: ["**/*.tf", "**/*.tfvars"]
+          autoplan: true
+          autoapply: false
+```
+
 ### Auto-Plan on Terraform File Changes
 ```yaml
 when_modified:
