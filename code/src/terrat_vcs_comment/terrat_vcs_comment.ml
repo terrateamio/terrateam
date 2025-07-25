@@ -33,6 +33,8 @@ module Make (M : S) = struct
     let compare = Strategy.compare
   end)
 
+  (* module El_set = CCSet. *)
+
   let partition_by_strategy els = By_strategy.group els
   let compact t e = if M.rendered_length t [ e ] < M.max_comment_length then e else M.compact e
 
