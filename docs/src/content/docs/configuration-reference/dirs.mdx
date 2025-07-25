@@ -63,25 +63,62 @@ Each directory automatically receives a `dir:<name>` tag, where `<name>` is the 
 Each workspace automatically receives a `workspace:<name>` tag, where `<name>` is the name of the workspace.
 
 ### Workspaces
-The `workspaces` configuration is an object where the object key is the name of the workspace and the value is its configuration. Unique custom tags can be created against a directory and workspace combination.
+The `workspaces` configuration is an object where the object key is the name of the workspace and the value is its configuration. Each workspace can have its own:
+- Custom tags for targeting specific workspace operations
+- `when_modified` configuration to override directory or global settings
+
 | Key | Type | Description |
 | --- | --- | --- |
 | workspaces | object | Workspace configuration. |
+| workspaces.\<name\>.tags | list | List of tags to assign to the workspace. |
+| workspaces.\<name\>.when_modified | object | Workspace-specific when_modified configuration. |
+
+#### Example
+```yaml
+dirs:
+  infrastructure:
+    tags: [aws]  # Directory-level tag
+    workspaces:
+      production:
+        tags: [critical, prod]  # Workspace-specific tags
+        when_modified:
+          file_patterns: ["${DIR}/*.tf", "shared/*.tf", "modules/*.tf"]
+          autoplan: true
+          autoapply: true
+      staging:
+        tags: [non-critical, staging]  # Different tags for staging
+        when_modified:
+          file_patterns: ["${DIR}/*.tf", "shared/*.tf"]  
+          autoplan: true
+          autoapply: false  # No auto-apply for staging
+```
+
+This example demonstrates:
+- Directory-level tags (`aws`) apply to all workspaces
+- Each workspace has its own tags (`critical`/`prod` vs `non-critical`/`staging`)
+- Each workspace has custom `when_modified` rules (production is triggered by more file patterns and has auto-apply enabled)
 
 ### When Modified
-The `when_modified` configuration can be set in the `dirs` directive to override the [global `when_modified` configuration](/configuration-reference/when-modified).
+The `when_modified` configuration can be set at multiple levels within the `dirs` directive:
+
+1. **Directory level**: `dirs.<directory>.when_modified` - Applies to ALL workspaces within that directory, overriding the global `when_modified` settings
+2. **Workspace level**: `dirs.<directory>.workspaces.<workspace>.when_modified` - The most specific level, applies only to that individual workspace, overriding both global and directory-level settings
+
 | Key | Type | Description |
 | --- | --- | --- |
 | when_modified | object | Configuration to override when to match pull request file changes with autoplan and autoapply. |
 
-- The `when_modified` configuration syntax is identical to the top-level `when_modified`.
-- The `when_modified` configuration defaults to the top-level `when_modified`.
-- The `when_modified` keys can be individually overridden in `dirs`.
-- The `file_patterns` default value is set to the path of the directory specified in the `dirs` object.
-- The `file_patterns` list is always relative to the root of the repository.
-- The `${DIR}` variable specified in `file_patterns` is always relative to the root of the repository. The internal `${DIR}` variable can be used to specify the directory that Terrateam is working against.
+#### Configuration Hierarchy
+- The `when_modified` configuration syntax is identical across all levels (global, directory, and workspace)
+- More specific configurations override broader ones: workspace > directory > global
+- Individual keys can be overridden at each level (e.g., you can set only `autoapply: true` at the workspace level while other settings come from higher levels)
+- The `file_patterns` default value is set to the path of the directory specified in the `dirs` object
+- The `file_patterns` list is always relative to the root of the repository
+- The `${DIR}` variable specified in `file_patterns` is always relative to the root of the repository and can be used to specify the directory that Terrateam is working against
 
-#### Example
+#### Examples
+
+##### Directory-Level Configuration
 ```yaml
 dirs:
   foobar:
@@ -89,7 +126,26 @@ dirs:
       file_patterns: ["${DIR}/*.tf"]
 ```
 
-The example above triggers a Terrateam plan operation when `foobar/*.tf` is modified in a pull request.
+This triggers a Terrateam plan operation when `foobar/*.tf` is modified in a pull request.
+
+##### Workspace-Level Configuration
+```yaml
+dirs:
+  foobar:
+    workspaces:
+      production:
+        when_modified:
+          file_patterns: ["${DIR}/*.tf", "shared/*.tf"]
+          autoplan: true
+          autoapply: true
+      staging:
+        when_modified:
+          file_patterns: ["${DIR}/*.tf"]
+          autoplan: true
+          autoapply: false
+```
+
+This example shows different `when_modified` configurations for production and staging workspaces within the same directory. The production workspace will autoplan and autoapply when either directory-specific or shared files change, while staging will only autoplan (not autoapply).
 
 ## Globs
 The `dirs` directive supports glob patterns, which can be useful for repositories with a lot of directories that match a pattern with a similar configuration.
