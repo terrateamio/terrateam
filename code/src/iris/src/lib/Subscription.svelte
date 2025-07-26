@@ -95,19 +95,13 @@
         reason_length: trialExtensionForm.reason.length
       });
 
-      const formDataToSubmit = new FormData();
-      formDataToSubmit.append('access_key', WEB3_FORMS_ACCESS_KEY);
-      formDataToSubmit.append('subject', `[Trial Extension Request] ${trialExtensionForm.organization}`);
-      formDataToSubmit.append('email', trialExtensionForm.email);
-      formDataToSubmit.append('from_name', trialExtensionForm.name);
-      
       // Build detailed message
       const message = `
 Trial Extension Request Details:
 
 Name: ${trialExtensionForm.name}
 Email: ${trialExtensionForm.email}
-{terminology.organization}: ${trialExtensionForm.organization}
+${terminology.organization}: ${trialExtensionForm.organization}
 Requested Extension: ${trialExtensionForm.additionalDays} days
 Current Trial End Date: ${$selectedInstallation?.trial_ends_at || 'N/A'}
 
@@ -117,18 +111,29 @@ ${trialExtensionForm.reason}
 ---
 This request was submitted via the Terrateam Iris trial extension form.
       `.trim();
-      
-      formDataToSubmit.append('message', message);
-      formDataToSubmit.append('replyto', 'support@terrateam.io');
+
+      // Create JSON object for Web3Forms
+      const formDataToSubmit = {
+        access_key: WEB3_FORMS_ACCESS_KEY,
+        subject: `[Trial Extension Request] ${trialExtensionForm.organization}`,
+        email: trialExtensionForm.email,
+        from_name: trialExtensionForm.name,
+        message: message,
+        reply_to: trialExtensionForm.email
+      };
 
       const response = await fetch(EXTERNAL_URLS.WEB3_FORMS_ENDPOINT, {
         method: 'POST',
-        body: formDataToSubmit
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(formDataToSubmit)
       });
 
       const result = await response.json();
 
-      if (result.success) {
+      if (response.status === 200 && result.success) {
         trialExtensionSuccess = true;
         
         // Reset form

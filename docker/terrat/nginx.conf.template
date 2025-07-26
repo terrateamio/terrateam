@@ -61,7 +61,7 @@ http {
             root /usr/local/share/terrat/ui/assets/;
             index index.html index.htm;
             try_files $uri $uri/ /index.html =404;
-            add_header Content-Security-Policy "default-src 'self'; img-src 'self' https://avatars.githubusercontent.com https://secure.gravatar.com; script-src 'self' 'nonce-$cspNonce' https://*.posthog.com; style-src 'self' 'nonce-$cspNonce'; object-src 'none'; connect-src 'self' https://*.posthog.com https://o4509570379677696.ingest.de.sentry.io; font-src 'self'; worker-src 'self' blob:; frame-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; manifest-src 'self'; media-src 'none'; upgrade-insecure-requests;";
+            add_header Content-Security-Policy "default-src 'self'; img-src 'self' https://avatars.githubusercontent.com https://secure.gravatar.com; script-src 'self' 'nonce-$cspNonce' https://*.posthog.com; style-src 'self' 'nonce-$cspNonce'; object-src 'none'; connect-src 'self' https://*.posthog.com https://o4509570379677696.ingest.de.sentry.io https://api.web3forms.com; font-src 'self'; worker-src 'self' blob:; frame-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; manifest-src 'self'; media-src 'none'; upgrade-insecure-requests;";
         }
 
         location /api {
