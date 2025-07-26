@@ -55,22 +55,28 @@
     submitSuccess = false;
 
     try {
-      const formDataToSubmit = new FormData();
-      formDataToSubmit.append('access_key', WEB3_FORMS_ACCESS_KEY);
-      formDataToSubmit.append('email', formData.email);
-      formDataToSubmit.append('subject', `[Terrateam Support] ${formData.subject}`);
-      formDataToSubmit.append('message', `Priority: ${formData.priority}\n\nMessage:\n${formData.message}`);
-      formDataToSubmit.append('from_name', 'Terrateam Support Form');
-      formDataToSubmit.append('replyto', 'support@terrateam.io');
+      // Create JSON object for Web3Forms
+      const formDataToSubmit = {
+        access_key: WEB3_FORMS_ACCESS_KEY,
+        email: formData.email,
+        subject: `[Terrateam Support] ${formData.subject}`,
+        message: `Priority: ${formData.priority}\n\nMessage:\n${formData.message}`,
+        from_name: 'Terrateam Support Form',
+        reply_to: formData.email
+      };
 
       const response = await fetch(EXTERNAL_URLS.WEB3_FORMS_ENDPOINT, {
         method: 'POST',
-        body: formDataToSubmit
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(formDataToSubmit)
       });
 
       const result = await response.json();
 
-      if (result.success) {
+      if (response.status === 200 && result.success) {
         submitSuccess = true;
         formData = { email: '', subject: '', message: '', priority: 'normal' };
       } else {
