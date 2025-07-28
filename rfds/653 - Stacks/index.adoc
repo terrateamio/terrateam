@@ -1,0 +1,468 @@
+= Stacks
+:authors: Malcolm Matalka <malcolm@terrateam.io>, Josh Pollara <josh@terrateam.io>
+:state: committed
+:labels: environments, workflows, stacks
+:source-highlighter: highlight.js
+:toc:
+
+== Motivation
+
+Terrateam offers powerful inter-root-module dependency management with "layered
+runs" however there is no concept of a parameterized group of dirspaces that
+have a well-defined relationship between groups.
+
+Terrateam would like to implement the following features which require a new
+concept:
+
+. **Change promotion** - It is desirable to plan multiple groups of changes
+together but require one set of changes to be applied before the next set of
+changes can be applied.  Unlike layered runs, which define a data dependency
+relationship between dirspaces, change promotion would define a workflow
+relationship between dirspaces.
+. **Parameterization** - Currently `workflows` are used both as a definition of
+steps to perform but also parameterizing a run (defining the environment).  This
+works well enough, generally, but can cause an explosion in the number of
+workflow definitions.  Often times the actual steps to be performed are the same
+between groups of dirspaces, but specifics about them, such as the environment,
+engine, cloud credentials, differ.  Stacks would provide a new layer of variable
+definition that workflows could then consume.
+
+Tools such as Terramate, Terragrunt, and Terraform have implemented a concept
+called "stacks" which all differ in some ways however all exists to provide a
+way to group infrastructure together.
+
+=== Terramate
+
+Terratmate https://terramate.io/docs/cli/stacks/[stacks] appear to be implicit
+based on the directory layout as well as a file called `stack.tm.hcl` of the
+repository.
+
+Stacks can be nested in Terramate and this appears to implement something close
+to Terrateam's "layered runs" functionality.
+
+Stacks can be used to implement environments or layering within a single
+environment.
+
+=== Terragrunt
+
+Terragrunt https://terragrunt.gruntwork.io/docs/features/stacks/[stacks]
+implements stacks in two ways: implicit and explicit.  A single directory
+becomes an implicit stack unless it is otherwise configured.  An explicit stack
+is configured via a `terragrunt.stack.hcl` file which can bring multiple
+directories together as a single stack.
+
+Terragrunt has a richer understanding of Terraform/Tofu and allows configuring
+stacks to have dependencies on outputs of reach other, feeding the outputs as
+inputs.
+
+=== Terraform
+
+HCP Terraform https://developer.hashicorp.com/terraform/language/stacks[stacks]
+define stacks a bit different but solve a similar function.  A stack replaces an
+existing root module and instead the stack defines how to use child modules and
+shared modules together to define and deploy infrastructure.
+
+HCP Terraform stacks are more than just defining some resources, it brings
+together a definition of a stack as well as a deployment definition, and
+explicit orchestration definition, all via HCL.  These stacks also allow for
+connecting outputs into inputs.
+
+HCP Terraform does not seem to consider stacks to be a recursive data structure,
+two things that can be connected to each other, instead a stack seems to be a
+complete definition and not a building block.
+
+The `orchestrate` block allows for defining rules around when and how a stack
+can be deployed.
+
+== Proposal
+
+The proposal is for a new configuration key called `stacks` which would allow
+for:
+
+. Grouping dirspaces under a well-defined name (the stack name).
+. Providing configuration for that grouping.
+
+This grouping could be consumed in all other sections of the configuration and
+would be referenced by the tag `stack_name:$name`.
+
+NOTE: The tag `stack_name` was chosen in order to avoid conflict with the
+existing tag `stack:$name` which comes from CDKTF support, where workspaces are
+renamed to stacks.
+
+=== Semantics
+
+* A stack defines an encapsulated unit of resources.  That means there is no
+  data or resource dependency (as far as Terrateam is concerned) that exists
+  outside of a stack.  This is in opposite to layered runs, which define a data
+  dependency between dirspaces.
+* A dirspace can be part of multiple stacks.  This allows for a way other than
+  "workspaces" to use a root module in multiple contexts.
+* Stack variables are accessible in:
+** Other parts of the configuration.
+** Run-time within the action.
+* Stack variables are coerced to a string representation in all contexts.
+* Accessible via the name `${STACK_VAR_NAME}` where `NAME` is the name of the
+  variable.
+* Stack variable names are made uppercase.
+* If the uppercase representation of variable names conflict, which one wins is
+  undefined.  For example, if we have a variables named `foo` and `Foo`, both
+  will become `FOO` and which one becomes `STACK_VAR_FOO` is undefined.
+
+=== The default stack
+
+If there is are no stacks configured, there is an implicit `default` stack with
+the following definition:
+
+[source,yaml]
+----
+stacks:
+  names:
+    default:
+      tag_query: ''
+----
+
+Additionally, if a dirspace does not match any configured stack AND there is no
+default stack configured, all unmatched dirspaces become part of an implicit
+"default" stack.
+
+For example, if we have two directories: `DirA` and `DirB`, with the following
+configuration:
+
+[source,yaml]
+----
+stacks:
+  names:
+    foo:
+      tag_query: 'dir:DirA'
+----
+
+Then `DirB` would become part of the `default` stack which implicitly is
+created.  However, with the following configuration:
+
+[source,yaml]
+----
+stacks:
+  names:
+    foo:
+      tag_query: 'dir:DirA'
+    default:
+      tag_query: 'tag_that_never_exists'
+----
+
+Then `DirB` would not be part of any stack.
+
+=== The difference between tags and stacks
+
+Tags and stacks can be used to group workspaces together under a single name.
+The difference between tags and stacks is that with tags, all tags of evaluated
+together whereas stacks define an encapsulation of matching tags that are then
+evaluated together.
+
+For example, consider the following configuration:
+
+[source,yaml]
+----
+dirs:
+  project1/dev:
+    tags: [project1, dev]
+  project1/prod:
+    tags: project1, prod]
+    when_modified:
+      depends_on: dev
+  project2/dev:
+    tags: [project2, dev]
+  project2/prod:
+    tags: [project2, prod]
+    when_modified:
+      depends_on: dev
+----
+
+In this configuration, if `project1/dev` is modified, both `project1/prod` and
+`project2/prod` will be triggered because they both have a dependency on the
+`dev` tag.
+
+However, if we add stacks for each project:
+
+[source,yaml]
+----
+dirs:
+  project1/dev:
+    tags: [project1, dev]
+  project1/prod:
+    tags: project1, prod]
+    when_modified:
+      depends_on: dev
+  project2/dev:
+    tags: [project2, dev]
+  project2/prod:
+    tags: [project2, prod]
+    when_modified:
+      depends_on: dev
+
+stacks:
+  names:
+    project1:
+      tag_query: project1
+    project2:
+      tag_query: project2
+----
+
+Now if `project1/dev` is changed, it will only trigger `project1/prod` because
+the stack has encapsulated everything matching `project1` and only those
+dirspaces will be evaluated together.
+
+=== User interfaces
+
+Adding stacks will change user interfaces in the following ways:
+
+* In pull requests
+** In a pull request, all outputs part of the same stack will be commented
+   together in a single comment.
+** What stack an output is part of will be part of the comment.
+* In the UI
+** Stacks will be grouped together
+** Stacks can be queried.
+
+=== Stacks configuration
+
+[source,yaml]
+----
+stacks:
+  allow_workspace_in_multiple_stacks: false
+  names: {}
+----
+
+* `allow_workspace_in_multiple_stacks` - Whether or not to reject a
+  configuration where a workspace is in multiple stacks.
+* `names` - A dictionary of name of stack to the configuration for the stack.
+
+=== Per stack configuration
+
+[source,yaml]
+----
+tag_query: ''
+variables:
+  var1: value
+  var2: value
+on_change:
+  can_apply_after:
+    - other_stack1
+    - other_stack2
+  run_strategy: one-for-one
+----
+
+* `tag_query` - The tag query for those workspaces that are part of this stack.
+* `variables` - A dictionary where the key is the name of the value and the
+  value is a string.
+* `on_change` - Configuration for when there is a change in a workspace in this
+  stack.
+** `can_apply_after` - A list of stack names which this stack is gated on
+   applying.  This applies only for stacks that have a change when this stack
+   has a change.
+** `run_strategy` - How to run the workspaces in this stack when one workspace
+   has a change.
+*** `one-for-one` - Run the workspaces that have changed.
+*** `all-for-one` - Run all workspaces if one workspace has changed.
+
+=== Nested Stacks
+
+Stacks encapsulate a set of dirspaces and thus cannot be nested.  They can
+reference other stacks in their configure (for example `can_apply_after`)
+however there is no way to configure a stack such that it is composed of other
+stacks.
+
+=== Examples
+
+==== Define dev and prod environments
+
+This defines two stacks, `prod` and `dev`.
+
+[source,yaml]
+----
+stacks:
+  names:
+    prod:
+      tag_query: production
+    dev:
+      tag_query: development
+----
+
+==== Require promotion of dev
+
+This defines that if the `prod` stack is changed, it can only be applied after
+the `dev` stack, but only if the `dev` stack has changes as well.  This
+effectively makes a dynamic gate for the application of `prod` only when `dev`
+is modified as well.
+
+[source,yaml]
+----
+stacks:
+  names:
+    prod:
+      tag_query: production
+      on_change:
+        can_apply_after:
+          - dev
+    dev:
+      tag_query: development
+----
+
+==== Specify an environment variable
+
+This defines a variable `stack_specific` that is accessible in the run-time
+environment of the workflow.
+
+NOTE: Variables are always translated to uppercase and coerced into a string
+representation.
+
+[source,yaml]
+----
+stacks:
+  names:
+    prod:
+      tag_query: production
+      variables:
+        stack_specific: in-prod-stack
+      on_change:
+        can_apply_after:
+          - dev
+    dev:
+      tag_query: development
+      variables:
+        stack_specific: in-dev-stack
+
+workflows:
+  - tag_query: ''
+    plan:
+      - type: run
+        cmd: ['echo', '${STACK_VAR_STACK_SPECIFIC}']
+      - type: init
+      - type: plan
+----
+
+==== Specify run environment in the stack
+
+This uses the variable section to define an environment which can then be
+accessed the same way a variable is can be accessed in the run-time environment.
+
+[source,yaml]
+----
+stacks:
+  names:
+    prod:
+      tag_query: production
+      variables:
+        environment: prod
+      on_change:
+        can_apply_after:
+          - dev
+    dev:
+      tag_query: development
+      variables:
+        environment: dev
+
+workflows:
+  - tag_query: ''
+    environment: '${STACK_VAR_ENVIRONMENT}'
+----
+
+
+==== Specify an engine for a stack
+
+Combine specifying an environment, which is done via the `variables` section
+with specifying an engine, which is a stack-level key.
+
+In this case, production is still on `terarform` version `1.5.7` and development
+is testing `tofu` on `1.6.1`.
+
+[source,yaml]
+----
+stacks:
+  names:
+    prod:
+      tag_query: production
+      variables:
+        environment: prod
+      on_change:
+        apply_after:
+          - dev
+      engine:
+        name: terraform
+        tf_version: 1.5.7
+    dev:
+      tag_query: development
+      variables:
+        environment: dev
+      engine:
+        name: tofu
+        tf_version: 1.6.1
+
+workflows:
+  - tag_query: ''
+    environment: '${STACK_VAR_ENVIRONMENT}'
+----
+
+==== Provide different controls based on stack name
+
+Define access control and apply requirements based on stack name.
+
+[source,yaml]
+----
+stacks:
+  names:
+    prod:
+      tag_query: production
+    dev:
+      tag_query: development
+
+access_control:
+  policies:
+    - tag_query: 'stack_name:prod'
+      plan: ['*']
+      apply: ['team:sre']
+    - tag_query: 'stack_name:dev'
+      plan: ['*']
+      apply: ['*']
+
+
+apply_requirements:
+  checks:
+    - tag_query: 'stack_name:prod'
+      approved:
+        enabled: true
+        any_of: ['team:sre']
+        any_of_count: 2
+    - tag_query: 'stack_name:dev'
+      approved:
+        enabled: false
+----
+
+==== Allow a workspace to be part of multiple stacks
+
+By default `allow_workspace_in_multiple_stacks` is `false`, as it can lead to
+confusion, however if one wants to use a dirspace as part of multiple stacks,
+they can make it `true` and it is up to them to ensure that the execution of
+that workspace is properly parameterized.
+
+[source,yaml]
+----
+dirs:
+  network:
+    tags: ['network']
+  production:
+    tags: ['prod']
+  development:
+    tags: ['dev']
+
+stacks:
+  allow_workspace_in_multiple_stacks: true
+  names:
+    prod:
+      tag_query: 'network or prod'
+      variables:
+        network_name: prod
+    dev:
+      tag_query: 'network or dev'
+      variables:
+        network_name: dev
+----
