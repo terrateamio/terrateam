@@ -14,7 +14,6 @@ export default defineConfig({
     starlight({
       title: "Terrateam",
       components: {
-        Banner: './src/components/Banner.astro',
         SiteTitle: './src/components/SiteTitle.astro',
       },
       plugins: [starlightImageZoom()],
@@ -74,8 +73,29 @@ export default defineConfig({
         },
         {
           label: "Cloud Providers",
-          autogenerate: { directory: "cloud-providers" },
           collapsed: true,
+          items: [
+            {
+              label: "AWS",
+              collapsed: true,
+              items: [
+                { label: "Getting Started", link: "/cloud-providers/aws/getting-started" },
+                { label: "Static Credentials", link: "/cloud-providers/aws/static-credentials" },
+                { label: "OIDC Setup", link: "/cloud-providers/aws/oidc-setup" },
+              ],
+            },
+            {
+              label: "GCP",
+              collapsed: true,
+              items: [
+                { label: "Getting Started", link: "/cloud-providers/gcp/getting-started" },
+                { label: "Static Credentials", link: "/cloud-providers/gcp/static-credentials" },
+                { label: "OIDC Setup", link: "/cloud-providers/gcp/oidc-setup" },
+              ],
+            },
+            { label: "Azure", link: "/cloud-providers/azure" },
+            { label: "Other", link: "/cloud-providers/other" },
+          ],
         },
         {
           label: "Advanced Workflows",
