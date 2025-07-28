@@ -14,7 +14,6 @@
 
   // Track time spent
   let startTime = Date.now();
-  let lastStepTime = Date.now();
 
   // Wizard state
   type WizardStep = 'assessment' | 'path-selection' | 'github-demo-setup' | 'gitlab-demo-setup' | 'github-repo-setup' | 'gitlab-setup' | 'validation' | 'success';
@@ -406,8 +405,7 @@
     analytics.track('getting_started_gitlab_group_selected', {
       path: 'demo',
       vcs_provider: 'gitlab',
-      group: group.name,
-      group_type: group.kind
+      group: group.name
     });
 
     markGitLabDemoStepComplete('select-group');
@@ -827,8 +825,7 @@
     analytics.track('getting_started_gitlab_group_selected', {
       path: 'repo',
       vcs_provider: 'gitlab',
-      group: group.name,
-      group_type: group.kind
+      group: group.name
     });
     
     // Clear previously selected repo when group changes
