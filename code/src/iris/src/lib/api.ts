@@ -539,6 +539,39 @@ export class ValidatedApiClient {
     return { work_manifests };
   }
 
+  // Get work manifests with query parameters for audit trail
+  async getWorkManifestsWithQuery(
+    installationId: string, 
+    params?: { q?: string; tz?: string; limit?: number; d?: string; page?: string; lite?: boolean },
+    provider?: VCSProvider
+  ): Promise<{ work_manifests: WorkManifest[]; hasMore: boolean }> {
+    const providerPath = this.getProviderPath(provider);
+    
+    // Build query params
+    const queryParams: Record<string, string> = {};
+    if (params?.q) queryParams.q = params.q;
+    if (params?.tz) queryParams.tz = params.tz;
+    if (params?.limit) queryParams.limit = params.limit.toString();
+    if (params?.d) queryParams.d = params.d;
+    if (params?.page) queryParams.page = params.page;
+    if (params?.lite) queryParams.lite = 'true';
+    
+    const response = await this.get(`${providerPath}/installations/${installationId}/work-manifests`, queryParams);
+    
+    // Validate the response structure
+    if (!response || typeof response !== 'object' || !('work_manifests' in response)) {
+      throw new ApiError('Invalid work manifests response format', 422);
+    }
+
+    const work_manifests = validateWorkManifests(response.work_manifests);
+    
+    // Check if we have more results based on Link headers
+    const linkHeaders = this.getLastLinkHeaders();
+    const hasMore = linkHeaders?.next !== undefined;
+    
+    return { work_manifests, hasMore };
+  }
+
   async getWorkManifest(installationId: string, workManifestId: string, provider?: VCSProvider): Promise<WorkManifest> {
     const providerPath = this.getProviderPath(provider);
     // Use query-based approach as shown in the OCaml UI

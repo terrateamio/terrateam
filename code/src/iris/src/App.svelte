@@ -21,6 +21,7 @@
   import Settings from './lib/Settings.svelte';
   import AuthCallback from './lib/AuthCallback.svelte';
   import Analytics from './lib/Analytics.svelte';
+  import AuditTrail from './lib/AuditTrail.svelte';
   import RootHandler from './lib/components/layout/RootHandler.svelte';
   
   // Check for maintenance mode
@@ -46,6 +47,7 @@
     '/configuration': Configuration,
     '/subscription': Subscription,
     '/analytics': Analytics,
+    '/audit-trail': AuditTrail,
     
     // Installation-scoped routes (when installations exist)
     '/i/:installationId/dashboard': Dashboard,
@@ -58,6 +60,7 @@
     '/i/:installationId/configuration': Configuration,
     '/i/:installationId/subscription': Subscription,
     '/i/:installationId/analytics': Analytics,
+    '/i/:installationId/audit-trail': AuditTrail,
   };
   
   // Auto-redirect authenticated users based on intended URL or whether they've visited before
