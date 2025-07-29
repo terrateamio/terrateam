@@ -101,7 +101,7 @@ module Msg = struct
     | `Unlock of Terrat_base_repo_config_v1.Access_control.Match_list.t
     ]
 
-  type ('account, 'pull_request, 'target, 'apply_requirements, 'config) t =
+  type ('account, 'db, 'pull_request, 'target, 'apply_requirements, 'config) t =
     | Access_control_denied of (string * access_control_denied)
     | Account_expired
     | Apply_no_matching_dirspaces
@@ -145,6 +145,7 @@ module Msg = struct
       }
     | Tf_op_result2 of {
         account_status : Account_status.t;
+        db : 'db;
         config : 'config;
         is_layered_run : bool;
         remaining_layers : Terrat_change_match3.Dirspace_config.t list list;
@@ -422,6 +423,7 @@ module type S = sig
       string ->
       ('diff, 'checks) Api.Pull_request.t ->
       ( Api.Account.t,
+        Db.t,
         ('diff2, 'checks2) Api.Pull_request.t,
         (('diff3, 'checks3) Api.Pull_request.t, Api.Repo.t) Target.t,
         Apply_requirements.Result.t,

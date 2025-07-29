@@ -4222,6 +4222,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                       {
                         account_status;
                         config = Ctx.config ctx;
+                        db = Ctx.storage ctx;
                         is_layered_run = CCList.length matches.Dv.Matches.all_matches > 1;
                         remaining_layers = matches.Dv.Matches.all_unapplied_matches;
                         result;

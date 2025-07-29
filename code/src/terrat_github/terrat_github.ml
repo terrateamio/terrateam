@@ -411,6 +411,7 @@ let load_workflow ~owner ~repo client =
 let publish_comment ~owner ~repo ~pull_number ~body client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "publish_comment");
   let open Abbs_future_combinators.Infix_result_monad in
+  let module Ic = Githubc2_components_issue_comment.Primary in
   call
     client
     Githubc2_issues.Create_comment.(
@@ -419,7 +420,11 @@ let publish_comment ~owner ~repo ~pull_number ~body client =
         Parameters.(make ~issue_number:pull_number ~owner ~repo))
   >>= fun resp ->
   match Openapi.Response.value resp with
-  | `Created _ -> Abb.Future.return (Ok ())
+  | `Created c ->
+      let module P = Githubc2_components.Issue_comment.Primary in
+      let cm = Githubc2_components.Issue_comment.value c in
+      let id = CCInt64.to_int cm.P.id in
+      Abb.Future.return (Ok id)
   | (`Forbidden _ | `Not_found _ | `Gone _ | `Unprocessable_entity _) as err ->
       Abb.Future.return (Error err)
 

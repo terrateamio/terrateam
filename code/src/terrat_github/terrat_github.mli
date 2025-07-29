@@ -245,7 +245,7 @@ val publish_comment :
   pull_number:int ->
   body:string ->
   Githubc2_abb.t ->
-  (unit, [> publish_comment_err ]) result Abb.Future.t
+  (int, [> publish_comment_err ]) result Abb.Future.t
 
 val react_to_comment :
   ?content:string ->

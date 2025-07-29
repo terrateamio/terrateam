@@ -26,7 +26,7 @@ type t = {
   merge_commit_sha : string option; [@default None]
   merge_status : string option; [@default None]
   merge_user : Gitlabc_components_api_entities_userbasic.t option; [@default None]
-  merge_when_pipeline_succeeds : string option; [@default None]
+  merge_when_pipeline_succeeds : bool option; [@default None]
   merged_at : string option; [@default None]
   merged_by : Gitlabc_components_api_entities_userbasic.t option; [@default None]
   milestone : Gitlabc_components_api_entities_milestone.t option; [@default None]

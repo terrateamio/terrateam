@@ -42,6 +42,19 @@ module type S = sig
     val to_native : t -> native
   end
 
+  module Comment : sig
+    module Id : sig
+      include ID
+
+      val compare : t -> t -> int
+    end
+
+    type t [@@deriving eq, yojson]
+
+    val make : id:Id.t -> unit -> t
+    val id : t -> Id.t
+  end
+
   module Ref : sig
     type t [@@deriving eq, yojson]
 
@@ -122,7 +135,7 @@ module type S = sig
     Client.t ->
     ('diff, 'checks) Pull_request.t ->
     string ->
-    (unit, [> `Error ]) result Abb.Future.t
+    (Comment.Id.t, [> `Error ]) result Abb.Future.t
 
   val fetch_pull_request :
     request_id:string ->

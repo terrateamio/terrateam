@@ -2192,13 +2192,15 @@ module Comment = struct
   let comment_on_pull_request ~request_id client pull_request msg_type body =
     let open Abbs_future_combinators.Infix_result_monad in
     Api.comment_on_pull_request ~request_id client pull_request body
-    >>= fun () ->
+    >>= fun comment_id ->
     Logs.info (fun m -> m "%s : PUBLISHED_COMMENT : %s" request_id msg_type);
-    Abb.Future.return (Ok ())
+    Abb.Future.return (Ok comment_id)
 
   let apply_template_and_publish ~request_id client pull_request msg_type template kv =
     match Snabela.apply template kv with
-    | Ok body -> comment_on_pull_request ~request_id client pull_request msg_type body
+    | Ok body ->
+        Abbs_future_combinators.Result.ignore
+        @@ comment_on_pull_request ~request_id client pull_request msg_type body
     | Error (#Snabela.err as err) ->
         Logs.err (fun m -> m "%s : TEMPLATE_ERROR : %a" request_id Snabela.pp_err err);
         Abb.Future.return (Error `Error)
@@ -2271,7 +2273,7 @@ module Comment = struct
         let open Abb.Future.Infix_monad in
         Api.comment_on_pull_request ~request_id client pull_request output
         >>= function
-        | Ok () -> Abb.Future.return (Ok ())
+        | Ok comment_id -> Abb.Future.return (Ok comment_id)
         | Error `Error -> (
             match (view, dirspaces) with
             | _, [] -> assert false
@@ -2325,6 +2327,7 @@ module Comment = struct
           account_status
           config
           client
+          db
           is_layered_run
           remaining_layers
           result
@@ -2350,6 +2353,7 @@ module Comment = struct
             account_status;
             config;
             client;
+            db;
             hooks;
             is_layered_run;
             remaining_layers;
@@ -2850,7 +2854,7 @@ module Comment = struct
       let open Abb.Future.Infix_monad in
       Api.comment_on_pull_request ~request_id client pull_request output
       >>= function
-      | Ok () -> Abb.Future.return (Ok ())
+      | Ok _ -> Abb.Future.return (Ok ())
       | Error `Error -> (
           match
             (view, results.Terrat_api_components_work_manifest_tf_operation_result.dirspaces)
@@ -4028,23 +4032,24 @@ module Comment = struct
           pull_request
           work_manifest
         >>= function
-        | Ok () -> Abb.Future.return (Ok ())
+        | Ok _ -> Abb.Future.return (Ok ())
         | Error _ -> Abb.Future.return (Error `Error))
     | Msg.Tf_op_result2
-        { account_status; config; is_layered_run; remaining_layers; result; work_manifest } -> (
+        { account_status; config; db; is_layered_run; remaining_layers; result; work_manifest } -> (
         let open Abb.Future.Infix_monad in
         Result.Publisher3.post_comment
           request_id
           account_status
           config
           client
+          db
           is_layered_run
           remaining_layers
           result
           pull_request
           work_manifest
         >>= function
-        | Ok () -> Abb.Future.return (Ok ())
+        | Ok cid -> Abb.Future.return (Ok cid)
         | Error _ -> Abb.Future.return (Error `Error))
     | Msg.Tier_check checks ->
         let module C = Terrat_tier.Check in
