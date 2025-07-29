@@ -9,6 +9,11 @@
   import { get } from 'svelte/store';
   import { VCS_PROVIDERS } from './vcs/providers';
   import GitLabSetup from './GitLabSetup.svelte';
+  import { analytics } from './analytics';
+  import { onDestroy } from 'svelte';
+
+  // Track time spent
+  let startTime = Date.now();
 
   // Wizard state
   type WizardStep = 'assessment' | 'path-selection' | 'github-demo-setup' | 'gitlab-demo-setup' | 'github-repo-setup' | 'gitlab-setup' | 'validation' | 'success';
@@ -119,6 +124,11 @@
   let pushTestSuccess = false;
 
   onMount(async () => {
+    // Track getting started page view
+    analytics.track('getting_started_viewed', {
+      vcs_provider: get(currentVCSProvider)
+    });
+
     // Fetch server config first to get GitHub app URL
     try {
       serverConfig = await api.getServerConfig();
@@ -134,6 +144,27 @@
     // Fetch GitLab bot username if we're showing GitLab setup
     if (get(currentVCSProvider) === 'gitlab') {
       await loadGitLabBotUsername();
+    }
+  });
+
+  onDestroy(() => {
+    // Track abandonment if user leaves before completing
+    if (currentStep !== 'success') {
+      const timeSpent = Math.round((Date.now() - startTime) / 1000);
+      analytics.track('getting_started_abandoned', {
+        last_step: currentStep,
+        last_demo_step: currentDemoStep,
+        last_gitlab_demo_step: currentGitLabDemoStep,
+        last_repo_step: currentRepoStep,
+        last_gitlab_step: currentGitLabStep,
+        path: selectedPath,
+        vcs_provider: currentProvider,
+        time_spent_seconds: timeSpent,
+        has_installations: hasInstallations,
+        has_configured_repos: hasConfiguredRepos,
+        selected_repository: selectedRepository?.name,
+        selected_gitlab_group: selectedGitLabGroup?.name || selectedGitLabDemoGroup?.name
+      });
     }
   });
 
@@ -212,6 +243,15 @@
 
   function selectPath(path: 'demo' | 'repo'): void {
     selectedPath = path;
+
+    // Track path selection
+    analytics.track('getting_started_path_selected', {
+      path: path,
+      vcs_provider: currentProvider,
+      has_installations: hasInstallations,
+      has_configured_repos: hasConfiguredRepos
+    });
+
     if (path === 'demo') {
       // Branch demo based on VCS provider - explicit GitHub vs GitLab
       if (currentProvider === 'gitlab') {
@@ -264,7 +304,18 @@
     }
   }
 
-  function openExternalLink(url: string): void {
+  function openExternalLink(url: string, linkType?: string): void {
+    // Track external link clicks
+    analytics.track('getting_started_external_link_clicked', {
+      url: url,
+      link_type: linkType || 'unknown',
+      current_step: currentStep,
+      current_demo_step: currentDemoStep,
+      current_repo_step: currentRepoStep,
+      path: selectedPath,
+      vcs_provider: currentProvider
+    });
+
     window.open(url, '_blank');
   }
   
@@ -297,11 +348,29 @@
       demoStepCompleted[step] = true;
     }
     
+    // Track step completion
+    analytics.track('getting_started_step_completed', {
+      path: 'demo',
+      vcs_provider: 'github',
+      step: step,
+      step_index: ['install-app', 'fork', 'enable-actions', 'make-changes'].indexOf(step) + 1
+    });
+
     // Auto-advance to next step
     const steps: DemoStep[] = ['install-app', 'fork', 'enable-actions', 'make-changes', 'success'];
     const currentIndex = steps.indexOf(currentDemoStep);
     if (currentIndex < steps.length - 1) {
       currentDemoStep = steps[currentIndex + 1];
+    }
+
+    // Track completion of entire flow
+    if (currentDemoStep === 'success') {
+      const timeSpent = Math.round((Date.now() - startTime) / 1000);
+      analytics.track('getting_started_completed', {
+        path: 'demo',
+        vcs_provider: 'github',
+        time_spent_seconds: timeSpent
+      });
     }
   }
 
@@ -331,6 +400,14 @@
     selectedGitLabDemoGroup = group;
     // Pre-fill the expected project path
     forkedProjectPath = `${group.name}/kick-the-tires`;
+
+    // Track group selection
+    analytics.track('getting_started_gitlab_group_selected', {
+      path: 'demo',
+      vcs_provider: 'gitlab',
+      group: group.name
+    });
+
     markGitLabDemoStepComplete('select-group');
   }
 
@@ -339,6 +416,15 @@
       gitlabDemoStepCompleted[step] = true;
     }
     
+    // Track step completion
+    analytics.track('getting_started_step_completed', {
+      path: 'demo',
+      vcs_provider: 'gitlab',
+      step: step,
+      step_index: ['select-group', 'fork', 'add-bot', 'configure-webhook', 'push-test', 'configure-variables', 'make-changes'].indexOf(step) + 1,
+      group: selectedGitLabDemoGroup?.name
+    });
+
     // Auto-advance to next step
     const steps: GitLabDemoStep[] = ['select-group', 'fork', 'add-bot', 'configure-webhook', 'push-test', 'configure-variables', 'make-changes', 'success'];
     const currentIndex = steps.indexOf(currentGitLabDemoStep);
@@ -346,6 +432,17 @@
       currentGitLabDemoStep = steps[currentIndex + 1];
     }
     
+    // Track completion of entire flow
+    if (currentGitLabDemoStep === 'success') {
+      const timeSpent = Math.round((Date.now() - startTime) / 1000);
+      analytics.track('getting_started_completed', {
+        path: 'demo',
+        vcs_provider: 'gitlab',
+        time_spent_seconds: timeSpent,
+        group: selectedGitLabDemoGroup?.name
+      });
+    }
+
     // Load webhook config when entering webhook step
     if (currentGitLabDemoStep === 'configure-webhook' && selectedGitLabDemoGroup) {
       loadWebhookConfig();
@@ -354,7 +451,7 @@
 
   async function loadWebhookConfig(): Promise<void> {
     if (!selectedGitLabDemoGroup) return;
-    
+
     try {
       const config = await api.getGitLabWebhookConfig(selectedGitLabDemoGroup.id.toString());
       webhookUrl = config.webhook_url;
@@ -374,11 +471,26 @@
       checkingWebhook = true;
       webhookVerificationError = null;
       
+      // Track webhook verification attempt
+      analytics.track('getting_started_gitlab_webhook_check', {
+        path: 'demo',
+        vcs_provider: 'gitlab',
+        group: selectedGitLabDemoGroup.name
+      });
+
       const config = await api.getGitLabWebhookConfig(selectedGitLabDemoGroup.id.toString());
       const isActive = config.state === 'active';
       
       if (isActive) {
         webhookVerificationError = null;
+
+        // Track successful webhook configuration
+        analytics.track('getting_started_gitlab_webhook_configured', {
+          path: 'demo',
+          vcs_provider: 'gitlab',
+          group: selectedGitLabDemoGroup.name
+        });
+
         markGitLabDemoStepComplete('configure-webhook');
       } else {
         webhookVerificationError = 'Webhook is not active yet. Please test it with a Push Event in GitLab.';
@@ -396,6 +508,13 @@
       checkingBotAdded = true;
       botVerificationError = null;
       
+      // Track bot verification attempt
+      analytics.track('getting_started_gitlab_bot_check', {
+        path: 'demo',
+        vcs_provider: 'gitlab',
+        group: selectedGitLabDemoGroup?.name
+      });
+
       // For GitLab demo, check if the bot was added to the selected group
       if (selectedGitLabDemoGroup) {
         // Always check via API, even for personal namespace
@@ -403,6 +522,14 @@
           const isAdded = await api.checkGitLabGroupMembership(Number(selectedGitLabDemoGroup.id));
           if (isAdded) {
             botVerificationError = null;
+
+            // Track successful bot addition
+            analytics.track('getting_started_gitlab_bot_added', {
+              path: 'demo',
+              vcs_provider: 'gitlab',
+              group: selectedGitLabDemoGroup.name
+            });
+            
             markGitLabDemoStepComplete('add-bot');
           } else {
             botVerificationError = `The bot has not been added yet. Please add @${gitlabBotUsername || 'terrateam-bot'} as a Developer to your group.`;
@@ -428,6 +555,13 @@
     try {
       checkingAppInstallation = true;
       
+      // Track app installation check
+      analytics.track('getting_started_check_installation', {
+        path: 'demo',
+        vcs_provider: currentProvider,
+        had_installations_before: hasInstallations
+      });
+      
       // Re-fetch installations to see if app was installed
       const installationsResponse = await api.getUserInstallations();
       const newInstallations = installationsResponse.installations;
@@ -440,6 +574,13 @@
       else if (newInstallations.length > installations.length) {
         installations = newInstallations;
         hasInstallations = true;
+        
+        // Track successful installation
+        analytics.track('getting_started_app_installed', {
+          path: 'demo',
+          vcs_provider: currentProvider,
+          installation_count: newInstallations.length
+        });
         markDemoStepComplete('install-app');
       } else {
         // Show message that we didn't detect the installation
@@ -459,11 +600,32 @@
       repoStepCompleted[step] = true;
     }
     
+    // Track step completion
+    analytics.track('getting_started_step_completed', {
+      path: 'repo',
+      vcs_provider: currentProvider,
+      step: step,
+      step_index: ['install-app', 'select-repo', 'add-workflow', 'configure', 'test'].indexOf(step) + 1,
+      repository: selectedRepository?.name
+    });
+    
     // Auto-advance to next step
     const steps: RepoStep[] = ['install-app', 'select-repo', 'add-workflow', 'configure', 'test', 'success'];
     const currentIndex = steps.indexOf(currentRepoStep);
     if (currentIndex < steps.length - 1) {
       currentRepoStep = steps[currentIndex + 1];
+    }
+    
+    // Track completion of entire flow
+    if (currentRepoStep === 'success') {
+      const timeSpent = Math.round((Date.now() - startTime) / 1000);
+      analytics.track('getting_started_completed', {
+        path: 'repo',
+        vcs_provider: currentProvider,
+        time_spent_seconds: timeSpent,
+        repository: selectedRepository?.name,
+        installation: selectedInstallation?.name
+      });
     }
   }
 
@@ -543,6 +705,16 @@
 
   function selectRepository(repo: Repository): void {
     selectedRepository = repo;
+    
+    // Track repository selection
+    analytics.track('getting_started_repository_selected', {
+      path: 'repo',
+      vcs_provider: currentProvider,
+      repository: repo.name,
+      repository_setup_status: repo.setup ? 'complete' : 'pending',
+      installation: selectedInstallation?.name
+    });
+    
     markRepoStepComplete('select-repo');
   }
 
@@ -593,11 +765,33 @@
       gitlabStepCompleted[step] = true;
     }
     
+    // Track step completion
+    analytics.track('getting_started_step_completed', {
+      path: 'repo',
+      vcs_provider: 'gitlab',
+      step: step,
+      step_index: ['select-group', 'select-repo', 'add-bot', 'configure-webhook', 'push-test', 'configure-variables', 'add-pipeline'].indexOf(step) + 1,
+      group: selectedGitLabGroup?.name,
+      repository: manualGitLabProject
+    });
+    
     // Auto-advance to next step
     const steps: GitLabStep[] = ['select-group', 'select-repo', 'add-bot', 'configure-webhook', 'push-test', 'configure-variables', 'add-pipeline', 'success'];
     const currentIndex = steps.indexOf(currentGitLabStep);
     if (currentIndex < steps.length - 1) {
       currentGitLabStep = steps[currentIndex + 1];
+    }
+    
+    // Track completion of entire flow
+    if (currentGitLabStep === 'success') {
+      const timeSpent = Math.round((Date.now() - startTime) / 1000);
+      analytics.track('getting_started_completed', {
+        path: 'repo',
+        vcs_provider: 'gitlab',
+        time_spent_seconds: timeSpent,
+        group: selectedGitLabGroup?.name,
+        repository: manualGitLabProject
+      });
     }
     
     // Load webhook config when entering configure-webhook step
@@ -626,6 +820,14 @@
 
   function selectGitLabGroup(group: GitLabGroup): void {
     selectedGitLabGroup = group;
+    
+    // Track group selection
+    analytics.track('getting_started_gitlab_group_selected', {
+      path: 'repo',
+      vcs_provider: 'gitlab',
+      group: group.name
+    });
+    
     // Clear previously selected repo when group changes
     markGitLabStepComplete('select-group');
   }
@@ -640,6 +842,15 @@
       // Construct the full repository path
       const repoName = manualGitLabProject.trim();
       const fullPath = `${selectedGitLabGroup.name}/${repoName}`;
+      
+      // Track repository addition
+      analytics.track('getting_started_gitlab_repo_added', {
+        path: 'repo',
+        vcs_provider: 'gitlab',
+        group: selectedGitLabGroup.name,
+        repository: repoName,
+        full_path: fullPath
+      });
       
       // Create a temporary repository object
       // In a real implementation, this would call an API to register the project
@@ -670,7 +881,7 @@
 
   async function loadGitLabWebhookConfig(): Promise<void> {
     if (!selectedGitLabGroup) return;
-    
+
     try {
       const config = await api.getGitLabWebhookConfig(selectedGitLabGroup.id.toString());
       webhookUrl = config.webhook_url;
@@ -701,10 +912,24 @@
       checkingGitLabBot = true;
       gitlabBotError = null;
       
+      // Track bot verification attempt
+      analytics.track('getting_started_gitlab_bot_check', {
+        path: 'repo',
+        vcs_provider: 'gitlab',
+        group: selectedGitLabGroup.name
+      });
+      
       // Check if the bot has been added to the group
       const isMember = await api.checkGitLabGroupMembership(selectedGitLabGroup.id);
       
       if (isMember) {
+        // Track successful bot addition
+        analytics.track('getting_started_gitlab_bot_added', {
+          path: 'repo',
+          vcs_provider: 'gitlab',
+          group: selectedGitLabGroup.name
+        });
+        
         // Bot is verified, proceed to next step
         markGitLabStepComplete('add-bot');
       } else {
@@ -724,7 +949,7 @@
     try {
       isCheckingPushTest = true;
       pushTestError = null;
-      
+
       // First check if webhook is active
       const webhookConfig = await api.getGitLabWebhookConfig(selectedGitLabGroup.id.toString());
       
@@ -781,7 +1006,7 @@
     try {
       isDemoCheckingPushTest = true;
       demoPushTestError = null;
-      
+
       // First check if webhook is active
       const webhookConfig = await api.getGitLabWebhookConfig(selectedGitLabDemoGroup.id.toString());
       
@@ -1169,7 +1394,7 @@
 
                   <div class="flex items-center space-x-3">
                     <button
-                      on:click={() => openExternalLink(githubAppUrl)}
+                      on:click={() => openExternalLink(githubAppUrl, 'github_app_install')}
                       class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center"
                     >
                       <Icon icon="mdi:download" class="mr-2" width="16" />
@@ -2147,7 +2372,7 @@
 
                   <div class="flex items-center space-x-3">
                     <button
-                      on:click={() => openExternalLink(githubAppUrl)}
+                      on:click={() => openExternalLink(githubAppUrl, 'github_app_install')}
                       class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center"
                     >
                       <Icon icon="mdi:download" class="mr-2" width="16" />
@@ -2257,7 +2482,7 @@
                                 The GitHub App doesn't have access to any repositories in this organization. You may need to configure repository access.
                               </p>
                               <button
-                                on:click={() => openExternalLink(githubAppUrl)}
+                                on:click={() => openExternalLink(githubAppUrl, 'github_app_install')}
                                 class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded text-sm font-medium flex items-center"
                               >
                                 <Icon icon="mdi:cog" class="mr-2" width="16" />
