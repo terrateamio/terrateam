@@ -27,11 +27,13 @@ export function storeIntendedUrl(url?: string): void {
     }
 
     // Only store if it's not the login page, root, or auth callback
+    // Check the base URL without query parameters
+    const baseUrl = urlToStore.split('?')[0];
     if (urlToStore && 
-        urlToStore !== '#/login' && 
-        urlToStore !== '#/' && 
-        urlToStore !== '' &&
-        !urlToStore.startsWith('#/auth/callback')) {
+        baseUrl !== '#/login' && 
+        baseUrl !== '#/' && 
+        baseUrl !== '' &&
+        !baseUrl.startsWith('#/auth/callback')) {
       sessionStorage.setItem(REDIRECT_URL_KEY, urlToStore);
     } else {
       // Clear any existing stored URL if we're at login/root/callback
