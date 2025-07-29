@@ -925,6 +925,27 @@ module Integrations = struct
   [@@deriving make, show, yojson, eq]
 end
 
+module Notifications = struct
+  module Policy = struct
+    module Strategy = struct
+      type t =
+        | Append
+        | Delete
+        | Minimize
+      [@@deriving show, yojson, eq]
+    end
+
+    type t = {
+      tag_query : Tag_query.t;
+      comment_strategy : Strategy.t; [@default Strategy.Append]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  type t = { policies : Policy.t list [@default [ Policy.make ~tag_query:Tag_query.any () ]] }
+  [@@deriving make, show, yojson, eq]
+end
+
 module Stacks = struct
   module On_change = struct
     type t = { can_apply_after : string list [@default []] } [@@deriving make, show, yojson, eq]
@@ -935,16 +956,12 @@ module Stacks = struct
       tag_query : Tag_query.t;
       on_change : On_change.t; [@default On_change.make ()]
       variables : string String_map.t; [@default String_map.empty]
-    }
-    [@@deriving make, show, yojson, eq]
-  end
 
   type t = {
     allow_workspace_in_multiple_stacks : bool; [@default false]
     names : Stack.t String_map.t;
         [@default String_map.singleton "default" (Stack.make ~tag_query:Tag_query.any ())]
   }
-  [@@deriving make, show, yojson, eq]
 end
 
 module Storage = struct
@@ -1073,6 +1090,7 @@ module View = struct
     hooks : Hooks.t; [@default Hooks.make ()]
     indexer : Indexer.t; [@default Indexer.make ()]
     integrations : Integrations.t; [@default Integrations.make ()]
+    notifications : Notifications.t; [@default Notifications.make ()]
     parallel_runs : int; [@default 3]
     stacks : Stacks.t; [@default Stacks.make ()]
     storage : Storage.t; [@default Storage.make ()]
@@ -1132,6 +1150,8 @@ type of_version_1_err =
   | `Glob_parse_err of string * string
   | `Hooks_unknown_run_on_err of Terrat_repo_config_run_on.t
   | `Hooks_unknown_visible_on_err of string
+  | `Notification_policy_comment_strategy_err of string
+  | `Notification_policy_tag_query_err of string * string
   | `Pattern_parse_err of string
   | `Stack_config_tag_query_err of string * string
   | `Unknown_lock_policy_err of string
@@ -2113,6 +2133,7 @@ let of_version_1_integrations integrations =
   in
   Ok { Integrations.resourcely }
 
+<<<<<<< HEAD
 let of_version_1_stack_config names =
   let open CCResult.Infix in
   let module N = Terrat_repo_config_stacks.Names in
@@ -2142,6 +2163,32 @@ let of_version_1_stacks stacks =
   let { S.allow_workspace_in_multiple_stacks; names } = stacks in
   map_opt of_version_1_stack_config names
   >>= fun names -> Ok (Stacks.make ~allow_workspace_in_multiple_stacks ?names ())
+=======
+let of_version_1_notification_policy policy =
+  let open CCResult.Infix in
+  let module P = Terrat_repo_config_notification_policy in
+  let module Policy = Notifications.Policy in
+  let { P.tag_query; comment_strategy } = policy in
+  CCResult.map_err
+    (function
+      | `Tag_query_error err -> `Notification_policy_tag_query_err err)
+    (Terrat_tag_query.of_string tag_query)
+  >>= fun tag_query ->
+  (match comment_strategy with
+  | "append" -> Ok Policy.Strategy.Append
+  | "delete" -> Ok Policy.Strategy.Delete
+  | "minimize" -> Ok Policy.Strategy.Minimize
+  | err -> Error (`Notification_policy_comment_strategy_err err))
+  >>= fun comment_strategy -> Ok { Policy.tag_query; comment_strategy }
+
+let of_version_1_notifications notifications =
+  let open CCResult.Infix in
+  let module N = Terrat_repo_config_notifications in
+  let { N.policies } = notifications in
+  let policies = CCOption.get_or ~default:[] policies in
+  CCResult.map_l of_version_1_notification_policy policies
+  >>= fun policies -> Ok { Notifications.policies }
+>>>>>>> b29c87084 (#561 ADD API Schemas, DB/Config/Strategy propagation and DB plumbing)
 
 let of_version_1_storage storage =
   let open CCResult.Infix in
@@ -2288,6 +2335,7 @@ let of_version_1 v1 =
     hooks;
     indexer;
     integrations;
+    notifications;
     parallel_runs;
     stacks;
     storage;
@@ -2328,8 +2376,13 @@ let of_version_1 v1 =
   >>= fun indexer ->
   map_opt of_version_1_integrations integrations
   >>= fun integrations ->
+<<<<<<< HEAD
   map_opt of_version_1_stacks stacks
   >>= fun stacks ->
+=======
+  map_opt of_version_1_notifications notifications
+  >>= fun notifications ->
+>>>>>>> b29c87084 (#561 ADD API Schemas, DB/Config/Strategy propagation and DB plumbing)
   map_opt of_version_1_storage storage
   >>= fun storage ->
   map_opt of_version_1_tags tags
@@ -2772,6 +2825,7 @@ let to_version_1_integrations integrations =
   in
   { I.resourcely = Some { I.Resourcely.enabled; extra_args = Some [] } }
 
+<<<<<<< HEAD
 let to_version_1_stacks stacks =
   let module S = Terrat_repo_config_stacks in
   let { Stacks.allow_workspace_in_multiple_stacks; names } = stacks in
@@ -2792,6 +2846,23 @@ let to_version_1_stacks stacks =
       Json_schema.Empty_obj.t
   in
   { S.allow_workspace_in_multiple_stacks; names = Some names }
+=======
+let to_version_1_notification_policy policy =
+  let module P = Terrat_repo_config_notification_policy in
+  let { Notifications.Policy.tag_query; comment_strategy } = policy in
+  let comment_strategy =
+    match comment_strategy with
+    | Notifications.Policy.Strategy.Append -> "append"
+    | Notifications.Policy.Strategy.Delete -> "delete"
+    | Notifications.Policy.Strategy.Minimize -> "minimize"
+  in
+  { P.tag_query = Terrat_tag_query.to_string tag_query; comment_strategy }
+
+let to_version_1_notifications notifications =
+  let module N = Terrat_repo_config.Notifications in
+  let { Notifications.policies } = notifications in
+  { N.policies = Some (CCList.map to_version_1_notification_policy policies) }
+>>>>>>> b29c87084 (#561 ADD API Schemas, DB/Config/Strategy propagation and DB plumbing)
 
 let to_version_1_storage_plans plans =
   match plans with
@@ -2994,6 +3065,7 @@ let to_version_1 t =
     hooks;
     indexer;
     integrations;
+    notifications;
     parallel_runs;
     stacks;
     storage;
@@ -3056,6 +3128,11 @@ let to_version_1 t =
         CCFun.(Integrations.equal (Integrations.make ()) %> not)
         to_version_1_integrations
         integrations;
+    notifications =
+      map_opt_if_true
+        CCFun.(Notifications.equal (Notifications.make ()) %> not)
+        to_version_1_notifications
+        notifications;
     parallel_runs;
     stacks = map_opt_if_true CCFun.(Stacks.equal (Stacks.make ()) %> not) to_version_1_stacks stacks;
     storage =
@@ -3382,6 +3459,7 @@ let engine t = t.View.engine
 let hooks t = t.View.hooks
 let indexer t = t.View.indexer
 let integrations t = t.View.integrations
+let notifications t = t.View.notifications
 let parallel_runs t = t.View.parallel_runs
 let stacks t = t.View.stacks
 let storage t = t.View.storage
