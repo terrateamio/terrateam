@@ -20,7 +20,7 @@
     "knip": "knip"
   },
   "devDependencies": {
-    "@sveltejs/vite-plugin-svelte": "^6.0.0",
+    "@sveltejs/vite-plugin-svelte": "^3.0.0",
     "@tsconfig/svelte": "^5.0.4",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^24.0.7",
@@ -33,7 +33,7 @@
     "svelte-preprocess": "^6.0.3",
     "tailwindcss": "^3.3.6",
     "typescript": "^5.8.3",
-    "vite": "^7.0.4"
+    "vite": "^5.0.3"
   },
   "dependencies": {
     "@sentry/svelte": "^9.33.0",
