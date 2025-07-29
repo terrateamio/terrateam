@@ -59,9 +59,9 @@ module Sql = struct
       /^ read "select_installation_by_webhook_secret.sql"
       /% Var.text "webhook_secret")
 
-  let update_installation_to_active () =
+  let update_installation_to_installed () =
     Pgsql_io.Typed_sql.(
-      sql /^ read "update_installation_to_active.sql" /% Var.bigint "installation_id")
+      sql /^ read "update_installation_to_installed.sql" /% Var.bigint "installation_id")
 
   let insert_installation_repository () =
     Pgsql_io.Typed_sql.(
@@ -71,6 +71,15 @@ module Sql = struct
       /% Var.bigint "installation_id"
       /% Var.text "owner"
       /% Var.text "name")
+
+  let select_work_manifest_by_run_id =
+    Pgsql_io.Typed_sql.(
+      sql
+      //
+      (* id *)
+      Ret.uuid
+      /^ "select id from work_manifests where run_id = $run_id"
+      /% Var.text "run_id")
 end
 
 module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
@@ -88,10 +97,14 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
     let module Pe = Gitlab_webhooks_push_event in
     let module Mre = Gitlab_webhooks_merge_request_event in
     let module Mrce = Gitlab_webhooks_merge_request_comment_event in
+    let module Pipee = Gitlab_webhooks_pipeline_event in
+    let module Je = Gitlab_webhooks_job_event in
     function
     | E.Push_event { Pe.project; _ }
     | E.Merge_request_event { Mre.project; _ }
-    | E.Merge_request_comment_event { Mrce.project; _ } ->
+    | E.Merge_request_comment_event { Mrce.project; _ }
+    | E.Pipeline_event { Pipee.project; _ }
+    | E.Job_event { Je.project; _ } ->
         let module P = Gitlab_webhooks_project in
         let { P.id; path_with_namespace; _ } = project in
         let owner, name = parse_path_with_namespace path_with_namespace in
@@ -110,6 +123,8 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
     let module Pe = Gitlab_webhooks_push_event in
     let module Mre = Gitlab_webhooks_merge_request_event in
     let module Mrce = Gitlab_webhooks_merge_request_comment_event in
+    let module Pipee = Gitlab_webhooks_pipeline_event in
+    let module Je = Gitlab_webhooks_job_event in
     let module User = Gitlab_webhooks_user in
     let module Mreoa = Mre.Object_attributes in
     let module Mrceoa = Mrce.Object_attributes in
@@ -174,6 +189,35 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
         | "merge" | "close" ->
             Evaluator.run_pull_request_close ~ctx ~account ~user ~repo ~pull_request_id ()
         | any -> raise (Failure "nyi"))
+    | E.Pipeline_event _ -> Abb.Future.return (Ok ())
+    | E.Job_event
+        {
+          Je.build_id = run_id;
+          build_status = "failed";
+          project = { Pr.id = repp_id; path_with_namespace; _ };
+          _;
+        } -> (
+        let open Abbs_future_combinators.Infix_result_monad in
+        Pgsql_pool.with_conn storage ~f:(fun db ->
+            Pgsql_io.Prepared_stmt.fetch
+              db
+              Sql.select_work_manifest_by_run_id
+              ~f:CCFun.id
+              (CCInt.to_string run_id)
+            >>= function
+            | work_manifest_id :: _ -> Abb.Future.return (Ok (Some work_manifest_id))
+            | [] -> Abb.Future.return (Ok None))
+        >>= function
+        | Some work_manifest_id -> Evaluator.run_work_manifest_failure ~ctx work_manifest_id
+        | None ->
+            Logs.info (fun m ->
+                m
+                  "%s : WORK_MANIFEST_FAILURE : NOT_FOUND : account=%d : run_id=%d"
+                  (Evaluator.Ctx.request_id ctx)
+                  installation_id
+                  run_id);
+            Abb.Future.return (Ok ()))
+    | E.Job_event _ -> Abb.Future.return (Ok ())
 
   let post' config storage webhook_secret ctx =
     let open Abbs_future_combinators.Infix_result_monad in
@@ -189,7 +233,10 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
         Logs.info (fun m ->
             m "%s : EVENT : PING : installation_id=%Ld" (Brtl_ctx.token ctx) installation_id);
         Pgsql_pool.with_conn storage ~f:(fun db ->
-            Pgsql_io.Prepared_stmt.execute db (Sql.update_installation_to_active ()) installation_id)
+            Pgsql_io.Prepared_stmt.execute
+              db
+              (Sql.update_installation_to_installed ())
+              installation_id)
         >>= fun () ->
         Abb.Future.return @@ decode ctx
         >>= fun event ->

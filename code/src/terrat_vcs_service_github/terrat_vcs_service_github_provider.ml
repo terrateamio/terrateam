@@ -69,6 +69,8 @@ module By_scope = Terrat_data.Group_by (struct
   let key { T.scope; _ } = Scope.of_terrat_api_scope scope
 end)
 
+let name = "github"
+
 module Api = Terrat_vcs_api_github
 
 module Unlock_id = struct

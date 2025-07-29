@@ -1,4 +1,6 @@
 module Provider : module type of Terrat_vcs_service_gitlab_provider = struct
+  let name = Terrat_vcs_service_gitlab_provider.name
+
   module Api = Terrat_vcs_api_gitlab
   module Unlock_id = Terrat_vcs_service_gitlab_provider.Unlock_id
   module Db = Terrat_vcs_service_gitlab_provider.Db

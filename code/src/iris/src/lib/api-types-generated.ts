@@ -340,6 +340,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gitlab/installations/{installation_id}/work-manifests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["gitlab-installations/list-work-manifests"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gitlab/installations/{installation_id}/work-manifests/{work_manifest_id}": {
         parameters: {
             query?: never;
@@ -364,22 +380,6 @@ export interface paths {
             cookie?: never;
         };
         get: operations["gitlab-installations/get-work-manifest-outputs"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/gitlab/installations/{installation_id}/work-manifests": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["gitlab-installations/list-work-manifests"];
         put?: never;
         post?: never;
         delete?: never;
@@ -504,12 +504,12 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        /** @enum {string} */
-        "dirspace-state": "aborted" | "failure" | "queued" | "running" | "success" | "unknown";
         "bad-request-err": {
             data?: string;
             id: string;
         };
+        /** @enum {string} */
+        "dirspace-state": "aborted" | "failure" | "queued" | "running" | "success" | "unknown";
         error: {
             msg: string;
         };
@@ -1625,6 +1625,49 @@ export interface operations {
             };
         };
     };
+    "gitlab-installations/list-work-manifests": {
+        parameters: {
+            query?: {
+                page?: string[];
+                q?: string;
+                d?: "asc" | "desc";
+                tz?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                installation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        work_manifests: components["schemas"]["installation-work-manifest"][];
+                    };
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["bad-request-err"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     "gitlab-installations/get-work-manifest": {
         parameters: {
             query?: never;
@@ -1702,49 +1745,6 @@ export interface operations {
                 content?: never;
             };
             404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    "gitlab-installations/list-work-manifests": {
-        parameters: {
-            query?: {
-                page?: string[];
-                q?: string;
-                d?: "asc" | "desc";
-                tz?: string;
-                limit?: number;
-            };
-            header?: never;
-            path: {
-                installation_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        work_manifests: components["schemas"]["installation-work-manifest"][];
-                    };
-                };
-            };
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["bad-request-err"];
-                };
-            };
-            403: {
                 headers: {
                     [name: string]: unknown;
                 };

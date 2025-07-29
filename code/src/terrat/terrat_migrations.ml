@@ -171,6 +171,7 @@ let migrations =
       run_file_sql "2025-07-15-fix-make-gitlab-tables-match-github-closer.sql" );
     ( "refactor-manage-github-maps-via-triggers",
       run_file_sql "2025-07-22-refactor-manage-github-maps-via-triggers.sql" );
+    ("fix-gitlab-installation-state", run_file_sql "2025-07-21-fix-gitlab-installation-state.sql");
   ]
 
 let run config storage = Mig.run (config, storage) migrations

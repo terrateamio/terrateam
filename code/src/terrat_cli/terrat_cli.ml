@@ -79,7 +79,8 @@ module Cmdline = struct
       (fun src ->
         if CCList.mem ~eq:CCString.equal (Logs.Src.name src) loggers then
           Logs.Src.set_level src (Some Logs.Error))
-      (Logs.Src.list ())
+      (Logs.Src.list ());
+    Logs_threaded.enable ()
 
   let loggers =
     let env =
