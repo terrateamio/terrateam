@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { getServerConfig, initializeGitHubLogin, authError } from './auth';
+  import { getServerConfig, initializeGitHubLogin, authError, isAuthenticated } from './auth';
   import type { ServerConfig } from './types';
   import type { VCSProvider } from './vcs/types';
   import { VCS_PROVIDERS } from './vcs/providers';
@@ -11,6 +11,11 @@
   let error: string | null = null;
   let serverConfig: ServerConfig | null = null;
   let availableProviders: VCSProvider[] = [];
+  
+  // Redirect authenticated users away from login page
+  $: if ($isAuthenticated) {
+    window.location.hash = '#/';
+  }
   
   onMount(async () => {
     try {
