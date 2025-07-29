@@ -16,12 +16,14 @@
 
 ## Open-Source Terraform automation in pull requests
 
-Terrateam automates Terraform plans and applies in pull requests. Open source, integrates with GitHub and GitLab, and easy to self-host.
+Terrateam automates Terraform plans and applies in pull requests. Built from day one to handle thousands of workspaces across monorepos or many repos, with complex dependencies at any scale.
 
-* Infrastructure as Code automation for Terraform, OpenTofu, Terragrunt, CDKTF, Pulumi, any CLI
-* Flexible policies, approvals, and cost checks
-* Multi-environment coordination and deployment workflows
-* Reporting UI to track runs, pull requests, locks, and more
+* **GitOps for Scale**: Manage 10 or 10,000 workspaces with tag-based configuration
+* **Flexible Automation**: Works with Terraform, OpenTofu, Terragrunt, CDKTF, Pulumi, any CLI
+* **Smart Locking**: Apply-only locks mean unlimited parallel plans
+* **Policy Engine**: Enforce rules with OPA/Rego, require approvals by team/role
+* **Cost & Drift Detection**: Catch infrastructure drift and show cost estimates automatically
+* **Self-Hostable**: Stateless by design. Your runners, your state, your secrets
 
 ---
 
@@ -35,15 +37,16 @@ Terrateam automates Terraform plans and applies in pull requests. Open source, i
   >
 </div>
 
+### Why Terrateam?
 
+While others built for simple workflows, we engineered for reality:
+- **Tag-based configuration** - Define rules once, apply everywhere
+- **Monorepo-first** - Handle thousands of workspaces without breaking a sweat
+- **Composable policies** - `tag:production AND team:payments` - express complex rules simply
+- **Full visibility UI** - Track every run, view execution logs, debug failures - all in the OSS version
 
-### What makes Terrateam different?
+[Learn more about our architecture →](https://terrateam.io/monorepo-at-scale)
 
-* **GitOps**: Runs `terraform plan` and `apply` in pull requests. Controlled by a `.terrateam/config.yml` file that maps directories, tags, policies, and approvals.
-* **Flexible**: Works with any Terraform-compatible CLI: OpenTofu, Terragrunt, CDKTF, Pulumi, and more. Fully configured through YAML.
-* **Policies**: Enforce rules with Rego, Checkov, or built-in policies. Require approvals by team, role, or user.
-* **Drift and cost detection**: Catch infrastructure drift and show cost estimates in pull requests automatically.
-* **Self-hostable and horizontally scalable**: Stateless by design. Deploy Terrateam on your infrastructure and scale out using standard Postgres and CI runners.
 ---
 
 ## Try Terrateam
@@ -78,6 +81,7 @@ docker-compose up setup
 * Safe parallel execution with locking
 * Cross-environment and dependency coordination
 * Config builder for advanced workflows
+* Full UI to track runs, view logs, and debug workflows (included in OSS)
 * Self-hostable (server and private runners)
 
 ---
@@ -88,12 +92,19 @@ Configure workflows via `.terrateam/config.yml`. See [Configuration Reference](h
 
 ---
 
+## Learn More
+
+* [Monorepo at Scale](https://terrateam.io/monorepo-at-scale) - How we handle thousands of workspaces
+* [Technical Architecture](https://terrateam.io/technical-architecture) - The engine under the hood  
+* [Configuration Reference](https://docs.terrateam.io/configuration-reference) - Tag queries and advanced workflows
+* [Blog](https://terrateam.io/blog) - Updates and best practices
+
+---
+
 ## Resources
 
 * [Documentation](https://docs.terrateam.io)
 * [Quickstart Guide](https://docs.terrateam.io/getting-started/quickstart-guide)
-* [Blog](https://terrateam.io/blog)
-* [Configuration Reference](https://docs.terrateam.io/configuration-reference)
 * [Community Slack](https://terrateam.io/slack)
 
 ---
