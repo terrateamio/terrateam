@@ -108,6 +108,7 @@ let infracost () =
 let load_github () =
   let open CCResult.Infix in
   match Sys.getenv_opt "GITHUB_APP_ID" with
+  | Some "" | None -> Ok None
   | Some app_id ->
       let webhook_secret = Sys.getenv_opt "GITHUB_WEBHOOK_SECRET" in
       env_str "GITHUB_APP_PEM"
@@ -151,11 +152,11 @@ let load_github () =
              web_base_url;
              webhook_secret;
            })
-  | None -> Ok None
 
 let load_gitlab () =
   let open CCResult.Infix in
   match Sys.getenv_opt "GITLAB_APP_ID" with
+  | Some "" | None -> Ok None
   | Some app_id ->
       env_str "GITLAB_APP_SECRET"
       >>= fun app_secret ->
@@ -170,7 +171,6 @@ let load_gitlab () =
       env_str "GITLAB_ACCESS_TOKEN"
       >>= fun access_token ->
       Ok (Some { Gitlab.access_token; api_base_url; app_id; app_secret; web_base_url })
-  | None -> Ok None
 
 let create () =
   let open CCResult.Infix in
