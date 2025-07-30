@@ -78,8 +78,8 @@ Choose one of the following deployment methods based on your requirements and in
      \- Install the Helm chart:
         ```sh
         helm install terrateam terrateamio/terrateam \
-        --set server.dns_name="terrateam.example.com" \
-        --set certificate.enabled="true" \
+        --set terrateam.config.fqdn="terrateam.example.com" \
+        --set ingress.certificate.enabled="true" \
         --set ingress.enabled="true" \
         --set ingress.annotations."networking\.gke\.io\/managed-certificates"="terrateam-ingress-certificate" \
         --set ingress.annotations."kubernetes\.io\/ingress\.global-static-ip-name"="terrateam-static-ip" \
