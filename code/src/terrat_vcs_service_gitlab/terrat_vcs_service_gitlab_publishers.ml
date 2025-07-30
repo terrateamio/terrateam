@@ -368,11 +368,11 @@ module Publisher_tools = struct
         Map.of_list
           (CCList.flatten
              [
-               CCOption.map_or
-                 ~default:[]
-                 (fun work_manifest_url ->
-                   [ ("work_manifest_url", string (Uri.to_string work_manifest_url)) ])
-                 (Ui.work_manifest_url config work_manifest.Wm.account work_manifest);
+               (* CCOption.map_or *)
+               (*   ~default:[] *)
+               (*   (fun work_manifest_url -> *)
+               (*     [ ("work_manifest_url", string (Uri.to_string work_manifest_url)) ]) *)
+               (*   (Ui.work_manifest_url config work_manifest.Wm.account work_manifest); *)
                CCOption.map_or
                  ~default:[]
                  (fun env -> [ ("environment", string env) ])
