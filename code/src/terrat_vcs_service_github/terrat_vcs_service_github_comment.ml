@@ -138,6 +138,7 @@ module S = struct
     let module Step = Terrat_api_components_workflow_step_output in
     let module Scope = Terrat_api_components_workflow_step_output_scope in
     let cid = Api.Comment.Id.to_string comment_id |> Int64.of_string in
+
     let module By_scope = Terrat_data.Group_by (struct
       type t = Uuidm.t * string * Step.t
       type key = Uuidm.t * string * Terrat_dirspace.t
@@ -176,7 +177,24 @@ module S = struct
         Logs.err (fun m -> m "%s : ERROR : %a" t.request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
 
-  let upsert_comment_id t els comment_id = raise (Failure "nyi")
+  let upsert_comment_id t els comment_id =
+    let open Abb.Future.Infix_monad in
+    (* First, get all els for this comment_id *)
+    query_els_for_comment_id t comment_id
+    >>= function
+    | Ok old ->
+        (* TODO use sets for proper union/intersection operations *)
+        let _old_dirspaces =
+          CCList.map (fun el -> el.dirspace) old |> CCList.sort Terrat_dirspace.compare
+        in
+        let _new_dirspaces =
+          CCList.map (fun el -> el.dirspace) els |> CCList.sort Terrat_dirspace.compare
+        in
+        let _cid = Api.Comment.Id.to_string comment_id |> Int64.of_string in
+        let _wid = Ouuid.v4 () in
+        Abb.Future.return (Ok ())
+    | Error err -> Abb.Future.return (Error err)
+
   let delete_comment t comment_id = raise (Failure "nyi")
   let minimize_comment t comment_id = raise (Failure "nyi")
 
