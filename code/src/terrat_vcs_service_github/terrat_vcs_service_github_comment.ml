@@ -7,37 +7,194 @@ module Tmpl = Terrat_vcs_service_github_assets.Tmpl
 module Ui = Terrat_vcs_service_github_assets.Ui
 module Visible_on = Terrat_base_repo_config_v1.Workflow_step.Visible_on
 
+module Sql = struct
+  let read fname =
+    CCOption.get_exn_or
+      fname
+      (CCOption.map Pgsql_io.clean_string (Terrat_files_github_sql.read fname))
+
+  let select_comment_id =
+    Pgsql_io.Typed_sql.(
+      sql
+      //
+      (* comment_id *)
+      Ret.bigint
+      /^ read "select_comment_id.sql"
+      /% Var.uuid "work_manifest_id"
+      /% Var.text "dir"
+      /% Var.text "workspace")
+
+  let select_comment_elements =
+    Pgsql_io.Typed_sql.(
+      sql
+      //
+      (* work_manifest_id *)
+      Ret.uuid
+      //
+      (* comment.dir *)
+      Ret.text
+      //
+      (* comment.workspace *)
+      Ret.text
+      //
+      (* work_manifest.run_type *)
+      Ret.text
+      //
+      (* steps.ignore_errors *)
+      Ret.boolean
+      //
+      (* steps.payload *)
+      Ret.ud'
+        CCFun.(
+          CCOption.wrap Yojson.Safe.from_string
+          %> CCOption.flat_map
+               (Terrat_api_components_workflow_step_output.Payload.of_yojson %> CCOption.of_result))
+      //
+      (* steps.scope *)
+      Ret.ud'
+        CCFun.(
+          CCOption.wrap Yojson.Safe.from_string
+          %> CCOption.flat_map
+               (Terrat_api_components_workflow_step_output_scope.of_yojson %> CCOption.of_result))
+      //
+      (* steps.step *)
+      Ret.text
+      //
+      (* steps.success *)
+      Ret.boolean
+      /^ read "select_comment_elements.sql"
+      /% Var.bigint "comment_id")
+
+  (* let upsert_comment = *)
+  (*   Pgsql_io.Typed_sql.( *)
+  (*     sql *)
+  (*     /^ read "upsert_github_work_manifest_comment.sql" *)
+  (*     /% Var.bigint "comment_id" *)
+  (*     /% Var.uuid "work_manifest_id" *)
+  (*     /% Var.text "dir" *)
+  (*     /% Var.text "workspace") *)
+end
+
 module S = struct
   type t = {
     account_status : Terrat_vcs_provider2.Account_status.t;
     client : Api.Client.t;
     config : Api.Config.t;
+    db : Pgsql_io.t;
+    (* gates : Terrat_gate.t list; *)
     is_layered_run : bool;
     hooks : (Scope.t * Terrat_api_components_workflow_step_output.t list) list;
     pull_request : (unit, unit) Api.Pull_request.t;
     request_id : string;
     remaining_layers : Terrat_change_match3.Dirspace_config.t list list;
     result : Terrat_api_components_work_manifest_tf_operation_result2.t;
+    (* Curr Work M that is finished! *)
     work_manifest : (Api.Account.t, unit) Terrat_work_manifest3.Existing.t;
   }
 
   type el = {
     dirspace : Terrat_dirspace.t;
+    (* We need this because we show this to the user *)
     steps : Terrat_api_components_workflow_step_output.t list;
+    (* Comes from repo_config *)
+    (* Look at whomstever uses Terrat_change_match3.syntesize_config *)
+    (* check event_evaluator as well *)
     strategy : Terrat_vcs_comment.Strategy.t;
+        (* WM that is already part of el *)
+        (* work_manifest : (Api.Account.t, unit) Terrat_work_manifest3.Existing.t; *)
   }
   [@@deriving show]
 
-  (*TODO: fix this later*)
-  type comment_id = unit [@@deriving ord, show]
+  type comment_id = Api.Comment.Id.t [@@deriving ord, show]
 
   module Cmp = struct
     type t = bool * bool * Terrat_dirspace.t [@@deriving ord]
   end
 
-  let query_comment_id t el = raise (Failure "nyi")
-  let query_els_for_comment_id t cid = raise (Failure "nyi")
-  let upsert_comment_id t els cid = Abb.Future.return (Ok ())
+  let query_comment_id t el =
+    let open Abb.Future.Infix_monad in
+    let work_manifest_id = t.work_manifest.Terrat_work_manifest3.id in
+    let { Terrat_dirspace.dir; workspace } = el.dirspace in
+    Pgsql_io.Prepared_stmt.fetch
+      t.db
+      Sql.select_comment_id
+      ~f:CCFun.id
+      work_manifest_id
+      dir
+      workspace
+    >>= function
+    | Ok r ->
+        Abb.Future.return
+          (Ok
+             (CCOption.of_list r
+             |> CCOption.flat_map CCFun.(Int64.to_string %> Api.Comment.Id.of_string)))
+    | Error (#Pgsql_io.err as err) ->
+        Logs.err (fun m -> m "%s : ERROR : %a" t.request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
+  let query_els_for_comment_id t comment_id =
+    let open Abb.Future.Infix_monad in
+    let module D = Terrat_api_components_workflow_step_output_scope_dirspace in
+    let module Step = Terrat_api_components_workflow_step_output in
+    let module Scope = Terrat_api_components_workflow_step_output_scope in
+    let cid = Api.Comment.Id.to_string comment_id |> Int64.of_string in
+
+    let module By_scope = Terrat_data.Group_by (struct
+      type t = Uuidm.t * string * Step.t
+      type key = Uuidm.t * string * Terrat_dirspace.t
+
+      let key (work_manifest_id, run_type, step) =
+        match step.Step.scope with
+        | Scope.Workflow_step_output_scope_dirspace { D.dir; workspace; _ } ->
+            let dirspace = { Terrat_dirspace.dir; workspace } in
+            (work_manifest_id, run_type, dirspace)
+        | _ -> assert false
+
+      let compare (w1, rt1, s1) (w2, rt2, s2) =
+        match (String.lowercase_ascii rt1, String.lowercase_ascii rt2) with
+        | "plan", "plan" -> 1
+        | _, _ -> 0
+    end) in
+    Pgsql_io.Prepared_stmt.fetch
+      t.db
+      Sql.select_comment_elements
+      ~f:(fun wmid _ _ run_type ignore_errors payload scope step success ->
+        (wmid, run_type, { Step.ignore_errors; payload; scope; step; success }))
+      cid
+    >>= function
+    | Ok elements ->
+        (* TODO FIX THIS, find a way to properly fetch the strategy *)
+        let strategy = Terrat_vcs_comment.Strategy.Append in
+        let groups = By_scope.group elements in
+        let split =
+          CCList.map
+            (fun ((wid, run_type, d), v) -> (wid, run_type, d, CCList.map (fun (_, _, s) -> s) v))
+            groups
+        in
+        let els = CCList.map (fun (_, _, dirspace, steps) -> { dirspace; steps; strategy }) split in
+        Abb.Future.return (Ok els)
+    | Error (#Pgsql_io.err as err) ->
+        Logs.err (fun m -> m "%s : ERROR : %a" t.request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
+  let upsert_comment_id t els comment_id =
+    let open Abb.Future.Infix_monad in
+    (* First, get all els for this comment_id *)
+    query_els_for_comment_id t comment_id
+    >>= function
+    | Ok old ->
+        (* TODO use sets for proper union/intersection operations *)
+        let _old_dirspaces =
+          CCList.map (fun el -> el.dirspace) old |> CCList.sort Terrat_dirspace.compare
+        in
+        let _new_dirspaces =
+          CCList.map (fun el -> el.dirspace) els |> CCList.sort Terrat_dirspace.compare
+        in
+        let _cid = Api.Comment.Id.to_string comment_id |> Int64.of_string in
+        let _wid = Ouuid.v4 () in
+        Abb.Future.return (Ok ())
+    | Error err -> Abb.Future.return (Error err)
+
   let delete_comment t comment_id = raise (Failure "nyi")
   let minimize_comment t comment_id = raise (Failure "nyi")
 
@@ -60,11 +217,11 @@ module S = struct
         t.work_manifest
     in
     let request_id = t.request_id in
-    let msg_type = "GITHUB COMMENT" in
     Api.comment_on_pull_request ~request_id t.client t.pull_request body
-    >>= fun () ->
-    Logs.info (fun m -> m "%s : PUBLISHED_COMMENT : %s" request_id msg_type);
-    Abb.Future.return (Ok ())
+    >>= fun comment_id ->
+    let cid = Api.Comment.Id.to_string comment_id in
+    Logs.info (fun m -> m "%s : PUBLISHED_COMMENT : %s" request_id cid);
+    Abb.Future.return (Ok comment_id)
 
   let rendered_length t els =
     let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in

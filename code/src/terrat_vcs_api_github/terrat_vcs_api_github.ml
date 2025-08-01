@@ -87,6 +87,20 @@ module Account = struct
   let to_string t = CCInt.to_string t.installation_id
 end
 
+module Comment = struct
+  module Id = struct
+    type t = int [@@deriving eq, ord, show, yojson]
+
+    let of_string = CCInt.of_string
+    let to_string = CCInt.to_string
+  end
+
+  type t = { id : Id.t } [@@deriving eq, yojson]
+
+  let make ~id () = { id }
+  let id t = t.id
+end
+
 module Repo = struct
   module Id = struct
     type t = int [@@deriving yojson, show, eq]
@@ -412,7 +426,7 @@ let comment_on_pull_request ~request_id client pull_request body =
     ~body
     client.Client.client
   >>= function
-  | Ok () -> Abb.Future.return (Ok ())
+  | Ok id -> Abb.Future.return (Ok id)
   | Error (#Terrat_github.publish_comment_err as err) ->
       Prmths.Counter.inc_one Metrics.github_errors_total;
       Logs.err (fun m ->

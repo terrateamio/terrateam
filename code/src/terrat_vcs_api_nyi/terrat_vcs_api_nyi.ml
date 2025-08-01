@@ -41,6 +41,20 @@ module Account = struct
   let to_string t = raise (Failure "nyi")
 end
 
+module Comment = struct
+  module Id = struct
+    type t = unit [@@deriving yojson, show, eq]
+
+    let of_string s = raise (Failure "nyi")
+    let to_string t = raise (Failure "nyi")
+  end
+
+  type t = unit [@@deriving eq, yojson]
+
+  let make ~id = raise (Failure "nyi")
+  let id t = raise (Failure "nyi")
+end
+
 module Repo = struct
   module Id = struct
     type t = unit [@@deriving yojson, show, eq]

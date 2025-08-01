@@ -2207,7 +2207,7 @@ module Comment = struct
         let open Abb.Future.Infix_monad in
         Api.comment_on_pull_request ~request_id client pull_request output
         >>= function
-        | Ok () -> Abb.Future.return (Ok ())
+        | Ok _ -> Abb.Future.return (Ok ())
         | Error `Error -> (
             let dirspaces =
               CCList.filter
@@ -2268,6 +2268,7 @@ module Comment = struct
           account_status
           config
           client
+          db
           is_layered_run
           remaining_layers
           result
@@ -2293,6 +2294,7 @@ module Comment = struct
             account_status;
             config;
             client;
+            db;
             hooks;
             is_layered_run;
             remaining_layers;
@@ -3674,20 +3676,21 @@ module Comment = struct
           kv
     | Msg.Tf_op_result _ -> raise (Failure "NOT SUPPORTED")
     | Msg.Tf_op_result2
-        { account_status; config; is_layered_run; remaining_layers; result; work_manifest } -> (
+        { account_status; config; db; is_layered_run; remaining_layers; result; work_manifest } -> (
         let open Abb.Future.Infix_monad in
         Result.Publisher3.post_comment
           request_id
           account_status
           config
           client
+          db
           is_layered_run
           remaining_layers
           result
           pull_request
           work_manifest
         >>= function
-        | Ok () -> Abb.Future.return (Ok ())
+        | Ok _ -> Abb.Future.return (Ok ())
         | Error _ -> Abb.Future.return (Error `Error))
     | Msg.Tier_check checks ->
         let module C = Terrat_tier.Check in
