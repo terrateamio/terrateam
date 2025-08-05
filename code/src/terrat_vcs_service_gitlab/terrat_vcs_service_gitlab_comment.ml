@@ -22,6 +22,7 @@ module S = struct
   }
 
   type el = {
+    compact : bool;
     dirspace : Terrat_dirspace.t;
     steps : Terrat_api_components_workflow_step_output.t list;
     strategy : Terrat_vcs_comment.Strategy.t;
@@ -47,9 +48,10 @@ module S = struct
     let gates = t.result.R2.gates in
     let by_dirspace = CCList.map (fun el -> (Scope.Dirspace el.dirspace, el.steps)) els in
     let by_scope = t.hooks @ by_dirspace in
+    let compact = CCList.exists (fun { compact; _ } -> compact) els in
     let body =
       Publisher_tools.create_run_output
-        ~view:`Full
+        ~view:(if compact then `Compact else `Full)
         t.request_id
         t.account_status
         t.config
@@ -72,9 +74,10 @@ module S = struct
     let gates = t.result.R2.gates in
     let by_dirspace = CCList.map (fun el -> (Scope.Dirspace el.dirspace, el.steps)) els in
     let by_scope = t.hooks @ by_dirspace in
+    let compact = CCList.exists (fun { compact; _ } -> compact) els in
     let out =
       Publisher_tools.create_run_output
-        ~view:`Full
+        ~view:(if compact then `Compact else `Full)
         t.request_id
         t.account_status
         t.config
@@ -90,7 +93,7 @@ module S = struct
 
   (* TODO: For testing purposes only, will change this later *)
   (* TODO: Wirte with proper templates on Tmpl later *)
-  let compact el = el
+  let compact el = { el with compact = true }
 
   let compare_el el1 el2 =
     let module P = Terrat_vcs_service_gitlab_publishers in
