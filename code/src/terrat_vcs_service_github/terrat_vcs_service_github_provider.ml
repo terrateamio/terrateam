@@ -2317,7 +2317,13 @@ module Comment = struct
         by_scope
         |> CCList.filter_map (function
              | Scope.Dirspace dirspace, steps ->
-                 Some { Terrat_vcs_service_github_comment.S.dirspace; steps; strategy }
+                 Some
+                   {
+                     Terrat_vcs_service_github_comment.S.dirspace;
+                     steps;
+                     strategy;
+                     compact = false;
+                   }
              | Scope.Run _, _ -> None)
 
       let post_comment
