@@ -78,8 +78,8 @@ Choose one of the following deployment methods based on your requirements and in
      \- Install the Helm chart:
         ```sh
         helm install terrateam terrateamio/terrateam \
-        --set server.dns_name="terrateam.example.com" \
-        --set certificate.enabled="true" \
+        --set terrateam.config.fqdn="terrateam.example.com" \
+        --set ingress.certificate.enabled="true" \
         --set ingress.enabled="true" \
         --set ingress.annotations."networking\.gke\.io\/managed-certificates"="terrateam-ingress-certificate" \
         --set ingress.annotations."kubernetes\.io\/ingress\.global-static-ip-name"="terrateam-static-ip" \
@@ -91,7 +91,7 @@ Choose one of the following deployment methods based on your requirements and in
 
    ###### Without Ingress
      ```sh
-     helm install terrateam terrateamio/terrateam --set server.dns_name="terrateam.example.com"
+     helm install terrateam terrateamio/terrateam --set terrateam.config.fqdn="terrateam.example.com"
      ```
      You can use [NGINX-ingress](https://cert-manager.io/docs/tutorials/acme/nginx-ingress/) and [cert-manager](https://github.com/cert-manager/cert-manager) to expose the `terrateam-server` service.
 
