@@ -1896,7 +1896,24 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         in
         let working_set_matches =
           match all_unapplied_matches with
-          | layer :: _ -> CCList.filter (Terrat_change_match3.match_tag_query ~tag_query) layer
+          | layer :: _ -> (
+              match op with
+              | `Apply ->
+                  (* If it's an apply, we limit the working set to only those
+                     that can be applied, based on stacks configuration. *)
+                  let module S = Terrat_base_repo_config_v1.Stacks.Stack in
+                  let module Oc = Terrat_base_repo_config_v1.Stacks.On_change in
+                  let flat_all_unapplied_matches = CCList.flatten all_unapplied_matches in
+                  layer
+                  |> CCList.filter (Terrat_change_match3.match_tag_query ~tag_query)
+                  |> CCList.filter
+                       (fun { Dc.stack_config = { S.on_change = { Oc.can_apply_after }; _ }; _ } ->
+                         not
+                           (CCList.exists
+                              (fun { Dc.stack_name; _ } ->
+                                CCList.mem ~eq:CCString.equal stack_name can_apply_after)
+                              flat_all_unapplied_matches))
+              | _ -> CCList.filter (Terrat_change_match3.match_tag_query ~tag_query) layer)
           | [] -> []
         in
         let all_tag_query_matches =
@@ -2876,19 +2893,64 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | (`Missing_workflow | `Failed_to_start) as err ->
           publish_msg request_id client user pull_request (Msg.Run_work_manifest_err err)
 
+    let replace_stack_vars vars s =
+      let vars =
+        Terrat_data.String_map.fold
+          (fun k v acc ->
+            Terrat_data.String_map.add ("STACK_VAR_" ^ CCString.uppercase_ascii k) v acc)
+          vars
+          Terrat_data.String_map.empty
+      in
+      match Str_template.apply (CCFun.flip Terrat_data.String_map.find_opt vars) s with
+      | Ok s -> s
+      | Error (#Str_template.err as err) -> assert false
+
+    let apply_stack_vars_to_workflow stack workflow =
+      let module R = Terrat_base_repo_config_v1 in
+      let module E = R.Workflows.Entry in
+      let module S = R.Stacks.Stack in
+      let {
+        E.apply = _;
+        engine = _;
+        environment;
+        integrations = _;
+        lock_policy = _;
+        plan = _;
+        runs_on = _;
+        tag_query = _;
+      } =
+        workflow
+      in
+      {
+        workflow with
+        E.environment = CCOption.map (replace_stack_vars stack.S.variables) environment;
+      }
+
     let dirspaceflows_of_changes_with_branch_target repo_config changes =
       let module R = Terrat_base_repo_config_v1 in
       let workflows = R.workflows repo_config in
       Ok
         (CCList.map
-           (fun ({ Terrat_change_match3.Dirspace_config.dirspace; lock_branch_target; _ }, workflow)
+           (fun ( {
+                    Terrat_change_match3.Dirspace_config.dirspace;
+                    lock_branch_target;
+                    stack_config;
+                    _;
+                  },
+                  workflow )
               ->
              let module Dsf = Terrat_change.Dirspaceflow in
              {
                Dsf.dirspace;
                workflow =
                  ( lock_branch_target,
-                   CCOption.map (fun (idx, workflow) -> { Dsf.Workflow.idx; workflow }) workflow );
+                   CCOption.map
+                     (fun (idx, workflow) ->
+                       {
+                         Dsf.Workflow.idx;
+                         workflow = apply_stack_vars_to_workflow stack_config workflow;
+                       })
+                     workflow );
              })
            (match_tag_queries
               ~accessor:(fun { R.Workflows.Entry.tag_query; _ } -> tag_query)
@@ -4644,6 +4706,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                  pull_request
                  (Msg.Depends_on_cycle cycle))
             >>= fun () -> Abb.Future.return (Error `Error)
+        | Error (`Workspace_in_multiple_stacks_err _) -> raise (Failure "nyi")
       in
       let open Abb.Future.Infix_monad in
       run >>= fun _ -> Abb.Future.return (Ok state)
@@ -6658,6 +6721,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         | Error (`Depends_on_cycle_err cycle) ->
             H.maybe_publish_msg ctx state (Msg.Depends_on_cycle cycle)
             >>= fun () -> Abb.Future.return (`Failure `Error)
+        | Error (`Workspace_in_multiple_stacks_err _) -> raise (Failure "nyi")
         | Error (#Terrat_base_repo_config_v1.of_version_1_err as err) ->
             Logs.info (fun m ->
                 m
