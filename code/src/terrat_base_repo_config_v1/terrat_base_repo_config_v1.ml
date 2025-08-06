@@ -925,6 +925,28 @@ module Integrations = struct
   [@@deriving make, show, yojson, eq]
 end
 
+module Stacks = struct
+  module On_change = struct
+    type t = { can_apply_after : string list [@default []] } [@@deriving make, show, yojson, eq]
+  end
+
+  module Stack = struct
+    type t = {
+      tag_query : Tag_query.t;
+      on_change : On_change.t; [@default On_change.make ()]
+      variables : string String_map.t; [@default String_map.empty]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  type t = {
+    allow_workspace_in_multiple_stacks : bool; [@default false]
+    names : Stack.t String_map.t;
+        [@default String_map.singleton "default" (Stack.make ~tag_query:Tag_query.any ())]
+  }
+  [@@deriving make, show, yojson, eq]
+end
+
 module Storage = struct
   module Plans = struct
     module Cmd = struct
@@ -1052,6 +1074,7 @@ module View = struct
     indexer : Indexer.t; [@default Indexer.make ()]
     integrations : Integrations.t; [@default Integrations.make ()]
     parallel_runs : int; [@default 3]
+    stacks : Stacks.t; [@default Stacks.make ()]
     storage : Storage.t; [@default Storage.make ()]
     tags : Tags.t; [@default Tags.make ()]
     tree_builder : Tree_builder.t; [@default Tree_builder.make ()]
@@ -1110,6 +1133,7 @@ type of_version_1_err =
   | `Hooks_unknown_run_on_err of Terrat_repo_config_run_on.t
   | `Hooks_unknown_visible_on_err of string
   | `Pattern_parse_err of string
+  | `Stack_config_tag_query_err of string * string
   | `Unknown_lock_policy_err of string
   | `Unknown_plan_mode_err of string
   | `Window_parse_timezone_err of string
@@ -2089,6 +2113,36 @@ let of_version_1_integrations integrations =
   in
   Ok { Integrations.resourcely }
 
+let of_version_1_stack_config names =
+  let open CCResult.Infix in
+  let module N = Terrat_repo_config_stacks.Names in
+  let { N.additional = configs; _ } = names in
+  CCResult.map_l (fun (k, v) ->
+      let module Sc = Terrat_repo_config_stack_config in
+      let { Sc.on_change; tag_query; variables } = v in
+      CCResult.map_err
+        (function
+          | `Tag_query_error err -> `Stack_config_tag_query_err err)
+        (Terrat_tag_query.of_string tag_query)
+      >>= fun tag_query ->
+      map_opt
+        (fun { Sc.On_change.can_apply_after } -> Ok (Stacks.On_change.make ?can_apply_after ()))
+        on_change
+      >>= fun on_change ->
+      let variables =
+        CCOption.map (fun { Sc.Variables.additional = variables; _ } -> variables) variables
+      in
+      Ok (k, Stacks.Stack.make ~tag_query ?on_change ?variables ()))
+  @@ String_map.to_list configs
+  >>= fun configs -> Ok (String_map.of_list configs)
+
+let of_version_1_stacks stacks =
+  let open CCResult.Infix in
+  let module S = Terrat_repo_config_stacks in
+  let { S.allow_workspace_in_multiple_stacks; names } = stacks in
+  map_opt of_version_1_stack_config names
+  >>= fun names -> Ok (Stacks.make ~allow_workspace_in_multiple_stacks ?names ())
+
 let of_version_1_storage storage =
   let open CCResult.Infix in
   let { V1.Storage.plans } = storage in
@@ -2235,6 +2289,7 @@ let of_version_1 v1 =
     indexer;
     integrations;
     parallel_runs;
+    stacks;
     storage;
     tags;
     tree_builder;
@@ -2273,6 +2328,8 @@ let of_version_1 v1 =
   >>= fun indexer ->
   map_opt of_version_1_integrations integrations
   >>= fun integrations ->
+  map_opt of_version_1_stacks stacks
+  >>= fun stacks ->
   map_opt of_version_1_storage storage
   >>= fun storage ->
   map_opt of_version_1_tags tags
@@ -2299,6 +2356,7 @@ let of_version_1 v1 =
        ?indexer
        ?integrations
        ~parallel_runs
+       ?stacks
        ?storage
        ?tags
        ?tree_builder
@@ -2714,6 +2772,27 @@ let to_version_1_integrations integrations =
   in
   { I.resourcely = Some { I.Resourcely.enabled; extra_args = Some [] } }
 
+let to_version_1_stacks stacks =
+  let module S = Terrat_repo_config_stacks in
+  let { Stacks.allow_workspace_in_multiple_stacks; names } = stacks in
+  let names =
+    S.Names.make
+      ~additional:
+        (String_map.map
+           (fun v ->
+             let { Stacks.Stack.tag_query; on_change; variables } = v in
+             let module Sc = Terrat_repo_config_stack_config in
+             let { Stacks.On_change.can_apply_after } = on_change in
+             {
+               Sc.tag_query = Terrat_tag_query.to_string tag_query;
+               on_change = Some { Sc.On_change.can_apply_after = Some can_apply_after };
+               variables = Some (Sc.Variables.make ~additional:variables Json_schema.Empty_obj.t);
+             })
+           names)
+      Json_schema.Empty_obj.t
+  in
+  { S.allow_workspace_in_multiple_stacks; names = Some names }
+
 let to_version_1_storage_plans plans =
   match plans with
   | Storage.Plans.Terrateam ->
@@ -2916,6 +2995,7 @@ let to_version_1 t =
     indexer;
     integrations;
     parallel_runs;
+    stacks;
     storage;
     tags;
     tree_builder;
@@ -2977,6 +3057,7 @@ let to_version_1 t =
         to_version_1_integrations
         integrations;
     parallel_runs;
+    stacks = map_opt_if_true CCFun.(Stacks.equal (Stacks.make ()) %> not) to_version_1_stacks stacks;
     storage =
       map_opt_if_true CCFun.(Storage.equal (Storage.make ()) %> not) to_version_1_storage storage;
     tags = map_opt_if_true CCFun.(Tags.equal (Tags.make ()) %> not) to_version_1_tags tags;
@@ -3302,6 +3383,7 @@ let hooks t = t.View.hooks
 let indexer t = t.View.indexer
 let integrations t = t.View.integrations
 let parallel_runs t = t.View.parallel_runs
+let stacks t = t.View.stacks
 let storage t = t.View.storage
 let tags t = t.View.tags
 let tree_builder t = t.View.tree_builder

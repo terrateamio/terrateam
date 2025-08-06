@@ -2846,6 +2846,7 @@ module Comment = struct
           kv
     | `Notification_policy_comment_strategy_err err -> raise (Failure "nyi")
     | `Notification_policy_tag_query_err err -> raise (Failure "nyi")
+    | `Stack_config_tag_query_err err -> raise (Failure "nyi")
 
   let publish_comment ~request_id client user pull_request =
     let open Terrat_vcs_service_gitlab_publishers.Comment_api in
