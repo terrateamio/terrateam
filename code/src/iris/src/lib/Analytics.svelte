@@ -890,7 +890,7 @@
 
   <!-- Shared Controls -->
   <div class="mb-4 md:mb-6">
-    <Card padding="sm md:md">
+    <Card padding="md">
       <div class="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 md:gap-4">
         <!-- Date Range -->
         <div class="flex items-center space-x-2 w-full sm:w-auto">
@@ -1152,7 +1152,7 @@
 
     <!-- Workflow Tab Controls -->
     <div class="mb-4 md:mb-6">
-      <Card padding="sm md:md">
+      <Card padding="md">
         <div class="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 md:gap-4">
           <!-- Step Type Filter -->
           <div class="flex items-center space-x-2 w-full sm:w-auto">
