@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --force --clearScreen false",
+    "dev": "vite --force --clearScreen false --host",
     "build": "vite build && npm run check",
     "preview": "vite preview",
     "proxy": "node simple-proxy.js",

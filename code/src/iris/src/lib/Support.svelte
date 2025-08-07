@@ -97,17 +97,17 @@
 </script>
 
 <PageLayout activeItem="support" title="Support">
-    <main class="flex-1 p-6">
+    <main class="flex-1 p-4 md:p-6">
       <div class="max-w-4xl mx-auto">
         <!-- Support Overview -->
-        <div class="text-center mb-12">
-          <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-6 brand-icon-bg">
-            <svg class="w-8 h-8 brand-icon-color" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="text-center mb-8 md:mb-12">
+          <div class="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 rounded-full mb-4 md:mb-6 brand-icon-bg">
+            <svg class="w-6 h-6 md:w-8 md:h-8 brand-icon-color" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h2 class="text-3xl font-bold text-brand-primary mb-4">How can we help you?</h2>
-          <p class="text-xl text-brand-secondary max-w-2xl mx-auto">
+          <h2 class="text-2xl md:text-3xl font-bold text-brand-primary mb-3 md:mb-4">How can we help you?</h2>
+          <p class="text-base md:text-xl text-brand-secondary max-w-2xl mx-auto px-4 md:px-0">
             Get the support you need to successfully deploy and manage your infrastructure with Terrateam.
           </p>
         </div>
@@ -115,52 +115,52 @@
         <!-- Tab Navigation -->
         <div class="mb-8">
           <div class="flex justify-center">
-            <div class="bg-white dark:bg-gray-800 rounded-lg p-2 shadow-lg border">
-              <div class="flex space-x-1">
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-1 md:p-2 shadow-lg border w-full max-w-2xl">
+              <div class="grid grid-cols-2 md:flex md:space-x-1">
                 <button
                   on:click={() => activeTab = 'support'}
-                  class="px-6 py-3 rounded-lg text-sm font-semibold transition-colors
+                  class="px-3 py-2 md:px-6 md:py-3 rounded-lg text-xs md:text-sm font-semibold transition-colors flex items-center justify-center
                     {activeTab === 'support' 
                       ? 'bg-blue-600 text-white shadow-md' 
                       : 'text-brand-secondary hover:text-brand-primary hover:bg-gray-50 dark:hover:bg-gray-700'}"
                 >
-                  <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-4 h-4 mr-1 md:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
-                  Technical Support
+                  <span class="hidden sm:inline">Technical </span>Support
                 </button>
                 <button
                   on:click={() => activeTab = 'community'}
-                  class="px-6 py-3 rounded-lg text-sm font-semibold transition-colors
+                  class="px-3 py-2 md:px-6 md:py-3 rounded-lg text-xs md:text-sm font-semibold transition-colors flex items-center justify-center
                     {activeTab === 'community' 
                       ? 'bg-blue-600 text-white shadow-md' 
                       : 'text-brand-secondary hover:text-brand-primary hover:bg-gray-50 dark:hover:bg-gray-700'}"
                 >
-                  <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-4 h-4 mr-1 md:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                   Community
                 </button>
                 <button
                   on:click={() => activeTab = 'resources'}
-                  class="px-6 py-3 rounded-lg text-sm font-semibold transition-colors
+                  class="px-3 py-2 md:px-6 md:py-3 rounded-lg text-xs md:text-sm font-semibold transition-colors flex items-center justify-center
                     {activeTab === 'resources' 
                       ? 'bg-blue-600 text-white shadow-md' 
                       : 'text-brand-secondary hover:text-brand-primary hover:bg-gray-50 dark:hover:bg-gray-700'}"
                 >
-                  <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-4 h-4 mr-1 md:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                   </svg>
                   Resources
                 </button>
                 <button
                   on:click={() => activeTab = 'status'}
-                  class="px-6 py-3 rounded-lg text-sm font-semibold transition-colors
+                  class="px-3 py-2 md:px-6 md:py-3 rounded-lg text-xs md:text-sm font-semibold transition-colors flex items-center justify-center
                     {activeTab === 'status' 
                       ? 'bg-blue-600 text-white shadow-md' 
                       : 'text-brand-secondary hover:text-brand-primary hover:bg-gray-50 dark:hover:bg-gray-700'}"
                 >
-                  <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-4 h-4 mr-1 md:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   Status
@@ -181,7 +181,7 @@
               </p>
             </div>
             
-            <div class="card-bg rounded-lg shadow-lg border p-8 max-w-3xl mx-auto">
+            <div class="card-bg rounded-lg shadow-lg border p-4 md:p-6 lg:p-8 max-w-3xl mx-auto">
               <!-- Email Option -->
               <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
                 <div class="flex items-start">
@@ -316,19 +316,19 @@
         {:else if activeTab === 'community'}
           <!-- Community Section -->
           <div class="mb-8">
-            <div class="bg-brand-tertiary rounded-lg p-8 border border-brand-secondary max-w-3xl mx-auto">
+            <div class="bg-brand-tertiary rounded-lg p-6 md:p-8 border border-brand-secondary max-w-3xl mx-auto">
               <div class="text-center mb-6">
-                <h3 class="text-2xl font-bold text-brand-primary mb-4">Join Our Slack Community</h3>
+                <h3 class="text-lg md:text-xl lg:text-2xl font-bold text-brand-primary mb-3 md:mb-4">Join Our Slack Community</h3>
                 <div class="flex items-center justify-center mb-4">
-                  <div class="inline-flex items-center justify-center w-16 h-16 rounded-full slack-icon-bg">
-                    <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <div class="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 rounded-full slack-icon-bg">
+                    <svg class="w-6 h-6 md:w-8 md:h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M5.042 15.165a2.528 2.528 0 0 0-2.52 2.523A2.528 2.528 0 0 0 5.042 20.21a2.528 2.528 0 0 0 2.52-2.522 2.528 2.528 0 0 0-2.52-2.523zM17.5 15.165a2.528 2.528 0 0 0-2.52 2.523A2.528 2.528 0 0 0 17.5 20.21a2.528 2.528 0 0 0 2.52-2.522 2.528 2.528 0 0 0-2.52-2.523z"/>
                       <path d="M17.5 11.014a4.6 4.6 0 0 0-2.778-4.231 4.6 4.6 0 0 0-4.834.635A4.6 4.6 0 0 0 5.042 11.5a4.6 4.6 0 0 0 4.635 4.635 4.6 4.6 0 0 0 4.236-2.777 4.6 4.6 0 0 0 3.587-4.344z"/>
                       <path d="M12 2C6.478 2 2 6.478 2 12s4.478 10 10 10 10-4.478 10-10S17.522 2 12 2z"/>
                     </svg>
                   </div>
                 </div>
-                <p class="text-lg text-brand-primary">
+                <p class="text-sm md:text-base lg:text-lg text-brand-primary">
                   Get instant help from Terrateam engineers and connect with other users. It's the fastest way to get answers, troubleshoot issues, and share your infrastructure setups.
                 </p>
               </div>
@@ -348,9 +348,9 @@
             </div>
 
             <!-- GitHub Community -->
-            <div class="grid md:grid-cols-2 gap-6 mt-8 max-w-4xl mx-auto">
+            <div class="grid md:grid-cols-2 gap-4 md:gap-6 mt-8 max-w-4xl mx-auto">
               <!-- GitHub Issues -->
-              <div class="card-bg rounded-lg p-8 shadow border text-center">
+              <div class="card-bg rounded-lg p-6 md:p-8 shadow border text-center">
                 <div class="inline-flex items-center justify-center w-12 h-12 rounded-lg mb-6 brand-icon-bg">
                   <svg class="w-6 h-6 brand-icon-color" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
@@ -372,7 +372,7 @@
               </div>
 
               <!-- GitHub Discussions -->
-              <div class="card-bg rounded-lg p-8 shadow border text-center">
+              <div class="card-bg rounded-lg p-6 md:p-8 shadow border text-center">
                 <div class="inline-flex items-center justify-center w-12 h-12 rounded-lg mb-6 brand-icon-bg">
                   <svg class="w-6 h-6 brand-icon-color" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M1.75 1h12.5c.966 0 1.75.784 1.75 1.75v9.5A1.75 1.75 0 0114.25 14H8.061l-2.574 2.573A1.458 1.458 0 013 15.543V14H1.75A1.75 1.75 0 010 12.25v-9.5C0 1.784.784 1 1.75 1zM1.5 2.75v9.5c0 .138.112.25.25.25h2a.75.75 0 01.75.75v2.19l2.72-2.72a.75.75 0 01.53-.22h6.5a.25.25 0 00.25-.25v-9.5a.25.25 0 00-.25-.25H1.75a.25.25 0 00-.25.25z"/>
@@ -405,9 +405,9 @@
               </p>
             </div>
 
-            <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            <div class="grid md:grid-cols-2 gap-4 md:gap-6 max-w-4xl mx-auto">
               <!-- Documentation -->
-              <div class="card-bg rounded-lg p-8 shadow border text-center">
+              <div class="card-bg rounded-lg p-6 md:p-8 shadow border text-center">
                 <div class="inline-flex items-center justify-center w-12 h-12 rounded-lg mb-6 brand-icon-bg">
                   <svg class="w-6 h-6 brand-icon-color" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -429,7 +429,7 @@
               </div>
 
               <!-- Schedule a Call -->
-              <div class="card-bg rounded-lg p-8 shadow border text-center">
+              <div class="card-bg rounded-lg p-6 md:p-8 shadow border text-center">
                 <div class="inline-flex items-center justify-center w-12 h-12 rounded-lg mb-6 brand-icon-bg">
                   <svg class="w-6 h-6 brand-icon-color" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -461,15 +461,15 @@
               </p>
             </div>
             
-            <div class="card-bg rounded-lg shadow-lg border p-8 max-w-3xl mx-auto text-center">
-              <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-6 brand-icon-bg">
-                <svg class="w-8 h-8 brand-icon-color" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="card-bg rounded-lg shadow-lg border p-6 md:p-8 max-w-3xl mx-auto text-center">
+              <div class="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 rounded-full mb-4 md:mb-6 brand-icon-bg">
+                <svg class="w-6 h-6 md:w-8 md:h-8 brand-icon-color" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               
-              <h4 class="text-xl font-bold text-brand-primary mb-4">Real-time Service Status</h4>
-              <p class="text-brand-secondary mb-6">
+              <h4 class="text-lg md:text-xl font-bold text-brand-primary mb-3 md:mb-4">Real-time Service Status</h4>
+              <p class="text-sm md:text-base text-brand-secondary mb-4 md:mb-6">
                 Visit our status page for real-time information about service availability, ongoing incidents, and scheduled maintenance.
               </p>
               

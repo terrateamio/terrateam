@@ -256,8 +256,8 @@
   <!-- Quick Setup Banner (for users who haven't set up repositories yet) -->
   {#if $installations.length > 0 && $selectedInstallation && allRepositories.length === 0 && !isLoadingRepos && !repoError}
     <Card padding="lg" class="mb-6 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700">
-      <div class="flex items-center justify-between">
-        <div class="flex items-start space-x-4">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+        <div class="flex items-start space-x-4 flex-1">
           <div class="flex-shrink-0">
             <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
               <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -266,7 +266,7 @@
             </div>
           </div>
           <div class="flex-1 min-w-0">
-            <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">Ready to add your first repository?</h3>
+            <h3 class="text-base md:text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">Ready to add your first repository?</h3>
             <p class="text-sm text-blue-800 dark:text-blue-200">
               Follow our step-by-step setup guide to connect your repositories and enable Terraform automation.
             </p>
@@ -274,7 +274,7 @@
         </div>
         <button
           on:click={() => window.location.hash = '#/getting-started'}
-          class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 dark:bg-blue-500 rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
+          class="inline-flex items-center px-3 md:px-4 py-2 text-sm font-medium text-white bg-blue-600 dark:bg-blue-500 rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors whitespace-nowrap"
         >
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
@@ -309,8 +309,8 @@
     </Card>
   {:else if $selectedInstallation}
     <Card padding="none">
-      <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-600">
-        <div class="flex items-center justify-between">
+      <div class="px-4 md:px-6 py-4 border-b border-gray-200 dark:border-gray-600">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0">
           <div>
             <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
               Repositories in {$selectedInstallation.name}
@@ -377,10 +377,10 @@
       <!-- Search and Filter bar -->
       {#if allRepositories.length > 0 || isLoadingRepos}
         <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-600">
-          <div class="flex items-center justify-between space-x-4">
-            <div class="flex items-center space-x-4 flex-1">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between md:space-x-4 space-y-4 md:space-y-0">
+            <div class="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-4 md:space-y-0 flex-1">
               <!-- Search input -->
-              <div class="flex-1 max-w-md">
+              <div class="flex-1 w-full md:max-w-md">
                 <div class="relative">
                   <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -398,7 +398,7 @@
               </div>
               
               <!-- Sort and filter controls -->
-              <div class="flex items-center space-x-4">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0">
                 <div class="flex items-center space-x-2">
                   <span class="text-sm text-gray-700 dark:text-gray-300">Sort by:</span>
                   <select
@@ -502,8 +502,8 @@
       {:else}
         <div class="divide-y divide-gray-200 dark:divide-gray-600">
           {#each paginatedRepositories as repo}
-            <div class="p-6">
-              <div class="flex items-center justify-between">
+            <div class="p-4 md:p-6">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
                 <div class="flex items-center min-w-0 flex-1">
                   <div class="flex-shrink-0">
                     <div class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
@@ -514,7 +514,7 @@
                   </div>
                   <div class="ml-4 min-w-0 flex-1">
                     <div class="flex items-center">
-                      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 truncate">{repo.name}</h3>
+                      <h3 class="text-base md:text-lg font-medium text-gray-900 dark:text-gray-100 truncate">{repo.name}</h3>
                     </div>
                     {#if repo.setup}
                       <div class="mt-1 flex items-center text-sm text-green-600 dark:text-green-400">
@@ -556,9 +556,9 @@
         
         <!-- Pagination Controls -->
         {#if totalPages > 1}
-          <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-600">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center text-sm text-gray-700 dark:text-gray-300">
+          <div class="px-4 md:px-6 py-4 border-t border-gray-200 dark:border-gray-600">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-3 md:space-y-0">
+              <div class="flex items-center text-xs md:text-sm text-gray-700 dark:text-gray-300">
                 <span>
                   Showing {((currentDisplayPage - 1) * itemsPerPage) + 1} to {Math.min(currentDisplayPage * itemsPerPage, filteredRepositories.length)} of {filteredRepositories.length} repositories
                 </span>

@@ -101,16 +101,16 @@
   
 </script>
 
-<div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+<div class="min-h-screen bg-gray-50 flex flex-col justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
   <div class="sm:mx-auto sm:w-full sm:max-w-md">
     <div class="text-center">
       <img src="/assets/images/logo-wordmark.svg" alt="Logo" class="h-12 mx-auto mb-4" />
-      <h2 class="text-xl text-gray-600">Sign in to your account</h2>
+      <h2 class="text-lg sm:text-xl text-gray-600">Sign in to your account</h2>
     </div>
   </div>
 
   <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-    <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+    <div class="bg-white py-6 sm:py-8 px-4 shadow sm:rounded-lg sm:px-10">
       {#if isLoading}
         <div class="flex justify-center py-12">
           <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary"></div>
@@ -124,8 +124,8 @@
               </svg>
             </div>
             <div class="ml-3">
-              <h3 class="text-sm font-medium text-red-800">Authentication Error</h3>
-              <div class="mt-2 text-sm text-red-700">
+              <h3 class="text-xs sm:text-sm font-medium text-red-800">Authentication Error</h3>
+              <div class="mt-2 text-xs sm:text-sm text-red-700">
                 <p>{error}</p>
               </div>
             </div>
@@ -144,7 +144,7 @@
             <button
               on:click={() => handleProviderLogin('github')}
               disabled={!serverConfig?.github}
-              class="w-full flex justify-center items-center px-4 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              class="w-full flex justify-center items-center px-3 sm:px-4 py-2.5 sm:py-3 border border-transparent rounded-md shadow-sm text-xs sm:text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Icon icon="mdi:github" class="mr-3" width="20" />
               Sign in with GitHub
@@ -153,7 +153,7 @@
             <button
               on:click={() => handleProviderLogin('gitlab')}
               disabled={!serverConfig?.gitlab}
-              class="w-full flex justify-center items-center px-4 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              class="w-full flex justify-center items-center px-3 sm:px-4 py-2.5 sm:py-3 border border-transparent rounded-md shadow-sm text-xs sm:text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Icon icon="mdi:gitlab" class="mr-3" width="20" />
               Sign in with GitLab
@@ -161,14 +161,14 @@
           {/if}
         {:else}
           <!-- Multiple providers - show selection -->
-          <div class="text-center text-sm text-gray-600 mb-4">
+          <div class="text-center text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
             Choose your version control provider:
           </div>
           {#each availableProviders as provider}
             {@const config = VCS_PROVIDERS[provider]}
             <button
               on:click={() => handleProviderLogin(provider)}
-              class="w-full flex justify-center items-center px-4 py-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-colors"
+              class="w-full flex justify-center items-center px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-md shadow-sm text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary transition-colors"
             >
               <Icon icon={config.icon} class="mr-3" width="20" />
               Sign in with {config.displayName}
@@ -178,7 +178,7 @@
 
         {#if $authError}
           <div class="bg-red-50 border border-red-200 rounded-md p-4">
-            <div class="text-sm text-red-700">
+            <div class="text-xs sm:text-sm text-red-700">
               <p><strong>Authentication failed:</strong> {$authError}</p>
             </div>
           </div>
@@ -187,7 +187,7 @@
       </div>
       
       <div class="mt-6">
-        <div class="text-center text-sm text-gray-600">
+        <div class="text-center text-xs sm:text-sm text-gray-600">
           Secure authentication powered by OAuth
         </div>
       </div>

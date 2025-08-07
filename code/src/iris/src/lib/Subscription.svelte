@@ -918,7 +918,7 @@ This request was submitted via the Terrateam Iris trial extension form.
       {/if}
 
       <!-- Quick Actions Grid -->
-      <div class="grid md:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
         <!-- View Invoices -->
         <Card padding="lg" class="text-center hover:shadow-lg transition-shadow">
           <div class="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 mb-4">
@@ -995,7 +995,7 @@ This request was submitted via the Terrateam Iris trial extension form.
       aria-label="Request Trial Extension"
       tabindex="-1"
     >
-      <div class="p-6">
+      <div class="p-4 md:p-6">
         <!-- Modal Header -->
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Request Trial Extension</h3>
