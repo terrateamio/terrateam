@@ -1,0 +1,93 @@
+---
+title: Environment Variables
+description: Complete reference for Terrateam Self-Hosted environment variables and configuration options.
+---
+
+This page provides a comprehensive reference for all environment variables used to configure Terrateam Self-Hosted.
+
+## Required Variables
+
+These environment variables are required for Terrateam Self-Hosted to function properly:
+
+### Database Configuration
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `DB_HOST` | Database host address | `localhost`, `db.example.com` |
+| `DB_NAME` | Database name | `terrateam` |
+| `DB_USER` | Database username | `terrateam` |
+| `DB_PASS` | Database password | `secure_password_123` |
+| `DB_PORT` | Database port | `5432` |
+
+### GitHub Application Settings
+
+Required when using GitHub as your VCS provider:
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `GITHUB_APP_ID` | GitHub application ID | `123456` |
+| `GITHUB_APP_CLIENT_ID` | GitHub application client ID | `Iv1.8ea942184ee41c0b` |
+| `GITHUB_APP_CLIENT_SECRET` | GitHub application client secret | `8dab6d1de78a2cdbc9o014dubcf4a55ca44a3c81` |
+| `GITHUB_APP_PEM` | GitHub application private key (PEM format) | `-----BEGIN RSA PRIVATE KEY-----\nMIIE...` |
+| `GITHUB_WEBHOOK_SECRET` | GitHub webhook secret for security | `02d87878a0ac61d75d25cz8fec1d1af509f9a6d9` |
+
+### GitLab Application Settings
+
+Required when using GitLab as your VCS provider:
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `GITLAB_APP_ID` | GitLab application ID | `abc123def456` |
+| `GITLAB_APP_SECRET` | GitLab application secret | `gloas-1234567890abcdef` |
+| `GITLAB_ACCESS_TOKEN` | GitLab personal access token | `glpat-xxxxxxxxxxxxxxxxxxxx` |
+
+### Server Configuration
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `TERRAT_API_BASE` | Public-facing API base URL (includes `/api`) | `https://terrateam.example.com/api` |
+| `TERRAT_WEB_BASE_URL` | Public-facing web base URL | `https://terrateam.example.com` |
+| `TERRAT_UI_BASE` | Public-facing UI base URL (required for UI) | `https://terrateam.example.com` |
+
+## Optional Variables
+
+These environment variables provide additional configuration options:
+
+### GitHub Enterprise Server
+
+For GitHub Enterprise Server deployments:
+
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `GITHUB_API_BASE_URL` | GitHub API base URL | `https://api.github.com` | `https://api.github.example.com` |
+| `GITHUB_WEB_BASE_URL` | GitHub web base URL | `https://github.com` | `https://github.example.com` |
+
+### GitLab Self-Hosted
+
+For self-hosted GitLab instances:
+
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `GITLAB_API_BASE_URL` | GitLab API base URL | `https://gitlab.com/api` | `https://gitlab.example.com/api` |
+| `GITLAB_WEB_BASE_URL` | GitLab web base URL | `https://gitlab.com` | `https://gitlab.example.com` |
+
+### Proxy Configuration
+
+For environments requiring HTTP proxies:
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `HTTP_PROXY` | URL for HTTP proxy | `https://proxy.local:8080` |
+| `HTTPS_PROXY` | URL for HTTPS proxy | `https://proxy.local:8080` |
+| `NO_PROXY` | Comma-separated list of hosts to bypass proxy | `localhost,127.0.0.1,internal.com` |
+
+#### Proxy Authentication
+
+For proxies requiring authentication, include credentials in the URL:
+
+```bash
+HTTP_PROXY=https://username:password@proxy.local:8080
+HTTPS_PROXY=https://username:password@proxy.local:8080
+```
+
+For troubleshooting configuration issues, see the [Troubleshooting Guide](/self-hosted/troubleshooting/).

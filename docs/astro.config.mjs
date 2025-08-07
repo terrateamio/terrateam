@@ -126,9 +126,11 @@ export default defineConfig({
           label: "Self-Hosted",
           collapsed: true,
           items: [
-            { label: "Instructions", link: "/self-hosted/instructions" },
-            { label: "Best Practices", link: "/self-hosted/best-practices" },
-            { label: "Deployments with Docker Compose", link: "/self-hosted/deployments-with-docker-compose" },
+            { label: "Overview", link: "/self-hosted" },
+            { label: "Getting Started", link: "/self-hosted/getting-started" },
+            { label: "Docker Compose", link: "/self-hosted/docker-compose" },
+            { label: "Kubernetes", link: "/self-hosted/kubernetes" },
+            { label: "Environment Variables", link: "/self-hosted/environment-variables" },
           ],
         },
         {
