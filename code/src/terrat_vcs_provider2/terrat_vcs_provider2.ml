@@ -135,7 +135,8 @@ module Msg = struct
     | Repo_config_merge_err of ((string * string) * (string option * Yojson.Safe.t * Yojson.Safe.t))
     | Repo_config_parse_failure of string * string
     | Repo_config_schema_err of (string * Jsonschema_check.Validation_err.t list)
-    | Run_work_manifest_err of [ `Failed_to_start | `Missing_workflow ]
+    | Run_work_manifest_err of
+        [ `Failed_to_start_with_msg_err of string | `Failed_to_start | `Missing_workflow ]
     | Tag_query_err of Terrat_tag_query_ast.err
     | Tf_op_result of {
         is_layered_run : bool;
@@ -481,7 +482,11 @@ module type S = sig
       ( Api.Account.t,
         ((unit, unit) Api.Pull_request.t, Api.Repo.t) Target.t )
       Terrat_work_manifest3.Existing.t ->
-      (unit, [> `Failed_to_start | `Missing_workflow | `Error ]) result Abb.Future.t
+      ( unit,
+        [> `Failed_to_start_with_msg_err of string | `Failed_to_start | `Missing_workflow | `Error ]
+      )
+      result
+      Abb.Future.t
 
     val create :
       request_id:string ->

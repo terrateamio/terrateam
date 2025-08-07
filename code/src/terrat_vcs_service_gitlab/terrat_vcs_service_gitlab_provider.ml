@@ -3651,7 +3651,16 @@ module Comment = struct
           "REPO_CONFIG_SCHEMA_ERR"
           Tmpl.repo_config_schema_err
           kv
-    | Msg.Run_work_manifest_err `Failed_to_start ->
+    | Msg.Run_work_manifest_err (`Failed_to_start_with_msg_err "IDENTITY_VERIFICATION_ERR") ->
+        let kv = Snabela.Kv.(Map.of_list []) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "RUN_WORK_MANIFEST_ERR_FAILED_TO_START_IDENTITY_VERIFICATION"
+          Tmpl.failed_to_start_identity_verification_workflow
+          kv
+    | Msg.Run_work_manifest_err (`Failed_to_start | `Failed_to_start_with_msg_err _) ->
         let kv = Snabela.Kv.(Map.of_list []) in
         apply_template_and_publish
           ~request_id
@@ -4049,6 +4058,14 @@ module Work_manifest = struct
       >>= fun resp ->
       match Openapi.Response.value resp with
       | `Created _ -> Abb.Future.return (Ok ())
+      | `Bad_request json
+        when CCString.find ~sub:"Identity verification is required in order to run CI jobs"
+             @@ Yojson.Safe.to_string json
+             <> -1 ->
+          (* The above is cheap trick to determine if our specific error message
+             we care about is somewhere in the JSON error rather than decoding
+             it. *)
+          Abb.Future.return (Error (`Failed_to_start_with_msg_err "IDENTITY_VERIFICATION_ERR"))
       | (`Bad_request _ | `Unauthorized _ | `Forbidden _ | `Not_found _) as err ->
           Abb.Future.return (Error err)
     in
@@ -4056,6 +4073,7 @@ module Work_manifest = struct
     run
     >>= function
     | Ok _ -> Abb.Future.return (Ok ())
+    | Error (`Failed_to_start_with_msg_err _) as err -> Abb.Future.return err
     | Error (#Pipeline_api.Responses.t as err) ->
         Logs.err (fun m -> m "%s : %a" request_id Pipeline_api.Responses.pp err);
         Abb.Future.return (Error `Error)

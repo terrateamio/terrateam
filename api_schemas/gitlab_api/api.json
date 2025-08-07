@@ -3684,9 +3684,6 @@
           "archived": {
             "type": "boolean"
           },
-          "auto_ban_user_on_excessive_projects_download": {
-            "type": "string"
-          },
           "auto_devops_enabled": {
             "type": null
           },
@@ -3702,32 +3699,14 @@
           "default_branch": {
             "type": "string"
           },
-          "default_branch_protection": {
-            "type": "integer"
-          },
           "default_branch_protection_defaults": {
             "type": null
           },
           "description": {
             "type": "string"
           },
-          "duo_features_enabled": {
-            "type": "boolean"
-          },
-          "emails_disabled": {
-            "type": "boolean"
-          },
-          "emails_enabled": {
-            "type": "boolean"
-          },
           "enabled_git_access_protocol": {
             "type": null
-          },
-          "extra_shared_runners_minutes_limit": {
-            "type": null
-          },
-          "file_template_project_id": {
-            "type": "string"
           },
           "full_name": {
             "type": "string"
@@ -3737,40 +3716,6 @@
           },
           "id": {
             "type": "integer"
-          },
-          "ip_restriction_ranges": {
-            "type": "string"
-          },
-          "ldap_access": {
-            "type": "string"
-          },
-          "ldap_cn": {
-            "type": "string"
-          },
-          "ldap_group_links": {
-            "type": null
-          },
-          "lfs_enabled": {
-            "type": "boolean"
-          },
-          "lock_duo_features_enabled": {
-            "type": "boolean"
-          },
-          "lock_math_rendering_limits_enabled": {
-            "type": "boolean"
-          },
-          "marked_for_deletion_on": {
-            "type": "string"
-          },
-          "math_rendering_limits_enabled": {
-            "type": "boolean"
-          },
-          "max_artifacts_size": {
-            "format": "int32",
-            "type": "integer"
-          },
-          "membership_lock": {
-            "type": "boolean"
           },
           "mentions_disabled": {
             "type": null
@@ -3802,35 +3747,17 @@
             },
             "type": "array"
           },
-          "repository_storage": {
-            "type": "string"
-          },
-          "request_access_enabled": {
-            "type": "boolean"
-          },
-          "require_two_factor_authentication": {
-            "type": "boolean"
-          },
           "root_storage_statistics": {
             "type": null
           },
-          "runners_token": {
-            "type": "string"
-          },
           "saml_group_links": {
             "type": null
-          },
-          "service_access_tokens_expiration_enforced": {
-            "type": "string"
           },
           "share_with_group_lock": {
             "type": "boolean"
           },
           "shared_projects": {
             "type": null
-          },
-          "shared_runners_minutes_limit": {
-            "type": "string"
           },
           "shared_runners_setting": {
             "type": "string"
@@ -3841,31 +3768,10 @@
           "statistics": {
             "type": null
           },
-          "subgroup_creation_level": {
-            "type": "string"
-          },
-          "two_factor_grace_period": {
-            "type": "integer"
-          },
-          "unique_project_download_limit": {
-            "type": "string"
-          },
-          "unique_project_download_limit_alertlist": {
-            "type": "string"
-          },
-          "unique_project_download_limit_allowlist": {
-            "type": "string"
-          },
-          "unique_project_download_limit_interval_in_seconds": {
-            "type": "string"
-          },
           "visibility": {
             "type": "string"
           },
           "web_url": {
-            "type": "string"
-          },
-          "wiki_access_level": {
             "type": "string"
           }
         },
