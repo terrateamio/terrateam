@@ -3996,7 +3996,7 @@ module Comment = struct
           "REPO_CONFIG_SCHEMA_ERR"
           Tmpl.repo_config_schema_err
           kv
-    | Msg.Run_work_manifest_err `Failed_to_start ->
+    | Msg.Run_work_manifest_err (`Failed_to_start | `Failed_to_start_with_msg_err _) ->
         let kv = Snabela.Kv.(Map.of_list []) in
         apply_template_and_publish
           ~request_id

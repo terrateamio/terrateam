@@ -1049,7 +1049,12 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               p : (unit, [ `Error ]) result Abb.Future.Promise.t;
             }
           | Work_manifest_run_success
-          | Work_manifest_run_failure of [ `Failed_to_start | `Missing_workflow | `Error ]
+          | Work_manifest_run_failure of
+              [ `Failed_to_start_with_msg_err of string
+              | `Failed_to_start
+              | `Missing_workflow
+              | `Error
+              ]
           | Plan_store of {
               dirspace : Terrat_dirspace.t;
               data : string;
@@ -2873,7 +2878,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
 
     let publish_run_failure request_id client user pull_request = function
       | `Error -> publish_msg request_id client user pull_request Msg.Unexpected_temporary_err
-      | (`Missing_workflow | `Failed_to_start) as err ->
+      | (`Failed_to_start_with_msg_err _ | `Missing_workflow | `Failed_to_start) as err ->
           publish_msg request_id client user pull_request (Msg.Run_work_manifest_err err)
 
     let dirspaceflows_of_changes_with_branch_target repo_config changes =
