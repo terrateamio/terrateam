@@ -1,0 +1,341 @@
+---
+title: Environment Variables
+description: Complete reference for Terrateam Self-Hosted environment variables and configuration options.
+---
+
+This page provides a comprehensive reference for all environment variables used to configure Terrateam Self-Hosted.
+
+## Required Variables
+
+These environment variables are required for Terrateam Self-Hosted to function properly:
+
+### Database Configuration
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `DB_HOST` | Database host address | `localhost`, `db.example.com` |
+| `DB_NAME` | Database name | `terrateam` |
+| `DB_USER` | Database username | `terrateam` |
+| `DB_PASS` | Database password | `secure_password_123` |
+| `DB_PORT` | Database port | `5432` |
+
+### GitHub Application Settings
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `GITHUB_APP_ID` | GitHub application ID | `123456` |
+| `GITHUB_APP_CLIENT_ID` | GitHub application client ID | `Iv1.8ea942184ee41c0b` |
+| `GITHUB_APP_CLIENT_SECRET` | GitHub application client secret | `8dab6d1de78a2cdbc9o014dubcf4a55ca44a3c81` |
+| `GITHUB_APP_PEM` | GitHub application private key (PEM format) | `-----BEGIN RSA PRIVATE KEY-----\nMIIE...` |
+| `GITHUB_WEBHOOK_SECRET` | GitHub webhook secret for security | `02d87878a0ac61d75d25cz8fec1d1af509f9a6d9` |
+
+### Server Configuration
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `TERRAT_API_BASE` | Public-facing API base URL (includes `/api`) | `https://terrateam.example.com/api` |
+| `TERRAT_WEB_BASE_URL` | Public-facing web base URL | `https://terrateam.example.com` |
+
+## Optional Variables
+
+These environment variables provide additional configuration options:
+
+### GitHub Enterprise Server
+
+For GitHub Enterprise Server deployments:
+
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `GITHUB_API_BASE_URL` | GitHub API base URL | `https://api.github.com` | `https://api.github.example.com` |
+| `GITHUB_WEB_BASE_URL` | GitHub web base URL | `https://github.com` | `https://github.example.com` |
+
+### Webhook Configuration
+
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `GITHUB_WEBHOOK_URL_UPDATE` | Auto-update GitHub webhook URL on startup | `TRUE` | `FALSE` |
+
+:::note[Webhook URL Format]
+If you manually configure the GitHub webhook URL, ensure it includes the trailing `/api/github/v1/events` path.
+:::
+
+### Proxy Configuration
+
+For environments requiring HTTP proxies:
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `HTTP_PROXY` | URL for HTTP proxy | `https://proxy.local:8080` |
+| `HTTPS_PROXY` | URL for HTTPS proxy | `https://proxy.local:8080` |
+| `NO_PROXY` | Comma-separated list of hosts to bypass proxy | `localhost,127.0.0.1,internal.com` |
+
+#### Proxy Authentication
+
+For proxies requiring authentication, include credentials in the URL:
+
+```bash
+HTTP_PROXY=https://username:password@proxy.local:8080
+HTTPS_PROXY=https://username:password@proxy.local:8080
+```
+
+### TLS/SSL Configuration
+
+For custom TLS certificate handling:
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `NO_VERIFY_TLS_CERT` | Comma-separated list of hosts to skip TLS certificate verification | `internal.example.com,self-signed.local` |
+| `NO_VERIFY_TLS_NAME` | Comma-separated list of hosts to skip TLS name verification | `internal.example.com,self-signed.local` |
+
+:::caution[Security Warning]
+Only disable TLS verification for internal/trusted endpoints. Never disable TLS verification for external services.
+:::
+
+### Logging and Debugging
+
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `LOG_LEVEL` | Logging level | `INFO` | `DEBUG`, `WARN`, `ERROR` |
+| `LOG_FORMAT` | Log output format | `json` | `text`, `json` |
+
+### Performance Tuning
+
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `MAX_WORKERS` | Maximum number of worker processes | `4` | `8` |
+| `WORKER_TIMEOUT` | Worker timeout in seconds | `300` | `600` |
+| `MAX_CONNECTIONS` | Maximum database connections | `20` | `50` |
+
+## Configuration Examples
+
+### Docker Run Example
+
+```bash
+docker run -d \
+  --name terrateam-server \
+  -p 8080:8080 \
+  -e DB_HOST="postgres.example.com" \
+  -e DB_PORT="5432" \
+  -e DB_USER="terrateam" \
+  -e DB_PASS="secure_password_123" \
+  -e DB_NAME="terrateam" \
+  -e GITHUB_APP_ID="123456" \
+  -e GITHUB_APP_CLIENT_ID="Iv1.8ea942184ee41c0b" \
+  -e GITHUB_APP_CLIENT_SECRET="8dab6d1de78a2cdbc9o014dubcf4a55ca44a3c81" \
+  -e GITHUB_WEBHOOK_SECRET="02d87878a0ac61d75d25cz8fec1d1af509f9a6d9" \
+  -e GITHUB_APP_PEM="-----BEGIN RSA PRIVATE KEY-----
+MIIEowIBAAsYd4c7nM/N...
+-----END RSA PRIVATE KEY-----" \
+  -e TERRAT_API_BASE="https://terrateam.example.com/api" \
+  -e TERRAT_WEB_BASE_URL="https://terrateam.example.com" \
+  ghcr.io/terrateamio/terrat-oss:latest
+```
+
+### Docker Compose Example
+
+```yaml
+version: '3.8'
+
+services:
+  terrateam-server:
+    image: ghcr.io/terrateamio/terrat-oss:latest
+    environment:
+      # Database Configuration
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=terrateam
+      - DB_PASS=${DB_PASSWORD}
+      - DB_NAME=terrateam
+      
+      # GitHub App Configuration
+      - GITHUB_APP_ID=${GITHUB_APP_ID}
+      - GITHUB_APP_CLIENT_ID=${GITHUB_APP_CLIENT_ID}
+      - GITHUB_APP_CLIENT_SECRET=${GITHUB_APP_CLIENT_SECRET}
+      - GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET}
+      - GITHUB_APP_PEM=${GITHUB_APP_PEM}
+      
+      # Server Configuration
+      - TERRAT_API_BASE=${TERRAT_API_BASE}
+      - TERRAT_WEB_BASE_URL=${TERRAT_WEB_BASE_URL}
+      
+      # Optional: GitHub Enterprise
+      - GITHUB_API_BASE_URL=${GITHUB_API_BASE_URL}
+      - GITHUB_WEB_BASE_URL=${GITHUB_WEB_BASE_URL}
+      
+      # Optional: Proxy Configuration
+      - HTTP_PROXY=${HTTP_PROXY}
+      - HTTPS_PROXY=${HTTPS_PROXY}
+      - NO_PROXY=localhost,127.0.0.1
+```
+
+### Kubernetes ConfigMap Example
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: terrateam-config
+data:
+  DB_HOST: "postgres.example.com"
+  DB_PORT: "5432"
+  DB_USER: "terrateam"
+  DB_NAME: "terrateam"
+  TERRAT_API_BASE: "https://terrateam.example.com/api"
+  TERRAT_WEB_BASE_URL: "https://terrateam.example.com"
+  GITHUB_API_BASE_URL: "https://api.github.com"
+  GITHUB_WEB_BASE_URL: "https://github.com"
+  LOG_LEVEL: "INFO"
+  LOG_FORMAT: "json"
+```
+
+## Environment-Specific Configurations
+
+### Development Environment
+
+```bash
+# Minimal configuration for development
+export DB_HOST="localhost"
+export DB_PORT="5432"
+export DB_USER="terrateam"
+export DB_PASS="terrateam"
+export DB_NAME="terrateam"
+export GITHUB_APP_ID="123456"
+export GITHUB_APP_CLIENT_ID="Iv1.dev123"
+export GITHUB_APP_CLIENT_SECRET="dev_secret_123"
+export GITHUB_WEBHOOK_SECRET="dev_webhook_secret"
+export GITHUB_APP_PEM="-----BEGIN RSA PRIVATE KEY-----..."
+export TERRAT_API_BASE="https://ngrok-url.ngrok.io/api"
+export TERRAT_WEB_BASE_URL="https://ngrok-url.ngrok.io"
+export LOG_LEVEL="DEBUG"
+```
+
+### Production Environment
+
+```bash
+# Production configuration with security and performance settings
+export DB_HOST="prod-postgres.example.com"
+export DB_PORT="5432"
+export DB_USER="terrateam_prod"
+export DB_PASS="$(cat /run/secrets/db_password)"
+export DB_NAME="terrateam_prod"
+export GITHUB_APP_ID="789012"
+export GITHUB_APP_CLIENT_ID="Iv1.prod456"
+export GITHUB_APP_CLIENT_SECRET="$(cat /run/secrets/github_client_secret)"
+export GITHUB_WEBHOOK_SECRET="$(cat /run/secrets/github_webhook_secret)"
+export GITHUB_APP_PEM="$(cat /run/secrets/github_app_pem)"
+export TERRAT_API_BASE="https://terrateam.company.com/api"
+export TERRAT_WEB_BASE_URL="https://terrateam.company.com"
+export LOG_LEVEL="INFO"
+export LOG_FORMAT="json"
+export MAX_WORKERS="8"
+export MAX_CONNECTIONS="50"
+```
+
+### Air-Gapped Environment
+
+```bash
+# Configuration for air-gapped/offline environments
+export DB_HOST="internal-postgres.local"
+export DB_PORT="5432"
+export DB_USER="terrateam"
+export DB_PASS="secure_internal_password"
+export DB_NAME="terrateam"
+export GITHUB_APP_ID="345678"
+export GITHUB_APP_CLIENT_ID="Iv1.internal789"
+export GITHUB_APP_CLIENT_SECRET="internal_secret_456"
+export GITHUB_WEBHOOK_SECRET="internal_webhook_secret"
+export GITHUB_APP_PEM="-----BEGIN RSA PRIVATE KEY-----..."
+export TERRAT_API_BASE="https://terrateam.internal.com/api"
+export TERRAT_WEB_BASE_URL="https://terrateam.internal.com"
+export GITHUB_API_BASE_URL="https://github.internal.com/api/v3"
+export GITHUB_WEB_BASE_URL="https://github.internal.com"
+export NO_VERIFY_TLS_CERT="github.internal.com,postgres.internal.com"
+```
+
+## Security Best Practices
+
+### Secret Management
+
+1. **Never hardcode secrets** in configuration files
+2. **Use environment files** (`.env`) for development only
+3. **Use secret management systems** in production:
+   - Kubernetes Secrets
+   - Docker Secrets
+   - HashiCorp Vault
+   - AWS Secrets Manager
+   - Azure Key Vault
+
+### Example with External Secret Management
+
+```bash
+# Using external secret management
+export DB_PASS="$(vault kv get -field=password secret/terrateam/db)"
+export GITHUB_APP_CLIENT_SECRET="$(vault kv get -field=client_secret secret/terrateam/github)"
+export GITHUB_WEBHOOK_SECRET="$(vault kv get -field=webhook_secret secret/terrateam/github)"
+```
+
+### File Permissions
+
+When using `.env` files, ensure proper permissions:
+
+```bash
+# Set restrictive permissions on .env file
+chmod 600 .env
+chown terrateam:terrateam .env
+```
+
+## Validation and Testing
+
+### Environment Variable Validation
+
+Use this script to validate your environment variables:
+
+```bash
+#!/bin/bash
+
+# Required variables
+REQUIRED_VARS=(
+    "DB_HOST"
+    "DB_NAME"
+    "DB_USER"
+    "DB_PASS"
+    "GITHUB_APP_ID"
+    "GITHUB_APP_CLIENT_ID"
+    "GITHUB_APP_CLIENT_SECRET"
+    "GITHUB_WEBHOOK_SECRET"
+    "GITHUB_APP_PEM"
+    "TERRAT_API_BASE"
+    "TERRAT_WEB_BASE_URL"
+)
+
+echo "Validating required environment variables..."
+
+for var in "${REQUIRED_VARS[@]}"; do
+    if [[ -z "${!var}" ]]; then
+        echo "ERROR: $var is not set"
+        exit 1
+    else
+        echo "✓ $var is set"
+    fi
+done
+
+echo "All required environment variables are set!"
+```
+
+### Configuration Testing
+
+Test your configuration before deployment:
+
+```bash
+# Test database connection
+pg_isready -h $DB_HOST -p $DB_PORT -U $DB_USER
+
+# Test GitHub API connectivity
+curl -H "Authorization: Bearer $GITHUB_TOKEN" \
+     $GITHUB_API_BASE_URL/user
+
+# Test webhook endpoint accessibility
+curl -k $TERRAT_API_BASE/github/v1/events
+```
+
+For troubleshooting configuration issues, see the [Troubleshooting Guide](/self-hosted/troubleshooting/).

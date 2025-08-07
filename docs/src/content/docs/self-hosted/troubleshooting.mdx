@@ -1,0 +1,517 @@
+---
+title: Troubleshooting
+description: Common issues and solutions for Terrateam Self-Hosted deployments.
+---
+
+This guide covers common issues and their solutions when deploying and running Terrateam Self-Hosted.
+
+## General Troubleshooting Steps
+
+Before diving into specific issues, follow these general troubleshooting steps:
+
+1. **Check system requirements** - Ensure your system meets the minimum requirements
+2. **Verify connectivity** - Test network connectivity between components
+3. **Check logs** - Review application and system logs for error messages
+4. **Validate configuration** - Confirm all environment variables and settings are correct
+5. **Test health endpoints** - Use health check endpoints to verify service status
+
+## Installation Issues
+
+### Docker Container Won't Start
+
+**Symptoms:**
+- Container exits immediately after starting
+- "Exit code 1" or similar error messages
+
+**Solutions:**
+
+1. **Check Docker logs:**
+   ```bash
+   docker logs terrateam-server
+   ```
+
+2. **Verify environment variables:**
+   ```bash
+   docker exec terrateam-server env | grep -E "(DB_|GITHUB_|TERRAT_)"
+   ```
+
+3. **Test with minimal configuration:**
+   ```bash
+   docker run --rm -it \
+     -e DB_HOST="localhost" \
+     -e DB_USER="terrateam" \
+     -e DB_PASS="terrateam" \
+     -e DB_NAME="terrateam" \
+     -e GITHUB_APP_ID="123456" \
+     -e GITHUB_APP_CLIENT_ID="test" \
+     -e GITHUB_APP_CLIENT_SECRET="test" \
+     -e GITHUB_WEBHOOK_SECRET="test" \
+     -e GITHUB_APP_PEM="test" \
+     -e TERRAT_API_BASE="http://localhost:8080/api" \
+     -e TERRAT_WEB_BASE_URL="http://localhost:8080" \
+     ghcr.io/terrateamio/terrat-oss:latest
+   ```
+
+### Kubernetes Pods Not Starting
+
+**Symptoms:**
+- Pods stuck in `Pending`, `CrashLoopBackOff`, or `Error` state
+- Events show scheduling or resource issues
+
+**Solutions:**
+
+1. **Check pod status and events:**
+   ```bash
+   kubectl describe pod <pod-name>
+   kubectl get events --sort-by='.lastTimestamp'
+   ```
+
+2. **Verify resource limits:**
+   ```bash
+   kubectl top nodes
+   kubectl describe nodes
+   ```
+
+3. **Check secrets and configmaps:**
+   ```bash
+   kubectl get secrets
+   kubectl get configmaps
+   kubectl describe secret terrateam-github-app-pem
+   ```
+
+4. **Review pod logs:**
+   ```bash
+   kubectl logs <pod-name>
+   kubectl logs <pod-name> --previous
+   ```
+
+## Database Connection Issues
+
+### Cannot Connect to Database
+
+**Symptoms:**
+- "Connection refused" errors
+- "Database does not exist" errors
+- Authentication failures
+
+**Solutions:**
+
+1. **Test database connectivity:**
+   ```bash
+   # From Terrateam server container
+   pg_isready -h $DB_HOST -p $DB_PORT -U $DB_USER
+   
+   # Test connection with psql
+   psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME
+   ```
+
+2. **Verify database configuration:**
+   ```sql
+   -- Check if database exists
+   SELECT datname FROM pg_database WHERE datname = 'terrateam';
+   
+   -- Check user permissions
+   SELECT * FROM pg_user WHERE usename = 'terrateam';
+   
+   -- Check user permissions on database
+   SELECT datname, datacl FROM pg_database WHERE datname = 'terrateam';
+   ```
+
+3. **Check network connectivity:**
+   ```bash
+   # Test port connectivity
+   telnet $DB_HOST $DB_PORT
+   
+   # Test DNS resolution
+   nslookup $DB_HOST
+   ```
+
+4. **Verify PostgreSQL configuration:**
+   ```bash
+   # Check PostgreSQL is listening on correct interface
+   netstat -an | grep :5432
+   
+   # Check pg_hba.conf for authentication rules
+   # Check postgresql.conf for listen_addresses
+   ```
+
+### Database Migration Issues
+
+**Symptoms:**
+- "Migration failed" errors in logs
+- Database schema version mismatches
+
+**Solutions:**
+
+1. **Check migration status:**
+   ```sql
+   -- Connect to database and check migration table
+   SELECT * FROM schema_migrations ORDER BY version DESC LIMIT 10;
+   ```
+
+2. **Manually run migrations:**
+   ```bash
+   # If using Docker
+   docker exec terrateam-server terrateam migrate
+   ```
+
+3. **Reset database (development only):**
+   ```sql
+   -- WARNING: This will delete all data
+   DROP DATABASE terrateam;
+   CREATE DATABASE terrateam;
+   GRANT ALL PRIVILEGES ON DATABASE terrateam TO terrateam;
+   ```
+
+## GitHub Integration Issues
+
+### GitHub App Not Receiving Webhooks
+
+**Symptoms:**
+- Pull requests not triggering Terrateam actions
+- No webhook events in GitHub App settings
+- Webhook delivery failures
+
+**Solutions:**
+
+1. **Verify webhook URL:**
+   ```bash
+   # Test webhook endpoint accessibility
+   curl -k https://terrateam.example.com/api/github/v1/events
+   ```
+
+2. **Check webhook configuration:**
+   - Ensure webhook URL ends with `/api/github/v1/events`
+   - Verify webhook secret matches `GITHUB_WEBHOOK_SECRET`
+   - Confirm webhook is set to receive the correct events
+
+3. **Test webhook delivery:**
+   - Go to GitHub App settings → Advanced → Recent Deliveries
+   - Look for failed deliveries and error messages
+   - Use "Redeliver" to test webhook endpoint
+
+4. **Check firewall and network:**
+   ```bash
+   # Ensure port 443 is open for HTTPS
+   # Check if firewall is blocking GitHub webhook IPs
+   # Verify DNS resolution for your domain
+   ```
+
+### GitHub API Authentication Issues
+
+**Symptoms:**
+- "Unauthorized" or "Forbidden" errors
+- GitHub API rate limiting errors
+- Installation token errors
+
+**Solutions:**
+
+1. **Verify GitHub App configuration:**
+   ```bash
+   # Check GitHub App ID and client credentials
+   echo $GITHUB_APP_ID
+   echo $GITHUB_APP_CLIENT_ID
+   
+   # Verify PEM key format
+   echo "$GITHUB_APP_PEM" | openssl rsa -check -noout
+   ```
+
+2. **Test GitHub API access:**
+   ```bash
+   # Test with curl (replace with your values)
+   curl -H "Authorization: Bearer $GITHUB_TOKEN" \
+        $GITHUB_API_BASE_URL/user
+   ```
+
+3. **Check GitHub App permissions:**
+   - Ensure the app has required permissions
+   - Verify the app is installed on the correct repositories
+   - Check if the app installation is active
+
+### GitHub Enterprise Server Issues
+
+**Symptoms:**
+- Cannot connect to GitHub Enterprise Server
+- SSL certificate verification failures
+- API endpoint not found errors
+
+**Solutions:**
+
+1. **Verify GitHub Enterprise configuration:**
+   ```bash
+   export GITHUB_API_BASE_URL="https://api.github.example.com"
+   export GITHUB_WEB_BASE_URL="https://github.example.com"
+   ```
+
+2. **Test connectivity:**
+   ```bash
+   # Test API endpoint
+   curl -k $GITHUB_API_BASE_URL/user
+   
+   # Test web interface
+   curl -k $GITHUB_WEB_BASE_URL
+   ```
+
+3. **Handle SSL certificate issues:**
+   ```bash
+   # For self-signed certificates
+   export NO_VERIFY_TLS_CERT="github.example.com"
+   export NO_VERIFY_TLS_NAME="github.example.com"
+   ```
+
+## Network and Connectivity Issues
+
+### Load Balancer Health Check Failures
+
+**Symptoms:**
+- Load balancer shows backend as unhealthy
+- Intermittent connection issues
+- 502/503 errors from load balancer
+
+**Solutions:**
+
+1. **Verify health check endpoint:**
+   ```bash
+   curl http://localhost:8080/health
+   ```
+
+2. **Check health check configuration:**
+   ```nginx
+   # Example Nginx health check
+   location /health {
+       proxy_pass http://terrateam-backend;
+       proxy_set_header Host $host;
+       access_log off;
+   }
+   ```
+
+3. **Monitor application health:**
+   ```bash
+   # Check application logs for errors
+   docker logs terrateam-server | grep -i error
+   
+   # Monitor resource usage
+   docker stats terrateam-server
+   ```
+
+### SSL/TLS Certificate Issues
+
+**Symptoms:**
+- "Certificate verification failed" errors
+- Browser security warnings
+- HTTPS connection failures
+
+**Solutions:**
+
+1. **Verify certificate configuration:**
+   ```bash
+   # Check certificate validity
+   openssl s_client -connect terrateam.example.com:443 -servername terrateam.example.com
+   
+   # Check certificate expiration
+   openssl x509 -in cert.pem -text -noout | grep -A 2 "Validity"
+   ```
+
+2. **Test SSL configuration:**
+   ```bash
+   # Test with SSL Labs
+   curl -s "https://api.ssllabs.com/api/v3/analyze?host=terrateam.example.com"
+   ```
+
+3. **Handle certificate chain issues:**
+   ```bash
+   # Ensure full certificate chain is provided
+   cat cert.pem intermediate.pem root.pem > fullchain.pem
+   ```
+
+## Performance Issues
+
+### Slow Response Times
+
+**Symptoms:**
+- Slow API responses
+- Timeouts during Terraform operations
+- High resource usage
+
+**Solutions:**
+
+1. **Monitor resource usage:**
+   ```bash
+   # Check CPU and memory usage
+   docker stats terrateam-server
+   
+   # Check database performance
+   SELECT * FROM pg_stat_activity WHERE state = 'active';
+   ```
+
+2. **Optimize database queries:**
+   ```sql
+   -- Check slow queries
+   SELECT query, mean_exec_time, calls 
+   FROM pg_stat_statements 
+   ORDER BY mean_exec_time DESC 
+   LIMIT 10;
+   ```
+
+3. **Scale horizontally:**
+   ```bash
+   # Add more Terrateam instances
+   docker run -d --name terrateam-server-2 [same config] ghcr.io/terrateamio/terrat-oss:latest
+   ```
+
+### High Memory Usage
+
+**Symptoms:**
+- Out of memory errors
+- Container restarts due to memory limits
+- Slow garbage collection
+
+**Solutions:**
+
+1. **Increase memory limits:**
+   ```yaml
+   # Docker Compose
+   deploy:
+     resources:
+       limits:
+         memory: 2G
+       reservations:
+         memory: 1G
+   ```
+
+2. **Monitor memory usage:**
+   ```bash
+   # Check memory usage patterns
+   docker stats --no-stream terrateam-server
+   
+   # Check for memory leaks
+   docker exec terrateam-server cat /proc/meminfo
+   ```
+
+## Security Issues
+
+### Webhook Security
+
+**Symptoms:**
+- Unauthorized webhook deliveries
+- Webhook validation failures
+- Security warnings in logs
+
+**Solutions:**
+
+1. **Verify webhook secret:**
+   ```bash
+   # Ensure webhook secret matches
+   echo $GITHUB_WEBHOOK_SECRET
+   ```
+
+2. **Implement webhook IP filtering:**
+   ```nginx
+   # Allow only GitHub webhook IPs
+   location /api/github/v1/events {
+       allow 192.30.252.0/22;
+       allow 185.199.108.0/22;
+       allow 140.82.112.0/20;
+       deny all;
+       proxy_pass http://terrateam-backend;
+   }
+   ```
+
+### Access Control Issues
+
+**Symptoms:**
+- Unauthorized access to Terrateam
+- Permission denied errors
+- Authentication failures
+
+**Solutions:**
+
+1. **Review GitHub App permissions:**
+   - Check repository access settings
+   - Verify user permissions in GitHub
+   - Ensure proper organization membership
+
+2. **Implement network security:**
+   ```bash
+   # Use firewall rules
+   iptables -A INPUT -p tcp --dport 8080 -s trusted_network -j ACCEPT
+   iptables -A INPUT -p tcp --dport 8080 -j DROP
+   ```
+
+## Monitoring and Debugging
+
+### Enable Debug Logging
+
+```bash
+# Set debug log level
+export LOG_LEVEL="DEBUG"
+
+# For Docker
+docker run -e LOG_LEVEL="DEBUG" [...] ghcr.io/terrateamio/terrat-oss:latest
+
+# For Kubernetes
+kubectl set env deployment/terrateam-server LOG_LEVEL=DEBUG
+```
+
+### Collect Diagnostic Information
+
+```bash
+#!/bin/bash
+# Diagnostic script for Terrateam Self-Hosted
+
+echo "=== System Information ==="
+uname -a
+docker --version
+kubectl version --client 2>/dev/null || echo "kubectl not available"
+
+echo "=== Container Status ==="
+docker ps | grep terrateam
+
+echo "=== Container Logs ==="
+docker logs --tail 50 terrateam-server
+
+echo "=== Network Configuration ==="
+docker network ls
+docker port terrateam-server
+
+echo "=== Environment Variables ==="
+docker exec terrateam-server env | grep -E "(DB_|GITHUB_|TERRAT_)" | sed 's/=.*/=***/'
+
+echo "=== Health Check ==="
+curl -s http://localhost:8080/health || echo "Health check failed"
+
+echo "=== Database Connectivity ==="
+docker exec terrateam-server pg_isready -h $DB_HOST -p $DB_PORT -U $DB_USER
+```
+
+### Performance Monitoring
+
+```bash
+# Monitor system resources
+watch 'docker stats --no-stream terrateam-server'
+
+# Monitor database connections
+watch 'docker exec terrateam-server psql -h $DB_HOST -U $DB_USER -d $DB_NAME -c "SELECT count(*) FROM pg_stat_activity;"'
+
+# Monitor application metrics
+curl -s http://localhost:8080/metrics | grep -E "(http_requests|database_connections)"
+```
+
+## Getting Help
+
+If you're still experiencing issues after trying these troubleshooting steps:
+
+1. **Check the [FAQ](/self-hosted/faq/)** for common questions
+2. **Review the [GitHub Issues](https://github.com/terrateamio/terrateam/issues)** for known problems
+3. **Join the community** discussions for additional support
+4. **Contact support** with diagnostic information and logs
+
+### Information to Include When Seeking Help
+
+- Deployment method (Docker Compose, Kubernetes, Manual)
+- Terrateam version/image tag
+- Operating system and version
+- Database version and configuration
+- Error messages and logs
+- Steps to reproduce the issue
+- Network and security configuration details

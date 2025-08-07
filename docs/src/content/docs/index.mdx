@@ -18,7 +18,7 @@ import { LinkCard, CardGrid, Card } from '@astrojs/starlight/components';
 
 ## What is Terrateam?
 
-Terrateam is open-source GitOps CI/CD for Terraform and OpenTofu that integrates with GitHub. It enables teams to manage infrastructure changes through pull requests.
+Terrateam is open-source GitOps CI/CD for Terraform and OpenTofu that integrates with GitHub and GitLab. It enables teams to manage infrastructure changes through pull requests and merge requests.
 
 With Terrateam, you can:
   - Easily manage your infrastructure as code.
@@ -48,8 +48,8 @@ With Terrateam, you can:
 ## Terrateam Features
 
 <CardGrid>
-	<Card title="GitHub-Native" icon="github">
-		Terrateam is built as a GitHub app and Action, making it easy to integrate directly with your repositories.
+	<Card title="GitOps Native" icon="github">
+		Terrateam integrates with GitHub (as an app and Action) and GitLab, making it easy to work directly with your repositories.
     <LinkCard title="Installation" href="/quickstart-guide"  />
 	</Card>
 	<Card title="GitOps Workflow" icon="rocket">
@@ -89,15 +89,15 @@ Terrateam brings GitOps principles to Terraform workflows, making infrastructure
 The following steps explain how Terrateam processes your Terraform changes:
 
 <Steps>
-1. **Create a Pull Request with Terraform Changes**
+1. **Create a Pull Request or Merge Request with Terraform Changes**
 
-   When you create a pull request containing Terraform code changes, Terrateam automatically detects the modifications.
+   When you create a pull request (GitHub) or merge request (GitLab) containing Terraform code changes, Terrateam automatically detects the modifications.
    
    ![Terrateam pull request](../../assets/nibbler-pull-request.png)
 
 2. **Automatic Plan Operation**
 
-   Terrateam automatically runs `terraform plan` and comments the results directly in your pull request, allowing team members to review the proposed changes.
+   Terrateam automatically runs `terraform plan` and comments the results directly in your pull request or merge request, allowing team members to review the proposed changes.
    
    ![Terrateam plan](../../assets/nibbler-terrateam-plan.png)
 
@@ -115,7 +115,7 @@ The following steps explain how Terrateam processes your Terraform changes:
 <Steps>
 1. **Install**
 
-   Add the Terrateam GitHub app to your repository.
+   Add Terrateam to your GitHub or GitLab repository.
    
    <LinkCard title="Installation Guide" href="/quickstart-guide" />
 

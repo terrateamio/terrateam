@@ -1,0 +1,515 @@
+---
+title: Manual Installation
+description: Manual deployment guide for Terrateam Self-Hosted in custom environments.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Manual installation provides maximum flexibility for deploying Terrateam Self-Hosted in custom environments, air-gapped networks, or when you need complete control over the deployment process.
+
+## Prerequisites
+
+Before you begin, ensure you have:
+- **Docker** runtime environment
+- **PostgreSQL** database (version 14+)
+- **GitHub Application or GitLab configuration** already created (see [Getting Started](/self-hosted/getting-started/))
+- Network connectivity between components
+
+## Architecture Components
+
+Terrateam Self-Hosted consists of two main components:
+
+1. **Terrateam Server** - Main application container
+   - Image: `ghcr.io/terrateamio/terrat-oss:latest`
+   - Handles GitHub/GitLab webhooks and Terraform operations
+   - Exposes REST API and web interface
+
+2. **PostgreSQL Database** - Data storage
+   - Version 14+ required
+   - Stores application state, plans, and audit logs
+   - Can be external managed service or self-hosted
+
+## Installation Steps
+
+<Steps>
+
+1. **Prepare PostgreSQL Database**
+
+   Create the database and user for Terrateam:
+
+   ```sql
+   -- Connect as postgres superuser
+   CREATE DATABASE terrateam;
+   CREATE USER terrateam WITH ENCRYPTED PASSWORD 'STRONG_PASSWORD_HERE';
+   GRANT ALL PRIVILEGES ON DATABASE terrateam TO terrateam;
+   GRANT ALL ON SCHEMA public TO terrateam;
+   ALTER DATABASE terrateam OWNER TO terrateam;
+   ```
+
+   :::danger[Security]
+   Replace `STRONG_PASSWORD_HERE` with a secure, randomly generated password.
+   :::
+
+2. **Configure Environment Variables**
+
+   Prepare your environment variables (see [Environment Variables](/self-hosted/environment-variables/) for complete reference):
+
+   #### For GitHub:
+   ```bash
+   # Database Configuration
+   export DB_HOST="your-postgres-host"
+   export DB_PORT="5432"
+   export DB_USER="terrateam"
+   export DB_PASS="STRONG_PASSWORD_HERE"
+   export DB_NAME="terrateam"
+   
+   # GitHub App Configuration (from your setup)
+   export GITHUB_APP_ID="123456"
+   export GITHUB_APP_CLIENT_ID="Iv1.8ea942184ee41c0b"
+   export GITHUB_APP_CLIENT_SECRET="8dab6d1de78a2cdbc9o014dubcf4a55ca44a3c81"
+   export GITHUB_WEBHOOK_SECRET="02d87878a0ac61d75d25cz8fec1d1af509f9a6d9"
+   export GITHUB_APP_PEM="-----BEGIN RSA PRIVATE KEY-----
+   MIIEowIBAAsYd4c7nM/N...
+   -----END RSA PRIVATE KEY-----"
+   
+   # Server Configuration
+   export TERRAT_API_BASE="https://terrateam.example.com/api"
+   export TERRAT_WEB_BASE_URL="https://terrateam.example.com"
+   ```
+
+   #### For GitLab:
+   ```bash
+   # Database Configuration
+   export DB_HOST="your-postgres-host"
+   export DB_PORT="5432"
+   export DB_USER="terrateam"
+   export DB_PASS="STRONG_PASSWORD_HERE"
+   export DB_NAME="terrateam"
+   
+   # GitLab Configuration (from your setup)
+   export GITLAB_APP_ID="your-gitlab-app-id"
+   export GITLAB_APP_SECRET="your-gitlab-app-secret"
+   export GITLAB_ACCESS_TOKEN="your-gitlab-access-token"
+   
+   # Server Configuration
+   export TERRAT_API_BASE="https://terrateam.example.com/api"
+   export TERRAT_WEB_BASE_URL="https://terrateam.example.com"
+   
+   # For self-hosted GitLab (optional)
+   export GITLAB_API_BASE_URL="https://gitlab.example.com/api/v4"
+   export GITLAB_WEB_BASE_URL="https://gitlab.example.com"
+   ```
+
+3. **Deploy Terrateam Server**
+
+   Run the Terrateam server container:
+
+   #### For GitHub:
+   ```bash
+   docker run -d \
+     --name terrateam-server \
+     --restart unless-stopped \
+     -p 8080:8080 \
+     -e DB_HOST="$DB_HOST" \
+     -e DB_PORT="$DB_PORT" \
+     -e DB_USER="$DB_USER" \
+     -e DB_PASS="$DB_PASS" \
+     -e DB_NAME="$DB_NAME" \
+     -e GITHUB_APP_ID="$GITHUB_APP_ID" \
+     -e GITHUB_APP_CLIENT_ID="$GITHUB_APP_CLIENT_ID" \
+     -e GITHUB_APP_CLIENT_SECRET="$GITHUB_APP_CLIENT_SECRET" \
+     -e GITHUB_WEBHOOK_SECRET="$GITHUB_WEBHOOK_SECRET" \
+     -e GITHUB_APP_PEM="$GITHUB_APP_PEM" \
+     -e TERRAT_API_BASE="$TERRAT_API_BASE" \
+     -e TERRAT_WEB_BASE_URL="$TERRAT_WEB_BASE_URL" \
+     ghcr.io/terrateamio/terrat-oss:latest
+   ```
+
+   #### For GitLab:
+   ```bash
+   docker run -d \
+     --name terrateam-server \
+     --restart unless-stopped \
+     -p 8080:8080 \
+     -e DB_HOST="$DB_HOST" \
+     -e DB_PORT="$DB_PORT" \
+     -e DB_USER="$DB_USER" \
+     -e DB_PASS="$DB_PASS" \
+     -e DB_NAME="$DB_NAME" \
+     -e GITLAB_APP_ID="$GITLAB_APP_ID" \
+     -e GITLAB_APP_SECRET="$GITLAB_APP_SECRET" \
+     -e GITLAB_ACCESS_TOKEN="$GITLAB_ACCESS_TOKEN" \
+     -e TERRAT_API_BASE="$TERRAT_API_BASE" \
+     -e TERRAT_WEB_BASE_URL="$TERRAT_WEB_BASE_URL" \
+     ghcr.io/terrateamio/terrat-oss:latest
+   ```
+
+4. **Verify Deployment**
+
+   Check that the server is running and healthy:
+
+   ```bash
+   # Check container status
+   docker ps | grep terrateam-server
+   
+   # Check application health
+   curl http://localhost:8080/health
+   
+   # View logs
+   docker logs terrateam-server
+   ```
+
+5. **Configure Load Balancer/Reverse Proxy**
+
+   Set up a reverse proxy to handle HTTPS and external access. Example Nginx configuration:
+
+   ```nginx
+   server {
+       listen 80;
+       server_name terrateam.example.com;
+       return 301 https://$server_name$request_uri;
+   }
+   
+   server {
+       listen 443 ssl;
+       server_name terrateam.example.com;
+       
+       ssl_certificate /path/to/cert.pem;
+       ssl_certificate_key /path/to/key.pem;
+       
+       location / {
+           proxy_pass http://localhost:8080;
+           proxy_set_header Host $host;
+           proxy_set_header X-Real-IP $remote_addr;
+           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+           proxy_set_header X-Forwarded-Proto $scheme;
+       }
+       
+       location /health {
+           proxy_pass http://localhost:8080;
+           access_log off;
+       }
+   }
+   ```
+
+6. **Configure Webhook URLs**
+
+   #### For GitHub:
+   Navigate to your GitHub App settings and configure the webhook URL:
+   - Webhook URL: `https://terrateam.example.com/api/github/v1/events`
+   - Ensure the webhook secret matches your configuration
+
+   #### For GitLab:
+   For each GitLab project you want to manage:
+   1. Navigate to Project Settings → Webhooks
+   2. Add webhook URL: `https://terrateam.example.com/api/gitlab/v1/events`
+   3. Select these events:
+      - Push events
+      - Merge request events
+      - Comments
+      - Pipeline events
+
+7. **Enable UI Access**
+
+   #### For GitHub:
+   1. Navigate to your GitHub App settings
+   2. Check "Request user authorization (OAuth) during installation"
+   3. Set callback URL: `https://terrateam.example.com/api/github/v1/callback`
+   4. Save changes
+
+   #### For GitLab:
+   UI access is configured through the Personal Access Token setup.
+
+</Steps>
+
+## Production Deployment Patterns
+
+### High Availability Setup
+
+For production environments, deploy multiple Terrateam server instances:
+
+```bash
+# Instance 1
+docker run -d \
+  --name terrateam-server-1 \
+  -p 8081:8080 \
+  [environment variables] \
+  ghcr.io/terrateamio/terrat-oss:latest
+
+# Instance 2  
+docker run -d \
+  --name terrateam-server-2 \
+  -p 8082:8080 \
+  [environment variables] \
+  ghcr.io/terrateamio/terrat-oss:latest
+
+# Instance 3
+docker run -d \
+  --name terrateam-server-3 \
+  -p 8083:8080 \
+  [environment variables] \
+  ghcr.io/terrateamio/terrat-oss:latest
+```
+
+Configure your load balancer to distribute traffic across all instances.
+
+### Using Docker Compose for Manual Setup
+
+Create a `docker-compose.yml` for easier management:
+
+#### For GitHub:
+```yaml
+version: '3.8'
+
+services:
+  terrateam-server:
+    image: ghcr.io/terrateamio/terrat-oss:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=5432
+      - DB_USER=terrateam
+      - DB_PASS=${DB_PASS}
+      - DB_NAME=terrateam
+      - GITHUB_APP_ID=${GITHUB_APP_ID}
+      - GITHUB_APP_CLIENT_ID=${GITHUB_APP_CLIENT_ID}
+      - GITHUB_APP_CLIENT_SECRET=${GITHUB_APP_CLIENT_SECRET}
+      - GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET}
+      - GITHUB_APP_PEM=${GITHUB_APP_PEM}
+      - TERRAT_API_BASE=${TERRAT_API_BASE}
+      - TERRAT_WEB_BASE_URL=${TERRAT_WEB_BASE_URL}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      - db
+
+  db:
+    image: postgres:14-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=terrateam
+      - POSTGRES_PASSWORD=${DB_PASS}
+      - POSTGRES_DB=terrateam
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U terrateam"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+```
+
+#### For GitLab:
+```yaml
+version: '3.8'
+
+services:
+  terrateam-server:
+    image: ghcr.io/terrateamio/terrat-oss:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=5432
+      - DB_USER=terrateam
+      - DB_PASS=${DB_PASS}
+      - DB_NAME=terrateam
+      - GITLAB_APP_ID=${GITLAB_APP_ID}
+      - GITLAB_APP_SECRET=${GITLAB_APP_SECRET}
+      - GITLAB_ACCESS_TOKEN=${GITLAB_ACCESS_TOKEN}
+      - TERRAT_API_BASE=${TERRAT_API_BASE}
+      - TERRAT_WEB_BASE_URL=${TERRAT_WEB_BASE_URL}
+      # For self-hosted GitLab (optional)
+      - GITLAB_API_BASE_URL=${GITLAB_API_BASE_URL}
+      - GITLAB_WEB_BASE_URL=${GITLAB_WEB_BASE_URL}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      - db
+
+  db:
+    image: postgres:14-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=terrateam
+      - POSTGRES_PASSWORD=${DB_PASS}
+      - POSTGRES_DB=terrateam
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U terrateam"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+```
+
+## Security Considerations
+
+### Network Security
+- Place Terrateam server behind a firewall
+- Use HTTPS for all external connections
+- Restrict database access to Terrateam server only
+- Consider using VPN for administrative access
+
+### Data Security
+- Use strong passwords for database connections
+- Store secrets in a secure secrets management system
+- Regularly rotate GitHub App credentials
+- Enable database encryption at rest
+
+### Container Security
+- Regularly update Terrateam Docker images
+- Use non-root users where possible
+- Implement container scanning for vulnerabilities
+- Use read-only filesystems when possible
+
+## Monitoring and Logging
+
+### Health Monitoring
+Set up monitoring for the `/health` endpoint:
+
+```bash
+# Simple health check script
+#!/bin/bash
+if curl -f http://localhost:8080/health > /dev/null 2>&1; then
+    echo "Terrateam is healthy"
+    exit 0
+else
+    echo "Terrateam is unhealthy"
+    exit 1
+fi
+```
+
+### Log Management
+Configure log collection and rotation:
+
+```bash
+# View current logs
+docker logs terrateam-server
+
+# Follow logs in real-time
+docker logs -f terrateam-server
+
+# Configure log rotation
+docker run \
+  --log-driver=json-file \
+  --log-opt max-size=10m \
+  --log-opt max-file=3 \
+  [other options] \
+  ghcr.io/terrateamio/terrat-oss:latest
+```
+
+## Backup and Recovery
+
+### Database Backup
+Create regular database backups:
+
+```bash
+# Create backup
+pg_dump -h $DB_HOST -U terrateam -d terrateam > terrateam_backup.sql
+
+# Restore backup
+psql -h $DB_HOST -U terrateam -d terrateam < terrateam_backup.sql
+```
+
+### Configuration Backup
+- Back up environment variable configuration
+- Store GitHub App credentials securely
+- Document custom network and security configurations
+
+## Updates and Maintenance
+
+### Updating Terrateam
+```bash
+# Pull latest image
+docker pull ghcr.io/terrateamio/terrat-oss:latest
+
+# Stop current container
+docker stop terrateam-server
+
+# Remove old container
+docker rm terrateam-server
+
+# Start new container with updated image
+docker run -d [same configuration as before] ghcr.io/terrateamio/terrat-oss:latest
+```
+
+### Zero-Downtime Updates
+For high-availability deployments:
+
+1. Update instances one at a time
+2. Remove instance from load balancer
+3. Update and verify health
+4. Add back to load balancer
+5. Repeat for remaining instances
+
+## Troubleshooting
+
+### Common Issues
+
+**Container won't start:**
+```bash
+# Check Docker logs
+docker logs terrateam-server
+
+# Verify environment variables (GitHub)
+docker exec terrateam-server env | grep -E "(DB_|GITHUB_|TERRAT_)"
+
+# Verify environment variables (GitLab)
+docker exec terrateam-server env | grep -E "(DB_|GITLAB_|TERRAT_)"
+```
+
+**Database connection issues:**
+```bash
+# Test database connection
+docker exec terrateam-server pg_isready -h $DB_HOST -p 5432 -U terrateam
+```
+
+**Webhook issues:**
+```bash
+# Verify GitHub webhook URL accessibility
+curl -k https://terrateam.example.com/api/github/v1/events
+
+# Verify GitLab webhook URL accessibility
+curl -k https://terrateam.example.com/api/gitlab/v1/events
+
+# Check server logs for webhook processing
+docker logs terrateam-server | grep webhook
+```
+
+For more troubleshooting help, see the [Troubleshooting Guide](/self-hosted/troubleshooting/).
+
+## Next Steps
+
+After successful deployment:
+
+#### For GitHub:
+1. Install the GitHub Application in your repositories
+2. Configure OAuth for UI access
+3. Test webhook delivery
+
+#### For GitLab:
+1. Configure webhooks in your GitLab projects
+2. Test webhook delivery
+3. Verify PAT permissions
+
+#### For Both:
+1. Review [Best Practices](/self-hosted/best-practices/) for production operations
+2. Set up monitoring and alerting
+3. Configure backup and disaster recovery procedures
+4. Plan for scaling as usage grows

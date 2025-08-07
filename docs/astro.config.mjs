@@ -126,9 +126,34 @@ export default defineConfig({
           label: "Self-Hosted",
           collapsed: true,
           items: [
-            { label: "Instructions", link: "/self-hosted/instructions" },
-            { label: "Best Practices", link: "/self-hosted/best-practices" },
-            { label: "Deployments with Docker Compose", link: "/self-hosted/deployments-with-docker-compose" },
+            { label: "Overview", link: "/self-hosted" },
+            { label: "Getting Started", link: "/self-hosted/getting-started" },
+            {
+              label: "Deployment Methods",
+              collapsed: true,
+              items: [
+                { label: "Docker Compose", link: "/self-hosted/docker-compose" },
+                { label: "Kubernetes", link: "/self-hosted/kubernetes" },
+                { label: "Manual Installation", link: "/self-hosted/manual" },
+              ],
+            },
+            {
+              label: "Configuration",
+              collapsed: true,
+              items: [
+                { label: "Environment Variables", link: "/self-hosted/environment-variables" },
+                { label: "Best Practices", link: "/self-hosted/best-practices" },
+              ],
+            },
+            {
+              label: "Operations",
+              collapsed: true,
+              items: [
+                { label: "Zero-Downtime Deployments", link: "/self-hosted/zero-downtime-deployments" },
+                { label: "Troubleshooting", link: "/self-hosted/troubleshooting" },
+                { label: "FAQ", link: "/self-hosted/faq" },
+              ],
+            },
           ],
         },
         {

@@ -1,150 +1,63 @@
 ---
 title: Quickstart Guide
-description: Get up and running with Terrateam in minutes.
+description: Set up Terrateam in 2 minutes with our guided wizard.
 ---
-import { Steps } from '@astrojs/starlight/components';
-import { Icon } from '@astrojs/starlight/components';
-import { LinkCard, CardGrid, Card } from '@astrojs/starlight/components';
+import { LinkCard, CardGrid } from '@astrojs/starlight/components';
 
-Get up and running with Terrateam in minutes. Choose your starting point:
-
-<CardGrid>
-  <LinkCard 
-    title="Try the demo repository"
-    description="Learn Terrateam's workflow with simulated infrastructure. No cloud credentials needed. Perfect for getting started."
-    href="#option-1-try-the-demo-recommended"
-  />
-  <LinkCard 
-    title="Set up your own repository"
-    description="Jump straight into using Terrateam with your existing Terraform code and real infrastructure."
-    href="#option-2-set-up-your-own-repository"
-  />
-</CardGrid>
-
-## Prerequisites
-
-- **A GitHub account** 
-- **Administrator access** to install the Terrateam GitHub app
-
-## Option 1: Try the demo (recommended)
-
-Perfect for learning Terrateam. This demo uses null resources instead of real infrastructure, so you can learn Terrateam's workflow without any cloud setup.
+## Start Here
 
 <LinkCard
-  title="Terrateam Demo Repository"
-  href="https://github.com/terrateam-demo/kick-the-tires"
+  title="Sign up for Terrateam"
+  description="Launch the setup wizard and get running in 2 minutes"
+  href="https://terrateam.io/signup"
+  target="_blank"
 />
 
-<Steps>
-1. **Fork the demo repository**
+The setup wizard launches automatically after signup and will:
+- Assess your current setup
+- Recommend the best path (demo or your own repo)
+- Guide you through each step with automatic verification
+- Get you to your first Terraform plan in minutes
 
-   Click the link above and fork the repository to your GitHub account.
-   
-2. **Enable GitHub Actions Workflows**
-   
-   :::warning
-   Forked repositories disable workflows by default for security reasons.
-   :::
-   
-   - Go to your forked repository and click the **Actions** tab
-   - You'll likely see "Workflows aren't being run on this forked repository"
-   - Click on **I understand my workflows, go ahead and enable them**
+## Choose Your Path
 
-3. **Install the Terrateam GitHub App**
+After signing up, you'll see two options:
 
-   Sign up for Terrateam and install the GitHub app on your account/organization.
-   
-   <LinkCard
-     title="Install Terrateam GitHub App"
-     href="https://github.com/apps/terrateam-action"
-   />
+[![Terrateam Getting Started Wizard](../../../assets/getting-started-wizard.png)](https://terrateam.io/signup)
 
-4. **Try it out**
+### Option 1: Try the Demo (Recommended)
+**2-3 minutes** • No cloud credentials needed
 
-   - Edit `dev/main.tf` - change `null_resource_count = 0` to `null_resource_count = 1`
-   - Create a new branch and push your changes
-   - Open a pull request
-   - Watch Terrateam automatically comment with the Terraform plan!
+Perfect for first-time users. Uses simulated infrastructure so you can safely learn Terrateam's workflow.
 
-5. **Apply the changes**
+### Option 2: Connect Your Repository
+**5-10 minutes** • For existing Terraform users
 
-   Comment `terrateam apply` on the PR to apply the changes.
-</Steps>
+Jump straight in with your own Terraform code and real infrastructure.
 
-### What you'll see
+## What's Next?
 
-When you open your first PR, Terrateam will automatically comment with the terraform plan output:
+After the wizard completes:
 
-![Terrateam Plan](../../../assets/demo-plan-output.png)
+1. **Make a change** - Edit any `.tf` file
+2. **Open a pull request** - Terrateam automatically runs `terraform plan`
+3. **Review and apply** - Comment `terrateam apply` to deploy
 
-This demo uses `null_resource`, which doesn't provision anything. This is just a way to show how Terrateam runs the Terraform workflow safely.
-
-:::note
-This demo doesn't persist Terraform state between runs. Each `terraform plan` starts fresh, so you won't see destroy operations for previously created resources. This keeps the demo simple, but real Terrateam deployments use persistent state backends.
-:::
-
-## Option 2: Set up your own repository
-
-Ready to use Terrateam with your existing Terraform code? Here's how to get started:
-
-<Steps>
-1. **Install the Terrateam GitHub App**
-
-   If you haven't already, install Terrateam on your GitHub account/organization.
-   
-   <LinkCard
-     title="Install Terrateam GitHub App"
-     href="https://github.com/apps/terrateam-action"
-   />
-
-2. **Add the GitHub Actions Workflow**
-
-   **Critical:** The workflow file must be in your default branch (`main` or `master`)
-
-   ```bash
-   # Quick setup - copy/paste this entire block
-   git checkout -b add-terrateam-workflow && \
-   mkdir -p .github/workflows && \
-   curl -o .github/workflows/terrateam.yml https://raw.githubusercontent.com/terrateamio/terrateam-example/refs/heads/main/github/actions/workflows/default/terrateam.yml && \
-   git add .github/workflows/terrateam.yml && \
-   git commit -m "Add Terrateam workflow" && \
-   git push -u origin add-terrateam-workflow
-   ```
-
-   **Alternative:** Manually create `.github/workflows/terrateam.yml` and copy the contents from [this workflow file](https://raw.githubusercontent.com/terrateamio/terrateam-example/refs/heads/main/github/actions/workflows/default/terrateam.yml).
-
-   **Next:** Create a pull request and merge it into your default branch to activate the workflow.
-
-3. **Configure your repository**
-
-   Terrateam works automatically with most Terraform repositories. Simply ensure your repository has:
-   - `.tf` files in your project
-   - A valid Terraform configuration
-   - Proper cloud provider credentials (configured as GitHub secrets or environment variables)
-
-4. **Create your first pull request**
-
-   - Make changes to any `.tf` file
-   - Create a pull request
-   - Terrateam will automatically run `terraform plan` and comment on your PR
-
-5. **Apply Changes**
-
-   Comment `terrateam apply` on your PR to execute the planned changes.
-</Steps>
-
-## Troubleshooting
-
-**Terrateam isn't commenting on my PR?**
-- Check your repository's Actions tab for disabled workflows
-- Verify the Terrateam GitHub App is installed on your repository
-- Make sure your PR changes Terraform files (`.tf` files)
-
-## Next Steps
+## Need Help?
 
 <CardGrid>
-  <LinkCard title="Learn how Terrateam works" href="/how-it-works" />
-  <LinkCard title="Explore key Terrateam concepts" href="/getting-started/concepts" />
-  <LinkCard title="Set up cloud provider integration" href="/cloud-providers/" />
-  <LinkCard title="Explore advanced workflows" href="/advanced-workflows" />
+  <LinkCard 
+    title="Concepts"
+    description="Learn how Terrateam works"
+    href="/getting-started/concepts"
+  />
+  <LinkCard 
+    title="Commands"
+    description="See all available commands"
+    href="/command-reference"
+  />
 </CardGrid>
+
+:::tip
+The wizard handles all configuration automatically. Just sign up and follow the prompts!
+:::
