@@ -479,7 +479,7 @@
       });
 
       const config = await api.getGitLabWebhookConfig(selectedGitLabDemoGroup.id.toString());
-      const isActive = config.state === 'active';
+      const isActive = config.state === 'installed';
       
       if (isActive) {
         webhookVerificationError = null;
