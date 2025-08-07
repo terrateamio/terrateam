@@ -3790,9 +3790,6 @@
           },
           "provider": {
             "type": "string"
-          },
-          "saml_provider_id": {
-            "type": "string"
           }
         },
         "type": "object"
