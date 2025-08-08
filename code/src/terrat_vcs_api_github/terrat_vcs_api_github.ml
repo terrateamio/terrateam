@@ -294,7 +294,7 @@ let fetch_branch_sha ~request_id client repo ref_ =
   | Ok sha -> Abb.Future.return (Ok (Some sha))
   | Error (`Not_found _) -> Abb.Future.return (Ok None)
   | Error (#Terrat_github.fetch_branch_err as err) ->
-      Logs.err (fun m ->
+      Logs.info (fun m ->
           m "%s : FETCH_BRANCH_SHA : %a" request_id Terrat_github.pp_fetch_branch_err err);
       Abb.Future.return (Error `Error)
 
@@ -324,7 +324,7 @@ let fetch_file ~request_id client repo ref_ path =
   | Ok (Some { C.primary = { C.Primary.content; _ }; _ }) -> Abb.Future.return (Ok (Some content))
   | Ok None -> Abb.Future.return (Ok None)
   | Error (#Terrat_github.fetch_file_err as err) ->
-      Logs.err (fun m -> m "%s : FETCH_FILE : %a" request_id Terrat_github.pp_fetch_file_err err);
+      Logs.info (fun m -> m "%s : FETCH_FILE : %a" request_id Terrat_github.pp_fetch_file_err err);
       Abb.Future.return (Error `Error)
 
 let fetch_remote_repo ~request_id client repo =
@@ -339,7 +339,7 @@ let fetch_remote_repo ~request_id client repo =
   >>= function
   | Ok _ as r -> Abb.Future.return r
   | Error (#Terrat_github.fetch_repo_err as err) ->
-      Logs.err (fun m ->
+      Logs.info (fun m ->
           m "%s : FETCH_REMOTE_REPO : %a" request_id Terrat_github.pp_fetch_repo_err err);
       Abb.Future.return (Error `Error)
 
@@ -355,7 +355,7 @@ let fetch_centralized_repo ~request_id client owner =
   | Ok r -> Abb.Future.return (Ok (Some r))
   | Error (`Not_found _) -> Abb.Future.return (Ok None)
   | Error (#Terrat_github.fetch_repo_err as err) ->
-      Logs.err (fun m ->
+      Logs.info (fun m ->
           m "%s : FETCH_CENTRALIZED_REPO : %a" request_id Terrat_github.pp_fetch_repo_err err);
       Abb.Future.return (Error `Error)
 
@@ -400,7 +400,7 @@ let fetch_tree ~request_id client repo ref_ =
   >>= function
   | Ok _ as r -> Abb.Future.return r
   | Error (#Terrat_github.get_tree_err as err) ->
-      Logs.err (fun m -> m "%s : FETCH_TREE : %a" request_id Terrat_github.pp_get_tree_err err);
+      Logs.info (fun m -> m "%s : FETCH_TREE : %a" request_id Terrat_github.pp_get_tree_err err);
       Abb.Future.return (Error `Error)
 
 let comment_on_pull_request ~request_id client pull_request body =
@@ -415,7 +415,7 @@ let comment_on_pull_request ~request_id client pull_request body =
   | Ok () -> Abb.Future.return (Ok ())
   | Error (#Terrat_github.publish_comment_err as err) ->
       Prmths.Counter.inc_one Metrics.github_errors_total;
-      Logs.err (fun m ->
+      Logs.info (fun m ->
           m "%s : COMMENT_ON_PULL_REQUEST : %a" request_id Terrat_github.pp_publish_comment_err err);
       Abb.Future.return (Error `Error)
 
@@ -586,7 +586,7 @@ let react_to_comment ~request_id client pull_request comment_id =
   >>= function
   | Ok () -> Abb.Future.return (Ok ())
   | Error (#Terrat_github.publish_reaction_err as err) ->
-      Logs.err (fun m ->
+      Logs.info (fun m ->
           m "%s : REACT_TO_COMMENT : %a" request_id Terrat_github.pp_publish_reaction_err err);
       Abb.Future.return (Error `Error)
 
@@ -623,7 +623,7 @@ let fetch_commit_checks ~request_id client repo ref_ =
   | Ok _ as res -> Abb.Future.return res
   | Error (#Terrat_vcs_api_github_commit_check.list_err as err) ->
       Prmths.Counter.inc_one Metrics.github_errors_total;
-      Logs.err (fun m ->
+      Logs.info (fun m ->
           m
             "%s : FETCH_COMMIT_CHECKS : %a"
             request_id
@@ -661,7 +661,7 @@ let fetch_pull_request_reviews ~request_id repo pull_request_id client =
               reviews))
   | Error (#Terrat_github.Pull_request_reviews.list_err as err) ->
       Prmths.Counter.inc_one Metrics.github_errors_total;
-      Logs.err (fun m ->
+      Logs.info (fun m ->
           m "%s : ERROR : %a" request_id Terrat_github.Pull_request_reviews.pp_list_err err);
       Abb.Future.return (Error `Error)
 
