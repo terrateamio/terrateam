@@ -188,7 +188,8 @@ For Google Kubernetes Engine with managed SSL certificates:
 helm install terrateam terrateamio/terrateam \
   --set terrateam.config.fqdn="terrateam.example.com" \
   --set terrateam.config.vcs="github" \
-  --set server.env.TERRAT_UI_BASE="https://terrateam.example.com" \
+  --set terrateam.config.github.appUrl="$GITHUB_APP_URL" \
+  --set terrateam.config.uiBase="https://terrateam.example.com" \
   --set ingress.certificate.enabled="true" \
   --set ingress.enabled="true" \
   --set ingress.annotations."networking\.gke\.io\/managed-certificates"="terrateam-ingress-certificate" \
@@ -204,9 +205,10 @@ helm install terrateam terrateamio/terrateam \
 helm install terrateam terrateamio/terrateam \
   --set terrateam.config.fqdn="terrateam.example.com" \
   --set terrateam.config.vcs="github" \
-  --set server.env.GITHUB_API_BASE_URL="https://api.github.example.com" \
-  --set server.env.GITHUB_WEB_BASE_URL="https://github.example.com" \
-  --set server.env.TERRAT_UI_BASE="https://terrateam.example.com" \
+  --set terrateam.config.github.apiBaseUrl="https://api.github.example.com" \
+  --set terrateam.config.github.webBaseUrl="https://github.example.com" \
+  --set terrateam.config.github.appUrl="$GITHUB_APP_URL" \
+  --set terrateam.config.uiBase="https://terrateam.example.com" \
   --set ingress.certificate.enabled="true" \
   --set ingress.enabled="true" \
   --set ingress.annotations."networking\.gke\.io\/managed-certificates"="terrateam-ingress-certificate" \
@@ -223,7 +225,7 @@ helm install terrateam terrateamio/terrateam \
   --set terrateam.config.fqdn="terrateam.example.com" \
   --set terrateam.config.github.enabled=false \
   --set terrateam.config.gitlab.enabled=true \
-  --set server.env.TERRAT_UI_BASE="https://terrateam.example.com" \
+  --set terrateam.config.uiBase="https://terrateam.example.com" \
   --set ingress.certificate.enabled="true" \
   --set ingress.enabled="true" \
   --set ingress.annotations."networking\.gke\.io\/managed-certificates"="terrateam-ingress-certificate" \
@@ -240,9 +242,9 @@ helm install terrateam terrateamio/terrateam \
   --set terrateam.config.fqdn="terrateam.example.com" \
   --set terrateam.config.github.enabled=false \
   --set terrateam.config.gitlab.enabled=true \
-  --set server.env.GITLAB_API_BASE_URL="https://gitlab.example.com/api" \
-  --set server.env.GITLAB_WEB_BASE_URL="https://gitlab.example.com" \
-  --set server.env.TERRAT_UI_BASE="https://terrateam.example.com" \
+  --set terrateam.config.gitlab.apiBaseUrl="https://gitlab.example.com/api" \
+  --set terrateam.config.gitlab.webBaseUrl="https://gitlab.example.com" \
+  --set terrateam.config.uiBase="https://terrateam.example.com" \
   --set ingress.certificate.enabled="true" \
   --set ingress.enabled="true" \
   --set ingress.annotations."networking\.gke\.io\/managed-certificates"="terrateam-ingress-certificate" \
@@ -268,7 +270,8 @@ For clusters without ingress controllers:
 ```sh
 helm install terrateam terrateamio/terrateam \
   --set terrateam.config.fqdn="terrateam.example.com" \
-  --set server.env.TERRAT_UI_BASE="https://terrateam.example.com"
+  --set terrateam.config.github.appUrl="$GITHUB_APP_URL" \
+  --set terrateam.config.uiBase="https://terrateam.example.com"
 ```
 
 </TabItem>
@@ -277,9 +280,10 @@ helm install terrateam terrateamio/terrateam \
 ```sh
 helm install terrateam terrateamio/terrateam \
   --set terrateam.config.fqdn="terrateam.example.com" \
-  --set server.env.GITHUB_API_BASE_URL="https://api.github.example.com" \
-  --set server.env.GITHUB_WEB_BASE_URL="https://github.example.com" \
-  --set server.env.TERRAT_UI_BASE="https://terrateam.example.com"
+  --set terrateam.config.github.apiBaseUrl="https://api.github.example.com" \
+  --set terrateam.config.github.webBaseUrl="https://github.example.com" \
+  --set terrateam.config.github.appUrl="$GITHUB_APP_URL" \
+  --set terrateam.config.uiBase="https://terrateam.example.com"
 ```
 
 </TabItem>
@@ -290,7 +294,7 @@ helm install terrateam terrateamio/terrateam \
   --set terrateam.config.fqdn="terrateam.example.com" \
   --set terrateam.config.github.enabled=false \
   --set terrateam.config.gitlab.enabled=true \
-  --set server.env.TERRAT_UI_BASE="https://terrateam.example.com"
+  --set terrateam.config.uiBase="https://terrateam.example.com"
 ```
 
 </TabItem>
@@ -301,9 +305,9 @@ helm install terrateam terrateamio/terrateam \
   --set terrateam.config.fqdn="terrateam.example.com" \
   --set terrateam.config.github.enabled=false \
   --set terrateam.config.gitlab.enabled=true \
-  --set server.env.GITLAB_API_BASE_URL="https://gitlab.example.com/api" \
-  --set server.env.GITLAB_WEB_BASE_URL="https://gitlab.example.com" \
-  --set server.env.TERRAT_UI_BASE="https://terrateam.example.com"
+  --set terrateam.config.gitlab.apiBaseUrl="https://gitlab.example.com/api" \
+  --set terrateam.config.gitlab.webBaseUrl="https://gitlab.example.com" \
+  --set terrateam.config.uiBase="https://terrateam.example.com"
 ```
 
 </TabItem>
