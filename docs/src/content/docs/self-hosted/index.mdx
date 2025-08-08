@@ -1,77 +1,10 @@
 ---
-title: Self-Hosted Overview
-description: Deploy and manage Terrateam on your own infrastructure with complete control and security.
+title: Self-Hosted
+tableOfContents: false
+sidebar:
+  hidden: true
 ---
 
-import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import DirectoryList from '../../../components/DirectoryList.astro';
 
-Terrateam Self-Hosted allows you to run Terrateam on your own infrastructure, providing complete control over your Terraform automation while maintaining security and compliance requirements.
-
-## Quick Start
-
-New to Terrateam Self-Hosted? Choose your path:
-
-<CardGrid>
-  <LinkCard 
-    title="Getting Started"
-    description="Learn about prerequisites, deployment options, and architecture overview. Perfect for understanding your options before deployment."
-    href="/self-hosted/getting-started/"
-  />
-  <LinkCard 
-    title="Docker Compose Setup"
-    description="Jump straight into deployment using Docker Compose. Ideal for development, testing, and small teams."
-    href="/self-hosted/docker-compose/"
-  />
-</CardGrid>
-
-## Deployment Options
-
-Choose the deployment method that best fits your needs:
-
-<CardGrid>
-  <LinkCard 
-    title="Kubernetes Deployment"
-    description="Production-ready deployment with high availability, auto-scaling, and enterprise-grade features using Helm charts."
-    href="/self-hosted/kubernetes/"
-  />
-  <LinkCard 
-    title="Manual Installation"
-    description="Maximum flexibility for custom deployments, specific infrastructure requirements, or air-gapped environments."
-    href="/self-hosted/manual/"
-  />
-  <LinkCard 
-    title="Best Practices"
-    description="Security, scaling, and operational best practices for running Terrateam Self-Hosted in production."
-    href="/self-hosted/best-practices/"
-  />
-</CardGrid>
-
-## Configuration and Reference
-
-<CardGrid>
-  <LinkCard 
-    title="Environment Variables"
-    description="Complete reference for all configuration options and environment variables across all deployment methods."
-    href="/self-hosted/environment-variables/"
-  />
-  <LinkCard 
-    title="Troubleshooting"
-    description="Common issues and solutions for deployment and operation problems. Includes diagnostic commands and debugging tips."
-    href="/self-hosted/troubleshooting/"
-  />
-  <LinkCard 
-    title="FAQ"
-    description="Frequently asked questions about features, security, operations, and migration scenarios."
-    href="/self-hosted/faq/"
-  />
-</CardGrid>
-
-## Advanced Topics
-
-<CardGrid>
-  <LinkCard 
-    title="Zero-Downtime Deployments"
-    description="Advanced Docker Compose deployment patterns for production environments requiring zero-downtime updates and high availability."
-    href="/self-hosted/deployments-with-docker-compose/"
-  />
-</CardGrid>
+<DirectoryList />

@@ -3,7 +3,7 @@ title: Kubernetes Deployment
 description: Deploy Terrateam Self-Hosted on Kubernetes using Helm charts for GitHub and GitLab.
 ---
 
-import { Steps } from '@astrojs/starlight/components';
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 Kubernetes deployment with Helm provides a production-ready, scalable solution for Terrateam Self-Hosted. This method is recommended for enterprise environments requiring high availability and automatic scaling, and supports both GitHub and GitLab.
 
@@ -24,13 +24,14 @@ This creates a `.env` file with all required credentials.
 
 Before you begin, ensure you have:
 - **Completed the Setup Wizard** (see above) to generate credentials
-- **Kubernetes cluster** (v1.19+)
-- **Helm 3** installed
+- **Kubernetes cluster**
+- **Helm** installed
 - **kubectl** configured to access your cluster
 
 ## Installation Steps
 
-### GitHub Setup
+<Tabs>
+<TabItem label="GitHub">
 
 <Steps>
 
@@ -92,7 +93,8 @@ Before you begin, ensure you have:
 
 </Steps>
 
-### GitLab Setup
+</TabItem>
+<TabItem label="GitLab">
 
 <Steps>
 
@@ -148,6 +150,9 @@ Before you begin, ensure you have:
 
 </Steps>
 
+</TabItem>
+</Tabs>
+
 ## Deployment Options
 
 ### GKE with HTTPS Load Balancer
@@ -170,38 +175,84 @@ For Google Kubernetes Engine with managed SSL certificates:
    
    Add the static IP to your DNS zone as `terrateam.example.com`
 
-4. **Install with Helm:**
-
-   For GitHub:
-   ```sh
-   helm install terrateam terrateamio/terrateam \
-     --set terrateam.config.fqdn="terrateam.example.com" \
-     --set terrateam.config.vcs="github" \
-     --set server.env.TERRAT_UI_BASE="https://terrateam.example.com" \
-     --set ingress.certificate.enabled="true" \
-     --set ingress.enabled="true" \
-     --set ingress.annotations."networking\.gke\.io\/managed-certificates"="terrateam-ingress-certificate" \
-     --set ingress.annotations."kubernetes\.io\/ingress\.global-static-ip-name"="terrateam-static-ip" \
-     --set ingress.annotations."kubernetes\.io\/ingress\.class"="gce" \
-     --set-string ingress.annotations."kubernetes\.io\/ingress\.allow-http"="false"
-   ```
-
-   For GitLab:
-   ```sh
-   helm install terrateam terrateamio/terrateam \
-     --set terrateam.config.fqdn="terrateam.example.com" \
-     --set terrateam.config.github.enabled=false \
-     --set terrateam.config.gitlab.enabled=true \
-     --set server.env.TERRAT_UI_BASE="https://terrateam.example.com" \
-     --set ingress.certificate.enabled="true" \
-     --set ingress.enabled="true" \
-     --set ingress.annotations."networking\.gke\.io\/managed-certificates"="terrateam-ingress-certificate" \
-     --set ingress.annotations."kubernetes\.io\/ingress\.global-static-ip-name"="terrateam-static-ip" \
-     --set ingress.annotations."kubernetes\.io\/ingress\.class"="gce" \
-     --set-string ingress.annotations."kubernetes\.io\/ingress\.allow-http"="false"
-   ```
+4. **Install with Helm**
+   
+   Choose the appropriate command for your platform below.
 
 </Steps>
+
+<Tabs>
+<TabItem label="GitHub.com">
+
+```sh
+helm install terrateam terrateamio/terrateam \
+  --set terrateam.config.fqdn="terrateam.example.com" \
+  --set terrateam.config.vcs="github" \
+  --set server.env.TERRAT_UI_BASE="https://terrateam.example.com" \
+  --set ingress.certificate.enabled="true" \
+  --set ingress.enabled="true" \
+  --set ingress.annotations."networking\.gke\.io\/managed-certificates"="terrateam-ingress-certificate" \
+  --set ingress.annotations."kubernetes\.io\/ingress\.global-static-ip-name"="terrateam-static-ip" \
+  --set ingress.annotations."kubernetes\.io\/ingress\.class"="gce" \
+  --set-string ingress.annotations."kubernetes\.io\/ingress\.allow-http"="false"
+```
+
+</TabItem>
+<TabItem label="GitHub Enterprise">
+
+```sh
+helm install terrateam terrateamio/terrateam \
+  --set terrateam.config.fqdn="terrateam.example.com" \
+  --set terrateam.config.vcs="github" \
+  --set server.env.GITHUB_API_BASE_URL="https://api.github.example.com" \
+  --set server.env.GITHUB_WEB_BASE_URL="https://github.example.com" \
+  --set server.env.TERRAT_UI_BASE="https://terrateam.example.com" \
+  --set ingress.certificate.enabled="true" \
+  --set ingress.enabled="true" \
+  --set ingress.annotations."networking\.gke\.io\/managed-certificates"="terrateam-ingress-certificate" \
+  --set ingress.annotations."kubernetes\.io\/ingress\.global-static-ip-name"="terrateam-static-ip" \
+  --set ingress.annotations."kubernetes\.io\/ingress\.class"="gce" \
+  --set-string ingress.annotations."kubernetes\.io\/ingress\.allow-http"="false"
+```
+
+</TabItem>
+<TabItem label="GitLab.com">
+
+```sh
+helm install terrateam terrateamio/terrateam \
+  --set terrateam.config.fqdn="terrateam.example.com" \
+  --set terrateam.config.github.enabled=false \
+  --set terrateam.config.gitlab.enabled=true \
+  --set server.env.TERRAT_UI_BASE="https://terrateam.example.com" \
+  --set ingress.certificate.enabled="true" \
+  --set ingress.enabled="true" \
+  --set ingress.annotations."networking\.gke\.io\/managed-certificates"="terrateam-ingress-certificate" \
+  --set ingress.annotations."kubernetes\.io\/ingress\.global-static-ip-name"="terrateam-static-ip" \
+  --set ingress.annotations."kubernetes\.io\/ingress\.class"="gce" \
+  --set-string ingress.annotations."kubernetes\.io\/ingress\.allow-http"="false"
+```
+
+</TabItem>
+<TabItem label="GitLab Self-Hosted">
+
+```sh
+helm install terrateam terrateamio/terrateam \
+  --set terrateam.config.fqdn="terrateam.example.com" \
+  --set terrateam.config.github.enabled=false \
+  --set terrateam.config.gitlab.enabled=true \
+  --set server.env.GITLAB_API_BASE_URL="https://gitlab.example.com/api" \
+  --set server.env.GITLAB_WEB_BASE_URL="https://gitlab.example.com" \
+  --set server.env.TERRAT_UI_BASE="https://terrateam.example.com" \
+  --set ingress.certificate.enabled="true" \
+  --set ingress.enabled="true" \
+  --set ingress.annotations."networking\.gke\.io\/managed-certificates"="terrateam-ingress-certificate" \
+  --set ingress.annotations."kubernetes\.io\/ingress\.global-static-ip-name"="terrateam-static-ip" \
+  --set ingress.annotations."kubernetes\.io\/ingress\.class"="gce" \
+  --set-string ingress.annotations."kubernetes\.io\/ingress\.allow-http"="false"
+```
+
+</TabItem>
+</Tabs>
 
 :::note[Certificate Provisioning]
 Google-managed SSL certificates with Ingress can take up to 60 minutes to configure. The Ingress may show as ready while the certificate is still provisioning.
@@ -211,14 +262,29 @@ Google-managed SSL certificates with Ingress can take up to 60 minutes to config
 
 For clusters without ingress controllers:
 
-For GitHub:
+<Tabs>
+<TabItem label="GitHub.com">
+
 ```sh
 helm install terrateam terrateamio/terrateam \
   --set terrateam.config.fqdn="terrateam.example.com" \
   --set server.env.TERRAT_UI_BASE="https://terrateam.example.com"
 ```
 
-For GitLab:
+</TabItem>
+<TabItem label="GitHub Enterprise">
+
+```sh
+helm install terrateam terrateamio/terrateam \
+  --set terrateam.config.fqdn="terrateam.example.com" \
+  --set server.env.GITHUB_API_BASE_URL="https://api.github.example.com" \
+  --set server.env.GITHUB_WEB_BASE_URL="https://github.example.com" \
+  --set server.env.TERRAT_UI_BASE="https://terrateam.example.com"
+```
+
+</TabItem>
+<TabItem label="GitLab.com">
+
 ```sh
 helm install terrateam terrateamio/terrateam \
   --set terrateam.config.fqdn="terrateam.example.com" \
@@ -227,13 +293,31 @@ helm install terrateam terrateamio/terrateam \
   --set server.env.TERRAT_UI_BASE="https://terrateam.example.com"
 ```
 
+</TabItem>
+<TabItem label="GitLab Self-Hosted">
+
+```sh
+helm install terrateam terrateamio/terrateam \
+  --set terrateam.config.fqdn="terrateam.example.com" \
+  --set terrateam.config.github.enabled=false \
+  --set terrateam.config.gitlab.enabled=true \
+  --set server.env.GITLAB_API_BASE_URL="https://gitlab.example.com/api" \
+  --set server.env.GITLAB_WEB_BASE_URL="https://gitlab.example.com" \
+  --set server.env.TERRAT_UI_BASE="https://terrateam.example.com"
+```
+
+</TabItem>
+</Tabs>
+
 You can later expose the `terrateam-server` service using:
 - [NGINX Ingress Controller](https://cert-manager.io/docs/tutorials/acme/nginx-ingress/)
 - [cert-manager](https://github.com/cert-manager/cert-manager) for SSL certificates
 
 ## Configure Webhook URLs
 
-#### GitHub
+<Tabs>
+<TabItem label="GitHub">
+
 For GitHub, you need to configure the webhook URL in your GitHub App settings:
 
 1. Navigate to your GitHub App settings page
@@ -246,7 +330,9 @@ For GitHub, you need to configure the webhook URL in your GitHub App settings:
 Always include the trailing `/api/github/v1/events` path for GitHub webhooks.
 :::
 
-#### GitLab
+</TabItem>
+<TabItem label="GitLab">
+
 For GitLab, you'll need to configure webhooks in your GitLab projects:
 
 1. Navigate to your GitLab project settings
@@ -258,9 +344,14 @@ For GitLab, you'll need to configure webhooks in your GitLab projects:
    - Comments
    - Pipeline events
 
-### Enable Terrateam UI Access
+</TabItem>
+</Tabs>
 
-#### GitHub
+## Enable Terrateam UI Access
+
+<Tabs>
+<TabItem label="GitHub">
+
 To enable the Terrateam web UI for GitHub:
 
 1. Navigate to your GitHub App settings (e.g., `https://github.com/apps/your-terrateam-app`)
@@ -268,30 +359,50 @@ To enable the Terrateam web UI for GitHub:
 3. Check the box "Request user authorization (OAuth) during installation"
 4. Set the callback URL to: `https://terrateam.example.com/api/github/v1/callback`
 5. Save your changes
-6. Access your Terrateam UI at: `https://terrateam.example.com`
 
 :::note[OAuth Callback]
 The callback URL must match your deployment's FQDN with the path `/api/github/v1/callback`
 :::
 
-#### GitLab
-The GitLab UI access is configured through the Personal Access Token setup during installation.
+</TabItem>
+<TabItem label="GitLab">
 
-### Install Application
+To access the Terrateam web UI for GitLab:
 
-#### GitHub
-1. Navigate to your GitHub Application settings page
-2. Click "Install App" and select repositories
-3. Complete the installation
+1. Ensure your GitLab Personal Access Token is configured with the required scopes
+2. The UI access is already enabled through the OAuth configuration during setup
 
-#### GitLab
-1. Ensure your Personal Access Token has the required scopes
-2. Configure webhooks for each project as described above
-3. Test the webhook connection from GitLab settings
+</TabItem>
+</Tabs>
 
-## Scaling and High Availability
+## Getting Started Wizard
 
-### Horizontal Scaling
+Once you've enabled UI access, the next step is to complete the Getting Started Wizard:
+
+1. **Access the Terrateam UI**
+   - Navigate to: `https://terrateam.example.com`
+   - Log in with your GitHub or GitLab account
+
+2. **Complete the Getting Started Wizard**
+   
+   The wizard will guide you through:
+   - **Repository/Project Selection**: Choose which repositories (GitHub) or projects (GitLab) to enable for Terrateam
+   - **Cloud Provider Configuration**: Set up credentials for AWS, GCP, Azure, or other cloud providers
+   - **Workflow Setup**: Configure your first Terraform workflows and apply requirements
+   - **Team Permissions**: Set up role-based access control if needed
+
+3. **Verify Your Setup**
+   - Create a test pull request or merge request
+   - Confirm Terrateam responds with a plan
+   - Apply your first change
+
+## Production Management
+
+This section covers essential tasks for managing your Terrateam deployment in production, including scaling, monitoring, maintenance, and troubleshooting.
+
+### Scaling and High Availability
+
+#### Horizontal Scaling
 
 Scale the number of Terrateam server replicas:
 
@@ -300,41 +411,24 @@ helm upgrade terrateam terrateamio/terrateam \
   --set server.replicas=3
 ```
 
-### Database High Availability
+#### Database High Availability
 
 For production workloads, consider:
 - External managed PostgreSQL (AWS RDS, Google Cloud SQL, Azure Database)
 - PostgreSQL cluster with automatic failover
 - Regular database backups
 
-### Load Balancing
+### Monitoring and Logging
 
-The Helm chart automatically configures load balancing when multiple replicas are used. Health checks are performed on the `/health` endpoint.
-
-## Monitoring and Logging
-
-### Health Checks
+#### Health Checks
 
 Terrateam provides health check endpoints:
 - `/health` - Overall application health
 - `/metrics` - Prometheus metrics (if enabled)
 
-### Viewing Logs
+### Maintenance
 
-```sh
-# View all Terrateam logs
-kubectl logs -l app.kubernetes.io/name=terrateam
-
-# Follow logs from specific pod
-kubectl logs -f <pod-name>
-
-# View database logs
-kubectl logs -l app.kubernetes.io/name=postgresql
-```
-
-## Maintenance
-
-### Updates
+#### Updates
 
 Update to the latest Terrateam version:
 
@@ -343,56 +437,10 @@ helm repo update
 helm upgrade terrateam terrateamio/terrateam
 ```
 
-### Rolling Restarts
+#### Rolling Restarts
 
 Perform rolling restart without downtime:
 
 ```sh
 kubectl rollout restart deployment/terrateam-server
 ```
-
-### Backup and Recovery
-
-**Database Backup:**
-```sh
-kubectl exec -it <postgres-pod> -- pg_dump -U terrateam terrateam > backup.sql
-```
-
-**Restore Database:**
-```sh
-kubectl exec -i <postgres-pod> -- psql -U terrateam -d terrateam < backup.sql
-```
-
-## Advanced Configuration
-
-### GitHub Enterprise Server
-
-For GitHub Enterprise Server deployments:
-
-```yaml
-server:
-  env:
-    GITHUB_API_BASE_URL: "https://api.github.example.com"
-    GITHUB_WEB_BASE_URL: "https://github.example.com"
-    TERRAT_UI_BASE: "https://terrateam.example.com"
-```
-
-### GitLab Self-Hosted
-
-For self-hosted GitLab instances:
-
-```yaml
-server:
-  env:
-    GITLAB_API_BASE_URL: "https://gitlab.example.com/api"
-    GITLAB_WEB_BASE_URL: "https://gitlab.example.com"
-    TERRAT_UI_BASE: "https://terrateam.example.com"
-```
-
-## Next Steps
-
-After successful deployment:
-1. Review [Best Practices](/self-hosted/best-practices/) for production operations
-2. Set up monitoring and alerting
-3. Configure backup and disaster recovery procedures
-4. Plan for capacity scaling as usage grows
