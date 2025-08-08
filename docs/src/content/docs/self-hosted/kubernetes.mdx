@@ -188,6 +188,7 @@ For Google Kubernetes Engine with managed SSL certificates:
 helm install terrateam terrateamio/terrateam \
   --set terrateam.config.fqdn="terrateam.example.com" \
   --set terrateam.config.vcs="github" \
+  --set server.env.GITHUB_APP_URL="$GITHUB_APP_URL" \
   --set server.env.TERRAT_UI_BASE="https://terrateam.example.com" \
   --set ingress.certificate.enabled="true" \
   --set ingress.enabled="true" \
@@ -206,6 +207,7 @@ helm install terrateam terrateamio/terrateam \
   --set terrateam.config.vcs="github" \
   --set server.env.GITHUB_API_BASE_URL="https://api.github.example.com" \
   --set server.env.GITHUB_WEB_BASE_URL="https://github.example.com" \
+  --set server.env.GITHUB_APP_URL="$GITHUB_APP_URL" \
   --set server.env.TERRAT_UI_BASE="https://terrateam.example.com" \
   --set ingress.certificate.enabled="true" \
   --set ingress.enabled="true" \
@@ -268,6 +270,7 @@ For clusters without ingress controllers:
 ```sh
 helm install terrateam terrateamio/terrateam \
   --set terrateam.config.fqdn="terrateam.example.com" \
+  --set server.env.GITHUB_APP_URL="$GITHUB_APP_URL" \
   --set server.env.TERRAT_UI_BASE="https://terrateam.example.com"
 ```
 
@@ -279,6 +282,7 @@ helm install terrateam terrateamio/terrateam \
   --set terrateam.config.fqdn="terrateam.example.com" \
   --set server.env.GITHUB_API_BASE_URL="https://api.github.example.com" \
   --set server.env.GITHUB_WEB_BASE_URL="https://github.example.com" \
+  --set server.env.GITHUB_APP_URL="$GITHUB_APP_URL" \
   --set server.env.TERRAT_UI_BASE="https://terrateam.example.com"
 ```
 
