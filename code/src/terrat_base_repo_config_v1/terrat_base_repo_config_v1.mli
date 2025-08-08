@@ -582,12 +582,16 @@ module Stacks : sig
       tag_query : Tag_query.t;
       on_change : On_change.t; [@default On_change.make ()]
       variables : string String_map.t; [@default String_map.empty]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
 
   type t = {
     allow_workspace_in_multiple_stacks : bool; [@default false]
     names : Stack.t String_map.t;
         [@default String_map.singleton "default" (Stack.make ~tag_query:Tag_query.any ())]
   }
+  [@@deriving make, show, yojson, eq]
 end
 
 module Storage : sig
@@ -710,7 +714,7 @@ module View : sig
     hooks : Hooks.t; [@default Hooks.make ()]
     indexer : Indexer.t; [@default Indexer.make ()]
     integrations : Integrations.t; [@default Integrations.make ()]
-    notifications: Notifications.t; [@default Notifications.make ()]
+    notifications : Notifications.t; [@default Notifications.make ()]
     parallel_runs : int; [@default 3]
     stacks : Stacks.t; [@default Stacks.make ()]
     storage : Storage.t; [@default Storage.make ()]

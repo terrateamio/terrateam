@@ -956,12 +956,16 @@ module Stacks = struct
       tag_query : Tag_query.t;
       on_change : On_change.t; [@default On_change.make ()]
       variables : string String_map.t; [@default String_map.empty]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
 
   type t = {
     allow_workspace_in_multiple_stacks : bool; [@default false]
     names : Stack.t String_map.t;
         [@default String_map.singleton "default" (Stack.make ~tag_query:Tag_query.any ())]
   }
+  [@@deriving make, show, yojson, eq]
 end
 
 module Storage = struct
@@ -2133,7 +2137,6 @@ let of_version_1_integrations integrations =
   in
   Ok { Integrations.resourcely }
 
-<<<<<<< HEAD
 let of_version_1_stack_config names =
   let open CCResult.Infix in
   let module N = Terrat_repo_config_stacks.Names in
@@ -2163,7 +2166,7 @@ let of_version_1_stacks stacks =
   let { S.allow_workspace_in_multiple_stacks; names } = stacks in
   map_opt of_version_1_stack_config names
   >>= fun names -> Ok (Stacks.make ~allow_workspace_in_multiple_stacks ?names ())
-=======
+
 let of_version_1_notification_policy policy =
   let open CCResult.Infix in
   let module P = Terrat_repo_config_notification_policy in
@@ -2188,7 +2191,6 @@ let of_version_1_notifications notifications =
   let policies = CCOption.get_or ~default:[] policies in
   CCResult.map_l of_version_1_notification_policy policies
   >>= fun policies -> Ok { Notifications.policies }
->>>>>>> b29c87084 (#561 ADD API Schemas, DB/Config/Strategy propagation and DB plumbing)
 
 let of_version_1_storage storage =
   let open CCResult.Infix in
@@ -2376,13 +2378,10 @@ let of_version_1 v1 =
   >>= fun indexer ->
   map_opt of_version_1_integrations integrations
   >>= fun integrations ->
-<<<<<<< HEAD
   map_opt of_version_1_stacks stacks
   >>= fun stacks ->
-=======
   map_opt of_version_1_notifications notifications
   >>= fun notifications ->
->>>>>>> b29c87084 (#561 ADD API Schemas, DB/Config/Strategy propagation and DB plumbing)
   map_opt of_version_1_storage storage
   >>= fun storage ->
   map_opt of_version_1_tags tags
@@ -2825,7 +2824,6 @@ let to_version_1_integrations integrations =
   in
   { I.resourcely = Some { I.Resourcely.enabled; extra_args = Some [] } }
 
-<<<<<<< HEAD
 let to_version_1_stacks stacks =
   let module S = Terrat_repo_config_stacks in
   let { Stacks.allow_workspace_in_multiple_stacks; names } = stacks in
@@ -2846,7 +2844,7 @@ let to_version_1_stacks stacks =
       Json_schema.Empty_obj.t
   in
   { S.allow_workspace_in_multiple_stacks; names = Some names }
-=======
+
 let to_version_1_notification_policy policy =
   let module P = Terrat_repo_config_notification_policy in
   let { Notifications.Policy.tag_query; comment_strategy } = policy in
@@ -2862,7 +2860,6 @@ let to_version_1_notifications notifications =
   let module N = Terrat_repo_config.Notifications in
   let { Notifications.policies } = notifications in
   { N.policies = Some (CCList.map to_version_1_notification_policy policies) }
->>>>>>> b29c87084 (#561 ADD API Schemas, DB/Config/Strategy propagation and DB plumbing)
 
 let to_version_1_storage_plans plans =
   match plans with
