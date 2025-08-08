@@ -551,6 +551,28 @@ module Integrations : sig
   [@@deriving make, show, yojson, eq]
 end
 
+module Stacks : sig
+  module On_change : sig
+    type t = { can_apply_after : string list [@default []] } [@@deriving make, show, yojson, eq]
+  end
+
+  module Stack : sig
+    type t = {
+      tag_query : Tag_query.t;
+      on_change : On_change.t; [@default On_change.make ()]
+      variables : string String_map.t; [@default String_map.empty]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  type t = {
+    allow_workspace_in_multiple_stacks : bool; [@default false]
+    names : Stack.t String_map.t;
+        [@default String_map.singleton "default" (Stack.make ~tag_query:Tag_query.any ())]
+  }
+  [@@deriving make, show, yojson, eq]
+end
+
 module Storage : sig
   module Plans : sig
     module Cmd : sig
@@ -672,6 +694,7 @@ module View : sig
     indexer : Indexer.t; [@default Indexer.make ()]
     integrations : Integrations.t; [@default Integrations.make ()]
     parallel_runs : int; [@default 3]
+    stacks : Stacks.t; [@default Stacks.make ()]
     storage : Storage.t; [@default Storage.make ()]
     tags : Tags.t; [@default Tags.make ()]
     tree_builder : Tree_builder.t; [@default Tree_builder.make ()]
@@ -730,6 +753,7 @@ type of_version_1_err =
   | `Hooks_unknown_run_on_err of Terrat_repo_config_run_on.t
   | `Hooks_unknown_visible_on_err of string
   | `Pattern_parse_err of string
+  | `Stack_config_tag_query_err of string * string
   | `Unknown_lock_policy_err of string
   | `Unknown_plan_mode_err of string
   | `Window_parse_timezone_err of string
@@ -776,6 +800,7 @@ val hooks : 'a t -> Hooks.t
 val indexer : 'a t -> Indexer.t
 val integrations : 'a t -> Integrations.t
 val parallel_runs : 'a t -> int
+val stacks : 'a t -> Stacks.t
 val storage : 'a t -> Storage.t
 val tags : 'a t -> Tags.t
 val tree_builder : 'a t -> Tree_builder.t
