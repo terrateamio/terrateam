@@ -235,10 +235,12 @@ module S = struct
 
   let delete_comment t comment_id =
     let request_id = t.request_id in
+    Logs.debug (fun m -> m "[DELETE_COMMENT][GITHUB] REQUEST_ID %s" t.request_id);
     Api.delete_pull_request_comment ~request_id t.client t.pull_request comment_id
 
   let minimize_comment t comment_id =
     let request_id = t.request_id in
+    Logs.debug (fun m -> m "[MINIMIZE_COMMENT][GITHUB] REQUEST_ID %s" t.request_id);
     Api.minimize_pull_request_comment ~request_id t.client t.pull_request comment_id
 
   let post_comment t els =
