@@ -12,6 +12,7 @@ module S = struct
     account_status : Terrat_vcs_provider2.Account_status.t;
     client : Api.Client.t;
     config : Api.Config.t;
+    db : Pgsql_io.t;
     is_layered_run : bool;
     hooks : (Scope.t * Terrat_api_components_workflow_step_output.t list) list;
     pull_request : (unit, unit) Api.Pull_request.t;
@@ -65,7 +66,7 @@ module S = struct
     let msg_type = "GITLAB COMMENT" in
     let open Abbs_future_combinators.Infix_result_monad in
     Api.comment_on_pull_request ~request_id t.client t.pull_request body
-    >>= fun () ->
+    >>= fun _ ->
     Logs.info (fun m -> m "%s : PUBLISHED_COMMENT : %s" request_id msg_type);
     Abb.Future.return (Ok ())
 
@@ -90,9 +91,6 @@ module S = struct
     CCString.length out
 
   let strategy el = el.strategy
-
-  (* TODO: For testing purposes only, will change this later *)
-  (* TODO: Wirte with proper templates on Tmpl later *)
   let compact el = { el with compact = true }
 
   let compare_el el1 el2 =

@@ -108,6 +108,7 @@ module Make (M : S) = struct
     let module Alr = Abbs_future_combinators.List_result in
     let compressed = CCList.map (compact t) els in
     let sorted = CCList.sort M.compare_el compressed in
+    CCList.iter (fun el -> Logs.info (fun m -> m "[TERRAT_VCS_COMMENT] %a" M.pp_el el)) sorted;
     let groups = partition_by_strategy sorted in
     let split = CCList.map (fun (k, v) -> (k, split_by_size t v)) groups in
     match split with

@@ -262,13 +262,15 @@ module Comment_api = struct
   let comment_on_pull_request ~request_id client pull_request msg_type body =
     let open Abbs_future_combinators.Infix_result_monad in
     Api.comment_on_pull_request ~request_id client pull_request body
-    >>= fun () ->
+    >>= fun comment_id ->
     Logs.info (fun m -> m "%s : PUBLISHED_COMMENT : %s" request_id msg_type);
-    Abb.Future.return (Ok ())
+    Abb.Future.return (Ok comment_id)
 
   let apply_template_and_publish ~request_id client pull_request msg_type template kv =
     match Snabela.apply template kv with
-    | Ok body -> comment_on_pull_request ~request_id client pull_request msg_type body
+    | Ok body ->
+        Abbs_future_combinators.Result.ignore
+        @@ comment_on_pull_request ~request_id client pull_request msg_type body
     | Error (#Snabela.err as err) ->
         Logs.err (fun m -> m "%s : TEMPLATE_ERROR : %a" request_id Snabela.pp_err err);
         Abb.Future.return (Error `Error)
