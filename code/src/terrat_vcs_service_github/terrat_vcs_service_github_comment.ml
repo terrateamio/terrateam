@@ -129,13 +129,13 @@ module S = struct
       | N.Policy.Strategy.Minimize -> St.Minimize
       | N.Policy.Strategy.Delete -> St.Delete
     in
-    let notificatiion = Terrat_base_repo_config_v1.notifications t.repo_config in
-    let policies = notificatiion.N.policies in
+    let notification = Terrat_base_repo_config_v1.notifications t.repo_config in
+    let policies = notification.N.policies in
     match Cm3.of_dirspace t.synthesized_config dirspace with
     | Some config ->
         let strategy =
           match
-            CCList.find_pred
+            CCList.find_opt
               (fun p -> Cm3.match_tag_query ~tag_query:p.N.Policy.tag_query config)
               policies
           with

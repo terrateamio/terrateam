@@ -10,7 +10,7 @@ module Comment_strategy = struct
 end
 
 type t = {
-  comment_strategy : Comment_strategy.t; [@default "append"]
+  comment_strategy : Comment_strategy.t; [@default "minimize"]
   tag_query : string;
 }
 [@@deriving yojson { strict = true; meta = true }, make, show, eq]

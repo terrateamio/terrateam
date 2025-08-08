@@ -457,7 +457,7 @@ let minimize_comment ~owner ~repo ~comment_id client =
   >>= fun resp ->
   match Openapi.Response.value resp with
   | `OK { C.primary = { C.Primary.node_id; _ }; _ } -> (
-      let url = "graphql" in
+      let url = "/graphql" in
       let module Body = struct
         type t = { mutation : string } [@@deriving to_yojson]
       end in
@@ -465,7 +465,7 @@ let minimize_comment ~owner ~repo ~comment_id client =
         Printf.sprintf
           {|
             mutation MinCom {
-                minimizeComment(input:{subjectId: "%s", classifier: OUTDATED}) {
+                minimizeComment(input: {subjectId: "%s", classifier: OUTDATED}) {
                     clientMutationId,
                     minimizedComment {
                     isMinimized

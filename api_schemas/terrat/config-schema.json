@@ -963,7 +963,7 @@
       "additionalProperties": false,
       "properties": {
         "comment_strategy": {
-          "default": "append",
+          "default": "minimize",
           "enum": [
             "append",
             "delete",

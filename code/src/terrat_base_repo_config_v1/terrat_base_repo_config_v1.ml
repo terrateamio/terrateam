@@ -937,7 +937,7 @@ module Notifications = struct
 
     type t = {
       tag_query : Tag_query.t;
-      comment_strategy : Strategy.t; [@default Strategy.Append]
+      comment_strategy : Strategy.t; [@default Strategy.Minimize]
     }
     [@@deriving make, show, yojson, eq]
   end
@@ -2407,6 +2407,7 @@ let of_version_1 v1 =
        ?hooks
        ?indexer
        ?integrations
+       ?notifications
        ~parallel_runs
        ?stacks
        ?storage
