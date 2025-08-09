@@ -4,6 +4,7 @@ module Logs = (val Logs.src_log src : Logs.LOG)
 
 module Make (P : Terrat_vcs_provider2_github.S) = struct
   module Evaluator = Terrat_vcs_event_evaluator.Make (P)
+  module Evaluator2 = Terrat_vcs_event_evaluator2.Make (P)
 
   let response_headers = Cohttp.Header.of_list [ ("content-type", "application/json") ]
 
@@ -30,18 +31,18 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
       | [] -> assert false
       | encryption_key :: _ ->
           let request_id = Brtl_ctx.token ctx in
-          Evaluator.run_work_manifest_initiate
-            ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
-            ~encryption_key
-            work_manifest_id
+          Evaluator2.compute_node_poll
+            ~request_id
+            ~config
+            ~storage
+            ~compute_node_id:work_manifest_id
             initiate
-          >>= fun r -> Abb.Future.return (Ok r)
 
     let post config storage work_manifest_id initiate ctx =
       let open Abb.Future.Infix_monad in
       post' config storage work_manifest_id initiate ctx
       >>= function
-      | Ok (Some response) ->
+      | Ok response ->
           let body =
             response
             |> Terrat_api_work_manifest.Initiate.Responses.OK.to_yojson
@@ -50,11 +51,6 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
           Abb.Future.return
             (Brtl_ctx.set_response
                (Brtl_rspnc.create ~headers:response_headers ~status:`OK body)
-               ctx)
-      | Ok None ->
-          Abb.Future.return
-            (Brtl_ctx.set_response
-               (Brtl_rspnc.create ~headers:response_headers ~status:`Not_found "")
                ctx)
       | Error (#Pgsql_pool.err as err) ->
           Logs.err (fun m -> m "%s : ACCESS_TOKEN : %a" (Brtl_ctx.token ctx) Pgsql_pool.pp_err err);
@@ -111,10 +107,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
     let put config storage work_manifest_id result ctx =
       let open Abb.Future.Infix_monad in
       let request_id = Brtl_ctx.token ctx in
-      Evaluator.run_work_manifest_result
-        ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
-        work_manifest_id
-        result
+      Evaluator2.work_manifest_result ~request_id ~config ~storage ~work_manifest_id result
       >>= fun r ->
       match r with
       | Ok () -> Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
