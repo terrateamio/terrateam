@@ -1,12 +1,10 @@
 insert into jobs (
   context_id,
-  type,
   parameters,
   state,
   initiator
 ) values (
   $context_id,
-  $type,
   $parameters,
   $state,
   $initiator

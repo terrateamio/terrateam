@@ -4,6 +4,7 @@ module Logs = (val Logs.src_log src : Logs.LOG)
 
 module Make (P : Terrat_vcs_provider2_github.S) = struct
   module Evaluator = Terrat_vcs_event_evaluator.Make (P)
+  module Evaluator2 = Terrat_vcs_event_evaluator2.Make (P)
 
   module Sql = struct
     let select_encryption_key () =
@@ -55,12 +56,12 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
       | [] -> assert false
       | encryption_key :: _ ->
           let request_id = Brtl_ctx.token ctx in
-          Evaluator.run_work_manifest_initiate
-            ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
-            ~encryption_key
-            work_manifest_id
+          Evaluator2.compute_node_poll
+            ~request_id
+            ~config
+            ~storage
+            ~compute_node_id:work_manifest_id
             initiate
-          >>= fun r -> Abb.Future.return (Ok r)
 
     let post config storage work_manifest_id initiate =
       let open Abbs_future_combinators.Infix_result_monad in
@@ -190,10 +191,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
           >>= fun () ->
           let open Abb.Future.Infix_monad in
           let request_id = Brtl_ctx.token ctx in
-          Evaluator.run_work_manifest_result
-            ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
-            work_manifest_id
-            result
+          Evaluator2.work_manifest_result ~request_id ~config ~storage ~work_manifest_id result
           >>= fun r ->
           match r with
           | Ok () ->
