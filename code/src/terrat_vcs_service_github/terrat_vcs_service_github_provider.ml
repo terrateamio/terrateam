@@ -5188,10 +5188,6 @@ module Job_context = struct
       CCResult.map_err Terrat_tag_query_ast.show_err (Terrat_tag_query.of_string tag_query)
   end
 
-  module Parameters = struct
-    type t = { tag_query : Tag_query.t option } [@@deriving yojson]
-  end
-
   module Sql = struct
     let read fname =
       CCOption.get_exn_or
@@ -5217,20 +5213,100 @@ module Job_context = struct
         /% Var.bigint "repo_id"
         /% Var.bigint "pull_number")
 
-    let string_of_type = function
-      | Tjc.Job.Type_.Apply _ -> "apply"
-      | Tjc.Job.Type_.Autoapply -> "autoapply"
-      | Tjc.Job.Type_.Autoplan -> "autoplan"
-      | Tjc.Job.Type_.Plan _ -> "plan"
-      | Tjc.Job.Type_.Repo_config -> "repo_config"
-      | Tjc.Job.Type_.Unlock -> "unlock"
+    let scope_of_json =
+      let module P = struct
+        type t = {
+          type_ : string; [@key "type"]
+          pull_request_id : int option; [@default None]
+          branch : string option; [@default None]
+        }
+        [@@deriving yojson]
+      end in
+      let module S = Terrat_job_context.Context.Scope in
+      CCFun.(
+        CCOption.wrap Yojson.Safe.from_string
+        %> CCOption.flat_map (P.of_yojson %> CCResult.to_opt)
+        %> CCOption.flat_map (function
+             | { P.type_ = "setup"; _ } -> Some S.Setup
+             | { P.type_ = "pull_request"; pull_request_id = Some id; _ } ->
+                 Some (S.Pull_request id)
+             | { P.type_ = "branch"; branch = Some branch; _ } ->
+                 Some (S.Branch (Api.Ref.of_string branch))
+             | _ -> None))
+
+    let select_context_by_id =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* created_at *)
+        Ret.text
+        //
+        (* scope *)
+        Ret.(ud' scope_of_json)
+        //
+        (* updated_at *)
+        Ret.text
+        /^ read "select_context_by_id.sql"
+        /% Var.uuid "id")
 
     let string_of_state = function
       | Tjc.Job.State.Running -> "running"
       | Tjc.Job.State.Completed -> "completed"
       | Tjc.Job.State.Failed -> "failed"
 
-    let json_of_parameters = CCFun.(Parameters.to_yojson %> Yojson.Safe.to_string)
+    let state_of_string = function
+      | "running" -> Some Tjc.Job.State.Running
+      | "completed" -> Some Tjc.Job.State.Completed
+      | "failed" -> Some Tjc.Job.State.Failed
+      | _ -> None
+
+    module Type_ = struct
+      module P = struct
+        type t = {
+          type_ : string; [@key "type"]
+          tag_query : string option; [@default None]
+        }
+        [@@deriving yojson]
+      end
+
+      let to_json =
+        let module T = Terrat_job_context.Job.Type_ in
+        CCFun.(
+          (function
+          | T.Apply { tag_query } ->
+              { P.type_ = "apply"; tag_query = Some (Terrat_tag_query.to_string tag_query) }
+          | T.Autoapply -> { P.type_ = "autoapply"; tag_query = None }
+          | T.Autoplan -> { P.type_ = "autoplan"; tag_query = None }
+          | T.Plan { tag_query } ->
+              { P.type_ = "plan"; tag_query = Some (Terrat_tag_query.to_string tag_query) }
+          | T.Repo_config -> { P.type_ = "repo_config"; tag_query = None }
+          | T.Unlock -> { P.type_ = "unlock"; tag_query = None })
+          %> P.to_yojson
+          %> Yojson.Safe.to_string)
+
+      let of_json =
+        let module T = Terrat_job_context.Job.Type_ in
+        CCFun.(
+          CCOption.wrap Yojson.Safe.from_string
+          %> CCOption.flat_map (P.of_yojson %> CCResult.to_opt)
+          %> CCOption.flat_map (function
+               | { P.type_ = "apply"; tag_query = Some tag_query } ->
+                   Some
+                     (T.Apply
+                        { tag_query = CCResult.get_exn @@ Terrat_tag_query.of_string tag_query })
+               | { P.type_ = "autoapply"; _ } -> Some T.Autoapply
+               | { P.type_ = "autoplan"; _ } -> Some T.Autoplan
+               | { P.type_ = "plan"; tag_query = Some tag_query } ->
+                   Some
+                     (T.Plan
+                        { tag_query = CCResult.get_exn @@ Terrat_tag_query.of_string tag_query })
+               | { P.type_ = "repo_config"; _ } -> Some T.Repo_config
+               | { P.type_ = "unlock"; _ } -> Some T.Unlock
+               | _ -> None))
+    end
+
+    let string_of_initiator = Api.User.to_string
+    let initiator_of_string = CCFun.(Api.User.make %> CCOption.return)
 
     let insert_job =
       Pgsql_io.Typed_sql.(
@@ -5246,10 +5322,59 @@ module Job_context = struct
         Ret.text
         /^ read "insert_job.sql"
         /% Var.uuid "context_id"
-        /% Var.ud (Var.text "type") string_of_type
         /% Var.ud (Var.text "state") string_of_state
-        /% Var.ud (Var.json "parameters") json_of_parameters
-        /% Var.option (Var.text "initiator"))
+        /% Var.ud (Var.json "parameters") Type_.to_json
+        /% Var.ud (Var.option (Var.text "initiator")) (CCOption.map string_of_initiator))
+
+    let select_job_by_work_manifest_id =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* id *)
+        Ret.uuid
+        //
+        (* context_id *)
+        Ret.uuid
+        //
+        (* type *)
+        Ret.(ud' Type_.of_json)
+        //
+        (* state *)
+        Ret.(ud' state_of_string)
+        //
+        (* initiator *)
+        Ret.(option (ud' initiator_of_string))
+        //
+        (* created_at *)
+        Ret.text
+        //
+        (* updated_at *)
+        Ret.text
+        //
+        (* completed_at *)
+        Ret.(option text)
+        /^ read "select_job_by_work_manifest_id.sql"
+        /% Var.uuid "work_manifest")
+
+    let update_job_state =
+      Pgsql_io.Typed_sql.(
+        sql
+        /^ read "update_job_state.sql"
+        /% Var.uuid "job"
+        /% Var.ud (Var.text "state") string_of_state)
+
+    let upsert_job_work_manifest =
+      Pgsql_io.Typed_sql.(
+        sql /^ read "upsert_job_work_manifest.sql" /% Var.uuid "job" /% Var.uuid "work_manifest")
+
+    let select_job_work_manifests =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* work_manifest_id *)
+        Ret.uuid
+        /^ read "select_job_work_manifests.sql"
+        /% Var.uuid "job")
 
     let update_context_for_pull_request =
       Pgsql_io.Typed_sql.(
@@ -5258,6 +5383,111 @@ module Job_context = struct
         /% Var.uuid "context_id"
         /% Var.bigint "repo_id"
         /% Var.bigint "pull_number")
+
+    let to_compute_node_state =
+      Tjc.Compute_node.State.(
+        function
+        | "starting" -> Some Starting
+        | "running" -> Some Running
+        | "terminated" -> Some Terminated
+        | _ -> None)
+
+    let to_capabilities =
+      CCFun.(
+        CCOption.wrap Yojson.Safe.from_string
+        %> CCOption.flat_map (Tjc.Compute_node.Capabilities.of_yojson %> CCOption.of_result))
+
+    let insert_compute_node () =
+      Pgsql_io.Typed_sql.(
+        sql
+        (* state *)
+        // Ret.ud' to_compute_node_state
+        (* created_at *)
+        // Ret.text
+        (* updated_at *)
+        // Ret.text
+        /^ read "insert_compute_node.sql"
+        /% Var.uuid "id"
+        /% Var.(
+             ud
+               (json "capabilities")
+               CCFun.(Tjc.Compute_node.Capabilities.to_yojson %> Yojson.Safe.to_string)))
+
+    let select_compute_node () =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* id *)
+        Ret.uuid
+        //
+        (* state *)
+        Ret.ud' to_compute_node_state
+        //
+        (* capabilities *)
+        Ret.ud' to_capabilities
+        //
+        (* created_at *)
+        Ret.text
+        //
+        (* updated_at *)
+        Ret.text
+        /^ read "select_compute_node.sql"
+        /% Var.uuid "id")
+
+    let state_of_string =
+      let module S = Tjc.Compute_node_work.State in
+      function
+      | "created" -> Some S.Created
+      | "completed" -> Some S.Completed
+      | "aborted" -> Some S.Aborted
+      | _ -> None
+
+    let work_of_json =
+      CCFun.(
+        CCOption.wrap Yojson.Safe.from_string
+        %> CCOption.flat_map (Terrat_api_components.Work_manifest.of_yojson %> CCResult.to_opt))
+
+    let select_compute_node_work =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* created_at *)
+        Ret.text
+        //
+        (* state *)
+        Ret.(ud' state_of_string)
+        //
+        (* work *)
+        Ret.(ud' work_of_json)
+        //
+        (* work_manifest *)
+        Ret.uuid
+        /^ read "select_compute_node_work.sql"
+        /% Var.uuid "compute_node_id")
+
+    let string_of_state =
+      let module S = Tjc.Compute_node.State in
+      function
+      | S.Starting -> "starting"
+      | S.Running -> "running"
+      | S.Terminated -> "terminated"
+
+    let update_compute_node_state =
+      Pgsql_io.Typed_sql.(
+        sql
+        /^ read "update_compute_node_state.sql"
+        /% Var.uuid "compute_node_id"
+        /% Var.(ud (text "state") string_of_state))
+
+    let upsert_compute_node_work =
+      Pgsql_io.Typed_sql.(
+        sql
+        /^ read "upsert_compute_node_work.sql"
+        /% Var.uuid "compute_node_id"
+        /% Var.uuid "work_manifest"
+        /% Var.ud
+             (Var.json "work")
+             CCFun.(Terrat_api_components.Work_manifest.to_yojson %> Yojson.Safe.to_string))
   end
 
   let create_or_get_for_pull_request ~request_id db _account repo pull_request_id =
@@ -5312,30 +5542,35 @@ module Job_context = struct
         Abb.Future.return (Error `Error)
 
   let create ~request_id db account repo scope = raise (Failure "nyi")
-  let query ~request_id db id = raise (Failure "nyi")
+
+  let query ~request_id db id =
+    let open Abb.Future.Infix_monad in
+    Pgsql_io.Prepared_stmt.fetch
+      db
+      Sql.select_context_by_id
+      ~f:(fun created_at scope updated_at ->
+        { Terrat_job_context.Context.created_at; id; scope; updated_at })
+      id
+    >>= function
+    | Ok r -> Abb.Future.return (Ok (CCOption.of_list r))
+    | Error (#Pgsql_io.err as err) ->
+        Logs.err (fun m -> m "%s : CONTEXT : QUERY : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
 
   module Job = struct
+    let query_context = query
+
     let create ~request_id db type_ context initiator =
       let run =
         let open Abbs_future_combinators.Infix_result_monad in
-        let parameters =
-          match type_ with
-          | Tjc.Job.Type_.Apply { tag_query } -> { Parameters.tag_query = Some tag_query }
-          | Tjc.Job.Type_.Autoapply -> { Parameters.tag_query = None }
-          | Tjc.Job.Type_.Autoplan -> { Parameters.tag_query = None }
-          | Tjc.Job.Type_.Plan { tag_query } -> { Parameters.tag_query = Some tag_query }
-          | Tjc.Job.Type_.Repo_config -> { Parameters.tag_query = None }
-          | Tjc.Job.Type_.Unlock -> { Parameters.tag_query = None }
-        in
         Pgsql_io.Prepared_stmt.fetch
           db
           Sql.insert_job
           ~f:(fun id created_at updated_at -> (id, created_at, updated_at))
           context.Tjc.Context.id
-          type_
           Tjc.Job.State.Running
-          parameters
-          (CCOption.map Api.User.to_string initiator)
+          type_
+          initiator
         >>= function
         | [] -> assert false
         | (id, created_at, updated_at) :: _ ->
@@ -5363,17 +5598,155 @@ module Job_context = struct
     let query ~request_id db ~job_id = raise (Failure "nyi")
     let query_all_by_context_id ~request_id db ~context_id () = raise (Failure "nyi")
     let query_pending_by_context_id ~request_id db ~context_id () = raise (Failure "nyi")
-    let query_by_work_manifest_id ~request_id db ~work_manifest_id () = raise (Failure "nyi")
-    let update_state ~request_id db ~job_id state = raise (Failure "nyi")
-    let add_work_manifest ~request_id db ~job_id ~work_manifest_id () = raise (Failure "nyi")
-    let query_work_manifests ~request_id db ~job_id () = raise (Failure "nyi")
+
+    let query_by_work_manifest_id ~request_id db ~work_manifest_id () =
+      let run =
+        let open Abbs_future_combinators.Infix_result_monad in
+        Pgsql_io.Prepared_stmt.fetch
+          db
+          Sql.select_job_by_work_manifest_id
+          ~f:(fun id context_id type_ state initiator created_at updated_at completed_at ->
+            (id, context_id, type_, state, initiator, created_at, updated_at, completed_at))
+          work_manifest_id
+        >>= function
+        | [] -> Abb.Future.return (Ok None)
+        | (id, context_id, type_, state, initiator, created_at, updated_at, completed_at) :: _ -> (
+            query_context ~request_id db context_id
+            >>= function
+            | None -> assert false
+            | Some context ->
+                let module J = Terrat_job_context.Job in
+                Abb.Future.return
+                  (Ok
+                     (Some
+                        {
+                          J.completed_at;
+                          context;
+                          created_at;
+                          id;
+                          initiator;
+                          state;
+                          type_;
+                          updated_at;
+                        })))
+      in
+      let open Abb.Future.Infix_monad in
+      run
+      >>= function
+      | Ok _ as r -> Abb.Future.return r
+      | Error `Error -> Abb.Future.return (Error `Error)
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m -> m "%s : JOB : QUERY : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
+
+    let update_state ~request_id db ~job_id state =
+      let open Abb.Future.Infix_monad in
+      Pgsql_io.Prepared_stmt.execute db Sql.update_job_state job_id state
+      >>= function
+      | Ok () -> Abb.Future.return (Ok ())
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m -> m "%s : JOB : UPDATE_STATE : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
+
+    let add_work_manifest ~request_id db ~job_id ~work_manifest_id () =
+      let open Abb.Future.Infix_monad in
+      Pgsql_io.Prepared_stmt.execute db Sql.upsert_job_work_manifest job_id work_manifest_id
+      >>= function
+      | Ok () -> Abb.Future.return (Ok ())
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m -> m "%s : JOB : ADD_WORK_MANIFEST : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
+
+    let query_work_manifests ~request_id db ~job_id () =
+      let run =
+        let open Abbs_future_combinators.Infix_result_monad in
+        Pgsql_io.Prepared_stmt.fetch db Sql.select_job_work_manifests ~f:CCFun.id job_id
+        >>= fun work_manifests ->
+        Abbs_future_combinators.List_result.filter_map
+          ~f:(Work_manifest.query ~request_id db)
+          work_manifests
+      in
+      let open Abb.Future.Infix_monad in
+      run
+      >>= function
+      | Ok _ as r -> Abb.Future.return r
+      | Error `Error -> Abb.Future.return (Error `Error)
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m ->
+              m "%s : JOB : QUERY_WORK_MANIFESTS : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
   end
 
   module Compute_node = struct
-    let create ~request_id ~id ~state ~capabilities () = raise (Failure "nyi")
-    let query ~request_id ~compute_node_id () = raise (Failure "nyi")
-    let update_state ~request_id ~compute_node_id state = raise (Failure "nyi")
-    let add_work ~request_id ~compute_node_id work = raise (Failure "nyi")
-    let del_work ~request_id ~compute_node_id () = raise (Failure "nyi")
+    let create ~request_id ~id ~capabilities db =
+      let open Abb.Future.Infix_monad in
+      Pgsql_io.Prepared_stmt.fetch
+        db
+        (Sql.insert_compute_node ())
+        ~f:(fun state created_at updated_at -> (state, created_at, updated_at))
+        id
+        capabilities
+      >>= function
+      | Ok [] -> assert false
+      | Ok ((state, created_at, updated_at) :: _) ->
+          Abb.Future.return
+            (Ok { Tjc.Compute_node.id; state; capabilities; created_at; updated_at })
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m -> m "%s : COMPUTE_NODE : CREATE : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
+
+    let query ~request_id ~compute_node_id db =
+      let open Abb.Future.Infix_monad in
+      Pgsql_io.Prepared_stmt.fetch
+        db
+        (Sql.select_compute_node ())
+        ~f:(fun id state capabilities created_at updated_at ->
+          { Tjc.Compute_node.id; state; capabilities; created_at; updated_at })
+        compute_node_id
+      >>= function
+      | Ok [] -> Abb.Future.return (Ok None)
+      | Ok (compute_node :: _) -> Abb.Future.return (Ok (Some compute_node))
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m -> m "%s : COMPUTE_NODE : CREATE : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
+
+    let query_work ~request_id ~compute_node_id db =
+      let open Abb.Future.Infix_monad in
+      Pgsql_io.Prepared_stmt.fetch
+        db
+        Sql.select_compute_node_work
+        ~f:(fun created_at state work work_manifest ->
+          { Tjc.Compute_node_work.compute_node_id; created_at; state; work; work_manifest })
+        compute_node_id
+      >>= function
+      | Ok r -> Abb.Future.return (Ok (CCOption.of_list r))
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m -> m "%s : COMPUTE_NODE : QUERY_WORK : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
+
+    let update_state ~request_id ~compute_node_id db state =
+      let open Abb.Future.Infix_monad in
+      Pgsql_io.Prepared_stmt.execute db Sql.update_compute_node_state compute_node_id state
+      >>= function
+      | Ok () -> Abb.Future.return (Ok ())
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m ->
+              m "%s : COMPUTE_NODE : UPDATE_STATE : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
+
+    let set_work ~request_id ~compute_node_id ~work_manifest db work =
+      let open Abb.Future.Infix_monad in
+      Pgsql_io.Prepared_stmt.execute
+        db
+        Sql.upsert_compute_node_work
+        compute_node_id
+        work_manifest
+        work
+      >>= function
+      | Ok () -> Abb.Future.return (Ok ())
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m ->
+              m "%s : COMPUTE_NODE : UPDATE_STATE : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
   end
 end

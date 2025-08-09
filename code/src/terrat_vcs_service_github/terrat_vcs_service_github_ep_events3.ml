@@ -257,13 +257,16 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
             ~owner:repository.Gw.Repository.owner.Gw.User.login
             ()
         in
-        Evaluator.run_pull_request_open
-          ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
-          ~account
-          ~user
-          ~repo
-          ~pull_request_id
-          ()
+        Abbs_future_combinators.to_result
+        @@ Evaluator2.pull_request_job
+             ~request_id
+             ~config
+             ~storage
+             ~account
+             ~repo
+             ~pull_request_id
+             ~user
+             Terrat_job_context.Job.Type_.Autoplan
     | Gw.Pull_request_event.Pull_request_synchronize
         {
           Gw.Pull_request_synchronize.installation =
@@ -290,13 +293,16 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
             ~owner:repository.Gw.Repository.owner.Gw.User.login
             ()
         in
-        Evaluator.run_pull_request_sync
-          ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
-          ~account
-          ~user
-          ~repo
-          ~pull_request_id
-          ()
+        Abbs_future_combinators.to_result
+        @@ Evaluator2.pull_request_job
+             ~request_id
+             ~config
+             ~storage
+             ~account
+             ~repo
+             ~pull_request_id
+             ~user
+             Terrat_job_context.Job.Type_.Autoplan
     | Gw.Pull_request_event.Pull_request_reopened
         {
           Gw.Pull_request_reopened.installation =
@@ -325,13 +331,16 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
             ~owner:repository.Gw.Repository.owner.Gw.User.login
             ()
         in
-        Evaluator.run_pull_request_open
-          ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
-          ~account
-          ~user
-          ~repo
-          ~pull_request_id
-          ()
+        Abbs_future_combinators.to_result
+        @@ Evaluator2.pull_request_job
+             ~request_id
+             ~config
+             ~storage
+             ~account
+             ~repo
+             ~pull_request_id
+             ~user
+             Terrat_job_context.Job.Type_.Autoplan
     | Gw.Pull_request_event.Pull_request_ready_for_review
         {
           Gw.Pull_request_ready_for_review.installation =
@@ -486,7 +495,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
                 ()
             in
             Abbs_future_combinators.to_result
-            @@ Evaluator2.publish_repo_config
+            @@ Evaluator2.pull_request_job
                  ~request_id
                  ~config
                  ~storage
@@ -495,7 +504,49 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
                  ~pull_request_id
                  ~comment_id
                  ~user
-                 ()
+                 Terrat_job_context.Job.Type_.Repo_config
+        | Ok (Terrat_comment.Apply { tag_query }) ->
+            let account = P.Api.Account.make installation_id in
+            let user = P.Api.User.make sender.Gw.User.login in
+            let repo =
+              P.Api.Repo.make
+                ~id:repository.Gw.Repository.id
+                ~name:repository.Gw.Repository.name
+                ~owner:repository.Gw.Repository.owner.Gw.User.login
+                ()
+            in
+            Abbs_future_combinators.to_result
+            @@ Evaluator2.pull_request_job
+                 ~request_id
+                 ~config
+                 ~storage
+                 ~account
+                 ~repo
+                 ~pull_request_id
+                 ~comment_id
+                 ~user
+                 (Terrat_job_context.Job.Type_.Apply { tag_query })
+        | Ok (Terrat_comment.Plan { tag_query }) ->
+            let account = P.Api.Account.make installation_id in
+            let user = P.Api.User.make sender.Gw.User.login in
+            let repo =
+              P.Api.Repo.make
+                ~id:repository.Gw.Repository.id
+                ~name:repository.Gw.Repository.name
+                ~owner:repository.Gw.Repository.owner.Gw.User.login
+                ()
+            in
+            Abbs_future_combinators.to_result
+            @@ Evaluator2.pull_request_job
+                 ~request_id
+                 ~config
+                 ~storage
+                 ~account
+                 ~repo
+                 ~pull_request_id
+                 ~comment_id
+                 ~user
+                 (Terrat_job_context.Job.Type_.Plan { tag_query })
         | Ok comment ->
             let account = P.Api.Account.make installation_id in
             let user = P.Api.User.make sender.Gw.User.login in
