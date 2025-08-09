@@ -333,6 +333,6 @@ module Make (Fut : Abb_intf.Future.S) = struct
       fut
       >>= function
       | Ok _ -> Fut.return (Ok ())
-      | Error err -> Fut.return (Error err)
+      | Error _ as err -> Fut.return err
   end
 end
