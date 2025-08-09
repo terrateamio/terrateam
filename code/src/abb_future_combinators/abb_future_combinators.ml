@@ -347,7 +347,7 @@ module Make (Fut : Abb_intf.Future.S) = struct
       fut
       >>= function
       | Ok _ -> Fut.return (Ok ())
-      | Error err -> Fut.return (Error err)
+      | Error _ as err -> Fut.return err
 
     let all2 a b = Infix_result_app.((fun a b -> (a, b)) <$> a <*> b)
     let all3 a b c = Infix_result_app.((fun a b c -> (a, b, c)) <$> a <*> b <*> c)
