@@ -276,10 +276,10 @@
   <!-- Welcome Section -->
   <div class="mb-8">
     <Card padding="lg" class="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-700">
-      <div class="flex items-start justify-between">
-        <div>
-          <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Welcome to Terrateam</h2>
-          <p class="text-gray-700 dark:text-gray-300 mb-4">
+      <div class="flex flex-col md:flex-row md:items-start md:justify-between">
+        <div class="flex-1">
+          <h2 class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Welcome to Terrateam</h2>
+          <p class="text-sm md:text-base text-gray-700 dark:text-gray-300 mb-4">
             New to Terrateam? Check out our getting started guide to learn the basics and set up your first workspace.
           </p>
           <ClickableCard 
@@ -297,7 +297,7 @@
             </div>
           </ClickableCard>
         </div>
-        <img src="/assets/images/logo-symbol.svg" alt="Infrastructure Orchestration" class="w-56 h-56 opacity-30" />
+        <img src="/assets/images/logo-symbol.svg" alt="Infrastructure Orchestration" class="hidden md:block w-56 h-56 opacity-30" />
       </div>
     </Card>
   </div>
@@ -343,45 +343,45 @@
     </Card>
   {:else}
     <!-- Core Statistics Overview -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-8">
       <ClickableCard 
-        padding="lg" 
+        padding="md" 
         hover={true}
         on:click={() => navigateToRuns('state:failure')}
         aria-label="View failed runs from last 24 hours"
         class="text-center"
       >
-        <div class="text-3xl font-bold text-red-600 dark:text-red-400">{stats.failed24h}</div>
-        <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">Failed Runs</div>
+        <div class="text-2xl md:text-3xl font-bold text-red-600 dark:text-red-400">{stats.failed24h}</div>
+        <div class="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1">Failed Runs</div>
         <div class="text-xs text-gray-500 dark:text-gray-400">Last 24 hours</div>
       </ClickableCard>
       
       <ClickableCard 
-        padding="lg" 
+        padding="md" 
         hover={true}
         on:click={() => navigateToRuns('state:success')}
         aria-label="View successful runs from last 24 hours"
         class="text-center"
       >
-        <div class="text-3xl font-bold text-green-600 dark:text-green-400">{stats.successful24h}</div>
-        <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">Successful Runs</div>
+        <div class="text-2xl md:text-3xl font-bold text-green-600 dark:text-green-400">{stats.successful24h}</div>
+        <div class="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1">Successful Runs</div>
         <div class="text-xs text-gray-500 dark:text-gray-400">Last 24 hours</div>
       </ClickableCard>
       
       <ClickableCard 
-        padding="lg" 
+        padding="md" 
         hover={true}
         on:click={() => navigateToRuns('state:running')}
         aria-label="View currently running operations"
         class="text-center"
       >
-        <div class="text-3xl font-bold text-orange-600 dark:text-orange-400">{stats.running}</div>
-        <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">Running Operations</div>
+        <div class="text-2xl md:text-3xl font-bold text-orange-600 dark:text-orange-400">{stats.running}</div>
+        <div class="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1">Running Operations</div>
         <div class="text-xs text-gray-500 dark:text-gray-400">Currently active</div>
       </ClickableCard>
       
       <ClickableCard 
-        padding="lg" 
+        padding="md" 
         hover={true}
         on:click={() => {
           const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -390,8 +390,8 @@
         aria-label="View all runs from last 7 days"
         class="text-center"
       >
-        <div class="text-3xl font-bold text-blue-600 dark:text-blue-400">{stats.total7d}</div>
-        <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">Total Operations</div>
+        <div class="text-2xl md:text-3xl font-bold text-blue-600 dark:text-blue-400">{stats.total7d}</div>
+        <div class="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1">Total Operations</div>
         <div class="text-xs text-gray-500 dark:text-gray-400">Last 7 days</div>
       </ClickableCard>
     </div>
@@ -400,7 +400,7 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
       
       <ClickableCard 
-        padding="lg" 
+        padding="md" 
         hover={true}
         on:click={() => {
           const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -409,13 +409,13 @@
         aria-label="View plan operations from last 7 days"
         class="text-center"
       >
-        <div class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{stats.conversionRate.toFixed(1)}%</div>
-        <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">Plan → Apply Rate</div>
+        <div class="text-2xl md:text-3xl font-bold text-indigo-600 dark:text-indigo-400">{stats.conversionRate.toFixed(1)}%</div>
+        <div class="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1">Plan → Apply Rate</div>
         <div class="text-xs text-gray-500 dark:text-gray-400">{stats.plans} plans, {stats.applies} applies</div>
       </ClickableCard>
       
       <ClickableCard 
-        padding="lg" 
+        padding="md" 
         hover={true}
         on:click={() => {
           const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -424,13 +424,13 @@
         aria-label="View completed runs"
         class="text-center"
       >
-        <div class="text-3xl font-bold text-teal-600 dark:text-teal-400">{stats.avgDuration}</div>
-        <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">Avg Duration</div>
+        <div class="text-2xl md:text-3xl font-bold text-teal-600 dark:text-teal-400">{stats.avgDuration}</div>
+        <div class="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1">Avg Duration</div>
         <div class="text-xs text-gray-500 dark:text-gray-400">Minutes</div>
       </ClickableCard>
       
       <ClickableCard 
-        padding="lg" 
+        padding="md" 
         hover={true}
         on:click={() => {
           const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -439,8 +439,8 @@
         aria-label="View active workspaces from last 24 hours"
         class="text-center"
       >
-        <div class="text-3xl font-bold text-purple-600 dark:text-purple-400">{stats.workspaces24h}</div>
-        <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">Active Workspaces</div>
+        <div class="text-2xl md:text-3xl font-bold text-purple-600 dark:text-purple-400">{stats.workspaces24h}</div>
+        <div class="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1">Active Workspaces</div>
         <div class="text-xs text-gray-500 dark:text-gray-400">Last 24 hours</div>
       </ClickableCard>
       
@@ -464,14 +464,14 @@
                 aria-label="View runs by {user.name} from last 7 days"
                 class="bg-gray-50 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
               >
-                <div class="flex items-center justify-between">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div class="flex items-center space-x-3">
                     <div class="text-lg font-bold text-blue-600 dark:text-blue-400">#{index + 1}</div>
                     <div class="font-medium text-gray-900 dark:text-gray-100">{user.name}</div>
                   </div>
-                  <div class="flex items-center space-x-2">
-                    <div class="text-sm font-bold text-blue-600 dark:text-blue-400">{user.count} operations</div>
-                    <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div class="flex items-center gap-2 self-start sm:self-center">
+                    <div class="text-sm font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap">{user.count} operations</div>
+                    <svg class="w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
@@ -486,17 +486,17 @@
     <!-- Recent Activity Timeline -->
     <div class="mb-8">
       <Card padding="lg">
-        <div class="flex items-center justify-between mb-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Activity</h3>
-          <div class="flex items-center space-x-2">
+          <div class="flex items-center gap-2 flex-shrink-0">
             {#if isLoadingActivity}
               <LoadingSpinner size="sm" centered={false} />
             {:else}
               <button
                 on:click={() => loadRecentActivity()}
-                class="inline-flex items-center px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                class="inline-flex items-center px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 whitespace-nowrap"
               >
-                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-3 h-3 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
                 Refresh
@@ -510,8 +510,8 @@
               class="inline-block bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/50"
             >
               <div class="flex items-center space-x-1 text-blue-700 dark:text-blue-300">
-                <span class="text-xs font-medium">View All</span>
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <span class="text-xs font-medium whitespace-nowrap">View All</span>
+                <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                 </svg>
               </div>
@@ -554,44 +554,44 @@
                   'border-gray-400'
                 }"
               >
-                <div class="flex items-center justify-between">
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2 mb-1">
+                <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                  <div class="flex-1 min-w-0 overflow-hidden">
+                    <div class="flex items-center gap-2 mb-1 flex-wrap">
                       <!-- Type Badge -->
                       {#if activity.run_type}
-                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border {getTypeColor(activity.run_type)}">
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border {getTypeColor(activity.run_type)} whitespace-nowrap">
                           {getTypeIcon(activity.run_type)} {activity.run_type.toUpperCase()}
                         </span>
                       {/if}
                       
                       <!-- State Badge -->
-                      <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border {getStateColor(activity.state)}">
+                      <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border {getStateColor(activity.state)} whitespace-nowrap">
                         {getStateIcon(activity.state)} {activity.state ? activity.state.toUpperCase() : 'UNKNOWN'}
                       </span>
                     </div>
                     
-                    <div class="flex items-center gap-2 text-sm">
+                    <div class="flex flex-wrap items-center gap-2 text-sm">
                       <span class="font-medium text-gray-900 dark:text-gray-100">{activity.repo}</span>
                       {#if activity.dir}
                         <span class="text-gray-400 dark:text-gray-500">•</span>
-                        <span class="text-gray-600 dark:text-gray-400 font-mono text-xs bg-gray-100 dark:bg-gray-600 px-1 rounded">{activity.dir}</span>
+                        <span class="text-gray-600 dark:text-gray-400 font-mono text-xs bg-gray-100 dark:bg-gray-600 px-1 rounded break-all">{activity.dir}</span>
                       {/if}
                     </div>
                     
-                    <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      <span>{formatRelativeTime(activity.created_at)}</span>
+                    <div class="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      <span class="whitespace-nowrap">{formatRelativeTime(activity.created_at)}</span>
                       {#if activity.user}
                         <span class="text-gray-400 dark:text-gray-500">•</span>
-                        <span>by {activity.user}</span>
+                        <span class="whitespace-nowrap">by {activity.user}</span>
                       {/if}
                       {#if activity.branch}
                         <span class="text-gray-400 dark:text-gray-500">•</span>
-                        <span>{activity.branch}</span>
+                        <span class="break-all">{activity.branch}</span>
                       {/if}
                     </div>
                   </div>
                   
-                  <div class="flex-shrink-0 ml-4">
+                  <div class="flex-shrink-0 self-start">
                     <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>

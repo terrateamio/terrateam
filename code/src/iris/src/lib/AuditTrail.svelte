@@ -408,19 +408,19 @@
   subtitle="View operational history and user activity"
 >
   <!-- Filters -->
-  <div class="mb-6 space-y-4">
+  <div class="mb-4 md:mb-6 space-y-3 md:space-y-4">
     <!-- First row of filters -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
       <!-- Date Range Filter -->
       <div>
-        <label for="date-range" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <label for="date-range" class="block text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Date Range
         </label>
         <select
           id="date-range"
           bind:value={selectedDateRange}
           on:change={handleDateRangeChange}
-          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-primary"
+          class="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm md:text-base border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-primary"
         >
           {#each dateRangeOptions as option}
             <option value={option.value}>{option.label}</option>
@@ -430,14 +430,14 @@
 
       <!-- User Filter -->
       <div>
-        <label for="user" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <label for="user" class="block text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           User
         </label>
         <select
           id="user"
           bind:value={selectedUser}
           on:change={handleFilterChange}
-          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-primary"
+          class="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm md:text-base border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-primary"
         >
           <option value="all">All Users</option>
           {#each Array.from(users).sort() as user}
@@ -447,15 +447,15 @@
       </div>
 
       <!-- Operation Type Filter -->
-      <div>
-        <label for="operation" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+      <div class="sm:col-span-2 md:col-span-1">
+        <label for="operation" class="block text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Operation Type
         </label>
         <select
           id="operation"
           bind:value={selectedOperation}
           on:change={handleFilterChange}
-          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-primary"
+          class="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm md:text-base border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-primary"
         >
           {#each operationOptions as option}
             <option value={option.value}>{option.label}</option>
@@ -465,17 +465,17 @@
     </div>
 
     <!-- Second row of filters -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
       <!-- Repository Filter -->
       <div>
-        <label for="repository" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <label for="repository" class="block text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Repository
         </label>
         <select
           id="repository"
           bind:value={selectedRepository}
           on:change={handleFilterChange}
-          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-primary"
+          class="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm md:text-base border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-primary"
         >
           <option value="all">All Repositories</option>
           {#each Array.from(repositories).sort() as repo}
@@ -486,14 +486,14 @@
 
       <!-- Status Filter -->
       <div>
-        <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <label for="status" class="block text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Status
         </label>
         <select
           id="status"
           bind:value={selectedStatus}
           on:change={handleFilterChange}
-          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-primary"
+          class="w-full px-2 md:px-3 py-1.5 md:py-2 text-sm md:text-base border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-primary"
         >
           <option value="all">All Statuses</option>
           {#each Array.from(statuses).sort() as status}
@@ -505,7 +505,7 @@
       </div>
 
       <!-- Clear Filters Button -->
-      <div class="flex items-end">
+      <div class="flex items-end sm:col-span-2 md:col-span-1">
         <button
           on:click={() => {
             selectedUser = 'all';
@@ -514,7 +514,7 @@
             selectedRepository = 'all';
             applyFilters();
           }}
-          class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary"
+          class="w-full px-3 md:px-4 py-1.5 md:py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-xs md:text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary"
         >
           <iconify-icon icon="mdi:filter-remove" width="16" height="16" class="mr-1.5 inline-block"></iconify-icon>
           Clear Filters
@@ -524,8 +524,8 @@
   </div>
 
   <!-- Results section with download button -->
-  <div class="flex items-center justify-between mb-4">
-    <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+    <h2 class="text-base md:text-lg font-medium text-gray-900 dark:text-gray-100">
       {#if loading}
         Loading audit entries...
       {:else if error}
@@ -537,7 +537,7 @@
             {#if workManifests.length !== allWorkManifests.length}
               (filtered from {allWorkManifests.length} loaded)
             {/if}
-            <span class="text-gray-500 dark:text-gray-400 font-normal ml-2">
+            <span class="text-gray-500 dark:text-gray-400 font-normal ml-2 text-xs md:text-sm">
               • Load more below
             </span>
           </span>
@@ -554,14 +554,14 @@
       <div class="flex gap-2">
         <button
           on:click={() => downloadData('csv')}
-          class="inline-flex items-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary"
+          class="inline-flex items-center px-2 md:px-3 py-1 md:py-1.5 border border-gray-300 dark:border-gray-600 shadow-sm text-xs md:text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary"
         >
           <iconify-icon icon="mdi:download" width="16" height="16" class="mr-1.5"></iconify-icon>
           CSV
         </button>
         <button
           on:click={() => downloadData('json')}
-          class="inline-flex items-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary"
+          class="inline-flex items-center px-2 md:px-3 py-1 md:py-1.5 border border-gray-300 dark:border-gray-600 shadow-sm text-xs md:text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary"
         >
           <iconify-icon icon="mdi:download" width="16" height="16" class="mr-1.5"></iconify-icon>
           JSON
@@ -573,16 +573,16 @@
   <!-- Results -->
   {#if loading}
     <div class="flex justify-center py-12">
-      <LoadingSpinner size="lg" />
+      <LoadingSpinner size="md" />
     </div>
   {:else if error}
     <ErrorMessage type="error" message={error} />
   {:else if workManifests.length === 0}
-    <Card padding="lg">
+    <Card padding="md">
       <div class="text-center">
         <iconify-icon icon="mdi:file-clock" width="48" height="48" class="text-gray-400 dark:text-gray-600 mb-2"></iconify-icon>
-        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-1">No audit entries found</h3>
-        <p class="text-sm text-gray-500 dark:text-gray-400">Try adjusting your filters or search criteria</p>
+        <h3 class="text-base md:text-lg font-medium text-gray-900 dark:text-gray-100 mb-1">No audit entries found</h3>
+        <p class="text-xs md:text-sm text-gray-500 dark:text-gray-400">Try adjusting your filters or search criteria</p>
       </div>
     </Card>
   {:else}
@@ -616,14 +616,19 @@
             {#each workManifests as manifest}
               <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                 <!-- Time -->
-                <td class="px-3 py-2 whitespace-nowrap text-sm font-mono text-gray-600 dark:text-gray-400">
-                  {new Date(manifest.created_at).toLocaleTimeString('en-US', { 
+                <td class="px-2 md:px-3 py-1.5 md:py-2 whitespace-nowrap text-xs md:text-sm font-mono text-gray-600 dark:text-gray-400">
+                  <span class="hidden sm:inline">{new Date(manifest.created_at).toLocaleTimeString('en-US', { 
                     hour12: false, 
                     hour: '2-digit', 
                     minute: '2-digit', 
                     second: '2-digit' 
-                  })}
-                  <span class="text-xs text-gray-500 dark:text-gray-500 ml-1">
+                  })}</span>
+                  <span class="sm:hidden">{new Date(manifest.created_at).toLocaleTimeString('en-US', { 
+                    hour12: false, 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  })}</span>
+                  <span class="text-xs text-gray-500 dark:text-gray-500 ml-0.5 md:ml-1">
                     {new Date(manifest.created_at).toLocaleDateString('en-US', { 
                       month: 'short', 
                       day: 'numeric' 
@@ -632,12 +637,12 @@
                 </td>
                 
                 <!-- User -->
-                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                <td class="px-2 md:px-3 py-1.5 md:py-2 whitespace-nowrap text-xs md:text-sm text-gray-900 dark:text-gray-100">
                   {manifest.user || 'system'}
                 </td>
                 
                 <!-- Operation -->
-                <td class="px-3 py-2 whitespace-nowrap text-sm">
+                <td class="px-2 md:px-3 py-1.5 md:py-2 whitespace-nowrap text-xs md:text-sm">
                   <div class="flex items-center gap-1">
                     <iconify-icon 
                       icon="mdi:{getOperationIcon(manifest)}" 
@@ -645,15 +650,18 @@
                       height="16" 
                       class="text-gray-500 dark:text-gray-400"
                     ></iconify-icon>
-                    <span class="text-gray-900 dark:text-gray-100 font-medium">
+                    <span class="text-gray-900 dark:text-gray-100 font-medium hidden sm:inline">
                       {getOperationType(manifest).toLowerCase()}
+                    </span>
+                    <span class="text-gray-900 dark:text-gray-100 font-medium sm:hidden">
+                      {getOperationType(manifest).toLowerCase().slice(0, 5)}
                     </span>
                   </div>
                 </td>
                 
                 <!-- Target -->
-                <td class="px-3 py-2 text-sm text-gray-600 dark:text-gray-400">
-                  <div class="flex items-center gap-1 truncate max-w-md">
+                <td class="px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm text-gray-600 dark:text-gray-400">
+                  <div class="flex items-center gap-1 truncate max-w-xs md:max-w-md">
                     <span class="font-mono text-xs">{manifest.repo}</span>
                     {#if manifest.dirspaces.length > 0 && manifest.dirspaces[0].dir !== '.'}
                       <span class="text-gray-400">:</span>
@@ -670,7 +678,7 @@
                 </td>
                 
                 <!-- Status -->
-                <td class="px-3 py-2 whitespace-nowrap text-sm">
+                <td class="px-2 md:px-3 py-1.5 md:py-2 whitespace-nowrap text-xs md:text-sm">
                   <div class="flex items-center gap-1">
                     <iconify-icon 
                       icon="mdi:{getStateIcon(manifest.state)}" 
@@ -685,11 +693,11 @@
                 </td>
                 
                 <!-- Details Link -->
-                <td class="px-3 py-2 whitespace-nowrap text-center">
+                <td class="px-2 md:px-3 py-1.5 md:py-2 whitespace-nowrap text-center">
                   {#if manifest.id}
                     <a 
                       href="#/i/{$selectedInstallation?.id}/runs/{manifest.id}"
-                      class="text-brand-primary hover:text-blue-700 dark:hover:text-blue-400 underline text-sm"
+                      class="text-brand-primary hover:text-blue-700 dark:hover:text-blue-400 underline text-xs md:text-sm"
                       title="View run details"
                     >
                       View
@@ -707,14 +715,14 @@
     
     <!-- Load More Button -->
     {#if hasMoreResults}
-      <div class="mt-6 text-center">
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
+      <div class="mt-4 md:mt-6 text-center">
+        <p class="text-xs md:text-sm text-gray-500 dark:text-gray-400 mb-2 md:mb-3">
           More entries available
         </p>
         <button
           on:click={loadMoreAuditTrail}
           disabled={isLoadingMore}
-          class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="inline-flex items-center px-3 md:px-4 py-1.5 md:py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {#if isLoadingMore}
             <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-600 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

@@ -83,7 +83,7 @@
 
         <!-- {terminology.organization} Settings Card -->
         <div class="card-bg rounded-lg shadow border mb-6">
-          <div class="px-6 py-8">
+          <div class="px-4 py-6 md:px-6 md:py-8">
             <!-- Settings Icon -->
             <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-6 brand-icon-bg">
               <svg class="w-8 h-8 brand-icon-color" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -176,17 +176,17 @@
         </div>
 
         <!-- Connection Diagnostics Card -->
-        <Card padding="lg" class="mb-6">
-          <div class="flex items-center justify-between mb-6">
+        <Card padding="md" class="mb-6">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div class="flex items-center">
-              <div class="inline-flex items-center justify-center w-12 h-12 rounded-lg mr-4 brand-icon-bg">
+              <div class="inline-flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-lg mr-3 md:mr-4 brand-icon-bg">
                 <svg class="w-6 h-6 brand-icon-color" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
               </div>
               <div>
-                <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Connection Diagnostics</h2>
-                <p class="text-sm text-gray-600 dark:text-gray-400">
+                <h2 class="text-lg md:text-xl font-bold text-gray-900 dark:text-gray-100">Connection Diagnostics</h2>
+                <p class="text-xs md:text-sm text-gray-600 dark:text-gray-400">
                   {VCS_PROVIDERS[currentProvider].displayName} integration status and API connectivity
                 </p>
               </div>
@@ -247,23 +247,23 @@
               </div>
 
               <!-- Integration Details -->
-              <div class="grid md:grid-cols-2 gap-4">
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <!-- User Authentication -->
                 <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                  <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-start justify-between mb-3">
                     <h4 class="font-medium text-gray-900 dark:text-gray-100">User Authentication</h4>
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 whitespace-nowrap ml-2">
                       Connected
                     </span>
                   </div>
-                  <div class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                    <div class="flex justify-between">
-                      <span>User ID:</span>
-                      <span class="font-mono">{$user?.id?.substring(0, 8)}...</span>
+                  <div class="space-y-2 text-xs md:text-sm text-gray-600 dark:text-gray-400">
+                    <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span class="whitespace-nowrap">User ID:</span>
+                      <span class="font-mono truncate">{$user?.id?.substring(0, 8)}...</span>
                     </div>
-                    <div class="flex justify-between">
-                      <span>{VCS_PROVIDERS[currentProvider].displayName} User:</span>
-                      <span>{$githubUser?.username || 'Unknown'}</span>
+                    <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span class="whitespace-nowrap">{VCS_PROVIDERS[currentProvider].displayName} User:</span>
+                      <span class="truncate">{$githubUser?.username || 'Unknown'}</span>
                     </div>
                   </div>
                 </div>
@@ -271,51 +271,51 @@
                 <!-- Provider Integration -->
                 {#if serverConfig.github && currentProvider === 'github'}
                   <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                    <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-start justify-between mb-3">
                       <h4 class="font-medium text-gray-900 dark:text-gray-100">GitHub Integration</h4>
-                      <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                      <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 whitespace-nowrap ml-2">
                         Active
                       </span>
                     </div>
-                    <div class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                      <div class="flex justify-between">
-                        <span>App Client ID:</span>
-                        <span class="font-mono">{serverConfig.github.app_client_id}</span>
+                    <div class="space-y-2 text-xs md:text-sm text-gray-600 dark:text-gray-400">
+                      <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
+                        <span class="whitespace-nowrap">App Client ID:</span>
+                        <span class="font-mono truncate text-xs">{serverConfig.github.app_client_id}</span>
                       </div>
-                      <div class="flex justify-between">
-                        <span>API Base:</span>
-                        <span class="font-mono">{serverConfig.github.api_base_url}</span>
+                      <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
+                        <span class="whitespace-nowrap">API Base:</span>
+                        <span class="font-mono truncate text-xs break-all">{serverConfig.github.api_base_url}</span>
                       </div>
                     </div>
                   </div>
                 {:else if serverConfig.gitlab && currentProvider === 'gitlab'}
                   <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                    <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-start justify-between mb-3">
                       <h4 class="font-medium text-gray-900 dark:text-gray-100">GitLab Integration</h4>
-                      <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                      <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 whitespace-nowrap ml-2">
                         Active
                       </span>
                     </div>
-                    <div class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                      <div class="flex justify-between">
-                        <span>App ID:</span>
-                        <span class="font-mono">{serverConfig.gitlab.app_id.length > 12 ? serverConfig.gitlab.app_id.substring(0, 12) + '...' : serverConfig.gitlab.app_id}</span>
+                    <div class="space-y-2 text-xs md:text-sm text-gray-600 dark:text-gray-400">
+                      <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
+                        <span class="whitespace-nowrap">App ID:</span>
+                        <span class="font-mono truncate text-xs">{serverConfig.gitlab.app_id.length > 12 ? serverConfig.gitlab.app_id.substring(0, 12) + '...' : serverConfig.gitlab.app_id}</span>
                       </div>
-                      <div class="flex justify-between">
-                        <span>API Base:</span>
-                        <span class="font-mono">{serverConfig.gitlab.api_base_url.length > 20 ? serverConfig.gitlab.api_base_url.substring(0, 20) + '...' : serverConfig.gitlab.api_base_url}</span>
+                      <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
+                        <span class="whitespace-nowrap">API Base:</span>
+                        <span class="font-mono truncate text-xs break-all">{serverConfig.gitlab.api_base_url.length > 20 ? serverConfig.gitlab.api_base_url.substring(0, 20) + '...' : serverConfig.gitlab.api_base_url}</span>
                       </div>
-                      <div class="flex justify-between">
-                        <span>Web Base:</span>
-                        <span class="font-mono">{serverConfig.gitlab.web_base_url.length > 20 ? serverConfig.gitlab.web_base_url.substring(0, 20) + '...' : serverConfig.gitlab.web_base_url}</span>
+                      <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
+                        <span class="whitespace-nowrap">Web Base:</span>
+                        <span class="font-mono truncate text-xs break-all">{serverConfig.gitlab.web_base_url.length > 20 ? serverConfig.gitlab.web_base_url.substring(0, 20) + '...' : serverConfig.gitlab.web_base_url}</span>
                       </div>
                     </div>
                   </div>
                 {:else}
                   <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                    <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-start justify-between mb-3">
                       <h4 class="font-medium text-gray-900 dark:text-gray-100">{VCS_PROVIDERS[currentProvider].displayName} Integration</h4>
-                      <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
+                      <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 whitespace-nowrap ml-2">
                         Not Configured
                       </span>
                     </div>
@@ -327,16 +327,16 @@
 
                 <!-- {terminology.organizations} -->
                 <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                  <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-start justify-between mb-3">
                     <h4 class="font-medium text-gray-900 dark:text-gray-100">{terminology.organizations}</h4>
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 whitespace-nowrap ml-2">
                       {$installations.length} Connected
                     </span>
                   </div>
-                  <div class="space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                  <div class="space-y-1 text-xs md:text-sm text-gray-600 dark:text-gray-400">
                     {#each $installations.slice(0, 3) as installation}
-                      <div class="flex justify-between">
-                        <span>{installation.name}</span>
+                      <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
+                        <span class="truncate">{installation.name}</span>
                         <span class="text-xs text-gray-500">{installation.tier?.name || 'Free'}</span>
                       </div>
                     {/each}
@@ -350,20 +350,20 @@
 
                 <!-- Current Session -->
                 <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                  <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-start justify-between mb-3">
                     <h4 class="font-medium text-gray-900 dark:text-gray-100">Current Session</h4>
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 whitespace-nowrap ml-2">
                       Active
                     </span>
                   </div>
-                  <div class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                    <div class="flex justify-between">
-                      <span>Selected Org:</span>
-                      <span>{$selectedInstallation?.name || 'None'}</span>
+                  <div class="space-y-2 text-xs md:text-sm text-gray-600 dark:text-gray-400">
+                    <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span class="whitespace-nowrap">Selected Org:</span>
+                      <span class="truncate">{$selectedInstallation?.name || 'None'}</span>
                     </div>
-                    <div class="flex justify-between">
-                      <span>Last Check:</span>
-                      <span>{lastDiagnosticsCheck ? new Intl.DateTimeFormat('en-US', { 
+                    <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span class="whitespace-nowrap">Last Check:</span>
+                      <span class="truncate">{lastDiagnosticsCheck ? new Intl.DateTimeFormat('en-US', { 
                         hour: '2-digit', 
                         minute: '2-digit',
                         second: '2-digit'
@@ -377,16 +377,16 @@
         </Card>
 
         <!-- Settings Information -->
-        <div class="bg-brand-tertiary rounded-lg p-6 border border-brand-secondary">
+        <div class="bg-brand-tertiary rounded-lg p-4 md:p-6 border border-brand-secondary">
           <div class="flex items-start">
             <div class="flex-shrink-0">
-              <svg class="w-6 h-6 brand-icon-color" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 md:w-6 md:h-6 brand-icon-color" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <div class="ml-4">
-              <h3 class="text-lg font-semibold text-brand-primary mb-2">About Default {capitalizedOrganization}</h3>
-              <p class="text-brand-secondary">
+            <div class="ml-3 md:ml-4">
+              <h3 class="text-base md:text-lg font-semibold text-brand-primary mb-2">About Default {capitalizedOrganization}</h3>
+              <p class="text-sm md:text-base text-brand-secondary">
                 When you set a default {terminology.organization.toLowerCase()}, it will be automatically selected when you log in or refresh the application. 
                 You can still switch between {terminology.organizations.toLowerCase()} at any time using the dropdown in the sidebar. 
                 Your preference is saved locally in your browser.
