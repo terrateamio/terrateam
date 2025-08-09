@@ -77,3 +77,19 @@ module Compute_node = struct
     updated_at : string;
   }
 end
+
+module Compute_node_work = struct
+  module State = struct
+    type t =
+      | Created
+      | Completed
+      | Aborted
+  end
+
+  type t = {
+    compute_node_id : Uuidm.t;
+    created_at : string;
+    state : State.t;
+    work : Terrat_api_components.Work_manifest.t;
+  }
+end

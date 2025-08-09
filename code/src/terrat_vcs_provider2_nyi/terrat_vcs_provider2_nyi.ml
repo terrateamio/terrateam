@@ -133,10 +133,15 @@ module Job_context = struct
   end
 
   module Compute_node = struct
-    let create ~request_id ~id ~state ~capabilities () = raise (Failure "nyi")
-    let query ~request_id ~compute_node_id () = raise (Failure "nyi")
-    let update_state ~request_id ~compute_node_id state = raise (Failure "nyi")
-    let add_work ~request_id ~compute_node_id work = raise (Failure "nyi")
-    let del_work ~request_id ~compute_node_id () = raise (Failure "nyi")
+    let create ~request_id ~id ~capabilities db = raise (Failure "nyi")
+    let query ~request_id ~compute_node_id db = raise (Failure "nyi")
+    let query_work ~request_id ~compute_node_id db = raise (Failure "nyi")
+    let update_state ~request_id ~compute_node_id db state = raise (Failure "nyi")
+
+    let set_work_manifest ~request_id ~compute_node_id ~work_manifest db work =
+      raise (Failure "nyi")
+
+    let set_work_manifest_completed ~request_id ~compute_node_id ~work_manifest db =
+      raise (Failure "nyi")
   end
 end

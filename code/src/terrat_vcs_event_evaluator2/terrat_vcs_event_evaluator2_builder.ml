@@ -15,6 +15,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     | repo_config_fetch_err
     | Terrat_change_match3.synthesize_config_err
     | `Suspend_eval_err of string
+    | `Work_manifest_err of Uuidm.t
     | Pgsql_io.err
     | Pgsql_pool.err
     ]
@@ -64,12 +65,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       type t = {
         log_id : string;
         config : S.Api.Config.t;
-        storage : Terrat_storage.t;
         db : Pgsql_io.t Serializer.Mutex.t;
         mutable store : Hmap.t;
       }
-
-      let log_id t = t.log_id
 
       let set_k t k v =
         t.store <- Hmap.add k v t.store;
@@ -86,7 +84,33 @@ module Make (S : Terrat_vcs_provider2.S) = struct
 
   module Bs = Buildsys.Make (B)
 
+  let rebuilder = { Bs.Rebuilder.run = (fun _s _k v _task _fetcher -> Abb.Future.return (Ok v)) }
+
+  module State = struct
+    type t = B.State.t
+
+    let make ~log_id ~store ~config ~db () =
+      let open Abb.Future.Infix_monad in
+      Serializer.create ()
+      >>= fun serializer ->
+      let db = Serializer.Mutex.create serializer db in
+      Abb.Future.return { B.State.log_id; config; store; db }
+
+    let config t = t.B.State.config
+  end
+
   external coerce_to_task : 'a B.k -> 'a Bs.Task.t B.k = "%identity"
+
+  let union_tasks { Bs.Tasks.get = t1 } { Bs.Tasks.get = t2 } =
+    {
+      Bs.Tasks.get =
+        (fun s k ->
+          let open B.C in
+          t1 s k
+          >>= function
+          | Some _ as r -> return r
+          | None -> t2 s k);
+    }
 
   let run_db s ~f =
     let open Abb.Future.Infix_monad in
@@ -95,4 +119,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     | `Ok (Ok v) -> Abb.Future.return (Ok v)
     | `Ok (Error err) -> Abb.Future.return (Error err)
     | `Closed -> Abb.Future.return (Error `Closed)
+
+  let log_id state = state.B.State.log_id
 end
