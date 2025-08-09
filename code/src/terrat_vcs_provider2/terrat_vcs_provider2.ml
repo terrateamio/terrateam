@@ -681,40 +681,48 @@ module type S = sig
         Db.t ->
         job_id:Uuidm.t ->
         unit ->
-        (Uuidm.t list, [> `Error ]) result Abb.Future.t
+        ( ( Api.Account.t,
+            ((unit, unit) Api.Pull_request.t, Api.Repo.t) Target.t )
+          Terrat_work_manifest3.Existing.t
+          list,
+          [> `Error ] )
+        result
+        Abb.Future.t
     end
 
     module Compute_node : sig
       val create :
         request_id:string ->
         id:Uuidm.t ->
-        state:Terrat_job_context.Compute_node.State.t ->
         capabilities:Terrat_job_context.Compute_node.Capabilities.t ->
-        unit ->
+        Db.t ->
         (Terrat_job_context.Compute_node.t, [> `Error ]) result Abb.Future.t
 
       val query :
         request_id:string ->
         compute_node_id:Uuidm.t ->
-        unit ->
+        Db.t ->
         (Terrat_job_context.Compute_node.t option, [> `Error ]) result Abb.Future.t
+
+      val query_work :
+        request_id:string ->
+        compute_node_id:Uuidm.t ->
+        Db.t ->
+        (Terrat_job_context.Compute_node_work.t option, [> `Error ]) result Abb.Future.t
 
       val update_state :
         request_id:string ->
         compute_node_id:Uuidm.t ->
+        Db.t ->
         Terrat_job_context.Compute_node.State.t ->
         (unit, [> `Error ]) result Abb.Future.t
 
-      val add_work :
+      val set_work :
         request_id:string ->
         compute_node_id:Uuidm.t ->
-        Yojson.Safe.t ->
-        (unit, [> `Error ]) result Abb.Future.t
-
-      val del_work :
-        request_id:string ->
-        compute_node_id:Uuidm.t ->
-        unit ->
+        work_manifest:Uuidm.t ->
+        Db.t ->
+        Terrat_api_components.Work_manifest.t ->
         (unit, [> `Error ]) result Abb.Future.t
     end
   end
