@@ -117,4 +117,11 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) or join our [Sl
 
 ## License
 
-Terrateam is MPL-2.0 licensed. Some enterprise features are under a separate enterprise license.
+Terrateam is MPL-2.0 licensed. The open-source version includes all core features.
+
+Enterprise Edition Features (Hosted SaaS & Self-Hosted Enterprise):
+- RBAC - Role-based access control
+- Centralized Configuration - Manage config across multiple repos
+- Gatekeeper - Advanced approval workflows
+
+These enterprise features are available in our Hosted SaaS or via self-hosted Enterprise Edition licensing.
