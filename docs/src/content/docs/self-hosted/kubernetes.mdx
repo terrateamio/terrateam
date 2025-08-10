@@ -192,10 +192,10 @@ helm install terrateam terrateamio/terrateam \
   --set terrateam.config.uiBase="https://terrateam.example.com" \
   --set ingress.certificate.enabled="true" \
   --set ingress.enabled="true" \
-  --set ingress.annotations."networking\.gke\.io\/managed-certificates"="terrateam-ingress-certificate" \
-  --set ingress.annotations."kubernetes\.io\/ingress\.global-static-ip-name"="terrateam-static-ip" \
-  --set ingress.annotations."kubernetes\.io\/ingress\.class"="gce" \
-  --set-string ingress.annotations."kubernetes\.io\/ingress\.allow-http"="false"
+  --set ingress.className="gce" \
+  --set ingress.annotations."networking\.gke\.io/managed-certificates"="terrateam-ingress-certificate" \
+  --set ingress.annotations."kubernetes\.io/ingress\.global-static-ip-name"="terrateam-static-ip" \
+  --set-string ingress.annotations."kubernetes\.io/ingress\.allow-http"="false"
 ```
 
 </TabItem>
@@ -211,10 +211,10 @@ helm install terrateam terrateamio/terrateam \
   --set terrateam.config.uiBase="https://terrateam.example.com" \
   --set ingress.certificate.enabled="true" \
   --set ingress.enabled="true" \
-  --set ingress.annotations."networking\.gke\.io\/managed-certificates"="terrateam-ingress-certificate" \
-  --set ingress.annotations."kubernetes\.io\/ingress\.global-static-ip-name"="terrateam-static-ip" \
-  --set ingress.annotations."kubernetes\.io\/ingress\.class"="gce" \
-  --set-string ingress.annotations."kubernetes\.io\/ingress\.allow-http"="false"
+  --set ingress.className="gce" \
+  --set ingress.annotations."networking\.gke\.io/managed-certificates"="terrateam-ingress-certificate" \
+  --set ingress.annotations."kubernetes\.io/ingress\.global-static-ip-name"="terrateam-static-ip" \
+  --set-string ingress.annotations."kubernetes\.io/ingress\.allow-http"="false"
 ```
 
 </TabItem>
@@ -228,10 +228,10 @@ helm install terrateam terrateamio/terrateam \
   --set terrateam.config.uiBase="https://terrateam.example.com" \
   --set ingress.certificate.enabled="true" \
   --set ingress.enabled="true" \
-  --set ingress.annotations."networking\.gke\.io\/managed-certificates"="terrateam-ingress-certificate" \
-  --set ingress.annotations."kubernetes\.io\/ingress\.global-static-ip-name"="terrateam-static-ip" \
-  --set ingress.annotations."kubernetes\.io\/ingress\.class"="gce" \
-  --set-string ingress.annotations."kubernetes\.io\/ingress\.allow-http"="false"
+  --set ingress.className="gce" \
+  --set ingress.annotations."networking\.gke\.io/managed-certificates"="terrateam-ingress-certificate" \
+  --set ingress.annotations."kubernetes\.io/ingress\.global-static-ip-name"="terrateam-static-ip" \
+  --set-string ingress.annotations."kubernetes\.io/ingress\.allow-http"="false"
 ```
 
 </TabItem>
@@ -247,10 +247,10 @@ helm install terrateam terrateamio/terrateam \
   --set terrateam.config.uiBase="https://terrateam.example.com" \
   --set ingress.certificate.enabled="true" \
   --set ingress.enabled="true" \
-  --set ingress.annotations."networking\.gke\.io\/managed-certificates"="terrateam-ingress-certificate" \
-  --set ingress.annotations."kubernetes\.io\/ingress\.global-static-ip-name"="terrateam-static-ip" \
-  --set ingress.annotations."kubernetes\.io\/ingress\.class"="gce" \
-  --set-string ingress.annotations."kubernetes\.io\/ingress\.allow-http"="false"
+  --set ingress.className="gce" \
+  --set ingress.annotations."networking\.gke\.io/managed-certificates"="terrateam-ingress-certificate" \
+  --set ingress.annotations."kubernetes\.io/ingress\.global-static-ip-name"="terrateam-static-ip" \
+  --set-string ingress.annotations."kubernetes\.io/ingress\.allow-http"="false"
 ```
 
 </TabItem>
@@ -324,7 +324,7 @@ You can later expose the `terrateam-server` service using:
 
 For GitHub, you need to configure the webhook URL in your GitHub App settings:
 
-1. Navigate to your GitHub App settings page
+1. Navigate to your GitHub App settings page (find the URL in your `.env` file)
 2. Go to the "General" tab
 3. In the "Webhook" section, set the URL to: `https://terrateam.example.com/api/github/v1/events`
 4. Ensure the webhook secret matches the one you configured during setup
