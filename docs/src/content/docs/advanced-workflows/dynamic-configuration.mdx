@@ -2,12 +2,52 @@
 title: Dynamically Generate Configuration at Runtime
 description: Dynamically generate Terrateam configurations at runtime
 ---
+import MermaidDiagram from "../../../components/MermaidDiagram.astro";
 
 Some infrastructure setups cannot be expressed using the existing Terrateam repository configuration. The configuration may depend on information that exists in the repository, performing an API call, or may be best expressed in another way. To support these situations, Terrateam has the [`config_builder`](/configuration-reference/config-builder) configuration, which allows you to create dynamic configurations at runtime using custom scripts. This approach helps automate complex infrastructure workflows ...
 
 ## How It Works
 
 When `config_builder` is enabled, Terrateam will run the script you provide to generate the dynamic configuration. This configuration is then merged with the other configuration, producing a repository configuration. The script is executed in a GitHub Action, in a checkout of your repository.
+
+:::caution[Security Implications]
+Running arbitrary scripts as part of your configuration builder introduces security risks. These scripts have access to repository contents, environment variables, and any configured secrets. Only trusted users should be allowed to modify or approve config builder scripts. Always review scripts carefully for malicious or unintended behavior before enabling them.
+
+Using this in conjunction with `access_control.files` is always a good idea:
+```
+access_control:
+  files:
+    bin/script-that-handles-sensitive-things: ['role:admin']
+```
+:::
+
+:::note[Example Scenario]
+Imagine a scenario where your repository structure encodes environment and region information in directory names, such as `prod/us-east/database`. You want to automatically tag directories based on this structure so you can easily target all `us-east` regions for a plan or apply. With a config builder script, you can parse directory names and inject tags dynamically, something not possible with static configuration alone.
+:::
+
+### Configuration Merge Flow
+
+The configuration from the config builder is merged with other configuration sources. The merge order and override rules are important for understanding the final config.
+<details>
+  <summary>Expand for step-by-step configuration merge flow diagram</summary>
+  <MermaidDiagram chart={`
+flowchart TD
+  A(Centralized Defaults)
+  B(Centralized Overrides)
+  C(Repo Defaults)
+  D(Repo Overrides)
+  E(Repo Forced Config)
+  F(Repo Default Branch Config)
+  G(Feature Branch Config)
+  H(Config Builder Output)
+  I(Final Merged Config)
+  A --> B --> C --> D --> E --> F --> G --> H --> I
+  `} />
+</details>
+
+- Centralized and repo-level configs are merged in order.
+- The config builder script runs after all static config is merged.
+- Some sections (like access control) are always taken from the default branch config.
 
 :::note
 Dynamically building a configuration is very powerful and can make understanding your Terrateam configuration difficult. We recommend using this feature for specific needs and with careful consideration.

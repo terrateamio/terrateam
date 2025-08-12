@@ -13,6 +13,7 @@ module Step : sig
   type t =
     | Apply
     | Build_config
+    | Build_tree
     | Index
     | Plan
     | Unsafe_apply
@@ -46,6 +47,7 @@ type ('account, 'id, 'created_at, 'run_id, 'state, 'changes, 'denied_dirspaces, 
   id : 'id;
   initiator : Initiator.t;
   run_id : 'run_id;
+  runs_on : Yojson.Safe.t option;
   state : 'state;
   steps : Step.t list;
   tag_query : Terrat_tag_query.t;
@@ -60,7 +62,7 @@ module New : sig
       unit,
       unit,
       unit,
-      int Terrat_change.Dirspaceflow.t list,
+      int option Terrat_change.Dirspaceflow.t list,
       Deny.t list,
       'target )
     t
@@ -74,7 +76,7 @@ module Existing : sig
       string,
       string option,
       State.t,
-      int Terrat_change.Dirspaceflow.t list,
+      int option Terrat_change.Dirspaceflow.t list,
       Deny.t list,
       'target )
     t

@@ -1,0 +1,41 @@
+---
+title: Getting Started
+description: Get started with Terrateam Self-Hosted - prerequisites, overview, and deployment options.
+---
+
+import { LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+Terrateam Self-Hosted allows you to run Terrateam on your own infrastructure, giving you complete control over your Terraform automation while maintaining security and compliance requirements.
+
+:::note[Open Source vs Enterprise]
+The self-hosted Docker and Kubernetes deployments use the Open Source edition by default. For enterprise features like RBAC, Centralized Configuration, and Gatekeeper, see our [Editions and Licensing](/self-hosted/editions/) guide.
+:::
+
+## Deployment Options
+
+Choose the deployment method that best fits your infrastructure and requirements:
+
+<CardGrid>
+  <LinkCard 
+    title="Docker Compose" 
+    description="Quick setup for development, testing, and smaller production deployments. Perfect for getting started with minimal infrastructure."
+    href="/self-hosted/docker-compose/"
+  />
+  <LinkCard 
+    title="Kubernetes with Helm" 
+    description="Production-ready deployment with auto-scaling and high availability. Ideal for enterprise environments and large teams."
+    href="/self-hosted/kubernetes/"
+  />
+</CardGrid>
+
+:::tip[Recommended for Getting Started]
+If you're new to Terrateam Self-Hosted, we recommend starting with **Docker Compose** for the quickest setup experience.
+:::
+
+## Architecture Overview
+
+Terrateam Self-Hosted consists of several key components:
+
+- **Terrateam Server**: Main application handling webhooks and orchestrating Terraform operations
+- **PostgreSQL Database**: Stores application state, plans, and audit logs
+- **Load Balancer** (Production): Distributes traffic and provides high availability

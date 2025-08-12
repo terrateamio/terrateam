@@ -115,6 +115,7 @@ module Typed_sql : sig
     val ud' : (string -> 'a option) -> 'a t
 
     val option : 'a t -> 'a option t
+    val debug : (string option list -> unit) -> 'a t -> 'a t
   end
 
   type ('q, 'qr, 'p, 'pr) t
@@ -237,3 +238,7 @@ val ping : t -> bool Abb.Future.t
 
     Nested transactions are not supported. *)
 val tx : t -> f:(unit -> ('a, ([> err ] as 'e)) result Abb.Future.t) -> ('a, 'e) result Abb.Future.t
+
+(** Help function that takes a string representing SQL and removes any comments (lines that start
+    with --). This DOES NOT remove comments if they are not the very first entry on a line. *)
+val clean_string : string -> string

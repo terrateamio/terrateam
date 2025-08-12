@@ -49,13 +49,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
     let read fname =
       CCOption.get_exn_or
         fname
-        (CCOption.map
-           (fun s ->
-             s
-             |> CCString.split_on_char '\n'
-             |> CCList.filter CCFun.(CCString.prefix ~pre:"--" %> not)
-             |> CCString.concat "\n")
-           (Terrat_files_github_sql.read fname))
+        (CCOption.map Pgsql_io.clean_string (Terrat_files_github_sql.read fname))
 
     let insert_github_installation =
       Pgsql_io.Typed_sql.(
@@ -64,7 +58,8 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         /% Var.bigint "id"
         /% Var.text "login"
         /% Var.uuid "org"
-        /% Var.text "target_type")
+        /% Var.text "target_type"
+        /% Var.text "tier")
 
     let update_github_installation_unsuspend =
       Pgsql_io.Typed_sql.(
@@ -108,7 +103,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         //
         (* id *)
         Ret.uuid
-        /^ "select id from github_work_manifests where run_id = $run_id"
+        /^ "select id from work_manifests where run_id = $run_id"
         /% Var.text "run_id")
   end
 
@@ -161,6 +156,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
                       installation.Gw.Installation.account.Gw.User.login
                       org_id
                       installation.Gw.Installation.account.Gw.User.type_
+                      (Terrat_config.default_tier @@ P.Api.Config.config config)
                 | [] -> assert false)
             | _ :: _ -> Abb.Future.return (Ok ()))
     | Gw.Installation_event.Installation_deleted deleted ->

@@ -1,28 +1,13 @@
+let name = "nyi"
+
 module Api = Terrat_vcs_api_nyi
 
 module Unlock_id = struct
-  type t =
-    | Pull_request of int
-    | Drift
+  type t = unit
 
-  let of_pull_request id = Pull_request id
-  let drift () = Drift
-
-  let to_string = function
-    | Pull_request id -> CCInt.to_string id
-    | Drift -> "drift"
-end
-
-module Pull_request = struct
-  type t
-
-  let base_branch_name t = raise (Failure "nyi")
-  let base_ref t = raise (Failure "nyi")
-  let branch_name t = raise (Failure "nyi")
-  let branch_ref t = raise (Failure "nyi")
-  let id t = raise (Failure "nyi")
-  let repo t = raise (Failure "nyi")
-  let state t = raise (Failure "nyi")
+  let of_pull_request id = raise (Failure "nyi")
+  let drift () = raise (Failure "nyi")
+  let to_string t = raise (Failure "nyi")
 end
 
 module Db = struct
@@ -33,6 +18,7 @@ module Db = struct
   let store_index ~request_id db work_manifest_id index = raise (Failure "nyi")
   let store_index_result ~request_id db work_manifest_id index_result = raise (Failure "nyi")
   let store_repo_config_json ~request_id db account ref_ json = raise (Failure "nyi")
+  let store_repo_tree ~request_id db account ref_ files = raise (Failure "nyi")
   let store_flow_state ~request_id db work_manifest_id state = raise (Failure "nyi")
 
   let store_dirspaceflows ~request_id ~base_ref ~branch_ref db repo dirspaceflows =
@@ -44,6 +30,7 @@ module Db = struct
   let query_account_status ~request_id db account = raise (Failure "nyi")
   let query_index ~request_id db account ref_ = raise (Failure "nyi")
   let query_repo_config_json ~request_id db account ref_ = raise (Failure "nyi")
+  let query_repo_tree ?base_ref ~request_id db accoutn ref_ = raise (Failure "nyi")
   let query_next_pending_work_manifest ~request_id db = raise (Failure "nyi")
   let query_flow_state ~request_id db work_manifest_id = raise (Failure "nyi")
   let delete_flow_state ~request_id db work_manifest_id = raise (Failure "nyi")
@@ -80,6 +67,15 @@ module Apply_requirements = struct
     raise (Failure "nyi")
 end
 
+module Tier = struct
+  let check ~request_id user account db = raise (Failure "nyi")
+end
+
+module Gate = struct
+  let add_approval ~request_id ~token ~approver pull_request db = raise (Failure "nyi")
+  let eval ~request_id client dirspaces pull_request db = raise (Failure "nyi")
+end
+
 module Comment = struct
   let publish_comment ~request_id client user pull_request msg = raise (Failure "nyi")
 end
@@ -90,15 +86,8 @@ module Repo_config = struct
 end
 
 module Access_control = struct
-  module Ctx = struct
-    type t
-
-    let make ~client ~config ~repo ~user () = raise (Failure "nyi")
-  end
-
-  let query ctx mtch = raise (Failure "nyi")
-  let is_ci_changed ctx diff = raise (Failure "nyi")
-  let set_user user ctx = raise (Failure "nyi")
+  let query ~request_id client repo user match_ = raise (Failure "nyi")
+  let is_ci_changed ~request_id client repo diffs = raise (Failure "nyi")
 end
 
 module Commit_check = struct

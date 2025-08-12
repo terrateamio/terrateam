@@ -24,6 +24,8 @@ module Get_copilot_organization_details = struct
       [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
+    module Unprocessable_entity = struct end
+
     module Internal_server_error = struct
       type t = Githubc2_components.Basic_error.t
       [@@deriving yojson { strict = false; meta = false }, show, eq]
@@ -34,6 +36,7 @@ module Get_copilot_organization_details = struct
       | `Unauthorized of Unauthorized.t
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
+      | `Unprocessable_entity
       | `Internal_server_error of Internal_server_error.t
       ]
     [@@deriving show, eq]
@@ -44,6 +47,7 @@ module Get_copilot_organization_details = struct
         ("401", Openapi.of_json_body (fun v -> `Unauthorized v) Unauthorized.of_yojson);
         ("403", Openapi.of_json_body (fun v -> `Forbidden v) Forbidden.of_yojson);
         ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ("422", fun _ -> Ok `Unprocessable_entity);
         ( "500",
           Openapi.of_json_body (fun v -> `Internal_server_error v) Internal_server_error.of_yojson
         );
@@ -242,7 +246,7 @@ module Cancel_copilot_seat_assignment_for_teams = struct
       `Delete
 end
 
-module Add_copilot_for_business_seats_for_teams = struct
+module Add_copilot_seats_for_teams = struct
   module Parameters = struct
     type t = { org : string } [@@deriving make, show, eq]
   end
@@ -422,7 +426,7 @@ module Cancel_copilot_seat_assignment_for_users = struct
       `Delete
 end
 
-module Add_copilot_for_business_seats_for_users = struct
+module Add_copilot_seats_for_users = struct
   module Parameters = struct
     type t = { org : string } [@@deriving make, show, eq]
   end
@@ -512,7 +516,90 @@ module Add_copilot_for_business_seats_for_users = struct
       `Post
 end
 
-module Get_copilot_seat_assignment_details_for_user = struct
+module Copilot_metrics_for_organization = struct
+  module Parameters = struct
+    type t = {
+      org : string;
+      page : int; [@default 1]
+      per_page : int; [@default 28]
+      since : string option; [@default None]
+      until : string option; [@default None]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Githubc2_components.Copilot_usage_metrics_day.t list
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Forbidden = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Unprocessable_entity = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Internal_server_error = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    type t =
+      [ `OK of OK.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      | `Internal_server_error of Internal_server_error.t
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("403", Openapi.of_json_body (fun v -> `Forbidden v) Forbidden.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ( "422",
+          Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
+        ( "500",
+          Openapi.of_json_body (fun v -> `Internal_server_error v) Internal_server_error.of_yojson
+        );
+      ]
+  end
+
+  let url = "/orgs/{org}/copilot/metrics"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("org", Var (params.org, String)) ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("since", Var (params.since, Option String));
+           ("until", Var (params.until, Option String));
+           ("page", Var (params.page, Int));
+           ("per_page", Var (params.per_page, Int));
+         ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module Get_copilot_seat_details_for_user = struct
   module Parameters = struct
     type t = {
       org : string;
@@ -582,6 +669,90 @@ module Get_copilot_seat_assignment_details_for_user = struct
          let open Parameters in
          [ ("org", Var (params.org, String)); ("username", Var (params.username, String)) ])
       ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module Copilot_metrics_for_team = struct
+  module Parameters = struct
+    type t = {
+      org : string;
+      page : int; [@default 1]
+      per_page : int; [@default 28]
+      since : string option; [@default None]
+      team_slug : string;
+      until : string option; [@default None]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Githubc2_components.Copilot_usage_metrics_day.t list
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Forbidden = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Unprocessable_entity = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Internal_server_error = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    type t =
+      [ `OK of OK.t
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      | `Internal_server_error of Internal_server_error.t
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("403", Openapi.of_json_body (fun v -> `Forbidden v) Forbidden.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ( "422",
+          Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
+        ( "500",
+          Openapi.of_json_body (fun v -> `Internal_server_error v) Internal_server_error.of_yojson
+        );
+      ]
+  end
+
+  let url = "/orgs/{org}/team/{team_slug}/copilot/metrics"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("org", Var (params.org, String)); ("team_slug", Var (params.team_slug, String)) ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("since", Var (params.since, Option String));
+           ("until", Var (params.until, Option String));
+           ("page", Var (params.page, Int));
+           ("per_page", Var (params.per_page, Int));
+         ])
       ~url
       ~responses:Responses.t
       `Get

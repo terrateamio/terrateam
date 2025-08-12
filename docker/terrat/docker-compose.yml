@@ -18,12 +18,10 @@ services:
       POSTGRES_PASSWORD: "terrateam"
       POSTGRES_USER: "terrateam"
       POSTGRES_DB: "terrateam"
-      POSTGRES_HOST_AUTH_METHOD: "md5"
-      POSTGRES_INITDB_ARGS: "--auth-host=md5"
     healthcheck:
       test: [ "CMD", "pg_isready", "-d", "terrateam", "-U", "terrateam" ]
-      interval: 10s
-      timeout: 5s
+      interval: 3s
+      timeout: 3s
       retries: 5
     volumes:
       - db:/var/lib/postgresql/data/
@@ -32,9 +30,8 @@ services:
 
   server:
     image: ghcr.io/terrateamio/terrat-oss:latest
-    platform: linux/amd64
+    pull_policy: always
     environment:
-      NGROK_ENDPOINT: "http://ngrok:4040"
       DB_HOST: "db"
       DB_PORT: "5432"
       DB_USER: "terrateam"
@@ -45,32 +42,42 @@ services:
       GITHUB_APP_CLIENT_ID: "${GITHUB_APP_CLIENT_ID}"
       GITHUB_APP_ID: "${GITHUB_APP_ID}"
       GITHUB_APP_PEM: "${GITHUB_APP_PEM}"
+      GITHUB_APP_URL: "${GITHUB_APP_URL}"
+      GITLAB_APP_ID: "${GITLAB_APP_ID}"
+      GITLAB_APP_SECRET: "${GITLAB_APP_SECRET}"
+      GITLAB_ACCESS_TOKEN: "${GITLAB_ACCESS_TOKEN}"
+      TERRATUNNEL_API_ENDPOINT: "http://terratunnel:8081"
+      TERRAT_UI_BASE: "${TERRAT_UI_BASE}"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 60s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
+      interval: 3s
+      timeout: 3s
+      retries: 10
     depends_on:
       db:
         condition: service_healthy
-      ngrok:
+      terratunnel:
         condition: service_healthy
     networks:
       - terrateam
 
-  ngrok:
-    image: ngrok/ngrok:3
+  terratunnel:
+    image: ghcr.io/terrateamio/terratunnel:latest
+    pull_policy: always
+    command: ["client", "--local-endpoint", "http://server:8080", "--update-github-webhook"]
+    environment:
+      TERRATUNNEL_LOCAL_ENDPOINT: "http://server:8080"
+      TERRATUNNEL_API_KEY: "${TERRATUNNEL_API_KEY}"
+      GITHUB_APP_ID: "${GITHUB_APP_ID}"
+      GITHUB_APP_PEM: "${GITHUB_APP_PEM}"
+      WEBHOOK_PATH: "/api/github/v1/events"
     healthcheck:
-      test: /bin/bash -c "</dev/tcp/localhost/4040"
+      test: ["CMD", "wget", "--spider", "-q", "http://terratunnel:8081/health"]
       interval: 10s
       timeout: 5s
-      retries: 5
-    command: ["http", "http://server:8080"]
+      retries: 10
     networks:
       - terrateam
-    environment:
-      NGROK_AUTHTOKEN: "${NGROK_AUTHTOKEN}"
 
 networks:
   terrateam:

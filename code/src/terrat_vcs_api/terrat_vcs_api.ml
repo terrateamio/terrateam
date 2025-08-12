@@ -140,7 +140,11 @@ module type S = sig
     (Terrat_pull_request_review.t list, [> `Error ]) result Abb.Future.t
 
   val react_to_comment :
-    request_id:string -> Client.t -> Repo.t -> int -> (unit, [> `Error ]) result Abb.Future.t
+    request_id:string ->
+    Client.t ->
+    ('a, 'b) Pull_request.t ->
+    int ->
+    (unit, [> `Error ]) result Abb.Future.t
 
   val create_commit_checks :
     request_id:string ->

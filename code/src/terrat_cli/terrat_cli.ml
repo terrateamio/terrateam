@@ -56,14 +56,15 @@ module Cmdline = struct
     Logs.set_level level;
     let default_remove_loggers =
       [
-        "happy-eyeballs";
-        "dns_client";
-        "dns_cache";
         "abb.dns";
-        "cohttp_abb";
-        "cohttp_abb.io";
         "abb_curl";
         "abb_curl_easy";
+        "cohttp_abb";
+        "cohttp_abb.io";
+        "dns_cache";
+        "dns_client";
+        "happy-eyeballs";
+        "pgsql.pool";
       ]
     in
     let loggers =
@@ -78,7 +79,8 @@ module Cmdline = struct
       (fun src ->
         if CCList.mem ~eq:CCString.equal (Logs.Src.name src) loggers then
           Logs.Src.set_level src (Some Logs.Error))
-      (Logs.Src.list ())
+      (Logs.Src.list ());
+    Logs_threaded.enable ()
 
   let loggers =
     let env =
@@ -124,15 +126,41 @@ let exec_duration duration =
   Metrics.Exec_duration_histogram.observe Metrics.exec_duration duration;
   if duration >= 0.5 then Logs.info (fun m -> m "EXEC_DURATION : %f" duration)
 
-module Make (Github : Terrat_vcs_service.S with type Service.vcs_config = Terrat_config.Github.t) =
+module Make
+    (Github : Terrat_vcs_service.S with type Service.vcs_config = Terrat_config.Github.t)
+    (Gitlab : Terrat_vcs_service.S with type Service.vcs_config = Terrat_config.Gitlab.t) =
 struct
+  let src = Logs.Src.create "terrat"
+
+  module Logs = (val Logs.src_log src : Logs.LOG)
+
   let maybe_start_github config storage =
     let open Abb.Future.Infix_monad in
     match Terrat_config.github config with
-    | Some github ->
+    | Some github -> (
+        Logs.info (fun m -> m "Starting GitHub Service");
         Github.Service.start config github storage
-        >>= fun service -> Abb.Future.return (Github.Service.routes service)
-    | None -> Abb.Future.return []
+        >>= function
+        | Ok service ->
+            Abb.Future.return (Some (Terrat_vcs_service.Service ((module Github), service)))
+        | Error `Error ->
+            Logs.err (fun m -> m "Failed to start GitHub Service");
+            exit 1)
+    | None -> Abb.Future.return None
+
+  let maybe_start_gitlab config storage =
+    let open Abb.Future.Infix_monad in
+    match Terrat_config.gitlab config with
+    | Some gitlab -> (
+        Logs.info (fun m -> m "Starting GitLab Service");
+        Gitlab.Service.start config gitlab storage
+        >>= function
+        | Ok service ->
+            Abb.Future.return (Some (Terrat_vcs_service.Service ((module Gitlab), service)))
+        | Error `Error ->
+            Logs.err (fun m -> m "Failed to start GitLab Service");
+            exit 1)
+    | None -> Abb.Future.return None
 
   let server () =
     let run () =
@@ -143,7 +171,11 @@ struct
           Terrat_storage.create config
           >>= fun storage ->
           maybe_start_github config storage
-          >>= fun github_routes -> Terrat_server.run config storage github_routes
+          >>= fun github_service ->
+          maybe_start_gitlab config storage
+          >>= fun gitlab_service ->
+          let services = CCOption.to_list github_service @ CCOption.to_list gitlab_service in
+          Terrat_server.run config storage services
       | Error err ->
           Logs.err (fun m -> m "CONFIG : ERROR : %s" (Terrat_config.show_err err));
           exit 1

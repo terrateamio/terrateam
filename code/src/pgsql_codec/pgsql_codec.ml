@@ -15,6 +15,7 @@ module Reader : sig
   val int32 : int32 t
   val bytes : int -> string t
   val string : string t
+  val string_list : unit -> string list t
   val int16 : int t
   val repeat : int -> 'a t -> 'a list t
   val consume : int -> 'a t -> 'a list t
@@ -66,11 +67,17 @@ end = struct
 
   let string st =
     match Bytes.index_from_opt st.State.buf st.State.pos '\000' with
-    | Some idx when idx + 1 < st.State.stop ->
+    | Some idx when idx < st.State.stop ->
         let s = Bytes.sub_string st.State.buf st.State.pos (idx - st.State.pos) in
         (* +1 to consume the end null byte *)
         (Ok s, { st with State.pos = st.State.pos + (idx - st.State.pos) + 1 })
     | _ -> (Error `Length, st)
+
+  let rec string_list () =
+    string
+    >>= function
+    | "" -> return []
+    | auth_mechanism -> string_list () >>= fun rest -> return (auth_mechanism :: rest)
 
   let int16 st =
     if st.State.pos + 2 <= st.State.stop then
@@ -172,7 +179,7 @@ module Frame = struct
       | AuthenticationGSS
       | AuthenticationSSPI
       | AuthenticationGSSContinue of { data : string }
-      | AuthenticationSASL of { auth_mechanism : string }
+      | AuthenticationSASL of { auth_mechanisms : string list }
       | AuthenticationSASLContinue of { data : string }
       | AuthenticationSASLFinal of { data : string }
       | BackendKeyData of {
@@ -295,7 +302,9 @@ module Decode = struct
         | 7 -> return AuthenticationGSS
         | 9 -> return AuthenticationSSPI
         | 8 -> bytes (len - 4) >>= fun data -> return (AuthenticationGSSContinue { data })
-        | 10 -> string >>= fun auth_mechanism -> return (AuthenticationSASL { auth_mechanism })
+        | 10 ->
+            string_list ()
+            >>= fun auth_mechanisms -> return (AuthenticationSASL { auth_mechanisms })
         | 11 -> bytes (len - 4) >>= fun data -> return (AuthenticationSASLContinue { data })
         | 12 -> bytes (len - 4) >>= fun data -> return (AuthenticationSASLFinal { data })
         | _ -> fail `Invalid_frame)

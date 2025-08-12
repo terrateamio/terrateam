@@ -1,4 +1,5 @@
 {
+  "$ref": "#/definitions/version-1",
   "$schema": "http://json-schema.org/draft-04/schema#",
   "definitions": {
     "access-control": {
@@ -122,6 +123,9 @@
       "items": {
         "additionalProperties": false,
         "properties": {
+          "apply_after_merge": {
+            "$ref": "#/definitions/apply-requirements-checks-apply-after-merge"
+          },
           "approved": {
             "$ref": "#/definitions/apply-requirements-checks-approved-2"
           },
@@ -145,6 +149,16 @@
         "type": "object"
       },
       "type": "array"
+    },
+    "apply-requirements-checks-apply-after-merge": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "type": "object"
     },
     "apply-requirements-checks-approved": {
       "oneOf": [
@@ -232,6 +246,24 @@
         "enabled": {
           "default": false,
           "type": "boolean"
+        },
+        "require_explicit_apply": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "batch-runs": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": false,
+          "type": "boolean"
+        },
+        "max_workspaces_per_batch": {
+          "default": 1,
+          "type": "integer"
         }
       },
       "type": "object"
@@ -295,6 +327,13 @@
         "create_and_select_workspace": {
           "default": true,
           "type": "boolean"
+        },
+        "lock_branch_target": {
+          "enum": [
+            "all",
+            "dest_branch"
+          ],
+          "type": "string"
         },
         "stacks": {
           "$ref": "#/definitions/workspaces"
@@ -402,7 +441,7 @@
       "type": "object"
     },
     "engine": {
-      "oneOf": [
+      "anyOf": [
         {
           "$ref": "#/definitions/engine-cdktf"
         },
@@ -417,6 +456,15 @@
         },
         {
           "$ref": "#/definitions/engine-pulumi"
+        },
+        {
+          "$ref": "#/definitions/engine-fly"
+        },
+        {
+          "$ref": "#/definitions/engine-custom"
+        },
+        {
+          "$ref": "#/definitions/engine-other"
         }
       ]
     },
@@ -425,6 +473,9 @@
       "properties": {
         "name": {
           "const": "cdktf",
+          "type": "string"
+        },
+        "override_tf_cmd": {
           "type": "string"
         },
         "tf_cmd": {
@@ -439,11 +490,80 @@
       ],
       "type": "object"
     },
+    "engine-custom": {
+      "additionalProperties": false,
+      "properties": {
+        "apply": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "diff": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "init": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "name": {
+          "const": "custom",
+          "type": "string"
+        },
+        "outputs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "plan": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "unsafe_apply": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "engine-fly": {
+      "additionalProperties": false,
+      "properties": {
+        "config_file": {
+          "type": "string"
+        },
+        "name": {
+          "const": "fly",
+          "type": "string"
+        }
+      },
+      "required": [
+        "config_file",
+        "name"
+      ],
+      "type": "object"
+    },
     "engine-opentofu": {
       "additionalProperties": false,
       "properties": {
         "name": {
           "const": "tofu",
+          "type": "string"
+        },
+        "override_tf_cmd": {
           "type": "string"
         },
         "version": {
@@ -455,6 +575,7 @@
       ],
       "type": "object"
     },
+    "engine-other": {},
     "engine-pulumi": {
       "additionalProperties": false,
       "properties": {
@@ -475,6 +596,9 @@
           "const": "terraform",
           "type": "string"
         },
+        "override_tf_cmd": {
+          "type": "string"
+        },
         "version": {
           "type": "string"
         }
@@ -491,6 +615,9 @@
           "const": "terragrunt",
           "type": "string"
         },
+        "override_tf_cmd": {
+          "type": "string"
+        },
         "tf_cmd": {
           "type": "string"
         },
@@ -503,6 +630,33 @@
       },
       "required": [
         "name"
+      ],
+      "type": "object"
+    },
+    "gate": {
+      "additionalProperties": false,
+      "properties": {
+        "all_of": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "any_of": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "any_of_count": {
+          "type": "integer"
+        },
+        "token": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "token"
       ],
       "type": "object"
     },
@@ -554,7 +708,6 @@
           "type": "string"
         }
       },
-      "required": [],
       "type": "object"
     },
     "hook-op-env-exec": {
@@ -736,6 +889,10 @@
           "default": false,
           "type": "boolean"
         },
+        "on_error": {
+          "items": {},
+          "type": "array"
+        },
         "run_on": {
           "$ref": "#/definitions/run-on"
         },
@@ -852,6 +1009,53 @@
       ],
       "type": "string"
     },
+    "runs-on": {},
+    "stack-config": {
+      "additionalProperties": false,
+      "properties": {
+        "on_change": {
+          "additionalProperties": false,
+          "properties": {
+            "can_apply_after": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        "tag_query": {
+          "type": "string"
+        },
+        "variables": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "tag_query"
+      ],
+      "type": "object"
+    },
+    "stacks": {
+      "additionalProperties": false,
+      "properties": {
+        "allow_workspace_in_multiple_stacks": {
+          "default": false,
+          "type": "boolean"
+        },
+        "names": {
+          "additionalProperties": {
+            "$ref": "#/definitions/stack-config"
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
     "storage-plan-cmd": {
       "additionalProperties": false,
       "properties": {
@@ -959,6 +1163,19 @@
     "terraform-version": {
       "type": "string"
     },
+    "tree-builder": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": false,
+          "type": "boolean"
+        },
+        "script": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "version-1": {
       "additionalProperties": false,
       "properties": {
@@ -970,6 +1187,9 @@
         },
         "automerge": {
           "$ref": "#/definitions/automerge"
+        },
+        "batch_runs": {
+          "$ref": "#/definitions/batch-runs"
         },
         "checkout_strategy": {
           "default": "merge",
@@ -1072,7 +1292,6 @@
               "type": "boolean"
             }
           },
-          "required": [],
           "type": "object"
         },
         "integrations": {
@@ -1081,6 +1300,9 @@
         "parallel_runs": {
           "default": 3,
           "type": "integer"
+        },
+        "stacks": {
+          "$ref": "#/definitions/stacks"
         },
         "storage": {
           "additionalProperties": false,
@@ -1103,6 +1325,9 @@
         },
         "tags": {
           "$ref": "#/definitions/custom-tags"
+        },
+        "tree_builder": {
+          "$ref": "#/definitions/tree-builder"
         },
         "version": {
           "const": "1",
@@ -1208,6 +1433,9 @@
         "plan": {
           "$ref": "#/definitions/workflow-op-list"
         },
+        "runs_on": {
+          "$ref": "#/definitions/runs-on"
+        },
         "tag_query": {
           "type": "string"
         },
@@ -1252,6 +1480,92 @@
       ],
       "type": "object"
     },
+    "workflow-op-checkov": {
+      "additionalProperties": false,
+      "properties": {
+        "env": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "extra_args": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "gate": {
+          "$ref": "#/definitions/gate"
+        },
+        "ignore_errors": {
+          "default": false,
+          "type": "boolean"
+        },
+        "run_on": {
+          "$ref": "#/definitions/run-on"
+        },
+        "type": {
+          "const": "checkov",
+          "type": "string"
+        },
+        "visible_on": {
+          "enum": [
+            "always",
+            "failure",
+            "success"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "workflow-op-conftest": {
+      "additionalProperties": false,
+      "properties": {
+        "env": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "extra_args": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "gate": {
+          "$ref": "#/definitions/gate"
+        },
+        "ignore_errors": {
+          "default": false,
+          "type": "boolean"
+        },
+        "run_on": {
+          "$ref": "#/definitions/run-on"
+        },
+        "type": {
+          "const": "conftest",
+          "type": "string"
+        },
+        "visible_on": {
+          "enum": [
+            "always",
+            "failure",
+            "success"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
     "workflow-op-init": {
       "additionalProperties": false,
       "properties": {
@@ -1285,6 +1599,12 @@
           },
           {
             "$ref": "#/definitions/workflow-op-plan"
+          },
+          {
+            "$ref": "#/definitions/workflow-op-checkov"
+          },
+          {
+            "$ref": "#/definitions/workflow-op-conftest"
           },
           {
             "$ref": "#/definitions/workflow-op-apply"
@@ -1352,15 +1672,9 @@
             "$ref": "#/definitions/when-modified-nullable"
           }
         },
-        "required": [],
         "type": "object"
       },
       "type": "object"
     }
-  },
-  "oneOf": [
-    {
-      "$ref": "#/definitions/version-1"
-    }
-  ]
+  }
 }

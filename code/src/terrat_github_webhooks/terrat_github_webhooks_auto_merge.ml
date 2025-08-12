@@ -1,6 +1,6 @@
 type t = {
   commit_message : string;
-  commit_title : string;
+  commit_title : string option; [@default None]
   enabled_by : Terrat_github_webhooks_user.t;
   merge_method : string;
 }

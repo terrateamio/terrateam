@@ -3,24 +3,49 @@ title: Locks and Concurrency
 description: Manage concurrent Terraform operations and prevent conflicts
 ---
 
-import { Steps } from '@astrojs/starlight/components';
+import MermaidDiagram from '../../../components/MermaidDiagram.astro';
+import { Card, LinkCard, CardGrid } from '@astrojs/starlight/components';
 
 Terrateam's locks and concurrency feature ensures that changes to your infrastructure are safely applied by preventing concurrent modifications to the same resources. Locks guarantee that only a single change to a resource can be applied in a pull request at any given time, avoiding conflicts and maintaining consistency between your Terraform configuration and the real-world state of your infrastructure.
+
+## Why are locks important?  
+Suppose Alice and Bob both open pull requests that modify the same Terraform resource. Without locks, both could apply their changes independently, leading to a situation where the real infrastructure state no longer matches the code in your main branch. Locks prevent this by ensuring only one change can be applied at a time.
+
+<MermaidDiagram chart={`
+flowchart TD
+    T1["Alice"] --> A1["Alice PR<br>plan"]
+    T2["Bob"] --> B1["Bob PR<br>plan"]
+
+    A2["Alice PR<br>apply (acquire lock)"]
+    A3["Alice PR<br>infra update"]
+    A4["Alice PR<br>release lock"]
+
+    B2["Bob PR<br>apply (blocked)"]
+    B3["Bob PR<br>re-plan"]
+    B4["Bob PR<br>apply (acquire lock)"]
+    B5["Bob PR<br>infra update"]
+    B6["Bob PR<br>release lock"]
+
+    A1 --> A2 --> A3 --> A4 --> B3
+    B1 --> B2
+    B3 --> B4 --> B5 --> B6
+`} />
 
 ## Concurrent Collaboration
 
 When multiple team members are working on the same Terraform project, locks play a crucial role in coordinating their efforts and preventing conflicting changes.
 
-Here's how Terrateam's locks help facilitate collaboration among team members:
-
-##### Coordination
-When a team member applies a change to a resource in a pull request, Terrateam acquires a lock on that resource. This lock ensures that no other team member can concurrently apply changes to the same resource, preventing conflicts and inconsistencies.
-
-##### Invalidation
-If a team member attempts to apply a change to a resource that is already locked by another apply operation, Terrateam will deny the change. Once the lock is released, the change can be re-planned and applied.
-
-##### Consistency
-By preventing concurrent modifications to the same resources, locks help maintain consistency between your Terraform configuration and the actual state of your infrastructure. This consistency is crucial when multiple team members are working on the same project.
+<CardGrid>
+  <Card title="Coordination">
+    When a team member applies a change to a resource in a pull request, Terrateam acquires a lock on that resource. This lock ensures that no other team member can concurrently apply changes to the same resource, preventing conflicts and inconsistencies.
+  </Card>
+  <Card title="Invalidation">
+    If a team member attempts to apply a change to a resource that is already locked by another apply operation, Terrateam will deny the change. Once the lock is released, the change can be re-planned and applied.
+  </Card>
+  <Card title="Consistency">
+    By preventing concurrent modifications to the same resources, locks help maintain consistency between your Terraform configuration and the actual state of your infrastructure.
+  </Card>
+</CardGrid>
 
 ## What is a Lock?
 
@@ -46,23 +71,18 @@ By default, a lock is acquired when executing an apply operation or merging a pu
 
 If a pull request is created but never applied or merged, no lock is acquired. Locks are only acquired when executing an apply or merging a pull request without applying the changes.
 
-### Example 1: Applying
+### Example: Locking in Action
 
 Consider a pull request with changes in `dir1` and `dir2` (using only the `default` workspace):
 
-<Steps>
-1. Alice runs `terrateam plan` to plan all changes in the pull request.
-
-1. Alice runs `terrateam apply dir:dir1` to apply only the changes in `dir1`.
-</Steps>
-
-The pull request now owns locks on the following dirspaces:
-- `(dir1, default)`
-- `(dir2, default)`
-
-### Example 2: Merging
-
-Consider the same pull request from Example 1. Instead of executing a `terrateam apply`, Alice merges the pull request with unapplied changes.
+<MermaidDiagram chart={`
+flowchart TD
+    PR["PR opened: changes in <br>dir1, dir2"]
+    Plan["terrateam plan"]
+    Apply["terrateam apply dir:dir1"]
+    Locks["Locks acquired: <br>(dir1, default), (dir2, default)"]
+    PR --> Plan --> Apply --> Locks
+`} />
 
 The pull request now owns locks on the following dirspaces:
 - `(dir1, default)`
@@ -90,75 +110,19 @@ The `terrateam unlock` command is very powerful.
 *With great power comes great responsibility*
 :::
 
-## Benefits Of Locks
-
-### Drift Protection
-
-Locks are released when a change is both merged and applied to ensure that your default branch matches the real-world state of your infrastructure.
-
-Consider a pull request where a change is applied, but the pull request is accidentally closed instead of merged. Without the pull request merged, future pull requests would not be created on top of the applied change. With locks, future changes to the same dirspace could not be applied because the closed pull request still owns the lock. The change would need to be explicitly unlocked or the pull request would have to be re-opened and merged.
-
-### Preventing Conflicts
-
-Locks help prevent conflicts when multiple pull requests modify the same Terraform resource. Without locks, this can cause the state defined in your configuration to be different from the real-world state of your infrastructure.
-
-Consider two open pull requests without the ability to lock:
-- `PR1` created by Alice
-- `PR2` created by Bob
-
-<Steps>
-1. Alice and Bob both make changes to `dir1`.
-
-1. Alice applies her changes in `PR1` but does not merge.
-
-1. Bob applies his change in `PR2`, changing the same resources that Alice applied against.
-
-1. Bob merges his pull request before Alice merges her pull request.
-</Steps>
-
-Examining the repository, one could assume that the latest changes in the default branch match the real-world state of the infrastructure (Alice's changes). However, in reality, the real-world state matches Bob's changes.
-
-With locks, Terrateam guarantees that changes are merged in the order they are applied, preventing such conflicts.
-
-### Merging Without Applying
-
-Terrateam will not prevent users from merging a pull request without issuing a `terrateam apply`. However, Terrateam will recognize this scenario, and users will not be able to apply any new changes until locks have been released from the merged pull request that was not applied.
-
 ## Locking Policies
 
 The `lock_policy` option under workflows in your Terrateam configuration file instructs Terrateam under what situations it should acquire a lock.
 
-##### `strict` (default)
-Acquire a lock if a user comments `terrateam apply` in the pull request or the change is merged. The lock is released when the complimentary operation is performed. Recommended for production environments.
-
-##### `apply`
-Acquire a lock only if the directory has been applied in Terrateam (`terrateam apply`). The lock is released once the change is merged.
-
-##### `merge`
-Acquire a lock only if the directory has been merged. The lock is released when the change is applied (`terrateam apply`). Useful for development pull requests that are used as a playground and closed when done, rather than merging.
-
-##### `none`
-Never acquire a lock.
-
-## Example Scenario
-
-Consider the following scenario:
-- A repository named `repo`
-- Alice creates pull request `PR1` against `repo`
-- Bob creates pull request `PR2` against `repo`
-- Both pull requests have a change in directory `dir` (using only the `default` workspace)
-
-<Steps>
-1. Alice applies her change by commenting `terrateam apply` but does not merge the pull request. `PR1` now owns a lock on the dirspace `(dir, default)`.
-
-1. Bob tries to execute `terrateam apply` on `PR2` but receives an error stating that the plan cannot be applied because `PR1` owns the lock.
-
-1. Alice merges `PR1`. The lock is released, and a `terrateam apply` can be executed against `PR2`.
-
-1. Bob tries to execute `terrateam apply` on `PR2` again but receives an error stating that the plan has been invalidated. The `terrateam apply` Alice executed in `PR1` changed the state, marking Bob's plan as invalid. Bob now needs to run `terrateam plan` again before running `terrateam apply`.
-</Steps>
+| Policy   | Description                                                                                                         | Recommended Use Case                |
+|----------|---------------------------------------------------------------------------------------------------------------------|-------------------------------------|
+| `strict` | Acquire a lock if a user comments `terrateam apply` or the change is merged. Lock is released when the other action is performed. | Production environments (default)   |
+| `apply`  | Acquire a lock only if the directory has been applied in Terrateam. Lock is released once the change is merged.     | Standard apply/merge workflows      |
+| `merge`  | Acquire a lock only if the directory has been merged. Lock is released when the change is applied.                  | Dev/playground branches             |
+| `none`   | Never acquire a lock.                                                                                               | Special cases, not recommended      |
 
 ## Best Practices
+
 When working with locks in a team environment, consider the following best practices:
 - Communicate and coordinate with your team members when working on shared resources to avoid conflicts and delays.
 - Regularly review the lock status and address any long-standing locks that may be blocking other team members' progress.

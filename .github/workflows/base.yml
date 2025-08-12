@@ -57,7 +57,6 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/terrat-base:${{ env.VERSION_TAG }}-amd64
 
   build-arm64:
-    if: false
     needs: set-version-tag
     runs-on: ubuntu-22.04-arm64
     environment: production
@@ -92,7 +91,7 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/terrat-base:${{ env.VERSION_TAG }}-arm64
 
   create-manifest:
-    needs: [set-version-tag, build-amd64]
+    needs: [set-version-tag, build-amd64, build-arm64]
     runs-on: ubuntu-22.04
     environment: production
 

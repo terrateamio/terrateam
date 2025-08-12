@@ -1,5 +1,5 @@
 with
-drift_schedules as (
+ds as (
     select
         name,
         repository,
@@ -25,13 +25,13 @@ latest_drift_unlocks as (
     from github_drift_unlocks
     group by repository
 ),
-drift_work_manifests as (
+dwms as (
     select
         gwm.repository as repository,
         gwm.created_at as created_at,
         gwm.state as state,
         row_number() over (partition by gwm.repository order by gwm.created_at desc) as rn
-    from github_drift_work_manifests as dwm
+    from drift_work_manifests as dwm
     inner join github_work_manifests as gwm
         on gwm.id = dwm.work_manifest
     left join latest_drift_unlocks
@@ -39,7 +39,7 @@ drift_work_manifests as (
     where latest_drift_unlocks.repository is null or latest_drift_unlocks.unlocked_at < gwm.created_at
 ),
 latest_drift_manifests as (
-    select * from drift_work_manifests where rn = 1
+    select * from dwms where rn = 1
 ),
 drift_schedule_windows as (
     select
@@ -50,7 +50,7 @@ drift_schedule_windows as (
            when window_end < window_start then window_end + interval '1 day'
            else window_end
          end) as window_end
-    from drift_schedules as ds
+    from ds
     where window_start is not null and window_end is not null
 )
 select
@@ -60,8 +60,10 @@ select
     gir.owner as owner,
     gir.name as name,
     ds.reconcile,
-    ds.tag_query
-from drift_schedules as ds
+    ds.tag_query,
+    dsw.window_start,
+    dsw.window_end
+from ds
 inner join github_installation_repositories as gir
     on gir.id = ds.repository
 inner join github_installations as gi

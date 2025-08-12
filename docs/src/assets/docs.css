@@ -1,19 +1,115 @@
+/* === Custom Fonts === */
+@font-face {
+  font-family: 'Apertura';
+  src: url('/fonts/Apertura_Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Apertura';
+  src: url('/fonts/Apertura_Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Apertura';
+  src: url('/fonts/Apertura_Obliq.otf') format('opentype');
+  font-weight: 400;
+  font-style: oblique;
+}
+
+@font-face {
+  font-family: 'Apertura';
+  src: url('/fonts/Apertura_Bold_Obliq.otf') format('opentype');
+  font-weight: 700;
+  font-style: oblique;
+}
+
+/* === Global Font === */
 :root {
-  --purple-hsl: 255, 60%, 60%;
+  --sl-font: 'Apertura', sans-serif;
+  --purple-hsl: 200, 60%, 60%;
   --overlay-blurple: hsla(var(--purple-hsl), 0.2);
+
+  /* Override Starlight's text size variables */
+  /* Base sizes - increase from default */
+  --sl-text-base: 1.375rem !important;  /* 22px instead of 16px */
+  --sl-text-body: 1.375rem !important;  /* 22px for body text */
+  --sl-text-sm: 1.25rem !important;     /* 20px instead of 14px */
+  --sl-text-xs: 1.125rem !important;    /* 18px instead of 13px */
+  --sl-text-lg: 1.625rem !important;    /* 26px instead of 18px */
+  --sl-text-xl: 1.875rem !important;    /* 30px instead of 20px */
+
+  /* Heading sizes - increase proportionally */
+  --sl-text-h1: 3rem !important;        /* 48px */
+  --sl-text-h2: 2.5rem !important;      /* 40px */
+  --sl-text-h3: 2rem !important;        /* 32px */
+  --sl-text-h4: 1.75rem !important;     /* 28px */
+  --sl-text-h5: 1.5rem !important;      /* 24px */
+
+  /* Code text - keep readable but slightly larger */
+  --sl-text-code: 1.125rem !important;  /* 18px instead of 14px */
+  --sl-text-code-sm: 1.063rem !important; /* 17px instead of 13px */
+
+  /* Responsive sizes for larger screens */
+  --sl-text-2xl: 2.25rem !important;    /* 36px on mobile */
+  --sl-text-3xl: 2.75rem !important;    /* 44px on mobile */
+  --sl-text-4xl: 3.25rem !important;    /* 52px on mobile */
+  --sl-text-5xl: 4rem !important;       /* 64px on mobile */
+
+  /* Line height improvements */
+  --sl-line-height: 1.7 !important;
+  --sl-line-height-headings: 1.2 !important;
+
+  /* Dark mode colors. */
+  --sl-color-accent-low: #003d66;
+  --sl-color-accent: #008ae6;
+  --sl-color-accent-high: #66c2ff;
+  --sl-color-white: #ffffff;
+  --sl-color-gray-1: #eceef2;
+  --sl-color-gray-2: #c0c2c7;
+  --sl-color-gray-3: #888b96;
+  --sl-color-gray-4: #545861;
+  --sl-color-gray-5: #353841;
+  --sl-color-gray-6: #24272f;
+  --sl-color-black: #17181c;
 }
 
-:root[data-theme="light"] {
-  --purple-hsl: 255, 85%, 65%;
+/* Ensure proper sizes on larger screens */
+@media (min-width: 50rem) {
+  :root {
+    --sl-text-2xl: 2.5rem !important;   /* 40px on desktop */
+    --sl-text-3xl: 3rem !important;     /* 48px on desktop */
+    --sl-text-4xl: 3.5rem !important;   /* 56px on desktop */
+    --sl-text-5xl: 4.5rem !important;   /* 72px on desktop */
+  }
 }
 
+/* Light mode overrides */
+:root[data-theme='light'] {
+  --purple-hsl: 200, 85%, 65%;
+  --sl-color-accent-low: #cce9ff;
+  --sl-color-accent: #008ae6;
+  --sl-color-accent-high: #004c80;
+  --sl-color-white: #17181c;
+  --sl-color-gray-1: #24272f;
+  --sl-color-gray-2: #353841;
+  --sl-color-gray-3: #545861;
+  --sl-color-gray-4: #888b96;
+  --sl-color-gray-5: #c0c2c7;
+  --sl-color-gray-6: #eceef2;
+  --sl-color-gray-7: #f5f6f8;
+  --sl-color-black: #ffffff;
+}
+
+/* === Site Styles === */
 [data-has-hero] .page {
   background:
     linear-gradient(215deg, var(--overlay-blurple), transparent 40%),
-    radial-gradient(var(--overlay-blurple), transparent 40%) no-repeat -60vw -40vh /
-      105vw 200vh,
-    radial-gradient(var(--overlay-blurple), transparent 65%) no-repeat 50%
-      calc(100% + 20rem) / 60rem 30rem;
+    radial-gradient(var(--overlay-blurple), transparent 40%) no-repeat -60vw -40vh / 105vw 200vh,
+    radial-gradient(var(--overlay-blurple), transparent 65%) no-repeat 50% calc(100% + 20rem) / 60rem 30rem;
 }
 
 [data-has-hero] header {
@@ -48,7 +144,7 @@
 }
 
 .content-panel {
-  padding: 4.5rem var(--sl-content-pad-x);
+  padding: 1.5rem var(--sl-content-pad-x);
 }
 
 summary {
@@ -75,10 +171,90 @@ summary > * {
   padding-left: 1rem;
 }
 
-.content-panel {
-  padding: 1.5rem var(--sl-content-pad-x);
+.sl-markdown-content :is(th, td):not(:where(.not-content *)) > code {
+  overflow-wrap: normal;
 }
 
-.sl-markdown-content :is(th, td):not(:where(.not-content *)) > code {
-    overflow-wrap: normal;
+/* === Layout Fixes === */
+/* Remove these old centering rules that conflict with our new layout */
+
+/* === Font Size Improvements === */
+/* Explicitly set font size for markdown content paragraphs */
+.sl-markdown-content p,
+.sl-markdown-content li,
+.sl-markdown-content td,
+.sl-markdown-content div {
+  font-size: 1.375rem !important; /* 22px */
+  line-height: 1.7 !important;
+}
+
+/* Also set for the body and main content areas */
+body {
+  font-size: 1.375rem !important;
+}
+
+/* Ensure headings use the variables */
+.sl-markdown-content h1 { font-size: var(--sl-text-h1) !important; }
+.sl-markdown-content h2 { font-size: var(--sl-text-h2) !important; }
+.sl-markdown-content h3 { font-size: var(--sl-text-h3) !important; }
+.sl-markdown-content h4 { font-size: var(--sl-text-h4) !important; }
+.sl-markdown-content h5 { font-size: var(--sl-text-h5) !important; }
+.sl-markdown-content h6 { font-size: var(--sl-text-h6) !important; }
+
+/* === Mobile Fixes === */
+/* Fix "On this page" being cut off on mobile */
+@media (max-width: 50rem) {
+  /* Mobile table of contents */
+  mobile-starlight-toc nav,
+  #starlight__mobile-toc {
+    margin-top: 1rem !important;
+  }
+
+  /* Ensure proper spacing for mobile TOC summary */
+  #starlight__on-this-page--mobile {
+    padding-top: 0.5rem !important;
+  }
+}
+
+/* === Layout Fixes === */
+/* Simple content width increase without breaking anything */
+@media (min-width: 72rem) {
+  /* Just make the content wider */
+  :root {
+    --sl-content-width: 52rem !important; /* Default is 45rem */
+    --sl-sidebar-width: 20.5rem !important; /* 10% wider than default 18.75rem */
+  }
+}
+
+@media (min-width: 90rem) {
+  :root {
+    --sl-content-width: 58rem !important; /* Even wider on larger screens */
+  }
+}
+
+/* === Fix zoom overlap issue === */
+/* Remove negative margins and ensure proper spacing */
+@media (min-width: 72rem) {
+  /* Ensure sidebar stays fixed width */
+  .sidebar-pane {
+    min-width: var(--sl-sidebar-width);
+    flex-shrink: 0;
+  }
+
+  /* Reset main-pane margins to prevent overlap */
+  .main-pane {
+    margin-inline-start: 0 !important;
+    margin-inline-end: 0 !important;
+  }
+
+  /* Use padding instead of negative margins for spacing */
+  .sl-container > .main-frame {
+    padding-inline: 2rem !important;
+  }
+
+  /* Ensure content never goes under sidebar */
+  .main-frame {
+    overflow-x: hidden;
+    position: relative;
+  }
 }

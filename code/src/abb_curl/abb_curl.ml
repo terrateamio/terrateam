@@ -567,16 +567,21 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
         | None -> ()
 
       let setup_request handle meth_ headers uri =
-        Logs.debug (fun _ -> Curl.set_verbose handle true);
+        let debug_enabled = ref false in
+        Logs.debug (fun m ->
+            debug_enabled := true;
+            m "Verbose enabled");
+        Curl.set_verbose handle !debug_enabled;
         Curl.set_url handle (Uri.to_string uri);
         (match meth_ with
         | `GET -> ()
         | `PUT body ->
             Curl.set_put handle true;
-            maybe_set_body_writer handle body
+            maybe_set_body_writer handle @@ Some (CCOption.get_or ~default:"" body)
         | `POST body ->
             Curl.set_post handle true;
-            maybe_set_body_writer handle body
+            (* Ensure that a post always has a body, requests seem to hang otherwise. *)
+            maybe_set_body_writer handle @@ Some (CCOption.get_or ~default:"" body)
         | `DELETE body ->
             Curl.set_customrequest handle "DELETE";
             maybe_set_body_writer handle body
@@ -620,14 +625,13 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
                     CCString.length s)
             | None -> CCString.length s);
         Curl.set_writefunction handle (fun s ->
-            Mutex.lock t.mutex;
-            Queue.add (Out_event.Body (id, s)) t.out_event;
-            Mutex.unlock t.mutex;
+            Mutex.protect t.mutex (fun () -> Queue.add (Out_event.Body (id, s)) t.out_event);
             CCString.length s)
 
       let process_request
           t
           ({ Request.options; headers; body_reader; meth_; uri; id; _ } as request) =
+        Logs.debug (fun m -> m "process_request : id=%s : uri=%a" id Uri.pp uri);
         let handle = Curl.init () in
         t.requests <- Id_map.add id request t.requests;
         t.responses <-
@@ -664,14 +668,12 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
         t.shutdown <- true
 
       let trigger_out_events t =
-        Mutex.lock t.mutex;
-        if Queue.length t.out_event > 0 then trigger_eventfd t.trigger_eventfd;
-        Mutex.unlock t.mutex
+        Mutex.protect t.mutex (fun () ->
+            if Queue.length t.out_event > 0 then trigger_eventfd t.trigger_eventfd)
 
       let rec process_in_events t =
-        Mutex.lock t.mutex;
-        let event = Queue.take_opt t.in_event in
-        Mutex.unlock t.mutex;
+        Logs.debug (fun m -> m "process_in_events");
+        let event = Mutex.protect t.mutex (fun () -> Queue.take_opt t.in_event) in
         match event with
         | Some (In_event.Request request) ->
             process_request t request;
@@ -711,9 +713,8 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
                 t.responses <- Id_map.remove id t.responses;
                 t.requests <- Id_map.remove id t.requests;
                 t.handles <- Id_map.remove id t.handles;
-                Mutex.lock t.mutex;
-                Queue.add (Out_event.Ret (id, Ok { resp with Response.status })) t.out_event;
-                Mutex.unlock t.mutex;
+                Mutex.protect t.mutex (fun () ->
+                    Queue.add (Out_event.Ret (id, Ok { resp with Response.status })) t.out_event);
                 process_finished t
             | None -> assert false)
         | Some (handle, exit_code) -> (
@@ -732,16 +733,16 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
                 t.responses <- Id_map.remove id t.responses;
                 t.requests <- Id_map.remove id t.requests;
                 t.handles <- Id_map.remove id t.handles;
-                Mutex.lock t.mutex;
-                Queue.add
-                  (Out_event.Ret (id, Error (`Curl_err (Curl.strerror exit_code))))
-                  t.out_event;
-                Mutex.unlock t.mutex;
+                Mutex.protect t.mutex (fun () ->
+                    Queue.add
+                      (Out_event.Ret (id, Error (`Curl_err (Curl.strerror exit_code))))
+                      t.out_event);
                 process_finished t
             | None -> assert false)
         | None -> ()
 
       let rec loop t =
+        Logs.debug (fun m -> m "LOOPING");
         let timeout =
           CCOption.map
             (fun duration ->
@@ -756,6 +757,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
         let ret =
           Kqueue.kevent t.kq ~changelist:Kqueue.Eventlist.null ~eventlist:t.eventlist ~timeout
         in
+        Logs.debug (fun m -> m "RET : %d" ret);
         assert (ret >= 0);
         let end_ = Mtime_clock.elapsed () in
         let wait_time = Mtime.Span.(to_float_ns (abs_diff start end_)) /. 1e9 in
@@ -763,7 +765,6 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
           CCOption.map
             (fun timeout -> Duration.of_f (CCFloat.max 0.0 (Duration.to_f timeout -. wait_time)))
             t.timeout;
-        Logs.debug (fun m -> m "RET : %d" ret);
         if ret > 0 then (
           let eventfd_event = ref false in
           Kqueue.Eventlist.iter
@@ -788,7 +789,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
           if !eventfd_event && ret = 1 then Curl.Multi.action_timeout t.mt)
         else Curl.Multi.action_timeout t.mt;
         process_in_events t;
-        Curl.Multi.action_timeout t.mt;
+        Logs.debug (fun m -> m "in events processed");
         if not t.shutdown then (
           process_finished t;
           trigger_out_events t;
@@ -816,7 +817,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
             requests = Id_map.empty;
             responses = Id_map.empty;
             handles = Id_map.empty;
-            timeout = None;
+            timeout = Some (Duration.of_sec 0);
             shutdown = false;
           }
         in
@@ -846,9 +847,13 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
                      ~eventlist:Kqueue.Eventlist.null
                      ~timeout:None
                  in
-                 if ret <> 0 then raise (Failure "kevent error");
+                 if ret <> 0 then (
+                   Logs.err (fun m -> m "kevent_error");
+                   raise (Failure "kevent error"));
                  loop t
-               with exn -> Logs.err (fun m -> m "%s" (Printexc.to_string exn))));
+               with exn ->
+                 Logs.err (fun m ->
+                     m "--- %s %s ---" (Printexc.to_string exn) (Printexc.get_backtrace ()))));
         (wait_server_eventfd, trigger_server_eventfd, t.mutex, t.in_event, t.out_event)
     end
 
@@ -875,9 +880,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
       }
 
       let rec process_events t =
-        Mutex.lock t.mutex;
-        let event = Queue.take_opt t.out_event in
-        Mutex.unlock t.mutex;
+        let event = Mutex.protect t.mutex (fun () -> Queue.take_opt t.out_event) in
         match event with
         | Some (Out_event.Ret (id, ret)) -> (
             let open Abb.Future.Infix_monad in
@@ -912,17 +915,13 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
                 responses = Id_map.add id (request, p) t.responses;
               }
             in
-            Mutex.lock t.mutex;
-            Queue.add (In_event.Request request) t.in_event;
-            Mutex.unlock t.mutex;
+            Mutex.protect t.mutex (fun () -> Queue.add (In_event.Request request) t.in_event);
             trigger_eventfd t.trigger_eventfd;
             Abb.Future.return t
         | Msg.Cancel id ->
             let open Abb.Future.Infix_monad in
             Logs.debug (fun m -> m "MSG : CANCEL : id=%s" id);
-            Mutex.lock t.mutex;
-            Queue.add (In_event.Cancel id) t.in_event;
-            Mutex.unlock t.mutex;
+            Mutex.protect t.mutex (fun () -> Queue.add (In_event.Cancel id) t.in_event);
             trigger_eventfd t.trigger_eventfd;
             (match Id_map.get id t.responses with
             | Some (_, p) -> Abb.Future.Promise.set p (Error `Cancelled)
@@ -942,14 +941,13 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
         >>= function
         | `Ok msg -> handle_msg t w r msg >>= fun t -> loop t w r
         | `Closed ->
-            Mutex.lock t.mutex;
-            Queue.add In_event.Shutdown t.in_event;
-            Mutex.unlock t.mutex;
+            Mutex.protect t.mutex (fun () -> Queue.add In_event.Shutdown t.in_event);
             trigger_eventfd t.trigger_eventfd;
             Abb.Future.return ()
 
       let rec iterate_loop eventfd buf w =
         let open Abb.Future.Infix_monad in
+        Logs.debug (fun m -> m "ITERATE_LOOP");
         Abb.File.read eventfd ~buf ~pos:0 ~len:(Bytes.length buf)
         >>= fun _ ->
         Channel.send w Msg.Iterate
@@ -977,7 +975,6 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
             responses = Id_map.empty;
           }
         in
-        Logs.debug (fun m -> m "LOOP");
         loop t w r
     end
 

@@ -1,0 +1,80 @@
+use serde_json;
+use serde_yaml;
+use std::ffi::{CStr, CString};
+use std::os::raw::c_char;
+
+#[repr(C)]
+pub struct ConversionResult {
+    pub success: bool,
+    pub data: *mut c_char,
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn json_of_yaml(yaml_str: *const c_char) -> ConversionResult {
+    // Check for null pointer
+    if yaml_str.is_null() {
+        let error_msg = CString::new("Input string is null").unwrap();
+        return ConversionResult {
+            success: false,
+            data: error_msg.into_raw(),
+        };
+    }
+
+    // Convert C string to Rust string
+    let c_str = match CStr::from_ptr(yaml_str).to_str() {
+        Ok(s) => s,
+        Err(e) => {
+            let error_msg = CString::new(format!("Invalid UTF-8 string: {}", e)).unwrap();
+            return ConversionResult {
+                success: false,
+                data: error_msg.into_raw(),
+            };
+        }
+    };
+
+    // Parse YAML
+    let yaml_value: serde_yaml::Value = match serde_yaml::from_str(c_str) {
+        Ok(v) => v,
+        Err(e) => {
+            let error_msg = CString::new(format!("YAML parsing error: {}", e)).unwrap();
+            return ConversionResult {
+                success: false,
+                data: error_msg.into_raw(),
+            };
+        }
+    };
+
+    // Convert to JSON
+    let json_string = match serde_json::to_string(&yaml_value) {
+        Ok(s) => s,
+        Err(e) => {
+            let error_msg = CString::new(format!("JSON serialization error: {}", e)).unwrap();
+            return ConversionResult {
+                success: false,
+                data: error_msg.into_raw(),
+            };
+        }
+    };
+
+    // Convert back to C string
+    match CString::new(json_string) {
+        Ok(c_string) => ConversionResult {
+            success: true,
+            data: c_string.into_raw(),
+        },
+        Err(e) => {
+            let error_msg = CString::new(format!("String conversion error: {}", e)).unwrap();
+            ConversionResult {
+                success: false,
+                data: error_msg.into_raw(),
+            }
+        }
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn free_json_string(s: *mut c_char) {
+    if !s.is_null() {
+        let _ = CString::from_raw(s);
+    }
+}

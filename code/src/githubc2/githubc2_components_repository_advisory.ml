@@ -10,7 +10,7 @@ module Author = struct
         gists_url : string;
         gravatar_id : string option;
         html_url : string;
-        id : int;
+        id : int64;
         login : string;
         name : string option; [@default None]
         node_id : string;
@@ -23,6 +23,7 @@ module Author = struct
         subscriptions_url : string;
         type_ : string; [@key "type"]
         url : string;
+        user_view_type : string option; [@default None]
       }
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
@@ -41,7 +42,7 @@ module Author = struct
         gists_url : string;
         gravatar_id : string option;
         html_url : string;
-        id : int;
+        id : int64;
         login : string;
         name : string option; [@default None]
         node_id : string;
@@ -54,6 +55,7 @@ module Author = struct
         subscriptions_url : string;
         type_ : string; [@key "type"]
         url : string;
+        user_view_type : string option; [@default None]
       }
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
@@ -184,7 +186,7 @@ module Private_fork = struct
         git_tags_url : string;
         hooks_url : string;
         html_url : string;
-        id : int;
+        id : int64;
         issue_comment_url : string;
         issue_events_url : string;
         issues_url : string;
@@ -240,7 +242,7 @@ module Private_fork = struct
         git_tags_url : string;
         hooks_url : string;
         html_url : string;
-        id : int;
+        id : int64;
         issue_comment_url : string;
         issue_events_url : string;
         issues_url : string;
@@ -290,7 +292,7 @@ module Publisher = struct
         gists_url : string;
         gravatar_id : string option;
         html_url : string;
-        id : int;
+        id : int64;
         login : string;
         name : string option; [@default None]
         node_id : string;
@@ -303,6 +305,7 @@ module Publisher = struct
         subscriptions_url : string;
         type_ : string; [@key "type"]
         url : string;
+        user_view_type : string option; [@default None]
       }
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
@@ -321,7 +324,7 @@ module Publisher = struct
         gists_url : string;
         gravatar_id : string option;
         html_url : string;
-        id : int;
+        id : int64;
         login : string;
         name : string option; [@default None]
         node_id : string;
@@ -334,6 +337,7 @@ module Publisher = struct
         subscriptions_url : string;
         type_ : string; [@key "type"]
         url : string;
+        user_view_type : string option; [@default None]
       }
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
@@ -396,6 +400,7 @@ type t = {
   credits_detailed : Credits_detailed.t option;
   cve_id : string option;
   cvss : Cvss.t option;
+  cvss_severities : Githubc2_components_cvss_severities.t option; [@default None]
   cwe_ids : Cwe_ids.t option;
   cwes : Cwes.t option;
   description : string option;

@@ -45,4 +45,4 @@ type t = {
   tag_query : string;
   user : string option; [@default None]
 }
-[@@deriving yojson { strict = true; meta = true }, show, eq]
+[@@deriving yojson { strict = false; meta = true }, show, eq]

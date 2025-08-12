@@ -81,6 +81,17 @@ type fetch_file_err =
   | `Forbidden of Githubc2_components.Basic_error.t
   | `Found
   | `Not_file
+  | `Not_modified
+  ]
+[@@deriving show]
+
+type fetch_pull_request_err =
+  [ Githubc2_abb.call_err
+  | `Not_modified
+  | `Not_found of Githubc2_components.Basic_error.t
+  | `Not_acceptable of Githubc2_components.Basic_error.t
+  | `Internal_server_error of Githubc2_components.Basic_error.t
+  | `Service_unavailable of Githubc2_pulls.Get.Responses.Service_unavailable.t
   ]
 [@@deriving show]
 
@@ -89,19 +100,6 @@ type fetch_repo_err =
   | `Moved_permanently of Githubc2_repos.Get.Responses.Moved_permanently.t
   | `Forbidden of Githubc2_repos.Get.Responses.Forbidden.t
   | `Not_found of Githubc2_repos.Get.Responses.Not_found.t
-  ]
-[@@deriving show]
-
-type create_pull_request_err =
-  [ Githubc2_abb.call_err
-  | `Forbidden of Githubc2_components.Basic_error.t
-  | `Unprocessable_entity of Githubc2_components.Validation_error.t
-  ]
-[@@deriving show]
-
-type create_ref_err =
-  [ Githubc2_abb.call_err
-  | `Unprocessable_entity of Githubc2_components.Validation_error.t
   ]
 [@@deriving show]
 
@@ -127,44 +125,16 @@ type publish_reaction_err =
   ]
 [@@deriving show]
 
-type get_tree_raw_err =
-  [ Githubc2_abb.call_err
-  | `Not_found of Githubc2_components.Basic_error.t
-  | `Unprocessable_entity of Githubc2_components.Validation_error.t
-  ]
-[@@deriving show]
-
 type get_tree_err =
   [ Githubc2_abb.call_err
   | `Not_found of Githubc2_components.Basic_error.t
   | `Unprocessable_entity of Githubc2_components.Validation_error.t
-  ]
-[@@deriving show]
-
-type create_tree_err =
-  [ Githubc2_abb.call_err
-  | `Forbidden of Githubc2_components.Basic_error.t
-  | `Not_found of Githubc2_components.Basic_error.t
-  | `Unprocessable_entity of Githubc2_components.Validation_error.t
-  ]
-[@@deriving show]
-
-type create_commit_err =
-  [ Githubc2_abb.call_err
-  | `Not_found of Githubc2_components.Basic_error.t
-  | `Unprocessable_entity of Githubc2_components.Validation_error.t
+  | `Conflict of Githubc2_components.Basic_error.t
   ]
 [@@deriving show]
 
 type get_team_membership_in_org_err = Githubc2_abb.call_err [@@deriving show]
 type get_repo_collaborator_permission_err = Githubc2_abb.call_err [@@deriving show]
-
-type compare_commits_err =
-  [ Githubc2_abb.call_err
-  | `Not_found of Githubc2_components.Basic_error.t
-  | `Internal_server_error of Githubc2_components.Basic_error.t
-  ]
-[@@deriving show]
 
 let max_get_tree_chunks = 20
 
@@ -304,35 +274,6 @@ let get_installation_access_token
   | (`Unauthorized _ | `Forbidden _ | `Not_found _ | `Unprocessable_entity _) as err ->
       Abb.Future.return (Error err)
 
-let create_pull_request ~owner ~repo ~base_branch ~branch ~title ~body client =
-  Prmths.Counter.inc_one (Metrics.fn_call_total "create_pull_request");
-  let open Abbs_future_combinators.Infix_result_monad in
-  call
-    client
-    Githubc2_pulls.Create.(
-      make
-        ~body:
-          Request_body.(
-            make
-              Primary.(make ~base:base_branch ~body:(Some body) ~head:branch ~title:(Some title) ()))
-        Parameters.(make ~owner ~repo))
-  >>= fun resp ->
-  match Openapi.Response.value resp with
-  | `Created pr -> Abb.Future.return (Ok pr)
-  | (`Forbidden _ | `Unprocessable_entity _) as err -> Abb.Future.return (Error err)
-
-let create_ref ~owner ~repo ~ref_ ~sha client =
-  Prmths.Counter.inc_one (Metrics.fn_call_total "create_ref");
-  let open Abbs_future_combinators.Infix_result_monad in
-  call
-    client
-    Githubc2_git.Create_ref.(
-      make ~body:Request_body.(make Primary.(make ~ref_ ~sha)) Parameters.(make ~owner ~repo))
-  >>= fun resp ->
-  match Openapi.Response.value resp with
-  | `Created _ -> Abb.Future.return (Ok ())
-  | `Unprocessable_entity _ as err -> Abb.Future.return (Error err)
-
 let fetch_repo ~owner ~repo client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "fetch_repo");
   let open Abbs_future_combinators.Infix_result_monad in
@@ -363,7 +304,7 @@ let fetch_file ~owner ~repo ~ref_ ~path client =
   | `OK (C.Content_file file) -> Abb.Future.return (Ok (Some file))
   | `OK _ -> Abb.Future.return (Error `Not_file)
   | `Not_found _ -> Abb.Future.return (Ok None)
-  | (`Forbidden _ | `Found) as err -> Abb.Future.return (Error err)
+  | (`Forbidden _ | `Found | `Not_modified) as err -> Abb.Future.return (Error err)
 
 let fetch_pull_request_files ~owner ~repo ~pull_number client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "fetch_pull_request_files");
@@ -371,24 +312,18 @@ let fetch_pull_request_files ~owner ~repo ~pull_number client =
     client
     Githubc2_pulls.List_files.(make (Parameters.make ~per_page:100 ~owner ~pull_number ~repo ()))
 
-let fetch_changed_files ~owner ~repo ~base ~head client =
-  Prmths.Counter.inc_one (Metrics.fn_call_total "fetch_changed_files");
-  call client Githubc2_repos.Compare_commits.(make Parameters.(make ~base ~head ~owner ~repo ()))
-
 let fetch_pull_request ~owner ~repo ~pull_number client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "fetch_pull_request");
-  call client Githubc2_pulls.Get.(make Parameters.(make ~owner ~repo ~pull_number))
-
-let compare_commits ~owner ~repo (base, head) client =
   let open Abbs_future_combinators.Infix_result_monad in
-  let module Cc = Githubc2_components.Commit_comparison in
-  Prmths.Counter.inc_one (Metrics.fn_call_total "compare_commits");
-  call client Githubc2_repos.Compare_commits.(make Parameters.(make ~base ~head ~owner ~repo ()))
+  call client Githubc2_pulls.Get.(make Parameters.(make ~owner ~repo ~pull_number))
   >>= fun resp ->
   match Openapi.Response.value resp with
-  | `OK { Cc.primary = { Cc.Primary.files = Some files; _ }; _ } -> Abb.Future.return (Ok files)
-  | `OK { Cc.primary = { Cc.Primary.files = None; _ }; _ } -> Abb.Future.return (Ok [])
-  | (`Internal_server_error _ | `Not_found _) as err -> Abb.Future.return (Error err)
+  | `OK v -> Abb.Future.return (Ok v)
+  | ( `Not_modified
+    | `Not_found _
+    | `Not_acceptable _
+    | `Internal_server_error _
+    | `Service_unavailable _ ) as err -> Abb.Future.return (Error err)
 
 let get_user_installations client =
   let open Abbs_future_combinators.Infix_result_monad in
@@ -496,24 +431,11 @@ let react_to_comment ?(content = "rocket") ~owner ~repo ~comment_id client =
     Githubc2_reactions.Create_for_issue_comment.(
       make
         ~body:Request_body.(make Primary.(make ~content))
-        Parameters.(make ~comment_id ~owner ~repo))
+        Parameters.(make ~comment_id:(CCInt64.of_int comment_id) ~owner ~repo))
   >>= fun resp ->
   match Openapi.Response.value resp with
   | `OK _ | `Created _ -> Abb.Future.return (Ok ())
   | `Unprocessable_entity _ as err -> Abb.Future.return (Error err)
-
-let get_tree_raw ?(recursive = true) ~owner ~repo ~sha client =
-  Prmths.Counter.inc_one (Metrics.fn_call_total "get_tree");
-  let open Abbs_future_combinators.Infix_result_monad in
-  call
-    client
-    Githubc2_git.Get_tree.(
-      make
-        Parameters.(make ~recursive:(Some (Bool.to_string recursive)) ~owner ~repo ~tree_sha:sha ()))
-  >>= fun resp ->
-  match Openapi.Response.value resp with
-  | `OK tree -> Abb.Future.return (Ok tree)
-  | (`Not_found _ | `Unprocessable_entity _) as err -> Abb.Future.return (Error err)
 
 let rec get_tree ~owner ~repo ~sha client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "get_tree");
@@ -551,31 +473,16 @@ let rec get_tree ~owner ~repo ~sha client =
                 ~f:(fun files item ->
                   let module Items = Githubc2_components_git_tree.Primary.Tree.Items in
                   match item.Items.primary.Items.Primary.type_ with
-                  | Some "tree" ->
-                      get_tree
-                        ~owner
-                        ~repo
-                        ~sha:
-                          (CCOption.get_exn_or "get_tree_sha" item.Items.primary.Items.Primary.sha)
-                        client
+                  | "tree" ->
+                      get_tree ~owner ~repo ~sha:item.Items.primary.Items.Primary.sha client
                       >>= fun fs ->
-                      let path =
-                        CCOption.get_exn_or "get_tree_path" item.Items.primary.Items.Primary.path
-                      in
+                      let path = item.Items.primary.Items.Primary.path in
                       let fs = CCList.map (Filename.concat path) fs in
                       Abb.Future.return (Ok (files @ fs))
-                  | Some "blob" ->
-                      Abb.Future.return
-                        (Ok
-                           (CCOption.get_exn_or
-                              "get_tree_path"
-                              item.Items.primary.Items.Primary.path
-                           :: files))
-                  | Some typ ->
+                  | "blob" ->
+                      Abb.Future.return (Ok (item.Items.primary.Items.Primary.path :: files))
+                  | typ ->
                       Logs.err (fun m -> m "GET_TREE : UNKNOWN_TYPE : %s" typ);
-                      Abb.Future.return (Ok files)
-                  | None ->
-                      Logs.err (fun m -> m "GET_TREE : TYPE : NONE");
                       Abb.Future.return (Ok files))
                 items)
             items
@@ -584,7 +491,7 @@ let rec get_tree ~owner ~repo ~sha client =
           | Ok files -> Abb.Future.return (Ok (CCList.flatten files))
           | Error _ as err -> Abb.Future.return err)
       | `Not_found _ as err -> Abb.Future.return (Error err)
-      | `Unprocessable_entity _ as err -> Abb.Future.return (Error err))
+      | (`Unprocessable_entity _ | `Conflict _) as err -> Abb.Future.return (Error err))
   | `OK tree ->
       let tree = Githubc2_components_git_tree.(tree.primary.Primary.tree) in
       let files =
@@ -592,42 +499,12 @@ let rec get_tree ~owner ~repo ~sha client =
         |> CCList.filter_map (fun item ->
                let module Items = Githubc2_components_git_tree.Primary.Tree.Items in
                match item.Items.primary.Items.Primary.type_ with
-               | Some "blob" -> item.Items.primary.Items.Primary.path
+               | "blob" -> Some item.Items.primary.Items.Primary.path
                | _ -> None)
       in
       Abb.Future.return (Ok files)
   | `Not_found _ as err -> Abb.Future.return (Error err)
-  | `Unprocessable_entity _ as err -> Abb.Future.return (Error err)
-
-let create_tree ~owner ~repo ~base_tree ~tree client =
-  Prmths.Counter.inc_one (Metrics.fn_call_total "create_tree");
-  let module Git_tree = Githubc2_components.Git_tree in
-  let open Abbs_future_combinators.Infix_result_monad in
-  let tree =
-    CCList.map (fun item -> Githubc2_git.Create_tree.Request_body.Primary.Tree.Items.make item) tree
-  in
-  let body =
-    Githubc2_git.Create_tree.Request_body.(make (Primary.make ~base_tree:(Some base_tree) ~tree ()))
-  in
-  call client Githubc2_git.Create_tree.(make ~body Parameters.(make ~owner ~repo))
-  >>= fun resp ->
-  match Openapi.Response.value resp with
-  | `Created { Git_tree.primary = { Git_tree.Primary.sha; _ }; _ } -> Abb.Future.return (Ok sha)
-  | (`Forbidden _ | `Not_found _ | `Unprocessable_entity _) as err -> Abb.Future.return (Error err)
-
-let create_commit ~owner ~repo ~msg ~parent ~tree_sha client =
-  Prmths.Counter.inc_one (Metrics.fn_call_total "create_commit");
-  let module C = Githubc2_git.Create_commit in
-  let module Commit = Githubc2_components.Git_commit in
-  let open Abbs_future_combinators.Infix_result_monad in
-  let body =
-    C.Request_body.(make Primary.(make ~message:msg ~parents:(Some [ parent ]) ~tree:tree_sha ()))
-  in
-  call client C.(make ~body Parameters.(make ~owner ~repo))
-  >>= fun resp ->
-  match Openapi.Response.value resp with
-  | `Created { Commit.primary = { Commit.Primary.sha; _ }; _ } -> Abb.Future.return (Ok sha)
-  | (`Not_found _ | `Unprocessable_entity _) as err -> Abb.Future.return (Error err)
+  | (`Unprocessable_entity _ | `Conflict _) as err -> Abb.Future.return (Error err)
 
 let get_team_membership_in_org ~org ~team ~user client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "get_team_membership_in_org");
@@ -684,7 +561,7 @@ module Commit_status = struct
   end
 
   let create ~owner ~repo ~sha ~creates client =
-    let max_parallel = 20 in
+    let max_parallel = 10 in
     let open Abb.Future.Infix_monad in
     Abbs_future_combinators.List.map_par
       ~f:(fun creates ->

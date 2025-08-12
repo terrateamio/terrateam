@@ -1,0 +1,144 @@
+= Writing a Request For Discussion
+:authors: Malcolm Matalka
+:state: committed
+:labels: meta, processes
+:source-highlighter: highlight.js
+:toc:
+
+== Status
+
+In discussion
+
+== Introduction
+
+Communication is very important to Terrateam.  While many discussions are easy
+to happen over a meeting or in chat, some discussions require so much context
+and though to be effectively communicated that they require a long-form way to
+communicating.  Terrateam has chosen an RFD as the form this should take.
+
+RFDs are not unique to Terrateam.  The most prominent user of RFDs are Oxide.
+However the basic structure has been taken from the RFC system that has existed
+since the creation of the internet.
+
+== Why RFDs?
+
+We want to have RFDs for the following reasons:
+
+. Historical record - For decisions that we make that are of substance, it is
+useful to have a centralized store of them.  It also makes them searchable.
+. Larger context - Some ideas require more context to entirely appreciate than
+can be done in a meeting or in chat.  An RFD is the place where the author has
+the reader's undivided attention and is able to give them all of the context
+necessary to understand whatever is being discussed.
+
+
+== When to write an RFD
+
+There is no minimum requirement on when to write an RFD.  You should use your
+discretion on when writing one would be valuable.
+
+More importantly **do not** reject writing an RFD for any of these reasons:
+
+. The idea is not fully formed.  That is OK.  An RFD is a valid place to explore
+an idea and gather feedback.  The D stands for discussion.
+. The idea is too small.  That is OK.  Even small ideas can be important.
+
+In general, an RFD should almost definitely be written when:
+
+. There is a change in architecture to the product.  Getting feedback from
+multiple people improves the chances something will not be missed.
+. There is a change that will impact many parts of the system.  Getting feedback
+will help ensure that the change aligns with what other people are working on
+and their view of the system.
+
+== How to write an RFD
+
+. Every RFD must be associated with a ticket in the
+https://github.com/terrateamio/terrateam/issues[Terrateam] repository.
+. Every commit for an RFD must have the ticket ID in the commit such that GitHub
+can track it.
+. An RFD is a subdirectory of the `rfds` directory.
+. The directory must start with the ID of the ticket the RFD is being written
+under.  It may contain a short description of it.
+. The main file is called `index` and can be AsciiDoc or markdown,
+under the names `index.adoc` or  `index.md` respectively.
+. The file must have the required attributes, see the <<required-attributes,required
+attributes>> section.
+. There are no requirements on sections, length, word usage, or formalism.  A
+one sentence RFD is acceptable if that one sentence provides the sufficient
+context to readers.
+. The author should make every effort to link to relevant content, including
+other RFDs.
+. Other assets may be included in the directory in any way the author sees fit.
+. A pull request is made with the RFD.
+. Upon completion, the status is updated with if the RFD has been committed or
+abandoned and it is merged.
+
+NOTE: Abandoned RFDs are STILL VALUABLE.  Ensure that they are merged as well so
+that we can understand why a decision wasn't taken.  The `abandonded` state was
+chosen to signify that an RFD can always be returned to and considered again.
+
+[[required-attributes]]
+=== Required Attributes
+
+Every RFD must have some required attributes.  This is valuable for:
+
+. Automating tooling around RFDs.
+. Tracking metadata related to RFDs.
+
+The following attributes are required:
+
+. `authors` - List of authors of the RFD.  Fist name and last name.  Authors are
+free to choose how they want their name to be represented, but they should try
+to be consistent.  In AsciiDoc this is semicolon separated.
+. `state` - The state of the discussion.  See the <<rfd-states,states>> section
+for a list of available states.
+. `labels` - A list of labels relevant to this RFD.  Authors are free to create
+whichever labels they feel are necessary for the RFD.  Authors should do their
+best to choose labels that are the same for the same concepts across RFDs.  In
+AsciiDoc this is comma separated.
+
+
+[[rfd-states]]
+=== States
+
+The following states are available for an RFD:
+
+. `ideation`
+. `discussion`
+. `committed`
+. `abandonded`
+
+Either a `committed` or `abandonded` states is necessary for merging.
+
+== How to read an RFD
+
+. Try your best to read the RFD multiple times to ensure you understand it.
+. Give constructive feedback.
+
+=== Constructive feedback
+
+It's very important that feedback in an RFD is constructive.  But what is
+"constructive" is subjective and context dependent.  Some people enjoy more
+assertive feedback while others find that offputting.
+
+An RFD can be a significant undertaking for the authors.  It is a place for the
+authors to express their vision as it pertains to some area of Terrateam and
+feedback, whether intended or not, can feel like an attack.
+
+As such, it is incumbent on the reader to comment on an RFD in a way that is
+sensitive to the authors and maximizes the success of the discussion (where
+success is a consensus on the topic).
+
+While what "constructive" means depends on the situation but a reader should at
+least be able to pass these two tests before submitting a comment:
+
+. If I were the author of this RFD, is this a comment that I would feel creates
+a productive conversation?
+. Does this comment add necessary context to the discussion that produce a
+better discussion?
+
+Of course, we all can have a bad day, or not think too hard about a comment we
+made before hitting send, or simply be short in a comment because we were busy
+and didn't have time.  Both reader and writer should give as much charity in
+their interpretation of someone's comment as possible.

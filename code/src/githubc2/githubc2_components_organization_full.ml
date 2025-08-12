@@ -27,6 +27,7 @@ module Primary = struct
     dependabot_alerts_enabled_for_new_repositories : bool option; [@default None]
     dependabot_security_updates_enabled_for_new_repositories : bool option; [@default None]
     dependency_graph_enabled_for_new_repositories : bool option; [@default None]
+    deploy_keys_enabled_for_repositories : bool option; [@default None]
     description : string option;
     disk_usage : int option; [@default None]
     email : string option; [@default None]

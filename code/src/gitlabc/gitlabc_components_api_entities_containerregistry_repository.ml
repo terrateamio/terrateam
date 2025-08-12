@@ -1,0 +1,15 @@
+type t = {
+  cleanup_policy_started_at : string option; [@default None]
+  created_at : string option; [@default None]
+  delete_api_path : string option; [@default None]
+  id : int option; [@default None]
+  location : string option; [@default None]
+  name : string option; [@default None]
+  path : string option; [@default None]
+  project_id : int option; [@default None]
+  size : int option; [@default None]
+  status : string option; [@default None]
+  tags : Gitlabc_components_api_entities_containerregistry_tag.t option; [@default None]
+  tags_count : int option; [@default None]
+}
+[@@deriving yojson { strict = false; meta = true }, show, eq]

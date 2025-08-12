@@ -1,3 +1,9 @@
-insert into github_repo_configs (installation_id, sha, data)
-values($installation_id, $sha, $data) on conflict (installation_id, sha)
+insert into repo_configs (sha, data, installation)
+select
+        $sha,
+        $data,
+        gim.core_id
+from github_installations_map as gim
+where gim.installation_id = $installation_id
+on conflict on constraint repo_configs_pkey
 do update set data = excluded.data

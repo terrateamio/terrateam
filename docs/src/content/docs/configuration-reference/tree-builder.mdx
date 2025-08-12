@@ -1,0 +1,51 @@
+---
+title: tree_builder
+description: The tree_builder configuration reference
+---
+
+The `tree_builder` configuration allows you to customize how Terrateam discovers and tracks files in your repository. Instead of relying solely on Git's file tree and change detection, you can use a custom script to define which files should be considered and whether they have changed.
+
+## Default Configuration
+
+```yaml
+tree_builder:
+  enabled: false
+```
+
+## Keys
+
+| Key | Type | Description |
+| --- | --- | --- |
+| enabled | Boolean | Specifies whether the tree builder is enabled. Default is false. |
+| script | String | The script to execute for building the file tree. The script should output JSON to stdout. This key must be set when `enabled` is true. |
+
+## Script Behavior
+
+When `tree_builder` is enabled, Terrateam executes your custom script during the workflow evaluation process. The script analyzes your repository and outputs a JSON structure defining which files should be tracked and their change status.
+
+### Output
+
+The script must output valid JSON to stdout with the following structure
+
+```json
+{
+  "files": [
+    {
+      "path": "path/to/file1.tf",
+      "id": "abc123def456"
+    },
+    {
+      "path": "path/to/file2.tf",
+      "id": "789ghi012jkl"
+    }
+  ]
+}
+```
+
+### Output Fields
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| files | Array | Yes | Array of file objects |
+| files[].path | String | Yes | Relative path from repository root |
+| files[].id | String | Yes | Unique identifier for the file (typically a hash). Terrateam compares IDs between branches to detect changes |

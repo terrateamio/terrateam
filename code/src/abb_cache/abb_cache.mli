@@ -8,8 +8,8 @@ module Make (Abb : Abb_intf.S) : sig
     val fetch : args -> (v, err) result Abb.Future.t
     val equal_k : k -> k -> bool
 
-    (** Given a value, return how much capacity it consumes.  Must return a number
-      greater than or equal to 0.  *)
+    (** Given a value, return how much capacity it consumes. Must return a number greater than or
+        equal to 0. *)
     val weight : v -> int
   end
 
@@ -82,5 +82,34 @@ module Make (Abb : Abb_intf.S) : sig
          and type args = M.args
          and type v = M.v
          and type err = M.err
+  end
+
+  module Filesystem : sig
+    type cache_err =
+      [ Abb_io_file.Make(Abb).with_file_err
+      | Abb_intf.Errors.write
+      | Abb_intf.Errors.read
+      ]
+    [@@deriving show]
+
+    type 'v opts = {
+      on_hit : unit -> unit;
+      on_miss : unit -> unit;
+      on_evict : unit -> unit;
+      path : string;
+      to_string : 'v -> string;
+      of_string : string -> 'v option;
+    }
+
+    module Make (M : S with type k = string) :
+      SRC
+        with type opts = M.v opts
+         and type k = M.k
+         and type args = M.args
+         and type v = M.v
+         and type err =
+          [ `Fetch_err of M.err
+          | `Cache_err of cache_err
+          ]
   end
 end

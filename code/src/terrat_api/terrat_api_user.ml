@@ -37,7 +37,7 @@ module List_github_installations = struct
       end
 
       type t = { installations : Installations.t }
-      [@@deriving yojson { strict = true; meta = true }, show, eq]
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     module Forbidden = struct end

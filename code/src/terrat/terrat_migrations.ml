@@ -44,7 +44,8 @@ end
 
 module Mig = Data_mig.Make (Migrate)
 
-let run_file_sql fname (config, storage) =
+let run_file_sql ?(tx = true) fname (config, storage) =
+  let tx = if tx then fun db ~f -> Pgsql_io.tx db ~f else fun db ~f -> f () in
   match Terrat_files_migrations.read fname with
   | Some file ->
       let stmts =
@@ -53,12 +54,12 @@ let run_file_sql fname (config, storage) =
         |> CCList.filter CCFun.(CCString.trim %> CCString.is_empty %> not)
       in
       Pgsql_pool.with_conn storage ~f:(fun db ->
-          Pgsql_io.tx db ~f:(fun () ->
+          tx db ~f:(fun () ->
               Abbs_future_combinators.List_result.iter
                 ~f:(fun stmt ->
                   let open Pgsql_io in
                   Logs.info (fun m -> m "Performing SQL operation: %s" stmt);
-                  let stmt_sql = Typed_sql.(sql /^ stmt) in
+                  let stmt_sql = Typed_sql.(sql /^ Pgsql_io.clean_string stmt) in
                   Prepared_stmt.execute db stmt_sql)
                 stmts))
   | None -> failwith ("Could not load file: " ^ fname)
@@ -125,6 +126,52 @@ let migrations =
     ("add-has_changes-to-plans", run_file_sql "2024-12-07-add-has_changes-to-plans.sql");
     ("add-trial-columns", run_file_sql "2025-01-14-add-trial-columns.sql");
     ("add-multiple-drift-schedules", run_file_sql "2025-02-15-add-multiple-drift-schedules.sql");
+    ("add-gatekeeping", run_file_sql "2025-03-30-add-gatekeeping.sql");
+    ("add-tiers", run_file_sql "2025-04-05-add-tiers.sql");
+    ("add-users2-tables", run_file_sql "2025-04-07-refactor-user-tables.sql");
+    ("add-tree-builder", run_file_sql "2025-04-11-add-tree-builder.sql");
+    ("refactor-rename-core-tables", run_file_sql "2025-04-21-refactor-rename-core-tables.sql");
+    ( "refactor-remove-core-table-views",
+      run_file_sql "2025-04-21-refactor-delete-core-table-views.sql" );
+    ("add-work-manifest-runs-on", run_file_sql "2025-04-29-add-work-manifest-runs-on.sql");
+    ( "refactor-prep-github-vcs-mapping",
+      run_file_sql "2025-04-28-refactor-prep-for-github-vcs-mapping.sql" );
+    ( "refactor-fill-in-missing-github-maps",
+      run_file_sql "2025-05-01-refactor-fill-in-missing-github-maps.sql" );
+    ("add-repo-tree-id-column", run_file_sql "2025-05-13-add-repo-tree-id-column.sql");
+    ("refactor-fill-in-missing-core-ids", Terrat_migrations_ex_150.fill_in_all);
+    ( "refactor-remove-null-constraints-on-core-tables",
+      run_file_sql "2025-05-19-refactor-remove-null-constraints.sql" );
+    ("refactor-add-pkey-indexes", run_file_sql ~tx:false "2025-05-19-refactor-add-pkey-indexes.sql");
+    ( "refactor-add-core-table-constraints",
+      run_file_sql "2025-05-21-refactor-add-core-table-constraints.sql" );
+    ("refactor-swap-primary-keys", run_file_sql "2025-05-01-refactor-swap-primary-keys.sql");
+    ( "refactor-drop-legacy-github-columns",
+      run_file_sql "2025-05-02-refactor-remove-old-columns.sql" );
+    ("fix-slow-applied-dirspace-query", run_file_sql "2025-05-25-fix-slow-queries.sql");
+    ("add-gitlab-user-tables", run_file_sql "2025-06-09-add-gitlab-user-tables.sql");
+    ("add-gitlab-installations", run_file_sql "2025-06-16-add-gitlab-installations.sql");
+    ( "add-pull-request-complete-column",
+      run_file_sql "2025-06-30-add-pull-request-complete-column.sql" );
+    ( "add-pull-request-query-indices",
+      run_file_sql ~tx:false "2025-07-01-add-pull-request-query-indices.sql" );
+    ( "refactor-github-dirspace-locking-phase-1",
+      run_file_sql "2025-07-07-refactor-github-dirspace-locking-phase-1.sql" );
+    ( "refactor-github-dirspace-locking-phase-2",
+      run_file_sql "2025-07-07-refactor-github-dirspace-locking-phase-2.sql" );
+    ("refactor-github-dirspace-locking-phase-3.1", Terrat_migrations_ex_568.run_github);
+    ( "refactor-gihtub-dirspace-locking-phase-3.2",
+      run_file_sql "2025-07-09-refactor-github-dirspace-locking-phase-3.sql" );
+    ( "refactor-gitlab-dirspace-locking-phase-1",
+      run_file_sql "2025-07-14-refactor-gitlab-dirspace-locking-phase-1.sql" );
+    ("refactor-gitlab-dirspace-locking-phase-2", Terrat_migrations_ex_568.run_gitlab);
+    ( "refactor-gitlab-dirspace-locking-phase-3",
+      run_file_sql "2025-07-14-refactor-gitlab-dirspace-locking-phase-3.sql" );
+    ( "fix-make-gitlab-tables-closer-to-github",
+      run_file_sql "2025-07-15-fix-make-gitlab-tables-match-github-closer.sql" );
+    ( "refactor-manage-github-maps-via-triggers",
+      run_file_sql "2025-07-22-refactor-manage-github-maps-via-triggers.sql" );
+    ("fix-gitlab-installation-state", run_file_sql "2025-07-21-fix-gitlab-installation-state.sql");
   ]
 
 let run config storage = Mig.run (config, storage) migrations

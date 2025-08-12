@@ -24,7 +24,7 @@ module Primary = struct
     patch : string option; [@default None]
     previous_filename : string option; [@default None]
     raw_url : string option; [@default None]
-    sha : string option; [@default None]
+    sha : string;
     status : Status_.t;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]

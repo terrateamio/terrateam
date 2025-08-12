@@ -10,7 +10,7 @@ module Primary = struct
     organization : Githubc2_components_organization_simple_webhooks.t option; [@default None]
     ref_ : string; [@key "ref"]
     repository : Githubc2_components_repository_webhooks.t;
-    sender : Githubc2_components_simple_user_webhooks.t;
+    sender : Githubc2_components_simple_user.t;
     workflow : string;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]

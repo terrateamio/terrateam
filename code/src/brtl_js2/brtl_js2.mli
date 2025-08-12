@@ -143,8 +143,7 @@ module Router : sig
 
   val uri : t -> Uri.t Note.S.t
 
-  (** Navigate to the [path] given.  Specify [base] if a different base URI
-      should be used. *)
+  (** Navigate to the [path] given. Specify [base] if a different base URI should be used. *)
   val navigate : ?base:string -> t -> string -> unit
 end
 
@@ -158,6 +157,16 @@ module State : sig
   val with_app_state : 'b -> 'a t -> 'b t
 end
 
+(** A utility module to make working with URL paths. *)
+module Path : sig
+  (** Given a state, construct a path relative to the current [consumed_path]. The string [..] goes
+      up one directory. *)
+  val rel : 'a State.t -> string list -> string
+
+  (** Given a state, construct a path that that is relative to the root. *)
+  val abs : 'a State.t -> string list -> string
+end
+
 module Output : sig
   type t
 
@@ -166,13 +175,12 @@ module Output : sig
   (** Same as [render ?cleanup (Note.S.const ~eq:(==) els)]. *)
   val const : ?cleanup:(unit -> unit Abb_js.Future.t) -> Brr.El.t list -> t
 
-  (** Navigate to a URL.  If there is no host in the URL, then it is considered
-      an internal redirect. *)
+  (** Navigate to a URL. If there is no host in the URL, then it is considered an internal redirect.
+  *)
   val navigate : Uri.t -> t
 end
 
-(** A component is a function that takes a state and returns a signal
-    representing an output. *)
+(** A component is a function that takes a state and returns a signal representing an output. *)
 module Comp : sig
   type 'a t = 'a State.t -> Output.t Abb_js.Future.t
 end
@@ -186,8 +194,8 @@ module Router_output : sig
   val const : 'a State.t -> Brr.El.t -> 'a Comp.t -> Brr.El.t
 end
 
-(** A placeholder.  When rendering a component, this allows specifying a
-    placeholder that is replaced once the component is rendered. *)
+(** A placeholder. When rendering a component, this allows specifying a placeholder that is replaced
+    once the component is rendered. *)
 module Ph : sig
   val create : Brr.El.t list -> 'a Comp.t -> 'a Comp.t
 end

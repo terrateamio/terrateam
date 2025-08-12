@@ -506,7 +506,11 @@ module Config = struct
 end
 
 let extract_prim_type = function
-  | { Schema.typ = Some (("string" | "integer" | "number" | "boolean") as typ); _ } -> Some typ
+  | {
+      Schema.typ =
+        Some (("string" | "text" | "symbol" | "integer" | "number" | "boolean" | "file") as typ);
+      _;
+    } -> Some typ
   | _ -> None
 
 let is_prim_type schema = CCOption.is_some (extract_prim_type schema)
@@ -516,7 +520,7 @@ let prim_type_of_string format typ =
   (* | ("uri", "string")          -> Gen.qualified_type [ "Json_schema"; "Format"; "Uri"; "t" ] *)
   (* | ("uri-template", "string") -> Gen.qualified_type [ "Json_schema"; "Format"; "Uritmpl"; "t" ]
    * | ("date-time", "string") -> Gen.qualified_type [ "Json_schema"; "Format"; "Date_time"; "t" ] *)
-  | _, "string" -> Gen.prim_string
+  | _, ("string" | "file" | "text" | "symbol") -> Gen.prim_string
   | "int64", "integer" -> Gen.qualified_type [ "int64" ]
   | _, "integer" -> Gen.prim_int
   | _, "number" -> Gen.prim_float

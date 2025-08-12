@@ -32,11 +32,14 @@ module List_alerts_for_enterprise = struct
       before : string option; [@default None]
       direction : Direction.t; [@default "desc"]
       enterprise : string;
+      is_multi_repo : bool; [@default false]
+      is_publicly_leaked : bool; [@default false]
       per_page : int; [@default 30]
       resolution : string option; [@default None]
       secret_type : string option; [@default None]
       sort : Sort.t; [@default "created"]
       state : State.t option; [@default None]
+      validity : string option; [@default None]
     }
     [@@deriving make, show, eq]
   end
@@ -101,6 +104,9 @@ module List_alerts_for_enterprise = struct
            ("per_page", Var (params.per_page, Int));
            ("before", Var (params.before, Option String));
            ("after", Var (params.after, Option String));
+           ("validity", Var (params.validity, Option String));
+           ("is_publicly_leaked", Var (params.is_publicly_leaked, Bool));
+           ("is_multi_repo", Var (params.is_multi_repo, Bool));
          ])
       ~url
       ~responses:Responses.t
@@ -140,6 +146,8 @@ module List_alerts_for_org = struct
       after : string option; [@default None]
       before : string option; [@default None]
       direction : Direction.t; [@default "desc"]
+      is_multi_repo : bool; [@default false]
+      is_publicly_leaked : bool; [@default false]
       org : string;
       page : int; [@default 1]
       per_page : int; [@default 30]
@@ -147,6 +155,7 @@ module List_alerts_for_org = struct
       secret_type : string option; [@default None]
       sort : Sort.t; [@default "created"]
       state : State.t option; [@default None]
+      validity : string option; [@default None]
     }
     [@@deriving make, show, eq]
   end
@@ -212,6 +221,9 @@ module List_alerts_for_org = struct
            ("per_page", Var (params.per_page, Int));
            ("before", Var (params.before, Option String));
            ("after", Var (params.after, Option String));
+           ("validity", Var (params.validity, Option String));
+           ("is_publicly_leaked", Var (params.is_publicly_leaked, Bool));
+           ("is_multi_repo", Var (params.is_multi_repo, Bool));
          ])
       ~url
       ~responses:Responses.t
@@ -251,6 +263,8 @@ module List_alerts_for_repo = struct
       after : string option; [@default None]
       before : string option; [@default None]
       direction : Direction.t; [@default "desc"]
+      is_multi_repo : bool; [@default false]
+      is_publicly_leaked : bool; [@default false]
       owner : string;
       page : int; [@default 1]
       per_page : int; [@default 30]
@@ -259,6 +273,7 @@ module List_alerts_for_repo = struct
       secret_type : string option; [@default None]
       sort : Sort.t; [@default "created"]
       state : State.t option; [@default None]
+      validity : string option; [@default None]
     }
     [@@deriving make, show, eq]
   end
@@ -321,6 +336,9 @@ module List_alerts_for_repo = struct
            ("per_page", Var (params.per_page, Int));
            ("before", Var (params.before, Option String));
            ("after", Var (params.after, Option String));
+           ("validity", Var (params.validity, Option String));
+           ("is_publicly_leaked", Var (params.is_publicly_leaked, Bool));
+           ("is_multi_repo", Var (params.is_multi_repo, Bool));
          ])
       ~url
       ~responses:Responses.t
@@ -546,6 +564,146 @@ module List_locations_for_alert = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module Create_push_protection_bypass = struct
+  module Parameters = struct
+    type t = {
+      owner : string;
+      repo : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    module Primary = struct
+      type t = {
+        placeholder_id : string;
+        reason : Githubc2_components.Secret_scanning_push_protection_bypass_reason.t;
+      }
+      [@@deriving make, yojson { strict = false; meta = true }, show, eq]
+    end
+
+    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Githubc2_components.Secret_scanning_push_protection_bypass.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Forbidden = struct end
+    module Not_found = struct end
+    module Unprocessable_entity = struct end
+
+    module Service_unavailable = struct
+      module Primary = struct
+        type t = {
+          code : string option; [@default None]
+          documentation_url : string option; [@default None]
+          message : string option; [@default None]
+        }
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+    end
+
+    type t =
+      [ `OK of OK.t
+      | `Forbidden
+      | `Not_found
+      | `Unprocessable_entity
+      | `Service_unavailable of Service_unavailable.t
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+        ("422", fun _ -> Ok `Unprocessable_entity);
+        ("503", Openapi.of_json_body (fun v -> `Service_unavailable v) Service_unavailable.of_yojson);
+      ]
+  end
+
+  let url = "/repos/{owner}/{repo}/secret-scanning/push-protection-bypasses"
+
+  let make ~body =
+   fun params ->
+    Openapi.Request.make
+      ~body:(Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module Get_scan_history = struct
+  module Parameters = struct
+    type t = {
+      owner : string;
+      repo : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Githubc2_components.Secret_scanning_scan_history.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Not_found = struct end
+
+    module Service_unavailable = struct
+      module Primary = struct
+        type t = {
+          code : string option; [@default None]
+          documentation_url : string option; [@default None]
+          message : string option; [@default None]
+        }
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+    end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_found
+      | `Service_unavailable of Service_unavailable.t
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("404", fun _ -> Ok `Not_found);
+        ("503", Openapi.of_json_body (fun v -> `Service_unavailable v) Service_unavailable.of_yojson);
+      ]
+  end
+
+  let url = "/repos/{owner}/{repo}/secret-scanning/scan-history"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("owner", Var (params.owner, String)); ("repo", Var (params.repo, String)) ])
+      ~query_params:[]
       ~url
       ~responses:Responses.t
       `Get

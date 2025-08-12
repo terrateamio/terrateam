@@ -32,8 +32,8 @@ q as (
     select
         gwm.id as id,
         gwm.base_sha as base_sha,
-        completed_at,
-        created_at,
+        gwm.completed_at,
+        gwm.created_at,
         gwm.run_type as run_type,
         (case
          when gwm.state not in ('running', 'queued') then gwm.state
@@ -47,8 +47,8 @@ q as (
         gwm.repository as repository,
         gwm.pull_number as pull_number,
         coalesce(gpr.base_branch, gdwm.branch) as base_branch,
-        gir.owner as owner,
-        gir.name as name,
+        gwm.repo_owner as owner,
+        gwm.repo_name as name,
         gwm.run_kind as kind,
         gpr.title as title,
         coalesce(gdwm.branch, gpr.branch) as branch,
@@ -59,21 +59,19 @@ q as (
         gwm.dirspaces as dirspaces,
         gwm.environment as environment
     from github_work_manifests as gwm
-    inner join github_installation_repositories as gir
-        on gir.id = gwm.repository
-    inner join github_user_installations as gui
-        on gir.installation_id = gui.installation_id
+    inner join github_user_installations2 as gui
+        on gwm.installation_id = gui.installation_id
     inner join unified_run_types as urt
         on urt.id = gwm.id
     left join github_pull_requests as gpr
         on gwm.repository = gpr.repository and gwm.pull_number = gpr.pull_number
-    left join github_drift_work_manifests as gdwm
+    left join drift_work_manifests as gdwm
         on gwm.id = gdwm.work_manifest
     left join latest_unlocks as lu
         on lu.repository = gwm.repository and lu.pull_number = gwm.pull_number
     left join latest_drift_unlocks as ldu
         on ldu.repository = gwm.repository
-    where gir.installation_id = $installation_id
+    where gwm.installation_id = $installation_id
           and gui.user_id = $user
 )
 select
@@ -94,8 +92,8 @@ select
                   'dir', gwmds.path,
                   'workspace', gwmds.workspace,
                   'success', not ((gwmr.success is null and gwm.state = 'aborted') or not gwmr.success)))
-              from github_work_manifest_dirspaceflows as gwmds
-              left join github_work_manifest_results as gwmr
+              from work_manifest_dirspaceflows as gwmds
+              left join work_manifest_results as gwmr
                   on gwmds.work_manifest = gwmr.work_manifest
                   and gwmds.path = gwmr.path
                   and gwmds.workspace = gwmr.workspace

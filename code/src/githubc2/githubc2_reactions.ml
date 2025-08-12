@@ -378,7 +378,7 @@ end
 module Create_for_commit_comment = struct
   module Parameters = struct
     type t = {
-      comment_id : int;
+      comment_id : int64;
       owner : string;
       repo : string;
     }
@@ -455,7 +455,7 @@ module Create_for_commit_comment = struct
          [
            ("owner", Var (params.owner, String));
            ("repo", Var (params.repo, String));
-           ("comment_id", Var (params.comment_id, Int));
+           ("comment_id", Var (params.comment_id, Int64));
          ])
       ~query_params:[]
       ~url
@@ -481,7 +481,7 @@ module List_for_commit_comment = struct
     end
 
     type t = {
-      comment_id : int;
+      comment_id : int64;
       content : Content.t option; [@default None]
       owner : string;
       page : int; [@default 1]
@@ -526,7 +526,7 @@ module List_for_commit_comment = struct
          [
            ("owner", Var (params.owner, String));
            ("repo", Var (params.repo, String));
-           ("comment_id", Var (params.comment_id, Int));
+           ("comment_id", Var (params.comment_id, Int64));
          ])
       ~query_params:
         (let open Openapi.Request.Var in
@@ -544,7 +544,7 @@ end
 module Delete_for_commit_comment = struct
   module Parameters = struct
     type t = {
-      comment_id : int;
+      comment_id : int64;
       owner : string;
       reaction_id : int;
       repo : string;
@@ -571,7 +571,7 @@ module Delete_for_commit_comment = struct
          [
            ("owner", Var (params.owner, String));
            ("repo", Var (params.repo, String));
-           ("comment_id", Var (params.comment_id, Int));
+           ("comment_id", Var (params.comment_id, Int64));
            ("reaction_id", Var (params.reaction_id, Int));
          ])
       ~query_params:[]
@@ -583,7 +583,7 @@ end
 module Create_for_issue_comment = struct
   module Parameters = struct
     type t = {
-      comment_id : int;
+      comment_id : int64;
       owner : string;
       repo : string;
     }
@@ -660,7 +660,7 @@ module Create_for_issue_comment = struct
          [
            ("owner", Var (params.owner, String));
            ("repo", Var (params.repo, String));
-           ("comment_id", Var (params.comment_id, Int));
+           ("comment_id", Var (params.comment_id, Int64));
          ])
       ~query_params:[]
       ~url
@@ -686,7 +686,7 @@ module List_for_issue_comment = struct
     end
 
     type t = {
-      comment_id : int;
+      comment_id : int64;
       content : Content.t option; [@default None]
       owner : string;
       page : int; [@default 1]
@@ -731,7 +731,7 @@ module List_for_issue_comment = struct
          [
            ("owner", Var (params.owner, String));
            ("repo", Var (params.repo, String));
-           ("comment_id", Var (params.comment_id, Int));
+           ("comment_id", Var (params.comment_id, Int64));
          ])
       ~query_params:
         (let open Openapi.Request.Var in
@@ -749,7 +749,7 @@ end
 module Delete_for_issue_comment = struct
   module Parameters = struct
     type t = {
-      comment_id : int;
+      comment_id : int64;
       owner : string;
       reaction_id : int;
       repo : string;
@@ -776,7 +776,7 @@ module Delete_for_issue_comment = struct
          [
            ("owner", Var (params.owner, String));
            ("repo", Var (params.repo, String));
-           ("comment_id", Var (params.comment_id, Int));
+           ("comment_id", Var (params.comment_id, Int64));
            ("reaction_id", Var (params.reaction_id, Int));
          ])
       ~query_params:[]
@@ -1000,7 +1000,7 @@ end
 module Create_for_pull_request_review_comment = struct
   module Parameters = struct
     type t = {
-      comment_id : int;
+      comment_id : int64;
       owner : string;
       repo : string;
     }
@@ -1077,7 +1077,7 @@ module Create_for_pull_request_review_comment = struct
          [
            ("owner", Var (params.owner, String));
            ("repo", Var (params.repo, String));
-           ("comment_id", Var (params.comment_id, Int));
+           ("comment_id", Var (params.comment_id, Int64));
          ])
       ~query_params:[]
       ~url
@@ -1103,7 +1103,7 @@ module List_for_pull_request_review_comment = struct
     end
 
     type t = {
-      comment_id : int;
+      comment_id : int64;
       content : Content.t option; [@default None]
       owner : string;
       page : int; [@default 1]
@@ -1148,7 +1148,7 @@ module List_for_pull_request_review_comment = struct
          [
            ("owner", Var (params.owner, String));
            ("repo", Var (params.repo, String));
-           ("comment_id", Var (params.comment_id, Int));
+           ("comment_id", Var (params.comment_id, Int64));
          ])
       ~query_params:
         (let open Openapi.Request.Var in
@@ -1166,7 +1166,7 @@ end
 module Delete_for_pull_request_comment = struct
   module Parameters = struct
     type t = {
-      comment_id : int;
+      comment_id : int64;
       owner : string;
       reaction_id : int;
       repo : string;
@@ -1193,7 +1193,7 @@ module Delete_for_pull_request_comment = struct
          [
            ("owner", Var (params.owner, String));
            ("repo", Var (params.repo, String));
-           ("comment_id", Var (params.comment_id, Int));
+           ("comment_id", Var (params.comment_id, Int64));
            ("reaction_id", Var (params.reaction_id, Int));
          ])
       ~query_params:[]

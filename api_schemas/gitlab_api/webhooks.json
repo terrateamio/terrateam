@@ -1,0 +1,400 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "job-event": {
+      "additionalProperties": false,
+      "properties": {
+        "build_id": {
+          "type": "integer"
+        },
+        "build_name": {
+          "type": "string"
+        },
+        "build_stage": {
+          "type": "string"
+        },
+        "build_status": {
+          "type": "string"
+        },
+        "object_kind": {
+          "const": "build",
+          "type": "string"
+        },
+        "project": {
+          "$ref": "#/definitions/project"
+        },
+        "project_id": {
+          "type": "integer"
+        },
+        "project_name": {
+          "type": "string"
+        },
+        "ref": {
+          "type": "string"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sha": {
+          "type": "string"
+        },
+        "user": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "build_id",
+        "build_name",
+        "build_stage",
+        "build_status",
+        "object_kind",
+        "project",
+        "ref",
+        "sha"
+      ],
+      "type": "object"
+    },
+    "merge-request": {
+      "additionalProperties": false,
+      "properties": {
+        "created_at": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "iid": {
+          "type": "integer"
+        },
+        "source": {
+          "$ref": "#/definitions/project"
+        },
+        "source_branch": {
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/definitions/project"
+        },
+        "target_branch": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "created_at",
+        "id",
+        "source",
+        "source_branch",
+        "target",
+        "target_branch"
+      ],
+      "type": "object"
+    },
+    "merge-request-comment-event": {
+      "additionalProperties": false,
+      "properties": {
+        "event_type": {
+          "const": "note",
+          "type": "string"
+        },
+        "merge_request": {
+          "$ref": "#/definitions/merge-request"
+        },
+        "object_attributes": {
+          "additionalProperties": false,
+          "properties": {
+            "action": {
+              "enum": [
+                "create",
+                "update"
+              ],
+              "type": "string"
+            },
+            "created_at": {
+              "type": "string"
+            },
+            "id": {
+              "type": "integer"
+            },
+            "note": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "object_kind": {
+          "const": "note",
+          "type": "string"
+        },
+        "project": {
+          "$ref": "#/definitions/project"
+        },
+        "project_id": {
+          "type": "integer"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "user": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "event_type",
+        "merge_request",
+        "object_attributes",
+        "object_kind",
+        "project",
+        "project_id",
+        "repository",
+        "user"
+      ],
+      "type": "object"
+    },
+    "merge-request-event": {
+      "additionalProperties": false,
+      "properties": {
+        "event_type": {
+          "const": "merge_request",
+          "type": "string"
+        },
+        "object_attributes": {
+          "additionalProperties": false,
+          "properties": {
+            "action": {
+              "enum": [
+                "approval",
+                "approved",
+                "close",
+                "merge",
+                "open",
+                "reopen",
+                "unapproval",
+                "unapproved",
+                "update"
+              ],
+              "type": "string"
+            },
+            "id": {
+              "type": "integer"
+            },
+            "iid": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "action",
+            "id",
+            "iid"
+          ],
+          "type": "object"
+        },
+        "object_kind": {
+          "const": "merge_request",
+          "type": "string"
+        },
+        "project": {
+          "$ref": "#/definitions/project"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "user": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "event_type",
+        "object_attributes",
+        "object_kind",
+        "project",
+        "repository",
+        "user"
+      ],
+      "type": "object"
+    },
+    "pipeline-event": {
+      "additionalProperties": false,
+      "properties": {
+        "merge_request": {
+          "$ref": "#/definitions/merge-request"
+        },
+        "object_attributes": {
+          "additionalProperties": false,
+          "properties": {
+            "created_at": {
+              "type": "string"
+            },
+            "finished_at": {
+              "type": "string"
+            },
+            "id": {
+              "type": "integer"
+            },
+            "iid": {
+              "type": "integer"
+            },
+            "ref": {
+              "type": "string"
+            },
+            "source": {
+              "type": "string"
+            },
+            "stages": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "status": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "created_at",
+            "id",
+            "iid",
+            "ref",
+            "stages",
+            "status"
+          ],
+          "type": "object"
+        },
+        "object_kind": {
+          "const": "pipeline",
+          "type": "string"
+        },
+        "project": {
+          "$ref": "#/definitions/project"
+        },
+        "user": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "object_attributes",
+        "object_kind",
+        "project",
+        "user"
+      ],
+      "type": "object"
+    },
+    "project": {
+      "additionalProperties": false,
+      "properties": {
+        "default_branch": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "path_with_namespace": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "default_branch",
+        "id",
+        "name",
+        "namespace",
+        "path_with_namespace"
+      ],
+      "type": "object"
+    },
+    "push-event": {
+      "additionalProperties": false,
+      "properties": {
+        "checkout_sha": {
+          "type": "string"
+        },
+        "event_name": {
+          "const": "push",
+          "type": "string"
+        },
+        "object_kind": {
+          "const": "push",
+          "type": "string"
+        },
+        "project": {
+          "$ref": "#/definitions/project"
+        },
+        "project_id": {
+          "type": "integer"
+        },
+        "ref": {
+          "type": "string"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "user_username": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "checkout_sha",
+        "event_name",
+        "object_kind",
+        "project",
+        "project_id",
+        "ref",
+        "repository",
+        "user_username"
+      ],
+      "type": "object"
+    },
+    "repository": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "user": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "username": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "username"
+      ],
+      "type": "object"
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/definitions/push-event"
+    },
+    {
+      "$ref": "#/definitions/merge-request-comment-event"
+    },
+    {
+      "$ref": "#/definitions/merge-request-event"
+    },
+    {
+      "$ref": "#/definitions/pipeline-event"
+    },
+    {
+      "$ref": "#/definitions/job-event"
+    }
+  ]
+}

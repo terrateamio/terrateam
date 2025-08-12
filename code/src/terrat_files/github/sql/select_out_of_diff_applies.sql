@@ -1,7 +1,7 @@
 select distinct
     gwmds.path,
     gwmds.workspace
-from github_work_manifest_dirspaceflows as gwmds
+from work_manifest_dirspaceflows as gwmds
 inner join github_work_manifests as gwm on gwm.id = gwmds.work_manifest
 inner join github_pull_requests as gpr
     on gpr.repository = gwm.repository and gpr.pull_number = gwm.pull_number

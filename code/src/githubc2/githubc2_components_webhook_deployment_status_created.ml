@@ -96,6 +96,7 @@ module Primary = struct
             subscriptions_url : string option; [@default None]
             type_ : Type.t option; [@default None] [@key "type"]
             url : string option; [@default None]
+            user_view_type : string option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -229,6 +230,7 @@ module Primary = struct
                 subscriptions_url : string option; [@default None]
                 type_ : Type.t option; [@default None] [@key "type"]
                 url : string option; [@default None]
+                user_view_type : string option; [@default None]
               }
               [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
@@ -715,6 +717,7 @@ module Primary = struct
             subscriptions_url : string option; [@default None]
             type_ : Type.t option; [@default None] [@key "type"]
             url : string option; [@default None]
+            user_view_type : string option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -821,6 +824,7 @@ module Primary = struct
                 subscriptions_url : string option; [@default None]
                 type_ : Type.t option; [@default None] [@key "type"]
                 url : string option; [@default None]
+                user_view_type : string option; [@default None]
               }
               [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
@@ -1267,26 +1271,6 @@ module Primary = struct
     include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
   end
 
-  module Workflow_ = struct
-    module Primary = struct
-      type t = {
-        badge_url : string;
-        created_at : string;
-        html_url : string;
-        id : int;
-        name : string;
-        node_id : string;
-        path : string;
-        state : string;
-        updated_at : string;
-        url : string;
-      }
-      [@@deriving yojson { strict = false; meta = true }, show, eq]
-    end
-
-    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-  end
-
   module Workflow_run_ = struct
     module Primary = struct
       module Actor_ = struct
@@ -1324,6 +1308,7 @@ module Primary = struct
             subscriptions_url : string option; [@default None]
             type_ : Type.t option; [@default None] [@key "type"]
             url : string option; [@default None]
+            user_view_type : string option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -1668,6 +1653,7 @@ module Primary = struct
             subscriptions_url : string option; [@default None]
             type_ : Type.t option; [@default None] [@key "type"]
             url : string option; [@default None]
+            user_view_type : string option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -1727,8 +1713,8 @@ module Primary = struct
     installation : Githubc2_components_simple_installation.t option; [@default None]
     organization : Githubc2_components_organization_simple_webhooks.t option; [@default None]
     repository : Githubc2_components_repository_webhooks.t;
-    sender : Githubc2_components_simple_user_webhooks.t;
-    workflow : Workflow_.t option; [@default None]
+    sender : Githubc2_components_simple_user.t;
+    workflow : Githubc2_components_webhooks_workflow.t option; [@default None]
     workflow_run : Workflow_run_.t option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]

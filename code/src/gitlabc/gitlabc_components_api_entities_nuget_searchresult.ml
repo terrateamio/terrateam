@@ -1,0 +1,17 @@
+type t = {
+  type_ : string option; [@default None] [@key "@type"]
+  authors : string option; [@default None]
+  description : string option; [@default None]
+  iconurl : string option; [@default None] [@key "iconUrl"]
+  id : string option; [@default None]
+  licenseurl : string option; [@default None] [@key "licenseUrl"]
+  projecturl : string option; [@default None] [@key "projectUrl"]
+  summary : string option; [@default None]
+  tags : string option; [@default None]
+  title : string option; [@default None]
+  totaldownloads : int option; [@default None] [@key "totalDownloads"]
+  verified : bool option; [@default None]
+  version : string option; [@default None]
+  versions : Gitlabc_components_api_entities_nuget_searchresultversion.t option; [@default None]
+}
+[@@deriving yojson { strict = false; meta = true }, show, eq]

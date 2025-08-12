@@ -14,7 +14,7 @@ export default defineConfig({
     starlight({
       title: "Terrateam",
       components: {
-        Banner: './src/components/Banner.astro',
+        SiteTitle: './src/components/SiteTitle.astro',
       },
       plugins: [starlightImageZoom()],
       expressiveCode: {
@@ -28,7 +28,7 @@ export default defineConfig({
       },
       description: "Terraform and OpenTofu automation on GitHub",
       logo: {
-        src: "/src/assets/logo.png",
+        src: "/src/assets/logo-wordmark.svg",
         replacesTitle: true,
       },
       head: [
@@ -51,19 +51,51 @@ export default defineConfig({
       },
       customCss: process.env.NO_GRADIENTS
         ? []
-        : ["/src/assets/docs.css", "@fontsource/roboto"],
+        : [
+            "/src/assets/docs.css",
+            "@fontsource/roboto",
+            "/src/styles/mermaid.css"  
+          ],
       sidebar: [
         { label: "Welcome", link: "/" },
-        { label: "Quickstart Guide", link: "/quickstart-guide" },
         { label: "How It Works", link: "/how-it-works" },
         {
           label: "Getting Started",
-          autogenerate: { directory: "getting-started" },
+          items: [
+            { label: "Quickstart Guide", link: "/getting-started/quickstart-guide" },
+            { label: "Concepts", link: "/getting-started/concepts" },
+            { label: "Configuration", link: "/getting-started/configuration" },
+            { label: "Plan And Apply", link: "/getting-started/plan-and-apply" },
+            { label: "Pull Requests and Triggers", link: "/getting-started/pull-requests-and-triggers" },
+            { label: "Secrets and Variables", link: "/getting-started/secrets-and-variables" },
+            { label: "Tag Queries", link: "/getting-started/tag-queries" },
+          ],
         },
         {
           label: "Cloud Providers",
-          autogenerate: { directory: "cloud-providers" },
           collapsed: true,
+          items: [
+            {
+              label: "AWS",
+              collapsed: true,
+              items: [
+                { label: "Getting Started", link: "/cloud-providers/aws/getting-started" },
+                { label: "Static Credentials", link: "/cloud-providers/aws/static-credentials" },
+                { label: "OIDC Setup", link: "/cloud-providers/aws/oidc-setup" },
+              ],
+            },
+            {
+              label: "GCP",
+              collapsed: true,
+              items: [
+                { label: "Getting Started", link: "/cloud-providers/gcp/getting-started" },
+                { label: "Static Credentials", link: "/cloud-providers/gcp/static-credentials" },
+                { label: "OIDC Setup", link: "/cloud-providers/gcp/oidc-setup" },
+              ],
+            },
+            { label: "Azure", link: "/cloud-providers/azure" },
+            { label: "Other", link: "/cloud-providers/other" },
+          ],
         },
         {
           label: "Advanced Workflows",
@@ -92,8 +124,14 @@ export default defineConfig({
         },
         {
           label: "Self-Hosted",
-          autogenerate: { directory: "self-hosted" },
           collapsed: true,
+          items: [
+            { label: "Getting Started", link: "/self-hosted/getting-started" },
+            { label: "Docker Compose", link: "/self-hosted/docker-compose" },
+            { label: "Kubernetes", link: "/self-hosted/kubernetes" },
+            { label: "Environment Variables", link: "/self-hosted/environment-variables" },
+            { label: "Editions", link: "/self-hosted/editions" },
+          ],
         },
         {
           label: "Guides",
@@ -108,7 +146,11 @@ export default defineConfig({
       ],
     }),
   ],
+  markdown: {
+    rehypePlugins: []
+  },
   redirects: {
+    '/quickstart-guide': '/getting-started/quickstart-guide',
     '/security-and-compliance/plan-and-apply-permissions': '/security-and-compliance/role-based-access-control',
     '/configuration': '/getting-started/configuration',
     '/cloud-provider-setup/aws': '/cloud-providers/aws',
@@ -119,5 +161,6 @@ export default defineConfig({
     '/company/cookies': 'https://terrateam.io/cookies',
     '/company/terms-of-service': 'https://terrateam.io/terms-of-service',
     '/company/security-and-data': 'https://terrateam.io/security',
+    '/self-hosted/instructions': '/self-hosted/getting-started',
   },
 });

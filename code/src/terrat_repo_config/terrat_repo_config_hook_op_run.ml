@@ -10,6 +10,14 @@ module Env = struct
   include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Additional)
 end
 
+module On_error = struct
+  module Items = struct
+    type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
+  type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]
+end
+
 module Type = struct
   let t_of_yojson = function
     | `String "run" -> Ok "run"
@@ -35,6 +43,7 @@ type t = {
   cmd : Cmd.t;
   env : Env.t option; [@default None]
   ignore_errors : bool; [@default false]
+  on_error : On_error.t option; [@default None]
   run_on : Terrat_repo_config_run_on.t option; [@default None]
   type_ : Type.t; [@key "type"]
   visible_on : Visible_on.t option; [@default None]

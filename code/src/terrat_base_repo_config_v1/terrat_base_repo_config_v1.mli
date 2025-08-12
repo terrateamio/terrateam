@@ -48,6 +48,16 @@ module Workflow_step : sig
     [@@deriving make, show, yojson, eq]
   end
 
+  module Gate : sig
+    type t = {
+      any_of : string list option; [@default None]
+      all_of : string list option; [@default None]
+      any_of_count : int option; [@default None]
+      token : string;
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
   (* Workflow steps *)
 
   module Env : sig
@@ -113,6 +123,7 @@ module Workflow_step : sig
       cmd : Cmd.t;
       env : string String_map.t option;
       ignore_errors : bool; [@default false]
+      on_error : Yojson.Safe.t list; [@default []]
       run_on : Run_on.t; [@default Run_on.Success]
       visible_on : Visible_on.t; [@default Visible_on.Failure]
     }
@@ -148,6 +159,30 @@ module Workflow_step : sig
       env : string String_map.t option;
       extra_args : string list; [@default []]
       retry : Retry.t option;
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  module Conftest : sig
+    type t = {
+      env : string String_map.t option;
+      extra_args : string list; [@default []]
+      gate : Gate.t option; [@default None]
+      ignore_errors : bool; [@default false]
+      run_on : Run_on.t; [@default Run_on.Success]
+      visible_on : Visible_on.t; [@default Visible_on.Failure]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  module Checkov : sig
+    type t = {
+      env : string String_map.t option;
+      extra_args : string list; [@default []]
+      gate : Gate.t option; [@default None]
+      ignore_errors : bool; [@default false]
+      run_on : Run_on.t; [@default Run_on.Success]
+      visible_on : Visible_on.t; [@default Visible_on.Failure]
     }
     [@@deriving make, show, yojson, eq]
   end
@@ -201,6 +236,10 @@ module Access_control : sig
 end
 
 module Apply_requirements : sig
+  module Apply_after_merge : sig
+    type t = { enabled : bool [@default false] } [@@deriving make, show, yojson, eq]
+  end
+
   module Approved : sig
     type t = {
       all_of : Access_control.Match_list.t; [@default []]
@@ -225,6 +264,7 @@ module Apply_requirements : sig
 
   module Check : sig
     type t = {
+      apply_after_merge : Apply_after_merge.t; [@default Apply_after_merge.make ()]
       approved : Approved.t; [@default Approved.make ()]
       merge_conflicts : Merge_conflicts.t; [@default Merge_conflicts.make ()]
       require_ready_for_review_pr : bool; [@default true]
@@ -250,6 +290,15 @@ module Automerge : sig
   type t = {
     delete_branch : bool; [@default false]
     enabled : bool; [@default false]
+    require_explicit_apply : bool; [@default false]
+  }
+  [@@deriving make, show, yojson, eq]
+end
+
+module Batch_runs : sig
+  type t = {
+    enabled : bool; [@default false]
+    max_workspaces_per_batch : int; [@default 1]
   }
   [@@deriving make, show, yojson, eq]
 end
@@ -326,8 +375,16 @@ module Dirs : sig
   end
 
   module Dir : sig
+    module Branch_target : sig
+      type t =
+        | All
+        | Dest_branch
+      [@@deriving show, yojson, eq]
+    end
+
     type t = {
       create_and_select_workspace : bool; [@default true]
+      lock_branch_target : Branch_target.t; [@default Branch_target.All]
       stacks : Workspace.t String_map.t; [@default String_map.empty]
       tags : string list; [@default []]
       workspaces : Workspace.t String_map.t;
@@ -382,22 +439,48 @@ end
 module Engine : sig
   module Cdktf : sig
     type t = {
+      override_tf_cmd : string option;
       tf_cmd : string; [@default "terraform"]
       tf_version : string; [@default "latest"]
     }
     [@@deriving make, show, yojson, eq]
   end
 
+  module Custom : sig
+    type t = {
+      apply : string list option;
+      diff : string list option;
+      init : string list option;
+      outputs : string list option;
+      plan : string list option;
+      unsafe_apply : string list option;
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  module Fly : sig
+    type t = { config_file : string } [@@deriving make, show, yojson, eq]
+  end
+
   module Opentofu : sig
-    type t = { version : string option } [@@deriving make, show, yojson, eq]
+    type t = {
+      override_tf_cmd : string option;
+      version : string option;
+    }
+    [@@deriving make, show, yojson, eq]
   end
 
   module Terraform : sig
-    type t = { version : string option } [@@deriving make, show, yojson, eq]
+    type t = {
+      override_tf_cmd : string option;
+      version : string option;
+    }
+    [@@deriving make, show, yojson, eq]
   end
 
   module Terragrunt : sig
     type t = {
+      override_tf_cmd : string option;
       tf_cmd : string; [@default "terraform"]
       tf_version : string option;
       version : string option;
@@ -407,10 +490,13 @@ module Engine : sig
 
   type t =
     | Cdktf of Cdktf.t
+    | Custom of Custom.t
+    | Fly of Fly.t
     | Opentofu of Opentofu.t
+    | Other of Yojson.Safe.t
+    | Pulumi
     | Terraform of Terraform.t
     | Terragrunt of Terragrunt.t
-    | Pulumi
   [@@deriving show, yojson, eq]
 end
 
@@ -465,6 +551,28 @@ module Integrations : sig
   [@@deriving make, show, yojson, eq]
 end
 
+module Stacks : sig
+  module On_change : sig
+    type t = { can_apply_after : string list [@default []] } [@@deriving make, show, yojson, eq]
+  end
+
+  module Stack : sig
+    type t = {
+      tag_query : Tag_query.t;
+      on_change : On_change.t; [@default On_change.make ()]
+      variables : string String_map.t; [@default String_map.empty]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  type t = {
+    allow_workspace_in_multiple_stacks : bool; [@default false]
+    names : Stack.t String_map.t;
+        [@default String_map.singleton "default" (Stack.make ~tag_query:Tag_query.any ())]
+  }
+  [@@deriving make, show, yojson, eq]
+end
+
 module Storage : sig
   module Plans : sig
     module Cmd : sig
@@ -513,6 +621,14 @@ module Tags : sig
   [@@deriving make, show, yojson, eq]
 end
 
+module Tree_builder : sig
+  type t = {
+    enabled : bool; [@default false]
+    script : string; [@default ""]
+  }
+  [@@deriving make, show, yojson, eq]
+end
+
 module Workflows : sig
   module Entry : sig
     module Op : sig
@@ -523,6 +639,8 @@ module Workflows : sig
         | Run of Workflow_step.Run.t
         | Env of Workflow_step.Env.t
         | Oidc of Workflow_step.Oidc.t
+        | Checkov of Workflow_step.Checkov.t
+        | Conftest of Workflow_step.Conftest.t
       [@@deriving show, yojson, eq]
     end
 
@@ -540,12 +658,16 @@ module Workflows : sig
     end
 
     type t = {
-      apply : Op_list.t; [@default []]
+      apply : Op_list.t;
+          [@default
+            [ Op.Init (Workflow_step.Init.make ()); Op.Apply (Workflow_step.Apply.make ()) ]]
       engine : Engine.t; [@default Engine.(Terraform (Terraform.make ()))]
       environment : string option;
       integrations : Integrations.t; [@default Integrations.make ()]
       lock_policy : Lock_policy.t; [@default Lock_policy.Strict]
-      plan : Op_list.t; [@default []]
+      plan : Op_list.t;
+          [@default [ Op.Init (Workflow_step.Init.make ()); Op.Plan (Workflow_step.Plan.make ()) ]]
+      runs_on : Yojson.Safe.t option; [@default None]
       tag_query : Tag_query.t;
     }
     [@@deriving make, show, yojson, eq]
@@ -559,6 +681,7 @@ module View : sig
     access_control : Access_control.t; [@default Access_control.make ()]
     apply_requirements : Apply_requirements.t; [@default Apply_requirements.make ()]
     automerge : Automerge.t; [@default Automerge.make ()]
+    batch_runs : Batch_runs.t; [@default Batch_runs.make ()]
     config_builder : Config_builder.t; [@default Config_builder.make ()]
     cost_estimation : Cost_estimation.t; [@default Cost_estimation.make ()]
     create_and_select_workspace : bool; [@default true]
@@ -571,8 +694,10 @@ module View : sig
     indexer : Indexer.t; [@default Indexer.make ()]
     integrations : Integrations.t; [@default Integrations.make ()]
     parallel_runs : int; [@default 3]
+    stacks : Stacks.t; [@default Stacks.make ()]
     storage : Storage.t; [@default Storage.make ()]
     tags : Tags.t; [@default Tags.make ()]
+    tree_builder : Tree_builder.t; [@default Tree_builder.make ()]
     when_modified : When_modified.t; [@default When_modified.make ()]
     workflows : Workflows.t; [@default []]
   }
@@ -628,6 +753,7 @@ type of_version_1_err =
   | `Hooks_unknown_run_on_err of Terrat_repo_config_run_on.t
   | `Hooks_unknown_visible_on_err of string
   | `Pattern_parse_err of string
+  | `Stack_config_tag_query_err of string * string
   | `Unknown_lock_policy_err of string
   | `Unknown_plan_mode_err of string
   | `Window_parse_timezone_err of string
@@ -639,14 +765,17 @@ type of_version_1_err =
   ]
 [@@deriving show]
 
+type of_version_1_json_err =
+  [ of_version_1_err
+  | `Repo_config_schema_err of Jsonschema_check.Validation_err.t list
+  ]
+[@@deriving show]
+
 val of_view : View.t -> raw t
 val to_view : 'a t -> View.t
 val default : raw t
 val of_version_1 : Terrat_repo_config.Version_1.t -> (raw t, [> of_version_1_err ]) result
-
-val of_version_1_json :
-  Yojson.Safe.t -> (raw t, [> of_version_1_err | `Repo_config_parse_err of string ]) result
-
+val of_version_1_json : Yojson.Safe.t -> (raw t, [> of_version_1_json_err ]) result
 val to_version_1 : 'a t -> Terrat_repo_config.Version_1.t
 val merge_with_default_branch_config : default:'a t -> 'a t -> 'a t
 
@@ -658,6 +787,7 @@ val derive : ctx:Ctx.t -> index:Index.t -> file_list:string list -> 'a t -> deri
 val access_control : 'a t -> Access_control.t
 val apply_requirements : 'a t -> Apply_requirements.t
 val automerge : 'a t -> Automerge.t
+val batch_runs : 'a t -> Batch_runs.t
 val config_builder : 'a t -> Config_builder.t
 val cost_estimation : 'a t -> Cost_estimation.t
 val create_and_select_workspace : 'a t -> bool
@@ -670,7 +800,9 @@ val hooks : 'a t -> Hooks.t
 val indexer : 'a t -> Indexer.t
 val integrations : 'a t -> Integrations.t
 val parallel_runs : 'a t -> int
+val stacks : 'a t -> Stacks.t
 val storage : 'a t -> Storage.t
 val tags : 'a t -> Tags.t
+val tree_builder : 'a t -> Tree_builder.t
 val when_modified : 'a t -> When_modified.t
 val workflows : 'a t -> Workflows.t

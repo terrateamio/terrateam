@@ -2,6 +2,8 @@ module V1 = Terrat_repo_config.Version_1
 module String_map = Terrat_data.String_map
 module String_set = Terrat_data.String_set
 
+let config_schema = [%blob "../../../../api_schemas/terrat/config-schema.json"]
+
 let timezone_abbreviations =
   String_set.of_list
     [
@@ -313,6 +315,16 @@ module Workflow_step = struct
     [@@deriving make, show, yojson, eq]
   end
 
+  module Gate = struct
+    type t = {
+      any_of : string list option; [@default None]
+      all_of : string list option; [@default None]
+      any_of_count : int option; [@default None]
+      token : string;
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
   (* Workflow steps *)
   module Env = struct
     module Exec = struct
@@ -377,6 +389,7 @@ module Workflow_step = struct
       cmd : Cmd.t;
       env : string String_map.t option;
       ignore_errors : bool; [@default false]
+      on_error : Yojson.Safe.t list; [@default []]
       run_on : Run_on.t; [@default Run_on.Success]
       visible_on : Visible_on.t; [@default Visible_on.Failure]
     }
@@ -416,6 +429,30 @@ module Workflow_step = struct
       env : string String_map.t option;
       extra_args : string list; [@default []]
       retry : Retry.t option;
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  module Conftest = struct
+    type t = {
+      env : string String_map.t option;
+      extra_args : string list; [@default []]
+      gate : Gate.t option; [@default None]
+      ignore_errors : bool; [@default false]
+      run_on : Run_on.t; [@default Run_on.Success]
+      visible_on : Visible_on.t; [@default Visible_on.Failure]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  module Checkov = struct
+    type t = {
+      env : string String_map.t option;
+      extra_args : string list; [@default []]
+      gate : Gate.t option; [@default None]
+      ignore_errors : bool; [@default false]
+      run_on : Run_on.t; [@default Run_on.Success]
+      visible_on : Visible_on.t; [@default Visible_on.Failure]
     }
     [@@deriving make, show, yojson, eq]
   end
@@ -496,6 +533,10 @@ module Access_control = struct
 end
 
 module Apply_requirements = struct
+  module Apply_after_merge = struct
+    type t = { enabled : bool [@default false] } [@@deriving make, show, yojson, eq]
+  end
+
   module Approved = struct
     type t = {
       all_of : Access_control.Match_list.t; [@default []]
@@ -520,6 +561,7 @@ module Apply_requirements = struct
 
   module Check = struct
     type t = {
+      apply_after_merge : Apply_after_merge.t; [@default Apply_after_merge.make ()]
       approved : Approved.t; [@default Approved.make ()]
       merge_conflicts : Merge_conflicts.t; [@default Merge_conflicts.make ()]
       require_ready_for_review_pr : bool; [@default true]
@@ -545,6 +587,15 @@ module Automerge = struct
   type t = {
     delete_branch : bool; [@default false]
     enabled : bool; [@default false]
+    require_explicit_apply : bool; [@default false]
+  }
+  [@@deriving make, show, yojson, eq]
+end
+
+module Batch_runs = struct
+  type t = {
+    enabled : bool; [@default false]
+    max_workspaces_per_batch : int; [@default 1]
   }
   [@@deriving make, show, yojson, eq]
 end
@@ -688,8 +739,16 @@ module Dirs = struct
   end
 
   module Dir = struct
+    module Branch_target = struct
+      type t =
+        | All
+        | Dest_branch
+      [@@deriving show, yojson, eq]
+    end
+
     type t = {
       create_and_select_workspace : bool; [@default true]
+      lock_branch_target : Branch_target.t; [@default Branch_target.All]
       stacks : Workspace.t String_map.t; [@default String_map.empty]
       tags : string list; [@default []]
       workspaces : Workspace.t String_map.t;
@@ -752,8 +811,25 @@ module Drift = struct
 end
 
 module Engine = struct
+  module Custom = struct
+    type t = {
+      apply : string list option;
+      diff : string list option;
+      init : string list option;
+      outputs : string list option;
+      plan : string list option;
+      unsafe_apply : string list option;
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  module Fly = struct
+    type t = { config_file : string } [@@deriving make, show, yojson, eq]
+  end
+
   module Cdktf = struct
     type t = {
+      override_tf_cmd : string option;
       tf_cmd : string; [@default "terraform"]
       tf_version : string; [@default "latest"]
     }
@@ -761,15 +837,24 @@ module Engine = struct
   end
 
   module Opentofu = struct
-    type t = { version : string option } [@@deriving make, show, yojson, eq]
+    type t = {
+      override_tf_cmd : string option;
+      version : string option;
+    }
+    [@@deriving make, show, yojson, eq]
   end
 
   module Terraform = struct
-    type t = { version : string option } [@@deriving make, show, yojson, eq]
+    type t = {
+      override_tf_cmd : string option;
+      version : string option;
+    }
+    [@@deriving make, show, yojson, eq]
   end
 
   module Terragrunt = struct
     type t = {
+      override_tf_cmd : string option;
       tf_cmd : string; [@default "terraform"]
       tf_version : string option;
       version : string option;
@@ -779,10 +864,13 @@ module Engine = struct
 
   type t =
     | Cdktf of Cdktf.t
+    | Custom of Custom.t
+    | Fly of Fly.t
     | Opentofu of Opentofu.t
+    | Other of Yojson.Safe.t
+    | Pulumi
     | Terraform of Terraform.t
     | Terragrunt of Terragrunt.t
-    | Pulumi
   [@@deriving show, yojson, eq]
 end
 
@@ -837,6 +925,28 @@ module Integrations = struct
   [@@deriving make, show, yojson, eq]
 end
 
+module Stacks = struct
+  module On_change = struct
+    type t = { can_apply_after : string list [@default []] } [@@deriving make, show, yojson, eq]
+  end
+
+  module Stack = struct
+    type t = {
+      tag_query : Tag_query.t;
+      on_change : On_change.t; [@default On_change.make ()]
+      variables : string String_map.t; [@default String_map.empty]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  type t = {
+    allow_workspace_in_multiple_stacks : bool; [@default false]
+    names : Stack.t String_map.t;
+        [@default String_map.singleton "default" (Stack.make ~tag_query:Tag_query.any ())]
+  }
+  [@@deriving make, show, yojson, eq]
+end
+
 module Storage = struct
   module Plans = struct
     module Cmd = struct
@@ -885,6 +995,14 @@ module Tags = struct
   [@@deriving make, show, yojson, eq]
 end
 
+module Tree_builder = struct
+  type t = {
+    enabled : bool; [@default false]
+    script : string; [@default ""]
+  }
+  [@@deriving make, show, yojson, eq]
+end
+
 module Workflows = struct
   module Entry = struct
     module Op = struct
@@ -895,6 +1013,8 @@ module Workflows = struct
         | Run of Workflow_step.Run.t
         | Env of Workflow_step.Env.t
         | Oidc of Workflow_step.Oidc.t
+        | Checkov of Workflow_step.Checkov.t
+        | Conftest of Workflow_step.Conftest.t
       [@@deriving show, yojson, eq]
     end
 
@@ -927,6 +1047,7 @@ module Workflows = struct
       lock_policy : Lock_policy.t; [@default Lock_policy.Strict]
       plan : Op_list.t;
           [@default [ Op.Init (Workflow_step.Init.make ()); Op.Plan (Workflow_step.Plan.make ()) ]]
+      runs_on : Yojson.Safe.t option; [@default None]
       tag_query : Tag_query.t;
     }
     [@@deriving make, show, yojson, eq]
@@ -940,6 +1061,7 @@ module View = struct
     access_control : Access_control.t; [@default Access_control.make ()]
     apply_requirements : Apply_requirements.t; [@default Apply_requirements.make ()]
     automerge : Automerge.t; [@default Automerge.make ()]
+    batch_runs : Batch_runs.t; [@default Batch_runs.make ()]
     config_builder : Config_builder.t; [@default Config_builder.make ()]
     cost_estimation : Cost_estimation.t; [@default Cost_estimation.make ()]
     create_and_select_workspace : bool; [@default true]
@@ -952,8 +1074,10 @@ module View = struct
     indexer : Indexer.t; [@default Indexer.make ()]
     integrations : Integrations.t; [@default Integrations.make ()]
     parallel_runs : int; [@default 3]
+    stacks : Stacks.t; [@default Stacks.make ()]
     storage : Storage.t; [@default Storage.make ()]
     tags : Tags.t; [@default Tags.make ()]
+    tree_builder : Tree_builder.t; [@default Tree_builder.make ()]
     when_modified : When_modified.t; [@default When_modified.make ()]
     workflows : Workflows.t; [@default []]
   }
@@ -1009,6 +1133,7 @@ type of_version_1_err =
   | `Hooks_unknown_run_on_err of Terrat_repo_config_run_on.t
   | `Hooks_unknown_visible_on_err of string
   | `Pattern_parse_err of string
+  | `Stack_config_tag_query_err of string * string
   | `Unknown_lock_policy_err of string
   | `Unknown_plan_mode_err of string
   | `Window_parse_timezone_err of string
@@ -1017,6 +1142,12 @@ type of_version_1_err =
   | `Workflows_plan_unknown_run_on_err of Terrat_repo_config_run_on.t
   | `Workflows_plan_unknown_visible_on_err of string
   | `Workflows_tag_query_parse_err of string * string
+  ]
+[@@deriving show]
+
+type of_version_1_json_err =
+  [ of_version_1_err
+  | `Repo_config_schema_err of Jsonschema_check.Validation_err.t list
   ]
 [@@deriving show]
 
@@ -1126,6 +1257,10 @@ let get_apply_requirements_checks_approved =
       >>= fun any_of ->
       Ok (Apply_requirements.Approved.make ~enabled ?all_of ?any_of ~any_of_count ())
 
+let get_apply_requirements_checks_apply_after_merge =
+  let module Afm = Terrat_repo_config_apply_requirements_checks_apply_after_merge in
+  fun { Afm.enabled } -> Ok (Apply_requirements.Apply_after_merge.make ~enabled ())
+
 let get_apply_requirements_checks_merge_conflicts =
   let module Mc = Terrat_repo_config_apply_requirements_checks_merge_conflicts in
   fun { Mc.enabled } -> Ok (Apply_requirements.Merge_conflicts.make ~enabled ())
@@ -1159,7 +1294,14 @@ let of_version_1_apply_requirements_checks =
       let open CCResult.Infix in
       let module I = C2.Items in
       CCResult.map_l
-        (fun { I.approved; merge_conflicts; require_ready_for_review_pr; status_checks; tag_query }
+        (fun {
+               I.apply_after_merge;
+               approved;
+               merge_conflicts;
+               require_ready_for_review_pr;
+               status_checks;
+               tag_query;
+             }
            ->
           CCResult.map_err
             (function
@@ -1176,10 +1318,13 @@ let of_version_1_apply_requirements_checks =
           >>= fun merge_conflicts ->
           map_opt get_apply_requirements_checks_status_checks status_checks
           >>= fun status_checks ->
+          map_opt get_apply_requirements_checks_apply_after_merge apply_after_merge
+          >>= fun apply_after_merge ->
           Ok
             (Ar.Check.make
                ~require_ready_for_review_pr
                ~tag_query
+               ?apply_after_merge
                ?approved
                ?merge_conflicts
                ?status_checks
@@ -1309,7 +1454,9 @@ let of_version_1_hook_op =
   | Op.Hook_op_run op ->
       let open CCResult.Infix in
       let module Op = Terrat_repo_config_hook_op_run in
-      let { Op.capture_output; cmd; env; run_on; type_ = _; ignore_errors; visible_on } = op in
+      let { Op.capture_output; cmd; env; run_on; type_ = _; ignore_errors; visible_on; on_error } =
+        op
+      in
       CCResult.map_err
         (function
           | `Unknown_run_on err -> `Hooks_unknown_run_on_err err)
@@ -1324,7 +1471,15 @@ let of_version_1_hook_op =
       >>= fun env ->
       Ok
         (Hooks.Hook_op.Run
-           (Workflow_step.Run.make ~capture_output ~cmd ~ignore_errors ?visible_on ?env ?run_on ()))
+           (Workflow_step.Run.make
+              ~capture_output
+              ~cmd
+              ~ignore_errors
+              ?visible_on
+              ?env
+              ?run_on
+              ?on_error
+              ()))
   | Op.Hook_op_slack _ -> assert false
 
 let of_version_1_drift_schedule = function
@@ -1338,6 +1493,11 @@ let of_version_1_workflow_op_plan_mode = function
   | "strict" -> Ok Workflow_step.Plan.Mode.Strict
   | "fast-and-loose" -> Ok Workflow_step.Plan.Mode.Fast_and_loose
   | any -> Error (`Unknown_plan_mode_err any)
+
+let of_version_1_gate gate =
+  let module G = Terrat_repo_config_gate in
+  let { G.all_of; any_of; any_of_count; token } = gate in
+  Ok { Workflow_step.Gate.all_of; any_of; any_of_count; token }
 
 let of_version_1_workflow_op_list ops =
   let open CCResult.Infix in
@@ -1370,7 +1530,18 @@ let of_version_1_workflow_op_list ops =
           >>= fun retry -> Ok (O.Apply (Workflow_step.Apply.make ?env ?extra_args ?retry ()))
       | Op.Hook_op_run op ->
           let module Op = Terrat_repo_config_hook_op_run in
-          let { Op.capture_output; cmd; env; run_on; type_ = _; ignore_errors; visible_on } = op in
+          let {
+            Op.capture_output;
+            cmd;
+            env;
+            run_on;
+            type_ = _;
+            ignore_errors;
+            visible_on;
+            on_error;
+          } =
+            op
+          in
           map_opt (fun { Op.Env.additional; _ } -> Ok additional) env
           >>= fun env ->
           CCResult.map_err
@@ -1392,6 +1563,7 @@ let of_version_1_workflow_op_list ops =
                   ?env
                   ?run_on
                   ?visible_on
+                  ?on_error
                   ()))
       | Op.Hook_op_slack _ -> assert false
       | Op.Hook_op_env_exec op ->
@@ -1456,21 +1628,89 @@ let of_version_1_workflow_op_list ops =
                           ~access_token_lifetime
                           ~service_account
                           ~workload_identity_provider
-                          ())))))
+                          ()))))
+      | Op.Workflow_op_conftest op ->
+          let module Op = Terrat_repo_config_workflow_op_conftest in
+          let { Op.env; extra_args; gate; ignore_errors; run_on; visible_on; type_ = _ } = op in
+          map_opt (fun { Op.Env.additional; _ } -> Ok additional) env
+          >>= fun env ->
+          CCResult.map_err
+            (function
+              | `Unknown_run_on err -> `Workflows_unknown_run_on_err err)
+            (map_opt of_version_1_run_on run_on)
+          >>= fun run_on ->
+          CCResult.map_err
+            (function
+              | `Unknown_visible_on err -> `Workflows_unknown_visible_on_err err)
+            (map_opt of_version_1_visible_on visible_on)
+          >>= fun visible_on ->
+          map_opt of_version_1_gate gate
+          >>= fun gate ->
+          let extra_args = CCOption.get_or ~default:[] extra_args in
+          Ok
+            (O.Conftest
+               (Workflow_step.Conftest.make
+                  ?env
+                  ~extra_args
+                  ~gate
+                  ~ignore_errors
+                  ?run_on
+                  ?visible_on
+                  ()))
+      | Op.Workflow_op_checkov op ->
+          let module Op = Terrat_repo_config_workflow_op_checkov in
+          let { Op.env; extra_args; gate; ignore_errors; run_on; visible_on; type_ = _ } = op in
+          map_opt (fun { Op.Env.additional; _ } -> Ok additional) env
+          >>= fun env ->
+          CCResult.map_err
+            (function
+              | `Unknown_run_on err -> `Workflows_unknown_run_on_err err)
+            (map_opt of_version_1_run_on run_on)
+          >>= fun run_on ->
+          CCResult.map_err
+            (function
+              | `Unknown_visible_on err -> `Workflows_unknown_visible_on_err err)
+            (map_opt of_version_1_visible_on visible_on)
+          >>= fun visible_on ->
+          map_opt of_version_1_gate gate
+          >>= fun gate ->
+          let extra_args = CCOption.get_or ~default:[] extra_args in
+          Ok
+            (O.Checkov
+               (Workflow_step.Checkov.make
+                  ?env
+                  ~extra_args
+                  ~gate
+                  ~ignore_errors
+                  ?run_on
+                  ?visible_on
+                  ())))
     ops
 
 let of_version_1_workflow_engine cdktf terraform_version terragrunt default_engine engine =
-  let default_tf_cmd, default_tf_version, default_wrapper_version =
+  let default_tf_cmd, default_tf_version, default_override_tf_cmd, default_wrapper_version =
     match default_engine with
-    | Some Engine.(Opentofu { Opentofu.version; _ }) -> (Some "tofu", version, None)
-    | Some Engine.(Terragrunt { Terragrunt.tf_cmd; tf_version; version; _ }) ->
-        (Some tf_cmd, tf_version, version)
-    | _ -> (Some "terraform", None, None)
+    | Some Engine.(Opentofu { Opentofu.version; override_tf_cmd; _ }) ->
+        (Some "tofu", version, override_tf_cmd, None)
+    | Some Engine.(Terragrunt { Terragrunt.tf_cmd; tf_version; version; override_tf_cmd; _ }) ->
+        (Some tf_cmd, tf_version, override_tf_cmd, version)
+    | Some Engine.(Terraform { Terraform.version; override_tf_cmd; _ }) ->
+        (Some "terraform", version, override_tf_cmd, None)
+    | _ -> (Some "terraform", None, None, None)
   in
   match (cdktf, terraform_version, terragrunt, engine) with
   | _, _, _, Some engine -> (
       let module E = Terrat_repo_config_engine in
       match engine with
+      | E.Engine_other other -> Ok (Some (Engine.Other other))
+      | E.Engine_custom custom ->
+          let module E = Terrat_repo_config_engine_custom in
+          let { E.apply; init; plan; diff; unsafe_apply; outputs; name = _ } = custom in
+          Ok (Some Engine.(Custom (Custom.make ?apply ?init ?plan ?diff ?unsafe_apply ?outputs ())))
+      | E.Engine_fly fly ->
+          let module E = Terrat_repo_config_engine_fly in
+          let { E.config_file; name = _ } = fly in
+          Ok (Some Engine.(Fly (Fly.make ~config_file)))
       | E.Engine_cdktf cdktf ->
           let module E = Terrat_repo_config_engine_cdktf in
           Ok
@@ -1478,6 +1718,8 @@ let of_version_1_workflow_engine cdktf terraform_version terragrunt default_engi
                Engine.(
                  Cdktf
                    (Cdktf.make
+                      ?override_tf_cmd:
+                        (CCOption.or_ ~else_:default_override_tf_cmd cdktf.E.override_tf_cmd)
                       ?tf_cmd:(CCOption.or_ ~else_:default_tf_cmd cdktf.E.tf_cmd)
                       ?tf_version:(CCOption.or_ ~else_:default_tf_version cdktf.E.tf_version)
                       ())))
@@ -1487,7 +1729,11 @@ let of_version_1_workflow_engine cdktf terraform_version terragrunt default_engi
             (Some
                Engine.(
                  Opentofu
-                   (Opentofu.make ?version:(CCOption.or_ ~else_:default_tf_version ot.E.version) ())))
+                   (Opentofu.make
+                      ?version:(CCOption.or_ ~else_:default_tf_version ot.E.version)
+                      ?override_tf_cmd:
+                        (CCOption.or_ ~else_:default_override_tf_cmd ot.E.override_tf_cmd)
+                      ())))
       | E.Engine_terraform tf ->
           let module E = Terrat_repo_config_engine_terraform in
           Ok
@@ -1496,6 +1742,8 @@ let of_version_1_workflow_engine cdktf terraform_version terragrunt default_engi
                  Terraform
                    (Terraform.make
                       ?version:(CCOption.or_ ~else_:default_tf_version tf.E.version)
+                      ?override_tf_cmd:
+                        (CCOption.or_ ~else_:default_override_tf_cmd tf.E.override_tf_cmd)
                       ())))
       | E.Engine_terragrunt tg ->
           let module E = Terrat_repo_config_engine_terragrunt in
@@ -1504,6 +1752,8 @@ let of_version_1_workflow_engine cdktf terraform_version terragrunt default_engi
                Engine.(
                  Terragrunt
                    (Terragrunt.make
+                      ?override_tf_cmd:
+                        (CCOption.or_ ~else_:default_override_tf_cmd tg.E.override_tf_cmd)
                       ?tf_cmd:(CCOption.or_ ~else_:default_tf_cmd tg.E.tf_cmd)
                       ?tf_version:(CCOption.or_ ~else_:default_tf_version tg.E.tf_version)
                       ?version:(CCOption.or_ ~else_:default_wrapper_version tg.E.version)
@@ -1513,7 +1763,14 @@ let of_version_1_workflow_engine cdktf terraform_version terragrunt default_engi
       (* Cdktf *)
       Ok (Some Engine.(Cdktf (Cdktf.make ?tf_cmd:default_tf_cmd ?tf_version:default_tf_version ())))
   | _, Some terraform_version, _, None ->
-      Ok (Some Engine.(Terraform (Terraform.make ~version:terraform_version ())))
+      Ok
+        (Some
+           Engine.(
+             Terraform
+               (Terraform.make
+                  ~version:terraform_version
+                  ?override_tf_cmd:default_override_tf_cmd
+                  ())))
   | _, _, true, None ->
       (* Terragrunt *)
       Ok
@@ -1524,6 +1781,7 @@ let of_version_1_workflow_engine cdktf terraform_version terragrunt default_engi
                   ?tf_cmd:default_tf_cmd
                   ?tf_version:default_tf_version
                   ?version:default_wrapper_version
+                  ?override_tf_cmd:default_override_tf_cmd
                   ())))
   | _, _, _, None -> Ok default_engine
 
@@ -1603,11 +1861,19 @@ let of_version_1_apply_requirements apply_requirements =
 
 let of_version_automerge automerge =
   let module Am = Terrat_repo_config_automerge in
-  let { Am.delete_branch; enabled } = automerge in
-  Ok (Automerge.make ~delete_branch ~enabled ())
+  let { Am.delete_branch; enabled; require_explicit_apply } = automerge in
+  Ok (Automerge.make ~delete_branch ~enabled ~require_explicit_apply ())
+
+let of_version_1_batch_runs batch_runs =
+  let module Br = Terrat_repo_config_batch_runs in
+  let { Br.enabled; max_workspaces_per_batch } = batch_runs in
+  Ok (Batch_runs.make ~enabled ~max_workspaces_per_batch ())
 
 let of_version_1_config_builder { Terrat_repo_config.Config_builder.enabled; script } =
   Ok (Config_builder.make ~enabled ?script ())
+
+let of_version_1_tree_builder { Terrat_repo_config.Tree_builder.enabled; script } =
+  Ok (Tree_builder.make ~enabled ?script ())
 
 let of_version_1_cost_estimation { V1.Cost_estimation.currency; enabled; provider } =
   assert (provider = "infracost");
@@ -1669,7 +1935,16 @@ let of_version_1_dirs default_when_modified { V1.Dirs.additional; _ } =
       (Json_schema.String_map.to_list additional)
   in
   CCResult.map_l
-    (fun (dir, { D.create_and_select_workspace; stacks; tags; when_modified; workspaces }) ->
+    (fun ( dir,
+           {
+             D.create_and_select_workspace;
+             lock_branch_target;
+             stacks;
+             tags;
+             when_modified;
+             workspaces;
+           } )
+       ->
       map_opt (of_version_1_dirs_when_modified default_when_modified) when_modified
       >>= fun when_modified ->
       let when_modified = CCOption.or_ ~else_:default_when_modified when_modified in
@@ -1686,7 +1961,23 @@ let of_version_1_dirs default_when_modified { V1.Dirs.additional; _ } =
       >>= fun stacks ->
       map_opt (of_workspace when_modified) workspaces
       >>= fun workspaces ->
-      Ok (dir, Dirs.Dir.make ~create_and_select_workspace ?stacks ?tags ?workspaces ()))
+      let lock_branch_target =
+        CCOption.map
+          (function
+            | "all" -> Dirs.Dir.Branch_target.All
+            | "dest_branch" -> Dirs.Dir.Branch_target.Dest_branch
+            | _ -> assert false)
+          lock_branch_target
+      in
+      Ok
+        ( dir,
+          Dirs.Dir.make
+            ~create_and_select_workspace
+            ?lock_branch_target
+            ?stacks
+            ?tags
+            ?workspaces
+            () ))
     (Json_schema.String_map.to_list additional)
   >>= fun dirs -> Ok (String_map.of_list dirs)
 
@@ -1740,17 +2031,40 @@ let of_version_1_engine default_tf_version engine =
   | _, Some engine -> (
       let module E = Terrat_repo_config_engine in
       match engine with
+      | E.Engine_other other -> Ok (Some (Engine.Other other))
+      | E.Engine_custom custom ->
+          let module E = Terrat_repo_config_engine_custom in
+          let { E.apply; init; plan; diff; unsafe_apply; outputs; name = _ } = custom in
+          Ok (Some Engine.(Custom (Custom.make ?apply ?init ?plan ?diff ?unsafe_apply ?outputs ())))
+      | E.Engine_fly fly ->
+          let module E = Terrat_repo_config_engine_fly in
+          let { E.config_file; name = _ } = fly in
+          Ok (Some Engine.(Fly (Fly.make ~config_file)))
       | E.Engine_cdktf cdktf ->
           let module E = Terrat_repo_config_engine_cdktf in
           Ok
             (Some
-               Engine.(Cdktf (Cdktf.make ?tf_cmd:cdktf.E.tf_cmd ?tf_version:cdktf.E.tf_version ())))
+               Engine.(
+                 Cdktf
+                   (Cdktf.make
+                      ?tf_cmd:cdktf.E.tf_cmd
+                      ?tf_version:cdktf.E.tf_version
+                      ?override_tf_cmd:cdktf.E.override_tf_cmd
+                      ())))
       | E.Engine_opentofu ot ->
           let module E = Terrat_repo_config_engine_opentofu in
-          Ok (Some Engine.(Opentofu (Opentofu.make ?version:ot.E.version ())))
+          Ok
+            (Some
+               Engine.(
+                 Opentofu
+                   (Opentofu.make ?version:ot.E.version ?override_tf_cmd:ot.E.override_tf_cmd ())))
       | E.Engine_terraform tf ->
           let module E = Terrat_repo_config_engine_terraform in
-          Ok (Some Engine.(Terraform (Terraform.make ?version:tf.E.version ())))
+          Ok
+            (Some
+               Engine.(
+                 Terraform
+                   (Terraform.make ?version:tf.E.version ?override_tf_cmd:tf.E.override_tf_cmd ())))
       | E.Engine_terragrunt tg ->
           let module E = Terrat_repo_config_engine_terragrunt in
           Ok
@@ -1761,6 +2075,7 @@ let of_version_1_engine default_tf_version engine =
                       ?tf_cmd:tg.E.tf_cmd
                       ?tf_version:tg.E.tf_version
                       ?version:tg.E.version
+                      ?override_tf_cmd:tg.E.override_tf_cmd
                       ())))
       | E.Engine_pulumi _ -> Ok (Some Engine.Pulumi))
   | Some default_tf_version, _ ->
@@ -1797,6 +2112,36 @@ let of_version_1_integrations integrations =
       resourcely
   in
   Ok { Integrations.resourcely }
+
+let of_version_1_stack_config names =
+  let open CCResult.Infix in
+  let module N = Terrat_repo_config_stacks.Names in
+  let { N.additional = configs; _ } = names in
+  CCResult.map_l (fun (k, v) ->
+      let module Sc = Terrat_repo_config_stack_config in
+      let { Sc.on_change; tag_query; variables } = v in
+      CCResult.map_err
+        (function
+          | `Tag_query_error err -> `Stack_config_tag_query_err err)
+        (Terrat_tag_query.of_string tag_query)
+      >>= fun tag_query ->
+      map_opt
+        (fun { Sc.On_change.can_apply_after } -> Ok (Stacks.On_change.make ?can_apply_after ()))
+        on_change
+      >>= fun on_change ->
+      let variables =
+        CCOption.map (fun { Sc.Variables.additional = variables; _ } -> variables) variables
+      in
+      Ok (k, Stacks.Stack.make ~tag_query ?on_change ?variables ()))
+  @@ String_map.to_list configs
+  >>= fun configs -> Ok (String_map.of_list configs)
+
+let of_version_1_stacks stacks =
+  let open CCResult.Infix in
+  let module S = Terrat_repo_config_stacks in
+  let { S.allow_workspace_in_multiple_stacks; names } = stacks in
+  map_opt of_version_1_stack_config names
+  >>= fun names -> Ok (Stacks.make ~allow_workspace_in_multiple_stacks ?names ())
 
 let of_version_1_storage storage =
   let open CCResult.Infix in
@@ -1880,6 +2225,7 @@ let of_version_1_workflows default_engine default_integrations workflows =
            integrations;
            lock_policy;
            plan;
+           runs_on;
            tag_query;
            terraform_version;
            terragrunt;
@@ -1916,8 +2262,9 @@ let of_version_1_workflows default_engine default_integrations workflows =
            ?engine
            ?environment
            ?integrations
-           ~lock_policy
            ?plan
+           ~runs_on
+           ~lock_policy
            ~tag_query
            ()))
     workflows
@@ -1927,6 +2274,7 @@ let of_version_1 v1 =
     V1.access_control;
     apply_requirements;
     automerge;
+    batch_runs;
     checkout_strategy = _;
     config_builder;
     cost_estimation;
@@ -1941,8 +2289,10 @@ let of_version_1 v1 =
     indexer;
     integrations;
     parallel_runs;
+    stacks;
     storage;
     tags;
+    tree_builder;
     version = _;
     when_modified;
     workflows;
@@ -1956,6 +2306,8 @@ let of_version_1 v1 =
   >>= fun apply_requirements ->
   map_opt of_version_automerge automerge
   >>= fun automerge ->
+  map_opt of_version_1_batch_runs batch_runs
+  >>= fun batch_runs ->
   map_opt of_version_1_config_builder config_builder
   >>= fun config_builder ->
   map_opt of_version_1_cost_estimation cost_estimation
@@ -1976,10 +2328,14 @@ let of_version_1 v1 =
   >>= fun indexer ->
   map_opt of_version_1_integrations integrations
   >>= fun integrations ->
+  map_opt of_version_1_stacks stacks
+  >>= fun stacks ->
   map_opt of_version_1_storage storage
   >>= fun storage ->
   map_opt of_version_1_tags tags
   >>= fun tags ->
+  map_opt of_version_1_tree_builder tree_builder
+  >>= fun tree_builder ->
   map_opt (of_version_1_workflows engine integrations) workflows
   >>= fun workflows ->
   Ok
@@ -1987,6 +2343,7 @@ let of_version_1 v1 =
        ?access_control
        ?apply_requirements
        ?automerge
+       ?batch_runs
        ?config_builder
        ?cost_estimation
        ~create_and_select_workspace
@@ -1999,8 +2356,10 @@ let of_version_1 v1 =
        ?indexer
        ?integrations
        ~parallel_runs
+       ?stacks
        ?storage
        ?tags
+       ?tree_builder
        ?when_modified
        ?workflows
        ())
@@ -2008,17 +2367,12 @@ let of_version_1 v1 =
 let of_version_1_json json =
   match Terrat_repo_config.Version_1.of_yojson json with
   | Ok config -> of_version_1 config
-  | Error err ->
-      (* This is a cheap trick but we just want to make the error message a
-         little bit more friendly to users by replacing the parts of the error
-         message that are specific to the implementation. *)
-      Error
-        (`Repo_config_parse_err
-           ("Failed to parse repo config: "
-           ^ (err
-             |> CCString.replace ~sub:"Terrat_repo_config." ~by:""
-             |> CCString.replace ~sub:".t" ~by:""
-             |> CCString.lowercase_ascii)))
+  | Error _ -> (
+      match
+        Jsonschema_check.validate_json_schema ~schema:config_schema (Yojson.Safe.to_string json)
+      with
+      | Ok () -> assert false
+      | Error errors -> Error (`Repo_config_schema_err errors))
 
 let to_version_1_match_list =
   CCList.map (function
@@ -2069,6 +2423,11 @@ let to_version_1_access_control ac =
     unlock = Some (to_version_1_match_list ac.Access_control.unlock);
   }
 
+let to_version_1_apply_requirements_apply_after_merge afm =
+  let module Afm = Terrat_repo_config.Apply_requirements_checks_apply_after_merge in
+  let { Apply_requirements.Apply_after_merge.enabled } = afm in
+  { Afm.enabled }
+
 let to_version_1_apply_requirements_approved approved =
   let module Ap = Terrat_repo_config.Apply_requirements_checks_approved_2 in
   let { Apply_requirements.Approved.all_of; any_of; any_of_count; enabled } = approved in
@@ -2094,7 +2453,8 @@ let to_version_1_apply_requirements_checks =
   CCList.map
     (fun
       {
-        Apply_requirements.Check.approved;
+        Apply_requirements.Check.apply_after_merge;
+        approved;
         merge_conflicts;
         require_ready_for_review_pr;
         status_checks;
@@ -2102,7 +2462,9 @@ let to_version_1_apply_requirements_checks =
       }
     ->
       {
-        C2.Items.approved = Some (to_version_1_apply_requirements_approved approved);
+        C2.Items.apply_after_merge =
+          Some (to_version_1_apply_requirements_apply_after_merge apply_after_merge);
+        approved = Some (to_version_1_apply_requirements_approved approved);
         merge_conflicts = Some (to_version_1_apply_requirements_merge_conflicts merge_conflicts);
         require_ready_for_review_pr;
         status_checks = Some (to_version_1_apply_requirements_status_checks status_checks);
@@ -2127,13 +2489,23 @@ let to_version_1_apply_requirements ar =
 
 let to_version_1_automerge automerge =
   let module Am = Terrat_repo_config.Automerge in
-  let { Automerge.delete_branch; enabled } = automerge in
-  { Am.delete_branch; enabled }
+  let { Automerge.delete_branch; enabled; require_explicit_apply } = automerge in
+  { Am.delete_branch; enabled; require_explicit_apply }
+
+let to_version_1_batch_runs batch_runs =
+  let module Br = Terrat_repo_config.Batch_runs in
+  let { Batch_runs.enabled; max_workspaces_per_batch } = batch_runs in
+  { Br.enabled; max_workspaces_per_batch }
 
 let to_version_1_config_builder config_builder =
   let module Cb = Terrat_repo_config.Config_builder in
   let { Config_builder.enabled; script } = config_builder in
   { Cb.enabled; script }
+
+let to_version_1_tree_builder tree_builder =
+  let module Tb = Terrat_repo_config.Tree_builder in
+  let { Tree_builder.enabled; script } = tree_builder in
+  { Tb.enabled; script = Some script }
 
 let to_version_1_cost_estimation_provider = function
   | Cost_estimation.Provider.Infracost -> "infracost"
@@ -2184,11 +2556,17 @@ let to_version_1_dirs_dir dirs =
   let module D = Terrat_repo_config.Dir in
   String_map.fold
     (fun k v acc ->
-      let { Dirs.Dir.create_and_select_workspace; stacks; tags; workspaces } = v in
+      let { Dirs.Dir.create_and_select_workspace; lock_branch_target; stacks; tags; workspaces } =
+        v
+      in
       Json_schema.String_map.add
         k
         {
           D.create_and_select_workspace;
+          lock_branch_target =
+            (match lock_branch_target with
+            | Dirs.Dir.Branch_target.All -> Some "all"
+            | Dirs.Dir.Branch_target.Dest_branch -> Some "dest_branch");
           stacks =
             (if String_map.is_empty stacks then None
              else Some (to_version_1_dirs_dir_workspaces stacks));
@@ -2237,22 +2615,38 @@ let to_version_1_drift drift =
 let to_version_1_engine engine =
   let module E = Terrat_repo_config.Engine in
   match engine with
+  | Engine.Other other -> E.Engine_other other
+  | Engine.Custom custom ->
+      let module Custom = Terrat_repo_config.Engine_custom in
+      let { Engine.Custom.apply; init; plan; diff; unsafe_apply; outputs } = custom in
+      E.Engine_custom { Custom.name = "custom"; apply; init; plan; diff; unsafe_apply; outputs }
+  | Engine.Fly fly ->
+      let module Fly = Terrat_repo_config.Engine_fly in
+      let { Engine.Fly.config_file } = fly in
+      E.Engine_fly { Fly.name = "fly"; config_file }
   | Engine.Cdktf cdktf ->
       let module Cdktf = Terrat_repo_config.Engine_cdktf in
-      let { Engine.Cdktf.tf_cmd; tf_version } = cdktf in
-      E.Engine_cdktf { Cdktf.name = "cdktf"; tf_cmd = Some tf_cmd; tf_version = Some tf_version }
+      let { Engine.Cdktf.tf_cmd; tf_version; override_tf_cmd } = cdktf in
+      E.Engine_cdktf
+        {
+          Cdktf.name = "cdktf";
+          tf_cmd = Some tf_cmd;
+          tf_version = Some tf_version;
+          override_tf_cmd;
+        }
   | Engine.Opentofu ot ->
       let module Ot = Terrat_repo_config.Engine_opentofu in
-      let { Engine.Opentofu.version } = ot in
-      E.Engine_opentofu { Ot.name = "tofu"; version }
+      let { Engine.Opentofu.version; override_tf_cmd } = ot in
+      E.Engine_opentofu { Ot.name = "tofu"; version; override_tf_cmd }
   | Engine.Terraform tf ->
       let module Tf = Terrat_repo_config.Engine_terraform in
-      let { Engine.Terraform.version } = tf in
-      E.Engine_terraform { Tf.name = "terraform"; version }
+      let { Engine.Terraform.version; override_tf_cmd } = tf in
+      E.Engine_terraform { Tf.name = "terraform"; version; override_tf_cmd }
   | Engine.Terragrunt tg ->
       let module Tg = Terrat_repo_config.Engine_terragrunt in
-      let { Engine.Terragrunt.tf_cmd; tf_version; version } = tg in
-      E.Engine_terragrunt { Tg.name = "terragrunt"; tf_cmd = Some tf_cmd; tf_version; version }
+      let { Engine.Terragrunt.tf_cmd; tf_version; version; override_tf_cmd } = tg in
+      E.Engine_terragrunt
+        { Tg.name = "terragrunt"; tf_cmd = Some tf_cmd; tf_version; version; override_tf_cmd }
   | Engine.Pulumi ->
       let module P = Terrat_repo_config.Engine_pulumi in
       E.Engine_pulumi { P.name = "pulumi" }
@@ -2323,7 +2717,9 @@ let to_version_1_hooks_op_oidc = function
 
 let to_version_1_hooks_op_run r =
   let module R = Terrat_repo_config.Hook_op_run in
-  let { Workflow_step.Run.capture_output; cmd; env; run_on; ignore_errors; visible_on } = r in
+  let { Workflow_step.Run.capture_output; cmd; env; run_on; ignore_errors; visible_on; on_error } =
+    r
+  in
   {
     R.capture_output;
     cmd;
@@ -2332,6 +2728,7 @@ let to_version_1_hooks_op_run r =
     run_on = Some (Workflow_step.Run_on.to_string run_on);
     type_ = "run";
     visible_on = Some (Workflow_step.Visible_on.to_string visible_on);
+    on_error = Some on_error;
   }
 
 let to_version_1_hooks_hook_list =
@@ -2374,6 +2771,27 @@ let to_version_1_integrations integrations =
     integrations
   in
   { I.resourcely = Some { I.Resourcely.enabled; extra_args = Some [] } }
+
+let to_version_1_stacks stacks =
+  let module S = Terrat_repo_config_stacks in
+  let { Stacks.allow_workspace_in_multiple_stacks; names } = stacks in
+  let names =
+    S.Names.make
+      ~additional:
+        (String_map.map
+           (fun v ->
+             let { Stacks.Stack.tag_query; on_change; variables } = v in
+             let module Sc = Terrat_repo_config_stack_config in
+             let { Stacks.On_change.can_apply_after } = on_change in
+             {
+               Sc.tag_query = Terrat_tag_query.to_string tag_query;
+               on_change = Some { Sc.On_change.can_apply_after = Some can_apply_after };
+               variables = Some (Sc.Variables.make ~additional:variables Json_schema.Empty_obj.t);
+             })
+           names)
+      Json_schema.Empty_obj.t
+  in
+  { S.allow_workspace_in_multiple_stacks; names = Some names }
 
 let to_version_1_storage_plans plans =
   match plans with
@@ -2452,6 +2870,11 @@ let to_version_1_workflow_retry retry =
   let { Workflow_step.Retry.backoff; enabled; initial_sleep; tries } = retry in
   { R.backoff; enabled; initial_sleep; tries }
 
+let to_version_1_gate gate =
+  let module G = Terrat_repo_config_gate in
+  let { Workflow_step.Gate.all_of; any_of; any_of_count; token } = gate in
+  { G.all_of; any_of; any_of_count; token }
+
 let to_version_1_workflows_op =
   let module Op = Terrat_repo_config.Workflow_op_list in
   CCList.map (function
@@ -2489,13 +2912,51 @@ let to_version_1_workflows_op =
         Op.Items.Hook_op_env_exec (to_version_1_hooks_op_env_exec env)
     | Workflows.Entry.Op.Env (Workflow_step.Env.Source env) ->
         Op.Items.Hook_op_env_source (to_version_1_hooks_op_env_source env)
-    | Workflows.Entry.Op.Oidc oidc -> Op.Items.Hook_op_oidc (to_version_1_hooks_op_oidc oidc))
+    | Workflows.Entry.Op.Oidc oidc -> Op.Items.Hook_op_oidc (to_version_1_hooks_op_oidc oidc)
+    | Workflows.Entry.Op.Conftest ct ->
+        let module C = Terrat_repo_config.Workflow_op_conftest in
+        let { Workflow_step.Conftest.env; extra_args; gate; ignore_errors; run_on; visible_on } =
+          ct
+        in
+        Op.Items.Workflow_op_conftest
+          {
+            C.type_ = "conftest";
+            env = CCOption.map (fun env -> C.Env.make ~additional:env Json_schema.Empty_obj.t) env;
+            extra_args = Some extra_args;
+            gate = CCOption.map to_version_1_gate gate;
+            ignore_errors;
+            run_on = Some (Workflow_step.Run_on.to_string run_on);
+            visible_on = Some (Workflow_step.Visible_on.to_string visible_on);
+          }
+    | Workflows.Entry.Op.Checkov c ->
+        let module C = Terrat_repo_config.Workflow_op_checkov in
+        let { Workflow_step.Checkov.env; extra_args; gate; ignore_errors; run_on; visible_on } =
+          c
+        in
+        Op.Items.Workflow_op_checkov
+          {
+            C.type_ = "checkov";
+            env = CCOption.map (fun env -> C.Env.make ~additional:env Json_schema.Empty_obj.t) env;
+            extra_args = Some extra_args;
+            gate = CCOption.map to_version_1_gate gate;
+            ignore_errors;
+            run_on = Some (Workflow_step.Run_on.to_string run_on);
+            visible_on = Some (Workflow_step.Visible_on.to_string visible_on);
+          })
 
 let to_version_1_workflows =
   CCList.map (fun entry ->
       let module E = Terrat_repo_config.Workflow_entry in
-      let { Workflows.Entry.apply; engine; environment; integrations; lock_policy; plan; tag_query }
-          =
+      let {
+        Workflows.Entry.apply;
+        engine;
+        environment;
+        integrations;
+        lock_policy;
+        plan;
+        tag_query;
+        runs_on;
+      } =
         entry
       in
       {
@@ -2510,6 +2971,7 @@ let to_version_1_workflows =
             integrations;
         lock_policy = Workflows.Entry.Lock_policy.to_string lock_policy;
         plan = Some (to_version_1_workflows_op plan);
+        runs_on;
         tag_query = Terrat_tag_query.to_string tag_query;
         terraform_version = None;
         terragrunt = false;
@@ -2520,6 +2982,7 @@ let to_version_1 t =
     View.access_control;
     apply_requirements;
     automerge;
+    batch_runs;
     config_builder;
     cost_estimation;
     create_and_select_workspace;
@@ -2532,8 +2995,10 @@ let to_version_1 t =
     indexer;
     integrations;
     parallel_runs;
+    stacks;
     storage;
     tags;
+    tree_builder;
     when_modified;
     workflows;
   } =
@@ -2555,6 +3020,11 @@ let to_version_1 t =
         CCFun.(Automerge.equal (Automerge.make ()) %> not)
         to_version_1_automerge
         automerge;
+    batch_runs =
+      map_opt_if_true
+        CCFun.(Batch_runs.equal (Batch_runs.make ()) %> not)
+        to_version_1_batch_runs
+        batch_runs;
     checkout_strategy = "merge";
     config_builder =
       map_opt_if_true
@@ -2587,9 +3057,15 @@ let to_version_1 t =
         to_version_1_integrations
         integrations;
     parallel_runs;
+    stacks = map_opt_if_true CCFun.(Stacks.equal (Stacks.make ()) %> not) to_version_1_stacks stacks;
     storage =
       map_opt_if_true CCFun.(Storage.equal (Storage.make ()) %> not) to_version_1_storage storage;
     tags = map_opt_if_true CCFun.(Tags.equal (Tags.make ()) %> not) to_version_1_tags tags;
+    tree_builder =
+      map_opt_if_true
+        CCFun.(Tree_builder.equal (Tree_builder.make ()) %> not)
+        to_version_1_tree_builder
+        tree_builder;
     version = "1";
     when_modified =
       map_opt_if_true
@@ -2894,6 +3370,7 @@ let derive ~ctx ~index ~file_list repo_config =
 let access_control t = t.View.access_control
 let apply_requirements t = t.View.apply_requirements
 let automerge t = t.View.automerge
+let batch_runs t = t.View.batch_runs
 let config_builder t = t.View.config_builder
 let cost_estimation t = t.View.cost_estimation
 let create_and_select_workspace t = t.View.create_and_select_workspace
@@ -2906,7 +3383,9 @@ let hooks t = t.View.hooks
 let indexer t = t.View.indexer
 let integrations t = t.View.integrations
 let parallel_runs t = t.View.parallel_runs
+let stacks t = t.View.stacks
 let storage t = t.View.storage
 let tags t = t.View.tags
+let tree_builder t = t.View.tree_builder
 let when_modified t = t.View.when_modified
 let workflows t = t.View.workflows

@@ -23,6 +23,7 @@ end
 module Msg = struct
   type t =
     | Get of (Pgsql_io.t, unit) result Abb.Future.Promise.t
+    | Conn_timeout_check
     | Return of Pgsql_io.t
 end
 
@@ -30,6 +31,7 @@ module Server = struct
   type t = {
     metrics : Metrics.t -> unit Abb.Future.t;
     idle_check : Duration.t;
+    conn_timeout_check : Duration.t;
     tls_config : [ `Require of Otls.Tls_config.t | `Prefer of Otls.Tls_config.t ] option;
     passwd : string option;
     port : int option;
@@ -42,6 +44,15 @@ module Server = struct
     conns : Conn.t list;
     waiting : (Pgsql_io.t, unit) result Abb.Future.Promise.t Queue.t;
   }
+
+  let rec conn_timeout_check' timeout w =
+    let open Abb.Future.Infix_monad in
+    Abb.Sys.sleep @@ Duration.to_f timeout
+    >>= fun () ->
+    Abbs_channel.send w Msg.Conn_timeout_check
+    >>= function
+    | `Ok () -> conn_timeout_check' timeout w
+    | `Closed -> Abb.Future.return ()
 
   (* Consume waiting promises until we find one that is undetermined.  Needed in
      case a waiting future was terminated while waiting. *)
@@ -122,7 +133,7 @@ module Server = struct
                 Abb.Future.Promise.set p (Ok conn)
                 >>= fun () -> loop { t with num_conns = t.num_conns + 1 } w r
             | `Ok (Error (#Pgsql_io.create_err as err)) ->
-                Logs.err (fun m -> m "PGSQL_POOL : ERROR : %s" (Pgsql_io.show_create_err err));
+                Logs.err (fun m -> m "ERROR : %s" (Pgsql_io.show_create_err err));
                 Abb.Future.Promise.set p (Error ()) >>= fun () -> loop t w r
             | `Timeout -> Abb.Future.Promise.set p (Error ()) >>= fun () -> loop t w r))
     | `Ok (Msg.Return conn) when Pgsql_io.connected conn -> (
@@ -143,17 +154,44 @@ module Server = struct
         match take_until_undet t.waiting with
         | Some p -> handle_msg t w r (`Ok (Msg.Get p))
         | None -> loop t w r)
+    | `Ok Msg.Conn_timeout_check ->
+        let conn_timeout_check = Duration.to_f t.conn_timeout_check in
+        Logs.debug (fun m ->
+            m
+              "CONN_TIMEOUT_CHECK : STARTED : num_conns=%d : timeout=%0.0f"
+              t.num_conns
+              conn_timeout_check);
+        Abb.Sys.monotonic ()
+        >>= fun now ->
+        Abbs_future_combinators.List.fold_left
+          ~f:(fun t ({ Conn.conn; last_used } as c) ->
+            let age = now -. last_used in
+            Logs.debug (fun m -> m "CONN_TIMEOUT_CHECK : TEST : age=%0.0f" age);
+            if age >= conn_timeout_check then
+              Pgsql_io.destroy conn
+              >>= fun _ -> Abb.Future.return { t with num_conns = t.num_conns - 1 }
+            else Abb.Future.return { t with conns = c :: t.conns })
+          ~init:{ t with conns = [] }
+          t.conns
+        >>= fun t ->
+        Logs.debug (fun m -> m "CONN_TIMEOUT_CHECK : COMPLETED : num_conns=%d" t.num_conns);
+        loop t w r
     | `Closed ->
         Abbs_future_combinators.List.iter
           ~f:(fun Conn.{ conn; _ } -> Abbs_future_combinators.ignore (Pgsql_io.destroy conn))
           t.conns
+
+  let run t w r =
+    let open Abb.Future.Infix_monad in
+    Abb.Future.fork (conn_timeout_check' t.conn_timeout_check w) >>= fun _ -> loop t w r
 end
 
 type t = Msg.t Abbs_service_local.w
 
 let create
     ?(metrics = fun _ -> Abbs_future_combinators.unit)
-    ?(idle_check = Duration.of_year 1)
+    ?(idle_check = Duration.of_min 5)
+    ?(conn_timeout_check = Duration.of_min 1)
     ?tls_config
     ?passwd
     ?port
@@ -167,6 +205,7 @@ let create
       {
         metrics;
         idle_check;
+        conn_timeout_check;
         tls_config;
         passwd;
         port;
@@ -180,7 +219,7 @@ let create
         waiting = Queue.create ();
       }
   in
-  Abbs_service_local.create (Server.loop t)
+  Abbs_service_local.create (Server.run t)
 
 let destroy t = Abbs_future_combinators.ignore (Abbs_channel.close t)
 

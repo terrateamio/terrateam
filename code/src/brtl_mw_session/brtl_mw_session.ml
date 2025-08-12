@@ -40,6 +40,8 @@ let store_cookie config v ctx =
     Cohttp.Cookie.Set_cookie_hdr.make
       ?domain:config.Config.domain
       ?path:config.Config.path
+      ~secure:true
+      ~http_only:true
       ~expiration:config.Config.expiration
       (config.Config.cookie_name, cookie_id)
   in

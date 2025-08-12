@@ -1,17 +1,36 @@
+type premium_features =
+  [ `Access_control
+  | `Multiple_drift_schedules
+  | `Gatekeeping
+  ]
+[@@deriving show]
+
+type premium_feature_err = [ `Premium_feature_err of premium_features ] [@@deriving show]
+
 type fetch_repo_config_with_provenance_err =
   [ Terrat_base_repo_config_v1.of_version_1_err
-  | `Repo_config_parse_err of string * string
+  | `Repo_config_schema_err of string * Jsonschema_check.Validation_err.t list
   | `Config_merge_err of (string * string) * (string option * Yojson.Safe.t * Yojson.Safe.t)
   | `Json_decode_err of string * string
   | `Unexpected_err of string
   | `Yaml_decode_err of string * string
-  | `Premium_feature_err of [ `Access_control | `Multiple_drift_schedules ]
+  | premium_feature_err
   | `Error
   ]
 [@@deriving show]
 
 type access_control_query_err = [ `Error ] [@@deriving show]
 type access_control_err = access_control_query_err [@@deriving show]
+
+type gate_add_approval_err =
+  [ `Error
+  | `No_matching_token_err of string
+  | `Premium_feature_err of premium_features
+  ]
+[@@deriving show]
+
+type gate_eval_err = [ `Error ] [@@deriving show]
+type tier_check_err = [ `Error ] [@@deriving show]
 
 module Account_status = struct
   type t =
@@ -62,6 +81,15 @@ module Index = struct
   }
 end
 
+module Gate_eval = struct
+  type t = {
+    dirspace : Terrat_dirspace.t option;
+    token : string;
+    result : Terrat_gate.Result.t;
+  }
+  [@@deriving show]
+end
+
 module Msg = struct
   type access_control_denied =
     [ `All_dirspaces of Terrat_access_control2.R.Deny.t list
@@ -83,12 +111,14 @@ module Msg = struct
     | Automerge_failure of ('pull_request * string)
     | Bad_custom_branch_tag_pattern of (string * string)
     | Bad_glob of string
-    | Build_config_err of Terrat_base_repo_config_v1.of_version_1_err
+    | Build_config_err of Terrat_base_repo_config_v1.of_version_1_json_err
     | Build_config_failure of string
+    | Build_tree_failure of string
     | Conflicting_work_manifests of ('account, 'target) Terrat_work_manifest3.Existing.t list
     | Depends_on_cycle of Terrat_dirspace.t list
     | Dest_branch_no_match of 'pull_request
     | Dirspaces_owned_by_other_pull_request of (Terrat_change.Dirspace.t * 'pull_request) list
+    | Gate_check_failure of Gate_eval.t list
     | Help
     | Index_complete of (bool * (string * int option * string) list)
     | Invalid_unlock_id of string
@@ -96,7 +126,7 @@ module Msg = struct
     | Mismatched_refs
     | Missing_plans of Terrat_change.Dirspace.t list
     | Plan_no_matching_dirspaces
-    | Premium_feature_err of [ `Access_control | `Multiple_drift_schedules ]
+    | Premium_feature_err of premium_features
     | Pull_request_not_appliable of ('pull_request * 'apply_requirements)
     | Pull_request_not_mergeable
     | Repo_config of (string list * Terrat_base_repo_config_v1.derived Terrat_base_repo_config_v1.t)
@@ -104,7 +134,9 @@ module Msg = struct
     | Repo_config_failure of string
     | Repo_config_merge_err of ((string * string) * (string option * Yojson.Safe.t * Yojson.Safe.t))
     | Repo_config_parse_failure of string * string
-    | Run_work_manifest_err of [ `Failed_to_start | `Missing_workflow ]
+    | Repo_config_schema_err of (string * Jsonschema_check.Validation_err.t list)
+    | Run_work_manifest_err of
+        [ `Failed_to_start_with_msg_err of string | `Failed_to_start | `Missing_workflow ]
     | Tag_query_err of Terrat_tag_query_ast.err
     | Tf_op_result of {
         is_layered_run : bool;
@@ -120,11 +152,14 @@ module Msg = struct
         result : Terrat_api_components_work_manifest_tf_operation_result2.t;
         work_manifest : ('account, 'target) Terrat_work_manifest3.Existing.t;
       }
+    | Tier_check of Terrat_tier.Check.t
     | Unexpected_temporary_err
     | Unlock_success
 end
 
 module type S = sig
+  val name : string
+
   module Api : Terrat_vcs_api.S
 
   module Unlock_id : sig
@@ -173,6 +208,14 @@ module type S = sig
       Yojson.Safe.t ->
       (unit, [> `Error ]) result Abb.Future.t
 
+    val store_repo_tree :
+      request_id:string ->
+      t ->
+      Api.Account.t ->
+      Api.Ref.t ->
+      Terrat_api_components.Work_manifest_build_tree_result.Files.t ->
+      (unit, [> `Error ]) result Abb.Future.t
+
     val store_flow_state :
       request_id:string -> t -> Uuidm.t -> string -> (unit, [> `Error ]) result Abb.Future.t
 
@@ -182,7 +225,10 @@ module type S = sig
       branch_ref:Api.Ref.t ->
       t ->
       Api.Repo.t ->
-      Terrat_change.Dirspaceflow.Workflow.t Terrat_change.Dirspaceflow.t list ->
+      (Terrat_base_repo_config_v1.Dirs.Dir.Branch_target.t
+      * Terrat_change.Dirspaceflow.Workflow.t option)
+      Terrat_change.Dirspaceflow.t
+      list ->
       (unit, [> `Error ]) result Abb.Future.t
 
     val store_tf_operation_result :
@@ -222,6 +268,15 @@ module type S = sig
       Api.Account.t ->
       Api.Ref.t ->
       (Yojson.Safe.t option, [> `Error ]) result Abb.Future.t
+
+    val query_repo_tree :
+      ?base_ref:Api.Ref.t ->
+      request_id:string ->
+      t ->
+      Api.Account.t ->
+      Api.Ref.t ->
+      (Terrat_api_components.Work_manifest_build_tree_result.Files.t option, [> `Error ]) result
+      Abb.Future.t
 
     val query_next_pending_work_manifest :
       request_id:string ->
@@ -285,7 +340,10 @@ module type S = sig
     val query_missing_drift_scheduled_runs :
       request_id:string ->
       t ->
-      ((string * Api.Account.t * Api.Repo.t * bool * Terrat_tag_query.t) list, [> `Error ]) result
+      ( (string * Api.Account.t * Api.Repo.t * bool * Terrat_tag_query.t * (string * string) option)
+        list,
+        [> `Error ] )
+      result
       Abb.Future.t
 
     val cleanup_repo_configs : request_id:string -> t -> (unit, [> `Error ]) result Abb.Future.t
@@ -329,6 +387,33 @@ module type S = sig
       ('diff, 'checks) Api.Pull_request.t ->
       Terrat_change_match3.Dirspace_config.t list ->
       (Result.t, [> `Error ]) result Abb.Future.t
+  end
+
+  module Gate : sig
+    val add_approval :
+      request_id:string ->
+      token:string ->
+      approver:string ->
+      ('a, 'b) Api.Pull_request.t ->
+      Db.t ->
+      (unit, [> gate_add_approval_err ]) result Abb.Future.t
+
+    val eval :
+      request_id:string ->
+      Api.Client.t ->
+      Terrat_dirspace.t list ->
+      ('a, 'b) Api.Pull_request.t ->
+      Db.t ->
+      (Gate_eval.t list, [> gate_eval_err ]) result Abb.Future.t
+  end
+
+  module Tier : sig
+    val check :
+      request_id:string ->
+      Api.User.t ->
+      Api.Account.t ->
+      Db.t ->
+      (Terrat_tier.Check.t option, [> tier_check_err ]) result Abb.Future.t
   end
 
   module Comment : sig
@@ -397,7 +482,11 @@ module type S = sig
       ( Api.Account.t,
         ((unit, unit) Api.Pull_request.t, Api.Repo.t) Target.t )
       Terrat_work_manifest3.Existing.t ->
-      (unit, [> `Failed_to_start | `Missing_workflow | `Error ]) result Abb.Future.t
+      ( unit,
+        [> `Failed_to_start_with_msg_err of string | `Failed_to_start | `Missing_workflow | `Error ]
+      )
+      result
+      Abb.Future.t
 
     val create :
       request_id:string ->
@@ -438,7 +527,7 @@ module type S = sig
       request_id:string ->
       Db.t ->
       Uuidm.t ->
-      int Terrat_change.Dirspaceflow.t list ->
+      int option Terrat_change.Dirspaceflow.t list ->
       (unit, [> `Error ]) result Abb.Future.t
 
     val update_denied_dirspaces :

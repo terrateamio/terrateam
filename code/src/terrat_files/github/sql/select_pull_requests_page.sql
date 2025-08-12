@@ -29,7 +29,7 @@ select
 from github_pull_requests as gpr
 inner join github_installation_repositories as gir
     on gpr.repository = gir.id
-inner join github_user_installations as gui
+inner join github_user_installations2 as gui
     on gir.installation_id = gui.installation_id
 left join latest_github_work_manifest as lgwm
     on gpr.repository = lgwm.repository and gpr.pull_number = lgwm.pull_number

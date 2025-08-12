@@ -3,6 +3,7 @@ module Primary = struct
     module Primary = struct
       type t = {
         actions_runner_registration : Githubc2_components_rate_limit.t option; [@default None]
+        code_scanning_autofix : Githubc2_components_rate_limit.t option; [@default None]
         code_scanning_upload : Githubc2_components_rate_limit.t option; [@default None]
         code_search : Githubc2_components_rate_limit.t option; [@default None]
         core : Githubc2_components_rate_limit.t;

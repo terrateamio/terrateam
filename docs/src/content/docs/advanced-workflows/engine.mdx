@@ -1,0 +1,111 @@
+---
+title: Choosing and Configuring an Engine
+description: Learn how to select and configure the execution engine for plans and applies in Terrateam
+---
+
+import MermaidDiagram from "../../../components/MermaidDiagram.astro";
+
+Terrateam supports multiple execution engines, giving you the flexibility to choose the right tool for your workflow. Whether you are using standard Terraform, OpenTofu, Terragrunt, CDKTF, or even a fully custom engine, Terrateam makes it possible to configure plan and apply behavior that suits your needs.
+
+You can define the [engine](/configuration-reference/engine) globally or override it per workflow by using the `engine` key in your `.terrateam/config.yml` file.
+
+## Built In Engine Types
+
+### Terraform (default)
+```yaml
+engine:
+  name: terraform
+```
+
+### OpenTofu
+```yaml
+engine:
+  name: tofu
+  version: 1.9.0
+```
+
+### Terragrunt
+```yaml
+engine:
+  name: terragrunt
+  tf_version: 1.11.1
+```
+
+### CDKTF
+```yaml
+engine:
+  name: cdktf
+  tf_cmd: tofu
+```
+
+### Pulumi
+```yaml
+engine:
+  name: pulumi
+```
+
+## Custom Engine
+
+Use a custom engine when you need to perform tasks outside of standard Terraform or OpenTofu workflows, or when integrating with other infrastructure tools (e.g., custom wrappers, or legacy systems).
+
+:::note[About TERRATEAM_PLAN_FILE]
+When using a custom engine, Terrateam sets the `TERRATEAM_PLAN_FILE` environment variable to the path where your plan step must write the plan file. This is the only required environment variable that must be written to by your custom plan step. Terrateam will use this file for subsequent apply and diff steps. The file must be created, but it can be empty.
+:::
+
+### Example: Custom Engine
+
+Below is an example configuration for a custom engine. Each key corresponds to a step in the Terrateam workflow. Only `plan` is required; others are optional.
+
+```yaml
+engine:
+  name: custom
+  # The command to run during the init step (optional)
+  init: ['echo', 'init']
+  # The command to run during the plan step (required)
+  # Must write the plan to the file specified by $TERRATEAM_PLAN_FILE
+  plan: ['touch', '$TERRATEAM_PLAN_FILE']
+  # The command to produce a human-readable diff of the plan output (optional)
+  diff: ['printf', '+ added foo\n- removed bar\n~ updated bar\n']
+  # The command to run during the apply step (optional)
+  apply: ['cat', 'foo.txt']
+  # The command to return output values as a JSON string (optional)
+  outputs: ['echo', '{"foo": "bar"}']
+```
+
+**Highlights:**
+- `plan`: Must write the plan to the file specified by `$TERRATEAM_PLAN_FILE`.
+- `init`, `diff`, `apply`, `outputs`: Optional, provide additional control over workflow steps.
+- Use this pattern to integrate with any tool or process that can produce a compatible plan file.
+
+### How It Works
+Each key corresponds to a step in the Terrateam workflow:
+
+* `init` The command to run during the init step. Optional.
+* `plan` The command to run during the plan step. Must write to the path specified by the `TERRATEAM_PLAN_FILE` environment variable. Required.
+* `diff` The command to produce a human-readable diff of the plan output. Optional.
+* `apply` The command to run during the apply step. Optional.
+* `outputs` The command to return output values as a JSON string. Optional.
+
+Only define the steps that make sense for your use case. All others can be omitted.
+
+:::note
+The exit code of the `plan` script is important.  Custom engine uses the OpenTofu detailed exit code standard in that an exit code of `0` means there are changes in the plan and `2` means the plan was successful but there are no changes.  Any other exit code is considered a failure.
+:::
+
+## Per Workflow Engines
+If you have different workflows (for example, dev and prod), you can override the engine configuration per workflow. Just nest the `engine` block inside a workflow definition.
+
+```yaml
+workflows:
+  - tag_query: "development"
+    engine:
+      name: tofu
+  - tag_query: "production"
+    engine:
+      name: terraform
+```
+
+## Best Practices
+* Use per-workflow engine configurations to maximize flexibility.
+* Use `tf_version` and `tf_cmd` to control which Terraform compatible CLI is invoked.
+* For custom engines, test locally with the same environment variables Terrateam uses (especially `TERRATEAM_PLAN_FILE`).

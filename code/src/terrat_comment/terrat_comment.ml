@@ -1,15 +1,16 @@
 let trigger_words = [ "terrateam"; "terraform"; "tofu" ]
 
 type t =
-  | Plan of { tag_query : Terrat_tag_query.t }
   | Apply of { tag_query : Terrat_tag_query.t }
   | Apply_autoapprove of { tag_query : Terrat_tag_query.t }
   | Apply_force of { tag_query : Terrat_tag_query.t }
-  | Unlock of string list
-  | Help
   | Feedback of string
-  | Repo_config
+  | Gate_approval of { tokens : string list }
+  | Help
   | Index
+  | Plan of { tag_query : Terrat_tag_query.t }
+  | Repo_config
+  | Unlock of string list
 
 type err =
   [ `Not_terrateam
@@ -19,8 +20,20 @@ type err =
 [@@deriving show]
 
 let parse s =
+  let s =
+    (* In GitLab, the automatic copy of a triple backtick text adds the single
+       backticks, so we trim those off and any white space.  This makes it so
+       people can drop comments like `terrateam plan` and it will still work.
+       We trim twice, once for outside the single backticks and once for
+       inside. *)
+    s
+    |> CCString.trim
+    |> CCString.drop_while (( = ) '`')
+    |> CCString.rdrop_while (( = ) '`')
+    |> CCString.trim
+  in
   let split_s =
-    match CCString.Split.left ~by:" " (CCString.trim s) with
+    match CCString.Split.left ~by:" " s with
     | Some (trigger_word, action_rest)
       when CCList.mem ~eq:CCString.equal (CCString.lowercase_ascii trigger_word) trigger_words -> (
         match CCString.Split.left ~by:" " (CCString.trim action_rest) with
@@ -49,17 +62,26 @@ let parse s =
   | Some ("feedback", rest) -> Ok (Feedback rest)
   | Some ("repo-config", _) -> Ok Repo_config
   | Some ("index", _) -> Ok Index
+  | Some ("gate", rest) -> (
+      match CCString.Split.left ~by:" " (CCString.trim rest) with
+      | Some ("approve", tokens) ->
+          Ok
+            (Gate_approval
+               { tokens = CCList.map CCString.trim @@ CCString.split_on_char ' ' tokens })
+      | Some (action, _) -> Error (`Unknown_action action)
+      | None -> Error (`Unknown_action s))
   | Some (action, rest) -> Error (`Unknown_action action)
   | None -> Error `Not_terrateam
 
 let to_string = function
-  | Plan { tag_query } -> "terrateam plan " ^ Terrat_tag_query.to_string tag_query
   | Apply { tag_query } -> "terrateam apply " ^ Terrat_tag_query.to_string tag_query
   | Apply_autoapprove { tag_query } ->
       "terrateam apply-autoapprove " ^ Terrat_tag_query.to_string tag_query
   | Apply_force { tag_query } -> "terrateam apply-force " ^ Terrat_tag_query.to_string tag_query
-  | Unlock ids -> "terrateam unlock " ^ CCString.concat " " ids
-  | Help -> "terrateam help"
   | Feedback feedback -> "terrateam feedback " ^ feedback
-  | Repo_config -> "terrateam repo-config"
+  | Gate_approval { tokens } -> "terrateam gate approval " ^ CCString.concat " " tokens
+  | Help -> "terrateam help"
   | Index -> "terrateam index"
+  | Plan { tag_query } -> "terrateam plan " ^ Terrat_tag_query.to_string tag_query
+  | Repo_config -> "terrateam repo-config"
+  | Unlock ids -> "terrateam unlock " ^ CCString.concat " " ids

@@ -2,13 +2,14 @@
 ARG BASE_IMAGE
 
 # Optional base setup stage if BASE_IMAGE is not provided
-FROM alpine:3.18 as build-base
+FROM alpine:3.22 AS build-base
 
 # Install base packages
 RUN apk add --no-cache \
     bash \
     bsd-compat-headers \
     ca-certificates \
+    cargo \
     clang \
     cmake \
     coreutils \
@@ -27,11 +28,12 @@ RUN apk add --no-cache \
     opam \
     openssh \
     perl \
-    pkgconfig \
+    pkgconf \
     py3-yaml \
     python3 \
+    rsync \
+    rust \
     sqlite-dev \
-    yj \
     zlib-dev
 
 # Initialize opam
@@ -50,8 +52,7 @@ WORKDIR /
 
 # Set up opam repositories and dependencies
 RUN eval $(opam env) && \
-    opam repository set-url --set-default default "https://github.com/jjm-enterprises/opam-repository.git#terrateam" && \
-    opam switch create -y 5.1.1 && \
+    opam switch create -y 5.3.0 && \
     eval $(opam env) && \
     opam repository add opam-acsl mono/opam && \
     opam pin add -y containers 3.12 && \
@@ -76,42 +77,44 @@ RUN eval $(opam env) && \
     mv build /build-cache
 
 # Use provided BASE_IMAGE if specified, otherwise use the build-base stage
-FROM ${BASE_IMAGE:-build-base} as build-setup
+FROM ${BASE_IMAGE:-build-base} AS build-setup
 
 # Copy source files
 RUN rm -rfv /mono
 COPY ./ /mono
 
 # Build target for code-indexer
-FROM build-setup as code-indexer-build
+FROM build-setup AS code-indexer-build
 WORKDIR /mono/code
 RUN ulimit -s 524288 && ulimit -a && \
     mv /build-cache ./build && \
     eval $(opam env) && pds && \
-    (time make -j$(nproc --all) release_terrat_code_indexer test || time make -j1 release_terrat_code_indexer test) && \
+    (time make -j$(nproc --all) -k release_terrat_code_indexer test \
+        || time make -j1 release_terrat_code_indexer test) && \
     find . -name '*.tap' -exec cat '{}' \;
 
 # Build target for terrat-ee
-FROM build-setup as terrat-ee-build
+FROM build-setup AS terrat-ee-build
 WORKDIR /mono/code
 RUN ulimit -s 524288 && ulimit -a && \
     mv /build-cache ./build && \
     eval $(opam env) && pds && \
-    (time make -j$(nproc --all) test release_terrat_ee release_terrat_ui_files \
-     || time make -j1 test release_terrat_ee release_terrat_ui_files) && \
+    (time make -j$(nproc --all) -k test release_terrat_ee release_iris \
+     || time make -j1 test release_terrat_ee release_iris) && \
     find . -name '*.tap' -exec cat '{}' \;
 
 # Build target for terrat-oss
-FROM build-setup as terrat-oss-build
+FROM build-setup AS terrat-oss-build
 WORKDIR /mono/code
 RUN ulimit -s 524288 && ulimit -a && \
     mv /build-cache ./build && \
     eval $(opam env) && pds && \
-    (time make -j$(nproc --all) test release_terrat_oss || time make -j1 test release_terrat_oss) && \
+    (time make -j$(nproc --all) -k test release_terrat_oss release_iris \
+     || time make -j1 test release_terrat_oss release_iris) && \
     find . -name '*.tap' -exec cat '{}' \;
 
 # Final code-indexer image
-FROM alpine:3.18 as code-indexer
+FROM alpine:3.18 AS code-indexer
 RUN addgroup -S terrat && adduser -S -G terrat terrat
 USER terrat
 COPY --from=code-indexer-build /mono/code/build/release/terrat_code_indexer/terrat_code_indexer.native /usr/local/bin/terrat_code_indexer
@@ -119,7 +122,7 @@ WORKDIR /mnt
 ENTRYPOINT ["/usr/local/bin/terrat_code_indexer"]
 
 # Final terrat-ee image
-FROM alpine:3.18 as terrat-ee
+FROM alpine:3.18 AS terrat-ee
 RUN apk add --no-cache \
     bash \
     curl \
@@ -147,12 +150,12 @@ COPY docker/terrat/nginx.conf.template /etc/nginx/nginx.conf.template
 COPY --from=terrat-ee-build /usr/lib/libkqueue.so /usr/lib/libkqueue.so
 COPY --from=terrat-ee-build /usr/lib/libkqueue.so.0 /usr/lib/libkqueue.so.0
 COPY --from=terrat-ee-build /mono/code/build/release/terrat_ee/terrat_ee.native /usr/local/bin/terrat
-COPY --from=terrat-ee-build /mono/code/build/release/terrat_ui_files/assets /usr/local/share/terrat/ui/assets/
+COPY --from=terrat-ee-build /mono/code/build/release/iris/dist/ /usr/local/share/terrat/ui/assets/
 EXPOSE 8080
 CMD ["runsvdir", "/etc/service"]
 
 # Final terrat-oss image
-FROM alpine:3.18 as terrat-oss
+FROM alpine:3.18 AS terrat-oss
 RUN apk add --no-cache \
     bash \
     curl \
@@ -180,5 +183,6 @@ COPY docker/terrat/nginx.conf.template /etc/nginx/nginx.conf.template
 COPY --from=terrat-oss-build /usr/lib/libkqueue.so /usr/lib/libkqueue.so
 COPY --from=terrat-oss-build /usr/lib/libkqueue.so.0 /usr/lib/libkqueue.so.0
 COPY --from=terrat-oss-build /mono/code/build/release/terrat_oss/terrat_oss.native /usr/local/bin/terrat
+COPY --from=terrat-oss-build /mono/code/build/release/iris/dist/ /usr/local/share/terrat/ui/assets/
 EXPOSE 8080
 CMD ["runsvdir", "/etc/service"]

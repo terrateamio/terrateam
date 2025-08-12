@@ -1,5 +1,16 @@
 module Dependency_ = struct
   module Primary = struct
+    module Relationship = struct
+      let t_of_yojson = function
+        | `String "unknown" -> Ok "unknown"
+        | `String "direct" -> Ok "direct"
+        | `String "transitive" -> Ok "transitive"
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      type t = (string[@of_yojson t_of_yojson])
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
+    end
+
     module Scope = struct
       let t_of_yojson = function
         | `String "development" -> Ok "development"
@@ -13,6 +24,7 @@ module Dependency_ = struct
     type t = {
       manifest_path : string option; [@default None]
       package : Githubc2_components_dependabot_alert_package.t option; [@default None]
+      relationship : Relationship.t option; [@default None]
       scope : Scope.t option; [@default None]
     }
     [@@deriving yojson { strict = false; meta = true }, show, eq]

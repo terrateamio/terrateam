@@ -1,7 +1,9 @@
+module Vcs = struct
+  type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
+end
+
 type t = {
-  avatar_url : string option; [@default None]
-  email : string option; [@default None]
   id : string;
-  name : string option; [@default None]
+  vcs : Vcs.t;
 }
-[@@deriving yojson { strict = true; meta = true }, show, eq]
+[@@deriving yojson { strict = false; meta = true }, show, eq]

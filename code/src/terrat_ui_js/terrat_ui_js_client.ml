@@ -50,8 +50,8 @@ module Io = struct
   let ( >>= ) = Abb_js.Future.Infix_monad.( >>= )
   let return = Abb_js.Future.return
 
-  let call ?body ~headers ~meth url =
-    let url = Uri.to_string url in
+  let call ?body ~headers ~meth uri =
+    let url = Uri.to_string uri in
     let meth =
       match meth with
       | `Get -> `GET
@@ -67,6 +67,7 @@ module Io = struct
           (Ok
              (Openapi.Response.make
                 ~headers:(Http.Response.headers resp)
+                ~request_uri:uri
                 ~status:(Http.Response.status resp)
                 (Http.Response.text resp)))
     | Error (`Js_err err) -> return (Error (`Io_err err))
@@ -139,117 +140,6 @@ let whoami t =
   match Openapi.Response.value resp with
   | `OK user -> Abb_js.Future.return (Ok (Some user))
   | `Forbidden -> Abb_js.Future.return (Ok None)
-
-let client_id t =
-  let open Abb_js_future_combinators.Infix_result_monad in
-  call (Terrat_api_api_v1.Client_id.make ())
-  >>= fun resp ->
-  match Openapi.Response.value resp with
-  | `OK Terrat_api_api_v1.Client_id.Responses.OK.{ client_id } ->
-      Abb_js.Future.return (Ok client_id)
-  | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
-
-let list_github_installations t =
-  let open Abb_js_future_combinators.Infix_result_monad in
-  call (Terrat_api_user.List_github_installations.make ())
-  >>= fun resp ->
-  match Openapi.Response.value resp with
-  | `OK res -> Abb_js.Future.return (Ok res)
-  | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
-
-let work_manifests ?tz ?page ?limit ?q ?dir ~installation_id t =
-  let open Abb_js_future_combinators.Infix_result_monad in
-  let module R = Terrat_api_installations.List_work_manifests.Responses.OK in
-  call
-    Terrat_api_installations.List_work_manifests.(
-      make
-        Parameters.(
-          make
-            ~d:
-              (CCOption.map
-                 (function
-                   | `Asc -> "asc"
-                   | `Desc -> "desc")
-                 dir)
-            ~page
-            ~limit
-            ~q
-            ~tz
-            ~installation_id
-            ()))
-  >>= fun resp ->
-  match Openapi.Response.value resp with
-  | `OK R.{ work_manifests } -> Abb_js.Future.return (Ok (Page.of_response resp work_manifests))
-  | `Bad_request _ as err -> Abb_js.Future.return (Error err)
-  | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
-
-let work_manifest_outputs ?tz ?page ?limit ?q ?lite ~installation_id ~work_manifest_id t =
-  let open Abb_js_future_combinators.Infix_result_monad in
-  let module R = Terrat_api_installations.Get_work_manifest_outputs.Responses.OK in
-  call
-    Terrat_api_installations.Get_work_manifest_outputs.(
-      make Parameters.(make ~page ~limit ~q ~tz ?lite ~installation_id ~work_manifest_id ()))
-  >>= fun resp ->
-  match Openapi.Response.value resp with
-  | `OK { R.steps } -> Abb_js.Future.return (Ok (Page.of_response resp steps))
-  | `Bad_request _ as err -> Abb_js.Future.return (Error err)
-  | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
-  | `Not_found -> Abb_js.Future.return (Error `Not_found)
-
-let dirspaces ?tz ?page ?limit ?q ?dir ~installation_id t =
-  let open Abb_js_future_combinators.Infix_result_monad in
-  let module R = Terrat_api_installations.List_dirspaces.Responses.OK in
-  call
-    Terrat_api_installations.List_dirspaces.(
-      make
-        Parameters.(
-          make
-            ~d:
-              (CCOption.map
-                 (function
-                   | `Asc -> "asc"
-                   | `Desc -> "desc")
-                 dir)
-            ~page
-            ~limit
-            ~q
-            ~tz
-            ~installation_id
-            ()))
-  >>= fun resp ->
-  match Openapi.Response.value resp with
-  | `OK { R.dirspaces } -> Abb_js.Future.return (Ok (Page.of_response resp dirspaces))
-  | `Bad_request _ as err -> Abb_js.Future.return (Error err)
-  | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
-
-let pull_requests ?page ?pull_number ~installation_id t =
-  let open Abb_js_future_combinators.Infix_result_monad in
-  let module R = Terrat_api_installations.List_pull_requests.Responses.OK in
-  call
-    Terrat_api_installations.List_pull_requests.(
-      make Parameters.(make ~page ~pr:pull_number ~installation_id ()))
-  >>= fun resp ->
-  match Openapi.Response.value resp with
-  | `OK R.{ pull_requests } -> Abb_js.Future.return (Ok (Page.of_response resp pull_requests))
-  | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
-
-let repos ?page ~installation_id t =
-  let open Abb_js_future_combinators.Infix_result_monad in
-  let module R = Terrat_api_installations.List_repos.Responses.OK in
-  call Terrat_api_installations.List_repos.(make Parameters.(make ~page ~installation_id ()))
-  >>= fun resp ->
-  match Openapi.Response.value resp with
-  | `OK R.{ repositories } -> Abb_js.Future.return (Ok (Page.of_response resp repositories))
-  | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
-
-let repos_refresh ~installation_id t =
-  let open Abb_js_future_combinators.Infix_result_monad in
-  let module R = Terrat_api_installations.Repo_refresh.Responses.OK in
-  call Terrat_api_installations.Repo_refresh.(make Parameters.(make ~installation_id))
-  >>= fun resp ->
-  match Openapi.Response.value resp with
-  | `OK R.{ id } -> Abb_js.Future.return (Ok id)
-  | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
 
 let task ~id t =
   let open Abb_js_future_combinators.Infix_result_monad in

@@ -1,0 +1,37 @@
+### 🚫 Gatekeeper Requirements Not Satisfied
+
+This pull request is blocked until  approvals are satisfied.
+
+<details>
+    <summary>
+        Expand for list of gates that have not been approved
+    </summary>
+
+| Token   | Directory | Workspace | Required Approvers           | Any Approvers | Any Remaining Count |
+|---------|-----------|-----------|------------------------------|----------------|----------------------|
+@#denied-@
+| @token@ | @?dir=@@/dir=@@!dir=@`@dir@`@/dir=@ | @?workspace=@@/workspace=@@!workspace=@`@workspace@`@/workspace=@ | @#all_of@`@q@` @/all_of@ | @#any_of@`@q@` @/any_of@ | @any_of_count@ |
+@/denied-@
+
+### What to do?
+
+To continue, users matching the `Required Approvers` and `Any Approvers` must approve a token until all approvals are satisfied.
+
+To approve a token, comment the following:
+
+```
+terrateam gate approve <token>
+```
+
+Where `<token>` is the token to be approved.
+
+#### How Gatekeeper requirements work
+
+Gatekeeper uses `all_of`, `any_of`, and `any_of_count` to define approval rules:
+
+- `all_of` - Lists users or groups that must approve unconditionally.
+- `any_of` - Lists users or groups that may approve.
+- `any_of_count` - Sets how many approvals are required from the `any_of` list.
+
+A gate is satisfied only when all conditions are met. See [documentation](https://docs.terrateam.io/advanced-workflows/gatekeeper-requirements) for details.
+</details>

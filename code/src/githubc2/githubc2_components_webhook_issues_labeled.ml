@@ -58,6 +58,7 @@ module Primary = struct
             subscriptions_url : string option; [@default None]
             type_ : Type.t option; [@default None] [@key "type"]
             url : string option; [@default None]
+            user_view_type : string option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -187,6 +188,7 @@ module Primary = struct
                 subscriptions_url : string option; [@default None]
                 type_ : Type.t option; [@default None] [@key "type"]
                 url : string option; [@default None]
+                user_view_type : string option; [@default None]
               }
               [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
@@ -324,6 +326,7 @@ module Primary = struct
                 subscriptions_url : string option; [@default None]
                 type_ : Type.t option; [@default None] [@key "type"]
                 url : string option; [@default None]
+                user_view_type : string option; [@default None]
               }
               [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
@@ -793,6 +796,19 @@ module Primary = struct
         [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
+      module Sub_issues_summary_ = struct
+        module Primary = struct
+          type t = {
+            completed : int;
+            percent_completed : int;
+            total : int;
+          }
+          [@@deriving yojson { strict = false; meta = true }, show, eq]
+        end
+
+        include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+      end
+
       module User = struct
         module Primary = struct
           module Type = struct
@@ -817,7 +833,7 @@ module Primary = struct
             gists_url : string option; [@default None]
             gravatar_id : string option; [@default None]
             html_url : string option; [@default None]
-            id : int;
+            id : int64;
             login : string;
             name : string option; [@default None]
             node_id : string option; [@default None]
@@ -829,6 +845,7 @@ module Primary = struct
             subscriptions_url : string option; [@default None]
             type_ : Type.t option; [@default None] [@key "type"]
             url : string option; [@default None]
+            user_view_type : string option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -862,28 +879,13 @@ module Primary = struct
         repository_url : string;
         state : State.t option; [@default None]
         state_reason : string option; [@default None]
+        sub_issues_summary : Sub_issues_summary_.t option; [@default None]
         timeline_url : string option; [@default None]
         title : string;
+        type_ : Githubc2_components_issue_type.t option; [@default None] [@key "type"]
         updated_at : string;
         url : string;
         user : User.t option;
-      }
-      [@@deriving yojson { strict = false; meta = true }, show, eq]
-    end
-
-    include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-  end
-
-  module Label_ = struct
-    module Primary = struct
-      type t = {
-        color : string;
-        default : bool;
-        description : string option;
-        id : int;
-        name : string;
-        node_id : string;
-        url : string;
       }
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
@@ -896,10 +898,10 @@ module Primary = struct
     enterprise : Githubc2_components_enterprise_webhooks.t option; [@default None]
     installation : Githubc2_components_simple_installation.t option; [@default None]
     issue : Issue_.t;
-    label : Label_.t option; [@default None]
+    label : Githubc2_components_webhooks_label.t option; [@default None]
     organization : Githubc2_components_organization_simple_webhooks.t option; [@default None]
     repository : Githubc2_components_repository_webhooks.t;
-    sender : Githubc2_components_simple_user_webhooks.t;
+    sender : Githubc2_components_simple_user.t;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

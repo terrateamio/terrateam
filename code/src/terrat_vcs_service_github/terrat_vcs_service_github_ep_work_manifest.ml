@@ -146,6 +146,11 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         }
 
     module Sql = struct
+      let read fname =
+        CCOption.get_exn_or
+          fname
+          (CCOption.map Pgsql_io.clean_string (Terrat_files_github_sql.read fname))
+
       let select_encryption_key () =
         Pgsql_io.Typed_sql.(
           sql
@@ -160,7 +165,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
           //
           (* id *)
           Ret.uuid
-          /^ "select id from github_work_manifests where id = $id and state = 'running'"
+          /^ "select id from work_manifests where id = $id and state = 'running'"
           /% Var.uuid "id")
 
       let select_installation_id () =
@@ -169,9 +174,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
           //
           (* id *)
           Ret.bigint
-          /^ "select gir.installation_id from github_work_manifests as gwm inner join \
-              github_installation_repositories as gir on gwm.repository = gir.id where gwm.id = \
-              $id"
+          /^ read "select_installation_id_from_work_manifest.sql"
           /% Var.uuid "id")
     end
 
@@ -226,45 +229,15 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
       | _ -> Abb.Future.return false
 
     let github_permissions =
-      Githubc2_components.App_permissions.(
-        make
-          Primary.
-            {
-              actions = None;
-              administration = None;
-              checks = None;
-              contents = Some "read";
-              deployments = None;
-              environments = None;
-              issues = Some "write";
-              members = None;
-              metadata = None;
-              organization_administration = None;
-              organization_announcement_banners = None;
-              organization_custom_roles = None;
-              organization_hooks = None;
-              organization_packages = None;
-              organization_personal_access_token_requests = None;
-              organization_personal_access_tokens = None;
-              organization_plan = None;
-              organization_projects = None;
-              organization_secrets = None;
-              organization_self_hosted_runners = None;
-              organization_user_blocking = None;
-              packages = None;
-              pages = None;
-              pull_requests = Some "write";
-              repository_hooks = None;
-              repository_projects = None;
-              secret_scanning_alerts = None;
-              secrets = None;
-              security_events = None;
-              single_file = None;
-              statuses = Some "write";
-              team_discussions = None;
-              vulnerability_alerts = None;
-              workflows = None;
-            })
+      let module P = Githubc2_components.App_permissions in
+      P.make
+        {
+          (CCResult.get_or_failwith @@ P.Primary.of_yojson (`Assoc [])) with
+          P.Primary.contents = Some "read";
+          issues = Some "write";
+          pull_requests = Some "write";
+          statuses = Some "write";
+        }
 
     let post config storage work_manifest_id ctx =
       Brtl_permissions.with_permissions
@@ -321,5 +294,50 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
                   m "%s : ACCESS_TOKEN : %a" (Brtl_ctx.token ctx) Pgsql_io.pp_err err);
               Abb.Future.return
                 (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
+  end
+
+  module Workspaces = struct
+    module Sql = struct
+      let dirspaces =
+        let module P = struct
+          type t = Terrat_api_components.Work_manifest_workspaces.t [@@deriving yojson]
+        end in
+        CCFun.(
+          CCOption.wrap Yojson.Safe.from_string
+          %> CCOption.map P.of_yojson
+          %> CCOption.flat_map CCResult.to_opt)
+
+      let select_workspaces =
+        Pgsql_io.Typed_sql.(
+          sql
+          //
+          (* dirspaces *)
+          Ret.(ud' dirspaces)
+          /^ "select dirspaces from work_manifests where id = $id and state in ('queued', \
+              'running')"
+          /% Var.uuid "id")
+    end
+
+    let get config storage work_manifest_id ctx =
+      let open Abb.Future.Infix_monad in
+      Pgsql_pool.with_conn storage ~f:(fun db ->
+          Pgsql_io.Prepared_stmt.fetch db Sql.select_workspaces ~f:CCFun.id work_manifest_id)
+      >>= function
+      | Ok [] ->
+          Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Not_found "") ctx)
+      | Ok (workspaces :: _) ->
+          let body =
+            Terrat_api_components.Work_manifest_workspaces.to_yojson workspaces
+            |> Yojson.Safe.to_string
+          in
+          Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK body) ctx)
+      | Error (#Pgsql_pool.err as err) ->
+          Logs.err (fun m -> m "%s : WORKSPACES : %a" (Brtl_ctx.token ctx) Pgsql_pool.pp_err err);
+          Abb.Future.return
+            (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m -> m "%s : WORKSPACES : %a" (Brtl_ctx.token ctx) Pgsql_io.pp_err err);
+          Abb.Future.return
+            (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
   end
 end

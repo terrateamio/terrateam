@@ -1,0 +1,29 @@
+---
+title: batch_runs
+description: Configure how large each run should be.
+---
+
+In a large repository, it may not be possible to run all workspaces in a single GitHub Action run due to CPU and disk space limitations.  The `batch_runs` configuration allows specifying the maximum number of workspaces in individual action runs.
+
+## Default Configuration
+```yaml
+batch_runs:
+  enabled: false
+  max_workspaces_per_batch: 1
+```
+
+## Keys
+| Key | Type | Description |
+|-----|------|-------------|
+| enabled | Boolean | Specifies whether the batch runs is enabled. Default is false. |
+| max_workspaces_per_batch | Number | Maximum number of workspaces that each run can contain. Default is 1. |
+
+## Functionality
+If batch runs is enabled, the following happens:
+
+1. Tree builder, config builder, and indexer all will be executed in their own action run.
+2. If the number of workspaces that can be run in a single action run is greater than `max_workspaces_per_batch`, additional action runs will be created with the additional workspaces.
+
+## Considerations
+
+Terrateam does not limit how many action runs it will run at concurrently.  For example, if a change has 100 workspaces, and `max_workspaces_per_batch` is set to `1`, Terrateam will create 100 GitHub Action runs at the same time.

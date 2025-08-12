@@ -87,12 +87,26 @@ module Document = struct
   [@@deriving yojson { strict = false }]
 end
 
+let cleanup_name s =
+  s
+  |> CCString.replace ~by:"_" ~sub:"-"
+  |> CCString.replace ~by:"_" ~sub:"["
+  |> CCString.replace ~by:"_" ~sub:"]"
+  |> CCString.replace ~by:"_" ~sub:"*"
+  |> CCString.replace ~by:"_" ~sub:"$"
+  |> CCString.replace ~by:"_" ~sub:"("
+  |> CCString.replace ~by:"_" ~sub:")"
+  |> CCString.replace ~by:"_" ~sub:"."
+  |> CCString.replace ~by:"_" ~sub:"@"
+  |> CCString.replace ~by:"_" ~sub:"\\"
+
 let module_name_of_string s =
   s
   |> CCString.replace ~sub:"-" ~by:"_"
   |> (function
   | s when CCString.prefix ~pre:"_" s -> CCString.drop_while (( = ) '_') s ^ "_"
   | s -> s)
+  |> cleanup_name
   |> CCString.capitalize_ascii
 
 let module_name_of_field_name { Components.schemas; _ } s =
@@ -216,14 +230,23 @@ let module_name_of_operation_id s = s |> CCString.replace ~sub:"/" ~by:"_" |> mo
 
 let field_name_of_schema s =
   match CCString.lowercase_ascii s with
-  | ("type" | "in" | "object" | "class" | "to" | "private" | "include" | "ref" | "method" | "end")
-    as s -> s ^ "_"
-  | s when CCString.prefix ~pre:"_" s -> CCString.drop_while (( = ) '_') s ^ "_"
-  | s when CCString.prefix ~pre:"$" s -> CCString.drop_while (( = ) '$') s ^ "_"
-  | s when CCString.prefix ~pre:"@" s -> CCString.drop_while (( = ) '@') s ^ "_"
+  | ( "type"
+    | "in"
+    | "object"
+    | "class"
+    | "to"
+    | "private"
+    | "include"
+    | "ref"
+    | "method"
+    | "end"
+    | "external" ) as s -> s ^ "_"
+  | s when CCString.prefix ~pre:"_" s -> cleanup_name @@ CCString.drop_while (( = ) '_') s ^ "_"
+  | s when CCString.prefix ~pre:"$" s -> cleanup_name @@ CCString.drop_while (( = ) '$') s ^ "_"
+  | s when CCString.prefix ~pre:"@" s -> cleanup_name @@ CCString.drop_while (( = ) '@') s ^ "_"
   | "+1" -> "plus_one"
   | "-1" -> "minus_one"
-  | s -> s
+  | s -> cleanup_name s
 
 let field_default_of_value typ default =
   match (default, typ) with
@@ -285,9 +308,11 @@ let request_param_of_op_params components param_in params =
         Ast_helper.(Exp.construct (Location.mknoloc (Gen.ident [ "Array" ])) (Some obj))
       in
       let rec type_desc_of_schema = function
-        | { Schema.typ = Some typ; _ } as schema when Json_schema_conv.is_prim_type schema -> (
+        | { Schema.typ = Some typ; format; _ } as schema when Json_schema_conv.is_prim_type schema
+          -> (
             match Json_schema_conv.extract_prim_type schema with
-            | Some "string" -> scalar "String"
+            | Some ("string" | "file") -> scalar "String"
+            | Some "integer" when format = Some "int64" -> scalar "Int64"
             | Some "integer" -> scalar "Int"
             | Some "boolean" -> scalar "Bool"
             | Some "number" -> assert false

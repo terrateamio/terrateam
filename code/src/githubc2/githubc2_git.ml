@@ -41,8 +41,27 @@ module Create_blob = struct
     end
 
     module Unprocessable_entity = struct
-      type t = Githubc2_components.Validation_error.t
-      [@@deriving yojson { strict = false; meta = false }, show, eq]
+      type t =
+        | Validation_error of Githubc2_components.Validation_error.t
+        | Repository_rule_violation_error of Githubc2_components.Repository_rule_violation_error.t
+      [@@deriving show, eq]
+
+      let of_yojson =
+        Json_schema.one_of
+          (let open CCResult in
+           [
+             (fun v ->
+               map (fun v -> Validation_error v) (Githubc2_components.Validation_error.of_yojson v));
+             (fun v ->
+               map
+                 (fun v -> Repository_rule_violation_error v)
+                 (Githubc2_components.Repository_rule_violation_error.of_yojson v));
+           ])
+
+      let to_yojson = function
+        | Validation_error v -> Githubc2_components.Validation_error.to_yojson v
+        | Repository_rule_violation_error v ->
+            Githubc2_components.Repository_rule_violation_error.to_yojson v
     end
 
     type t =
@@ -108,6 +127,11 @@ module Get_blob = struct
       [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
+    module Conflict = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
     module Unprocessable_entity = struct
       type t = Githubc2_components.Validation_error.t
       [@@deriving yojson { strict = false; meta = false }, show, eq]
@@ -117,6 +141,7 @@ module Get_blob = struct
       [ `OK of OK.t
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
+      | `Conflict of Conflict.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
     [@@deriving show, eq]
@@ -126,6 +151,7 @@ module Get_blob = struct
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
         ("403", Openapi.of_json_body (fun v -> `Forbidden v) Forbidden.of_yojson);
         ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ("409", Openapi.of_json_body (fun v -> `Conflict v) Conflict.of_yojson);
         ( "422",
           Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
       ]
@@ -216,6 +242,11 @@ module Create_commit = struct
       [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
+    module Conflict = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
     module Unprocessable_entity = struct
       type t = Githubc2_components.Validation_error.t
       [@@deriving yojson { strict = false; meta = false }, show, eq]
@@ -224,6 +255,7 @@ module Create_commit = struct
     type t =
       [ `Created of Created.t
       | `Not_found of Not_found.t
+      | `Conflict of Conflict.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
     [@@deriving show, eq]
@@ -232,6 +264,7 @@ module Create_commit = struct
       [
         ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
         ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ("409", Openapi.of_json_body (fun v -> `Conflict v) Conflict.of_yojson);
         ( "422",
           Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
       ]
@@ -275,9 +308,15 @@ module Get_commit = struct
       [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
+    module Conflict = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
     type t =
       [ `OK of OK.t
       | `Not_found of Not_found.t
+      | `Conflict of Conflict.t
       ]
     [@@deriving show, eq]
 
@@ -285,6 +324,7 @@ module Get_commit = struct
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
         ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ("409", Openapi.of_json_body (fun v -> `Conflict v) Conflict.of_yojson);
       ]
   end
 
@@ -323,9 +363,22 @@ module List_matching_refs = struct
       [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    type t = [ `OK of OK.t ] [@@deriving show, eq]
+    module Conflict = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
 
-    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
+    type t =
+      [ `OK of OK.t
+      | `Conflict of Conflict.t
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("409", Openapi.of_json_body (fun v -> `Conflict v) Conflict.of_yojson);
+      ]
   end
 
   let url = "/repos/{owner}/{repo}/git/matching-refs/{ref}"
@@ -368,9 +421,15 @@ module Get_ref = struct
       [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
+    module Conflict = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
     type t =
       [ `OK of OK.t
       | `Not_found of Not_found.t
+      | `Conflict of Conflict.t
       ]
     [@@deriving show, eq]
 
@@ -378,6 +437,7 @@ module Get_ref = struct
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
         ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ("409", Openapi.of_json_body (fun v -> `Conflict v) Conflict.of_yojson);
       ]
   end
 
@@ -427,6 +487,11 @@ module Create_ref = struct
       [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
+    module Conflict = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
     module Unprocessable_entity = struct
       type t = Githubc2_components.Validation_error.t
       [@@deriving yojson { strict = false; meta = false }, show, eq]
@@ -434,6 +499,7 @@ module Create_ref = struct
 
     type t =
       [ `Created of Created.t
+      | `Conflict of Conflict.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
     [@@deriving show, eq]
@@ -441,6 +507,7 @@ module Create_ref = struct
     let t =
       [
         ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
+        ("409", Openapi.of_json_body (fun v -> `Conflict v) Conflict.of_yojson);
         ( "422",
           Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
       ]
@@ -491,6 +558,11 @@ module Update_ref = struct
       [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
+    module Conflict = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
     module Unprocessable_entity = struct
       type t = Githubc2_components.Validation_error.t
       [@@deriving yojson { strict = false; meta = false }, show, eq]
@@ -498,6 +570,7 @@ module Update_ref = struct
 
     type t =
       [ `OK of OK.t
+      | `Conflict of Conflict.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
     [@@deriving show, eq]
@@ -505,6 +578,7 @@ module Update_ref = struct
     let t =
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("409", Openapi.of_json_body (fun v -> `Conflict v) Conflict.of_yojson);
         ( "422",
           Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
       ]
@@ -544,6 +618,11 @@ module Delete_ref = struct
   module Responses = struct
     module No_content = struct end
 
+    module Conflict = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
     module Unprocessable_entity = struct
       type t = Githubc2_components.Validation_error.t
       [@@deriving yojson { strict = false; meta = false }, show, eq]
@@ -551,6 +630,7 @@ module Delete_ref = struct
 
     type t =
       [ `No_content
+      | `Conflict of Conflict.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
     [@@deriving show, eq]
@@ -558,6 +638,7 @@ module Delete_ref = struct
     let t =
       [
         ("204", fun _ -> Ok `No_content);
+        ("409", Openapi.of_json_body (fun v -> `Conflict v) Conflict.of_yojson);
         ( "422",
           Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
       ]
@@ -636,6 +717,11 @@ module Create_tag = struct
       [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
+    module Conflict = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
     module Unprocessable_entity = struct
       type t = Githubc2_components.Validation_error.t
       [@@deriving yojson { strict = false; meta = false }, show, eq]
@@ -643,6 +729,7 @@ module Create_tag = struct
 
     type t =
       [ `Created of Created.t
+      | `Conflict of Conflict.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
     [@@deriving show, eq]
@@ -650,6 +737,7 @@ module Create_tag = struct
     let t =
       [
         ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
+        ("409", Openapi.of_json_body (fun v -> `Conflict v) Conflict.of_yojson);
         ( "422",
           Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
       ]
@@ -693,9 +781,15 @@ module Get_tag = struct
       [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
+    module Conflict = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
     type t =
       [ `OK of OK.t
       | `Not_found of Not_found.t
+      | `Conflict of Conflict.t
       ]
     [@@deriving show, eq]
 
@@ -703,6 +797,7 @@ module Get_tag = struct
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
         ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ("409", Openapi.of_json_body (fun v -> `Conflict v) Conflict.of_yojson);
       ]
   end
 
@@ -805,6 +900,11 @@ module Create_tree = struct
       [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
+    module Conflict = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
     module Unprocessable_entity = struct
       type t = Githubc2_components.Validation_error.t
       [@@deriving yojson { strict = false; meta = false }, show, eq]
@@ -814,6 +914,7 @@ module Create_tree = struct
       [ `Created of Created.t
       | `Forbidden of Forbidden.t
       | `Not_found of Not_found.t
+      | `Conflict of Conflict.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
     [@@deriving show, eq]
@@ -823,6 +924,7 @@ module Create_tree = struct
         ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
         ("403", Openapi.of_json_body (fun v -> `Forbidden v) Forbidden.of_yojson);
         ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ("409", Openapi.of_json_body (fun v -> `Conflict v) Conflict.of_yojson);
         ( "422",
           Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
       ]
@@ -867,6 +969,11 @@ module Get_tree = struct
       [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
+    module Conflict = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
     module Unprocessable_entity = struct
       type t = Githubc2_components.Validation_error.t
       [@@deriving yojson { strict = false; meta = false }, show, eq]
@@ -875,6 +982,7 @@ module Get_tree = struct
     type t =
       [ `OK of OK.t
       | `Not_found of Not_found.t
+      | `Conflict of Conflict.t
       | `Unprocessable_entity of Unprocessable_entity.t
       ]
     [@@deriving show, eq]
@@ -883,6 +991,7 @@ module Get_tree = struct
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
         ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ("409", Openapi.of_json_body (fun v -> `Conflict v) Conflict.of_yojson);
         ( "422",
           Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
       ]

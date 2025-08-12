@@ -1,0 +1,15 @@
+type t = {
+  auth_method : string option; [@default None]
+  enabled : bool option; [@default None]
+  id : int option; [@default None]
+  keep_divergent_refs : bool option; [@default None]
+  last_error : int option; [@default None]
+  last_successful_update_at : string option; [@default None]
+  last_update_at : string option; [@default None]
+  last_update_started_at : string option; [@default None]
+  mirror_branch_regex : string option; [@default None]
+  only_protected_branches : bool option; [@default None]
+  update_status : string option; [@default None]
+  url : string option; [@default None]
+}
+[@@deriving yojson { strict = false; meta = true }, show, eq]

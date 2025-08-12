@@ -1,4 +1,5 @@
 module Make (Abb : Abb_intf.S) = struct
+  module Abb_io_file = Abb_io_file.Make (Abb)
   module Fut_comb = Abb_future_combinators.Make (Abb.Future)
 
   module type S = sig
@@ -237,6 +238,115 @@ module Make (Abb : Abb_intf.S) = struct
             in
             Hashtbl.replace t.cache k (ret, now +. Duration.to_f t.opts.duration);
             Abb.Future.fork ret >>= fun _ -> ret
+    end
+  end
+
+  module Filesystem = struct
+    type cache_err =
+      [ Abb_io_file.with_file_err
+      | Abb_intf.Errors.write
+      | Abb_intf.Errors.read
+      ]
+    [@@deriving show]
+
+    type 'v opts = {
+      on_hit : unit -> unit;
+      on_miss : unit -> unit;
+      on_evict : unit -> unit;
+      path : string;
+      to_string : 'v -> string;
+      of_string : string -> 'v option;
+    }
+
+    module Make (M : S with type k = string) = struct
+      type nonrec opts = M.v opts
+      type k = M.k
+      type args = M.args
+      type v = M.v
+
+      type err =
+        [ `Fetch_err of M.err
+        | `Cache_err of cache_err
+        ]
+
+      type t = {
+        opts : opts;
+        cache : (M.k, (M.v, err) result Abb.Future.t) Hashtbl.t;
+      }
+
+      let create opts =
+        if not (Sys.file_exists opts.path) then Sys.mkdir opts.path 0o700;
+        { opts; cache = Hashtbl.create 10 }
+
+      let id_of_k = CCFun.(Digest.string %> Digest.to_hex)
+
+      let fetch' t k filename args =
+        let open Abb.Future.Infix_monad in
+        let run =
+          Fut_comb.guard (fun () ->
+              M.fetch args
+              >>= function
+              | Ok v as r -> (
+                  let str = t.opts.to_string v in
+                  let run =
+                    let open Fut_comb.Infix_result_monad in
+                    Abb_io_file.write_file ~fname:(filename ^ ".tmp") str
+                    >>= fun () ->
+                    Fut_comb.to_result
+                    @@ Fut_comb.ignore
+                    @@ Abb.File.rename ~src:(filename ^ ".tmp") ~dst:filename
+                  in
+                  run
+                  >>= function
+                  | Ok () ->
+                      Hashtbl.remove t.cache k;
+                      Abb.Future.return r
+                  | Error (#Abb_io_file.with_file_err as err) ->
+                      Hashtbl.remove t.cache k;
+                      Abb.Future.return (Error (`Cache_err err))
+                  | Error (#Abb_intf.Errors.write as err) ->
+                      Hashtbl.remove t.cache k;
+                      Abb.Future.return (Error (`Cache_err err)))
+              | Error err ->
+                  Hashtbl.remove t.cache k;
+                  Abb.Future.return (Error (`Fetch_err err)))
+        in
+        Hashtbl.replace t.cache k run;
+        Abb.Future.fork run >>= fun _ -> run
+
+      let read_keys filename keys =
+        let open Fut_comb.Infix_result_monad in
+        Fut_comb.List_result.map
+          ~f:(fun k ->
+            Abb_io_file.read_file (filename ^ "." ^ k)
+            >>= fun content -> Abb.Future.return (Ok (k, content)))
+          keys
+
+      let fetch t k args =
+        let open Abb.Future.Infix_monad in
+        let filename = Filename.concat t.opts.path @@ id_of_k k in
+        if Sys.file_exists filename then
+          let run =
+            let open Fut_comb.Infix_result_monad in
+            Abb_io_file.read_file filename
+            >>= fun contents ->
+            match t.opts.of_string contents with
+            | Some v -> Abb.Future.return (Ok v)
+            | None ->
+                t.opts.on_miss ();
+                fetch' t k filename args
+          in
+          run
+          >>= function
+          | Ok contents ->
+              t.opts.on_hit ();
+              Abb.Future.return (Ok contents)
+          | Error (#Abb_intf.Errors.read as err) -> Abb.Future.return (Error (`Cache_err err))
+          | Error (#Abb_io_file.with_file_err as err) -> Abb.Future.return (Error (`Cache_err err))
+          | Error (`Fetch_err _ | `Cache_err _) as err -> Abb.Future.return err
+        else (
+          t.opts.on_miss ();
+          fetch' t k filename args)
     end
   end
 end

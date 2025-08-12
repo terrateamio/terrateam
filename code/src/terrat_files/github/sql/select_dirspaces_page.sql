@@ -10,6 +10,7 @@ unified_run_types as (
            when 'plan' then 'plan'
            when 'index' then 'index'
            when 'build-config' then 'build-config'
+           when 'build-tree' then 'build-tree'
            end) as run_type
     from github_work_manifests as gwm
 ),
@@ -44,7 +45,7 @@ q as (
                and gwm.created_at <= ldu.unlocked_at) then ldu.unlocked_at
         else null
         end) as completed_at,
-        created_at,
+        gwm.created_at,
         gwm.sha as branch_ref,
         gwm.run_type as run_type,
         (case
@@ -74,19 +75,19 @@ q as (
         urt.run_type as unified_run_type,
         gwm.environment as environment
     from github_work_manifests as gwm
-    inner join github_work_manifest_dirspaceflows as gwmds
+    inner join work_manifest_dirspaceflows as gwmds
         on gwmds.work_manifest = gwm.id
     inner join github_installation_repositories as gir
         on gir.id = gwm.repository
-    inner join github_user_installations as gui
+    inner join github_user_installations2 as gui
         on gir.installation_id = gui.installation_id
     inner join unified_run_types as urt
         on urt.id = gwm.id
-    left join github_work_manifest_results as gwmr
+    left join work_manifest_results as gwmr
         on gwm.id = gwmr.work_manifest and gwmds.path = gwmr.path and gwmds.workspace = gwmr.workspace
     left join github_pull_requests as gpr
         on gwm.repository = gpr.repository and gwm.pull_number = gpr.pull_number
-    left join github_drift_work_manifests as gdwm
+    left join drift_work_manifests as gdwm
         on gwm.id = gdwm.work_manifest
     left join latest_unlocks as lu
         on lu.repository = gwm.repository and lu.pull_number = gwm.pull_number

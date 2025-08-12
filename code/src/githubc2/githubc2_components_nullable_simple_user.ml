@@ -8,7 +8,7 @@ module Primary = struct
     gists_url : string;
     gravatar_id : string option;
     html_url : string;
-    id : int;
+    id : int64;
     login : string;
     name : string option; [@default None]
     node_id : string;
@@ -20,7 +20,8 @@ module Primary = struct
     starred_url : string;
     subscriptions_url : string;
     type_ : string; [@key "type"]
-    url : string option; [@default None]
+    url : string;
+    user_view_type : string option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

@@ -1,0 +1,82 @@
+---
+title: Editions and Licensing
+description: Compare Terrateam Open Source and Enterprise editions
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Available Editions
+
+Terrateam is available in two editions to meet different organizational needs:
+
+### Open Source Edition
+
+The open-source version includes all core Terrateam features and is licensed under MPL-2.0. This edition is perfect for teams that want full control over their infrastructure automation.
+
+**Includes:**
+- GitOps pull request automation
+- Pre and post-merge applies
+- Policy enforcement (OPA, Rego, Checkov, built-in)
+- Cost estimation
+- Safe parallel execution with locking
+- Cross-environment and dependency coordination
+- Config builder for advanced workflows
+- Full UI to track runs, view logs, and debug workflows
+- Self-hostable (server and private runners)
+- Drift detection
+- All core workflow features
+
+### Enterprise Edition
+
+The Enterprise Edition includes everything in the Open Source edition plus additional features designed for large organizations with complex governance requirements.
+
+**Additional Enterprise Features:**
+
+<CardGrid>
+  <Card title="Role-Based Access Control (RBAC)" icon="seti:lock">
+    Fine-grained permissions management with role-based policies to control who can plan, apply, and manage infrastructure across teams and environments.
+  </Card>
+  
+  <Card title="Centralized Configuration" icon="document">
+    Manage Terrateam configuration across multiple repositories from a single location, ensuring consistent policies and workflows across your entire organization.
+  </Card>
+  
+  <Card title="Gatekeeper" icon="approve-check">
+    Advanced approval workflows with multi-stage reviews, custom approval chains, and compliance gates for critical infrastructure changes.
+  </Card>
+</CardGrid>
+
+## How to Get Each Edition
+
+### Open Source Edition
+- **Self-Hosted**: Available via Docker or Kubernetes deployment
+- **Source Code**: Available on [GitHub](https://github.com/terrateamio/terrateam)
+- **License**: MPL-2.0
+
+### Enterprise Edition
+- **Hosted SaaS**: Automatically included in all hosted plans at [terrateam.io](https://terrateam.io)
+- **Self-Hosted Enterprise**: Available with enterprise licensing - [contact sales](https://terrateam.io/contact)
+
+## Choosing the Right Edition
+
+### Open Source Edition is ideal for:
+- Teams wanting full control over their deployment
+- Organizations with standard workflow requirements
+- Projects where MPL-2.0 licensing works
+
+### Enterprise Edition is ideal for:
+- Large organizations with multiple teams
+- Companies requiring centralized governance
+- Organizations needing advanced approval workflows
+- Teams wanting managed SaaS convenience
+
+## Upgrading to Enterprise
+
+If you're currently using the Open Source edition and need enterprise features, you have two options:
+
+1. **Switch to Hosted SaaS**: Get started immediately at [terrateam.io](https://terrateam.io)
+2. **Self-Hosted Enterprise License**: Contact our team for enterprise licensing options
+
+:::tip[Try Enterprise Features]
+The Hosted SaaS version includes all Enterprise features and offers a free trial to explore these capabilities.
+:::

@@ -1,0 +1,35 @@
+#! /usr/bin/env bash
+
+set -e
+set -u
+set -o pipefail
+
+DEFAULT_BRANCH=origin/main
+
+# Verify that every commit for a file in the current working directory matches
+# the below pattern pattern.
+if git log --no-merges "${DEFAULT_BRANCH}"..HEAD --pretty=%s . \
+        | grep -vE '^(([a-zA-Z0-9/.-_]+)?#[0-9]+ )+(ADD|REFACTOR|FIX|UPDATE|REMOVE) .*$' \
+        | grep -q .; then
+    echo "Not all commit messages match the required structure"
+    echo "Commit messages must be of the form:"
+    echo
+    echo "\$GITHUB_ISSUE_1 \$GITHUB_ISSUE_2 ... \$GITHUB_ISSUE_N \$ACTION \$SUMMARY"
+    echo
+    echo "OPTIONAL LONGER MESSAGE"
+    echo
+    echo
+    echo "Where:"
+    echo "\$GITHUB_ISSUE can be of the form '#123' or 'org/repo#123'"
+    echo "\$ACTION is ADD, REFACTOR, FIX, UPDATE, or REMOVE"
+    echo
+    echo
+    echo "For example:"
+    echo "#123 FIX Bug in confabulator that prevents users from making progress"
+    echo
+    echo "The confabulator was working on a co-axial retrograde orientation when in reality"
+    echo "it necessary for it to be in a tri-axial prograde orientation.  This was preventing"
+    echo "users from verifying the semi-articulating socket pair."
+    exit 1
+fi
+

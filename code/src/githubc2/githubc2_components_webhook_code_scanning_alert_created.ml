@@ -10,6 +10,10 @@ module Primary = struct
 
   module Alert = struct
     module Primary = struct
+      module Dismissal_approved_by = struct
+        type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
       module Dismissed_at = struct
         type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
@@ -144,6 +148,7 @@ module Primary = struct
 
       type t = {
         created_at : string option;
+        dismissal_approved_by : Dismissal_approved_by.t option; [@default None]
         dismissed_at : Dismissed_at.t option;
         dismissed_by : Dismissed_by.t option;
         dismissed_comment : string option; [@default None]
@@ -154,7 +159,7 @@ module Primary = struct
         most_recent_instance : Most_recent_instance.t option; [@default None]
         number : int;
         rule : Rule.t;
-        state : State.t;
+        state : State.t option;
         tool : Tool.t option;
         updated_at : string option; [@default None]
         url : string;
@@ -174,7 +179,7 @@ module Primary = struct
     organization : Githubc2_components_organization_simple_webhooks.t option; [@default None]
     ref_ : string; [@key "ref"]
     repository : Githubc2_components_repository_webhooks.t;
-    sender : Githubc2_components_simple_user_webhooks.t;
+    sender : Githubc2_components_simple_user.t;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

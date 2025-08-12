@@ -24,7 +24,7 @@ module Io = struct
     | Ok (resp, body) ->
         let headers = resp |> Http.Response.headers |> Http.Headers.to_list in
         let status = resp |> Http.Response.status |> Http.Status.to_int in
-        return (Ok (Openapi.Response.make ~headers ~status body))
+        return (Ok (Openapi.Response.make ~headers ~request_uri:uri ~status body))
     | Error err -> return (Error (`Io_err err))
 
   let call ?body ~headers ~meth uri = call' ?body ~headers ~meth uri
