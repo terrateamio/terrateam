@@ -455,6 +455,7 @@ let fetch_pull_request' ~request_id ~client ~repo merge_request_iid =
         | Ok resp -> (
             match Openapi.Response.value resp with
             | `OK { Mr.diff_refs = None; _ } -> true
+            | `OK { Mr.merge_commit_sha = None; _ } -> true
             | `OK { Mr.detailed_merge_status = Some "checking"; _ } -> true
             | _ -> false)
         | Error _ -> true))
