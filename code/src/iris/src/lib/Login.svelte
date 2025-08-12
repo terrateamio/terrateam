@@ -1,17 +1,15 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { getServerConfig, initializeGitHubLogin, authError, isAuthenticated } from './auth';
-  import type { ServerConfig } from './types';
+  import { initializeGitHubLogin, authError, isAuthenticated } from './auth';
   import type { VCSProvider } from './vcs/types';
   import { VCS_PROVIDERS } from './vcs/providers';
-  import { setVCSProvider } from './stores';
+  import { setVCSProvider, serverConfig } from './stores';
   import { Icon } from './components';
   
   let isLoading: boolean = true;
   let error: string | null = null;
-  let serverConfig: ServerConfig | null = null;
+
   let availableProviders: VCSProvider[] = [];
-  
   // Redirect authenticated users away from login page
   $: if ($isAuthenticated) {
     window.location.hash = '#/';
@@ -19,14 +17,12 @@
   
   onMount(async () => {
     try {
-      serverConfig = await getServerConfig();
-      
       // Determine available providers based on server config
       const providers: VCSProvider[] = [];
-      if (serverConfig.github) {
+      if ($serverConfig.github) {
         providers.push('github');
       }
-      if (serverConfig.gitlab) {
+      if ($serverConfig.gitlab) {
         providers.push('gitlab');
       }
       availableProviders = providers;
@@ -50,9 +46,9 @@
     setVCSProvider(provider);
     
     if (provider === 'github') {
-      if (serverConfig?.github) {
-        const github = serverConfig?.github;
-        const clientId = serverConfig.github.app_client_id;
+      if ($serverConfig?.github) {
+        const github = $serverConfig?.github;
+        const clientId = $serverConfig.github.app_client_id;
         try {
           initializeGitHubLogin(github.web_base_url, clientId);
         } catch (err) {
@@ -63,9 +59,9 @@
         error = 'GitHub login is not configured';
       }
     } else if (provider === 'gitlab') {
-      if (serverConfig?.gitlab) {
-        const appId = serverConfig.gitlab.app_id;
-        const redirectUrl = serverConfig.gitlab.redirect_url;
+      if ($serverConfig?.gitlab) {
+        const appId = $serverConfig.gitlab.app_id;
+        const redirectUrl = $serverConfig.gitlab.redirect_url;
         try {
           // GitLab OAuth flow
           const params = new URLSearchParams({
@@ -75,7 +71,7 @@
             scope: 'api',
             state: 'gitlab_login'
           });
-          window.location.href = `${serverConfig.gitlab.web_base_url}/oauth/authorize?${params.toString()}`;
+          window.location.href = `${$serverConfig.gitlab.web_base_url}/oauth/authorize?${params.toString()}`;
         } catch (err) {
           console.error('Error in GitLab login:', err);
           error = 'Failed to initialize GitLab login';
@@ -133,7 +129,7 @@
           {#if availableProviders[0] === 'github'}
             <button
               on:click={() => handleProviderLogin('github')}
-              disabled={!serverConfig?.github}
+              disabled={!$serverConfig?.github}
               class="w-full flex justify-center items-center px-4 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Icon icon="mdi:github" class="mr-3" width="20" />
@@ -142,7 +138,7 @@
           {:else if availableProviders[0] === 'gitlab'}
             <button
               on:click={() => handleProviderLogin('gitlab')}
-              disabled={!serverConfig?.gitlab}
+              disabled={!$serverConfig?.gitlab}
               class="w-full flex justify-center items-center px-4 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Icon icon="mdi:gitlab" class="mr-3" width="20" />
