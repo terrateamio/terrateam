@@ -130,7 +130,7 @@ let synthesize_config ~index repo_config =
              let module D = R.Dirs.Dir in
              let module Ws = R.Dirs.Workspace in
              let module Wm = R.When_modified in
-             CCList.map
+             CCList.flat_map
                (fun (workspace, workspace_config) ->
                  let dirspace = { Terrat_dirspace.dir = dirname; workspace } in
                  let tags = Terrat_tag_set.of_list workspace_config.Ws.tags in
@@ -153,18 +153,26 @@ let synthesize_config ~index repo_config =
                  let tags =
                    Terrat_tag_set.of_list (("stack_name:" ^ stack_name) :: workspace_config.Ws.tags)
                  in
-                 ( dirspace,
-                   {
-                     Dirspace_config.dirspace;
-                     file_pattern_matcher =
-                       compile_file_pattern_matcher
-                         workspace_config.Ws.when_modified.Wm.file_patterns;
-                     lock_branch_target = config.D.lock_branch_target;
-                     stack_config;
-                     stack_name;
-                     tags;
-                     when_modified = workspace_config.Ws.when_modified;
-                   } ))
+                 (* If the dirspace is explicitly ignored via an empty
+                    [file_patterns], do not even include it so that we don't
+                    waste time trying to match against it. *)
+                 match workspace_config.Ws.when_modified.Wm.file_patterns with
+                 | [] -> []
+                 | _ :: _ ->
+                     [
+                       ( dirspace,
+                         {
+                           Dirspace_config.dirspace;
+                           file_pattern_matcher =
+                             compile_file_pattern_matcher
+                               workspace_config.Ws.when_modified.Wm.file_patterns;
+                           lock_branch_target = config.D.lock_branch_target;
+                           stack_config;
+                           stack_name;
+                           tags;
+                           when_modified = workspace_config.Ws.when_modified;
+                         } );
+                     ])
                (String_map.to_list config.D.workspaces @ String_map.to_list config.D.stacks))
       |> Dirspace_map.of_list
     in
