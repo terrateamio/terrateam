@@ -2,13 +2,14 @@
   import type { Dirspace } from './types';
   // Auth handled by PageLayout
   import { api } from './api';
-  import { selectedInstallation } from './stores';
+  import { selectedInstallation, currentVCSProvider, serverConfig } from './stores';
   import PageLayout from './components/layout/PageLayout.svelte';
   import LoadingSpinner from './components/ui/LoadingSpinner.svelte';
   import { navigateToRun, navigateToRuns } from './utils/navigation';
   import ErrorMessage from './components/ui/ErrorMessage.svelte';
   import Card from './components/ui/Card.svelte';
   import ClickableCard from './components/ui/ClickableCard.svelte';
+  import { getWebBaseUrl } from './server-config';
   
   export let params: { repo: string; dir: string; workspace: string } = { 
     repo: '', 
@@ -41,6 +42,7 @@
   let costEstimation: OutputItem[] = [];
   let isLoading: boolean = false;
   let error: string | null = null;
+  const web_base_url = getWebBaseUrl($currentVCSProvider, $serverConfig);
   
   // Plan analysis data
   let resourceChanges = {
@@ -633,7 +635,7 @@
       <ClickableCard 
         padding="lg" 
         hover={true}
-        on:click={() => workspace && window.open(`https://github.com/${workspace.owner}/${workspace.repo}/tree/${workspace.branch}/${workspace.dir}`, '_blank')}
+        on:click={() => workspace && window.open(`${web_base_url}/${workspace.owner}/${workspace.repo}/tree/${workspace.branch}/${workspace.dir}`, '_blank')}
         aria-label="View workspace directory on GitHub"
       >
         <div class="text-center">

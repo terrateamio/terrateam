@@ -288,7 +288,7 @@ export async function logout(): Promise<void> {
   }
 }
 
-export function initializeGitHubLogin(clientId: string): void {
+export function initializeGitHubLogin(web_base_url: string, clientId: string): void {
   
   // Don't overwrite existing stored URL if we're on the login page
   // (the intended URL was already stored when redirecting to login)
@@ -299,7 +299,7 @@ export function initializeGitHubLogin(clientId: string): void {
   }
   
   // Redirect directly to GitHub OAuth
-  const githubOAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}`;
+  const githubOAuthUrl = `${web_base_url}/login/oauth/authorize?client_id=${clientId}`;
   window.location.href = githubOAuthUrl;
 }
 

@@ -2,13 +2,14 @@
   import type { WorkManifest } from './types';
   // Auth handled by PageLayout
   import { api } from './api';
-  import { selectedInstallation, installations } from './stores';
+  import { selectedInstallation, installations, currentVCSProvider, serverConfig } from './stores';
   import { analytics } from './analytics';
   import PageLayout from './components/layout/PageLayout.svelte';
   import LoadingSpinner from './components/ui/LoadingSpinner.svelte';
   import ErrorMessage from './components/ui/ErrorMessage.svelte';
   import Card from './components/ui/Card.svelte';
   import SafeOutput from './components/ui/SafeOutput.svelte';
+  import { getWebBaseUrl } from './server-config';
   
   export let params: { id: string; installationId?: string } = { id: '' };
   
@@ -29,7 +30,8 @@
   let outputsError: string | null = null;
   let expandedDirspaces: Set<string> = new Set();
   let activeOutputTab: 'all' | 'raw' | 'cost' | 'failed' = 'all';
-  
+  const web_base_url = getWebBaseUrl($currentVCSProvider, $serverConfig);
+
   interface OutputItem {
     payload?: {
       text?: string;
@@ -433,12 +435,12 @@
   
   function getPullRequestUrl(owner: string, repo: string, pullNumber: number): string {
     // Construct GitHub PR URL using owner and repo
-    return `https://github.com/${owner}/${repo}/pull/${pullNumber}`;
+    return `${web_base_url}/${owner}/${repo}/pull/${pullNumber}`;
   }
   
   function getGitHubActionsUrl(owner: string, repo: string, runId: string): string {
     // Construct GitHub Actions run URL using owner, repo, and run_id
-    return `https://github.com/${owner}/${repo}/actions/runs/${runId}`;
+    return `${web_base_url}/${owner}/${repo}/actions/runs/${runId}`;
   }
   
   // Removed unused function - can be added back if needed for job-specific URLs
