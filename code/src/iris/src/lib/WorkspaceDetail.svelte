@@ -410,56 +410,56 @@
     </div>
 
     <!-- Workspace Overview -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
       <!-- Main Info -->
-      <Card padding="lg" class="lg:col-span-2">
-        <div class="flex items-start justify-between mb-6">
-          <div>
-            <h2 class="text-2xl font-bold text-brand-primary mb-2">
+      <Card padding="md" class="lg:col-span-2">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4 md:mb-6">
+          <div class="min-w-0 flex-1">
+            <h2 class="text-xl md:text-2xl font-bold text-brand-primary mb-2 truncate">
               📁 {workspace.dir}
             </h2>
-            <div class="flex items-center space-x-4">
-              <span class="text-lg px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 rounded-full font-mono">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-sm md:text-lg px-2 md:px-3 py-0.5 md:py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 rounded-full font-mono">
                 {workspace.workspace}
               </span>
-              <span class={`px-3 py-1 rounded-full font-medium ${getStateColor(workspace.state)}`}>
+              <span class={`px-2 md:px-3 py-0.5 md:py-1 rounded-full font-medium text-sm ${getStateColor(workspace.state)}`}>
                 {getStateIcon(workspace.state)} {workspace.state}
               </span>
             </div>
           </div>
-          <div class="text-right">
-            <div class="text-sm text-gray-600 dark:text-gray-400">Last Run</div>
-            <div class="font-medium">{getRunTypeLabel(workspace.run_type)}</div>
-            <div class="text-sm text-gray-500 dark:text-gray-400">{getRelativeTime(workspace.created_at)}</div>
+          <div class="text-left sm:text-right">
+            <div class="text-xs md:text-sm text-gray-600 dark:text-gray-400">Last Run</div>
+            <div class="font-medium text-sm md:text-base">{getRunTypeLabel(workspace.run_type)}</div>
+            <div class="text-xs md:text-sm text-gray-500 dark:text-gray-400">{getRelativeTime(workspace.created_at)}</div>
           </div>
         </div>
         
         <!-- Repository & Environment Info -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 text-xs md:text-sm">
           <div>
             <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-2">Repository</h4>
             <div class="space-y-1">
-              <div><span class="text-gray-600 dark:text-gray-400">Owner:</span> <span class="font-mono">{workspace.owner}</span></div>
-              <div><span class="text-gray-600 dark:text-gray-400">Repo:</span> <span class="font-mono">{workspace.repo}</span></div>
-              <div><span class="text-gray-600 dark:text-gray-400">Environment:</span> <span class="font-mono">{workspace.environment || 'default'}</span></div>
+              <div class="truncate"><span class="text-gray-600 dark:text-gray-400">Owner:</span> <span class="font-mono">{workspace.owner}</span></div>
+              <div class="truncate"><span class="text-gray-600 dark:text-gray-400">Repo:</span> <span class="font-mono">{workspace.repo}</span></div>
+              <div class="truncate"><span class="text-gray-600 dark:text-gray-400">Environment:</span> <span class="font-mono">{workspace.environment || 'default'}</span></div>
             </div>
           </div>
           <div>
             <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-2">Last Run Context</h4>
             <div class="space-y-1">
-              <div><span class="text-gray-600 dark:text-gray-400">Branch:</span> <span class="font-mono text-xs">{workspace.branch}</span></div>
-              <div><span class="text-gray-600 dark:text-gray-400">Base Branch:</span> <span class="font-mono text-xs">{workspace.base_branch}</span></div>
-              <div><span class="text-gray-600 dark:text-gray-400">Commit:</span> <span class="font-mono text-xs">{workspace.branch_ref.substring(0, 8)}</span></div>
+              <div class="truncate"><span class="text-gray-600 dark:text-gray-400">Branch:</span> <span class="font-mono text-xs">{workspace.branch}</span></div>
+              <div class="truncate"><span class="text-gray-600 dark:text-gray-400">Base Branch:</span> <span class="font-mono text-xs">{workspace.base_branch}</span></div>
+              <div class="truncate"><span class="text-gray-600 dark:text-gray-400">Commit:</span> <span class="font-mono text-xs">{workspace.branch_ref.substring(0, 8)}</span></div>
             </div>
           </div>
         </div>
       </Card>
       
       <!-- Quick Stats -->
-      <div class="space-y-4">
+      <div class="space-y-3 md:space-y-4">
         <!-- Resource Changes (only show if we have plan data) -->
         {#if outputs.some(output => output?.step === 'tf/plan')}
-          <Card padding="lg">
+          <Card padding="md">
             <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-3">📊 Resource Changes</h4>
             {#if resourceChanges.hasChanges}
               <div class="space-y-2">
@@ -550,7 +550,7 @@
           })()}
           
           {#if costData?.total_monthly_cost !== undefined}
-            <Card padding="lg">
+            <Card padding="md">
               <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-3">💰 Last Plan Cost</h4>
               <div class="text-center">
                 <div class="text-2xl font-bold text-green-600 dark:text-green-400">
@@ -572,9 +572,9 @@
         {/if}
         
         <!-- Last Operations -->
-        <Card padding="lg">
+        <Card padding="md">
           <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-3">⏰ Recent Operations</h4>
-          <div class="space-y-3 text-sm">
+          <div class="space-y-3 text-xs md:text-sm">
             {#if lastApplyRun}
               <div>
                 <div class="flex justify-between items-center">
@@ -603,43 +603,43 @@
     </div>
 
     <!-- Actions -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-8">
       <ClickableCard 
-        padding="lg" 
+        padding="md" 
         hover={true}
         on:click={() => workspace && navigateToRun(workspace.id)}
         aria-label="View latest run details"
       >
         <div class="text-center">
-          <div class="text-2xl mb-2">📋</div>
-          <div class="font-medium">Latest Run</div>
-          <div class="text-sm text-gray-600 dark:text-gray-400">View most recent run details</div>
+          <div class="text-xl md:text-2xl mb-1 md:mb-2">📋</div>
+          <div class="font-medium text-sm md:text-base">Latest Run</div>
+          <div class="text-xs md:text-sm text-gray-600 dark:text-gray-400">View most recent run details</div>
         </div>
       </ClickableCard>
       
       <ClickableCard 
-        padding="lg" 
+        padding="md" 
         hover={true}
         on:click={() => workspace && navigateToRuns(`repo:${encodeURIComponent(workspace.repo)} and dir:${encodeURIComponent(workspace.dir)} and workspace:${encodeURIComponent(workspace.workspace)}`)}
         aria-label="View all runs for this workspace"
       >
         <div class="text-center">
-          <div class="text-2xl mb-2">📋</div>
-          <div class="font-medium">All Runs</div>
-          <div class="text-sm text-gray-600 dark:text-gray-400">History of all runs</div>
+          <div class="text-xl md:text-2xl mb-1 md:mb-2">📋</div>
+          <div class="font-medium text-sm md:text-base">All Runs</div>
+          <div class="text-xs md:text-sm text-gray-600 dark:text-gray-400">History of all runs</div>
         </div>
       </ClickableCard>
       
       <ClickableCard 
-        padding="lg" 
+        padding="md" 
         hover={true}
         on:click={() => workspace && window.open(`https://github.com/${workspace.owner}/${workspace.repo}/tree/${workspace.branch}/${workspace.dir}`, '_blank')}
         aria-label="View workspace directory on GitHub"
       >
         <div class="text-center">
-          <div class="text-2xl mb-2">🔗</div>
-          <div class="font-medium">View on GitHub</div>
-          <div class="text-sm text-gray-600 dark:text-gray-400">Open directory in repo</div>
+          <div class="text-xl md:text-2xl mb-1 md:mb-2">🔗</div>
+          <div class="font-medium text-sm md:text-base">View on GitHub</div>
+          <div class="text-xs md:text-sm text-gray-600 dark:text-gray-400">Open directory in repo</div>
         </div>
       </ClickableCard>
     </div>
@@ -647,14 +647,14 @@
     <!-- Tabbed Content -->
     <Card padding="none" class="mb-6">
       <!-- Tab Navigation - Single tab now, so just show as header -->
-      <div class="border-b border-gray-200 dark:border-gray-600 px-6 py-3">
-        <h3 class="font-medium text-lg text-gray-900 dark:text-gray-100">
+      <div class="border-b border-gray-200 dark:border-gray-600 px-4 md:px-6 py-3">
+        <h3 class="font-medium text-base md:text-lg text-gray-900 dark:text-gray-100">
           📈 Recent Run History
         </h3>
       </div>
       
       <!-- Tab Content -->
-      <div class="p-6">
+      <div class="p-4 md:p-6">
         {#if activeTab === 'history'}
           <!-- Run History -->
           {#if runHistory.length === 0}
@@ -665,21 +665,21 @@
           {:else}
             <div class="space-y-3">
               {#each runHistory as run}
-                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                  <div class="flex items-center space-x-4">
-                    <span class={`px-2 py-1 rounded text-xs font-medium ${getStateColor(run.state)}`}>
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 md:p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors gap-3">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class={`px-1.5 md:px-2 py-0.5 md:py-1 rounded text-xs font-medium ${getStateColor(run.state)}`}>
                       {getStateIcon(run.state)} {run.state}
                     </span>
-                    <span class="font-medium">{getRunTypeLabel(run.run_type)}</span>
+                    <span class="font-medium text-sm md:text-base">{getRunTypeLabel(run.run_type)}</span>
                     {#if run.user}
-                      <span class="text-sm text-gray-600 dark:text-gray-400">by {run.user}</span>
+                      <span class="text-xs md:text-sm text-gray-600 dark:text-gray-400">by {run.user}</span>
                     {/if}
                   </div>
-                  <div class="flex items-center space-x-4">
-                    <span class="text-sm text-gray-500 dark:text-gray-400">{formatDate(run.created_at)}</span>
+                  <div class="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
+                    <span class="text-xs md:text-sm text-gray-500 dark:text-gray-400">{formatDate(run.created_at)}</span>
                     <button
                       on:click={() => navigateToRun(run.id)}
-                      class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium"
+                      class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-xs md:text-sm font-medium whitespace-nowrap"
                     >
                       View Details →
                     </button>
