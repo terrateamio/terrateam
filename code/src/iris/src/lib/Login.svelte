@@ -51,26 +51,16 @@
     
     if (provider === 'github') {
       if (serverConfig?.github) {
+        const github = serverConfig?.github;
         const clientId = serverConfig.github.app_client_id;
         try {
-          initializeGitHubLogin(clientId);
+          initializeGitHubLogin(github.web_base_url, clientId);
         } catch (err) {
           console.error('Error in initializeGitHubLogin:', err);
         }
       } else {
-        // Fallback: Try legacy endpoint for GitHub client ID
-        try {
-          const response = await fetch('/api/v1/github/client_id');
-          const data = await response.json();
-          if (data.client_id) {
-            initializeGitHubLogin(data.client_id);
-          } else {
-            error = 'GitHub client ID not available';
-          }
-        } catch (err) {
-          console.error('Failed to get GitHub client ID:', err);
-          error = 'Failed to initialize GitHub login';
-        }
+        console.error('No GitHub configuration available');
+        error = 'GitHub login is not configured';
       }
     } else if (provider === 'gitlab') {
       if (serverConfig?.gitlab) {
