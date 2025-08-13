@@ -272,6 +272,13 @@ module Comment_api = struct
     | Error (#Snabela.err as err) ->
         Logs.err (fun m -> m "%s : TEMPLATE_ERROR : %a" request_id Snabela.pp_err err);
         Abb.Future.return (Error `Error)
+
+  let apply_template_and_publish_jinja ~request_id client pull_request msg_type template kv =
+    match Minijinja.render_template template kv with
+    | Ok body -> comment_on_pull_request ~request_id client pull_request msg_type body
+    | Error err ->
+        Logs.err (fun m -> m "%s : TEMPLATE_ERROR : %s" request_id err);
+        Abb.Future.return (Error `Error)
 end
 
 module Publisher_tools = struct

@@ -107,6 +107,7 @@ let react_to_comment ~request_id client pull_request comment_id = raise (Failure
 let create_commit_checks ~request_id client repo ref_ checks = raise (Failure "nyi")
 let fetch_commit_checks ~request_id client repo ref_ = raise (Failure "nyi")
 let fetch_pull_request_reviews ~request_id client repo pull_request = raise (Failure "nyi")
+let fetch_pull_request_requested_reviews ~request_id repo pull_number client = raise (Failure "nyi")
 let merge_pull_request ~request_id client pull_request = raise (Failure "nyi")
 let delete_branch ~request_id client repo branch = raise (Failure "nyi")
 let is_member_of_team ~request_id ~team ~user repo client = raise (Failure "nyi")

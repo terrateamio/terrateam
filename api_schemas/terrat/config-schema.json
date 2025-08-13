@@ -206,6 +206,10 @@
         "enabled": {
           "default": false,
           "type": "boolean"
+        },
+        "require_completed_reviews": {
+          "default": false,
+          "type": "boolean"
         }
       },
       "type": "object"
