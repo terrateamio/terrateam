@@ -1236,7 +1236,7 @@
                             <span class="text-xs text-red-600 dark:text-red-400">•</span>
                             <!-- Plan/Apply Badge for failures -->
                             {#if failure.run_type === 'plan'}
-                              <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700">
+                              <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700" title="Click to view run details">
                                 📋 Plan
                               </span>
                             {:else if failure.run_type === 'apply'}
@@ -1329,7 +1329,7 @@
                             <span class="text-xs text-green-600 dark:text-green-400">•</span>
                             <!-- Plan/Apply Badge for successes -->
                             {#if success.run_type === 'plan'}
-                              <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700">
+                              <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700" title="Click to view run details">
                                 📋 Plan
                               </span>
                             {:else if success.run_type === 'apply'}
