@@ -39,6 +39,11 @@
   },
   "dependencies": {
     "@sentry/svelte": "^9.33.0",
+    "@types/cytoscape": "^3.21.9",
+    "@types/d3": "^7.4.3",
+    "cytoscape": "^3.33.0",
+    "cytoscape-dagre": "^2.5.0",
+    "d3": "^7.9.0",
     "highlight.js": "^11.11.1",
     "js-yaml": "^4.1.0",
     "posthog-js": "^1.257.0",
