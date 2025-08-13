@@ -9,8 +9,7 @@ import type {
   ChangeSet,
   ChangeType,
   TerraformJsonPlan,
-  TerraformResourceChange,
-  TerraformModule
+  TerraformResourceChange
 } from '../types/terraform';
 
 /**
@@ -123,40 +122,6 @@ function mapActionsToChangeType(actions: string[]): ChangeType {
 }
 
 
-/**
- * Extract resource references from an object
- */
-function extractReferences(obj: any, refs: Set<string> = new Set()): Set<string> {
-  if (!obj) return refs;
-
-  if (typeof obj === 'string') {
-    // Look for patterns like ${resource_type.resource_name...}
-    const matches = obj.match(/\$\{([^}]+)\}/g);
-    if (matches) {
-      for (const match of matches) {
-        const ref = match.slice(2, -1).split('.').slice(0, 2).join('.');
-        if (ref) refs.add(ref);
-      }
-    }
-    // Also check for direct references
-    if (obj.includes('.') && !obj.includes(' ')) {
-      const parts = obj.split('.');
-      if (parts.length >= 2) {
-        refs.add(`${parts[0]}.${parts[1]}`);
-      }
-    }
-  } else if (Array.isArray(obj)) {
-    for (const item of obj) {
-      extractReferences(item, refs);
-    }
-  } else if (typeof obj === 'object') {
-    for (const value of Object.values(obj)) {
-      extractReferences(value, refs);
-    }
-  }
-
-  return refs;
-}
 
 /**
  * Parse text format Terraform plan
@@ -208,7 +173,6 @@ function parseTextPlan(planText: string): ParsedPlan {
       
       // Extract the actual resource type and name
       // Handle both direct resources and module resources
-      let resourceId = fullResourceId;
       let type = '';
       let name = '';
       
@@ -221,15 +185,13 @@ function parseTextPlan(planText: string): ParsedPlan {
           if (parts[i].includes('_')) {
             type = parts[i];
             name = parts.slice(i + 1).join('.');
-            resourceId = `${type}.${name}`;
             break;
           }
         }
-        // If we couldn't determine the type, use the full ID
+        // If we couldn't determine the type, use the last two parts
         if (!type) {
           type = parts[parts.length - 2];
           name = parts[parts.length - 1];
-          resourceId = fullResourceId;
         }
       } else {
         // Direct resource: aws_instance.example
@@ -413,7 +375,6 @@ function parseFallbackFormat(planText: string): ResourceNode[] {
         // Extract resource type and name from the path
         let type = '';
         let name = '';
-        let id = fullPath;
         
         // Split and analyze the path
         const parts = fullPath.split('.');
@@ -424,7 +385,6 @@ function parseFallbackFormat(planText: string): ResourceNode[] {
             type = part;
             const typeIndex = parts.indexOf(part);
             name = parts.slice(typeIndex + 1).join('.');
-            id = `${type}.${name}`;
             break;
           }
         }
@@ -433,7 +393,6 @@ function parseFallbackFormat(planText: string): ResourceNode[] {
         if (!type && parts.length >= 2) {
           type = parts[parts.length - 2];
           name = parts[parts.length - 1];
-          id = `${type}.${name}`;
         }
         
         if (type) {
