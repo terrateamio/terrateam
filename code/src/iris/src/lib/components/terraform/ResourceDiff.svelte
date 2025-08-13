@@ -63,7 +63,7 @@
     }
   }
 
-  function formatValue(value: any): string {
+  function formatValue(value: unknown): string {
     if (value === null || value === undefined) return 'null';
     if (typeof value === 'string') return value;
     if (typeof value === 'boolean') return value.toString();
@@ -73,8 +73,8 @@
     return String(value);
   }
 
-  function getChangedAttributes(resource: ResourceNode): Array<{key: string, before: any, after: any}> {
-    const changes: Array<{key: string, before: any, after: any}> = [];
+  function getChangedAttributes(resource: ResourceNode): Array<{key: string, before: unknown, after: unknown}> {
+    const changes: Array<{key: string, before: unknown, after: unknown}> = [];
     const allKeys = new Set([
       ...Object.keys(resource.before),
       ...Object.keys(resource.after)

@@ -653,11 +653,12 @@
       );
       
       // Find the matching output by step and scope
-      const fullOutput = response.outputs.find((o: any) => 
-        o.step === output.step && 
-        o.scope?.dir === output.scope?.dir &&
-        o.scope?.workspace === output.scope?.workspace
-      ) as OutputItem | undefined;
+      const fullOutput = response.outputs.find((o: unknown) => {
+        const out = o as OutputItem;
+        return out.step === output.step && 
+          out.scope?.dir === output.scope?.dir &&
+          out.scope?.workspace === output.scope?.workspace;
+      }) as OutputItem | undefined;
       
       if (fullOutput?.payload?.text) {
         return fullOutput.payload.text;

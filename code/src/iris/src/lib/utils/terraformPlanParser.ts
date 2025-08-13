@@ -103,8 +103,8 @@ function convertResourceChange(change: TerraformResourceChange): ResourceNode | 
     name: change.name,
     provider: change.provider_name || 'unknown',
     changeType,
-    before: change.change.before || {},
-    after: change.change.after || {},
+    before: (change.change.before || {}) as Record<string, unknown>,
+    after: (change.change.after || {}) as Record<string, unknown>,
     module: change.module_address
   };
 }
@@ -135,7 +135,7 @@ function parseTextPlan(planText: string): ParsedPlan {
   
   let currentResource: Partial<ResourceNode> | null = null;
   let inResourceBlock = false;
-  let currentAttributes: Record<string, any> = {};
+  let currentAttributes: Record<string, unknown> = {};
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -448,7 +448,7 @@ function extractProviderFromType(type: string): string {
 /**
  * Parse attribute value from text
  */
-function parseAttributeValue(value: string): any {
+function parseAttributeValue(value: string): unknown {
   value = value.trim();
   
   // Remove quotes if present

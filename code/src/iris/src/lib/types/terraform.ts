@@ -13,9 +13,9 @@ export interface ResourceNode {
   name: string;                  // Resource name (e.g., "web")
   provider: string;              // Provider name (e.g., "aws")
   changeType: ChangeType;        // Type of change
-  before: Record<string, any>;   // State before change
-  after: Record<string, any>;    // State after change
-  attributes?: Record<string, any>; // Additional attributes
+  before: Record<string, unknown>;   // State before change
+  after: Record<string, unknown>;    // State after change
+  attributes?: Record<string, unknown>; // Additional attributes
   module?: string;               // Module path if in a module
 }
 
@@ -33,10 +33,10 @@ export interface ChangeSet {
 export interface ParsedPlan {
   resources: ResourceNode[];
   changes: ChangeSet;
-  outputs?: Record<string, any>;
-  plannedValues?: any;
-  priorState?: any;
-  configuration?: any;
+  outputs?: Record<string, unknown>;
+  plannedValues?: unknown;
+  priorState?: unknown;
+  configuration?: unknown;
 }
 
 
@@ -46,13 +46,13 @@ export interface TerraformJsonPlan {
   terraform_version?: string;
   planned_values?: {
     root_module?: TerraformModule;
-    outputs?: Record<string, any>;
+    outputs?: Record<string, unknown>;
   };
   resource_changes?: TerraformResourceChange[];
-  output_changes?: Record<string, any>;
-  prior_state?: any;
+  output_changes?: Record<string, unknown>;
+  prior_state?: unknown;
   configuration?: {
-    provider_config?: Record<string, any>;
+    provider_config?: Record<string, unknown>;
     root_module?: TerraformModule;
   };
 }
@@ -61,9 +61,9 @@ export interface TerraformJsonPlan {
 export interface TerraformModule {
   resources?: TerraformResource[];
   child_modules?: TerraformModule[];
-  module_calls?: Record<string, any>;
-  variables?: Record<string, any>;
-  outputs?: Record<string, any>;
+  module_calls?: Record<string, unknown>;
+  variables?: Record<string, unknown>;
+  outputs?: Record<string, unknown>;
 }
 
 // Terraform resource in configuration
@@ -74,10 +74,10 @@ export interface TerraformResource {
   name: string;
   provider_name?: string;
   schema_version?: number;
-  values?: Record<string, any>;
-  sensitive_values?: Record<string, any>;
+  values?: Record<string, unknown>;
+  sensitive_values?: Record<string, unknown>;
   depends_on?: string[];
-  expressions?: Record<string, any>;
+  expressions?: Record<string, unknown>;
 }
 
 // Terraform resource change
@@ -90,12 +90,12 @@ export interface TerraformResourceChange {
   provider_name: string;
   change: {
     actions: Array<'create' | 'read' | 'update' | 'delete' | 'no-op'>;
-    before: any;
-    after: any;
-    after_unknown?: any;
-    before_sensitive?: any;
-    after_sensitive?: any;
-    importing?: any;
+    before: unknown;
+    after: unknown;
+    after_unknown?: unknown;
+    before_sensitive?: unknown;
+    after_sensitive?: unknown;
+    importing?: unknown;
   };
 }
 
