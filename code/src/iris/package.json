@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "@sentry/svelte": "^9.33.0",
+    "glob": "^11.0.3",
     "highlight.js": "^11.11.1",
     "js-yaml": "^4.1.0",
     "posthog-js": "^1.257.0",
