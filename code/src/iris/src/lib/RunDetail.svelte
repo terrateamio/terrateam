@@ -97,6 +97,11 @@
     });
   }
   
+  // Switch away from Changes tab if viewing an apply run
+  $: if (run?.run_type === 'apply' && activeOutputTab === 'changes') {
+    activeOutputTab = 'all';
+  }
+  
   async function loadRunData(runId: string): Promise<void> {
     if (!$selectedInstallation) return;
     
@@ -976,12 +981,14 @@
           >
             ❌ Failed
           </button>
-          <button 
-            on:click={() => activeOutputTab = 'changes'}
-            class="px-3 py-1 text-sm font-medium rounded-md transition-colors {activeOutputTab === 'changes' ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}"
-          >
-            📊 Changes
-          </button>
+          {#if run?.run_type === 'plan'}
+            <button 
+              on:click={() => activeOutputTab = 'changes'}
+              class="px-3 py-1 text-sm font-medium rounded-md transition-colors {activeOutputTab === 'changes' ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}"
+            >
+              📊 Changes
+            </button>
+          {/if}
         </div>
       </div>
 
