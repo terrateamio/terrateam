@@ -28,6 +28,7 @@ module Batch_runs = Terrat_repo_config_batch_runs
 module Config_builder = Terrat_repo_config_config_builder
 module Custom_tags = Terrat_repo_config_custom_tags
 module Custom_tags_branch = Terrat_repo_config_custom_tags_branch
+module Default_branch_overrides = Terrat_repo_config_default_branch_overrides
 module Destination_branch_name = Terrat_repo_config_destination_branch_name
 module Destination_branch_object = Terrat_repo_config_destination_branch_object
 module Dir = Terrat_repo_config_dir
