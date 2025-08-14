@@ -1,0 +1,27 @@
+---
+title: default_branch_overrides
+description: Configure which configurations come from the default branch
+---
+
+The `default_branch_overrides` configuration allows you to specify which root keys in the configuration are sourced from the default branch.  By default, the keys `access_control`, `apply_requirements`, and `destination_branches` are all sourced from the default branch.  Only root-level keys may be specified.
+
+## Default Configuration
+```yaml
+default_branch_overrides:
+  - access_control
+  - apply_requirements
+  - destination_branches
+```
+
+## Examples
+### Allow apply requirements to be specified in a feature branch.
+```yaml
+default_branch_overrides:
+  - access_control
+  - destination_branches
+```
+## Considerations
+When setting `default_branch_overrides`:
+
+1. Remember to specify all configuration keys that **must** come from the default branch.
+2. By removing a key from the overrides, it may be defined in any feature branch, so take caution with any keys related to the security of the system.

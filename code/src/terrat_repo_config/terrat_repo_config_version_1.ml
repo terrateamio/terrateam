@@ -150,6 +150,7 @@ type t = {
   config_builder : Terrat_repo_config_config_builder.t option; [@default None]
   cost_estimation : Cost_estimation.t option; [@default None]
   create_and_select_workspace : bool; [@default true]
+  default_branch_overrides : Terrat_repo_config_default_branch_overrides.t option; [@default None]
   default_tf_version : string option; [@default None]
   destination_branches : Destination_branches.t option; [@default None]
   dirs : Dirs.t option; [@default None]

@@ -304,6 +304,12 @@
       "properties": {},
       "type": "object"
     },
+    "default-branch-overrides": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
     "destination-branch-name": {
       "type": "string"
     },
@@ -1230,6 +1236,9 @@
         "create_and_select_workspace": {
           "default": true,
           "type": "boolean"
+        },
+        "default_branch_overrides": {
+          "$ref": "#/definitions/default-branch-overrides"
         },
         "default_tf_version": {
           "$ref": "#/definitions/terraform-version"

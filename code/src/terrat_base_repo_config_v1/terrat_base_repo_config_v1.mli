@@ -325,6 +325,12 @@ module Cost_estimation : sig
   [@@deriving make, show, yojson, eq]
 end
 
+module Default_branch_overrides : sig
+  type t = string list [@@deriving show, yojson, eq]
+
+  val make : unit -> t
+end
+
 module Destination_branches : sig
   module Destination_branch : sig
     type t = {
@@ -686,6 +692,7 @@ module View : sig
     config_builder : Config_builder.t; [@default Config_builder.make ()]
     cost_estimation : Cost_estimation.t; [@default Cost_estimation.make ()]
     create_and_select_workspace : bool; [@default true]
+    default_branch_overrides : Default_branch_overrides.t option; [@default None]
     destination_branches : Destination_branches.t; [@default []]
     dirs : Dirs.t; [@default String_map.empty]
     drift : Drift.t; [@default Drift.make ()]
@@ -792,6 +799,7 @@ val batch_runs : 'a t -> Batch_runs.t
 val config_builder : 'a t -> Config_builder.t
 val cost_estimation : 'a t -> Cost_estimation.t
 val create_and_select_workspace : 'a t -> bool
+val default_branch_overrides : 'a t -> Default_branch_overrides.t
 val destination_branches : 'a t -> Destination_branches.t
 val dirs : 'a t -> Dirs.t
 val drift : 'a t -> Drift.t
