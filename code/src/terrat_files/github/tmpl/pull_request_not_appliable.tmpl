@@ -2,29 +2,41 @@
 
 `apply_requirements` have not passed.
 
-@#checks-@
-## Directory @dir@ : Workspace @workspace@ : @?passed@:thumbsup: Passed@/passed@@!passed@:heavy_multiplication_x: Failed@/passed@
-@?apply_after_merge_enabled-@
-**Apply After Merge**: @?apply_after_merge_check@:thumbsup: Passed@/apply_after_merge_check@@!apply_after_merge_check@:heavy_multiplication_x: Failed@/apply_after_merge_check@
-@/apply_after_merge_enabled-@
-@?approved_enabled-@
-**Approved**: @?approved_check@:thumbsup: Passed@/approved_check@@!approved_check@:heavy_multiplication_x: Failed@/approved_check@
-@/approved_enabled-@
-@?merge_conflicts_enabled-@
-**Merge Conflicts**: @?merge_conflicts_check@:thumbsup: Passed@/merge_conflicts_check@@!merge_conflicts_check@:heavy_multiplication_x: Failed@/merge_conflicts_check@
-@/merge_conflicts_enabled-@
-@?ready_for_review_enabled-@
-**Ready for Review**: @?ready_for_review_check@:thumbsup: Passed@/ready_for_review_check@@!ready_for_review_check@:heavy_multiplication_x: Failed - Pull request still in draft stage.@/ready_for_review_check@
-@/ready_for_review_enabled-@
-@?status_checks_enabled-@
-**Status Checks**: @?status_checks_check@:thumbsup: Passed@/status_checks_check@@!status_checks_check@:heavy_multiplication_x: Failed@/status_checks_check@
-@!status_checks_check-@
+{% for c in checks %}
+## Directory {{ c.dir }} : Workspace {{ c.workspace }} : {% if c.passed %}:thumbsup: Passed{% else %}:heavy_multiplication_x: Failed{% endif %}
+  {% if c.matched_apply_requirement %}
+    {% if c.apply_after_merge_enabled %}
+**Apply After Merge**: {% if c.apply_after_merge_check %}:thumbsup: Passed{% else %}:heavy_multiplication_x: Failed{% endif %}
+    {% endif %}
+    {% if c.approved_enabled %}
+**Approved**: {% if c.approved_check %}:thumbsup: Passed{% else %}:heavy_multiplication_x: Failed{% endif %}
+      {% if c.missing_reviews %}
 
+Missing the following reviews:
+
+        {% for r in c.missing_reviews %}
+- `{{ r }}`
+        {% endfor %}
+      {% endif %}
+    {% endif %}
+    {% if c.merge_conflicts_enabled %}
+**Merge Conflicts**: {% if c.merge_conflicts_check %}:thumbsup: Passed{% else %}:heavy_multiplication_x: Failed{% endif %}
+    {% endif %}
+    {% if c.ready_for_review_enabled %}
+**Ready for Review**: {% if c.ready_for_review_check %}:thumbsup: Passed{% else %}:heavy_multiplication_x: Failed - Pull request still in draft stage.{% endif %}
+    {% endif %}
+    {% if c.status_checks_enabled %}
+**Status Checks**: {% if c.status_checks_check %}:thumbsup: Passed{% else %}:heavy_multiplication_x: Failed{% endif %}
+
+      {% if not c.status_checks_check %}
 The following status checks have not passed. They may still be running or have failed. Terrateam will proceed with the apply only after all status checks are successful.  To disable or ignore specific status checks, see the [apply requirements documentation](https://docs.terrateam.io/configuration-reference/apply-requirements/#checks).
 
-@#status_checks_failed-@
-- @title@
-@/status_checks_failed-@
-@/status_checks_check-@
-@/status_checks_enabled-@
-@/checks-@
+        {% for ch in c.status_checks_failed %}
+- {{ ch.title }}
+        {% endfor %}
+      {% endif %}
+    {% endif %}
+  {% else %}
+No matching apply requirement found.
+  {% endif %}
+{% endfor %}

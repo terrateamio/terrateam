@@ -543,6 +543,7 @@ module Apply_requirements = struct
       any_of : Access_control.Match_list.t; [@default []]
       any_of_count : int; [@default 1]
       enabled : bool; [@default false]
+      require_completed_reviews : bool; [@default false]
     }
     [@@deriving make, show, yojson, eq]
   end
@@ -1244,7 +1245,8 @@ let get_apply_requirements_checks_approved =
   function
   | Ap.Apply_requirements_checks_approved_1 { Ap1.count; enabled } ->
       Ok (Apply_requirements.Approved.make ~any_of_count:count ~enabled ())
-  | Ap.Apply_requirements_checks_approved_2 { Ap2.enabled; all_of; any_of; any_of_count } ->
+  | Ap.Apply_requirements_checks_approved_2
+      { Ap2.enabled; all_of; any_of; any_of_count; require_completed_reviews } ->
       CCResult.map_err
         (function
           | `Match_parse_err err -> `Apply_requirements_approved_all_of_match_parse_err err)
@@ -1255,7 +1257,14 @@ let get_apply_requirements_checks_approved =
           | `Match_parse_err err -> `Apply_requirements_approved_any_of_match_parse_err err)
         (map_opt of_version_1_match_list any_of)
       >>= fun any_of ->
-      Ok (Apply_requirements.Approved.make ~enabled ?all_of ?any_of ~any_of_count ())
+      Ok
+        (Apply_requirements.Approved.make
+           ~enabled
+           ?all_of
+           ?any_of
+           ~any_of_count
+           ~require_completed_reviews
+           ())
 
 let get_apply_requirements_checks_apply_after_merge =
   let module Afm = Terrat_repo_config_apply_requirements_checks_apply_after_merge in
@@ -2430,12 +2439,21 @@ let to_version_1_apply_requirements_apply_after_merge afm =
 
 let to_version_1_apply_requirements_approved approved =
   let module Ap = Terrat_repo_config.Apply_requirements_checks_approved_2 in
-  let { Apply_requirements.Approved.all_of; any_of; any_of_count; enabled } = approved in
+  let {
+    Apply_requirements.Approved.all_of;
+    any_of;
+    any_of_count;
+    enabled;
+    require_completed_reviews;
+  } =
+    approved
+  in
   {
     Ap.all_of = Some (to_version_1_match_list all_of);
     any_of = Some (to_version_1_match_list any_of);
     any_of_count;
     enabled;
+    require_completed_reviews;
   }
 
 let to_version_1_apply_requirements_merge_conflicts mc =

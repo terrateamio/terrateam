@@ -725,6 +725,9 @@ let fetch_pull_request_reviews ~request_id client repo pull_number =
   (* TODO: Implement *)
   Abb.Future.return (Ok [])
 
+let fetch_pull_request_requested_reviews ~request_id repo pull_number client =
+  Abb.Future.return (Ok [])
+
 let merge_pull_request ~request_id client pull_request =
   let module Gl =
     Gitlabc_projects_merge_requests.PutApiV4ProjectsIdMergeRequestsMergeRequestIidMerge
