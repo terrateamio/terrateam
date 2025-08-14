@@ -3568,7 +3568,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         <*> Dv.working_branch_ref ctx state
         <*> Dv.matches ctx state `Plan)
       >>= fun (repo_config, base_ref, branch_ref, working_branch_ref, matches) ->
-      let all_matches = CCList.flatten matches.Dv.Matches.all_matches in
+      let all_matches = CCList.flatten matches.Dv.Matches.all_tag_query_matches in
       Abb.Future.return (dirspaceflows_of_changes_with_branch_target repo_config all_matches)
       >>= fun all_dirspaceflows ->
       store_dirspaceflows
