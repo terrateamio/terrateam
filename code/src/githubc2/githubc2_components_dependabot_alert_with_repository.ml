@@ -62,11 +62,11 @@ type t = {
   auto_dismissed_at : string option; [@default None]
   created_at : string;
   dependency : Dependency_.t;
-  dismissed_at : string option;
-  dismissed_by : Githubc2_components_nullable_simple_user.t option;
-  dismissed_comment : string option;
-  dismissed_reason : Dismissed_reason.t option;
-  fixed_at : string option;
+  dismissed_at : string option; [@default None]
+  dismissed_by : Githubc2_components_nullable_simple_user.t option; [@default None]
+  dismissed_comment : string option; [@default None]
+  dismissed_reason : Dismissed_reason.t option; [@default None]
+  fixed_at : string option; [@default None]
   html_url : string;
   number : int;
   repository : Githubc2_components_simple_repository.t;

@@ -40,8 +40,8 @@ module Primary = struct
       end
 
       type t = {
-        completed_at : string option;
-        conclusion : Conclusion.t option;
+        completed_at : string option; [@default None]
+        conclusion : Conclusion.t option; [@default None]
         details_url : string;
         external_id : string;
         head_sha : string;
@@ -635,18 +635,18 @@ module Primary = struct
           end
 
           type t = {
-            created_at : string option;
-            description : string option;
+            created_at : string option; [@default None]
+            description : string option; [@default None]
             events : Events.t option; [@default None]
-            external_url : string option;
+            external_url : string option; [@default None]
             html_url : string;
-            id : int option;
+            id : int option; [@default None]
             name : string;
             node_id : string;
-            owner : Owner.t option;
+            owner : Owner.t option; [@default None]
             permissions : Permissions.t option; [@default None]
             slug : string option; [@default None]
-            updated_at : string option;
+            updated_at : string option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -656,13 +656,13 @@ module Primary = struct
 
       type t = {
         created_at : string;
-        creator : Creator.t option;
-        description : string option;
+        creator : Creator.t option; [@default None]
+        description : string option; [@default None]
         environment : string;
         id : int;
         node_id : string;
         original_environment : string;
-        payload : Payload.t option;
+        payload : Payload.t option; [@default None]
         performed_via_github_app : Performed_via_github_app.t option; [@default None]
         production_environment : bool option; [@default None]
         ref_ : string; [@key "ref"]
@@ -1229,18 +1229,18 @@ module Primary = struct
           end
 
           type t = {
-            created_at : string option;
-            description : string option;
+            created_at : string option; [@default None]
+            description : string option; [@default None]
             events : Events.t option; [@default None]
-            external_url : string option;
+            external_url : string option; [@default None]
             html_url : string;
-            id : int option;
+            id : int option; [@default None]
             name : string;
             node_id : string;
-            owner : Owner.t option;
+            owner : Owner.t option; [@default None]
             permissions : Permissions.t option; [@default None]
             slug : string option; [@default None]
-            updated_at : string option;
+            updated_at : string option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -1250,7 +1250,7 @@ module Primary = struct
 
       type t = {
         created_at : string;
-        creator : Creator.t option;
+        creator : Creator.t option; [@default None]
         deployment_url : string;
         description : string;
         environment : string;
@@ -1662,13 +1662,13 @@ module Primary = struct
       end
 
       type t = {
-        actor : Actor_.t option;
+        actor : Actor_.t option; [@default None]
         artifacts_url : string option; [@default None]
         cancel_url : string option; [@default None]
         check_suite_id : int;
         check_suite_node_id : string;
         check_suite_url : string option; [@default None]
-        conclusion : Conclusion.t option;
+        conclusion : Conclusion.t option; [@default None]
         created_at : string;
         display_title : string;
         event : string;
@@ -1692,7 +1692,7 @@ module Primary = struct
         run_number : int;
         run_started_at : string;
         status : Status_.t;
-        triggering_actor : Triggering_actor.t option;
+        triggering_actor : Triggering_actor.t option; [@default None]
         updated_at : string;
         url : string;
         workflow_id : int;

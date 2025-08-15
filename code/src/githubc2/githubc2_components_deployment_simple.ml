@@ -1,7 +1,7 @@
 module Primary = struct
   type t = {
     created_at : string;
-    description : string option;
+    description : string option; [@default None]
     environment : string;
     id : int;
     node_id : string;

@@ -136,7 +136,7 @@ module Primary = struct
                 type t = {
                   color : string;
                   default : bool;
-                  description : string option;
+                  description : string option; [@default None]
                   id : int;
                   name : string;
                   node_id : string;
@@ -207,12 +207,12 @@ module Primary = struct
               end
 
               type t = {
-                closed_at : string option;
+                closed_at : string option; [@default None]
                 closed_issues : int;
                 created_at : string;
-                creator : Creator.t option;
-                description : string option;
-                due_on : string option;
+                creator : Creator.t option; [@default None]
+                description : string option; [@default None]
+                due_on : string option; [@default None]
                 html_url : string;
                 id : int;
                 labels_url : string;
@@ -731,18 +731,18 @@ module Primary = struct
               end
 
               type t = {
-                created_at : string option;
-                description : string option;
+                created_at : string option; [@default None]
+                description : string option; [@default None]
                 events : Events.t option; [@default None]
-                external_url : string option;
+                external_url : string option; [@default None]
                 html_url : string;
-                id : int option;
+                id : int option; [@default None]
                 name : string;
                 node_id : string;
-                owner : Owner.t option;
+                owner : Owner.t option; [@default None]
                 permissions : Permissions.t option; [@default None]
                 slug : string option; [@default None]
-                updated_at : string option;
+                updated_at : string option; [@default None]
               }
               [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
@@ -852,12 +852,12 @@ module Primary = struct
           end
 
           type t = {
-            active_lock_reason : Active_lock_reason.t option;
+            active_lock_reason : Active_lock_reason.t option; [@default None]
             assignee : Assignee.t option; [@default None]
             assignees : Assignees.t;
             author_association : Author_association_.t;
-            body : string option;
-            closed_at : string option;
+            body : string option; [@default None]
+            closed_at : string option; [@default None]
             comments : int;
             comments_url : string;
             created_at : string;
@@ -868,7 +868,7 @@ module Primary = struct
             labels : Labels.t option; [@default None]
             labels_url : string;
             locked : bool option; [@default None]
-            milestone : Milestone_.t option;
+            milestone : Milestone_.t option; [@default None]
             node_id : string;
             number : int;
             performed_via_github_app : Performed_via_github_app.t option; [@default None]
@@ -882,7 +882,7 @@ module Primary = struct
             title : string;
             updated_at : string;
             url : string;
-            user : User.t option;
+            user : User.t option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -930,7 +930,7 @@ module Primary = struct
                 name : string;
                 node_id : string;
                 spdx_id : string;
-                url : string option;
+                url : string option; [@default None]
               }
               [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
@@ -1062,7 +1062,7 @@ module Primary = struct
             default_branch : string;
             delete_branch_on_merge : bool; [@default false]
             deployments_url : string;
-            description : string option;
+            description : string option; [@default None]
             disabled : bool option; [@default None]
             downloads_url : string;
             events_url : string;
@@ -1081,7 +1081,7 @@ module Primary = struct
             has_pages : bool;
             has_projects : bool; [@default true]
             has_wiki : bool; [@default true]
-            homepage : string option;
+            homepage : string option; [@default None]
             hooks_url : string;
             html_url : string;
             id : int64;
@@ -1091,25 +1091,25 @@ module Primary = struct
             issues_url : string;
             keys_url : string;
             labels_url : string;
-            language : string option;
+            language : string option; [@default None]
             languages_url : string;
-            license : License_.t option;
+            license : License_.t option; [@default None]
             master_branch : string option; [@default None]
             merges_url : string;
             milestones_url : string;
-            mirror_url : string option;
+            mirror_url : string option; [@default None]
             name : string;
             node_id : string;
             notifications_url : string;
             open_issues : int;
             open_issues_count : int;
             organization : string option; [@default None]
-            owner : Owner.t option;
+            owner : Owner.t option; [@default None]
             permissions : Permissions.t option; [@default None]
             private_ : bool; [@key "private"]
             public : bool option; [@default None]
             pulls_url : string;
-            pushed_at : Pushed_at.t option;
+            pushed_at : Pushed_at.t option; [@default None]
             releases_url : string;
             role_name : string option; [@default None]
             size : int;
@@ -1139,7 +1139,7 @@ module Primary = struct
       end
 
       type t = {
-        old_issue : Old_issue.t option;
+        old_issue : Old_issue.t option; [@default None]
         old_repository : Old_repository.t;
       }
       [@@deriving yojson { strict = false; meta = true }, show, eq]
@@ -1274,7 +1274,7 @@ module Primary = struct
             type t = {
               color : string;
               default : bool;
-              description : string option;
+              description : string option; [@default None]
               id : int;
               name : string;
               node_id : string;
@@ -1346,12 +1346,12 @@ module Primary = struct
           end
 
           type t = {
-            closed_at : string option;
+            closed_at : string option; [@default None]
             closed_issues : int;
             created_at : string;
-            creator : Creator.t option;
-            description : string option;
-            due_on : string option;
+            creator : Creator.t option; [@default None]
+            description : string option; [@default None]
+            due_on : string option; [@default None]
             html_url : string;
             id : int;
             labels_url : string;
@@ -1872,18 +1872,18 @@ module Primary = struct
           end
 
           type t = {
-            created_at : string option;
-            description : string option;
+            created_at : string option; [@default None]
+            description : string option; [@default None]
             events : Events.t option; [@default None]
-            external_url : string option;
+            external_url : string option; [@default None]
             html_url : string;
-            id : int option;
+            id : int option; [@default None]
             name : string;
             node_id : string;
-            owner : Owner.t option;
+            owner : Owner.t option; [@default None]
             permissions : Permissions.t option; [@default None]
             slug : string option; [@default None]
-            updated_at : string option;
+            updated_at : string option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -1993,12 +1993,12 @@ module Primary = struct
       end
 
       type t = {
-        active_lock_reason : Active_lock_reason.t option;
+        active_lock_reason : Active_lock_reason.t option; [@default None]
         assignee : Assignee.t option; [@default None]
         assignees : Assignees.t;
         author_association : Author_association_.t;
-        body : string option;
-        closed_at : string option;
+        body : string option; [@default None]
+        closed_at : string option; [@default None]
         comments : int;
         comments_url : string;
         created_at : string;
@@ -2009,7 +2009,7 @@ module Primary = struct
         labels : Labels.t option; [@default None]
         labels_url : string;
         locked : bool option; [@default None]
-        milestone : Milestone_.t option;
+        milestone : Milestone_.t option; [@default None]
         node_id : string;
         number : int;
         performed_via_github_app : Performed_via_github_app.t option; [@default None]
@@ -2024,7 +2024,7 @@ module Primary = struct
         type_ : Githubc2_components_issue_type.t option; [@default None] [@key "type"]
         updated_at : string;
         url : string;
-        user : User.t option;
+        user : User.t option; [@default None]
       }
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end

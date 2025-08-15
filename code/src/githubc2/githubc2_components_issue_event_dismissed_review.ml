@@ -1,7 +1,7 @@
 module Primary = struct
   type t = {
     dismissal_commit_id : string option; [@default None]
-    dismissal_message : string option;
+    dismissal_message : string option; [@default None]
     review_id : int;
     state : string;
   }

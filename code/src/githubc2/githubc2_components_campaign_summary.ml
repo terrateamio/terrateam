@@ -21,7 +21,7 @@ module Primary = struct
   type t = {
     alert_stats : Alert_stats.t option; [@default None]
     closed_at : string option; [@default None]
-    contact_link : string option;
+    contact_link : string option; [@default None]
     created_at : string;
     description : string;
     ends_at : string;

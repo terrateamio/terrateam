@@ -15,7 +15,7 @@ module Primary = struct
 
   type t = {
     id : string;
-    last_read_at : string option;
+    last_read_at : string option; [@default None]
     reason : string;
     repository : Githubc2_components_minimal_repository.t;
     subject : Subject.t;

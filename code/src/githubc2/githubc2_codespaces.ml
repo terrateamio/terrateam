@@ -1534,7 +1534,7 @@ module Pre_flight_with_repo_for_authenticated_user = struct
         module Defaults = struct
           module Primary = struct
             type t = {
-              devcontainer_path : string option;
+              devcontainer_path : string option; [@default None]
               location : string;
             }
             [@@deriving yojson { strict = false; meta = true }, show, eq]

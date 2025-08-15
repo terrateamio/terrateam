@@ -18,7 +18,7 @@ module Primary = struct
   type t = {
     color : Color.t option; [@default None]
     created_at : string option; [@default None]
-    description : string option;
+    description : string option; [@default None]
     id : int;
     is_enabled : bool option; [@default None]
     name : string;

@@ -51,7 +51,7 @@ module Issue_ = struct
       end
 
       type t = {
-        active_lock_reason : string option;
+        active_lock_reason : string option; [@default None]
         assignee : Terrat_github_webhooks_user.t option; [@default None]
         assignees : Assignees.t option; [@default None]
         author_association : string;
@@ -122,7 +122,7 @@ module Issue_ = struct
       end
 
       type t = {
-        active_lock_reason : string option;
+        active_lock_reason : string option; [@default None]
         assignee : Terrat_github_webhooks_user.t option; [@default None]
         assignees : Assignees.t option; [@default None]
         author_association : string;

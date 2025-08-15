@@ -59,7 +59,7 @@ module Primary = struct
           created_at : string;
           download_count : int;
           id : int;
-          label : string option;
+          label : string option; [@default None]
           name : string;
           node_id : string;
           size : int;
@@ -143,24 +143,24 @@ module Primary = struct
   type t = {
     assets : Assets.t;
     assets_url : string;
-    author : Author.t option;
-    body : string option;
-    created_at : string option;
+    author : Author.t option; [@default None]
+    body : string option; [@default None]
+    created_at : string option; [@default None]
     discussion_url : string option; [@default None]
     draft : bool;
     html_url : string;
     id : int;
-    name : string option;
+    name : string option; [@default None]
     node_id : string;
     prerelease : bool;
-    published_at : string option;
+    published_at : string option; [@default None]
     reactions : Reactions.t option; [@default None]
     tag_name : string;
-    tarball_url : string option;
+    tarball_url : string option; [@default None]
     target_commitish : string;
     upload_url : string;
     url : string;
-    zipball_url : string option;
+    zipball_url : string option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

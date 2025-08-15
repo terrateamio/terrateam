@@ -172,10 +172,10 @@ module Primary = struct
   end
 
   type t = {
-    active_lock_reason : string option;
-    answer_chosen_at : string option;
-    answer_chosen_by : Answer_chosen_by.t option;
-    answer_html_url : string option;
+    active_lock_reason : string option; [@default None]
+    answer_chosen_at : string option; [@default None]
+    answer_chosen_by : Answer_chosen_by.t option; [@default None]
+    answer_html_url : string option; [@default None]
     author_association : Author_association_.t;
     body : string;
     category : Category.t;
@@ -190,11 +190,11 @@ module Primary = struct
     reactions : Reactions.t option; [@default None]
     repository_url : string;
     state : State.t;
-    state_reason : State_reason.t option;
+    state_reason : State_reason.t option; [@default None]
     timeline_url : string option; [@default None]
     title : string;
     updated_at : string;
-    user : User.t option;
+    user : User.t option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

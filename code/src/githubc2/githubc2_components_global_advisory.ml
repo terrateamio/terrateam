@@ -17,8 +17,8 @@ end
 module Cvss = struct
   module Primary = struct
     type t = {
-      score : float option;
-      vector_string : string option;
+      score : float option; [@default None]
+      vector_string : string option; [@default None]
     }
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
@@ -102,28 +102,28 @@ module Vulnerabilities = struct
 end
 
 type t = {
-  credits : Credits.t option;
-  cve_id : string option;
-  cvss : Cvss.t option;
+  credits : Credits.t option; [@default None]
+  cve_id : string option; [@default None]
+  cvss : Cvss.t option; [@default None]
   cvss_severities : Githubc2_components_cvss_severities.t option; [@default None]
-  cwes : Cwes.t option;
-  description : string option;
+  cwes : Cwes.t option; [@default None]
+  description : string option; [@default None]
   epss : Githubc2_components_security_advisory_epss.t option; [@default None]
   ghsa_id : string;
-  github_reviewed_at : string option;
+  github_reviewed_at : string option; [@default None]
   html_url : string;
-  identifiers : Identifiers.t option;
-  nvd_published_at : string option;
+  identifiers : Identifiers.t option; [@default None]
+  nvd_published_at : string option; [@default None]
   published_at : string;
-  references : References.t option;
-  repository_advisory_url : string option;
+  references : References.t option; [@default None]
+  repository_advisory_url : string option; [@default None]
   severity : Severity.t;
-  source_code_location : string option;
+  source_code_location : string option; [@default None]
   summary : string;
   type_ : Type.t; [@key "type"]
   updated_at : string;
   url : string;
-  vulnerabilities : Vulnerabilities.t option;
-  withdrawn_at : string option;
+  vulnerabilities : Vulnerabilities.t option; [@default None]
+  withdrawn_at : string option; [@default None]
 }
 [@@deriving yojson { strict = false; meta = true }, show, eq]

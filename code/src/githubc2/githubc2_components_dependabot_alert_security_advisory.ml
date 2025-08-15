@@ -1,7 +1,7 @@
 module Cvss = struct
   type t = {
     score : float;
-    vector_string : string option;
+    vector_string : string option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
@@ -66,7 +66,7 @@ module Vulnerabilities = struct
 end
 
 type t = {
-  cve_id : string option;
+  cve_id : string option; [@default None]
   cvss : Cvss.t;
   cvss_severities : Githubc2_components_cvss_severities.t option; [@default None]
   cwes : Cwes.t;
@@ -80,6 +80,6 @@ type t = {
   summary : string;
   updated_at : string;
   vulnerabilities : Vulnerabilities.t;
-  withdrawn_at : string option;
+  withdrawn_at : string option; [@default None]
 }
 [@@deriving yojson { strict = false; meta = true }, show, eq]

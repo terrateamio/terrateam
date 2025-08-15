@@ -20,7 +20,7 @@ module Primary = struct
 
       module Description = struct
         module Primary = struct
-          type t = { from : string option }
+          type t = { from : string option [@default None] }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
@@ -29,7 +29,7 @@ module Primary = struct
 
       module Homepage = struct
         module Primary = struct
-          type t = { from : string option }
+          type t = { from : string option [@default None] }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 

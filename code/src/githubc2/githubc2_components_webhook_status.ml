@@ -5,8 +5,8 @@ module Primary = struct
         module Commit_ = struct
           module Primary = struct
             type t = {
-              sha : string option;
-              url : string option;
+              sha : string option; [@default None]
+              url : string option; [@default None]
             }
             [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
@@ -79,7 +79,7 @@ module Primary = struct
               module Primary = struct
                 type t = {
                   date : string;
-                  email : string option;
+                  email : string option; [@default None]
                   name : string;
                   username : string option; [@default None]
                 }
@@ -93,7 +93,7 @@ module Primary = struct
               module Primary = struct
                 type t = {
                   date : string;
-                  email : string option;
+                  email : string option; [@default None]
                   name : string;
                   username : string option; [@default None]
                 }
@@ -115,7 +115,7 @@ module Primary = struct
               module Primary = struct
                 type t = {
                   date : string;
-                  email : string option;
+                  email : string option; [@default None]
                   name : string;
                   username : string option; [@default None]
                 }
@@ -129,7 +129,7 @@ module Primary = struct
               module Primary = struct
                 type t = {
                   date : string;
-                  email : string option;
+                  email : string option; [@default None]
                   name : string;
                   username : string option; [@default None]
                 }
@@ -184,11 +184,11 @@ module Primary = struct
               end
 
               type t = {
-                payload : string option;
+                payload : string option; [@default None]
                 reason : Reason.t;
-                signature : string option;
+                signature : string option; [@default None]
                 verified : bool;
-                verified_at : string option;
+                verified_at : string option; [@default None]
               }
               [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
@@ -271,10 +271,10 @@ module Primary = struct
       end
 
       type t = {
-        author : Author.t option;
+        author : Author.t option; [@default None]
         comments_url : string;
         commit : Commit_.t;
-        committer : Committer.t option;
+        committer : Committer.t option; [@default None]
         html_url : string;
         node_id : string;
         parents : Parents.t;
@@ -305,7 +305,7 @@ module Primary = struct
     commit : Commit_.t;
     context : string;
     created_at : string;
-    description : string option;
+    description : string option; [@default None]
     enterprise : Githubc2_components_enterprise_webhooks.t option; [@default None]
     id : int;
     installation : Githubc2_components_simple_installation.t option; [@default None]
@@ -315,7 +315,7 @@ module Primary = struct
     sender : Githubc2_components_simple_user.t;
     sha : string;
     state : State.t;
-    target_url : string option;
+    target_url : string option; [@default None]
     updated_at : string;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]

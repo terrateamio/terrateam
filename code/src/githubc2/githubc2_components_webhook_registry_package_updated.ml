@@ -218,7 +218,7 @@ module Primary = struct
 
       type t = {
         created_at : string;
-        description : Description.t option;
+        description : Description.t option; [@default None]
         ecosystem : string;
         html_url : string;
         id : int;
@@ -227,7 +227,7 @@ module Primary = struct
         owner : Owner.t;
         package_type : string;
         package_version : Package_version_.t;
-        registry : Registry.t option;
+        registry : Registry.t option; [@default None]
         updated_at : string;
       }
       [@@deriving yojson { strict = false; meta = true }, show, eq]

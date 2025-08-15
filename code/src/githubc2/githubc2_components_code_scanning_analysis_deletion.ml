@@ -1,7 +1,7 @@
 module Primary = struct
   type t = {
-    confirm_delete_url : string option;
-    next_analysis_url : string option;
+    confirm_delete_url : string option; [@default None]
+    next_analysis_url : string option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

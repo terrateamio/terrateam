@@ -2,7 +2,7 @@ module Primary = struct
   type t = {
     created_at : string;
     ignored : bool;
-    reason : string option;
+    reason : string option; [@default None]
     repository_url : string;
     subscribed : bool;
     url : string;

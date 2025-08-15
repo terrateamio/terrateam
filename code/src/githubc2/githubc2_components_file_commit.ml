@@ -124,7 +124,7 @@ module Primary = struct
 
   type t = {
     commit : Commit_.t;
-    content : Content.t option;
+    content : Content.t option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

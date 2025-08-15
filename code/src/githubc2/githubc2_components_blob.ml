@@ -5,7 +5,7 @@ module Primary = struct
     highlighted_content : string option; [@default None]
     node_id : string;
     sha : string;
-    size : int option;
+    size : int option; [@default None]
     url : string;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]

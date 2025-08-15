@@ -38,7 +38,7 @@ module Primary = struct
 
   type t = {
     access_tokens_url : string;
-    account : Account.t option;
+    account : Account.t option; [@default None]
     app_id : int;
     app_slug : string;
     contact_email : string option; [@default None]
@@ -50,10 +50,10 @@ module Primary = struct
     permissions : Githubc2_components_app_permissions.t;
     repositories_url : string;
     repository_selection : Repository_selection.t;
-    single_file_name : string option;
+    single_file_name : string option; [@default None]
     single_file_paths : Single_file_paths.t option; [@default None]
-    suspended_at : string option;
-    suspended_by : Githubc2_components_nullable_simple_user.t option;
+    suspended_at : string option; [@default None]
+    suspended_by : Githubc2_components_nullable_simple_user.t option; [@default None]
     target_id : int;
     target_type : string;
     updated_at : string;

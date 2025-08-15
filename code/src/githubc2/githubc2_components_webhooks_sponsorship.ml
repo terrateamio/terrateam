@@ -138,8 +138,8 @@ module Primary = struct
     maintainer : Maintainer.t option; [@default None]
     node_id : string;
     privacy_level : string;
-    sponsor : Sponsor.t option;
-    sponsorable : Sponsorable.t option;
+    sponsor : Sponsor.t option; [@default None]
+    sponsorable : Sponsorable.t option; [@default None]
     tier : Tier.t;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]

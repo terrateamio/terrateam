@@ -409,13 +409,13 @@ module Primary = struct
       end
 
       type t = {
-        actor : Actor_.t option;
+        actor : Actor_.t option; [@default None]
         artifacts_url : string option; [@default None]
         cancel_url : string option; [@default None]
         check_suite_id : int;
         check_suite_node_id : string;
         check_suite_url : string option; [@default None]
-        conclusion : Conclusion.t option;
+        conclusion : Conclusion.t option; [@default None]
         created_at : string;
         display_title : string;
         event : string;
@@ -439,7 +439,7 @@ module Primary = struct
         run_number : int;
         run_started_at : string;
         status : Status_.t;
-        triggering_actor : Triggering_actor.t option;
+        triggering_actor : Triggering_actor.t option; [@default None]
         updated_at : string;
         url : string;
         workflow_id : int;
@@ -464,7 +464,7 @@ module Primary = struct
     since : string;
     workflow_job_run : Githubc2_components_webhooks_workflow_job_run.t option; [@default None]
     workflow_job_runs : Workflow_job_runs.t option; [@default None]
-    workflow_run : Workflow_run_.t option;
+    workflow_run : Workflow_run_.t option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

@@ -152,7 +152,7 @@ module Primary = struct
             help_uri : string option; [@default None]
             id : string;
             name : string option; [@default None]
-            severity : Severity.t option;
+            severity : Severity.t option; [@default None]
             tags : Tags.t option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
@@ -175,7 +175,7 @@ module Primary = struct
           type t = {
             guid : string option; [@default None]
             name : string;
-            version : string option;
+            version : string option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -185,17 +185,17 @@ module Primary = struct
 
       type t = {
         created_at : string;
-        dismissed_at : string option;
-        dismissed_by : Dismissed_by.t option;
+        dismissed_at : string option; [@default None]
+        dismissed_by : Dismissed_by.t option; [@default None]
         dismissed_comment : string option; [@default None]
-        dismissed_reason : Dismissed_reason.t option;
+        dismissed_reason : Dismissed_reason.t option; [@default None]
         fixed_at : Fixed_at.t option; [@default None]
         html_url : string;
         instances_url : string option; [@default None]
         most_recent_instance : Most_recent_instance.t option; [@default None]
         number : int;
         rule : Rule.t;
-        state : State.t option;
+        state : State.t option; [@default None]
         tool : Tool.t;
         url : string;
       }

@@ -17,17 +17,17 @@ module Primary = struct
     html_url : string;
     id : int;
     mentions_count : int option; [@default None]
-    name : string option;
+    name : string option; [@default None]
     node_id : string;
     prerelease : bool;
-    published_at : string option;
+    published_at : string option; [@default None]
     reactions : Githubc2_components_reaction_rollup.t option; [@default None]
     tag_name : string;
-    tarball_url : string option;
+    tarball_url : string option; [@default None]
     target_commitish : string;
     upload_url : string;
     url : string;
-    zipball_url : string option;
+    zipball_url : string option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

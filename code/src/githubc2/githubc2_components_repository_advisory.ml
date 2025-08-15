@@ -8,7 +8,7 @@ module Author = struct
         followers_url : string;
         following_url : string;
         gists_url : string;
-        gravatar_id : string option;
+        gravatar_id : string option; [@default None]
         html_url : string;
         id : int64;
         login : string;
@@ -40,7 +40,7 @@ module Author = struct
         followers_url : string;
         following_url : string;
         gists_url : string;
-        gravatar_id : string option;
+        gravatar_id : string option; [@default None]
         html_url : string;
         id : int64;
         login : string;
@@ -105,8 +105,8 @@ end
 module Cvss = struct
   module Primary = struct
     type t = {
-      score : float option;
-      vector_string : string option;
+      score : float option; [@default None]
+      vector_string : string option; [@default None]
     }
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
@@ -175,7 +175,7 @@ module Private_fork = struct
         contents_url : string;
         contributors_url : string;
         deployments_url : string;
-        description : string option;
+        description : string option; [@default None]
         downloads_url : string;
         events_url : string;
         fork : bool;
@@ -231,7 +231,7 @@ module Private_fork = struct
         contents_url : string;
         contributors_url : string;
         deployments_url : string;
-        description : string option;
+        description : string option; [@default None]
         downloads_url : string;
         events_url : string;
         fork : bool;
@@ -290,7 +290,7 @@ module Publisher = struct
         followers_url : string;
         following_url : string;
         gists_url : string;
-        gravatar_id : string option;
+        gravatar_id : string option; [@default None]
         html_url : string;
         id : int64;
         login : string;
@@ -322,7 +322,7 @@ module Publisher = struct
         followers_url : string;
         following_url : string;
         gists_url : string;
-        gravatar_id : string option;
+        gravatar_id : string option; [@default None]
         html_url : string;
         id : int64;
         login : string;
@@ -391,32 +391,32 @@ module Vulnerabilities = struct
 end
 
 type t = {
-  author : Author.t option;
-  closed_at : string option;
-  collaborating_teams : Collaborating_teams.t option;
-  collaborating_users : Collaborating_users.t option;
-  created_at : string option;
-  credits : Credits.t option;
-  credits_detailed : Credits_detailed.t option;
-  cve_id : string option;
-  cvss : Cvss.t option;
+  author : Author.t option; [@default None]
+  closed_at : string option; [@default None]
+  collaborating_teams : Collaborating_teams.t option; [@default None]
+  collaborating_users : Collaborating_users.t option; [@default None]
+  created_at : string option; [@default None]
+  credits : Credits.t option; [@default None]
+  credits_detailed : Credits_detailed.t option; [@default None]
+  cve_id : string option; [@default None]
+  cvss : Cvss.t option; [@default None]
   cvss_severities : Githubc2_components_cvss_severities.t option; [@default None]
-  cwe_ids : Cwe_ids.t option;
-  cwes : Cwes.t option;
-  description : string option;
+  cwe_ids : Cwe_ids.t option; [@default None]
+  cwes : Cwes.t option; [@default None]
+  description : string option; [@default None]
   ghsa_id : string;
   html_url : string;
   identifiers : Identifiers.t;
-  private_fork : Private_fork.t option;
-  published_at : string option;
-  publisher : Publisher.t option;
-  severity : Severity.t option;
+  private_fork : Private_fork.t option; [@default None]
+  published_at : string option; [@default None]
+  publisher : Publisher.t option; [@default None]
+  severity : Severity.t option; [@default None]
   state : State.t;
-  submission : Submission.t option;
+  submission : Submission.t option; [@default None]
   summary : string;
-  updated_at : string option;
+  updated_at : string option; [@default None]
   url : string;
-  vulnerabilities : Vulnerabilities.t option;
-  withdrawn_at : string option;
+  vulnerabilities : Vulnerabilities.t option; [@default None]
+  withdrawn_at : string option; [@default None]
 }
 [@@deriving yojson { strict = false; meta = true }, show, eq]

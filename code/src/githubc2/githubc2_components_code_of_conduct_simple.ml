@@ -1,6 +1,6 @@
 module Primary = struct
   type t = {
-    html_url : string option;
+    html_url : string option; [@default None]
     key : string;
     name : string;
     url : string;

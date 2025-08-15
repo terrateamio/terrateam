@@ -47,7 +47,7 @@ module Primary = struct
     role : string;
     state : string;
     url : string;
-    user : User.t option;
+    user : User.t option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
