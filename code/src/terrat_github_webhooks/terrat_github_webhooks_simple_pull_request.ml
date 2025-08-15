@@ -84,14 +84,14 @@ end
 
 type t = {
   links_ : Links_.t; [@key "_links"]
-  active_lock_reason : string option;
+  active_lock_reason : string option; [@default None]
   assignee : Terrat_github_webhooks_user.t option; [@default None]
   assignees : Assignees.t;
   author_association : string;
   auto_merge : Terrat_github_webhooks_auto_merge.t option; [@default None]
   base : Base.t;
   body : string;
-  closed_at : string option;
+  closed_at : string option; [@default None]
   comments_url : string;
   commits_url : string;
   created_at : string;
@@ -103,8 +103,8 @@ type t = {
   issue_url : string;
   labels : Labels.t;
   locked : bool;
-  merge_commit_sha : string option;
-  merged_at : string option;
+  merge_commit_sha : string option; [@default None]
+  merged_at : string option; [@default None]
   milestone : Terrat_github_webhooks_milestone.t option; [@default None]
   node_id : string;
   number : int;

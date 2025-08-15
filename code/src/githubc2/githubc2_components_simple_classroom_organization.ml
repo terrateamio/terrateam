@@ -4,7 +4,7 @@ module Primary = struct
     html_url : string;
     id : int;
     login : string;
-    name : string option;
+    name : string option; [@default None]
     node_id : string;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]

@@ -1,14 +1,14 @@
 module Primary = struct
   type t = {
     created_at : string;
-    email : string option;
+    email : string option; [@default None]
     failed_at : string option; [@default None]
     failed_reason : string option; [@default None]
     id : int64;
     invitation_source : string option; [@default None]
     invitation_teams_url : string;
     inviter : Githubc2_components_simple_user.t;
-    login : string option;
+    login : string option; [@default None]
     node_id : string;
     role : string;
     team_count : int;

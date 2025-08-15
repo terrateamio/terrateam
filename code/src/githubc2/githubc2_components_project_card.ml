@@ -5,10 +5,10 @@ module Primary = struct
     column_url : string;
     content_url : string option; [@default None]
     created_at : string;
-    creator : Githubc2_components_nullable_simple_user.t option;
+    creator : Githubc2_components_nullable_simple_user.t option; [@default None]
     id : int64;
     node_id : string;
-    note : string option;
+    note : string option; [@default None]
     project_id : string option; [@default None]
     project_url : string;
     updated_at : string;

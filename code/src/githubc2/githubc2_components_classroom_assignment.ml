@@ -12,15 +12,15 @@ module Primary = struct
   type t = {
     accepted : int;
     classroom : Githubc2_components_classroom.t;
-    deadline : string option;
+    deadline : string option; [@default None]
     editor : string;
     feedback_pull_requests_enabled : bool;
     id : int;
     invitations_enabled : bool;
     invite_link : string;
     language : string;
-    max_members : int option;
-    max_teams : int option;
+    max_members : int option; [@default None]
+    max_teams : int option; [@default None]
     passing : int;
     public_repo : bool;
     slug : string;

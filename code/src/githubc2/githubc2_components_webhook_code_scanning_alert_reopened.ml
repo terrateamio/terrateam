@@ -102,7 +102,7 @@ module Primary = struct
             help_uri : string option; [@default None]
             id : string;
             name : string option; [@default None]
-            severity : Severity.t option;
+            severity : Severity.t option; [@default None]
             tags : Tags.t option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
@@ -127,7 +127,7 @@ module Primary = struct
           type t = {
             guid : string option; [@default None]
             name : string;
-            version : string option;
+            version : string option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -137,16 +137,16 @@ module Primary = struct
 
       type t = {
         created_at : string;
-        dismissed_at : string option;
-        dismissed_by : Dismissed_by.t option;
+        dismissed_at : string option; [@default None]
+        dismissed_by : Dismissed_by.t option; [@default None]
         dismissed_comment : string option; [@default None]
-        dismissed_reason : string option;
+        dismissed_reason : string option; [@default None]
         fixed_at : Fixed_at.t option; [@default None]
         html_url : string;
         most_recent_instance : Most_recent_instance.t option; [@default None]
         number : int;
         rule : Rule.t;
-        state : State.t option;
+        state : State.t option; [@default None]
         tool : Tool.t;
         url : string;
       }
@@ -158,12 +158,12 @@ module Primary = struct
 
   type t = {
     action : Action.t;
-    alert : Alert.t option;
-    commit_oid : string option;
+    alert : Alert.t option; [@default None]
+    commit_oid : string option; [@default None]
     enterprise : Githubc2_components_enterprise_webhooks.t option; [@default None]
     installation : Githubc2_components_simple_installation.t option; [@default None]
     organization : Githubc2_components_organization_simple_webhooks.t option; [@default None]
-    ref_ : string option; [@key "ref"]
+    ref_ : string option; [@default None] [@key "ref"]
     repository : Githubc2_components_repository_webhooks.t;
     sender : Githubc2_components_simple_user.t;
   }

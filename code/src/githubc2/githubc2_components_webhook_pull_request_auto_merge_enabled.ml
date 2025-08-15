@@ -274,9 +274,9 @@ module Primary = struct
           end
 
           type t = {
-            commit_message : string option;
-            commit_title : string option;
-            enabled_by : Enabled_by.t option;
+            commit_message : string option; [@default None]
+            commit_title : string option; [@default None]
+            enabled_by : Enabled_by.t option; [@default None]
             merge_method : Merge_method.t;
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
@@ -323,7 +323,7 @@ module Primary = struct
                     name : string;
                     node_id : string;
                     spdx_id : string;
-                    url : string option;
+                    url : string option; [@default None]
                   }
                   [@@deriving yojson { strict = false; meta = true }, show, eq]
                 end
@@ -497,7 +497,7 @@ module Primary = struct
                 default_branch : string;
                 delete_branch_on_merge : bool; [@default false]
                 deployments_url : string;
-                description : string option;
+                description : string option; [@default None]
                 disabled : bool option; [@default None]
                 downloads_url : string;
                 events_url : string;
@@ -516,7 +516,7 @@ module Primary = struct
                 has_pages : bool;
                 has_projects : bool; [@default true]
                 has_wiki : bool; [@default true]
-                homepage : string option;
+                homepage : string option; [@default None]
                 hooks_url : string;
                 html_url : string;
                 id : int64;
@@ -526,27 +526,27 @@ module Primary = struct
                 issues_url : string;
                 keys_url : string;
                 labels_url : string;
-                language : string option;
+                language : string option; [@default None]
                 languages_url : string;
-                license : License_.t option;
+                license : License_.t option; [@default None]
                 master_branch : string option; [@default None]
                 merge_commit_message : Merge_commit_message.t option; [@default None]
                 merge_commit_title : Merge_commit_title.t option; [@default None]
                 merges_url : string;
                 milestones_url : string;
-                mirror_url : string option;
+                mirror_url : string option; [@default None]
                 name : string;
                 node_id : string;
                 notifications_url : string;
                 open_issues : int;
                 open_issues_count : int;
                 organization : string option; [@default None]
-                owner : Owner.t option;
+                owner : Owner.t option; [@default None]
                 permissions : Permissions.t option; [@default None]
                 private_ : bool; [@key "private"]
                 public : bool option; [@default None]
                 pulls_url : string;
-                pushed_at : Pushed_at.t option;
+                pushed_at : Pushed_at.t option; [@default None]
                 releases_url : string;
                 role_name : string option; [@default None]
                 size : int;
@@ -626,7 +626,7 @@ module Primary = struct
             ref_ : string; [@key "ref"]
             repo : Repo.t;
             sha : string;
-            user : User.t option;
+            user : User.t option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -672,7 +672,7 @@ module Primary = struct
                     name : string;
                     node_id : string;
                     spdx_id : string;
-                    url : string option;
+                    url : string option; [@default None]
                   }
                   [@@deriving yojson { strict = false; meta = true }, show, eq]
                 end
@@ -846,7 +846,7 @@ module Primary = struct
                 default_branch : string;
                 delete_branch_on_merge : bool; [@default false]
                 deployments_url : string;
-                description : string option;
+                description : string option; [@default None]
                 disabled : bool option; [@default None]
                 downloads_url : string;
                 events_url : string;
@@ -865,7 +865,7 @@ module Primary = struct
                 has_pages : bool;
                 has_projects : bool; [@default true]
                 has_wiki : bool; [@default true]
-                homepage : string option;
+                homepage : string option; [@default None]
                 hooks_url : string;
                 html_url : string;
                 id : int;
@@ -875,27 +875,27 @@ module Primary = struct
                 issues_url : string;
                 keys_url : string;
                 labels_url : string;
-                language : string option;
+                language : string option; [@default None]
                 languages_url : string;
-                license : License_.t option;
+                license : License_.t option; [@default None]
                 master_branch : string option; [@default None]
                 merge_commit_message : Merge_commit_message.t option; [@default None]
                 merge_commit_title : Merge_commit_title.t option; [@default None]
                 merges_url : string;
                 milestones_url : string;
-                mirror_url : string option;
+                mirror_url : string option; [@default None]
                 name : string;
                 node_id : string;
                 notifications_url : string;
                 open_issues : int;
                 open_issues_count : int;
                 organization : string option; [@default None]
-                owner : Owner.t option;
+                owner : Owner.t option; [@default None]
                 permissions : Permissions.t option; [@default None]
                 private_ : bool; [@key "private"]
                 public : bool option; [@default None]
                 pulls_url : string;
-                pushed_at : Pushed_at.t option;
+                pushed_at : Pushed_at.t option; [@default None]
                 releases_url : string;
                 role_name : string option; [@default None]
                 size : int;
@@ -975,7 +975,7 @@ module Primary = struct
             ref_ : string; [@key "ref"]
             repo : Repo.t;
             sha : string;
-            user : User.t option;
+            user : User.t option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -989,7 +989,7 @@ module Primary = struct
             type t = {
               color : string;
               default : bool;
-              description : string option;
+              description : string option; [@default None]
               id : int;
               name : string;
               node_id : string;
@@ -1104,12 +1104,12 @@ module Primary = struct
           end
 
           type t = {
-            closed_at : string option;
+            closed_at : string option; [@default None]
             closed_issues : int;
             created_at : string;
-            creator : Creator.t option;
-            description : string option;
-            due_on : string option;
+            creator : Creator.t option; [@default None]
+            description : string option; [@default None]
+            due_on : string option; [@default None]
             html_url : string;
             id : int;
             labels_url : string;
@@ -1189,7 +1189,7 @@ module Primary = struct
                   end
 
                   type t = {
-                    description : string option;
+                    description : string option; [@default None]
                     html_url : string;
                     id : int;
                     members_url : string;
@@ -1220,7 +1220,7 @@ module Primary = struct
 
               type t = {
                 deleted : bool option; [@default None]
-                description : string option;
+                description : string option; [@default None]
                 html_url : string;
                 id : int;
                 members_url : string;
@@ -1277,7 +1277,7 @@ module Primary = struct
                 end
 
                 type t = {
-                  description : string option;
+                  description : string option; [@default None]
                   html_url : string;
                   id : int;
                   members_url : string;
@@ -1386,16 +1386,16 @@ module Primary = struct
 
       type t = {
         links_ : Links_.t; [@key "_links"]
-        active_lock_reason : Active_lock_reason.t option;
+        active_lock_reason : Active_lock_reason.t option; [@default None]
         additions : int option; [@default None]
-        assignee : Assignee.t option;
+        assignee : Assignee.t option; [@default None]
         assignees : Assignees.t;
         author_association : Author_association_.t;
-        auto_merge : Auto_merge_.t option;
+        auto_merge : Auto_merge_.t option; [@default None]
         base : Base.t;
-        body : string option;
+        body : string option; [@default None]
         changed_files : int option; [@default None]
-        closed_at : string option;
+        closed_at : string option; [@default None]
         comments : int option; [@default None]
         comments_url : string;
         commits : int option; [@default None]
@@ -1411,13 +1411,13 @@ module Primary = struct
         labels : Labels.t;
         locked : bool;
         maintainer_can_modify : bool option; [@default None]
-        merge_commit_sha : string option;
+        merge_commit_sha : string option; [@default None]
         mergeable : bool option; [@default None]
         mergeable_state : string option; [@default None]
         merged : bool option; [@default None]
-        merged_at : string option;
+        merged_at : string option; [@default None]
         merged_by : Merged_by.t option; [@default None]
-        milestone : Milestone_.t option;
+        milestone : Milestone_.t option; [@default None]
         node_id : string;
         number : int;
         patch_url : string;
@@ -1432,7 +1432,7 @@ module Primary = struct
         title : string;
         updated_at : string;
         url : string;
-        user : User.t option;
+        user : User.t option; [@default None]
       }
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end

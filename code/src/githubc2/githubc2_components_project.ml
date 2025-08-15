@@ -12,10 +12,10 @@ module Primary = struct
   end
 
   type t = {
-    body : string option;
+    body : string option; [@default None]
     columns_url : string;
     created_at : string;
-    creator : Githubc2_components_nullable_simple_user.t option;
+    creator : Githubc2_components_nullable_simple_user.t option; [@default None]
     html_url : string;
     id : int;
     name : string;

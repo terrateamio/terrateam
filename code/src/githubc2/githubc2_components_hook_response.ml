@@ -1,8 +1,8 @@
 module Primary = struct
   type t = {
-    code : int option;
-    message : string option;
-    status : string option;
+    code : int option; [@default None]
+    message : string option; [@default None]
+    status : string option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

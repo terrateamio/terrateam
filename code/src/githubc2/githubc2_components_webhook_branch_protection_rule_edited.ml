@@ -12,7 +12,7 @@ module Primary = struct
     module Primary = struct
       module Admin_enforced = struct
         module Primary = struct
-          type t = { from : bool option }
+          type t = { from : bool option [@default None] }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
@@ -33,7 +33,7 @@ module Primary = struct
 
       module Authorized_actors_only = struct
         module Primary = struct
-          type t = { from : bool option }
+          type t = { from : bool option [@default None] }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
@@ -42,7 +42,7 @@ module Primary = struct
 
       module Authorized_dismissal_actors_only = struct
         module Primary = struct
-          type t = { from : bool option }
+          type t = { from : bool option [@default None] }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
@@ -70,7 +70,7 @@ module Primary = struct
 
       module Lock_allows_fork_sync = struct
         module Primary = struct
-          type t = { from : bool option }
+          type t = { from : bool option [@default None] }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
@@ -117,7 +117,7 @@ module Primary = struct
 
       module Require_last_push_approval = struct
         module Primary = struct
-          type t = { from : bool option }
+          type t = { from : bool option [@default None] }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 

@@ -33,7 +33,7 @@ module Primary = struct
       end
 
       type t = {
-        description : string option;
+        description : string option; [@default None]
         html_url : string;
         id : int;
         members_url : string;

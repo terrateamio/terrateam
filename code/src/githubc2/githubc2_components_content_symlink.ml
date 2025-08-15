@@ -2,8 +2,8 @@ module Primary = struct
   module Links_ = struct
     module Primary = struct
       type t = {
-        git : string option;
-        html : string option;
+        git : string option; [@default None]
+        html : string option; [@default None]
         self : string;
       }
       [@@deriving yojson { strict = false; meta = true }, show, eq]
@@ -23,9 +23,9 @@ module Primary = struct
 
   type t = {
     links_ : Links_.t; [@key "_links"]
-    download_url : string option;
-    git_url : string option;
-    html_url : string option;
+    download_url : string option; [@default None]
+    git_url : string option; [@default None]
+    html_url : string option; [@default None]
     name : string;
     path : string;
     sha : string;

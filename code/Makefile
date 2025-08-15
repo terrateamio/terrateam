@@ -44,39 +44,39 @@ release-terrat: release_terrat_code_indexer
 
 debug-terrat: debug_terrat_code_indexer
 
-terrat-api: debug_openapi_cli
+terrat-api: debug_openapi_cli release_openapi_cli
 	jq -S . < ../api_schemas/terrat/api.json > /tmp/$$$$.json && mv /tmp/$$$$.json ../api_schemas/terrat/api.json
 	rm -f ./src/terrat_api/*.ml
 	env OCAMLRUNPARAM=b ./build/debug/openapi_cli/openapi_cli.native convert --non-strict-records --input ../api_schemas/terrat/api.json --name "terrat_api" --output-dir ./src/terrat_api
 	find src/terrat_api  -type f -exec ocamlformat -i '{}' \;
 
-terrat-repo-config: debug_json_schema_hooks_cli
+terrat-repo-config: debug_json_schema_hooks_cli release_json_schema_hooks_cli
 	jq -S . < ../api_schemas/terrat/config-schema.json > /tmp/$$$$.json && mv /tmp/$$$$.json ../api_schemas/terrat/config-schema.json
 	rm -f ./src/terrat_repo_config/*.ml
 	env OCAMLRUNPARAM=b ./build/debug/json_schema_hooks_cli/json_schema_hooks_cli.native convert --input ../api_schemas/terrat/config-schema.json --name terrat_repo_config --output-dir=./src/terrat_repo_config/
 	find src/terrat_repo_config/ -type f -exec ocamlformat -i '{}' \;
 
-terrat-webhooks: debug_json_schema_hooks_cli
+terrat-webhooks: debug_json_schema_hooks_cli release_json_schema_hooks_cli
 	jq -S . < ../api_schemas/github_webhooks/terrat-schema.json > /tmp/$$$$.json && mv /tmp/$$$$.json ../api_schemas/github_webhooks/terrat-schema.json
 	rm -f ./src/terrat_github_webhooks/*.ml
 	env OCAMLRUNPARAM=b ./build/debug/json_schema_hooks_cli/json_schema_hooks_cli.native convert -i ../api_schemas/github_webhooks/terrat-schema.json -n terrat_github_webhooks --output-dir ./src/terrat_github_webhooks/ --non-strict-records
 	find src/terrat_github_webhooks/ -type f -exec ocamlformat -i '{}' \;
 
-github-api: debug_openapi_cli
+github-api: debug_openapi_cli release_openapi_cli
 	jq -S . < ../api_schemas/github_api/api.github.com.json > /tmp/$$$$.json && mv /tmp/$$$$.json ../api_schemas/github_api/api.github.com.json
 	rm -rf src/githubc2
 	mkdir -p src/githubc2
 	env OCAMLRUNPARAM=b ./build/debug/openapi_cli/openapi_cli.native convert --non-strict-records --input ../api_schemas/github_api/api.github.com.json --name "githubc2" --output-dir ./src/githubc2/
 	find src/githubc2/ -type f -exec ocamlformat -i '{}' \;
 
-gitlab-api: debug_openapi_cli
+gitlab-api: debug_openapi_cli release_openapi_cli
 	jq -S . < ../api_schemas/gitlab_api/api.json > /tmp/$$$$.json && mv /tmp/$$$$.json ../api_schemas/gitlab_api/api.json
 	rm -rf src/gitlabc
 	mkdir -p src/gitlabc
 	env OCAMLRUNPARAM=b ./build/debug/openapi_cli/openapi_cli.native convert --non-strict-records --input ../api_schemas/gitlab_api/api.json --name "gitlabc" --output-dir ./src/gitlabc/
 	find src/gitlabc/ -type f -exec ocamlformat -i '{}' \;
 
-gitlab-webhooks: debug_json_schema_hooks_cli
+gitlab-webhooks: debug_json_schema_hooks_cli release_json_schema_hooks_cli
 	jq -S . < ../api_schemas/gitlab_api/webhooks.json > /tmp/$$$$.json && mv /tmp/$$$$.json ../api_schemas/gitlab_api/webhooks.json
 	rm -f ./src/gitlab_webhooks/*.ml
 	env OCAMLRUNPARAM=b ./build/debug/json_schema_hooks_cli/json_schema_hooks_cli.native convert -i ../api_schemas/gitlab_api/webhooks.json -n gitlab_webhooks --output-dir ./src/gitlab_webhooks/ --non-strict-records

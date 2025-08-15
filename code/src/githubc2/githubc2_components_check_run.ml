@@ -27,9 +27,9 @@ module Primary = struct
       type t = {
         annotations_count : int;
         annotations_url : string;
-        summary : string option;
-        text : string option;
-        title : string option;
+        summary : string option; [@default None]
+        text : string option; [@default None]
+        title : string option; [@default None]
       }
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
@@ -57,21 +57,21 @@ module Primary = struct
   end
 
   type t = {
-    app : Githubc2_components_nullable_integration.t option;
-    check_suite : Check_suite_.t option;
-    completed_at : string option;
-    conclusion : Conclusion.t option;
+    app : Githubc2_components_nullable_integration.t option; [@default None]
+    check_suite : Check_suite_.t option; [@default None]
+    completed_at : string option; [@default None]
+    conclusion : Conclusion.t option; [@default None]
     deployment : Githubc2_components_deployment_simple.t option; [@default None]
-    details_url : string option;
-    external_id : string option;
+    details_url : string option; [@default None]
+    external_id : string option; [@default None]
     head_sha : string;
-    html_url : string option;
+    html_url : string option; [@default None]
     id : int64;
     name : string;
     node_id : string;
     output : Output.t;
     pull_requests : Pull_requests.t;
-    started_at : string option;
+    started_at : string option; [@default None]
     status : Status_.t;
     url : string;
   }

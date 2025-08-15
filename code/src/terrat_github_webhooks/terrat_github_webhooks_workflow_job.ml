@@ -9,8 +9,8 @@ end
 
 type t = {
   check_run_url : string;
-  completed_at : string option;
-  conclusion : string option;
+  completed_at : string option; [@default None]
+  conclusion : string option; [@default None]
   head_sha : string;
   html_url : string;
   id : int;
@@ -20,10 +20,10 @@ type t = {
   run_attempt : int;
   run_id : int;
   run_url : string;
-  runner_group_id : int option;
-  runner_group_name : string option;
-  runner_id : int option;
-  runner_name : string option;
+  runner_group_id : int option; [@default None]
+  runner_group_name : string option; [@default None]
+  runner_id : int option; [@default None]
+  runner_name : string option; [@default None]
   started_at : string;
   status : string;
   steps : Steps.t;

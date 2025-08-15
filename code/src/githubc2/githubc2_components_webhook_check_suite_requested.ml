@@ -520,18 +520,18 @@ module Primary = struct
 
           type t = {
             client_id : string option; [@default None]
-            created_at : string option;
-            description : string option;
+            created_at : string option; [@default None]
+            description : string option; [@default None]
             events : Events.t option; [@default None]
-            external_url : string option;
+            external_url : string option; [@default None]
             html_url : string;
-            id : int option;
+            id : int option; [@default None]
             name : string;
             node_id : string;
-            owner : Owner.t option;
+            owner : Owner.t option; [@default None]
             permissions : Permissions.t option; [@default None]
             slug : string option; [@default None]
-            updated_at : string option;
+            updated_at : string option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -561,7 +561,7 @@ module Primary = struct
             module Primary = struct
               type t = {
                 date : string option; [@default None]
-                email : string option;
+                email : string option; [@default None]
                 name : string;
                 username : string option; [@default None]
               }
@@ -575,7 +575,7 @@ module Primary = struct
             module Primary = struct
               type t = {
                 date : string option; [@default None]
-                email : string option;
+                email : string option; [@default None]
                 name : string;
                 username : string option; [@default None]
               }
@@ -683,13 +683,13 @@ module Primary = struct
       end
 
       type t = {
-        after : string option;
+        after : string option; [@default None]
         app : App.t;
-        before : string option;
+        before : string option; [@default None]
         check_runs_url : string;
-        conclusion : Conclusion.t option;
+        conclusion : Conclusion.t option; [@default None]
         created_at : string;
-        head_branch : string option;
+        head_branch : string option; [@default None]
         head_commit : Head_commit.t;
         head_sha : string;
         id : int;
@@ -698,7 +698,7 @@ module Primary = struct
         pull_requests : Pull_requests.t;
         rerequestable : bool option; [@default None]
         runs_rerequestable : bool option; [@default None]
-        status : Status_.t option;
+        status : Status_.t option; [@default None]
         updated_at : string;
         url : string;
       }

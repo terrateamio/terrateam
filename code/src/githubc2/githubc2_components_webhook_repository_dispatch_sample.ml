@@ -6,7 +6,7 @@ module Primary = struct
   type t = {
     action : string;
     branch : string;
-    client_payload : Client_payload.t option;
+    client_payload : Client_payload.t option; [@default None]
     enterprise : Githubc2_components_enterprise_webhooks.t option; [@default None]
     installation : Githubc2_components_simple_installation.t;
     organization : Githubc2_components_organization_simple_webhooks.t option; [@default None]

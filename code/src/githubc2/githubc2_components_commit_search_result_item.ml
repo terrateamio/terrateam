@@ -29,7 +29,7 @@ module Primary = struct
       type t = {
         author : Author.t;
         comment_count : int;
-        committer : Githubc2_components_nullable_git_user.t option;
+        committer : Githubc2_components_nullable_git_user.t option; [@default None]
         message : string;
         tree : Tree.t;
         url : string;
@@ -59,10 +59,10 @@ module Primary = struct
   end
 
   type t = {
-    author : Githubc2_components_nullable_simple_user.t option;
+    author : Githubc2_components_nullable_simple_user.t option; [@default None]
     comments_url : string;
     commit : Commit_.t;
-    committer : Githubc2_components_nullable_git_user.t option;
+    committer : Githubc2_components_nullable_git_user.t option; [@default None]
     html_url : string;
     node_id : string;
     parents : Parents.t;

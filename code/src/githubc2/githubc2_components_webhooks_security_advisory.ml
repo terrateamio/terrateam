@@ -3,7 +3,7 @@ module Primary = struct
     module Primary = struct
       type t = {
         score : float;
-        vector_string : string option;
+        vector_string : string option; [@default None]
       }
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
@@ -80,7 +80,7 @@ module Primary = struct
         end
 
         type t = {
-          first_patched_version : First_patched_version.t option;
+          first_patched_version : First_patched_version.t option; [@default None]
           package : Package_.t;
           severity : string;
           vulnerable_version_range : string;
@@ -107,7 +107,7 @@ module Primary = struct
     summary : string;
     updated_at : string;
     vulnerabilities : Vulnerabilities.t;
-    withdrawn_at : string option;
+    withdrawn_at : string option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

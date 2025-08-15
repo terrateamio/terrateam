@@ -1,14 +1,14 @@
 module Primary = struct
   type t = {
     avatar_url : string;
-    created_at : string option;
+    created_at : string option; [@default None]
     description : string option; [@default None]
     html_url : string;
     id : int;
     name : string;
     node_id : string;
     slug : string;
-    updated_at : string option;
+    updated_at : string option; [@default None]
     website_url : string option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]

@@ -285,7 +285,8 @@ let record_field_attrs schema name required =
             ~default:[]
             (fun default -> Gen.field_default default)
             (field_default_of_value schema.Schema.typ default)
-      | None when not (String_set.mem name required) -> Gen.field_default_none
+      | None when (not (String_set.mem name required)) || schema.Schema.nullable ->
+          Gen.field_default_none
       | None -> []);
       (if CCString.equal (field_name_of_schema name) name then [] else Gen.yojson_key_name name);
     ]

@@ -36,7 +36,7 @@ module Primary = struct
     repositories_removed : Repositories_removed.t;
     repository : Githubc2_components_repository_webhooks.t option; [@default None]
     repository_selection : Githubc2_components_webhooks_repository_selection.t;
-    requester : Githubc2_components_webhooks_user.t option;
+    requester : Githubc2_components_webhooks_user.t option; [@default None]
     sender : Githubc2_components_simple_user.t;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]

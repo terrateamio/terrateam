@@ -3,7 +3,7 @@ module Primary = struct
     module Primary = struct
       module Error = struct
         module Primary = struct
-          type t = { message : string option }
+          type t = { message : string option [@default None] }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 
@@ -54,11 +54,11 @@ module Primary = struct
       end
 
       type t = {
-        commit : string option;
+        commit : string option; [@default None]
         created_at : string;
         duration : int;
         error : Error.t;
-        pusher : Pusher.t option;
+        pusher : Pusher.t option; [@default None]
         status : string;
         updated_at : string;
         url : string;

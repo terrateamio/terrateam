@@ -42,12 +42,12 @@ module Items = struct
     type t = {
       change_type : Change_type.t;
       ecosystem : string;
-      license : string option;
+      license : string option; [@default None]
       manifest : string;
       name : string;
-      package_url : string option;
+      package_url : string option; [@default None]
       scope : Scope.t;
-      source_repository_url : string option;
+      source_repository_url : string option; [@default None]
       version : string;
       vulnerabilities : Vulnerabilities.t;
     }

@@ -40,7 +40,7 @@ module Primary = struct
     default_branch : string;
     delete_branch_on_merge : bool option; [@default None]
     deployments_url : string;
-    description : string option;
+    description : string option; [@default None]
     disabled : bool;
     downloads_url : string;
     events_url : string;
@@ -59,7 +59,7 @@ module Primary = struct
     has_pages : bool;
     has_projects : bool;
     has_wiki : bool;
-    homepage : string option;
+    homepage : string option; [@default None]
     hooks_url : string;
     html_url : string;
     id : int;
@@ -69,19 +69,19 @@ module Primary = struct
     issues_url : string;
     keys_url : string;
     labels_url : string;
-    language : string option;
+    language : string option; [@default None]
     languages_url : string;
-    license : Githubc2_components_nullable_license_simple.t option;
+    license : Githubc2_components_nullable_license_simple.t option; [@default None]
     master_branch : string option; [@default None]
     merges_url : string;
     milestones_url : string;
-    mirror_url : string option;
+    mirror_url : string option; [@default None]
     name : string;
     node_id : string;
     notifications_url : string;
     open_issues : int;
     open_issues_count : int;
-    owner : Githubc2_components_nullable_simple_user.t option;
+    owner : Githubc2_components_nullable_simple_user.t option; [@default None]
     permissions : Permissions.t option; [@default None]
     private_ : bool; [@key "private"]
     pulls_url : string;

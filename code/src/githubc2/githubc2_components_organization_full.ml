@@ -16,7 +16,7 @@ module Primary = struct
 
   type t = {
     advanced_security_enabled_for_new_repositories : bool option; [@default None]
-    archived_at : string option;
+    archived_at : string option; [@default None]
     avatar_url : string;
     billing_email : string option; [@default None]
     blog : string option; [@default None]
@@ -28,7 +28,7 @@ module Primary = struct
     dependabot_security_updates_enabled_for_new_repositories : bool option; [@default None]
     dependency_graph_enabled_for_new_repositories : bool option; [@default None]
     deploy_keys_enabled_for_repositories : bool option; [@default None]
-    description : string option;
+    description : string option; [@default None]
     disk_usage : int option; [@default None]
     email : string option; [@default None]
     events_url : string;

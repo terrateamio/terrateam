@@ -28,7 +28,7 @@ module Primary = struct
 
   type t = {
     property_name : string;
-    value : Value.t option;
+    value : Value.t option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

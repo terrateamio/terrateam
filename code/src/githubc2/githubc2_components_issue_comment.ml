@@ -13,7 +13,7 @@ module Primary = struct
     reactions : Githubc2_components_reaction_rollup.t option; [@default None]
     updated_at : string;
     url : string;
-    user : Githubc2_components_nullable_simple_user.t option;
+    user : Githubc2_components_nullable_simple_user.t option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

@@ -52,13 +52,13 @@ module Primary = struct
     id : int;
     owner : Githubc2_components_simple_user.t;
     permissions : Permissions.t;
-    reason : string option;
+    reason : string option; [@default None]
     repositories_url : string;
     repository_selection : Repository_selection.t;
     token_expired : bool;
-    token_expires_at : string option;
+    token_expires_at : string option; [@default None]
     token_id : int;
-    token_last_used_at : string option;
+    token_last_used_at : string option; [@default None]
     token_name : string;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]

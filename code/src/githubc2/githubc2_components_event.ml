@@ -48,13 +48,13 @@ module Primary = struct
 
   type t = {
     actor : Githubc2_components_actor.t;
-    created_at : string option;
+    created_at : string option; [@default None]
     id : string;
     org : Githubc2_components_actor.t option; [@default None]
     payload : Payload.t;
     public : bool;
     repo : Repo.t;
-    type_ : string option; [@key "type"]
+    type_ : string option; [@default None] [@key "type"]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

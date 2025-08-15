@@ -52,7 +52,7 @@ module Primary = struct
     default_branch : string option; [@default None]
     delete_branch_on_merge : bool option; [@default None]
     deployments_url : string;
-    description : string option;
+    description : string option; [@default None]
     disabled : bool option; [@default None]
     downloads_url : string;
     events_url : string;

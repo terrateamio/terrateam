@@ -15,7 +15,7 @@ module Primary = struct
 
   type t = {
     activity_type : Activity_type.t;
-    actor : Githubc2_components_nullable_simple_user.t option;
+    actor : Githubc2_components_nullable_simple_user.t option; [@default None]
     after : string;
     before : string;
     id : int;

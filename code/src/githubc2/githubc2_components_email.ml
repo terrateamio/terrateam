@@ -3,7 +3,7 @@ module Primary = struct
     email : string;
     primary : bool;
     verified : bool;
-    visibility : string option;
+    visibility : string option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

@@ -28,8 +28,8 @@ module Primary = struct
 
   type t = {
     created_at : string;
-    creator : Githubc2_components_nullable_simple_user.t option;
-    description : string option;
+    creator : Githubc2_components_nullable_simple_user.t option; [@default None]
+    description : string option; [@default None]
     environment : string;
     id : int64;
     node_id : string;

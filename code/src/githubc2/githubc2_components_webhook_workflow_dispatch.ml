@@ -5,7 +5,7 @@ module Primary = struct
 
   type t = {
     enterprise : Githubc2_components_enterprise_webhooks.t option; [@default None]
-    inputs : Inputs.t option;
+    inputs : Inputs.t option; [@default None]
     installation : Githubc2_components_simple_installation.t option; [@default None]
     organization : Githubc2_components_organization_simple_webhooks.t option; [@default None]
     ref_ : string; [@key "ref"]

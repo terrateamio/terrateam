@@ -15,13 +15,13 @@ module Primary = struct
     created_at : string;
     download_count : int;
     id : int;
-    label : string option;
+    label : string option; [@default None]
     name : string;
     node_id : string;
     size : int;
     state : State.t;
     updated_at : string;
-    uploader : Githubc2_components_nullable_simple_user.t option;
+    uploader : Githubc2_components_nullable_simple_user.t option; [@default None]
     url : string;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]

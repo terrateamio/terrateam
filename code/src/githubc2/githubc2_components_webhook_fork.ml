@@ -9,7 +9,7 @@ module Primary = struct
               name : string;
               node_id : string;
               spdx_id : string;
-              url : string option;
+              url : string option; [@default None]
             }
             [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
@@ -113,7 +113,7 @@ module Primary = struct
           default_branch : string;
           delete_branch_on_merge : bool; [@default false]
           deployments_url : string;
-          description : string option;
+          description : string option; [@default None]
           disabled : bool option; [@default None]
           downloads_url : string;
           events_url : string;
@@ -131,7 +131,7 @@ module Primary = struct
           has_pages : bool;
           has_projects : bool; [@default true]
           has_wiki : bool; [@default true]
-          homepage : string option;
+          homepage : string option; [@default None]
           hooks_url : string;
           html_url : string;
           id : int64;
@@ -141,25 +141,25 @@ module Primary = struct
           issues_url : string;
           keys_url : string;
           labels_url : string;
-          language : string option;
+          language : string option; [@default None]
           languages_url : string;
-          license : License_.t option;
+          license : License_.t option; [@default None]
           master_branch : string option; [@default None]
           merges_url : string;
           milestones_url : string;
-          mirror_url : string option;
+          mirror_url : string option; [@default None]
           name : string;
           node_id : string;
           notifications_url : string;
           open_issues : int;
           open_issues_count : int;
           organization : string option; [@default None]
-          owner : Owner.t option;
+          owner : Owner.t option; [@default None]
           permissions : Permissions.t option; [@default None]
           private_ : bool; [@key "private"]
           public : bool option; [@default None]
           pulls_url : string;
-          pushed_at : string option;
+          pushed_at : string option; [@default None]
           releases_url : string;
           role_name : string option; [@default None]
           size : int;
@@ -197,7 +197,7 @@ module Primary = struct
               name : string;
               node_id : string;
               spdx_id : string;
-              url : string option;
+              url : string option; [@default None]
             }
             [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
@@ -301,7 +301,7 @@ module Primary = struct
           default_branch : string;
           delete_branch_on_merge : bool; [@default false]
           deployments_url : string;
-          description : string option;
+          description : string option; [@default None]
           disabled : bool option; [@default None]
           downloads_url : string;
           events_url : string;
@@ -319,7 +319,7 @@ module Primary = struct
           has_pages : bool;
           has_projects : bool; [@default true]
           has_wiki : bool; [@default true]
-          homepage : string option;
+          homepage : string option; [@default None]
           hooks_url : string;
           html_url : string;
           id : int64;
@@ -329,25 +329,25 @@ module Primary = struct
           issues_url : string;
           keys_url : string;
           labels_url : string;
-          language : string option;
+          language : string option; [@default None]
           languages_url : string;
-          license : License_.t option;
+          license : License_.t option; [@default None]
           master_branch : string option; [@default None]
           merges_url : string;
           milestones_url : string;
-          mirror_url : string option;
+          mirror_url : string option; [@default None]
           name : string;
           node_id : string;
           notifications_url : string;
           open_issues : int;
           open_issues_count : int;
           organization : string option; [@default None]
-          owner : Owner.t option;
+          owner : Owner.t option; [@default None]
           permissions : Permissions.t option; [@default None]
           private_ : bool; [@key "private"]
           public : bool option; [@default None]
           pulls_url : string;
-          pushed_at : string option;
+          pushed_at : string option; [@default None]
           releases_url : string;
           role_name : string option; [@default None]
           size : int;

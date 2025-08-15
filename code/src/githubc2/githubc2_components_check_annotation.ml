@@ -1,15 +1,15 @@
 module Primary = struct
   type t = {
-    annotation_level : string option;
+    annotation_level : string option; [@default None]
     blob_href : string;
-    end_column : int option;
+    end_column : int option; [@default None]
     end_line : int;
-    message : string option;
+    message : string option; [@default None]
     path : string;
-    raw_details : string option;
-    start_column : int option;
+    raw_details : string option; [@default None]
+    start_column : int option; [@default None]
     start_line : int;
-    title : string option;
+    title : string option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

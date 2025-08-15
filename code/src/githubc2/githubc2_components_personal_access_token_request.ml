@@ -147,13 +147,13 @@ module Primary = struct
     permissions_added : Permissions_added.t;
     permissions_result : Permissions_result.t;
     permissions_upgraded : Permissions_upgraded.t;
-    repositories : Repositories.t option;
-    repository_count : int option;
+    repositories : Repositories.t option; [@default None]
+    repository_count : int option; [@default None]
     repository_selection : Repository_selection.t;
     token_expired : bool;
-    token_expires_at : string option;
+    token_expires_at : string option; [@default None]
     token_id : int;
-    token_last_used_at : string option;
+    token_last_used_at : string option; [@default None]
     token_name : string;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
