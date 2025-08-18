@@ -3165,62 +3165,31 @@ module Make (S : Terrat_vcs_provider2.S) = struct
        1. The environment, so all environments get their own work manifest.
 
        2. runs_on, so any runs that get their own runs_on configuration get
-          their own work manifest.
-
-       3. Overlapping workspaces.  This way if a dir has multiple workspace that
-          will run in it, it will get its own run.  This ensure isolation between
-          those directories. *)
+          their own work manifest.  *)
     let partition_by_run_params ~max_workspaces_per_batch dirspaceflows =
       let module M = struct
         type t = string option * Yojson.Safe.t option [@@deriving eq]
       end in
       let module Dsf = Terrat_change.Dirspaceflow in
       let module We = Terrat_base_repo_config_v1.Workflows.Entry in
-      let partitioned_by_dir =
-        let rec update_first_match ~test ~update = function
-          | [] -> None
-          | x :: xs when test x -> Some (update x :: xs)
-          | x :: xs ->
-              let open CCOption.Infix in
-              update_first_match ~test ~update xs >>= fun xs -> Some (x :: xs)
-        in
-        let partitions =
-          CCList.fold_left
-            (fun groups ({ Dsf.dirspace = { Terrat_dirspace.dir; _ }; _ } as dsf) ->
-              match
-                update_first_match
-                  ~test:CCFun.(Terrat_data.String_map.mem dir %> not)
-                  ~update:(Terrat_data.String_map.add dir dsf)
-                  groups
-              with
-              | Some groups -> groups
-              | None -> Terrat_data.String_map.singleton dir dsf :: groups)
-            []
-            dirspaceflows
-        in
-        CCList.map CCFun.(Terrat_data.String_map.to_list %> CCList.map snd) partitions
-      in
       let partitions =
-        CCList.flat_map
-          (fun dirspaceflows ->
-            CCListLabels.fold_left
-              ~f:(fun acc dsf ->
-                let k =
-                  match dsf with
-                  | {
-                   Dsf.workflow = Some { Dsf.Workflow.workflow = { We.environment; runs_on; _ }; _ };
-                   _;
-                  } -> (environment, runs_on)
-                  | _ -> (None, None)
-                in
-                CCList.Assoc.update
-                  ~eq:M.equal
-                  ~f:(fun v -> Some (dsf :: CCOption.get_or ~default:[] v))
-                  k
-                  acc)
-              ~init:[]
-              dirspaceflows)
-          partitioned_by_dir
+        CCListLabels.fold_left
+          ~f:(fun acc dsf ->
+            let k =
+              match dsf with
+              | {
+               Dsf.workflow = Some { Dsf.Workflow.workflow = { We.environment; runs_on; _ }; _ };
+               _;
+              } -> (environment, runs_on)
+              | _ -> (None, None)
+            in
+            CCList.Assoc.update
+              ~eq:M.equal
+              ~f:(fun v -> Some (dsf :: CCOption.get_or ~default:[] v))
+              k
+              acc)
+          ~init:[]
+          dirspaceflows
       in
       CCList.flat_map
         (fun (k, dsfs) ->
