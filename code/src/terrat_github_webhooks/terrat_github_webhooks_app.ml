@@ -12,7 +12,7 @@ end
 
 type t = {
   created_at : string;
-  description : string option;
+  description : string option; [@default None]
   events : Events.t option; [@default None]
   external_url : string;
   html_url : string;

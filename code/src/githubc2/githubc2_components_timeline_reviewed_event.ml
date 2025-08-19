@@ -30,7 +30,7 @@ module Primary = struct
   type t = {
     links_ : Links_.t; [@key "_links"]
     author_association : Githubc2_components_author_association.t;
-    body : string option;
+    body : string option; [@default None]
     body_html : string option; [@default None]
     body_text : string option; [@default None]
     commit_id : string;

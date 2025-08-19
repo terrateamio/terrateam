@@ -2,13 +2,15 @@
   import type { WorkManifest } from './types';
   // Auth handled by PageLayout
   import { api } from './api';
-  import { selectedInstallation, installations } from './stores';
+  import { selectedInstallation, installations, currentVCSProvider, serverConfig } from './stores';
   import { analytics } from './analytics';
   import PageLayout from './components/layout/PageLayout.svelte';
   import LoadingSpinner from './components/ui/LoadingSpinner.svelte';
   import ErrorMessage from './components/ui/ErrorMessage.svelte';
   import Card from './components/ui/Card.svelte';
   import SafeOutput from './components/ui/SafeOutput.svelte';
+  import { getWebBaseUrl } from './server-config';
+  import PlanChanges from './components/terraform/PlanChanges.svelte';
   
   export let params: { id: string; installationId?: string } = { id: '' };
   
@@ -28,7 +30,13 @@
   let isLoadingOutputs: boolean = false;
   let outputsError: string | null = null;
   let expandedDirspaces: Set<string> = new Set();
-  let activeOutputTab: 'all' | 'raw' | 'cost' | 'failed' = 'all';
+  let activeOutputTab: 'all' | 'raw' | 'cost' | 'failed' | 'changes' = 'all';
+  const web_base_url = getWebBaseUrl($currentVCSProvider, $serverConfig);
+  
+  // Visualization state
+  let visualizationPlanOutput: string = '';
+  let visualizationWorkManifestId: string = '';
+  let isFetchingVisualizationData: boolean = false;
   
   interface OutputItem {
     payload?: {
@@ -87,6 +95,11 @@
     analytics.trackRunAction('view_details', params.id, {
       installation_id: $selectedInstallation.id
     });
+  }
+  
+  // Switch away from Changes tab if viewing an apply run
+  $: if (run?.run_type === 'apply' && activeOutputTab === 'changes') {
+    activeOutputTab = 'all';
   }
   
   async function loadRunData(runId: string): Promise<void> {
@@ -433,12 +446,12 @@
   
   function getPullRequestUrl(owner: string, repo: string, pullNumber: number): string {
     // Construct GitHub PR URL using owner and repo
-    return `https://github.com/${owner}/${repo}/pull/${pullNumber}`;
+    return `${web_base_url}/${owner}/${repo}/pull/${pullNumber}`;
   }
   
   function getGitHubActionsUrl(owner: string, repo: string, runId: string): string {
     // Construct GitHub Actions run URL using owner, repo, and run_id
-    return `https://github.com/${owner}/${repo}/actions/runs/${runId}`;
+    return `${web_base_url}/${owner}/${repo}/actions/runs/${runId}`;
   }
   
   // Removed unused function - can be added back if needed for job-specific URLs
@@ -594,6 +607,77 @@
     modalOutputTitle = '';
     // Restore body scroll
     document.body.classList.remove('modal-open');
+  }
+
+  // Function to open plan changes view
+  async function openPlanChanges(output: OutputItem) {
+    // Check if this is lite mode and we need to fetch the full output
+    if (output?.payload?._isLiteMode) {
+      console.log('Fetching full output for visualization (lite mode detected)');
+      isFetchingVisualizationData = true;
+      try {
+        // Fetch the full output content
+        const fullOutput = await fetchFullOutput(output);
+        if (fullOutput) {
+          visualizationPlanOutput = fullOutput;
+          visualizationWorkManifestId = run?.id || '';
+          activeOutputTab = 'changes';
+        } else {
+          console.error('Failed to fetch full output');
+        }
+      } catch (error) {
+        console.error('Error fetching full output:', error);
+      } finally {
+        isFetchingVisualizationData = false;
+      }
+    } else {
+      // Use the existing content
+      visualizationPlanOutput = output.payload?.plan_text || output.payload?.text || '';
+      visualizationWorkManifestId = run?.id || '';
+      activeOutputTab = 'changes';
+    }
+  }
+  
+  // Helper function to fetch full output content
+  async function fetchFullOutput(output: OutputItem): Promise<string | null> {
+    if (!run?.id || !$selectedInstallation?.id) return null;
+    
+    try {
+      // Get the full outputs (not lite mode)
+      const response = await api.getWorkManifestOutputs(
+        $selectedInstallation.id,
+        run.id,
+        {
+          lite: false  // Force full content
+        }
+      );
+      
+      // Find the matching output by step and scope
+      const fullOutput = response.outputs.find((o: unknown) => {
+        const out = o as OutputItem;
+        return out.step === output.step && 
+          out.scope?.dir === output.scope?.dir &&
+          out.scope?.workspace === output.scope?.workspace;
+      }) as OutputItem | undefined;
+      
+      if (fullOutput?.payload?.text) {
+        return fullOutput.payload.text;
+      } else if (fullOutput?.payload?.plan_text) {
+        return fullOutput.payload.plan_text;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error fetching full outputs:', error);
+      return null;
+    }
+  }
+
+  // Check if output contains a Terraform plan
+  function isPlanOutput(output: OutputItem): boolean {
+    return !!(output?.step === 'tf/plan' || 
+              output?.payload?.plan_text || 
+              (output?.payload?.text && output.payload.text.includes('Terraform will perform')));
   }
 
   // Close modal on Escape key
@@ -898,6 +982,14 @@
           >
             ❌ Failed
           </button>
+          {#if run?.run_type === 'plan'}
+            <button 
+              on:click={() => activeOutputTab = 'changes'}
+              class="px-3 py-1 text-sm font-medium rounded-md transition-colors {activeOutputTab === 'changes' ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}"
+            >
+              📊 Changes
+            </button>
+          {/if}
         </div>
       </div>
 
@@ -1126,15 +1218,31 @@
                           {@const typedOutput = output}
                           {@const displayState = getDisplayState(typedOutput)}
                           <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded p-3">
-                            <div class="flex items-center space-x-2 mb-2">
-                              <span>{getStepIcon(typedOutput?.step || 'unknown')}</span>
-                              <span class="font-medium text-gray-900 dark:text-gray-100">{getStepLabel(typedOutput?.step || 'Unknown Step')}</span>
-                              {#if typedOutput?.state}
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {displayState.color}">
-                                  {displayState.state}
-                                </span>
+                            <div class="flex items-center justify-between mb-2">
+                              <div class="flex items-center space-x-2">
+                                <span>{getStepIcon(typedOutput?.step || 'unknown')}</span>
+                                <span class="font-medium text-gray-900 dark:text-gray-100">{getStepLabel(typedOutput?.step || 'Unknown Step')}</span>
+                                {#if typedOutput?.state}
+                                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {displayState.color}">
+                                    {displayState.state}
+                                  </span>
+                                {/if}
+                                <span class="text-xs text-gray-500">idx: {typedOutput?.idx}</span>
+                              </div>
+                              {#if isPlanOutput(typedOutput)}
+                                <button
+                                  type="button"
+                                  on:click={() => openPlanChanges(typedOutput)}
+                                  class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                                  title="View plan changes"
+                                >
+                                  <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                  </svg>
+                                  View Changes
+                                </button>
                               {/if}
-                              <span class="text-xs text-gray-500">idx: {typedOutput?.idx}</span>
                             </div>
                             {#if typedOutput?.payload?.text}
                               <!-- Output not loaded - click to view -->
@@ -1465,6 +1573,74 @@
                 </div>
               {/each}
             </div>
+          {/if}
+        
+        <!-- Changes Tab -->
+        {:else if activeOutputTab === 'changes'}
+          {#if isFetchingVisualizationData}
+            <!-- Loading state while fetching full output -->
+            <div class="flex flex-col items-center justify-center py-12">
+              <LoadingSpinner size="lg" />
+              <p class="mt-4 text-gray-600 dark:text-gray-400">Loading plan changes...</p>
+            </div>
+          {:else if !visualizationPlanOutput}
+            <!-- First, show list of plans that can view changes -->
+            <div class="space-y-4">
+              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Select a Terraform plan output to view changes:
+              </p>
+              {#each outputs.filter(o => isPlanOutput(o)) as planOutput}
+                <Card 
+                  padding="md" 
+                  hover={true}
+                  class="cursor-pointer"
+                >
+                  <button
+                    class="w-full text-left"
+                    on:click={() => openPlanChanges(planOutput)}
+                  >
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <h4 class="font-medium text-gray-900 dark:text-white">
+                          {planOutput.scope?.dir || 'unknown'} / {planOutput.scope?.workspace || 'default'}
+                        </h4>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                          {getStepLabel(planOutput.step || 'tf/plan')}
+                        </p>
+                      </div>
+                      <svg class="w-5 h-5 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                    </div>
+                  </button>
+                </Card>
+              {:else}
+                <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <div class="text-4xl mb-2">📊</div>
+                  <p>No Terraform plan outputs found</p>
+                  <p class="text-sm mt-2">Run a plan first to see changes</p>
+                </div>
+              {/each}
+            </div>
+          {:else}
+            <!-- Show the visualization -->
+            <div class="mb-4">
+              <button
+                class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                on:click={() => {
+                  visualizationPlanOutput = '';
+                  activeOutputTab = 'all';
+                }}
+              >
+                ← Back to plan selection
+              </button>
+            </div>
+            <PlanChanges 
+              planOutput={visualizationPlanOutput}
+              workManifestId={visualizationWorkManifestId}
+              showHeader={false}
+            />
           {/if}
         {/if}
         

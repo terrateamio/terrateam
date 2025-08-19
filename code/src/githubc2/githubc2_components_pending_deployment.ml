@@ -56,7 +56,7 @@ module Primary = struct
     environment : Environment_.t;
     reviewers : Reviewers.t;
     wait_timer : int;
-    wait_timer_started_at : string option;
+    wait_timer_started_at : string option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

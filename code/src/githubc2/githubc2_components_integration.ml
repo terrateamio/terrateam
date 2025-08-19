@@ -45,7 +45,7 @@ module Primary = struct
     client_id : string option; [@default None]
     client_secret : string option; [@default None]
     created_at : string;
-    description : string option;
+    description : string option; [@default None]
     events : Events.t;
     external_url : string;
     html_url : string;

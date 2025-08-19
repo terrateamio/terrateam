@@ -53,10 +53,10 @@ module Primary = struct
   end
 
   type t = {
-    body : string option;
+    body : string option; [@default None]
     columns_url : string;
     created_at : string;
-    creator : Creator.t option;
+    creator : Creator.t option; [@default None]
     html_url : string;
     id : int;
     name : string;

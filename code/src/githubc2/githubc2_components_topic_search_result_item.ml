@@ -56,18 +56,18 @@ module Primary = struct
   type t = {
     aliases : Aliases.t option; [@default None]
     created_at : string;
-    created_by : string option;
+    created_by : string option; [@default None]
     curated : bool;
-    description : string option;
-    display_name : string option;
+    description : string option; [@default None]
+    display_name : string option; [@default None]
     featured : bool;
     logo_url : string option; [@default None]
     name : string;
     related : Related.t option; [@default None]
-    released : string option;
+    released : string option; [@default None]
     repository_count : int option; [@default None]
     score : float;
-    short_description : string option;
+    short_description : string option; [@default None]
     text_matches : Githubc2_components_search_result_text_matches.t option; [@default None]
     updated_at : string;
   }

@@ -20,6 +20,7 @@ apply_requirements:
         any_of: []
         any_of_count: 1
         all_of: []
+        require_completed_reviews: false
       merge_conflicts:
         enabled: true
       status_checks:
@@ -63,6 +64,7 @@ The `approved` key is used to specify the approval requirements for the pull req
 | any_of | list | List of GitHub teams/users/roles, where any one of them is required to approve the pull request. |
 | any_of_count | integer | The number of approvals required from the any_of list. Default is 1. |
 | all_of | list | List of GitHub teams/users/roles, where all of them are required to approve the pull request. |
+| require_completed_reviews | boolean | Specify that all pull request reviews must be completed. |
 
 #### Merge Conflicts
 The `merge_conflicts` key is used to specify whether the pull request must have no merge conflicts before an apply operation can be executed.

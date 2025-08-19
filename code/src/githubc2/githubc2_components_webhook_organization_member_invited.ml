@@ -55,14 +55,14 @@ module Primary = struct
 
       type t = {
         created_at : string;
-        email : string option;
-        failed_at : string option;
-        failed_reason : string option;
+        email : string option; [@default None]
+        failed_at : string option; [@default None]
+        failed_reason : string option; [@default None]
         id : float;
         invitation_source : string option; [@default None]
         invitation_teams_url : string;
-        inviter : Inviter.t option;
-        login : string option;
+        inviter : Inviter.t option; [@default None]
+        login : string option; [@default None]
         node_id : string;
         role : string;
         team_count : float;

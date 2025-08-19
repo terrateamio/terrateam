@@ -3,7 +3,7 @@ module Primary = struct
     module Items = struct
       module Primary = struct
         type t = {
-          app_id : int option;
+          app_id : int option; [@default None]
           context : string;
         }
         [@@deriving yojson { strict = false; meta = true }, show, eq]

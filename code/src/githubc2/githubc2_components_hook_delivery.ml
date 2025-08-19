@@ -10,8 +10,8 @@ module Primary = struct
       end
 
       type t = {
-        headers : Headers.t option;
-        payload : Payload.t option;
+        headers : Headers.t option; [@default None]
+        payload : Payload.t option; [@default None]
       }
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
@@ -26,8 +26,8 @@ module Primary = struct
       end
 
       type t = {
-        headers : Headers.t option;
-        payload : string option;
+        headers : Headers.t option; [@default None]
+        payload : string option; [@default None]
       }
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
@@ -36,15 +36,15 @@ module Primary = struct
   end
 
   type t = {
-    action : string option;
+    action : string option; [@default None]
     delivered_at : string;
     duration : float;
     event : string;
     guid : string;
     id : int;
-    installation_id : int option;
+    installation_id : int option; [@default None]
     redelivery : bool;
-    repository_id : int option;
+    repository_id : int option; [@default None]
     request : Request.t;
     response : Response.t;
     status : string;

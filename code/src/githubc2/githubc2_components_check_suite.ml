@@ -36,25 +36,25 @@ module Primary = struct
   end
 
   type t = {
-    after : string option;
-    app : Githubc2_components_nullable_integration.t option;
-    before : string option;
+    after : string option; [@default None]
+    app : Githubc2_components_nullable_integration.t option; [@default None]
+    before : string option; [@default None]
     check_runs_url : string;
-    conclusion : Conclusion.t option;
-    created_at : string option;
-    head_branch : string option;
+    conclusion : Conclusion.t option; [@default None]
+    created_at : string option; [@default None]
+    head_branch : string option; [@default None]
     head_commit : Githubc2_components_simple_commit.t;
     head_sha : string;
     id : int64;
     latest_check_runs_count : int;
     node_id : string;
-    pull_requests : Pull_requests.t option;
+    pull_requests : Pull_requests.t option; [@default None]
     repository : Githubc2_components_minimal_repository.t;
     rerequestable : bool option; [@default None]
     runs_rerequestable : bool option; [@default None]
-    status : Status_.t option;
-    updated_at : string option;
-    url : string option;
+    status : Status_.t option; [@default None]
+    updated_at : string option; [@default None]
+    url : string option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

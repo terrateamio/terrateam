@@ -16,7 +16,7 @@ module Primary = struct
 
   type t = {
     created_at : string;
-    creator : Githubc2_components_nullable_simple_user.t option;
+    creator : Githubc2_components_nullable_simple_user.t option; [@default None]
     deployment_url : string;
     description : string; [@default ""]
     environment : string; [@default ""]

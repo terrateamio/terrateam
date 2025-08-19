@@ -6,14 +6,14 @@ module Primary = struct
     created_at : string;
     html_url : string;
     id : int;
-    line : int option;
+    line : int option; [@default None]
     node_id : string;
-    path : string option;
-    position : int option;
+    path : string option; [@default None]
+    position : int option; [@default None]
     reactions : Githubc2_components_reaction_rollup.t option; [@default None]
     updated_at : string;
     url : string;
-    user : Githubc2_components_nullable_simple_user.t option;
+    user : Githubc2_components_nullable_simple_user.t option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

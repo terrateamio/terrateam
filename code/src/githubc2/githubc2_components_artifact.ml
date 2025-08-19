@@ -16,15 +16,15 @@ module Primary = struct
 
   type t = {
     archive_download_url : string;
-    created_at : string option;
+    created_at : string option; [@default None]
     digest : string option; [@default None]
     expired : bool;
-    expires_at : string option;
+    expires_at : string option; [@default None]
     id : int;
     name : string;
     node_id : string;
     size_in_bytes : int;
-    updated_at : string option;
+    updated_at : string option; [@default None]
     url : string;
     workflow_run : Workflow_run_.t option; [@default None]
   }

@@ -1715,9 +1715,12 @@ module Apply_requirements = struct
       apply_after_merge : bool option;
       approved : bool option;
       approved_reviews : Terrat_pull_request_review.t list;
+      missing_reviews : Terrat_base_repo_config_v1.Access_control.Match.t list;
+      missing_any_of_count : int;
+      any_of : Terrat_base_repo_config_v1.Access_control.Match.t list;
       match_ : Terrat_change_match3.Dirspace_config.t;
       merge_conflicts : bool option;
-      passed : bool;
+      passed : bool option;
       ready_for_review : bool option;
       status_checks : bool option;
       status_checks_failed : Terrat_commit_check.t list;
@@ -1725,7 +1728,7 @@ module Apply_requirements = struct
 
     type t = result list
 
-    let passed t = CCList.for_all (fun { passed; _ } -> passed) t
+    let passed t = CCList.for_all (fun { passed; _ } -> CCOption.get_or ~default:false passed) t
 
     let approved_reviews t =
       CCList.flatten (CCList.map (fun { approved_reviews; _ } -> approved_reviews) t)
@@ -1771,13 +1774,13 @@ module Apply_requirements = struct
         (* Abb.Future.return (Error (`Invalid_query query)) *))
     | M.Any -> Abb.Future.return (Ok true)
 
-  let compute_approved ~request_id client repo approved approved_reviews =
+  let compute_approved ~request_id client repo approved approved_reviews requested_reviews =
     let module Match_set = CCSet.Make (Terrat_base_repo_config_v1.Access_control.Match) in
     let module Match_map = CCMap.Make (Terrat_base_repo_config_v1.Access_control.Match) in
     let open Abbs_future_combinators.Infix_result_monad in
     let module Tprr = Terrat_pull_request_review in
     let module Ac = Terrat_base_repo_config_v1.Apply_requirements.Approved in
-    let { Ac.all_of; any_of; any_of_count; enabled } = approved in
+    let { Ac.all_of; any_of; any_of_count; enabled; require_completed_reviews } = approved in
     let combined_queries = Match_set.(to_list (of_list (all_of @ any_of))) in
     Abbs_future_combinators.List_result.fold_left
       ~init:Match_map.empty
@@ -1793,6 +1796,9 @@ module Apply_requirements = struct
             | _ -> Abb.Future.return (Ok None))
           approved_reviews
         >>= fun matching_reviews ->
+        (* [query] is something like "user:foo" or "team:bar" and
+           [approved_reviews] are the list of reviews for this PR.
+           [matching_reviews] are the users that match this query. *)
         Abb.Future.return
           (Ok
              (CCList.fold_left
@@ -1801,14 +1807,27 @@ module Apply_requirements = struct
                 matching_reviews)))
       combined_queries
     >>= fun matching_reviews ->
-    let all_of_results = CCList.map (CCFun.flip Match_map.mem matching_reviews) all_of in
+    (* [matching_reviews] is a map from a query to those users that approved and
+       match that query. *)
+    let all_of_results, all_of_missing =
+      CCList.partition (CCFun.flip Match_map.mem matching_reviews) all_of
+    in
     let any_of_results =
       CCList.flatten (CCList.filter_map (CCFun.flip Match_map.find_opt matching_reviews) any_of)
     in
-    let all_of_passed = CCList.for_all CCFun.id all_of_results in
-    let any_of_passed =
-      (CCList.is_empty any_of && CCList.length approved_reviews >= any_of_count)
-      || ((not (CCList.is_empty any_of)) && CCList.length any_of_results >= any_of_count)
+    let all_of_passed = CCList.length all_of_results = CCList.length all_of in
+    let missing_any_of =
+      CCInt.max
+        0
+        (if CCList.is_empty any_of then any_of_count - CCList.length approved_reviews
+         else any_of_count - CCList.length any_of_results)
+    in
+    let any_of_passed = missing_any_of = 0 in
+    let required_reviews_passed =
+      (not require_completed_reviews) || CCList.is_empty requested_reviews
+    in
+    let missing_reviews =
+      all_of_missing @ if require_completed_reviews then requested_reviews else []
     in
     Logs.info (fun m ->
         m
@@ -1818,7 +1837,9 @@ module Apply_requirements = struct
           (Bool.to_string any_of_passed));
     (* Considered approved if all "all_of" passes and any "any_of" passes OR
          "all of" and "any of" are empty and the approvals is more than count *)
-    Abb.Future.return (Ok (all_of_passed && any_of_passed))
+    Abb.Future.return
+      (Ok
+         (all_of_passed && any_of_passed && required_reviews_passed, missing_reviews, missing_any_of))
 
   let eval ~request_id config user client repo_config pull_request dirspace_configs =
     let max_parallel = 20 in
@@ -1853,7 +1874,7 @@ module Apply_requirements = struct
     in
     let { Ar.checks; _ } = R.apply_requirements repo_config in
     Abbs_future_combinators.Infix_result_app.(
-      (fun reviews commit_checks -> (reviews, commit_checks))
+      (fun reviews commit_checks requested_reviews -> (reviews, commit_checks, requested_reviews))
       <$> Abbs_time_it.run (log_time request_id "FETCH_APPROVED_TIME") (fun () ->
               Api.fetch_pull_request_reviews
                 ~request_id
@@ -1865,8 +1886,14 @@ module Apply_requirements = struct
                 ~request_id
                 client
                 (Api.Pull_request.repo pull_request)
-                (Api.Pull_request.branch_ref pull_request)))
-    >>= fun (reviews, commit_checks) ->
+                (Api.Pull_request.branch_ref pull_request))
+      <*> Abbs_time_it.run (log_time request_id "FETCH_REQUESTED_REVIEWS") (fun () ->
+              Api.fetch_pull_request_requested_reviews
+                ~request_id
+                (Api.Pull_request.repo pull_request)
+                (Api.Pull_request.id pull_request)
+                client))
+    >>= fun (reviews, commit_checks, requested_reviews) ->
     let approved_reviews =
       CCList.filter
         (function
@@ -1911,7 +1938,10 @@ module Apply_requirements = struct
                   (Api.Pull_request.repo pull_request)
                   approved
                   approved_reviews
-                >>= fun approved_result ->
+                  requested_reviews
+                >>= fun (approved_result, missing_reviews, missing_any_of_count) ->
+                let module Ac = Terrat_base_repo_config_v1.Apply_requirements.Approved in
+                let { Ac.any_of; _ } = approved in
                 let ignore_matching = status_checks.Sc.ignore_matching in
                 (* Convert all patterns and ignore those that don't compile.  This eats
                      errors.
@@ -1966,7 +1996,7 @@ module Apply_requirements = struct
                 in
                 let apply_requirements =
                   {
-                    Result.passed;
+                    Result.passed = Some passed;
                     match_;
                     apply_after_merge =
                       (if apply_after_merge.Afm.enabled then Some merged else None);
@@ -1979,6 +2009,9 @@ module Apply_requirements = struct
                       (if status_checks.Sc.enabled then Some all_commit_check_success else None);
                     status_checks_failed = failed_commit_checks;
                     approved_reviews;
+                    missing_reviews;
+                    missing_any_of_count;
+                    any_of;
                   }
                 in
                 Logs.info (fun m ->
@@ -2005,10 +2038,11 @@ module Apply_requirements = struct
                       (Bool.to_string passed));
                 Abb.Future.return (Ok apply_requirements)
             | None ->
+                Logs.info (fun m -> m "%s : NO_APPLY_REQUIREMENTS_MATCHED" request_id);
                 Abb.Future.return
                   (Ok
                      {
-                       Result.passed = false;
+                       Result.passed = None;
                        match_;
                        apply_after_merge = None;
                        approved = None;
@@ -2017,6 +2051,9 @@ module Apply_requirements = struct
                        status_checks = None;
                        status_checks_failed = [];
                        approved_reviews = [];
+                       missing_reviews = [];
+                       missing_any_of_count = 0;
+                       any_of = [];
                      }))
           chunk)
       (CCList.chunks (CCInt.max 1 (CCList.length dirspace_configs / max_parallel)) dirspace_configs)
@@ -3524,54 +3561,79 @@ module Comment = struct
           "PREMIUM_FEATURE_GATEKEEPING"
           Tmpl.premium_feature_err_gatekeeping
           kv
+    | Msg.Premium_feature_err `Require_completed_reviews ->
+        let kv = Snabela.Kv.(Map.of_list []) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "PREMIUM_FEATURE_REQUIRE_COMPLETED_REVIEWS"
+          Tmpl.premium_feature_err_require_completed_reviews
+          kv
     | Msg.Pull_request_not_appliable (_, apply_requirements) ->
         let module Dc = Terrat_change_match3.Dirspace_config in
         let module Ds = Terrat_dirspace in
         let module Ar = Apply_requirements.Result in
         let kv =
-          Snabela.Kv.(
-            Map.of_list
-              [
-                ( "checks",
-                  list
-                    (CCList.map
-                       (fun ar ->
-                         Map.of_list
-                           [
-                             ("dir", string ar.Ar.match_.Dc.dirspace.Ds.dir);
-                             ("workspace", string ar.Ar.match_.Dc.dirspace.Ds.workspace);
-                             ("passed", bool ar.Ar.passed);
-                             ( "apply_after_merge_enabled",
-                               bool (CCOption.is_some ar.Ar.apply_after_merge) );
-                             ( "apply_after_merge_check",
-                               bool (CCOption.get_or ~default:false ar.Ar.apply_after_merge) );
-                             ("approved_enabled", bool (CCOption.is_some ar.Ar.approved));
-                             ("approved_check", bool (CCOption.get_or ~default:false ar.Ar.approved));
-                             ( "merge_conflicts_enabled",
-                               bool (CCOption.is_some ar.Ar.merge_conflicts) );
-                             ( "merge_conflicts_check",
-                               bool (CCOption.get_or ~default:false ar.Ar.merge_conflicts) );
-                             ( "ready_for_review_enabled",
-                               bool (CCOption.is_some ar.Ar.ready_for_review) );
-                             ( "ready_for_review_check",
-                               bool (CCOption.get_or ~default:false ar.Ar.ready_for_review) );
-                             ("status_checks_enabled", bool (CCOption.is_some ar.Ar.status_checks));
-                             ( "status_checks_check",
-                               bool (CCOption.get_or ~default:false ar.Ar.status_checks) );
-                             ( "status_checks_failed",
-                               list
-                                 (CCList.map
-                                    (fun Terrat_commit_check.{ title; _ } ->
-                                      Map.of_list [ ("title", string title) ])
-                                    ar.Ar.status_checks_failed) );
-                           ])
-                       (CCList.sort
-                          (fun { Ar.passed = passed1; _ } { Ar.passed = passed2; _ } ->
-                            Bool.compare passed1 passed2)
-                          apply_requirements)) );
-              ])
+          `Assoc
+            [
+              ( "checks",
+                `List
+                  (CCList.map (fun ar ->
+                       `Assoc
+                         [
+                           ("dir", `String ar.Ar.match_.Dc.dirspace.Ds.dir);
+                           ("workspace", `String ar.Ar.match_.Dc.dirspace.Ds.workspace);
+                           ("matched_apply_requirement", `Bool (CCOption.is_some ar.Ar.passed));
+                           ("passed", `Bool (CCOption.get_or ~default:false ar.Ar.passed));
+                           ( "apply_after_merge_enabled",
+                             `Bool (CCOption.is_some ar.Ar.apply_after_merge) );
+                           ( "apply_after_merge_check",
+                             `Bool (CCOption.get_or ~default:false ar.Ar.apply_after_merge) );
+                           ("approved_enabled", `Bool (CCOption.is_some ar.Ar.approved));
+                           ("approved_check", `Bool (CCOption.get_or ~default:false ar.Ar.approved));
+                           ( "missing_reviews",
+                             `List
+                               (CCList.map
+                                  (fun m ->
+                                    `String
+                                      (Terrat_base_repo_config_v1.Access_control.Match.to_string m))
+                                  ar.Ar.missing_reviews) );
+                           ("missing_any_of_count", `Int ar.Ar.missing_any_of_count);
+                           ( "any_of",
+                             `List
+                               (CCList.map
+                                  (fun m ->
+                                    `String
+                                      (Terrat_base_repo_config_v1.Access_control.Match.to_string m))
+                                  ar.Ar.any_of) );
+                           ( "merge_conflicts_enabled",
+                             `Bool (CCOption.is_some ar.Ar.merge_conflicts) );
+                           ( "merge_conflicts_check",
+                             `Bool (CCOption.get_or ~default:false ar.Ar.merge_conflicts) );
+                           ( "ready_for_review_enabled",
+                             `Bool (CCOption.is_some ar.Ar.ready_for_review) );
+                           ( "ready_for_review_check",
+                             `Bool (CCOption.get_or ~default:false ar.Ar.ready_for_review) );
+                           ("status_checks_enabled", `Bool (CCOption.is_some ar.Ar.status_checks));
+                           ( "status_checks_check",
+                             `Bool (CCOption.get_or ~default:false ar.Ar.status_checks) );
+                           ( "status_checks_failed",
+                             `List
+                               (CCList.map
+                                  (fun Terrat_commit_check.{ title; _ } ->
+                                    `Assoc [ ("title", `String title) ])
+                                  ar.Ar.status_checks_failed) );
+                         ])
+                  @@ CCList.sort
+                       (fun { Ar.passed = passed1; _ } { Ar.passed = passed2; _ } ->
+                         Bool.compare
+                           (CCOption.get_or ~default:false passed1)
+                           (CCOption.get_or ~default:false passed2))
+                       apply_requirements) );
+            ]
         in
-        apply_template_and_publish
+        apply_template_and_publish_jinja
           ~request_id
           client
           pull_request
@@ -3885,6 +3947,15 @@ module Repo_config = struct
     | { V1.View.drift = { V1.Drift.enabled = true; schedules }; _ }
       when V1.String_map.cardinal schedules > 1 ->
         Abb.Future.return (Error (`Premium_feature_err `Multiple_drift_schedules))
+    | { V1.View.apply_requirements = { V1.Apply_requirements.checks; _ }; _ }
+      when CCList.exists
+             (fun {
+                    V1.Apply_requirements.Check.approved =
+                      { V1.Apply_requirements.Approved.require_completed_reviews; _ };
+                    _;
+                  }
+                -> require_completed_reviews)
+             checks -> Abb.Future.return (Error (`Premium_feature_err `Require_completed_reviews))
     | _ -> Abb.Future.return (Ok (provenance, final_repo_config))
 end
 

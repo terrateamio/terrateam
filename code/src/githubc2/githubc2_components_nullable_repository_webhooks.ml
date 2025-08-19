@@ -270,12 +270,12 @@ module Primary = struct
     compare_url : string;
     contents_url : string;
     contributors_url : string;
-    created_at : string option;
+    created_at : string option; [@default None]
     custom_properties : Custom_properties.t option; [@default None]
     default_branch : string;
     delete_branch_on_merge : bool; [@default false]
     deployments_url : string;
-    description : string option;
+    description : string option; [@default None]
     disabled : bool;
     downloads_url : string;
     events_url : string;
@@ -294,7 +294,7 @@ module Primary = struct
     has_pages : bool;
     has_projects : bool; [@default true]
     has_wiki : bool; [@default true]
-    homepage : string option;
+    homepage : string option; [@default None]
     hooks_url : string;
     html_url : string;
     id : int64;
@@ -304,15 +304,15 @@ module Primary = struct
     issues_url : string;
     keys_url : string;
     labels_url : string;
-    language : string option;
+    language : string option; [@default None]
     languages_url : string;
-    license : Githubc2_components_nullable_license_simple.t option;
+    license : Githubc2_components_nullable_license_simple.t option; [@default None]
     master_branch : string option; [@default None]
     merge_commit_message : Merge_commit_message.t option; [@default None]
     merge_commit_title : Merge_commit_title.t option; [@default None]
     merges_url : string;
     milestones_url : string;
-    mirror_url : string option;
+    mirror_url : string option; [@default None]
     name : string;
     network_count : int option; [@default None]
     node_id : string;
@@ -324,7 +324,7 @@ module Primary = struct
     permissions : Permissions.t option; [@default None]
     private_ : bool; [@default false] [@key "private"]
     pulls_url : string;
-    pushed_at : string option;
+    pushed_at : string option; [@default None]
     releases_url : string;
     size : int;
     squash_merge_commit_message : Squash_merge_commit_message.t option; [@default None]
@@ -344,7 +344,7 @@ module Primary = struct
     template_repository : Template_repository.t option; [@default None]
     topics : Topics.t option; [@default None]
     trees_url : string;
-    updated_at : string option;
+    updated_at : string option; [@default None]
     url : string;
     use_squash_pr_title_as_default : bool; [@default false]
     visibility : string; [@default "public"]

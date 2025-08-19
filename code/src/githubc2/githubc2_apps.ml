@@ -81,7 +81,7 @@ module Create_from_manifest = struct
             client_id : string;
             client_secret : string;
             created_at : string;
-            description : string option;
+            description : string option; [@default None]
             events : Events.t;
             external_url : string;
             html_url : string;
@@ -94,7 +94,7 @@ module Create_from_manifest = struct
             permissions : Permissions.t;
             slug : string option; [@default None]
             updated_at : string;
-            webhook_secret : string option;
+            webhook_secret : string option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -152,7 +152,7 @@ module Create_from_manifest = struct
             client_id : string;
             client_secret : string;
             created_at : string;
-            description : string option;
+            description : string option; [@default None]
             events : Events.t;
             external_url : string;
             html_url : string;
@@ -165,7 +165,7 @@ module Create_from_manifest = struct
             permissions : Permissions.t;
             slug : string option; [@default None]
             updated_at : string;
-            webhook_secret : string option;
+            webhook_secret : string option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -522,18 +522,18 @@ module List_installations = struct
               module Primary = struct
                 type t = {
                   avatar_url : string;
-                  created_at : string option;
+                  created_at : string option; [@default None]
                   description : string option; [@default None]
                   email : string option; [@default None]
                   events_url : string;
                   followers_url : string;
                   following_url : string;
                   gists_url : string;
-                  gravatar_id : string option;
+                  gravatar_id : string option; [@default None]
                   html_url : string;
                   id : int;
                   login : string;
-                  name : string option;
+                  name : string option; [@default None]
                   node_id : string;
                   organizations_url : string;
                   received_events_url : string;
@@ -544,7 +544,7 @@ module List_installations = struct
                   starred_url : string;
                   subscriptions_url : string;
                   type_ : string; [@key "type"]
-                  updated_at : string option;
+                  updated_at : string option; [@default None]
                   url : string;
                   website_url : string option; [@default None]
                 }
@@ -558,18 +558,18 @@ module List_installations = struct
               module Primary = struct
                 type t = {
                   avatar_url : string;
-                  created_at : string option;
+                  created_at : string option; [@default None]
                   description : string option; [@default None]
                   email : string option; [@default None]
                   events_url : string;
                   followers_url : string;
                   following_url : string;
                   gists_url : string;
-                  gravatar_id : string option;
+                  gravatar_id : string option; [@default None]
                   html_url : string;
                   id : int;
                   login : string;
-                  name : string option;
+                  name : string option; [@default None]
                   node_id : string;
                   organizations_url : string;
                   received_events_url : string;
@@ -580,7 +580,7 @@ module List_installations = struct
                   starred_url : string;
                   subscriptions_url : string;
                   type_ : string; [@key "type"]
-                  updated_at : string option;
+                  updated_at : string option; [@default None]
                   url : string;
                   website_url : string option; [@default None]
                 }
@@ -1013,7 +1013,7 @@ module List_installations = struct
                 followers_url : string;
                 following_url : string;
                 gists_url : string;
-                gravatar_id : string option;
+                gravatar_id : string option; [@default None]
                 html_url : string;
                 id : int;
                 login : string;
@@ -1037,7 +1037,7 @@ module List_installations = struct
 
           type t = {
             access_tokens_url : string;
-            account : Account.t option;
+            account : Account.t option; [@default None]
             app_id : int;
             app_slug : string;
             contact_email : string option; [@default None]
@@ -1049,10 +1049,10 @@ module List_installations = struct
             permissions : Permissions.t;
             repositories_url : string;
             repository_selection : Repository_selection.t;
-            single_file_name : string option;
+            single_file_name : string option; [@default None]
             single_file_paths : Single_file_paths.t option; [@default None]
-            suspended_at : string option;
-            suspended_by : Suspended_by.t option;
+            suspended_at : string option; [@default None]
+            suspended_by : Suspended_by.t option; [@default None]
             target_id : int;
             target_type : string;
             updated_at : string;

@@ -57,14 +57,14 @@ module Primary = struct
       type t = {
         after_id : int option; [@default None]
         archived : bool;
-        column_id : int option;
+        column_id : int option; [@default None]
         column_url : string;
         content_url : string option; [@default None]
         created_at : string;
-        creator : Creator.t option;
+        creator : Creator.t option; [@default None]
         id : int;
         node_id : string;
-        note : string option;
+        note : string option; [@default None]
         project_url : string;
         updated_at : string;
         url : string;

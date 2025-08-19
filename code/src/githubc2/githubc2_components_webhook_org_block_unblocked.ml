@@ -10,7 +10,7 @@ module Primary = struct
 
   type t = {
     action : Action.t;
-    blocked_user : Githubc2_components_webhooks_user.t option;
+    blocked_user : Githubc2_components_webhooks_user.t option; [@default None]
     enterprise : Githubc2_components_enterprise_webhooks.t option; [@default None]
     installation : Githubc2_components_simple_installation.t option; [@default None]
     organization : Githubc2_components_organization_simple_webhooks.t;

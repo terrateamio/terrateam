@@ -27,20 +27,20 @@ type t = {
   html_url : string;
   id : int;
   in_reply_to_id : int option; [@default None]
-  line : int option;
+  line : int option; [@default None]
   node_id : string;
   original_commit_id : string;
   original_line : int;
   original_position : int;
-  original_start_line : int option;
+  original_start_line : int option; [@default None]
   path : string;
-  position : int option;
+  position : int option; [@default None]
   pull_request_review_id : int;
   pull_request_url : string;
   reactions : Terrat_github_webhooks_reactions.t;
   side : Side.t;
-  start_line : int option;
-  start_side : string option;
+  start_line : int option; [@default None]
+  start_side : string option; [@default Some "RIGHT"]
   updated_at : string;
   url : string;
   user : Terrat_github_webhooks_user.t;

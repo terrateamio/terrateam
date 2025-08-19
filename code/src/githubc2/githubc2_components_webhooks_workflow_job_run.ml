@@ -8,12 +8,12 @@ module Primary = struct
   end
 
   type t = {
-    conclusion : Conclusion.t option;
+    conclusion : Conclusion.t option; [@default None]
     created_at : string;
     environment : string;
     html_url : string;
     id : int;
-    name : Name.t option;
+    name : Name.t option; [@default None]
     status : string;
     updated_at : string;
   }

@@ -33,7 +33,7 @@ module Primary = struct
     description : string option; [@default None]
     id : int64;
     name : string;
-    organization : Githubc2_components_nullable_simple_user.t option;
+    organization : Githubc2_components_nullable_simple_user.t option; [@default None]
     permissions : Permissions.t;
     source : Source.t option; [@default None]
     updated_at : string;

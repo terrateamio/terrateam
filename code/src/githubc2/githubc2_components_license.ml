@@ -23,8 +23,8 @@ module Primary = struct
     name : string;
     node_id : string;
     permissions : Permissions.t;
-    spdx_id : string option;
-    url : string option;
+    spdx_id : string option; [@default None]
+    url : string option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

@@ -132,9 +132,9 @@ module Primary = struct
                   created_at : string;
                   download_url : string;
                   id : int;
-                  md5 : string option;
+                  md5 : string option; [@default None]
                   name : string;
-                  sha1 : string option;
+                  sha1 : string option; [@default None]
                   sha256 : string;
                   size : int;
                   state : string;
@@ -195,7 +195,7 @@ module Primary = struct
               end
 
               type t = {
-                author : Author.t option;
+                author : Author.t option; [@default None]
                 created_at : string;
                 draft : bool;
                 html_url : string;
@@ -219,7 +219,7 @@ module Primary = struct
           end
 
           type t = {
-            author : Author.t option;
+            author : Author.t option; [@default None]
             body : string;
             body_html : string;
             created_at : string;
@@ -268,16 +268,16 @@ module Primary = struct
 
       type t = {
         created_at : string;
-        description : string option;
+        description : string option; [@default None]
         ecosystem : string;
         html_url : string;
         id : int;
         name : string;
         namespace : string;
-        owner : Owner.t option;
+        owner : Owner.t option; [@default None]
         package_type : string;
         package_version : Package_version_.t;
-        registry : Registry.t option;
+        registry : Registry.t option; [@default None]
         updated_at : string;
       }
       [@@deriving yojson { strict = false; meta = true }, show, eq]

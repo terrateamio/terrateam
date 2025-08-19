@@ -1,6 +1,6 @@
 module Primary = struct
   type t = {
-    description : string option;
+    description : string option; [@default None]
     started_at : string;
     status : Githubc2_components_code_scanning_autofix_status.t;
   }

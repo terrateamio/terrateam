@@ -9,7 +9,7 @@ end
 
 type t = {
   after : string;
-  base_ref : string option;
+  base_ref : string option; [@default None]
   before : string;
   commits : Commits.t;
   compare : string;

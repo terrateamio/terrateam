@@ -16,7 +16,7 @@ module Primary = struct
     change_status : Change_status.t;
     committed_at : string;
     url : string;
-    user : Githubc2_components_nullable_simple_user.t option;
+    user : Githubc2_components_nullable_simple_user.t option; [@default None]
     version : string;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]

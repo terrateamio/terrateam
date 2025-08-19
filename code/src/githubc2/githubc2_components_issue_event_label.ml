@@ -1,7 +1,7 @@
 module Primary = struct
   type t = {
-    color : string option;
-    name : string option;
+    color : string option; [@default None]
+    name : string option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

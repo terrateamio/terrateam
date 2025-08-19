@@ -172,6 +172,7 @@ let migrations =
     ( "refactor-manage-github-maps-via-triggers",
       run_file_sql "2025-07-22-refactor-manage-github-maps-via-triggers.sql" );
     ("fix-gitlab-installation-state", run_file_sql "2025-07-21-fix-gitlab-installation-state.sql");
+    ("add-github-emails-table", run_file_sql "2025-08-19-add-emails-table.sql");
   ]
 
 let run config storage = Mig.run (config, storage) migrations

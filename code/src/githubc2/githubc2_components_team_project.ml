@@ -13,7 +13,7 @@ module Primary = struct
   end
 
   type t = {
-    body : string option;
+    body : string option; [@default None]
     columns_url : string;
     created_at : string;
     creator : Githubc2_components_simple_user.t;

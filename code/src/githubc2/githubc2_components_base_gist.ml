@@ -41,7 +41,7 @@ module Primary = struct
     comments_url : string;
     commits_url : string;
     created_at : string;
-    description : string option;
+    description : string option; [@default None]
     files : Files.t;
     forks : Forks.t option; [@default None]
     forks_url : string;
@@ -56,7 +56,7 @@ module Primary = struct
     truncated : bool option; [@default None]
     updated_at : string;
     url : string;
-    user : Githubc2_components_nullable_simple_user.t option;
+    user : Githubc2_components_nullable_simple_user.t option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

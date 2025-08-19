@@ -17,7 +17,7 @@ module Primary = struct
           html_url : string;
           page_name : string;
           sha : string;
-          summary : string option;
+          summary : string option; [@default None]
           title : string;
         }
         [@@deriving yojson { strict = false; meta = true }, show, eq]

@@ -543,6 +543,7 @@ module Apply_requirements = struct
       any_of : Access_control.Match_list.t; [@default []]
       any_of_count : int; [@default 1]
       enabled : bool; [@default false]
+      require_completed_reviews : bool; [@default false]
     }
     [@@deriving make, show, yojson, eq]
   end
@@ -619,6 +620,12 @@ module Cost_estimation = struct
     provider : Provider.t; [@default Provider.Infracost]
   }
   [@@deriving make, show, yojson, eq]
+end
+
+module Default_branch_overrides = struct
+  type t = string list [@@deriving show, yojson, eq]
+
+  let make () = [ "access_control"; "apply_requirements"; "destination_branches" ]
 end
 
 module Destination_branches = struct
@@ -1065,6 +1072,7 @@ module View = struct
     config_builder : Config_builder.t; [@default Config_builder.make ()]
     cost_estimation : Cost_estimation.t; [@default Cost_estimation.make ()]
     create_and_select_workspace : bool; [@default true]
+    default_branch_overrides : Default_branch_overrides.t option; [@default None]
     destination_branches : Destination_branches.t; [@default []]
     dirs : Dirs.t; [@default String_map.empty]
     drift : Drift.t; [@default Drift.make ()]
@@ -1244,7 +1252,8 @@ let get_apply_requirements_checks_approved =
   function
   | Ap.Apply_requirements_checks_approved_1 { Ap1.count; enabled } ->
       Ok (Apply_requirements.Approved.make ~any_of_count:count ~enabled ())
-  | Ap.Apply_requirements_checks_approved_2 { Ap2.enabled; all_of; any_of; any_of_count } ->
+  | Ap.Apply_requirements_checks_approved_2
+      { Ap2.enabled; all_of; any_of; any_of_count; require_completed_reviews } ->
       CCResult.map_err
         (function
           | `Match_parse_err err -> `Apply_requirements_approved_all_of_match_parse_err err)
@@ -1255,7 +1264,14 @@ let get_apply_requirements_checks_approved =
           | `Match_parse_err err -> `Apply_requirements_approved_any_of_match_parse_err err)
         (map_opt of_version_1_match_list any_of)
       >>= fun any_of ->
-      Ok (Apply_requirements.Approved.make ~enabled ?all_of ?any_of ~any_of_count ())
+      Ok
+        (Apply_requirements.Approved.make
+           ~enabled
+           ?all_of
+           ?any_of
+           ~any_of_count
+           ~require_completed_reviews
+           ())
 
 let get_apply_requirements_checks_apply_after_merge =
   let module Afm = Terrat_repo_config_apply_requirements_checks_apply_after_merge in
@@ -2279,6 +2295,7 @@ let of_version_1 v1 =
     config_builder;
     cost_estimation;
     create_and_select_workspace;
+    default_branch_overrides;
     default_tf_version;
     destination_branches;
     dirs;
@@ -2347,6 +2364,7 @@ let of_version_1 v1 =
        ?config_builder
        ?cost_estimation
        ~create_and_select_workspace
+       ~default_branch_overrides
        ?destination_branches
        ?dirs
        ?drift
@@ -2430,12 +2448,21 @@ let to_version_1_apply_requirements_apply_after_merge afm =
 
 let to_version_1_apply_requirements_approved approved =
   let module Ap = Terrat_repo_config.Apply_requirements_checks_approved_2 in
-  let { Apply_requirements.Approved.all_of; any_of; any_of_count; enabled } = approved in
+  let {
+    Apply_requirements.Approved.all_of;
+    any_of;
+    any_of_count;
+    enabled;
+    require_completed_reviews;
+  } =
+    approved
+  in
   {
     Ap.all_of = Some (to_version_1_match_list all_of);
     any_of = Some (to_version_1_match_list any_of);
     any_of_count;
     enabled;
+    require_completed_reviews;
   }
 
 let to_version_1_apply_requirements_merge_conflicts mc =
@@ -2986,6 +3013,7 @@ let to_version_1 t =
     config_builder;
     cost_estimation;
     create_and_select_workspace;
+    default_branch_overrides;
     destination_branches;
     dirs;
     drift;
@@ -3037,6 +3065,7 @@ let to_version_1 t =
         to_version_1_cost_estimation
         cost_estimation;
     create_and_select_workspace;
+    default_branch_overrides;
     default_tf_version = None;
     destination_branches =
       map_opt_if_true (( <> ) []) to_version_1_destination_branches destination_branches;
@@ -3076,12 +3105,37 @@ let to_version_1 t =
   }
 
 let merge_with_default_branch_config ~default t =
-  {
-    t with
-    View.access_control = default.View.access_control;
-    apply_requirements = default.View.apply_requirements;
-    destination_branches = default.View.destination_branches;
-  }
+  (* Some identifiers come from the default branch (generally for security
+     reasons). The configuration for this is a list of root keys that should
+     come from the default branch.  The easiest way to implement this to convert
+     everything to the JSON representation, pull from default, then convert
+     back.  Because we know everything was a valid repository configuration, we
+     can elide error checking because this is just moving keys around and does
+     not change the correctness of the configuration. *)
+  let default_branch_overrides =
+    "default_branch_overrides"
+    :: CCOption.get_or
+         ~default:(Default_branch_overrides.make ())
+         default.View.default_branch_overrides
+  in
+  let default_json = Terrat_repo_config.Version_1.to_yojson @@ to_version_1 default in
+  let t_json = Terrat_repo_config.Version_1.to_yojson @@ to_version_1 t in
+  let t =
+    CCListLabels.fold_left
+      ~f:(fun t override ->
+        CCList.Assoc.set
+          ~eq:CCString.equal
+          override
+          (Yojson.Safe.Util.member override default_json)
+          t)
+      ~init:(Yojson.Safe.Util.to_assoc t_json)
+      default_branch_overrides
+  in
+  `Assoc t
+  |> Terrat_repo_config.Version_1.of_yojson
+  |> CCResult.get_exn
+  |> of_version_1
+  |> CCResult.get_exn
 
 (* Functionality around derive *)
 
@@ -3374,6 +3428,10 @@ let batch_runs t = t.View.batch_runs
 let config_builder t = t.View.config_builder
 let cost_estimation t = t.View.cost_estimation
 let create_and_select_workspace t = t.View.create_and_select_workspace
+
+let default_branch_overrides t =
+  CCOption.get_or ~default:(Default_branch_overrides.make ()) t.View.default_branch_overrides
+
 let destination_branches t = t.View.destination_branches
 let dirs t = t.View.dirs
 let drift t = t.View.drift

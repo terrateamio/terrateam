@@ -75,22 +75,22 @@ module Primary = struct
     created_at : string;
     devcontainer_path : string option; [@default None]
     display_name : string option; [@default None]
-    environment_id : string option;
+    environment_id : string option; [@default None]
     git_status : Git_status.t;
     id : int64;
-    idle_timeout_minutes : int option;
+    idle_timeout_minutes : int option; [@default None]
     idle_timeout_notice : string option; [@default None]
     last_used_at : string;
     location : Location.t;
-    machine : Githubc2_components_nullable_codespace_machine.t option;
+    machine : Githubc2_components_nullable_codespace_machine.t option; [@default None]
     machines_url : string;
     name : string;
     owner : Githubc2_components_simple_user.t;
     pending_operation : bool option; [@default None]
     pending_operation_disabled_reason : string option; [@default None]
-    prebuild : bool option;
+    prebuild : bool option; [@default None]
     publish_url : string option; [@default None]
-    pulls_url : string option;
+    pulls_url : string option; [@default None]
     recent_folders : Recent_folders.t;
     repository : Githubc2_components_full_repository.t;
     retention_expires_at : string option; [@default None]

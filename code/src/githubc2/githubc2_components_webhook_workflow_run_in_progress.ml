@@ -74,7 +74,7 @@ module Primary = struct
             module Primary = struct
               type t = {
                 date : string option; [@default None]
-                email : string option;
+                email : string option; [@default None]
                 name : string;
                 username : string option; [@default None]
               }
@@ -88,7 +88,7 @@ module Primary = struct
             module Primary = struct
               type t = {
                 date : string option; [@default None]
-                email : string option;
+                email : string option; [@default None]
                 name : string;
                 username : string option; [@default None]
               }
@@ -168,7 +168,7 @@ module Primary = struct
             contents_url : string;
             contributors_url : string;
             deployments_url : string;
-            description : string option;
+            description : string option; [@default None]
             downloads_url : string;
             events_url : string;
             fork : bool;
@@ -188,10 +188,10 @@ module Primary = struct
             languages_url : string;
             merges_url : string;
             milestones_url : string;
-            name : string option;
+            name : string option; [@default None]
             node_id : string;
             notifications_url : string;
-            owner : Owner.t option;
+            owner : Owner.t option; [@default None]
             private_ : bool; [@key "private"]
             pulls_url : string;
             releases_url : string;
@@ -354,7 +354,7 @@ module Primary = struct
             contents_url : string;
             contributors_url : string;
             deployments_url : string;
-            description : string option;
+            description : string option; [@default None]
             downloads_url : string;
             events_url : string;
             fork : bool;
@@ -377,7 +377,7 @@ module Primary = struct
             name : string;
             node_id : string;
             notifications_url : string;
-            owner : Owner.t option;
+            owner : Owner.t option; [@default None]
             private_ : bool; [@key "private"]
             pulls_url : string;
             releases_url : string;
@@ -452,16 +452,16 @@ module Primary = struct
       end
 
       type t = {
-        actor : Actor_.t option;
+        actor : Actor_.t option; [@default None]
         artifacts_url : string;
         cancel_url : string;
         check_suite_id : int;
         check_suite_node_id : string;
         check_suite_url : string;
-        conclusion : Conclusion.t option;
+        conclusion : Conclusion.t option; [@default None]
         created_at : string;
         event : string;
-        head_branch : string option;
+        head_branch : string option; [@default None]
         head_commit : Head_commit.t;
         head_repository : Head_repository.t;
         head_sha : string;
@@ -469,10 +469,10 @@ module Primary = struct
         id : int;
         jobs_url : string;
         logs_url : string;
-        name : string option;
+        name : string option; [@default None]
         node_id : string;
         path : string;
-        previous_attempt_url : string option;
+        previous_attempt_url : string option; [@default None]
         pull_requests : Pull_requests.t;
         referenced_workflows : Referenced_workflows.t option; [@default None]
         repository : Repository_.t;
@@ -481,7 +481,7 @@ module Primary = struct
         run_number : int;
         run_started_at : string;
         status : Status_.t;
-        triggering_actor : Triggering_actor.t option;
+        triggering_actor : Triggering_actor.t option; [@default None]
         updated_at : string;
         url : string;
         workflow_id : int;
@@ -500,7 +500,7 @@ module Primary = struct
     organization : Githubc2_components_organization_simple_webhooks.t option; [@default None]
     repository : Githubc2_components_repository_webhooks.t;
     sender : Githubc2_components_simple_user.t;
-    workflow : Githubc2_components_webhooks_workflow.t option;
+    workflow : Githubc2_components_webhooks_workflow.t option; [@default None]
     workflow_run : Workflow_run_.t;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]

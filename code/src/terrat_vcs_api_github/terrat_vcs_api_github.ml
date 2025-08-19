@@ -661,8 +661,44 @@ let fetch_pull_request_reviews ~request_id repo pull_request_id client =
               reviews))
   | Error (#Terrat_github.Pull_request_reviews.list_err as err) ->
       Prmths.Counter.inc_one Metrics.github_errors_total;
-      Logs.info (fun m ->
-          m "%s : ERROR : %a" request_id Terrat_github.Pull_request_reviews.pp_list_err err);
+      Logs.info (fun m -> m "%s : %a" request_id Terrat_github.Pull_request_reviews.pp_list_err err);
+      Abb.Future.return (Error `Error)
+
+let fetch_pull_request_requested_reviews ~request_id repo pull_number client =
+  let module Resp = Githubc2_pulls.List_requested_reviewers.Responses in
+  let run =
+    let open Abbs_future_combinators.Infix_result_monad in
+    Githubc2_abb.call
+      client.Client.client
+      Githubc2_pulls.List_requested_reviewers.(
+        make (Parameters.make ~owner:repo.Repo.owner ~repo:repo.Repo.name ~pull_number))
+    >>= fun resp ->
+    let module Rr = Githubc2_components.Pull_request_review_request in
+    let (`OK { Rr.primary = { Rr.Primary.teams; users }; _ }) = Openapi.Response.value resp in
+    let module T = Githubc2_components_team in
+    let module U = Githubc2_components_simple_user in
+    Abb.Future.return
+      (Ok
+         (CCList.map
+            (fun { T.primary = { T.Primary.name; _ }; _ } ->
+              Terrat_base_repo_config_v1.Access_control.Match.Team name)
+            teams
+         @ CCList.map
+             (fun { U.primary = { U.Primary.login; _ }; _ } ->
+               Terrat_base_repo_config_v1.Access_control.Match.User login)
+             users))
+  in
+  let open Abb.Future.Infix_monad in
+  run
+  >>= function
+  | Ok _ as r -> Abb.Future.return r
+  | Error (#Resp.t as err) ->
+      Prmths.Counter.inc_one Metrics.github_errors_total;
+      Logs.info (fun m -> m "%s : FETCH_PULL_REQUEST_REVIEWS : %a" request_id Resp.pp err);
+      Abb.Future.return (Error `Error)
+  | Error (#Githubc2_abb.call_err as err) ->
+      Logs.err (fun m ->
+          m "%s : FETCH_PULL_REQUEST_REVIEWS: %a" request_id Githubc2_abb.pp_call_err err);
       Abb.Future.return (Error `Error)
 
 let merge_pull_request' request_id client pull_request =

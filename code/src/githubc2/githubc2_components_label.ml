@@ -2,7 +2,7 @@ module Primary = struct
   type t = {
     color : string;
     default : bool;
-    description : string option;
+    description : string option; [@default None]
     id : int64;
     name : string;
     node_id : string;
