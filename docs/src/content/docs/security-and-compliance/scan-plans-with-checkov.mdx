@@ -12,7 +12,7 @@ Checkov is an open-source tool that scans infrastructure as code (IaC) files, su
 Checkov can be integrated into your CI/CD pipeline to automatically scan your Terraform plans and provide feedback on potential issues, helping you catch and fix problems early in the development process.
 
 ## Configuring Checkov
-To integrate Checkov with Terrateam, you need to configure a custom workflow in your Terrateam configuration file (`.terrateam/config.yml`).
+To integrate Checkov with Terrateam, you need to configure a workflow in your Terrateam configuration file (`.terrateam/config.yml`).
 Here's an example configuration that runs Checkov against the generated Terraform plan:
 ```yaml
 workflows:
@@ -20,16 +20,14 @@ workflows:
     plan:
       - type: init
       - type: plan
-      - type: run
-        cmd: ['checkov-wrapper']
-        capture_output: true
+      - type: checkov
 ```
 In this configuration:
 - The `init` and `plan` steps generate the Terraform plan as usual.
-- The `run` step executes the `checkov-wrapper` script, which calls the `checkov` binary with the generated Terraform plan file.
-- The `capture_output` option is set to `true` to include the Checkov output in the Terrateam plan results.
+- The `checkov` step automatically runs Checkov against the generated Terraform plan file.
+- The Checkov output is automatically captured and included in the Terrateam plan results.
 :::note
-The `checkov-wrapper` is a simple bash script that calls the `checkov` binary using the generated Terraform plan file. You can find the source code [here](https://github.com/terrateamio/action/blob/main/checkov-wrapper).
+The `checkov` step type is a Terrateam workflow step that automatically handles running Checkov with the appropriate configuration against your Terraform plan.
 :::
 
 ## Scanning Terraform Plans
@@ -60,10 +58,8 @@ workflows:
         cmd: ['echo', 'CKV_GCP_73']
       - type: init
       - type: plan
-      - type: run
-        cmd: ['checkov-wrapper']
-        capture_output: true 
+      - type: checkov
 ```
 In this configuration:
-- The `env` step sets the `CKV_SKIP_CHECK` environment variable to`CKV_GCP_73`, indicating that the specific check with ID `CKV_GCP_73` should be skipped during the Checkov scan.
-- The subsequent steps (`init`, `plan`, and `run`) are executed as usual, with Checkov using the specified configuration options.
+- The `env` step sets the `CKV_SKIP_CHECK` environment variable to `CKV_GCP_73`, indicating that the specific check with ID `CKV_GCP_73` should be skipped during the Checkov scan.
+- The subsequent steps (`init`, `plan`, and `checkov`) are executed as usual, with Checkov using the specified configuration options.

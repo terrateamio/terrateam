@@ -1,0 +1,183 @@
+---
+title: Gatekeeper - Manual Approval Gates
+description: Create manual approval gates for security scans, policy violations, and custom validations
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Gatekeeper allows you to create manual approval gates in your Terrateam workflows, enabling authorized users to override failures from security scans, policy checks, or custom validations. This is particularly useful when you need human judgment to determine if certain violations are acceptable given the context.
+
+## Understanding Gatekeeper
+
+When a gated workflow step fails (such as a security scan detecting issues or a policy check finding violations), instead of immediately failing the entire workflow, Gatekeeper:
+
+1. Pauses the workflow execution
+2. Creates an approval request with a unique token
+3. Notifies authorized approvers
+4. Waits for manual approval before continuing
+
+This allows teams to maintain strict automated checks while providing flexibility for legitimate exceptions.
+
+## How Gatekeeper Works
+
+<Steps>
+1. **A gated step fails**: A workflow step configured with a gate encounters a failure condition
+
+2. **Approval request created**: Terrateam posts a comment in the pull request with:
+   - Details about what failed
+   - The gate token identifier
+   - Who can approve the gate
+
+3. **Authorized user reviews**: Team members review the failure and determine if it's acceptable
+
+4. **Approval granted**: An authorized user comments with the approval command:
+   ```
+   terrateam gate approve <token>
+   ```
+
+5. **Workflow continues**: Once approved, the workflow proceeds as if the step had succeeded
+</Steps>
+
+## Configuring Gates
+
+Gates can be added to the following workflow step types:
+- `run`: Gate failures from custom scripts and commands
+- `checkov`: Gate security scan violations
+- `conftest`: Gate policy check failures
+
+### Gate Configuration Options
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `token` | String | **Required**. A unique identifier for this gate request |
+| `all_of` | List | List of users/teams that must ALL approve the gate |
+| `any_of` | List | List of users/teams where ANY ONE can approve the gate |
+| `any_of_count` | Integer | Number of approvals required from the `any_of` list (default: 1) |
+
+### Authorization Patterns
+
+Gatekeeper supports flexible authorization patterns:
+
+**Single Approver**:
+```yaml
+gate:
+  token: "security-override"
+  any_of: ["user:security-lead"]
+```
+
+**Any Team Member**:
+```yaml
+gate:
+  token: "platform-approval"
+  any_of: ["team:platform", "team:sre"]
+```
+
+**Multiple Required Approvers**:
+```yaml
+gate:
+  token: "critical-override"
+  all_of: ["team:security", "team:compliance"]
+```
+
+**N-of-M Approvals**:
+```yaml
+gate:
+  token: "cost-approval"
+  any_of: ["user:cfo", "user:cto", "user:eng-director", "user:finance-lead"]
+  any_of_count: 2
+```
+
+## Common Use Cases
+
+:::caution
+Gates provide a powerful override mechanism. Configure them carefully to maintain security while enabling flexibility.
+:::
+
+### Security Scan Overrides
+
+Allow security teams to approve known false positives or accepted risks:
+
+```yaml
+workflows:
+  - tag_query: ""
+    plan:
+      - type: init
+      - type: plan
+      - type: checkov
+        gate:
+          token: "checkov-override"
+          any_of: ["team:security", "team:platform"]
+```
+
+When Checkov detects issues, security or platform team members can review and approve if the findings are acceptable.
+
+### Policy Exception Handling
+
+Enable compliance teams to grant exceptions to policy violations:
+
+```yaml
+workflows:
+  - tag_query: "production"
+    plan:
+      - type: init
+      - type: plan
+      - type: conftest
+        gate:
+          token: "policy-exception"
+          all_of: ["team:compliance"]
+          any_of: ["user:compliance-lead", "user:ciso"]
+```
+
+This requires both general compliance team approval and approval from either the compliance lead or CISO.
+
+### Cost Threshold Approvals
+
+Require finance approval when infrastructure changes exceed cost thresholds:
+
+```yaml
+workflows:
+  - tag_query: ""
+    plan:
+      - type: init
+      - type: plan
+      - type: run
+        cmd: ['./scripts/cost-check.sh']
+        gate:
+          token: "cost-threshold"
+          any_of: ["team:finance", "user:budget-owner"]
+```
+
+If the cost check script fails (indicating costs exceed thresholds), finance team members can review and approve the changes.
+
+### Multi-Stage Validation
+
+Combine multiple gated checks with different approval requirements:
+
+```yaml
+workflows:
+  - tag_query: "production"
+    plan:
+      - type: init
+      - type: plan
+      
+      # Security scanning with override capability
+      - type: checkov
+        gate:
+          token: "security-scan"
+          any_of: ["team:security"]
+      
+      # Compliance validation with stricter approval
+      - type: conftest
+        gate:
+          token: "compliance-check"
+          all_of: ["team:compliance"]
+          any_of: ["user:compliance-lead"]
+      
+      # Custom validation with multiple approvers required
+      - type: run
+        cmd: ['./scripts/validate-production.sh']
+        gate:
+          token: "prod-validation"
+          any_of: ["team:platform", "team:sre", "team:devops"]
+          any_of_count: 2
+```

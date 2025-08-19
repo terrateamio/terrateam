@@ -1,0 +1,72 @@
+---
+title: Feature Branch Configuration Overrides
+description: Test and validate configuration changes using feature branches instead of the default branch
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Terrateam's `default_branch_overrides` feature allows you to control which configuration settings must come from the default branch versus which can be overridden in feature branches.
+
+## Understanding Configuration Sources
+
+By default, Terrateam sources certain critical configuration settings from your default branch (usually `main` or `master`) for security reasons. This prevents unauthorized users from bypassing security controls by modifying configurations in their feature branches.
+
+The three configurations that come from the default branch by default are:
+- **`access_control`**: Who can run Terrateam commands
+- **`apply_requirements`**: What approvals and checks are needed before applying
+- **`destination_branches`**: Which branches changes can be merged into
+
+All other configuration settings (workflows, hooks, etc.) are always read from the feature branch.
+
+## Configuring Default Branch Overrides
+
+The `default_branch_overrides` setting specifies which configuration keys must come from the default branch. By removing a key from this list, you allow it to be overridden in feature branches.
+
+### Default Configuration
+
+```yaml
+default_branch_overrides:
+  - access_control
+  - apply_requirements
+  - destination_branches
+```
+
+With this default configuration, all three security-critical settings must come from the default branch and cannot be modified in feature branches.
+
+### Allowing Feature Branch Overrides
+
+To allow specific configurations to be overridden in feature branches, remove them from the list:
+
+```yaml
+# Allow apply_requirements to be tested in feature branches
+default_branch_overrides:
+  - access_control
+  - destination_branches
+```
+
+Now `apply_requirements` can be modified and tested in feature branches, while `access_control` and `destination_branches` still come from the default branch.
+
+## Security Considerations
+
+:::caution
+Removing configurations from `default_branch_overrides` has security implications. Be careful about which settings you allow to be overridden in feature branches.
+:::
+
+### Access Control Risks
+
+If you remove `access_control` from the default branch overrides:
+- Any user can grant themselves permissions in their feature branch
+- Unauthorized users could run apply commands
+- Security boundaries could be bypassed
+
+### Apply Requirements Risks
+
+If you remove `apply_requirements` from the default branch overrides:
+- Users could bypass approval requirements in their branches
+- Critical checks could be disabled
+- Compliance requirements might be violated
+
+### Destination Branches Risks
+
+If you remove `destination_branches` from the default branch overrides:
+- Users could change which target branches allow Terraform operations

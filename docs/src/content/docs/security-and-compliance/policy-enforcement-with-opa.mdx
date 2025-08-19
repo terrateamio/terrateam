@@ -17,7 +17,7 @@ Terrateam integrates with Open Policy Agent (OPA) and Conftest to provide powerf
 
 ## Configuring Policy Enforcement
 
-To enable policy enforcement with OPA and Conftest in Terrateam, you need to configure a custom workflow in your Terrateam configuration file (`.terrateam/config.yml`).
+To enable policy enforcement with OPA and Conftest in Terrateam, you need to configure a workflow in your Terrateam configuration file (`.terrateam/config.yml`).
 
 Here's an example configuration that runs Conftest against the generated Terraform plan:
 ```yaml
@@ -26,18 +26,16 @@ workflows:
     plan:
       - type: init
       - type: plan
-      - type: run
-        cmd: ['conftest-wrapper']
-        capture_output: true
+      - type: conftest
 ```
 
 In this configuration:
 - The `init` and `plan` steps generate the Terraform plan as usual.
-- The `run` step executes the `conftest-wrapper` script, which calls the `conftest` binary with the generated Terraform plan file.
-- The `capture_output` option is set to `true` to include the Conftest output in the Terrateam plan results.
+- The `conftest` step automatically runs Conftest against the generated Terraform plan file using any policies found in the policy directory.
+- The Conftest output is automatically captured and included in the Terrateam plan results.
 
 :::note
-The `conftest-wrapper` is a simple bash script that calls the `conftest` binary using the generated Terraform plan file. You can find the source code [here](https://github.com/terrateamio/action/blob/main/conftest-wrapper).
+The `conftest` step type is a Terrateam workflow step that automatically handles running Conftest with the appropriate configuration against your Terraform plan.
 :::
 
 ## Defining Policies with Rego
@@ -101,14 +99,12 @@ workflows:
       - type: env
         name: CONFTEST_POLICY
         cmd: ['echo', '$TERRATEAM_ROOT/aws/policies/iam/']
-      - type: run
-        cmd: ['conftest-wrapper']
-        capture_output: true 
+      - type: conftest
 ```
 
 In this configuration:
 - The `env` step sets the `CONFTEST_POLICY` environment variable to the `aws/policies/iam/` directory relative to the repository root (`$TERRATEAM_ROOT`).
-- The `run` step executes the `conftest-wrapper` script, which will use the specified policy directory when running Conftest.
+- The `conftest` step automatically uses the specified policy directory when running Conftest.
 With this setup, when a pull request is created against the `aws/us-east-1/production/iam/main.tf` file, Terrateam will execute Conftest using the Rego policy files located in the `aws/policies/iam/` directory.
 
 ## Policy Testing Workflow
