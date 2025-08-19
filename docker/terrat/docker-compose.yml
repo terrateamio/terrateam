@@ -31,7 +31,6 @@ services:
   server:
     image: ghcr.io/terrateamio/terrat-oss:latest
     pull_policy: always
-    platform: linux/amd64
     environment:
       DB_HOST: "db"
       DB_PORT: "5432"

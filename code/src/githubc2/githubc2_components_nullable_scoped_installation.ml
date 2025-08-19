@@ -19,7 +19,7 @@ module Primary = struct
     permissions : Githubc2_components_app_permissions.t;
     repositories_url : string;
     repository_selection : Repository_selection.t;
-    single_file_name : string option;
+    single_file_name : string option; [@default None]
     single_file_paths : Single_file_paths.t option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]

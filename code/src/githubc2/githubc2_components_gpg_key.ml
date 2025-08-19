@@ -74,13 +74,13 @@ module Primary = struct
     can_sign : bool;
     created_at : string;
     emails : Emails.t;
-    expires_at : string option;
+    expires_at : string option; [@default None]
     id : int64;
     key_id : string;
     name : string option; [@default None]
-    primary_key_id : int option;
+    primary_key_id : int option; [@default None]
     public_key : string;
-    raw_key : string option;
+    raw_key : string option; [@default None]
     revoked : bool;
     subkeys : Subkeys.t;
   }

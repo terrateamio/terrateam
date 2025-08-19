@@ -16,7 +16,7 @@ module Primary = struct
 
   type t = {
     compute_service : Compute_service.t option; [@default None]
-    created_on : string option;
+    created_on : string option; [@default None]
     id : string;
     name : string;
     network_settings_ids : Network_settings_ids.t option; [@default None]

@@ -19,16 +19,16 @@ module Primary = struct
   type t = {
     app : App.t;
     created_at : string;
-    expires_at : string option;
-    fingerprint : string option;
-    hashed_token : string option;
+    expires_at : string option; [@default None]
+    fingerprint : string option; [@default None]
+    hashed_token : string option; [@default None]
     id : int64;
     installation : Githubc2_components_nullable_scoped_installation.t option; [@default None]
-    note : string option;
-    note_url : string option;
-    scopes : Scopes.t option;
+    note : string option; [@default None]
+    note_url : string option; [@default None]
+    scopes : Scopes.t option; [@default None]
     token : string;
-    token_last_eight : string option;
+    token_last_eight : string option; [@default None]
     updated_at : string;
     url : string;
     user : Githubc2_components_nullable_simple_user.t option; [@default None]

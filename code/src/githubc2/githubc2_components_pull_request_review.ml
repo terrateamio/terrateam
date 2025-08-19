@@ -33,14 +33,14 @@ module Primary = struct
     body : string;
     body_html : string option; [@default None]
     body_text : string option; [@default None]
-    commit_id : string option;
+    commit_id : string option; [@default None]
     html_url : string;
     id : int64;
     node_id : string;
     pull_request_url : string;
     state : string;
     submitted_at : string option; [@default None]
-    user : Githubc2_components_nullable_simple_user.t option;
+    user : Githubc2_components_nullable_simple_user.t option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

@@ -87,7 +87,7 @@ type t = {
   default_branch : string;
   delete_branch_on_merge : bool; [@default false]
   deployments_url : string;
-  description : string option;
+  description : string option; [@default None]
   disabled : bool option; [@default None]
   downloads_url : string;
   events_url : string;
@@ -105,7 +105,7 @@ type t = {
   has_pages : bool;
   has_projects : bool;
   has_wiki : bool;
-  homepage : string option;
+  homepage : string option; [@default None]
   hooks_url : string;
   html_url : string;
   id : int;
@@ -115,13 +115,13 @@ type t = {
   issues_url : string;
   keys_url : string;
   labels_url : string;
-  language : string option;
+  language : string option; [@default None]
   languages_url : string;
   license : Terrat_github_webhooks_license.t option; [@default None]
   master_branch : string option; [@default None]
   merges_url : string;
   milestones_url : string;
-  mirror_url : string option;
+  mirror_url : string option; [@default None]
   name : string;
   node_id : string;
   notifications_url : string;

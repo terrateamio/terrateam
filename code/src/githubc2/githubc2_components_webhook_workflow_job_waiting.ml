@@ -55,11 +55,11 @@ module Primary = struct
             end
 
             type t = {
-              completed_at : string option;
-              conclusion : Conclusion.t option;
+              completed_at : string option; [@default None]
+              conclusion : Conclusion.t option; [@default None]
               name : string;
               number : int;
-              started_at : string option;
+              started_at : string option; [@default None]
               status : Status_.t;
             }
             [@@deriving yojson { strict = false; meta = true }, show, eq]
@@ -73,10 +73,10 @@ module Primary = struct
 
       type t = {
         check_run_url : string;
-        completed_at : string option;
-        conclusion : string option;
+        completed_at : string option; [@default None]
+        conclusion : string option; [@default None]
         created_at : string;
-        head_branch : string option;
+        head_branch : string option; [@default None]
         head_sha : string;
         html_url : string;
         id : int;
@@ -86,15 +86,15 @@ module Primary = struct
         run_attempt : int;
         run_id : float;
         run_url : string;
-        runner_group_id : int option;
-        runner_group_name : string option;
-        runner_id : int option;
-        runner_name : string option;
+        runner_group_id : int option; [@default None]
+        runner_group_name : string option; [@default None]
+        runner_id : int option; [@default None]
+        runner_name : string option; [@default None]
         started_at : string;
         status : Status_.t;
         steps : Steps.t;
         url : string;
-        workflow_name : string option;
+        workflow_name : string option; [@default None]
       }
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end

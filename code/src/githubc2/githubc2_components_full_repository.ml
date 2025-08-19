@@ -90,7 +90,7 @@ module Primary = struct
     default_branch : string;
     delete_branch_on_merge : bool option; [@default None]
     deployments_url : string;
-    description : string option;
+    description : string option; [@default None]
     disabled : bool;
     downloads_url : string;
     events_url : string;
@@ -109,7 +109,7 @@ module Primary = struct
     has_pages : bool;
     has_projects : bool;
     has_wiki : bool;
-    homepage : string option;
+    homepage : string option; [@default None]
     hooks_url : string;
     html_url : string;
     id : int64;
@@ -119,15 +119,15 @@ module Primary = struct
     issues_url : string;
     keys_url : string;
     labels_url : string;
-    language : string option;
+    language : string option; [@default None]
     languages_url : string;
-    license : Githubc2_components_nullable_license_simple.t option;
+    license : Githubc2_components_nullable_license_simple.t option; [@default None]
     master_branch : string option; [@default None]
     merge_commit_message : Merge_commit_message.t option; [@default None]
     merge_commit_title : Merge_commit_title.t option; [@default None]
     merges_url : string;
     milestones_url : string;
-    mirror_url : string option;
+    mirror_url : string option; [@default None]
     name : string;
     network_count : int;
     node_id : string;

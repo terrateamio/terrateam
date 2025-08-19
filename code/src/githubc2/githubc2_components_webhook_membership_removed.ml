@@ -65,11 +65,11 @@ module Primary = struct
     action : Action.t;
     enterprise : Githubc2_components_enterprise_webhooks.t option; [@default None]
     installation : Githubc2_components_simple_installation.t option; [@default None]
-    member : Githubc2_components_webhooks_user.t option;
+    member : Githubc2_components_webhooks_user.t option; [@default None]
     organization : Githubc2_components_organization_simple_webhooks.t;
     repository : Githubc2_components_repository_webhooks.t option; [@default None]
     scope : Scope.t;
-    sender : Sender.t option;
+    sender : Sender.t option; [@default None]
     team : Githubc2_components_webhooks_team.t;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]

@@ -59,7 +59,7 @@ module All_of = struct
           type t = {
             color : string;
             default : bool;
-            description : string option;
+            description : string option; [@default None]
             id : int64;
             name : string;
             node_id : string;
@@ -142,14 +142,14 @@ module All_of = struct
       additions : int;
       allow_auto_merge : bool; [@default false]
       allow_update_branch : bool option; [@default None]
-      assignee : Githubc2_components_nullable_simple_user.t option;
+      assignee : Githubc2_components_nullable_simple_user.t option; [@default None]
       assignees : Assignees.t option; [@default None]
       author_association : Githubc2_components_author_association.t;
-      auto_merge : Githubc2_components_auto_merge.t option;
+      auto_merge : Githubc2_components_auto_merge.t option; [@default None]
       base : Base.t;
-      body : string option;
+      body : string option; [@default None]
       changed_files : int;
-      closed_at : string option;
+      closed_at : string option; [@default None]
       comments : int;
       comments_url : string;
       commits : int;
@@ -167,14 +167,14 @@ module All_of = struct
       locked : bool;
       maintainer_can_modify : bool;
       merge_commit_message : Merge_commit_message.t option; [@default None]
-      merge_commit_sha : string option;
+      merge_commit_sha : string option; [@default None]
       merge_commit_title : Merge_commit_title.t option; [@default None]
-      mergeable : bool option;
+      mergeable : bool option; [@default None]
       mergeable_state : string;
       merged : bool;
-      merged_at : string option;
-      merged_by : Githubc2_components_nullable_simple_user.t option;
-      milestone : Githubc2_components_nullable_milestone.t option;
+      merged_at : string option; [@default None]
+      merged_by : Githubc2_components_nullable_simple_user.t option; [@default None]
+      milestone : Githubc2_components_nullable_milestone.t option; [@default None]
       node_id : string;
       number : int;
       patch_url : string;
@@ -261,7 +261,7 @@ module T = struct
           type t = {
             color : string;
             default : bool;
-            description : string option;
+            description : string option; [@default None]
             id : int64;
             name : string;
             node_id : string;
@@ -344,14 +344,14 @@ module T = struct
       additions : int;
       allow_auto_merge : bool; [@default false]
       allow_update_branch : bool option; [@default None]
-      assignee : Githubc2_components_nullable_simple_user.t option;
+      assignee : Githubc2_components_nullable_simple_user.t option; [@default None]
       assignees : Assignees.t option; [@default None]
       author_association : Githubc2_components_author_association.t;
-      auto_merge : Githubc2_components_auto_merge.t option;
+      auto_merge : Githubc2_components_auto_merge.t option; [@default None]
       base : Base.t;
-      body : string option;
+      body : string option; [@default None]
       changed_files : int;
-      closed_at : string option;
+      closed_at : string option; [@default None]
       comments : int;
       comments_url : string;
       commits : int;
@@ -369,14 +369,14 @@ module T = struct
       locked : bool;
       maintainer_can_modify : bool;
       merge_commit_message : Merge_commit_message.t option; [@default None]
-      merge_commit_sha : string option;
+      merge_commit_sha : string option; [@default None]
       merge_commit_title : Merge_commit_title.t option; [@default None]
-      mergeable : bool option;
+      mergeable : bool option; [@default None]
       mergeable_state : string;
       merged : bool;
-      merged_at : string option;
-      merged_by : Githubc2_components_nullable_simple_user.t option;
-      milestone : Githubc2_components_nullable_milestone.t option;
+      merged_at : string option; [@default None]
+      merged_by : Githubc2_components_nullable_simple_user.t option; [@default None]
+      milestone : Githubc2_components_nullable_milestone.t option; [@default None]
       node_id : string;
       number : int;
       patch_url : string;

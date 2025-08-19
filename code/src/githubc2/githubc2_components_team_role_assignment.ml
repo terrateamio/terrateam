@@ -27,14 +27,14 @@ module Primary = struct
 
   type t = {
     assignment : Assignment.t option; [@default None]
-    description : string option;
+    description : string option; [@default None]
     html_url : string;
     id : int;
     members_url : string;
     name : string;
     node_id : string;
     notification_setting : string option; [@default None]
-    parent : Githubc2_components_nullable_team_simple.t option;
+    parent : Githubc2_components_nullable_team_simple.t option; [@default None]
     permission : string;
     permissions : Permissions.t option; [@default None]
     privacy : string option; [@default None]

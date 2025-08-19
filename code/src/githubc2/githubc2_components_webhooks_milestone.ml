@@ -54,12 +54,12 @@ module Primary = struct
   end
 
   type t = {
-    closed_at : string option;
+    closed_at : string option; [@default None]
     closed_issues : int;
     created_at : string;
-    creator : Creator.t option;
-    description : string option;
-    due_on : string option;
+    creator : Creator.t option; [@default None]
+    description : string option; [@default None]
+    due_on : string option; [@default None]
     html_url : string;
     id : int;
     labels_url : string;

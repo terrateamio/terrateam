@@ -3,7 +3,11 @@ module String_map = Terrat_data.String_map
 module Dirspace_map = Terrat_data.Dirspace_map
 module Dirspace_set = Terrat_data.Dirspace_set
 
-type synthesize_config_err = [ `Depends_on_cycle_err of Terrat_dirspace.t list ] [@@deriving show]
+type synthesize_config_err =
+  [ `Depends_on_cycle_err of Terrat_dirspace.t list
+  | `Workspace_in_multiple_stacks_err of Terrat_dirspace.t
+  ]
+[@@deriving show]
 
 exception Synthesize_config_err of synthesize_config_err
 
@@ -12,6 +16,8 @@ module Dirspace_config = struct
     dirspace : Terrat_dirspace.t;
     file_pattern_matcher : string -> bool; [@opque]
     lock_branch_target : Terrat_base_repo_config_v1.Dirs.Dir.Branch_target.t;
+    stack_config : Terrat_base_repo_config_v1.Stacks.Stack.t;
+    stack_name : string;
     tags : Terrat_tag_set.t;
     when_modified : Terrat_base_repo_config_v1.When_modified.t;
   }
@@ -104,9 +110,18 @@ let compile_file_pattern_matcher file_patterns =
   in
   fun fname -> patterns_match fname && not_patterns_match fname
 
+let match_stacks dirspace tags stacks =
+  CCList.filter
+    (fun (_, { R.Stacks.Stack.tag_query; _ }) ->
+      Terrat_tag_query.match_ ~ctx:(Terrat_tag_query.Ctx.make ~dirspace ()) ~tag_set:tags tag_query)
+    stacks
+
 let synthesize_config ~index repo_config =
   try
     let symlinks = build_symlinks index.R.Index.symlinks in
+    let stacks = R.stacks repo_config in
+    let stack_configs = Terrat_data.String_map.to_list stacks.R.Stacks.names in
+    let no_default_stack = not (Terrat_data.String_map.mem "default" stacks.R.Stacks.names) in
     let dirspaces =
       repo_config
       |> R.dirs
@@ -115,19 +130,49 @@ let synthesize_config ~index repo_config =
              let module D = R.Dirs.Dir in
              let module Ws = R.Dirs.Workspace in
              let module Wm = R.When_modified in
-             CCList.map
+             CCList.flat_map
                (fun (workspace, workspace_config) ->
                  let dirspace = { Terrat_dirspace.dir = dirname; workspace } in
-                 ( dirspace,
-                   {
-                     Dirspace_config.dirspace;
-                     file_pattern_matcher =
-                       compile_file_pattern_matcher
-                         workspace_config.Ws.when_modified.Wm.file_patterns;
-                     lock_branch_target = config.D.lock_branch_target;
-                     tags = Terrat_tag_set.of_list workspace_config.Ws.tags;
-                     when_modified = workspace_config.Ws.when_modified;
-                   } ))
+                 let tags = Terrat_tag_set.of_list workspace_config.Ws.tags in
+                 (* Determine which stack the dirspace is part of.  In this
+                    implementation, a dirspace can only be part of a single
+                    stack.  If a dirspace does not match any stack AND there is
+                    no [default] stack configured by the user, the dirspace
+                    implicitly gets made part of the default stack.  In the
+                    future, this dirspace should actually be filtered out rather
+                    than fail. *)
+                 let stack_name, stack_config =
+                   match match_stacks dirspace tags stack_configs with
+                   | [] when no_default_stack ->
+                       ("default", R.Stacks.Stack.make ~tag_query:Terrat_tag_query.any ())
+                   | [] -> raise (Failure "nyi")
+                   | [ (stack_name, stack_config) ] -> (stack_name, stack_config)
+                   | _ :: _ ->
+                       raise (Synthesize_config_err (`Workspace_in_multiple_stacks_err dirspace))
+                 in
+                 let tags =
+                   Terrat_tag_set.of_list (("stack_name:" ^ stack_name) :: workspace_config.Ws.tags)
+                 in
+                 (* If the dirspace is explicitly ignored via an empty
+                    [file_patterns], do not even include it so that we don't
+                    waste time trying to match against it. *)
+                 match workspace_config.Ws.when_modified.Wm.file_patterns with
+                 | [] -> []
+                 | _ :: _ ->
+                     [
+                       ( dirspace,
+                         {
+                           Dirspace_config.dirspace;
+                           file_pattern_matcher =
+                             compile_file_pattern_matcher
+                               workspace_config.Ws.when_modified.Wm.file_patterns;
+                           lock_branch_target = config.D.lock_branch_target;
+                           stack_config;
+                           stack_name;
+                           tags;
+                           when_modified = workspace_config.Ws.when_modified;
+                         } );
+                     ])
                (String_map.to_list config.D.workspaces @ String_map.to_list config.D.stacks))
       |> Dirspace_map.of_list
     in

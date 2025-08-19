@@ -1,10 +1,14 @@
 import { writable, type Writable } from 'svelte/store';
 import type { Installation, Repository, ThemeStore, ThemeMode } from './types';
 import type { VCSProvider } from './vcs/types';
+import type { ServerConfig } from './types';
 
 // VCS Provider state
 export const currentVCSProvider: Writable<VCSProvider> = writable('github');
 export const availableProviders: Writable<VCSProvider[]> = writable(['github', 'gitlab']);
+
+// Server config
+export const serverConfig: Writable<ServerConfig> = writable();
 
 // Organization/installation state
 export const installations: Writable<Installation[]> = writable([]);

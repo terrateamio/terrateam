@@ -12,7 +12,7 @@ module Primary = struct
     following : int option; [@default None]
     following_url : string;
     gists_url : string;
-    gravatar_id : string option;
+    gravatar_id : string option; [@default None]
     hireable : bool option; [@default None]
     html_url : string;
     id : int64;

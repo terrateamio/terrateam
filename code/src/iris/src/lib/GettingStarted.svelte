@@ -1924,7 +1924,7 @@
                     <ol class="list-decimal list-inside space-y-3 text-sm text-yellow-800 dark:text-yellow-200">
                       <li>
                         <a 
-                          href="https://gitlab.com/{forkedProjectPath}/-/hooks" 
+                          href="{serverConfig?.gitlab?.web_base_url || 'https://gitlab.com'}/{forkedProjectPath}/-/hooks" 
                           target="_blank"
                           rel="noopener noreferrer"
                           class="inline-flex items-center font-medium text-yellow-700 dark:text-yellow-300 underline hover:text-yellow-600 dark:hover:text-yellow-200 break-words"
@@ -3181,7 +3181,7 @@
                     <ol class="list-decimal list-inside space-y-2 text-sm text-yellow-800 dark:text-yellow-200">
                       <li>
                         <a 
-                          href="https://gitlab.com/{selectedGitLabGroup?.name || ''}/{manualGitLabProject || ''}/-/hooks" 
+                          href="{serverConfig?.gitlab?.web_base_url || 'https://gitlab.com'}/{selectedGitLabGroup?.name || ''}/{manualGitLabProject || ''}/-/hooks" 
                           target="_blank"
                           rel="noopener noreferrer"
                           class="inline-flex items-center font-medium text-yellow-700 dark:text-yellow-300 underline hover:text-yellow-600 dark:hover:text-yellow-200"

@@ -5,7 +5,7 @@ module Primary = struct
         id : int;
         login : string;
         node_id : string;
-        organization_billing_email : string option;
+        organization_billing_email : string option; [@default None]
         type_ : string; [@key "type"]
       }
       [@@deriving yojson { strict = false; meta = true }, show, eq]
@@ -39,7 +39,7 @@ module Primary = struct
         monthly_price_in_cents : int;
         name : string;
         price_model : Price_model.t;
-        unit_name : string option;
+        unit_name : string option; [@default None]
         yearly_price_in_cents : int;
       }
       [@@deriving yojson { strict = false; meta = true }, show, eq]
@@ -51,8 +51,8 @@ module Primary = struct
   type t = {
     account : Account.t;
     billing_cycle : string;
-    free_trial_ends_on : string option;
-    next_billing_date : string option;
+    free_trial_ends_on : string option; [@default None]
+    next_billing_date : string option; [@default None]
     on_free_trial : bool;
     plan : Plan.t;
     unit_count : int;

@@ -46,6 +46,7 @@ module Tmpl = struct
     |> fun tmpl ->
     Snabela.of_template tmpl Transformers.[ money; compact_plan; plan_diff; minus_one ]
 
+  let jinja fname = fname |> Terrat_files_github_tmpl.read |> CCOption.get_exn_or fname
   let terrateam_comment_help = read "terrateam_comment_help.tmpl"
   let apply_requirements_config_err_tag_query = read "apply_requirements_config_err_tag_query.tmpl"
 
@@ -62,7 +63,7 @@ module Tmpl = struct
   let repo_config_parse_failure = read "repo_config_parse_failure.tmpl"
   let repo_config_schema_err = read "repo_config_schema_err.tmpl"
   let repo_config_generic_failure = read "repo_config_generic_failure.tmpl"
-  let pull_request_not_appliable = read "pull_request_not_appliable.tmpl"
+  let pull_request_not_appliable = jinja "pull_request_not_appliable.tmpl"
   let pull_request_not_mergeable = read "pull_request_not_mergeable.tmpl"
   let apply_no_matching_dirspaces = read "apply_no_matching_dirspaces.tmpl"
   let plan_no_matching_dirspaces = read "plan_no_matching_dirspaces.tmpl"
@@ -177,6 +178,10 @@ module Tmpl = struct
     read "premium_feature_err_multiple_drift_schedules.tmpl"
 
   let premium_feature_err_gatekeeping = read "premium_feature_err_gatekeeping.tmpl"
+
+  let premium_feature_err_require_completed_reviews =
+    read "premium_feature_err_require_completed_reviews.tmpl"
+
   let repo_config_merge_err = read "repo_config_merge_err.tmpl"
   let gate_check_failure = read "gate_check_failure.tmpl"
   let tier_check = read "tier_check.tmpl"

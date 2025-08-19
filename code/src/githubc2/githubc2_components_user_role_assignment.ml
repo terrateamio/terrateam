@@ -23,7 +23,7 @@ module Primary = struct
     followers_url : string;
     following_url : string;
     gists_url : string;
-    gravatar_id : string option;
+    gravatar_id : string option; [@default None]
     html_url : string;
     id : int;
     inherited_from : Inherited_from.t option; [@default None]

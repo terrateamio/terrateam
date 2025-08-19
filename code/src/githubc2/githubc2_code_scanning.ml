@@ -28,7 +28,7 @@ module List_alerts_for_org = struct
       severity : Githubc2_components.Code_scanning_alert_severity.t option; [@default None]
       sort : Sort.t; [@default "created"]
       state : Githubc2_components.Code_scanning_alert_state_query.t option; [@default None]
-      tool_guid : string option;
+      tool_guid : string option; [@default None]
       tool_name : string option; [@default None]
     }
     [@@deriving make, show, eq]
@@ -131,8 +131,8 @@ module List_alerts_for_repo = struct
       ref_ : string option; [@default None] [@key "ref"]
       repo : string;
       sort : Sort.t; [@default "created"]
-      state : Githubc2_components.Code_scanning_alert_state.t;
-      tool_guid : string option;
+      state : Githubc2_components.Code_scanning_alert_state.t; [@default None]
+      tool_guid : string option; [@default None]
       tool_name : string option; [@default None]
     }
     [@@deriving make, show, eq]
@@ -777,7 +777,7 @@ module List_recent_analyses = struct
       repo : string;
       sarif_id : string option; [@default None]
       sort : Sort.t; [@default "created"]
-      tool_guid : string option;
+      tool_guid : string option; [@default None]
       tool_name : string option; [@default None]
     }
     [@@deriving make, show, eq]

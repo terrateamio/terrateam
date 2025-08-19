@@ -17,8 +17,8 @@ module Primary = struct
     expired : bool option; [@default None]
     html_url : string;
     id : int64;
-    invitee : Githubc2_components_nullable_simple_user.t option;
-    inviter : Githubc2_components_nullable_simple_user.t option;
+    invitee : Githubc2_components_nullable_simple_user.t option; [@default None]
+    inviter : Githubc2_components_nullable_simple_user.t option; [@default None]
     node_id : string;
     permissions : Permissions.t;
     repository : Githubc2_components_minimal_repository.t;

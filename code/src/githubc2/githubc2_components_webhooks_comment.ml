@@ -87,11 +87,11 @@ module Primary = struct
     html_url : string;
     id : int;
     node_id : string;
-    parent_id : int option;
+    parent_id : int option; [@default None]
     reactions : Reactions.t;
     repository_url : string;
     updated_at : string;
-    user : User.t option;
+    user : User.t option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

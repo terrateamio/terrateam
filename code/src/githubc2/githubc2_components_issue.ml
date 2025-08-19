@@ -51,11 +51,11 @@ module Primary = struct
   module Pull_request_ = struct
     module Primary = struct
       type t = {
-        diff_url : string option;
-        html_url : string option;
+        diff_url : string option; [@default None]
+        html_url : string option; [@default None]
         merged_at : string option; [@default None]
-        patch_url : string option;
-        url : string option;
+        patch_url : string option; [@default None]
+        url : string option; [@default None]
       }
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
@@ -76,13 +76,13 @@ module Primary = struct
 
   type t = {
     active_lock_reason : string option; [@default None]
-    assignee : Githubc2_components_nullable_simple_user.t option;
+    assignee : Githubc2_components_nullable_simple_user.t option; [@default None]
     assignees : Assignees.t option; [@default None]
     author_association : Githubc2_components_author_association.t;
     body : string option; [@default None]
     body_html : string option; [@default None]
     body_text : string option; [@default None]
-    closed_at : string option;
+    closed_at : string option; [@default None]
     closed_by : Githubc2_components_nullable_simple_user.t option; [@default None]
     comments : int;
     comments_url : string;
@@ -94,7 +94,7 @@ module Primary = struct
     labels : Labels.t;
     labels_url : string;
     locked : bool;
-    milestone : Githubc2_components_nullable_milestone.t option;
+    milestone : Githubc2_components_nullable_milestone.t option; [@default None]
     node_id : string;
     number : int;
     performed_via_github_app : Githubc2_components_nullable_integration.t option; [@default None]
@@ -110,7 +110,7 @@ module Primary = struct
     type_ : Githubc2_components_issue_type.t option; [@default None] [@key "type"]
     updated_at : string;
     url : string;
-    user : Githubc2_components_nullable_simple_user.t option;
+    user : Githubc2_components_nullable_simple_user.t option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

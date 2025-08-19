@@ -1901,7 +1901,24 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         in
         let working_set_matches =
           match all_unapplied_matches with
-          | layer :: _ -> CCList.filter (Terrat_change_match3.match_tag_query ~tag_query) layer
+          | layer :: _ -> (
+              match op with
+              | `Apply ->
+                  (* If it's an apply, we limit the working set to only those
+                     that can be applied, based on stacks configuration. *)
+                  let module S = Terrat_base_repo_config_v1.Stacks.Stack in
+                  let module Oc = Terrat_base_repo_config_v1.Stacks.On_change in
+                  let flat_all_unapplied_matches = CCList.flatten all_unapplied_matches in
+                  layer
+                  |> CCList.filter (Terrat_change_match3.match_tag_query ~tag_query)
+                  |> CCList.filter
+                       (fun { Dc.stack_config = { S.on_change = { Oc.can_apply_after }; _ }; _ } ->
+                         not
+                           (CCList.exists
+                              (fun { Dc.stack_name; _ } ->
+                                CCList.mem ~eq:CCString.equal stack_name can_apply_after)
+                              flat_all_unapplied_matches))
+              | _ -> CCList.filter (Terrat_change_match3.match_tag_query ~tag_query) layer)
           | [] -> []
         in
         let all_tag_query_matches =
@@ -2881,19 +2898,64 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | (`Failed_to_start_with_msg_err _ | `Missing_workflow | `Failed_to_start) as err ->
           publish_msg request_id client user pull_request (Msg.Run_work_manifest_err err)
 
+    let replace_stack_vars vars s =
+      let vars =
+        Terrat_data.String_map.fold
+          (fun k v acc ->
+            Terrat_data.String_map.add ("STACK_VAR_" ^ CCString.uppercase_ascii k) v acc)
+          vars
+          Terrat_data.String_map.empty
+      in
+      match Str_template.apply (CCFun.flip Terrat_data.String_map.find_opt vars) s with
+      | Ok s -> s
+      | Error (#Str_template.err as err) -> assert false
+
+    let apply_stack_vars_to_workflow stack workflow =
+      let module R = Terrat_base_repo_config_v1 in
+      let module E = R.Workflows.Entry in
+      let module S = R.Stacks.Stack in
+      let {
+        E.apply = _;
+        engine = _;
+        environment;
+        integrations = _;
+        lock_policy = _;
+        plan = _;
+        runs_on = _;
+        tag_query = _;
+      } =
+        workflow
+      in
+      {
+        workflow with
+        E.environment = CCOption.map (replace_stack_vars stack.S.variables) environment;
+      }
+
     let dirspaceflows_of_changes_with_branch_target repo_config changes =
       let module R = Terrat_base_repo_config_v1 in
       let workflows = R.workflows repo_config in
       Ok
         (CCList.map
-           (fun ({ Terrat_change_match3.Dirspace_config.dirspace; lock_branch_target; _ }, workflow)
+           (fun ( {
+                    Terrat_change_match3.Dirspace_config.dirspace;
+                    lock_branch_target;
+                    stack_config;
+                    _;
+                  },
+                  workflow )
               ->
              let module Dsf = Terrat_change.Dirspaceflow in
              {
                Dsf.dirspace;
                workflow =
                  ( lock_branch_target,
-                   CCOption.map (fun (idx, workflow) -> { Dsf.Workflow.idx; workflow }) workflow );
+                   CCOption.map
+                     (fun (idx, workflow) ->
+                       {
+                         Dsf.Workflow.idx;
+                         workflow = apply_stack_vars_to_workflow stack_config workflow;
+                       })
+                     workflow );
              })
            (match_tag_queries
               ~accessor:(fun { R.Workflows.Entry.tag_query; _ } -> tag_query)
@@ -3103,62 +3165,31 @@ module Make (S : Terrat_vcs_provider2.S) = struct
        1. The environment, so all environments get their own work manifest.
 
        2. runs_on, so any runs that get their own runs_on configuration get
-          their own work manifest.
-
-       3. Overlapping workspaces.  This way if a dir has multiple workspace that
-          will run in it, it will get its own run.  This ensure isolation between
-          those directories. *)
+          their own work manifest.  *)
     let partition_by_run_params ~max_workspaces_per_batch dirspaceflows =
       let module M = struct
         type t = string option * Yojson.Safe.t option [@@deriving eq]
       end in
       let module Dsf = Terrat_change.Dirspaceflow in
       let module We = Terrat_base_repo_config_v1.Workflows.Entry in
-      let partitioned_by_dir =
-        let rec update_first_match ~test ~update = function
-          | [] -> None
-          | x :: xs when test x -> Some (update x :: xs)
-          | x :: xs ->
-              let open CCOption.Infix in
-              update_first_match ~test ~update xs >>= fun xs -> Some (x :: xs)
-        in
-        let partitions =
-          CCList.fold_left
-            (fun groups ({ Dsf.dirspace = { Terrat_dirspace.dir; _ }; _ } as dsf) ->
-              match
-                update_first_match
-                  ~test:CCFun.(Terrat_data.String_map.mem dir %> not)
-                  ~update:(Terrat_data.String_map.add dir dsf)
-                  groups
-              with
-              | Some groups -> groups
-              | None -> Terrat_data.String_map.singleton dir dsf :: groups)
-            []
-            dirspaceflows
-        in
-        CCList.map CCFun.(Terrat_data.String_map.to_list %> CCList.map snd) partitions
-      in
       let partitions =
-        CCList.flat_map
-          (fun dirspaceflows ->
-            CCListLabels.fold_left
-              ~f:(fun acc dsf ->
-                let k =
-                  match dsf with
-                  | {
-                   Dsf.workflow = Some { Dsf.Workflow.workflow = { We.environment; runs_on; _ }; _ };
-                   _;
-                  } -> (environment, runs_on)
-                  | _ -> (None, None)
-                in
-                CCList.Assoc.update
-                  ~eq:M.equal
-                  ~f:(fun v -> Some (dsf :: CCOption.get_or ~default:[] v))
-                  k
-                  acc)
-              ~init:[]
-              dirspaceflows)
-          partitioned_by_dir
+        CCListLabels.fold_left
+          ~f:(fun acc dsf ->
+            let k =
+              match dsf with
+              | {
+               Dsf.workflow = Some { Dsf.Workflow.workflow = { We.environment; runs_on; _ }; _ };
+               _;
+              } -> (environment, runs_on)
+              | _ -> (None, None)
+            in
+            CCList.Assoc.update
+              ~eq:M.equal
+              ~f:(fun v -> Some (dsf :: CCOption.get_or ~default:[] v))
+              k
+              acc)
+          ~init:[]
+          dirspaceflows
       in
       CCList.flat_map
         (fun (k, dsfs) ->
@@ -3506,7 +3537,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         <*> Dv.working_branch_ref ctx state
         <*> Dv.matches ctx state `Plan)
       >>= fun (repo_config, base_ref, branch_ref, working_branch_ref, matches) ->
-      let all_matches = CCList.flatten matches.Dv.Matches.all_matches in
+      let all_matches = CCList.flatten matches.Dv.Matches.all_tag_query_matches in
       Abb.Future.return (dirspaceflows_of_changes_with_branch_target repo_config all_matches)
       >>= fun all_dirspaceflows ->
       store_dirspaceflows
@@ -4649,6 +4680,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                  pull_request
                  (Msg.Depends_on_cycle cycle))
             >>= fun () -> Abb.Future.return (Error `Error)
+        | Error (`Workspace_in_multiple_stacks_err _) -> raise (Failure "nyi")
       in
       let open Abb.Future.Infix_monad in
       run >>= fun _ -> Abb.Future.return (Ok state)
@@ -6663,6 +6695,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         | Error (`Depends_on_cycle_err cycle) ->
             H.maybe_publish_msg ctx state (Msg.Depends_on_cycle cycle)
             >>= fun () -> Abb.Future.return (`Failure `Error)
+        | Error (`Workspace_in_multiple_stacks_err _) -> raise (Failure "nyi")
         | Error (#Terrat_base_repo_config_v1.of_version_1_err as err) ->
             Logs.info (fun m ->
                 m

@@ -206,6 +206,10 @@
         "enabled": {
           "default": false,
           "type": "boolean"
+        },
+        "require_completed_reviews": {
+          "default": false,
+          "type": "boolean"
         }
       },
       "type": "object"
@@ -299,6 +303,12 @@
       },
       "properties": {},
       "type": "object"
+    },
+    "default-branch-overrides": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
     },
     "destination-branch-name": {
       "type": "string"
@@ -1010,6 +1020,52 @@
       "type": "string"
     },
     "runs-on": {},
+    "stack-config": {
+      "additionalProperties": false,
+      "properties": {
+        "on_change": {
+          "additionalProperties": false,
+          "properties": {
+            "can_apply_after": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        "tag_query": {
+          "type": "string"
+        },
+        "variables": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "tag_query"
+      ],
+      "type": "object"
+    },
+    "stacks": {
+      "additionalProperties": false,
+      "properties": {
+        "allow_workspace_in_multiple_stacks": {
+          "default": false,
+          "type": "boolean"
+        },
+        "names": {
+          "additionalProperties": {
+            "$ref": "#/definitions/stack-config"
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
     "storage-plan-cmd": {
       "additionalProperties": false,
       "properties": {
@@ -1181,6 +1237,9 @@
           "default": true,
           "type": "boolean"
         },
+        "default_branch_overrides": {
+          "$ref": "#/definitions/default-branch-overrides"
+        },
         "default_tf_version": {
           "$ref": "#/definitions/terraform-version"
         },
@@ -1254,6 +1313,9 @@
         "parallel_runs": {
           "default": 3,
           "type": "integer"
+        },
+        "stacks": {
+          "$ref": "#/definitions/stacks"
         },
         "storage": {
           "additionalProperties": false,

@@ -2,6 +2,7 @@ type premium_features =
   [ `Access_control
   | `Multiple_drift_schedules
   | `Gatekeeping
+  | `Require_completed_reviews
   ]
 [@@deriving show]
 

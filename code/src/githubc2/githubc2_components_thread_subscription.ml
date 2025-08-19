@@ -1,8 +1,8 @@
 module Primary = struct
   type t = {
-    created_at : string option;
+    created_at : string option; [@default None]
     ignored : bool;
-    reason : string option;
+    reason : string option; [@default None]
     repository_url : string option; [@default None]
     subscribed : bool;
     thread_url : string option; [@default None]

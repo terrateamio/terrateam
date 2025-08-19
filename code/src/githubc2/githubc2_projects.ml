@@ -690,7 +690,7 @@ module Create_card = struct
   module Request_body = struct
     module V0 = struct
       module Primary = struct
-        type t = { note : string option }
+        type t = { note : string option [@default None] }
         [@@deriving make, yojson { strict = false; meta = true }, show, eq]
       end
 

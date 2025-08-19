@@ -25,7 +25,7 @@ module Primary = struct
     number : int;
     price_model : Price_model.t;
     state : string;
-    unit_name : string option;
+    unit_name : string option; [@default None]
     url : string;
     yearly_price_in_cents : int;
   }

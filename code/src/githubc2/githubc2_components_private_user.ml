@@ -15,28 +15,28 @@ module Primary = struct
 
   type t = {
     avatar_url : string;
-    bio : string option;
-    blog : string option;
+    bio : string option; [@default None]
+    blog : string option; [@default None]
     business_plus : bool option; [@default None]
     collaborators : int;
-    company : string option;
+    company : string option; [@default None]
     created_at : string;
     disk_usage : int;
-    email : string option;
+    email : string option; [@default None]
     events_url : string;
     followers : int;
     followers_url : string;
     following : int;
     following_url : string;
     gists_url : string;
-    gravatar_id : string option;
-    hireable : bool option;
+    gravatar_id : string option; [@default None]
+    hireable : bool option; [@default None]
     html_url : string;
     id : int64;
     ldap_dn : string option; [@default None]
-    location : string option;
+    location : string option; [@default None]
     login : string;
-    name : string option;
+    name : string option; [@default None]
     node_id : string;
     notification_email : string option; [@default None]
     organizations_url : string;

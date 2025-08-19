@@ -49,10 +49,10 @@ module Primary = struct
     column_url : string;
     content_url : string option; [@default None]
     created_at : string;
-    creator : Creator.t option;
+    creator : Creator.t option; [@default None]
     id : int;
     node_id : string;
-    note : string option;
+    note : string option; [@default None]
     project_url : string;
     updated_at : string;
     url : string;

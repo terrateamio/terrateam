@@ -3,7 +3,18 @@
   import router from 'svelte-spa-router';
   import { isAuthenticated, isLoading, getCurrentUser, redirectToIntendedUrl } from './lib/auth';
   import { api, isApiError } from './lib/api';
-  import { installations, selectedInstallation, installationsLoading, installationsError, defaultInstallationId, theme, hasVisitedBefore, markAsVisited, currentVCSProvider } from './lib/stores';
+  import {
+    installations,
+    selectedInstallation,
+    installationsLoading,
+    installationsError,
+    defaultInstallationId,
+    theme,
+    hasVisitedBefore,
+    markAsVisited,
+    currentVCSProvider,
+    serverConfig
+  } from './lib/stores';
   import { getMaintenanceConfig } from './lib/utils/maintenance';
   import MaintenanceMode from './lib/MaintenanceMode.svelte';
   import Login from './lib/Login.svelte';
@@ -100,6 +111,16 @@
     loadInstallations();
   }
 
+  async function loadServerConfig() {
+    try {
+      const config = await api.getServerConfig();
+      serverConfig.set(config);
+    } catch (err) {
+      console.error('Failed to load server config:', err);
+      // Non-critical, continue without server config
+    }
+  }
+
   async function loadInstallations() {
     if ($installationsLoading) return;
     
@@ -194,7 +215,8 @@
     if (handleLegacyUrlRedirect()) {
       return; // Exit early if we're redirecting
     }
-    
+
+    await loadServerConfig();
     await getCurrentUser();
   });
 </script>

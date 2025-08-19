@@ -246,6 +246,7 @@ module Apply_requirements : sig
       any_of : Access_control.Match_list.t; [@default []]
       any_of_count : int; [@default 1]
       enabled : bool; [@default true]
+      require_completed_reviews : bool; [@default false]
     }
     [@@deriving make, show, yojson, eq]
   end
@@ -322,6 +323,12 @@ module Cost_estimation : sig
     provider : Provider.t; [@default Provider.Infracost]
   }
   [@@deriving make, show, yojson, eq]
+end
+
+module Default_branch_overrides : sig
+  type t = string list [@@deriving show, yojson, eq]
+
+  val make : unit -> t
 end
 
 module Destination_branches : sig
@@ -551,6 +558,28 @@ module Integrations : sig
   [@@deriving make, show, yojson, eq]
 end
 
+module Stacks : sig
+  module On_change : sig
+    type t = { can_apply_after : string list [@default []] } [@@deriving make, show, yojson, eq]
+  end
+
+  module Stack : sig
+    type t = {
+      tag_query : Tag_query.t;
+      on_change : On_change.t; [@default On_change.make ()]
+      variables : string String_map.t; [@default String_map.empty]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  type t = {
+    allow_workspace_in_multiple_stacks : bool; [@default false]
+    names : Stack.t String_map.t;
+        [@default String_map.singleton "default" (Stack.make ~tag_query:Tag_query.any ())]
+  }
+  [@@deriving make, show, yojson, eq]
+end
+
 module Storage : sig
   module Plans : sig
     module Cmd : sig
@@ -663,6 +692,7 @@ module View : sig
     config_builder : Config_builder.t; [@default Config_builder.make ()]
     cost_estimation : Cost_estimation.t; [@default Cost_estimation.make ()]
     create_and_select_workspace : bool; [@default true]
+    default_branch_overrides : Default_branch_overrides.t option; [@default None]
     destination_branches : Destination_branches.t; [@default []]
     dirs : Dirs.t; [@default String_map.empty]
     drift : Drift.t; [@default Drift.make ()]
@@ -672,6 +702,7 @@ module View : sig
     indexer : Indexer.t; [@default Indexer.make ()]
     integrations : Integrations.t; [@default Integrations.make ()]
     parallel_runs : int; [@default 3]
+    stacks : Stacks.t; [@default Stacks.make ()]
     storage : Storage.t; [@default Storage.make ()]
     tags : Tags.t; [@default Tags.make ()]
     tree_builder : Tree_builder.t; [@default Tree_builder.make ()]
@@ -730,6 +761,7 @@ type of_version_1_err =
   | `Hooks_unknown_run_on_err of Terrat_repo_config_run_on.t
   | `Hooks_unknown_visible_on_err of string
   | `Pattern_parse_err of string
+  | `Stack_config_tag_query_err of string * string
   | `Unknown_lock_policy_err of string
   | `Unknown_plan_mode_err of string
   | `Window_parse_timezone_err of string
@@ -767,6 +799,7 @@ val batch_runs : 'a t -> Batch_runs.t
 val config_builder : 'a t -> Config_builder.t
 val cost_estimation : 'a t -> Cost_estimation.t
 val create_and_select_workspace : 'a t -> bool
+val default_branch_overrides : 'a t -> Default_branch_overrides.t
 val destination_branches : 'a t -> Destination_branches.t
 val dirs : 'a t -> Dirs.t
 val drift : 'a t -> Drift.t
@@ -776,6 +809,7 @@ val hooks : 'a t -> Hooks.t
 val indexer : 'a t -> Indexer.t
 val integrations : 'a t -> Integrations.t
 val parallel_runs : 'a t -> int
+val stacks : 'a t -> Stacks.t
 val storage : 'a t -> Storage.t
 val tags : 'a t -> Tags.t
 val tree_builder : 'a t -> Tree_builder.t

@@ -2,8 +2,8 @@ module Primary = struct
   module Cvss_v3 = struct
     module Primary = struct
       type t = {
-        score : float option;
-        vector_string : string option;
+        score : float option; [@default None]
+        vector_string : string option; [@default None]
       }
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
@@ -14,8 +14,8 @@ module Primary = struct
   module Cvss_v4 = struct
     module Primary = struct
       type t = {
-        score : float option;
-        vector_string : string option;
+        score : float option; [@default None]
+        vector_string : string option; [@default None]
       }
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end

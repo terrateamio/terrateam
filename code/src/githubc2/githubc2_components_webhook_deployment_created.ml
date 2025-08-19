@@ -584,18 +584,18 @@ module Primary = struct
           end
 
           type t = {
-            created_at : string option;
-            description : string option;
+            created_at : string option; [@default None]
+            description : string option; [@default None]
             events : Events.t option; [@default None]
-            external_url : string option;
+            external_url : string option; [@default None]
             html_url : string;
-            id : int option;
+            id : int option; [@default None]
             name : string;
             node_id : string;
-            owner : Owner.t option;
+            owner : Owner.t option; [@default None]
             permissions : Permissions.t option; [@default None]
             slug : string option; [@default None]
-            updated_at : string option;
+            updated_at : string option; [@default None]
           }
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
@@ -605,8 +605,8 @@ module Primary = struct
 
       type t = {
         created_at : string;
-        creator : Creator.t option;
-        description : string option;
+        creator : Creator.t option; [@default None]
+        description : string option; [@default None]
         environment : string;
         id : int;
         node_id : string;
@@ -1019,13 +1019,13 @@ module Primary = struct
       end
 
       type t = {
-        actor : Actor_.t option;
+        actor : Actor_.t option; [@default None]
         artifacts_url : string option; [@default None]
         cancel_url : string option; [@default None]
         check_suite_id : int;
         check_suite_node_id : string;
         check_suite_url : string option; [@default None]
-        conclusion : Conclusion.t option;
+        conclusion : Conclusion.t option; [@default None]
         created_at : string;
         display_title : string;
         event : string;
@@ -1069,8 +1069,8 @@ module Primary = struct
     organization : Githubc2_components_organization_simple_webhooks.t option; [@default None]
     repository : Githubc2_components_repository_webhooks.t;
     sender : Githubc2_components_simple_user.t;
-    workflow : Githubc2_components_webhooks_workflow.t option;
-    workflow_run : Workflow_run_.t option;
+    workflow : Githubc2_components_webhooks_workflow.t option; [@default None]
+    workflow_run : Workflow_run_.t option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

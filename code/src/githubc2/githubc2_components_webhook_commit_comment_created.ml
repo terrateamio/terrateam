@@ -96,14 +96,14 @@ module Primary = struct
         created_at : string;
         html_url : string;
         id : int;
-        line : int option;
+        line : int option; [@default None]
         node_id : string;
-        path : string option;
-        position : int option;
+        path : string option; [@default None]
+        position : int option; [@default None]
         reactions : Reactions.t option; [@default None]
         updated_at : string;
         url : string;
-        user : User.t option;
+        user : User.t option; [@default None]
       }
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end

@@ -139,6 +139,13 @@ module type S = sig
     Client.t ->
     (Terrat_pull_request_review.t list, [> `Error ]) result Abb.Future.t
 
+  val fetch_pull_request_requested_reviews :
+    request_id:string ->
+    Repo.t ->
+    Pull_request.Id.t ->
+    Client.t ->
+    (Terrat_base_repo_config_v1.Access_control.Match.t list, [> `Error ]) result Abb.Future.t
+
   val react_to_comment :
     request_id:string ->
     Client.t ->
