@@ -12,12 +12,20 @@
 **Approved**: {% if c.approved_check %}:thumbsup: Passed{% else %}:heavy_multiplication_x: Failed{% endif %}
       {% if c.missing_reviews %}
 
-Missing the following reviews:
+The following required reviews are missing:
 
         {% for r in c.missing_reviews %}
 - `{{ r }}`
         {% endfor %}
       {% endif %}
+    {% endif %}
+    {% if c.missing_any_of_count > 0 %}
+
+Missing {{ c.missing_any_of_count }} reviews from any of the following:
+
+      {% for r in c.any_of %}
+- `{{ r }}`
+      {% endfor %}
     {% endif %}
     {% if c.merge_conflicts_enabled %}
 **Merge Conflicts**: {% if c.merge_conflicts_check %}:thumbsup: Passed{% else %}:heavy_multiplication_x: Failed{% endif %}
