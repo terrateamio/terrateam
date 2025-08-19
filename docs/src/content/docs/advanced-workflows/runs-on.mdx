@@ -1,0 +1,104 @@
+---
+title: Custom Runners with runs_on
+description: Configure workflows to run on specific GitHub Actions runners
+---
+
+The `runs_on` configuration allows you to specify which GitHub Actions runners your Terrateam workflows should execute on. This is particularly useful for organizations that need to use self-hosted runners for security, compliance, or performance reasons.
+
+## Overview
+
+By default, Terrateam workflows run on `ubuntu-latest` GitHub-hosted runners. The `runs_on` configuration gives you flexibility to:
+
+- Use self-hosted runners for sensitive workloads
+- Target specific runner labels for specialized hardware or software requirements
+- Distribute workloads across different runner pools
+- Comply with organizational policies that require on-premises execution
+
+## Configuration
+
+The `runs_on` parameter accepts any valid GitHub Actions runner specification. It can be configured at the workflow level in your `.terrateam/config.yml`:
+
+```yaml
+workflows:
+  - tag_query: ""
+    runs_on: ubuntu-latest  # Default value
+```
+
+### Basic Examples
+
+#### Self-Hosted Runner
+```yaml
+workflows:
+  - tag_query: "production"
+    runs_on: self-hosted
+    plan:
+      - type: init
+      - type: plan
+    apply:
+      - type: init
+      - type: apply
+```
+
+#### Multiple Labels
+When you need a runner with specific characteristics, you can specify multiple labels as an array:
+
+```yaml
+workflows:
+  - tag_query: "production"
+    runs_on: [self-hosted, linux, x64, gpu]
+    plan:
+      - type: init
+      - type: plan
+```
+
+#### Single Label as Array
+You can also specify a single label as an array for consistency:
+
+```yaml
+workflows:
+  - tag_query: ""
+    runs_on: ["self-hosted"]
+```
+
+## Advanced Patterns
+
+### Environment-Specific Runners
+
+Different environments often have different security and compliance requirements. You can configure separate runners for each environment:
+
+```yaml
+workflows:
+  # Development uses GitHub-hosted runners
+  - tag_query: "dev"
+    runs_on: ubuntu-latest
+    plan:
+      - type: init
+      - type: plan
+    apply:
+      - type: init
+      - type: apply
+
+  # Staging uses self-hosted runners with specific labels
+  - tag_query: "staging"
+    runs_on: [self-hosted, staging, linux]
+    plan:
+      - type: init
+      - type: plan
+    apply:
+      - type: init
+      - type: apply
+
+  # Production uses dedicated high-security runners
+  - tag_query: "production"
+    runs_on: [self-hosted, production, secure, linux]
+    plan:
+      - type: init
+      - type: plan
+    apply:
+      - type: init
+      - type: apply
+```
+
+## Conclusion
+
+The `runs_on` configuration provides powerful flexibility for controlling where your Terraform operations execute. By carefully planning your runner strategy, you can achieve the right balance of security, performance, compliance, and cost for your organization's needs.
