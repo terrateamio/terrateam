@@ -11,6 +11,14 @@ GITHUB_API_BASE_URL = 'GITHUB_API_BASE_URL'
 REQUIRED_ENV_KEYS = []
 
 def setup_environment():
+    if os.getenv('CUSTOM_CA_CERT'):
+        try:
+            subprocess.check_call(['sudo', '/usr/local/bin/update-ca-certificates.py'])
+            os.environ['CERTS_DIR'] = '/etc/ssl/certs'
+            print("Custom CA certificates installed successfully")
+        except subprocess.CalledProcessError as e:
+            print(f"Failed to update CA certificates: {e}")
+            sys.exit(1)
     if 'GITHUB_APP_PEM' in os.environ:
         os.environ['GITHUB_APP_PEM'] = os.environ['GITHUB_APP_PEM'].replace('\\n', '\n')
     os.environ['TERRAT_PYTHON_EXEC'] = '/usr/bin/python3'

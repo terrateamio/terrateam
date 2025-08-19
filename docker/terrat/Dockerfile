@@ -139,10 +139,15 @@ RUN apk add --no-cache \
     python3 \
     runit \
     strace \
+    sudo \
     yj
 RUN addgroup -S terrat && adduser -S -G terrat terrat
-RUN mkdir -p /usr/local/bin /etc/service/terrat /etc/service/nginx /usr/local/share/terrat/ui/assets
-RUN chown -R terrat:terrat /usr/local/bin /etc/service /usr/local/share /etc/nginx /var/lib/nginx /var/log/nginx /run
+RUN mkdir -p /usr/local/bin /etc/service/terrat /etc/service/nginx /usr/local/share/terrat/ui/assets /usr/local/share/ca-certificates
+COPY --chown=root:root docker/terrat/update-ca-certificates.py /usr/local/bin/update-ca-certificates.py
+RUN chmod 755 /usr/local/bin/update-ca-certificates.py
+RUN echo 'terrat ALL=(root) NOPASSWD: /usr/local/bin/update-ca-certificates.py' > /etc/sudoers.d/terrat
+RUN chmod 440 /etc/sudoers.d/terrat
+RUN chown -R terrat:terrat /etc/service /usr/local/share/terrat /etc/nginx /var/lib/nginx /var/log/nginx /run
 USER terrat
 COPY docker/terrat/service/terrat /etc/service/terrat/run
 COPY docker/terrat/service/nginx /etc/service/nginx/run
@@ -172,10 +177,15 @@ RUN apk add --no-cache \
     python3 \
     runit \
     strace \
+    sudo \
     yj
 RUN addgroup -S terrat && adduser -S -G terrat terrat
-RUN mkdir -p /usr/local/bin /etc/service/terrat /etc/service/nginx /usr/local/share/terrat/ui/assets
-RUN chown -R terrat:terrat /usr/local/bin /etc/service /usr/local/share /etc/nginx /var/lib/nginx /var/log/nginx /run
+RUN mkdir -p /usr/local/bin /etc/service/terrat /etc/service/nginx /usr/local/share/terrat/ui/assets /usr/local/share/ca-certificates
+COPY --chown=root:root docker/terrat/update-ca-certificates.py /usr/local/bin/update-ca-certificates.py
+RUN chmod 755 /usr/local/bin/update-ca-certificates.py
+RUN echo 'terrat ALL=(root) NOPASSWD: /usr/local/bin/update-ca-certificates.py' > /etc/sudoers.d/terrat
+RUN chmod 440 /etc/sudoers.d/terrat
+RUN chown -R terrat:terrat /etc/service /usr/local/share/terrat /etc/nginx /var/lib/nginx /var/log/nginx /run
 USER terrat
 COPY docker/terrat/service/terrat /etc/service/terrat/run
 COPY docker/terrat/service/nginx /etc/service/nginx/run
