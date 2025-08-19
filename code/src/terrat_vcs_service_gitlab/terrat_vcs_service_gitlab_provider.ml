@@ -3561,6 +3561,15 @@ module Comment = struct
           "PREMIUM_FEATURE_GATEKEEPING"
           Tmpl.premium_feature_err_gatekeeping
           kv
+    | Msg.Premium_feature_err `Require_completed_reviews ->
+        let kv = Snabela.Kv.(Map.of_list []) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "PREMIUM_FEATURE_REQUIRE_COMPLETED_REVIEWS"
+          Tmpl.premium_feature_err_require_completed_reviews
+          kv
     | Msg.Pull_request_not_appliable (_, apply_requirements) ->
         let module Dc = Terrat_change_match3.Dirspace_config in
         let module Ds = Terrat_dirspace in
@@ -3938,6 +3947,15 @@ module Repo_config = struct
     | { V1.View.drift = { V1.Drift.enabled = true; schedules }; _ }
       when V1.String_map.cardinal schedules > 1 ->
         Abb.Future.return (Error (`Premium_feature_err `Multiple_drift_schedules))
+    | { V1.View.apply_requirements = { V1.Apply_requirements.checks; _ }; _ }
+      when CCList.exists
+             (fun {
+                    V1.Apply_requirements.Check.approved =
+                      { V1.Apply_requirements.Approved.require_completed_reviews; _ };
+                    _;
+                  }
+                -> require_completed_reviews)
+             checks -> Abb.Future.return (Error (`Premium_feature_err `Require_completed_reviews))
     | _ -> Abb.Future.return (Ok (provenance, final_repo_config))
 end
 
