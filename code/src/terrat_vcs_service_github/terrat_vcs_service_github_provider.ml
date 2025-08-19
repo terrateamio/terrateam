@@ -1,11 +1,11 @@
 let src = Logs.Src.create "vcs_service_github_provider"
 
 module Api = Terrat_vcs_api_github
-module By_scope = Terrat_vcs_service_github_scope.By_scope
+module By_scope = Terrat_scope.By_scope
 module Logs = (val Logs.src_log src : Logs.LOG)
-module Scope = Terrat_vcs_service_github_scope.Scope
-module Tmpl = Terrat_vcs_service_github_assets.Tmpl
-module Ui = Terrat_vcs_service_github_assets.Ui
+module Scope = Terrat_scope.Scope
+module Tmpl = Terrat_vcs_github_comment_templates.Tmpl
+module Ui = Terrat_vcs_github_comment_ui.Ui
 
 let not_a_bad_chunk_size = 500
 let replace_nul_byte = CCString.replace ~which:`All ~sub:"\x00" ~by:"\\0"
@@ -2226,27 +2226,6 @@ module Gate = struct
 end
 
 module Comment = struct
-  let comment_on_pull_request ~request_id client pull_request msg_type body =
-    let open Abbs_future_combinators.Infix_result_monad in
-    Api.comment_on_pull_request ~request_id client pull_request body
-    >>= fun () ->
-    Logs.info (fun m -> m "%s : PUBLISHED_COMMENT : %s" request_id msg_type);
-    Abb.Future.return (Ok ())
-
-  let apply_template_and_publish ~request_id client pull_request msg_type template kv =
-    match Snabela.apply template kv with
-    | Ok body -> comment_on_pull_request ~request_id client pull_request msg_type body
-    | Error (#Snabela.err as err) ->
-        Logs.err (fun m -> m "%s : TEMPLATE_ERROR : %a" request_id Snabela.pp_err err);
-        Abb.Future.return (Error `Error)
-
-  let apply_template_and_publish_jinja ~request_id client pull_request msg_type template kv =
-    match Minijinja.render_template template kv with
-    | Ok body -> comment_on_pull_request ~request_id client pull_request msg_type body
-    | Error err ->
-        Logs.err (fun m -> m "%s : TEMPLATE_ERROR : %s" request_id err);
-        Abb.Future.return (Error `Error)
-
   module Result = struct
     let steps_has_changes steps =
       let module P = struct
@@ -2289,8 +2268,8 @@ module Comment = struct
           work_manifest =
         let module Wm = Terrat_work_manifest3 in
         let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
-        let module Publisher_tools = Terrat_vcs_service_github_publishers.Publisher_tools in
-        let module Comment_api = Terrat_vcs_service_github_publishers.Comment_api in
+        let module Publisher_tools = Terrat_vcs_github_comment_publishers.Publisher_tools in
+        let module Comment_api = Terrat_vcs_github_comment_publishers.Comment_api in
         let by_scope = By_scope.group results.R2.steps in
         let gates = results.R2.gates in
         let dirspaces =
@@ -2315,7 +2294,7 @@ module Comment = struct
         let open Abb.Future.Infix_monad in
         Api.comment_on_pull_request ~request_id client pull_request output
         >>= function
-        | Ok () -> Abb.Future.return (Ok ())
+        | Ok comment_id -> Abb.Future.return (Ok comment_id)
         | Error `Error -> (
             match (view, dirspaces) with
             | _, [] -> assert false
@@ -2351,36 +2330,22 @@ module Comment = struct
     end
 
     module Publisher3 = struct
-      module Gcm = Terrat_vcs_comment.Make (Terrat_vcs_service_github_comment.S)
-
-      let create_els results =
-        let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
-        let module Tcm = Terrat_vcs_service_github_comment in
-        let by_scope = By_scope.group results.R2.steps in
-        let strategy = Terrat_vcs_comment.Strategy.Append in
-        by_scope
-        |> CCList.filter_map (function
-             | Scope.Dirspace dirspace, steps ->
-                 Some
-                   {
-                     Terrat_vcs_service_github_comment.S.dirspace;
-                     steps;
-                     strategy;
-                     compact = false;
-                   }
-             | Scope.Run _, _ -> None)
+      module Gcm = Terrat_vcs_comment.Make (Terrat_vcs_github_comment.S)
 
       let post_comment
           request_id
           account_status
           config
           client
+          db
           is_layered_run
           remaining_layers
+          repo_config
           result
           pull_request
+          synthesized_config
           work_manifest =
-        let module Tcm = Terrat_vcs_service_github_comment in
+        let module Tcm = Terrat_vcs_github_comment in
         let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
         let pull_request =
           Api.Pull_request.set_diff () pull_request |> Api.Pull_request.set_checks ()
@@ -2400,15 +2365,24 @@ module Comment = struct
             account_status;
             config;
             client;
+            db;
             hooks;
             is_layered_run;
-            remaining_layers;
-            result;
             pull_request;
+            remaining_layers;
+            repo_config;
+            result;
+            synthesized_config;
             work_manifest;
           }
         in
-        let els = create_els result in
+        let els =
+          CCList.filter_map
+            (function
+              | Scope.Dirspace dirspace, steps -> Tcm.S.create_el t dirspace steps
+              | Scope.Run _, _ -> None)
+            by_scope
+        in
         Gcm.run t els
     end
   end
@@ -2893,6 +2867,7 @@ module Comment = struct
         results
         pull_request
         work_manifest =
+      let module Gcm_api = Terrat_vcs_github_comment_publishers.Comment_api in
       let module Wm = Terrat_work_manifest3 in
       let output =
         create_run_output ~view request_id is_layered_run remaining_layers results work_manifest
@@ -2900,7 +2875,7 @@ module Comment = struct
       let open Abb.Future.Infix_monad in
       Api.comment_on_pull_request ~request_id client pull_request output
       >>= function
-      | Ok () -> Abb.Future.return (Ok ())
+      | Ok _ -> Abb.Future.return (Ok ())
       | Error `Error -> (
           match
             (view, results.Terrat_api_components_work_manifest_tf_operation_result.dirspaces)
@@ -2920,13 +2895,14 @@ module Comment = struct
               (* If we're in compact view but there is only one dirspace, then
                    that means there is no way to make the comment smaller. *)
               let kv = Snabela.Kv.(Map.of_list []) in
-              apply_template_and_publish
-                ~request_id
-                client
-                pull_request
-                "ITERATE_COMMENT_POST"
-                Tmpl.comment_too_large
-                kv
+              Abbs_future_combinators.Result.ignore
+              @@ Gcm_api.apply_template_and_publish
+                   ~request_id
+                   client
+                   pull_request
+                   "ITERATE_COMMENT_POST"
+                   Tmpl.comment_too_large
+                   kv
           | `Compact, dirspaces ->
               Abbs_future_combinators.List_result.iter
                 ~f:(fun dirspace ->
@@ -2950,273 +2926,304 @@ module Comment = struct
   end
 
   let repo_config_failure ~request_id ~client ~pull_request ~title err =
+    let module Gcm_api = Terrat_vcs_github_comment_publishers.Comment_api in
     (* A bit of a cheap trick here to make it look like a code section in this
          context *)
     let err = "```\n" ^ err ^ "\n```" in
     let kv = Snabela.Kv.(Map.of_list [ ("title", string title); ("msg", string err) ]) in
-    apply_template_and_publish
-      ~request_id
-      client
-      pull_request
-      "REPO_CONFIG_GENERIC_FAILURE"
-      Tmpl.repo_config_generic_failure
-      kv
+    Abbs_future_combinators.Result.ignore
+    @@ Gcm_api.apply_template_and_publish
+         ~request_id
+         client
+         pull_request
+         "REPO_CONFIG_GENERIC_FAILURE"
+         Tmpl.repo_config_generic_failure
+         kv
 
   let repo_config_err ~request_id ~client ~pull_request ~title err =
+    let module Gcm_api = Terrat_vcs_github_comment_publishers.Comment_api in
     match err with
     | `Access_control_ci_config_update_match_parse_err m ->
         let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "ACCESS_CONTROL_CI_CONFIG_UPDATE_MATCH_PARSE_ERR"
-          Tmpl.repo_config_err_access_control_ci_config_update_match_parse_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "ACCESS_CONTROL_CI_CONFIG_UPDATE_MATCH_PARSE_ERR"
+             Tmpl.repo_config_err_access_control_ci_config_update_match_parse_err
+             kv
     | `Access_control_file_match_parse_err (path, m) ->
         let kv = Snabela.Kv.(Map.of_list [ ("path", string path); ("match", string m) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "ACCESS_CONTROL_FILE_MATCH_PARSE_ERR"
-          Tmpl.repo_config_err_access_control_file_match_parse_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "ACCESS_CONTROL_FILE_MATCH_PARSE_ERR"
+             Tmpl.repo_config_err_access_control_file_match_parse_err
+             kv
     | `Access_control_policy_apply_autoapprove_match_parse_err m ->
         let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "ACCESS_CONTROL_POLICY_APPLY_AUTOAPPROVE_MATCH_PARSE_ERR"
-          Tmpl.repo_config_err_access_control_policy_apply_autoapprove_match_parse_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "ACCESS_CONTROL_POLICY_APPLY_AUTOAPPROVE_MATCH_PARSE_ERR"
+             Tmpl.repo_config_err_access_control_policy_apply_autoapprove_match_parse_err
+             kv
     | `Access_control_policy_apply_force_match_parse_err m ->
         let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "ACCESS_CONTROL_POLICY_APPLY_FORCE_MATCH_PARSE_ERR"
-          Tmpl.repo_config_err_access_control_policy_apply_force_match_parse_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "ACCESS_CONTROL_POLICY_APPLY_FORCE_MATCH_PARSE_ERR"
+             Tmpl.repo_config_err_access_control_policy_apply_force_match_parse_err
+             kv
     | `Access_control_policy_apply_match_parse_err m ->
         let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "ACCESS_CONTROL_POLICY_APPLY_MATCH_PARSE_ERR"
-          Tmpl.repo_config_err_access_control_policy_apply_match_parse_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "ACCESS_CONTROL_POLICY_APPLY_MATCH_PARSE_ERR"
+             Tmpl.repo_config_err_access_control_policy_apply_match_parse_err
+             kv
     | `Access_control_policy_apply_with_superapproval_match_parse_err m ->
         let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "ACCESS_CONTROL_POLICY_APPLY_WITH_SUPERAPPROVAL_MATCH_PARSE_ERR"
-          Tmpl.repo_config_err_access_control_policy_apply_with_superapproval_match_parse_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "ACCESS_CONTROL_POLICY_APPLY_WITH_SUPERAPPROVAL_MATCH_PARSE_ERR"
+             Tmpl.repo_config_err_access_control_policy_apply_with_superapproval_match_parse_err
+             kv
     | `Access_control_policy_plan_match_parse_err m ->
         let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "ACCESS_CONTROL_POLICY_PLAN_MATCH_PARSE_ERR"
-          Tmpl.repo_config_err_access_control_policy_plan_match_parse_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "ACCESS_CONTROL_POLICY_PLAN_MATCH_PARSE_ERR"
+             Tmpl.repo_config_err_access_control_policy_plan_match_parse_err
+             kv
     | `Access_control_policy_superapproval_match_parse_err m ->
         let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "ACCESS_CONTROL_POLICY_SUPERAPPROVAL_MATCH_PARSE_ERR"
-          Tmpl.repo_config_err_access_control_policy_superapproval_match_parse_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "ACCESS_CONTROL_POLICY_SUPERAPPROVAL_MATCH_PARSE_ERR"
+             Tmpl.repo_config_err_access_control_policy_superapproval_match_parse_err
+             kv
     | `Access_control_policy_tag_query_err (q, err) ->
         let kv = Snabela.Kv.(Map.of_list [ ("query", string q); ("error", string err) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "ACCESS_CONTROL_POLICY_TAG_QUERY_ERR"
-          Tmpl.repo_config_err_access_control_policy_tag_query_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "ACCESS_CONTROL_POLICY_TAG_QUERY_ERR"
+             Tmpl.repo_config_err_access_control_policy_tag_query_err
+             kv
     | `Access_control_terrateam_config_update_match_parse_err m ->
         let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "ACCESS_CONTROL_TERRATEAM_CONFIG_UPDATE_MATCH_PARSE_ERR"
-          Tmpl.repo_config_err_access_control_terrateam_config_update_match_parse_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "ACCESS_CONTROL_TERRATEAM_CONFIG_UPDATE_MATCH_PARSE_ERR"
+             Tmpl.repo_config_err_access_control_terrateam_config_update_match_parse_err
+             kv
     | `Access_control_unlock_match_parse_err m ->
         let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "ACCESS_CONTROL_UNLOCK_MATCH_PARSE_ERR"
-          Tmpl.repo_config_err_access_control_unlock_match_parse_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "ACCESS_CONTROL_UNLOCK_MATCH_PARSE_ERR"
+             Tmpl.repo_config_err_access_control_unlock_match_parse_err
+             kv
     | `Apply_requirements_approved_all_of_match_parse_err m ->
         let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "APPLY_REQUIREMENTS_APPROVED_ALL_OF_MATCH_PARSE_ERR"
-          Tmpl.repo_config_err_apply_requirements_approved_all_of_match_parse_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "APPLY_REQUIREMENTS_APPROVED_ALL_OF_MATCH_PARSE_ERR"
+             Tmpl.repo_config_err_apply_requirements_approved_all_of_match_parse_err
+             kv
     | `Apply_requirements_approved_any_of_match_parse_err m ->
         let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "APPLY_REQUIREMENTS_APPROVED_ANY_OF_MATCH_PARSE_ERR"
-          Tmpl.repo_config_err_apply_requirements_approved_any_of_match_parse_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "APPLY_REQUIREMENTS_APPROVED_ANY_OF_MATCH_PARSE_ERR"
+             Tmpl.repo_config_err_apply_requirements_approved_any_of_match_parse_err
+             kv
     | `Apply_requirements_check_tag_query_err (q, err) ->
         let kv = Snabela.Kv.(Map.of_list [ ("query", string q); ("error", string err) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "APPLY_REQUIREMENTS_CHECK_TAG_QUERY_ERR"
-          Tmpl.repo_config_err_apply_requirements_check_tag_query_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "APPLY_REQUIREMENTS_CHECK_TAG_QUERY_ERR"
+             Tmpl.repo_config_err_apply_requirements_check_tag_query_err
+             kv
     | `Depends_on_err (q, err) ->
         let kv = Snabela.Kv.(Map.of_list [ ("query", string q); ("error", string err) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "DRIFT_TAG_QUERY_ERR"
-          Tmpl.repo_config_err_depends_on_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "DRIFT_TAG_QUERY_ERR"
+             Tmpl.repo_config_err_depends_on_err
+             kv
     | `Drift_schedule_err s ->
         let kv = Snabela.Kv.(Map.of_list [ ("schedule", string s) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "DRIFT_SCHEDULE_ERR"
-          Tmpl.repo_config_err_drift_schedule_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "DRIFT_SCHEDULE_ERR"
+             Tmpl.repo_config_err_drift_schedule_err
+             kv
     | `Drift_tag_query_err (q, err) ->
         let kv = Snabela.Kv.(Map.of_list [ ("query", string q); ("error", string err) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "DRIFT_TAG_QUERY_ERR"
-          Tmpl.repo_config_err_drift_tag_query_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "DRIFT_TAG_QUERY_ERR"
+             Tmpl.repo_config_err_drift_tag_query_err
+             kv
     | `Glob_parse_err (s, err) ->
         let kv = Snabela.Kv.(Map.of_list [ ("glob", string s); ("error", string err) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "GLOB_PARSE_ERR"
-          Tmpl.repo_config_err_glob_parse_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "GLOB_PARSE_ERR"
+             Tmpl.repo_config_err_glob_parse_err
+             kv
     | `Hooks_unknown_run_on_err s ->
         let kv = Snabela.Kv.(Map.of_list [ ("run_on", string s) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "HOOKS_UNKNOWN_RUN_ON_ERR"
-          Tmpl.repo_config_err_hooks_unknown_run_on_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "HOOKS_UNKNOWN_RUN_ON_ERR"
+             Tmpl.repo_config_err_hooks_unknown_run_on_err
+             kv
     | `Hooks_unknown_visible_on_err s ->
         let kv = Snabela.Kv.(Map.of_list [ ("visible_on", string s) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "HOOKS_UNKNOWN_VISIBLE_ON_ERR"
-          Tmpl.repo_config_err_hooks_unknown_visible_on_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "HOOKS_UNKNOWN_VISIBLE_ON_ERR"
+             Tmpl.repo_config_err_hooks_unknown_visible_on_err
+             kv
     | `Pattern_parse_err s ->
         let kv = Snabela.Kv.(Map.of_list [ ("pattern", string s) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "PATTERN_PARSE_ERR"
-          Tmpl.repo_config_err_pattern_parse_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "PATTERN_PARSE_ERR"
+             Tmpl.repo_config_err_pattern_parse_err
+             kv
     | `Unknown_lock_policy_err s ->
         let kv = Snabela.Kv.(Map.of_list [ ("lock_policy", string s) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "UNKNOWN_LOCK_POLICY_ERR"
-          Tmpl.repo_config_err_unknown_lock_policy_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "UNKNOWN_LOCK_POLICY_ERR"
+             Tmpl.repo_config_err_unknown_lock_policy_err
+             kv
     | `Unknown_plan_mode_err s -> assert false
     | `Window_parse_timezone_err tz ->
         let kv = Snabela.Kv.(Map.of_list [ ("tz", string tz) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "WINDOW_PARSE_TIMEZONE_ERR"
-          Tmpl.repo_config_err_window_parse_timezone_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "WINDOW_PARSE_TIMEZONE_ERR"
+             Tmpl.repo_config_err_window_parse_timezone_err
+             kv
     | `Workflows_apply_unknown_run_on_err s ->
         let kv = Snabela.Kv.(Map.of_list [ ("run_on", string s) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "WORKFLOWS_APPLY_UNKNOWN_RUN_ON_ERR"
-          Tmpl.repo_config_err_workflows_apply_unknown_run_on_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "WORKFLOWS_APPLY_UNKNOWN_RUN_ON_ERR"
+             Tmpl.repo_config_err_workflows_apply_unknown_run_on_err
+             kv
     | `Workflows_apply_unknown_visible_on_err s ->
         let kv = Snabela.Kv.(Map.of_list [ ("visible_on", string s) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "WORKFLOWS_APPLY_UNKNOWN_VISIBLE_ON_ERR"
-          Tmpl.repo_config_err_workflows_apply_unknown_visible_on_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "WORKFLOWS_APPLY_UNKNOWN_VISIBLE_ON_ERR"
+             Tmpl.repo_config_err_workflows_apply_unknown_visible_on_err
+             kv
     | `Workflows_plan_unknown_run_on_err s ->
         let kv = Snabela.Kv.(Map.of_list [ ("run_on", string s) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "WORKFLOWS_PLAN_UNKNOWN_RUN_ON_ERR"
-          Tmpl.repo_config_err_workflows_plan_unknown_run_on_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "WORKFLOWS_PLAN_UNKNOWN_RUN_ON_ERR"
+             Tmpl.repo_config_err_workflows_plan_unknown_run_on_err
+             kv
     | `Workflows_plan_unknown_visible_on_err s ->
         let kv = Snabela.Kv.(Map.of_list [ ("visible_on", string s) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "WORKFLOWS_PLAN_UNKNOWN_VISIBLE_ON_ERR"
-          Tmpl.repo_config_err_workflows_plan_unknown_visible_on_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "WORKFLOWS_PLAN_UNKNOWN_VISIBLE_ON_ERR"
+             Tmpl.repo_config_err_workflows_plan_unknown_visible_on_err
+             kv
     | `Workflows_tag_query_parse_err (q, err) ->
         let kv = Snabela.Kv.(Map.of_list [ ("query", string q); ("error", string err) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "WORKFLOWS_TAG_QUERY_PARSE_ERR"
-          Tmpl.repo_config_err_workflows_tag_query_parse_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "WORKFLOWS_TAG_QUERY_PARSE_ERR"
+             Tmpl.repo_config_err_workflows_tag_query_parse_err
+             kv
     | `Repo_config_schema_err errs ->
         let errors =
           CCList.map
@@ -3227,18 +3234,20 @@ module Comment = struct
         let kv =
           Snabela.Kv.(Map.of_list [ ("fname", string "repo_config"); ("errors", list errors) ])
         in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "REPO_CONFIG_SCHEMA_ERR"
-          Tmpl.repo_config_schema_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "REPO_CONFIG_SCHEMA_ERR"
+             Tmpl.repo_config_schema_err
+             kv
     | `Notification_policy_comment_strategy_err err -> raise (Failure "nyi")
     | `Notification_policy_tag_query_err err -> raise (Failure "nyi")
     | `Stack_config_tag_query_err err -> raise (Failure "nyi")
 
   let publish_comment ~request_id client user pull_request =
+    let module Gcm_api = Terrat_vcs_github_comment_publishers.Comment_api in
     let module Msg = Terrat_vcs_provider2.Msg in
     function
     | Msg.Access_control_denied (default_branch, `All_dirspaces denies) ->
@@ -3289,13 +3298,14 @@ module Comment = struct
                        denies) );
               ])
         in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "ACCESS_CONTROL_ALL_DIRSPACES_DENIED"
-          Tmpl.access_control_all_dirspaces_denied
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "ACCESS_CONTROL_ALL_DIRSPACES_DENIED"
+             Tmpl.access_control_all_dirspaces_denied
+             kv
     | Msg.Access_control_denied (default_branch, `Ci_config_update match_list) ->
         let kv =
           Snabela.Kv.(
@@ -3316,13 +3326,14 @@ module Comment = struct
                        match_list) );
               ])
         in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "ACCESS_CONTROL_CI_CONFIG_UPDATE_DENIED"
-          Tmpl.access_control_ci_config_update_denied
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "ACCESS_CONTROL_CI_CONFIG_UPDATE_DENIED"
+             Tmpl.access_control_ci_config_update_denied
+             kv
     | Msg.Access_control_denied (default_branch, `Dirspaces denies) ->
         let kv =
           Snabela.Kv.(
@@ -3371,13 +3382,14 @@ module Comment = struct
                        denies) );
               ])
         in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "ACCESS_CONTROL_DIRSPACES_DENIED"
-          Tmpl.access_control_dirspaces_denied
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "ACCESS_CONTROL_DIRSPACES_DENIED"
+             Tmpl.access_control_dirspaces_denied
+             kv
     | Msg.Access_control_denied (default_branch, `Files (fname, match_list)) ->
         let kv =
           Snabela.Kv.(
@@ -3399,13 +3411,14 @@ module Comment = struct
                        match_list) );
               ])
         in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "ACCESS_CONTROL_FILES"
-          Tmpl.access_control_files_denied
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "ACCESS_CONTROL_FILES"
+             Tmpl.access_control_files_denied
+             kv
     | Msg.Access_control_denied (default_branch, `Terrateam_config_update match_list) ->
         let kv =
           Snabela.Kv.(
@@ -3426,25 +3439,27 @@ module Comment = struct
                        match_list) );
               ])
         in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "ACCESS_CONTROL_TERRATEAM_CONFIG_UPDATE_DENIED"
-          Tmpl.access_control_terrateam_config_update_denied
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "ACCESS_CONTROL_TERRATEAM_CONFIG_UPDATE_DENIED"
+             Tmpl.access_control_terrateam_config_update_denied
+             kv
     | Msg.Access_control_denied (default_branch, `Lookup_err) ->
         let kv =
           Snabela.Kv.(
             Map.of_list [ ("user", string user); ("default_branch", string default_branch) ])
         in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "ACCESS_CONTROL_LOOKUP_ERR"
-          Tmpl.access_control_lookup_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "ACCESS_CONTROL_LOOKUP_ERR"
+             Tmpl.access_control_lookup_err
+             kv
     | Msg.Access_control_denied (default_branch, `Unlock match_list) ->
         let kv =
           Snabela.Kv.(
@@ -3465,100 +3480,117 @@ module Comment = struct
                        match_list) );
               ])
         in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "ACCESS_CONTROL_UNLOCK_DENIED"
-          Tmpl.access_control_unlock_denied
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "ACCESS_CONTROL_UNLOCK_DENIED"
+             Tmpl.access_control_unlock_denied
+             kv
     | Msg.Account_expired ->
         let kv = Snabela.Kv.(Map.of_list []) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "ACCOUNT_EXPIRED"
-          Tmpl.account_expired_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "ACCOUNT_EXPIRED"
+             Tmpl.account_expired_err
+             kv
     | Msg.Apply_no_matching_dirspaces ->
         let kv = Snabela.Kv.(Map.of_list []) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "APPLY_NO_MATCHING_DIRSPACES"
-          Tmpl.apply_no_matching_dirspaces
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "APPLY_NO_MATCHING_DIRSPACES"
+             Tmpl.apply_no_matching_dirspaces
+             kv
     | Msg.Apply_requirements_config_err (`Tag_query_error (query, err)) ->
         let kv = Snabela.Kv.(Map.of_list [ ("query", string query); ("error", string err) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "APPLY_REQUIREMENTS_CONFIG_ERR_TAG_QUERY"
-          Tmpl.apply_requirements_config_err_tag_query
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "APPLY_REQUIREMENTS_CONFIG_ERR_TAG_QUERY"
+             Tmpl.apply_requirements_config_err_tag_query
+             kv
     | Msg.Apply_requirements_config_err (`Invalid_query query) ->
         let kv = Snabela.Kv.(Map.of_list [ ("query", string query) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "APPLY_REQUIREMENTS_CONFIG_ERR_INVALID_QUERY"
-          Tmpl.apply_requirements_config_err_invalid_query
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "APPLY_REQUIREMENTS_CONFIG_ERR_INVALID_QUERY"
+             Tmpl.apply_requirements_config_err_invalid_query
+             kv
     | Msg.Apply_requirements_validation_err ->
         let kv = Snabela.Kv.(Map.of_list []) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "APPLY_REQUIREMENTS_VALIDATION_ERR"
-          Tmpl.apply_requirements_validation_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "APPLY_REQUIREMENTS_VALIDATION_ERR"
+             Tmpl.apply_requirements_validation_err
+             kv
     | Msg.Autoapply_running ->
         let kv = Snabela.Kv.(Map.of_list []) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "AUTO_APPLY_RUNNING"
-          Tmpl.auto_apply_running
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "AUTO_APPLY_RUNNING"
+             Tmpl.auto_apply_running
+             kv
     | Msg.Automerge_failure (pr, msg) ->
         let kv = Snabela.Kv.(Map.of_list [ ("msg", string msg) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "AUTOMERGE_FAILURE"
-          Tmpl.automerge_failure
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "AUTOMERGE_FAILURE"
+             Tmpl.automerge_failure
+             kv
     | Msg.Bad_custom_branch_tag_pattern (tag, pat) ->
         let kv = Snabela.Kv.(Map.of_list [ ("tag", string tag); ("pattern", string pat) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "BAD_CUSTOM_BRANCH_TAG_PATTERN"
-          Tmpl.bad_custom_branch_tag_pattern
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "BAD_CUSTOM_BRANCH_TAG_PATTERN"
+             Tmpl.bad_custom_branch_tag_pattern
+             kv
     | Msg.Bad_glob s ->
         let kv = Snabela.Kv.(Map.of_list [ ("glob", string s) ]) in
-        apply_template_and_publish ~request_id client pull_request "BAD_GLOB" Tmpl.bad_glob kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "BAD_GLOB"
+             Tmpl.bad_glob
+             kv
     | Msg.Build_config_err err -> repo_config_err ~request_id ~client ~pull_request ~title:"" err
     | Msg.Build_config_failure err ->
         repo_config_failure ~request_id ~client ~pull_request ~title:"built" err
     | Msg.Build_tree_failure msg ->
         let kv = Snabela.Kv.(Map.of_list [ ("msg", string msg) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "BUILD_TREE_FAILURE"
-          Tmpl.build_tree_failure
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "BUILD_TREE_FAILURE"
+             Tmpl.build_tree_failure
+             kv
     | Msg.Conflicting_work_manifests wms ->
         let module Wm = Terrat_work_manifest3 in
         let kv =
@@ -3603,13 +3635,14 @@ module Comment = struct
                        wms) );
               ])
         in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "CONFLICTING_WORK_MANIFESTS"
-          Tmpl.conflicting_work_manifests
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "CONFLICTING_WORK_MANIFESTS"
+             Tmpl.conflicting_work_manifests
+             kv
     | Msg.Depends_on_cycle cycle ->
         let kv =
           Snabela.Kv.(
@@ -3623,13 +3656,14 @@ module Comment = struct
                        cycle) );
               ])
         in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "DEPENDS_ON_CYCLE"
-          Tmpl.depends_on_cycle
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "DEPENDS_ON_CYCLE"
+             Tmpl.depends_on_cycle
+             kv
     | Msg.Dest_branch_no_match pull_request ->
         let kv =
           Snabela.Kv.(
@@ -3647,13 +3681,14 @@ module Comment = struct
                     @@ Api.Pull_request.base_branch_name pull_request) );
               ])
         in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "DEST_BRANCH_NO_MATCH"
-          Tmpl.base_branch_not_default_branch
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "DEST_BRANCH_NO_MATCH"
+             Tmpl.base_branch_not_default_branch
+             kv
     | Msg.Dirspaces_owned_by_other_pull_request prs ->
         let unique_pull_request_ids =
           prs
@@ -3693,13 +3728,14 @@ module Comment = struct
                   workspace
                   id))
           prs;
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "DIRSPACES_OWNED_BY_OTHER_PRS"
-          Tmpl.dirspaces_owned_by_other_pull_requests
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "DIRSPACES_OWNED_BY_OTHER_PRS"
+             Tmpl.dirspaces_owned_by_other_pull_requests
+             kv
     | Msg.Gate_check_failure denied ->
         let module G = Terrat_vcs_provider2.Gate_eval in
         let kv =
@@ -3739,22 +3775,24 @@ module Comment = struct
                        denied );
               ])
         in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "GATE_CHECK_FAILURE"
-          Tmpl.gate_check_failure
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "GATE_CHECK_FAILURE"
+             Tmpl.gate_check_failure
+             kv
     | Msg.Help ->
         let kv = Snabela.Kv.(Map.of_list []) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "HELP"
-          Tmpl.terrateam_comment_help
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "HELP"
+             Tmpl.terrateam_comment_help
+             kv
     | Msg.Index_complete (success, failures) ->
         let kv =
           Snabela.Kv.(
@@ -3777,22 +3815,24 @@ module Comment = struct
                        failures) );
               ])
         in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "INDEX_COMPLETE"
-          Tmpl.index_complete
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "INDEX_COMPLETE"
+             Tmpl.index_complete
+             kv
     | Msg.Invalid_unlock_id unlock_id ->
         let kv = Snabela.Kv.(Map.of_list [ ("unlock_id", string unlock_id) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "INVALID_UNLOCK_ID"
-          Tmpl.invalid_lock_id
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "INVALID_UNLOCK_ID"
+             Tmpl.invalid_lock_id
+             kv
     | Msg.Maybe_stale_work_manifests wms ->
         let module Wm = Terrat_work_manifest3 in
         let kv =
@@ -3837,22 +3877,24 @@ module Comment = struct
                        wms) );
               ])
         in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "MAYBE_STALE_WORK_MANIFESTS"
-          Tmpl.maybe_stale_work_manifests
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "MAYBE_STALE_WORK_MANIFESTS"
+             Tmpl.maybe_stale_work_manifests
+             kv
     | Msg.Mismatched_refs ->
         let kv = Snabela.Kv.(Map.of_list []) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "MISMATCHED_REFS"
-          Tmpl.mismatched_refs
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "MISMATCHED_REFS"
+             Tmpl.mismatched_refs
+             kv
     | Msg.Missing_plans dirspaces ->
         let kv =
           Snabela.Kv.(
@@ -3870,58 +3912,64 @@ module Comment = struct
           (fun Terrat_change.Dirspace.{ dir; workspace } ->
             Logs.info (fun m -> m "%s : MISSING_PLANS : %s : %s" request_id dir workspace))
           dirspaces;
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "MISSING_PLANS"
-          Tmpl.missing_plans
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "MISSING_PLANS"
+             Tmpl.missing_plans
+             kv
     | Msg.Plan_no_matching_dirspaces ->
         let kv = Snabela.Kv.(Map.of_list []) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "PLAN_NO_MATCHING_DIRSPACES"
-          Tmpl.plan_no_matching_dirspaces
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "PLAN_NO_MATCHING_DIRSPACES"
+             Tmpl.plan_no_matching_dirspaces
+             kv
     | Msg.Premium_feature_err `Access_control ->
         let kv = Snabela.Kv.(Map.of_list []) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "PREMIUM_FEATURE_ACCESS_CONTROL"
-          Tmpl.premium_feature_err_access_control
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "PREMIUM_FEATURE_ACCESS_CONTROL"
+             Tmpl.premium_feature_err_access_control
+             kv
     | Msg.Premium_feature_err `Multiple_drift_schedules ->
         let kv = Snabela.Kv.(Map.of_list []) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "PREMIUM_FEATURE_MULTIPLE_DRIFT_SCHEDULES"
-          Tmpl.premium_feature_err_multiple_drift_schedules
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "PREMIUM_FEATURE_MULTIPLE_DRIFT_SCHEDULES"
+             Tmpl.premium_feature_err_multiple_drift_schedules
+             kv
     | Msg.Premium_feature_err `Gatekeeping ->
         let kv = Snabela.Kv.(Map.of_list []) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "PREMIUM_FEATURE_GATEKEEPING"
-          Tmpl.premium_feature_err_gatekeeping
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "PREMIUM_FEATURE_GATEKEEPING"
+             Tmpl.premium_feature_err_gatekeeping
+             kv
     | Msg.Premium_feature_err `Require_completed_reviews ->
         let kv = Snabela.Kv.(Map.of_list []) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "PREMIUM_FEATURE_REQUIRE_COMPLETED_REVIEWS"
-          Tmpl.premium_feature_err_require_completed_reviews
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "PREMIUM_FEATURE_REQUIRE_COMPLETED_REVIEWS"
+             Tmpl.premium_feature_err_require_completed_reviews
+             kv
     | Msg.Pull_request_not_appliable (_, apply_requirements) ->
         let module Dc = Terrat_change_match3.Dirspace_config in
         let module Ds = Terrat_dirspace in
@@ -3985,22 +4033,24 @@ module Comment = struct
                        apply_requirements) );
             ]
         in
-        apply_template_and_publish_jinja
-          ~request_id
-          client
-          pull_request
-          "PULL_REQUEST_NOT_APPLIABLE"
-          Tmpl.pull_request_not_appliable
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish_jinja
+             ~request_id
+             client
+             pull_request
+             "PULL_REQUEST_NOT_APPLIABLE"
+             Tmpl.pull_request_not_appliable
+             kv
     | Msg.Pull_request_not_mergeable ->
         let kv = Snabela.Kv.(Map.of_list []) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "PULL_REQUEST_NOT_MERGEABLE"
-          Tmpl.pull_request_not_mergeable
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "PULL_REQUEST_NOT_MERGEABLE"
+             Tmpl.pull_request_not_mergeable
+             kv
     | Msg.Repo_config (provenance, repo_config) ->
         let repo_config_json =
           Terrat_repo_config.Version_1.to_yojson
@@ -4016,7 +4066,14 @@ module Comment = struct
                   list (CCList.map (fun src -> Map.of_list [ ("src", string src) ]) provenance) );
               ])
         in
-        apply_template_and_publish ~request_id client pull_request "REPO_CONFIG" Tmpl.repo_config kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "REPO_CONFIG"
+             Tmpl.repo_config
+             kv
     | Msg.Repo_config_err err -> repo_config_err ~request_id ~client ~pull_request ~title:"" err
     | Msg.Repo_config_failure err ->
         repo_config_failure ~request_id ~client ~pull_request ~title:"Terrateam repository" err
@@ -4035,22 +4092,24 @@ module Comment = struct
                 ("src_value", string src_value);
               ])
         in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "REPO_CONFIG_MERGE_ERR"
-          Tmpl.repo_config_merge_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "REPO_CONFIG_MERGE_ERR"
+             Tmpl.repo_config_merge_err
+             kv
     | Msg.Repo_config_parse_failure (fname, err) ->
         let kv = Snabela.Kv.(Map.of_list [ ("fname", string fname); ("msg", string err) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "REPO_CONFIG_PARSE_FAILURE"
-          Tmpl.repo_config_parse_failure
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "REPO_CONFIG_PARSE_FAILURE"
+             Tmpl.repo_config_parse_failure
+             kv
     | Msg.Repo_config_schema_err (fname, errs) ->
         let errors =
           CCList.map
@@ -4059,40 +4118,44 @@ module Comment = struct
             errs
         in
         let kv = Snabela.Kv.(Map.of_list [ ("fname", string fname); ("errors", list errors) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "REPO_CONFIG_SCHEMA_ERR"
-          Tmpl.repo_config_schema_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "REPO_CONFIG_SCHEMA_ERR"
+             Tmpl.repo_config_schema_err
+             kv
     | Msg.Run_work_manifest_err (`Failed_to_start | `Failed_to_start_with_msg_err _) ->
         let kv = Snabela.Kv.(Map.of_list []) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "RUN_WORK_MANIFEST_ERR_FAILED_TO_START"
-          Tmpl.failed_to_start_workflow
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "RUN_WORK_MANIFEST_ERR_FAILED_TO_START"
+             Tmpl.failed_to_start_workflow
+             kv
     | Msg.Run_work_manifest_err `Missing_workflow ->
         let kv = Snabela.Kv.(Map.of_list []) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "RUN_WORK_MANIFEST_ERR_MISSING_WORKFLOW"
-          Tmpl.failed_to_find_workflow
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "RUN_WORK_MANIFEST_ERR_MISSING_WORKFLOW"
+             Tmpl.failed_to_find_workflow
+             kv
     | Msg.Tag_query_err (`Tag_query_error (s, err)) ->
         let kv = Snabela.Kv.(Map.of_list [ ("query", string s); ("err", string err) ]) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "TAG_QUERY_ERR"
-          Tmpl.tag_query_error
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "TAG_QUERY_ERR"
+             Tmpl.tag_query_error
+             kv
     | Msg.Tf_op_result { is_layered_run; remaining_layers; result; work_manifest } -> (
         let open Abb.Future.Infix_monad in
         Result_publisher.iterate_comment_posts
@@ -4104,23 +4167,36 @@ module Comment = struct
           pull_request
           work_manifest
         >>= function
-        | Ok () -> Abb.Future.return (Ok ())
+        | Ok _ -> Abb.Future.return (Ok ())
         | Error _ -> Abb.Future.return (Error `Error))
     | Msg.Tf_op_result2
-        { account_status; config; is_layered_run; remaining_layers; result; work_manifest } -> (
+        {
+          account_status;
+          config;
+          db;
+          is_layered_run;
+          remaining_layers;
+          repo_config;
+          result;
+          synthesized_config;
+          work_manifest;
+        } -> (
         let open Abb.Future.Infix_monad in
         Result.Publisher3.post_comment
           request_id
           account_status
           config
           client
+          db
           is_layered_run
           remaining_layers
+          repo_config
           result
           pull_request
+          synthesized_config
           work_manifest
         >>= function
-        | Ok () -> Abb.Future.return (Ok ())
+        | Ok cid -> Abb.Future.return (Ok cid)
         | Error _ -> Abb.Future.return (Error `Error))
     | Msg.Tier_check checks ->
         let module C = Terrat_tier.Check in
@@ -4146,25 +4222,34 @@ module Comment = struct
                     ] );
               ])
         in
-        apply_template_and_publish ~request_id client pull_request "TIER_CHECK" Tmpl.tier_check kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "TIER_CHECK"
+             Tmpl.tier_check
+             kv
     | Msg.Unexpected_temporary_err ->
         let kv = Snabela.Kv.(Map.of_list []) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "UNEXPECTED_TEMPORARY_ERR"
-          Tmpl.unexpected_temporary_err
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "UNEXPECTED_TEMPORARY_ERR"
+             Tmpl.unexpected_temporary_err
+             kv
     | Msg.Unlock_success ->
         let kv = Snabela.Kv.(Map.of_list []) in
-        apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "UNLOCK_SUCCESS"
-          Tmpl.unlock_success
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish
+             ~request_id
+             client
+             pull_request
+             "UNLOCK_SUCCESS"
+             Tmpl.unlock_success
+             kv
 end
 
 module Repo_config = struct

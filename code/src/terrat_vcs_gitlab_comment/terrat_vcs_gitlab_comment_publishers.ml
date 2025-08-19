@@ -1,9 +1,9 @@
-module Api = Terrat_vcs_api_github
-module Scope = Terrat_vcs_service_github_scope.Scope
-module By_scope = Terrat_vcs_service_github_scope.By_scope
-module Tmpl = Terrat_vcs_service_github_assets.Tmpl
+module Api = Terrat_vcs_api_gitlab
+module Scope = Terrat_scope.Scope
+module By_scope = Terrat_scope.By_scope
+module Tmpl = Terrat_vcs_gitlab_comment_templates.Tmpl
+module Ui = Terrat_vcs_gitlab_comment_ui.Ui
 module Visible_on = Terrat_base_repo_config_v1.Workflow_step.Visible_on
-module Ui = Terrat_vcs_service_github_assets.Ui
 
 module Output = struct
   type t = {
@@ -262,15 +262,22 @@ module Comment_api = struct
   let comment_on_pull_request ~request_id client pull_request msg_type body =
     let open Abbs_future_combinators.Infix_result_monad in
     Api.comment_on_pull_request ~request_id client pull_request body
-    >>= fun () ->
-    Logs.info (fun m -> m "%s : PUBLISHED_COMMENT : %s" request_id msg_type);
-    Abb.Future.return (Ok ())
+    >>= fun comment_id -> Abb.Future.return (Ok comment_id)
 
   let apply_template_and_publish ~request_id client pull_request msg_type template kv =
     match Snabela.apply template kv with
-    | Ok body -> comment_on_pull_request ~request_id client pull_request msg_type body
+    | Ok body ->
+        Abbs_future_combinators.Result.ignore
+        @@ comment_on_pull_request ~request_id client pull_request msg_type body
     | Error (#Snabela.err as err) ->
         Logs.err (fun m -> m "%s : TEMPLATE_ERROR : %a" request_id Snabela.pp_err err);
+        Abb.Future.return (Error `Error)
+
+  let apply_template_and_publish_jinja ~request_id client pull_request msg_type template kv =
+    match Minijinja.render_template template kv with
+    | Ok body -> comment_on_pull_request ~request_id client pull_request msg_type body
+    | Error err ->
+        Logs.err (fun m -> m "%s : TEMPLATE_ERROR : %s" request_id err);
         Abb.Future.return (Error `Error)
 end
 
@@ -368,11 +375,11 @@ module Publisher_tools = struct
         Map.of_list
           (CCList.flatten
              [
-               CCOption.map_or
-                 ~default:[]
-                 (fun work_manifest_url ->
-                   [ ("work_manifest_url", string (Uri.to_string work_manifest_url)) ])
-                 (Ui.work_manifest_url config work_manifest.Wm.account work_manifest);
+               (* CCOption.map_or *)
+               (*   ~default:[] *)
+               (*   (fun work_manifest_url -> *)
+               (*     [ ("work_manifest_url", string (Uri.to_string work_manifest_url)) ]) *)
+               (*   (Ui.work_manifest_url config work_manifest.Wm.account work_manifest); *)
                CCOption.map_or
                  ~default:[]
                  (fun env -> [ ("environment", string env) ])

@@ -4249,6 +4249,53 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                    (Ctx.storage ctx)
                    (Event.account state.State.event)
                  >>= fun account_status ->
+                 (* TODO: HUGE HACK, redo this later *)
+                 let run =
+                   let open Abbs_future_combinators.Infix_result_monad in
+                   Abbs_future_combinators.Infix_result_app.(
+                     (fun client pull_request repo_config repo_tree ->
+                       (client, pull_request, repo_config, repo_tree))
+                     <$> Dv.client ctx state
+                     <*> Dv.pull_request ctx state
+                     <*> Dv.repo_config_with_provenance ctx state
+                     <*> Dv.repo_tree_branch ctx state)
+                   >>= fun (client, pull_request, (provenance, repo_config), repo_tree) ->
+                   Dv.query_index ctx state
+                   >>= fun index ->
+                   let index =
+                     let module R = Terrat_base_repo_config_v1 in
+                     match R.indexer repo_config with
+                     | { R.Indexer.enabled = true; _ } ->
+                         CCOption.map_or
+                           ~default:Terrat_base_repo_config_v1.Index.empty
+                           (fun { Terrat_vcs_provider2.Index.index; _ } -> index)
+                           index
+                     | _ -> Terrat_base_repo_config_v1.Index.empty
+                   in
+                   Abbs_time_it.run (log_time state.State.request_id "DERIVE") (fun () ->
+                       Abbs_future_combinators.to_result
+                       @@ Abb.Thread.run (fun () ->
+                              Terrat_base_repo_config_v1.derive
+                                ~ctx:
+                                  (Terrat_base_repo_config_v1.Ctx.make
+                                     ~dest_branch:
+                                       (S.Api.Ref.to_string
+                                          (S.Api.Pull_request.base_branch_name pull_request))
+                                     ~branch:
+                                       (S.Api.Ref.to_string
+                                          (S.Api.Pull_request.branch_name pull_request))
+                                     ())
+                                ~index
+                                ~file_list:repo_tree
+                                repo_config))
+                   >>= fun repo_config ->
+                   Abb.Future.return (Terrat_change_match3.synthesize_config ~index repo_config)
+                   >>= fun synthesized_config ->
+                   Abb.Future.return (Ok (repo_config, synthesized_config))
+                 in
+                 run
+                 >>= fun (repo_config, synthesized_config) ->
+                 (* TODO: HUGE HACK, redo this later *)
                  publish_msg
                    state.State.request_id
                    client
@@ -4258,9 +4305,12 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                       {
                         account_status;
                         config = Ctx.config ctx;
+                        db = Ctx.storage ctx;
                         is_layered_run = CCList.length matches.Dv.Matches.all_matches > 1;
                         remaining_layers = matches.Dv.Matches.all_unapplied_matches;
                         result;
+                        repo_config;
+                        synthesized_config;
                         work_manifest;
                       })
                  >>= fun () -> Abb.Future.return (Ok state))

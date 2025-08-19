@@ -119,6 +119,14 @@ type publish_comment_err =
   ]
 [@@deriving show]
 
+type delete_comment_err = Githubc2_abb.call_err [@@deriving show]
+
+type minimize_comment_err =
+  [ Githubc2_abb.call_err
+  | `Not_found of Githubc2_components.Basic_error.t
+  ]
+[@@deriving show]
+
 type publish_reaction_err =
   [ Githubc2_abb.call_err
   | `Unprocessable_entity of Githubc2_components.Validation_error.t
@@ -411,6 +419,7 @@ let load_workflow ~owner ~repo client =
 let publish_comment ~owner ~repo ~pull_number ~body client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "publish_comment");
   let open Abbs_future_combinators.Infix_result_monad in
+  let module Ic = Githubc2_components_issue_comment.Primary in
   call
     client
     Githubc2_issues.Create_comment.(
@@ -419,9 +428,73 @@ let publish_comment ~owner ~repo ~pull_number ~body client =
         Parameters.(make ~issue_number:pull_number ~owner ~repo))
   >>= fun resp ->
   match Openapi.Response.value resp with
-  | `Created _ -> Abb.Future.return (Ok ())
+  | `Created c ->
+      let module P = Githubc2_components.Issue_comment.Primary in
+      let cm = Githubc2_components.Issue_comment.value c in
+      let id = CCInt64.to_int cm.P.id in
+      Abb.Future.return (Ok id)
   | (`Forbidden _ | `Not_found _ | `Gone _ | `Unprocessable_entity _) as err ->
       Abb.Future.return (Error err)
+
+let delete_comment ~owner ~repo ~comment_id client =
+  Prmths.Counter.inc_one (Metrics.fn_call_total "delete_comment");
+  let open Abb.Future.Infix_monad in
+  call
+    client
+    Githubc2_issues.Delete_comment.(
+      make Parameters.(make ~comment_id:(CCInt64.of_int comment_id) ~owner ~repo))
+  >>= function
+  | Ok resp -> (
+      match Openapi.Response.value resp with
+      | `No_content -> Abb.Future.return (Ok ()))
+  | Error err ->
+      (* TODO #561: Handle this properly later *)
+      Abb.Future.return (Ok ())
+
+let minimize_comment ~owner ~repo ~comment_id client =
+  Prmths.Counter.inc_one (Metrics.fn_call_total "minimize_comment");
+  let module C = Githubc2_components.Issue_comment in
+  let open Abbs_future_combinators.Infix_result_monad in
+  call
+    client
+    Githubc2_issues.Get_comment.(
+      make Parameters.(make ~comment_id:(CCInt64.of_int comment_id) ~owner ~repo))
+  >>= fun resp ->
+  match Openapi.Response.value resp with
+  | `OK { C.primary = { C.Primary.node_id; _ }; _ } -> (
+      let url = "/graphql" in
+      let module Body = struct
+        type t = { query : string } [@@deriving to_yojson]
+      end in
+      let content =
+        Printf.sprintf
+          {|
+            mutation MinCom {
+                minimizeComment(input: {subjectId: "%s", classifier: OUTDATED}) {
+                    clientMutationId,
+                    minimizedComment {
+                    isMinimized
+                    }
+                }
+            }
+        |}
+      in
+      let body = { Body.query = content node_id } in
+      let request =
+        Openapi.Request.make
+          ~body:(Body.to_yojson body)
+          ~headers:[]
+          ~url_params:[]
+          ~query_params:[]
+          ~url
+          ~responses:[ ("200", fun _ -> Ok `OK) ]
+          `Post
+      in
+      call client request
+      >>= fun resp ->
+      match Openapi.Response.value resp with
+      | `OK -> Abb.Future.return (Ok ()))
+  | `Not_found _ as err -> Abb.Future.return (Error err)
 
 let react_to_comment ?(content = "rocket") ~owner ~repo ~comment_id client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "react_to_comment");
