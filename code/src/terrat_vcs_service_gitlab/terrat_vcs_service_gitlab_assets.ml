@@ -182,6 +182,10 @@ module Tmpl = struct
     read "premium_feature_err_multiple_drift_schedules.tmpl"
 
   let premium_feature_err_gatekeeping = read "premium_feature_err_gatekeeping.tmpl"
+
+  let premium_feature_err_require_completed_reviews =
+    read "premium_feature_err_require_completed_reviews.tmpl"
+
   let repo_config_merge_err = read "repo_config_merge_err.tmpl"
   let gate_check_failure = read "gate_check_failure.tmpl"
   let tier_check = read "tier_check.tmpl"

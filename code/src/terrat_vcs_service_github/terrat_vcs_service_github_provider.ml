@@ -1759,6 +1759,8 @@ module Apply_requirements = struct
       approved : bool option;
       approved_reviews : Terrat_pull_request_review.t list;
       missing_reviews : Terrat_base_repo_config_v1.Access_control.Match.t list;
+      missing_any_of_count : int;
+      any_of : Terrat_base_repo_config_v1.Access_control.Match.t list;
       match_ : Terrat_change_match3.Dirspace_config.t;
       merge_conflicts : bool option;
       passed : bool option;
@@ -1857,10 +1859,13 @@ module Apply_requirements = struct
       CCList.flatten (CCList.filter_map (CCFun.flip Match_map.find_opt matching_reviews) any_of)
     in
     let all_of_passed = CCList.length all_of_results = CCList.length all_of in
-    let any_of_passed =
-      (CCList.is_empty any_of && CCList.length approved_reviews >= any_of_count)
-      || ((not (CCList.is_empty any_of)) && CCList.length any_of_results >= any_of_count)
+    let missing_any_of =
+      CCInt.max
+        0
+        (if CCList.is_empty any_of then any_of_count - CCList.length approved_reviews
+         else any_of_count - CCList.length any_of_results)
     in
+    let any_of_passed = missing_any_of = 0 in
     let required_reviews_passed =
       (not require_completed_reviews) || CCList.is_empty requested_reviews
     in
@@ -1876,7 +1881,8 @@ module Apply_requirements = struct
     (* Considered approved if all "all_of" passes and any "any_of" passes OR
          "all of" and "any of" are empty and the approvals is more than count *)
     Abb.Future.return
-      (Ok (all_of_passed && any_of_passed && required_reviews_passed, missing_reviews))
+      (Ok
+         (all_of_passed && any_of_passed && required_reviews_passed, missing_reviews, missing_any_of))
 
   let eval ~request_id config user client repo_config pull_request dirspace_configs =
     let max_parallel = 20 in
@@ -1976,7 +1982,9 @@ module Apply_requirements = struct
                   approved
                   approved_reviews
                   requested_reviews
-                >>= fun (approved_result, missing_reviews) ->
+                >>= fun (approved_result, missing_reviews, missing_any_of_count) ->
+                let module Ac = Terrat_base_repo_config_v1.Apply_requirements.Approved in
+                let { Ac.any_of; _ } = approved in
                 let ignore_matching = status_checks.Sc.ignore_matching in
                 (* Convert all patterns and ignore those that don't compile.  This eats
                      errors.
@@ -2045,6 +2053,8 @@ module Apply_requirements = struct
                     status_checks_failed = failed_commit_checks;
                     approved_reviews;
                     missing_reviews;
+                    missing_any_of_count;
+                    any_of;
                   }
                 in
                 Logs.info (fun m ->
@@ -2085,6 +2095,8 @@ module Apply_requirements = struct
                        status_checks_failed = [];
                        approved_reviews = [];
                        missing_reviews = [];
+                       missing_any_of_count = 0;
+                       any_of = [];
                      }))
           chunk)
       (CCList.chunks (CCInt.max 1 (CCList.length dirspace_configs / max_parallel)) dirspace_configs)
@@ -3901,6 +3913,15 @@ module Comment = struct
           "PREMIUM_FEATURE_GATEKEEPING"
           Tmpl.premium_feature_err_gatekeeping
           kv
+    | Msg.Premium_feature_err `Require_completed_reviews ->
+        let kv = Snabela.Kv.(Map.of_list []) in
+        apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "PREMIUM_FEATURE_REQUIRE_COMPLETED_REVIEWS"
+          Tmpl.premium_feature_err_require_completed_reviews
+          kv
     | Msg.Pull_request_not_appliable (_, apply_requirements) ->
         let module Dc = Terrat_change_match3.Dirspace_config in
         let module Ds = Terrat_dirspace in
@@ -3930,6 +3951,14 @@ module Comment = struct
                                     `String
                                       (Terrat_base_repo_config_v1.Access_control.Match.to_string m))
                                   ar.Ar.missing_reviews) );
+                           ("missing_any_of_count", `Int ar.Ar.missing_any_of_count);
+                           ( "any_of",
+                             `List
+                               (CCList.map
+                                  (fun m ->
+                                    `String
+                                      (Terrat_base_repo_config_v1.Access_control.Match.to_string m))
+                                  ar.Ar.any_of) );
                            ( "merge_conflicts_enabled",
                              `Bool (CCOption.is_some ar.Ar.merge_conflicts) );
                            ( "merge_conflicts_check",
@@ -4264,15 +4293,24 @@ module Repo_config = struct
         ~default:default_repo_config
         repo_config
     in
-    (* Warn OSS users about enabled functionality that only is part of the
-           EE edition.  This is to make sure someone doesn't enable
-           functionality and is surprised when it doesn't work. *)
+    (* Warn OSS users about enabled functionality that only is part of the EE
+       edition.  This is to make sure someone doesn't enable functionality and
+       is surprised when it doesn't work. *)
     match V1.to_view final_repo_config with
     | { V1.View.access_control = { V1.Access_control.enabled = true; _ }; _ } ->
         Abb.Future.return (Error (`Premium_feature_err `Access_control))
     | { V1.View.drift = { V1.Drift.enabled = true; schedules }; _ }
       when V1.String_map.cardinal schedules > 1 ->
         Abb.Future.return (Error (`Premium_feature_err `Multiple_drift_schedules))
+    | { V1.View.apply_requirements = { V1.Apply_requirements.checks; _ }; _ }
+      when CCList.exists
+             (fun {
+                    V1.Apply_requirements.Check.approved =
+                      { V1.Apply_requirements.Approved.require_completed_reviews; _ };
+                    _;
+                  }
+                -> require_completed_reviews)
+             checks -> Abb.Future.return (Error (`Premium_feature_err `Require_completed_reviews))
     | _ -> Abb.Future.return (Ok (provenance, final_repo_config))
 end
 
