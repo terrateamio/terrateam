@@ -950,7 +950,7 @@
           updateURLWithQuery('');
           loadRuns();
         }}
-        class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-sm"
+        class="inline-flex items-center px-3 md:px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-sm"
       >
         <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -963,7 +963,7 @@
   <!-- View Mode Selector (only show when not viewing a specific repository) -->
   {#if !basicFilters.repo}
     <div class="mb-6">
-      <div class="flex items-center space-x-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-fit">
+      <div class="flex items-center space-x-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-full sm:w-fit">
         <button
           on:click={() => {
             viewMode = 'overview';
@@ -973,7 +973,7 @@
             loadRecentFailures();
             loadRecentSuccesses();
           }}
-          class="px-4 py-2 text-sm font-medium rounded-md transition-colors {viewMode === 'overview' ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}"
+          class="flex-1 sm:flex-initial px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors {viewMode === 'overview' ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}"
         >
           🏠 Overview
         </button>
@@ -987,7 +987,7 @@
               loadRuns();
             }
           }}
-          class="px-4 py-2 text-sm font-medium rounded-md transition-colors {viewMode === 'search' ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}"
+          class="flex-1 sm:flex-initial px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors {viewMode === 'search' ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}"
         >
           🔍 Search
         </button>
@@ -1068,16 +1068,17 @@
         <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow overflow-hidden">
           <!-- Tab Headers -->
           <div class="border-b border-gray-200 dark:border-gray-700">
-            <nav class="flex space-x-0" aria-label="Recent Activity">
+            <nav class="flex flex-col sm:flex-row sm:space-x-0" aria-label="Recent Activity">
               <button
                 on:click={() => activeTab = 'active'}
-                class="flex-1 py-4 px-6 text-sm font-medium text-center border-b-2 transition-colors {activeTab === 'active' ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}"
+                class="flex-1 py-3 px-2 sm:px-4 md:px-6 text-xs sm:text-sm font-medium text-center sm:border-b-2 border-l-4 sm:border-l-0 transition-colors {activeTab === 'active' ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}"
               >
-                <div class="flex items-center justify-center">
-                  <span class="mr-2">🔄</span>
-                  Active Operations
+                <div class="flex items-center justify-center flex-wrap gap-1">
+                  <span class="hidden sm:inline mr-1">🔄</span>
+                  <span>Active</span>
+                  <span class="hidden lg:inline">Operations</span>
                   {#if activeOperations.length > 0}
-                    <span class="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200">
+                    <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200">
                       {activeOperations.length}
                     </span>
                   {/if}
@@ -1085,37 +1086,41 @@
               </button>
               <button
                 on:click={() => activeTab = 'failures'}
-                class="flex-1 py-4 px-6 text-sm font-medium text-center border-b-2 transition-colors {activeTab === 'failures' ? 'border-red-500 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}"
+                class="flex-1 py-3 px-2 sm:px-4 md:px-6 text-xs sm:text-sm font-medium text-center sm:border-b-2 border-l-4 sm:border-l-0 transition-colors {activeTab === 'failures' ? 'border-red-500 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}"
               >
-                <div class="flex items-center justify-center">
-                  <span class="mr-2">🚨</span>
-                  Recent Failures
+                <div class="flex items-center justify-center flex-wrap gap-1">
+                  <span class="hidden sm:inline mr-1">🚨</span>
+                  <span>Recent</span>
+                  <span>Failures</span>
                 </div>
               </button>
               <button
                 on:click={() => activeTab = 'successes'}
-                class="flex-1 py-4 px-6 text-sm font-medium text-center border-b-2 transition-colors {activeTab === 'successes' ? 'border-green-500 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}"
+                class="flex-1 py-3 px-2 sm:px-4 md:px-6 text-xs sm:text-sm font-medium text-center sm:border-b-2 border-l-4 sm:border-l-0 transition-colors {activeTab === 'successes' ? 'border-green-500 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}"
               >
-                <div class="flex items-center justify-center">
-                  <span class="mr-2">✅</span>
-                  Recent Successes
+                <div class="flex items-center justify-center flex-wrap gap-1">
+                  <span class="hidden sm:inline mr-1">✅</span>
+                  <span>Recent</span>
+                  <span>Successes</span>
                 </div>
               </button>
             </nav>
           </div>
 
           <!-- Tab Content -->
-          <div class="p-6">
+          <div class="p-4 sm:p-6">
             {#if activeTab === 'active'}
               <!-- Active Operations Content -->
-              <div class="flex items-center justify-between mb-4">
-                <div>
-                  <h2 class="text-lg font-semibold text-blue-800 dark:text-blue-400">Active Operations</h2>
-                  <p class="text-sm text-blue-600 dark:text-blue-400">Running and pending Terraform operations</p>
-                </div>
-                <div class="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                  <div class="w-2 h-2 bg-green-400 dark:bg-green-500 rounded-full animate-pulse"></div>
-                  <span>Auto-refreshing</span>
+              <div class="mb-4">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div>
+                    <h2 class="text-base md:text-lg font-semibold text-blue-800 dark:text-blue-400">Active Operations</h2>
+                    <p class="text-xs md:text-sm text-blue-600 dark:text-blue-400">Running and pending Terraform operations</p>
+                  </div>
+                  <div class="flex items-center space-x-2 text-xs md:text-sm text-gray-600 dark:text-gray-400">
+                    <div class="w-2 h-2 bg-green-400 dark:bg-green-500 rounded-full animate-pulse"></div>
+                    <span>Auto-refreshing</span>
+                  </div>
                 </div>
               </div>
 
@@ -1150,27 +1155,32 @@
                       <div class="flex items-center justify-between">
                         <div class="flex-1 min-w-0">
                           <div class="mb-2">
-                            <div class="flex items-start gap-2">
-                              <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border flex-shrink-0 {getStateColor(operation.state)}">
+                            <div class="flex flex-col sm:flex-row sm:items-start gap-2">
+                              <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border flex-shrink-0 self-start {getStateColor(operation.state)}">
                                 {getStateIcon(operation.state)} {operation.state.toUpperCase()}
                               </span>
-                              <div class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all">
-                                {operation.run_type} - {operation.repo}/{operation.dir}
+                              <div class="flex-1 min-w-0">
+                                <div class="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  {operation.run_type}
+                                </div>
+                                <div class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 break-words">
+                                  {operation.repo}/{operation.dir}
+                                </div>
                               </div>
                             </div>
                           </div>
                           
-                          <div class="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                            Started {formatDateTime(operation.created_at)}
-                            • Duration: {formatDuration(duration)}
+                          <div class="text-xs text-gray-500 dark:text-gray-400 space-y-0.5">
+                            <div>Started {formatDateTime(operation.created_at)}</div>
+                            <div>Duration: {formatDuration(duration)}</div>
                             {#if operation.workspace && operation.workspace !== 'default'}
-                              • Workspace: {operation.workspace}
+                              <div>Workspace: {operation.workspace}</div>
                             {/if}
                           </div>
 
                         </div>
                         
-                        <div class="flex items-center ml-4">
+                        <div class="flex items-center ml-2 sm:ml-4">
                           <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                           </svg>
@@ -1229,11 +1239,11 @@
                       }}
                       class="block w-full text-left p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 hover:border-red-300 dark:hover:border-red-700 transition-colors cursor-pointer"
                     >
-                      <div class="flex items-center justify-between">
+                      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                         <div class="flex-1">
-                          <div class="flex items-center gap-2 mb-2">
+                          <!-- Repository and Type -->
+                          <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
                             <span class="font-medium text-red-800 dark:text-red-400">{failure.repo}</span>
-                            <span class="text-xs text-red-600 dark:text-red-400">•</span>
                             <!-- Plan/Apply Badge for failures -->
                             {#if failure.run_type === 'plan'}
                               <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700" title="Click to view run details">
@@ -1253,13 +1263,18 @@
                                 🔍 Drift
                               </span>
                             {/if}
-                            <span class="text-xs text-red-600 dark:text-red-400">•</span>
-                            <span class="text-sm text-red-700 dark:text-red-300">{failure.branch}</span>
+                          </div>
+                          
+                          <!-- Branch and Directory -->
+                          <div class="text-sm text-red-700 dark:text-red-300 mb-1">
+                            {failure.branch}
                             {#if failure.dir}
-                              <span class="text-xs text-red-600 dark:text-red-400">•</span>
+                              <span class="text-xs text-red-600 dark:text-red-400"> • </span>
                               <span class="text-xs text-red-600 dark:text-red-400 font-mono">{failure.dir}</span>
                             {/if}
                           </div>
+                          
+                          <!-- Timestamp and User -->
                           <div class="text-xs text-red-600 dark:text-red-400">
                             Failed {formatDateTime(failure.created_at)}
                             {#if failure.user}
@@ -1267,7 +1282,9 @@
                             {/if}
                           </div>
                         </div>
-                        <div class="flex items-center space-x-2">
+                        
+                        <!-- Status Badge and Arrow -->
+                        <div class="flex items-center space-x-2 self-start sm:self-center">
                           <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
                             Failed
                           </span>
@@ -1322,11 +1339,11 @@
                       }}
                       class="block w-full text-left p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 hover:border-green-300 dark:hover:border-green-700 transition-colors cursor-pointer"
                     >
-                      <div class="flex items-center justify-between">
+                      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                         <div class="flex-1">
-                          <div class="flex items-center gap-2 mb-2">
+                          <!-- Repository and Type -->
+                          <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
                             <span class="font-medium text-green-800 dark:text-green-400">{success.repo}</span>
-                            <span class="text-xs text-green-600 dark:text-green-400">•</span>
                             <!-- Plan/Apply Badge for successes -->
                             {#if success.run_type === 'plan'}
                               <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700" title="Click to view run details">
@@ -1346,14 +1363,18 @@
                                 🔍 Drift
                               </span>
                             {/if}
-                            <span class="text-xs text-green-600 dark:text-green-400">•</span>
-                            <span class="text-sm text-green-700 dark:text-green-300">{success.branch}</span>
+                          </div>
+                          
+                          <!-- Branch and Directory -->
+                          <div class="text-sm text-green-700 dark:text-green-300 mb-1">
+                            {success.branch}
                             {#if success.dir}
-                              <span class="text-xs text-green-600 dark:text-green-400">•</span>
+                              <span class="text-xs text-green-600 dark:text-green-400"> • </span>
                               <span class="text-xs text-green-600 dark:text-green-400 font-mono">{success.dir}</span>
                             {/if}
                           </div>
-                          <!-- Terraform summary removed for memory safety -->
+                          
+                          <!-- Timestamp and User -->
                           <div class="text-xs text-green-600 dark:text-green-400">
                             Completed {formatDateTime(success.created_at)}
                             {#if success.user}
@@ -1361,7 +1382,9 @@
                             {/if}
                           </div>
                         </div>
-                        <div class="flex items-center space-x-2">
+                        
+                        <!-- Status Badge and Arrow -->
+                        <div class="flex items-center space-x-2 self-start sm:self-center">
                           <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
                             Success
                           </span>
@@ -1414,8 +1437,8 @@
         {:else}
           <div class="card-bg rounded-lg shadow overflow-hidden">
             <!-- Table Header -->
-            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-3 border-b border-gray-200 dark:border-gray-600">
-              <div class="grid grid-cols-12 gap-4 text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+            <div class="bg-gray-50 dark:bg-gray-700 px-4 md:px-6 py-3 border-b border-gray-200 dark:border-gray-600">
+              <div class="hidden md:grid grid-cols-12 gap-4 text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 <div class="col-span-4">Repository</div>
                 <div class="col-span-2 text-center">Success</div>
                 <div class="col-span-2 text-center">Failed</div>
@@ -1435,9 +1458,9 @@
                   role="button"
                   aria-label="View runs for {repo.name}"
                 >
-                  <div class="grid grid-cols-12 gap-4 items-center">
+                  <div class="flex flex-col md:grid md:grid-cols-12 md:gap-4 md:items-center space-y-3 md:space-y-0">
                     <!-- Repository Name -->
-                    <div class="col-span-4">
+                    <div class="md:col-span-4">
                       <div class="flex items-center">
                         <svg class="w-4 h-4 text-gray-400 dark:text-gray-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -1451,23 +1474,44 @@
                       </div>
                     </div>
 
+                    <!-- Mobile: Status counts in a row with labels -->
+                    <div class="flex justify-around md:hidden">
+                      <!-- Success Count -->
+                      <div class="text-center">
+                        <div class="text-xs text-gray-600 dark:text-gray-400 mb-1">Success</div>
+                        <div class="text-lg font-semibold text-green-600 dark:text-green-400">{repo.successCount}</div>
+                      </div>
+                      <!-- Failed Count -->
+                      <div class="text-center">
+                        <div class="text-xs text-gray-600 dark:text-gray-400 mb-1">Failed</div>
+                        <div class="text-lg font-semibold {repo.failedCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-400 dark:text-gray-500'}">{repo.failedCount}</div>
+                      </div>
+                      <!-- Running Count -->
+                      <div class="text-center">
+                        <div class="text-xs text-gray-600 dark:text-gray-400 mb-1">Running</div>
+                        <div class="text-lg font-semibold {repo.runningCount > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}">{repo.runningCount}</div>
+                      </div>
+                    </div>
+
+                    <!-- Desktop: Status counts without labels (headers provide context) -->
                     <!-- Success Count -->
-                    <div class="col-span-2 text-center">
+                    <div class="hidden md:block col-span-2 text-center">
                       <div class="text-lg font-semibold text-green-600 dark:text-green-400">{repo.successCount}</div>
                     </div>
 
                     <!-- Failed Count -->
-                    <div class="col-span-2 text-center">
+                    <div class="hidden md:block col-span-2 text-center">
                       <div class="text-lg font-semibold {repo.failedCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-400 dark:text-gray-500'}">{repo.failedCount}</div>
                     </div>
 
                     <!-- Running Count -->
-                    <div class="col-span-2 text-center">
+                    <div class="hidden md:block col-span-2 text-center">
                       <div class="text-lg font-semibold {repo.runningCount > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}">{repo.runningCount}</div>
                     </div>
 
                     <!-- Last Run -->
                     <div class="col-span-2 text-center">
+                      <div class="text-xs text-gray-600 dark:text-gray-400 mb-1 md:hidden">Last Deploy</div>
                       {#if repo.lastApplied}
                         <div class="text-sm">
                           <div class="font-medium text-gray-900 dark:text-gray-100">{formatDateTime(repo.lastApplied.date)}</div>
@@ -1558,28 +1602,33 @@
       <!-- SEARCH MODE -->
       <div class="space-y-6">
         <!-- Search Interface -->
-        <div class="card-bg rounded-lg shadow p-6">
+        <div class="card-bg rounded-lg shadow p-4 sm:p-6">
           <div class="mb-4">
-            <div class="flex items-center justify-between mb-3">
-              <h3 class="text-sm font-semibold text-blue-900 dark:text-blue-400">🔍 Search Runs</h3>
-              <div class="flex items-center space-x-4">
+            <div class="flex flex-col gap-3">
+              <!-- Title and Back Button Row -->
+              <div class="flex items-center justify-between">
+                <h3 class="text-sm font-semibold text-blue-900 dark:text-blue-400">🔍 Search Runs</h3>
                 <button
                   on:click={() => navigateToRuns()}
-                  class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                  class="text-xs sm:text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
                 >
                   ← Back to Overview
                 </button>
-                <div class="flex items-center space-x-2">
-                  <span class="text-xs text-gray-600 dark:text-gray-400">Mode:</span>
+              </div>
+              
+              <!-- Mode Toggle Row -->
+              <div class="flex items-center justify-center sm:justify-start gap-2">
+                <span class="text-xs text-gray-600 dark:text-gray-400">Mode:</span>
+                <div class="flex rounded-md shadow-sm" role="group">
                   <button
                     on:click={switchToBasicMode}
-                    class="px-2 py-1 text-xs rounded transition-colors {isBasicMode ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'}"
+                    class="px-3 py-1.5 text-xs font-medium rounded-l-md transition-colors {isBasicMode ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600'}"
                   >
                     Basic
                   </button>
                   <button
                     on:click={switchToAdvancedMode}
-                    class="px-2 py-1 text-xs rounded transition-colors {!isBasicMode ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'}"
+                    class="px-3 py-1.5 text-xs font-medium rounded-r-md transition-colors {!isBasicMode ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600'} {isBasicMode ? 'border-l border-gray-300 dark:border-gray-600' : ''}"
                   >
                     Advanced
                   </button>
@@ -1780,7 +1829,7 @@
                 </div>
                 
                 <!-- Quick Filter Buttons -->
-                <div class="flex flex-wrap gap-2">
+                <div class="flex flex-wrap gap-2 mb-3 md:mb-0">
                   <span class="text-xs font-medium text-gray-700 dark:text-gray-300 self-center">Quick filters:</span>
                   <button on:click={() => addQuickFilter('state:failure')} class="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-xs rounded hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors">
                     ❌ Failures
@@ -1920,14 +1969,14 @@
                 <!-- Repository Header -->
                 <button
                   on:click={() => toggleRepoCollapse(repoName)}
-                  class="w-full px-6 py-4 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-100 dark:border-blue-800 flex items-center justify-between hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                  class="w-full px-4 md:px-6 py-3 md:py-4 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-100 dark:border-blue-800 flex items-center justify-between hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
                 >
-                  <div class="flex items-center">
-                    <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div class="flex items-center flex-wrap gap-2">
+                    <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                     </svg>
-                    <h3 class="text-lg font-medium text-blue-900 dark:text-blue-100">{repoName}</h3>
-                    <span class="ml-2 px-2 py-1 bg-blue-200 dark:bg-blue-800/50 text-blue-800 dark:text-blue-200 text-xs rounded-full">
+                    <h3 class="text-base sm:text-lg font-medium text-blue-900 dark:text-blue-100">{repoName}</h3>
+                    <span class="px-2.5 py-1 bg-blue-200 dark:bg-blue-800/50 text-blue-800 dark:text-blue-200 text-xs rounded-full whitespace-nowrap">
                       {groupedRuns[repoName].length} run{groupedRuns[repoName].length !== 1 ? 's' : ''}
                     </span>
                   </div>
@@ -1955,9 +2004,9 @@
                           e.preventDefault();
                           navigateToRun(run.id);
                         }}
-                        class="block w-full text-left p-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                        class="block w-full text-left p-4 md:p-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
                       >
-                        <div class="flex items-center justify-between">
+                        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                           <div class="flex-1">
                             <div class="mb-2">
                               <div class="flex items-start gap-2 flex-wrap">
@@ -2005,11 +2054,11 @@
                               {/if}
                             </div>
                           </div>
-                          <div class="flex items-center space-x-2">
-                            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium {getStateColor(run.state)}">
+                          <div class="flex items-center gap-2 self-start">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium {getStateColor(run.state)}">
                               {run.state}
                             </span>
-                            <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg class="w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                             </svg>
                           </div>

@@ -279,22 +279,22 @@
   subtitle="Manage Terraform directories and workspace combinations across your repositories"
 >
   <!-- Summary Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-    <Card padding="lg" class="text-center">
-      <div class="text-3xl font-bold text-brand-primary">{totalWorkspaceCount}</div>
-      <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">Workspaces Loaded</div>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
+    <Card padding="md" class="text-center">
+      <div class="text-2xl md:text-3xl font-bold text-brand-primary">{totalWorkspaceCount}</div>
+      <div class="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1">Workspaces Loaded</div>
     </Card>
-    <Card padding="lg" class="text-center">
-      <div class="text-3xl font-bold text-brand-primary">{totalRepositories}</div>
-      <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">Repositories</div>
+    <Card padding="md" class="text-center">
+      <div class="text-2xl md:text-3xl font-bold text-brand-primary">{totalRepositories}</div>
+      <div class="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1">Repositories</div>
     </Card>
-    <Card padding="lg" class="text-center">
-      <div class="text-3xl font-bold text-green-600 dark:text-green-400">{successfulWorkspaces}</div>
-      <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">Successful</div>
+    <Card padding="md" class="text-center">
+      <div class="text-2xl md:text-3xl font-bold text-green-600 dark:text-green-400">{successfulWorkspaces}</div>
+      <div class="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1">Successful</div>
     </Card>
-    <Card padding="lg" class="text-center">
-      <div class="text-3xl font-bold text-red-600 dark:text-red-400">{failedWorkspaces}</div>
-      <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">Failed</div>
+    <Card padding="md" class="text-center">
+      <div class="text-2xl md:text-3xl font-bold text-red-600 dark:text-red-400">{failedWorkspaces}</div>
+      <div class="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1">Failed</div>
     </Card>
   </div>
 
@@ -449,15 +449,15 @@
           <!-- Repository Header -->
           <button
             on:click={() => toggleRepoCollapse(repoName)}
-            class="w-full px-6 py-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+            class="w-full px-4 md:px-6 py-3 md:py-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
           >
-            <div class="flex items-center space-x-3">
-              <div class="text-lg">
+            <div class="flex items-center space-x-2 md:space-x-3">
+              <div class="text-base md:text-lg">
                 {collapsedRepos.has(repoName) ? '▶️' : '🔽'}
               </div>
-              <div class="text-left">
-                <h3 class="text-lg font-semibold text-brand-primary">{repoName}</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400">
+              <div class="text-left min-w-0 flex-1">
+                <h3 class="text-base md:text-lg font-semibold text-brand-primary truncate">{repoName}</h3>
+                <p class="text-xs md:text-sm text-gray-600 dark:text-gray-400">
                   {#if loadedRepos.has(repoName)}
                     {workspaces.length} workspace{workspaces.length !== 1 ? 's' : ''}
                   {:else if isLoading}
@@ -468,15 +468,15 @@
                 </p>
               </div>
             </div>
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-1 md:space-x-2 flex-shrink-0">
               {#if isLoading}
                 <LoadingSpinner size="sm" />
               {:else if loadedRepos.has(repoName) && workspaces.length > 0}
                 <!-- Status summary for this repo -->
-                <span class="text-xs px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-full">
+                <span class="text-xs px-1.5 md:px-2 py-0.5 md:py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-full">
                   {workspaces.filter(ws => ws.state === 'success').length} ✅
                 </span>
-                <span class="text-xs px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400 rounded-full">
+                <span class="text-xs px-1.5 md:px-2 py-0.5 md:py-1 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400 rounded-full">
                   {workspaces.filter(ws => ws.state === 'failure').length} ❌
                 </span>
               {/if}
@@ -507,59 +507,61 @@
                 {#each workspaces as workspace}
                 <button
                   on:click={() => navigateToWorkspace(workspace.repo, workspace.dir, workspace.workspace)}
-                  class="w-full p-6 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                  class="w-full p-4 md:p-6 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
                 >
-                  <div class="flex items-start justify-between">
-                    <div class="flex-1">
-                      <div class="flex items-center space-x-3 mb-2">
-                        <h4 class="text-lg font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                  <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2 mb-2">
+                        <h4 class="text-base md:text-lg font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate" title={workspace.dir}>
                           📁 {workspace.dir}
                         </h4>
-                        <span class="text-sm px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 rounded-full font-mono">
-                          {workspace.workspace}
-                        </span>
-                        <span class={`text-xs px-2 py-1 rounded-full font-medium ${getStateColor(workspace.state)}`}>
-                          {getStateIcon(workspace.state)} {workspace.state}
-                        </span>
-                        <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                        </svg>
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                          <span class="text-xs md:text-sm px-2 py-0.5 md:py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 rounded-full font-mono whitespace-nowrap" title="Workspace: {workspace.workspace}">
+                            {workspace.workspace}
+                          </span>
+                          <span class={`text-xs px-2 py-0.5 md:py-1 rounded-full font-medium whitespace-nowrap ${getStateColor(workspace.state)}`} title="Status: {workspace.state}">
+                            {getStateIcon(workspace.state)} {workspace.state}
+                          </span>
+                        </div>
                       </div>
                       
-                      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600 dark:text-gray-400">
-                        <div>
+                      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-4 text-xs md:text-sm text-gray-600 dark:text-gray-400">
+                        <div class="truncate">
                           <span class="font-medium">Environment:</span>
                           <span class="ml-1">{workspace.environment || 'default'}</span>
                         </div>
-                        <div>
+                        <div class="truncate">
                           <span class="font-medium">Last Run:</span>
                           <span class="ml-1">{getRunTypeLabel(workspace.run_type)}</span>
                         </div>
-                        <div>
+                        <div class="truncate">
                           <span class="font-medium">Updated:</span>
                           <span class="ml-1">{formatDate(workspace.created_at)}</span>
                         </div>
                       </div>
                       
                       {#if workspace.user}
-                        <div class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                        <div class="mt-2 text-xs md:text-sm text-gray-600 dark:text-gray-400 truncate">
                           <span class="font-medium">Last User:</span>
                           <span class="ml-1">{workspace.user}</span>
                         </div>
                       {/if}
                       
                       {#if workspace.branch && workspace.branch !== workspace.base_branch}
-                        <div class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                        <div class="mt-2 text-xs md:text-sm text-gray-600 dark:text-gray-400 truncate">
                           <span class="font-medium">Branch:</span>
                           <span class="ml-1 font-mono">{workspace.branch}</span>
-                          <span class="mx-2">→</span>
+                          <span class="mx-1 md:mx-2">→</span>
                           <span class="font-mono">{workspace.base_branch}</span>
                         </div>
                       {/if}
                     </div>
                     
-                    <div class="flex items-center space-x-2">
-                      <span class="text-sm text-gray-500 dark:text-gray-400">Click for details →</span>
+                    <div class="flex items-center space-x-2 flex-shrink-0">
+                      <span class="hidden md:inline text-sm text-gray-500 dark:text-gray-400">Click for details →</span>
+                      <svg class="w-4 h-4 text-gray-400 md:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                      </svg>
                     </div>
                   </div>
                 </button>

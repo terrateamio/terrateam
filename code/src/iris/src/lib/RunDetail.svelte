@@ -785,27 +785,27 @@
 
     <!-- Run Overview -->
     <Card padding="lg" class="mb-6">
-      <div class="flex items-start justify-between mb-6">
-        <div>
-          <h2 class="text-2xl font-bold text-blue-600 dark:text-blue-400 dark:text-blue-400 mb-2">
+      <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-6">
+        <div class="flex-1">
+          <h2 class="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400 mb-2 break-words">
             {run.repo}
           </h2>
-          <div class="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400 dark:text-gray-400">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-1 sm:space-y-0 text-sm text-gray-600 dark:text-gray-400">
             <span>Dirspaces: <span class="font-medium">{run.dirspaces.length}</span></span>
             <span>Environment: <span class="font-medium">{run.environment || 'default'}</span></span>
           </div>
         </div>
-        <div class="text-right">
+        <div class="flex flex-col items-start lg:items-end space-y-2">
           {#if run}
             {@const smartStatus = getSmartStatusDisplay(run)}
-            <div class="flex items-center space-x-2 mb-2">
-              <span class="text-sm font-medium">Status:</span>
-              <span class={`px-3 py-1 text-sm font-medium rounded-full ${smartStatus.color}`}>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-sm font-medium whitespace-nowrap">Status:</span>
+              <span class={`px-3 py-1 text-xs sm:text-sm font-medium rounded-full whitespace-nowrap ${smartStatus.color}`}>
                 {smartStatus.icon} {smartStatus.label}
               </span>
             </div>
           {/if}
-          <div class="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-400 mb-2">
+          <div class="text-sm text-gray-600 dark:text-gray-400">
             {getRunTypeLabel(run.run_type)}
           </div>
           {#if run.run_id}
@@ -813,13 +813,14 @@
               href={getGitHubActionsUrl(run.owner, run.repo, run.run_id)}
               target="_blank"
               rel="noopener noreferrer"
-              class="inline-flex items-center text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline"
+              class="inline-flex items-center text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline whitespace-nowrap"
             >
-              <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4 mr-1 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
               </svg>
-              View GitHub Actions Log
-              <svg class="w-3 h-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <span class="hidden sm:inline">View GitHub Actions Log</span>
+              <span class="sm:hidden">View Log</span>
+              <svg class="w-3 h-3 ml-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>
             </a>
@@ -832,10 +833,10 @@
         {@const prInfo = getPullRequestInfo(run.kind)}
         <div class="border-t border-gray-200 dark:border-gray-700 pt-6 mb-6">
           <h3 class="text-lg font-semibold text-blue-600 dark:text-blue-400 mb-4">Pull Request Details</h3>
-          <div class="grid md:grid-cols-2 gap-6">
+          <div class="flex flex-col md:grid md:grid-cols-2 gap-4 md:gap-6">
             <div>
               <div class="flex items-center space-x-2 mb-3">
-                <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 16 16">
+                <svg class="w-5 h-5 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 16 16">
                   <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zM4.5 7.5a.5.5 0 0 0 0 1h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H4.5z"/>
                 </svg>
                 <a 
@@ -845,26 +846,26 @@
                   class="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline flex items-center space-x-1"
                 >
                   <span>PR #{prInfo.pullNumber}</span>
-                  <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg class="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                   </svg>
                 </a>
               </div>
               {#if prInfo.pullTitle}
-                <p class="text-gray-700 dark:text-gray-300 text-sm">
+                <p class="text-gray-700 dark:text-gray-300 text-sm break-words">
                   {prInfo.pullTitle}
                 </p>
               {/if}
             </div>
-            <div>
+            <div class="mt-2 md:mt-0">
               <div class="space-y-2 text-sm">
-                <div class="flex justify-between">
-                  <span class="text-gray-600 dark:text-gray-400 dark:text-gray-400">Branch:</span>
-                  <span class="font-medium font-mono text-blue-600 dark:text-blue-400">{run.branch}</span>
+                <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <span class="text-gray-600 dark:text-gray-400">Branch:</span>
+                  <span class="font-medium font-mono text-xs sm:text-sm text-blue-600 dark:text-blue-400 break-all">{run.branch}</span>
                 </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-600 dark:text-gray-400 dark:text-gray-400">Target:</span>
-                  <span class="font-medium font-mono text-green-600 dark:text-green-400">{run.base_branch}</span>
+                <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <span class="text-gray-600 dark:text-gray-400">Target:</span>
+                  <span class="font-medium font-mono text-xs sm:text-sm text-green-600 dark:text-green-400 break-all">{run.base_branch}</span>
                 </div>
               </div>
             </div>
@@ -874,7 +875,7 @@
         <!-- Non-PR Run (drift, index, etc.) -->
         <div class="border-t border-gray-200 dark:border-gray-700 pt-6 mb-6">
           <h3 class="text-lg font-semibold text-blue-600 dark:text-blue-400 mb-4">Run Information</h3>
-          <div class="grid md:grid-cols-2 gap-6">
+          <div class="grid md:grid-cols-2 gap-4 md:gap-6">
             <div>
               <div class="flex items-center space-x-2 mb-3">
                 <svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -904,7 +905,7 @@
       <!-- Timing Information -->
       <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
         <h3 class="text-lg font-semibold text-blue-600 dark:text-blue-400 mb-4">Execution Timeline</h3>
-        <div class="grid md:grid-cols-3 gap-6">
+        <div class="grid md:grid-cols-3 gap-4 md:gap-6">
           <div>
             <div class="text-sm text-gray-600 dark:text-gray-400 mb-1">Started</div>
             <div class="font-medium text-gray-900 dark:text-gray-100 dark:text-gray-100">{formatDate(run.created_at)}</div>
@@ -953,32 +954,35 @@
 
     <!-- Run Outputs -->{#if run}
     <Card padding="lg" class="mb-6">
-      <div class="flex items-center justify-between mb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <h3 class="text-lg font-semibold text-blue-600 dark:text-blue-400">Execution Outputs</h3>
         
         <!-- Output Filter Tabs -->
-        <div class="flex space-x-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+        <div class="flex flex-wrap gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
           <button 
             on:click={() => activeOutputTab = 'all'}
-            class="px-3 py-1 text-sm font-medium rounded-md transition-colors {activeOutputTab === 'all' ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}"
+            class="px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-colors whitespace-nowrap {activeOutputTab === 'all' ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}"
           >
-            All Steps
+            <span class="hidden sm:inline">All Steps</span>
+            <span class="sm:hidden">All</span>
           </button>
           <button 
             on:click={() => activeOutputTab = 'raw'}
-            class="px-3 py-1 text-sm font-medium rounded-md transition-colors {activeOutputTab === 'raw' ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}"
+            class="px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-colors whitespace-nowrap {activeOutputTab === 'raw' ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}"
           >
-            🔧 Raw Steps
+            <span class="hidden sm:inline">🔧 Raw Steps</span>
+            <span class="sm:hidden">🔧 Raw</span>
           </button>
           <button 
             on:click={() => activeOutputTab = 'cost'}
-            class="px-3 py-1 text-sm font-medium rounded-md transition-colors {activeOutputTab === 'cost' ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}"
+            class="px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-colors whitespace-nowrap {activeOutputTab === 'cost' ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}"
           >
-            💰 Cost ({costEstimation.length})
+            💰 Cost <span class="hidden sm:inline">({costEstimation.length})</span>
+            <span class="sm:hidden text-[10px]">({costEstimation.length})</span>
           </button>
           <button 
             on:click={() => activeOutputTab = 'failed'}
-            class="px-3 py-1 text-sm font-medium rounded-md transition-colors {activeOutputTab === 'failed' ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}"
+            class="px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-colors whitespace-nowrap {activeOutputTab === 'failed' ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}"
           >
             ❌ Failed
           </button>
@@ -1034,7 +1038,7 @@
                     </div>
                     
                     <!-- Cost Summary Metrics -->
-                    <div class="grid md:grid-cols-3 gap-6">
+                    <div class="grid md:grid-cols-3 gap-4 md:gap-6">
                       <div class="bg-white dark:bg-gray-800 rounded-lg p-4 text-center border border-gray-200 dark:border-gray-700">
                         <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
                           ${(costData.summary.total_monthly_cost || 0).toFixed(2)}
@@ -1192,14 +1196,17 @@
                       {/if}
                     </div>
                     <div class="flex-1 min-w-0">
-                      <div class="font-medium text-gray-900 dark:text-gray-100">{dirspace.dir}</div>
-                      <div class="text-sm text-gray-600 dark:text-gray-400">Workspace: {dirspace.workspace}</div>
+                      <div class="font-medium text-gray-900 dark:text-gray-100 truncate">{dirspace.dir}</div>
+                      <div class="text-sm text-gray-600 dark:text-gray-400 truncate">Workspace: {dirspace.workspace}</div>
                       
                       <!-- Terraform summaries removed for memory safety -->
                     </div>
                   </div>
                   <div class="flex items-center space-x-2 flex-shrink-0">
-                    <span class="text-sm text-gray-500 dark:text-gray-400">{dirspaceOutputs.length} step{dirspaceOutputs.length !== 1 ? 's' : ''}</span>
+                    <span class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                      <span class="hidden sm:inline">{dirspaceOutputs.length} step{dirspaceOutputs.length !== 1 ? 's' : ''}</span>
+                      <span class="sm:hidden">{dirspaceOutputs.length} {dirspaceOutputs.length === 1 ? 'step' : 'steps'}</span>
+                    </span>
                     <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 transform transition-transform {isExpanded ? 'rotate-180' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                     </svg>
@@ -1250,18 +1257,18 @@
                                 <div class="mt-3">
                                   <div class="text-xs text-gray-600 dark:text-gray-400 mb-2">Output:</div>
                                   <div class="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
-                                    <div class="flex items-center justify-between">
+                                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                       <div class="flex items-center">
-                                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                         </svg>
-                                        <span class="text-sm text-gray-600 dark:text-gray-400">Click to view output content</span>
+                                        <span class="text-sm text-gray-600 dark:text-gray-400">Output content not loaded</span>
                                       </div>
                                       <button
                                         type="button"
                                         on:click={() => loadFullOutput(typedOutput)}
-                                        class="inline-flex items-center px-3 py-2 border border-blue-300 dark:border-blue-600 text-sm font-medium rounded-md text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                                        class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-blue-300 dark:border-blue-600 text-sm font-medium rounded-md text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
                                       >
                                         <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -1342,14 +1349,17 @@
                       {/if}
                     </div>
                     <div class="flex-1 min-w-0">
-                      <div class="font-medium text-gray-900 dark:text-gray-100">{dirspace.dir}</div>
-                      <div class="text-sm text-gray-600 dark:text-gray-400">Workspace: {dirspace.workspace}</div>
+                      <div class="font-medium text-gray-900 dark:text-gray-100 truncate">{dirspace.dir}</div>
+                      <div class="text-sm text-gray-600 dark:text-gray-400 truncate">Workspace: {dirspace.workspace}</div>
                       
                       <!-- Terraform summaries removed for memory safety -->
                     </div>
                   </div>
                   <div class="flex items-center space-x-2 flex-shrink-0">
-                    <span class="text-sm text-gray-500 dark:text-gray-400">{dirspaceOutputs.length} step{dirspaceOutputs.length !== 1 ? 's' : ''} (unfiltered)</span>
+                    <span class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                      <span class="hidden sm:inline">{dirspaceOutputs.length} step{dirspaceOutputs.length !== 1 ? 's' : ''} (unfiltered)</span>
+                      <span class="sm:hidden">{dirspaceOutputs.length} {dirspaceOutputs.length === 1 ? 'step' : 'steps'}</span>
+                    </span>
                     <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 transform transition-transform {isExpanded ? 'rotate-180' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                     </svg>
@@ -1390,18 +1400,18 @@
                                 <div class="mt-3">
                                   <div class="text-xs text-gray-600 dark:text-gray-400 mb-2">Output:</div>
                                   <div class="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
-                                    <div class="flex items-center justify-between">
+                                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                       <div class="flex items-center">
-                                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                         </svg>
-                                        <span class="text-sm text-gray-600 dark:text-gray-400">Click to view output content</span>
+                                        <span class="text-sm text-gray-600 dark:text-gray-400">Output content not loaded</span>
                                       </div>
                                       <button
                                         type="button"
                                         on:click={() => loadFullOutput(typedOutput)}
-                                        class="inline-flex items-center px-3 py-2 border border-blue-300 dark:border-blue-600 text-sm font-medium rounded-md text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                                        class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-blue-300 dark:border-blue-600 text-sm font-medium rounded-md text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
                                       >
                                         <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -1511,24 +1521,24 @@
                                 <div class="mt-3">
                                   <div class="text-xs text-red-700 dark:text-red-400 mb-2">Error Output:</div>
                                   <div class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-600 rounded-lg p-4">
-                                    <div class="flex items-center justify-between">
+                                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                       <div class="flex items-center">
-                                        <svg class="w-5 h-5 text-red-500 dark:text-red-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg class="w-5 h-5 text-red-500 dark:text-red-400 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                         </svg>
-                                        <span class="text-sm text-red-600 dark:text-red-400">Click to view error output</span>
+                                        <span class="text-sm text-red-600 dark:text-red-400">Error output not loaded</span>
                                       </div>
                                       <button
                                         type="button"
                                         on:click={() => loadFullOutput(typedOutput)}
-                                        class="inline-flex items-center px-3 py-2 border border-red-300 dark:border-red-600 text-sm font-medium rounded-md text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
+                                        class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-red-300 dark:border-red-600 text-sm font-medium rounded-md text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
                                       >
                                         <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                         </svg>
-                                        View Output
+                                        View Error Output
                                       </button>
                                     </div>
                                   </div>
@@ -1655,28 +1665,28 @@
         <div>
           <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-3">Identifiers</h4>
           <div class="space-y-2 text-sm">
-            <div class="flex justify-between">
-              <span class="text-gray-600 dark:text-gray-400">Work Manifest ID:</span>
-              <span class="font-mono text-xs bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1 rounded">{run.id}</span>
+            <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
+              <span class="text-gray-600 dark:text-gray-400 whitespace-nowrap">Work Manifest ID:</span>
+              <span class="font-mono text-[10px] sm:text-xs bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1 rounded break-all">{run.id}</span>
             </div>
             {#if run.run_id}
-              <div class="flex justify-between">
-                <span class="text-gray-600 dark:text-gray-400">GitHub Actions ID:</span>
-                <span class="font-mono text-xs bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1 rounded">{run.run_id}</span>
+              <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
+                <span class="text-gray-600 dark:text-gray-400 whitespace-nowrap">GitHub Actions ID:</span>
+                <span class="font-mono text-[10px] sm:text-xs bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1 rounded break-all">{run.run_id}</span>
               </div>
             {/if}
           </div>
         </div>
-        <div>
+        <div class="mt-4 md:mt-0">
           <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-3">Git References</h4>
           <div class="space-y-2 text-sm">
-            <div class="flex justify-between">
-              <span class="text-gray-600 dark:text-gray-400">Branch Ref:</span>
-              <span class="font-mono text-xs bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1 rounded">{run.branch_ref.substring(0, 8)}</span>
+            <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
+              <span class="text-gray-600 dark:text-gray-400 whitespace-nowrap">Branch Ref:</span>
+              <span class="font-mono text-[10px] sm:text-xs bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1 rounded">{run.branch_ref.substring(0, 8)}</span>
             </div>
-            <div class="flex justify-between">
-              <span class="text-gray-600 dark:text-gray-400">Base Ref:</span>
-              <span class="font-mono text-xs bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1 rounded">{run.base_ref.substring(0, 8)}</span>
+            <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
+              <span class="text-gray-600 dark:text-gray-400 whitespace-nowrap">Base Ref:</span>
+              <span class="font-mono text-[10px] sm:text-xs bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1 rounded">{run.base_ref.substring(0, 8)}</span>
             </div>
           </div>
         </div>
@@ -1698,28 +1708,28 @@
 
   <!-- Full-Screen Output Modal -->
   {#if showOutputModal}
-    <div class="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-75 flex items-center justify-center p-4">
-      <div class="bg-white rounded-lg shadow-xl w-full h-full max-w-7xl max-h-full flex flex-col">
+    <div class="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-75 flex items-center justify-center p-2 sm:p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full h-full max-w-7xl max-h-full flex flex-col">
         <!-- Modal Header -->
-        <div class="flex items-center justify-between p-4 border-b border-gray-200">
-          <div class="flex items-center space-x-3">
-            <h3 class="text-lg font-semibold text-gray-900">Output View</h3>
-            <span class="text-sm text-gray-600 dark:text-gray-400">{modalOutputTitle}</span>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 gap-2">
+          <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+            <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">Output View</h3>
+            <span class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 break-all">{modalOutputTitle}</span>
           </div>
-          <div class="flex items-center space-x-2">
+          <div class="flex items-center gap-2">
             <button
-              class="px-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+              class="px-2 sm:px-3 py-1 text-xs sm:text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               on:click={() => navigator.clipboard.writeText(modalOutputContent)}
               title="Copy to clipboard"
             >
               📋 Copy
             </button>
             <button
-              class="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-400 rounded-full hover:bg-gray-100 transition-colors"
+              class="p-1.5 sm:p-2 text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               on:click={closeOutputModal}
               title="Close (Esc)"
             >
-              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -1728,17 +1738,17 @@
 
         <!-- Modal Content -->
         <div class="flex-1 overflow-hidden">
-          <pre class="h-full w-full bg-gray-900 text-gray-100 p-4 overflow-auto text-sm font-mono whitespace-pre-wrap">{modalOutputContent}</pre>
+          <pre class="h-full w-full bg-gray-900 dark:bg-gray-950 text-gray-100 p-3 sm:p-4 overflow-auto text-xs sm:text-sm font-mono whitespace-pre-wrap break-words">{modalOutputContent}</pre>
         </div>
 
         <!-- Modal Footer -->
-        <div class="p-4 border-t border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700">
-          <div class="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+        <div class="p-3 sm:p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
             <div>
               {modalOutputContent.split('\n').length} lines • {modalOutputContent.length} characters
             </div>
-            <div>
-              Press <kbd class="px-2 py-1 bg-gray-200 rounded text-xs">Esc</kbd> to close
+            <div class="hidden sm:block">
+              Press <kbd class="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">Esc</kbd> to close
             </div>
           </div>
         </div>
