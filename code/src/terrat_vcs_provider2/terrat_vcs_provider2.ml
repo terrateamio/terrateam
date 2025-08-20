@@ -464,14 +464,28 @@ module type S = sig
   end
 
   module Commit_check : sig
-    val make :
+    val make_dirspace_title : run_type:string -> Terrat_dirspace.t -> string
+
+    val make_dirspace :
       ?work_manifest:('a, 'b) Terrat_work_manifest3.Existing.t ->
       config:Api.Config.t ->
       description:string ->
-      title:string ->
+      run_type:string ->
+      dirspace:Terrat_dirspace.t ->
       status:Terrat_commit_check.Status.t ->
       repo:Api.Repo.t ->
-      Api.Account.t ->
+      account:Api.Account.t ->
+      unit ->
+      Terrat_commit_check.t
+
+    val make_str :
+      ?work_manifest:('a, 'b) Terrat_work_manifest3.Existing.t ->
+      config:Api.Config.t ->
+      description:string ->
+      status:Terrat_commit_check.Status.t ->
+      repo:Api.Repo.t ->
+      account:Api.Account.t ->
+      string ->
       Terrat_commit_check.t
   end
 

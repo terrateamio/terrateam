@@ -626,22 +626,7 @@ module Provider :
       | Error _ -> Abb.Future.return (Error `Error)
   end
 
-  module Commit_check = struct
-    let make ?work_manifest ~config ~description ~title ~status ~repo account =
-      let module Wm = Terrat_work_manifest3 in
-      let details_url =
-        match work_manifest with
-        | Some work_manifest ->
-            Printf.sprintf
-              "%s/i/%d/runs/%s"
-              (Uri.to_string @@ Terrat_config.terrateam_web_base_url @@ Api.Config.config config)
-              (Api.Account.id account)
-              (Uuidm.to_string work_manifest.Wm.id)
-        | None -> Uri.to_string @@ Terrat_config.terrateam_web_base_url @@ Api.Config.config config
-      in
-      Terrat_commit_check.make ~details_url ~description ~title ~status
-  end
-
+  module Commit_check = Terrat_vcs_service_github_provider.Commit_check
   module Ui = Terrat_vcs_service_github_provider.Ui
   module Comment = Terrat_vcs_service_github_provider.Comment
 end
