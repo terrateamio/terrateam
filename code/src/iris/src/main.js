@@ -43,6 +43,7 @@ async function initializeAnalytics() {
     posthog.default.init('phc_2tp2xlYY8TujRhNizd6oga1tzVzRaLXJ1O30UnOgIOF', {
       api_host: 'https://eu.i.posthog.com',
       person_profiles: 'always',
+      opt_in_site_apps: true,
       autocapture: true,
       capture_pageview: true,
       capture_pageleave: true,
