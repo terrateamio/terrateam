@@ -4323,25 +4323,56 @@ module Access_control = struct
 end
 
 module Commit_check = struct
+  let commit_status_check_title_limit = 200
+  let short_hash_length = 6
+
+  let make_dirspace_title ~run_type { Terrat_dirspace.dir; workspace } =
+    let title = Printf.sprintf "terrateam %s: %s %s" run_type dir workspace in
+    if CCString.length title > commit_status_check_title_limit then
+      let short_hash =
+        CCString.sub Sha256.(to_hex (string (dir ^ ":" ^ workspace))) 0 short_hash_length
+      in
+      (* Heuristic guessing that the end of a dir path is probably more unique *)
+      let short_dir = CCString.rev @@ CCString.sub (CCString.rev dir) 0 40 in
+      let short_workspace = CCString.sub workspace 0 20 in
+      Printf.sprintf "terrateam %s: ...%s %s... %s" run_type short_dir short_workspace short_hash
+    else title
+
   let make ?work_manifest ~config ~description ~title ~status ~repo account =
     let module Wm = Terrat_work_manifest3 in
     let details_url =
       match work_manifest with
-      | Some { Wm.id; run_id = Some run_id; _ } ->
+      | Some work_manifest ->
           Printf.sprintf
-            "%s/%s/%s/actions/runs/%s"
-            (Uri.to_string (Terrat_config.Github.web_base_url @@ Api.Config.vcs_config config))
-            (Api.Repo.owner repo)
-            (Api.Repo.name repo)
-            run_id
-      | Some _ | None ->
-          Printf.sprintf
-            "%s/%s/%s/actions"
-            (Uri.to_string (Terrat_config.Github.web_base_url @@ Api.Config.vcs_config config))
-            (Api.Repo.owner repo)
-            (Api.Repo.name repo)
+            "%s/i/%d/runs/%s"
+            (Uri.to_string @@ Terrat_config.terrateam_web_base_url @@ Api.Config.config config)
+            (Api.Account.id account)
+            (Uuidm.to_string work_manifest.Wm.id)
+      | None -> Uri.to_string @@ Terrat_config.terrateam_web_base_url @@ Api.Config.config config
     in
     Terrat_commit_check.make ~details_url ~description ~title ~status
+
+  let make_str ?work_manifest ~config ~description ~status ~repo ~account s =
+    make ?work_manifest ~config ~description ~title:s ~status ~repo account
+
+  let make_dirspace
+      ?work_manifest
+      ~config
+      ~description
+      ~run_type
+      ~dirspace
+      ~status
+      ~repo
+      ~account
+      () =
+    make_str
+      ?work_manifest
+      ~config
+      ~description
+      ~status
+      ~repo
+      ~account
+      (make_dirspace_title ~run_type dirspace)
 end
 
 module Work_manifest = struct

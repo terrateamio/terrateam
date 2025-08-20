@@ -3968,8 +3968,33 @@ module Access_control = struct
 end
 
 module Commit_check = struct
-  let make ?work_manifest ~config ~description ~title ~status ~repo account =
+  let make_dirspace_title ~run_type { Terrat_dirspace.dir; workspace } =
+    Printf.sprintf "terrateam %s: %s %s" run_type dir workspace
+
+  let make ?work_manifest ~config ~description ~title ~status ~repo ~account () =
     Terrat_commit_check.make ~details_url:"" ~description ~title ~status
+
+  let make_str ?work_manifest ~config ~description ~status ~repo ~account s =
+    make ?work_manifest ~config ~description ~title:s ~status ~repo ~account ()
+
+  let make_dirspace
+      ?work_manifest
+      ~config
+      ~description
+      ~run_type
+      ~dirspace
+      ~status
+      ~repo
+      ~account
+      () =
+    make_str
+      ?work_manifest
+      ~config
+      ~description
+      ~status
+      ~repo
+      ~account
+      (make_dirspace_title ~run_type dirspace)
 end
 
 module Work_manifest = struct

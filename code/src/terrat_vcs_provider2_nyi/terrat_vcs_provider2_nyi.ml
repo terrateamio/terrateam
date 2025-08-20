@@ -91,7 +91,24 @@ module Access_control = struct
 end
 
 module Commit_check = struct
-  let make ?work_manifest ~config ~description ~title ~status ~repo account = raise (Failure "nyi")
+  let make_dirspace_title ~run_type dirspace = raise (Failure "nyi")
+
+  let make_dirspace
+      ?work_manifest
+      ~config
+      ~description
+      ~run_type
+      ~dirspace
+      ~status
+      ~repo
+      ~account
+      () =
+    raise (Failure "nyi")
+
+  let make_hook ?work_manifest ~config ~description ~run_type ~hook ~status ~repo ~account () =
+    raise (Failure "nyi")
+
+  let make_str ?work_manifest ~config ~description ~status ~repo ~account s = raise (Failure "nyi")
 end
 
 module Work_manifest = struct

@@ -3103,14 +3103,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               >>= fun pull_request ->
               let module Status = Terrat_commit_check.Status in
               let check =
-                S.Commit_check.make
+                S.Commit_check.make_str
                   ~config:(Ctx.config ctx)
                   ~description:"Completed"
-                  ~title:"terrateam index"
                   ~status:Status.Completed
                   ~work_manifest
                   ~repo
-                  account
+                  ~account
+                  "terrateam index"
               in
               create_commit_checks
                 state.State.request_id
@@ -3143,13 +3143,13 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       if apply_requirements.R.Apply_requirements.create_completed_apply_check_on_noop then
         let checks =
           [
-            S.Commit_check.make
+            S.Commit_check.make_str
               ~config
               ~description:"Completed"
-              ~title:"terrateam apply"
               ~status:Terrat_commit_check.Status.Completed
               ~repo
-              account;
+              ~account
+              "terrateam apply";
           ]
         in
         create_commit_checks
@@ -3223,37 +3223,39 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           in
           let aggregate =
             [
-              S.Commit_check.make
+              S.Commit_check.make_str
                 ~config
                 ~description
-                ~title:(Printf.sprintf "terrateam %s pre-hooks" run_type)
                 ~status
                 ~work_manifest
                 ~repo
-                account;
-              S.Commit_check.make
+                ~account
+                (Printf.sprintf "terrateam %s pre-hooks" run_type);
+              S.Commit_check.make_str
                 ~config
                 ~description
-                ~title:(Printf.sprintf "terrateam %s post-hooks" run_type)
                 ~status
                 ~work_manifest
                 ~repo
-                account;
+                ~account
+                (Printf.sprintf "terrateam %s post-hooks" run_type);
             ]
           in
           let dirspace_checks =
             let module Ds = Terrat_change.Dirspace in
             let module Dsf = Terrat_change.Dirspaceflow in
             CCList.map
-              (fun { Dsf.dirspace = { Ds.dir; workspace; _ }; _ } ->
-                S.Commit_check.make
+              (fun { Dsf.dirspace; _ } ->
+                S.Commit_check.make_dirspace
                   ~config
                   ~description
-                  ~title:(Printf.sprintf "terrateam %s: %s %s" run_type dir workspace)
+                  ~run_type
+                  ~dirspace
                   ~status
                   ~work_manifest
                   ~repo
-                  account)
+                  ~account
+                  ())
               dirspaces
           in
           let checks = aggregate @ dirspace_checks in
@@ -3286,37 +3288,39 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       in
       let aggregate =
         [
-          S.Commit_check.make
+          S.Commit_check.make_str
             ~config
             ~description:(description result.Wmr.pre_hooks_success)
-            ~title:(Printf.sprintf "terrateam %s pre-hooks" run_type)
             ~status:(status result.Wmr.pre_hooks_success)
             ~work_manifest
             ~repo
-            account;
-          S.Commit_check.make
+            ~account
+            (Printf.sprintf "terrateam %s pre-hooks" run_type);
+          S.Commit_check.make_str
             ~config
             ~description:(description result.Wmr.post_hooks_success)
-            ~title:(Printf.sprintf "terrateam %s post-hooks" run_type)
             ~status:(status result.Wmr.post_hooks_success)
             ~work_manifest
             ~repo
-            account;
+            ~account
+            (Printf.sprintf "terrateam %s post-hooks" run_type);
         ]
       in
       let dirspace_checks =
         let module Ds = Terrat_change.Dirspace in
         let module Dsf = Terrat_change.Dirspaceflow in
         CCList.map
-          (fun ({ Terrat_dirspace.dir; workspace }, success) ->
-            S.Commit_check.make
+          (fun (dirspace, success) ->
+            S.Commit_check.make_dirspace
               ~config
               ~description:(description success)
-              ~title:(Printf.sprintf "terrateam %s: %s %s" run_type dir workspace)
+              ~run_type
+              ~dirspace
               ~status:(status success)
               ~work_manifest
               ~repo
-              account)
+              ~account
+              ())
           result.Wmr.dirspaces_success
       in
       let checks = aggregate @ dirspace_checks in
@@ -3384,34 +3388,35 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           |> CCList.filter_map
                (fun
                  {
-                   Terrat_change_match3.Dirspace_config.dirspace =
-                     { Terrat_dirspace.dir; workspace };
+                   Terrat_change_match3.Dirspace_config.dirspace;
                    when_modified = { Terrat_base_repo_config_v1.When_modified.autoapply; _ };
                    _;
                  }
                ->
-                 let name = Printf.sprintf "terrateam apply: %s %s" dir workspace in
+                 let name = S.Commit_check.make_dirspace_title ~run_type:"apply" dirspace in
                  if (not autoapply) && not (String_set.mem name commit_check_titles) then
                    Some
-                     (S.Commit_check.make
+                     (S.Commit_check.make_dirspace
                         ~config
                         ~description:"Waiting"
-                        ~title:(Printf.sprintf "terrateam apply: %s %s" dir workspace)
+                        ~run_type:"apply"
+                        ~dirspace
                         ~status:Terrat_commit_check.Status.Queued
                         ~repo
-                        account)
+                        ~account
+                        ())
                  else None)
         in
         let missing_apply_check =
           if not (String_set.mem "terrateam apply" commit_check_titles) then
             [
-              S.Commit_check.make
+              S.Commit_check.make_str
                 ~config
                 ~description:"Waiting"
-                ~title:"terrateam apply"
                 ~status:Terrat_commit_check.Status.Queued
                 ~repo
-                account;
+                ~account
+                "terrateam apply";
             ]
           else []
         in
@@ -4475,14 +4480,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               Dv.branch_ref ctx state
               >>= fun branch_ref' ->
               let check =
-                S.Commit_check.make
+                S.Commit_check.make_str
                   ~config:(Ctx.config ctx)
                   ~description:"Queued"
-                  ~title:"terrateam index"
                   ~status:Status.Queued
                   ~work_manifest
                   ~repo
-                  account
+                  ~account
+                  "terrateam index"
               in
               create_commit_checks state.State.request_id client repo branch_ref' [ check ]
               >>= fun () -> Abb.Future.return (Ok state))
@@ -4518,14 +4523,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               Dv.branch_ref ctx state
               >>= fun branch_ref' ->
               let check =
-                S.Commit_check.make
+                S.Commit_check.make_str
                   ~config:(Ctx.config ctx)
                   ~description:"Queued"
-                  ~title:"terrateam index"
                   ~status:Status.Queued
                   ~work_manifest
                   ~repo
-                  account
+                  ~account
+                  "terrateam index"
               in
               create_commit_checks state.State.request_id client repo branch_ref' [ check ]
               >>= fun () -> Abb.Future.return (Ok state))
@@ -4541,14 +4546,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               >>= fun pull_request ->
               let module Status = Terrat_commit_check.Status in
               let check =
-                S.Commit_check.make
+                S.Commit_check.make_str
                   ~config:(Ctx.config ctx)
                   ~description:"Running"
-                  ~title:"terrateam index"
                   ~status:Status.Running
                   ~work_manifest
                   ~repo
-                  account
+                  ~account
+                  "terrateam index"
               in
               create_commit_checks
                 state.State.request_id
@@ -4569,14 +4574,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               >>= fun pull_request ->
               let module Status = Terrat_commit_check.Status in
               let check =
-                S.Commit_check.make
+                S.Commit_check.make_str
                   ~config:(Ctx.config ctx)
                   ~description:"Failed"
-                  ~title:"terrateam index"
                   ~status:Status.Failed
                   ~work_manifest
                   ~repo
-                  account
+                  ~account
+                  "terrateam index"
               in
               create_commit_checks
                 state.State.request_id
@@ -5720,14 +5725,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               Dv.pull_request ctx state
               >>= fun pull_request ->
               let check =
-                S.Commit_check.make
+                S.Commit_check.make_str
                   ~config:(Ctx.config ctx)
                   ~description:"Completed"
-                  ~title:"terrateam apply"
                   ~status:Terrat_commit_check.Status.Completed
                   ~work_manifest
                   ~repo:(Event.repo state.State.event)
-                  (Event.account state.State.event)
+                  ~account:(Event.account state.State.event)
+                  "terrateam apply"
               in
               create_commit_checks
                 state.State.request_id
@@ -5971,14 +5976,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               Dv.branch_ref ctx state
               >>= fun branch_ref' ->
               let check =
-                S.Commit_check.make
+                S.Commit_check.make_str
                   ~config:(Ctx.config ctx)
                   ~description:"Queued"
-                  ~title:"terrateam build-tree"
                   ~status:Status.Queued
                   ~work_manifest
                   ~repo
-                  account
+                  ~account
+                  "terrateam build-tree"
               in
               create_commit_checks state.State.request_id client repo branch_ref' [ check ]
               >>= fun () -> Abb.Future.return (Ok state))
@@ -6014,14 +6019,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               Dv.branch_ref ctx state
               >>= fun branch_ref' ->
               let check =
-                S.Commit_check.make
+                S.Commit_check.make_str
                   ~config:(Ctx.config ctx)
                   ~description:"Queued"
-                  ~title:"terrateam build-tree"
                   ~status:Status.Queued
                   ~work_manifest
                   ~repo
-                  account
+                  ~account
+                  "terrateam build-tree"
               in
               create_commit_checks state.State.request_id client repo branch_ref' [ check ]
               >>= fun () -> Abb.Future.return (Ok state))
@@ -6037,14 +6042,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               >>= fun pull_request ->
               let module Status = Terrat_commit_check.Status in
               let check =
-                S.Commit_check.make
+                S.Commit_check.make_str
                   ~config:(Ctx.config ctx)
                   ~description:"Running"
-                  ~title:"terrateam build-tree"
                   ~status:Status.Running
                   ~work_manifest
                   ~repo
-                  account
+                  ~account
+                  "terrateam build-tree"
               in
               create_commit_checks
                 state.State.request_id
@@ -6065,14 +6070,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               >>= fun pull_request ->
               let module Status = Terrat_commit_check.Status in
               let check =
-                S.Commit_check.make
+                S.Commit_check.make_str
                   ~config:(Ctx.config ctx)
                   ~description:"Failed"
-                  ~title:"terrateam build-tree"
                   ~status:Status.Failed
                   ~work_manifest
                   ~repo
-                  account
+                  ~account
+                  "terrateam build-tree"
               in
               create_commit_checks
                 state.State.request_id
@@ -6138,14 +6143,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                 >>= fun pull_request ->
                 let module Status = Terrat_commit_check.Status in
                 let check =
-                  S.Commit_check.make
+                  S.Commit_check.make_str
                     ~config:(Ctx.config ctx)
                     ~description:"Failed"
-                    ~title:"terrateam build-tree"
                     ~status:Status.Failed
                     ~work_manifest
                     ~repo
-                    account
+                    ~account
+                    "terrateam build-tree"
                 in
                 create_commit_checks
                   state.State.request_id
@@ -6185,14 +6190,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                   >>= fun pull_request ->
                   let module Status = Terrat_commit_check.Status in
                   let check =
-                    S.Commit_check.make
+                    S.Commit_check.make_str
                       ~config:(Ctx.config ctx)
                       ~description:"Completed"
-                      ~title:"terrateam build-tree"
                       ~status:Status.Completed
                       ~work_manifest
                       ~repo
-                      account
+                      ~account
+                      "terrateam build-tree"
                   in
                   create_commit_checks
                     state.State.request_id
@@ -6257,14 +6262,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               Dv.branch_ref ctx state
               >>= fun branch_ref' ->
               let check =
-                S.Commit_check.make
+                S.Commit_check.make_str
                   ~config:(Ctx.config ctx)
                   ~description:"Queued"
-                  ~title:"terrateam build-config"
                   ~status:Status.Queued
                   ~work_manifest
                   ~repo
-                  account
+                  ~account
+                  "terrateam build-config"
               in
               create_commit_checks state.State.request_id client repo branch_ref' [ check ]
               >>= fun () -> Abb.Future.return (Ok state))
@@ -6300,14 +6305,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               Dv.branch_ref ctx state
               >>= fun branch_ref' ->
               let check =
-                S.Commit_check.make
+                S.Commit_check.make_str
                   ~config:(Ctx.config ctx)
                   ~description:"Queued"
-                  ~title:"terrateam build-config"
                   ~status:Status.Queued
                   ~work_manifest
                   ~repo
-                  account
+                  ~account
+                  "terrateam build-config"
               in
               create_commit_checks state.State.request_id client repo branch_ref' [ check ]
               >>= fun () -> Abb.Future.return (Ok state))
@@ -6323,14 +6328,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               >>= fun pull_request ->
               let module Status = Terrat_commit_check.Status in
               let check =
-                S.Commit_check.make
+                S.Commit_check.make_str
                   ~config:(Ctx.config ctx)
                   ~description:"Running"
-                  ~title:"terrateam build-config"
                   ~status:Status.Running
                   ~work_manifest
                   ~repo
-                  account
+                  ~account
+                  "terrateam build-config"
               in
               create_commit_checks
                 state.State.request_id
@@ -6351,14 +6356,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               >>= fun pull_request ->
               let module Status = Terrat_commit_check.Status in
               let check =
-                S.Commit_check.make
+                S.Commit_check.make_str
                   ~config:(Ctx.config ctx)
                   ~description:"Failed"
-                  ~title:"terrateam build-config"
                   ~status:Status.Failed
                   ~work_manifest
                   ~repo
-                  account
+                  ~account
+                  "terrateam build-config"
               in
               create_commit_checks
                 state.State.request_id
@@ -6447,14 +6452,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                 >>= fun pull_request ->
                 let module Status = Terrat_commit_check.Status in
                 let check =
-                  S.Commit_check.make
+                  S.Commit_check.make_str
                     ~config:(Ctx.config ctx)
                     ~description:"Failed"
-                    ~title:"terrateam build-config"
                     ~status:Status.Failed
                     ~work_manifest
                     ~repo
-                    account
+                    ~account
+                    "terrateam build-config"
                 in
                 create_commit_checks
                   state.State.request_id
@@ -6499,14 +6504,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                       >>= fun pull_request ->
                       let module Status = Terrat_commit_check.Status in
                       let check =
-                        S.Commit_check.make
+                        S.Commit_check.make_str
                           ~config:(Ctx.config ctx)
                           ~description:"Completed"
-                          ~title:"terrateam build-config"
                           ~status:Status.Completed
                           ~work_manifest
                           ~repo
-                          account
+                          ~account
+                          "terrateam build-config"
                       in
                       create_commit_checks
                         state.State.request_id
@@ -6625,20 +6630,17 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                   let repo = Event.repo state.State.event in
                   let checks =
                     CCList.map
-                      (fun { Dsf.dirspace = { Ds.dir; workspace; _ }; _ } ->
-                        S.Commit_check.make
+                      (fun { Dsf.dirspace; _ } ->
+                        S.Commit_check.make_dirspace
                           ~config:(Ctx.config ctx)
                           ~description:"Completed"
-                          ~title:
-                            (Printf.sprintf
-                               "terrateam %s: %s %s"
-                               (Wm.Step.to_string Wm.Step.Apply)
-                               dir
-                               workspace)
+                          ~run_type:(Wm.Step.to_string Wm.Step.Apply)
+                          ~dirspace
                           ~status:Terrat_commit_check.Status.Completed
                           ~work_manifest
                           ~repo
-                          account)
+                          ~account
+                          ())
                       applied_changes
                   in
                   Dv.client ctx state
