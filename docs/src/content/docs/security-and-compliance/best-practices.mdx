@@ -79,11 +79,9 @@ When designing your Terrateam workflows, consider the following security best pr
          - type: env
            name: CONFTEST_POLICY
            cmd: ['echo', '/tmp/policies/']
-         - type: run
-           cmd: ['conftest-wrapper']
-           capture_output: true
+         - type: conftest
    ```
-   This configuration syncs OPA policies from a private S3 bucket and uses `conftest` to evaluate the Terraform plan against those policies, preventing non-compliant changes from being applied.
+   This configuration syncs OPA policies from a private S3 bucket and uses the `conftest` step to evaluate the Terraform plan against those policies, preventing non-compliant changes from being applied.
 
 3. Enable [drift detection](/configuration-reference/drift) to identify and track changes made to your infrastructure outside of Terraform:
    ```yaml
