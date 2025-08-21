@@ -1,20 +1,20 @@
-@-?overall_success-@
+{% if overall_success %}
 ## Plans :thumbsup:
-@?account_status=trial_ending-@
+  {%- if account_status == 'trial_ending' %}
 > [!WARNING]
-> Your Terrateam trial ends in **@trial_end_days@ days**.  To avoid an interruption in service, please reach out to support@@terrateam.io or contact us on [our Slack](https://terrateam.io/slack).
+> Your Terrateam trial ends in **{{ trial_end_days }} days**.  To avoid an interruption in service, please reach out to support@terrateam.io or contact us on [our Slack](https://terrateam.io/slack).
 
-@/account_status=trial_ending-@
-@^work_manifest_url-@
+  {%- endif %}
+  {%- if work_manifest_url is defined %}
 
-Outputs can be viewed in the Terrateam Console [here](@work_manifest_url@).
+Outputs can be viewed in the Terrateam Console [here]({{ work_manifest_url }}).
 
-@/work_manifest_url-@
-@?compact_view-@
+  {%- endif %}
+  {%- if compact_view %}
 The plan output exceeds the size limit for pull request comments. You can view the full plan by clicking the GitHub status check link or directly in the action log.
 
-@/compact_view-@
-@^denied_dirspaces-@
+  {%- endif %}
+  {%- if denied_dirspaces %}
 <details open>
   <summary><h2>Access Control :no_entry:</h2></summary>
 
@@ -22,31 +22,31 @@ Not all [dirspaces](https://docs.terrateam.io/getting-started/concepts/#dirspace
 
 | Dir | Workspace | Policy |
 | --- | --------- | ------ |
-@#denied_dirspaces-@
-| `@dir@` | `@workspace@` | @^policy@@#policy@`@item@` @/policy-@@/policy@@^!policy@**No matching policy**@/policy@ |
-@/denied_dirspaces-@
+      {%- for dd in denied_dirspaces %}
+| {{ dd.dir }} | {{ dd.workspace }} | {% if dd.policy %}{% for p in dd.policy %}`{{ p.item }}`{% endfor %}{% else %}**No matching policy**{% endif %}
+      {%- endfor %}
 </details>
-@/denied_dirspaces-@
-@?is_layered_run-@
-> [!NOTE]
-> This is a **layered run** with @num_more_layers@ @?num_more_layers=1@layer@/num_more_layers=1@@!num_more_layers=1@layers@/num_more_layers=1@ remaining to apply.  Layered runs require multiple rounds of planning and applying.
+  {%- endif -%}
+  {%- if is_layered_run %}
 
-@/is_layered_run-@
-@#?gates-@
+> [!NOTE]
+> This is a **layered run** with {{ num_more_layers }} {% if num_layers == 1 %}layer{% else %}layers{% endif %} remaining to apply.  Layered runs require multiple rounds of planning and applying.
+
+  {%- endif %}
+  {%- if gates %}
+
 > [!IMPORTANT]
 > Gates added to the change.
 
 | Token   | Directory | Workspace | Required Approvers           | Any Approvers | Any Remaining Count |
 |---------|-----------|-----------|------------------------------|----------------|----------------------|
-@#gates-@
-| @token@ | @?dir=@@/dir=@@!dir=@`@dir@`@/dir=@ | @?workspace=@@/workspace=@@!workspace=@`@workspace@`@/workspace=@ | @#all_of@`@q@` @/all_of@ | @#any_of@`@q@` @/any_of@ | @any_of_count@ |
-@/gates-@
+    {%- for g in gates %}
+| {{ g.token }} | {% if g.dir %}`{{ g.dir }}`{% endif %} | {% if g.workspace %}`{{ g.workspace }}`{% endif %} | {% for p in g.all_of %}`{{ p.q }}` {% endfor %} | {% for p in g.any_of %}`{{ p.q }}` {% endfor %} | {{ g.any_of_count }} |
+    {%- endfor %}
 
 <details>
-    <summary>
-        Expand for details on gates
-    </summary>
-    
+  <summary>Expand for details on gates</summary>
+
 ### What to do?
 
 To continue, users matching the `Required Approvers` and `Any Approvers` must approve a token until all approvals are satisfied.
@@ -70,159 +70,165 @@ Gatekeeper uses `all_of`, `any_of`, and `any_of_count` to define approval rules:
 A gate is satisfied only when all conditions are met. See [documentation](https://docs.terrateam.io/advanced-workflows/gatekeeper-requirements) for details.
 </details>
 
-@/gates-@
-## Terrateam Plan Output@^environment@: @environment@@/environment@ :thumbsup:
+  {%- endif %}
+
+## Terrateam Plan Output{% if environment is defined %}: {{ environment }}{% endif %} :thumbsup:
 <details>
   <summary>Expand for plan output details</summary>
 
-@/overall_success-@
-@!overall_success-@
+{%- else %}
 ## Plans :heavy_multiplication_x:
-@^work_manifest_url-@
+  {%- if work_manifest_url is defined %}
+ 
+Outputs can be viewed in the Terrateam Console [here]({{ work_manifest_url }}).
 
-Outputs can be viewed in the Terrateam Console [here](@work_manifest_url@).
-
-@/work_manifest_url-@
-@?compact_view-@
+  {%- endif %}
+  {%- if compact_view %}
 The plan output exceeds the size limit for pull request comments. You can view the full plan by clicking the GitHub status check link or directly in the action log.
 
-@/compact_view-@
+  {%- endif %}
 
 Running plans **FAILED**.  See **Terrateam Plan Output**.
 
 After resolving the issue, run `terrateam plan` to execute the plan operation again.
 
-## Terrateam Plan Output@^environment@: @environment@@/environment@ :heavy_multiplication_x:
+## Terrateam Plan Output{% if environment is defined %}: {{ environment }}{% endif %} :heavy_multiplication_x:
 <details>
   <summary>Expand for plan output details</summary>
-@/overall_success-@
-@#?pre_hooks-@
+
+{%- endif %}
+{%- if pre_hooks %}
 <details>
-  <summary><h3>Pre Hooks</h3></summary>
+    <summary><h3>Pre Hooks</h3></summary>
 
-@#pre_hooks-@
-**Step**: @name@
-@?success-@
-**Success**: :thumbsup:
-@/success-@
-@!success-@
-**Success**: :heavy_multiplication_x:
-@/success-@
-@^cmd-@
-**Command**: `@cmd@`
-@/cmd-@
-@^details-@
-**Details**: @details@
-@/details-@
+    {%- for h in pre_hooks %}
+
+**Step**: {{ h.name }}
+**Success**: {% if h.success %}:thumbsup:{% else %}:heavy_multiplication_x:{% endif %}
+      {% if h.cmd is defined %}
+**Command** : `{{ h.cmd }}`
+      {% endif %}
+      {% if h.details is defined %}
+**Details**: {{ h.details }}
+      {% endif %}
+      {% if not compact_view %}
 ```
-@text@
+{{ h.text }}
 ```
-@/pre_hooks-@
+    {%- else %}
+
+No output shown due to comment size.
+
+    {%- endif %}
+    {% endfor %}
 </details>
-@/pre_hooks-@
-@#?post_hooks-@
+
+{%- endif %}
+{%- if post_hooks %}
 <details>
-  <summary><h3>Post Hooks</h3></summary>
+    <summary><h3>Post Hooks</h3></summary>
 
-@#post_hooks-@
-**Step**: @name@
-@?success-@
-**Success**: :thumbsup:
-@/success-@
-@!success-@
-**Success**: :heavy_multiplication_x:
-@/success-@
-@^cmd-@
-**Command**: `@cmd@`
-@/cmd-@
-@^details-@
-**Details**: @details@
-@/details-@
+    {%- for h in post_hooks %}
+
+**Step**: {{ h.name }}
+**Success**: {% if h.success %}:thumbsup:{% else %}:heavy_multiplication_x:{% endif %}
+      {% if h.cmd is defined %}
+**Command** : `{{ h.cmd }}`
+      {%- endif %}
+      {%- if h.details is defined %}
+**Details**: {{ h.details }}
+      {%- endif %}
+      {% if not compact_view %}
 ```
-@text@
+{{ h.text }}
 ```
-@/post_hooks-@
+    {%- else %}
+
+No output shown due to comment size.
+
+    {%- endif %}
+    {%- endfor %}
 </details>
-@/post_hooks-@
-@#dirspaces-@
 
-## Dir: @dir@ | @?success@@^has_changes@@?has_changes@Success :thumbsup:@/has_changes@@!has_changes@No changes@/has_changes@@/has_changes@@/success@@!success@:heavy_multiplication_x:@/success@
-@?compact_dirspaces-@
+{%- endif %}
+{%- for d in dirspaces %}
+
+## Dir: {{ d.dir }} | {% if d.success %}{% if d.has_changes is defined and d.has_changes %}Success :thumbsup:{% elif d.has_changes is defined and not d.has_changes %}No changes{% endif %}{% else %}:heavy_multiplication_x:{% endif %}
+  {%- if compact_dirspaces %}
 <details>
   <summary>Expand for details</summary>
 
 ---
 
-@/compact_dirspaces-@
-**Dir**: @dir@
-**Workspace**: @workspace@
-**Success**: @?success@:thumbsup:@/success@@!success@:heavy_multiplication_x:@/success@
+  {% endif %}
+**Dir**: {{ d.dir }}
+**Workspace**: {{ d.workspace }}
+**Success**: {% if d.success %}:thumbsup:{% else %}:heavy_multiplication_x:{% endif %}
 
-@#steps-@
-**Step**: @name@
-@?success-@
-**Success**: :thumbsup:
-@/success-@
-@!success-@
-**Success**: :heavy_multiplication_x:
-@/success-@
-@^cmd-@
-**Command**: `@cmd@`
-@/cmd-@
-@^details-@
-**Details**: @details@
-@/details-@
-@!compact_view-@
-```@text_decorator@
-@?name=plan-@
-@text | plan_diff@
-@/name=plan-@
-@!name=plan-@
-@text@
-@/name=plan-@
+  {%- for s in d.steps %}
+
+**Step**: {{ s.name }}
+**Success**: {% if s.success %}:thumbsup:{% else %}:heavy_multiplication_x:{% endif %}
+    {%- if s.cmd is defined %}
+**Command**: `{{ s.cmd }}`
+    {%- endif %}
+    {%- if s.details is defined %}
+**Details**: {{ s.details }}
+    {%- endif %}
+    {%- if not compact_view %}
+
+```{{ s.text_decorator }}
+{{ s.text }}
 ```
-@/compact_view-@
-@?compact_view-@
+
+    {%- else %}
 
 No output shown due to comment size.
-@/compact_view-@
-@/steps-@
-@?compact_dirspaces-@
+
+    {%- endif %}
+  {%- endfor %}
+  {%- if compact_dirspaces %}
 </details>
-@/compact_dirspaces-@
-@/dirspaces-@
+
+  {%- endif %}
+{%- endfor %}
 
 </details>
-@^cost_estimation-@
+
+  {%- if cost_estimation is defined %}
 
 ## Cost Estimation
-@#cost_estimation-@
-@?success-@
-**Total Monthly Difference: @diff_monthly_cost | money@ @currency@**
+
+    {%- if cost_estimation.success %}
+**Total Monthly Difference: {{ cost_estimation.diff_monthly_cost | round(2)}} {{ cost_estimation.currency }}**
 <details>
   <summary>Expand for cost estimation details</summary>
 
-| Dir | Workspace | Previous (@currency@) | New (@currency@) | Diff (@currency@) |
+| Dir | Workspace | Previous ({{ cost_estimation.currency }}) | New ({{ cost_estimation.currency }}) | Diff ({{ cost_estimation.currency }}) |
 | :---: | :---: | ---: | ---: | ---: |
-@#dirspaces-@
-| @dir@ | @workspace@ | @prev_monthly_cost | money@ | @total_monthly_cost | money@ | @diff_monthly_cost | money@|
-@/dirspaces-@
-| | **Total** | **@prev_monthly_cost | money@** | **@total_monthly_cost | money@** | **@diff_monthly_cost | money@** |
-</details>
-@/success-@
-@!success-@
+  {%- for d in cost_estimation.dirspaces %}
+| {{ d.dir }} | {{ d.workspace }} | {{ d.prev_monthly_cost | round(2) }} | {{ d.total_monthly_cost | round(2) }} | {{ d.diff_monthly_cost | round(2) }} |
+  {%- endfor %}
+| | **Total** | **{{ cost_estimation.prev_monthly_cost | round(2) }}** | **{{ cost_estimation.total_monthly_cost | round(2) }}** | **{{ cost_estimation.diff_monthly_cost | round(2) }}** |
+
+    {%- else %}
+
 **Error calculating Cost Estimation**
 <details>
   <summary>Expand for cost estimation details</summary>
 
+{%- if cost_estimation.text is defined %}
+
 ```
-@text@
+{{ cost_estimation.text }}
 ```
+
+{%- endif %}
+{%- endif %}
+
 </details>
-@/success-@
-@/cost_estimation-@
-@/cost_estimation-@
-@?overall_success-@
+{%- endif %}
+{%- if overall_success %}
 
 ---
 
@@ -231,7 +237,8 @@ To apply all these changes, comment:
 ```
 terrateam apply
 ```
-@/overall_success-@
+
+{%- endif %}
 
 ---
 
