@@ -99,8 +99,8 @@ WORKDIR /mono/code
 RUN ulimit -s 524288 && ulimit -a && \
     mv /build-cache ./build && \
     eval $(opam env) && pds && \
-    (time make -j$(nproc --all) -k test release_terrat_ee release_iris \
-     || time make -j1 test release_terrat_ee release_iris) && \
+    (time make -j$(nproc --all) -k test test-terrat release_terrat_ee release_iris \
+     || time make -j1 test test-terrat release_terrat_ee release_iris) && \
     find . -name '*.tap' -exec cat '{}' \;
 
 # Build target for terrat-oss
@@ -109,8 +109,8 @@ WORKDIR /mono/code
 RUN ulimit -s 524288 && ulimit -a && \
     mv /build-cache ./build && \
     eval $(opam env) && pds && \
-    (time make -j$(nproc --all) -k test release_terrat_oss release_iris \
-     || time make -j1 test release_terrat_oss release_iris) && \
+    (time make -j$(nproc --all) -k test test-terrat release_terrat_oss release_iris \
+     || time make -j1 test test-terrat release_terrat_oss release_iris) && \
     find . -name '*.tap' -exec cat '{}' \;
 
 # Final code-indexer image
