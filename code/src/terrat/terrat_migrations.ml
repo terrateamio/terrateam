@@ -174,6 +174,8 @@ let migrations =
     ("fix-gitlab-installation-state", run_file_sql "2025-07-21-fix-gitlab-installation-state.sql");
     ("add-github-emails-table", run_file_sql "2025-08-19-add-emails-table.sql");
     ("add-comment-tracking", run_file_sql "2025-08-20-add-comment-tracking.sql");
+    ( "fix-missing-repository-mappings",
+      run_file_sql "2025-08-21-fix-missing-repository-mappings.sql" );
   ]
 
 let run config storage = Mig.run (config, storage) migrations

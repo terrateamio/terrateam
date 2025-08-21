@@ -47,6 +47,7 @@ module Comment = struct
 
     let of_string s = raise (Failure "nyi")
     let to_string t = raise (Failure "nyi")
+    let compare _ _ = raise (Failure "nyi")
   end
 
   type t = unit [@@deriving eq, yojson]
