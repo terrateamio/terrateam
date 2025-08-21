@@ -125,7 +125,7 @@ ${changes.map(c => `  ${c.key}: ${formatValue(c.before)} → ${formatValue(c.aft
     }
     
     // Use a custom replacer to clean up escaped quotes
-    return JSON.stringify(data, (key, value) => {
+    return JSON.stringify(data, (_key, value) => {
       if (typeof value === 'string') {
         // Clean up any escaped quotes
         return value.replace(/\\"/g, '"');

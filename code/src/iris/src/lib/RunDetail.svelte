@@ -98,9 +98,6 @@
     });
   }
   
-  // Keep track of whether we have plan/apply outputs for changes visualization
-  let hasPlanOrApplyOutputs: boolean = false;
-  
   async function loadRunData(runId: string): Promise<void> {
     if (!$selectedInstallation) return;
     

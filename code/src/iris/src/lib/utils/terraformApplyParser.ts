@@ -23,7 +23,7 @@ export function parseTerraformApply(applyOutput: string): ParsedPlan {
   let currentResource: Partial<ResourceNode> | null = null;
   let currentAttributes: Record<string, unknown> = {};
   let inResourceBlock = false;
-  let captureMode: 'none' | 'creating' | 'modifying' | 'destroying' | 'reading' = 'none';
+  let captureMode: 'none' | 'creating' | 'modifying' | 'destroying' | 'reading' | 'refreshing' = 'none';
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -67,7 +67,20 @@ export function parseTerraformApply(applyOutput: string): ParsedPlan {
       };
       currentAttributes = {};
       inResourceBlock = true;
-      captureMode = operation.toLowerCase() as typeof captureMode;
+      // Map operation to captureMode
+      const lowerOp = operation.toLowerCase();
+      switch (lowerOp) {
+        case 'creating':
+        case 'modifying':
+        case 'destroying':
+        case 'reading':
+        case 'refreshing':
+          captureMode = lowerOp;
+          break;
+        default:
+          captureMode = 'none';
+          break;
+      }
       
       // For destroying operations, we'll put any captured info in 'before'
       if (captureMode === 'destroying') {
@@ -228,7 +241,7 @@ export function parseTerraformApply(applyOutput: string): ParsedPlan {
         const objectCreateMatch = value.match(/^null\s*->\s*<(object|array)>$/);
         const objectDestroyMatch = value.match(/^<(object|array)>\s*->\s*null$/);
         
-        if (indicator === '+' || captureMode === 'creating') {
+        if (indicator === '+') {
           if (createMatch) {
             currentResource.after![key] = createMatch[1];
             currentAttributes[key] = createMatch[1];
@@ -241,7 +254,7 @@ export function parseTerraformApply(applyOutput: string): ParsedPlan {
             currentResource.after![key] = cleanValue;
             currentAttributes[key] = cleanValue;
           }
-        } else if (indicator === '-' || captureMode === 'destroying') {
+        } else if (indicator === '-') {
           if (destroyMatch) {
             currentResource.before![key] = destroyMatch[1];
             currentAttributes[key] = destroyMatch[1];
@@ -257,7 +270,7 @@ export function parseTerraformApply(applyOutput: string): ParsedPlan {
             currentResource.before![key] = cleanValue;
             currentAttributes[key] = cleanValue;
           }
-        } else if (indicator === '~' || captureMode === 'modifying') {
+        } else if (indicator === '~') {
           // For modifications, we might see old -> new format
           if (destroyMatch) {
             currentResource.before![key] = destroyMatch[1];
@@ -298,7 +311,7 @@ export function parseTerraformApply(applyOutput: string): ParsedPlan {
       
       // Also look for simple attribute format without indicators
       const simpleAttrMatch = trimmedLine.match(/^(\w+)\s*[:=]\s*(.+)/);
-      if (simpleAttrMatch && !attrMatch) {
+      if (simpleAttrMatch && !attrMatch && currentResource) {
         const [, key, value] = simpleAttrMatch;
         const cleanValue = parseAttributeValue(value);
         currentAttributes[key] = cleanValue;
@@ -310,7 +323,11 @@ export function parseTerraformApply(applyOutput: string): ParsedPlan {
         } else if (captureMode === 'destroying') {
           // For destroying, attributes go in 'before'
           currentResource.before![key] = cleanValue;
+        } else if (captureMode === 'reading' || captureMode === 'refreshing') {
+          // For reading/refreshing operations, we typically don't capture state changes
+          // but we can store in attributes for reference
         }
+        // Note: if captureMode is 'none', we don't modify resource state
       }
     }
     
