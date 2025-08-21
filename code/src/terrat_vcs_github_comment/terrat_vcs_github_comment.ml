@@ -1,7 +1,6 @@
 module Api = Terrat_vcs_api_github
 module By_scope = Terrat_scope.By_scope
 module Publisher_tools = Terrat_vcs_github_comment_publishers.Publisher_tools
-module Output = Terrat_vcs_github_comment_publishers.Output
 module Scope = Terrat_scope.Scope
 module Tmpl = Terrat_vcs_github_comment_templates.Tmpl
 module Ui = Terrat_vcs_github_comment_ui.Ui
