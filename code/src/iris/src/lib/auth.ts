@@ -144,6 +144,67 @@ export async function getCurrentUser(): Promise<User | null> {
     user.set(userData);
     isAuthenticated.set(true);
     
+    // Track Reddit conversion event ONLY for first-time users AND when analytics are enabled
+    const analyticsEnabled = (window as any).terrateamConfig?.ui_analytics === 'enabled';
+    
+    if (analyticsEnabled) {
+      const FIRST_LOGIN_KEY = `terrateam_user_${userData.id}_first_login`;
+      const isFirstLogin = !localStorage.getItem(FIRST_LOGIN_KEY);
+      
+      if (isFirstLogin) {
+        // Mark that this user has logged in before
+        localStorage.setItem(FIRST_LOGIN_KEY, new Date().toISOString());
+        
+        // Track conversion via webhooks server instead of directly
+        try {
+          // Get the webhooks URL from config or use a default
+          const webhooksUrl = (window as any).terrateamConfig?.webhooks_url || 'https://webhooks.terrateam.workers.dev';
+          const webhooksSecret = (window as any).terrateamConfig?.webhooks_secret;
+          
+          if (webhooksSecret) {
+            const response = await fetch(`${webhooksUrl}/reddit-conversion`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${webhooksSecret}`
+              },
+              body: JSON.stringify({
+                eventType: 'SignUp',
+                userId: userData.id.toString()
+              })
+            });
+            
+            if (response.ok) {
+              console.log('Reddit conversion tracked via webhooks server for user', userData.id);
+            } else {
+              console.warn('Failed to track Reddit conversion:', response.status);
+            }
+          } else {
+            // Fallback to client-side Reddit pixel if webhooks not configured
+            if (typeof window !== 'undefined' && (window as any).rdt) {
+              (window as any).rdt('track', 'SignUp', {
+                transactionId: `signup-${userData.id}-${Date.now()}`,
+                value: 0,
+                currency: 'USD'
+              });
+              console.log('Reddit pixel: New user signup tracked (client-side fallback) for user', userData.id);
+            }
+          }
+        } catch (e) {
+          console.warn('Reddit conversion tracking failed:', e);
+          // Fallback to client-side tracking if server tracking fails
+          if (typeof window !== 'undefined' && (window as any).rdt) {
+            (window as any).rdt('track', 'SignUp', {
+              transactionId: `signup-${userData.id}-${Date.now()}`,
+              value: 0,
+              currency: 'USD'
+            });
+            console.log('Reddit pixel: New user signup tracked (error fallback) for user', userData.id);
+          }
+        }
+      }
+    }
+    
     // Determine which VCS provider the user logged in with
     let provider: 'github' | 'gitlab' = 'github'; // default
     if (userData.vcs && userData.vcs.length > 0) {
