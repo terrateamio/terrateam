@@ -177,11 +177,7 @@ export async function getCurrentUser(): Promise<User | null> {
             console.warn('Reddit conversion tracking blocked by CORS - origin not allowed');
             // Fallback to client-side tracking
             if (typeof window !== 'undefined' && (window as any).rdt) {
-              (window as any).rdt('track', 'SignUp', {
-                transactionId: `signup-${userData.id}-${Date.now()}`,
-                value: 0,
-                currency: 'USD'
-              });
+              (window as any).rdt('track', 'SignUp');
               console.log('Reddit pixel: New user signup tracked (CORS fallback) for user', userData.id);
             }
           } else {
@@ -191,11 +187,7 @@ export async function getCurrentUser(): Promise<User | null> {
           console.warn('Reddit conversion tracking failed:', e);
           // Fallback to client-side tracking if server tracking fails
           if (typeof window !== 'undefined' && (window as any).rdt) {
-            (window as any).rdt('track', 'SignUp', {
-              transactionId: `signup-${userData.id}-${Date.now()}`,
-              value: 0,
-              currency: 'USD'
-            });
+            (window as any).rdt('track', 'SignUp');
             console.log('Reddit pixel: New user signup tracked (error fallback) for user', userData.id);
           }
         }
