@@ -29,16 +29,10 @@ export function parseTerraformPlan(planOutput: string): ParsedPlan {
     }
   } catch (e) {
     // Not JSON, fall through to text parsing
-    console.log('Plan is not JSON, parsing as text format');
   }
 
   // Parse as text format
-  const result = parseTextPlan(planOutput);
-  console.log('Parsed text plan:', {
-    resourceCount: result.resources.length,
-    resources: result.resources.map(r => ({ id: r.id, type: r.type, changeType: r.changeType }))
-  });
-  return result;
+  return parseTextPlan(planOutput);
 }
 
 /**
@@ -130,9 +124,6 @@ function parseTextPlan(planText: string): ParsedPlan {
   const resources: ResourceNode[] = [];
   const lines = planText.split('\n');
   
-  console.log('parseTextPlan: Starting to parse', lines.length, 'lines');
-  console.log('First 10 lines:', lines.slice(0, 10));
-  
   let currentResource: Partial<ResourceNode> | null = null;
   let inResourceBlock = false;
   let currentAttributes: Record<string, unknown> = {};
@@ -140,23 +131,11 @@ function parseTextPlan(planText: string): ParsedPlan {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     
-    // Debug: log lines that look like resource headers
-    if (line.includes('will be') && line.startsWith('#')) {
-      console.log(`Line ${i}: Potential resource header: "${line}"`);
-    }
-    
     // Check for resource header 
     // Matches patterns like:
     // "# aws_instance.example will be created"
     // "# module.staging.aws_instance.example will be created"
     // "# module.staging_compute_instance.google_compute_instance.this[0] will be created"
-    
-    // First try to see what the actual format is
-    if (line.trim().startsWith('#') && line.includes('will be')) {
-      console.log(`Testing regex on line: "${line}"`);
-      const testMatch = line.match(/^\s*#\s+(.+)\s+will be\s+(\w+)/);
-      console.log('Regex match result:', testMatch);
-    }
     
     const resourceMatch = line.match(/^\s*#\s+(.+)\s+will be\s+(\w+)/);
     if (resourceMatch) {
@@ -169,7 +148,6 @@ function parseTextPlan(planText: string): ParsedPlan {
       }
       
       const [, fullResourceId, action] = resourceMatch;
-      console.log('Found resource:', fullResourceId, 'action:', action);
       
       // Extract the actual resource type and name
       // Handle both direct resources and module resources
@@ -239,24 +217,127 @@ function parseTextPlan(planText: string): ParsedPlan {
       // Check for attribute changes (e.g., "+ attribute = value")
       const attrMatch = line.match(/^\s*([\+\-\~])\s+(\w+)\s*=\s*(.+)/);
       if (attrMatch) {
-        const [, indicator, key, value] = attrMatch;
-        const cleanValue = parseAttributeValue(value);
+        const [, indicator, key] = attrMatch;
+        let value = attrMatch[3];
+        
+        // Check if this is the start of a multi-line value (ends with { or [)
+        let fullValue = value;
+        if (value.trim().endsWith('{') || value.trim().endsWith('[')) {
+          // This is a multi-line value, skip to the closing bracket
+          // For now, we'll just indicate it's a complex object/array
+          if (value.includes('->')) {
+            // Handle patterns like "null -> {" or "{ -> null"
+            const parts = value.split('->').map(p => p.trim());
+            if (parts[0] === 'null' && parts[1] === '{') {
+              fullValue = 'null -> <object>';
+            } else if (parts[0] === '{' && parts[1] === 'null') {
+              fullValue = '<object> -> null';
+            } else if (parts[0] === 'null' && parts[1] === '[') {
+              fullValue = 'null -> <array>';
+            } else if (parts[0] === '[' && parts[1] === 'null') {
+              fullValue = '<array> -> null';
+            } else {
+              fullValue = value.replace('{', '<object>').replace('[', '<array>');
+            }
+          } else {
+            fullValue = value.replace('{', '<object>').replace('[', '<array>');
+          }
+          
+          // Skip lines until we find the closing bracket
+          let bracketCount = 1;
+          let j = i + 1;
+          while (j < lines.length && bracketCount > 0) {
+            const nextLine = lines[j];
+            // Count opening and closing brackets
+            for (const char of nextLine) {
+              if (char === '{' || char === '[') bracketCount++;
+              if (char === '}' || char === ']') bracketCount--;
+            }
+            j++;
+          }
+          i = j - 1; // Skip to the line after the closing bracket
+          value = fullValue;
+        }
+        
+        // Check for special patterns first before using parseAttributeValue
+        // For destroy: "old_value" -> null
+        // For create: null -> "new_value" 
+        // For update: "old_value" -> "new_value"
+        // Also handle multi-line values that we've simplified to <object> or <array>
+        const destroyMatch = value.match(/^"([^"]*?)"\s*->\s*null$/);
+        const createMatch = value.match(/^null\s*->\s*"([^"]*?)"$/);
+        const quotedChangeMatch = value.match(/^"([^"]*?)"\s*->\s*"([^"]*?)"$/);
+        const simpleDestroyMatch = value.match(/^([^\s]+)\s*->\s*null$/);
+        const simpleCreateMatch = value.match(/^null\s*->\s*(\S+)$/);
+        const objectCreateMatch = value.match(/^null\s*->\s*<(object|array)>$/);
+        const objectDestroyMatch = value.match(/^<(object|array)>\s*->\s*null$/);
         
         if (indicator === '+') {
-          currentResource.after![key] = cleanValue;
+          if (createMatch) {
+            currentResource.after![key] = createMatch[1];
+          } else if (objectCreateMatch) {
+            currentResource.before![key] = null;
+            currentResource.after![key] = `{...}`; // Simplified representation
+          } else {
+            currentResource.after![key] = parseAttributeValue(value);
+          }
         } else if (indicator === '-') {
-          currentResource.before![key] = cleanValue;
+          if (destroyMatch) {
+            // Extract the value being destroyed (without quotes)
+            currentResource.before![key] = destroyMatch[1];
+          } else if (objectDestroyMatch) {
+            currentResource.before![key] = `{...}`; // Simplified representation
+            currentResource.after![key] = null;
+          } else if (simpleDestroyMatch && simpleDestroyMatch[1] !== 'null') {
+            // Handle unquoted values like: false -> null
+            currentResource.before![key] = parseAttributeValue(simpleDestroyMatch[1]);
+          } else {
+            currentResource.before![key] = parseAttributeValue(value);
+          }
         } else if (indicator === '~') {
           // Changed attribute - try to parse old and new values
-          const changeMatch = value.match(/"([^"]*)".*->\s*"([^"]*)"/);
-          if (changeMatch) {
-            currentResource.before![key] = changeMatch[1];
-            currentResource.after![key] = changeMatch[2];
+          if (destroyMatch) {
+            // Resource being destroyed: "value" -> null
+            currentResource.before![key] = destroyMatch[1];
+            currentResource.after![key] = null;
+          } else if (createMatch) {
+            // Resource being created: null -> "value"
+            currentResource.before![key] = null;
+            currentResource.after![key] = createMatch[1];
+          } else if (objectCreateMatch) {
+            // Multi-line object/array being created
+            currentResource.before![key] = null;
+            currentResource.after![key] = `{...}`;
+          } else if (objectDestroyMatch) {
+            // Multi-line object/array being destroyed
+            currentResource.before![key] = `{...}`;
+            currentResource.after![key] = null;
+          } else if (quotedChangeMatch) {
+            // Resource being updated: "old" -> "new"
+            currentResource.before![key] = quotedChangeMatch[1];
+            currentResource.after![key] = quotedChangeMatch[2];
+          } else if (simpleDestroyMatch && simpleDestroyMatch[1] !== 'null') {
+            // Unquoted destroy: value -> null
+            currentResource.before![key] = parseAttributeValue(simpleDestroyMatch[1]);
+            currentResource.after![key] = null;
+          } else if (simpleCreateMatch) {
+            // Unquoted create: null -> value
+            currentResource.before![key] = null;
+            currentResource.after![key] = parseAttributeValue(simpleCreateMatch[1]);
           } else {
-            currentResource.after![key] = cleanValue;
+            // Try general unquoted change pattern: old -> new
+            const unquotedChangeMatch = value.match(/^([^\s]+)\s*->\s*(.+)$/);
+            if (unquotedChangeMatch) {
+              currentResource.before![key] = parseAttributeValue(unquotedChangeMatch[1]);
+              currentResource.after![key] = parseAttributeValue(unquotedChangeMatch[2]);
+            } else {
+              // Single value change, put it in after
+              currentResource.after![key] = parseAttributeValue(value);
+            }
           }
         }
-        currentAttributes[key] = cleanValue;
+        // Store the final value in attributes
+        currentAttributes[key] = currentResource.after?.[key] || currentResource.before?.[key];
       }
 
       // Check for end of resource block (empty line or next resource starting)
@@ -288,7 +369,6 @@ function parseTextPlan(planText: string): ParsedPlan {
 
   // If no resources found, try alternative parsing approach
   if (resources.length === 0) {
-    console.log('No resources found with primary parser, trying fallback parser');
     const fallbackResources = parseFallbackFormat(planText);
     resources.push(...fallbackResources);
   }
@@ -296,10 +376,6 @@ function parseTextPlan(planText: string): ParsedPlan {
   // Calculate change set
   const changes = calculateChangeSet(resources);
 
-  console.log('parseTextPlan complete:', {
-    resourceCount: resources.length,
-    resources: resources.map(r => ({ id: r.id, type: r.type }))
-  });
 
   return {
     resources,
@@ -314,8 +390,6 @@ function parseFallbackFormat(planText: string): ResourceNode[] {
   const resources: ResourceNode[] = [];
   const lines = planText.split('\n');
   
-  console.log('parseFallbackFormat: Attempting alternative parsing');
-  
   // Look for patterns like "resource "type" "name" {" or variations
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -324,7 +398,6 @@ function parseFallbackFormat(planText: string): ResourceNode[] {
     const resourceDeclMatch = line.match(/^\s*([\+\-\~])\s+resource\s+"([\w_]+)"\s+"([\w_\-\.\[\]]+)"/);
     if (resourceDeclMatch) {
       const [, indicator, type, name] = resourceDeclMatch;
-      console.log('Fallback found resource declaration:', type, name, 'indicator:', indicator);
       
       const changeType = indicator === '+' ? 'create' : 
                         indicator === '-' ? 'delete' : 
@@ -364,13 +437,11 @@ function parseFallbackFormat(planText: string): ResourceNode[] {
     // Also look for module resources in the format we saw
     // "# module.staging_compute_instance.google_compute_instance.this[0] will be created"
     if (line.includes('will be created') || line.includes('will be destroyed') || line.includes('will be updated')) {
-      console.log('Fallback checking line for resource:', line);
       
       // More flexible regex that doesn't require starting with #
       const match = line.match(/(?:^|\s)([\w\.\[\]_-]+)\s+will be\s+(\w+)/);
       if (match) {
         const [, fullPath, action] = match;
-        console.log('Fallback matched resource:', fullPath, 'action:', action);
         
         // Extract resource type and name from the path
         let type = '';
@@ -408,13 +479,11 @@ function parseFallbackFormat(planText: string): ResourceNode[] {
           };
           
           resources.push(resource);
-          console.log('Fallback added resource:', resource);
         }
       }
     }
   }
   
-  console.log('parseFallbackFormat found', resources.length, 'resources');
   return resources;
 }
 
@@ -451,9 +520,13 @@ function extractProviderFromType(type: string): string {
 function parseAttributeValue(value: string): unknown {
   value = value.trim();
   
+  // This function should NOT receive "value" -> null patterns anymore
+  // Those are handled by the calling code
+  
   // Remove quotes if present
   if ((value.startsWith('"') && value.endsWith('"')) || 
       (value.startsWith("'") && value.endsWith("'"))) {
+    // Remove outer quotes
     return value.slice(1, -1);
   }
   

@@ -11,6 +11,7 @@
   import SafeOutput from './components/ui/SafeOutput.svelte';
   import { getWebBaseUrl } from './server-config';
   import PlanChanges from './components/terraform/PlanChanges.svelte';
+  import ApplyChanges from './components/terraform/ApplyChanges.svelte';
   
   export let params: { id: string; installationId?: string } = { id: '' };
   
@@ -97,10 +98,8 @@
     });
   }
   
-  // Switch away from Changes tab if viewing an apply run
-  $: if (run?.run_type === 'apply' && activeOutputTab === 'changes') {
-    activeOutputTab = 'all';
-  }
+  // Keep track of whether we have plan/apply outputs for changes visualization
+  let hasPlanOrApplyOutputs: boolean = false;
   
   async function loadRunData(runId: string): Promise<void> {
     if (!$selectedInstallation) return;
@@ -613,7 +612,6 @@
   async function openPlanChanges(output: OutputItem) {
     // Check if this is lite mode and we need to fetch the full output
     if (output?.payload?._isLiteMode) {
-      console.log('Fetching full output for visualization (lite mode detected)');
       isFetchingVisualizationData = true;
       try {
         // Fetch the full output content
@@ -678,6 +676,47 @@
     return !!(output?.step === 'tf/plan' || 
               output?.payload?.plan_text || 
               (output?.payload?.text && output.payload.text.includes('Terraform will perform')));
+  }
+  
+  // Check if output contains a Terraform apply
+  function isApplyOutput(output: OutputItem): boolean {
+    return !!(output?.step === 'tf/apply' || 
+              (output?.payload?.text && 
+               (output.payload.text.includes('Creating...') || 
+                output.payload.text.includes('Modifying...') || 
+                output.payload.text.includes('Destroying...') ||
+                output.payload.text.includes('Apply complete!'))));
+  }
+  
+  // Function to open apply changes view
+  async function openApplyChanges(output: OutputItem) {
+    // Check if this is lite mode and we need to fetch the full output
+    if (output?.payload?._isLiteMode) {
+      isFetchingVisualizationData = true;
+      try {
+        // Fetch the full output content
+        const fullOutput = await fetchFullOutput(output);
+        if (fullOutput) {
+          visualizationPlanOutput = fullOutput; // Reusing the same variable for simplicity
+          visualizationWorkManifestId = run?.id || '';
+          activeOutputTab = 'changes';
+        } else {
+          console.error('Failed to fetch full output');
+        }
+      } catch (error) {
+        console.error('Error fetching full output:', error);
+      } finally {
+        isFetchingVisualizationData = false;
+      }
+    } else {
+      // Use the existing full output
+      const outputText = output?.payload?.text || '';
+      if (outputText) {
+        visualizationPlanOutput = outputText;
+        visualizationWorkManifestId = run?.id || '';
+        activeOutputTab = 'changes';
+      }
+    }
   }
 
   // Close modal on Escape key
@@ -986,7 +1025,7 @@
           >
             ❌ Failed
           </button>
-          {#if run?.run_type === 'plan'}
+          {#if run?.run_type === 'plan' || run?.run_type === 'apply'}
             <button 
               on:click={() => activeOutputTab = 'changes'}
               class="px-3 py-1 text-sm font-medium rounded-md transition-colors {activeOutputTab === 'changes' ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}"
@@ -1022,18 +1061,15 @@
                 {#if costData?.summary}
                   <!-- Cost Summary Card -->
                   <div class="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6">
-                    <div class="flex items-center justify-between mb-6">
+                    <div class="mb-6">
                       <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                        <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
                           <span class="text-xl">💰</span>
                         </div>
                         <div>
                           <h4 class="text-lg font-semibold text-green-800 dark:text-green-400">Cost Impact Summary</h4>
                           <p class="text-sm text-green-600 dark:text-green-400">Monthly infrastructure costs in {costData?.currency || 'USD'}</p>
                         </div>
-                      </div>
-                      <div class="text-right">
-                        <span class="text-xs text-gray-500">idx: {typedOutput?.idx}</span>
                       </div>
                     </div>
                     
@@ -1074,34 +1110,34 @@
                       <div class="divide-y divide-gray-200 dark:divide-gray-600">
                         {#each costData.dirspaces as dirspace}
                           {#if dirspace.total_monthly_cost > 0 || dirspace.diff_monthly_cost !== 0}
-                            <div class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700">
-                              <div class="flex items-center justify-between">
-                                <div class="flex-1">
-                                  <div class="flex items-center space-x-3">
-                                    <div class="w-3 h-3 rounded-full {dirspace.diff_monthly_cost > 0 ? 'bg-red-400' : dirspace.diff_monthly_cost < 0 ? 'bg-green-400' : 'bg-gray-400'}"></div>
-                                    <div>
-                                      <div class="font-medium text-gray-900 dark:text-gray-100 dark:text-gray-100">{dirspace.dir}</div>
+                            <div class="px-4 sm:px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700">
+                              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <div class="flex-1 min-w-0">
+                                  <div class="flex items-center gap-3">
+                                    <div class="w-3 h-3 rounded-full flex-shrink-0 {dirspace.diff_monthly_cost > 0 ? 'bg-red-400' : dirspace.diff_monthly_cost < 0 ? 'bg-green-400' : 'bg-gray-400'}"></div>
+                                    <div class="min-w-0 flex-1">
+                                      <div class="font-medium text-gray-900 dark:text-gray-100 truncate">{dirspace.dir}</div>
                                       <div class="text-sm text-gray-500 dark:text-gray-400">Workspace: {dirspace.workspace}</div>
                                     </div>
                                   </div>
                                 </div>
                                 
-                                <div class="flex items-center space-x-6 text-sm">
-                                  <div class="text-center">
+                                <div class="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm flex-shrink-0">
+                                  <div class="text-center min-w-[60px]">
                                     <div class="font-semibold text-gray-900 dark:text-gray-100">${dirspace.total_monthly_cost.toFixed(2)}</div>
                                     <div class="text-xs text-gray-500">Total</div>
                                   </div>
                                   
                                   {#if dirspace.diff_monthly_cost !== 0}
-                                    <div class="text-center">
-                                      <div class="font-semibold {dirspace.diff_monthly_cost > 0 ? 'text-red-600' : 'text-green-600'}">
+                                    <div class="text-center min-w-[60px]">
+                                      <div class="font-semibold {dirspace.diff_monthly_cost > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}">
                                         {dirspace.diff_monthly_cost > 0 ? '+' : ''}${dirspace.diff_monthly_cost.toFixed(2)}
                                       </div>
                                       <div class="text-xs text-gray-500">Change</div>
                                     </div>
                                   {/if}
                                   
-                                  <div class="text-center">
+                                  <div class="text-center min-w-[60px]">
                                     <div class="font-semibold text-gray-700 dark:text-gray-300">${dirspace.prev_monthly_cost.toFixed(2)}</div>
                                     <div class="text-xs text-gray-500">Previous</div>
                                   </div>
@@ -1142,7 +1178,6 @@
                     <div class="flex items-center space-x-2 mb-2">
                       <span class="text-lg">💰</span>
                       <span class="font-medium text-yellow-800 dark:text-yellow-400">Cost Estimation</span>
-                      <span class="text-xs text-gray-500">idx: {typedOutput?.idx}</span>
                     </div>
                     
                     {#if typedOutput?.payload?.text}
@@ -1225,9 +1260,9 @@
                           {@const typedOutput = output}
                           {@const displayState = getDisplayState(typedOutput)}
                           <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded p-3">
-                            <div class="flex items-center justify-between mb-2">
-                              <div class="flex items-center space-x-2">
-                                <span>{getStepIcon(typedOutput?.step || 'unknown')}</span>
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+                              <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                <span class="flex-shrink-0">{getStepIcon(typedOutput?.step || 'unknown')}</span>
                                 <span class="font-medium text-gray-900 dark:text-gray-100">{getStepLabel(typedOutput?.step || 'Unknown Step')}</span>
                                 {#if typedOutput?.state}
                                   <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {displayState.color}">
@@ -1240,12 +1275,25 @@
                                 <button
                                   type="button"
                                   on:click={() => openPlanChanges(typedOutput)}
-                                  class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                                  class="flex-shrink-0 inline-flex items-center px-2 py-1 text-xs font-medium rounded-md text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
                                   title="View plan changes"
                                 >
                                   <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                                           d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                  </svg>
+                                  View Changes
+                                </button>
+                              {:else if isApplyOutput(typedOutput)}
+                                <button
+                                  type="button"
+                                  on:click={() => openApplyChanges(typedOutput)}
+                                  class="flex-shrink-0 inline-flex items-center px-2 py-1 text-xs font-medium rounded-md text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors"
+                                  title="View apply changes"
+                                >
+                                  <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                   </svg>
                                   View Changes
                                 </button>
@@ -1257,18 +1305,18 @@
                                 <div class="mt-3">
                                   <div class="text-xs text-gray-600 dark:text-gray-400 mb-2">Output:</div>
                                   <div class="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
-                                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                                      <div class="flex items-center">
+                                    <div class="flex flex-col gap-3">
+                                      <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
                                         <svg class="w-5 h-5 text-gray-500 dark:text-gray-400 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                         </svg>
-                                        <span class="text-sm text-gray-600 dark:text-gray-400">Output content not loaded</span>
+                                        <span>Output content not loaded</span>
                                       </div>
                                       <button
                                         type="button"
                                         on:click={() => loadFullOutput(typedOutput)}
-                                        class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-blue-300 dark:border-blue-600 text-sm font-medium rounded-md text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                                        class="inline-flex items-center justify-center px-4 py-2 border border-blue-300 dark:border-blue-600 text-sm font-medium rounded-md text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
                                       >
                                         <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -1282,9 +1330,9 @@
                               {:else}
                                 <!-- Display actual step output content with safe loading -->
                                 <div class="mt-3">
-                                  <div class="text-xs text-gray-600 dark:text-gray-400 mb-2">Output:
-                                    {#if typedOutput.payload._wasLoadedOnDemand}
-                                      <span class="ml-2 text-green-600 font-medium">(loaded on demand)</span>
+                                  <div class="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                                    Output: {#if typedOutput.payload._wasLoadedOnDemand}
+                                      <span class="text-green-600 dark:text-green-400 font-medium">(loaded on demand)</span>
                                     {/if}
                                   </div>
                                   <SafeOutput 
@@ -1378,8 +1426,8 @@
                           {@const typedOutput = output}
                           {@const displayState = getDisplayState(typedOutput)}
                           <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded p-3">
-                            <div class="flex items-center space-x-2 mb-2">
-                              <span>{getStepIcon(typedOutput?.step || 'unknown')}</span>
+                            <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2">
+                              <span class="flex-shrink-0">{getStepIcon(typedOutput?.step || 'unknown')}</span>
                               <span class="font-medium text-gray-900 dark:text-gray-100">{getStepLabel(typedOutput?.step || 'Unknown Step')}</span>
                               {#if typedOutput?.state}
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {displayState.color}">
@@ -1388,7 +1436,7 @@
                               {/if}
                               <span class="text-xs text-gray-500">idx: {typedOutput?.idx}</span>
                               {#if typedOutput?.payload?.visible_on}
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
                                   visible_on: {typedOutput.payload.visible_on}
                                 </span>
                               {/if}
@@ -1400,18 +1448,18 @@
                                 <div class="mt-3">
                                   <div class="text-xs text-gray-600 dark:text-gray-400 mb-2">Output:</div>
                                   <div class="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
-                                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                                      <div class="flex items-center">
+                                    <div class="flex flex-col gap-3">
+                                      <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
                                         <svg class="w-5 h-5 text-gray-500 dark:text-gray-400 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                         </svg>
-                                        <span class="text-sm text-gray-600 dark:text-gray-400">Output content not loaded</span>
+                                        <span>Output content not loaded</span>
                                       </div>
                                       <button
                                         type="button"
                                         on:click={() => loadFullOutput(typedOutput)}
-                                        class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-blue-300 dark:border-blue-600 text-sm font-medium rounded-md text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                                        class="inline-flex items-center justify-center px-4 py-2 border border-blue-300 dark:border-blue-600 text-sm font-medium rounded-md text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
                                       >
                                         <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -1425,9 +1473,9 @@
                               {:else}
                                 <!-- Display actual step output content with safe loading -->
                                 <div class="mt-3">
-                                  <div class="text-xs text-gray-600 dark:text-gray-400 mb-2">Output:
-                                    {#if typedOutput.payload._wasLoadedOnDemand}
-                                      <span class="ml-2 text-green-600 font-medium">(loaded on demand)</span>
+                                  <div class="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                                    Output: {#if typedOutput.payload._wasLoadedOnDemand}
+                                      <span class="text-green-600 dark:text-green-400 font-medium">(loaded on demand)</span>
                                     {/if}
                                   </div>
                                   <SafeOutput 
@@ -1505,8 +1553,8 @@
                           {@const typedOutput = output}
                           {@const displayState = getDisplayState(typedOutput)}
                           <div class="bg-white dark:bg-gray-800 border border-red-200 dark:border-red-600 rounded p-3">
-                            <div class="flex items-center space-x-2 mb-2">
-                              <span>❌</span>
+                            <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2">
+                              <span class="flex-shrink-0">❌</span>
                               <span class="font-medium text-red-900 dark:text-red-100">{getStepLabel(typedOutput?.step || 'Unknown Step')}</span>
                               {#if typedOutput?.state}
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {displayState.color}">
@@ -1521,18 +1569,18 @@
                                 <div class="mt-3">
                                   <div class="text-xs text-red-700 dark:text-red-400 mb-2">Error Output:</div>
                                   <div class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-600 rounded-lg p-4">
-                                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                                      <div class="flex items-center">
+                                    <div class="flex flex-col gap-3">
+                                      <div class="flex items-center text-sm text-red-600 dark:text-red-400">
                                         <svg class="w-5 h-5 text-red-500 dark:text-red-400 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                         </svg>
-                                        <span class="text-sm text-red-600 dark:text-red-400">Error output not loaded</span>
+                                        <span>Error output not loaded</span>
                                       </div>
                                       <button
                                         type="button"
                                         on:click={() => loadFullOutput(typedOutput)}
-                                        class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-red-300 dark:border-red-600 text-sm font-medium rounded-md text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
+                                        class="inline-flex items-center justify-center px-4 py-2 border border-red-300 dark:border-red-600 text-sm font-medium rounded-md text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
                                       >
                                         <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -1591,47 +1639,88 @@
             <!-- Loading state while fetching full output -->
             <div class="flex flex-col items-center justify-center py-12">
               <LoadingSpinner size="lg" />
-              <p class="mt-4 text-gray-600 dark:text-gray-400">Loading plan changes...</p>
+              <p class="mt-4 text-gray-600 dark:text-gray-400">
+                Loading {run?.run_type === 'apply' ? 'apply' : 'plan'} changes...
+              </p>
             </div>
           {:else if !visualizationPlanOutput}
-            <!-- First, show list of plans that can view changes -->
+            <!-- First, show list of plans or applies that can view changes -->
             <div class="space-y-4">
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Select a Terraform plan output to view changes:
-              </p>
-              {#each outputs.filter(o => isPlanOutput(o)) as planOutput}
-                <Card 
-                  padding="md" 
-                  hover={true}
-                  class="cursor-pointer"
-                >
-                  <button
-                    class="w-full text-left"
-                    on:click={() => openPlanChanges(planOutput)}
+              {#if run?.run_type === 'plan'}
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Select a Terraform plan output to view changes:
+                </p>
+                {#each outputs.filter(o => isPlanOutput(o)) as planOutput}
+                  <Card 
+                    padding="md" 
+                    hover={true}
+                    class="cursor-pointer"
                   >
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <h4 class="font-medium text-gray-900 dark:text-white">
-                          {planOutput.scope?.dir || 'unknown'} / {planOutput.scope?.workspace || 'default'}
-                        </h4>
-                        <p class="text-sm text-gray-600 dark:text-gray-400">
-                          {getStepLabel(planOutput.step || 'tf/plan')}
-                        </p>
+                    <button
+                      class="w-full text-left"
+                      on:click={() => openPlanChanges(planOutput)}
+                    >
+                      <div class="flex items-center justify-between">
+                        <div>
+                          <h4 class="font-medium text-gray-900 dark:text-white">
+                            {planOutput.scope?.dir || 'unknown'} / {planOutput.scope?.workspace || 'default'}
+                          </h4>
+                          <p class="text-sm text-gray-600 dark:text-gray-400">
+                            {getStepLabel(planOutput.step || 'tf/plan')}
+                          </p>
+                        </div>
+                        <svg class="w-5 h-5 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
                       </div>
-                      <svg class="w-5 h-5 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                      </svg>
-                    </div>
-                  </button>
-                </Card>
-              {:else}
-                <div class="text-center py-8 text-gray-500 dark:text-gray-400">
-                  <div class="text-4xl mb-2">📊</div>
-                  <p>No Terraform plan outputs found</p>
-                  <p class="text-sm mt-2">Run a plan first to see changes</p>
-                </div>
-              {/each}
+                    </button>
+                  </Card>
+                {:else}
+                  <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <div class="text-4xl mb-2">📊</div>
+                    <p>No Terraform plan outputs found</p>
+                    <p class="text-sm mt-2">Run a plan first to see changes</p>
+                  </div>
+                {/each}
+              {:else if run?.run_type === 'apply'}
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Select a Terraform apply output to view changes:
+                </p>
+                {#each outputs.filter(o => isApplyOutput(o)) as applyOutput}
+                  <Card 
+                    padding="md" 
+                    hover={true}
+                    class="cursor-pointer"
+                  >
+                    <button
+                      class="w-full text-left"
+                      on:click={() => openApplyChanges(applyOutput)}
+                    >
+                      <div class="flex items-center justify-between">
+                        <div>
+                          <h4 class="font-medium text-gray-900 dark:text-white">
+                            {applyOutput.scope?.dir || 'unknown'} / {applyOutput.scope?.workspace || 'default'}
+                          </h4>
+                          <p class="text-sm text-gray-600 dark:text-gray-400">
+                            {getStepLabel(applyOutput.step || 'tf/apply')}
+                          </p>
+                        </div>
+                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                    </button>
+                  </Card>
+                {:else}
+                  <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <div class="text-4xl mb-2">🚀</div>
+                    <p>No Terraform apply outputs found</p>
+                    <p class="text-sm mt-2">Run an apply to see changes</p>
+                  </div>
+                {/each}
+              {/if}
             </div>
           {:else}
             <!-- Show the visualization -->
@@ -1643,14 +1732,22 @@
                   activeOutputTab = 'all';
                 }}
               >
-                ← Back to plan selection
+                ← Back to {run?.run_type === 'apply' ? 'apply' : 'plan'} selection
               </button>
             </div>
-            <PlanChanges 
-              planOutput={visualizationPlanOutput}
-              workManifestId={visualizationWorkManifestId}
-              showHeader={false}
-            />
+            {#if run?.run_type === 'apply'}
+              <ApplyChanges 
+                applyOutput={visualizationPlanOutput}
+                workManifestId={visualizationWorkManifestId}
+                showHeader={false}
+              />
+            {:else}
+              <PlanChanges 
+                planOutput={visualizationPlanOutput}
+                workManifestId={visualizationWorkManifestId}
+                showHeader={false}
+              />
+            {/if}
           {/if}
         {/if}
         

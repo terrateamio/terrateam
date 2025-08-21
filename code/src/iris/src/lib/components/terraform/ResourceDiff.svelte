@@ -113,71 +113,89 @@ ${changes.map(c => `  ${c.key}: ${formatValue(c.before)} → ${formatValue(c.aft
     link.click();
     URL.revokeObjectURL(url);
   }
+  
+  // Format resource data for display, handling escaped strings
+  function formatResourceData(data: unknown): string {
+    if (!data || typeof data !== 'object') {
+      if (typeof data === 'string') {
+        // Clean up escaped quotes in strings
+        return data.replace(/\\"/g, '"');
+      }
+      return JSON.stringify(data, null, 2);
+    }
+    
+    // Use a custom replacer to clean up escaped quotes
+    return JSON.stringify(data, (key, value) => {
+      if (typeof value === 'string') {
+        // Clean up any escaped quotes
+        return value.replace(/\\"/g, '"');
+      }
+      return value;
+    }, 2);
+  }
 </script>
 
 <div class="resource-diff">
   <!-- Controls -->
   <Card padding="sm">
-    <div class="flex flex-wrap items-center justify-between gap-4">
-      <!-- Search -->
-      <div class="flex items-center gap-2">
-        <div class="relative">
-          <input
-            type="text"
-            placeholder="Search resources..."
-            bind:value={searchQuery}
-            class="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                   bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-                   focus:ring-2 focus:ring-brand-primary focus:border-transparent"
-          />
-          <svg class="absolute left-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </div>
-
-        <!-- Filter buttons -->
-        <div class="flex gap-1">
-          <button
-            class="px-3 py-2 rounded-lg text-sm font-medium transition-colors
-                   {filterType === 'all' ? 'bg-brand-primary text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}"
-            on:click={() => filterType = 'all'}
-          >
-            All ({resources.length})
-          </button>
-          <button
-            class="px-3 py-2 rounded-lg text-sm font-medium transition-colors
-                   {filterType === 'create' ? 'bg-green-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}"
-            on:click={() => filterType = 'create'}
-          >
-            Create ({changes.create.length})
-          </button>
-          <button
-            class="px-3 py-2 rounded-lg text-sm font-medium transition-colors
-                   {filterType === 'update' ? 'bg-yellow-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}"
-            on:click={() => filterType = 'update'}
-          >
-            Update ({changes.update.length})
-          </button>
-          <button
-            class="px-3 py-2 rounded-lg text-sm font-medium transition-colors
-                   {filterType === 'delete' ? 'bg-red-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}"
-            on:click={() => filterType = 'delete'}
-          >
-            Delete ({changes.delete.length})
-          </button>
-          <button
-            class="px-3 py-2 rounded-lg text-sm font-medium transition-colors
-                   {filterType === 'replace' ? 'bg-purple-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}"
-            on:click={() => filterType = 'replace'}
-          >
-            Replace ({changes.replace.length})
-          </button>
-        </div>
+    <div class="space-y-4">
+      <!-- Search Bar -->
+      <div class="relative w-full">
+        <input
+          type="text"
+          placeholder="Search resources..."
+          bind:value={searchQuery}
+          class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+                 bg-white dark:bg-gray-800 text-gray-900 dark:text-white
+                 focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+        />
+        <svg class="absolute left-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
       </div>
 
-      <!-- Actions -->
-      <div class="flex items-center gap-2">
-        <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+      <!-- Filter buttons - Horizontal scroll on mobile -->
+      <div class="flex items-center gap-2 overflow-x-auto pb-2 -mx-2 px-2">
+        <button
+          class="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap
+                 {filterType === 'all' ? 'bg-brand-primary text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}"
+          on:click={() => filterType = 'all'}
+        >
+          All ({resources.length})
+        </button>
+        <button
+          class="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap
+                 {filterType === 'create' ? 'bg-green-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}"
+          on:click={() => filterType = 'create'}
+        >
+          Create ({changes.create.length})
+        </button>
+        <button
+          class="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap
+                 {filterType === 'update' ? 'bg-yellow-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}"
+          on:click={() => filterType = 'update'}
+        >
+          Update ({changes.update.length})
+        </button>
+        <button
+          class="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap
+                 {filterType === 'delete' ? 'bg-red-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}"
+          on:click={() => filterType = 'delete'}
+        >
+          Delete ({changes.delete.length})
+        </button>
+        <button
+          class="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap
+                 {filterType === 'replace' ? 'bg-purple-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}"
+          on:click={() => filterType = 'replace'}
+        >
+          Replace ({changes.replace.length})
+        </button>
+      </div>
+
+      <!-- Actions - Stack on mobile -->
+      <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+        <label class="flex items-center gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
           <input
             type="checkbox"
             bind:checked={showOnlyChangedAttributes}
@@ -186,11 +204,12 @@ ${changes.map(c => `  ${c.key}: ${formatValue(c.before)} → ${formatValue(c.aft
           Only show changes
         </label>
         <button
-          class="px-3 py-2 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-700 
-                 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+          class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-gray-100 dark:bg-gray-700 
+                 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600
+                 inline-flex items-center justify-center"
           on:click={exportDiff}
         >
-          <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                   d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
           </svg>
@@ -202,7 +221,7 @@ ${changes.map(c => `  ${c.key}: ${formatValue(c.before)} → ${formatValue(c.aft
 
   <!-- Summary Statistics -->
   {#if filteredResources.length > 0}
-    <div class="mt-4 grid grid-cols-4 gap-4">
+    <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
       <Card padding="sm">
         <div class="text-center">
           <div class="text-2xl font-bold text-green-600 dark:text-green-400">
@@ -261,22 +280,22 @@ ${changes.map(c => `  ${c.key}: ${formatValue(c.before)} → ${formatValue(c.aft
             tabindex="0"
           >
             <!-- Resource Header -->
-            <div class="flex items-start justify-between">
-              <div class="flex items-center gap-3">
-                <span class="text-2xl font-bold {getChangeColor(resource.changeType)} px-2 py-1 rounded">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-start gap-2 sm:gap-3 min-w-0 flex-1">
+                <span class="flex-shrink-0 text-lg sm:text-2xl font-bold {getChangeColor(resource.changeType)} px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">
                   {getChangeIcon(resource.changeType)}
                 </span>
-                <div>
-                  <h3 class="font-semibold text-gray-900 dark:text-white">
+                <div class="min-w-0 flex-1">
+                  <h3 class="font-semibold text-sm sm:text-base text-gray-900 dark:text-white break-all">
                     {resource.id}
                   </h3>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">
+                  <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                     Type: {resource.type} | Provider: {resource.provider}
                   </p>
                 </div>
               </div>
               <svg 
-                class="w-5 h-5 text-gray-400 transform transition-transform
+                class="flex-shrink-0 w-4 h-4 sm:w-5 sm:h-5 text-gray-400 transform transition-transform
                        {selectedResource?.id === resource.id ? 'rotate-180' : ''}"
                 fill="none" 
                 stroke="currentColor" 
@@ -294,7 +313,7 @@ ${changes.map(c => `  ${c.key}: ${formatValue(c.before)} → ${formatValue(c.aft
                     <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300">New Resource</h4>
                     <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
                       <pre class="text-xs text-green-800 dark:text-green-200 overflow-x-auto">
-{JSON.stringify(resource.after, null, 2)}
+{formatResourceData(resource.after)}
                       </pre>
                     </div>
                   </div>
@@ -303,7 +322,7 @@ ${changes.map(c => `  ${c.key}: ${formatValue(c.before)} → ${formatValue(c.aft
                     <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Removed Resource</h4>
                     <div class="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
                       <pre class="text-xs text-red-800 dark:text-red-200 overflow-x-auto">
-{JSON.stringify(resource.before, null, 2)}
+{formatResourceData(resource.before)}
                       </pre>
                     </div>
                   </div>
@@ -315,22 +334,22 @@ ${changes.map(c => `  ${c.key}: ${formatValue(c.before)} → ${formatValue(c.aft
                     </h4>
                     {#each getChangedAttributes(resource) as change}
                       <div class="border-l-4 border-yellow-400 pl-4 py-2">
-                        <div class="text-sm font-medium text-gray-900 dark:text-white">
+                        <div class="text-xs sm:text-sm font-medium text-gray-900 dark:text-white break-all">
                           {change.key}
                         </div>
-                        <div class="mt-1 grid grid-cols-2 gap-4">
+                        <div class="mt-1 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
                           <div>
                             <span class="text-xs text-gray-500 dark:text-gray-400">Before:</span>
-                            <div class="mt-1 p-2 bg-red-50 dark:bg-red-900/20 rounded text-xs">
-                              <code class="text-red-700 dark:text-red-300">
+                            <div class="mt-1 p-2 bg-red-50 dark:bg-red-900/20 rounded text-xs overflow-x-auto">
+                              <code class="text-red-700 dark:text-red-300 break-all">
                                 {formatValue(change.before)}
                               </code>
                             </div>
                           </div>
                           <div>
                             <span class="text-xs text-gray-500 dark:text-gray-400">After:</span>
-                            <div class="mt-1 p-2 bg-green-50 dark:bg-green-900/20 rounded text-xs">
-                              <code class="text-green-700 dark:text-green-300">
+                            <div class="mt-1 p-2 bg-green-50 dark:bg-green-900/20 rounded text-xs overflow-x-auto">
+                              <code class="text-green-700 dark:text-green-300 break-all">
                                 {formatValue(change.after)}
                               </code>
                             </div>
@@ -345,7 +364,7 @@ ${changes.map(c => `  ${c.key}: ${formatValue(c.before)} → ${formatValue(c.aft
                       </h4>
                       <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
                         <pre class="text-xs text-gray-600 dark:text-gray-400 overflow-x-auto">
-{JSON.stringify(resource.after, null, 2)}
+{formatResourceData(resource.after)}
                         </pre>
                       </div>
                     {/if}
