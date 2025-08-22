@@ -328,11 +328,5 @@ module Make (Fut : Abb_intf.Future.S) = struct
       >>= function
       | Ok _ as r -> Fut.return r
       | Error err -> Fut.return (Error (f err))
-
-    let ignore fut =
-      fut
-      >>= function
-      | Ok _ -> Fut.return (Ok ())
-      | Error err -> Fut.return (Error err)
   end
 end
