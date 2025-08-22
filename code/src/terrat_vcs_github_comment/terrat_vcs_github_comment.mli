@@ -23,6 +23,7 @@ module S : sig
     dirspace : Terrat_dirspace.t;
     steps : Terrat_api_components_workflow_step_output.t list;
     strategy : Terrat_vcs_comment.Strategy.t;
+    work_manifest_id : Uuidm.t;
   }
   [@@deriving show]
 
@@ -33,7 +34,11 @@ module S : sig
   end
 
   val create_el :
-    t -> Terrat_dirspace.t -> Terrat_api_components_workflow_step_output.t list -> el option
+    t ->
+    work_manifest_id:Uuidm.t ->
+    Terrat_dirspace.t ->
+    Terrat_api_components_workflow_step_output.t list ->
+    el option
 
   val query_comment_id : t -> el -> (comment_id option, [> `Error ]) result Abb.Future.t
   val query_els_for_comment_id : t -> comment_id -> (el list, [> `Error ]) result Abb.Future.t

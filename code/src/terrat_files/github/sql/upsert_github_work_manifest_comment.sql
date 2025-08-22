@@ -5,7 +5,7 @@ with wm AS (
         gwm.run_type,
         case 
           when gwm.run_type in ('autoplan', 'plan') then 'plan'
-          when gwm.run_type in ('autoapply', 'apply') then 'apply'
+          when gwm.run_type in ('autoapply', 'apply', 'unsafe-apply') then 'apply'
           else gwm.run_type
         end as unified_run_type
     from github_work_manifests gwm

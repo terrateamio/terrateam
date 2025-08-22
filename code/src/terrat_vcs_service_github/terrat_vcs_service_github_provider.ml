@@ -2376,10 +2376,11 @@ module Comment = struct
             work_manifest;
           }
         in
+        let work_manifest_id = work_manifest.Terrat_work_manifest3.id in
         let els =
           CCList.filter_map
             (function
-              | Scope.Dirspace dirspace, steps -> Tcm.S.create_el t dirspace steps
+              | Scope.Dirspace dirspace, steps -> Tcm.S.create_el t ~work_manifest_id dirspace steps
               | Scope.Run _, _ -> None)
             by_scope
         in

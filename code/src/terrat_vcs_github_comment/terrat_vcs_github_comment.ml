@@ -102,8 +102,7 @@ module S = struct
     dirspace : Terrat_dirspace.t;
     steps : Terrat_api_components_workflow_step_output.t list;
     strategy : Terrat_vcs_comment.Strategy.t;
-        (* WM that is already part of el *)
-        (* work_manifest : (Api.Account.t, unit) Terrat_work_manifest3.Existing.t; *)
+    work_manifest_id : Uuidm.t;
   }
   [@@deriving show]
 
@@ -113,8 +112,7 @@ module S = struct
     type t = bool * bool * Terrat_dirspace.t [@@deriving ord]
   end
 
-  (* TODO: Refactor this later *)
-  let create_el t dirspace steps =
+  let create_el t ~work_manifest_id dirspace steps =
     let module St = Terrat_vcs_comment.Strategy in
     let module Cm3 = Terrat_change_match3 in
     let module Brc1 = Terrat_base_repo_config_v1 in
@@ -141,7 +139,7 @@ module S = struct
         (* I think it makes no sense dealing with this here, `terrat_vcs_comment`
            already knows how to handle that, so hardcoding may be fine *)
         let compact = false in
-        Some { dirspace; steps; strategy; compact }
+        Some { work_manifest_id; dirspace; steps; strategy; compact }
     | _ -> None
 
   let query_comment_id t el =
@@ -200,7 +198,10 @@ module S = struct
             groups
         in
         let els =
-          CCList.filter_map (fun (_, _, dirspace, steps) -> create_el t dirspace steps) split
+          CCList.filter_map
+            (fun (work_manifest_id, _, dirspace, steps) ->
+              create_el t ~work_manifest_id dirspace steps)
+            split
         in
         Abb.Future.return (Ok els)
     | Error (#Pgsql_io.err as err) ->
@@ -210,7 +211,6 @@ module S = struct
   let upsert_comment_id t els comment_id =
     let open Abb.Future.Infix_monad in
     let cid = Api.Comment.Id.to_string comment_id |> Int64.of_string in
-    let work_manifest_id = t.work_manifest.Terrat_work_manifest3.id in
     Abbs_future_combinators.List_result.map
       ~f:(fun el ->
         let { Terrat_dirspace.dir; workspace } = el.dirspace in
@@ -219,7 +219,7 @@ module S = struct
           Sql.upsert_github_work_manifest_comment
           ~f:(fun _ -> ())
           cid
-          work_manifest_id
+          el.work_manifest_id
           dir
           workspace)
       els

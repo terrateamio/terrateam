@@ -82,6 +82,13 @@ module Make (M : S) = struct
     >>= fun () ->
     find_all_els_from t cids
     >>= fun els' ->
+    (* Do not confuse "els" with "els'", the first being new changes and the
+       latter being "every element that may be related to the new" stuff. 
+
+       When assembling a new comment we need to make sure we are not forgetting 
+       old outputs as well. So even if you do a "terrateam plan dir:tf1", we
+       we also need to pull off old plans for 'dir:tf2' and 'dir:tf2' (example)
+       and add them back to the new VCS comment. *)
     let og_els = El_set.of_list els in
     let union =
       CCList.fold_left
@@ -89,6 +96,8 @@ module Make (M : S) = struct
         og_els
         els'
     in
+    (* TODO: Sorting should be done here and not on the `run` function, 
+       make sure to remove it later. *)
     let sorted = CCList.sort M.compare_el (El_set.to_list union) in
     M.post_comment t sorted >>= fun new_cid -> M.upsert_comment_id t sorted new_cid
 
