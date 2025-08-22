@@ -76,6 +76,14 @@ type publish_comment_err =
   ]
 [@@deriving show]
 
+type delete_comment_err = Githubc2_abb.call_err [@@deriving show]
+
+type minimize_comment_err =
+  [ Githubc2_abb.call_err
+  | `Not_found of Githubc2_components.Basic_error.t
+  ]
+[@@deriving show]
+
 type publish_reaction_err =
   [ Githubc2_abb.call_err
   | `Unprocessable_entity of Githubc2_components.Validation_error.t
@@ -245,7 +253,21 @@ val publish_comment :
   pull_number:int ->
   body:string ->
   Githubc2_abb.t ->
-  (unit, [> publish_comment_err ]) result Abb.Future.t
+  (int, [> publish_comment_err ]) result Abb.Future.t
+
+val delete_comment :
+  owner:string ->
+  repo:string ->
+  comment_id:int ->
+  Githubc2_abb.t ->
+  (unit, [> delete_comment_err ]) result Abb.Future.t
+
+val minimize_comment :
+  owner:string ->
+  repo:string ->
+  comment_id:int ->
+  Githubc2_abb.t ->
+  (unit, [> minimize_comment_err ]) result Abb.Future.t
 
 val react_to_comment :
   ?content:string ->
