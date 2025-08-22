@@ -48,45 +48,45 @@ engine:
 
 Use a custom engine when you need to perform tasks outside of standard Terraform or OpenTofu workflows, or when integrating with other infrastructure tools (e.g., custom wrappers, or legacy systems).
 
-:::note[About TERRATEAM_PLAN_FILE]
-When using a custom engine, Terrateam sets the `TERRATEAM_PLAN_FILE` environment variable to the path where your plan step must write the plan file. This is the only required environment variable that must be written to by your custom plan step. Terrateam will use this file for subsequent apply and diff steps. The file must be created, but it can be empty.
+:::note[No Required Steps]
+Custom engine does not require any specific steps - all steps are optional. You can define only the steps you need for your workflow. The `TERRATEAM_PLAN_FILE` environment variable is available in the apply phase if your plan step writes to it.
 :::
 
 ### Example: Custom Engine
 
-Below is an example configuration for a custom engine. Each key corresponds to a step in the Terrateam workflow. Only `plan` is required; others are optional.
+Below is an example configuration for a custom engine. Each key corresponds to a step in the Terrateam workflow. All steps are optional - define only what you need.
 
 ```yaml
 engine:
   name: custom
   # The command to run during the init step (optional)
   init: ['echo', 'init']
-  # The command to run during the plan step (required)
-  # Must write the plan to the file specified by $TERRATEAM_PLAN_FILE
-  plan: ['touch', '$TERRATEAM_PLAN_FILE']
+  # The command to run during the plan step (optional)
+  plan: ['my-custom-plan']
   # The command to produce a human-readable diff of the plan output (optional)
   diff: ['printf', '+ added foo\n- removed bar\n~ updated bar\n']
   # The command to run during the apply step (optional)
-  apply: ['cat', 'foo.txt']
+  apply: ['my-custom-apply']
   # The command to return output values as a JSON string (optional)
   outputs: ['echo', '{"foo": "bar"}']
 ```
 
 **Highlights:**
-- `plan`: Must write the plan to the file specified by `$TERRATEAM_PLAN_FILE`.
-- `init`, `diff`, `apply`, `outputs`: Optional, provide additional control over workflow steps.
-- Use this pattern to integrate with any tool or process that can produce a compatible plan file.
+- All steps (`init`, `plan`, `diff`, `apply`, `outputs`) are optional
+- Define only the steps that make sense for your use case
+- `$TERRATEAM_PLAN_FILE` environment variable is available to pass data from plan to apply
+- Use this pattern to integrate with any tool or custom process
 
 ### How It Works
 Each key corresponds to a step in the Terrateam workflow:
 
 * `init` The command to run during the init step. Optional.
-* `plan` The command to run during the plan step. Must write to the path specified by the `TERRATEAM_PLAN_FILE` environment variable. Required.
+* `plan` The command to run during the plan step. Optional.
 * `diff` The command to produce a human-readable diff of the plan output. Optional.
 * `apply` The command to run during the apply step. Optional.
 * `outputs` The command to return output values as a JSON string. Optional.
 
-Only define the steps that make sense for your use case. All others can be omitted.
+All steps are optional - you can define any combination of steps that makes sense for your use case.
 
 :::note
 The exit code of the `plan` script is important.  Custom engine uses the OpenTofu detailed exit code standard in that an exit code of `0` means there are changes in the plan and `2` means the plan was successful but there are no changes.  Any other exit code is considered a failure.
