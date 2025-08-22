@@ -41,21 +41,6 @@ module Account = struct
   let to_string t = raise (Failure "nyi")
 end
 
-module Comment = struct
-  module Id = struct
-    type t = unit [@@deriving yojson, show, eq]
-
-    let of_string s = raise (Failure "nyi")
-    let to_string t = raise (Failure "nyi")
-    let compare _ _ = raise (Failure "nyi")
-  end
-
-  type t = unit [@@deriving eq, yojson]
-
-  let make ~id = raise (Failure "nyi")
-  let id t = raise (Failure "nyi")
-end
-
 module Repo = struct
   module Id = struct
     type t = unit [@@deriving yojson, show, eq]
@@ -116,8 +101,6 @@ let fetch_centralized_repo ~request_id client owner = raise (Failure "nyi")
 let create_client ~request_id config account = raise (Failure "nyi")
 let fetch_tree ~request_id client repo ref_ = raise (Failure "nyi")
 let comment_on_pull_request ~request_id client pull_request body = raise (Failure "nyi")
-let delete_pull_request_comment ~request_id client pull_request comment_id = raise (Failure "nyi")
-let minimize_pull_request_comment ~request_id client pull_request comment_id = raise (Failure "nyi")
 let fetch_diff ~client ~owner ~repo pull_number = raise (Failure "nyi")
 let fetch_pull_request ~request_id account client repo pull_request_id = raise (Failure "nyi")
 let react_to_comment ~request_id client pull_request comment_id = raise (Failure "nyi")

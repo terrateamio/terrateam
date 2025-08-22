@@ -496,15 +496,14 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
                   (P.Api.Config.vcs_config config)
                   installation_id
                 >>= fun access_token ->
-                Abbs_future_combinators.Result.ignore
-                @@ Terrat_github.with_client
-                     (P.Api.Config.vcs_config config)
-                     (`Token access_token)
-                     (Terrat_github.publish_comment
-                        ~owner:repository.Gw.Repository.owner.Gw.User.login
-                        ~repo:repository.Gw.Repository.name
-                        ~pull_number:pull_request_id
-                        ~body)
+                Terrat_github.with_client
+                  (P.Api.Config.vcs_config config)
+                  (`Token access_token)
+                  (Terrat_github.publish_comment
+                     ~owner:repository.Gw.Repository.owner.Gw.User.login
+                     ~repo:repository.Gw.Repository.name
+                     ~pull_number:pull_request_id
+                     ~body)
             | Error (#Snabela.err as err) ->
                 Logs.err (fun m ->
                     m "%s : TMPL_ERROR : TAG_QUERY_ERROR : %s" request_id (Snabela.show_err err));
@@ -517,15 +516,14 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
               (P.Api.Config.vcs_config config)
               installation_id
             >>= fun access_token ->
-            Abbs_future_combinators.Result.ignore
-            @@ Terrat_github.with_client
-                 (P.Api.Config.vcs_config config)
-                 (`Token access_token)
-                 (Terrat_github.publish_comment
-                    ~owner:repository.Gw.Repository.owner.Gw.User.login
-                    ~repo:repository.Gw.Repository.name
-                    ~pull_number:pull_request_id
-                    ~body:Tmpl.terrateam_comment_unknown_action))
+            Terrat_github.with_client
+              (P.Api.Config.vcs_config config)
+              (`Token access_token)
+              (Terrat_github.publish_comment
+                 ~owner:repository.Gw.Repository.owner.Gw.User.login
+                 ~repo:repository.Gw.Repository.name
+                 ~pull_number:pull_request_id
+                 ~body:Tmpl.terrateam_comment_unknown_action))
     | Gw.Issue_comment_event.Issue_comment_created _ ->
         Logs.debug (fun m -> m "%s : NOOP : ISSUE_COMMENT_CREATED" request_id);
         Prmths.Counter.inc_one (Metrics.comment_events_total "noop");

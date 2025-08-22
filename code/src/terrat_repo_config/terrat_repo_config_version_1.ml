@@ -160,7 +160,6 @@ type t = {
   hooks : Hooks.t option; [@default None]
   indexer : Indexer.t option; [@default None]
   integrations : Terrat_repo_config_integrations.t option; [@default None]
-  notifications : Terrat_repo_config_notifications.t option; [@default None]
   parallel_runs : int; [@default 3]
   stacks : Terrat_repo_config_stacks.t option; [@default None]
   storage : Storage.t option; [@default None]

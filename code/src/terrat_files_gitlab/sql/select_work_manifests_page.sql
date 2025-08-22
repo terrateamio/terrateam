@@ -2,11 +2,15 @@ with
 unified_run_types as (
     select
        id,
-       case 
-           when gwm.run_type in ('autoplan', 'plan') then 'plan'
-           when gwm.run_type in ('autoapply', 'apply', 'unsafe-apply') then 'apply'
-           else gwm.run_type
-       end as run_type
+       (case gwm.run_type
+           when 'autoapply' then 'apply'
+           when 'apply' then 'apply'
+           when 'unsafe-apply' then 'apply'
+           when 'autoplan' then 'plan'
+           when 'plan' then 'plan'
+           when 'index' then 'index'
+           when 'build-config' then 'build-config'
+           end) as run_type
     from gitlab_work_manifests as gwm
 ),
 latest_unlocks as (
