@@ -12,17 +12,13 @@ REQUIRED_ENV_KEYS = []
 
 def setup_environment():
     if os.getenv('CUSTOM_CA_CERT'):
-        cert_path_root = '/usr/local/share/ca-certificates/'
-        certs = [cert
-                 for cert in os.getenv('CUSTOM_CA_CERT').split('-----END CERTIFICATE-----')
-                 if cert.strip()]
-        for idx in range(len(certs)):
-            cert_path = os.path.join(cert_path_root, 'custom-ca-cert-{}.crt'.format(idx))
-            with open(cert_path, 'w') as cert_file:
-                cert_file.write((certs[idx] + '-----END CERTIFICATE-----').strip())
-        subprocess.check_call(['update-ca-certificates'])
-        os.environ['CERTS_DIR'] = '/etc/ssl/certs'
-        print(f"Self-signed certificate installed to {cert_path}")
+        try:
+            subprocess.check_call(['sudo', '/usr/local/bin/update-ca-certificates.py'])
+            os.environ['CERTS_DIR'] = '/etc/ssl/certs'
+            print("Custom CA certificates installed successfully")
+        except subprocess.CalledProcessError as e:
+            print(f"Failed to update CA certificates: {e}")
+            sys.exit(1)
     if 'GITHUB_APP_PEM' in os.environ:
         os.environ['GITHUB_APP_PEM'] = os.environ['GITHUB_APP_PEM'].replace('\\n', '\n')
     os.environ['TERRAT_PYTHON_EXEC'] = '/usr/bin/python3'

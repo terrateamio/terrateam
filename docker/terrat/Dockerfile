@@ -115,6 +115,8 @@ RUN ulimit -s 524288 && ulimit -a && \
 
 # Final code-indexer image
 FROM alpine:3.18 AS code-indexer
+RUN addgroup -S terrat && adduser -S -G terrat terrat
+USER terrat
 COPY --from=code-indexer-build /mono/code/build/release/terrat_code_indexer/terrat_code_indexer.native /usr/local/bin/terrat_code_indexer
 WORKDIR /mnt
 ENTRYPOINT ["/usr/local/bin/terrat_code_indexer"]
@@ -137,8 +139,16 @@ RUN apk add --no-cache \
     python3 \
     runit \
     strace \
+    sudo \
     yj
-RUN mkdir -p /usr/local/bin /etc/service/terrat /etc/service/nginx /usr/local/share/terrat/ui/assets
+RUN addgroup -S terrat && adduser -S -G terrat terrat
+RUN mkdir -p /usr/local/bin /etc/service/terrat /etc/service/nginx /usr/local/share/terrat/ui/assets /usr/local/share/ca-certificates
+COPY --chown=root:root docker/terrat/update-ca-certificates.py /usr/local/bin/update-ca-certificates.py
+RUN chmod 755 /usr/local/bin/update-ca-certificates.py
+RUN echo 'terrat ALL=(root) NOPASSWD: /usr/local/bin/update-ca-certificates.py' > /etc/sudoers.d/terrat
+RUN chmod 440 /etc/sudoers.d/terrat
+RUN chown -R terrat:terrat /etc/service /usr/local/share/terrat /etc/nginx /var/lib/nginx /var/log/nginx /run
+USER terrat
 COPY docker/terrat/service/terrat /etc/service/terrat/run
 COPY docker/terrat/service/nginx /etc/service/nginx/run
 COPY docker/terrat/nginx.conf.template /etc/nginx/nginx.conf.template
@@ -167,8 +177,16 @@ RUN apk add --no-cache \
     python3 \
     runit \
     strace \
+    sudo \
     yj
-RUN mkdir -p /usr/local/bin /etc/service/terrat /etc/service/nginx /usr/local/share/terrat/ui/assets
+RUN addgroup -S terrat && adduser -S -G terrat terrat
+RUN mkdir -p /usr/local/bin /etc/service/terrat /etc/service/nginx /usr/local/share/terrat/ui/assets /usr/local/share/ca-certificates
+COPY --chown=root:root docker/terrat/update-ca-certificates.py /usr/local/bin/update-ca-certificates.py
+RUN chmod 755 /usr/local/bin/update-ca-certificates.py
+RUN echo 'terrat ALL=(root) NOPASSWD: /usr/local/bin/update-ca-certificates.py' > /etc/sudoers.d/terrat
+RUN chmod 440 /etc/sudoers.d/terrat
+RUN chown -R terrat:terrat /etc/service /usr/local/share/terrat /etc/nginx /var/lib/nginx /var/log/nginx /run
+USER terrat
 COPY docker/terrat/service/terrat /etc/service/terrat/run
 COPY docker/terrat/service/nginx /etc/service/nginx/run
 COPY docker/terrat/nginx.conf.template /etc/nginx/nginx.conf.template
