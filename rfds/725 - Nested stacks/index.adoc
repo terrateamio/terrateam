@@ -1,0 +1,459 @@
+= Nested Stacks
+:authors: Malcolm Matalka <malcolm@terrateam.io>
+:state: committed
+:labels: workflows, stacks
+:source-highlighter: highlight.js
+:toc:
+
+== Introduction
+
+When stacks were introduced in RFD 653, nesting and layering stacks were
+explicitly rejected as an option.  However, in real-world usage of stacks,
+nested stacks are both desirable and necessary for useful workflows.
+
+Layered stacks were rejected because the functionality overlaps with "layered
+runs" and the idea was that if the user wanted sequential operations, they would
+define that within a stack.  Nested stacks were rejected because their use cases
+were unclear.
+
+However, after trying to use stacks in real-world situations, being able to nest
+stacks and layer them turns out to be useful functionality that stacks expresses
+well.
+
+== Proposal
+
+This proposal adds two core pieces of functionality that were not present in the
+previous implementation:
+
+. Layered stacks - Defining a layering of stacks such that one stack must be
+completely successfully applied before the next stacks can be planned.
+. Nested stacks - Defining a grouping of stacks.
+
+Stacks are "layered" when one stack must be completely applied prior to the
+execution of any operation of the next stack.  Layered stacks form a dependency
+tree.  The tree must be acyclic, in that a stack cannot transitively reference
+itself.
+
+Stacks are "nested" when, instead of a `tag_query` key, they have a `stacks`
+configuration, which is a list of names of stacks which are nested in this
+stack.  This allows configuration to be applied to a set of stacks.
+
+Nested stacks can have layered stacks inside of them.  Nested stacks which are
+layered have a "top" and "bottom".  The "top" of a stack is the last layer in
+the stack that can be run.  The "bottom" of a stack is the first layer that can
+be run.
+
+This proposal completely changes how the relationship between stacks is defined.
+The previous configurations are removed (except for `variables`) and replaces
+them with `rules`.
+
+The `rules` configuration has the following configurations:
+
+. `plan_after` - A list of stacks that must be applied before this stack can
+plan.
+. `apply_after` - A list of stacks that must be applied for this stack is
+allowed to apply.
+. `modified_by` - A list of stacks which, if are considered modified, force this
+stack to becoming modified.
+. `auto_apply` - Boolean defining if this stack should be automatically applied
+if it passes all apply requirements.
+
+The `modified_by` configuration has special semantics: When `modified_by` is
+defined and `plan_after` is **not** defined, `plan_after` is implicitly set to
+the value of `modified_by`.
+
+In order to define a "nested stack", instead of a `tag_query` the stack
+definition has a `stacks` entry which lists the stacks that this stack
+encapsulates.
+
+=== `STACK_VAR_$name`
+
+This proposal also changes the naming behaviour of stack variables.  Previously,
+they were accessible via the name `STACK_VAR_$name`, however this is going to be
+removed and instead they are accessed simply by `$name`.  It is the
+responsibility of the user to create names that do not overlap or otherwise have
+unintended consequences.
+
+=== Examples
+
+==== Defining layered stacks
+
+[source,yaml]
+----
+stacks:
+  names:
+    base:
+      tag_query: base
+    dev:
+      tag_query: dev
+      rules:
+        plan_after:
+          - base
+----
+
+The above configuration defines a rule that the `dev` stack can only be planned
+after the `base` stack is applied.
+
+This configuration **DOES NOT** define that when `base` changes that `dev` is
+also considered change, like how `depends_on` works for layered runs.
+
+==== Layered runs
+
+The following configuration matches the existing functionality of layered runs
+which forces the execution of a dependency even if it is not explicitly changed
+by files in the layer, with the `modified_by` rule.
+
+[source,yaml]
+----
+stacks:
+  names:
+    base:
+      tag_query: base
+    dev:
+      tag_query: dev
+      rules:
+        modified_by:
+          - base
+        plan_after:
+          - base
+----
+
+==== Layered runs (concise)
+
+If the `plans_after` configuration is not specified but the `modified_by`
+configuration is, Terrateam implicitly constructs a `plan_after` configuration
+based on `modified_by`.  This short hand represents what most users probably
+expect, being modified by another stack means that the current stack should be
+planned after the other is applied.
+
+NOTE: If `modified_by` and `plan_after` are configured, no implicit construction
+of `plan_after` is performed.  The user has chosen to have complete control over
+`plan_after`.
+
+This configuration is equivalent to the above configuration.
+
+[source,yaml]
+----
+stacks:
+  names:
+    base:
+      tag_query: base
+    dev:
+      tag_query: dev
+      rules:
+        modified_by:
+          - base
+----
+
+==== Co-stacks and layered stacks
+
+The following configuration defines a `prod` and `dev` to be co-stacks, in that
+they can be planned together, and it defines `base` to be a layered stack of
+`prod` and `dev`.
+
+In this configuration:
+
+. Both `prod` and `dev` are considered modified if `base` changes.
+. Both `prod` and `dev` cannot perform a `plan` until `base` is applied.
+. `prod` can be planned with `dev`.
+. `prod` can only be applied after `dev` has been applied.
+
+NOTE: This configuration makes use of the implicit `plan_after` when
+`modified_by` is set.
+
+[source,yaml]
+----
+stacks:
+  names:
+    base:
+      tag_query: base
+    prod:
+      tag_query: prod
+      rules:
+        modified_by:
+          - base
+        apply_after:
+          - dev
+    dev:
+      tag_query: dev
+      rules:
+        modified_by:
+          - base
+----
+
+==== `modified_by` is transitive
+
+The following configuration adds another stack called `network`.
+
+[source,yaml]
+----
+stacks:
+  names:
+    network:
+      tag_query: network
+    base:
+      tag_query: base
+      rules:
+        modified_by:
+          - network
+    prod:
+      tag_query: prod
+      rules:
+        modified_by:
+          - base
+        apply_after:
+          - dev
+    dev:
+      tag_query: dev
+      rules:
+        plan_after:
+          - base
+----
+
+If `network` is changed, then `base`, `prod`, and `dev` will be run because
+`base` has a `modified_by` configuration for `network`, which considers `base`
+changed, and `prod` and `dev` have the same configuration for base.
+
+The `modified_by` configuration only takes effect if the dependent stack is
+considered "modified" by the system.
+
+The following configuration **would not** run `prod` and `dev` if `network` is
+modified because `base` would not be considered modified:
+
+[source,yaml]
+----
+stacks:
+  names:
+    network:
+      tag_query: network
+    base:
+      tag_query: base
+      rules:
+        plan_after:
+          - network
+    prod:
+      tag_query: prod
+      rules:
+        modified_by:
+          - base
+        apply_after:
+          - dev
+    dev:
+      tag_query: dev
+      rules:
+        modified_by:
+          - base
+----
+
+The above configuration would require that `base` can only be planned after
+`network` is applied if, and only if, `base` is also explicitly modified.
+`prod` and `dev` would be considered modified in that scenario as well.
+
+==== Nested stacks
+
+In this example we have defined two parent stacks `dev` and `prod`.  These have
+nested stacks.  The entire `prod` stack cannot be applied until the `dev` stack
+is complete.  A change to `base` will cause both `prod` and `dev` to be
+considered changed.
+
+In this case, if `base` is changed, after it has been applied, `dev` and `prod`
+will be run.  `prod` and `dev` will be planned together however `prod` cannot be
+applied until `dev` is applied.
+
+[source,yaml]
+----
+stacks:
+  names:
+    # The prod stack
+    prod:
+      stacks:
+        - prod-service
+        - prod-database
+        - prod-network
+      rules:
+        modified_by:
+          - base
+        apply_after:
+          - dev
+
+    # The dev stack
+    dev:
+      stacks:
+        - dev-service
+        - dev-database
+        - dev-network
+      rules:
+        modified_by:
+          - base
+
+    # The prod stcks
+    prod-service:
+      tag_query: prod and compute
+    prod-database:
+      tag_query: prod and database
+    prod-network:
+      tag_query: prod and network
+
+    # The dev stacks
+    dev-service:
+      tag_query: dev and compute
+    dev-database:
+      tag_query: dev and database
+    dev-network:
+      tag_query: dev and network
+
+    # Base stack
+    base:
+      tag_query: base
+----
+
+==== Nested stacks with layered stacks
+
+The above example performed a layered stack operation with `base` at the bottom.
+But we can have layers within nested stacks as well.
+
+The below example is the same as the above, however we have defined `plan_after`
+rules for stacks within the nested stack.
+
+This configuration means that the `prod-network` stack can be planned with the
+`dev-network` but it cannot be applied until `dev-service` has been applied,
+because `dev-service` is the "top" of the `dev` stack and `dev-network` is the
+"bottom" of the `dev` stack.
+
+[source,yaml]
+----
+stacks:
+  names:
+    # The prod stack
+    prod:
+      stacks:
+        - prod-service
+        - prod-database
+        - prod-network
+      rules:
+        modified_by:
+          - base
+        apply_after:
+          - dev
+
+    # The dev stack
+    dev:
+      stacks:
+        - dev-service
+        - dev-database
+        - dev-network
+      rules:
+        modified_by:
+          - base
+
+    # The prod stcks
+    prod-service:
+      tag_query: prod and compute
+      rules:
+        plan_after:
+          - prod-database
+    prod-database:
+      tag_query: prod and database
+      rules:
+        plan_after:
+          - prod-network
+    prod-network:
+      tag_query: prod and network
+
+    # The dev stacks
+    dev-service:
+      tag_query: dev and compute
+      rules:
+        plan_after:
+          - dev-database
+    dev-database:
+      tag_query: dev and database
+      rules:
+        plan_after:
+          - dev-network
+    dev-network:
+      tag_query: dev and network
+      
+    base:
+      tag_query: base
+----
+
+==== Nested nested stacks
+
+The following example shows that stacks can be nested like Russian dolls.
+
+[source,yaml]
+----
+stacks:
+  names:
+    everything:
+      stacks:
+        - prod
+        - dev
+        - staging
+    prod:
+      stacks:
+        - prod-compute
+        - prod-database
+
+    prod-compute:
+      stacks:
+        - prod-compute-us-east-1
+        - prod-compute-us-west-1
+
+    prod-compute-us-east-1:
+      tag_query: prod and compute and us-east-1
+
+    prod-compute-us-west-1:
+      tag_query: prod and compute and us-west-1
+
+
+    prod-database:
+      stacks:
+        - prod-database-us-east-1
+        - prod-database-us-west-1
+
+    prod-database-us-east-1:
+      tag_query: prod and database and us-east-1
+
+    prod-database-us-west-1:
+      tag_query: prod and database and us-west-1
+
+    # Imagine equivalents for dev and staging below
+    #
+    # ...
+----
+
+==== Auto apply after
+
+A functionality introduced with stack is `auto_apply`.  This allows a stack to
+automatically be applied, assuming all apply requirements are satisfied.
+
+The following configuration makes it such that the `dev` stack is automatically
+applied after it is planned.
+
+[source,yaml]
+----
+stacks:
+  names:
+    network:
+      tag_query: network
+    base:
+      tag_query: base
+      rules:
+        plan_after:
+          - network
+    prod:
+      tag_query: prod
+      rules:
+        modified_by:
+          - base
+        apply_after:
+          - dev
+    dev:
+      tag_query: dev
+      rules:
+        modified_by:
+          - base
+      auto_apply: true
+----
