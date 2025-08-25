@@ -1858,8 +1858,6 @@ module PostApiV4ProjectsIdMergeRequestsMergeRequestIidNotesNotesId = struct
   end
 
   module Responses = struct
-    module OK = struct end
-
     module Created = struct
       type t = { id : int } [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
@@ -1867,15 +1865,13 @@ module PostApiV4ProjectsIdMergeRequestsMergeRequestIidNotesNotesId = struct
     module Not_found = struct end
 
     type t =
-      [ `OK
-      | `Created of Created.t
+      [ `Created of Created.t
       | `Not_found
       ]
     [@@deriving show, eq]
 
     let t =
       [
-        ("200", fun _ -> Ok `OK);
         ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
         ("404", fun _ -> Ok `Not_found);
       ]

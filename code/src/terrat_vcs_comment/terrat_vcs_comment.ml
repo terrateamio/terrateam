@@ -73,6 +73,34 @@ module Make (M : S) = struct
     let groups, rest = CCList.fold_left combine ([], []) els in
     CCList.rev (CCList.rev rest :: groups) |> CCList.filter CCFun.(CCList.is_empty %> not)
 
+  let fetch_and_apply fn t els =
+    let open Abbs_future_combinators.Infix_result_monad in
+    let module Alr = Abbs_future_combinators.List_result in
+    find_existing_comments_for_el t els
+    >>= fun cids ->
+    Alr.iter ~f:fn cids
+    >>= fun () ->
+    find_all_els_from t cids
+    >>= fun els' ->
+    (* Do not confuse "els" with "els'", the first being new changes and the
+       latter being "every element that may be related to the new" stuff. 
+
+       When assembling a new comment we need to make sure we are not forgetting 
+       old outputs as well. So even if you do a "terrateam plan dir:tf1", we
+       we also need to pull off old plans for 'dir:tf2' and 'dir:tf2' (example)
+       and add them back to the new VCS comment. *)
+    let og_els = El_set.of_list els in
+    let union =
+      CCList.fold_left
+        (fun acc el -> if El_set.mem el acc then acc else El_set.add el acc)
+        og_els
+        els'
+    in
+    (* TODO: Sorting should be done here and not on the `run` function, 
+       make sure to remove it later. *)
+    let sorted = CCList.sort M.compare_el (El_set.to_list union) in
+    M.post_comment t sorted >>= fun new_cid -> M.upsert_comment_id t sorted new_cid
+
   let append t elss =
     let open Abbs_future_combinators.Infix_result_monad in
     let module Alr = Abbs_future_combinators.List_result in
@@ -82,26 +110,12 @@ module Make (M : S) = struct
   let delete t elss =
     let open Abbs_future_combinators.Infix_result_monad in
     let module Alr = Abbs_future_combinators.List_result in
-    let delete_if_comment_exists els =
-      find_existing_comments_for_el t els
-      >>= fun cids ->
-      Alr.iter ~f:(M.delete_comment t) cids
-      >>= fun () ->
-      find_all_els_from t cids
-      >>= fun els -> M.post_comment t els >>= fun new_cid -> M.upsert_comment_id t els new_cid
-    in
-    Alr.iter ~f:delete_if_comment_exists elss
+    Alr.iter ~f:(fetch_and_apply (M.delete_comment t) t) elss
 
   let minimize t elss =
     let open Abbs_future_combinators.Infix_result_monad in
     let module Alr = Abbs_future_combinators.List_result in
-    let minimize_single els =
-      find_existing_comments_for_el t els
-      >>= fun cids ->
-      Alr.iter ~f:(M.minimize_comment t) cids
-      >>= fun () -> M.post_comment t els >>= fun new_cid -> M.upsert_comment_id t els new_cid
-    in
-    Alr.iter ~f:minimize_single elss
+    Alr.iter ~f:(fetch_and_apply (M.minimize_comment t) t) elss
 
   let run t els =
     let open Abbs_future_combinators.Infix_result_monad in

@@ -970,6 +970,39 @@
       },
       "type": "object"
     },
+    "notification-policy": {
+      "additionalProperties": false,
+      "properties": {
+        "comment_strategy": {
+          "default": "minimize",
+          "enum": [
+            "append",
+            "delete",
+            "minimize"
+          ],
+          "type": "string"
+        },
+        "tag_query": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "tag_query"
+      ],
+      "type": "object"
+    },
+    "notifications": {
+      "additionalProperties": false,
+      "properties": {
+        "policies": {
+          "items": {
+            "$ref": "#/definitions/notification-policy"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
     "permission": {
       "items": {
         "additionalProperties": false,
@@ -1309,6 +1342,9 @@
         },
         "integrations": {
           "$ref": "#/definitions/integrations"
+        },
+        "notifications": {
+          "$ref": "#/definitions/notifications"
         },
         "parallel_runs": {
           "default": 3,
