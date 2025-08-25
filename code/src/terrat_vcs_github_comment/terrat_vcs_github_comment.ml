@@ -284,6 +284,7 @@ module S = struct
     in
     CCString.length out
 
+  let dirspace el = el.dirspace
   let strategy el = el.strategy
   let compact el = { el with compact = true }
 

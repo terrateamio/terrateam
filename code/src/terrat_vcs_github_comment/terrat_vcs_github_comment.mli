@@ -47,6 +47,7 @@ module S : sig
   val minimize_comment : t -> comment_id -> (unit, [> `Error ]) result Abb.Future.t
   val post_comment : t -> el list -> (comment_id, [> `Error ]) result Abb.Future.t
   val rendered_length : t -> el list -> int
+  val dirspace : el -> Terrat_dirspace.t
   val strategy : el -> Terrat_vcs_comment.Strategy.t
   val compact : el -> el
   val compare_el : el -> el -> int
