@@ -97,6 +97,7 @@ module S = struct
     in
     CCString.length out
 
+  let dirspace el = el.dirspace
   (* TODO: Remove this once proper GitLab migrations are also merged *)
   let strategy el = Terrat_vcs_comment.Strategy.Append
   let compact el = { el with compact = true }

@@ -18,6 +18,7 @@ module type S = sig
   val minimize_comment : t -> comment_id -> (unit, [> `Error ]) result Abb.Future.t
   val post_comment : t -> el list -> (comment_id, [> `Error ]) result Abb.Future.t
   val rendered_length : t -> el list -> int
+  val dirspace : el -> Terrat_dirspace.t
   val strategy : el -> Strategy.t
   val compact : el -> el
   val max_comment_length : int
@@ -41,7 +42,7 @@ module Make (M : S) = struct
   module El_set = CCSet.Make (struct
     type t = M.el
 
-    let compare = M.compare_el
+    let compare el1 el2 = Terrat_dirspace.compare (M.dirspace el1) (M.dirspace el2)
   end)
 
   let partition_by_strategy els = By_strategy.group els

@@ -104,6 +104,7 @@ module H = struct
         assert false
 
   let rendered_length _ els = CCList.fold_left (fun acc el -> acc + el.Eh.rendered_length) 0 els
+  let dirspace el = el.Eh.dirspace
   let strategy el = el.Eh.strategy
   let compact el = { el with Eh.rendered_length = 1 }
 
