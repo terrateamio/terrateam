@@ -58,7 +58,15 @@ module Tmpl = struct
   let missing_plans = read "missing_plans.tmpl"
   let dirspaces_owned_by_other_pull_requests = read "dirspaces_owned_by_other_pull_requests.tmpl"
   let conflicting_work_manifests = read "conflicting_work_manifests.tmpl"
-  let depends_on_cycle = read "depends_on_cycle.tmpl"
+  let synthesize_config_err_cycle = jinja "synthesize_config_err_cycle.tmpl"
+
+  let synthesize_config_err_workspace_in_multiple_stacks =
+    jinja "synthesize_config_err_workspace_in_multiple_stacks.tmpl"
+
+  let synthesize_config_err_workspace_matches_no_stacks =
+    jinja "synthesize_config_err_workspace_matches_no_stacks.tmpl"
+
+  let synthesize_config_err_stack_not_found = jinja "synthesize_config_err_stack_not_found.tmpl"
   let maybe_stale_work_manifests = read "maybe_stale_work_manifests.tmpl"
   let repo_config_parse_failure = read "repo_config_parse_failure.tmpl"
   let repo_config_schema_err = read "repo_config_schema_err.tmpl"
