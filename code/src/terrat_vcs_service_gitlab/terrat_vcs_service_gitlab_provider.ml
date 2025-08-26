@@ -2604,11 +2604,11 @@ module Comment = struct
       kv
 
   let repo_config_err ~request_id ~client ~pull_request ~title err =
-    let open Terrat_vcs_gitlab_comment_publishers.Comment_api in
+    let module Gcm_api = Terrat_vcs_gitlab_comment_publishers.Comment_api in
     match err with
     | `Access_control_ci_config_update_match_parse_err m ->
         let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-        apply_template_and_publish
+        Gcm_api.apply_template_and_publish
           ~request_id
           client
           pull_request
@@ -2617,7 +2617,7 @@ module Comment = struct
           kv
     | `Access_control_file_match_parse_err (path, m) ->
         let kv = Snabela.Kv.(Map.of_list [ ("path", string path); ("match", string m) ]) in
-        apply_template_and_publish
+        Gcm_api.apply_template_and_publish
           ~request_id
           client
           pull_request
@@ -2626,7 +2626,7 @@ module Comment = struct
           kv
     | `Access_control_policy_apply_autoapprove_match_parse_err m ->
         let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-        apply_template_and_publish
+        Gcm_api.apply_template_and_publish
           ~request_id
           client
           pull_request
@@ -2635,7 +2635,7 @@ module Comment = struct
           kv
     | `Access_control_policy_apply_force_match_parse_err m ->
         let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-        apply_template_and_publish
+        Gcm_api.apply_template_and_publish
           ~request_id
           client
           pull_request
@@ -2644,7 +2644,7 @@ module Comment = struct
           kv
     | `Access_control_policy_apply_match_parse_err m ->
         let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-        apply_template_and_publish
+        Gcm_api.apply_template_and_publish
           ~request_id
           client
           pull_request
@@ -2653,7 +2653,7 @@ module Comment = struct
           kv
     | `Access_control_policy_apply_with_superapproval_match_parse_err m ->
         let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-        apply_template_and_publish
+        Gcm_api.apply_template_and_publish
           ~request_id
           client
           pull_request
@@ -2662,7 +2662,7 @@ module Comment = struct
           kv
     | `Access_control_policy_plan_match_parse_err m ->
         let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-        apply_template_and_publish
+        Gcm_api.apply_template_and_publish
           ~request_id
           client
           pull_request
@@ -2671,7 +2671,7 @@ module Comment = struct
           kv
     | `Access_control_policy_superapproval_match_parse_err m ->
         let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-        apply_template_and_publish
+        Gcm_api.apply_template_and_publish
           ~request_id
           client
           pull_request
@@ -2680,7 +2680,7 @@ module Comment = struct
           kv
     | `Access_control_policy_tag_query_err (q, err) ->
         let kv = Snabela.Kv.(Map.of_list [ ("query", string q); ("error", string err) ]) in
-        apply_template_and_publish
+        Gcm_api.apply_template_and_publish
           ~request_id
           client
           pull_request
@@ -2689,7 +2689,7 @@ module Comment = struct
           kv
     | `Access_control_terrateam_config_update_match_parse_err m ->
         let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-        apply_template_and_publish
+        Gcm_api.apply_template_and_publish
           ~request_id
           client
           pull_request
@@ -2698,7 +2698,7 @@ module Comment = struct
           kv
     | `Access_control_unlock_match_parse_err m ->
         let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-        apply_template_and_publish
+        Gcm_api.apply_template_and_publish
           ~request_id
           client
           pull_request
@@ -2707,7 +2707,7 @@ module Comment = struct
           kv
     | `Apply_requirements_approved_all_of_match_parse_err m ->
         let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-        apply_template_and_publish
+        Gcm_api.apply_template_and_publish
           ~request_id
           client
           pull_request
@@ -2716,7 +2716,7 @@ module Comment = struct
           kv
     | `Apply_requirements_approved_any_of_match_parse_err m ->
         let kv = Snabela.Kv.(Map.of_list [ ("match", string m) ]) in
-        apply_template_and_publish
+        Gcm_api.apply_template_and_publish
           ~request_id
           client
           pull_request
@@ -2725,7 +2725,7 @@ module Comment = struct
           kv
     | `Apply_requirements_check_tag_query_err (q, err) ->
         let kv = Snabela.Kv.(Map.of_list [ ("query", string q); ("error", string err) ]) in
-        apply_template_and_publish
+        Gcm_api.apply_template_and_publish
           ~request_id
           client
           pull_request
@@ -2734,7 +2734,7 @@ module Comment = struct
           kv
     | `Depends_on_err (q, err) ->
         let kv = Snabela.Kv.(Map.of_list [ ("query", string q); ("error", string err) ]) in
-        apply_template_and_publish
+        Gcm_api.apply_template_and_publish
           ~request_id
           client
           pull_request
@@ -2743,7 +2743,7 @@ module Comment = struct
           kv
     | `Drift_schedule_err s ->
         let kv = Snabela.Kv.(Map.of_list [ ("schedule", string s) ]) in
-        apply_template_and_publish
+        Gcm_api.apply_template_and_publish
           ~request_id
           client
           pull_request
@@ -2752,7 +2752,7 @@ module Comment = struct
           kv
     | `Drift_tag_query_err (q, err) ->
         let kv = Snabela.Kv.(Map.of_list [ ("query", string q); ("error", string err) ]) in
-        apply_template_and_publish
+        Gcm_api.apply_template_and_publish
           ~request_id
           client
           pull_request
@@ -2761,7 +2761,7 @@ module Comment = struct
           kv
     | `Glob_parse_err (s, err) ->
         let kv = Snabela.Kv.(Map.of_list [ ("glob", string s); ("error", string err) ]) in
-        apply_template_and_publish
+        Gcm_api.apply_template_and_publish
           ~request_id
           client
           pull_request
@@ -2770,7 +2770,7 @@ module Comment = struct
           kv
     | `Hooks_unknown_run_on_err s ->
         let kv = Snabela.Kv.(Map.of_list [ ("run_on", string s) ]) in
-        apply_template_and_publish
+        Gcm_api.apply_template_and_publish
           ~request_id
           client
           pull_request
@@ -2779,7 +2779,7 @@ module Comment = struct
           kv
     | `Hooks_unknown_visible_on_err s ->
         let kv = Snabela.Kv.(Map.of_list [ ("visible_on", string s) ]) in
-        apply_template_and_publish
+        Gcm_api.apply_template_and_publish
           ~request_id
           client
           pull_request
@@ -2788,7 +2788,7 @@ module Comment = struct
           kv
     | `Pattern_parse_err s ->
         let kv = Snabela.Kv.(Map.of_list [ ("pattern", string s) ]) in
-        apply_template_and_publish
+        Gcm_api.apply_template_and_publish
           ~request_id
           client
           pull_request
@@ -2797,7 +2797,7 @@ module Comment = struct
           kv
     | `Unknown_lock_policy_err s ->
         let kv = Snabela.Kv.(Map.of_list [ ("lock_policy", string s) ]) in
-        apply_template_and_publish
+        Gcm_api.apply_template_and_publish
           ~request_id
           client
           pull_request
@@ -2807,7 +2807,7 @@ module Comment = struct
     | `Unknown_plan_mode_err s -> assert false
     | `Window_parse_timezone_err tz ->
         let kv = Snabela.Kv.(Map.of_list [ ("tz", string tz) ]) in
-        apply_template_and_publish
+        Gcm_api.apply_template_and_publish
           ~request_id
           client
           pull_request
@@ -2816,7 +2816,7 @@ module Comment = struct
           kv
     | `Workflows_apply_unknown_run_on_err s ->
         let kv = Snabela.Kv.(Map.of_list [ ("run_on", string s) ]) in
-        apply_template_and_publish
+        Gcm_api.apply_template_and_publish
           ~request_id
           client
           pull_request
@@ -2825,7 +2825,7 @@ module Comment = struct
           kv
     | `Workflows_apply_unknown_visible_on_err s ->
         let kv = Snabela.Kv.(Map.of_list [ ("visible_on", string s) ]) in
-        apply_template_and_publish
+        Gcm_api.apply_template_and_publish
           ~request_id
           client
           pull_request
@@ -2834,7 +2834,7 @@ module Comment = struct
           kv
     | `Workflows_plan_unknown_run_on_err s ->
         let kv = Snabela.Kv.(Map.of_list [ ("run_on", string s) ]) in
-        apply_template_and_publish
+        Gcm_api.apply_template_and_publish
           ~request_id
           client
           pull_request
@@ -2843,7 +2843,7 @@ module Comment = struct
           kv
     | `Workflows_plan_unknown_visible_on_err s ->
         let kv = Snabela.Kv.(Map.of_list [ ("visible_on", string s) ]) in
-        apply_template_and_publish
+        Gcm_api.apply_template_and_publish
           ~request_id
           client
           pull_request
@@ -2852,7 +2852,7 @@ module Comment = struct
           kv
     | `Workflows_tag_query_parse_err (q, err) ->
         let kv = Snabela.Kv.(Map.of_list [ ("query", string q); ("error", string err) ]) in
-        apply_template_and_publish
+        Gcm_api.apply_template_and_publish
           ~request_id
           client
           pull_request
@@ -2869,15 +2869,23 @@ module Comment = struct
         let kv =
           Snabela.Kv.(Map.of_list [ ("fname", string "repo_config"); ("errors", list errors) ])
         in
-        apply_template_and_publish
+        Gcm_api.apply_template_and_publish
           ~request_id
           client
           pull_request
           "REPO_CONFIG_SCHEMA_ERR"
           Tmpl.repo_config_schema_err
           kv
-    | `Notification_policy_comment_strategy_err err -> raise (Failure "nyi")
-    | `Notification_policy_tag_query_err err -> raise (Failure "nyi")
+    | `Notification_policy_tag_query_err (query, err) ->
+        let kv = `Assoc [ ("query", `String query); ("error", `String err) ] in
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish_jinja
+             ~request_id
+             client
+             pull_request
+             "NOTIFICATION_POLICY_TAG_QUERY_ERR"
+             Tmpl.notification_policy_tag_query_err
+             kv
     | `Stack_config_tag_query_err err -> raise (Failure "nyi")
 
   let publish_comment ~request_id client user pull_request =

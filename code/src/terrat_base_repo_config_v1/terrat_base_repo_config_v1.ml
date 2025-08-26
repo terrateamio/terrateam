@@ -1162,7 +1162,6 @@ type of_version_1_err =
   | `Glob_parse_err of string * string
   | `Hooks_unknown_run_on_err of Terrat_repo_config_run_on.t
   | `Hooks_unknown_visible_on_err of string
-  | `Notification_policy_comment_strategy_err of string
   | `Notification_policy_tag_query_err of string * string
   | `Pattern_parse_err of string
   | `Stack_config_tag_query_err of string * string
@@ -2197,7 +2196,7 @@ let of_version_1_notification_policy policy =
   | "append" -> Ok Policy.Strategy.Append
   | "delete" -> Ok Policy.Strategy.Delete
   | "minimize" -> Ok Policy.Strategy.Minimize
-  | err -> Error (`Notification_policy_comment_strategy_err err))
+  | _st -> assert false)
   >>= fun comment_strategy -> Ok { Policy.tag_query; comment_strategy }
 
 let of_version_1_notifications notifications =
