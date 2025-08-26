@@ -91,7 +91,7 @@ module Primary = struct
     reactions : Githubc2_components_reaction_rollup.t option; [@default None]
     side : Side.t; [@default "RIGHT"]
     start_line : int option; [@default None]
-    start_side : Start_side.t option; [@default Some "RIGHT1"]
+    start_side : Start_side.t option; [@default Some "RIGHT"]
     subject_type : Subject_type.t option; [@default None]
     updated_at : string;
     url : string;

@@ -12,7 +12,7 @@ all: .merlin
 pds.mk: pds.conf $(wildcard src/*/*) $(wildcard test/*/*)
 	pds -d
 
-terrat-schemas: terrat-api terrat-repo-config terrat-webhooks gitlab-api gitlab-webhooks
+terrat-schemas: terrat-api terrat-repo-config terrat-webhooks gitlab-api gitlab-webhooks github-api
 
 terrat: release-terrat debug-terrat
 
