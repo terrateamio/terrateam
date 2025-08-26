@@ -1043,6 +1043,15 @@
             "description": "Starts at 0, relative dependency order to perform operation on dir.",
             "type": "integer"
           },
+          "stack_name": {
+            "type": "string"
+          },
+          "variables": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
           "workflow": {
             "type": "integer"
           },
@@ -1052,8 +1061,9 @@
         },
         "required": [
           "path",
-          "workspace",
-          "rank"
+          "rank",
+          "stack_name",
+          "workspace"
         ],
         "type": "object"
       },

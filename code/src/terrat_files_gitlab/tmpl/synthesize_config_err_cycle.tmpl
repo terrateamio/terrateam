@@ -6,10 +6,10 @@ There is a cycle between dirspaces that is preventing operations from being eval
 
 Here is an example of the cycle:
 
-@#cycle-@
-- `@dir@:@workspace@`
-@/cycle-@
+{% for c in cycle %}
+- `{{ c.dir }}:{{ c.workspace }}`
+{% endfor %}
 
 ### What to do?
 
-The cycle must be removed. To do this, modify the `depends_on` sections of the in the configuration file.
+The cycle must be removed. To do this, modify the `depends_on` or `stacks` sections of the in the configuration file.
