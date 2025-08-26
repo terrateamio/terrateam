@@ -1718,7 +1718,7 @@ let of_version_1_workflow_engine cdktf terraform_version terragrunt default_engi
   | _, _, _, Some engine -> (
       let module E = Terrat_repo_config_engine in
       match engine with
-      | E.Engine_other other -> Ok (Some (Engine.Other other))
+      | E.Engine_other _ as other -> Ok (Some (Engine.Other (E.to_yojson other)))
       | E.Engine_custom custom ->
           let module E = Terrat_repo_config_engine_custom in
           let { E.apply; init; plan; diff; unsafe_apply; outputs; name = _ } = custom in
@@ -2047,7 +2047,7 @@ let of_version_1_engine default_tf_version engine =
   | _, Some engine -> (
       let module E = Terrat_repo_config_engine in
       match engine with
-      | E.Engine_other other -> Ok (Some (Engine.Other other))
+      | E.Engine_other _ as other -> Ok (Some (Engine.Other (E.to_yojson other)))
       | E.Engine_custom custom ->
           let module E = Terrat_repo_config_engine_custom in
           let { E.apply; init; plan; diff; unsafe_apply; outputs; name = _ } = custom in
@@ -2641,8 +2641,9 @@ let to_version_1_drift drift =
 
 let to_version_1_engine engine =
   let module E = Terrat_repo_config.Engine in
+  let module O = Terrat_repo_config_engine_other in
   match engine with
-  | Engine.Other other -> E.Engine_other other
+  | Engine.Other other -> E.Engine_other (CCResult.get_exn @@ O.of_yojson other)
   | Engine.Custom custom ->
       let module Custom = Terrat_repo_config.Engine_custom in
       let { Engine.Custom.apply; init; plan; diff; unsafe_apply; outputs } = custom in

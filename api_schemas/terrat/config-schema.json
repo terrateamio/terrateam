@@ -585,7 +585,23 @@
       ],
       "type": "object"
     },
-    "engine-other": {},
+    "engine-other": {
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        ]
+      },
+      "properties": {},
+      "type": "object"
+    },
     "engine-pulumi": {
       "additionalProperties": false,
       "properties": {
