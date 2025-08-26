@@ -29,6 +29,7 @@ val create :
   ?tls_config:[ `Require of Otls.Tls_config.t | `Prefer of Otls.Tls_config.t ] ->
   ?passwd:string ->
   ?port:int ->
+  ?on_connect:(Pgsql_io.t -> unit Abb.Future.t) ->
   connect_timeout:float ->
   host:string ->
   user:string ->
