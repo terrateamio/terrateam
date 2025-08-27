@@ -514,7 +514,13 @@
                   </div>
                   <div class="ml-4 min-w-0 flex-1">
                     <div class="flex items-center">
-                      <h3 class="text-base md:text-lg font-medium text-gray-900 dark:text-gray-100 truncate">{repo.name}</h3>
+                      <button
+                        on:click={() => handleRepoClick(repo)}
+                        class="text-base md:text-lg font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 truncate text-left transition-colors cursor-pointer"
+                        aria-label="View {repo.name} details"
+                      >
+                        {repo.name}
+                      </button>
                     </div>
                     {#if repo.setup}
                       <div class="mt-1 flex items-center text-sm text-green-600 dark:text-green-400">

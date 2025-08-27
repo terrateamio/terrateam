@@ -1,7 +1,7 @@
 <script lang="ts">
   // Auth handled by PageLayout
   import PageLayout from './components/layout/PageLayout.svelte';
-  import { selectedInstallation, installations } from './stores';
+  import { selectedInstallation, installations, currentVCSProvider } from './stores';
   import { Icon } from './components';
   import hljs from 'highlight.js/lib/core';
   import yamlLang from 'highlight.js/lib/languages/yaml';
@@ -466,7 +466,7 @@
                     </li>
                     <li class="text-sm text-gray-600 dark:text-gray-400 flex items-start">
                       <span class="text-green-500 mr-2 mt-0.5">✓</span>
-                      <span>Multi-environment support</span>
+                      <span>Multi-{$currentVCSProvider === 'gitlab' ? 'GitLab environment' : 'GitHub environment'} support</span>
                     </li>
                     <li class="text-sm text-gray-600 dark:text-gray-400 flex items-start">
                       <span class="text-green-500 mr-2 mt-0.5">✓</span>
@@ -890,7 +890,7 @@
                   </div>
                 </div>
 
-                <!-- Multiple Environments -->
+                <!-- Multiple {$currentVCSProvider === 'gitlab' ? 'GitLab' : 'GitHub'} Environments -->
                 <div>
                   <button
                     on:click={() => configOptions = { ...configOptions, multipleEnvironments: !configOptions.multipleEnvironments }}
@@ -905,14 +905,14 @@
                         <div class="flex items-center">
                           <div class="text-lg mr-3">🏗️</div>
                           <div class="flex items-center gap-3">
-                            <span class="text-sm font-medium">Multiple Environments</span>
+                            <span class="text-sm font-medium">Multiple {$currentVCSProvider === 'gitlab' ? 'GitLab' : 'GitHub'} Environments</span>
                             <a 
                               href="https://docs.terrateam.io/advanced-workflows/multiple-environments/"
                               target="_blank"
                               rel="noopener noreferrer"
                               on:click|stopPropagation
                               class="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                              title="Learn more about Multiple Environments (opens in new tab)"
+                              title="Learn more about Multiple {$currentVCSProvider === 'gitlab' ? 'GitLab' : 'GitHub'} Environments (opens in new tab)"
                             >
                               <Icon icon="mdi:open-in-new" width="16" height="16" />
                             </a>

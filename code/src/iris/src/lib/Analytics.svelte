@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   // Auth handled by PageLayout
   import { api } from './api';
-  import { selectedInstallation } from './stores';
+  import { selectedInstallation, currentVCSProvider } from './stores';
   import { repositoryService } from './services/repository-service';
   import PageLayout from './components/layout/PageLayout.svelte';
   import Card from './components/ui/Card.svelte';
@@ -1069,7 +1069,7 @@
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Success Rate</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Duration</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Activity</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Environments</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{$currentVCSProvider === 'gitlab' ? 'GitLab' : 'GitHub'} Environments</th>
               </tr>
             </thead>
             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -1800,7 +1800,7 @@
                         </div>
                         {#if drift.environment}
                           <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Environment:</span>
+                            <span class="text-gray-600 dark:text-gray-400">{$currentVCSProvider === 'gitlab' ? 'GitLab' : 'GitHub'} Environment:</span>
                             <span class="font-mono text-gray-900 dark:text-gray-100">{drift.environment}</span>
                           </div>
                         {/if}
