@@ -4159,6 +4159,7 @@ module Comment = struct
              kv
     | Msg.Tf_op_result { is_layered_run; remaining_layers; result; work_manifest } -> (
         let open Abb.Future.Infix_monad in
+        Logs.info (fun m -> m "%s : TF_OP_RESULT_V1" request_id);
         Result_publisher.iterate_comment_posts
           request_id
           client
