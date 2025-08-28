@@ -527,7 +527,7 @@
                       
                       <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-4 text-xs md:text-sm text-gray-600 dark:text-gray-400">
                         <div class="truncate">
-                          <span class="font-medium">Environment:</span>
+                          <span class="font-medium">{$currentVCSProvider === 'gitlab' ? 'GitLab' : 'GitHub'} Environment:</span>
                           <span class="ml-1">{workspace.environment || 'default'}</span>
                         </div>
                         <div class="truncate">

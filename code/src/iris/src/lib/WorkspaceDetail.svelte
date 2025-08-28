@@ -443,7 +443,7 @@
             <div class="space-y-1">
               <div class="truncate"><span class="text-gray-600 dark:text-gray-400">Owner:</span> <span class="font-mono">{workspace.owner}</span></div>
               <div class="truncate"><span class="text-gray-600 dark:text-gray-400">Repo:</span> <span class="font-mono">{workspace.repo}</span></div>
-              <div class="truncate"><span class="text-gray-600 dark:text-gray-400">Environment:</span> <span class="font-mono">{workspace.environment || 'default'}</span></div>
+              <div class="truncate"><span class="text-gray-600 dark:text-gray-400">{$currentVCSProvider === 'gitlab' ? 'GitLab' : 'GitHub'} Environment:</span> <span class="font-mono">{workspace.environment || 'default'}</span></div>
             </div>
           </div>
           <div>

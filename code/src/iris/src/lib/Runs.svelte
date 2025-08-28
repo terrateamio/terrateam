@@ -1767,7 +1767,7 @@
 
                 <!-- Environment Filter -->
                 <div>
-                  <label for="environment-filter" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Environment</label>
+                  <label for="environment-filter" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{$currentVCSProvider === 'gitlab' ? 'GitLab' : 'GitHub'} Environment</label>
                   <input
                     id="environment-filter"
                     type="text"
@@ -1892,8 +1892,8 @@
                           <div><code class="bg-white dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100">branch:main</code> - Operations on main branch</div>
                           <div><code class="bg-white dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100">workspace:production</code> - Operations in production workspace</div>
                           <div><code class="bg-white dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100">dir:infra/s3</code> - Operations that processed the infra/s3 directory</div>
-                          <div><code class="bg-white dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100">environment:production</code> - Operations in production environment</div>
-                          <div><code class="bg-white dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100">environment:</code> - Operations with no environment specified</div>
+                          <div><code class="bg-white dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100">environment:production</code> - Operations in production {$currentVCSProvider === 'gitlab' ? 'GitLab' : 'GitHub'} environment</div>
+                          <div><code class="bg-white dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100">environment:</code> - Operations with no {$currentVCSProvider === 'gitlab' ? 'GitLab' : 'GitHub'} environment specified</div>
                         </div>
                       </div>
                       
