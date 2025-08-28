@@ -79,3 +79,4 @@ where (ldm.state is null or ldm.state <> 'running')
            and (dsw.window_start is null
                 or (dsw.window_start <= current_timestamp and current_timestamp < dsw.window_end)))
       and gi.state = 'installed'
+for update skip locked
