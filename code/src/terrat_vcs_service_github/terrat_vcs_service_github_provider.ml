@@ -3243,8 +3243,16 @@ module Comment = struct
              "REPO_CONFIG_SCHEMA_ERR"
              Tmpl.repo_config_schema_err
              kv
-    | `Notification_policy_comment_strategy_err err -> raise (Failure "nyi")
-    | `Notification_policy_tag_query_err err -> raise (Failure "nyi")
+    | `Notification_policy_tag_query_err (query, err) ->
+        let kv = `Assoc [ ("query", `String query); ("error", `String err) ] in
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish_jinja
+             ~request_id
+             client
+             pull_request
+             "NOTIFICATION_POLICY_TAG_QUERY_ERR"
+             Tmpl.notification_policy_tag_query_err
+             kv
     | `Stack_config_tag_query_err err -> raise (Failure "nyi")
 
   let publish_comment ~request_id client user pull_request =

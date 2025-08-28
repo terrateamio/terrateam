@@ -259,10 +259,7 @@ module S = struct
     in
     let request_id = t.request_id in
     Api.comment_on_pull_request ~request_id t.client t.pull_request body
-    >>= fun comment_id ->
-    let cid = Api.Comment.Id.to_string comment_id in
-    Logs.debug (fun m -> m "%s : PUBLISHED_GITHUB_COMMENT : %s" request_id cid);
-    Abb.Future.return (Ok comment_id)
+    >>= fun comment_id -> Abb.Future.return (Ok comment_id)
 
   let rendered_length t els =
     let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
