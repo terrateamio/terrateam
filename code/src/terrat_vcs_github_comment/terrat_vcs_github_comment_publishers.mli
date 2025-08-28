@@ -2,52 +2,6 @@ module Api = Terrat_vcs_api_github
 module Scope = Terrat_scope.Scope
 module Visible_on = Terrat_base_repo_config_v1.Workflow_step.Visible_on
 
-module Output : sig
-  type t = {
-    cmd : string option;
-    name : string;
-    success : bool;
-    text : string;
-    text_decorator : string option;
-    visible_on : Visible_on.t;
-  }
-
-  val make :
-    ?cmd:string ->
-    ?text_decorator:string ->
-    name:string ->
-    success:bool ->
-    text:string ->
-    visible_on:Visible_on.t ->
-    unit ->
-    t
-
-  val to_kv : t -> Snabela.Kv.t Snabela.Kv.Map.t
-  val filter : overall_success:bool -> t list -> t list
-end
-
-val steps_has_changes : Terrat_api_components.Workflow_step_output.t list -> bool
-val steps_success : Terrat_api_components.Workflow_step_output.t list -> bool
-
-val kv_of_cost_estimation :
-  Terrat_dirspace.t list ->
-  Terrat_api_components_workflow_step_output.t ->
-  (Snabela.Kv.t Snabela.Kv.Map.t, string) result
-
-val output_of_run :
-  ?default_visible_on:Visible_on.t ->
-  Terrat_api_components_workflow_step_output.t ->
-  (Output.t, string) result
-
-val output_of_plan : Terrat_api_components_workflow_step_output.t -> (Output.t, string) result
-
-val output_of_workflow_output :
-  Terrat_api_components.Workflow_step_output.t -> (Output.t, string) result
-
-val output_of_raw : Terrat_api_components.Workflow_step_output.t -> Output.t
-val output_of_steps : Terrat_api_components.Workflow_step_output.t list -> Output.t list
-val kv_of_outputs : Output.t list -> Snabela.Kv.t Snabela.Kv.Map.t list
-
 val dirspace_compare :
   Terrat_dirspace.t * Terrat_api_components.Workflow_step_output.t list ->
   Terrat_dirspace.t * Terrat_api_components.Workflow_step_output.t list ->
