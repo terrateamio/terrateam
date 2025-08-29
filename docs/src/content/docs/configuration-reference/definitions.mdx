@@ -1,0 +1,16 @@
+---
+title: definitions
+description: Free-form section of configuration for YAML anchors
+---
+
+The `definitions` configuration is a section of the configuration that can be any valid YAML.  It is useful for defining YAML Anchors which can then be applied to other parts of the configuration.
+
+## Examples
+### Default engine configuration
+```yaml
+definitions:
+  default_engine: &default_engine
+    name: tofu
+
+engine: *default_engine
+```

@@ -2345,6 +2345,7 @@ let of_version_1 v1 =
     create_and_select_workspace;
     default_branch_overrides;
     default_tf_version;
+    definitions = _;
     destination_branches;
     dirs;
     drift;
@@ -3137,6 +3138,7 @@ let to_version_1 t =
     create_and_select_workspace;
     default_branch_overrides;
     default_tf_version = None;
+    definitions = None;
     destination_branches =
       map_opt_if_true (( <> ) []) to_version_1_destination_branches destination_branches;
     dirs = map_opt_if_true CCFun.(String_map.is_empty %> not) to_version_1_dirs dirs;

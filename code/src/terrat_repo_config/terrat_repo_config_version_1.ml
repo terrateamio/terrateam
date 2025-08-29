@@ -26,6 +26,10 @@ module Cost_estimation = struct
   [@@deriving yojson { strict = true; meta = true }, make, show, eq]
 end
 
+module Definitions = struct
+  type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show, eq]
+end
+
 module Destination_branches = struct
   module Items = struct
     type t =
@@ -152,6 +156,7 @@ type t = {
   create_and_select_workspace : bool; [@default true]
   default_branch_overrides : Terrat_repo_config_default_branch_overrides.t option; [@default None]
   default_tf_version : string option; [@default None]
+  definitions : Definitions.t option; [@default None]
   destination_branches : Destination_branches.t option; [@default None]
   dirs : Dirs.t option; [@default None]
   drift : Drift.t option; [@default None]
