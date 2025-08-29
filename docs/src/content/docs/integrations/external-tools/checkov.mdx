@@ -1,0 +1,65 @@
+---
+title: Scanning Terraform Plans with Checkov
+description: Integrate Checkov with Terrateam to detect misconfigurations in your Terraform plans
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Terrateam integrates with [Checkov](https://www.checkov.io/), a popular tool for scanning infrastructure as code, to help you detect and prevent common misconfigurations in your Terraform plans. By running Checkov against your Terraform plans as part of your Terrateam [workflows](/reference/configuration/workflows), you can identify potential issues before they are applied to your infrastructure, ensuring better security and compliance.
+
+## What is Checkov?
+Checkov is an open-source tool that scans infrastructure as code (IaC) files, such as Terraform configurations, to identify misconfigurations, security issues, and compliance violations. It provides a comprehensive set of built-in policies and checks based on industry best practices and compliance standards like the CIS Benchmark, HIPAA, and PCI-DSS.
+Checkov can be integrated into your CI/CD pipeline to automatically scan your Terraform plans and provide feedback on potential issues, helping you catch and fix problems early in the development process.
+
+## Configuring Checkov
+To integrate Checkov with Terrateam, you need to configure a workflow in your Terrateam configuration file (`.terrateam/config.yml`).
+Here's an example configuration that runs Checkov against the generated Terraform plan:
+```yaml
+workflows:
+  - tag_query: ''
+    plan:
+      - type: init
+      - type: plan
+      - type: checkov
+```
+In this configuration:
+- The `init` and `plan` steps generate the Terraform plan as usual.
+- The `checkov` step automatically runs Checkov against the generated Terraform plan file.
+- The Checkov output is automatically captured and included in the Terrateam plan results.
+:::note
+The `checkov` step type is a Terrateam workflow step that automatically handles running Checkov with the appropriate configuration against your Terraform plan.
+:::
+
+## Scanning Terraform Plans
+When a Terrateam plan operation runs with Checkov enabled, the following steps occur:
+<Steps>
+1. Terrateam generates the Terraform plan file.
+
+2. Checkov is executed against the generated plan file, scanning for misconfigurations and policy violations.
+
+3. If Checkov detects any issues, it returns a non-zero exit status, causing the Terrateam plan operation to fail.
+
+4. The Checkov output, including details about the identified issues, is captured and included in the Terrateam plan results.
+
+5. If the plan passes the Checkov scan without any issues, the Terrateam plan operation succeeds, and the plan can be reviewed and applied as usual.
+</Steps>
+Here's an example of a Terrateam plan failing due to a Checkov scan detecting misconfigurations:
+![Checkov Plan Failure](/src/assets/static-analysis-terrateam-checkov-step-checkov-fails.png)
+
+## Customizing Checkov Options
+Checkov provides various configuration options that can be customized using environment variables. You can find the full list of Checkov configuration options [here](https://www.checkov.io/2.Basics/CLI%20Command%20Reference.html#cli-command-reference).
+Here's an example of how to skip a specific check using the `CKV_SKIP_CHECK` environment variable in your Terrateam workflow:
+```yaml
+workflows:
+  - tag_query: ''
+    plan:
+      - type: env
+        name: CKV_SKIP_CHECK
+        cmd: ['echo', 'CKV_GCP_73']
+      - type: init
+      - type: plan
+      - type: checkov
+```
+In this configuration:
+- The `env` step sets the `CKV_SKIP_CHECK` environment variable to `CKV_GCP_73`, indicating that the specific check with ID `CKV_GCP_73` should be skipped during the Checkov scan.
+- The subsequent steps (`init`, `plan`, and `checkov`) are executed as usual, with Checkov using the specified configuration options.

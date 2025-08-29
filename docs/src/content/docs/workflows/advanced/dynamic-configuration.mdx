@@ -1,0 +1,206 @@
+---
+title: Dynamically Generate Configuration at Runtime
+description: Dynamically generate Terrateam configurations at runtime
+---
+import MermaidDiagram from "../../../../components/MermaidDiagram.astro";
+
+Some infrastructure setups cannot be expressed using the existing Terrateam repository configuration. The configuration may depend on information that exists in the repository, performing an API call, or may be best expressed in another way. To support these situations, Terrateam has the [`config_builder`](/reference/configuration/config-builder) configuration, which allows you to create dynamic configurations at runtime using custom scripts. This approach helps automate complex infrastructure workflows ...
+
+## How It Works
+
+When `config_builder` is enabled, Terrateam will run the script you provide to generate the dynamic configuration. This configuration is then merged with the other configuration, producing a repository configuration. The script is executed in a GitHub Action, in a checkout of your repository.
+
+:::caution[Security Implications]
+Running arbitrary scripts as part of your configuration builder introduces security risks. These scripts have access to repository contents, environment variables, and any configured secrets. Only trusted users should be allowed to modify or approve config builder scripts. Always review scripts carefully for malicious or unintended behavior before enabling them.
+
+Using this in conjunction with `access_control.files` is always a good idea:
+```
+access_control:
+  files:
+    bin/script-that-handles-sensitive-things: ['role:admin']
+```
+:::
+
+:::note[Example Scenario]
+Imagine a scenario where your repository structure encodes environment and region information in directory names, such as `prod/us-east/database`. You want to automatically tag directories based on this structure so you can easily target all `us-east` regions for a plan or apply. With a config builder script, you can parse directory names and inject tags dynamically, something not possible with static configuration alone.
+:::
+
+### Configuration Merge Flow
+
+The configuration from the config builder is merged with other configuration sources. The merge order and override rules are important for understanding the final config.
+<details>
+  <summary>Expand for step-by-step configuration merge flow diagram</summary>
+  <MermaidDiagram chart={`
+flowchart TD
+  A(Centralized Defaults)
+  B(Centralized Overrides)
+  C(Repo Defaults)
+  D(Repo Overrides)
+  E(Repo Forced Config)
+  F(Repo Default Branch Config)
+  G(Feature Branch Config)
+  H(Config Builder Output)
+  I(Final Merged Config)
+  A --> B --> C --> D --> E --> F --> G --> H --> I
+  `} />
+</details>
+
+- Centralized and repo-level configs are merged in order.
+- The config builder script runs after all static config is merged.
+- Some sections (like access control) are always taken from the default branch config.
+
+:::note
+Dynamically building a configuration is very powerful and can make understanding your Terrateam configuration difficult. We recommend using this feature for specific needs and with careful consideration.
+
+You can always comment `terrateam repo-config` in a pull request, and Terrateam will comment back with the assembled repository configuration.
+:::
+
+### Configuration
+
+To enable `config_builder`:
+
+```yaml
+config_builder:
+  enabled: true
+  script: |
+    #! /usr/bin/env bash
+    # Insert your script logic here to dynamically generate configuration
+```
+
+### Input
+
+When running the config builder, the existing repository configuration will be passed in as input via `stdin` as JSON. The repository configuration that is input has all directory globs expanded and implicit tags included.
+
+### Output
+
+The script should write to `stdout` the produced repository configuration in JSON format. The output must be a valid Terrateam repository configuration.
+
+## Interpreter
+
+If the `script` does not begin with a shebang (`#!`), the script is assumed to be a bash script and a shebang is injected into the script before execution.
+
+### Errors
+
+Errors, from the configuration builder script failing to the output being invalid, will be communicated via a comment in the pull request and failed status check.
+
+### Security
+
+Adding the ability to run an arbitrary program to generate configuration introduces a new avenue for security concerns. Terrateam has the following rules when constructing a repository config from a config builder:
+
+1. `access_control`, `apply_requirements`, and `destination_branches` are always taken from the default branch's configuration, which is constructed without the config builder.
+2. Any explicit configuration defined in the feature branch repository configuration overrides any output from the config builder. For example, if the `indexer` feature is explicitly enabled in `.terrateam/config.yml`, the config builder cannot disable it—its output will be overwritten.
+3. Overrides defined in the centralized configuration always win.
+4. The `terrateam_repo_update` access control applies to the `.terrateam/config.yml`. It is recommended to either put as much of your config builder script in the `script` section as possible or verify the contents of any called programs in the script before calling out to them. By doing this, the validation of the scripts is enforced with the `terrateam_repo_update` access control.
+
+## Use Cases
+
+In general, we try to make the Terrateam configuration as expressive as possible. Configuration expressed with a static file is easier to maintain and understand. However, there are several use cases that are not possible without `config_builder`.
+
+### Fine-grained Access Control
+
+The `terrateam_config_update` access control applies to the whole configuration, but there are scenarios where parts of the configuration should be modified by a different set of users. By moving that configuration to a separate file, providing a merge script, and using per-file access control, the management of those parts of the configuration can be delegated to other users.
+
+### Custom Tags
+
+You might include information in the directory structure of your repository. For example, each directory might be structured like `prod/us-east/database`, where the first part is the environment, the second is the region, and the third is the service. A config builder script can derive tags from this structure, so you could easily plan just the `us-east` regions. The Terrateam configuration does not have a way to specify this, but a config builder script could add these tags.
+
+### Bespoke Configuration Syntax
+
+In some cases, it is desirable to offer a configuration file format that is specifically designed for your needs. With config builder, you can transform this specific configuration into the Terrateam configuration.
+
+Terrateam itself provides an example of this in the [terrateam-aux-repo-config](https://github.com/terrateamio/action/blob/main/bin/terrateam-aux-repo-config) script. This supports specifying layer dependencies as a standalone YAML file.
+
+### Experimentation
+
+Config builder scripts are a good place to experiment with new possible configuration options. Experimentation can happen within them, and eventually, if they prove useful, they can be incorporated as official Terrateam configuration features.
+
+## terrateam-aux-repo-config
+
+Terrateam comes with an existing config builder called `terrateam-aux-repo-config`. This script serves as a place for bespoke configuration functionality. Currently, it allows for expressing layers as a list of directories and then translating them into a `depends_on` tag query.
+
+Given a directory structure like the following:
+
+```
+.
+└── projects
+    ├── proj1
+    │   ├── base
+    │   │   └── main.tf
+    │   ├── database1
+    │   │   └── main.tf
+    │   ├── database2
+    │   │   └── main.tf
+    │   └── webservice
+    │       └── main.tf
+    ├── proj2
+    │   ├── base
+    │   │   └── main.tf
+    │   ├── database1
+    │   │   └── main.tf
+    │   ├── database2
+    │   │   └── main.tf
+    │   └── webservice
+    │       └── main.tf
+    └── proj3
+        ├── base
+        │   └── main.tf
+        ├── database1
+        │   └── main.tf
+        ├── database2
+        │   └── main.tf
+        └── webservice
+            └── main.tf
+```
+
+The layers can be defined in `.terrateam/aux.yml`:
+
+```yaml
+# .terrateam/aux.yml
+dirs:
+  projects/proj1/database1:
+    deps:
+      - projects/proj1/base
+  projects/proj1/database2:
+    deps:
+      - projects/proj1/base
+  projects/proj2/database1:
+    deps:
+      - projects/proj2/base
+  projects/proj2/database2:
+    deps:
+      - projects/proj2/base
+  projects/proj3/database1:
+    deps:
+      - projects/proj3/base
+  projects/proj3/database2:
+    deps:
+      - projects/proj3/base
+  projects/proj1/webservice:
+    deps:
+      - projects/proj1/database1
+      - projects/proj1/database2
+  projects/proj2/webservice:
+    deps:
+      - projects/proj2/database1
+      - projects/proj2/database2
+  projects/proj3/webservice:
+    deps:
+      - projects/proj3/database1
+      - projects/proj3/database2
+```
+
+And the `terrateam-aux-repo-config` can be enabled with:
+
+```yaml
+config_builder:
+  enabled: true
+  script: |
+    #! /usr/bin/env bash
+    terrateam-aux-repo-config
+```
+
+### Best Practices
+
+- Utilize config builder only after careful consideration. It is a powerful feature that allows your configuration to differ between executions.
+- Ensure that your script properly handles errors and failures when using external APIs or data sources.
+- Use explicit configuration in the repository configuration and centralized configuration, and use config builder for configurations that cannot be expressed any other way.
