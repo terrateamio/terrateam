@@ -1,0 +1,57 @@
+---
+title: Troubleshooting
+description: Common issues and solutions for Terrateam
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## Common Issues & Solutions
+
+Find solutions to frequently encountered problems with Terrateam.
+
+<CardGrid>
+  <LinkCard
+    title="Common Errors"
+    description="Solutions to frequently encountered error messages"
+    href="/troubleshooting/common-errors"
+  />
+  <LinkCard
+    title="Debugging Guide"
+    description="Step-by-step debugging procedures for failed operations"
+    href="/troubleshooting/debugging-guide"
+  />
+  <LinkCard
+    title="Performance Issues"
+    description="Optimize slow plan/apply operations and large repositories"
+    href="/troubleshooting/performance"
+  />
+  <LinkCard
+    title="FAQ"
+    description="Frequently asked questions and quick answers"
+    href="/troubleshooting/faq"
+  />
+</CardGrid>
+
+## Quick Fixes
+
+### Authentication Issues
+- Verify GitHub App permissions
+- Check cloud provider credentials
+- Validate OIDC configuration
+
+### Plan/Apply Failures
+- Review Terraform version compatibility
+- Check for locked workspaces
+- Verify directory configuration
+
+### Configuration Problems
+- Validate YAML syntax
+- Check for conflicting rules
+- Review access control settings
+
+## Get Help
+
+If you can't find a solution here:
+1. Search [GitHub Issues](https://github.com/terrateamio/terrateam/issues)
+2. Join our [Community Slack](https://terrateam.io/slack)
+3. Contact [Support](mailto:support@terrateam.io)

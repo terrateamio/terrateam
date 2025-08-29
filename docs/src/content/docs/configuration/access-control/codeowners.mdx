@@ -1,0 +1,74 @@
+---
+title: Enforcing CODEOWNERS Approval
+description: Ensure infrastructure changes are approved by the right teams using CODEOWNERS
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Terrateam integrates with CODEOWNERS to ensure that infrastructure changes are reviewed and approved by the appropriate teams or individuals before being applied. This is particularly important for maintaining governance and compliance in large organizations where different teams own different parts of the infrastructure.
+
+## Configuring CODEOWNERS Enforcement
+
+To enforce CODEOWNERS approval in Terrateam, use the `require_completed_reviews` option in your [apply requirements](/reference/configuration/apply-requirements) configuration. This ensures that all required CODEOWNERS have approved the pull request before Terraform changes can be applied.
+
+### Basic Configuration
+
+Here's a basic example that enforces CODEOWNERS approval for all infrastructure changes:
+
+```yaml
+apply_requirements:
+  checks:
+    - tag_query: ''
+      approved:
+        enabled: true
+        require_completed_reviews: true
+```
+
+With this configuration:
+- Terrateam will check that all CODEOWNERS have approved the pull request
+- If any required CODEOWNERS review is pending or has requested changes, the apply will be blocked
+- The apply can only proceed once all CODEOWNERS have approved
+
+### Environment-Specific CODEOWNERS Enforcement
+
+You can use tag queries to enforce CODEOWNERS approval only for specific environments:
+
+```yaml
+apply_requirements:
+  checks:
+    - tag_query: 'production'
+      approved:
+        enabled: true
+        require_completed_reviews: true
+    - tag_query: 'staging'
+      approved:
+        enabled: true
+        require_completed_reviews: false
+    - tag_query: 'development'
+      approved:
+        enabled: false
+```
+
+This configuration:
+- Enforces CODEOWNERS approval for production environments
+- Allows applies in staging without completed CODEOWNERS reviews
+- Allows applies in development without any approval requirements
+
+## How It Works
+
+When `require_completed_reviews: true` is configured:
+
+<Steps>
+1. A developer opens a pull request with Terraform changes
+
+2. Your VCS automatically requests reviews from CODEOWNERS based on the files changed
+
+3. When someone runs `terrateam apply`, Terrateam checks:
+   - Whether approval is required based on your configuration
+   - If all CODEOWNERS have approved the pull request
+   - If any required reviews are still pending or have requested changes
+
+4. If all CODEOWNERS have approved, the apply proceeds
+
+5. If any CODEOWNERS review is incomplete or has requested changes, Terrateam blocks the apply with a message indicating which reviews are still needed
+</Steps>

@@ -1,0 +1,98 @@
+---
+title: Ignoring a Directory
+description: Learn how to configure Terrateam to ignore specific directories and prevent automatic plans and applies in them.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+In some cases, you may want to prevent Terrateam from running plans or applies within certain directories or files in your repository.
+
+**Why ignore directories or files?**  
+This is especially useful for:
+- Directories with Terraform modules that are not meant to be deployed directly (for example, shared modules or templates).
+- Supporting files or folders that match Terraform file patterns (like `.tf`), but should not trigger infrastructure changes.
+
+:::tip
+The `file_patterns` configuration supports glob patterns (see [Dirs reference](/reference/configuration/dirs#globs)). You can use this to precisely match or exclude files and directories.
+:::
+
+## How to Ignore a Directory
+
+To ignore a directory in Terrateam, add it to the `dirs` section in your `.terrateam/config.yml` file and set `when_modified.file_patterns` to an empty list.
+
+**Example: Ignore the `docs` directory**
+```yaml
+dirs:
+  docs:
+    when_modified:
+      file_patterns: []
+```
+Changes to files in the `docs` directory will not trigger any plans or applies.
+
+## Ignoring Module Directories
+
+If you have a directory containing Terraform modules (for example, `modules/`), and you do not want changes in these modules to trigger runs directly, you can ignore the entire directory:
+
+```yaml
+dirs:
+  modules:
+    when_modified:
+      file_patterns: []
+```
+
+## Ignoring Specific Files
+
+You can also ignore specific files by using their path as a key in the `dirs` section and setting `file_patterns` to an empty list:
+
+**Example: Ignore a specific file**
+```yaml
+dirs:
+  foobar.tf:
+    when_modified:
+      file_patterns: []
+```
+
+:::tip
+You can use glob patterns to ignore groups of files, such as all dev.*.tfvars files:
+:::
+
+```yaml
+dirs:
+  "dev.*.tfvars":
+    when_modified:
+      file_patterns: []
+```
+
+## Advanced: Ignoring by Pattern
+
+You can use glob patterns to ignore files or directories matching a pattern. For example, to ignore all files in a `test/` directory:
+
+```yaml
+dirs:
+  test/**:
+    when_modified:
+      file_patterns: []
+```
+
+Or to ignore all files ending in `.example.tf`:
+
+```yaml
+dirs:
+  "**/*.example.tf":
+    when_modified:
+      file_patterns: []
+```
+
+:::tip
+The `${DIR}` variable can be used in `file_patterns` to refer to the current directory. See [Dirs reference](/reference/configuration/dirs#when-modified) for more details.
+:::
+
+## Best Practices
+
+- Use precise patterns to avoid unintentionally ignoring important infrastructure code.
+- Review the [Dirs configuration reference](/reference/configuration/dirs) for more on glob patterns and advanced matching.
+- Remember that ignoring a directory or file means no plans or applies will be triggered for changes within it.
+
+---
+
+If you need to ignore more complex patterns or have questions about matching behavior, see the [Globs section](/reference/configuration/dirs#globs) in the configuration reference.

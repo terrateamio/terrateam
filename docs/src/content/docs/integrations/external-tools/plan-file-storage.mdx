@@ -1,0 +1,149 @@
+---
+title: Plan File Storage
+description: Learn how to configure and use plan file storage in Terrateam
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Terrateam offers flexibility in storing Terraform plan files across various locations, providing precise control over their management and accessibility. Configuring plan file storage ensures secure retention and convenient access as needed.
+
+Plan files are essential during the apply process to verify that executed changes align with previously planned and reviewed changes. Storing these files adds an additional layer of security.
+
+## Configuring Plan File Storage
+
+To configure plan file storage in Terrateam, you can modify the `storage` section of your Terrateam configuration file (`.terrateam/config.yml`).
+```yaml
+storage:
+  plans:
+    method: s3
+    bucket: my-terraform-plans
+    region: us-east-1
+```
+
+In this example, we set the `method` to `s3` to indicate that we want to store plan files in an AWS S3 bucket. We then specify the `bucket` and `region` where the plan files should be stored.
+
+### Storage Methods
+
+Terrateam supports several storage methods for plan files:
+
+##### `terrateam` (default)
+Plan files are stored within the Terrateam server. This is the default behavior and requires no additional configuration.
+
+##### `s3`
+Plan files are stored in an AWS S3 bucket. You need to provide the `bucket` and `region` in your configuration.
+
+##### `cmd`
+Plan files are stored using a custom command. You need to provide the `store`, `fetch`, and `delete` commands in your configuration.
+
+### S3 Storage
+
+To store plan files in an AWS S3 bucket, you need to configure the following options:
+- `bucket`: The name of the S3 bucket where plan files will be stored.
+- `region`: The AWS region where the S3 bucket is located.
+- `path` (optional): The path within the S3 bucket where plan files will be stored. Defaults to `terrateam/plans/$dir/$workspace/$date-$time-$token`.
+- `access_key_id` (optional): The AWS access key ID to use for authentication. If not provided, Terrateam will use the default AWS credentials chain.
+- `secret_access_key` (optional): The AWS secret access key to use for authentication. If not provided, Terrateam will use the default AWS credentials chain.
+
+### Custom Command Storage
+
+To store plan files using a custom command, you need to configure the following options:
+
+##### `store`
+The command to run when storing a plan file. The command should accept the plan file path as an argument.
+
+##### `fetch`
+The command to run when fetching a plan file. The command should accept the plan file path as an argument and output the plan file contents to stdout.
+
+##### `delete` (optional)
+The command to run when deleting a plan file. The command should accept the plan file path as an argument.
+
+#### Examples
+##### Example 1: Using Gsutil for Google Cloud Storage
+```yaml
+storage:
+  plans:
+    method: cmd
+    store: ["gsutil", "cp", "$plan_path", "gs://my-terraform-plans/$dir/$workspace/$date-$time-$token"]
+    fetch: ["gsutil", "cp", "gs://my-terraform-plans/$dir/$workspace/$date-$time-$token", "$plan_dst_path"]
+    delete: ["gsutil", "rm", "gs://my-terraform-plans/$dir/$workspace/$date-$time-$token"]
+```
+
+##### Example 2: Using Curl for Custom Plan Storage
+```yaml
+storage:
+  plans:
+    method: cmd
+    store: ["curl", "-X", "PUT", "--data-binary", "@$plan_path", "https://plan-storage.example.com/$dir/$workspace/$date-$time-$token"]
+    fetch: ["curl", "-X", "GET", "https://plan-storage.example.com/$dir/$workspace/$date-$time-$token", "-o", "$plan_dst_path"]
+    delete: ["curl", "-X", "DELETE", "https://plan-storage.example.com/$dir/$workspace/$date-$time-$token", "-o", "$plan_dst_path"]
+```
+
+These examples illustrate how Terrateam configurations can utilize different commands (`gsutil` and `curl`) to store, fetch, and delete Terraform plan files. Adjustments to `store`, `fetch`, and `delete` commands can tailor the configuration to fit specific storage requirements and workflows effectively.
+
+### Using Environment Variables
+```yaml
+workflows:
+  - tag_query: "dir:production"
+    plan:
+      - type: env
+        name: MY_PLAN_BUCKET
+        cmd: ['echo', 'production-bucket-name']
+      - type: init
+      - type: plan
+    apply:
+      - type: env
+        name: MY_PLAN_BUCKET
+        cmd: ['echo', 'production-bucket-name']
+      - type: init
+      - type: apply
+  - tag_query: ""
+    plan:
+      - type: env
+        name: MY_PLAN_BUCKET
+        cmd: ['echo', 'non-production-bucket-name']
+      - type: init
+      - type: plan
+    apply:
+      - type: env
+        name: MY_PLAN_BUCKET
+        cmd: ['echo', 'non-production-bucket-name']
+      - type: init
+      - type: apply
+storage:
+  plans:
+    method: s3
+    bucket: $MY_PLAN_BUCKET
+    region: us-east-1
+```
+
+The above example illustrates how you can leverage environment variables to define `storage.plans` configuration values. Be sure to define all environment variables used in a catchall workflow (`tag_query: ""`).
+
+## Using Plan File Storage
+
+Once you've configured plan file storage in your Terrateam configuration file, Terrateam will automatically store and retrieve plan files as needed during the plan and apply process.
+<Steps>
+1. Open a pull request with changes to your Terraform code.
+
+1. Terrateam automatically runs a plan operation and stores the resulting plan file using the configured storage method.
+
+1. Review the plan output and collaborate with your team to ensure the changes are as expected.
+
+1. Once the pull request is approved, comment `terrateam apply` to trigger an apply operation.
+
+1. Terrateam retrieves the stored plan file and uses it during the apply process to ensure the changes match the previously reviewed plan.
+
+1. After the apply is complete, Terrateam deletes the stored plan file (if configured to do so).
+</Steps>
+
+## Considerations
+
+- When using S3 storage, ensure that the AWS credentials used by Terrateam have the necessary permissions to read, write, and delete objects in the specified S3 bucket.
+- If using custom command storage, ensure that the commands are properly secured and have access to the necessary resources (e.g., storage systems, credentials) to store and retrieve plan files.
+- Plan files may contain sensitive information about your infrastructure. Always ensure that your storage method is properly secured and that access to the stored plan files is restricted to authorized users.
+- Terrateam provides several built-in variables that you can use in your storage configuration, such as `$dir`, `$workspace`, and `$date`. These variables allow you to create dynamic paths for storing plan files based on the current directory, workspace, and timestamp.
+
+## Best Practices
+
+- Use a consistent naming convention for your stored plan files to make it easy to identify and manage them.
+- Consider implementing a retention policy for your stored plan files to avoid accumulating unnecessary files over time.
+- Use Terrateam's built-in variables to create dynamic and unique paths for your stored plan files, reducing the risk of conflicts and making it easier to identify specific plan files. See the [Configuration Reference](/reference/configuration/storage) for details.
