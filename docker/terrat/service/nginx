@@ -2,10 +2,6 @@
 
 sleep 5
 
-if [ -z "$TERRAT_UI_BASE" ]; then
-    export TERRAT_UI_BASE="https://app.terrateam.io/"
-fi
-
 if [ "$DISABLE_IPV6" = "1" ]; then
   export IPV6_LISTEN=""
 else
