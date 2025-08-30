@@ -26,12 +26,13 @@ let rec string stop b buf =
 let rec token buf =
   match%sedlex buf with
   | identifier -> (
-      match Sedlexing.Utf8.lexeme buf with
+      let token = Sedlexing.Utf8.lexeme buf in
+      match CCString.lowercase_ascii token with
       | "and" -> T.AND
       | "or" -> T.OR
       | "not" -> T.NOT
       | "in" -> T.IN
-      | str -> T.STRING str)
+      | _ -> T.STRING token)
   | '(' -> T.LPAREN
   | ')' -> T.RPAREN
   | '"' ->
