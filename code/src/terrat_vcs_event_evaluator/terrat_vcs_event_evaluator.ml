@@ -7328,14 +7328,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     in
     let event_kind_repo_config_flow =
       Flow.Flow.(
-        seq
-          (action
-             [
-               Flow.Step.make
-                 ~id:Id.Publish_repo_config
-                 ~f:(eval_step F.test_repo_config_validity)
-                 ();
-             ])
+        seq store_pull_request_flow
+        @@ seq
+             (action
+                [
+                  Flow.Step.make
+                    ~id:Id.Publish_repo_config
+                    ~f:(eval_step F.test_repo_config_validity)
+                    ();
+                ])
         @@ seq index_flow
         @@ action
              [
@@ -7349,14 +7350,12 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     in
     let event_kind_index_flow =
       Flow.Flow.(
-        seq
-          (action
-             [ Flow.Step.make ~id:Id.Store_pull_request ~f:(eval_step F.store_pull_request) () ])
-          (seq
+        seq store_pull_request_flow
+        @@ seq
              index_flow
              (seq
                 complete_work_manifest_flow
-                (action [ Flow.Step.make ~id:Id.Publish_index ~f:(eval_step F.publish_index) () ]))))
+                (action [ Flow.Step.make ~id:Id.Publish_index ~f:(eval_step F.publish_index) () ])))
     in
     let event_kind_unlock_flow =
       Flow.Flow.(action [ Flow.Step.make ~id:Id.Unlock ~f:(eval_step F.unlock) () ])

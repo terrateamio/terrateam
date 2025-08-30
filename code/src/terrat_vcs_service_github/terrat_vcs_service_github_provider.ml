@@ -764,7 +764,14 @@ module Db = struct
                     ~f:(fun branch _ -> branch)
                     work_manifest_id)
               >>= function
-              | [] -> assert false
+              | [] ->
+                  Logs.info (fun m ->
+                      m
+                        "%s : QUERY_WORK_MANIFEST : MISSING_DRIFT : id=%a"
+                        request_id
+                        Uuidm.pp
+                        work_manifest_id);
+                  assert false
               | branch :: _ ->
                   Abb.Future.return
                     (Ok
