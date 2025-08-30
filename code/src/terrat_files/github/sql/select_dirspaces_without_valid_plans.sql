@@ -6,7 +6,8 @@ latest_dirspace_work_manifests as(
     select distinct on (gwm.repository, gwm.pull_number, wmr.path, wmr.workspace)
         gwm.id,
         wmr.path,
-        wmr.workspace
+        wmr.workspace,
+        wmr.success
     from github_work_manifests as gwm
     inner join github_pull_requests as gpr
         on gpr.repository = gwm.repository
@@ -38,4 +39,4 @@ left join plans
     on plans.work_manifest = gwm.id
        and plans.path = ds.path
        and plans.workspace = ds.workspace
-where gwm.id is null or plans.data is null
+where gwm.id is null or plans.data is null and ldswm.success
