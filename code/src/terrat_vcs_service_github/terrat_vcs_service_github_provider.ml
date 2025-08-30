@@ -3705,6 +3705,16 @@ module Comment = struct
              "STACK_NOT_FOUND"
              Tmpl.synthesize_config_err_stack_not_found
              kv
+    | Msg.Str_template_err (`Missing_var_err name) ->
+        let kv = `Assoc [ ("var_name", `String name) ] in
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish_jinja
+             ~request_id
+             client
+             pull_request
+             "STR_TEMPLATE"
+             Tmpl.str_template_err_missing_var
+             kv
     | Msg.Dest_branch_no_match pull_request ->
         let kv =
           Snabela.Kv.(

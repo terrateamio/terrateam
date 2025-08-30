@@ -2990,9 +2990,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           publish_msg request_id client user pull_request (Msg.Run_work_manifest_err err)
 
     let replace_stack_vars vars s =
-      match Str_template.apply (CCFun.flip Terrat_data.String_map.find_opt vars) s with
-      | Ok s -> s
-      | Error (#Str_template.err as err) -> assert false
+      Str_template.apply (CCFun.flip Terrat_data.String_map.find_opt vars) s
 
     let apply_stack_vars_to_workflow stack workflow =
       let module R = Terrat_base_repo_config_v1 in
@@ -3010,43 +3008,37 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       } =
         workflow
       in
-      {
-        workflow with
-        E.environment = CCOption.map (replace_stack_vars stack.S.variables) environment;
-      }
+      let open CCResult.Infix in
+      CCResult.opt_map (replace_stack_vars stack.S.variables) environment
+      >>= fun environment -> Ok { workflow with E.environment }
 
     let dirspaceflows_of_changes_with_branch_target repo_config changes =
       let module R = Terrat_base_repo_config_v1 in
       let module S = R.Stacks in
       let workflows = R.workflows repo_config in
-      Ok
-        (CCList.map
-           (fun ( {
-                    Terrat_change_match3.Dirspace_config.dirspace;
-                    lock_branch_target;
-                    stack_config = { S.Stack.variables; _ } as stack_config;
-                    _;
-                  },
-                  workflow )
-              ->
-             let module Dsf = Terrat_change.Dirspaceflow in
-             {
-               Dsf.dirspace;
-               workflow =
-                 ( lock_branch_target,
-                   CCOption.map
-                     (fun (idx, workflow) ->
-                       {
-                         Dsf.Workflow.idx;
-                         workflow = apply_stack_vars_to_workflow stack_config workflow;
-                       })
-                     workflow );
-               variables = Some variables;
-             })
-           (match_tag_queries
-              ~accessor:(fun { R.Workflows.Entry.tag_query; _ } -> tag_query)
-              ~changes
-              workflows))
+      CCResult.map_l
+        (fun ( {
+                 Terrat_change_match3.Dirspace_config.dirspace;
+                 lock_branch_target;
+                 stack_config = { S.Stack.variables; _ } as stack_config;
+                 _;
+               },
+               workflow )
+           ->
+          let open CCResult.Infix in
+          let module Dsf = Terrat_change.Dirspaceflow in
+          CCResult.opt_map
+            (fun (idx, workflow) ->
+              let open CCResult.Infix in
+              apply_stack_vars_to_workflow stack_config workflow
+              >>= fun workflow -> Ok { Dsf.Workflow.idx; workflow })
+            workflow
+          >>= fun workflow ->
+          Ok { Dsf.dirspace; workflow = (lock_branch_target, workflow); variables = Some variables })
+        (match_tag_queries
+           ~accessor:(fun { R.Workflows.Entry.tag_query; _ } -> tag_query)
+           ~changes
+           workflows)
 
     let strip_lock_branch_target dsfs =
       let module Dsf = Terrat_change.Dirspaceflow in
@@ -4759,7 +4751,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         ~result:H.generate_index_work_manifest_result
         ~fallthrough:H.log_state_err_iter
 
-    (* This is run for its side effect.  If the repo config is not valid, the surrounding [eval_step] will publish the error. *)
+    (* This is run for its side effect.  If the repo config is not valid, the
+       surrounding [eval_step] will publish the error. *)
     let test_repo_config_validity ctx state =
       let open Abbs_future_combinators.Infix_result_monad in
       Dv.repo_config ctx state >>= fun _ -> Abb.Future.return (Ok state)
@@ -6887,6 +6880,10 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             Logs.info (fun m ->
                 m "%s : %a" state.State.request_id Terrat_vcs_provider2.pp_gate_add_approval_err err);
             H.maybe_publish_msg ctx state Msg.Unexpected_temporary_err
+            >>= fun () -> Abb.Future.return (`Failure `Error)
+        | Error (#Str_template.err as err) ->
+            Logs.info (fun m -> m "%s : %a" state.State.request_id Str_template.pp_err err);
+            H.maybe_publish_msg ctx state (Msg.Str_template_err err)
             >>= fun () -> Abb.Future.return (`Failure `Error)
         | Error `Silent_failure ->
             (* A failure where we know that any communication to the user that

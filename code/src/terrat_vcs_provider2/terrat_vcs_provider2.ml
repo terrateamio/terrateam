@@ -137,6 +137,7 @@ module Msg = struct
     | Repo_config_schema_err of (string * Jsonschema_check.Validation_err.t list)
     | Run_work_manifest_err of
         [ `Failed_to_start_with_msg_err of string | `Failed_to_start | `Missing_workflow ]
+    | Str_template_err of Str_template.err
     | Synthesize_config_err of Terrat_change_match3.synthesize_config_err
     | Tag_query_err of Terrat_tag_query_ast.err
     | Tf_op_result of {

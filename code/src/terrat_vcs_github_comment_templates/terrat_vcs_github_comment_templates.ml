@@ -67,6 +67,7 @@ module Tmpl = struct
     jinja "synthesize_config_err_workspace_matches_no_stacks.tmpl"
 
   let synthesize_config_err_stack_not_found = jinja "synthesize_config_err_stack_not_found.tmpl"
+  let str_template_err_missing_var = jinja "str_template_err_missing_var.tmpl"
   let maybe_stale_work_manifests = read "maybe_stale_work_manifests.tmpl"
   let repo_config_parse_failure = read "repo_config_parse_failure.tmpl"
   let repo_config_schema_err = read "repo_config_schema_err.tmpl"
