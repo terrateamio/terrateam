@@ -927,12 +927,7 @@
           "type": "string"
         },
         "visible_on": {
-          "enum": [
-            "always",
-            "failure",
-            "success"
-          ],
-          "type": "string"
+          "$ref": "#/definitions/visible-on"
         }
       },
       "required": [
@@ -1414,6 +1409,14 @@
       },
       "type": "object"
     },
+    "visible-on": {
+      "enum": [
+        "always",
+        "failure",
+        "success"
+      ],
+      "type": "string"
+    },
     "when-modified": {
       "additionalProperties": false,
       "properties": {
@@ -1578,12 +1581,7 @@
           "type": "string"
         },
         "visible_on": {
-          "enum": [
-            "always",
-            "failure",
-            "success"
-          ],
-          "type": "string"
+          "$ref": "#/definitions/visible-on"
         }
       },
       "required": [
@@ -1678,6 +1676,9 @@
             "$ref": "#/definitions/workflow-op-apply"
           },
           {
+            "$ref": "#/definitions/workflow-op-opa"
+          },
+          {
             "$ref": "#/definitions/hook-op-run"
           },
           {
@@ -1695,6 +1696,44 @@
         ]
       },
       "type": "array"
+    },
+    "workflow-op-opa": {
+      "additionalProperties": false,
+      "properties": {
+        "env": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "extra_args": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "gate": {
+          "$ref": "#/definitions/gate"
+        },
+        "ignore_errors": {
+          "default": false,
+          "type": "boolean"
+        },
+        "run_on": {
+          "$ref": "#/definitions/run-on"
+        },
+        "type": {
+          "const": "opa",
+          "type": "string"
+        },
+        "visible_on": {
+          "$ref": "#/definitions/visible-on"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
     },
     "workflow-op-plan": {
       "additionalProperties": false,
