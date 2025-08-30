@@ -174,6 +174,11 @@ let load_gitlab () =
 
 let create () =
   let open CCResult.Infix in
+  (* This is required for Terrateam UI to work correctly so we simply check if
+     it is set to we can error to the user if it is not, we do not use it in the
+     actual server. *)
+  env_str "TERRAT_UI_BASE"
+  >>= fun _ ->
   of_opt
     (`Key_error "TERRAT_PORT")
     (CCInt.of_string (CCOption.get_or ~default:"8080" (Sys.getenv_opt "TERRAT_PORT")))

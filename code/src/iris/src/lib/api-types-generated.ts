@@ -752,6 +752,10 @@ export interface components {
             path: string;
             /** @description Starts at 0, relative dependency order to perform operation on dir. */
             rank: number;
+            stack_name: string;
+            variables?: {
+                [key: string]: string;
+            };
             workflow?: number;
             workspace: string;
         };

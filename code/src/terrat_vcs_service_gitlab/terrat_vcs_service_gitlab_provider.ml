@@ -642,7 +642,8 @@ module Db = struct
           Pgsql_io.Prepared_stmt.fetch
             db
             Sql.select_work_manifest_dirspaceflows
-            ~f:(fun dir idx workspace -> { Dsf.dirspace = { Ds.dir; workspace }; workflow = idx })
+            ~f:(fun dir idx workspace ->
+              { Dsf.dirspace = { Ds.dir; workspace }; workflow = idx; variables = None })
             work_manifest_id)
       >>= fun changes ->
       Metrics.Psql_query_time.time
@@ -3267,26 +3268,68 @@ module Comment = struct
           "CONFLICTING_WORK_MANIFESTS"
           Tmpl.conflicting_work_manifests
           kv
-    | Msg.Depends_on_cycle cycle ->
+    | Msg.Synthesize_config_err (`Depends_on_cycle_err cycle) ->
         let kv =
-          Snabela.Kv.(
-            Map.of_list
-              [
-                ( "cycle",
-                  list
-                    (CCList.map
-                       (fun { Terrat_dirspace.dir; workspace } ->
-                         Map.of_list [ ("dir", string dir); ("workspace", string workspace) ])
-                       cycle) );
-              ])
+          `Assoc
+            [
+              ( "cycle",
+                `List
+                  (CCList.map
+                     (fun { Terrat_dirspace.dir; workspace } ->
+                       `Assoc [ ("dir", `String dir); ("workspace", `String workspace) ])
+                     cycle) );
+            ]
         in
-        Gcm_api.apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "DEPENDS_ON_CYCLE"
-          Tmpl.depends_on_cycle
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish_jinja
+             ~request_id
+             client
+             pull_request
+             "DEPENDS_ON_CYCLE"
+             Tmpl.synthesize_config_err_cycle
+             kv
+    | Msg.Synthesize_config_err
+        (`Workspace_in_multiple_stacks_err { Terrat_dirspace.dir; workspace }) ->
+        let kv = `Assoc [ ("dir", `String dir); ("workspace", `String workspace) ] in
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish_jinja
+             ~request_id
+             client
+             pull_request
+             "WORKSPACE_IN_MULTIPLE_STACKS"
+             Tmpl.synthesize_config_err_workspace_in_multiple_stacks
+             kv
+    | Msg.Synthesize_config_err
+        (`Workspace_matches_no_stacks_err { Terrat_dirspace.dir; workspace }) ->
+        let kv = `Assoc [ ("dir", `String dir); ("workspace", `String workspace) ] in
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish_jinja
+             ~request_id
+             client
+             pull_request
+             "WORKSPACE_MATCHES_NO_STACKS"
+             Tmpl.synthesize_config_err_workspace_matches_no_stacks
+             kv
+    | Msg.Synthesize_config_err (`Stack_not_found_err stack) ->
+        let kv = `Assoc [ ("stack", `String stack) ] in
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish_jinja
+             ~request_id
+             client
+             pull_request
+             "STACK_NOT_FOUND"
+             Tmpl.synthesize_config_err_stack_not_found
+             kv
+    | Msg.Str_template_err (`Missing_var_err name) ->
+        let kv = `Assoc [ ("var_name", `String name) ] in
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish_jinja
+             ~request_id
+             client
+             pull_request
+             "STR_TEMPLATE"
+             Tmpl.str_template_err_missing_var
+             kv
     | Msg.Dest_branch_no_match pull_request ->
         let kv =
           Snabela.Kv.(
