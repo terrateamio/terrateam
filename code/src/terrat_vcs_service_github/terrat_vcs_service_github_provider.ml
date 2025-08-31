@@ -4135,7 +4135,17 @@ module Comment = struct
              "REPO_CONFIG_SCHEMA_ERR"
              Tmpl.repo_config_schema_err
              kv
-    | Msg.Run_work_manifest_err (`Failed_to_start | `Failed_to_start_with_msg_err _) ->
+    | Msg.Run_work_manifest_err (`Failed_to_start_with_msg_err msg) ->
+        let kv = `Assoc [ ("msg", `String msg) ] in
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish_jinja
+             ~request_id
+             client
+             pull_request
+             "RUN_WORK_MANIFEST_ERR_FAILED_TO_START_WITH_MSG"
+             Tmpl.failed_to_start_workflow_with_msg
+             kv
+    | Msg.Run_work_manifest_err `Failed_to_start ->
         let kv = Snabela.Kv.(Map.of_list []) in
         Abbs_future_combinators.Result.ignore
         @@ Gcm_api.apply_template_and_publish
@@ -4673,6 +4683,18 @@ module Work_manifest = struct
                     Githubc2_abb.pp_call_err
                     err);
               Abb.Future.return (Ok ())
+          | Error (`Missing_response resp as err)
+            when CCString.mem ~sub:"does not exist" (Openapi.Response.value resp) -> (
+              let module P = struct
+                type t = { message : string } [@@deriving yojson { strict = false }]
+              end in
+              match
+                CCOption.wrap Yojson.Safe.from_string (Openapi.Response.value resp)
+                |> CCResult.opt_map P.of_yojson
+              with
+              | Ok (Some { P.message }) ->
+                  Abb.Future.return (Error (`Failed_to_start_with_msg_err message))
+              | _ -> Abb.Future.return (Error `Failed_to_start))
           | Error (#Githubc2_abb.call_err as err) ->
               Logs.err (fun m ->
                   m
@@ -4700,7 +4722,8 @@ module Work_manifest = struct
         Logs.err (fun m ->
             m "%s: ERROR : %a" request_id Terrat_github.pp_get_installation_access_token_err err);
         Abb.Future.return (Error `Error)
-    | Error ((`Missing_workflow | `Failed_to_start) as err) -> Abb.Future.return (Error err)
+    | Error ((`Missing_workflow | `Failed_to_start | `Failed_to_start_with_msg_err _) as err) ->
+        Abb.Future.return (Error err)
     | Error `Error -> Abb.Future.return (Error `Error)
 
   let update_work_manifest_changes ~request_id db work_manifest_id changes =

@@ -86,6 +86,7 @@ module Tmpl = struct
   let account_expired_err = read "account_expired_err.tmpl"
   let repo_config = read "repo_config.tmpl"
   let unexpected_temporary_err = read "unexpected_temporary_err.tmpl"
+  let failed_to_start_workflow_with_msg = jinja "failed_to_start_workflow_with_msg.tmpl"
   let failed_to_start_workflow = read "failed_to_start_workflow.tmpl"
   let failed_to_find_workflow = read "failed_to_find_workflow.tmpl"
   let comment_too_large = read "comment_too_large.tmpl"
