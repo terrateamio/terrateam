@@ -27,7 +27,7 @@ module List = struct
     Abb.Future.return (Ok (CCList.map (fun { G.id; full_name = name; _ } -> { R.id; name }) groups))
 
   let get config storage =
-    Brtl_ep.run_result ~f:(fun ctx ->
+    Brtl_ep.run_result_json ~f:(fun ctx ->
         let open Abbs_future_combinators.Infix_result_monad in
         Terrat_session.with_session ctx
         >>= fun user ->
@@ -81,7 +81,7 @@ module Is_member = struct
     | _ -> Abb.Future.return (Ok false)
 
   let get { U.id; _ } config storage group_id =
-    Brtl_ep.run_result ~f:(fun ctx ->
+    Brtl_ep.run_result_json ~f:(fun ctx ->
         let open Abbs_future_combinators.Infix_result_monad in
         Terrat_session.with_session ctx
         >>= fun user ->

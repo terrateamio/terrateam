@@ -5,6 +5,7 @@ module Items = struct
     | Workflow_op_checkov of Terrat_repo_config_workflow_op_checkov.t
     | Workflow_op_conftest of Terrat_repo_config_workflow_op_conftest.t
     | Workflow_op_apply of Terrat_repo_config_workflow_op_apply.t
+    | Workflow_op_opa of Terrat_repo_config_workflow_op_opa.t
     | Hook_op_run of Terrat_repo_config_hook_op_run.t
     | Hook_op_slack of Terrat_repo_config_hook_op_slack.t
     | Hook_op_env_exec of Terrat_repo_config_hook_op_env_exec.t
@@ -28,6 +29,8 @@ module Items = struct
              (Terrat_repo_config_workflow_op_conftest.of_yojson v));
          (fun v ->
            map (fun v -> Workflow_op_apply v) (Terrat_repo_config_workflow_op_apply.of_yojson v));
+         (fun v ->
+           map (fun v -> Workflow_op_opa v) (Terrat_repo_config_workflow_op_opa.of_yojson v));
          (fun v -> map (fun v -> Hook_op_run v) (Terrat_repo_config_hook_op_run.of_yojson v));
          (fun v -> map (fun v -> Hook_op_slack v) (Terrat_repo_config_hook_op_slack.of_yojson v));
          (fun v ->
@@ -43,6 +46,7 @@ module Items = struct
     | Workflow_op_checkov v -> Terrat_repo_config_workflow_op_checkov.to_yojson v
     | Workflow_op_conftest v -> Terrat_repo_config_workflow_op_conftest.to_yojson v
     | Workflow_op_apply v -> Terrat_repo_config_workflow_op_apply.to_yojson v
+    | Workflow_op_opa v -> Terrat_repo_config_workflow_op_opa.to_yojson v
     | Hook_op_run v -> Terrat_repo_config_hook_op_run.to_yojson v
     | Hook_op_slack v -> Terrat_repo_config_hook_op_slack.to_yojson v
     | Hook_op_env_exec v -> Terrat_repo_config_hook_op_env_exec.to_yojson v

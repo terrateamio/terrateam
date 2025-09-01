@@ -186,6 +186,18 @@ module Workflow_step : sig
     }
     [@@deriving make, show, yojson, eq]
   end
+
+  module Opa : sig
+    type t = {
+      env : string String_map.t option;
+      extra_args : string list; [@default []]
+      gate : Gate.t option; [@default None]
+      ignore_errors : bool; [@default false]
+      run_on : Run_on.t; [@default Run_on.Success]
+      visible_on : Visible_on.t; [@default Visible_on.Failure]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
 end
 
 module Access_control : sig
@@ -669,6 +681,7 @@ module Workflows : sig
         | Oidc of Workflow_step.Oidc.t
         | Checkov of Workflow_step.Checkov.t
         | Conftest of Workflow_step.Conftest.t
+        | Opa of Workflow_step.Opa.t
       [@@deriving show, yojson, eq]
     end
 

@@ -456,6 +456,18 @@ module Workflow_step = struct
     }
     [@@deriving make, show, yojson, eq]
   end
+
+  module Opa = struct
+    type t = {
+      env : string String_map.t option;
+      extra_args : string list; [@default []]
+      gate : Gate.t option; [@default None]
+      ignore_errors : bool; [@default false]
+      run_on : Run_on.t; [@default Run_on.Success]
+      visible_on : Visible_on.t; [@default Visible_on.Failure]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
 end
 
 module Access_control = struct
@@ -1043,6 +1055,7 @@ module Workflows = struct
         | Oidc of Workflow_step.Oidc.t
         | Checkov of Workflow_step.Checkov.t
         | Conftest of Workflow_step.Conftest.t
+        | Opa of Workflow_step.Opa.t
       [@@deriving show, yojson, eq]
     end
 
@@ -1723,7 +1736,28 @@ let of_version_1_workflow_op_list ops =
                   ~ignore_errors
                   ?run_on
                   ?visible_on
-                  ())))
+                  ()))
+      | Op.Workflow_op_opa op ->
+          let module Op = Terrat_repo_config_workflow_op_opa in
+          let { Op.env; extra_args; gate; ignore_errors; run_on; visible_on; type_ = _ } = op in
+          map_opt (fun { Op.Env.additional; _ } -> Ok additional) env
+          >>= fun env ->
+          CCResult.map_err
+            (function
+              | `Unknown_run_on err -> `Workflows_unknown_run_on_err err)
+            (map_opt of_version_1_run_on run_on)
+          >>= fun run_on ->
+          CCResult.map_err
+            (function
+              | `Unknown_visible_on err -> `Workflows_unknown_visible_on_err err)
+            (map_opt of_version_1_visible_on visible_on)
+          >>= fun visible_on ->
+          map_opt of_version_1_gate gate
+          >>= fun gate ->
+          let extra_args = CCOption.get_or ~default:[] extra_args in
+          Ok
+            (O.Opa
+               (Workflow_step.Opa.make ?env ~extra_args ~gate ~ignore_errors ?run_on ?visible_on ())))
     ops
 
 let of_version_1_workflow_engine cdktf terraform_version terragrunt default_engine engine =
@@ -3033,6 +3067,19 @@ let to_version_1_workflows_op =
         Op.Items.Workflow_op_checkov
           {
             C.type_ = "checkov";
+            env = CCOption.map (fun env -> C.Env.make ~additional:env Json_schema.Empty_obj.t) env;
+            extra_args = Some extra_args;
+            gate = CCOption.map to_version_1_gate gate;
+            ignore_errors;
+            run_on = Some (Workflow_step.Run_on.to_string run_on);
+            visible_on = Some (Workflow_step.Visible_on.to_string visible_on);
+          }
+    | Workflows.Entry.Op.Opa opa ->
+        let module C = Terrat_repo_config.Workflow_op_opa in
+        let { Workflow_step.Opa.env; extra_args; gate; ignore_errors; run_on; visible_on } = opa in
+        Op.Items.Workflow_op_opa
+          {
+            C.type_ = "opa";
             env = CCOption.map (fun env -> C.Env.make ~additional:env Json_schema.Empty_obj.t) env;
             extra_args = Some extra_args;
             gate = CCOption.map to_version_1_gate gate;

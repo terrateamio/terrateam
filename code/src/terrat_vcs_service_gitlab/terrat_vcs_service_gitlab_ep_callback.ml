@@ -126,29 +126,30 @@ let perform_auth config storage code =
                 (CCInt64.of_int gitlab_user_id)
               >>= fun () -> Abb.Future.return (Ok (Terrat_user.make ~id:user_id ()))))
 
-let get config storage code state ctx =
+let get config storage code state =
   let open Abb.Future.Infix_monad in
-  perform_auth config storage code
-  >>= function
-  | Ok user ->
-      let ctx = Terrat_session.create_user_session user ctx in
-      let uri = ctx |> Brtl_ctx.uri_base |> CCFun.flip Uri.with_path "/" |> Uri.to_string in
-      let headers = Cohttp.Header.of_list [ ("location", uri) ] in
-      Abb.Future.return
-        (Brtl_ctx.set_response (Brtl_rspnc.create ~headers ~status:`See_other "") ctx)
-  | Error (#Openapic_abb.call_err as err) ->
-      Logs.err (fun m -> m "FAIL : %a" Openapic_abb.pp_call_err err);
-      Abb.Future.return
-        (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-  | Error (#Oauth.authorize_err as err) ->
-      Logs.err (fun m -> m "FAIL : %a" Oauth.pp_authorize_err err);
-      Abb.Future.return
-        (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-  | Error (#Pgsql_pool.err as err) ->
-      Logs.err (fun m -> m "FAIL : %a" Pgsql_pool.pp_err err);
-      Abb.Future.return
-        (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-  | Error (#Pgsql_io.err as err) ->
-      Logs.err (fun m -> m "FAIL : %a" Pgsql_io.pp_err err);
-      Abb.Future.return
-        (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+  Brtl_ep.run ~content_type:"text/plain" ~f:(fun ctx ->
+      perform_auth config storage code
+      >>= function
+      | Ok user ->
+          let ctx = Terrat_session.create_user_session user ctx in
+          let uri = ctx |> Brtl_ctx.uri_base |> CCFun.flip Uri.with_path "/" |> Uri.to_string in
+          let headers = Cohttp.Header.of_list [ ("location", uri) ] in
+          Abb.Future.return
+            (Brtl_ctx.set_response (Brtl_rspnc.create ~headers ~status:`See_other "") ctx)
+      | Error (#Openapic_abb.call_err as err) ->
+          Logs.err (fun m -> m "FAIL : %a" Openapic_abb.pp_call_err err);
+          Abb.Future.return
+            (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+      | Error (#Oauth.authorize_err as err) ->
+          Logs.err (fun m -> m "FAIL : %a" Oauth.pp_authorize_err err);
+          Abb.Future.return
+            (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+      | Error (#Pgsql_pool.err as err) ->
+          Logs.err (fun m -> m "FAIL : %a" Pgsql_pool.pp_err err);
+          Abb.Future.return
+            (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m -> m "FAIL : %a" Pgsql_io.pp_err err);
+          Abb.Future.return
+            (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))

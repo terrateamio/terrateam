@@ -72,6 +72,7 @@ module Tags = Terrat_repo_config_tags
 module Terraform_version = Terrat_repo_config_terraform_version
 module Tree_builder = Terrat_repo_config_tree_builder
 module Version_1 = Terrat_repo_config_version_1
+module Visible_on = Terrat_repo_config_visible_on
 module When_modified = Terrat_repo_config_when_modified
 module When_modified_nullable = Terrat_repo_config_when_modified_nullable
 module Workflow_entry = Terrat_repo_config_workflow_entry
@@ -80,6 +81,7 @@ module Workflow_op_checkov = Terrat_repo_config_workflow_op_checkov
 module Workflow_op_conftest = Terrat_repo_config_workflow_op_conftest
 module Workflow_op_init = Terrat_repo_config_workflow_op_init
 module Workflow_op_list = Terrat_repo_config_workflow_op_list
+module Workflow_op_opa = Terrat_repo_config_workflow_op_opa
 module Workflow_op_plan = Terrat_repo_config_workflow_op_plan
 module Workspaces = Terrat_repo_config_workspaces
 

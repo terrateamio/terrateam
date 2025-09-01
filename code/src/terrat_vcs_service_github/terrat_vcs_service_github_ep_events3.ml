@@ -648,52 +648,55 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
     | Ok () -> Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
     | Error err -> handle_error ctx err
 
-  let post config storage ctx =
-    let request = Brtl_ctx.request ctx in
-    let headers = Brtl_ctx.Request.headers request in
-    let body = Brtl_ctx.body ctx in
-    Metrics.DefaultHistogram.time Metrics.events_duration_seconds (fun () ->
-        Prmths.Gauge.track_inprogress Metrics.events_concurrent (fun () ->
-            match
-              Terrat_github_webhooks_decoder.run
-                ?secret:(Terrat_config.Github.webhook_secret @@ P.Api.Config.vcs_config config)
-                headers
-                body
-            with
-            | Ok (Gw.Event.Installation_event installation_event) ->
-                process_event_handler config storage ctx (fun () ->
-                    process_installation (Brtl_ctx.token ctx) config storage installation_event)
-            | Ok (Gw.Event.Pull_request_event pull_request_event) ->
-                process_event_handler config storage ctx (fun () ->
-                    process_pull_request_event
-                      (Brtl_ctx.token ctx)
-                      config
-                      storage
-                      pull_request_event)
-            | Ok (Gw.Event.Issue_comment_event event) ->
-                process_event_handler config storage ctx (fun () ->
-                    process_issue_comment (Brtl_ctx.token ctx) config storage event)
-            | Ok (Gw.Event.Workflow_job_event event) ->
-                process_event_handler config storage ctx (fun () ->
-                    process_workflow_job (Brtl_ctx.token ctx) config storage event)
-            | Ok (Gw.Event.Push_event event) ->
-                process_event_handler config storage ctx (fun () ->
-                    process_push_event (Brtl_ctx.token ctx) config storage event)
-            | Ok (Gw.Event.Workflow_run_event _) ->
-                Logs.debug (fun m -> m "%s : NOOP : WORKFLOW_RUN_EVENT" (Brtl_ctx.token ctx));
-                Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
-            | Ok (Gw.Event.Installation_repositories_event _)
-            | Ok (Gw.Event.Workflow_dispatch_event _) ->
-                Logs.debug (fun m ->
-                    m "%s : NOOP : INSTALLATION_REPOSITORIES_EVENT" (Brtl_ctx.token ctx));
-                Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
-            | Error (#Terrat_github_webhooks_decoder.err as err) ->
-                Prmths.Counter.inc_one Metrics.github_webhook_decode_errors_total;
-                Logs.warn (fun m ->
-                    m
-                      "%s : UNKNOWN_EVENT : %s"
-                      (Brtl_ctx.token ctx)
-                      (Terrat_github_webhooks_decoder.show_err err));
-                Abb.Future.return
-                  (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)))
+  let post config storage =
+    Brtl_ep.run_json ~f:(fun ctx ->
+        let request = Brtl_ctx.request ctx in
+        let headers = Brtl_ctx.Request.headers request in
+        let body = Brtl_ctx.body ctx in
+        Metrics.DefaultHistogram.time Metrics.events_duration_seconds (fun () ->
+            Prmths.Gauge.track_inprogress Metrics.events_concurrent (fun () ->
+                match
+                  Terrat_github_webhooks_decoder.run
+                    ?secret:(Terrat_config.Github.webhook_secret @@ P.Api.Config.vcs_config config)
+                    headers
+                    body
+                with
+                | Ok (Gw.Event.Installation_event installation_event) ->
+                    process_event_handler config storage ctx (fun () ->
+                        process_installation (Brtl_ctx.token ctx) config storage installation_event)
+                | Ok (Gw.Event.Pull_request_event pull_request_event) ->
+                    process_event_handler config storage ctx (fun () ->
+                        process_pull_request_event
+                          (Brtl_ctx.token ctx)
+                          config
+                          storage
+                          pull_request_event)
+                | Ok (Gw.Event.Issue_comment_event event) ->
+                    process_event_handler config storage ctx (fun () ->
+                        process_issue_comment (Brtl_ctx.token ctx) config storage event)
+                | Ok (Gw.Event.Workflow_job_event event) ->
+                    process_event_handler config storage ctx (fun () ->
+                        process_workflow_job (Brtl_ctx.token ctx) config storage event)
+                | Ok (Gw.Event.Push_event event) ->
+                    process_event_handler config storage ctx (fun () ->
+                        process_push_event (Brtl_ctx.token ctx) config storage event)
+                | Ok (Gw.Event.Workflow_run_event _) ->
+                    Logs.debug (fun m -> m "%s : NOOP : WORKFLOW_RUN_EVENT" (Brtl_ctx.token ctx));
+                    Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
+                | Ok (Gw.Event.Installation_repositories_event _)
+                | Ok (Gw.Event.Workflow_dispatch_event _) ->
+                    Logs.debug (fun m ->
+                        m "%s : NOOP : INSTALLATION_REPOSITORIES_EVENT" (Brtl_ctx.token ctx));
+                    Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
+                | Error (#Terrat_github_webhooks_decoder.err as err) ->
+                    Prmths.Counter.inc_one Metrics.github_webhook_decode_errors_total;
+                    Logs.warn (fun m ->
+                        m
+                          "%s : UNKNOWN_EVENT : %s"
+                          (Brtl_ctx.token ctx)
+                          (Terrat_github_webhooks_decoder.show_err err));
+                    Abb.Future.return
+                      (Brtl_ctx.set_response
+                         (Brtl_rspnc.create ~status:`Internal_server_error "")
+                         ctx))))
 end

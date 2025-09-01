@@ -5814,7 +5814,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                     else Abb.Future.return (Ok state)
                 | Error (`Merge_err reason) ->
                     H.maybe_publish_msg ctx state (Msg.Automerge_failure (pull_request, reason))
-                    >>= fun () -> Abb.Future.return (Error (`Noop state))
+                    >>= fun () -> Abb.Future.return (Ok state)
                 | Error `Error as err -> Abb.Future.return err
               else Abb.Future.return (Ok state)
           | None -> assert false)
