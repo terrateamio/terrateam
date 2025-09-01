@@ -188,9 +188,17 @@ module Workflow_step : sig
   end
 
   module Opa : sig
+    module Fail_on : sig
+      type t =
+        | Defined
+        | Undefined
+      [@@deriving show, yojson, eq]
+    end
+
     type t = {
       env : string String_map.t option;
       extra_args : string list; [@default []]
+      fail_on : Fail_on.t; [@default Fail_on.Undefined]
       gate : Gate.t option; [@default None]
       ignore_errors : bool; [@default false]
       run_on : Run_on.t; [@default Run_on.Success]

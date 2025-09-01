@@ -1712,6 +1712,14 @@
           },
           "type": "array"
         },
+        "fail_on": {
+          "default": "undefined",
+          "enum": [
+            "defined",
+            "undefined"
+          ],
+          "type": "string"
+        },
         "gate": {
           "$ref": "#/definitions/gate"
         },
