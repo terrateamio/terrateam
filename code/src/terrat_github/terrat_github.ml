@@ -123,7 +123,7 @@ type delete_comment_err = Githubc2_abb.call_err [@@deriving show]
 
 type minimize_comment_err =
   [ Githubc2_abb.call_err
-  | `Not_found of Githubc2_components.Basic_error.t
+  | `Not_found
   ]
 [@@deriving show]
 
@@ -455,6 +455,33 @@ let minimize_comment ~owner ~repo ~comment_id client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "minimize_comment");
   let module C = Githubc2_components.Issue_comment in
   let open Abbs_future_combinators.Infix_result_monad in
+  let module Body = struct
+    type t = { query : string } [@@deriving to_yojson]
+  end in
+  let create_minimize_request url node_id =
+    let content =
+      Printf.sprintf
+        {|
+        mutation MinCom {
+            minimizeComment(input: {subjectId: "%s", classifier: OUTDATED}) {
+                clientMutationId,
+                minimizedComment {
+                isMinimized
+                }
+            }
+        }
+      |}
+    in
+    let body = { Body.query = content node_id } in
+    Openapi.Request.make
+      ~body:(Body.to_yojson body)
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:[]
+      ~url
+      ~responses:[ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
+      `Post
+  in
   call
     client
     Githubc2_issues.Get_comment.(
@@ -463,38 +490,20 @@ let minimize_comment ~owner ~repo ~comment_id client =
   match Openapi.Response.value resp with
   | `OK { C.primary = { C.Primary.node_id; _ }; _ } -> (
       let url = "/graphql" in
-      let module Body = struct
-        type t = { query : string } [@@deriving to_yojson]
-      end in
-      let content =
-        Printf.sprintf
-          {|
-            mutation MinCom {
-                minimizeComment(input: {subjectId: "%s", classifier: OUTDATED}) {
-                    clientMutationId,
-                    minimizedComment {
-                    isMinimized
-                    }
-                }
-            }
-        |}
-      in
-      let body = { Body.query = content node_id } in
-      let request =
-        Openapi.Request.make
-          ~body:(Body.to_yojson body)
-          ~headers:[]
-          ~url_params:[]
-          ~query_params:[]
-          ~url
-          ~responses:[ ("200", fun _ -> Ok `OK) ]
-          `Post
-      in
+      let request = create_minimize_request url node_id in
       call client request
       >>= fun resp ->
       match Openapi.Response.value resp with
-      | `OK -> Abb.Future.return (Ok ()))
-  | `Not_found _ as err -> Abb.Future.return (Error err)
+      | `OK -> Abb.Future.return (Ok ())
+      | `Not_found -> (
+          let url = "/api/graphql" in
+          let request = create_minimize_request url node_id in
+          call client request
+          >>= fun resp ->
+          match Openapi.Response.value resp with
+          | `OK -> Abb.Future.return (Ok ())
+          | `Not_found -> Abb.Future.return (Error `Not_found)))
+  | `Not_found _ -> Abb.Future.return (Error `Not_found)
 
 let react_to_comment ?(content = "rocket") ~owner ~repo ~comment_id client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "react_to_comment");
