@@ -450,7 +450,9 @@ let delete_pull_request_comment ~request_id client pull_request comment_id =
             request_id
             Terrat_github.pp_delete_comment_err
             err);
-      Abb.Future.return (Error `Error)
+      (* Ignore all errors as this can fail for a bunch of reasons and we don't
+         want to block the actual commenting *)
+      Abb.Future.return (Ok ())
 
 let minimize_pull_request_comment ~request_id client pull_request comment_id =
   let open Abb.Future.Infix_monad in
@@ -469,7 +471,9 @@ let minimize_pull_request_comment ~request_id client pull_request comment_id =
             request_id
             Terrat_github.pp_minimize_comment_err
             err);
-      Abb.Future.return (Error `Error)
+      (* Ignore all errors as this can fail for a bunch of reasons and we don't
+         want to block the actual commenting *)
+      Abb.Future.return (Ok ())
 
 let diff_of_github_diff =
   CCList.map
