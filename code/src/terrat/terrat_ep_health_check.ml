@@ -43,7 +43,8 @@ let get' storage ctx =
       Abb.Future.return
         (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
 
-let get storage ctx =
-  Prmths.Counter.inc_one Metrics.requests_total;
-  Metrics.DefaultHistogram.time Metrics.duration_seconds (fun () ->
-      Prmths.Gauge.track_inprogress Metrics.requests_concurrent (fun () -> get' storage ctx))
+let get storage =
+  Brtl_ep.run_json ~f:(fun ctx ->
+      Prmths.Counter.inc_one Metrics.requests_total;
+      Metrics.DefaultHistogram.time Metrics.duration_seconds (fun () ->
+          Prmths.Gauge.track_inprogress Metrics.requests_concurrent (fun () -> get' storage ctx)))

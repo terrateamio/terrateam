@@ -253,46 +253,49 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
           (Evaluator.Ctx.make ~request_id:(Brtl_ctx.token ctx) ~config ~storage ())
           event
 
-  let post config storage ctx =
-    let headers = Brtl_ctx.Request.headers @@ Brtl_ctx.request ctx in
-    Metrics.DefaultHistogram.time Metrics.events_duration_seconds (fun () ->
-        Prmths.Gauge.track_inprogress Metrics.events_concurrent (fun () ->
-            match Cohttp.Header.get headers "x-gitlab-token" with
-            | Some webhook_secret -> (
-                let open Abb.Future.Infix_monad in
-                post' config storage webhook_secret ctx
-                >>= function
-                | Ok () ->
-                    Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
-                | Error `Error ->
-                    Logs.err (fun m -> m "");
+  let post config storage =
+    Brtl_ep.run_json ~f:(fun ctx ->
+        let headers = Brtl_ctx.Request.headers @@ Brtl_ctx.request ctx in
+        Metrics.DefaultHistogram.time Metrics.events_duration_seconds (fun () ->
+            Prmths.Gauge.track_inprogress Metrics.events_concurrent (fun () ->
+                match Cohttp.Header.get headers "x-gitlab-token" with
+                | Some webhook_secret -> (
+                    let open Abb.Future.Infix_monad in
+                    post' config storage webhook_secret ctx
+                    >>= function
+                    | Ok () ->
+                        Abb.Future.return
+                          (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
+                    | Error `Error ->
+                        Logs.err (fun m -> m "");
+                        Abb.Future.return
+                          (Brtl_ctx.set_response
+                             (Brtl_rspnc.create ~status:`Internal_server_error "")
+                             ctx)
+                    | Error (#Gitlab_webhooks_decoder.err as err) ->
+                        Logs.err (fun m -> m "%a" Gitlab_webhooks_decoder.pp_err err);
+                        Abb.Future.return
+                          (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
+                    | Error `Installation_not_found ->
+                        Logs.err (fun m -> m "INSTALLATION_NOT_FOUND");
+                        Abb.Future.return
+                          (Brtl_ctx.set_response
+                             (Brtl_rspnc.create ~status:`Internal_server_error "")
+                             ctx)
+                    | Error (#Pgsql_pool.err as err) ->
+                        Logs.err (fun m -> m "%a" Pgsql_pool.pp_err err);
+                        Abb.Future.return
+                          (Brtl_ctx.set_response
+                             (Brtl_rspnc.create ~status:`Internal_server_error "")
+                             ctx)
+                    | Error (#Pgsql_io.err as err) ->
+                        Logs.err (fun m -> m "%a" Pgsql_io.pp_err err);
+                        Abb.Future.return
+                          (Brtl_ctx.set_response
+                             (Brtl_rspnc.create ~status:`Internal_server_error "")
+                             ctx))
+                | None ->
+                    Logs.info (fun m -> m "MISSING_TOKEN_HEADER");
                     Abb.Future.return
-                      (Brtl_ctx.set_response
-                         (Brtl_rspnc.create ~status:`Internal_server_error "")
-                         ctx)
-                | Error (#Gitlab_webhooks_decoder.err as err) ->
-                    Logs.err (fun m -> m "%a" Gitlab_webhooks_decoder.pp_err err);
-                    Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
-                | Error `Installation_not_found ->
-                    Logs.err (fun m -> m "INSTALLATION_NOT_FOUND");
-                    Abb.Future.return
-                      (Brtl_ctx.set_response
-                         (Brtl_rspnc.create ~status:`Internal_server_error "")
-                         ctx)
-                | Error (#Pgsql_pool.err as err) ->
-                    Logs.err (fun m -> m "%a" Pgsql_pool.pp_err err);
-                    Abb.Future.return
-                      (Brtl_ctx.set_response
-                         (Brtl_rspnc.create ~status:`Internal_server_error "")
-                         ctx)
-                | Error (#Pgsql_io.err as err) ->
-                    Logs.err (fun m -> m "%a" Pgsql_io.pp_err err);
-                    Abb.Future.return
-                      (Brtl_ctx.set_response
-                         (Brtl_rspnc.create ~status:`Internal_server_error "")
-                         ctx))
-            | None ->
-                Logs.info (fun m -> m "MISSING_TOKEN_HEADER");
-                Abb.Future.return
-                  (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx)))
+                      (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx))))
 end

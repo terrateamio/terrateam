@@ -32,7 +32,7 @@ module Whoami = struct
   end
 
   let get config storage =
-    Brtl_ep.run_result ~f:(fun ctx ->
+    Brtl_ep.run_result_json ~f:(fun ctx ->
         let open Abbs_future_combinators.Infix_result_monad in
         Terrat_session.with_session ctx
         >>= fun user ->
@@ -77,7 +77,7 @@ module Whoareyou = struct
   module U = Gitlabc_components.API_Entities_UserPublic
 
   let get { U.id; username; _ } config storage =
-    Brtl_ep.run_result ~f:(fun ctx ->
+    Brtl_ep.run_result_json ~f:(fun ctx ->
         let open Abbs_future_combinators.Infix_result_monad in
         Terrat_session.with_session ctx
         >>= fun user ->

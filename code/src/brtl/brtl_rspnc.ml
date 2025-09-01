@@ -19,7 +19,6 @@ let create_stream
     ?(encoding = Encoding.chunked)
     ~status
     body =
-  let headers = Cohttp.Header.add_unless_exists headers "content-type" "text/html" in
   let headers = Cohttp.Header.add_unless_exists headers "connection" "keep-alive" in
   { response = Response.make ?version ~headers ~status (); body }
 
@@ -34,6 +33,11 @@ let headers t = Response.headers t.response
 
 let add_header name value t =
   let hdrs = Cohttp.Header.add t.response.Response.headers name value in
+  let response = { t.response with Response.headers = hdrs } in
+  { t with response }
+
+let add_header_if_not_exists name value t =
+  let hdrs = Cohttp.Header.add_unless_exists t.response.Response.headers name value in
   let response = { t.response with Response.headers = hdrs } in
   { t with response }
 

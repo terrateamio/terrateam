@@ -9,19 +9,26 @@ let on_failure ctx =
       let headers = Cohttp.Header.of_list [ ("location", Uri.to_string uri) ] in
       Brtl_ctx.set_response (Brtl_rspnc.create ~headers ~status:`See_other "") ctx
 
-let run ~on_failure ~f ctx =
+let set_content_type content_type ctx =
+  let rspnc =
+    Brtl_rspnc.add_header_if_not_exists "content-type" content_type @@ Brtl_ctx.response ctx
+  in
+  Brtl_ctx.set_response rspnc ctx
+
+let run ~content_type ~f ctx =
+  let open Abb.Future.Infix_monad in
+  f ctx >>= fun ctx -> Abb.Future.return @@ set_content_type content_type ctx
+
+let run_json ~f ctx = run ~content_type:"application/json" ~f ctx
+
+let run_result ~content_type ~f (ctx : (string, 'a) Brtl_ctx.t) =
   let open Abb.Future.Infix_monad in
   f ctx
   >>| function
-  | Ok ctx -> ctx
+  | Ok ctx -> set_content_type content_type ctx
   | Error ctx -> on_failure ctx
 
-let run_result ~f (ctx : (string, 'a) Brtl_ctx.t) =
-  let open Abb.Future.Infix_monad in
-  f ctx
-  >>| function
-  | Ok ctx -> ctx
-  | Error ctx -> on_failure ctx
+let run_result_json ~f ctx = run_result ~content_type:"application/json" ~f ctx
 
 module Infix = struct
   let ( @--> ) f1 f2 v =
