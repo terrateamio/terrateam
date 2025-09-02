@@ -80,7 +80,7 @@ type delete_comment_err = Githubc2_abb.call_err [@@deriving show]
 
 type minimize_comment_err =
   [ Githubc2_abb.call_err
-  | `Not_found of Githubc2_components.Basic_error.t
+  | `Not_found
   ]
 [@@deriving show]
 
