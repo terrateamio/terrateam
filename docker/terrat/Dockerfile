@@ -142,10 +142,10 @@ RUN apk add --no-cache \
     sudo \
     yj
 RUN addgroup -S terrat && adduser -S -G terrat terrat
-RUN mkdir -p /usr/local/bin /etc/service/terrat /etc/service/nginx /usr/local/share/terrat/ui/assets /usr/local/share/ca-certificates
+RUN mkdir -p /usr/local/bin /etc/service/terrat /etc/service/nginx /usr/local/share/terrat/ui/assets /usr/local/share/ca-certificates /usr/local/share/ca-certificates/terrat
 RUN echo 'terrat ALL=(root) NOPASSWD: /usr/sbin/update-ca-certificates' > /etc/sudoers.d/terrat && \
     chmod 440 /etc/sudoers.d/terrat
-RUN chown -R terrat:terrat /etc/service /usr/local/share/terrat /etc/nginx /var/lib/nginx /var/log/nginx /run
+RUN chown -R terrat:terrat /etc/service /usr/local/share/terrat /etc/nginx /var/lib/nginx /var/log/nginx /run /usr/local/share/ca-certificates/terrat
 COPY docker/terrat/service/terrat /etc/service/terrat/run
 COPY docker/terrat/service/nginx /etc/service/nginx/run
 COPY docker/terrat/nginx.conf.template /etc/nginx/nginx.conf.template
@@ -178,10 +178,10 @@ RUN apk add --no-cache \
     sudo \
     yj
 RUN addgroup -S terrat && adduser -S -G terrat terrat
-RUN mkdir -p /usr/local/bin /etc/service/terrat /etc/service/nginx /usr/local/share/terrat/ui/assets /usr/local/share/ca-certificates
+RUN mkdir -p /usr/local/bin /etc/service/terrat /etc/service/nginx /usr/local/share/terrat/ui/assets /usr/local/share/ca-certificates /usr/local/share/ca-certificates/terrat
 RUN echo 'terrat ALL=(root) NOPASSWD: /usr/sbin/update-ca-certificates' > /etc/sudoers.d/terrat && \
     chmod 440 /etc/sudoers.d/terrat
-RUN chown -R terrat:terrat /etc/service /usr/local/share/terrat /etc/nginx /var/lib/nginx /var/log/nginx /run
+RUN chown -R terrat:terrat /etc/service /usr/local/share/terrat /etc/nginx /var/lib/nginx /var/log/nginx /run /usr/local/share/ca-certificates/terrat
 COPY docker/terrat/service/terrat /etc/service/terrat/run
 COPY docker/terrat/service/nginx /etc/service/nginx/run
 COPY docker/terrat/nginx.conf.template /etc/nginx/nginx.conf.template
