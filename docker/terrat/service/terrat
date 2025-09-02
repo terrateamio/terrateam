@@ -20,7 +20,7 @@ def setup_environment():
             cert_path = os.path.join(cert_path_root, 'custom-ca-cert-{}.crt'.format(idx))
             with open(cert_path, 'w') as cert_file:
                 cert_file.write((certs[idx] + '-----END CERTIFICATE-----').strip())
-        subprocess.check_call(['update-ca-certificates'])
+        subprocess.check_call(['sudo', 'update-ca-certificates'])
         os.environ['CERTS_DIR'] = '/etc/ssl/certs'
         print(f"Self-signed certificate installed to {cert_path}")
     if 'GITHUB_APP_PEM' in os.environ:
