@@ -674,7 +674,7 @@ module Commit_status = struct
         Githubc2_abb.collect_all
           client
           Githubc2_repos.List_commit_statuses_for_ref.(
-            make Parameters.(make ~owner ~repo ~ref_:sha ())))
+            make Parameters.(make ~per_page:100 ~owner ~repo ~ref_:sha ())))
       ~while_:(Abbs_future_combinators.finite_tries 3 CCResult.is_error)
       ~betwixt:
         (Abbs_future_combinators.series ~start:1.5 ~step:(( *. ) 1.5) (fun n _ ->
@@ -691,7 +691,9 @@ module Status_check = struct
   let list ~owner ~repo ~ref_ client =
     Prmths.Counter.inc_one (Metrics.fn_call_total "status_check_list");
     let open Abb.Future.Infix_monad in
-    call client Githubc2_checks.List_for_ref.(make Parameters.(make ~owner ~repo ~ref_ ()))
+    call
+      client
+      Githubc2_checks.List_for_ref.(make Parameters.(make ~per_page:100 ~owner ~repo ~ref_ ()))
     >>= function
     | Ok resp ->
         let module OK = Githubc2_checks.List_for_ref.Responses.OK in
@@ -711,7 +713,8 @@ module Pull_request_reviews = struct
     Prmths.Counter.inc_one (Metrics.fn_call_total "pull_request_reviews_list");
     Githubc2_abb.collect_all
       client
-      Githubc2_pulls.List_reviews.(make Parameters.(make ~owner ~repo ~pull_number ()))
+      Githubc2_pulls.List_reviews.(
+        make Parameters.(make ~per_page:100 ~owner ~repo ~pull_number ()))
 end
 
 module Oauth = struct

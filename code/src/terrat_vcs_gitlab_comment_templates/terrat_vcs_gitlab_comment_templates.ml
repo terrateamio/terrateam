@@ -182,8 +182,8 @@ module Tmpl = struct
 
   let plan_complete = read "plan_complete.tmpl"
   let apply_complete = read "apply_complete.tmpl"
-  let plan_complete2 = read "plan_complete2.tmpl"
-  let apply_complete2 = read "apply_complete2.tmpl"
+  let plan_complete2 = jinja "plan_complete2.tmpl"
+  let apply_complete2 = jinja "apply_complete2.tmpl"
   let automerge_failure = read "automerge_error.tmpl"
   let premium_feature_err_access_control = read "premium_feature_err_access_control.tmpl"
 
