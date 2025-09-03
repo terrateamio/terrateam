@@ -974,23 +974,35 @@ module Notifications = struct
 end
 
 module Stacks = struct
-  module On_change = struct
-    type t = { can_apply_after : string list [@default []] } [@@deriving make, show, yojson, eq]
+  module Rules = struct
+    type t = {
+      apply_after : string list; [@default []]
+      auto_apply : bool option; [@default None]
+      modified_by : string list; [@default []]
+      plan_after : string list; [@default []]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  module Type_ = struct
+    type t =
+      | Nested of string list
+      | Stack of Tag_query.t
+    [@@deriving show, yojson, eq]
   end
 
   module Stack = struct
     type t = {
-      tag_query : Tag_query.t;
-      on_change : On_change.t; [@default On_change.make ()]
+      type_ : Type_.t;
+      rules : Rules.t; [@default Rules.make ()]
       variables : string String_map.t; [@default String_map.empty]
     }
     [@@deriving make, show, yojson, eq]
   end
 
   type t = {
-    allow_workspace_in_multiple_stacks : bool; [@default false]
     names : Stack.t String_map.t;
-        [@default String_map.singleton "default" (Stack.make ~tag_query:Tag_query.any ())]
+        [@default String_map.singleton "default" (Stack.make ~type_:(Type_.Stack Tag_query.any) ())]
   }
   [@@deriving make, show, yojson, eq]
 end
@@ -2215,30 +2227,45 @@ let of_version_1_stack_config names =
   let module N = Terrat_repo_config_stacks.Names in
   let { N.additional = configs; _ } = names in
   CCResult.map_l (fun (k, v) ->
+      let module S = Terrat_repo_config_stacks.Names.Additional in
       let module Sc = Terrat_repo_config_stack_config in
-      let { Sc.on_change; tag_query; variables } = v in
-      CCResult.map_err
-        (function
-          | `Tag_query_error err -> `Stack_config_tag_query_err err)
-        (Terrat_tag_query.of_string tag_query)
-      >>= fun tag_query ->
-      map_opt
-        (fun { Sc.On_change.can_apply_after } -> Ok (Stacks.On_change.make ?can_apply_after ()))
-        on_change
-      >>= fun on_change ->
-      let variables =
-        CCOption.map (fun { Sc.Variables.additional = variables; _ } -> variables) variables
+      let module Sn = Terrat_repo_config_stack_nested_config in
+      let module V = Terrat_repo_config_stack_variables in
+      (match v with
+      | S.Stack_config { Sc.tag_query; rules; variables } ->
+          CCResult.map_err
+            (function
+              | `Tag_query_error err -> `Stack_config_tag_query_err err)
+            (Terrat_tag_query.of_string tag_query)
+          >>= fun tag_query -> Ok (Stacks.Type_.Stack tag_query, rules, variables)
+      | S.Stack_nested_config { Sn.stacks; rules; variables } ->
+          Ok (Stacks.Type_.Nested stacks, rules, variables))
+      >>= fun (type_, rules, variables) ->
+      let module R = Terrat_repo_config_stack_rules in
+      let { R.apply_after; auto_apply; modified_by; plan_after } =
+        CCOption.get_or
+          ~default:
+            { R.apply_after = None; auto_apply = None; modified_by = None; plan_after = None }
+          rules
       in
-      Ok (k, Stacks.Stack.make ~tag_query ?on_change ?variables ()))
+      let rules =
+        {
+          Stacks.Rules.apply_after = CCOption.get_or ~default:[] apply_after;
+          auto_apply;
+          modified_by = CCOption.get_or ~default:[] modified_by;
+          plan_after = CCOption.get_or ~default:[] (CCOption.or_ ~else_:modified_by plan_after);
+        }
+      in
+      let variables = CCOption.map (fun { V.additional = variables; _ } -> variables) variables in
+      Ok (k, Stacks.Stack.make ~type_ ~rules ?variables ()))
   @@ String_map.to_list configs
   >>= fun configs -> Ok (String_map.of_list configs)
 
 let of_version_1_stacks stacks =
   let open CCResult.Infix in
   let module S = Terrat_repo_config_stacks in
-  let { S.allow_workspace_in_multiple_stacks; names } = stacks in
-  map_opt of_version_1_stack_config names
-  >>= fun names -> Ok (Stacks.make ~allow_workspace_in_multiple_stacks ?names ())
+  let { S.names } = stacks in
+  map_opt of_version_1_stack_config names >>= fun names -> Ok (Stacks.make ?names ())
 
 let of_version_1_notification_policy policy =
   let open CCResult.Infix in
@@ -2913,24 +2940,46 @@ let to_version_1_integrations integrations =
 
 let to_version_1_stacks stacks =
   let module S = Terrat_repo_config_stacks in
-  let { Stacks.allow_workspace_in_multiple_stacks; names } = stacks in
+  let { Stacks.names } = stacks in
   let names =
     S.Names.make
       ~additional:
         (String_map.map
            (fun v ->
-             let { Stacks.Stack.tag_query; on_change; variables } = v in
+             let module S = Terrat_repo_config_stacks.Names.Additional in
              let module Sc = Terrat_repo_config_stack_config in
-             let { Stacks.On_change.can_apply_after } = on_change in
-             {
-               Sc.tag_query = Terrat_tag_query.to_string tag_query;
-               on_change = Some { Sc.On_change.can_apply_after = Some can_apply_after };
-               variables = Some (Sc.Variables.make ~additional:variables Json_schema.Empty_obj.t);
-             })
+             let module Sn = Terrat_repo_config_stack_nested_config in
+             let module V = Terrat_repo_config_stack_variables in
+             let module R = Terrat_repo_config_stack_rules in
+             let { Stacks.Stack.type_; rules; variables } = v in
+             let { Stacks.Rules.modified_by; apply_after; auto_apply; plan_after } = rules in
+             let rules =
+               {
+                 R.modified_by = Some modified_by;
+                 apply_after = Some apply_after;
+                 auto_apply;
+                 plan_after = Some plan_after;
+               }
+             in
+             match type_ with
+             | Stacks.Type_.Stack tag_query ->
+                 S.Stack_config
+                   {
+                     Sc.tag_query = Terrat_tag_query.to_string tag_query;
+                     rules = Some rules;
+                     variables = Some (V.make ~additional:variables Json_schema.Empty_obj.t);
+                   }
+             | Stacks.Type_.Nested stacks ->
+                 S.Stack_nested_config
+                   {
+                     Sn.stacks;
+                     rules = Some rules;
+                     variables = Some (V.make ~additional:variables Json_schema.Empty_obj.t);
+                   })
            names)
       Json_schema.Empty_obj.t
   in
-  { S.allow_workspace_in_multiple_stacks; names = Some names }
+  { S.names = Some names }
 
 let to_version_1_notification_policy policy =
   let module P = Terrat_repo_config_notification_policy in

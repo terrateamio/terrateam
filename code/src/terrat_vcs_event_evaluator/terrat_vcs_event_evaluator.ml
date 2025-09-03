@@ -789,6 +789,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Always_store_pull_request
       | Batch_runs_disabled
       | Batch_runs_enabled
+      | Can_run_stack_auto_apply
       | Check_access_control_apply
       | Check_access_control_ci_change
       | Check_access_control_files
@@ -868,6 +869,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Always_store_pull_request -> "always_store_pull_request"
       | Batch_runs_disabled -> "batch_runs_disabled"
       | Batch_runs_enabled -> "batch_runs_enabled"
+      | Can_run_stack_auto_apply -> "can_run_stack_auto_apply"
       | Check_access_control_apply -> "check_access_control_apply"
       | Check_access_control_ci_change -> "check_access_control_ci_change"
       | Check_access_control_files -> "check_access_control_files"
@@ -947,6 +949,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | "always_store_pull_request" -> Some Always_store_pull_request
       | "batch_runs_disabled" -> Some Batch_runs_disabled
       | "batch_runs_enabled" -> Some Batch_runs_enabled
+      | "can_run_stack_auto_apply" -> Some Can_run_stack_auto_apply
       | "check_access_control_apply" -> Some Check_access_control_apply
       | "check_access_control_ci_change" -> Some Check_access_control_ci_change
       | "check_access_control_files" -> Some Check_access_control_files
@@ -1388,7 +1391,12 @@ module Make (S : Terrat_vcs_provider2.S) = struct
 
       module Matches = Abbs_cache.Expiring.Make (struct
         type k =
-          string * S.Api.Account.t * S.Api.Repo.t * S.Api.Ref.t * S.Api.Ref.t * [ `Plan | `Apply ]
+          string
+          * S.Api.Account.t
+          * S.Api.Repo.t
+          * S.Api.Ref.t
+          * S.Api.Ref.t
+          * [ `Plan | `Apply | `Stack_auto_apply ]
         [@@deriving eq]
 
         type v = Matches.t
@@ -1411,7 +1419,12 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           * S.Api.Repo.t
           * S.Api.Pull_request.Id.t
           * S.Api.Ref.t
-          * [ `Plan | `Apply of string list | `Apply_autoapprove | `Apply_force ]
+          * [ `Plan
+            | `Stack_auto_apply of string list
+            | `Apply of string list
+            | `Apply_autoapprove
+            | `Apply_force
+            ]
         [@@deriving eq]
 
         type v = Terrat_access_control2.R.t
@@ -1903,20 +1916,21 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           match all_unapplied_matches with
           | layer :: _ -> (
               match op with
-              | `Apply ->
+              | `Apply | `Stack_auto_apply ->
                   (* If it's an apply, we limit the working set to only those
                      that can be applied, based on stacks configuration. *)
                   let module S = Terrat_base_repo_config_v1.Stacks.Stack in
-                  let module Oc = Terrat_base_repo_config_v1.Stacks.On_change in
+                  let module Oc = Terrat_base_repo_config_v1.Stacks.Rules in
                   let flat_all_unapplied_matches = CCList.flatten all_unapplied_matches in
                   layer
                   |> CCList.filter (Terrat_change_match3.match_tag_query ~tag_query)
                   |> CCList.filter
-                       (fun { Dc.stack_config = { S.on_change = { Oc.can_apply_after }; _ }; _ } ->
+                       (fun
+                         ({ Dc.stack_config = { S.rules = { Oc.apply_after; _ }; _ }; _ } as dc) ->
                          not
                            (CCList.exists
                               (fun { Dc.stack_name; _ } ->
-                                CCList.mem ~eq:CCString.equal stack_name can_apply_after)
+                                CCList.mem ~eq:CCString.equal stack_name apply_after)
                               flat_all_unapplied_matches))
               | _ -> CCList.filter (Terrat_change_match3.match_tag_query ~tag_query) layer)
           | [] -> []
@@ -2099,6 +2113,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             let trigger_type = Event.trigger_type state.State.event in
             match (op, trigger_type) with
             | `Plan, `Auto ->
+                Logs.info (fun m -> m "%s : MATCHES : PLAN : AUTO" state.State.request_id);
                 let working_set_matches =
                   CCList.filter
                     (fun {
@@ -2126,7 +2141,30 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                        all_unapplied_matches;
                        working_layer;
                      })
+            | `Stack_auto_apply, _ ->
+                Logs.info (fun m -> m "%s : MATCHES : STACK_AUTO_APPLY" state.State.request_id);
+                let module S = Terrat_base_repo_config_v1.Stacks in
+                let working_set_matches =
+                  CCList.filter
+                    (fun {
+                           Terrat_change_match3.Dirspace_config.stack_config =
+                             { S.Stack.rules = { S.Rules.auto_apply; _ }; _ };
+                           _;
+                         }
+                       -> CCOption.get_or ~default:false auto_apply)
+                    working_set_matches
+                in
+                Abb.Future.return
+                  (Ok
+                     {
+                       Matches.working_set_matches;
+                       all_matches;
+                       all_tag_query_matches;
+                       all_unapplied_matches;
+                       working_layer;
+                     })
             | (`Apply | `Apply_autoapprove | `Apply_force), `Auto ->
+                Logs.info (fun m -> m "%s : MATCHES : APPLY : AUTO" state.State.request_id);
                 let working_set_matches =
                   CCList.filter
                     (fun {
@@ -2147,6 +2185,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                        working_layer;
                      })
             | (`Plan | `Apply | `Apply_autoapprove | `Apply_force), `Manual ->
+                Logs.info (fun m -> m "%s : MATCHES : PLAN-APPLY : MANUAL" state.State.request_id);
                 Abb.Future.return
                   (Ok
                      {
@@ -2170,7 +2209,17 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       let open Abb.Future.Infix_monad in
       Abbs_time_it.run
         (fun time ->
-          Logs.info (fun m -> m "%s : DV : MATCHES : time=%f" state.State.request_id time))
+          Logs.info (fun m ->
+              m
+                "%s : DV : MATCHES : op=%s :  time=%f"
+                state.State.request_id
+                (match op with
+                | `Apply -> "apply"
+                | `Stack_auto_apply -> "stack_auto_apply"
+                | `Plan -> "plan"
+                | `Apply_autoapprove -> "apply_autoapprove"
+                | `Apply_force -> "apply_force")
+                time))
         (fun () ->
           let open Abbs_future_combinators.Infix_result_monad in
           base_ref ctx state
@@ -2180,6 +2229,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           let op =
             match op with
             | `Plan -> `Plan
+            | `Stack_auto_apply -> `Stack_auto_apply
             | `Apply | `Apply_autoapprove | `Apply_force -> `Apply
           in
           Cache.Matches.fetch
@@ -2222,24 +2272,39 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       let account = Event.account state.State.event in
       let repo = Event.repo state.State.event in
       let pull_request_id = Event.pull_request_id state.State.event in
+      let op' =
+        match op with
+        | `Apply _ -> `Apply
+        | `Stack_auto_apply _ -> `Stack_auto_apply
+        | (`Plan | `Apply_autoapprove | `Apply_force) as op -> op
+      in
+      let eval_op =
+        match op with
+        | `Stack_auto_apply reviews -> `Apply reviews
+        | (`Apply _ | `Plan | `Apply_autoapprove | `Apply_force) as op -> op
+      in
       let fetch () =
         let open Abbs_future_combinators.Infix_result_monad in
         access_control ctx state
         >>= fun ac ->
-        let op' =
-          match op with
-          | `Apply _ -> `Apply
-          | (`Plan | `Apply_autoapprove | `Apply_force) as op -> op
-        in
         matches ctx state op'
         >>= fun matches ->
-        Access_control_engine.eval_tf_operation ac matches.Matches.working_set_matches op
+        Access_control_engine.eval_tf_operation ac matches.Matches.working_set_matches eval_op
       in
       let open Abb.Future.Infix_monad in
       Abbs_time_it.run
         (fun time ->
           Logs.info (fun m ->
-              m "%s : DV : ACCESS_CONTROL_TF_OP : time=%f" state.State.request_id time))
+              m
+                "%s : DV : ACCESS_CONTROL_TF_OP : op=%s : time=%f"
+                state.State.request_id
+                (match op' with
+                | `Apply -> "apply"
+                | `Stack_auto_apply -> "stack_auto_apply"
+                | `Plan -> "plan"
+                | `Apply_autoapprove -> "apply_autoapprove"
+                | `Apply_force -> "apply_force")
+                time))
         (fun () ->
           let open Abbs_future_combinators.Infix_result_monad in
           pull_request ctx state
@@ -2299,8 +2364,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         >>= fun matches ->
         let workflows = Terrat_base_repo_config_v1.workflows repo_config in
         let dirspaceflows =
+          let module S = Terrat_base_repo_config_v1.Stacks in
           CCList.map
-            (fun ({ Terrat_change_match3.Dirspace_config.dirspace; _ } as change) ->
+            (fun ({
+                    Terrat_change_match3.Dirspace_config.dirspace;
+                    stack_config = { S.Stack.variables; _ };
+                    _;
+                  } as change)
+               ->
               Terrat_change.Dirspaceflow.
                 {
                   dirspace;
@@ -2311,6 +2382,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                          (fun { Terrat_base_repo_config_v1.Workflows.Entry.tag_query; _ } ->
                            Terrat_change_match3.match_tag_query ~tag_query change)
                          workflows);
+                  variables = Some variables;
                 })
             matches
         in
@@ -2318,16 +2390,31 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           (Ok
              (CCList.map
                 (fun Terrat_change.
-                       { Dirspaceflow.dirspace = { Dirspace.dir; workspace }; workflow; _ }
+                       {
+                         Dirspaceflow.dirspace = { Dirspace.dir; workspace } as dirspace;
+                         workflow;
+                         variables;
+                         _;
+                       }
                    ->
+                  let module Tcm = Terrat_change_match3 in
+                  let module Wmd = Terrat_api_components.Work_manifest_dir in
+                  let { Tcm.Dirspace_config.stack_name; _ } =
+                    CCOption.get_exn_or "dirspaces" @@ Tcm.of_dirspace config dirspace
+                  in
                   {
-                    Terrat_api_components.Work_manifest_dir.path = dir;
+                    Wmd.path = dir;
                     workspace;
                     workflow =
                       CCOption.map
                         (fun Terrat_change.Dirspaceflow.Workflow.{ idx; _ } -> idx)
                         workflow;
                     rank = 0;
+                    variables =
+                      CCOption.map
+                        (fun additional -> Wmd.Variables.make ~additional Json_schema.Empty_obj.t)
+                        variables;
+                    stack_name;
                   })
                 dirspaceflows))
       in
@@ -2377,7 +2464,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               repo
               working_branch_ref)
 
-    let apply_requirements ctx state =
+    let apply_requirements ctx state op =
       let fetch () =
         let open Abbs_future_combinators.Infix_result_monad in
         Abbs_future_combinators.Infix_result_app.(
@@ -2386,7 +2473,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           <$> client ctx state
           <*> repo_config ctx state
           <*> pull_request ctx state
-          <*> matches ctx state `Apply)
+          <*> matches ctx state op)
         >>= fun (client, repo_config, pull_request, matches) ->
         eval_apply_requirements
           state.State.request_id
@@ -2416,14 +2503,18 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           match op with
           | (`Plan | `Apply_autoapprove | `Apply_force) as op ->
               tf_operation_access_control_evaluation ctx state op
-          | `Apply ->
-              apply_requirements ctx state
+          | (`Apply | `Stack_auto_apply) as op' ->
+              apply_requirements ctx state op'
               >>= fun apply_requirements ->
+              let reviews =
+                CCList.filter_map
+                  (fun { Terrat_pull_request_review.user; _ } -> user)
+                  (S.Apply_requirements.Result.approved_reviews apply_requirements)
+              in
               let access_control_run_type =
-                `Apply
-                  (CCList.filter_map
-                     (fun { Terrat_pull_request_review.user; _ } -> user)
-                     (S.Apply_requirements.Result.approved_reviews apply_requirements))
+                match op' with
+                | `Apply -> `Apply reviews
+                | `Stack_auto_apply -> `Stack_auto_apply reviews
               in
               tf_operation_access_control_evaluation ctx state access_control_run_type)
       | Terrat_work_manifest3.Initiator.System ->
@@ -2899,16 +2990,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           publish_msg request_id client user pull_request (Msg.Run_work_manifest_err err)
 
     let replace_stack_vars vars s =
-      let vars =
-        Terrat_data.String_map.fold
-          (fun k v acc ->
-            Terrat_data.String_map.add ("STACK_VAR_" ^ CCString.uppercase_ascii k) v acc)
-          vars
-          Terrat_data.String_map.empty
-      in
-      match Str_template.apply (CCFun.flip Terrat_data.String_map.find_opt vars) s with
-      | Ok s -> s
-      | Error (#Str_template.err as err) -> assert false
+      Str_template.apply (CCFun.flip Terrat_data.String_map.find_opt vars) s
 
     let apply_stack_vars_to_workflow stack workflow =
       let module R = Terrat_base_repo_config_v1 in
@@ -2926,41 +3008,37 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       } =
         workflow
       in
-      {
-        workflow with
-        E.environment = CCOption.map (replace_stack_vars stack.S.variables) environment;
-      }
+      let open CCResult.Infix in
+      CCResult.opt_map (replace_stack_vars stack.S.variables) environment
+      >>= fun environment -> Ok { workflow with E.environment }
 
     let dirspaceflows_of_changes_with_branch_target repo_config changes =
       let module R = Terrat_base_repo_config_v1 in
+      let module S = R.Stacks in
       let workflows = R.workflows repo_config in
-      Ok
-        (CCList.map
-           (fun ( {
-                    Terrat_change_match3.Dirspace_config.dirspace;
-                    lock_branch_target;
-                    stack_config;
-                    _;
-                  },
-                  workflow )
-              ->
-             let module Dsf = Terrat_change.Dirspaceflow in
-             {
-               Dsf.dirspace;
-               workflow =
-                 ( lock_branch_target,
-                   CCOption.map
-                     (fun (idx, workflow) ->
-                       {
-                         Dsf.Workflow.idx;
-                         workflow = apply_stack_vars_to_workflow stack_config workflow;
-                       })
-                     workflow );
-             })
-           (match_tag_queries
-              ~accessor:(fun { R.Workflows.Entry.tag_query; _ } -> tag_query)
-              ~changes
-              workflows))
+      CCResult.map_l
+        (fun ( {
+                 Terrat_change_match3.Dirspace_config.dirspace;
+                 lock_branch_target;
+                 stack_config = { S.Stack.variables; _ } as stack_config;
+                 _;
+               },
+               workflow )
+           ->
+          let open CCResult.Infix in
+          let module Dsf = Terrat_change.Dirspaceflow in
+          CCResult.opt_map
+            (fun (idx, workflow) ->
+              let open CCResult.Infix in
+              apply_stack_vars_to_workflow stack_config workflow
+              >>= fun workflow -> Ok { Dsf.Workflow.idx; workflow })
+            workflow
+          >>= fun workflow ->
+          Ok { Dsf.dirspace; workflow = (lock_branch_target, workflow); variables = Some variables })
+        (match_tag_queries
+           ~accessor:(fun { R.Workflows.Entry.tag_query; _ } -> tag_query)
+           ~changes
+           workflows)
 
     let strip_lock_branch_target dsfs =
       let module Dsf = Terrat_change.Dirspaceflow in
@@ -3356,7 +3434,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           [
             (match op with
             | `Plan -> Wm.Step.Plan
-            | `Apply | `Apply_force -> Wm.Step.Apply
+            | `Apply | `Apply_force | `Stack_auto_apply -> Wm.Step.Apply
             | `Apply_autoapprove -> Wm.Step.Unsafe_apply);
           ];
         tag_query;
@@ -3882,7 +3960,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                   @ [
                       (match op with
                       | `Plan -> Wm.Step.Plan
-                      | `Apply | `Apply_force -> Wm.Step.Apply
+                      | `Apply | `Apply_force | `Stack_auto_apply -> Wm.Step.Apply
                       | `Apply_autoapprove -> Wm.Step.Unsafe_apply);
                     ];
               }
@@ -3995,7 +4073,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             if Event.trigger_type state.State.event = `Auto then
               publish_msg request_id client user pull_request Msg.Autoapply_running
             else Abb.Future.return (Ok ())
-        | `Plan -> Abb.Future.return (Ok ())
+        | `Stack_auto_apply | `Plan -> Abb.Future.return (Ok ())
       in
       run_interactive ctx state (fun () ->
           Dv.client ctx state
@@ -4058,13 +4136,26 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               ~key:encryption_key
               (Cstruct.of_string (Uuidm.to_string id))))
 
-    let changed_dirspaces changes =
+    let changed_dirspaces config changes =
+      let module Tcm = Terrat_change_match3 in
+      let module S = Terrat_base_repo_config_v1.Stacks in
       let module Tc = Terrat_change in
       let module Dsf = Tc.Dirspaceflow in
       CCList.map
-        (fun Tc.{ Dsf.dirspace = { Dirspace.dir; workspace }; workflow } ->
-          (* TODO: Provide correct rank *)
-          Terrat_api_components.Work_manifest_dir.{ path = dir; workspace; workflow; rank = 0 })
+        (fun Tc.{ Dsf.dirspace = { Dirspace.dir; workspace } as dirspace; workflow; _ } ->
+          let { Tcm.Dirspace_config.stack_name; stack_config = { S.Stack.variables; _ }; _ } =
+            CCOption.get_exn_or "changed_dirspaces" @@ Tcm.of_dirspace config dirspace
+          in
+          (* TODO: Remove rank, it is deprecated *)
+          Terrat_api_components.Work_manifest_dir.
+            {
+              path = dir;
+              workspace;
+              workflow;
+              rank = 0;
+              variables = Some (Variables.make ~additional:variables Json_schema.Empty_obj.t);
+              stack_name;
+            })
         changes
 
     let run_op_work_manifest_iter_initiate ctx state encryption_key run_id sha work_manifest =
@@ -4120,6 +4211,12 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               >>= fun branch_name ->
               Dv.query_index ctx state
               >>= fun index ->
+              let index =
+                CCOption.map_or
+                  ~default:Terrat_base_repo_config_v1.Index.empty
+                  (fun { Terrat_vcs_provider2.Index.index; _ } -> index)
+                  index
+              in
               Abbs_time_it.run (log_time state.State.request_id "DERIVE") (fun () ->
                   Abbs_future_combinators.to_result
                   @@ Abb.Thread.run (fun () ->
@@ -4129,14 +4226,12 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                                 ~dest_branch:(S.Api.Ref.to_string base_branch_name)
                                 ~branch:(S.Api.Ref.to_string branch_name)
                                 ())
-                           ~index:
-                             (CCOption.map_or
-                                ~default:Terrat_base_repo_config_v1.Index.empty
-                                (fun { Terrat_vcs_provider2.Index.index; _ } -> index)
-                                index)
+                           ~index
                            ~file_list:repo_tree
                            repo_config))
               >>= fun repo_config ->
+              Abb.Future.return (Terrat_change_match3.synthesize_config ~index repo_config)
+              >>= fun config ->
               Dv.dirspaces ctx state
               >>= fun (base_dirspaces, dirspaces) ->
               Abb.Future.return
@@ -4148,7 +4243,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                             Work_manifest_plan.token = token encryption_key work_manifest.Wm.id;
                             base_dirspaces;
                             base_ref = S.Api.Ref.to_string base_branch_name;
-                            changed_dirspaces = changed_dirspaces changes;
+                            changed_dirspaces = changed_dirspaces config changes;
                             dirspaces;
                             run_kind = run_kind_str;
                             run_kind_data;
@@ -4171,6 +4266,12 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               >>= fun branch_name ->
               Dv.query_index ctx state
               >>= fun index ->
+              let index =
+                CCOption.map_or
+                  ~default:Terrat_base_repo_config_v1.Index.empty
+                  (fun { Terrat_vcs_provider2.Index.index; _ } -> index)
+                  index
+              in
               Abbs_time_it.run (log_time state.State.request_id "DERIVE") (fun () ->
                   Abbs_future_combinators.to_result
                   @@ Abb.Thread.run (fun () ->
@@ -4180,14 +4281,12 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                                 ~dest_branch:(S.Api.Ref.to_string base_branch_name)
                                 ~branch:(S.Api.Ref.to_string branch_name)
                                 ())
-                           ~index:
-                             (CCOption.map_or
-                                ~default:Terrat_base_repo_config_v1.Index.empty
-                                (fun { Terrat_vcs_provider2.Index.index; _ } -> index)
-                                index)
+                           ~index
                            ~file_list:repo_tree
                            repo_config))
               >>= fun repo_config ->
+              Abb.Future.return (Terrat_change_match3.synthesize_config ~index repo_config)
+              >>= fun config ->
               Abb.Future.return
                 (Ok
                    (Some
@@ -4196,7 +4295,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                           {
                             Work_manifest_apply.token = token encryption_key work_manifest.Wm.id;
                             base_ref = S.Api.Ref.to_string base_branch_name;
-                            changed_dirspaces = changed_dirspaces changes;
+                            changed_dirspaces = changed_dirspaces config changes;
                             run_kind = run_kind_str;
                             type_ = "apply";
                             result_version;
@@ -4652,7 +4751,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         ~result:H.generate_index_work_manifest_result
         ~fallthrough:H.log_state_err_iter
 
-    (* This is run for its side effect.  If the repo config is not valid, the surrounding [eval_step] will publish the error. *)
+    (* This is run for its side effect.  If the repo config is not valid, the
+       surrounding [eval_step] will publish the error. *)
     let test_repo_config_validity ctx state =
       let open Abbs_future_combinators.Infix_result_monad in
       Dv.repo_config ctx state >>= fun _ -> Abb.Future.return (Ok state)
@@ -4704,38 +4804,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               pull_request
               (Msg.Repo_config (provenance, repo_config))
             >>= fun () -> Abb.Future.return (Ok state)
-        | Error (`Bad_glob_err s) ->
-            let open Abb.Future.Infix_monad in
-            Logs.err (fun m -> m "%s : BAD_GLOB : %s" state.State.request_id s);
-            Abbs_future_combinators.ignore
+        | Error (#Terrat_change_match3.synthesize_config_err as err) ->
+            Abbs_future_combinators.Result.ignore
               (publish_msg
                  state.State.request_id
                  client
                  (S.Api.User.to_string @@ Event.user state.State.event)
                  pull_request
-                 (Msg.Bad_glob s))
+                 (Msg.Synthesize_config_err err))
             >>= fun () -> Abb.Future.return (Error `Error)
-        | Error (`Depends_on_cycle_err cycle) ->
-            let open Abb.Future.Infix_monad in
-            Logs.err (fun m ->
-                m
-                  "%s : DEPENDS_ON_CYCLE : %s"
-                  state.State.request_id
-                  (CCString.concat
-                     " -> "
-                     (CCList.map
-                        (fun { Terrat_dirspace.dir; workspace } ->
-                          "(" ^ dir ^ ", " ^ workspace ^ ")")
-                        cycle)));
-            Abbs_future_combinators.ignore
-              (publish_msg
-                 state.State.request_id
-                 client
-                 (S.Api.User.to_string @@ Event.user state.State.event)
-                 pull_request
-                 (Msg.Depends_on_cycle cycle))
-            >>= fun () -> Abb.Future.return (Error `Error)
-        | Error (`Workspace_in_multiple_stacks_err _) -> raise (Failure "nyi")
       in
       let open Abb.Future.Infix_monad in
       run >>= fun _ -> Abb.Future.return (Ok state)
@@ -5509,7 +5586,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       let unified_op =
         match op with
         | `Plan -> `Plan
-        | `Apply | `Apply_autoapprove | `Apply_force -> `Apply
+        | `Apply | `Apply_autoapprove | `Apply_force | `Stack_auto_apply -> `Apply
       in
       query_conflicting_work_manifests_in_repo
         state.State.request_id
@@ -5601,11 +5678,11 @@ module Make (S : Terrat_vcs_provider2.S) = struct
 
     let check_access_control_apply op ctx state =
       let open Abbs_future_combinators.Infix_result_monad in
-      Dv.apply_requirements ctx state
+      Dv.apply_requirements ctx state op
       >>= fun apply_requirements ->
       let access_control_run_type =
         match op with
-        | `Apply ->
+        | `Apply | `Stack_auto_apply ->
             `Apply
               (CCList.filter_map
                  (fun { Terrat_pull_request_review.user; _ } -> user)
@@ -5665,11 +5742,11 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       Dv.access_control_results ctx state op
       >>= fun { Terrat_access_control2.R.pass = working_set_matches; _ } ->
       let trigger_type = Event.trigger_type state.State.event in
-      match (working_set_matches, trigger_type) with
-      | [], `Auto ->
+      match (op, working_set_matches, trigger_type) with
+      | `Stack_auto_apply, [], _ | _, [], `Auto ->
           Logs.info (fun m -> m "%s : NOOP : AUTOAPPLY_NO_MATCHES" state.State.request_id);
           Abb.Future.return (Error (`Noop state))
-      | [], _ ->
+      | _, [], _ ->
           Logs.info (fun m -> m "%s : NOOP : APPLY_NO_MATCHING_DIRSPACES" state.State.request_id);
           Dv.client ctx state
           >>= fun client ->
@@ -5682,7 +5759,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             pull_request
             Msg.Apply_no_matching_dirspaces
           >>= fun () -> Abb.Future.return (Error (`Noop state))
-      | _ :: _, _ -> Abb.Future.return (Ok state)
+      | _, _ :: _, _ -> Abb.Future.return (Ok state)
 
     let check_dirspaces_owned_by_other_pull_requests op ctx state =
       let open Abbs_future_combinators.Infix_result_monad in
@@ -6609,6 +6686,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               query_work_manifest state.State.request_id (Ctx.storage ctx) work_manifest_id
               >>= function
               | Some { Wm.changes; _ } ->
+                  let module Dc = Terrat_change_match3.Dirspace_config in
+                  let module V1 = Terrat_base_repo_config_v1 in
+                  let module S = V1.Stacks in
                   let module Dsf = Terrat_change.Dirspaceflow in
                   let changed_dirspaces =
                     Terrat_data.Dirspace_set.of_list (CCList.map Dsf.to_dirspace changes)
@@ -6633,6 +6713,16 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                        which case this also prevents us from getting into an
                        infinite loop. *)
                     Abb.Future.return (Ok (Id.More_layers_to_run, state))
+                  else if
+                    op = `Plan
+                    && CCList.exists
+                         (fun {
+                                Dc.stack_config = { S.Stack.rules = { S.Rules.auto_apply; _ }; _ };
+                                _;
+                              }
+                            -> CCOption.get_or ~default:false auto_apply)
+                         working_layer
+                  then Abb.Future.return (Ok (Id.Can_run_stack_auto_apply, state))
                   else
                     (* This does not mean that all layers are completely
                        finished, but it means all layers are done as far as they
@@ -6741,13 +6831,11 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             Logs.info (fun m -> m "%s" state.State.request_id);
             H.maybe_publish_msg ctx state Msg.Unexpected_temporary_err
             >>= fun () -> Abb.Future.return (`Failure `Error)
-        | Error (`Bad_glob_err s) ->
-            H.maybe_publish_msg ctx state (Msg.Bad_glob s)
+        | Error (#Terrat_change_match3.synthesize_config_err as err) ->
+            Logs.info (fun m ->
+                m "%s : %a" state.State.request_id Terrat_change_match3.pp_synthesize_config_err err);
+            H.maybe_publish_msg ctx state (Msg.Synthesize_config_err err)
             >>= fun () -> Abb.Future.return (`Failure `Error)
-        | Error (`Depends_on_cycle_err cycle) ->
-            H.maybe_publish_msg ctx state (Msg.Depends_on_cycle cycle)
-            >>= fun () -> Abb.Future.return (`Failure `Error)
-        | Error (`Workspace_in_multiple_stacks_err _) -> raise (Failure "nyi")
         | Error (#Terrat_base_repo_config_v1.of_version_1_err as err) ->
             Logs.info (fun m ->
                 m
@@ -6792,6 +6880,10 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             Logs.info (fun m ->
                 m "%s : %a" state.State.request_id Terrat_vcs_provider2.pp_gate_add_approval_err err);
             H.maybe_publish_msg ctx state Msg.Unexpected_temporary_err
+            >>= fun () -> Abb.Future.return (`Failure `Error)
+        | Error (#Str_template.err as err) ->
+            Logs.info (fun m -> m "%s : %a" state.State.request_id Str_template.pp_err err);
+            H.maybe_publish_msg ctx state (Msg.Str_template_err err)
             >>= fun () -> Abb.Future.return (`Failure `Error)
         | Error `Silent_failure ->
             (* A failure where we know that any communication to the user that
@@ -6933,7 +7025,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
              ])
     in
     let event_kind_op_flow =
-      let layers_flow op next_layer_flow =
+      let layers_flow ~stack_auto_apply_flow op next_layer_flow =
         Flow.Flow.(
           choice
             ~id:Id.Test_more_layers_to_run
@@ -6951,8 +7043,20 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                          ~id:Id.Synthesize_pull_request_sync
                          ~f:(eval_step F.synthesize_pull_request_sync)
                          ();
+                       Flow.Step.make ~id:Id.Checkpoint ~f:(eval_step F.checkpoint) ();
                      ])
                   next_layer_flow );
+              ( Id.Can_run_stack_auto_apply,
+                seq
+                  (action
+                     [
+                       Flow.Step.make
+                         ~id:Id.Complete_work_manifest
+                         ~f:(eval_step F.complete_work_manifest)
+                         ();
+                       Flow.Step.make ~id:Id.Checkpoint ~f:(eval_step F.checkpoint) ();
+                     ])
+                  stack_auto_apply_flow );
               ( Id.All_layers_completed,
                 action
                   [
@@ -7056,9 +7160,11 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                          ~f:(eval_step F.complete_no_change_dirspaces)
                          ();
                      ]))
-               (layers_flow `Plan (gen op_kind_plan_flow))))
-      in
-      let op_kind_apply_flow op =
+               (layers_flow
+                  `Plan
+                  ~stack_auto_apply_flow:(gen (op_kind_apply_flow `Stack_auto_apply))
+                  (gen op_kind_plan_flow))))
+      and op_kind_apply_flow op _ _ =
         Flow.Flow.(
           seq
             (action
@@ -7133,7 +7239,10 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                     not that is a bug depends on your perspective. *)
                  Flow.Step.make ~id:Id.Reset_ctx ~f:(eval_step F.wait_for_initiate) ();
                ])
-            (layers_flow op (gen op_kind_plan_flow)))
+            (layers_flow
+               op
+               ~stack_auto_apply_flow:(gen (op_kind_apply_flow `Stack_auto_apply))
+               (gen op_kind_plan_flow)))
       in
       Flow.Flow.(
         recover
@@ -7152,9 +7261,10 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                          ~f:F.test_op_kind
                          [
                            (Id.Op_kind_plan, gen op_kind_plan_flow);
-                           (Id.Op_kind_apply, op_kind_apply_flow `Apply);
-                           (Id.Op_kind_apply_autoapprove, op_kind_apply_flow `Apply_autoapprove);
-                           (Id.Op_kind_apply_force, op_kind_apply_flow `Apply_force);
+                           (Id.Op_kind_apply, gen (op_kind_apply_flow `Apply));
+                           ( Id.Op_kind_apply_autoapprove,
+                             gen (op_kind_apply_flow `Apply_autoapprove) );
+                           (Id.Op_kind_apply_force, gen (op_kind_apply_flow `Apply_force));
                          ])))))
           ~f:(fun _ state -> function
             | `Step_err (_, `Noop state) -> Abb.Future.return (Ok (Id.Recover_noop, state))
@@ -7218,14 +7328,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     in
     let event_kind_repo_config_flow =
       Flow.Flow.(
-        seq
-          (action
-             [
-               Flow.Step.make
-                 ~id:Id.Publish_repo_config
-                 ~f:(eval_step F.test_repo_config_validity)
-                 ();
-             ])
+        seq store_pull_request_flow
+        @@ seq
+             (action
+                [
+                  Flow.Step.make
+                    ~id:Id.Publish_repo_config
+                    ~f:(eval_step F.test_repo_config_validity)
+                    ();
+                ])
         @@ seq index_flow
         @@ action
              [
@@ -7239,14 +7350,12 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     in
     let event_kind_index_flow =
       Flow.Flow.(
-        seq
-          (action
-             [ Flow.Step.make ~id:Id.Store_pull_request ~f:(eval_step F.store_pull_request) () ])
-          (seq
+        seq store_pull_request_flow
+        @@ seq
              index_flow
              (seq
                 complete_work_manifest_flow
-                (action [ Flow.Step.make ~id:Id.Publish_index ~f:(eval_step F.publish_index) () ]))))
+                (action [ Flow.Step.make ~id:Id.Publish_index ~f:(eval_step F.publish_index) () ])))
     in
     let event_kind_unlock_flow =
       Flow.Flow.(action [ Flow.Step.make ~id:Id.Unlock ~f:(eval_step F.unlock) () ])

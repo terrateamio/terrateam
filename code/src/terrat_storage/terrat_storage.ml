@@ -22,6 +22,19 @@ let metrics Pgsql_pool.Metrics.{ num_conns; idle_conns } =
   Prmths.Gauge.set Metrics.num_idle_conns (CCFloat.of_int idle_conns);
   Abbs_future_combinators.unit
 
+let on_connect idle_tx_timeout conn =
+  Abbs_future_combinators.ignore
+    (let open Abb.Future.Infix_monad in
+     Pgsql_io.Prepared_stmt.execute
+       conn
+       Pgsql_io.Typed_sql.(
+         sql /^ Printf.sprintf "set idle_in_transaction_session_timeout='%s'" idle_tx_timeout)
+     >>= function
+     | Ok () -> Abb.Future.return ()
+     | Error (#Pgsql_io.err as err) ->
+         Logs.err (fun m -> m "%a" Pgsql_io.pp_err err);
+         Abb.Future.return ())
+
 let create config =
   let open Abb.Future.Infix_monad in
   let tls_config =
@@ -39,6 +52,7 @@ let create config =
     ~passwd:(Terrat_config.db_password config)
     ~max_conns:(Terrat_config.db_max_pool_size config)
     ~connect_timeout:(Terrat_config.db_connect_timeout config)
+    ~on_connect:(on_connect (Terrat_config.db_idle_tx_timeout config))
     (Terrat_config.db config)
   >>= fun storage ->
   Pgsql_pool.with_conn storage ~f:(fun db ->

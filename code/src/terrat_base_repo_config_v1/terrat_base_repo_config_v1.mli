@@ -265,7 +265,7 @@ module Apply_requirements : sig
       all_of : Access_control.Match_list.t; [@default []]
       any_of : Access_control.Match_list.t; [@default []]
       any_of_count : int; [@default 1]
-      enabled : bool; [@default true]
+      enabled : bool; [@default false]
       require_completed_reviews : bool; [@default false]
     }
     [@@deriving make, show, yojson, eq]
@@ -600,23 +600,35 @@ module Notifications : sig
 end
 
 module Stacks : sig
-  module On_change : sig
-    type t = { can_apply_after : string list [@default []] } [@@deriving make, show, yojson, eq]
+  module Rules : sig
+    type t = {
+      apply_after : string list; [@default []]
+      auto_apply : bool option; [@default None]
+      modified_by : string list; [@default []]
+      plan_after : string list; [@default []]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  module Type_ : sig
+    type t =
+      | Nested of string list
+      | Stack of Tag_query.t
+    [@@deriving show, yojson, eq]
   end
 
   module Stack : sig
     type t = {
-      tag_query : Tag_query.t;
-      on_change : On_change.t; [@default On_change.make ()]
+      type_ : Type_.t;
+      rules : Rules.t; [@default Rules.make ()]
       variables : string String_map.t; [@default String_map.empty]
     }
     [@@deriving make, show, yojson, eq]
   end
 
   type t = {
-    allow_workspace_in_multiple_stacks : bool; [@default false]
     names : Stack.t String_map.t;
-        [@default String_map.singleton "default" (Stack.make ~tag_query:Tag_query.any ())]
+        [@default String_map.singleton "default" (Stack.make ~type_:(Type_.Stack Tag_query.any) ())]
   }
   [@@deriving make, show, yojson, eq]
 end
