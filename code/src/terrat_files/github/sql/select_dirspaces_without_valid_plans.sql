@@ -39,4 +39,4 @@ left join plans
     on plans.work_manifest = gwm.id
        and plans.path = ds.path
        and plans.workspace = ds.workspace
-where gwm.id is null or plans.data is null and ldswm.success
+where gwm.id is null or plans.data is null or not ldswm.success
