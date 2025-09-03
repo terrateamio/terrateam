@@ -10,24 +10,20 @@ with wm AS (
         end as unified_run_type
     from github_work_manifests gwm
     where id = $work_manifest
-),
-insert_comment as (
-  insert into github_work_manifest_comments(comment_id, work_manifest, repository, pull_number, dir, workspace, unified_run_type)
-  select
-      $comment_id, 
-      $work_manifest, 
-      wm.repository,
-      wm.pull_number,
-      $dir,
-      $workspace,
-      wm.unified_run_type
-  from wm
-  on conflict (repository, pull_number, dir, workspace, unified_run_type)
-  do update 
-      set comment_id = excluded.comment_id,
-          created_at = current_timestamp,
-          work_manifest = excluded.work_manifest
-  returning comment_id
 )
-select comment_id
-from insert_comment
+insert into github_pull_request_tf_summary_elements(comment_id, work_manifest, repository, pull_number, dir, workspace, unified_run_type)
+select
+    $comment_id, 
+    $work_manifest, 
+    wm.repository,
+    wm.pull_number,
+    $dir,
+    $workspace,
+    wm.unified_run_type
+from wm
+on conflict (repository, pull_number, dir, workspace, unified_run_type)
+do update 
+set comment_id = excluded.comment_id,
+    created_at = current_timestamp,
+    work_manifest = excluded.work_manifest
+returning comment_id
