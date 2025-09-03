@@ -25,8 +25,9 @@ module Rt = struct
     Brtl_rtng.Route.(rel / "api" /% Path.string / "tenv" /% Path.ud Uuidm.of_string /% Path.any)
 end
 
-let response_404 ctx =
-  Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Not_found "") ctx)
+let response_404 =
+  Brtl_ep.run ~content_type:"text/html" ~f:(fun ctx ->
+      Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Not_found "") ctx))
 
 let maybe_add_admin_routes config storage =
   (* Very important, we only want to add these endpoints if the admin token is
@@ -47,8 +48,9 @@ let rtng config storage services =
       services
   in
   Brtl_rtng.create
-    ~default:(fun ctx ->
-      Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Not_found "") ctx))
+    ~default:
+      (Brtl_ep.run ~content_type:"text/html" ~f:(fun ctx ->
+           Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Not_found "") ctx)))
     (maybe_add_admin_routes config storage
     @ Brtl_rtng.Route.(
         [
