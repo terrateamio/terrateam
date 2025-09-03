@@ -6,7 +6,10 @@ module Rt = struct
   let logout () = Brtl_rtng.Route.(api_v1 () / "logout")
   let server_config () = Brtl_rtng.Route.(api_v1 () / "server" / "config")
   let health_check () = Brtl_rtng.Route.(rel / "health")
-  let infracost () = Brtl_rtng.Route.(api () / "github" / "infracost" /% Path.any)
+
+  (* The [Path.string] before "infracost" is so that we can ignore any
+     underlying VCS-based API base URL. *)
+  let infracost () = Brtl_rtng.Route.(api () /% Path.string / "infracost" /% Path.any)
   let metrics () = Brtl_rtng.Route.(rel / "metrics")
 
   (* Admin interface *)
@@ -63,7 +66,7 @@ let rtng config storage services =
             (`GET, Rt.whoami () --> Terrat_ep_whoami.get config storage services);
             (`POST, Rt.logout () --> Terrat_ep_logout.post storage);
             (* Infracost *)
-            (`POST, Rt.infracost () --> Terrat_ep_infracost.post config storage);
+            (`POST, Rt.infracost () --> fun _ -> Terrat_ep_infracost.post config storage);
             (* Server *)
             (`GET, Rt.server_config () --> Terrat_ep_server.Config.get config);
             (* API 404s.  This is needed because for any and only UI endpoint we
