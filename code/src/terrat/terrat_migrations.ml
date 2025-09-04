@@ -178,6 +178,7 @@ let migrations =
     ("add-comment-tracking", run_file_sql "2025-08-20-add-comment-tracking.sql");
     ( "fix-missing-repository-mappings",
       run_file_sql "2025-08-21-fix-missing-repository-mappings.sql" );
+    ("refactor-gates-primary-key", run_file_sql "2025-09-04-refactor-gates-primary-key.sql");
   ]
 
 let run config storage =
