@@ -131,13 +131,22 @@ function parseTextPlan(planText: string): ParsedPlan {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     
+    // Check for import comment (appears before "must be replaced" resources)
+    // Pattern: "# (imported from "some/id")"
+    const importMatch = line.match(/^\s*#\s*\(imported from/i);
+    if (importMatch) {
+      // Skip this line, the actual resource info will come next
+      continue;
+    }
+    
     // Check for resource header 
     // Matches patterns like:
     // "# aws_instance.example will be created"
     // "# module.staging.aws_instance.example will be created"
     // "# module.staging_compute_instance.google_compute_instance.this[0] will be created"
+    // "# module.foo["..."].kubernetes_deployment_v1.main must be replaced"
     
-    const resourceMatch = line.match(/^\s*#\s+(.+)\s+will be\s+(\w+)/);
+    const resourceMatch = line.match(/^\s*#\s+(.+)\s+(?:will be|must be)\s+(\w+)/);
     if (resourceMatch) {
       // Save previous resource if exists
       if (currentResource && currentResource.id) {
@@ -156,20 +165,45 @@ function parseTextPlan(planText: string): ParsedPlan {
       
       if (fullResourceId.startsWith('module.')) {
         // Module resource: module.staging_compute_instance.google_compute_instance.this[0]
-        const parts = fullResourceId.split('.');
-        // Find the resource type (should be the second-to-last or third-to-last part)
-        // Look for known resource type patterns
-        for (let i = 1; i < parts.length - 1; i++) {
-          if (parts[i].includes('_')) {
-            type = parts[i];
-            name = parts.slice(i + 1).join('.');
-            break;
+        // or: module.foo["..."].kubernetes_deployment_v1.main
+        
+        // First, handle bracketed modules like module.foo["key"]
+        const bracketMatch = fullResourceId.match(/^module\.[^\.]+\[[^\]]+\]\.(.+)$/);
+        if (bracketMatch) {
+          // Extract everything after the bracketed module
+          const resourcePart = bracketMatch[1];
+          const parts = resourcePart.split('.');
+          
+          // The first part with underscore is likely the resource type
+          for (let i = 0; i < parts.length - 1; i++) {
+            if (parts[i].includes('_')) {
+              type = parts[i];
+              name = parts.slice(i + 1).join('.');
+              break;
+            }
           }
-        }
-        // If we couldn't determine the type, use the last two parts
-        if (!type) {
-          type = parts[parts.length - 2];
-          name = parts[parts.length - 1];
+          // If no underscore found, use standard convention
+          if (!type && parts.length >= 2) {
+            type = parts[0];
+            name = parts.slice(1).join('.');
+          }
+        } else {
+          // Standard module path without brackets
+          const parts = fullResourceId.split('.');
+          // Find the resource type (should be the second-to-last or third-to-last part)
+          // Look for known resource type patterns
+          for (let i = 1; i < parts.length - 1; i++) {
+            if (parts[i].includes('_')) {
+              type = parts[i];
+              name = parts.slice(i + 1).join('.');
+              break;
+            }
+          }
+          // If we couldn't determine the type, use the last two parts
+          if (!type && parts.length >= 2) {
+            type = parts[parts.length - 2];
+            name = parts[parts.length - 1];
+          }
         }
       } else {
         // Direct resource: aws_instance.example
@@ -192,16 +226,47 @@ function parseTextPlan(planText: string): ParsedPlan {
       continue;
     }
 
-    // Also check for resource declaration line (e.g., '+ resource "google_compute_instance" "this" {')
-    const resourceDeclMatch = line.match(/^\s*[\+\-\~]\s+resource\s+"([\w_]+)"\s+"([\w_\-\.]+)"/);
-    if (resourceDeclMatch && currentResource) {
-      const [, resourceType, resourceName] = resourceDeclMatch;
-      // Update the current resource with more accurate info if needed
-      if (!currentResource.type || currentResource.type === '') {
-        currentResource.type = resourceType;
+    // Check for -/+ resource declaration (replacement)
+    const replacementDeclMatch = line.match(/^\s*-\/\+\s+resource\s+"([\w_]+)"\s+"([\w_\-\.]+)"/);
+    if (replacementDeclMatch) {
+      const [, resourceType, resourceName] = replacementDeclMatch;
+      
+      // If we have a current resource from the header, update it
+      if (currentResource) {
+        currentResource.changeType = 'replace';
+        if (!currentResource.type || currentResource.type === '') {
+          currentResource.type = resourceType;
+        }
+        if (!currentResource.name || currentResource.name === '') {
+          currentResource.name = resourceName;
+        }
+      } else {
+        // Create a new resource for this replacement
+        currentResource = {
+          id: `${resourceType}.${resourceName}`,
+          type: resourceType,
+          name: resourceName,
+          provider: extractProviderFromType(resourceType),
+          changeType: 'replace',
+          before: {},
+          after: {}
+        };
+        currentAttributes = {};
+        inResourceBlock = true;
       }
-      if (!currentResource.name || currentResource.name === '') {
-        currentResource.name = resourceName;
+    }
+    // Also check for regular resource declaration line (e.g., '+ resource "google_compute_instance" "this" {')
+    else if (line.match(/^\s*[\+\-\~]\s+resource\s+"([\w_]+)"\s+"([\w_\-\.]+)"/)) {
+      const resourceDeclMatch = line.match(/^\s*[\+\-\~]\s+resource\s+"([\w_]+)"\s+"([\w_\-\.]+)"/);
+      if (resourceDeclMatch && currentResource) {
+        const [, resourceType, resourceName] = resourceDeclMatch;
+        // Update the current resource with more accurate info if needed
+        if (!currentResource.type || currentResource.type === '') {
+          currentResource.type = resourceType;
+        }
+        if (!currentResource.name || currentResource.name === '') {
+          currentResource.name = resourceName;
+        }
       }
     }
 
@@ -394,7 +459,44 @@ function parseFallbackFormat(planText: string): ResourceNode[] {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     
-    // Check for resource declarations with + or -
+    // Check for -/+ resource declarations (replacements) first
+    const replaceDeclMatch = line.match(/^\s*-\/\+\s+resource\s+"([\w_]+)"\s+"([\w_\-\.\[\]]+)"/);
+    if (replaceDeclMatch) {
+      const [, type, name] = replaceDeclMatch;
+      
+      const resource: ResourceNode = {
+        id: `${type}.${name}`,
+        type: type,
+        name: name,
+        provider: extractProviderFromType(type),
+        changeType: 'replace',
+        before: {},
+        after: {},
+        attributes: {}
+      };
+      
+      // Try to extract some attributes from the following lines
+      for (let j = i + 1; j < Math.min(i + 20, lines.length); j++) {
+        const attrLine = lines[j];
+        if (attrLine.trim() === '}') break;
+        
+        const attrMatch = attrLine.match(/^\s*[\+\-\~]?\s*(\w+)\s*=\s*(.+)/);
+        if (attrMatch) {
+          const [, key, value] = attrMatch;
+          if (resource.attributes) {
+            resource.attributes[key] = parseAttributeValue(value);
+          }
+          // For replacements, attributes go to both before and after
+          resource.before[key] = parseAttributeValue(value);
+          resource.after[key] = parseAttributeValue(value);
+        }
+      }
+      
+      resources.push(resource);
+      continue;
+    }
+    
+    // Check for regular resource declarations with + or -
     const resourceDeclMatch = line.match(/^\s*([\+\-\~])\s+resource\s+"([\w_]+)"\s+"([\w_\-\.\[\]]+)"/);
     if (resourceDeclMatch) {
       const [, indicator, type, name] = resourceDeclMatch;
