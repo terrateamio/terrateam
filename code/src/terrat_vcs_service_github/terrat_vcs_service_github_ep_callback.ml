@@ -45,7 +45,7 @@ module Webhook = struct
           ("username", `String username);
           ("email", `String (CCOption.get_or ~default:"" email));
           ("name", `String (CCOption.get_or ~default:"" name));
-          ("avatar_url", `String (CCOption.get_or ~default:"" avatar_url));
+          ("avatar_url", `String avatar_url);
           ("timestamp", `String timestamp);
         ]
         |> Yojson.Safe.to_string
