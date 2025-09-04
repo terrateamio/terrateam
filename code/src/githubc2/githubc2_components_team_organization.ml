@@ -15,7 +15,7 @@ module Primary = struct
   end
 
   type t = {
-    archived_at : string option;
+    archived_at : string option; [@default None]
     avatar_url : string;
     billing_email : string option; [@default None]
     blog : string option; [@default None]
@@ -23,7 +23,7 @@ module Primary = struct
     company : string option; [@default None]
     created_at : string;
     default_repository_permission : string option; [@default None]
-    description : string option;
+    description : string option; [@default None]
     disk_usage : int option; [@default None]
     email : string option; [@default None]
     events_url : string;

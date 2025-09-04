@@ -1,12 +1,11 @@
 module PostApiV4ProjectsIdPipelineSchedules = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      postapiv4projectsidpipelineschedules :
-        Gitlabc_components.PostApiV4ProjectsIdPipelineSchedules.t;
-          [@key "postApiV4ProjectsIdPipelineSchedules"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdPipelineSchedules.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -37,8 +36,10 @@ module PostApiV4ProjectsIdPipelineSchedules = struct
 
   let url = "/api/v4/projects/{id}/pipeline_schedules"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -173,11 +174,13 @@ module PutApiV4ProjectsIdPipelineSchedulesPipelineScheduleId = struct
     type t = {
       id : string;
       pipeline_schedule_id : int;
-      putapiv4projectsidpipelineschedulespipelinescheduleid :
-        Gitlabc_components.PutApiV4ProjectsIdPipelineSchedulesPipelineScheduleId.t;
-          [@key "putApiV4ProjectsIdPipelineSchedulesPipelineScheduleId"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdPipelineSchedulesPipelineScheduleId.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -208,8 +211,10 @@ module PutApiV4ProjectsIdPipelineSchedulesPipelineScheduleId = struct
 
   let url = "/api/v4/projects/{id}/pipeline_schedules/{pipeline_schedule_id}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -432,11 +437,13 @@ module PostApiV4ProjectsIdPipelineSchedulesPipelineScheduleIdVariables = struct
     type t = {
       id : string;
       pipeline_schedule_id : int;
-      postapiv4projectsidpipelineschedulespipelinescheduleidvariables :
-        Gitlabc_components.PostApiV4ProjectsIdPipelineSchedulesPipelineScheduleIdVariables.t;
-          [@key "postApiV4ProjectsIdPipelineSchedulesPipelineScheduleIdVariables"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdPipelineSchedulesPipelineScheduleIdVariables.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -467,8 +474,10 @@ module PostApiV4ProjectsIdPipelineSchedulesPipelineScheduleIdVariables = struct
 
   let url = "/api/v4/projects/{id}/pipeline_schedules/{pipeline_schedule_id}/variables"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -541,11 +550,13 @@ module PutApiV4ProjectsIdPipelineSchedulesPipelineScheduleIdVariablesKey = struc
       id : string;
       key : string;
       pipeline_schedule_id : int;
-      putapiv4projectsidpipelineschedulespipelinescheduleidvariableskey :
-        Gitlabc_components.PutApiV4ProjectsIdPipelineSchedulesPipelineScheduleIdVariablesKey.t;
-          [@key "putApiV4ProjectsIdPipelineSchedulesPipelineScheduleIdVariablesKey"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdPipelineSchedulesPipelineScheduleIdVariablesKey.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -576,8 +587,10 @@ module PutApiV4ProjectsIdPipelineSchedulesPipelineScheduleIdVariablesKey = struc
 
   let url = "/api/v4/projects/{id}/pipeline_schedules/{pipeline_schedule_id}/variables/{key}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

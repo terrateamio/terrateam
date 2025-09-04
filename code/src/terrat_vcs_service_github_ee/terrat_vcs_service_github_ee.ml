@@ -8,6 +8,8 @@ module Logs = (val Logs.src_log src : Logs.LOG)
 module Provider :
   Terrat_vcs_provider2_github.S
     with type Api.Config.t = Terrat_vcs_service_github_provider.Api.Config.t = struct
+  let name = Terrat_vcs_service_github_provider.name
+
   module Api = Terrat_vcs_api_github
   module Unlock_id = Terrat_vcs_service_github_provider.Unlock_id
   module Db = Terrat_vcs_service_github_provider.Db
@@ -366,12 +368,10 @@ module Provider :
       | Some (_, content) when CCString.is_empty (CCString.trim content) ->
           Abb.Future.return (Ok None)
       | Some (fname, content) ->
-          Abbs_future_combinators.Result.map_err
-            ~f:(function
-              | `Json_decode_err err -> `Json_decode_err (fname, err)
-              | `Unexpected_err -> `Unexpected_err fname
-              | `Yaml_decode_err err -> `Yaml_decode_err (fname, err))
-            (Jsonu.of_yaml_string content)
+          Abb.Future.return
+          @@ CCResult.map_err
+               (fun (`Yaml_decode_err err) -> `Yaml_decode_err (fname, err))
+               (Jsonu.of_yaml_string content)
           >>= fun json -> Abb.Future.return (Ok (Some (fname, json)))
 
     let maybe_fetch_centralized_repo_config_file request_id client centralized_repo basename =
@@ -471,7 +471,7 @@ module Provider :
             ->
       let wrap_err fname =
         Abbs_future_combinators.Result.map_err ~f:(function
-          | `Repo_config_parse_err err -> `Repo_config_parse_err (fname, err)
+          | `Repo_config_schema_err err -> `Repo_config_schema_err (fname, err)
           | #Terrat_base_repo_config_v1.of_version_1_err as err -> err)
       in
       let validate_configs =
@@ -626,216 +626,15 @@ module Provider :
       | Error _ -> Abb.Future.return (Error `Error)
   end
 
-  module Commit_check = struct
-    let make ?work_manifest ~config ~description ~title ~status ~repo account =
-      let module Wm = Terrat_work_manifest3 in
-      let details_url =
-        match work_manifest with
-        | Some work_manifest ->
-            Printf.sprintf
-              "%s/i/%d/runs/%s"
-              (Uri.to_string @@ Terrat_config.terrateam_web_base_url @@ Api.Config.config config)
-              (Api.Account.id account)
-              (Uuidm.to_string work_manifest.Wm.id)
-        | None -> Uri.to_string @@ Terrat_config.terrateam_web_base_url @@ Api.Config.config config
-      in
-      Terrat_commit_check.make ~details_url ~description ~title ~status
-  end
-
-  module Ui = struct
-    let work_manifest_url config account work_manifest =
-      let module Wm = Terrat_work_manifest3 in
-      Some
-        (Uri.of_string
-           (Printf.sprintf
-              "%s/i/%d/runs/%s"
-              (Uri.to_string (Terrat_config.terrateam_web_base_url @@ Api.Config.config config))
-              (Api.Account.id account)
-              (Uuidm.to_string work_manifest.Wm.id)))
-  end
-
-  module Comment = Terrat_vcs_service_github_provider.Comment (Ui)
+  module Commit_check = Terrat_vcs_service_github_provider.Commit_check
+  module Ui = Terrat_vcs_service_github_provider.Ui
+  module Comment = Terrat_vcs_service_github_provider.Comment
 end
 
 module Routes = struct
   type config = Provider.Api.Config.t
 
-  module Rt = struct
-    let api () = Brtl_rtng.Route.(rel / "api")
-    let api_v1 () = Brtl_rtng.Route.(api () / "v1")
-
-    (* Legacy Installations API *)
-    let legacy_installation_api_rt () = Brtl_rtng.Route.(api_v1 () / "installations")
-
-    let legacy_installation_work_manifests_rt () =
-      Brtl_rtng.Route.(
-        legacy_installation_api_rt ()
-        /% Path.int
-        / "work-manifests"
-        /? Query.(option (string "q"))
-        /? Query.(option (string "tz"))
-        /? Query.(
-             option
-               (ud_array
-                  "page"
-                  Brtl_ep_paginate.Param.(of_param Typ.(tuple (string, ud' Uuidm.of_string)))))
-        /? Query.(option_default 20 (Query.int "limit")))
-
-    let legacy_installation_work_manifest_outputs_rt () =
-      Brtl_rtng.Route.(
-        legacy_installation_api_rt ()
-        /% Path.int
-        / "work-manifests"
-        /% Path.ud Uuidm.of_string
-        / "outputs"
-        /? Query.(option (string "q"))
-        /? Query.(option (string "tz"))
-        /? Query.(option (ud_array "page" Brtl_ep_paginate.Param.(of_param Typ.int)))
-        /? Query.(option_default 20 (Query.int "limit"))
-        /? Query.(option_default false (Query.bool "lite")))
-
-    let legacy_installation_dirspaces_rt () =
-      Brtl_rtng.Route.(
-        legacy_installation_api_rt ()
-        /% Path.int
-        / "dirspaces"
-        /? Query.(option (string "q"))
-        /? Query.(option (string "tz"))
-        /? Query.(
-             option
-               (ud_array
-                  "page"
-                  Brtl_ep_paginate.Param.(
-                    of_param Typ.(tuple4 (string, string, string, ud' Uuidm.of_string)))))
-        /? Query.(option_default 20 (Query.int "limit")))
-
-    let legacy_installation_pull_requests_manifests_rt () =
-      Brtl_rtng.Route.(
-        legacy_installation_api_rt ()
-        /% Path.int
-        / "pull-requests"
-        /? Query.(option (int "pr"))
-        /? Query.(
-             option
-               (ud_array "page" Brtl_ep_paginate.Param.(of_param Typ.(ud' CCInt64.of_string_opt))))
-        /? Query.(option_default 20 (Query.int "limit")))
-
-    let legacy_installation_repos_rt () =
-      Brtl_rtng.Route.(
-        legacy_installation_api_rt ()
-        /% Path.int
-        / "repos"
-        /? Query.(option (ud_array "page" Brtl_ep_paginate.Param.(of_param Typ.string)))
-        /? Query.(option_default 20 (int "limit")))
-
-    let legacy_installation_repos_refresh_rt () =
-      Brtl_rtng.Route.(legacy_installation_api_rt () /% Path.int / "repos" / "refresh")
-
-    (* VCS Specific installations API *)
-    let installation_api_rt () = Brtl_rtng.Route.(api_v1 () / "github" / "installations")
-
-    let installation_work_manifests_rt () =
-      Brtl_rtng.Route.(
-        installation_api_rt ()
-        /% Path.int
-        / "work-manifests"
-        /? Query.(option (string "q"))
-        /? Query.(option (string "tz"))
-        /? Query.(
-             option
-               (ud_array
-                  "page"
-                  Brtl_ep_paginate.Param.(of_param Typ.(tuple (string, ud' Uuidm.of_string)))))
-        /? Query.(option_default 20 (Query.int "limit")))
-
-    let installation_work_manifest_outputs_rt () =
-      Brtl_rtng.Route.(
-        installation_api_rt ()
-        /% Path.int
-        / "work-manifests"
-        /% Path.ud Uuidm.of_string
-        / "outputs"
-        /? Query.(option (string "q"))
-        /? Query.(option (string "tz"))
-        /? Query.(option (ud_array "page" Brtl_ep_paginate.Param.(of_param Typ.int)))
-        /? Query.(option_default 20 (Query.int "limit"))
-        /? Query.(option_default false (Query.bool "lite")))
-
-    let installation_dirspaces_rt () =
-      Brtl_rtng.Route.(
-        installation_api_rt ()
-        /% Path.int
-        / "dirspaces"
-        /? Query.(option (string "q"))
-        /? Query.(option (string "tz"))
-        /? Query.(
-             option
-               (ud_array
-                  "page"
-                  Brtl_ep_paginate.Param.(
-                    of_param Typ.(tuple4 (string, string, string, ud' Uuidm.of_string)))))
-        /? Query.(option_default 20 (Query.int "limit")))
-
-    let installation_pull_requests_manifests_rt () =
-      Brtl_rtng.Route.(
-        installation_api_rt ()
-        /% Path.int
-        / "pull-requests"
-        /? Query.(option (int "pr"))
-        /? Query.(
-             option
-               (ud_array "page" Brtl_ep_paginate.Param.(of_param Typ.(ud' CCInt64.of_string_opt))))
-        /? Query.(option_default 20 (Query.int "limit")))
-
-    let installation_repos_rt () =
-      Brtl_rtng.Route.(
-        installation_api_rt ()
-        /% Path.int
-        / "repos"
-        /? Query.(option (ud_array "page" Brtl_ep_paginate.Param.(of_param Typ.string)))
-        /? Query.(option_default 20 (int "limit")))
-
-    let installation_repos_refresh_rt () =
-      Brtl_rtng.Route.(installation_api_rt () /% Path.int / "repos" / "refresh")
-
-    (* User API *)
-    let user_api_rt () = Brtl_rtng.Route.(api_v1 () / "user")
-    let user_installations_rt () = Brtl_rtng.Route.(user_api_rt () / "github" / "installations")
-  end
-
-  let routes config storage =
-    let module Ep_inst = Terrat_vcs_service_github_ee_ep_installations in
-    let module Ep_user = Terrat_vcs_service_github_ee_ep_user in
-    Brtl_rtng.Route.
-      [
-        (* Installations *)
-        (`GET, Rt.installation_dirspaces_rt () --> Ep_inst.Dirspaces.get config storage);
-        (`GET, Rt.installation_work_manifests_rt () --> Ep_inst.Work_manifests.get config storage);
-        ( `GET,
-          Rt.installation_work_manifest_outputs_rt ()
-          --> Ep_inst.Work_manifests.Outputs.get config storage );
-        ( `GET,
-          Rt.installation_pull_requests_manifests_rt () --> Ep_inst.Pull_requests.get config storage
-        );
-        (`GET, Rt.installation_repos_rt () --> Ep_inst.Repos.get config storage);
-        (`POST, Rt.installation_repos_refresh_rt () --> Ep_inst.Repos.Refresh.post config storage);
-        (`GET, Rt.user_installations_rt () --> Ep_user.Installations.get config storage);
-        (* Legacy Installations *)
-        (`GET, Rt.legacy_installation_dirspaces_rt () --> Ep_inst.Dirspaces.get config storage);
-        ( `GET,
-          Rt.legacy_installation_work_manifests_rt () --> Ep_inst.Work_manifests.get config storage
-        );
-        ( `GET,
-          Rt.legacy_installation_work_manifest_outputs_rt ()
-          --> Ep_inst.Work_manifests.Outputs.get config storage );
-        ( `GET,
-          Rt.legacy_installation_pull_requests_manifests_rt ()
-          --> Ep_inst.Pull_requests.get config storage );
-        (`GET, Rt.legacy_installation_repos_rt () --> Ep_inst.Repos.get config storage);
-        ( `POST,
-          Rt.legacy_installation_repos_refresh_rt () --> Ep_inst.Repos.Refresh.post config storage
-        );
-      ]
+  let routes _config _storage = []
 end
 
 include Terrat_vcs_service_github.Make (Provider) (Routes)

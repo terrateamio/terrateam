@@ -49,12 +49,14 @@ Workflows consist of a series of steps that are executed in order. The available
 - `env`: Sets environment variables.
 - `run`: Runs a custom command.
 - `oidc`: Initiates an OIDC connection to a cloud provider.
+- `checkov`: Runs Checkov security scanning on the Terraform plan.
+- `conftest`: Runs Conftest policy validation on the Terraform plan.
 
 ### Plan
 Plan steps are defined under the `plan` key in a workflow.
 | Key | Type | Description |
 |-----|------|-------------|
-| type | String | Terrateam step type: `init`, `plan`, `env`, `run`, `oidc`. |
+| type | String | Terrateam step type: `init`, `plan`, `env`, `run`, `oidc`, `checkov`, `conftest`. |
 | extra_args | List | Extra command line arguments passed to the `terraform` command. |
 
 ### Apply
@@ -93,6 +95,71 @@ Custom commands can be run using the `run` step type.
 | env | Object | Environment variables to set for this execution. Object keys are environment variable names and the value is a string. |
 | ignore_errors | Boolean | Set to `true` if failure should be ignored.  Default is `false.` |
 | visible_on | String | When the output of the command should be visible in a PR comment or the UI.  Options are `always`, `failure`, `success`.  Default is `failure`. |
+| gate | Object | Gate configuration for manual approval if the command fails (see Gate section below) |
+
+### Checkov
+Runs Checkov security scanning against the generated Terraform plan to detect misconfigurations and security issues.
+
+The `checkov` step type automatically:
+- Executes Checkov against the Terraform plan file
+- Captures and includes the output in the Terrateam results
+- Fails the workflow if critical issues are detected
+
+| Key | Type | Description |
+|-----|------|-------------|
+| type | String | Must be `checkov` |
+| extra_args | List | Extra command line arguments passed to the checkov command |
+| gate | Object | Gate configuration for manual approval if Checkov fails (see Gate section below) |
+
+Configuration is done through environment variables. Common Checkov environment variables include:
+- `CKV_SKIP_CHECK`: Comma-separated list of check IDs to skip
+- `CKV_CHECK`: Comma-separated list of specific check IDs to run
+- `CKV_FRAMEWORK`: Specify framework to scan (default: terraform_plan)
+
+For a full list of configuration options, see the [Checkov documentation](https://www.checkov.io/2.Basics/CLI%20Command%20Reference.html).
+
+### Conftest
+Runs Conftest policy validation using Open Policy Agent (OPA) against the generated Terraform plan.
+
+The `conftest` step type automatically:
+- Executes Conftest against the Terraform plan file using Rego policies
+- Captures and includes the output in the Terrateam results
+- Fails the workflow if policies are violated
+
+| Key | Type | Description |
+|-----|------|-------------|
+| type | String | Must be `conftest` |
+| extra_args | List | Extra command line arguments passed to the conftest command |
+| gate | Object | Gate configuration for manual approval if Conftest fails (see Gate section below) |
+
+By default, Conftest looks for policies in the `policy/` directory relative to the Terraform configuration. This can be customized using the `CONFTEST_POLICY` environment variable.
+
+Common Conftest environment variables include:
+- `CONFTEST_POLICY`: Path to the directory containing Rego policy files
+- `CONFTEST_NAMESPACE`: Namespace to use for policy evaluation (default: main)
+- `CONFTEST_OUTPUT`: Output format (json, table, tap, junit, github)
+
+For more information on writing policies and configuration options, see the [Conftest documentation](https://www.conftest.dev/).
+
+### Gate
+The `gate` configuration allows you to require manual approval when certain workflow steps fail, particularly useful for security scanning, policy checks, and custom validation scripts. When a gated step fails, instead of immediately failing the workflow, Terrateam creates an approval request that authorized users can approve to continue the workflow.
+
+Gates are supported on the following step types:
+- `run`: Gate custom command failures
+- `checkov`: Gate security scan failures
+- `conftest`: Gate policy violations
+
+| Key | Type | Description |
+|-----|------|-------------|
+| token | String | **Required**. A unique identifier for this gate request |
+| all_of | List | List of users/teams that must all approve the gate |
+| any_of | List | List of users/teams where any one can approve the gate |
+| any_of_count | Integer | Number of approvals required from the `any_of` list (default: 1) |
+
+To approve a gate, authorized users can comment:
+```
+terrateam gate approve <token>
+```
 
 ### OIDC
 An OIDC connection to a cloud provider can be initiated using the `oidc` step type, which supports AWS and GCP providers.
@@ -220,6 +287,84 @@ This workflow matches any directories tagged with `dir:gcp` and:
 2. Runs `terraform init` for both plan and apply.
 3. Runs `terraform plan`.
 4. Runs `terraform apply`.
+
+### Security Scanning with Checkov
+```yaml
+workflows:
+  - tag_query: ""
+    plan:
+      - type: init
+      - type: plan
+      - type: checkov
+```
+This workflow runs Checkov security scanning after generating the Terraform plan to detect misconfigurations and security issues.
+
+### Policy Validation with Conftest
+```yaml
+workflows:
+  - tag_query: ""
+    plan:
+      - type: init
+      - type: plan
+      - type: conftest
+```
+This workflow runs Conftest policy validation after generating the Terraform plan to ensure compliance with your organization's policies.
+
+### Combined Security and Policy Checks
+```yaml
+workflows:
+  - tag_query: "env:production"
+    plan:
+      - type: env
+        name: CKV_SKIP_CHECK
+        cmd: ['echo', 'CKV_AWS_20,CKV_AWS_23']
+      - type: env
+        name: CONFTEST_POLICY
+        cmd: ['echo', '$TERRATEAM_ROOT/policies/production/']
+      - type: init
+      - type: plan
+      - type: checkov
+      - type: conftest
+```
+This workflow for production environments:
+1. Sets Checkov to skip specific checks
+2. Configures Conftest to use production-specific policies
+3. Runs both security scanning and policy validation
+
+### Using Gates for Manual Approval
+```yaml
+workflows:
+  - tag_query: "env:production"
+    plan:
+      - type: init
+      - type: plan
+      - type: checkov
+        gate:
+          token: "checkov-override"
+          any_of: ["team:security", "team:platform"]
+      - type: conftest
+        gate:
+          token: "policy-override"
+          all_of: ["team:compliance"]
+          any_of: ["user:cto", "user:security-lead"]
+```
+This workflow allows security or platform team members to approve Checkov failures, and requires both compliance team approval and either CTO or security lead approval for Conftest policy violations.
+
+### Gating Custom Validation Scripts
+```yaml
+workflows:
+  - tag_query: ""
+    plan:
+      - type: init
+      - type: plan
+      - type: run
+        cmd: ['./scripts/cost-check.sh']
+        gate:
+          token: "cost-approval"
+          any_of: ["team:finance", "user:budget-owner"]
+          any_of_count: 1
+```
+This workflow runs a custom cost validation script and allows finance team members or the budget owner to approve if costs exceed thresholds.
 
 ### Specifying a GitHub Environment
 ```yaml

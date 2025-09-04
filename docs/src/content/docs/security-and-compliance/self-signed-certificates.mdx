@@ -3,31 +3,78 @@ title: Self-Signed Certificates
 description: Learn how to configure Terrateam to trust self-signed certificates
 ---
 
-Terrateam supports the use of self-signed certificates for secure communication with services in your infrastructure. To ensure that your Terrateam operations can properly trust these certificates, you can configure the system to add them to the trusted Certificate Authority (CA) store using hooks and environment variables.
+import { Steps } from '@astrojs/starlight/components';
 
-## Adding a Self-Signed Certificate
+Terrateam supports the use of self-signed certificates for secure communication with services in your infrastructure. This is essential when working with internal services, private registries, or enterprise environments that use custom Certificate Authorities (CAs).
 
-To add a self-signed certificate to the trusted CA store during Terrateam operations, you can use [hooks](/configuration-reference/hooks) and GitHub variables.
+## How It Works
 
-## Setting the Certificate as a GitHub Variable
+Terrateam automatically installs any custom CA certificates provided through environment variables that follow the `CUSTOM_CA_BUNDLE_*` naming pattern. These certificates are added to the system's trusted CA store before any Terraform operations are executed, ensuring that all tools (Terraform, cloud CLIs, git, etc.) can properly validate SSL/TLS connections.
 
-To pass the self-signed certificate to Terrateam, you can store it as a GitHub variable and expose it as an environment variable during your operations.
+## Configuration Methods
 
-1. Go to your GitHub repository and navigate to **Settings** > **Secrets and variables** > **Actions** > **Variables**.
-2. Click on **New repository variable**.
-3. Add a new variable with the name `SELF_SIGNED_CERT` and paste the contents of your certificate file (including the `-----BEGIN CERTIFICATE-----` and `-----END CERTIFICATE-----` lines).
-4. The `SELF_SIGNED_CERT` variable will be set as an environment variable automatically.
+There are two primary ways to configure custom CA certificates in Terrateam:
 
-## Configuring Hooks to Add the Certificate
+### Method 1: Using VCS Variables (Recommended)
 
-The following example demonstrates how to configure a hook to install a self-signed certificate for all operations:
+This method stores your certificates as variables in your VCS provider, making them available to all Terrateam operations automatically.
+
+<Steps>
+1. **Navigate to your repository's settings**:
+   - **GitHub**: Settings → Secrets and variables → Actions → Variables
+   - **GitLab**: Settings → CI/CD → Variables
+
+2. **Create a new variable**:
+   - Name: Must start with `CUSTOM_CA_BUNDLE_` (e.g., `CUSTOM_CA_BUNDLE_CORP`, `CUSTOM_CA_BUNDLE_INTERNAL`)
+   - Value: The complete certificate content including headers
+   - Type: Variable (not secret, as certificates are not sensitive)
+
+3. **Add your certificate content**:
+   ```
+   -----BEGIN CERTIFICATE-----
+   MIIDXTCCAkWgAwIBAgIJAKLdQVPy90WjMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV
+   [... certificate content ...]
+   nI7bfRn4YjSSiXzPuQVh66IYHIvw+xP6
+   -----END CERTIFICATE-----
+   ```
+
+4. **The certificate is automatically installed**:
+   - Terrateam detects all `CUSTOM_CA_BUNDLE_*` environment variables
+   - Certificates are written to `/usr/local/share/ca-certificates/`
+   - System CA store is updated via `update-ca-certificates`
+</Steps>
+
+### Method 2: Using Terrateam Configuration
+
+You can also define custom CA certificates directly in your Terrateam configuration file using hooks and environment variables.
 
 ```yaml
 hooks:
   all:
     pre:
-      - type: run
-        cmd: ['sh', '-c', 'echo "$SELF_SIGNED_CERT" > /usr/local/share/ca-certificates/selfsigned.crt && update-ca-certificates']
+      - type: env
+        name: CUSTOM_CA_BUNDLE_INTERNAL
+        cmd: ['sh', '-c', 'cat <<EOF
+-----BEGIN CERTIFICATE-----
+MIIDXTCCAkWgAwIBAgIJAKLdQVPy90WjMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV
+[... certificate content ...]
+nI7bfRn4YjSSiXzPuQVh66IYHIvw+xP6
+-----END CERTIFICATE-----
+EOF']
 ```
 
-By using this hook, the self-signed certificate will be trusted by the system before each operation is executed.
+:::tip
+Using VCS variables is preferred as it keeps certificates out of your configuration files and makes them easier to manage and rotate.
+:::
+
+## Multiple Certificates
+
+You can add multiple custom CA certificates by using different variable names:
+
+```bash
+CUSTOM_CA_BUNDLE_CORP="-----BEGIN CERTIFICATE-----..."
+CUSTOM_CA_BUNDLE_INTERNAL="-----BEGIN CERTIFICATE-----..."
+CUSTOM_CA_BUNDLE_PARTNER="-----BEGIN CERTIFICATE-----..."
+```
+
+Each certificate will be installed separately and all will be trusted by the system.

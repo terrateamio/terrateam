@@ -58,7 +58,7 @@ module Primary = struct
         type t = {
           color : string;
           default : bool;
-          description : string option;
+          description : string option; [@default None]
           id : int64;
           name : string;
           node_id : string;
@@ -97,14 +97,14 @@ module Primary = struct
     links_ : Links_.t; [@key "_links"]
     active_lock_reason : string option; [@default None]
     additions : int;
-    assignee : Githubc2_components_nullable_simple_user.t option;
+    assignee : Githubc2_components_nullable_simple_user.t option; [@default None]
     assignees : Assignees.t option; [@default None]
     author_association : Githubc2_components_author_association.t;
-    auto_merge : Githubc2_components_auto_merge.t option;
+    auto_merge : Githubc2_components_auto_merge.t option; [@default None]
     base : Base.t;
-    body : string option;
+    body : string option; [@default None]
     changed_files : int;
-    closed_at : string option;
+    closed_at : string option; [@default None]
     comments : int;
     comments_url : string;
     commits : int;
@@ -120,13 +120,13 @@ module Primary = struct
     labels : Labels.t;
     locked : bool;
     maintainer_can_modify : bool;
-    merge_commit_sha : string option;
-    mergeable : bool option;
+    merge_commit_sha : string option; [@default None]
+    mergeable : bool option; [@default None]
     mergeable_state : string;
     merged : bool;
-    merged_at : string option;
-    merged_by : Githubc2_components_nullable_simple_user.t option;
-    milestone : Githubc2_components_nullable_milestone.t option;
+    merged_at : string option; [@default None]
+    merged_by : Githubc2_components_nullable_simple_user.t option; [@default None]
+    milestone : Githubc2_components_nullable_milestone.t option; [@default None]
     node_id : string;
     number : int;
     patch_url : string;

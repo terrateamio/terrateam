@@ -12,7 +12,7 @@ module Primary = struct
   type t = {
     accepted : int;
     classroom : Githubc2_components_simple_classroom.t;
-    deadline : string option;
+    deadline : string option; [@default None]
     editor : string;
     feedback_pull_requests_enabled : bool;
     id : int;

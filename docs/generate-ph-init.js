@@ -28,8 +28,6 @@ const content = `
 
 posthog.init('${POSTHOG_API_KEY}', {
     api_host: 'https://eu.i.posthog.com',
-    persistence: 'memory',
-    person_profiles: 'identified_only'
 });
 `;
 

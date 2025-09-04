@@ -11,7 +11,7 @@ module Primary = struct
     contents_url : string;
     contributors_url : string;
     deployments_url : string;
-    description : string option;
+    description : string option; [@default None]
     downloads_url : string;
     events_url : string;
     fork : bool;

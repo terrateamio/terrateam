@@ -3,9 +3,11 @@
   // Auth handled by PageLayout
   import { api } from './api';
   import { selectedInstallation, installationsLoading, currentVCSProvider } from './stores';
+  import { repositoryService } from './services/repository-service';
   import PageLayout from './components/layout/PageLayout.svelte';
   import Card from './components/ui/Card.svelte';
   import ClickableCard from './components/ui/ClickableCard.svelte';
+  import LinkCard from './components/ui/LinkCard.svelte';
   import { onMount, onDestroy } from 'svelte';
   import { navigateToRun as navigateToRunUtil, navigateToRuns } from './utils/navigation';
   import { VCS_PROVIDERS } from './vcs/providers';
@@ -58,7 +60,8 @@
   let pageSize: number = 20; // Runs per request
   let hasMoreResults: boolean = false;
   let isLoadingMore: boolean = false;
-  let totalLoadedResults: number = 0;
+  let nextPageUrl: string | null = null; // URL for next page from Link header
+  let allLoadedIds: Set<string> = new Set(); // Track all loaded IDs to prevent duplicates
   
   // Basic mode filter state
   let basicFilters = {
@@ -73,10 +76,9 @@
   };
   
   // Enhanced date range state
-  let dateRangeMode: 'preset' | 'custom' | 'advanced' = 'preset';
+  let dateRangeMode: 'preset' | 'custom' = 'preset';
   let customStartDate: string = '';
   let customEndDate: string = '';
-  let advancedDateQuery: string = '';
   
   // Repository grouping for non-overwhelming display
   let groupedRuns: Record<string, Dirspace[]> = {};
@@ -265,11 +267,11 @@
     
     isLoadingRepos = true;
     try {
-      const response = await api.getInstallationRepos($selectedInstallation.id);
-      if (response && 'repositories' in response) {
-        repositories = response.repositories as Repository[];
-      } else {
-        repositories = [];
+      const result = await repositoryService.loadRepositories($selectedInstallation);
+      repositories = result.repositories;
+      
+      if (result.error) {
+        console.error('Error loading repositories:', result.error);
       }
     } catch (err) {
       console.error('Error loading repositories:', err);
@@ -297,16 +299,13 @@
         limit: 100 // API appears to cap at 100 results regardless of limit requested
       };
 
-      // Run both API calls in parallel for better performance
-      const [reposResponse, response] = await Promise.all([
-        api.getInstallationRepos($selectedInstallation.id),
+      // Load repositories from cache and dirspaces in parallel
+      const [reposResult, response] = await Promise.all([
+        repositoryService.loadRepositories($selectedInstallation),
         api.getInstallationDirspaces($selectedInstallation.id, params)
       ]);
       
-      let allRepos: Repository[] = [];
-      if (reposResponse && 'repositories' in reposResponse) {
-        allRepos = reposResponse.repositories as Repository[];
-      }
+      const allRepos = reposResult.repositories;
       
       // Initialize metrics for ALL repositories (even if no runs)
       const metricsMap = new Map<string, RepoMetrics>();
@@ -483,53 +482,111 @@
       // Reset for new search
       currentPage = 1;
       hasMoreResults = false;
-      totalLoadedResults = 0;
+      nextPageUrl = null;
+      allLoadedIds.clear();
     }
     error = null;
     
     try {
-      // Build query: use searchQuery from URL
-      let query = searchQuery.trim() || '';
-
-      // Request more than pageSize to detect if there are more results
-      const requestLimit = pageSize + 1;
-      const params: Record<string, unknown> = { 
-        tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        limit: requestLimit,
-        offset: loadMore ? totalLoadedResults : 0
-      };
+      let response;
       
-      if (query) {
-        params.q = query;
+      if (loadMore && nextPageUrl) {
+        // Use the next page URL directly from the Link header
+        // Make direct fetch request to the URL provided by Link header
+        const fetchResponse = await fetch(nextPageUrl, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
+        
+        if (!fetchResponse.ok) {
+          throw new Error(`HTTP ${fetchResponse.status}: ${fetchResponse.statusText}`);
+        }
+        
+        const rawResponse = await fetchResponse.json();
+        
+        // Parse Link headers from the response
+        const linkHeader = fetchResponse.headers.get('Link') || fetchResponse.headers.get('link');
+        let linkHeaders: Record<string, string> | null = null;
+        if (linkHeader) {
+          // Simple parsing of Link header
+          linkHeaders = {};
+          const parts = linkHeader.split(/,\s*(?=<)/);
+          for (const part of parts) {
+            const match = part.match(/<([^>]+)>;\s*rel="([^"]+)"/);
+            if (match) {
+              linkHeaders[match[2]] = match[1];
+            }
+          }
+        }
+        
+        // Format response to match our expected structure
+        response = {
+          dirspaces: rawResponse.dirspaces || [],
+          hasMore: linkHeaders?.next !== undefined,
+          linkHeaders
+        };
+      } else {
+        // Build query for initial load
+        let query = searchQuery.trim();
+        
+        const params: Record<string, unknown> = { 
+          tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          limit: pageSize
+        };
+        
+        if (query) {
+          params.q = query;
+        }
+        
+        response = await api.getInstallationDirspaces($selectedInstallation.id, params);
       }
-      
-      const response = await api.getInstallationDirspaces($selectedInstallation.id, params);
       
       if (response && 'dirspaces' in response) {
         const dirspaces = response.dirspaces as Dirspace[];
         
-        // Check if there are more results
-        hasMoreResults = dirspaces.length > pageSize;
         
-        // Remove the extra item if we got it (it was just for detection)
-        const actualResults = hasMoreResults ? dirspaces.slice(0, pageSize) : dirspaces;
+        // Use Link header to determine if there are more results
+        hasMoreResults = response.hasMore;
+        
+        // Fix double slash issue in the URL if present
+        if (response.linkHeaders?.next) {
+          nextPageUrl = response.linkHeaders.next.replace('//api/', '/api/');
+        } else {
+          nextPageUrl = null;
+        }
+        
+        const actualResults = dirspaces;
         
         if (loadMore) {
+          // With proper Link header pagination, we shouldn't get duplicates
+          // but let's still check just in case
+          const newResults = actualResults.filter(r => !allLoadedIds.has(r.id));
+          
+          
+          // Add new IDs to our tracking set
+          newResults.forEach(r => allLoadedIds.add(r.id));
+          
           // Append to existing results
-          workManifests = [...workManifests, ...actualResults];
+          workManifests = [...workManifests, ...newResults];
         } else {
           // Replace results for new search
           workManifests = actualResults;
+          
+          // Reset and track IDs
+          allLoadedIds.clear();
+          actualResults.forEach(r => allLoadedIds.add(r.id));
         }
         
-        totalLoadedResults = workManifests.length;
         currentPage = loadMore ? currentPage + 1 : 1;
+        
 
       } else {
         if (!loadMore) {
           workManifests = [];
           hasMoreResults = false;
-          totalLoadedResults = 0;
         }
       }
       
@@ -539,7 +596,6 @@
       if (!loadMore) {
         workManifests = [];
         hasMoreResults = false;
-        totalLoadedResults = 0;
       }
     } finally {
       if (loadMore) {
@@ -583,7 +639,6 @@
     dateRangeMode = 'preset';
     customStartDate = '';
     customEndDate = '';
-    advancedDateQuery = '';
     resetPagination();
     updateURLWithQuery('');
     loadRuns(false);
@@ -667,17 +722,40 @@
           break;
       }
     } else if (dateRangeMode === 'custom' && (customStartDate || customEndDate)) {
-      // Custom date range
-      if (customStartDate && customEndDate) {
-        filters.push(`created_at:${customStartDate}..${customEndDate}`);
-      } else if (customStartDate) {
-        filters.push(`created_at:${customStartDate}..`);
-      } else if (customEndDate) {
-        filters.push(`created_at:..${customEndDate}`);
+      // Custom date range - handle datetime-local format
+      let startStr = '';
+      let endStr = '';
+      
+      if (customStartDate) {
+        // datetime-local format is YYYY-MM-DDTHH:MM
+        // Convert to API format: YYYY-MM-DD HH:MM
+        startStr = customStartDate.replace('T', ' ');
       }
-    } else if (dateRangeMode === 'advanced' && advancedDateQuery.trim()) {
-      // Advanced date query - user provides full syntax
-      filters.push(advancedDateQuery.trim());
+      
+      if (customEndDate) {
+        endStr = customEndDate.replace('T', ' ');
+      }
+      
+      if (startStr && endStr) {
+        // Use quotes when time is included
+        if (startStr.includes(' ') || endStr.includes(' ')) {
+          filters.push(`"created_at:${startStr}..${endStr}"`);
+        } else {
+          filters.push(`created_at:${startStr}..${endStr}`);
+        }
+      } else if (startStr) {
+        if (startStr.includes(' ')) {
+          filters.push(`"created_at:${startStr}.."`);
+        } else {
+          filters.push(`created_at:${startStr}..`);
+        }
+      } else if (endStr) {
+        if (endStr.includes(' ')) {
+          filters.push(`"created_at:..${endStr}"`);
+        } else {
+          filters.push(`created_at:..${endStr}`);
+        }
+      }
     }
     
     return filters.join(' and ');
@@ -694,18 +772,20 @@
     return `${seconds}s`;
   }
 
-  function formatRelativeTime(dateString: string): string {
+  function formatDateTime(dateString: string): string {
     const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    return `${diffDays}d ago`;
+    // Format: "Jan 24, 2025 3:45 PM"
+    const options: Intl.DateTimeFormatOptions = {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    };
+    
+    return date.toLocaleString('en-US', options);
   }
 
   function getStateColor(state: string): string {
@@ -751,7 +831,6 @@
     dateRangeMode = 'preset';
     customStartDate = '';
     customEndDate = '';
-    advancedDateQuery = '';
     
     searchQuery = '';
     resetPagination();
@@ -821,6 +900,9 @@
   // Reset pagination when search query changes
   function resetPagination(): void {
     currentPage = 1;
+    hasMoreResults = false;
+    nextPageUrl = null;
+    allLoadedIds.clear();
   }
 
   // Store search context when navigating to run detail
@@ -843,6 +925,14 @@
     return `#/runs?q=${encodeURIComponent(query)}`;
   }
   
+  // Generate installation-scoped href for run detail
+  function getRunDetailHref(runId: string): string {
+    if ($selectedInstallation) {
+      return `#/i/${$selectedInstallation.id}/runs/${runId}`;
+    }
+    return `#/runs/${runId}`;
+  }
+  
 </script>
 
 <PageLayout 
@@ -860,7 +950,7 @@
           updateURLWithQuery('');
           loadRuns();
         }}
-        class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-sm"
+        class="inline-flex items-center px-3 md:px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-sm"
       >
         <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -873,7 +963,7 @@
   <!-- View Mode Selector (only show when not viewing a specific repository) -->
   {#if !basicFilters.repo}
     <div class="mb-6">
-      <div class="flex items-center space-x-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-fit">
+      <div class="flex items-center space-x-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-full sm:w-fit">
         <button
           on:click={() => {
             viewMode = 'overview';
@@ -883,7 +973,7 @@
             loadRecentFailures();
             loadRecentSuccesses();
           }}
-          class="px-4 py-2 text-sm font-medium rounded-md transition-colors {viewMode === 'overview' ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}"
+          class="flex-1 sm:flex-initial px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors {viewMode === 'overview' ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}"
         >
           🏠 Overview
         </button>
@@ -897,7 +987,7 @@
               loadRuns();
             }
           }}
-          class="px-4 py-2 text-sm font-medium rounded-md transition-colors {viewMode === 'search' ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}"
+          class="flex-1 sm:flex-initial px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors {viewMode === 'search' ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}"
         >
           🔍 Search
         </button>
@@ -978,16 +1068,17 @@
         <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow overflow-hidden">
           <!-- Tab Headers -->
           <div class="border-b border-gray-200 dark:border-gray-700">
-            <nav class="flex space-x-0" aria-label="Recent Activity">
+            <nav class="flex flex-col sm:flex-row sm:space-x-0" aria-label="Recent Activity">
               <button
                 on:click={() => activeTab = 'active'}
-                class="flex-1 py-4 px-6 text-sm font-medium text-center border-b-2 transition-colors {activeTab === 'active' ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}"
+                class="flex-1 py-3 px-2 sm:px-4 md:px-6 text-xs sm:text-sm font-medium text-center sm:border-b-2 border-l-4 sm:border-l-0 transition-colors {activeTab === 'active' ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}"
               >
-                <div class="flex items-center justify-center">
-                  <span class="mr-2">🔄</span>
-                  Active Operations
+                <div class="flex items-center justify-center flex-wrap gap-1">
+                  <span class="hidden sm:inline mr-1">🔄</span>
+                  <span>Active</span>
+                  <span class="hidden lg:inline">Operations</span>
                   {#if activeOperations.length > 0}
-                    <span class="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200">
+                    <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200">
                       {activeOperations.length}
                     </span>
                   {/if}
@@ -995,37 +1086,41 @@
               </button>
               <button
                 on:click={() => activeTab = 'failures'}
-                class="flex-1 py-4 px-6 text-sm font-medium text-center border-b-2 transition-colors {activeTab === 'failures' ? 'border-red-500 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}"
+                class="flex-1 py-3 px-2 sm:px-4 md:px-6 text-xs sm:text-sm font-medium text-center sm:border-b-2 border-l-4 sm:border-l-0 transition-colors {activeTab === 'failures' ? 'border-red-500 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}"
               >
-                <div class="flex items-center justify-center">
-                  <span class="mr-2">🚨</span>
-                  Recent Failures
+                <div class="flex items-center justify-center flex-wrap gap-1">
+                  <span class="hidden sm:inline mr-1">🚨</span>
+                  <span>Recent</span>
+                  <span>Failures</span>
                 </div>
               </button>
               <button
                 on:click={() => activeTab = 'successes'}
-                class="flex-1 py-4 px-6 text-sm font-medium text-center border-b-2 transition-colors {activeTab === 'successes' ? 'border-green-500 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}"
+                class="flex-1 py-3 px-2 sm:px-4 md:px-6 text-xs sm:text-sm font-medium text-center sm:border-b-2 border-l-4 sm:border-l-0 transition-colors {activeTab === 'successes' ? 'border-green-500 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}"
               >
-                <div class="flex items-center justify-center">
-                  <span class="mr-2">✅</span>
-                  Recent Successes
+                <div class="flex items-center justify-center flex-wrap gap-1">
+                  <span class="hidden sm:inline mr-1">✅</span>
+                  <span>Recent</span>
+                  <span>Successes</span>
                 </div>
               </button>
             </nav>
           </div>
 
           <!-- Tab Content -->
-          <div class="p-6">
+          <div class="p-4 sm:p-6">
             {#if activeTab === 'active'}
               <!-- Active Operations Content -->
-              <div class="flex items-center justify-between mb-4">
-                <div>
-                  <h2 class="text-lg font-semibold text-blue-800 dark:text-blue-400">Active Operations</h2>
-                  <p class="text-sm text-blue-600 dark:text-blue-400">Running and pending Terraform operations</p>
-                </div>
-                <div class="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                  <div class="w-2 h-2 bg-green-400 dark:bg-green-500 rounded-full animate-pulse"></div>
-                  <span>Auto-refreshing</span>
+              <div class="mb-4">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div>
+                    <h2 class="text-base md:text-lg font-semibold text-blue-800 dark:text-blue-400">Active Operations</h2>
+                    <p class="text-xs md:text-sm text-blue-600 dark:text-blue-400">Running and pending Terraform operations</p>
+                  </div>
+                  <div class="flex items-center space-x-2 text-xs md:text-sm text-gray-600 dark:text-gray-400">
+                    <div class="w-2 h-2 bg-green-400 dark:bg-green-500 rounded-full animate-pulse"></div>
+                    <span>Auto-refreshing</span>
+                  </div>
                 </div>
               </div>
 
@@ -1042,41 +1137,56 @@
                     {@const now = new Date()}
                     {@const duration = now.getTime() - createdAt.getTime()}
                     
-                    <ClickableCard
+                    <LinkCard
+                      href={getRunDetailHref(operation.id)}
                       padding="md"
                       hover={true}
-                      on:click={() => navigateToRunUtil(operation.id)}
+                      on:click={(e) => {
+                        // Allow middle-click and Ctrl/Cmd+click to open in new tab
+                        if (e.button !== 0 || e.ctrlKey || e.metaKey) {
+                          return;
+                        }
+                        e.preventDefault();
+                        navigateToRunUtil(operation.id);
+                      }}
                       aria-label="View operation {operation.run_type} in {operation.repo}/{operation.dir}"
                       class="bg-gray-50 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600"
                     >
                       <div class="flex items-center justify-between">
                         <div class="flex-1 min-w-0">
-                          <div class="flex items-center gap-2 mb-2">
-                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border {getStateColor(operation.state)}">
-                              {getStateIcon(operation.state)} {operation.state.toUpperCase()}
-                            </span>
-                            <span class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                              {operation.run_type} - {operation.repo}/{operation.dir}
-                            </span>
+                          <div class="mb-2">
+                            <div class="flex flex-col sm:flex-row sm:items-start gap-2">
+                              <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border flex-shrink-0 self-start {getStateColor(operation.state)}">
+                                {getStateIcon(operation.state)} {operation.state.toUpperCase()}
+                              </span>
+                              <div class="flex-1 min-w-0">
+                                <div class="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  {operation.run_type}
+                                </div>
+                                <div class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 break-words">
+                                  {operation.repo}/{operation.dir}
+                                </div>
+                              </div>
+                            </div>
                           </div>
                           
-                          <div class="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                            Started {formatRelativeTime(operation.created_at)}
-                            • Duration: {formatDuration(duration)}
+                          <div class="text-xs text-gray-500 dark:text-gray-400 space-y-0.5">
+                            <div>Started {formatDateTime(operation.created_at)}</div>
+                            <div>Duration: {formatDuration(duration)}</div>
                             {#if operation.workspace && operation.workspace !== 'default'}
-                              • Workspace: {operation.workspace}
+                              <div>Workspace: {operation.workspace}</div>
                             {/if}
                           </div>
 
                         </div>
                         
-                        <div class="flex items-center ml-4">
+                        <div class="flex items-center ml-2 sm:ml-4">
                           <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                           </svg>
                         </div>
                       </div>
-                    </ClickableCard>
+                    </LinkCard>
                   {/each}
                 </div>
               {:else}
@@ -1117,18 +1227,26 @@
               {:else}
                 <div class="space-y-3">
                   {#each recentFailures.slice(0, 5) as failure}
-                    <button 
-                      on:click={() => navigateToRun(failure.id)}
-                      class="block w-full text-left p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 hover:border-red-300 dark:hover:border-red-700 transition-colors"
+                    <a 
+                      href={getRunDetailHref(failure.id)}
+                      on:click={(e) => {
+                        // Allow middle-click and Ctrl/Cmd+click to open in new tab
+                        if (e.button !== 0 || e.ctrlKey || e.metaKey) {
+                          return;
+                        }
+                        e.preventDefault();
+                        navigateToRun(failure.id);
+                      }}
+                      class="block w-full text-left p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 hover:border-red-300 dark:hover:border-red-700 transition-colors cursor-pointer"
                     >
-                      <div class="flex items-center justify-between">
+                      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                         <div class="flex-1">
-                          <div class="flex items-center gap-2 mb-2">
+                          <!-- Repository and Type -->
+                          <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
                             <span class="font-medium text-red-800 dark:text-red-400">{failure.repo}</span>
-                            <span class="text-xs text-red-600 dark:text-red-400">•</span>
                             <!-- Plan/Apply Badge for failures -->
                             {#if failure.run_type === 'plan'}
-                              <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700">
+                              <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700" title="Click to view run details">
                                 📋 Plan
                               </span>
                             {:else if failure.run_type === 'apply'}
@@ -1145,21 +1263,28 @@
                                 🔍 Drift
                               </span>
                             {/if}
-                            <span class="text-xs text-red-600 dark:text-red-400">•</span>
-                            <span class="text-sm text-red-700 dark:text-red-300">{failure.branch}</span>
+                          </div>
+                          
+                          <!-- Branch and Directory -->
+                          <div class="text-sm text-red-700 dark:text-red-300 mb-1">
+                            {failure.branch}
                             {#if failure.dir}
-                              <span class="text-xs text-red-600 dark:text-red-400">•</span>
+                              <span class="text-xs text-red-600 dark:text-red-400"> • </span>
                               <span class="text-xs text-red-600 dark:text-red-400 font-mono">{failure.dir}</span>
                             {/if}
                           </div>
+                          
+                          <!-- Timestamp and User -->
                           <div class="text-xs text-red-600 dark:text-red-400">
-                            Failed {formatRelativeTime(failure.created_at)}
+                            Failed {formatDateTime(failure.created_at)}
                             {#if failure.user}
                               • by {failure.user}
                             {/if}
                           </div>
                         </div>
-                        <div class="flex items-center space-x-2">
+                        
+                        <!-- Status Badge and Arrow -->
+                        <div class="flex items-center space-x-2 self-start sm:self-center">
                           <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
                             Failed
                           </span>
@@ -1168,7 +1293,7 @@
                           </svg>
                         </div>
                       </div>
-                    </button>
+                    </a>
                   {/each}
                 </div>
               {/if}
@@ -1202,18 +1327,26 @@
               {:else}
                 <div class="space-y-3">
                   {#each recentSuccesses.slice(0, 5) as success}
-                    <button 
-                      on:click={() => navigateToRun(success.id)}
-                      class="block w-full text-left p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 hover:border-green-300 dark:hover:border-green-700 transition-colors"
+                    <a 
+                      href={getRunDetailHref(success.id)}
+                      on:click={(e) => {
+                        // Allow middle-click and Ctrl/Cmd+click to open in new tab
+                        if (e.button !== 0 || e.ctrlKey || e.metaKey) {
+                          return;
+                        }
+                        e.preventDefault();
+                        navigateToRun(success.id);
+                      }}
+                      class="block w-full text-left p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 hover:border-green-300 dark:hover:border-green-700 transition-colors cursor-pointer"
                     >
-                      <div class="flex items-center justify-between">
+                      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                         <div class="flex-1">
-                          <div class="flex items-center gap-2 mb-2">
+                          <!-- Repository and Type -->
+                          <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
                             <span class="font-medium text-green-800 dark:text-green-400">{success.repo}</span>
-                            <span class="text-xs text-green-600 dark:text-green-400">•</span>
                             <!-- Plan/Apply Badge for successes -->
                             {#if success.run_type === 'plan'}
-                              <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700">
+                              <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700" title="Click to view run details">
                                 📋 Plan
                               </span>
                             {:else if success.run_type === 'apply'}
@@ -1230,22 +1363,28 @@
                                 🔍 Drift
                               </span>
                             {/if}
-                            <span class="text-xs text-green-600 dark:text-green-400">•</span>
-                            <span class="text-sm text-green-700 dark:text-green-300">{success.branch}</span>
+                          </div>
+                          
+                          <!-- Branch and Directory -->
+                          <div class="text-sm text-green-700 dark:text-green-300 mb-1">
+                            {success.branch}
                             {#if success.dir}
-                              <span class="text-xs text-green-600 dark:text-green-400">•</span>
+                              <span class="text-xs text-green-600 dark:text-green-400"> • </span>
                               <span class="text-xs text-green-600 dark:text-green-400 font-mono">{success.dir}</span>
                             {/if}
                           </div>
-                          <!-- Terraform summary removed for memory safety -->
+                          
+                          <!-- Timestamp and User -->
                           <div class="text-xs text-green-600 dark:text-green-400">
-                            Completed {formatRelativeTime(success.created_at)}
+                            Completed {formatDateTime(success.created_at)}
                             {#if success.user}
                               • by {success.user}
                             {/if}
                           </div>
                         </div>
-                        <div class="flex items-center space-x-2">
+                        
+                        <!-- Status Badge and Arrow -->
+                        <div class="flex items-center space-x-2 self-start sm:self-center">
                           <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
                             Success
                           </span>
@@ -1254,7 +1393,7 @@
                           </svg>
                         </div>
                       </div>
-                    </button>
+                    </a>
                   {/each}
                 </div>
               {/if}
@@ -1298,8 +1437,8 @@
         {:else}
           <div class="card-bg rounded-lg shadow overflow-hidden">
             <!-- Table Header -->
-            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-3 border-b border-gray-200 dark:border-gray-600">
-              <div class="grid grid-cols-12 gap-4 text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+            <div class="bg-gray-50 dark:bg-gray-700 px-4 md:px-6 py-3 border-b border-gray-200 dark:border-gray-600">
+              <div class="hidden md:grid grid-cols-12 gap-4 text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 <div class="col-span-4">Repository</div>
                 <div class="col-span-2 text-center">Success</div>
                 <div class="col-span-2 text-center">Failed</div>
@@ -1319,9 +1458,9 @@
                   role="button"
                   aria-label="View runs for {repo.name}"
                 >
-                  <div class="grid grid-cols-12 gap-4 items-center">
+                  <div class="flex flex-col md:grid md:grid-cols-12 md:gap-4 md:items-center space-y-3 md:space-y-0">
                     <!-- Repository Name -->
-                    <div class="col-span-4">
+                    <div class="md:col-span-4">
                       <div class="flex items-center">
                         <svg class="w-4 h-4 text-gray-400 dark:text-gray-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -1335,26 +1474,47 @@
                       </div>
                     </div>
 
+                    <!-- Mobile: Status counts in a row with labels -->
+                    <div class="flex justify-around md:hidden">
+                      <!-- Success Count -->
+                      <div class="text-center">
+                        <div class="text-xs text-gray-600 dark:text-gray-400 mb-1">Success</div>
+                        <div class="text-lg font-semibold text-green-600 dark:text-green-400">{repo.successCount}</div>
+                      </div>
+                      <!-- Failed Count -->
+                      <div class="text-center">
+                        <div class="text-xs text-gray-600 dark:text-gray-400 mb-1">Failed</div>
+                        <div class="text-lg font-semibold {repo.failedCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-400 dark:text-gray-500'}">{repo.failedCount}</div>
+                      </div>
+                      <!-- Running Count -->
+                      <div class="text-center">
+                        <div class="text-xs text-gray-600 dark:text-gray-400 mb-1">Running</div>
+                        <div class="text-lg font-semibold {repo.runningCount > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}">{repo.runningCount}</div>
+                      </div>
+                    </div>
+
+                    <!-- Desktop: Status counts without labels (headers provide context) -->
                     <!-- Success Count -->
-                    <div class="col-span-2 text-center">
+                    <div class="hidden md:block col-span-2 text-center">
                       <div class="text-lg font-semibold text-green-600 dark:text-green-400">{repo.successCount}</div>
                     </div>
 
                     <!-- Failed Count -->
-                    <div class="col-span-2 text-center">
+                    <div class="hidden md:block col-span-2 text-center">
                       <div class="text-lg font-semibold {repo.failedCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-400 dark:text-gray-500'}">{repo.failedCount}</div>
                     </div>
 
                     <!-- Running Count -->
-                    <div class="col-span-2 text-center">
+                    <div class="hidden md:block col-span-2 text-center">
                       <div class="text-lg font-semibold {repo.runningCount > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}">{repo.runningCount}</div>
                     </div>
 
                     <!-- Last Run -->
                     <div class="col-span-2 text-center">
+                      <div class="text-xs text-gray-600 dark:text-gray-400 mb-1 md:hidden">Last Deploy</div>
                       {#if repo.lastApplied}
                         <div class="text-sm">
-                          <div class="font-medium text-gray-900 dark:text-gray-100">{formatRelativeTime(repo.lastApplied.date)}</div>
+                          <div class="font-medium text-gray-900 dark:text-gray-100">{formatDateTime(repo.lastApplied.date)}</div>
                           <div class="text-xs text-gray-500 dark:text-gray-400">by {repo.lastApplied.user}</div>
                         </div>
                       {:else}
@@ -1442,28 +1602,33 @@
       <!-- SEARCH MODE -->
       <div class="space-y-6">
         <!-- Search Interface -->
-        <div class="card-bg rounded-lg shadow p-6">
+        <div class="card-bg rounded-lg shadow p-4 sm:p-6">
           <div class="mb-4">
-            <div class="flex items-center justify-between mb-3">
-              <h3 class="text-sm font-semibold text-blue-900 dark:text-blue-400">🔍 Search Runs</h3>
-              <div class="flex items-center space-x-4">
+            <div class="flex flex-col gap-3">
+              <!-- Title and Back Button Row -->
+              <div class="flex items-center justify-between">
+                <h3 class="text-sm font-semibold text-blue-900 dark:text-blue-400">🔍 Search Runs</h3>
                 <button
                   on:click={() => navigateToRuns()}
-                  class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                  class="text-xs sm:text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
                 >
                   ← Back to Overview
                 </button>
-                <div class="flex items-center space-x-2">
-                  <span class="text-xs text-gray-600 dark:text-gray-400">Mode:</span>
+              </div>
+              
+              <!-- Mode Toggle Row -->
+              <div class="flex items-center justify-center sm:justify-start gap-2">
+                <span class="text-xs text-gray-600 dark:text-gray-400">Mode:</span>
+                <div class="flex rounded-md shadow-sm" role="group">
                   <button
                     on:click={switchToBasicMode}
-                    class="px-2 py-1 text-xs rounded transition-colors {isBasicMode ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'}"
+                    class="px-3 py-1.5 text-xs font-medium rounded-l-md transition-colors {isBasicMode ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600'}"
                   >
                     Basic
                   </button>
                   <button
                     on:click={switchToAdvancedMode}
-                    class="px-2 py-1 text-xs rounded transition-colors {!isBasicMode ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'}"
+                    class="px-3 py-1.5 text-xs font-medium rounded-r-md transition-colors {!isBasicMode ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600'} {isBasicMode ? 'border-l border-gray-300 dark:border-gray-600' : ''}"
                   >
                     Advanced
                   </button>
@@ -1532,20 +1697,13 @@
                     >
                       Custom
                     </button>
-                    <button
-                      type="button"
-                      on:click={() => dateRangeMode = 'advanced'}
-                      class="px-2 py-1 text-xs border rounded {dateRangeMode === 'advanced' ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-300' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}"
-                    >
-                      Advanced
-                    </button>
                     
                     <!-- Preset Dropdown (inline with buttons) -->
                     {#if dateRangeMode === 'preset'}
                       <select bind:value={basicFilters.dateRange} class="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500">
                         <option value="">All time</option>
-                        <option value="today">Today</option>
-                        <option value="yesterday">Yesterday</option>
+                        <option value="today">Last 24 hours</option>
+                        <option value="yesterday">Last 48 hours</option>
                         <option value="week">Last 7 days</option>
                         <option value="month">Last 30 days</option>
                         <option value="3months">Last 3 months</option>
@@ -1558,47 +1716,27 @@
                   {#if dateRangeMode === 'custom'}
                     <div class="space-y-2">
                       <div>
-                        <label for="custom-start-date" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">From (optional)</label>
+                        <label for="custom-start-date" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">From date & time (optional)</label>
                         <input
                           id="custom-start-date"
-                          type="date"
+                          type="datetime-local"
                           bind:value={customStartDate}
                           class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                       </div>
                       <div>
-                        <label for="custom-end-date" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">To (optional)</label>
+                        <label for="custom-end-date" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">To date & time (optional)</label>
                         <input
                           id="custom-end-date"
-                          type="date"
+                          type="datetime-local"
                           bind:value={customEndDate}
                           class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                       </div>
                       <div class="text-xs text-gray-500 dark:text-gray-400">
-                        Leave blank for open-ended ranges
+                        <p>Leave blank for open-ended ranges</p>
+                        <p class="mt-1">Examples: 2024-01-15 14:30 or just 2024-01-15</p>
                       </div>
-                    </div>
-                  {/if}
-                  
-                  <!-- Advanced Mode -->
-                  {#if dateRangeMode === 'advanced'}
-                    <div class="space-y-2">
-                      <input
-                        type="text"
-                        bind:value={advancedDateQuery}
-                        placeholder="e.g., created_at:2024-01-01..2024-01-31"
-                        class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                      <details class="text-xs text-gray-500 dark:text-gray-400">
-                        <summary class="cursor-pointer hover:text-gray-700 dark:hover:text-gray-300">Examples</summary>
-                        <div class="mt-1 space-y-1">
-                          <div><code>created_at:2024-01-01..</code> - From Jan 1st onwards</div>
-                          <div><code>created_at:..2024-01-31</code> - Up to Jan 31st</div>
-                          <div><code>created_at:2024-01-01..2024-01-31</code> - January 2024</div>
-                          <div><code>"created_at:2024-01-01 12:00..2024-01-01 18:00"</code> - With time</div>
-                        </div>
-                      </details>
                     </div>
                   {/if}
                 </div>
@@ -1629,7 +1767,7 @@
 
                 <!-- Environment Filter -->
                 <div>
-                  <label for="environment-filter" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Environment</label>
+                  <label for="environment-filter" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{$currentVCSProvider === 'gitlab' ? 'GitLab' : 'GitHub'} Environment</label>
                   <input
                     id="environment-filter"
                     type="text"
@@ -1691,7 +1829,7 @@
                 </div>
                 
                 <!-- Quick Filter Buttons -->
-                <div class="flex flex-wrap gap-2">
+                <div class="flex flex-wrap gap-2 mb-3 md:mb-0">
                   <span class="text-xs font-medium text-gray-700 dark:text-gray-300 self-center">Quick filters:</span>
                   <button on:click={() => addQuickFilter('state:failure')} class="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-xs rounded hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors">
                     ❌ Failures
@@ -1754,8 +1892,8 @@
                           <div><code class="bg-white dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100">branch:main</code> - Operations on main branch</div>
                           <div><code class="bg-white dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100">workspace:production</code> - Operations in production workspace</div>
                           <div><code class="bg-white dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100">dir:infra/s3</code> - Operations that processed the infra/s3 directory</div>
-                          <div><code class="bg-white dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100">environment:production</code> - Operations in production environment</div>
-                          <div><code class="bg-white dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100">environment:</code> - Operations with no environment specified</div>
+                          <div><code class="bg-white dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100">environment:production</code> - Operations in production {$currentVCSProvider === 'gitlab' ? 'GitLab' : 'GitHub'} environment</div>
+                          <div><code class="bg-white dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100">environment:</code> - Operations with no {$currentVCSProvider === 'gitlab' ? 'GitLab' : 'GitHub'} environment specified</div>
                         </div>
                       </div>
                       
@@ -1831,14 +1969,14 @@
                 <!-- Repository Header -->
                 <button
                   on:click={() => toggleRepoCollapse(repoName)}
-                  class="w-full px-6 py-4 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-100 dark:border-blue-800 flex items-center justify-between hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                  class="w-full px-4 md:px-6 py-3 md:py-4 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-100 dark:border-blue-800 flex items-center justify-between hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
                 >
-                  <div class="flex items-center">
-                    <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div class="flex items-center flex-wrap gap-2">
+                    <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                     </svg>
-                    <h3 class="text-lg font-medium text-blue-900 dark:text-blue-100">{repoName}</h3>
-                    <span class="ml-2 px-2 py-1 bg-blue-200 dark:bg-blue-800/50 text-blue-800 dark:text-blue-200 text-xs rounded-full">
+                    <h3 class="text-base sm:text-lg font-medium text-blue-900 dark:text-blue-100">{repoName}</h3>
+                    <span class="px-2.5 py-1 bg-blue-200 dark:bg-blue-800/50 text-blue-800 dark:text-blue-200 text-xs rounded-full whitespace-nowrap">
                       {groupedRuns[repoName].length} run{groupedRuns[repoName].length !== 1 ? 's' : ''}
                     </span>
                   </div>
@@ -1856,63 +1994,76 @@
                 {#if !collapsedRepos.has(repoName)}
                   <div class="divide-y divide-gray-200 dark:divide-gray-700">
                     {#each groupedRuns[repoName] as run}
-                      <button 
-                        on:click={() => navigateToRun(run.id)}
-                        class="block w-full text-left p-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      <a 
+                        href={getRunDetailHref(run.id)}
+                        on:click={(e) => {
+                          // Allow middle-click and Ctrl/Cmd+click to open in new tab
+                          if (e.button !== 0 || e.ctrlKey || e.metaKey) {
+                            return;
+                          }
+                          e.preventDefault();
+                          navigateToRun(run.id);
+                        }}
+                        class="block w-full text-left p-4 md:p-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
                       >
-                        <div class="flex items-center justify-between">
+                        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                           <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-2">
-                              <!-- Plan/Apply Visual Indicator -->
-                              {#if run.run_type === 'plan'}
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700">
-                                  📋 Plan
-                                </span>
-                              {:else if run.run_type === 'apply'}
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700">
-                                  🚀 Apply
-                                </span>
-                              {:else}
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
-                                  {run.run_type}
-                                </span>
-                              {/if}
-                              
-                              <!-- Drift Detection Indicator -->
-                              {#if run.kind === 'drift'}
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-700">
-                                  🔍 Drift
-                                </span>
-                              {/if}
-                              <span class="text-xs text-gray-400 dark:text-gray-500">•</span>
-                              <span class="text-sm text-gray-700 dark:text-gray-300">{run.branch}</span>
-                              {#if run.dir}
-                                <span class="text-xs text-gray-400 dark:text-gray-500">•</span>
-                                <span class="text-xs text-gray-600 dark:text-gray-400 font-mono">{run.dir}</span>
-                              {/if}
-                              {#if run.workspace && run.workspace !== 'default'}
-                                <span class="text-xs text-gray-400 dark:text-gray-500">•</span>
-                                <span class="text-xs text-gray-600 dark:text-gray-400">workspace: {run.workspace}</span>
-                              {/if}
+                            <div class="mb-2">
+                              <div class="flex items-start gap-2 flex-wrap">
+                                <!-- Plan/Apply Visual Indicator -->
+                                {#if run.run_type === 'plan'}
+                                  <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700 flex-shrink-0">
+                                    📋 Plan
+                                  </span>
+                                {:else if run.run_type === 'apply'}
+                                  <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700 flex-shrink-0">
+                                    🚀 Apply
+                                  </span>
+                                {:else}
+                                  <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 flex-shrink-0">
+                                    {run.run_type}
+                                  </span>
+                                {/if}
+                                
+                                <!-- Drift Detection Indicator -->
+                                {#if run.kind === 'drift'}
+                                  <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-700 flex-shrink-0">
+                                    🔍 Drift
+                                  </span>
+                                {/if}
+                                
+                                <!-- Path and details on separate line if needed -->
+                                <div class="flex items-center gap-1 flex-wrap">
+                                  <span class="text-sm text-gray-700 dark:text-gray-300">{run.branch}</span>
+                                  {#if run.dir}
+                                    <span class="text-xs text-gray-400 dark:text-gray-500">•</span>
+                                    <span class="text-xs text-gray-600 dark:text-gray-400 font-mono break-all">{run.dir}</span>
+                                  {/if}
+                                  {#if run.workspace && run.workspace !== 'default'}
+                                    <span class="text-xs text-gray-400 dark:text-gray-500">•</span>
+                                    <span class="text-xs text-gray-600 dark:text-gray-400">workspace: {run.workspace}</span>
+                                  {/if}
+                                </div>
+                              </div>
                             </div>
                             <!-- Terraform summary removed for memory safety -->
                             <div class="text-xs text-gray-500 dark:text-gray-400">
-                              {formatRelativeTime(run.created_at)}
+                              {formatDateTime(run.created_at)}
                               {#if run.user}
                                 • by {run.user}
                               {/if}
                             </div>
                           </div>
-                          <div class="flex items-center space-x-2">
-                            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium {getStateColor(run.state)}">
+                          <div class="flex items-center gap-2 self-start">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium {getStateColor(run.state)}">
                               {run.state}
                             </span>
-                            <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg class="w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                             </svg>
                           </div>
                         </div>
-                      </button>
+                      </a>
                     {/each}
                   </div>
                 {/if}

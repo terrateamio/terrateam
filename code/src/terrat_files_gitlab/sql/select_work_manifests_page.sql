@@ -2,15 +2,11 @@ with
 unified_run_types as (
     select
        id,
-       (case gwm.run_type
-           when 'autoapply' then 'apply'
-           when 'apply' then 'apply'
-           when 'unsafe-apply' then 'apply'
-           when 'autoplan' then 'plan'
-           when 'plan' then 'plan'
-           when 'index' then 'index'
-           when 'build-config' then 'build-config'
-           end) as run_type
+       case 
+           when gwm.run_type in ('autoplan', 'plan') then 'plan'
+           when gwm.run_type in ('autoapply', 'apply', 'unsafe-apply') then 'apply'
+           else gwm.run_type
+       end as run_type
     from gitlab_work_manifests as gwm
 ),
 latest_unlocks as (
@@ -32,8 +28,8 @@ q as (
     select
         gwm.id as id,
         gwm.base_sha as base_sha,
-        completed_at,
-        created_at,
+        gwm.completed_at,
+        gwm.created_at,
         gwm.run_type as run_type,
         (case
          when gwm.state not in ('running', 'queued') then gwm.state

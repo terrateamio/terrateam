@@ -1,11 +1,11 @@
 module PutApiV4ProjectsIdTransfer = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      putapiv4projectsidtransfer : Gitlabc_components.PutApiV4ProjectsIdTransfer.t;
-          [@key "putApiV4ProjectsIdTransfer"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdTransfer.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -33,8 +33,10 @@ module PutApiV4ProjectsIdTransfer = struct
 
   let url = "/api/v4/projects/{id}/transfer"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

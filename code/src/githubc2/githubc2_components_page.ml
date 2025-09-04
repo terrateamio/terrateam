@@ -33,7 +33,7 @@ module Primary = struct
 
   type t = {
     build_type : Build_type.t option; [@default None]
-    cname : string option;
+    cname : string option; [@default None]
     custom_404 : bool; [@default false]
     html_url : string option; [@default None]
     https_certificate : Githubc2_components_pages_https_certificate.t option; [@default None]
@@ -42,7 +42,7 @@ module Primary = struct
     protected_domain_state : Protected_domain_state.t option; [@default None]
     public : bool;
     source : Githubc2_components_pages_source_hash.t option; [@default None]
-    status : Status_.t option;
+    status : Status_.t option; [@default None]
     url : string;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]

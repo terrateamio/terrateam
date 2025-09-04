@@ -1,5 +1,5 @@
 let get config storage services =
-  Brtl_ep.run_result ~f:(fun ctx ->
+  Brtl_ep.run_result_json ~f:(fun ctx ->
       let open Abbs_future_combinators.Infix_result_monad in
       Terrat_session.with_session ctx
       >>= fun user ->

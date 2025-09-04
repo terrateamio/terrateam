@@ -27,11 +27,13 @@ export function storeIntendedUrl(url?: string): void {
     }
 
     // Only store if it's not the login page, root, or auth callback
+    // Check the base URL without query parameters
+    const baseUrl = urlToStore.split('?')[0];
     if (urlToStore && 
-        urlToStore !== '#/login' && 
-        urlToStore !== '#/' && 
-        urlToStore !== '' &&
-        !urlToStore.startsWith('#/auth/callback')) {
+        baseUrl !== '#/login' && 
+        baseUrl !== '#/' && 
+        baseUrl !== '' &&
+        !baseUrl.startsWith('#/auth/callback')) {
       sessionStorage.setItem(REDIRECT_URL_KEY, urlToStore);
     } else {
       // Clear any existing stored URL if we're at login/root/callback
@@ -141,6 +143,56 @@ export async function getCurrentUser(): Promise<User | null> {
     
     user.set(userData);
     isAuthenticated.set(true);
+    
+    // Track Reddit conversion event ONLY for first-time users AND when analytics are enabled
+    const analyticsEnabled = (window as any).terrateamConfig?.ui_analytics === 'enabled';
+    
+    if (analyticsEnabled) {
+      const FIRST_LOGIN_KEY = `terrateam_user_${userData.id}_first_login`;
+      const isFirstLogin = !localStorage.getItem(FIRST_LOGIN_KEY);
+      
+      if (isFirstLogin) {
+        // Mark that this user has logged in before
+        localStorage.setItem(FIRST_LOGIN_KEY, new Date().toISOString());
+        
+        // Track conversion via webhooks server
+        try {
+          // Get the webhooks URL from config or use a default
+          const webhooksUrl = (window as any).terrateamConfig?.webhooks_url || 'https://webhooks.terrateam.workers.dev';
+          
+          const response = await fetch(`${webhooksUrl}/reddit-conversion`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              eventType: 'SignUp',
+              userId: userData.id.toString()
+            })
+          });
+
+          if (response.ok) {
+            console.log('Reddit conversion tracked via webhooks server for user', userData.id);
+          } else if (response.status === 403) {
+            console.warn('Reddit conversion tracking blocked by CORS - origin not allowed');
+            // Fallback to client-side tracking
+            if (typeof window !== 'undefined' && (window as any).rdt) {
+              (window as any).rdt('track', 'SignUp');
+              console.log('Reddit pixel: New user signup tracked (CORS fallback) for user', userData.id);
+            }
+          } else {
+            console.warn('Failed to track Reddit conversion:', response.status);
+          }
+        } catch (e) {
+          console.warn('Reddit conversion tracking failed:', e);
+          // Fallback to client-side tracking if server tracking fails
+          if (typeof window !== 'undefined' && (window as any).rdt) {
+            (window as any).rdt('track', 'SignUp');
+            console.log('Reddit pixel: New user signup tracked (error fallback) for user', userData.id);
+          }
+        }
+      }
+    }
     
     // Determine which VCS provider the user logged in with
     let provider: 'github' | 'gitlab' = 'github'; // default
@@ -286,7 +338,7 @@ export async function logout(): Promise<void> {
   }
 }
 
-export function initializeGitHubLogin(clientId: string): void {
+export function initializeGitHubLogin(web_base_url: string, clientId: string): void {
   
   // Don't overwrite existing stored URL if we're on the login page
   // (the intended URL was already stored when redirecting to login)
@@ -297,7 +349,7 @@ export function initializeGitHubLogin(clientId: string): void {
   }
   
   // Redirect directly to GitHub OAuth
-  const githubOAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}`;
+  const githubOAuthUrl = `${web_base_url}/login/oauth/authorize?client_id=${clientId}`;
   window.location.href = githubOAuthUrl;
 }
 

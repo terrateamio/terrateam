@@ -11,5 +11,6 @@ type t = {
   any_of : Any_of.t option; [@default None]
   any_of_count : int; [@default 1]
   enabled : bool; [@default false]
+  require_completed_reviews : bool; [@default false]
 }
 [@@deriving yojson { strict = true; meta = true }, make, show, eq]

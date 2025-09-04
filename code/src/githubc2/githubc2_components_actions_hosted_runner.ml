@@ -20,6 +20,7 @@ module Primary = struct
   type t = {
     id : int;
     image_details : Githubc2_components_nullable_actions_hosted_runner_pool_image.t option;
+        [@default None]
     last_active_on : string option; [@default None]
     machine_size_details : Githubc2_components_actions_hosted_runner_machine_spec.t;
     maximum_runners : int; [@default 10]

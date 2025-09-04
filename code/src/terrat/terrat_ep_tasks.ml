@@ -2,16 +2,22 @@ module Sql = struct
   let select_task () =
     Pgsql_io.Typed_sql.(
       sql
-      // (* name *) Ret.text
-      // (* state *) Ret.text
-      // (* updated_at *) Ret.text
+      //
+      (* name *)
+      Ret.text
+      //
+      (* state *)
+      Ret.text
+      //
+      (* updated_at *)
+      Ret.text
       /^ "select name, state, to_char(updated_at, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') from tasks \
           where id = $id"
       /% Var.uuid "id")
 end
 
 let get storage task_id =
-  Brtl_ep.run_result ~f:(fun ctx ->
+  Brtl_ep.run_result_json ~f:(fun ctx ->
       let open Abbs_future_combinators.Infix_result_monad in
       Terrat_session.with_session ctx
       >>= fun _ ->

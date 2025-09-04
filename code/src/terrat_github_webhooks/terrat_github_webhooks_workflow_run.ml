@@ -46,7 +46,7 @@ type t = {
   check_suite_id : int;
   check_suite_node_id : string;
   check_suite_url : string;
-  conclusion : string option;
+  conclusion : string option; [@default None]
   created_at : string;
   event : string;
   head_branch : string;

@@ -29,7 +29,7 @@ module Primary = struct
         ref_ : string; [@key "ref"]
         repo : Githubc2_components_repository.t;
         sha : string;
-        user : Githubc2_components_nullable_simple_user.t option;
+        user : Githubc2_components_nullable_simple_user.t option; [@default None]
       }
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
@@ -44,7 +44,7 @@ module Primary = struct
         ref_ : string; [@key "ref"]
         repo : Githubc2_components_repository.t;
         sha : string;
-        user : Githubc2_components_nullable_simple_user.t option;
+        user : Githubc2_components_nullable_simple_user.t option; [@default None]
       }
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
@@ -86,13 +86,13 @@ module Primary = struct
   type t = {
     links_ : Links_.t; [@key "_links"]
     active_lock_reason : string option; [@default None]
-    assignee : Githubc2_components_nullable_simple_user.t option;
+    assignee : Githubc2_components_nullable_simple_user.t option; [@default None]
     assignees : Assignees.t option; [@default None]
     author_association : Githubc2_components_author_association.t;
-    auto_merge : Githubc2_components_auto_merge.t option;
+    auto_merge : Githubc2_components_auto_merge.t option; [@default None]
     base : Base.t;
-    body : string option;
-    closed_at : string option;
+    body : string option; [@default None]
+    closed_at : string option; [@default None]
     comments_url : string;
     commits_url : string;
     created_at : string;
@@ -104,9 +104,9 @@ module Primary = struct
     issue_url : string;
     labels : Labels.t;
     locked : bool;
-    merge_commit_sha : string option;
-    merged_at : string option;
-    milestone : Githubc2_components_nullable_milestone.t option;
+    merge_commit_sha : string option; [@default None]
+    merged_at : string option; [@default None]
+    milestone : Githubc2_components_nullable_milestone.t option; [@default None]
     node_id : string;
     number : int;
     patch_url : string;
@@ -119,7 +119,7 @@ module Primary = struct
     title : string;
     updated_at : string;
     url : string;
-    user : Githubc2_components_nullable_simple_user.t option;
+    user : Githubc2_components_nullable_simple_user.t option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

@@ -1,5 +1,6 @@
 {
-  "$schema": "http://json-schema.org/draft-04/schema#",
+  "$ref": "#/definitions/version-1",
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
     "access-control": {
       "additionalProperties": false,
@@ -205,6 +206,10 @@
         "enabled": {
           "default": false,
           "type": "boolean"
+        },
+        "require_completed_reviews": {
+          "default": false,
+          "type": "boolean"
         }
       },
       "type": "object"
@@ -298,6 +303,12 @@
       },
       "properties": {},
       "type": "object"
+    },
+    "default-branch-overrides": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
     },
     "destination-branch-name": {
       "type": "string"
@@ -575,6 +586,21 @@
       "type": "object"
     },
     "engine-other": {
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        ]
+      },
+      "properties": {},
+      "type": "object"
     },
     "engine-pulumi": {
       "additionalProperties": false,
@@ -890,8 +916,7 @@
           "type": "boolean"
         },
         "on_error": {
-          "items": {
-          },
+          "items": {},
           "type": "array"
         },
         "run_on": {
@@ -902,12 +927,7 @@
           "type": "string"
         },
         "visible_on": {
-          "enum": [
-            "always",
-            "failure",
-            "success"
-          ],
-          "type": "string"
+          "$ref": "#/definitions/visible-on"
         }
       },
       "required": [
@@ -961,6 +981,39 @@
       },
       "type": "object"
     },
+    "notification-policy": {
+      "additionalProperties": false,
+      "properties": {
+        "comment_strategy": {
+          "default": "minimize",
+          "enum": [
+            "append",
+            "delete",
+            "minimize"
+          ],
+          "type": "string"
+        },
+        "tag_query": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "tag_query"
+      ],
+      "type": "object"
+    },
+    "notifications": {
+      "additionalProperties": false,
+      "properties": {
+        "policies": {
+          "items": {
+            "$ref": "#/definitions/notification-policy"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
     "permission": {
       "items": {
         "additionalProperties": false,
@@ -1010,7 +1063,100 @@
       ],
       "type": "string"
     },
-    "runs-on": {
+    "runs-on": {},
+    "stack-config": {
+      "additionalProperties": false,
+      "properties": {
+        "rules": {
+          "$ref": "#/definitions/stack-rules"
+        },
+        "tag_query": {
+          "type": "string"
+        },
+        "variables": {
+          "$ref": "#/definitions/stack-variables"
+        }
+      },
+      "required": [
+        "tag_query"
+      ],
+      "type": "object"
+    },
+    "stack-nested-config": {
+      "additionalProperties": false,
+      "properties": {
+        "rules": {
+          "$ref": "#/definitions/stack-rules"
+        },
+        "stacks": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "variables": {
+          "$ref": "#/definitions/stack-variables"
+        }
+      },
+      "required": [
+        "stacks"
+      ],
+      "type": "object"
+    },
+    "stack-rules": {
+      "additionalProperties": false,
+      "properties": {
+        "apply_after": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "auto_apply": {
+          "type": "boolean"
+        },
+        "modified_by": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "plan_after": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "stack-variables": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "stacks": {
+      "additionalProperties": false,
+      "properties": {
+        "names": {
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "$ref": "#/definitions/stack-config"
+              },
+              {
+                "$ref": "#/definitions/stack-nested-config"
+              }
+            ]
+          },
+          "type": "object"
+        }
+      },
+      "require": [
+        "names"
+      ],
+      "type": "object"
     },
     "storage-plan-cmd": {
       "additionalProperties": false,
@@ -1183,8 +1329,14 @@
           "default": true,
           "type": "boolean"
         },
+        "default_branch_overrides": {
+          "$ref": "#/definitions/default-branch-overrides"
+        },
         "default_tf_version": {
           "$ref": "#/definitions/terraform-version"
+        },
+        "definitions": {
+          "type": null
         },
         "destination_branches": {
           "items": {
@@ -1253,9 +1405,15 @@
         "integrations": {
           "$ref": "#/definitions/integrations"
         },
+        "notifications": {
+          "$ref": "#/definitions/notifications"
+        },
         "parallel_runs": {
           "default": 3,
           "type": "integer"
+        },
+        "stacks": {
+          "$ref": "#/definitions/stacks"
         },
         "storage": {
           "additionalProperties": false,
@@ -1298,6 +1456,14 @@
         }
       },
       "type": "object"
+    },
+    "visible-on": {
+      "enum": [
+        "always",
+        "failure",
+        "success"
+      ],
+      "type": "string"
     },
     "when-modified": {
       "additionalProperties": false,
@@ -1463,12 +1629,7 @@
           "type": "string"
         },
         "visible_on": {
-          "enum": [
-            "always",
-            "failure",
-            "success"
-          ],
-          "type": "string"
+          "$ref": "#/definitions/visible-on"
         }
       },
       "required": [
@@ -1563,6 +1724,9 @@
             "$ref": "#/definitions/workflow-op-apply"
           },
           {
+            "$ref": "#/definitions/workflow-op-opa"
+          },
+          {
             "$ref": "#/definitions/hook-op-run"
           },
           {
@@ -1580,6 +1744,52 @@
         ]
       },
       "type": "array"
+    },
+    "workflow-op-opa": {
+      "additionalProperties": false,
+      "properties": {
+        "env": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "extra_args": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "fail_on": {
+          "default": "undefined",
+          "enum": [
+            "defined",
+            "undefined"
+          ],
+          "type": "string"
+        },
+        "gate": {
+          "$ref": "#/definitions/gate"
+        },
+        "ignore_errors": {
+          "default": false,
+          "type": "boolean"
+        },
+        "run_on": {
+          "$ref": "#/definitions/run-on"
+        },
+        "type": {
+          "const": "opa",
+          "type": "string"
+        },
+        "visible_on": {
+          "$ref": "#/definitions/visible-on"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
     },
     "workflow-op-plan": {
       "additionalProperties": false,
@@ -1629,10 +1839,5 @@
       },
       "type": "object"
     }
-  },
-  "oneOf": [
-    {
-      "$ref": "#/definitions/version-1"
-    }
-  ]
+  }
 }

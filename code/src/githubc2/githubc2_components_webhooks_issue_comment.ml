@@ -87,11 +87,11 @@ module Primary = struct
     id : int64;
     issue_url : string;
     node_id : string;
-    performed_via_github_app : Githubc2_components_integration.t option;
+    performed_via_github_app : Githubc2_components_integration.t option; [@default None]
     reactions : Reactions.t;
     updated_at : string;
     url : string;
-    user : User.t option;
+    user : User.t option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

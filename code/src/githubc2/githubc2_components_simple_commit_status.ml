@@ -1,14 +1,14 @@
 module Primary = struct
   type t = {
-    avatar_url : string option;
+    avatar_url : string option; [@default None]
     context : string;
     created_at : string;
-    description : string option;
+    description : string option; [@default None]
     id : int;
     node_id : string;
     required : bool option; [@default None]
     state : string;
-    target_url : string option;
+    target_url : string option; [@default None]
     updated_at : string;
     url : string;
   }

@@ -1,6 +1,59 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
+    "job-event": {
+      "additionalProperties": false,
+      "properties": {
+        "build_id": {
+          "type": "integer"
+        },
+        "build_name": {
+          "type": "string"
+        },
+        "build_stage": {
+          "type": "string"
+        },
+        "build_status": {
+          "type": "string"
+        },
+        "object_kind": {
+          "const": "build",
+          "type": "string"
+        },
+        "project": {
+          "$ref": "#/definitions/project"
+        },
+        "project_id": {
+          "type": "integer"
+        },
+        "project_name": {
+          "type": "string"
+        },
+        "ref": {
+          "type": "string"
+        },
+        "repository": {
+          "$ref": "#/definitions/repository"
+        },
+        "sha": {
+          "type": "string"
+        },
+        "user": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "build_id",
+        "build_name",
+        "build_stage",
+        "build_status",
+        "object_kind",
+        "project",
+        "ref",
+        "sha"
+      ],
+      "type": "object"
+    },
     "merge-request": {
       "additionalProperties": false,
       "properties": {
@@ -162,6 +215,72 @@
       ],
       "type": "object"
     },
+    "pipeline-event": {
+      "additionalProperties": false,
+      "properties": {
+        "merge_request": {
+          "$ref": "#/definitions/merge-request"
+        },
+        "object_attributes": {
+          "additionalProperties": false,
+          "properties": {
+            "created_at": {
+              "type": "string"
+            },
+            "finished_at": {
+              "type": "string"
+            },
+            "id": {
+              "type": "integer"
+            },
+            "iid": {
+              "type": "integer"
+            },
+            "ref": {
+              "type": "string"
+            },
+            "source": {
+              "type": "string"
+            },
+            "stages": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "status": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "created_at",
+            "id",
+            "iid",
+            "ref",
+            "stages",
+            "status"
+          ],
+          "type": "object"
+        },
+        "object_kind": {
+          "const": "pipeline",
+          "type": "string"
+        },
+        "project": {
+          "$ref": "#/definitions/project"
+        },
+        "user": {
+          "$ref": "#/definitions/user"
+        }
+      },
+      "required": [
+        "object_attributes",
+        "object_kind",
+        "project",
+        "user"
+      ],
+      "type": "object"
+    },
     "project": {
       "additionalProperties": false,
       "properties": {
@@ -270,6 +389,12 @@
     },
     {
       "$ref": "#/definitions/merge-request-event"
+    },
+    {
+      "$ref": "#/definitions/pipeline-event"
+    },
+    {
+      "$ref": "#/definitions/job-event"
     }
   ]
 }

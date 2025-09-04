@@ -5,7 +5,7 @@ description: Understanding the Terrateam configuration file and how to customize
 
 import { Steps } from '@astrojs/starlight/components';
 
-Terrateam uses a `.terrateam/config.yml` file to customize how it interacts with your GitHub repository and Terraform code.
+Terrateam uses a `.terrateam/config.yml` file to customize how it interacts with your GitHub or GitLab repository and Terraform code.
 
 :::note[Do I need a config file?]
 Terrateam uses sensible defaults if `.terrateam/config.yml` doesn’t exist. Add a config file only if you need custom workflows, OIDC, policies, or other advanced settings.
@@ -38,7 +38,7 @@ Each section serves a specific purpose in customizing Terrateam's behavior:
 
 ## Access Control
 
-Access Control allows you to define policies for who can perform various Terrateam operations, such as planning and applying changes. You can configure access based on individual users, GitHub teams, or repository collaborator roles.
+Access Control allows you to define policies for who can perform various Terrateam operations, such as planning and applying changes. You can configure access based on individual users, teams, or repository collaborator roles.
 
 Here's an example `access_control` configuration:
 
@@ -56,7 +56,7 @@ Access the [Access Control](/configuration-reference/access-control) page to see
 
 ## Apply Requirements
 
-Apply Requirements allows you to specify conditions that must be met before an Apply operation can be performed on an unmerged pull request. This helps ensure that changes are properly reviewed and validated before being applied.
+Apply Requirements allows you to specify conditions that must be met before an Apply operation can be performed on an unmerged pull request or merge request. This helps ensure that changes are properly reviewed and validated before being applied.
 
 Here's an example `apply_requirements` configuration with explanations:
 
@@ -88,7 +88,7 @@ apply_requirements:
 
 This configuration requires that the pull request has at least two approvals, no merge conflicts, and all status checks (except those matching `ci/.*`) have passed before an apply can be performed.
 
-When `create_pending_apply_check` is enabled, Terrateam will create a `Terrateam Apply` GitHub status check. Combined with [GitHub Rulesets](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets), this prevents the pull request from being merged until all Apply operations have completed.
+When `create_pending_apply_check` is enabled, Terrateam will create a `Terrateam Apply` status check. Combined with branch protection rules, this prevents the pull request or merge request from being merged until all Apply operations have completed.
 
 See [Apply Requirements](/configuration-reference/apply-requirements) for details.
 
@@ -205,7 +205,7 @@ The `config.yml` file supports many other configuration options, including:
 - `engine`: Set the IaC tool to be used for operations.
 - `when_modified`: Configure when Terrateam should trigger based on file changes
 - `cost_estimation`: Enable and configure cost estimation for Terraform plans
-- `automerge`: Automatically merge pull requests after successful applies
+- `automerge`: Automatically merge pull requests or merge requests after successful applies
 
 See the [Configuration Reference](/configuration-reference) for a complete list of available options.
 

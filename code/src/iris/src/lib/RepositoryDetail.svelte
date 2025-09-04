@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { Repository } from './types';
   // Auth handled by PageLayout
-  import { api } from './api';
   import { selectedInstallation, currentVCSProvider } from './stores';
+  import { repositoryService } from './services/repository-service';
   import PageLayout from './components/layout/PageLayout.svelte';
   import { navigateToRuns, navigateToRepositories } from './utils/navigation';
   import { VCS_PROVIDERS } from './vcs/providers';
@@ -14,37 +14,43 @@
   $: terminology = VCS_PROVIDERS[currentProvider]?.terminology || VCS_PROVIDERS.github.terminology;
   
   let repository: Repository | null = null;
-  let isLoadingRepo: boolean = false;
   let error: string | null = null;
+  let isLoading: boolean = false;
   
-  
-  // Load repository data when params change
+  // Load repository when params or installation changes
   $: if (params.id && $selectedInstallation) {
-    loadRepositoryData(params.id);
+    loadRepository(params.id, $selectedInstallation.id);
   }
   
-  async function loadRepositoryData(repoId: string): Promise<void> {
-    if (!$selectedInstallation) return;
-    
+  async function loadRepository(repoId: string, installationId: string): Promise<void> {
     error = null;
-    isLoadingRepo = true;
+    isLoading = true;
     
     try {
-      // Find the repository in the current installation
-      const reposResponse = await api.getInstallationRepos($selectedInstallation.id);
-      if (reposResponse && (reposResponse as any).repositories) {
-        repository = (reposResponse as any).repositories.find((repo: Repository) => repo.id === repoId) || null;
-        if (!repository) {
-          error = 'Repository not found';
+      // First check if it's in cache
+      repository = repositoryService.getRepositoryFromCache(installationId, repoId);
+      
+      if (!repository) {
+        // Not in cache, need to load repositories
+        const result = await repositoryService.loadRepositories($selectedInstallation!);
+        
+        if (result.error) {
+          error = result.error;
           return;
         }
+        
+        // Now try to find it again
+        repository = repositoryService.getRepositoryFromCache(installationId, repoId);
+        
+        if (!repository) {
+          error = 'Repository not found in the current installation';
+        }
       }
-      
     } catch (err) {
-      error = 'Failed to load repository data';
-      console.error('Error loading repository data:', err);
+      error = 'Failed to load repository';
+      console.error('Error loading repository:', err);
     } finally {
-      isLoadingRepo = false;
+      isLoading = false;
     }
   }
   
@@ -55,8 +61,8 @@
     }
   }
   
-  function handleSetupRepo(): void {
-    window.open('https://docs.terrateam.io/getting-started/quickstart-guide#option-2-set-up-your-own-repository', '_blank');
+  function handleGetStarted(): void {
+    window.location.hash = '#/getting-started';
   }
 </script>
 
@@ -77,9 +83,10 @@
       Back to Repositories
     </button>
   </div>
-      {#if isLoadingRepo}
+      {#if isLoading}
         <div class="flex justify-center py-12">
           <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary"></div>
+          <span class="ml-3 text-gray-600 dark:text-gray-400">Loading repository data...</span>
         </div>
       {:else if error}
         <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4">
@@ -100,9 +107,9 @@
       {:else if repository}
         <div class="space-y-6">
           <!-- Repository Configuration -->
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-6">
             <h2 class="text-lg font-semibold text-brand-primary mb-4">Repository Configuration</h2>
-            <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+            <dl class="grid grid-cols-1 gap-x-4 gap-y-4 md:gap-y-6 sm:grid-cols-2">
               <div>
                 <dt class="text-sm font-medium text-gray-600 dark:text-gray-400">Repository Name</dt>
                 <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100 font-mono">{repository.name}</dd>
@@ -119,11 +126,11 @@
           </div>
 
           <!-- Actions -->
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-6">
             <h3 class="text-lg font-semibold text-brand-primary mb-4">Actions</h3>
             <div class="space-y-4">
               <!-- View Runs -->
-              <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg space-y-3 sm:space-y-0">
                 <div class="flex items-center">
                   <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
@@ -135,7 +142,7 @@
                 </div>
                 <button
                   on:click={viewAllRuns}
-                  class="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white text-sm rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
+                  class="px-3 md:px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white text-sm rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors whitespace-nowrap"
                 >
                   View Runs
                 </button>
@@ -143,7 +150,7 @@
 
               <!-- Setup Repository (if not configured) -->
               {#if !repository.setup}
-                <div class="flex items-center justify-between p-4 border border-yellow-200 dark:border-yellow-700 rounded-lg bg-yellow-50 dark:bg-yellow-900/20">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border border-yellow-200 dark:border-yellow-700 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 space-y-3 sm:space-y-0">
                   <div class="flex items-center">
                     <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -155,16 +162,16 @@
                     </div>
                   </div>
                   <button
-                    on:click={handleSetupRepo}
-                    class="px-4 py-2 bg-yellow-600 dark:bg-yellow-500 text-white text-sm rounded-md hover:bg-yellow-700 dark:hover:bg-yellow-600 transition-colors"
+                    on:click={handleGetStarted}
+                    class="px-3 md:px-4 py-2 bg-yellow-600 dark:bg-yellow-500 text-white text-sm rounded-md hover:bg-yellow-700 dark:hover:bg-yellow-600 transition-colors whitespace-nowrap"
                   >
-                    Setup Guide
+                    Getting Started
                   </button>
                 </div>
               {/if}
 
               <!-- Disable Repository -->
-              <div class="flex items-start justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+              <div class="flex flex-col p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
                 <div class="flex items-start">
                   <svg class="w-5 h-5 text-gray-600 dark:text-gray-400 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L5.636 5.636" />
@@ -187,7 +194,7 @@
 
           <!-- Quick Info -->
           {#if repository.setup}
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-6">
               <h3 class="text-lg font-semibold text-brand-primary mb-4">Quick Info</h3>
               <div class="text-sm text-gray-600 dark:text-gray-400 space-y-2">
                 <p>• This repository is connected to Terrateam and ready for infrastructure management</p>

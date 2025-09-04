@@ -436,12 +436,12 @@ module Primary = struct
                   created_at : string;
                   download_url : string;
                   id : int;
-                  md5 : string option;
+                  md5 : string option; [@default None]
                   name : string;
-                  sha1 : string option;
-                  sha256 : string option;
+                  sha1 : string option; [@default None]
+                  sha256 : string option; [@default None]
                   size : int;
-                  state : string option;
+                  state : string option; [@default None]
                   updated_at : string;
                 }
                 [@@deriving yojson { strict = false; meta = true }, show, eq]
@@ -499,12 +499,12 @@ module Primary = struct
               end
 
               type t = {
-                author : Author.t option;
+                author : Author.t option; [@default None]
                 created_at : string;
                 draft : bool;
                 html_url : string;
                 id : int;
-                name : string option;
+                name : string option; [@default None]
                 prerelease : bool;
                 published_at : string;
                 tag_name : string;
@@ -574,18 +574,18 @@ module Primary = struct
       end
 
       type t = {
-        created_at : string option;
-        description : string option;
+        created_at : string option; [@default None]
+        description : string option; [@default None]
         ecosystem : string;
         html_url : string;
         id : int;
         name : string;
         namespace : string;
-        owner : Owner.t option;
+        owner : Owner.t option; [@default None]
         package_type : string;
-        package_version : Package_version_.t option;
-        registry : Registry.t option;
-        updated_at : string option;
+        package_version : Package_version_.t option; [@default None]
+        registry : Registry.t option; [@default None]
+        updated_at : string option; [@default None]
       }
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end

@@ -91,9 +91,9 @@ type t = {
   permissions : Permissions.t;
   repositories_url : string;
   repository_selection : string;
-  single_file_name : string option;
+  single_file_name : string option; [@default None]
   single_file_paths : Single_file_paths.t option; [@default None]
-  suspended_at : string option;
+  suspended_at : string option; [@default None]
   suspended_by : Terrat_github_webhooks_user.t option; [@default None]
   target_id : int;
   target_type : Target_type.t;

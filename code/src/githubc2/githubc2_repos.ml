@@ -2020,13 +2020,13 @@ module Update_branch_protection = struct
         allow_force_pushes : bool option; [@default None]
         allow_fork_syncing : bool; [@default false]
         block_creations : bool option; [@default None]
-        enforce_admins : bool option;
+        enforce_admins : bool option; [@default None]
         lock_branch : bool; [@default false]
         required_conversation_resolution : bool option; [@default None]
         required_linear_history : bool option; [@default None]
-        required_pull_request_reviews : Required_pull_request_reviews.t option;
-        required_status_checks : Required_status_checks.t option;
-        restrictions : Restrictions.t option;
+        required_pull_request_reviews : Required_pull_request_reviews.t option; [@default None]
+        required_status_checks : Required_status_checks.t option; [@default None]
+        restrictions : Restrictions.t option; [@default None]
       }
       [@@deriving make, yojson { strict = false; meta = true }, show, eq]
     end
@@ -8958,7 +8958,7 @@ module Update_information_about_pages_site = struct
 
         type t = {
           build_type : Build_type.t option; [@default None]
-          cname : string option;
+          cname : string option; [@default None]
           https_enforced : bool option; [@default None]
           source : Source.t option; [@default None]
         }

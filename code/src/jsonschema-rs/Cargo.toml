@@ -1,0 +1,11 @@
+[package]
+name = "jsonschema-c-wrapper"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+jsonschema = "0.17"
+serde_json = "1.0"
+
+[lib]
+crate-type = ["staticlib"]

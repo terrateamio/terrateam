@@ -10,7 +10,7 @@ module Primary = struct
   end
 
   type t = {
-    description : string option;
+    description : string option; [@default None]
     enterprise : Githubc2_components_enterprise_webhooks.t option; [@default None]
     installation : Githubc2_components_simple_installation.t option; [@default None]
     master_branch : string;

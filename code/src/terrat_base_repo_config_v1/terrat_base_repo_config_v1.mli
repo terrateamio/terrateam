@@ -186,6 +186,26 @@ module Workflow_step : sig
     }
     [@@deriving make, show, yojson, eq]
   end
+
+  module Opa : sig
+    module Fail_on : sig
+      type t =
+        | Defined
+        | Undefined
+      [@@deriving show, yojson, eq]
+    end
+
+    type t = {
+      env : string String_map.t option;
+      extra_args : string list; [@default []]
+      fail_on : Fail_on.t; [@default Fail_on.Undefined]
+      gate : Gate.t option; [@default None]
+      ignore_errors : bool; [@default false]
+      run_on : Run_on.t; [@default Run_on.Success]
+      visible_on : Visible_on.t; [@default Visible_on.Failure]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
 end
 
 module Access_control : sig
@@ -245,7 +265,8 @@ module Apply_requirements : sig
       all_of : Access_control.Match_list.t; [@default []]
       any_of : Access_control.Match_list.t; [@default []]
       any_of_count : int; [@default 1]
-      enabled : bool; [@default true]
+      enabled : bool; [@default false]
+      require_completed_reviews : bool; [@default false]
     }
     [@@deriving make, show, yojson, eq]
   end
@@ -322,6 +343,12 @@ module Cost_estimation : sig
     provider : Provider.t; [@default Provider.Infracost]
   }
   [@@deriving make, show, yojson, eq]
+end
+
+module Default_branch_overrides : sig
+  type t = string list [@@deriving show, yojson, eq]
+
+  val make : unit -> t
 end
 
 module Destination_branches : sig
@@ -551,6 +578,61 @@ module Integrations : sig
   [@@deriving make, show, yojson, eq]
 end
 
+module Notifications : sig
+  module Policy : sig
+    module Strategy : sig
+      type t =
+        | Append
+        | Delete
+        | Minimize
+      [@@deriving show, yojson, eq]
+    end
+
+    type t = {
+      tag_query : Tag_query.t;
+      comment_strategy : Strategy.t; [@default Strategy.Append]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  type t = { policies : Policy.t list [@default [ Policy.make ~tag_query:Tag_query.any () ]] }
+  [@@deriving make, show, yojson, eq]
+end
+
+module Stacks : sig
+  module Rules : sig
+    type t = {
+      apply_after : string list; [@default []]
+      auto_apply : bool option; [@default None]
+      modified_by : string list; [@default []]
+      plan_after : string list; [@default []]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  module Type_ : sig
+    type t =
+      | Nested of string list
+      | Stack of Tag_query.t
+    [@@deriving show, yojson, eq]
+  end
+
+  module Stack : sig
+    type t = {
+      type_ : Type_.t;
+      rules : Rules.t; [@default Rules.make ()]
+      variables : string String_map.t; [@default String_map.empty]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  type t = {
+    names : Stack.t String_map.t;
+        [@default String_map.singleton "default" (Stack.make ~type_:(Type_.Stack Tag_query.any) ())]
+  }
+  [@@deriving make, show, yojson, eq]
+end
+
 module Storage : sig
   module Plans : sig
     module Cmd : sig
@@ -619,6 +701,7 @@ module Workflows : sig
         | Oidc of Workflow_step.Oidc.t
         | Checkov of Workflow_step.Checkov.t
         | Conftest of Workflow_step.Conftest.t
+        | Opa of Workflow_step.Opa.t
       [@@deriving show, yojson, eq]
     end
 
@@ -663,6 +746,7 @@ module View : sig
     config_builder : Config_builder.t; [@default Config_builder.make ()]
     cost_estimation : Cost_estimation.t; [@default Cost_estimation.make ()]
     create_and_select_workspace : bool; [@default true]
+    default_branch_overrides : Default_branch_overrides.t option; [@default None]
     destination_branches : Destination_branches.t; [@default []]
     dirs : Dirs.t; [@default String_map.empty]
     drift : Drift.t; [@default Drift.make ()]
@@ -671,7 +755,9 @@ module View : sig
     hooks : Hooks.t; [@default Hooks.make ()]
     indexer : Indexer.t; [@default Indexer.make ()]
     integrations : Integrations.t; [@default Integrations.make ()]
+    notifications : Notifications.t; [@default Notifications.make ()]
     parallel_runs : int; [@default 3]
+    stacks : Stacks.t; [@default Stacks.make ()]
     storage : Storage.t; [@default Storage.make ()]
     tags : Tags.t; [@default Tags.make ()]
     tree_builder : Tree_builder.t; [@default Tree_builder.make ()]
@@ -729,7 +815,9 @@ type of_version_1_err =
   | `Glob_parse_err of string * string
   | `Hooks_unknown_run_on_err of Terrat_repo_config_run_on.t
   | `Hooks_unknown_visible_on_err of string
+  | `Notification_policy_tag_query_err of string * string
   | `Pattern_parse_err of string
+  | `Stack_config_tag_query_err of string * string
   | `Unknown_lock_policy_err of string
   | `Unknown_plan_mode_err of string
   | `Window_parse_timezone_err of string
@@ -741,14 +829,17 @@ type of_version_1_err =
   ]
 [@@deriving show]
 
+type of_version_1_json_err =
+  [ of_version_1_err
+  | `Repo_config_schema_err of Jsonschema_check.Validation_err.t list
+  ]
+[@@deriving show]
+
 val of_view : View.t -> raw t
 val to_view : 'a t -> View.t
 val default : raw t
 val of_version_1 : Terrat_repo_config.Version_1.t -> (raw t, [> of_version_1_err ]) result
-
-val of_version_1_json :
-  Yojson.Safe.t -> (raw t, [> of_version_1_err | `Repo_config_parse_err of string ]) result
-
+val of_version_1_json : Yojson.Safe.t -> (raw t, [> of_version_1_json_err ]) result
 val to_version_1 : 'a t -> Terrat_repo_config.Version_1.t
 val merge_with_default_branch_config : default:'a t -> 'a t -> 'a t
 
@@ -764,6 +855,7 @@ val batch_runs : 'a t -> Batch_runs.t
 val config_builder : 'a t -> Config_builder.t
 val cost_estimation : 'a t -> Cost_estimation.t
 val create_and_select_workspace : 'a t -> bool
+val default_branch_overrides : 'a t -> Default_branch_overrides.t
 val destination_branches : 'a t -> Destination_branches.t
 val dirs : 'a t -> Dirs.t
 val drift : 'a t -> Drift.t
@@ -772,7 +864,9 @@ val engine : 'a t -> Engine.t
 val hooks : 'a t -> Hooks.t
 val indexer : 'a t -> Indexer.t
 val integrations : 'a t -> Integrations.t
+val notifications : 'a t -> Notifications.t
 val parallel_runs : 'a t -> int
+val stacks : 'a t -> Stacks.t
 val storage : 'a t -> Storage.t
 val tags : 'a t -> Tags.t
 val tree_builder : 'a t -> Tree_builder.t

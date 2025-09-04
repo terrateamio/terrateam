@@ -1,0 +1,59 @@
+---
+title: Docker Compose Setup
+description: Complete guide to deploying Terrateam Self-Hosted using Docker Compose with automated setup wizard for GitHub and GitLab.
+---
+
+Docker Compose provides the quickest way to get Terrateam Self-Hosted up and running. The included setup wizard automates the entire app creation process for both GitHub and GitLab, making deployment simple and error-free.
+
+## What the Setup Wizard Does
+
+The Terrateam setup wizard is a containerized application that handles all the complex configuration automatically for your chosen version control system:
+
+### For GitHub
+- **Automated GitHub App Creation**: Creates a GitHub App with all required permissions
+- **OAuth Configuration**: Sets up webhook endpoints and OAuth settings
+- **Secure Credentials**: Generates private keys and webhook secrets
+- **Callback URLs**: Configures proper callback URLs for your deployment
+
+### For GitLab
+- **Personal Access Token Setup**: Guides you through PAT configuration
+- **Project Integration**: Configures GitLab project webhooks
+- **API Access**: Sets up proper API endpoints and authentication
+- **Webhook Configuration**: Establishes secure webhook communication
+
+## Quick Start
+
+### Prerequisites
+- Docker and Docker Compose installed
+- For GitHub: Admin permissions in your GitHub organization
+- For GitLab: Admin access to your GitLab group/project
+- Port 3000 available on your local machine
+
+### Step 1: Clone the Repository
+
+```sh
+git clone https://github.com/terrateamio/terrateam.git
+cd terrateam/docker/terrat
+```
+
+### Step 2: Start the Setup Wizard
+
+```sh
+docker-compose up setup
+```
+
+The setup container will start and be available at `http://localhost:3000`
+
+### Step 3: Complete the Setup Wizard
+
+1. Open your browser to http://localhost:3000
+2. Click "Get Started" on the welcome screen
+3. **Select your VCS** - Choose between GitHub and GitLab
+4. **Configure Tunnel** - Authenticate with your VCS provider
+5. **Complete Setup**:
+   - **GitHub**: Follow OAuth flow to create GitHub App automatically
+   - **GitLab**: Enter your Personal Access Token and configure project settings
+6. The wizard will automatically:
+   - Configure all necessary permissions
+   - Generate secure credentials
+   - Set up webhooks

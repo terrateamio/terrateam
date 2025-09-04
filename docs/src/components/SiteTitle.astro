@@ -2,8 +2,8 @@
   <img
     alt="Terrateam"
     src="/logo-wordmark.svg"
-    width="180"
-    height="40"
+    width="252"
+    height="56"
   />
 </a>
 
@@ -19,10 +19,16 @@
   }
 
   img {
-    height: calc(var(--sl-nav-height) - 2 * var(--sl-nav-pad-y));
+    height: calc(var(--sl-nav-height) - 0.8 * var(--sl-nav-pad-y));
     width: auto;
-    max-width: 100%;
+    max-width: 252px;
+    max-height: 56px;
     object-fit: contain;
     object-position: 0 50%;
+  }
+  
+  /* Make header slightly taller for the logo */
+  :global(header) {
+    --sl-nav-height: 4.5rem !important;
   }
 </style>

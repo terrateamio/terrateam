@@ -20,8 +20,20 @@ type err =
 [@@deriving show]
 
 let parse s =
+  let s =
+    (* In GitLab, the automatic copy of a triple backtick text adds the single
+       backticks, so we trim those off and any white space.  This makes it so
+       people can drop comments like `terrateam plan` and it will still work.
+       We trim twice, once for outside the single backticks and once for
+       inside. *)
+    s
+    |> CCString.trim
+    |> CCString.drop_while (( = ) '`')
+    |> CCString.rdrop_while (( = ) '`')
+    |> CCString.trim
+  in
   let split_s =
-    match CCString.Split.left ~by:" " (CCString.trim s) with
+    match CCString.Split.left ~by:" " s with
     | Some (trigger_word, action_rest)
       when CCList.mem ~eq:CCString.equal (CCString.lowercase_ascii trigger_word) trigger_words -> (
         match CCString.Split.left ~by:" " (CCString.trim action_rest) with

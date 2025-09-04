@@ -1,11 +1,11 @@
 module Primary = struct
   type t = {
-    actor : Githubc2_components_nullable_simple_user.t option;
+    actor : Githubc2_components_nullable_simple_user.t option; [@default None]
     assignee : Githubc2_components_nullable_simple_user.t option; [@default None]
     assigner : Githubc2_components_nullable_simple_user.t option; [@default None]
     author_association : Githubc2_components_author_association.t option; [@default None]
-    commit_id : string option;
-    commit_url : string option;
+    commit_id : string option; [@default None]
+    commit_url : string option; [@default None]
     created_at : string;
     dismissed_review : Githubc2_components_issue_event_dismissed_review.t option; [@default None]
     event : string;

@@ -25,77 +25,76 @@ let replace_where q = function
 let set_timeout timeout =
   Pgsql_io.Typed_sql.(sql /^ Printf.sprintf "set local statement_timeout = '%s'" timeout)
 
+module Sql = struct
+  let read fname =
+    CCOption.get_exn_or
+      fname
+      (CCOption.map Pgsql_io.clean_string (Terrat_files_gitlab_sql.read fname))
+
+  let select_user_installations () =
+    Pgsql_io.Typed_sql.(sql /^ read "select_user_installations.sql" /% Var.uuid "user_id")
+
+  let upsert_user_installations () =
+    Pgsql_io.Typed_sql.(
+      sql
+      //
+      (* installation_id *)
+      Ret.bigint
+      //
+      (* name *)
+      Ret.text
+      //
+      (* state *)
+      Ret.text
+      /^ read "upsert_user_installations.sql"
+      /% Var.uuid "user_id"
+      /% Var.(array (bigint "installation_ids")))
+end
+
+let update_user_installations ~config ~storage ~user () =
+  let open Abbs_future_combinators.Infix_result_monad in
+  let module Groups = Gitlabc_groups.GetApiV4Groups in
+  let vcs_config = Terrat_vcs_service_gitlab_provider.Api.Config.vcs_config config in
+  Pgsql_pool.with_conn storage ~f:(fun db -> User.Oauth.access_token ~config:vcs_config db user)
+  >>= fun token ->
+  let client =
+    Openapic_abb.create
+      ~base_url:(Terrat_config.Gitlab.api_base_url vcs_config)
+      ~user_agent:"Terrateam"
+      (`Bearer token)
+  in
+  Openapic_abb.collect_all
+    ~page:Openapic_abb.Page.gitlab
+    client
+    Groups.(make (Parameters.make ~order_by:"name" ()))
+  >>= fun groups ->
+  let module G = Gitlabc_components_api_entities_group in
+  let group_ids = CCList.map (fun { G.id; _ } -> CCInt64.of_int id) groups in
+  Pgsql_pool.with_conn storage ~f:(fun db ->
+      Pgsql_io.Prepared_stmt.fetch
+        db
+        (Sql.upsert_user_installations ())
+        ~f:(fun installation_id name state ->
+          let module I = Terrat_api_components_installation in
+          let module T = Terrat_api_components_tier in
+          {
+            I.id = CCInt64.to_string installation_id;
+            name;
+            account_status = state;
+            tier = { T.features = { T.Features.num_users_per_month = None }; name = "Unknown" };
+            trial_ends_at = None;
+          })
+        (Terrat_user.id user)
+        group_ids)
+
 module List = struct
-  module Sql = struct
-    let read fname =
-      CCOption.get_exn_or
-        fname
-        (CCOption.map Pgsql_io.clean_string (Terrat_files_gitlab_sql.read fname))
-
-    let select_user_installations () =
-      Pgsql_io.Typed_sql.(sql /^ read "select_user_installations.sql" /% Var.uuid "user_id")
-
-    let upsert_user_installations () =
-      Pgsql_io.Typed_sql.(
-        sql
-        //
-        (* installation_id *)
-        Ret.bigint
-        //
-        (* name *)
-        Ret.text
-        //
-        (* state *)
-        Ret.text
-        /^ read "upsert_user_installations.sql"
-        /% Var.uuid "user_id"
-        /% Var.(array (bigint "installation_ids")))
-  end
-
-  let get' config storage user =
-    let open Abbs_future_combinators.Infix_result_monad in
-    let module Groups = Gitlabc_groups.GetApiV4Groups in
-    let vcs_config = Terrat_vcs_service_gitlab_provider.Api.Config.vcs_config config in
-    Pgsql_pool.with_conn storage ~f:(fun db -> User.Oauth.access_token ~config:vcs_config db user)
-    >>= fun token ->
-    let client =
-      Openapic_abb.create
-        ~base_url:(Terrat_config.Gitlab.api_base_url vcs_config)
-        ~user_agent:"Terrateam"
-        (`Bearer token)
-    in
-    Openapic_abb.collect_all
-      ~page:Openapic_abb.Page.gitlab
-      client
-      Groups.(make (Parameters.make ~order_by:"name" ()))
-    >>= fun groups ->
-    let module G = Gitlabc_components_api_entities_group in
-    let group_ids = CCList.map (fun { G.id; _ } -> CCInt64.of_int id) groups in
-    Pgsql_pool.with_conn storage ~f:(fun db ->
-        Pgsql_io.Prepared_stmt.fetch
-          db
-          (Sql.upsert_user_installations ())
-          ~f:(fun installation_id name state ->
-            let module I = Terrat_api_components_installation in
-            let module T = Terrat_api_components_tier in
-            {
-              I.id = CCInt64.to_string installation_id;
-              name;
-              account_status = state;
-              tier = { T.features = { T.Features.num_users_per_month = None }; name = "Unknown" };
-              trial_ends_at = None;
-            })
-          (Terrat_user.id user)
-          group_ids)
-    >>= fun installations -> Abb.Future.return (Ok installations)
-
   let get config storage =
-    Brtl_ep.run_result ~f:(fun ctx ->
+    Brtl_ep.run_result_json ~f:(fun ctx ->
         let open Abbs_future_combinators.Infix_result_monad in
         Terrat_session.with_session ctx
         >>= fun user ->
         let open Abb.Future.Infix_monad in
-        get' config storage user
+        update_user_installations ~config ~storage ~user ()
         >>= function
         | Ok installations ->
             let module R = Terrat_api_gitlab_installations.List.Responses.OK in
@@ -193,7 +192,7 @@ module Webhook = struct
     | webhook_secret :: _ -> Abb.Future.return (Ok webhook_secret)
 
   let get config storage installation_id =
-    Brtl_ep.run_result ~f:(fun ctx ->
+    Brtl_ep.run_result_json ~f:(fun ctx ->
         let open Abbs_future_combinators.Infix_result_monad in
         Terrat_session.with_session ctx
         >>= fun user ->
@@ -359,7 +358,7 @@ module List_repos = struct
     Paginate.run ?page ~page_param:"page" query ctx >>= fun ctx -> Abb.Future.return (Ok ctx)
 
   let get config storage installation_id page limit =
-    Brtl_ep.run_result ~f:(fun ctx ->
+    Brtl_ep.run_result_json ~f:(fun ctx ->
         let open Abbs_future_combinators.Infix_result_monad in
         Terrat_session.with_session ctx
         >>= fun user ->
@@ -654,7 +653,7 @@ module List_dirspaces = struct
 
   let get config storage installation_id query timezone page limit =
     let module Bad_request = Terrat_api_components_bad_request_err in
-    Brtl_ep.run_result ~f:(fun ctx ->
+    Brtl_ep.run_result_json ~f:(fun ctx ->
         let open Abbs_future_combinators.Infix_result_monad in
         Terrat_session.with_session ctx
         >>= fun user ->
@@ -925,7 +924,7 @@ module List_work_manifest_outputs = struct
 
   let get config storage installation_id work_manifest_id query timezone page limit lite =
     let module Bad_request = Terrat_api_components_bad_request_err in
-    Brtl_ep.run_result ~f:(fun ctx ->
+    Brtl_ep.run_result_json ~f:(fun ctx ->
         let open Abbs_future_combinators.Infix_result_monad in
         Terrat_session.with_session ctx
         >>= fun user ->
@@ -1290,7 +1289,7 @@ module List_work_manifests = struct
 
   let get config storage installation_id query timezone page limit =
     let module Bad_request = Terrat_api_components_bad_request_err in
-    Brtl_ep.run_result ~f:(fun ctx ->
+    Brtl_ep.run_result_json ~f:(fun ctx ->
         let open Abbs_future_combinators.Infix_result_monad in
         Terrat_session.with_session ctx
         >>= fun user ->

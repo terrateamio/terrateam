@@ -12,6 +12,7 @@ import {
   type GitLabGroup,
   type GitLabUser,
   type GitLabWebhook,
+  type GitLabWhoAreYou,
   validateRepository,
   validateUser,
   validateDirspace,
@@ -23,6 +24,7 @@ import {
   validateGitLabGroups,
   validateGitLabUser,
   validateGitLabWebhook,
+  validateGitLabWhoAreYou,
 } from './types';
 import { sentryService } from './sentry';
 import { get } from 'svelte/store';
@@ -42,6 +44,14 @@ class ApiError extends Error {
   }
 }
 
+// Helper type for parsed Link headers
+export interface LinkHeader {
+  next?: string;
+  prev?: string;
+  first?: string;
+  last?: string;
+}
+
 export class ValidatedApiClient {
   private baseUrl: string;
 
@@ -55,6 +65,32 @@ export class ValidatedApiClient {
     return getProviderApiPath(currentProvider);
   }
 
+  private lastResponseHeaders: Headers | null = null;
+  
+  // Parse Link header according to RFC 5988
+  private parseLinkHeader(linkHeader: string): LinkHeader {
+    const links: LinkHeader = {};
+    
+    // Split by comma, but be careful of commas within URLs
+    const parts = linkHeader.split(/,\s*(?=<)/);
+    
+    for (const part of parts) {
+      const match = part.match(/<([^>]+)>;\s*rel="([^"]+)"/);
+      if (match) {
+        const [, url, rel] = match;
+        links[rel as keyof LinkHeader] = url;
+      }
+    }
+    
+    return links;
+  }
+  
+  // Get parsed Link headers from last response
+  public getLastLinkHeaders(): LinkHeader | null {
+    const linkHeader = this.lastResponseHeaders?.get('Link') || this.lastResponseHeaders?.get('link');
+    return linkHeader ? this.parseLinkHeader(linkHeader) : null;
+  }
+  
   private async request<T>(
     endpoint: string,
     options: ApiRequestOptions = {}
@@ -90,6 +126,10 @@ export class ValidatedApiClient {
     try {
       
       const response = await fetch(url, requestOptions);
+      
+      // Store headers for pagination
+      this.lastResponseHeaders = response.headers;
+      
       const responseText = await response.text();
 
       // Add breadcrumb for all API calls
@@ -170,6 +210,54 @@ export class ValidatedApiClient {
   // Utility methods
   async get<T>(endpoint: string, params?: Record<string, string>): Promise<T> {
     return this.request<T>(endpoint, { method: 'GET', params });
+  }
+  
+  // Get raw response from a full URL (for pagination)
+  async getFromUrl<T>(fullUrl: string): Promise<T> {
+    try {
+      // Fix double slash issue if present
+      const fixedUrl = fullUrl.replace('//api/', '/api/');
+      
+      const response = await fetch(fixedUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+      
+      // Store headers for pagination
+      this.lastResponseHeaders = response.headers;
+      
+      const responseText = await response.text();
+      
+      if (!response.ok) {
+        let errorData: unknown;
+        try {
+          errorData = responseText ? JSON.parse(responseText) : null;
+        } catch {
+          errorData = responseText;
+        }
+        
+        throw new ApiError(
+          `HTTP ${response.status}: ${response.statusText}`,
+          response.status,
+          response,
+          errorData
+        );
+      }
+      
+      return responseText ? JSON.parse(responseText) : ({} as T);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      console.error('API request failed:', error);
+      throw new ApiError(
+        error instanceof Error ? error.message : 'Network error',
+        0
+      );
+    }
   }
 
   async post<T>(endpoint: string, data?: unknown): Promise<T> {
@@ -255,18 +343,25 @@ export class ValidatedApiClient {
   // Repositories with cursor-based pagination
   async getInstallationRepos(
     installationId: string, 
-    params?: { cursor?: string },
+    params?: { cursor?: string; page?: number },
     provider?: VCSProvider
   ): Promise<{ repositories: Repository[]; nextCursor?: string; hasMore: boolean }> {
     const providerPath = this.getProviderPath(provider);
-    const queryParams: Record<string, string> = {};
     
-    // Use cursor-based pagination if provided
+    // Build the URL manually to avoid encoding issues with the cursor
+    let endpoint = `${providerPath}/installations/${installationId}/repos`;
+    
     if (params?.cursor) {
-      queryParams.page = params.cursor;
+      // The API expects the cursor value without URL encoding
+      // So we build the URL manually instead of using URLSearchParams
+      endpoint += `?page=${params.cursor}`;
     }
     
-    const response = await this.get(`${providerPath}/installations/${installationId}/repos`, queryParams);
+    // Use the endpoint directly without additional params
+    const response = await this.request(endpoint, { method: 'GET' });
+    
+    // Check Link header for pagination
+    const linkHeader = this.lastResponseHeaders?.get('Link') || this.lastResponseHeaders?.get('link');
     
     // Validate the response structure
     if (!response || typeof response !== 'object' || !('repositories' in response)) {
@@ -275,28 +370,87 @@ export class ValidatedApiClient {
 
     const repositories = validateRepositories(response.repositories);
     
-    // Extract pagination info from response
+    // Extract pagination info from Link header
     let nextCursor: string | undefined;
     let hasMore = false;
     
-    // Check for pagination metadata in response
-    if ('pagination' in response && response.pagination && typeof response.pagination === 'object') {
-      const pagination = response.pagination as { next_cursor?: string };
-      nextCursor = pagination.next_cursor;
-      hasMore = !!nextCursor;
+    // Parse Link header for pagination (RFC 5988)
+    if (linkHeader) {
+      const links = this.parseLinkHeader(linkHeader);
+      
+      if (links.next) {
+        // Extract page parameter from next URL
+        try {
+          // Fix double slash issue if present
+          const fixedUrl = links.next.replace('//api/', '/api/');
+          
+          // The URL might be relative, so we need to handle it carefully
+          const nextUrl = fixedUrl.startsWith('http') 
+            ? new URL(fixedUrl)
+            : new URL(fixedUrl, 'https://app.terrateam.io');
+          
+          nextCursor = nextUrl.searchParams.get('page') || undefined;
+          hasMore = true;
+        } catch (e) {
+          console.error('Failed to parse next URL from Link header:', e);
+        }
+      }
     }
-    // Fallback: check for next_page or similar fields
-    else if ('next_cursor' in response) {
-      nextCursor = response.next_cursor as string | undefined;
-      hasMore = !!nextCursor;
-    }
-    // If no pagination info, assume no more pages
-    else {
-      hasMore = false;
+    
+    // Only check response body for pagination if we didn't find it in Link headers
+    if (!nextCursor && !hasMore) {
+      // Check for various pagination field formats
+      // 1. Check for pagination metadata object
+      if ('pagination' in response && response.pagination && typeof response.pagination === 'object') {
+        const pagination = response.pagination as Record<string, any>;
+        nextCursor = pagination.next_cursor || pagination.nextCursor || pagination.next || pagination.cursor;
+        hasMore = pagination.has_more !== undefined ? pagination.has_more : 
+                  pagination.hasMore !== undefined ? pagination.hasMore : !!nextCursor;
+      }
+      // 2. Check for next_cursor at top level
+      else if ('next_cursor' in response || 'nextCursor' in response) {
+        const resp = response as any;
+        nextCursor = (resp.next_cursor || resp.nextCursor) as string | undefined;
+        hasMore = !!nextCursor;
+      }
+      // 3. Check for next_page at top level
+      else if ('next_page' in response || 'nextPage' in response) {
+        const resp = response as any;
+        nextCursor = (resp.next_page || resp.nextPage) as string | undefined;
+        hasMore = !!nextCursor;
+      }
+      // 4. Check for next at top level
+      else if ('next' in response) {
+        nextCursor = response.next as string | undefined;
+        hasMore = !!nextCursor;
+      }
+      // 5. Check for page_info object
+      else if ('page_info' in response || 'pageInfo' in response) {
+        const resp = response as any;
+        const pageInfo = (resp.page_info || resp.pageInfo) as Record<string, any>;
+        nextCursor = pageInfo.next_cursor || pageInfo.nextCursor || pageInfo.endCursor;
+        hasMore = pageInfo.has_next_page !== undefined ? pageInfo.has_next_page : 
+                  pageInfo.hasNextPage !== undefined ? pageInfo.hasNextPage : !!nextCursor;
+      }
+      // 6. Check meta/metadata
+      else if ('meta' in response || 'metadata' in response) {
+        const resp = response as any;
+        const meta = (resp.meta || resp.metadata) as Record<string, any>;
+        nextCursor = meta.next_cursor || meta.nextCursor || meta.next;
+        hasMore = meta.has_more !== undefined ? meta.has_more : !!nextCursor;
+      }
+      // No pagination info found
+      else {
+        // If we didn't find pagination info and got exactly 20 repositories, assume there might be more
+        if (repositories.length === 20) {
+          hasMore = true;
+        }
+      }
     }
     
     return { repositories, nextCursor, hasMore };
   }
+  
 
   async getRepository(installationId: string, repoId: string, provider?: VCSProvider): Promise<Repository> {
     const providerPath = this.getProviderPath(provider);
@@ -321,7 +475,7 @@ export class ValidatedApiClient {
     installationId: string, 
     params?: { q?: string; tz?: string; limit?: number; d?: string; page?: string[] },
     provider?: VCSProvider
-  ): Promise<{ dirspaces: Dirspace[]; nextCursor?: string; hasMore: boolean }> {
+  ): Promise<{ dirspaces: Dirspace[]; nextCursor?: string; hasMore: boolean; linkHeaders?: LinkHeader }> {
     const providerPath = this.getProviderPath(provider);
     
     // Always use dirspaces endpoint - it handles all Tag Query Language queries including repo: filters
@@ -354,10 +508,12 @@ export class ValidatedApiClient {
 
     if ('dirspaces' in response) {
       const dirspaces = validateDirspaces(response.dirspaces);
+      
+      // Get Link headers for pagination
+      const linkHeaders = this.getLastLinkHeaders() || undefined;
+      const hasMore = linkHeaders?.next !== undefined;
 
-      // The dirspaces API doesn't return pagination metadata
-      // The caller should use date-based pagination with created_at filters
-      return { dirspaces, hasMore: false };
+      return { dirspaces, hasMore, linkHeaders };
     } else {
       throw new ApiError('Invalid dirspaces response format - expected dirspaces', 422);
     }
@@ -381,6 +537,39 @@ export class ValidatedApiClient {
 
     const work_manifests = validateWorkManifests(response.work_manifests);
     return { work_manifests };
+  }
+
+  // Get work manifests with query parameters for audit trail
+  async getWorkManifestsWithQuery(
+    installationId: string, 
+    params?: { q?: string; tz?: string; limit?: number; d?: string; page?: string; lite?: boolean },
+    provider?: VCSProvider
+  ): Promise<{ work_manifests: WorkManifest[]; hasMore: boolean }> {
+    const providerPath = this.getProviderPath(provider);
+    
+    // Build query params
+    const queryParams: Record<string, string> = {};
+    if (params?.q) queryParams.q = params.q;
+    if (params?.tz) queryParams.tz = params.tz;
+    if (params?.limit) queryParams.limit = params.limit.toString();
+    if (params?.d) queryParams.d = params.d;
+    if (params?.page) queryParams.page = params.page;
+    if (params?.lite) queryParams.lite = 'true';
+    
+    const response = await this.get(`${providerPath}/installations/${installationId}/work-manifests`, queryParams);
+    
+    // Validate the response structure
+    if (!response || typeof response !== 'object' || !('work_manifests' in response)) {
+      throw new ApiError('Invalid work manifests response format', 422);
+    }
+
+    const work_manifests = validateWorkManifests(response.work_manifests);
+    
+    // Check if we have more results based on Link headers
+    const linkHeaders = this.getLastLinkHeaders();
+    const hasMore = linkHeaders?.next !== undefined;
+    
+    return { work_manifests, hasMore };
   }
 
   async getWorkManifest(installationId: string, workManifestId: string, provider?: VCSProvider): Promise<WorkManifest> {
@@ -545,6 +734,12 @@ export class ValidatedApiClient {
   async getGitLabUser(): Promise<GitLabUser> {
     const response = await this.get('/api/v1/gitlab/whoami');
     return validateGitLabUser(response);
+  }
+
+  // Get GitLab bot information
+  async getGitLabBotInfo(): Promise<GitLabWhoAreYou> {
+    const response = await this.get('/api/v1/gitlab/whoareyou');
+    return validateGitLabWhoAreYou(response);
   }
 
 }

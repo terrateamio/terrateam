@@ -2,7 +2,7 @@ module Primary = struct
   type t = {
     avatar_url : string;
     display_login : string option; [@default None]
-    gravatar_id : string option;
+    gravatar_id : string option; [@default None]
     id : int;
     login : string;
     url : string;

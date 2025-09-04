@@ -87,6 +87,20 @@ module Account = struct
   let to_string t = CCInt.to_string t.installation_id
 end
 
+module Comment = struct
+  module Id = struct
+    type t = int [@@deriving eq, ord, show, yojson]
+
+    let of_string = CCInt.of_string
+    let to_string = CCInt.to_string
+  end
+
+  type t = { id : Id.t } [@@deriving eq, yojson]
+
+  let make ~id () = { id }
+  let id t = t.id
+end
+
 module Repo = struct
   module Id = struct
     type t = int [@@deriving yojson, show, eq]
@@ -294,7 +308,7 @@ let fetch_branch_sha ~request_id client repo ref_ =
   | Ok sha -> Abb.Future.return (Ok (Some sha))
   | Error (`Not_found _) -> Abb.Future.return (Ok None)
   | Error (#Terrat_github.fetch_branch_err as err) ->
-      Logs.err (fun m ->
+      Logs.info (fun m ->
           m "%s : FETCH_BRANCH_SHA : %a" request_id Terrat_github.pp_fetch_branch_err err);
       Abb.Future.return (Error `Error)
 
@@ -324,7 +338,7 @@ let fetch_file ~request_id client repo ref_ path =
   | Ok (Some { C.primary = { C.Primary.content; _ }; _ }) -> Abb.Future.return (Ok (Some content))
   | Ok None -> Abb.Future.return (Ok None)
   | Error (#Terrat_github.fetch_file_err as err) ->
-      Logs.err (fun m -> m "%s : FETCH_FILE : %a" request_id Terrat_github.pp_fetch_file_err err);
+      Logs.info (fun m -> m "%s : FETCH_FILE : %a" request_id Terrat_github.pp_fetch_file_err err);
       Abb.Future.return (Error `Error)
 
 let fetch_remote_repo ~request_id client repo =
@@ -339,7 +353,7 @@ let fetch_remote_repo ~request_id client repo =
   >>= function
   | Ok _ as r -> Abb.Future.return r
   | Error (#Terrat_github.fetch_repo_err as err) ->
-      Logs.err (fun m ->
+      Logs.info (fun m ->
           m "%s : FETCH_REMOTE_REPO : %a" request_id Terrat_github.pp_fetch_repo_err err);
       Abb.Future.return (Error `Error)
 
@@ -355,7 +369,7 @@ let fetch_centralized_repo ~request_id client owner =
   | Ok r -> Abb.Future.return (Ok (Some r))
   | Error (`Not_found _) -> Abb.Future.return (Ok None)
   | Error (#Terrat_github.fetch_repo_err as err) ->
-      Logs.err (fun m ->
+      Logs.info (fun m ->
           m "%s : FETCH_CENTRALIZED_REPO : %a" request_id Terrat_github.pp_fetch_repo_err err);
       Abb.Future.return (Error `Error)
 
@@ -400,7 +414,7 @@ let fetch_tree ~request_id client repo ref_ =
   >>= function
   | Ok _ as r -> Abb.Future.return r
   | Error (#Terrat_github.get_tree_err as err) ->
-      Logs.err (fun m -> m "%s : FETCH_TREE : %a" request_id Terrat_github.pp_get_tree_err err);
+      Logs.info (fun m -> m "%s : FETCH_TREE : %a" request_id Terrat_github.pp_get_tree_err err);
       Abb.Future.return (Error `Error)
 
 let comment_on_pull_request ~request_id client pull_request body =
@@ -412,12 +426,54 @@ let comment_on_pull_request ~request_id client pull_request body =
     ~body
     client.Client.client
   >>= function
-  | Ok () -> Abb.Future.return (Ok ())
+  | Ok id -> Abb.Future.return (Ok id)
   | Error (#Terrat_github.publish_comment_err as err) ->
       Prmths.Counter.inc_one Metrics.github_errors_total;
-      Logs.err (fun m ->
+      Logs.info (fun m ->
           m "%s : COMMENT_ON_PULL_REQUEST : %a" request_id Terrat_github.pp_publish_comment_err err);
       Abb.Future.return (Error `Error)
+
+let delete_pull_request_comment ~request_id client pull_request comment_id =
+  let open Abb.Future.Infix_monad in
+  Terrat_github.delete_comment
+    ~owner:(Repo.owner (Terrat_pull_request.repo pull_request))
+    ~repo:(Repo.name (Terrat_pull_request.repo pull_request))
+    ~comment_id
+    client.Client.client
+  >>= function
+  | Ok () -> Abb.Future.return (Ok ())
+  | Error (#Terrat_github.delete_comment_err as err) ->
+      Prmths.Counter.inc_one Metrics.github_errors_total;
+      Logs.err (fun m ->
+          m
+            "%s : DELETE_COMMENT_ON_PULL_REQUEST : %a"
+            request_id
+            Terrat_github.pp_delete_comment_err
+            err);
+      (* Ignore all errors as this can fail for a bunch of reasons and we don't
+         want to block the actual commenting *)
+      Abb.Future.return (Ok ())
+
+let minimize_pull_request_comment ~request_id client pull_request comment_id =
+  let open Abb.Future.Infix_monad in
+  Terrat_github.minimize_comment
+    ~owner:(Repo.owner (Terrat_pull_request.repo pull_request))
+    ~repo:(Repo.name (Terrat_pull_request.repo pull_request))
+    ~comment_id
+    client.Client.client
+  >>= function
+  | Ok () as r -> Abb.Future.return r
+  | Error (#Terrat_github.minimize_comment_err as err) ->
+      Prmths.Counter.inc_one Metrics.github_errors_total;
+      Logs.err (fun m ->
+          m
+            "%s : MINIMIZE_COMMENT_ON_PULL_REQUEST : %a"
+            request_id
+            Terrat_github.pp_minimize_comment_err
+            err);
+      (* Ignore all errors as this can fail for a bunch of reasons and we don't
+         want to block the actual commenting *)
+      Abb.Future.return (Ok ())
 
 let diff_of_github_diff =
   CCList.map
@@ -586,7 +642,7 @@ let react_to_comment ~request_id client pull_request comment_id =
   >>= function
   | Ok () -> Abb.Future.return (Ok ())
   | Error (#Terrat_github.publish_reaction_err as err) ->
-      Logs.err (fun m ->
+      Logs.info (fun m ->
           m "%s : REACT_TO_COMMENT : %a" request_id Terrat_github.pp_publish_reaction_err err);
       Abb.Future.return (Error `Error)
 
@@ -623,7 +679,7 @@ let fetch_commit_checks ~request_id client repo ref_ =
   | Ok _ as res -> Abb.Future.return res
   | Error (#Terrat_vcs_api_github_commit_check.list_err as err) ->
       Prmths.Counter.inc_one Metrics.github_errors_total;
-      Logs.err (fun m ->
+      Logs.info (fun m ->
           m
             "%s : FETCH_COMMIT_CHECKS : %a"
             request_id
@@ -661,8 +717,44 @@ let fetch_pull_request_reviews ~request_id repo pull_request_id client =
               reviews))
   | Error (#Terrat_github.Pull_request_reviews.list_err as err) ->
       Prmths.Counter.inc_one Metrics.github_errors_total;
+      Logs.info (fun m -> m "%s : %a" request_id Terrat_github.Pull_request_reviews.pp_list_err err);
+      Abb.Future.return (Error `Error)
+
+let fetch_pull_request_requested_reviews ~request_id repo pull_number client =
+  let module Resp = Githubc2_pulls.List_requested_reviewers.Responses in
+  let run =
+    let open Abbs_future_combinators.Infix_result_monad in
+    Githubc2_abb.call
+      client.Client.client
+      Githubc2_pulls.List_requested_reviewers.(
+        make (Parameters.make ~owner:repo.Repo.owner ~repo:repo.Repo.name ~pull_number))
+    >>= fun resp ->
+    let module Rr = Githubc2_components.Pull_request_review_request in
+    let (`OK { Rr.primary = { Rr.Primary.teams; users }; _ }) = Openapi.Response.value resp in
+    let module T = Githubc2_components_team in
+    let module U = Githubc2_components_simple_user in
+    Abb.Future.return
+      (Ok
+         (CCList.map
+            (fun { T.primary = { T.Primary.name; _ }; _ } ->
+              Terrat_base_repo_config_v1.Access_control.Match.Team name)
+            teams
+         @ CCList.map
+             (fun { U.primary = { U.Primary.login; _ }; _ } ->
+               Terrat_base_repo_config_v1.Access_control.Match.User login)
+             users))
+  in
+  let open Abb.Future.Infix_monad in
+  run
+  >>= function
+  | Ok _ as r -> Abb.Future.return r
+  | Error (#Resp.t as err) ->
+      Prmths.Counter.inc_one Metrics.github_errors_total;
+      Logs.info (fun m -> m "%s : FETCH_PULL_REQUEST_REVIEWS : %a" request_id Resp.pp err);
+      Abb.Future.return (Error `Error)
+  | Error (#Githubc2_abb.call_err as err) ->
       Logs.err (fun m ->
-          m "%s : ERROR : %a" request_id Terrat_github.Pull_request_reviews.pp_list_err err);
+          m "%s : FETCH_PULL_REQUEST_REVIEWS: %a" request_id Githubc2_abb.pp_call_err err);
       Abb.Future.return (Error `Error)
 
 let merge_pull_request' request_id client pull_request =

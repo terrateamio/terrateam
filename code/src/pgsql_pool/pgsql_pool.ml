@@ -43,6 +43,7 @@ module Server = struct
     num_conns : int;
     conns : Conn.t list;
     waiting : (Pgsql_io.t, unit) result Abb.Future.Promise.t Queue.t;
+    on_connect : Pgsql_io.t -> unit Abb.Future.t;
   }
 
   let rec conn_timeout_check' timeout w =
@@ -130,6 +131,8 @@ module Server = struct
                  t.database)
             >>= function
             | `Ok (Ok conn) ->
+                t.on_connect conn
+                >>= fun () ->
                 Abb.Future.Promise.set p (Ok conn)
                 >>= fun () -> loop { t with num_conns = t.num_conns + 1 } w r
             | `Ok (Error (#Pgsql_io.create_err as err)) ->
@@ -195,11 +198,13 @@ let create
     ?tls_config
     ?passwd
     ?port
+    ?on_connect
     ~connect_timeout
     ~host
     ~user
     ~max_conns
     database =
+  let on_connect = CCOption.get_or ~default:(fun _ -> Abbs_future_combinators.unit) on_connect in
   let t =
     Server.
       {
@@ -217,6 +222,7 @@ let create
         num_conns = 0;
         conns = [];
         waiting = Queue.create ();
+        on_connect;
       }
   in
   Abbs_service_local.create (Server.run t)

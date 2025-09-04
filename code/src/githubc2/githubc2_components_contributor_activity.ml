@@ -18,7 +18,7 @@ module Primary = struct
   end
 
   type t = {
-    author : Githubc2_components_nullable_simple_user.t option;
+    author : Githubc2_components_nullable_simple_user.t option; [@default None]
     total : int;
     weeks : Weeks.t;
   }

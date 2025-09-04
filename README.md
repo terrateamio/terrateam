@@ -16,53 +16,37 @@
 
 ## Open-Source Terraform automation in pull requests
 
-Terrateam automates Terraform plans and applies in pull requests. Open source, integrates with GitHub and GitLab, and easy to self-host.
+Terrateam automates Terraform plans and applies in pull requests. Built from day one to handle thousands of workspaces across monorepos or many repos, with complex dependencies at any scale.
 
-* Infrastructure as Code automation for Terraform, OpenTofu, Terragrunt, CDKTF, Pulumi, any CLI
-* Flexible policies, approvals, and cost checks
-* Multi-environment coordination and deployment workflows
-* Reporting UI to track runs, pull requests, locks, and more
+* **GitOps for Scale**: Manage 10 or 10,000 workspaces with tag-based configuration
+* **Flexible Automation**: Works with Terraform, OpenTofu, Terragrunt, CDKTF, Pulumi, any CLI
+* **Smart Locking**: Apply-only locks mean unlimited parallel plans
+* **Policy Engine**: Enforce rules with OPA/Rego, require approvals by team/role
+* **Cost & Drift Detection**: Catch infrastructure drift and show cost estimates automatically
+* **Self-Hostable**: Stateless by design. Your runners, your state, your secrets
 
 ---
 
-<div align="center" style="font-weight: 600; font-size: 14px; margin-bottom: 12px;">
-  Terraform plan in a PR + optional Terrateam UI
+<div align="center">
+  <img
+    src="assets/terrateam-ui.png"
+    alt="Terrateam UI - Run Dashboard"
+    width="800"
+    loading="lazy"
+    style="border-radius:8px; border:1px solid #ddd; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin: 20px 0;"
+  >
 </div>
 
-<table align="center">
-  <tr>
-    <td align="center" style="vertical-align: top;">
-      <img
-        src="assets/terrateam-pr-comment.png"
-        alt="Terrateam PR comment screenshot"
-        width="340"
-        loading="lazy"
-        style="border-radius:6px; border:1px solid #ccc; box-shadow: 0 2px 6px rgba(0,0,0,0.06);"
-      ><br>
-      <div style="font-size: 13px; margin-top: 6px;">Terrateam PR comment</div>
-    </td>
-    <td align="center" style="padding-left: 24px; vertical-align: top;">
-      <img
-        src="assets/terrateam-ui.png"
-        alt="Terrateam UI screenshot"
-        width="400"
-        loading="lazy"
-        style="border-radius:6px; border:1px solid #ccc; box-shadow: 0 2px 6px rgba(0,0,0,0.06);"
-      ><br>
-      <div style="font-size: 13px; margin-top: 6px;">Terrateam Run Dashboard</div>
-    </td>
-  </tr>
-</table>
+### Why Terrateam?
 
+While others built for simple workflows, we engineered for reality:
+- **Tag-based configuration** - Define rules once, apply everywhere
+- **Monorepo-first** - Handle thousands of workspaces without breaking a sweat
+- **Composable policies** - `tag:production AND team:payments` - express complex rules simply
+- **Full visibility UI** - Track every run, view execution logs, debug failures - all in the OSS version
 
+[Learn more about our architecture →](https://terrateam.io/monorepo-at-scale)
 
-### What makes Terrateam different?
-
-* **GitOps**: Runs `terraform plan` and `apply` in pull requests. Controlled by a `.terrateam/config.yml` file that maps directories, tags, policies, and approvals.
-* **Flexible**: Works with any Terraform-compatible CLI: OpenTofu, Terragrunt, CDKTF, Pulumi, and more. Fully configured through YAML.
-* **Policies**: Enforce rules with Rego, Checkov, or built-in policies. Require approvals by team, role, or user.
-* **Drift and cost detection**: Catch infrastructure drift and show cost estimates in pull requests automatically.
-* **Self-hostable and horizontally scalable**: Stateless by design. Deploy Terrateam on your infrastructure and scale out using standard Postgres and CI runners.
 ---
 
 ## Try Terrateam
@@ -97,6 +81,7 @@ docker-compose up setup
 * Safe parallel execution with locking
 * Cross-environment and dependency coordination
 * Config builder for advanced workflows
+* Full UI to track runs, view logs, and debug workflows (included in OSS)
 * Self-hostable (server and private runners)
 
 ---
@@ -107,12 +92,19 @@ Configure workflows via `.terrateam/config.yml`. See [Configuration Reference](h
 
 ---
 
+## Learn More
+
+* [Monorepo at Scale](https://terrateam.io/monorepo-at-scale) - How we handle thousands of workspaces
+* [Technical Architecture](https://terrateam.io/technical-architecture) - The engine under the hood  
+* [Configuration Reference](https://docs.terrateam.io/configuration-reference) - Tag queries and advanced workflows
+* [Blog](https://terrateam.io/blog) - Updates and best practices
+
+---
+
 ## Resources
 
 * [Documentation](https://docs.terrateam.io)
 * [Quickstart Guide](https://docs.terrateam.io/getting-started/quickstart-guide)
-* [Blog](https://terrateam.io/blog)
-* [Configuration Reference](https://docs.terrateam.io/configuration-reference)
 * [Community Slack](https://terrateam.io/slack)
 
 ---
@@ -125,4 +117,11 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) or join our [Sl
 
 ## License
 
-Terrateam is MPL-2.0 licensed. Some enterprise features are under a separate enterprise license.
+Terrateam is MPL-2.0 licensed. The open-source version includes all core features.
+
+Enterprise Edition Features (Hosted SaaS & Self-Hosted Enterprise):
+- RBAC - Role-based access control
+- Centralized Configuration - Manage config across multiple repos
+- Gatekeeper - Advanced approval workflows
+
+These enterprise features are available in our Hosted SaaS or via self-hosted Enterprise Edition licensing.

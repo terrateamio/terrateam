@@ -86,7 +86,7 @@ module Primary = struct
     original_start_line : int option; [@default None]
     path : string;
     position : int option; [@default None]
-    pull_request_review_id : int64 option;
+    pull_request_review_id : int64 option; [@default None]
     pull_request_url : string;
     reactions : Githubc2_components_reaction_rollup.t option; [@default None]
     side : Side.t; [@default "RIGHT"]

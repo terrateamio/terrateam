@@ -95,19 +95,13 @@
         reason_length: trialExtensionForm.reason.length
       });
 
-      const formDataToSubmit = new FormData();
-      formDataToSubmit.append('access_key', WEB3_FORMS_ACCESS_KEY);
-      formDataToSubmit.append('subject', `[Trial Extension Request] ${trialExtensionForm.organization}`);
-      formDataToSubmit.append('email', trialExtensionForm.email);
-      formDataToSubmit.append('from_name', trialExtensionForm.name);
-      
       // Build detailed message
       const message = `
 Trial Extension Request Details:
 
 Name: ${trialExtensionForm.name}
 Email: ${trialExtensionForm.email}
-{terminology.organization}: ${trialExtensionForm.organization}
+${terminology.organization}: ${trialExtensionForm.organization}
 Requested Extension: ${trialExtensionForm.additionalDays} days
 Current Trial End Date: ${$selectedInstallation?.trial_ends_at || 'N/A'}
 
@@ -117,18 +111,29 @@ ${trialExtensionForm.reason}
 ---
 This request was submitted via the Terrateam Iris trial extension form.
       `.trim();
-      
-      formDataToSubmit.append('message', message);
-      formDataToSubmit.append('replyto', 'support@terrateam.io');
+
+      // Create JSON object for Web3Forms
+      const formDataToSubmit = {
+        access_key: WEB3_FORMS_ACCESS_KEY,
+        subject: `[Trial Extension Request] ${trialExtensionForm.organization}`,
+        email: trialExtensionForm.email,
+        from_name: trialExtensionForm.name,
+        message: message,
+        reply_to: trialExtensionForm.email
+      };
 
       const response = await fetch(EXTERNAL_URLS.WEB3_FORMS_ENDPOINT, {
         method: 'POST',
-        body: formDataToSubmit
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(formDataToSubmit)
       });
 
       const result = await response.json();
 
-      if (result.success) {
+      if (response.status === 200 && result.success) {
         trialExtensionSuccess = true;
         
         // Reset form
@@ -913,7 +918,7 @@ This request was submitted via the Terrateam Iris trial extension form.
       {/if}
 
       <!-- Quick Actions Grid -->
-      <div class="grid md:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
         <!-- View Invoices -->
         <Card padding="lg" class="text-center hover:shadow-lg transition-shadow">
           <div class="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 mb-4">
@@ -990,7 +995,7 @@ This request was submitted via the Terrateam Iris trial extension form.
       aria-label="Request Trial Extension"
       tabindex="-1"
     >
-      <div class="p-6">
+      <div class="p-4 md:p-6">
         <!-- Modal Header -->
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Request Trial Extension</h3>

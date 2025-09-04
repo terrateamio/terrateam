@@ -44,6 +44,18 @@
       
     </script>
     
+    <!-- Reddit Pixel (only loads when analytics are enabled) -->
+    <script nonce="NGINX_CSP_NONCE">
+    // Only initialize Reddit Pixel if analytics are enabled
+    if (window.terrateamConfig && window.terrateamConfig.ui_analytics === 'enabled') {
+      !function(w,d){if(!w.rdt){var p=w.rdt=function(){p.sendEvent?p.sendEvent.apply(p,arguments):p.callQueue.push(arguments)};p.callQueue=[];var t=d.createElement("script");t.src="https://www.redditstatic.com/ads/pixel.js",t.async=!0;var s=d.getElementsByTagName("script")[0];s.parentNode.insertBefore(t,s)}}(window,document);
+      rdt('init','a2_goli51v33nfp');
+      rdt('track', 'PageVisit');
+    }
+    </script>
+    <!-- DO NOT MODIFY UNLESS TO REPLACE A USER IDENTIFIER -->
+    <!-- End Reddit Pixel -->
+    
   </head>
   <body>
     <div id="app"></div>

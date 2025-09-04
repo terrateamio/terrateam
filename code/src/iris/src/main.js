@@ -1,6 +1,15 @@
 import './app.css'
 import App from './App.svelte'
 
+// Helper function to get distinct ID from URL
+function getDistinctIdFromUrl() {
+  if (typeof window !== 'undefined') {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('distinct_id') || urlParams.get('distinctId');
+  }
+  return null;
+}
+
 // Check for maintenance mode before any initialization
 function checkMaintenanceMode() {
   // Check runtime config (injected by server)
@@ -31,9 +40,10 @@ async function initializeAnalytics() {
   if (analyticsEnabled) {
     // Initialize PostHog using the NPM package
     const posthog = await import('posthog-js');
-    posthog.default.init('phc_fsKOHuZf9KUckG2XylWf4f8hMae2BujybE2nvzxqxX5', {
+    posthog.default.init('phc_2tp2xlYY8TujRhNizd6oga1tzVzRaLXJ1O30UnOgIOF', {
       api_host: 'https://eu.i.posthog.com',
       person_profiles: 'always',
+      opt_in_site_apps: true,
       autocapture: true,
       capture_pageview: true,
       capture_pageleave: true,
@@ -63,6 +73,9 @@ async function initializeAnalytics() {
       secure_cookie: true,
       cross_subdomain_cookie: true,
       capture_performance: true,
+      bootstrap: {
+        distinctID: getDistinctIdFromUrl() || undefined
+      },
       // Disable console log capture to avoid logging sensitive debug info
       disable_external_dependency_loading: false
     });
@@ -70,6 +83,20 @@ async function initializeAnalytics() {
     // Store PostHog reference globally for backward compatibility
     window.posthog = posthog.default;
     
+    // Check for email parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const signupEmail = urlParams.get('email');
+    if (signupEmail) {
+      // Identify user with email from signup before OAuth
+      posthog.default.identify(signupEmail, {
+        signup_source: 'marketing_site',
+        signup_timestamp: new Date().toISOString()
+      });
+
+      // Store email for later use after OAuth
+      sessionStorage.setItem('signup_email', signupEmail);
+    }
+
     const Sentry = await import("@sentry/svelte");
     
     Sentry.init({

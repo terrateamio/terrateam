@@ -1,0 +1,16 @@
+[package]
+name = "minijinja-c-wrapper"
+version = "0.1.0"
+edition = "2021"
+authors = ["Your Name <your.email@example.com>"]
+description = "C wrapper for MiniJinja template engine"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+minijinja = { version = "2.3", features = ["builtins"] }
+serde_json = "1.0"
+
+[lib]
+name = "minijinja_c_wrapper"
+crate-type = ["staticlib"]
+

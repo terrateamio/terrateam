@@ -1,12 +1,11 @@
 module PutApiV4UserUserIdCreditCardValidation = struct
   module Parameters = struct
-    type t = {
-      putapiv4useruseridcreditcardvalidation :
-        Gitlabc_components.PutApiV4UserUserIdCreditCardValidation.t;
-          [@key "putApiV4UserUserIdCreditCardValidation"]
-      user_id : string;
-    }
-    [@@deriving make, show, eq]
+    type t = { user_id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4UserUserIdCreditCardValidation.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -19,8 +18,10 @@ module PutApiV4UserUserIdCreditCardValidation = struct
 
   let url = "/api/v4/user/{user_id}/credit_card_validation"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

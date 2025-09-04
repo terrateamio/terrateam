@@ -1,12 +1,11 @@
 module PostApiV4ProjectsIdFeatureFlagsUserLists = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      postapiv4projectsidfeatureflagsuserlists :
-        Gitlabc_components.PostApiV4ProjectsIdFeatureFlagsUserLists.t;
-          [@key "postApiV4ProjectsIdFeatureFlagsUserLists"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdFeatureFlagsUserLists.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -34,8 +33,10 @@ module PostApiV4ProjectsIdFeatureFlagsUserLists = struct
 
   let url = "/api/v4/projects/{id}/feature_flags_user_lists"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -150,11 +151,13 @@ module PutApiV4ProjectsIdFeatureFlagsUserListsIid = struct
     type t = {
       id : string;
       iid : string;
-      putapiv4projectsidfeatureflagsuserlistsiid :
-        Gitlabc_components.PutApiV4ProjectsIdFeatureFlagsUserListsIid.t;
-          [@key "putApiV4ProjectsIdFeatureFlagsUserListsIid"]
     }
     [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdFeatureFlagsUserListsIid.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -182,8 +185,10 @@ module PutApiV4ProjectsIdFeatureFlagsUserListsIid = struct
 
   let url = "/api/v4/projects/{id}/feature_flags_user_lists/{iid}"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

@@ -29,7 +29,8 @@ end
 module Document = struct
   type t = {
     definitions : Json_schema_conv.Schema.t Json_schema_conv.Properties.t;
-    one_of : Json_schema_conv.Schema.t list; [@key "oneOf"]
+    one_of : Json_schema_conv.Schema.t list option; [@key "oneOf"] [@default None]
+    ref_ : string option; [@key "$ref"] [@default None]
   }
   [@@deriving yojson { strict = false }, show]
 end
@@ -76,25 +77,27 @@ let field_name_of_schema s =
       | s when CCString.prefix ~pre:"_" s -> CCString.drop_while (( = ) '_') s ^ "_"
       | s -> s)
 
-let field_default_of_value =
+let field_default_of_value typ default =
   let module Gen = Json_schema_conv.Gen in
-  function
-  | `String s -> Gen.field_default Ast_helper.(Exp.constant (Const.string s))
-  | `Bool b ->
-      Gen.field_default
-        Ast_helper.(Exp.construct (Location.mknoloc (Gen.ident [ Bool.to_string b ])) None)
-  | `Float fl -> Gen.field_default Ast_helper.(Exp.constant (Const.float (CCFloat.to_string fl)))
-  | `Int int -> Gen.field_default Ast_helper.(Exp.constant (Const.integer (CCInt.to_string int)))
-  | `List [] -> Gen.(field_default (make_list []))
-  | `List (`String _ :: _ as v) ->
-      Gen.(
-        field_default
-          (make_list
-             (CCList.map
-                (fun s -> Ast_helper.(Exp.constant (Const.string s)))
-                (Yojson.Safe.Util.filter_string v))))
-  | `List _ -> (* TODO: Add more *) []
-  | json -> failwith (Printf.sprintf "Unknown field default value: %s" (Yojson.Safe.to_string json))
+  match (default, typ) with
+  | `String s, Some "boolean" ->
+      Some Ast_helper.(Exp.construct (Location.mknoloc (Gen.ident [ s ])) None)
+  | `String s, _ -> Some Ast_helper.(Exp.constant (Const.string s))
+  | `Bool b, _ ->
+      Some Ast_helper.(Exp.construct (Location.mknoloc (Gen.ident [ Bool.to_string b ])) None)
+  | `Float fl, _ -> Some Ast_helper.(Exp.constant (Const.float (CCFloat.to_string fl)))
+  | `Int int, _ -> Some Ast_helper.(Exp.constant (Const.integer (CCInt.to_string int)))
+  | `List [], _ -> Some Json_schema_conv.Gen.(make_list [])
+  | `List (`String _ :: _ as v), _ ->
+      Some
+        Json_schema_conv.Gen.(
+          make_list
+            (CCList.map
+               (fun s -> Ast_helper.(Exp.constant (Const.string s)))
+               (Yojson.Safe.Util.filter_string v)))
+  | `List _, _ -> (* TODO: Add more *) None
+  | json, _ ->
+      failwith (Printf.sprintf "Unknown field default value: %s" (Yojson.Safe.to_string json))
 
 let rec resolve_ref definitions ref_ =
   let module Value = Json_schema_conv.Value in
@@ -168,10 +171,26 @@ let convert_def strict_records definitions module_base def =
            [
              (if CCString.equal field_name name then []
               else Json_schema_conv.Gen.yojson_key_name name);
-             (if Json_schema_conv.String_set.mem name required then []
+             (if
+                Json_schema_conv.String_set.mem name required
+                && not schema.Json_schema_conv.Schema.nullable
+              then []
               else
                 match schema.Json_schema_conv.Schema.default with
-                | Some default -> field_default_of_value default
+                | Some default when schema.Json_schema_conv.Schema.nullable ->
+                    CCOption.map_or
+                      ~default:[]
+                      (fun default ->
+                        Json_schema_conv.Gen.field_default
+                          (Ast_helper.Exp.construct
+                             (Location.mknoloc (Json_schema_conv.Gen.ident [ "Some" ]))
+                             (Some default)))
+                      (field_default_of_value schema.Json_schema_conv.Schema.typ default)
+                | Some default ->
+                    CCOption.map_or
+                      ~default:[]
+                      (fun default -> Json_schema_conv.Gen.field_default default)
+                      (field_default_of_value schema.Json_schema_conv.Schema.typ default)
                 | None -> Json_schema_conv.Gen.field_default_none);
            ])
        ~resolve_ref:(resolve_ref definitions)
@@ -179,9 +198,17 @@ let convert_def strict_records definitions module_base def =
        ())
     def
 
-let convert_document strict_records output_dir output_name { Document.definitions; one_of } =
+let convert_document strict_records output_dir output_name { Document.definitions; one_of; ref_ } =
   let module_base = CCString.capitalize_ascii output_name in
-  let event = Json_schema_conv.{ (Schema.make_t_ ()) with Schema.one_of = Some one_of } in
+  let event =
+    match (one_of, ref_) with
+    | Some one_of, _ -> Json_schema_conv.{ (Schema.make_t_ ()) with Schema.one_of = Some one_of }
+    | None, Some ref_ ->
+        (* This is a bit of a hack to support a ref as a hook entrypoint.  Using
+           a $ref gets translated to a singular oneOf. *)
+        Json_schema_conv.{ (Schema.make_t_ ()) with Schema.one_of = Some [ Value.Ref ref_ ] }
+    | None, None -> assert false
+  in
   Json_schema_conv.String_map.iter
     (fun name def ->
       match def with

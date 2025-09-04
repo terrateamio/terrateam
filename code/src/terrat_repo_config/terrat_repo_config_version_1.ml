@@ -26,6 +26,10 @@ module Cost_estimation = struct
   [@@deriving yojson { strict = true; meta = true }, make, show, eq]
 end
 
+module Definitions = struct
+  type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = true }, show, eq]
+end
+
 module Destination_branches = struct
   module Items = struct
     type t =
@@ -150,7 +154,9 @@ type t = {
   config_builder : Terrat_repo_config_config_builder.t option; [@default None]
   cost_estimation : Cost_estimation.t option; [@default None]
   create_and_select_workspace : bool; [@default true]
+  default_branch_overrides : Terrat_repo_config_default_branch_overrides.t option; [@default None]
   default_tf_version : string option; [@default None]
+  definitions : Definitions.t option; [@default None]
   destination_branches : Destination_branches.t option; [@default None]
   dirs : Dirs.t option; [@default None]
   drift : Drift.t option; [@default None]
@@ -159,7 +165,9 @@ type t = {
   hooks : Hooks.t option; [@default None]
   indexer : Indexer.t option; [@default None]
   integrations : Terrat_repo_config_integrations.t option; [@default None]
+  notifications : Terrat_repo_config_notifications.t option; [@default None]
   parallel_runs : int; [@default 3]
+  stacks : Terrat_repo_config_stacks.t option; [@default None]
   storage : Storage.t option; [@default None]
   tags : Terrat_repo_config_custom_tags.t option; [@default None]
   tree_builder : Terrat_repo_config_tree_builder.t option; [@default None]

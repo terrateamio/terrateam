@@ -1,0 +1,1 @@
+drop table gitlab_dirspace_locking_migration;

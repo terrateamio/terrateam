@@ -5,10 +5,20 @@ description: The when_modified configuration reference
 
 The `when_modified` configuration allows you to configure autoplan and autoapply operations based on pull request file changes. This enables you to automatically trigger plan and apply operations when specific files are modified in your repository.
 
+## Configuration Levels
+
+The `when_modified` configuration can be set at three different levels, all using the same syntax:
+
+1. **Global level** - Applied to all directories unless overridden
+2. **Directory level** - Set under `dirs.<directory>.when_modified` to override global settings for a specific directory
+3. **Workspace level** - Set under `dirs.<directory>.workspaces.<workspace>.when_modified` to override settings for a specific workspace
+
+All three levels support the exact same configuration options. More specific configurations override broader ones (workspace > directory > global).
+
 ## Default Configuration
 ```yaml
 when_modified:
-  file_patterns: ["**/*.tf", "**/*.tfvars"]
+  file_patterns: ["${DIR}/*.tf", "${DIR}/*.tfvars"]
   autoplan: true
   autoplan_draft_pr: true
   autoapply: false
@@ -18,7 +28,7 @@ when_modified:
 ## Keys
 | Key                  | Type    | Description                                                                                       |
 |----------------------|---------|---------------------------------------------------------------------------------------------------|
-| file_patterns        | List    | List of file globs to identify changes in a directory. Always relative to the root of the repository. Prefix with `!` to exclude a file glob. Default is `["**/*.tf", "**/*.tfvars"]`. |
+| file_patterns        | List    | List of file globs to identify changes in a directory. Always relative to the root of the repository. Prefix with `!` to exclude a file glob. Default is `["${DIR}/*.tf", "${DIR}/*.tfvars"]`. |
 | autoplan             | Boolean | Automatically run a plan operation on a new pull request or an update on an existing one. Default is true. |
 | autoplan_draft_pr    | Boolean | Automatically run a plan operation on a new draft pull request or an update on an existing one. Default is true. |
 | autoapply            | Boolean | Automatically run an apply operation after merging a pull request. Default is false. |
@@ -43,13 +53,48 @@ The `depends_on` key allows you to specify dependencies on other directories wit
 - Layered Operations: Supports multi-layered operations, where each layer depends on the successful apply of the previous one.
 - Dependency Management: Automatically triggers plan and apply operations based on changes in the lowest layer, and cascades through dependent layers.
 
-While it's technically possible to specify dependencies using the `depends_on` key at a global level, it is recommended to define them within the `dirs.when_modified` configuration for better granularity and control. The `dirs.when_modified` configuration supports the same keys as the global `when_modified` configuration.
+While the `depends_on` key can be specified in the top-level `when_modified` configuration (which would make ALL directories depend on the specified directories), it is strongly recommended to define dependencies at the directory or workspace level for better control. Use `dirs.<directory>.when_modified.depends_on` or `dirs.<directory>.workspaces.<workspace>.when_modified.depends_on` instead.
 
-## Examples
+## Configuration Examples
+
+### Same Configuration at Different Levels
+
+The following three configurations achieve the same result for the `production` directory:
+
+#### 1. Global Level Configuration
+```yaml
+when_modified:
+  file_patterns: ["${DIR}/*.tf", "${DIR}/*.tfvars"]
+  autoplan: true
+  autoapply: false
+```
+
+#### 2. Directory Level Configuration
+```yaml
+dirs:
+  production:
+    when_modified:
+      file_patterns: ["${DIR}/*.tf", "${DIR}/*.tfvars"]
+      autoplan: true
+      autoapply: false
+```
+
+#### 3. Workspace Level Configuration
+```yaml
+dirs:
+  production:
+    workspaces:
+      default:
+        when_modified:
+          file_patterns: ["${DIR}/*.tf", "${DIR}/*.tfvars"]
+          autoplan: true
+          autoapply: false
+```
+
 ### Auto-Plan on Terraform File Changes
 ```yaml
 when_modified:
-  file_patterns: ["**/*.tf"]
+  file_patterns: ["${DIR}/*.tf"]
   autoplan: true
   autoplan_draft_pr: false
   autoapply: false
@@ -59,7 +104,7 @@ This configuration triggers a plan operation automatically when any `.tf` file i
 ### Auto-Plan and Auto-Apply on Terraform and tfvars File Changes
 ```yaml
 when_modified:
-  file_patterns: ["**/*.tf", "**/*.tfvars"]
+  file_patterns: ["${DIR}/*.tf", "${DIR}/*.tfvars"]
   autoplan: true
   autoplan_draft_pr: true
   autoapply: true
@@ -69,7 +114,7 @@ This configuration triggers plan operations automatically on changes to `.tf` or
 ### Exclude Certain Files from Triggering Auto-Plan
 ```yaml
 when_modified:
-  file_patterns: ["**/*.tf", "!**/modules/**/*.tf"]
+  file_patterns: ["${DIR}/*.tf", "!**/modules/**/*.tf"]
   autoplan: true
   autoplan_draft_pr: true
   autoapply: false
@@ -90,15 +135,15 @@ This configuration triggers a plan operation for the `database` directory if cha
 dirs:
   network:
     when_modified:
-      file_patterns: ["**/*.tf"]
+      file_patterns: ["${DIR}/*.tf"]
   database:
     when_modified:
       depends_on: 'dir:network'
-      file_patterns: ["**/*.tf"]
+      file_patterns: ["${DIR}/*.tf"]
   application:
     when_modified:
       depends_on: 'dir:database'
-      file_patterns: ["**/*.tf"]
+      file_patterns: ["${DIR}/*.tf"]
 ```
 This configuration triggers a plan operation for the `network` layer if changes are detected. If the apply for the `network` layer is successful, a plan operation will be triggered for the `database` layer, which depends on `network`. If the `database` layer's apply is successful, the process continues with a plan operation for the `application` layer, and so on.
 

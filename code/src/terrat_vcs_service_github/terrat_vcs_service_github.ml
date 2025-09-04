@@ -79,9 +79,149 @@ struct
           / "callback"
           /? Query.string "code"
           /? Query.(option (ud "installation_id" (CCOption.wrap Int64.of_string))))
+
+      (* Legacy Installations API *)
+      let legacy_installation_api_rt () = Brtl_rtng.Route.(api_v1 () / "installations")
+
+      let legacy_installation_work_manifests_rt () =
+        Brtl_rtng.Route.(
+          legacy_installation_api_rt ()
+          /% Path.int
+          / "work-manifests"
+          /? Query.(option (string "q"))
+          /? Query.(option (string "tz"))
+          /? Query.(
+               option
+                 (ud_array
+                    "page"
+                    Brtl_ep_paginate.Param.(of_param Typ.(tuple (string, ud' Uuidm.of_string)))))
+          /? Query.(option_default 20 (Query.int "limit")))
+
+      let legacy_installation_work_manifest_outputs_rt () =
+        Brtl_rtng.Route.(
+          legacy_installation_api_rt ()
+          /% Path.int
+          / "work-manifests"
+          /% Path.ud Uuidm.of_string
+          / "outputs"
+          /? Query.(option (string "q"))
+          /? Query.(option (string "tz"))
+          /? Query.(option (ud_array "page" Brtl_ep_paginate.Param.(of_param Typ.int)))
+          /? Query.(option_default 20 (Query.int "limit"))
+          /? Query.(option_default false (Query.bool "lite")))
+
+      let legacy_installation_dirspaces_rt () =
+        Brtl_rtng.Route.(
+          legacy_installation_api_rt ()
+          /% Path.int
+          / "dirspaces"
+          /? Query.(option (string "q"))
+          /? Query.(option (string "tz"))
+          /? Query.(
+               option
+                 (ud_array
+                    "page"
+                    Brtl_ep_paginate.Param.(
+                      of_param Typ.(tuple4 (string, string, string, ud' Uuidm.of_string)))))
+          /? Query.(option_default 20 (Query.int "limit")))
+
+      let legacy_installation_pull_requests_manifests_rt () =
+        Brtl_rtng.Route.(
+          legacy_installation_api_rt ()
+          /% Path.int
+          / "pull-requests"
+          /? Query.(option (int "pr"))
+          /? Query.(
+               option
+                 (ud_array "page" Brtl_ep_paginate.Param.(of_param Typ.(ud' CCInt64.of_string_opt))))
+          /? Query.(option_default 20 (Query.int "limit")))
+
+      let legacy_installation_repos_rt () =
+        Brtl_rtng.Route.(
+          legacy_installation_api_rt ()
+          /% Path.int
+          / "repos"
+          /? Query.(option (ud_array "page" Brtl_ep_paginate.Param.(of_param Typ.string)))
+          /? Query.(option_default 20 (int "limit")))
+
+      let legacy_installation_repos_refresh_rt () =
+        Brtl_rtng.Route.(legacy_installation_api_rt () /% Path.int / "repos" / "refresh")
+
+      (* VCS Specific installations API *)
+      let installation_api_rt () = Brtl_rtng.Route.(api_v1 () / "github" / "installations")
+
+      let installation_work_manifests_rt () =
+        Brtl_rtng.Route.(
+          installation_api_rt ()
+          /% Path.int
+          / "work-manifests"
+          /? Query.(option (string "q"))
+          /? Query.(option (string "tz"))
+          /? Query.(
+               option
+                 (ud_array
+                    "page"
+                    Brtl_ep_paginate.Param.(of_param Typ.(tuple (string, ud' Uuidm.of_string)))))
+          /? Query.(option_default 20 (Query.int "limit")))
+
+      let installation_work_manifest_outputs_rt () =
+        Brtl_rtng.Route.(
+          installation_api_rt ()
+          /% Path.int
+          / "work-manifests"
+          /% Path.ud Uuidm.of_string
+          / "outputs"
+          /? Query.(option (string "q"))
+          /? Query.(option (string "tz"))
+          /? Query.(option (ud_array "page" Brtl_ep_paginate.Param.(of_param Typ.int)))
+          /? Query.(option_default 20 (Query.int "limit"))
+          /? Query.(option_default false (Query.bool "lite")))
+
+      let installation_dirspaces_rt () =
+        Brtl_rtng.Route.(
+          installation_api_rt ()
+          /% Path.int
+          / "dirspaces"
+          /? Query.(option (string "q"))
+          /? Query.(option (string "tz"))
+          /? Query.(
+               option
+                 (ud_array
+                    "page"
+                    Brtl_ep_paginate.Param.(
+                      of_param Typ.(tuple4 (string, string, string, ud' Uuidm.of_string)))))
+          /? Query.(option_default 20 (Query.int "limit")))
+
+      let installation_pull_requests_manifests_rt () =
+        Brtl_rtng.Route.(
+          installation_api_rt ()
+          /% Path.int
+          / "pull-requests"
+          /? Query.(option (int "pr"))
+          /? Query.(
+               option
+                 (ud_array "page" Brtl_ep_paginate.Param.(of_param Typ.(ud' CCInt64.of_string_opt))))
+          /? Query.(option_default 20 (Query.int "limit")))
+
+      let installation_repos_rt () =
+        Brtl_rtng.Route.(
+          installation_api_rt ()
+          /% Path.int
+          / "repos"
+          /? Query.(option (ud_array "page" Brtl_ep_paginate.Param.(of_param Typ.string)))
+          /? Query.(option_default 20 (int "limit")))
+
+      let installation_repos_refresh_rt () =
+        Brtl_rtng.Route.(installation_api_rt () /% Path.int / "repos" / "refresh")
+
+      (* User API *)
+      let user_api_rt () = Brtl_rtng.Route.(api_v1 () / "user")
+      let user_installations_rt () = Brtl_rtng.Route.(user_api_rt () / "github" / "installations")
     end
 
     let routes config storage =
+      let module Ep_inst = Terrat_vcs_service_github_ep_installations in
+      let module Ep_user = Terrat_vcs_service_github_ep_user in
       Routes.routes config storage
       @ Brtl_rtng.Route.
           [
@@ -106,6 +246,35 @@ struct
             );
             ( `GET,
               Rt.github_whoami () --> Terrat_vcs_service_github_ep_user.Whoami.get config storage );
+            (* Installations *)
+            (`GET, Rt.installation_dirspaces_rt () --> Ep_inst.Dirspaces.get config storage);
+            ( `GET,
+              Rt.installation_work_manifests_rt () --> Ep_inst.Work_manifests.get config storage );
+            ( `GET,
+              Rt.installation_work_manifest_outputs_rt ()
+              --> Ep_inst.Work_manifests.Outputs.get config storage );
+            ( `GET,
+              Rt.installation_pull_requests_manifests_rt ()
+              --> Ep_inst.Pull_requests.get config storage );
+            (`GET, Rt.installation_repos_rt () --> Ep_inst.Repos.get config storage);
+            ( `POST,
+              Rt.installation_repos_refresh_rt () --> Ep_inst.Repos.Refresh.post config storage );
+            (`GET, Rt.user_installations_rt () --> Ep_user.Installations.get config storage);
+            (* Legacy Installations *)
+            (`GET, Rt.legacy_installation_dirspaces_rt () --> Ep_inst.Dirspaces.get config storage);
+            ( `GET,
+              Rt.legacy_installation_work_manifests_rt ()
+              --> Ep_inst.Work_manifests.get config storage );
+            ( `GET,
+              Rt.legacy_installation_work_manifest_outputs_rt ()
+              --> Ep_inst.Work_manifests.Outputs.get config storage );
+            ( `GET,
+              Rt.legacy_installation_pull_requests_manifests_rt ()
+              --> Ep_inst.Pull_requests.get config storage );
+            (`GET, Rt.legacy_installation_repos_rt () --> Ep_inst.Repos.get config storage);
+            ( `POST,
+              Rt.legacy_installation_repos_refresh_rt ()
+              --> Ep_inst.Repos.Refresh.post config storage );
           ]
   end
 

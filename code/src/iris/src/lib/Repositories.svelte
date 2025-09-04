@@ -1,172 +1,165 @@
 <script lang="ts">
-  import type { Repository, Installation } from './types';
+  import type { Installation, ServerConfig } from './types';
   // Auth handled by PageLayout
-  import { api } from './api';
   import { installations, selectedInstallation, installationsLoading, installationsError, currentVCSProvider } from './stores';
+  import { repositoryService, type RepositoryWithStats } from './services/repository-service';
+  import { api } from './api';
   import PageLayout from './components/layout/PageLayout.svelte';
   import Card from './components/ui/Card.svelte';
   import ClickableCard from './components/ui/ClickableCard.svelte';
   import LoadingSpinner from './components/ui/LoadingSpinner.svelte';
   import ErrorMessage from './components/ui/ErrorMessage.svelte';
-  import CursorPagination from './components/ui/CursorPagination.svelte';
   import { navigateToRepository } from './utils/navigation';
   import { VCS_PROVIDERS } from './vcs/providers';
+  import { onMount } from 'svelte';
   
-  interface RepositoryWithStats extends Repository {
-    runCount?: number;
-    lastRun?: string;
-  }
+  // Router props (external reference only)
+  export const params = {};
   
-  let repositories: RepositoryWithStats[] = [];
+  // Server configuration
+  let serverConfig: ServerConfig | null = null;
+  let githubAppUrl: string = 'https://github.com/apps/terrateam-action'; // fallback URL
+  
+  // Repository cache - stores ALL repositories once loaded
+  let allRepositories: RepositoryWithStats[] = [];
   let isLoadingRepos: boolean = false;
   let repoError: string | null = null;
   let isRefreshing: boolean = false;
   let lastRefreshedAt: Date | null = null;
+  let loadProgress: { current: number; total?: number } = { current: 0 };
   
-  // Cursor-based pagination state
-  let currentPage: number = 1;
-  let hasMore: boolean = false;
-  let cursors: string[] = []; // Stack of cursors to allow backward navigation
-  let currentCursor: string | undefined = undefined;
-  let isUsingCursorPagination: boolean = false;
+  // Filter/search state
+  let filteredRepositories: RepositoryWithStats[] = [];
+  let sortBy: 'name' | 'updated' = 'name'; // Default to alphabetical
+  let showConfiguredOnly: boolean = false; // Filter to show only configured repos
+  let searchQuery: string = ''; // Now we can search ALL repos!
+  
+  // Client-side pagination state for display
+  let currentDisplayPage: number = 1;
+  let itemsPerPage: number = 20;
+  let paginatedRepositories: RepositoryWithStats[] = [];
+  let totalPages: number = 0;
   
   // Get current VCS provider terminology
   $: currentProvider = $currentVCSProvider || 'github';
   $: terminology = VCS_PROVIDERS[currentProvider]?.terminology || VCS_PROVIDERS.github.terminology;
-  let totalRepositories: number = 0; // Estimated total for display purposes
   
-  // Load repositories when selectedInstallation changes
+  onMount(async () => {
+    // Fetch server config to get GitHub app URL
+    try {
+      serverConfig = await api.getServerConfig();
+      if (serverConfig?.github?.app_url) {
+        githubAppUrl = serverConfig.github.app_url;
+      }
+    } catch (error) {
+      console.error('Failed to fetch server config:', error);
+      // Will use fallback URL
+    }
+  });
+  
+  // Filter and sort repositories from cache
+  $: {
+    let filtered = allRepositories;
+    
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(repo => 
+        repo.name.toLowerCase().includes(query)
+      );
+    }
+    
+    // Apply configured filter
+    if (showConfiguredOnly) {
+      filtered = filtered.filter(repo => repo.setup);
+    }
+    
+    // Apply sorting
+    filteredRepositories = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'updated':
+          // Sort by updated_at date (most recent first)
+          const aDate = new Date(a.updated_at).getTime();
+          const bDate = new Date(b.updated_at).getTime();
+          return bDate - aDate;
+        case 'name':
+        default:
+          // Sort alphabetically
+          return a.name.localeCompare(b.name);
+      }
+    });
+  }
+  
+  // Client-side pagination for display
+  $: {
+    totalPages = Math.ceil(filteredRepositories.length / itemsPerPage);
+    
+    // Reset to page 1 if current page is beyond total pages
+    if (currentDisplayPage > totalPages && totalPages > 0) {
+      currentDisplayPage = 1;
+    }
+    
+    // Calculate paginated slice
+    const startIndex = (currentDisplayPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    paginatedRepositories = filteredRepositories.slice(startIndex, endIndex);
+  }
+  
+  // Load all repositories when selectedInstallation changes
   $: if ($selectedInstallation) {
-    // Reset pagination state when installation changes
-    currentPage = 1;
-    cursors = [];
-    currentCursor = undefined;
-    hasMore = false;
-    isUsingCursorPagination = false;
     loadRepositories($selectedInstallation);
   }
   
-  async function loadRepositories(installation: Installation, direction: 'first' | 'next' | 'previous' = 'first'): Promise<void> {
+  async function loadRepositories(installation: Installation, forceRefresh: boolean = false): Promise<void> {
     repoError = null;
     isLoadingRepos = true;
+    loadProgress = { current: 0 };
     
     try {
-      let cursor: string | undefined;
+      const result = await repositoryService.loadRepositories(installation, forceRefresh);
       
-      // Determine which cursor to use based on direction
-      if (direction === 'first') {
-        cursor = undefined; // Start from beginning
-      } else if (direction === 'next') {
-        cursor = currentCursor; // Use current cursor to get next page
-      } else if (direction === 'previous' && cursors.length > 0) {
-        // Go back to previous cursor
-        cursors.pop(); // Remove current cursor
-        cursor = cursors[cursors.length - 1]; // Use previous cursor
+      allRepositories = result.repositories;
+      
+      if (result.error) {
+        repoError = result.error;
       }
-
-      const response = await api.getInstallationRepos(installation.id, { 
-        cursor 
-      });
       
-      if (response && response.repositories) {
-        const baseRepos = response.repositories;
-        
-        // Enhance repositories with run statistics
-        const reposWithStats = await Promise.all(
-          baseRepos.map(async (repo) => {
-            try {
-              // Get run count for each repository
-              const runsResponse = await api.getInstallationDirspaces(installation.id, {
-                q: `repo:${repo.name}`,
-                limit: 1000 // Get a large number to count
-              });
-              
-              const runs = runsResponse?.dirspaces || [];
-              const runCount = runs.length;
-              
-              // Find the most recent run
-              const sortedRuns = runs
-                .filter(d => d.completed_at)
-                .sort((a, b) => new Date(b.completed_at!).getTime() - new Date(a.completed_at!).getTime());
-              
-              const lastRun = sortedRuns[0]?.completed_at;
-              
-              return {
-                ...repo,
-                runCount,
-                lastRun
-              } as RepositoryWithStats;
-            } catch (err) {
-              console.warn(`Failed to load run stats for ${repo.name}:`, err);
-              return {
-                ...repo,
-                runCount: 0,
-                lastRun: undefined
-              } as RepositoryWithStats;
-            }
-          })
-        );
-        
-        repositories = reposWithStats;
-        
-        // Update cursor-based pagination state
-        hasMore = response.hasMore;
-        isUsingCursorPagination = true;
-        
-        if (direction === 'next' && response.nextCursor) {
-          // Moving forward - add current cursor to stack and update to next
-          if (currentCursor) {
-            cursors.push(currentCursor);
-          }
-          currentCursor = response.nextCursor;
-          currentPage += 1;
-        } else if (direction === 'previous') {
-          // Moving backward - cursor already updated above
-          currentPage = Math.max(1, currentPage - 1);
-          currentCursor = response.nextCursor; // Update current cursor for this page
-        } else if (direction === 'first') {
-          // Starting fresh
-          currentPage = 1;
-          cursors = [];
-          currentCursor = response.nextCursor;
-        }
-        
-        // Update total count estimate for display
-        totalRepositories = currentPage * repositories.length + (hasMore ? 10 : 0);
-        
-      } else {
-        console.warn('No repositories found in response:', response);
-        repositories = [];
-        currentPage = 1;
-        hasMore = false;
-        cursors = [];
-        currentCursor = undefined;
+      // Update last refreshed time if this was a fresh load
+      if (!result.fromCache && !result.error) {
+        lastRefreshedAt = new Date();
       }
     } catch (err) {
       repoError = 'Failed to load repositories';
       console.error('Error loading repositories:', err);
-      repositories = [];
-      isUsingCursorPagination = false;
+      allRepositories = [];
     } finally {
       isLoadingRepos = false;
+      loadProgress = { current: 0 };
     }
   }
 
   function handleSetupRepo(): void {
     window.open('https://docs.terrateam.io/getting-started/quickstart-guide#option-2-set-up-your-own-repository', '_blank');
   }
-
-  function handleNextPage(): void {
-    if ($selectedInstallation && hasMore) {
-      loadRepositories($selectedInstallation, 'next');
+  
+  function goToPage(page: number): void {
+    if (page >= 1 && page <= totalPages) {
+      currentDisplayPage = page;
     }
   }
   
-  function handlePreviousPage(): void {
-    if ($selectedInstallation && currentPage > 1) {
-      loadRepositories($selectedInstallation, 'previous');
+  function goToNextPage(): void {
+    if (currentDisplayPage < totalPages) {
+      currentDisplayPage++;
     }
   }
+  
+  function goToPreviousPage(): void {
+    if (currentDisplayPage > 1) {
+      currentDisplayPage--;
+    }
+  }
+
 
   function handleRepoClick(repo: RepositoryWithStats): void {
     // Navigate to repository detail page for all repositories
@@ -202,9 +195,19 @@
     repoError = null;
     
     try {
+      // Check if this is a GitLab installation
+      const currentProvider = $currentVCSProvider;
       
-      // Call the refresh endpoint - this triggers a background job
-      const refreshResponse = await api.refreshInstallationRepos($selectedInstallation.id);
+      if (currentProvider === 'gitlab') {
+        // GitLab doesn't have a refresh endpoint, just reload the repositories
+        await loadRepositories($selectedInstallation, true);
+        lastRefreshedAt = new Date();
+        isRefreshing = false;
+        return;
+      }
+      
+      // Call the refresh endpoint for GitHub - this triggers a background job to sync
+      const refreshResponse = await api.refreshInstallationRepos($selectedInstallation.id, currentProvider);
       
       // Poll the task status
       let attempts = 0;
@@ -217,10 +220,8 @@
           const taskStatus = await api.getTask(refreshResponse.id);
           
           if (taskStatus.state === 'completed') {
-            // Refresh completed successfully, reload repositories from current position
-            lastRefreshedAt = new Date();
-            // Reload from the first page to maintain pagination state
-            await loadRepositories($selectedInstallation, 'first');
+            // Refresh completed successfully, reload with fresh data
+            await loadRepositories($selectedInstallation, true);
             break;
           } else if (taskStatus.state === 'failed' || taskStatus.state === 'aborted') {
             throw new Error(`Repository refresh ${taskStatus.state}`);
@@ -235,9 +236,7 @@
       
       if (attempts >= maxAttempts) {
         // Timeout - still reload repositories as they might have been updated
-        lastRefreshedAt = new Date();
-        // Reload from the first page to maintain pagination state
-        await loadRepositories($selectedInstallation, 'first');
+        await loadRepositories($selectedInstallation, true);
       }
     } catch (err) {
       console.error('Error refreshing repositories:', err);
@@ -255,10 +254,10 @@
   subtitle="Configure your repositories for Terraform infrastructure automation"
 >
   <!-- Quick Setup Banner (for users who haven't set up repositories yet) -->
-  {#if $installations.length > 0 && $selectedInstallation && repositories.length === 0 && !isLoadingRepos && !repoError}
+  {#if $installations.length > 0 && $selectedInstallation && allRepositories.length === 0 && !isLoadingRepos && !repoError}
     <Card padding="lg" class="mb-6 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700">
-      <div class="flex items-center justify-between">
-        <div class="flex items-start space-x-4">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+        <div class="flex items-start space-x-4 flex-1">
           <div class="flex-shrink-0">
             <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
               <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -267,7 +266,7 @@
             </div>
           </div>
           <div class="flex-1 min-w-0">
-            <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">Ready to add your first repository?</h3>
+            <h3 class="text-base md:text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">Ready to add your first repository?</h3>
             <p class="text-sm text-blue-800 dark:text-blue-200">
               Follow our step-by-step setup guide to connect your repositories and enable Terraform automation.
             </p>
@@ -275,7 +274,7 @@
         </div>
         <button
           on:click={() => window.location.hash = '#/getting-started'}
-          class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 dark:bg-blue-500 rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
+          class="inline-flex items-center px-3 md:px-4 py-2 text-sm font-medium text-white bg-blue-600 dark:bg-blue-500 rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors whitespace-nowrap"
         >
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
@@ -302,7 +301,7 @@
         Install the Terrateam GitHub App to connect your repositories and start managing infrastructure.
       </p>
       <button
-        on:click={() => window.open('https://github.com/apps/terrateam-action', '_blank')}
+        on:click={() => window.open(githubAppUrl, '_blank')}
         class="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
       >
         Install {VCS_PROVIDERS[currentProvider].displayName} App
@@ -310,15 +309,33 @@
     </Card>
   {:else if $selectedInstallation}
     <Card padding="none">
-      <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-600">
-        <div class="flex items-center justify-between">
+      <div class="px-4 md:px-6 py-4 border-b border-gray-200 dark:border-gray-600">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0">
           <div>
             <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
               Repositories in {$selectedInstallation.name}
             </h2>
             <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-              {#if totalRepositories > 0}
-                Showing {repositories.length} of {totalRepositories} repositories
+              {#if isLoadingRepos}
+                Loading repositories... (page {loadProgress.current})
+              {:else if allRepositories.length > 0}
+                {#if searchQuery.trim() || showConfiguredOnly}
+                  Showing {paginatedRepositories.length} of {filteredRepositories.length} repositories
+                  {#if searchQuery.trim()}
+                    matching "{searchQuery}"
+                  {/if}
+                  {#if showConfiguredOnly}
+                    (configured only)
+                  {/if}
+                  {#if totalPages > 1}
+                    • Page {currentDisplayPage} of {totalPages}
+                  {/if}
+                {:else}
+                  Showing {paginatedRepositories.length} of {allRepositories.length} repositories
+                  {#if totalPages > 1}
+                    • Page {currentDisplayPage} of {totalPages}
+                  {/if}
+                {/if}
               {:else}
                 View run activity and manage repository configuration
               {/if}
@@ -350,19 +367,125 @@
           <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
             Last refreshed: {formatTimeAgo(lastRefreshedAt.toISOString())}
           </p>
+        {:else if allRepositories.length > 0}
+          <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            Data loaded from cache
+          </p>
         {/if}
       </div>
+      
+      <!-- Search and Filter bar -->
+      {#if allRepositories.length > 0 || isLoadingRepos}
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-600">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between md:space-x-4 space-y-4 md:space-y-0">
+            <div class="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-4 md:space-y-0 flex-1">
+              <!-- Search input -->
+              <div class="flex-1 w-full md:max-w-md">
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search repositories..."
+                    bind:value={searchQuery}
+                    disabled={isLoadingRepos}
+                    class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                </div>
+              </div>
+              
+              <!-- Sort and filter controls -->
+              <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0">
+                <div class="flex items-center space-x-2">
+                  <span class="text-sm text-gray-700 dark:text-gray-300">Sort by:</span>
+                  <select
+                    bind:value={sortBy}
+                    disabled={isLoadingRepos}
+                    class="text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="name">Name (A-Z)</option>
+                    <option value="updated">Recently Updated</option>
+                  </select>
+                </div>
+                <label class="flex items-center space-x-2 text-sm">
+                  <input
+                    type="checkbox"
+                    bind:checked={showConfiguredOnly}
+                    disabled={isLoadingRepos}
+                    class="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                  <span class="text-gray-700 dark:text-gray-300">Configured only</span>
+                </label>
+              </div>
+            </div>
+            
+            <!-- Clear search button -->
+            {#if searchQuery.trim()}
+              <button
+                on:click={() => searchQuery = ''}
+                class="inline-flex items-center px-2 py-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+              >
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Clear
+              </button>
+            {/if}
+          </div>
+        </div>
+      {/if}
 
       {#if isLoadingRepos}
         <div class="flex justify-center items-center py-12">
           <LoadingSpinner size="md" />
-          <span class="ml-3 text-gray-600 dark:text-gray-400">Loading repositories and run data...</span>
+          <span class="ml-3 text-gray-600 dark:text-gray-400">
+            Loading repositories... (page {loadProgress.current})
+          </span>
         </div>
       {:else if repoError}
         <div class="p-6">
           <ErrorMessage type="error" message={repoError} />
         </div>
-      {:else if repositories.length === 0}
+      {:else if paginatedRepositories.length === 0 && (showConfiguredOnly || searchQuery.trim()) && allRepositories.length > 0}
+        <div class="text-center py-12">
+          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">No repositories found</h3>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            {#if searchQuery.trim() && showConfiguredOnly}
+              No configured repositories match "{searchQuery}"
+            {:else if searchQuery.trim()}
+              No repositories match "{searchQuery}"
+            {:else if showConfiguredOnly}
+              No configured repositories found
+            {/if}
+          </p>
+          <div class="mt-6">
+            <div class="flex justify-center space-x-3">
+              {#if searchQuery.trim()}
+                <button
+                  on:click={() => searchQuery = ''}
+                  class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:border-gray-600 dark:text-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600"
+                >
+                  Clear search
+                </button>
+              {/if}
+              {#if showConfiguredOnly}
+                <button
+                  on:click={() => showConfiguredOnly = false}
+                  class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:border-gray-600 dark:text-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600"
+                >
+                  Show all repositories
+                </button>
+              {/if}
+            </div>
+          </div>
+        </div>
+      {:else if allRepositories.length === 0}
         <div class="text-center py-12">
           <div class="text-6xl mb-4">📁</div>
           <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">No Repositories</h3>
@@ -378,9 +501,9 @@
         </div>
       {:else}
         <div class="divide-y divide-gray-200 dark:divide-gray-600">
-          {#each repositories as repo}
-            <div class="p-6">
-              <div class="flex items-center justify-between">
+          {#each paginatedRepositories as repo}
+            <div class="p-4 md:p-6">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
                 <div class="flex items-center min-w-0 flex-1">
                   <div class="flex-shrink-0">
                     <div class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
@@ -391,23 +514,29 @@
                   </div>
                   <div class="ml-4 min-w-0 flex-1">
                     <div class="flex items-center">
-                      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 truncate">{repo.name}</h3>
+                      <button
+                        on:click={() => handleRepoClick(repo)}
+                        class="text-base md:text-lg font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 truncate text-left transition-colors cursor-pointer"
+                        aria-label="View {repo.name} details"
+                      >
+                        {repo.name}
+                      </button>
                     </div>
-                    <div class="mt-2 flex items-center space-x-6 text-sm text-gray-500 dark:text-gray-400">
-                      <div class="flex items-center">
+                    {#if repo.setup}
+                      <div class="mt-1 flex items-center text-sm text-green-600 dark:text-green-400">
                         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <span class="font-medium">{repo.runCount || 0}</span>
-                        <span class="ml-1">runs</span>
+                        <span>Configured</span>
                       </div>
-                      <div class="flex items-center">
+                    {:else}
+                      <div class="mt-1 flex items-center text-sm text-gray-500 dark:text-gray-400">
                         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <span>Last: {formatTimeAgo(repo.lastRun)}</span>
+                        <span>Not configured</span>
                       </div>
-                    </div>
+                    {/if}
                   </div>
                 </div>
                 <div class="flex items-center space-x-3">
@@ -431,17 +560,49 @@
           {/each}
         </div>
         
-        <!-- Pagination -->
-        {#if isUsingCursorPagination && (currentPage > 1 || hasMore)}
-          <CursorPagination 
-            {currentPage}
-            hasNext={hasMore}
-            hasPrevious={currentPage > 1}
-            isLoading={isLoadingRepos}
-            on:next={handleNextPage}
-            on:previous={handlePreviousPage}
-          />
+        <!-- Pagination Controls -->
+        {#if totalPages > 1}
+          <div class="px-4 md:px-6 py-4 border-t border-gray-200 dark:border-gray-600">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-3 md:space-y-0">
+              <div class="flex items-center text-xs md:text-sm text-gray-700 dark:text-gray-300">
+                <span>
+                  Showing {((currentDisplayPage - 1) * itemsPerPage) + 1} to {Math.min(currentDisplayPage * itemsPerPage, filteredRepositories.length)} of {filteredRepositories.length} repositories
+                </span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <button
+                  on:click={goToPreviousPage}
+                  disabled={currentDisplayPage === 1}
+                  class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Previous
+                </button>
+                
+                <!-- Page numbers -->
+                {#each Array(Math.min(5, totalPages)) as _, i}
+                  {@const pageNum = Math.max(1, Math.min(totalPages - 4, currentDisplayPage - 2)) + i}
+                  {#if pageNum <= totalPages}
+                    <button
+                      on:click={() => goToPage(pageNum)}
+                      class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md transition-colors {pageNum === currentDisplayPage ? 'bg-blue-600 text-white border-blue-600' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}"
+                    >
+                      {pageNum}
+                    </button>
+                  {/if}
+                {/each}
+                
+                <button
+                  on:click={goToNextPage}
+                  disabled={currentDisplayPage === totalPages}
+                  class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
         {/if}
+        
         {/if}
     </Card>
   {:else}

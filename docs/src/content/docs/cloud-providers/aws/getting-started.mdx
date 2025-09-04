@@ -1,0 +1,35 @@
+---
+title: Getting Started
+description: Configure Terrateam to integrate with AWS
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+To use Terrateam with AWS, you need to configure authentication and authorization between Terrateam and your AWS account. Choose the setup method that works best for your needs.
+
+## Setup Options
+
+<CardGrid>
+  <LinkCard
+    title="Static Credentials"
+    description="Easiest to get started - Set up AWS access keys and secrets in GitHub. Perfect for quick testing, simple setups, and getting started with Terrateam."
+    href="./static-credentials"
+  />
+  <LinkCard
+    title="OpenID Connect (OIDC)"
+    description="Recommended for production - Secure, keyless authentication using GitHub's OIDC provider. Includes both automated and manual setup options."
+    href="./oidc-setup"
+  />
+</CardGrid>
+
+## What's Next?
+
+Once you've configured AWS authentication, you'll be able to:
+
+- Run `terrateam plan` to preview infrastructure changes
+- Run `terrateam apply` to deploy infrastructure changes
+- Use all of Terrateam's advanced features with your AWS resources
+
+:::tip[Need help choosing?]
+If you're just getting started with Terrateam, we recommend beginning with [static credentials](./static-credentials) as it's the quickest way to get up and running. You can always switch to OIDC later for enhanced security.
+:::

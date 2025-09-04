@@ -14,7 +14,6 @@ export default defineConfig({
     starlight({
       title: "Terrateam",
       components: {
-        Banner: './src/components/Banner.astro',
         SiteTitle: './src/components/SiteTitle.astro',
       },
       plugins: [starlightImageZoom()],
@@ -74,8 +73,29 @@ export default defineConfig({
         },
         {
           label: "Cloud Providers",
-          autogenerate: { directory: "cloud-providers" },
           collapsed: true,
+          items: [
+            {
+              label: "AWS",
+              collapsed: true,
+              items: [
+                { label: "Getting Started", link: "/cloud-providers/aws/getting-started" },
+                { label: "Static Credentials", link: "/cloud-providers/aws/static-credentials" },
+                { label: "OIDC Setup", link: "/cloud-providers/aws/oidc-setup" },
+              ],
+            },
+            {
+              label: "GCP",
+              collapsed: true,
+              items: [
+                { label: "Getting Started", link: "/cloud-providers/gcp/getting-started" },
+                { label: "Static Credentials", link: "/cloud-providers/gcp/static-credentials" },
+                { label: "OIDC Setup", link: "/cloud-providers/gcp/oidc-setup" },
+              ],
+            },
+            { label: "Azure", link: "/cloud-providers/azure" },
+            { label: "Other", link: "/cloud-providers/other" },
+          ],
         },
         {
           label: "Advanced Workflows",
@@ -106,9 +126,11 @@ export default defineConfig({
           label: "Self-Hosted",
           collapsed: true,
           items: [
-            { label: "Instructions", link: "/self-hosted/instructions" },
-            { label: "Best Practices", link: "/self-hosted/best-practices" },
-            { label: "Deployments with Docker Compose", link: "/self-hosted/deployments-with-docker-compose" },
+            { label: "Getting Started", link: "/self-hosted/getting-started" },
+            { label: "Docker Compose", link: "/self-hosted/docker-compose" },
+            { label: "Kubernetes", link: "/self-hosted/kubernetes" },
+            { label: "Environment Variables", link: "/self-hosted/environment-variables" },
+            { label: "Editions", link: "/self-hosted/editions" },
           ],
         },
         {
@@ -139,6 +161,6 @@ export default defineConfig({
     '/company/cookies': 'https://terrateam.io/cookies',
     '/company/terms-of-service': 'https://terrateam.io/terms-of-service',
     '/company/security-and-data': 'https://terrateam.io/security',
-    '/self-hosted/overview': '/self-hosted/instructions',
+    '/self-hosted/instructions': '/self-hosted/getting-started',
   },
 });

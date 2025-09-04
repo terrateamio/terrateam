@@ -17,11 +17,16 @@ module Make
         with type Api.Config.t = Terrat_vcs_service_gitlab_provider.Api.Config.t)
     (Routes : ROUTES with type config = Provider.Api.Config.t) =
 struct
+  module Evaluator = Terrat_vcs_event_evaluator.Make (Provider)
   module Ep_events = Terrat_vcs_service_gitlab_ep_events.Make (Provider)
   module Work_manifest = Terrat_vcs_service_gitlab_ep_work_manifest.Make (Provider)
 
   type t = {
     config : Provider.Api.Config.t;
+    drift : unit Abb.Future.t;
+    flow_state_cleanup : unit Abb.Future.t;
+    plan_cleanup : unit Abb.Future.t;
+    repo_config_cleanup : unit Abb.Future.t;
     storage : Terrat_storage.t;
     whoami : Gitlabc_components.API_Entities_UserPublic.t;
   }
@@ -214,11 +219,49 @@ struct
 
     type vcs_config = Provider.Api.Config.vcs_config
 
+    let one_hour = Duration.to_f (Duration.of_hour 1)
+
+    let rec drift config storage =
+      let open Abb.Future.Infix_monad in
+      Abbs_future_combinators.ignore
+        (Evaluator.run_scheduled_drift
+           (Evaluator.Ctx.make ~config ~storage ~request_id:(Ouuid.to_string (Ouuid.v4 ())) ()))
+      >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> drift config storage
+
+    let rec flow_state_cleanup config storage =
+      let open Abb.Future.Infix_monad in
+      Abbs_future_combinators.ignore
+        (Evaluator.run_flow_state_cleanup
+           (Evaluator.Ctx.make ~config ~storage ~request_id:(Ouuid.to_string (Ouuid.v4 ())) ()))
+      >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> flow_state_cleanup config storage
+
+    let rec plan_cleanup config storage =
+      let open Abb.Future.Infix_monad in
+      Abbs_future_combinators.ignore
+        (Evaluator.run_plan_cleanup
+           (Evaluator.Ctx.make ~config ~storage ~request_id:(Ouuid.to_string (Ouuid.v4 ())) ()))
+      >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> plan_cleanup config storage
+
+    let rec repo_config_cleanup config storage =
+      let open Abb.Future.Infix_monad in
+      Abbs_future_combinators.ignore
+        (Evaluator.run_repo_config_cleanup
+           (Evaluator.Ctx.make ~config ~storage ~request_id:(Ouuid.to_string (Ouuid.v4 ())) ()))
+      >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> repo_config_cleanup config storage
+
     let name _ = "gitlab"
 
     let start config vcs_config storage =
       let open Abb.Future.Infix_monad in
       let config = Provider.Api.Config.make ~config ~vcs_config () in
+      Abb.Future.Infix_app.(
+        (fun drift flow_state_cleanup plan_cleanup repo_config_cleanup ->
+          (drift, flow_state_cleanup, plan_cleanup, repo_config_cleanup))
+        <$> Abb.Future.fork (drift config storage)
+        <*> Abb.Future.fork (flow_state_cleanup config storage)
+        <*> Abb.Future.fork (plan_cleanup config storage)
+        <*> Abb.Future.fork (repo_config_cleanup config storage))
+      >>= fun (drift, flow_state_cleanup, plan_cleanup, repo_config_cleanup) ->
       let access_token = Terrat_config.Gitlab.access_token vcs_config in
       let client =
         Openapic_abb.create
@@ -232,7 +275,17 @@ struct
           let module U = Gitlabc_components.API_Entities_UserPublic in
           let (`OK whoami) = Openapi.Response.value resp in
           Logs.info (fun m -> m "START : username=%s" whoami.U.username);
-          Abb.Future.return (Ok { config; storage; whoami })
+          Abb.Future.return
+            (Ok
+               {
+                 config;
+                 drift;
+                 flow_state_cleanup;
+                 plan_cleanup;
+                 repo_config_cleanup;
+                 storage;
+                 whoami;
+               })
       | Error (#Openapic_abb.call_err as err) ->
           Logs.err (fun m -> m "Failed to fetch user: %a" Openapic_abb.pp_call_err err);
           Abb.Future.return (Error `Error)

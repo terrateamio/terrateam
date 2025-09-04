@@ -1,6 +1,6 @@
 type t = {
   avatar_url : string;
-  description : string option;
+  description : string option; [@default None]
   events_url : string;
   hooks_url : string;
   html_url : string option; [@default None]

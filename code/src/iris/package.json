@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --force --clearScreen false",
+    "dev": "vite --force --clearScreen false --host",
     "build": "vite build && npm run check",
     "preview": "vite preview",
     "proxy": "node simple-proxy.js",
@@ -17,7 +17,9 @@
     "check-api-types": "node scripts/check-api-types.cjs",
     "pre-commit": "npm run type-check && npm run check-api-types && npm run knip",
     "quality-check": "npm run pre-commit",
-    "knip": "knip"
+    "knip": "knip",
+    "test": "npm run type-check && npm run check-api-types && npm run check && npm run knip",
+    "download-icons": "node scripts/download-icons.js"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^3.0.0",

@@ -130,12 +130,21 @@ let create ?(user_agent = "Openapic_abb") ?call_timeout ~base_url auth =
     call_timeout;
   }
 
+let maybe_with_base_url base_url req =
+  (* As a heuristic, we will use if the URL has a scheme to decide if we should
+     prepend the base url or the URL is already complete.  This is required for
+     pagination, because some pagination systems provide partial URLs and others
+     provide complete URLs. *)
+  match Uri.scheme @@ Openapi.Request.url req with
+  | None -> Openapi.Request.with_base_url base_url req
+  | Some _ -> req
+
 let call ?log t req =
   let open Abb.Future.Infix_monad in
   CCOption.iter (fun f -> f (`Req req)) log;
   match t.call_timeout with
   | None -> (
-      Api.call Openapi.Request.(req |> with_base_url t.base_url |> add_headers t.headers)
+      Api.call Openapi.Request.(req |> maybe_with_base_url t.base_url |> add_headers t.headers)
       >>= function
       | Ok resp ->
           CCOption.iter (fun f -> f (`Resp resp)) log;
@@ -160,7 +169,7 @@ let call ?log t req =
 
 let rec fold' page t ~init ~f req =
   let open Abbs_future_combinators.Infix_result_monad in
-  Api.call Openapi.Request.(req |> add_headers t.headers)
+  call t Openapi.Request.(req |> add_headers t.headers)
   >>= fun resp ->
   f init resp
   >>= fun init ->

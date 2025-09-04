@@ -89,15 +89,15 @@ module Primary = struct
   type t = {
     links_ : Links_.t; [@key "_links"]
     author_association : Author_association_.t;
-    body : string option;
+    body : string option; [@default None]
     commit_id : string;
     html_url : string;
     id : int;
     node_id : string;
     pull_request_url : string;
     state : string;
-    submitted_at : string option;
-    user : User.t option;
+    submitted_at : string option; [@default None]
+    user : User.t option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

@@ -1,11 +1,11 @@
 module PostApiV4GroupsIdSshCertificates = struct
   module Parameters = struct
-    type t = {
-      id : int;
-      postapiv4groupsidsshcertificates : Gitlabc_components.PostApiV4GroupsIdSshCertificates.t;
-          [@key "postApiV4GroupsIdSshCertificates"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4GroupsIdSshCertificates.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -36,8 +36,10 @@ module PostApiV4GroupsIdSshCertificates = struct
 
   let url = "/api/v4/groups/{id}/ssh_certificates"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

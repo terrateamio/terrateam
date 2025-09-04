@@ -1,10 +1,18 @@
-type synthesize_config_err = [ `Depends_on_cycle_err of Terrat_dirspace.t list ] [@@deriving show]
+type synthesize_config_err =
+  [ `Depends_on_cycle_err of Terrat_dirspace.t list
+  | `Workspace_in_multiple_stacks_err of Terrat_dirspace.t
+  | `Workspace_matches_no_stacks_err of Terrat_dirspace.t
+  | `Stack_not_found_err of string
+  ]
+[@@deriving show]
 
 module Dirspace_config : sig
   type t = {
     dirspace : Terrat_change.Dirspace.t;
     file_pattern_matcher : string -> bool;
     lock_branch_target : Terrat_base_repo_config_v1.Dirs.Dir.Branch_target.t;
+    stack_config : Terrat_base_repo_config_v1.Stacks.Stack.t;
+    stack_name : string;
     tags : Terrat_tag_set.t;
     when_modified : Terrat_base_repo_config_v1.When_modified.t;
   }

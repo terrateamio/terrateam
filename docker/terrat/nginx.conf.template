@@ -4,6 +4,11 @@ worker_processes 2;
 
 error_log /dev/stderr warn;
 
+env TERRATEAM_UI_ANALYTICS;
+env TERRATEAM_UI_SUBSCRIPTION;
+env TERRATEAM_MAINTENANCE;
+env TERRATEAM_MAINTENANCE_MESSAGE;
+
 events {
     worker_connections  1024;
 }
@@ -47,10 +52,16 @@ http {
             sub_filter_types *;
             sub_filter 'NGINX_CSP_NONCE' '$cspNonce';
 
+            # Runtime environment variable substitution for UI configuration
+            sub_filter '%TERRATEAM_UI_ANALYTICS%' '${TERRATEAM_UI_ANALYTICS}';
+            sub_filter '%TERRATEAM_UI_SUBSCRIPTION%' '${TERRATEAM_UI_SUBSCRIPTION}';
+            sub_filter '%TERRATEAM_MAINTENANCE%' '${TERRATEAM_MAINTENANCE}';
+            sub_filter '%TERRATEAM_MAINTENANCE_MESSAGE%' '${TERRATEAM_MAINTENANCE_MESSAGE}';
+
             root /usr/local/share/terrat/ui/assets/;
             index index.html index.htm;
             try_files $uri $uri/ /index.html =404;
-            add_header Content-Security-Policy "default-src 'self' https://*.posthog.com; img-src 'self' https://avatars.githubusercontent.com; script-src 'self' 'nonce-$cspNonce' https://*.posthog.com; style-src 'self'; object-src 'none'; connect-src 'self' https://*.posthog.com";
+            add_header Content-Security-Policy "default-src 'self'; img-src 'self' https://avatars.githubusercontent.com https://secure.gravatar.com https://www.redditstatic.com https://alb.reddit.com; script-src 'self' 'nonce-$cspNonce' https://*.posthog.com https://www.redditstatic.com; style-src 'self' 'nonce-$cspNonce'; object-src 'none'; connect-src 'self' https://*.posthog.com https://o4509570379677696.ingest.de.sentry.io https://api.web3forms.com https://alb.reddit.com https://pixel-config.reddit.com https://conversions-config.reddit.com https://www.redditstatic.com; font-src 'self'; worker-src 'self' blob:; frame-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; manifest-src 'self'; media-src 'none'; upgrade-insecure-requests;";
         }
 
         location /api {

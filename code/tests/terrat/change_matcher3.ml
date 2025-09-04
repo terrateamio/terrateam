@@ -2229,6 +2229,89 @@ let test_files_in_same_dir_match_multiple_dirs =
           assert (Terrat_tag_set.mem "dir1" tags)
       | _ -> assert false)
 
+(* This test is for timing and the numbers of been reduced in this to make it
+   run quickly, increase the numbers, as described, to test various directory
+   size configurations. *)
+let test_large_directory_timing =
+  Oth.test ~name:"Test large directory timing" (fun _ ->
+      (* Set to 2000 and 7000 respectivively to see some mean performance issues *)
+      let num_tf_dirs = 20 in
+      let num_other_dirs = 70 in
+      let tf_files =
+        CCList.flat_map (fun i ->
+            CCList.map (fun j -> Printf.sprintf "this_is_terraform_code_%d/tf_%d.tf" i j)
+            @@ CCList.range 1 10)
+        @@ CCList.range 1 num_tf_dirs
+      in
+      let other_files =
+        CCList.flat_map (fun i ->
+            CCList.map (fun j -> Printf.sprintf "this_is_not_terraform_code_%d/foo_%d.txt" i j)
+            @@ CCList.range 1 10)
+        @@ CCList.range 1 num_other_dirs
+      in
+      let file_list = tf_files @ other_files in
+      let repo_config =
+        let module R = Terrat_base_repo_config_v1 in
+        R.derive
+          ~ctx
+          ~index:Terrat_base_repo_config_v1.Index.empty
+          ~file_list
+          (R.of_view
+             (R.View.make
+                ~dirs:
+                  (R.String_map.of_list
+                     [
+                       ( "this_is_not_terraform_code_*/*",
+                         R.Dirs.Dir.make
+                           ~workspaces:
+                             (R.String_map.of_list
+                                [
+                                  ( "default",
+                                    R.Dirs.Workspace.make
+                                      ~when_modified:(R.When_modified.make ~file_patterns:[] ())
+                                      () );
+                                ])
+                           () );
+                       ( "this_is_terraform_code_*/*.tf",
+                         R.Dirs.Dir.make
+                           ~workspaces:
+                             (R.String_map.of_list
+                                [
+                                  ( "default",
+                                    R.Dirs.Workspace.make
+                                      ~when_modified:
+                                        (R.When_modified.make
+                                           ~file_patterns:
+                                             [
+                                               CCResult.get_exn (R.File_pattern.make "${DIR}/*.tf");
+                                               CCResult.get_exn
+                                                 (R.File_pattern.make "${DIR}/*.tfvars");
+                                               CCResult.get_exn
+                                                 (R.File_pattern.make "${DIR}/*.json");
+                                               CCResult.get_exn
+                                                 (R.File_pattern.make "terraform/modules/**/*.tf");
+                                             ]
+                                           ())
+                                      () );
+                                ])
+                           () );
+                     ])
+                ()))
+      in
+      (* Printf.printf *)
+      (*   "%s\n%!" *)
+      (*   Terrat_base_repo_config_v1.( *)
+      (*     Yojson.Safe.pretty_to_string @@ View.to_yojson @@ to_view repo_config); *)
+      let diff = CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) file_list in
+      let dirs =
+        CCResult.get_exn
+          (Terrat_change_match3.synthesize_config
+             ~index:Terrat_base_repo_config_v1.Index.empty
+             repo_config)
+      in
+      let changes = CCList.flatten (Terrat_change_match3.match_diff_list dirs diff) in
+      assert (CCList.length changes = num_tf_dirs))
+
 let test =
   Oth.parallel
     [
@@ -2277,6 +2360,7 @@ let test =
       test_depends_on_cycle;
       test_depends_on_relative_dir;
       test_files_in_same_dir_match_multiple_dirs;
+      test_large_directory_timing;
     ]
 
 let () =

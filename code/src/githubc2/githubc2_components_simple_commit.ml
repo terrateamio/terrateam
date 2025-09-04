@@ -24,8 +24,8 @@ module Primary = struct
   end
 
   type t = {
-    author : Author.t option;
-    committer : Committer.t option;
+    author : Author.t option; [@default None]
+    committer : Committer.t option; [@default None]
     id : string;
     message : string;
     timestamp : string;

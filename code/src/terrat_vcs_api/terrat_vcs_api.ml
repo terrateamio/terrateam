@@ -42,6 +42,19 @@ module type S = sig
     val to_native : t -> native
   end
 
+  module Comment : sig
+    module Id : sig
+      include ID
+
+      val compare : t -> t -> int
+    end
+
+    type t [@@deriving eq, yojson]
+
+    val make : id:Id.t -> unit -> t
+    val id : t -> Id.t
+  end
+
   module Ref : sig
     type t [@@deriving eq, yojson]
 
@@ -122,6 +135,20 @@ module type S = sig
     Client.t ->
     ('diff, 'checks) Pull_request.t ->
     string ->
+    (Comment.Id.t, [> `Error ]) result Abb.Future.t
+
+  val delete_pull_request_comment :
+    request_id:string ->
+    Client.t ->
+    ('diff, 'checks) Pull_request.t ->
+    Comment.Id.t ->
+    (unit, [> `Error ]) result Abb.Future.t
+
+  val minimize_pull_request_comment :
+    request_id:string ->
+    Client.t ->
+    ('diff, 'checks) Pull_request.t ->
+    Comment.Id.t ->
     (unit, [> `Error ]) result Abb.Future.t
 
   val fetch_pull_request :
@@ -138,6 +165,13 @@ module type S = sig
     Pull_request.Id.t ->
     Client.t ->
     (Terrat_pull_request_review.t list, [> `Error ]) result Abb.Future.t
+
+  val fetch_pull_request_requested_reviews :
+    request_id:string ->
+    Repo.t ->
+    Pull_request.Id.t ->
+    Client.t ->
+    (Terrat_base_repo_config_v1.Access_control.Match.t list, [> `Error ]) result Abb.Future.t
 
   val react_to_comment :
     request_id:string ->

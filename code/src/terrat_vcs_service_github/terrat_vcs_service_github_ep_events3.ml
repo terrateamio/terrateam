@@ -61,9 +61,6 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         /% Var.text "target_type"
         /% Var.text "tier")
 
-    let insert_installation_map =
-      Pgsql_io.Typed_sql.(sql /^ read "insert_installation_map.sql" /% Var.bigint "installation")
-
     let update_github_installation_unsuspend =
       Pgsql_io.Typed_sql.(
         sql
@@ -160,11 +157,6 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
                       org_id
                       installation.Gw.Installation.account.Gw.User.type_
                       (Terrat_config.default_tier @@ P.Api.Config.config config)
-                    >>= fun () ->
-                    Pgsql_io.Prepared_stmt.execute
-                      db
-                      Sql.insert_installation_map
-                      (Int64.of_int installation.Gw.Installation.id)
                 | [] -> assert false)
             | _ :: _ -> Abb.Future.return (Ok ()))
     | Gw.Installation_event.Installation_deleted deleted ->
@@ -504,14 +496,15 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
                   (P.Api.Config.vcs_config config)
                   installation_id
                 >>= fun access_token ->
-                Terrat_github.with_client
-                  (P.Api.Config.vcs_config config)
-                  (`Token access_token)
-                  (Terrat_github.publish_comment
-                     ~owner:repository.Gw.Repository.owner.Gw.User.login
-                     ~repo:repository.Gw.Repository.name
-                     ~pull_number:pull_request_id
-                     ~body)
+                Abbs_future_combinators.Result.ignore
+                @@ Terrat_github.with_client
+                     (P.Api.Config.vcs_config config)
+                     (`Token access_token)
+                     (Terrat_github.publish_comment
+                        ~owner:repository.Gw.Repository.owner.Gw.User.login
+                        ~repo:repository.Gw.Repository.name
+                        ~pull_number:pull_request_id
+                        ~body)
             | Error (#Snabela.err as err) ->
                 Logs.err (fun m ->
                     m "%s : TMPL_ERROR : TAG_QUERY_ERROR : %s" request_id (Snabela.show_err err));
@@ -524,14 +517,15 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
               (P.Api.Config.vcs_config config)
               installation_id
             >>= fun access_token ->
-            Terrat_github.with_client
-              (P.Api.Config.vcs_config config)
-              (`Token access_token)
-              (Terrat_github.publish_comment
-                 ~owner:repository.Gw.Repository.owner.Gw.User.login
-                 ~repo:repository.Gw.Repository.name
-                 ~pull_number:pull_request_id
-                 ~body:Tmpl.terrateam_comment_unknown_action))
+            Abbs_future_combinators.Result.ignore
+            @@ Terrat_github.with_client
+                 (P.Api.Config.vcs_config config)
+                 (`Token access_token)
+                 (Terrat_github.publish_comment
+                    ~owner:repository.Gw.Repository.owner.Gw.User.login
+                    ~repo:repository.Gw.Repository.name
+                    ~pull_number:pull_request_id
+                    ~body:Tmpl.terrateam_comment_unknown_action))
     | Gw.Issue_comment_event.Issue_comment_created _ ->
         Logs.debug (fun m -> m "%s : NOOP : ISSUE_COMMENT_CREATED" request_id);
         Prmths.Counter.inc_one (Metrics.comment_events_total "noop");
@@ -654,52 +648,55 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
     | Ok () -> Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
     | Error err -> handle_error ctx err
 
-  let post config storage ctx =
-    let request = Brtl_ctx.request ctx in
-    let headers = Brtl_ctx.Request.headers request in
-    let body = Brtl_ctx.body ctx in
-    Metrics.DefaultHistogram.time Metrics.events_duration_seconds (fun () ->
-        Prmths.Gauge.track_inprogress Metrics.events_concurrent (fun () ->
-            match
-              Terrat_github_webhooks_decoder.run
-                ?secret:(Terrat_config.Github.webhook_secret @@ P.Api.Config.vcs_config config)
-                headers
-                body
-            with
-            | Ok (Gw.Event.Installation_event installation_event) ->
-                process_event_handler config storage ctx (fun () ->
-                    process_installation (Brtl_ctx.token ctx) config storage installation_event)
-            | Ok (Gw.Event.Pull_request_event pull_request_event) ->
-                process_event_handler config storage ctx (fun () ->
-                    process_pull_request_event
-                      (Brtl_ctx.token ctx)
-                      config
-                      storage
-                      pull_request_event)
-            | Ok (Gw.Event.Issue_comment_event event) ->
-                process_event_handler config storage ctx (fun () ->
-                    process_issue_comment (Brtl_ctx.token ctx) config storage event)
-            | Ok (Gw.Event.Workflow_job_event event) ->
-                process_event_handler config storage ctx (fun () ->
-                    process_workflow_job (Brtl_ctx.token ctx) config storage event)
-            | Ok (Gw.Event.Push_event event) ->
-                process_event_handler config storage ctx (fun () ->
-                    process_push_event (Brtl_ctx.token ctx) config storage event)
-            | Ok (Gw.Event.Workflow_run_event _) ->
-                Logs.debug (fun m -> m "%s : NOOP : WORKFLOW_RUN_EVENT" (Brtl_ctx.token ctx));
-                Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
-            | Ok (Gw.Event.Installation_repositories_event _)
-            | Ok (Gw.Event.Workflow_dispatch_event _) ->
-                Logs.debug (fun m ->
-                    m "%s : NOOP : INSTALLATION_REPOSITORIES_EVENT" (Brtl_ctx.token ctx));
-                Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
-            | Error (#Terrat_github_webhooks_decoder.err as err) ->
-                Prmths.Counter.inc_one Metrics.github_webhook_decode_errors_total;
-                Logs.warn (fun m ->
-                    m
-                      "%s : UNKNOWN_EVENT : %s"
-                      (Brtl_ctx.token ctx)
-                      (Terrat_github_webhooks_decoder.show_err err));
-                Abb.Future.return
-                  (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)))
+  let post config storage =
+    Brtl_ep.run_json ~f:(fun ctx ->
+        let request = Brtl_ctx.request ctx in
+        let headers = Brtl_ctx.Request.headers request in
+        let body = Brtl_ctx.body ctx in
+        Metrics.DefaultHistogram.time Metrics.events_duration_seconds (fun () ->
+            Prmths.Gauge.track_inprogress Metrics.events_concurrent (fun () ->
+                match
+                  Terrat_github_webhooks_decoder.run
+                    ?secret:(Terrat_config.Github.webhook_secret @@ P.Api.Config.vcs_config config)
+                    headers
+                    body
+                with
+                | Ok (Gw.Event.Installation_event installation_event) ->
+                    process_event_handler config storage ctx (fun () ->
+                        process_installation (Brtl_ctx.token ctx) config storage installation_event)
+                | Ok (Gw.Event.Pull_request_event pull_request_event) ->
+                    process_event_handler config storage ctx (fun () ->
+                        process_pull_request_event
+                          (Brtl_ctx.token ctx)
+                          config
+                          storage
+                          pull_request_event)
+                | Ok (Gw.Event.Issue_comment_event event) ->
+                    process_event_handler config storage ctx (fun () ->
+                        process_issue_comment (Brtl_ctx.token ctx) config storage event)
+                | Ok (Gw.Event.Workflow_job_event event) ->
+                    process_event_handler config storage ctx (fun () ->
+                        process_workflow_job (Brtl_ctx.token ctx) config storage event)
+                | Ok (Gw.Event.Push_event event) ->
+                    process_event_handler config storage ctx (fun () ->
+                        process_push_event (Brtl_ctx.token ctx) config storage event)
+                | Ok (Gw.Event.Workflow_run_event _) ->
+                    Logs.debug (fun m -> m "%s : NOOP : WORKFLOW_RUN_EVENT" (Brtl_ctx.token ctx));
+                    Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
+                | Ok (Gw.Event.Installation_repositories_event _)
+                | Ok (Gw.Event.Workflow_dispatch_event _) ->
+                    Logs.debug (fun m ->
+                        m "%s : NOOP : INSTALLATION_REPOSITORIES_EVENT" (Brtl_ctx.token ctx));
+                    Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
+                | Error (#Terrat_github_webhooks_decoder.err as err) ->
+                    Prmths.Counter.inc_one Metrics.github_webhook_decode_errors_total;
+                    Logs.warn (fun m ->
+                        m
+                          "%s : UNKNOWN_EVENT : %s"
+                          (Brtl_ctx.token ctx)
+                          (Terrat_github_webhooks_decoder.show_err err));
+                    Abb.Future.return
+                      (Brtl_ctx.set_response
+                         (Brtl_rspnc.create ~status:`Internal_server_error "")
+                         ctx))))
 end

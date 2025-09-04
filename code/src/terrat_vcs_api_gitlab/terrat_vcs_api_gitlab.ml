@@ -37,15 +37,15 @@ let fetch_pull_request_tries = 6
 let one_minute = Duration.(to_f (of_min 1))
 let call_timeout = Duration.(to_f (of_sec 10))
 
-let log_call = function
-  | `Req req ->
-      Logs.debug (fun m ->
-          m "req = %a" (Openapi.Request.pp (fun fmt _ -> Format.fprintf fmt "<opaque>")) req)
-  | `Resp resp ->
-      Logs.debug (fun m ->
-          m "resp = %a" (Openapi.Response.pp (fun fmt _ -> Format.fprintf fmt "<opaque>")) resp)
-  | `Err (#Openapic_abb.call_err as err) ->
-      Logs.debug (fun m -> m "err = %a" Openapic_abb.pp_call_err err)
+(* let log_call = function *)
+(*   | `Req req -> *)
+(*       Logs.debug (fun m -> *)
+(*           m "req = %a" (Openapi.Request.pp (fun fmt _ -> Format.fprintf fmt "<opaque>")) req) *)
+(*   | `Resp resp -> *)
+(*       Logs.debug (fun m -> *)
+(*           m "resp = %a" (Openapi.Response.pp (fun fmt _ -> Format.fprintf fmt "<opaque>")) resp) *)
+(*   | `Err (#Openapic_abb.call_err as err) -> *)
+(*       Logs.debug (fun m -> m "err = %a" Openapic_abb.pp_call_err err) *)
 
 let rate_limit_wait resp =
   let headers = Openapi.Response.headers resp in
@@ -82,9 +82,12 @@ let retry_wait default_wait resp =
   rate_limit_wait resp
   >>= function
   | Some retry_after ->
+      Logs.debug (fun m -> m "RATE_LIMIT : wait=%f" retry_after);
       Metrics.Call_retry_wait_histograph.observe Metrics.rate_limit_retry_wait_seconds retry_after;
       Abb.Future.return retry_after
-  | None -> Abb.Future.return default_wait
+  | None ->
+      Logs.debug (fun m -> m "RATE_LIMIT : wait=%f" default_wait);
+      Abb.Future.return default_wait
 
 let call ?(tries = 3) t req =
   Abbs_future_combinators.retry
@@ -164,6 +167,20 @@ module Account = struct
   let make installation_id = { installation_id }
   let id t = t.installation_id
   let to_string t = CCInt.to_string t.installation_id
+end
+
+module Comment = struct
+  module Id = struct
+    type t = int [@@deriving eq, ord, show, yojson]
+
+    let of_string = CCInt.of_string
+    let to_string = CCInt.to_string
+  end
+
+  type t = { id : Id.t } [@@deriving eq, yojson]
+
+  let make ~id () = { id }
+  let id t = t.id
 end
 
 module Repo = struct
@@ -375,24 +392,24 @@ let comment_on_pull_request ~request_id client pull_request body =
   in
   let run =
     let open Abbs_future_combinators.Infix_result_monad in
+    let body = { Gl.Request_body.body } in
     call
       client.Client.client
       Gl.(
         make
+          ~body
           (Parameters.make
              ~id:(CCInt.to_string @@ Repo.id @@ Terrat_pull_request.repo pull_request)
-             ~merge_request_iid:(Terrat_pull_request.id pull_request)
-             ~body))
+             ~merge_request_iid:(Terrat_pull_request.id pull_request)))
     >>= fun resp ->
     match Openapi.Response.value resp with
-    | `OK -> Abb.Future.return (Ok ())
-    | `Created _ -> Abb.Future.return (Ok ())
+    | `Created { Gl.Responses.Created.id } -> Abb.Future.return (Ok id)
     | `Not_found -> Abb.Future.return (Error `Not_found)
   in
   let open Abb.Future.Infix_monad in
   run
   >>= function
-  | Ok _ as r -> Abb.Future.return r
+  | Ok id as r -> Abb.Future.return r
   | Error (#Gl.Responses.t as err) ->
       Logs.err (fun m -> m "%s : COMMENT_ON_PULL_REQUEST : %a" request_id Gl.Responses.pp err);
       Abb.Future.return (Error `Error)
@@ -400,6 +417,14 @@ let comment_on_pull_request ~request_id client pull_request body =
       Logs.err (fun m ->
           m "%s : COMMENT_ON_PULL_REQUEST : %a" request_id Openapic_abb.pp_call_err err);
       Abb.Future.return (Error `Error)
+
+let delete_pull_request_comment ~request_id client pull_request comment_id =
+  let open Abb.Future.Infix_monad in
+  raise (Failure "nyi")
+
+let minimize_pull_request_comment ~request_id client pull_request comment_id =
+  let open Abb.Future.Infix_monad in
+  raise (Failure "nyi")
 
 let fetch_diff ~request_id ~client ~repo merge_request_iid =
   let module Gl =
@@ -587,6 +612,13 @@ let create_commit_checks ~request_id client repo ref_ checks =
     let open Abbs_future_combinators.Infix_result_monad in
     let module Glg = Gitlabc_projects_repository.GetApiV4ProjectsIdRepositoryCommitsShaStatuses in
     let module Glc = Gitlabc_components_api_entities_commitstatus in
+    let module Tcc = Terrat_commit_check in
+    (* For GitLab, we only care about the terrateam apply status checks.  Status
+       checks do not show the same as in GitHub, so creating the extras is not
+       valuable. *)
+    let checks =
+      CCList.filter (fun { Tcc.title; _ } -> CCString.equal title "terrateam apply") checks
+    in
     Openapic_abb.collect_all
       ~page:Openapic_abb.Page.gitlab
       client.Client.client
@@ -714,6 +746,9 @@ let fetch_pull_request_reviews ~request_id client repo pull_number =
   (* TODO: Implement *)
   Abb.Future.return (Ok [])
 
+let fetch_pull_request_requested_reviews ~request_id repo pull_number client =
+  Abb.Future.return (Ok [])
+
 let merge_pull_request ~request_id client pull_request =
   let module Gl =
     Gitlabc_projects_merge_requests.PutApiV4ProjectsIdMergeRequestsMergeRequestIidMerge
@@ -727,12 +762,24 @@ let merge_pull_request ~request_id client pull_request =
           (Parameters.make
              ~id:(CCInt.to_string @@ Repo.id @@ Terrat_pull_request.repo pull_request)
              ~merge_request_iid:(Terrat_pull_request.id pull_request)))
-    >>= fun resp -> raise (Failure "nyi")
+    >>= fun resp ->
+    match Openapi.Response.value resp with
+    | `OK _ -> Abb.Future.return (Ok ())
+    | #Gl.Responses.t as err -> Abb.Future.return (Error err)
   in
   let open Abb.Future.Infix_monad in
   run
   >>= function
   | Ok _ as r -> Abb.Future.return r
+  | Error
+      (( `Bad_request json
+       | `Unauthorized json
+       | `Not_found json
+       | `Method_not_allowed json
+       | `Conflict json
+       | `Unprocessable_entity json ) as err) ->
+      Logs.err (fun m -> m "%s : MERGE_PULL_REQUEST : %a" request_id Gl.Responses.pp err);
+      Abb.Future.return (Error (`Merge_err (Yojson.Safe.pretty_to_string json)))
   | Error (#Gl.Responses.t as err) ->
       Logs.err (fun m -> m "%s : MERGE_PULL_REQUEST : %a" request_id Gl.Responses.pp err);
       Abb.Future.return (Error `Error)

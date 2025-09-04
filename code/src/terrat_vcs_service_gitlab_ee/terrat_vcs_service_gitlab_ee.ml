@@ -1,4 +1,6 @@
 module Provider : module type of Terrat_vcs_service_gitlab_provider = struct
+  let name = Terrat_vcs_service_gitlab_provider.name
+
   module Api = Terrat_vcs_api_gitlab
   module Unlock_id = Terrat_vcs_service_gitlab_provider.Unlock_id
   module Db = Terrat_vcs_service_gitlab_provider.Db
@@ -70,12 +72,10 @@ module Provider : module type of Terrat_vcs_service_gitlab_provider = struct
       | Some (_, content) when CCString.is_empty (CCString.trim content) ->
           Abb.Future.return (Ok None)
       | Some (fname, content) ->
-          Abbs_future_combinators.Result.map_err
-            ~f:(function
-              | `Json_decode_err err -> `Json_decode_err (fname, err)
-              | `Unexpected_err -> `Unexpected_err fname
-              | `Yaml_decode_err err -> `Yaml_decode_err (fname, err))
-            (Jsonu.of_yaml_string content)
+          Abb.Future.return
+          @@ CCResult.map_err
+               (fun (`Yaml_decode_err err) -> `Yaml_decode_err (fname, err))
+               (Jsonu.of_yaml_string content)
           >>= fun json -> Abb.Future.return (Ok (Some (fname, json)))
 
     let maybe_fetch_centralized_repo_config_file request_id client centralized_repo basename =
@@ -175,7 +175,7 @@ module Provider : module type of Terrat_vcs_service_gitlab_provider = struct
             ->
       let wrap_err fname =
         Abbs_future_combinators.Result.map_err ~f:(function
-          | `Repo_config_parse_err err -> `Repo_config_parse_err (fname, err)
+          | `Repo_config_schema_err err -> `Repo_config_schema_err (fname, err)
           | #Terrat_base_repo_config_v1.of_version_1_err as err -> err)
       in
       let validate_configs =

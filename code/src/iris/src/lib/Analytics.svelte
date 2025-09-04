@@ -2,7 +2,8 @@
   import { onMount } from 'svelte';
   // Auth handled by PageLayout
   import { api } from './api';
-  import { selectedInstallation } from './stores';
+  import { selectedInstallation, currentVCSProvider } from './stores';
+  import { repositoryService } from './services/repository-service';
   import PageLayout from './components/layout/PageLayout.svelte';
   import Card from './components/ui/Card.svelte';
   import LoadingSpinner from './components/ui/LoadingSpinner.svelte';
@@ -20,7 +21,7 @@
   let error: string | null = null;
 
   // Shared filtering
-  let dateRange = '30'; // days
+  let dateRange = '7'; // days
   let selectedRepo = '';
 
   // Repository Analytics state
@@ -166,9 +167,15 @@
     if (!$selectedInstallation) return;
 
     isLoadingRepos = true;
+    error = null;
+    
     try {
-      const response = await api.getInstallationRepos($selectedInstallation.id);
-      repositories = response.repositories || [];
+      const result = await repositoryService.loadRepositories($selectedInstallation);
+      repositories = result.repositories;
+      
+      if (result.error) {
+        error = result.error;
+      }
     } catch (err) {
       console.error('Error loading repositories:', err);
       error = err instanceof Error ? err.message : 'Failed to load repositories';
@@ -187,13 +194,70 @@
       const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
       const dateFilter = startDate.toISOString().split('T')[0];
 
-      const response = await api.getInstallationDirspaces($selectedInstallation.id, {
-        q: `created_at:${dateFilter}..`,
-        tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        limit: 200
-      });
+      // Load a reasonable sample for analytics (up to 10 pages / 500 runs)
+      const allDirspaces: Dirspace[] = [];
+      let hasMore = true;
+      let nextPageUrl: string | null = null;
+      let pagesLoaded = 0;
+      const maxPages = 10;  // Limit to 10 pages for performance
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      
+      while (hasMore && pagesLoaded < maxPages) {
+        let response;
+        
+        if (nextPageUrl) {
+          // Use the URL from Link header directly
+          const fetchResponse: Response = await fetch(nextPageUrl, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+          });
+          
+          const rawResponse: { dirspaces: Dirspace[] } = await fetchResponse.json();
+          
+          // Parse Link headers from the response
+          const linkHeader = fetchResponse.headers.get('Link');
+          let linkHeaders: Record<string, string> | null = null;
+          if (linkHeader) {
+            linkHeaders = {};
+            const parts = linkHeader.split(/,\s*(?=<)/);
+            for (const part of parts) {
+              const match = part.match(/<([^>]+)>;\s*rel="([^"]+)"/);
+              if (match) {
+                linkHeaders[match[2]] = match[1];
+              }
+            }
+          }
+          
+          response = {
+            dirspaces: rawResponse.dirspaces || [],
+            linkHeaders
+          };
+        } else {
+          // Initial request
+          response = await api.getInstallationDirspaces($selectedInstallation.id, {
+            q: `created_at:${dateFilter}..`,
+            tz: timezone,
+            limit: 50
+          });
+        }
+        
+        if (response && response.dirspaces) {
+          allDirspaces.push(...response.dirspaces);
+        }
+        
+        pagesLoaded++;
+        
+        // Check for next page
+        if (response.linkHeaders?.next && pagesLoaded < maxPages) {
+          nextPageUrl = response.linkHeaders.next.replace('//api/', '/api/');
+          hasMore = true;
+        } else {
+          hasMore = false;
+        }
+      }
 
-      dirspaces = response.dirspaces || [];
+      dirspaces = allDirspaces;
     } catch (err) {
       console.error('Error loading dirspaces:', err);
       error = err instanceof Error ? err.message : 'Failed to load run data';
@@ -209,15 +273,70 @@
     driftError = null;
     
     try {
+      // Load a reasonable sample for analytics (up to 5 pages / 250 drift operations)
+      const allDriftOperations: Dirspace[] = [];
+      let hasMore = true;
+      let nextPageUrl: string | null = null;
+      let pagesLoaded = 0;
+      const maxPages = 5;  // Fewer pages for drift since it's less common
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       
-      // Use the dirspaces API with kind:drift filter 
-      const response = await api.getInstallationDirspaces($selectedInstallation.id, {
-        q: 'kind:drift',
-        tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        limit: 100 // Get more drift operations for better analytics
-      });
+      while (hasMore && pagesLoaded < maxPages) {
+        let response;
+        
+        if (nextPageUrl) {
+          // Use the URL from Link header directly
+          const fetchResponse: Response = await fetch(nextPageUrl, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+          });
+          
+          const rawResponse: { dirspaces: Dirspace[] } = await fetchResponse.json();
+          
+          // Parse Link headers from the response
+          const linkHeader = fetchResponse.headers.get('Link');
+          let linkHeaders: Record<string, string> | null = null;
+          if (linkHeader) {
+            linkHeaders = {};
+            const parts = linkHeader.split(/,\s*(?=<)/);
+            for (const part of parts) {
+              const match = part.match(/<([^>]+)>;\s*rel="([^"]+)"/);
+              if (match) {
+                linkHeaders[match[2]] = match[1];
+              }
+            }
+          }
+          
+          response = {
+            dirspaces: rawResponse.dirspaces || [],
+            linkHeaders
+          };
+        } else {
+          // Initial request
+          response = await api.getInstallationDirspaces($selectedInstallation.id, {
+            q: 'kind:drift',
+            tz: timezone,
+            limit: 50
+          });
+        }
+        
+        if (response && response.dirspaces) {
+          allDriftOperations.push(...response.dirspaces);
+        }
+        
+        pagesLoaded++;
+        
+        // Check for next page
+        if (response.linkHeaders?.next && pagesLoaded < maxPages) {
+          nextPageUrl = response.linkHeaders.next.replace('//api/', '/api/');
+          hasMore = true;
+        } else {
+          hasMore = false;
+        }
+      }
       
-      driftOperations = response.dirspaces || [];
+      driftOperations = allDriftOperations;
     } catch (err) {
       console.error('❌ Error loading drift operations:', err);
       driftError = err instanceof Error ? err.message : 'Failed to load drift operations';
@@ -735,15 +854,15 @@
   });
 </script>
 
-<PageLayout activeItem="analytics" title="Analytics" subtitle="Repository health and workflow performance insights based on the most recent 100 operations">
+<PageLayout activeItem="analytics" title="Analytics" subtitle="Repository health and workflow performance insights">
   
   <!-- Tab Navigation -->
-  <div class="mb-6">
+  <div class="mb-4 md:mb-6">
     <div class="border-b border-gray-200 dark:border-gray-700">
-      <nav class="-mb-px flex space-x-8">
+      <nav class="-mb-px flex flex-wrap gap-2 sm:gap-0 sm:space-x-8">
         <button
           on:click={() => activeTab = 'repository'}
-          class="py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200 {activeTab === 'repository' 
+          class="py-2 px-1 border-b-2 font-medium text-xs md:text-sm transition-colors duration-200 {activeTab === 'repository' 
             ? 'border-blue-500 text-blue-600 dark:text-blue-400' 
             : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'}"
         >
@@ -751,7 +870,7 @@
         </button>
         <button
           on:click={() => activeTab = 'workflow'}
-          class="py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200 {activeTab === 'workflow' 
+          class="py-2 px-1 border-b-2 font-medium text-xs md:text-sm transition-colors duration-200 {activeTab === 'workflow' 
             ? 'border-blue-500 text-blue-600 dark:text-blue-400' 
             : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'}"
         >
@@ -759,7 +878,7 @@
         </button>
         <button
           on:click={() => activeTab = 'drift'}
-          class="py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200 {activeTab === 'drift' 
+          class="py-2 px-1 border-b-2 font-medium text-xs md:text-sm transition-colors duration-200 {activeTab === 'drift' 
             ? 'border-blue-500 text-blue-600 dark:text-blue-400' 
             : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'}"
         >
@@ -770,14 +889,14 @@
   </div>
 
   <!-- Shared Controls -->
-  <div class="mb-6">
+  <div class="mb-4 md:mb-6">
     <Card padding="md">
-      <div class="flex flex-wrap items-center gap-4">
+      <div class="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 md:gap-4">
         <!-- Date Range -->
-        <div class="flex items-center space-x-2">
-          <label for="date-range" class="text-sm font-medium text-gray-700 dark:text-gray-300">Time Range:</label>
+        <div class="flex items-center space-x-2 w-full sm:w-auto">
+          <label for="date-range" class="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">Time Range:</label>
           <select id="date-range" bind:value={dateRange} on:change={loadData}
-                  class="border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500">
+                  class="flex-1 sm:flex-none border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-xs md:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500">
             <option value="7">Last 7 days</option>
             <option value="30">Last 30 days</option>
             <option value="90">Last 90 days</option>
@@ -785,10 +904,10 @@
         </div>
 
         <!-- Repository Filter -->
-        <div class="flex items-center space-x-2">
-          <label for="repo-filter" class="text-sm font-medium text-gray-700 dark:text-gray-300">Repository:</label>
+        <div class="flex items-center space-x-2 w-full sm:w-auto">
+          <label for="repo-filter" class="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">Repository:</label>
           <select id="repo-filter" bind:value={selectedRepo}
-                  class="border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500">
+                  class="flex-1 sm:flex-none border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-xs md:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500">
             <option value="">All Repositories</option>
             {#each uniqueRepos as repo}
               <option value={repo}>{repo}</option>
@@ -799,12 +918,12 @@
         <!-- Enhanced Analysis (Workflow tab only) -->
         {#if activeTab === 'workflow'}
           {#if selectedRepo}
-            <div class="flex items-center space-x-2 border-l border-gray-300 dark:border-gray-600 pl-4">
-              <span class="text-sm text-gray-600 dark:text-gray-400">Step Details:</span>
+            <div class="flex items-center space-x-2 w-full sm:w-auto sm:border-l sm:border-gray-300 sm:dark:border-gray-600 sm:pl-4">
+              <span class="text-xs md:text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">Step Details:</span>
               <button 
                 on:click={() => loadDetailedDataForRepo(selectedRepo)}
                 disabled={loadingDetailedData || loadedDetailedRepos.has(selectedRepo)}
-                class="px-3 py-1 rounded-md text-sm font-medium border transition-all {
+                class="px-2 md:px-3 py-0.5 md:py-1 rounded-md text-xs md:text-sm font-medium border transition-all {
                   loadedDetailedRepos.has(selectedRepo) 
                     ? 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-600 text-green-700 dark:text-green-300 cursor-default' 
                     : loadingDetailedData 
@@ -825,7 +944,7 @@
               </button>
             </div>
           {:else}
-            <div class="flex items-center space-x-2 border-l border-gray-300 dark:border-gray-600 pl-4">
+            <div class="flex items-center space-x-2 w-full sm:w-auto sm:border-l sm:border-gray-300 sm:dark:border-gray-600 sm:pl-4">
               <span class="text-xs text-gray-500 dark:text-gray-400">💡 Select a repository to load detailed step analysis</span>
             </div>
           {/if}
@@ -834,7 +953,7 @@
       
       <!-- Success message -->
       {#if activeTab === 'workflow' && selectedRepo && loadedDetailedRepos.has(selectedRepo)}
-        <div class="mt-3 text-xs text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/30 px-2 py-1 rounded border border-green-200 dark:border-green-600">
+        <div class="mt-2 md:mt-3 text-xs text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/30 px-2 py-1 rounded border border-green-200 dark:border-green-600">
           ✅ Now showing detailed step execution data for {selectedRepo}
         </div>
       {/if}
@@ -866,63 +985,63 @@
   <!-- Repository Health Tab -->
   {:else if activeTab === 'repository'}
     <!-- Overall Metrics -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <Card padding="lg" class="text-center">
-        <div class="text-3xl font-bold text-blue-600 dark:text-blue-400">{overallMetrics.totalRepos}</div>
-        <div class="text-sm text-blue-700 dark:text-blue-300 mt-1">Total Repositories</div>
-        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">{overallMetrics.activeRepos} active</div>
+    <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
+      <Card padding="md" class="text-center">
+        <div class="text-2xl md:text-3xl font-bold text-blue-600 dark:text-blue-400">{overallMetrics.totalRepos}</div>
+        <div class="text-xs md:text-sm text-blue-700 dark:text-blue-300 mt-1">Total Repositories</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 md:mt-1">{overallMetrics.activeRepos} active</div>
       </Card>
       
-      <Card padding="lg" class="text-center">
-        <div class="text-3xl font-bold text-green-600 dark:text-green-400">{overallMetrics.totalRuns}</div>
-        <div class="text-sm text-green-700 dark:text-green-300 mt-1">Total Runs</div>
-        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Last {dateRange} days (max 100)</div>
+      <Card padding="md" class="text-center">
+        <div class="text-2xl md:text-3xl font-bold text-green-600 dark:text-green-400">{overallMetrics.totalRuns}</div>
+        <div class="text-xs md:text-sm text-green-700 dark:text-green-300 mt-1">Total Runs</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 md:mt-1">Last {dateRange} days (up to 500 runs)</div>
       </Card>
       
-      <Card padding="lg" class="text-center">
-        <div class="text-3xl font-bold {getSuccessRateColor(overallMetrics.avgSuccessRate)}">
+      <Card padding="md" class="text-center">
+        <div class="text-2xl md:text-3xl font-bold {getSuccessRateColor(overallMetrics.avgSuccessRate)}">
           {overallMetrics.avgSuccessRate.toFixed(1)}%
         </div>
-        <div class="text-sm text-gray-700 dark:text-gray-300 mt-1">Avg Success Rate</div>
-        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Across all repos</div>
+        <div class="text-xs md:text-sm text-gray-700 dark:text-gray-300 mt-1">Avg Success Rate</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 md:mt-1">Across all repos</div>
       </Card>
       
-      <Card padding="lg" class="text-center">
-        <div class="text-3xl font-bold text-purple-600 dark:text-purple-400">{overallMetrics.totalUsers}</div>
-        <div class="text-sm text-purple-700 dark:text-purple-300 mt-1">Active Users</div>
-        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Contributing to runs</div>
+      <Card padding="md" class="text-center">
+        <div class="text-2xl md:text-3xl font-bold text-purple-600 dark:text-purple-400">{overallMetrics.totalUsers}</div>
+        <div class="text-xs md:text-sm text-purple-700 dark:text-purple-300 mt-1">Active Users</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 md:mt-1">Contributing to runs</div>
       </Card>
     </div>
 
     <!-- Repository Analytics Table -->
-    <Card padding="lg">
-      <div class="flex items-center justify-between mb-6">
+    <Card padding="md">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 md:mb-6">
         <div>
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Repository Performance</h3>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Based on the most recent 100 runs from the selected time range</p>
+          <h3 class="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-100">Repository Performance</h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Based on a sample of recent runs from the selected time range</p>
         </div>
         
         <!-- Repository Tab Controls -->
-        <div class="flex items-center space-x-4">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
           <!-- Search -->
           <div class="flex items-center space-x-2">
-            <label for="search-repos" class="text-sm font-medium text-gray-700">Search:</label>
+            <label for="search-repos" class="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">Search:</label>
             <input id="search-repos" type="text" bind:value={searchQuery} placeholder="Filter repositories..."
-                   class="border-gray-300 rounded-md shadow-sm text-sm focus:border-blue-500 focus:ring-blue-500" />
+                   class="flex-1 sm:flex-none border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-xs md:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500" />
           </div>
 
           <!-- Sort -->
           <div class="flex items-center space-x-2">
-            <label for="sort-by" class="text-sm font-medium text-gray-700">Sort by:</label>
+            <label for="sort-by" class="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">Sort by:</label>
             <select id="sort-by" bind:value={sortBy}
-                    class="border-gray-300 rounded-md shadow-sm text-sm focus:border-blue-500 focus:ring-blue-500">
+                    class="flex-1 sm:flex-none border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-xs md:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500">
               <option value="runs">Runs</option>
               <option value="success">Success Rate</option>
               <option value="activity">Last Activity</option>
               <option value="name">Name</option>
             </select>
             <button on:click={() => sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'}
-                    class="p-1 text-gray-400 hover:text-gray-600">
+                    class="p-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300">
               {#if sortOrder === 'asc'}
                 ↑
               {:else}
@@ -950,7 +1069,7 @@
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Success Rate</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Duration</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Activity</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Environments</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{$currentVCSProvider === 'gitlab' ? 'GitLab' : 'GitHub'} Environments</th>
               </tr>
             </thead>
             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -999,47 +1118,47 @@
   <!-- Workflow Performance Tab -->
   {:else if activeTab === 'workflow'}
     <!-- Performance Overview -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <Card padding="lg" class="text-center">
-        <div class="text-3xl font-bold text-blue-600 dark:text-blue-400">{performanceMetrics.totalSteps}</div>
-        <div class="text-sm text-blue-700 dark:text-blue-300 mt-1">Total Steps</div>
-        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Executed</div>
+    <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
+      <Card padding="md" class="text-center">
+        <div class="text-2xl md:text-3xl font-bold text-blue-600 dark:text-blue-400">{performanceMetrics.totalSteps}</div>
+        <div class="text-xs md:text-sm text-blue-700 dark:text-blue-300 mt-1">Total Steps</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 md:mt-1">Executed</div>
       </Card>
       
-      <Card padding="lg" class="text-center">
-        <div class="text-3xl font-bold {getSuccessRateColor(performanceMetrics.successRate)}">
+      <Card padding="md" class="text-center">
+        <div class="text-2xl md:text-3xl font-bold {getSuccessRateColor(performanceMetrics.successRate)}">
           {performanceMetrics.successRate.toFixed(1)}%
         </div>
-        <div class="text-sm text-gray-700 dark:text-gray-300 mt-1">Success Rate</div>
-        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Overall performance</div>
+        <div class="text-xs md:text-sm text-gray-700 dark:text-gray-300 mt-1">Success Rate</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 md:mt-1">Overall performance</div>
       </Card>
       
-      <Card padding="lg" class="text-center">
-        <div class="text-3xl font-bold text-purple-600 dark:text-purple-400">{formatDuration(performanceMetrics.avgDuration)}</div>
-        <div class="text-sm text-purple-700 dark:text-purple-300 mt-1">Avg Duration</div>
-        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Per step</div>
+      <Card padding="md" class="text-center">
+        <div class="text-2xl md:text-3xl font-bold text-purple-600 dark:text-purple-400">{formatDuration(performanceMetrics.avgDuration)}</div>
+        <div class="text-xs md:text-sm text-purple-700 dark:text-purple-300 mt-1">Avg Duration</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 md:mt-1">Per step</div>
       </Card>
       
-      <Card padding="lg" class="text-center">
-        <div class="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
+      <Card padding="md" class="text-center">
+        <div class="text-2xl md:text-3xl font-bold text-yellow-600 dark:text-yellow-400">
           {selectedStepType || selectedRepo ? filteredStepAnalytics.length : stepAnalytics.length}
         </div>
-        <div class="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+        <div class="text-xs md:text-sm text-yellow-700 dark:text-yellow-300 mt-1">
           {selectedStepType || selectedRepo ? 'Filtered' : ''} Step Types
         </div>
-        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">In workflow</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 md:mt-1">In workflow</div>
       </Card>
     </div>
 
     <!-- Workflow Tab Controls -->
-    <div class="mb-6">
+    <div class="mb-4 md:mb-6">
       <Card padding="md">
-        <div class="flex flex-wrap items-center gap-4">
+        <div class="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 md:gap-4">
           <!-- Step Type Filter -->
-          <div class="flex items-center space-x-2">
-            <label for="step-filter" class="text-sm font-medium text-gray-700 dark:text-gray-300">Step Type:</label>
+          <div class="flex items-center space-x-2 w-full sm:w-auto">
+            <label for="step-filter" class="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">Step Type:</label>
             <select id="step-filter" bind:value={selectedStepType}
-                    class="border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500">
+                    class="flex-1 sm:flex-none border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-xs md:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500">
               <option value="">All Steps</option>
               {#each uniqueStepTypes as stepType}
                 <option value={stepType}>{stepType}</option>
@@ -1051,18 +1170,18 @@
           <div class="flex items-center space-x-2">
             <input id="failures-only" type="checkbox" bind:checked={onlyShowFailures}
                    class="rounded border-gray-300 dark:border-gray-600 text-blue-600 dark:bg-gray-800 focus:ring-blue-500" />
-            <label for="failures-only" class="text-sm font-medium text-gray-700 dark:text-gray-300">Show failures only</label>
+            <label for="failures-only" class="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300">Show failures only</label>
           </div>
         </div>
       </Card>
     </div>
 
     <!-- Step Analytics -->
-    <Card padding="lg">
-      <div class="flex items-center justify-between mb-6">
+    <Card padding="md">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4 md:mb-6">
         <div>
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Step-by-Step Analysis</h3>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Based on the most recent 100 runs from the selected time range</p>
+          <h3 class="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-100">Step-by-Step Analysis</h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Based on a sample of recent runs from the selected time range</p>
         </div>
         {#if selectedStepType || selectedRepo}
           <div class="text-xs text-gray-600 dark:text-gray-400">
@@ -1098,9 +1217,9 @@
             </div>
           {/if}
           
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
           {#each filteredStepAnalytics as analytics}
-            <Card padding="md" class="bg-gray-50 dark:bg-gray-700">
+            <Card padding="sm" class="bg-gray-50 dark:bg-gray-700">
               
               <!-- Step Header -->
               <div class="flex items-center justify-between mb-3">
@@ -1275,9 +1394,9 @@
 
     <!-- Recent Workflow Steps -->
     <div class="mt-8">
-      <Card padding="lg">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Workflow Steps</h3>
+      <Card padding="md">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+          <h3 class="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Workflow Steps</h3>
           {#if selectedStepType || selectedRepo || onlyShowFailures}
             <div class="text-xs text-gray-600 dark:text-gray-400">
               Filtered: {filteredSteps.length} / {workflowSteps.length} steps
@@ -1293,12 +1412,12 @@
             {/if}
           </div>
         {:else}
-          <div class="space-y-3 max-h-96 overflow-y-auto">
+          <div class="space-y-3 max-h-96 overflow-y-auto overflow-x-hidden">
             {#each filteredSteps.slice(0, 50) as step}
               <div class="bg-gray-50 dark:bg-gray-700 rounded-md">
                 <div class="flex items-center justify-between p-3">
                   <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2 mb-1">
+                    <div class="flex flex-wrap items-center gap-2 mb-1">
                       <button
                         on:click={() => selectedStepType = step.step}
                         class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border transition-colors hover:bg-opacity-80 {getStepCategoryColor(getStepCategory(step.step))}"
@@ -1308,7 +1427,7 @@
                       </button>
                       <button 
                         on:click={() => selectedRepo = step.repository || ''}
-                        class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                        class="text-xs md:text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate max-w-[150px] md:max-w-none"
                         title="Filter to {step.repository} repository"
                       >
                         {step.repository}
@@ -1331,16 +1450,22 @@
                         {step.success ? 'Success' : 'Failed'}
                       </button>
                     </div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400">
-                      {formatDate(step.created_at)}
-                      {#if step.duration}
-                        • {formatDuration(step.duration)}
-                      {/if}
-                      {#if step.scope.dir}
-                        • {step.scope.dir}
-                      {/if}
-                      {#if step.scope.workspace}
-                        • {step.scope.workspace}
+                    <div class="text-xs text-gray-500 dark:text-gray-400 space-y-1 md:space-y-0">
+                      <div class="flex flex-wrap items-center gap-x-2">
+                        <span>{formatDate(step.created_at)}</span>
+                        {#if step.duration}
+                          <span>• {formatDuration(step.duration)}</span>
+                        {/if}
+                      </div>
+                      {#if step.scope.dir || step.scope.workspace}
+                        <div class="flex flex-wrap items-center gap-x-2">
+                          {#if step.scope.dir}
+                            <span class="truncate max-w-[200px]">{step.scope.dir}</span>
+                          {/if}
+                          {#if step.scope.workspace}
+                            <span>• {step.scope.workspace}</span>
+                          {/if}
+                        </div>
                       {/if}
                     </div>
                   </div>
@@ -1474,35 +1599,35 @@
   <!-- Drift Detection Tab -->
   {:else if activeTab === 'drift'}
     <!-- Drift Overview Metrics -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <Card padding="lg" class="text-center">
-        <div class="text-3xl font-bold text-blue-600">{driftMetrics.totalDrifts}</div>
-        <div class="text-sm text-blue-700 mt-1">Drift Detections</div>
-        <div class="text-xs text-gray-500 mt-1">Last 30 days</div>
+    <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
+      <Card padding="md" class="text-center">
+        <div class="text-2xl md:text-3xl font-bold text-blue-600">{driftMetrics.totalDrifts}</div>
+        <div class="text-xs md:text-sm text-blue-700 mt-1">Drift Detections</div>
+        <div class="text-xs text-gray-500 mt-0.5 md:mt-1">Last 30 days</div>
       </Card>
       
-      <Card padding="lg" class="text-center">
-        <div class="text-3xl font-bold {driftMetrics.openDrifts > 0 ? 'text-red-600' : 'text-green-600'}">
+      <Card padding="md" class="text-center">
+        <div class="text-2xl md:text-3xl font-bold {driftMetrics.openDrifts > 0 ? 'text-red-600' : 'text-green-600'}">
           {driftMetrics.openDrifts}
         </div>
-        <div class="text-sm text-gray-700 mt-1">Open Drifts</div>
-        <div class="text-xs text-gray-500 mt-1">Requiring attention</div>
+        <div class="text-xs md:text-sm text-gray-700 mt-1">Open Drifts</div>
+        <div class="text-xs text-gray-500 mt-0.5 md:mt-1">Requiring attention</div>
       </Card>
       
-      <Card padding="lg" class="text-center">
-        <div class="text-3xl font-bold text-purple-600">
+      <Card padding="md" class="text-center">
+        <div class="text-2xl md:text-3xl font-bold text-purple-600">
           {formatDuration(driftMetrics.avgDriftResolutionTime)}
         </div>
-        <div class="text-sm text-purple-700 mt-1">Avg Resolution</div>
-        <div class="text-xs text-gray-500 mt-1">Time to complete</div>
+        <div class="text-xs md:text-sm text-purple-700 mt-1">Avg Resolution</div>
+        <div class="text-xs text-gray-500 mt-0.5 md:mt-1">Time to complete</div>
       </Card>
       
-      <Card padding="lg" class="text-center">
-        <div class="text-lg font-bold text-yellow-600">
+      <Card padding="md" class="text-center">
+        <div class="text-base md:text-lg font-bold text-yellow-600">
           {driftMetrics.mostDriftProneRepo || 'None'}
         </div>
-        <div class="text-sm text-yellow-700 mt-1">Most Drift-Prone</div>
-        <div class="text-xs text-gray-500 mt-1">Repository</div>
+        <div class="text-xs md:text-sm text-yellow-700 mt-1">Most Drift-Prone</div>
+        <div class="text-xs text-gray-500 mt-0.5 md:mt-1">Repository</div>
       </Card>
     </div>
 
@@ -1549,23 +1674,23 @@
     {:else}
       
       <!-- Drift Detection Timeline -->
-      <Card padding="lg" class="mb-8">
-        <div class="flex items-center justify-between mb-6">
+      <Card padding="md" class="mb-6 md:mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4 md:mb-6">
           <div>
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Drift Detections</h3>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Based on the most recent 100 drift operations</p>
+            <h3 class="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Drift Detections</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Based on recent drift operations</p>
           </div>
-          <div class="text-xs text-gray-600 dark:text-gray-400">
+          <div class="text-xs text-gray-600 dark:text-gray-400 text-left sm:text-right">
             Showing {Math.min(20, driftOperations.length)} of {driftOperations.length} drift operations
           </div>
         </div>
         
-        <div class="space-y-4 max-h-96 overflow-y-auto">
+        <div class="space-y-3 md:space-y-4 max-h-96 overflow-y-auto">
           {#each driftOperations.slice(0, 20) as drift}
             <div class="bg-gray-50 dark:bg-gray-700 rounded-md">
-              <div class="flex items-center justify-between p-4">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 md:p-4 gap-3">
                 <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-3 mb-2">
+                  <div class="flex flex-wrap items-center gap-2 mb-2">
                     <span class="w-3 h-3 rounded-full {
                       drift.state === 'success' ? 'bg-green-400' :
                       drift.state === 'failure' ? 'bg-red-400' :
@@ -1573,10 +1698,10 @@
                       drift.state === 'queued' ? 'bg-yellow-400' :
                       'bg-gray-400'
                     }"></span>
-                    <span class="font-medium text-gray-900 dark:text-gray-100">{drift.repo}</span>
-                    <span class="text-sm text-gray-700 dark:text-gray-300">/{drift.dir}</span>
+                    <span class="font-medium text-sm md:text-base text-gray-900 dark:text-gray-100">{drift.repo}</span>
+                    <span class="text-xs md:text-sm text-gray-700 dark:text-gray-300">/{drift.dir}</span>
                     {#if drift.workspace && drift.workspace !== 'default'}
-                      <span class="text-sm text-gray-700 dark:text-gray-300">:{drift.workspace}</span>
+                      <span class="text-xs md:text-sm text-gray-700 dark:text-gray-300">:{drift.workspace}</span>
                     {/if}
                     <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {
                       drift.state === 'success' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200' :
@@ -1593,7 +1718,7 @@
                       </span>
                     {/if}
                   </div>
-                  <div class="text-sm text-gray-600 dark:text-gray-400">
+                  <div class="text-xs md:text-sm text-gray-600 dark:text-gray-400">
                     <span>Owner: {drift.owner || 'Unknown'}</span>
                     <span class="mx-2">•</span>
                     <span>Created: {formatDate(drift.created_at)}</span>
@@ -1609,7 +1734,7 @@
                 <!-- Expand/Collapse Button for Drift Items -->
                 <button
                   on:click={() => expandedDriftItem = expandedDriftItem === drift.id ? null : drift.id}
-                  class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 transition-colors ml-4"
+                  class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 transition-colors sm:ml-4"
                   title={expandedDriftItem === drift.id ? 'Collapse details' : 'Show drift details'}
                 >
                   {#if expandedDriftItem === drift.id}
@@ -1626,7 +1751,7 @@
 
               <!-- Expandable Drift Details -->
               {#if expandedDriftItem === drift.id}
-                <div class="px-4 pb-4 border-t border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 rounded-b-md">
+                <div class="px-3 md:px-4 pb-3 md:pb-4 border-t border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 rounded-b-md">
                   <div class="pt-4 space-y-3">
                     
                     <!-- Drift Analysis Details -->
@@ -1675,7 +1800,7 @@
                         </div>
                         {#if drift.environment}
                           <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Environment:</span>
+                            <span class="text-gray-600 dark:text-gray-400">{$currentVCSProvider === 'gitlab' ? 'GitLab' : 'GitHub'} Environment:</span>
                             <span class="font-mono text-gray-900 dark:text-gray-100">{drift.environment}</span>
                           </div>
                         {/if}

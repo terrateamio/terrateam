@@ -51,8 +51,8 @@ module Primary = struct
     original_position : int;
     original_start_line : int option; [@default None]
     path : string;
-    position : int option;
-    pull_request_review_id : int64 option;
+    position : int option; [@default None]
+    pull_request_review_id : int64 option; [@default None]
     pull_request_url : string;
     reactions : Githubc2_components_reaction_rollup.t option; [@default None]
     side : Side.t; [@default "RIGHT"]
@@ -60,7 +60,7 @@ module Primary = struct
     start_side : Start_side.t option; [@default Some "RIGHT"]
     updated_at : string;
     url : string;
-    user : Githubc2_components_nullable_simple_user.t option;
+    user : Githubc2_components_nullable_simple_user.t option; [@default None]
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end

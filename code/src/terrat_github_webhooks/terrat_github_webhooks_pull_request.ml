@@ -84,16 +84,16 @@ end
 
 type t = {
   links_ : Links_.t; [@key "_links"]
-  active_lock_reason : string option;
+  active_lock_reason : string option; [@default None]
   additions : int;
   assignee : Terrat_github_webhooks_user.t option; [@default None]
   assignees : Assignees.t;
   author_association : string;
   auto_merge : Terrat_github_webhooks_auto_merge.t option; [@default None]
   base : Base.t;
-  body : string option;
+  body : string option; [@default None]
   changed_files : int;
-  closed_at : string option;
+  closed_at : string option; [@default None]
   comments : int;
   comments_url : string;
   commits : int;
@@ -109,17 +109,17 @@ type t = {
   labels : Labels.t;
   locked : bool;
   maintainer_can_modify : bool;
-  merge_commit_sha : string option;
-  mergeable : bool option;
+  merge_commit_sha : string option; [@default None]
+  mergeable : bool option; [@default None]
   mergeable_state : string;
-  merged : bool option;
-  merged_at : string option;
+  merged : bool option; [@default None]
+  merged_at : string option; [@default None]
   merged_by : Terrat_github_webhooks_user.t option; [@default None]
   milestone : Terrat_github_webhooks_milestone.t option; [@default None]
   node_id : string;
   number : int;
   patch_url : string;
-  rebaseable : bool option;
+  rebaseable : bool option; [@default None]
   requested_reviewers : Requested_reviewers.t;
   requested_teams : Requested_teams.t;
   review_comment_url : string;

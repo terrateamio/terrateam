@@ -24,6 +24,7 @@ module Dirspaceflow = struct
   type 'a t = {
     dirspace : Dirspace.t;
     workflow : 'a;
+    variables : string Terrat_data.String_map.t option;
   }
   [@@deriving eq, show]
 

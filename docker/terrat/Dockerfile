@@ -2,13 +2,14 @@
 ARG BASE_IMAGE
 
 # Optional base setup stage if BASE_IMAGE is not provided
-FROM alpine:3.18 AS build-base
+FROM alpine:3.22 AS build-base
 
 # Install base packages
 RUN apk add --no-cache \
     bash \
     bsd-compat-headers \
     ca-certificates \
+    cargo \
     clang \
     cmake \
     coreutils \
@@ -31,8 +32,8 @@ RUN apk add --no-cache \
     py3-yaml \
     python3 \
     rsync \
+    rust \
     sqlite-dev \
-    yj \
     zlib-dev
 
 # Initialize opam
@@ -95,12 +96,11 @@ RUN ulimit -s 524288 && ulimit -a && \
 # Build target for terrat-ee
 FROM build-setup AS terrat-ee-build
 WORKDIR /mono/code
-RUN apk add --no-cache rsync
 RUN ulimit -s 524288 && ulimit -a && \
     mv /build-cache ./build && \
     eval $(opam env) && pds && \
-    (time make -j$(nproc --all) -k test release_terrat_ee release_iris \
-     || time make -j1 test release_terrat_ee release_iris) && \
+    (time make -j$(nproc --all) -k test test-terrat release_terrat_ee release_iris \
+     || time make -j1 test test-terrat release_terrat_ee release_iris) && \
     find . -name '*.tap' -exec cat '{}' \;
 
 # Build target for terrat-oss
@@ -109,7 +109,8 @@ WORKDIR /mono/code
 RUN ulimit -s 524288 && ulimit -a && \
     mv /build-cache ./build && \
     eval $(opam env) && pds && \
-    (time make -j$(nproc --all) -k test release_terrat_oss || time make -j1 test release_terrat_oss) && \
+    (time make -j$(nproc --all) -k test test-terrat release_terrat_oss release_iris \
+     || time make -j1 test test-terrat release_terrat_oss release_iris) && \
     find . -name '*.tap' -exec cat '{}' \;
 
 # Final code-indexer image
@@ -174,5 +175,6 @@ COPY docker/terrat/nginx.conf.template /etc/nginx/nginx.conf.template
 COPY --from=terrat-oss-build /usr/lib/libkqueue.so /usr/lib/libkqueue.so
 COPY --from=terrat-oss-build /usr/lib/libkqueue.so.0 /usr/lib/libkqueue.so.0
 COPY --from=terrat-oss-build /mono/code/build/release/terrat_oss/terrat_oss.native /usr/local/bin/terrat
+COPY --from=terrat-oss-build /mono/code/build/release/iris/dist/ /usr/local/share/terrat/ui/assets/
 EXPOSE 8080
 CMD ["runsvdir", "/etc/service"]

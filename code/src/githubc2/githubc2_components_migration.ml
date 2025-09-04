@@ -22,7 +22,7 @@ module Primary = struct
     lock_repositories : bool;
     node_id : string;
     org_metadata_only : bool;
-    owner : Githubc2_components_nullable_simple_user.t option;
+    owner : Githubc2_components_nullable_simple_user.t option; [@default None]
     repositories : Repositories.t;
     state : string;
     updated_at : string;

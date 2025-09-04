@@ -16,7 +16,7 @@ module Primary = struct
     memory_in_bytes : int;
     name : string;
     operating_system : string;
-    prebuild_availability : Prebuild_availability.t option;
+    prebuild_availability : Prebuild_availability.t option; [@default None]
     storage_in_bytes : int;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]

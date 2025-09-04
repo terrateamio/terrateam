@@ -15,7 +15,7 @@ export function isAnalyticsEnabled(): boolean {
     return enabled;
   }
   
-  // Default to disabled for safety
+  // Default to disabled
   return false;
 }
 
@@ -32,7 +32,7 @@ export function getSubscriptionMode(): SubscriptionMode {
     }
   }
   
-  // Default to OSS mode (shows self-hosted/enterprise contact info)
+  // Default to OSS mode
   return 'oss';
 }
 

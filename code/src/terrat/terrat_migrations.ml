@@ -159,9 +159,23 @@ let migrations =
       run_file_sql "2025-07-07-refactor-github-dirspace-locking-phase-1.sql" );
     ( "refactor-github-dirspace-locking-phase-2",
       run_file_sql "2025-07-07-refactor-github-dirspace-locking-phase-2.sql" );
-    ("refactor-github-dirspace-locking-phase-3.1", Terrat_migrations_ex_568.run);
+    ("refactor-github-dirspace-locking-phase-3.1", Terrat_migrations_ex_568.run_github);
     ( "refactor-gihtub-dirspace-locking-phase-3.2",
       run_file_sql "2025-07-09-refactor-github-dirspace-locking-phase-3.sql" );
+    ( "refactor-gitlab-dirspace-locking-phase-1",
+      run_file_sql "2025-07-14-refactor-gitlab-dirspace-locking-phase-1.sql" );
+    ("refactor-gitlab-dirspace-locking-phase-2", Terrat_migrations_ex_568.run_gitlab);
+    ( "refactor-gitlab-dirspace-locking-phase-3",
+      run_file_sql "2025-07-14-refactor-gitlab-dirspace-locking-phase-3.sql" );
+    ( "fix-make-gitlab-tables-closer-to-github",
+      run_file_sql "2025-07-15-fix-make-gitlab-tables-match-github-closer.sql" );
+    ( "refactor-manage-github-maps-via-triggers",
+      run_file_sql "2025-07-22-refactor-manage-github-maps-via-triggers.sql" );
+    ("fix-gitlab-installation-state", run_file_sql "2025-07-21-fix-gitlab-installation-state.sql");
+    ("add-github-emails-table", run_file_sql "2025-08-19-add-emails-table.sql");
+    ("add-comment-tracking", run_file_sql "2025-08-20-add-comment-tracking.sql");
+    ( "fix-missing-repository-mappings",
+      run_file_sql "2025-08-21-fix-missing-repository-mappings.sql" );
   ]
 
 let run config storage = Mig.run (config, storage) migrations

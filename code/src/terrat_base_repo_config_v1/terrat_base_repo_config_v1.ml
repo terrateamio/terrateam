@@ -2,6 +2,8 @@ module V1 = Terrat_repo_config.Version_1
 module String_map = Terrat_data.String_map
 module String_set = Terrat_data.String_set
 
+let config_schema = [%blob "../../../../api_schemas/terrat/config-schema.json"]
+
 let timezone_abbreviations =
   String_set.of_list
     [
@@ -454,6 +456,26 @@ module Workflow_step = struct
     }
     [@@deriving make, show, yojson, eq]
   end
+
+  module Opa = struct
+    module Fail_on = struct
+      type t =
+        | Defined
+        | Undefined
+      [@@deriving show, yojson, eq]
+    end
+
+    type t = {
+      env : string String_map.t option;
+      extra_args : string list; [@default []]
+      fail_on : Fail_on.t; [@default Fail_on.Undefined]
+      gate : Gate.t option; [@default None]
+      ignore_errors : bool; [@default false]
+      run_on : Run_on.t; [@default Run_on.Success]
+      visible_on : Visible_on.t; [@default Visible_on.Failure]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
 end
 
 module Access_control = struct
@@ -541,6 +563,7 @@ module Apply_requirements = struct
       any_of : Access_control.Match_list.t; [@default []]
       any_of_count : int; [@default 1]
       enabled : bool; [@default false]
+      require_completed_reviews : bool; [@default false]
     }
     [@@deriving make, show, yojson, eq]
   end
@@ -617,6 +640,12 @@ module Cost_estimation = struct
     provider : Provider.t; [@default Provider.Infracost]
   }
   [@@deriving make, show, yojson, eq]
+end
+
+module Default_branch_overrides = struct
+  type t = string list [@@deriving show, yojson, eq]
+
+  let make () = [ "access_control"; "apply_requirements"; "destination_branches" ]
 end
 
 module Destination_branches = struct
@@ -923,6 +952,61 @@ module Integrations = struct
   [@@deriving make, show, yojson, eq]
 end
 
+module Notifications = struct
+  module Policy = struct
+    module Strategy = struct
+      type t =
+        | Append
+        | Delete
+        | Minimize
+      [@@deriving show, yojson, eq]
+    end
+
+    type t = {
+      tag_query : Tag_query.t;
+      comment_strategy : Strategy.t; [@default Strategy.Minimize]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  type t = { policies : Policy.t list [@default [ Policy.make ~tag_query:Tag_query.any () ]] }
+  [@@deriving make, show, yojson, eq]
+end
+
+module Stacks = struct
+  module Rules = struct
+    type t = {
+      apply_after : string list; [@default []]
+      auto_apply : bool option; [@default None]
+      modified_by : string list; [@default []]
+      plan_after : string list; [@default []]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  module Type_ = struct
+    type t =
+      | Nested of string list
+      | Stack of Tag_query.t
+    [@@deriving show, yojson, eq]
+  end
+
+  module Stack = struct
+    type t = {
+      type_ : Type_.t;
+      rules : Rules.t; [@default Rules.make ()]
+      variables : string String_map.t; [@default String_map.empty]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  type t = {
+    names : Stack.t String_map.t;
+        [@default String_map.singleton "default" (Stack.make ~type_:(Type_.Stack Tag_query.any) ())]
+  }
+  [@@deriving make, show, yojson, eq]
+end
+
 module Storage = struct
   module Plans = struct
     module Cmd = struct
@@ -991,6 +1075,7 @@ module Workflows = struct
         | Oidc of Workflow_step.Oidc.t
         | Checkov of Workflow_step.Checkov.t
         | Conftest of Workflow_step.Conftest.t
+        | Opa of Workflow_step.Opa.t
       [@@deriving show, yojson, eq]
     end
 
@@ -1041,6 +1126,7 @@ module View = struct
     config_builder : Config_builder.t; [@default Config_builder.make ()]
     cost_estimation : Cost_estimation.t; [@default Cost_estimation.make ()]
     create_and_select_workspace : bool; [@default true]
+    default_branch_overrides : Default_branch_overrides.t option; [@default None]
     destination_branches : Destination_branches.t; [@default []]
     dirs : Dirs.t; [@default String_map.empty]
     drift : Drift.t; [@default Drift.make ()]
@@ -1049,7 +1135,9 @@ module View = struct
     hooks : Hooks.t; [@default Hooks.make ()]
     indexer : Indexer.t; [@default Indexer.make ()]
     integrations : Integrations.t; [@default Integrations.make ()]
+    notifications : Notifications.t; [@default Notifications.make ()]
     parallel_runs : int; [@default 3]
+    stacks : Stacks.t; [@default Stacks.make ()]
     storage : Storage.t; [@default Storage.make ()]
     tags : Tags.t; [@default Tags.make ()]
     tree_builder : Tree_builder.t; [@default Tree_builder.make ()]
@@ -1107,7 +1195,9 @@ type of_version_1_err =
   | `Glob_parse_err of string * string
   | `Hooks_unknown_run_on_err of Terrat_repo_config_run_on.t
   | `Hooks_unknown_visible_on_err of string
+  | `Notification_policy_tag_query_err of string * string
   | `Pattern_parse_err of string
+  | `Stack_config_tag_query_err of string * string
   | `Unknown_lock_policy_err of string
   | `Unknown_plan_mode_err of string
   | `Window_parse_timezone_err of string
@@ -1116,6 +1206,12 @@ type of_version_1_err =
   | `Workflows_plan_unknown_run_on_err of Terrat_repo_config_run_on.t
   | `Workflows_plan_unknown_visible_on_err of string
   | `Workflows_tag_query_parse_err of string * string
+  ]
+[@@deriving show]
+
+type of_version_1_json_err =
+  [ of_version_1_err
+  | `Repo_config_schema_err of Jsonschema_check.Validation_err.t list
   ]
 [@@deriving show]
 
@@ -1212,7 +1308,8 @@ let get_apply_requirements_checks_approved =
   function
   | Ap.Apply_requirements_checks_approved_1 { Ap1.count; enabled } ->
       Ok (Apply_requirements.Approved.make ~any_of_count:count ~enabled ())
-  | Ap.Apply_requirements_checks_approved_2 { Ap2.enabled; all_of; any_of; any_of_count } ->
+  | Ap.Apply_requirements_checks_approved_2
+      { Ap2.enabled; all_of; any_of; any_of_count; require_completed_reviews } ->
       CCResult.map_err
         (function
           | `Match_parse_err err -> `Apply_requirements_approved_all_of_match_parse_err err)
@@ -1223,7 +1320,14 @@ let get_apply_requirements_checks_approved =
           | `Match_parse_err err -> `Apply_requirements_approved_any_of_match_parse_err err)
         (map_opt of_version_1_match_list any_of)
       >>= fun any_of ->
-      Ok (Apply_requirements.Approved.make ~enabled ?all_of ?any_of ~any_of_count ())
+      Ok
+        (Apply_requirements.Approved.make
+           ~enabled
+           ?all_of
+           ?any_of
+           ~any_of_count
+           ~require_completed_reviews
+           ())
 
 let get_apply_requirements_checks_apply_after_merge =
   let module Afm = Terrat_repo_config_apply_requirements_checks_apply_after_merge in
@@ -1652,6 +1756,43 @@ let of_version_1_workflow_op_list ops =
                   ~ignore_errors
                   ?run_on
                   ?visible_on
+                  ()))
+      | Op.Workflow_op_opa op ->
+          let module Op = Terrat_repo_config_workflow_op_opa in
+          let { Op.env; extra_args; fail_on; gate; ignore_errors; run_on; visible_on; type_ = _ } =
+            op
+          in
+          let fail_on =
+            match fail_on with
+            | "defined" -> Workflow_step.Opa.Fail_on.Defined
+            | "undefined" -> Workflow_step.Opa.Fail_on.Undefined
+            | _ -> assert false
+          in
+          map_opt (fun { Op.Env.additional; _ } -> Ok additional) env
+          >>= fun env ->
+          CCResult.map_err
+            (function
+              | `Unknown_run_on err -> `Workflows_unknown_run_on_err err)
+            (map_opt of_version_1_run_on run_on)
+          >>= fun run_on ->
+          CCResult.map_err
+            (function
+              | `Unknown_visible_on err -> `Workflows_unknown_visible_on_err err)
+            (map_opt of_version_1_visible_on visible_on)
+          >>= fun visible_on ->
+          map_opt of_version_1_gate gate
+          >>= fun gate ->
+          let extra_args = CCOption.get_or ~default:[] extra_args in
+          Ok
+            (O.Opa
+               (Workflow_step.Opa.make
+                  ?env
+                  ~extra_args
+                  ~fail_on
+                  ~gate
+                  ~ignore_errors
+                  ?run_on
+                  ?visible_on
                   ())))
     ops
 
@@ -1670,7 +1811,7 @@ let of_version_1_workflow_engine cdktf terraform_version terragrunt default_engi
   | _, _, _, Some engine -> (
       let module E = Terrat_repo_config_engine in
       match engine with
-      | E.Engine_other other -> Ok (Some (Engine.Other other))
+      | E.Engine_other _ as other -> Ok (Some (Engine.Other (E.to_yojson other)))
       | E.Engine_custom custom ->
           let module E = Terrat_repo_config_engine_custom in
           let { E.apply; init; plan; diff; unsafe_apply; outputs; name = _ } = custom in
@@ -1999,7 +2140,7 @@ let of_version_1_engine default_tf_version engine =
   | _, Some engine -> (
       let module E = Terrat_repo_config_engine in
       match engine with
-      | E.Engine_other other -> Ok (Some (Engine.Other other))
+      | E.Engine_other _ as other -> Ok (Some (Engine.Other (E.to_yojson other)))
       | E.Engine_custom custom ->
           let module E = Terrat_repo_config_engine_custom in
           let { E.apply; init; plan; diff; unsafe_apply; outputs; name = _ } = custom in
@@ -2080,6 +2221,76 @@ let of_version_1_integrations integrations =
       resourcely
   in
   Ok { Integrations.resourcely }
+
+let of_version_1_stack_config names =
+  let open CCResult.Infix in
+  let module N = Terrat_repo_config_stacks.Names in
+  let { N.additional = configs; _ } = names in
+  CCResult.map_l (fun (k, v) ->
+      let module S = Terrat_repo_config_stacks.Names.Additional in
+      let module Sc = Terrat_repo_config_stack_config in
+      let module Sn = Terrat_repo_config_stack_nested_config in
+      let module V = Terrat_repo_config_stack_variables in
+      (match v with
+      | S.Stack_config { Sc.tag_query; rules; variables } ->
+          CCResult.map_err
+            (function
+              | `Tag_query_error err -> `Stack_config_tag_query_err err)
+            (Terrat_tag_query.of_string tag_query)
+          >>= fun tag_query -> Ok (Stacks.Type_.Stack tag_query, rules, variables)
+      | S.Stack_nested_config { Sn.stacks; rules; variables } ->
+          Ok (Stacks.Type_.Nested stacks, rules, variables))
+      >>= fun (type_, rules, variables) ->
+      let module R = Terrat_repo_config_stack_rules in
+      let { R.apply_after; auto_apply; modified_by; plan_after } =
+        CCOption.get_or
+          ~default:
+            { R.apply_after = None; auto_apply = None; modified_by = None; plan_after = None }
+          rules
+      in
+      let rules =
+        {
+          Stacks.Rules.apply_after = CCOption.get_or ~default:[] apply_after;
+          auto_apply;
+          modified_by = CCOption.get_or ~default:[] modified_by;
+          plan_after = CCOption.get_or ~default:[] (CCOption.or_ ~else_:modified_by plan_after);
+        }
+      in
+      let variables = CCOption.map (fun { V.additional = variables; _ } -> variables) variables in
+      Ok (k, Stacks.Stack.make ~type_ ~rules ?variables ()))
+  @@ String_map.to_list configs
+  >>= fun configs -> Ok (String_map.of_list configs)
+
+let of_version_1_stacks stacks =
+  let open CCResult.Infix in
+  let module S = Terrat_repo_config_stacks in
+  let { S.names } = stacks in
+  map_opt of_version_1_stack_config names >>= fun names -> Ok (Stacks.make ?names ())
+
+let of_version_1_notification_policy policy =
+  let open CCResult.Infix in
+  let module P = Terrat_repo_config_notification_policy in
+  let module Policy = Notifications.Policy in
+  let { P.tag_query; comment_strategy } = policy in
+  CCResult.map_err
+    (function
+      | `Tag_query_error err -> `Notification_policy_tag_query_err err)
+    (Terrat_tag_query.of_string tag_query)
+  >>= fun tag_query ->
+  (match comment_strategy with
+  | "append" -> Ok Policy.Strategy.Append
+  | "delete" -> Ok Policy.Strategy.Delete
+  | "minimize" -> Ok Policy.Strategy.Minimize
+  | _st -> assert false)
+  >>= fun comment_strategy -> Ok { Policy.tag_query; comment_strategy }
+
+let of_version_1_notifications notifications =
+  let open CCResult.Infix in
+  let module N = Terrat_repo_config_notifications in
+  let { N.policies } = notifications in
+  let policies = CCOption.get_or ~default:[] policies in
+  CCResult.map_l of_version_1_notification_policy policies
+  >>= fun policies -> Ok { Notifications.policies }
 
 let of_version_1_storage storage =
   let open CCResult.Infix in
@@ -2217,7 +2428,9 @@ let of_version_1 v1 =
     config_builder;
     cost_estimation;
     create_and_select_workspace;
+    default_branch_overrides;
     default_tf_version;
+    definitions = _;
     destination_branches;
     dirs;
     drift;
@@ -2226,7 +2439,9 @@ let of_version_1 v1 =
     hooks;
     indexer;
     integrations;
+    notifications;
     parallel_runs;
+    stacks;
     storage;
     tags;
     tree_builder;
@@ -2265,6 +2480,10 @@ let of_version_1 v1 =
   >>= fun indexer ->
   map_opt of_version_1_integrations integrations
   >>= fun integrations ->
+  map_opt of_version_1_stacks stacks
+  >>= fun stacks ->
+  map_opt of_version_1_notifications notifications
+  >>= fun notifications ->
   map_opt of_version_1_storage storage
   >>= fun storage ->
   map_opt of_version_1_tags tags
@@ -2282,6 +2501,7 @@ let of_version_1 v1 =
        ?config_builder
        ?cost_estimation
        ~create_and_select_workspace
+       ~default_branch_overrides
        ?destination_branches
        ?dirs
        ?drift
@@ -2290,7 +2510,9 @@ let of_version_1 v1 =
        ?hooks
        ?indexer
        ?integrations
+       ?notifications
        ~parallel_runs
+       ?stacks
        ?storage
        ?tags
        ?tree_builder
@@ -2301,17 +2523,12 @@ let of_version_1 v1 =
 let of_version_1_json json =
   match Terrat_repo_config.Version_1.of_yojson json with
   | Ok config -> of_version_1 config
-  | Error err ->
-      (* This is a cheap trick but we just want to make the error message a
-         little bit more friendly to users by replacing the parts of the error
-         message that are specific to the implementation. *)
-      Error
-        (`Repo_config_parse_err
-           ("Failed to parse repo config: "
-           ^ (err
-             |> CCString.replace ~sub:"Terrat_repo_config." ~by:""
-             |> CCString.replace ~sub:".t" ~by:""
-             |> CCString.lowercase_ascii)))
+  | Error _ -> (
+      match
+        Jsonschema_check.validate_json_schema ~schema:config_schema (Yojson.Safe.to_string json)
+      with
+      | Ok () -> assert false
+      | Error errors -> Error (`Repo_config_schema_err errors))
 
 let to_version_1_match_list =
   CCList.map (function
@@ -2369,12 +2586,21 @@ let to_version_1_apply_requirements_apply_after_merge afm =
 
 let to_version_1_apply_requirements_approved approved =
   let module Ap = Terrat_repo_config.Apply_requirements_checks_approved_2 in
-  let { Apply_requirements.Approved.all_of; any_of; any_of_count; enabled } = approved in
+  let {
+    Apply_requirements.Approved.all_of;
+    any_of;
+    any_of_count;
+    enabled;
+    require_completed_reviews;
+  } =
+    approved
+  in
   {
     Ap.all_of = Some (to_version_1_match_list all_of);
     any_of = Some (to_version_1_match_list any_of);
     any_of_count;
     enabled;
+    require_completed_reviews;
   }
 
 let to_version_1_apply_requirements_merge_conflicts mc =
@@ -2553,8 +2779,9 @@ let to_version_1_drift drift =
 
 let to_version_1_engine engine =
   let module E = Terrat_repo_config.Engine in
+  let module O = Terrat_repo_config_engine_other in
   match engine with
-  | Engine.Other other -> E.Engine_other other
+  | Engine.Other other -> E.Engine_other (CCResult.get_exn @@ O.of_yojson other)
   | Engine.Custom custom ->
       let module Custom = Terrat_repo_config.Engine_custom in
       let { Engine.Custom.apply; init; plan; diff; unsafe_apply; outputs } = custom in
@@ -2711,6 +2938,65 @@ let to_version_1_integrations integrations =
   in
   { I.resourcely = Some { I.Resourcely.enabled; extra_args = Some [] } }
 
+let to_version_1_stacks stacks =
+  let module S = Terrat_repo_config_stacks in
+  let { Stacks.names } = stacks in
+  let names =
+    S.Names.make
+      ~additional:
+        (String_map.map
+           (fun v ->
+             let module S = Terrat_repo_config_stacks.Names.Additional in
+             let module Sc = Terrat_repo_config_stack_config in
+             let module Sn = Terrat_repo_config_stack_nested_config in
+             let module V = Terrat_repo_config_stack_variables in
+             let module R = Terrat_repo_config_stack_rules in
+             let { Stacks.Stack.type_; rules; variables } = v in
+             let { Stacks.Rules.modified_by; apply_after; auto_apply; plan_after } = rules in
+             let rules =
+               {
+                 R.modified_by = Some modified_by;
+                 apply_after = Some apply_after;
+                 auto_apply;
+                 plan_after = Some plan_after;
+               }
+             in
+             match type_ with
+             | Stacks.Type_.Stack tag_query ->
+                 S.Stack_config
+                   {
+                     Sc.tag_query = Terrat_tag_query.to_string tag_query;
+                     rules = Some rules;
+                     variables = Some (V.make ~additional:variables Json_schema.Empty_obj.t);
+                   }
+             | Stacks.Type_.Nested stacks ->
+                 S.Stack_nested_config
+                   {
+                     Sn.stacks;
+                     rules = Some rules;
+                     variables = Some (V.make ~additional:variables Json_schema.Empty_obj.t);
+                   })
+           names)
+      Json_schema.Empty_obj.t
+  in
+  { S.names = Some names }
+
+let to_version_1_notification_policy policy =
+  let module P = Terrat_repo_config_notification_policy in
+  let { Notifications.Policy.tag_query; comment_strategy } = policy in
+  let comment_strategy =
+    match comment_strategy with
+    | Notifications.Policy.Strategy.Append -> "append"
+    | Notifications.Policy.Strategy.Delete -> "delete"
+    | Notifications.Policy.Strategy.Minimize -> "minimize"
+  in
+  { P.tag_query = Terrat_tag_query.to_string tag_query; comment_strategy }
+
+let to_version_1_notifications notifications =
+  let module N = Terrat_repo_config.Notifications in
+  let { Notifications.policies } = notifications in
+  { N.policies = Some (CCList.map to_version_1_notification_policy policies) }
+
 let to_version_1_storage_plans plans =
   match plans with
   | Storage.Plans.Terrateam ->
@@ -2860,6 +3146,28 @@ let to_version_1_workflows_op =
             ignore_errors;
             run_on = Some (Workflow_step.Run_on.to_string run_on);
             visible_on = Some (Workflow_step.Visible_on.to_string visible_on);
+          }
+    | Workflows.Entry.Op.Opa opa ->
+        let module C = Terrat_repo_config.Workflow_op_opa in
+        let { Workflow_step.Opa.env; extra_args; fail_on; gate; ignore_errors; run_on; visible_on }
+            =
+          opa
+        in
+        let fail_on =
+          match fail_on with
+          | Workflow_step.Opa.Fail_on.Defined -> "defined"
+          | Workflow_step.Opa.Fail_on.Undefined -> "undefined"
+        in
+        Op.Items.Workflow_op_opa
+          {
+            C.type_ = "opa";
+            env = CCOption.map (fun env -> C.Env.make ~additional:env Json_schema.Empty_obj.t) env;
+            extra_args = Some extra_args;
+            fail_on;
+            gate = CCOption.map to_version_1_gate gate;
+            ignore_errors;
+            run_on = Some (Workflow_step.Run_on.to_string run_on);
+            visible_on = Some (Workflow_step.Visible_on.to_string visible_on);
           })
 
 let to_version_1_workflows =
@@ -2904,6 +3212,7 @@ let to_version_1 t =
     config_builder;
     cost_estimation;
     create_and_select_workspace;
+    default_branch_overrides;
     destination_branches;
     dirs;
     drift;
@@ -2912,7 +3221,9 @@ let to_version_1 t =
     hooks;
     indexer;
     integrations;
+    notifications;
     parallel_runs;
+    stacks;
     storage;
     tags;
     tree_builder;
@@ -2954,7 +3265,9 @@ let to_version_1 t =
         to_version_1_cost_estimation
         cost_estimation;
     create_and_select_workspace;
+    default_branch_overrides;
     default_tf_version = None;
+    definitions = None;
     destination_branches =
       map_opt_if_true (( <> ) []) to_version_1_destination_branches destination_branches;
     dirs = map_opt_if_true CCFun.(String_map.is_empty %> not) to_version_1_dirs dirs;
@@ -2973,7 +3286,13 @@ let to_version_1 t =
         CCFun.(Integrations.equal (Integrations.make ()) %> not)
         to_version_1_integrations
         integrations;
+    notifications =
+      map_opt_if_true
+        CCFun.(Notifications.equal (Notifications.make ()) %> not)
+        to_version_1_notifications
+        notifications;
     parallel_runs;
+    stacks = map_opt_if_true CCFun.(Stacks.equal (Stacks.make ()) %> not) to_version_1_stacks stacks;
     storage =
       map_opt_if_true CCFun.(Storage.equal (Storage.make ()) %> not) to_version_1_storage storage;
     tags = map_opt_if_true CCFun.(Tags.equal (Tags.make ()) %> not) to_version_1_tags tags;
@@ -2992,12 +3311,37 @@ let to_version_1 t =
   }
 
 let merge_with_default_branch_config ~default t =
-  {
-    t with
-    View.access_control = default.View.access_control;
-    apply_requirements = default.View.apply_requirements;
-    destination_branches = default.View.destination_branches;
-  }
+  (* Some identifiers come from the default branch (generally for security
+     reasons). The configuration for this is a list of root keys that should
+     come from the default branch.  The easiest way to implement this to convert
+     everything to the JSON representation, pull from default, then convert
+     back.  Because we know everything was a valid repository configuration, we
+     can elide error checking because this is just moving keys around and does
+     not change the correctness of the configuration. *)
+  let default_branch_overrides =
+    "default_branch_overrides"
+    :: CCOption.get_or
+         ~default:(Default_branch_overrides.make ())
+         default.View.default_branch_overrides
+  in
+  let default_json = Terrat_repo_config.Version_1.to_yojson @@ to_version_1 default in
+  let t_json = Terrat_repo_config.Version_1.to_yojson @@ to_version_1 t in
+  let t =
+    CCListLabels.fold_left
+      ~f:(fun t override ->
+        CCList.Assoc.set
+          ~eq:CCString.equal
+          override
+          (Yojson.Safe.Util.member override default_json)
+          t)
+      ~init:(Yojson.Safe.Util.to_assoc t_json)
+      default_branch_overrides
+  in
+  `Assoc t
+  |> Terrat_repo_config.Version_1.of_yojson
+  |> CCResult.get_exn
+  |> of_version_1
+  |> CCResult.get_exn
 
 (* Functionality around derive *)
 
@@ -3290,6 +3634,10 @@ let batch_runs t = t.View.batch_runs
 let config_builder t = t.View.config_builder
 let cost_estimation t = t.View.cost_estimation
 let create_and_select_workspace t = t.View.create_and_select_workspace
+
+let default_branch_overrides t =
+  CCOption.get_or ~default:(Default_branch_overrides.make ()) t.View.default_branch_overrides
+
 let destination_branches t = t.View.destination_branches
 let dirs t = t.View.dirs
 let drift t = t.View.drift
@@ -3298,7 +3646,9 @@ let engine t = t.View.engine
 let hooks t = t.View.hooks
 let indexer t = t.View.indexer
 let integrations t = t.View.integrations
+let notifications t = t.View.notifications
 let parallel_runs t = t.View.parallel_runs
+let stacks t = t.View.stacks
 let storage t = t.View.storage
 let tags t = t.View.tags
 let tree_builder t = t.View.tree_builder

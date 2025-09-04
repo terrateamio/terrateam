@@ -1,14 +1,14 @@
 module Primary = struct
   type t = {
-    avatar_url : string option;
+    avatar_url : string option; [@default None]
     context : string;
     created_at : string;
-    creator : Githubc2_components_nullable_simple_user.t option;
-    description : string option;
+    creator : Githubc2_components_nullable_simple_user.t option; [@default None]
+    description : string option; [@default None]
     id : int;
     node_id : string;
     state : string;
-    target_url : string option;
+    target_url : string option; [@default None]
     updated_at : string;
     url : string;
   }

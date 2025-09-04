@@ -62,7 +62,7 @@ module Primary = struct
     tfvc_project : string option; [@default None]
     url : string;
     use_lfs : bool option; [@default None]
-    vcs : string option;
+    vcs : string option; [@default None]
     vcs_url : string;
   }
   [@@deriving yojson { strict = false; meta = true }, show, eq]

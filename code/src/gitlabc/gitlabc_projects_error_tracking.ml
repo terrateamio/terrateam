@@ -100,13 +100,12 @@ end
 
 module PatchApiV4ProjectsIdErrorTrackingSettings = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      patchapiv4projectsiderrortrackingsettings :
-        Gitlabc_components.PatchApiV4ProjectsIdErrorTrackingSettings.t;
-          [@key "patchApiV4ProjectsIdErrorTrackingSettings"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PatchApiV4ProjectsIdErrorTrackingSettings.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -134,8 +133,10 @@ module PatchApiV4ProjectsIdErrorTrackingSettings = struct
 
   let url = "/api/v4/projects/{id}/error_tracking/settings"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
@@ -149,13 +150,12 @@ end
 
 module PutApiV4ProjectsIdErrorTrackingSettings = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      putapiv4projectsiderrortrackingsettings :
-        Gitlabc_components.PutApiV4ProjectsIdErrorTrackingSettings.t;
-          [@key "putApiV4ProjectsIdErrorTrackingSettings"]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdErrorTrackingSettings.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
@@ -183,8 +183,10 @@ module PutApiV4ProjectsIdErrorTrackingSettings = struct
 
   let url = "/api/v4/projects/{id}/error_tracking/settings"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

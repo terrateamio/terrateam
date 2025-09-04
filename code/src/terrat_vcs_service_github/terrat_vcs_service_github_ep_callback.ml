@@ -47,9 +47,17 @@ module Sql = struct
       /% Var.text "token"
       /% Var.uuid "user_id"
       /% Var.text "username")
+
+  let insert_github_user_email () =
+    Pgsql_io.Typed_sql.(
+      sql
+      /^ "insert into github_user_emails (username, email) values($username, $email) on conflict \
+          (username, email) do nothing"
+      /% Var.text "username"
+      /% Var.text "email")
 end
 
-let perform_auth config storage code =
+let perform_auth request_id config storage code =
   let module Oauth = Terrat_github.Oauth.Response in
   let open Abbs_future_combinators.Infix_result_monad in
   Terrat_github.Oauth.authorize
@@ -62,6 +70,23 @@ let perform_auth config storage code =
     ~access_token
     ()
   >>= fun current_user ->
+  let c =
+    Terrat_github.create
+      (Terrat_vcs_service_github_provider.Api.Config.vcs_config config)
+      (`Bearer access_token)
+  in
+  Githubc2_abb.call
+    c
+    Githubc2_users.List_emails_for_authenticated_user.(make (Parameters.make ~per_page:100 ()))
+  >>= fun user_emails ->
+  let emails =
+    match Openapi.Response.value user_emails with
+    | `OK emails ->
+        CCList.map
+          (fun Githubc2_components.Email.{ primary = Primary.{ email; _ }; _ } -> email)
+          emails
+    | _ -> []
+  in
   Abbs_future_combinators.to_result (Abb.Sys.time ())
   >>= fun now ->
   let username, avatar_url, name, email =
@@ -82,6 +107,7 @@ let perform_auth config storage code =
       (fun exp -> ISO8601.Permissive.string_of_datetime (now +. CCFloat.of_int exp))
       oauth.Oauth.refresh_token_expires_in
   in
+  Logs.info (fun m -> m "%s : CALLBACK : username=%s" request_id username);
   Pgsql_pool.with_conn storage ~f:(fun db ->
       Pgsql_io.tx db ~f:(fun () ->
           Pgsql_io.Prepared_stmt.fetch
@@ -107,6 +133,15 @@ let perform_auth config storage code =
                     oauth.Oauth.access_token
                     user_id
                     username
+                  >>= fun () ->
+                  Abbs_future_combinators.List_result.iter
+                    ~f:(fun email ->
+                      Pgsql_io.Prepared_stmt.execute
+                        db
+                        (Sql.insert_github_user_email ())
+                        username
+                        email)
+                    emails
                   >>= fun () -> Abb.Future.return (Ok (Terrat_user.make ~id:user_id ())))
           | (user_id, _email, _name, _avatar_url) :: _ ->
               Pgsql_io.Prepared_stmt.execute
@@ -121,43 +156,49 @@ let perform_auth config storage code =
                 oauth.Oauth.access_token
                 user_id
                 username
+              >>= fun () ->
+              Abbs_future_combinators.List_result.iter
+                ~f:(fun email ->
+                  Pgsql_io.Prepared_stmt.execute db (Sql.insert_github_user_email ()) username email)
+                emails
               >>= fun () -> Abb.Future.return (Ok (Terrat_user.make ~id:user_id ()))))
 
-let get config storage code installation_id_opt ctx =
+let get config storage code installation_id_opt =
   let open Abb.Future.Infix_monad in
-  perform_auth config storage code
-  >>= function
-  | Ok user ->
-      let ctx = Terrat_session.create_user_session user ctx in
-      let uri =
-        ctx
-        |> Brtl_ctx.uri_base
-        |> CCFun.flip Uri.with_path "/"
-        |> CCFun.flip
-             Uri.with_query
-             (CCOption.map_or
-                ~default:[]
-                (fun installation_id ->
-                  [ ("installation_id", [ Int64.to_string installation_id ]) ])
-                installation_id_opt)
-        |> Uri.to_string
-      in
-      let headers = Cohttp.Header.of_list [ ("location", uri) ] in
-      Abb.Future.return
-        (Brtl_ctx.set_response (Brtl_rspnc.create ~headers ~status:`See_other "") ctx)
-  | Error (#Pgsql_pool.err as err) ->
-      Logs.err (fun m -> m "FAIL : %s" (Pgsql_pool.show_err err));
-      Abb.Future.return
-        (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-  | Error (#Pgsql_io.err as err) ->
-      Logs.err (fun m -> m "FAIL : %s" (Pgsql_io.show_err err));
-      Abb.Future.return
-        (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-  | Error (#Terrat_github.user_err as err) ->
-      Logs.err (fun m -> m "FAIL : %s" (Terrat_github.show_user_err err));
-      Abb.Future.return
-        (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-  | Error (#Terrat_github.Oauth.authorize_err as err) ->
-      Logs.err (fun m -> m "FAIL : %a" Terrat_github.Oauth.pp_authorize_err err);
-      Abb.Future.return
-        (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+  Brtl_ep.run ~content_type:"text/plain" ~f:(fun ctx ->
+      perform_auth (Brtl_ctx.token ctx) config storage code
+      >>= function
+      | Ok user ->
+          let ctx = Terrat_session.create_user_session user ctx in
+          let uri =
+            ctx
+            |> Brtl_ctx.uri_base
+            |> CCFun.flip Uri.with_path "/"
+            |> CCFun.flip
+                 Uri.with_query
+                 (CCOption.map_or
+                    ~default:[]
+                    (fun installation_id ->
+                      [ ("installation_id", [ Int64.to_string installation_id ]) ])
+                    installation_id_opt)
+            |> Uri.to_string
+          in
+          let headers = Cohttp.Header.of_list [ ("location", uri) ] in
+          Abb.Future.return
+            (Brtl_ctx.set_response (Brtl_rspnc.create ~headers ~status:`See_other "") ctx)
+      | Error (#Pgsql_pool.err as err) ->
+          Logs.err (fun m -> m "FAIL : %s" (Pgsql_pool.show_err err));
+          Abb.Future.return
+            (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m -> m "FAIL : %s" (Pgsql_io.show_err err));
+          Abb.Future.return
+            (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+      | Error (#Terrat_github.user_err as err) ->
+          Logs.err (fun m -> m "FAIL : %s" (Terrat_github.show_user_err err));
+          Abb.Future.return
+            (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+      | Error (#Terrat_github.Oauth.authorize_err as err) ->
+          Logs.err (fun m -> m "FAIL : %a" Terrat_github.Oauth.pp_authorize_err err);
+          Abb.Future.return
+            (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))

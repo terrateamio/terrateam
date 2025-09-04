@@ -3,7 +3,18 @@
   import router from 'svelte-spa-router';
   import { isAuthenticated, isLoading, getCurrentUser, redirectToIntendedUrl } from './lib/auth';
   import { api, isApiError } from './lib/api';
-  import { installations, selectedInstallation, installationsLoading, installationsError, defaultInstallationId, theme, hasVisitedBefore, markAsVisited, currentVCSProvider } from './lib/stores';
+  import {
+    installations,
+    selectedInstallation,
+    installationsLoading,
+    installationsError,
+    defaultInstallationId,
+    theme,
+    hasVisitedBefore,
+    markAsVisited,
+    currentVCSProvider,
+    serverConfig
+  } from './lib/stores';
   import { getMaintenanceConfig } from './lib/utils/maintenance';
   import MaintenanceMode from './lib/MaintenanceMode.svelte';
   import Login from './lib/Login.svelte';
@@ -21,6 +32,7 @@
   import Settings from './lib/Settings.svelte';
   import AuthCallback from './lib/AuthCallback.svelte';
   import Analytics from './lib/Analytics.svelte';
+  import AuditTrail from './lib/AuditTrail.svelte';
   import RootHandler from './lib/components/layout/RootHandler.svelte';
   
   // Check for maintenance mode
@@ -46,6 +58,7 @@
     '/configuration': Configuration,
     '/subscription': Subscription,
     '/analytics': Analytics,
+    '/audit-trail': AuditTrail,
     
     // Installation-scoped routes (when installations exist)
     '/i/:installationId/dashboard': Dashboard,
@@ -58,6 +71,7 @@
     '/i/:installationId/configuration': Configuration,
     '/i/:installationId/subscription': Subscription,
     '/i/:installationId/analytics': Analytics,
+    '/i/:installationId/audit-trail': AuditTrail,
   };
   
   // Auto-redirect authenticated users based on intended URL or whether they've visited before
@@ -95,6 +109,16 @@
   $: if (!maintenanceConfig.isMaintenanceMode && $isAuthenticated && !$isLoading && !installationsInitialized) {
     installationsInitialized = true;
     loadInstallations();
+  }
+
+  async function loadServerConfig() {
+    try {
+      const config = await api.getServerConfig();
+      serverConfig.set(config);
+    } catch (err) {
+      console.error('Failed to load server config:', err);
+      // Non-critical, continue without server config
+    }
   }
 
   async function loadInstallations() {
@@ -151,11 +175,12 @@
   function handleLegacyUrlRedirect() {
     const path = window.location.pathname;
     
-    // Check for other potential legacy patterns
-    // Example: /i/{installation_id} → #/dashboard
-    const legacyInstallationMatch = path.match(/^\/i\/(\d+)\/?$/i);
+    // Check for installation-scoped URLs (both shallow and deep)
+    // Example: /i/{installation_id} → #/i/{installation_id}/dashboard
+    // Example: /i/{installation_id}/runs/{run_id} → #/i/{installation_id}/runs/{run_id}
+    const legacyInstallationMatch = path.match(/^\/i\/(\d+)(\/.*)?$/i);
     if (legacyInstallationMatch) {
-      const [, installationId] = legacyInstallationMatch;
+      const [, installationId, restOfPath] = legacyInstallationMatch;
       
       // Store installation ID for auto-selection
       try {
@@ -164,7 +189,13 @@
         console.warn('Could not store installation ID in session storage:', e);
       }
       
-      window.location.replace(`${window.location.origin}/#/`);
+      // If there's a deeper path (like /runs/xxx), preserve it in the hash
+      if (restOfPath && restOfPath !== '/') {
+        window.location.replace(`${window.location.origin}/#/i/${installationId}${restOfPath}`);
+      } else {
+        // Just /i/{id} or /i/{id}/ - redirect to root and let auto-redirect handle it
+        window.location.replace(`${window.location.origin}/#/`);
+      }
       return true;
     }
     
@@ -184,7 +215,8 @@
     if (handleLegacyUrlRedirect()) {
       return; // Exit early if we're redirecting
     }
-    
+
+    await loadServerConfig();
     await getCurrentUser();
   });
 </script>

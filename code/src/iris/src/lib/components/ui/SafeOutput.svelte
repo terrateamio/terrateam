@@ -133,11 +133,13 @@
 
 {#if !showContent}
   <!-- Size warning with options -->
-  <div class="border border-yellow-200 bg-yellow-50 rounded-lg p-4">
-    <div class="flex items-start space-x-3">
-      <div class="text-yellow-600 text-xl">⚠️</div>
+  <div class="border border-yellow-200 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4">
+    <div class="flex items-start gap-3">
+      <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
       <div class="flex-1">
-        <h4 class="font-medium text-yellow-800 mb-2">
+        <h4 class="font-medium text-yellow-800 dark:text-yellow-200 mb-2 text-sm sm:text-base">
           {#if isMedium}
             Large Output Detected
           {:else if isLarge}
@@ -146,7 +148,7 @@
             Extremely Large Output Detected
           {/if}
         </h4>
-        <p class="text-sm text-yellow-700 mb-3">
+        <p class="text-xs sm:text-sm text-yellow-700 dark:text-yellow-300 mb-3">
           This {title.toLowerCase()} output is {formatSize(contentSize)}.
           {#if isMedium}
             This is large but should render fine on modern browsers.
@@ -157,38 +159,50 @@
           {/if}
         </p>
         
-        <div class="flex flex-wrap gap-2">
+        <div class="flex flex-col sm:flex-row gap-2">
           {#if !isHuge}
             <button
-              class="px-3 py-1 bg-yellow-600 text-white text-sm rounded hover:bg-yellow-700 transition-colors"
+              class="px-3 py-1.5 bg-yellow-600 dark:bg-yellow-700 text-white text-xs sm:text-sm rounded hover:bg-yellow-700 dark:hover:bg-yellow-800 transition-colors inline-flex items-center justify-center"
               on:click={handleShowContent}
             >
-              📄 Show Preview ({formatSize(Math.min(contentSize, 1000000))})
+              <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Show Preview ({formatSize(Math.min(contentSize, 1000000))})
             </button>
           {/if}
           
           <button
-            class="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+            class="px-3 py-1.5 bg-green-600 dark:bg-green-700 text-white text-xs sm:text-sm rounded hover:bg-green-700 dark:hover:bg-green-800 transition-colors inline-flex items-center justify-center"
             on:click={handleDownload}
           >
-            💾 Download Output
+            <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Download Output
           </button>
           
           {#if githubUrl}
             <button
-              class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+              class="px-3 py-1.5 bg-blue-600 dark:bg-blue-700 text-white text-xs sm:text-sm rounded hover:bg-blue-700 dark:hover:bg-blue-800 transition-colors inline-flex items-center justify-center"
               on:click={openGitHubLog}
             >
-              🔗 View in GitHub
+              <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              View in GitHub
             </button>
           {/if}
           
           {#if !isHuge}
             <button
-              class="px-3 py-1 border border-yellow-300 text-yellow-700 text-sm rounded hover:bg-yellow-100 transition-colors"
+              class="px-3 py-1.5 border border-yellow-300 dark:border-yellow-600 text-yellow-700 dark:text-yellow-300 text-xs sm:text-sm rounded hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition-colors inline-flex items-center justify-center"
               on:click={handleShowFullContent}
             >
-              ⚡ Load Full Output (Risk: May freeze browser)
+              <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Load Full Output (Risk: May freeze browser)
             </button>
           {/if}
         </div>
@@ -199,30 +213,36 @@
   <!-- Content display -->
   <div class="space-y-3">
     <!-- Header with expand button and size info -->
-    <div class="flex items-center justify-between text-xs text-gray-600 bg-gray-50 px-3 py-2 rounded">
-      <span>
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded">
+      <span class="font-medium">
         {#if isMedium || isLarge || isHuge}
           Size: {formatSize(contentSize)}
         {:else}
           Output:
         {/if}
       </span>
-      <div class="flex items-center space-x-2">
+      <div class="flex items-center gap-2 flex-wrap">
         <button
-          class="text-blue-600 hover:text-blue-800 px-2 py-1 border border-blue-200 rounded hover:bg-blue-50 transition-colors"
+          class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 px-3 py-1 border border-blue-200 dark:border-blue-600 rounded hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors inline-flex items-center justify-center"
           on:click={handleExpand}
         >
-          🔍 Expand
+          <svg class="w-4 h-4 mr-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <span>Expand</span>
         </button>
         <button
-          class="text-green-600 hover:text-green-800 px-2 py-1 border border-green-200 rounded hover:bg-green-50 transition-colors"
+          class="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 px-3 py-1 border border-green-200 dark:border-green-600 rounded hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors inline-flex items-center justify-center"
           on:click={handleDownload}
         >
-          💾 Download
+          <svg class="w-4 h-4 mr-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          <span>Download</span>
         </button>
         {#if githubUrl && (isMedium || isLarge || isHuge)}
           <button
-            class="text-blue-600 hover:text-blue-800 underline"
+            class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline"
             on:click={openGitHubLog}
           >
             View in GitHub
@@ -231,7 +251,7 @@
       </div>
     </div>
     
-    <pre class="text-xs bg-gray-900 text-gray-100 p-3 rounded overflow-x-auto whitespace-pre-wrap font-mono {showFullContent ? '' : 'max-h-96'}">
+    <pre class="text-xs bg-gray-900 dark:bg-gray-950 text-gray-100 dark:text-gray-200 p-3 rounded overflow-x-auto whitespace-pre-wrap font-mono {showFullContent ? '' : 'max-h-96'}">
       {showFullContent ? content : previewContent}
     </pre>
     
