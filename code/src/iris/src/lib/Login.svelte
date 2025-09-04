@@ -43,6 +43,18 @@
   });
   
   async function handleProviderLogin(provider: VCSProvider): Promise<void> {
+    // Capture Reddit tracking parameters before OAuth redirect
+    const urlParams = new URLSearchParams(window.location.search);
+    const rdtCid = urlParams.get('rdt_cid');
+    const rdtUuid = urlParams.get('rdt_uuid');
+    
+    if (rdtCid) {
+      sessionStorage.setItem('rdt_cid', rdtCid);
+    }
+    if (rdtUuid) {
+      sessionStorage.setItem('rdt_uuid', rdtUuid);
+    }
+    
     setVCSProvider(provider);
     
     if (provider === 'github') {
