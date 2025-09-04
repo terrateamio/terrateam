@@ -2,6 +2,8 @@ let src = Logs.Src.create "vcs_service_github_ep_callback"
 
 module Logs = (val Logs.src_log src : Logs.LOG)
 
+module Http = Abb_curl.Make (Abb)
+
 module Webhook = struct
   type config = {
     enabled : bool;
@@ -49,7 +51,7 @@ module Webhook = struct
         |> Yojson.Safe.to_string
       in
       let headers = 
-        Cohttp.Header.of_list [
+        [
           ("Content-Type", "application/json");
           ("User-Agent", "Terrateam/1.0");
           ("Authorization", Printf.sprintf "Bearer %s" cfg.secret);
@@ -59,17 +61,20 @@ module Webhook = struct
       let endpoint_url = Printf.sprintf "%s/github-signup" cfg.endpoint in
       let uri = Uri.of_string endpoint_url in
       let open Abb.Future.Infix_monad in
-      Cohttp_abb.Client.post ~headers ~body:(Cohttp_abb.Body.of_string body) uri
-      >>= fun (resp, _body) ->
-      let status_code = Cohttp.Code.code_of_status (Cohttp.Response.status resp) in
-      if status_code >= 200 && status_code < 300 then (
-        Logs.info (fun m -> m "Signup webhook sent successfully for user %s" username);
-        Abb.Future.return (Ok ())
-      ) else (
-        Logs.warn (fun m -> 
-          m "Failed to send signup webhook for user %s: HTTP %d" username status_code);
-        Abb.Future.return (Ok ())  (* Don't fail the main operation *)
-      )
+      Http.post ~headers ~body uri
+      >>= function
+      | Ok (resp, _body) when Http.Status.is_success (Http.Response.status resp) ->
+          Logs.info (fun m -> m "Signup webhook sent successfully for user %s" username);
+          Abb.Future.return (Ok ())
+      | Ok (resp, _body) ->
+          let status_code = Http.Status.to_code (Http.Response.status resp) in
+          Logs.warn (fun m -> 
+            m "Failed to send signup webhook for user %s: HTTP %d" username status_code);
+          Abb.Future.return (Ok ())  (* Don't fail the main operation *)
+      | Error err ->
+          Logs.warn (fun m -> 
+            m "Failed to send signup webhook for user %s: %s" username (Http.Error.show err));
+          Abb.Future.return (Ok ())  (* Don't fail the main operation *)
 end
 
 module Sql = struct
