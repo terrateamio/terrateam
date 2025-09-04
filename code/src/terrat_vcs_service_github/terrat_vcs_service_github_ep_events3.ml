@@ -51,7 +51,7 @@ module Webhook = struct
         |> Yojson.Safe.to_string
       in
       let headers = 
-        [
+        Http.Headers.of_list [
           ("Content-Type", "application/json");
           ("User-Agent", "Terrateam/1.0");
           ("Authorization", Printf.sprintf "Bearer %s" cfg.secret);
@@ -67,13 +67,13 @@ module Webhook = struct
           Logs.info (fun m -> m "Webhook sent successfully to %s for %s event" cfg.endpoint event_type);
           Abb.Future.return (Ok ())
       | Ok (resp, _body) ->
-          let status_code = Http.Status.to_code (Http.Response.status resp) in
+          let status_code = Http.Status.to_int (Http.Response.status resp) in
           Logs.warn (fun m -> 
             m "Failed to send webhook to %s for %s event: HTTP %d" cfg.endpoint event_type status_code);
           Abb.Future.return (Ok ())  (* Don't fail the main operation *)
-      | Error err ->
+      | Error _ ->
           Logs.warn (fun m -> 
-            m "Failed to send webhook to %s for %s event: %s" cfg.endpoint event_type (Http.Error.show err));
+            m "Failed to send webhook to %s for %s event: network error" cfg.endpoint event_type);
           Abb.Future.return (Ok ())  (* Don't fail the main operation *)
 end
 
@@ -251,6 +251,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
                 | [] -> assert false)
             | _ :: _ -> Abb.Future.return (Ok ()))
     | Gw.Installation_event.Installation_deleted deleted ->
+        let open Abbs_future_combinators.Infix_result_monad in
         let installation = deleted.Gw.Installation_deleted.installation in
         Logs.info (fun m ->
             m
@@ -286,6 +287,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
               installation_event.Gw.Installation_new_permissions_accepted.sender.Gw.User.login);
         Abb.Future.return (Ok ())
     | Gw.Installation_event.Installation_suspend suspended ->
+        let open Abbs_future_combinators.Infix_result_monad in
         let installation = suspended.Gw.Installation_suspend.installation in
         let module I = Gw.Installation_suspend.Installation_ in
         Logs.info (fun m ->
@@ -310,6 +312,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
               suspended.Gw.Installation_suspend.sender.Gw.User.login
               installation.I.T.primary.I.T.Primary.account.Gw.User.type_)
     | Gw.Installation_event.Installation_unsuspend unsuspend ->
+        let open Abbs_future_combinators.Infix_result_monad in
         let installation = unsuspend.Gw.Installation_unsuspend.installation in
         let module I = Gw.Installation_unsuspend.Installation_ in
         Logs.info (fun m ->

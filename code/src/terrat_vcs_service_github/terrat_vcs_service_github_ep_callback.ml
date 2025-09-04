@@ -51,7 +51,7 @@ module Webhook = struct
         |> Yojson.Safe.to_string
       in
       let headers = 
-        [
+        Http.Headers.of_list [
           ("Content-Type", "application/json");
           ("User-Agent", "Terrateam/1.0");
           ("Authorization", Printf.sprintf "Bearer %s" cfg.secret);
@@ -67,13 +67,13 @@ module Webhook = struct
           Logs.info (fun m -> m "Signup webhook sent successfully for user %s" username);
           Abb.Future.return (Ok ())
       | Ok (resp, _body) ->
-          let status_code = Http.Status.to_code (Http.Response.status resp) in
+          let status_code = Http.Status.to_int (Http.Response.status resp) in
           Logs.warn (fun m -> 
             m "Failed to send signup webhook for user %s: HTTP %d" username status_code);
           Abb.Future.return (Ok ())  (* Don't fail the main operation *)
-      | Error err ->
+      | Error _ ->
           Logs.warn (fun m -> 
-            m "Failed to send signup webhook for user %s: %s" username (Http.Error.show err));
+            m "Failed to send signup webhook for user %s: network error" username);
           Abb.Future.return (Ok ())  (* Don't fail the main operation *)
 end
 
@@ -127,10 +127,10 @@ module Sql = struct
     Pgsql_io.Typed_sql.(
       sql
       /^ "insert into github_user_emails (username, email, is_primary) values($username, $email, \
-          $is_primary) on conflict (username, email) do update set is_primary = EXCLUDED.is_primary"
+          $is_primary::boolean) on conflict (username, email) do update set is_primary = EXCLUDED.is_primary"
       /% Var.text "username"
       /% Var.text "email"
-      /% Var.bool "is_primary")
+      /% Var.text "is_primary")
 
   let select_user_installations_by_username () =
     Pgsql_io.Typed_sql.(
@@ -228,7 +228,7 @@ let perform_auth request_id config storage code =
                         (Sql.insert_github_user_email ())
                         username
                         email
-                        is_primary)
+                        (if is_primary then "true" else "false"))
                     emails
                   >>= fun () ->
                   (* Check if user has any installations *)
@@ -263,7 +263,7 @@ let perform_auth request_id config storage code =
               >>= fun () ->
               Abbs_future_combinators.List_result.iter
                 ~f:(fun (email, is_primary) ->
-                  Pgsql_io.Prepared_stmt.execute db (Sql.insert_github_user_email ()) username email is_primary)
+                  Pgsql_io.Prepared_stmt.execute db (Sql.insert_github_user_email ()) username email (if is_primary then "true" else "false"))
                 emails
               >>= fun () ->
               (* Check if user has any installations *)
