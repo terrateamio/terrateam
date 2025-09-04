@@ -2,6 +2,76 @@ let src = Logs.Src.create "vcs_service_github_ep_events"
 
 module Logs = (val Logs.src_log src : Logs.LOG)
 
+module Webhook = struct
+  type config = {
+    enabled : bool;
+    endpoint : string;
+    secret : string;
+  }
+
+  let config_from_env () =
+    let enabled =
+      match Sys.getenv_opt "TERRATEAM_WEBHOOKS_ENABLED" with
+      | Some "true" -> true
+      | Some "1" -> true
+      | _ -> false
+    in
+    let endpoint =
+      CCOption.get_or ~default:"" (Sys.getenv_opt "TERRATEAM_WEBHOOKS_ENDPOINT")
+    in
+    let secret =
+      CCOption.get_or ~default:"" (Sys.getenv_opt "TERRATEAM_WEBHOOKS_SECRET")
+    in
+    { enabled; endpoint; secret }
+
+  let send_installation_event config event_type installation_id account sender target_type =
+    let cfg = config_from_env () in
+    if not cfg.enabled || cfg.endpoint = "" then
+      Abb.Future.return (Ok ())
+    else
+      let timestamp = 
+        let open Unix in
+        let t = gettimeofday () in
+        let tm = gmtime t in
+        Printf.sprintf "%04d-%02d-%02dT%02d:%02d:%02dZ"
+          (tm.tm_year + 1900) (tm.tm_mon + 1) tm.tm_mday
+          tm.tm_hour tm.tm_min tm.tm_sec
+      in
+      let body = 
+        `Assoc [
+          ("event_type", `String (Printf.sprintf "github_installation_%s" event_type));
+          ("installation_id", `Int installation_id);
+          ("account", `String account);
+          ("sender", `String sender);
+          ("target_type", `String target_type);
+          ("timestamp", `String timestamp);
+        ]
+        |> Yojson.Safe.to_string
+      in
+      let headers = 
+        Cohttp.Header.of_list [
+          ("Content-Type", "application/json");
+          ("User-Agent", "Terrateam/1.0");
+          ("Authorization", Printf.sprintf "Bearer %s" cfg.secret);
+        ]
+      in
+      (* Append the specific path for GitHub installation webhooks *)
+      let endpoint_url = Printf.sprintf "%s/github-installation" cfg.endpoint in
+      let uri = Uri.of_string endpoint_url in
+      let open Abb.Future.Infix_monad in
+      Cohttp_abb.Client.post ~headers ~body:(Cohttp_abb.Body.of_string body) uri
+      >>= fun (resp, _body) ->
+      let status_code = Cohttp.Code.code_of_status (Cohttp.Response.status resp) in
+      if status_code >= 200 && status_code < 300 then (
+        Logs.info (fun m -> m "Webhook sent successfully to %s for %s event" cfg.endpoint event_type);
+        Abb.Future.return (Ok ())
+      ) else (
+        Logs.warn (fun m -> 
+          m "Failed to send webhook to %s for %s event: HTTP %d" cfg.endpoint event_type status_code);
+        Abb.Future.return (Ok ())  (* Don't fail the main operation *)
+      )
+end
+
 module Metrics = struct
   module DefaultHistogram = Prmths.Histogram (struct
     let spec = Prmths.Histogram_spec.of_list [ 0.005; 0.5; 1.0; 5.0; 10.0; 15.0; 20.0 ]
@@ -59,25 +129,32 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         /% Var.text "login"
         /% Var.uuid "org"
         /% Var.text "target_type"
-        /% Var.text "tier")
+        /% Var.text "tier"
+        /% Var.text "sender")
 
     let update_github_installation_unsuspend =
       Pgsql_io.Typed_sql.(
         sql
-        /^ "update github_installations set state = 'installed' where id = $id"
-        /% Var.bigint "id")
+        /^ "update github_installations set state = 'installed', sender = $sender, updated_at = now() \
+            where id = $id"
+        /% Var.bigint "id"
+        /% Var.text "sender")
 
     let update_github_installation_uninstall =
       Pgsql_io.Typed_sql.(
         sql
-        /^ "update github_installations set state = 'uninstalled' where id = $id"
-        /% Var.bigint "id")
+        /^ "update github_installations set state = 'uninstalled', sender = $sender, updated_at = \
+            now() where id = $id"
+        /% Var.bigint "id"
+        /% Var.text "sender")
 
     let update_github_installation_suspended =
       Pgsql_io.Typed_sql.(
         sql
-        /^ "update github_installations set state = 'suspended' where id = $id"
-        /% Var.bigint "id")
+        /^ "update github_installations set state = 'suspended', sender = $sender, updated_at = \
+            now() where id = $id"
+        /% Var.bigint "id"
+        /% Var.text "sender")
 
     let insert_org =
       Pgsql_io.Typed_sql.(
@@ -157,6 +234,15 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
                       org_id
                       installation.Gw.Installation.account.Gw.User.type_
                       (Terrat_config.default_tier @@ P.Api.Config.config config)
+                      created.Gw.Installation_created.sender.Gw.User.login
+                    >>= fun () ->
+                    Webhook.send_installation_event
+                      config
+                      "created"
+                      installation.Gw.Installation.id
+                      installation.Gw.Installation.account.Gw.User.login
+                      created.Gw.Installation_created.sender.Gw.User.login
+                      installation.Gw.Installation.account.Gw.User.type_
                 | [] -> assert false)
             | _ :: _ -> Abb.Future.return (Ok ()))
     | Gw.Installation_event.Installation_deleted deleted ->
@@ -172,7 +258,16 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
             Pgsql_io.Prepared_stmt.execute
               db
               Sql.update_github_installation_uninstall
-              (Int64.of_int installation.Gw.Installation.id))
+              (Int64.of_int installation.Gw.Installation.id)
+              deleted.Gw.Installation_deleted.sender.Gw.User.login
+            >>= fun () ->
+            Webhook.send_installation_event
+              config
+              "deleted"
+              installation.Gw.Installation.id
+              installation.Gw.Installation.account.Gw.User.login
+              deleted.Gw.Installation_deleted.sender.Gw.User.login
+              installation.Gw.Installation.account.Gw.User.type_)
     | Gw.Installation_event.Installation_new_permissions_accepted installation_event ->
         Prmths.Counter.inc_one (Metrics.installation_events_total "new_permissions_accepted");
         let installation =
@@ -199,7 +294,16 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
             Pgsql_io.Prepared_stmt.execute
               db
               Sql.update_github_installation_suspended
-              (Int64.of_int installation.I.T.primary.I.T.Primary.id))
+              (Int64.of_int installation.I.T.primary.I.T.Primary.id)
+              suspended.Gw.Installation_suspend.sender.Gw.User.login
+            >>= fun () ->
+            Webhook.send_installation_event
+              config
+              "suspended"
+              installation.I.T.primary.I.T.Primary.id
+              installation.I.T.primary.I.T.Primary.account.Gw.User.login
+              suspended.Gw.Installation_suspend.sender.Gw.User.login
+              installation.I.T.primary.I.T.Primary.account.Gw.User.type_)
     | Gw.Installation_event.Installation_unsuspend unsuspend ->
         let installation = unsuspend.Gw.Installation_unsuspend.installation in
         let module I = Gw.Installation_unsuspend.Installation_ in
@@ -214,7 +318,16 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
             Pgsql_io.Prepared_stmt.execute
               db
               Sql.update_github_installation_unsuspend
-              (Int64.of_int installation.I.T.primary.I.T.Primary.id))
+              (Int64.of_int installation.I.T.primary.I.T.Primary.id)
+              unsuspend.Gw.Installation_unsuspend.sender.Gw.User.login
+            >>= fun () ->
+            Webhook.send_installation_event
+              config
+              "unsuspended"
+              installation.I.T.primary.I.T.Primary.id
+              installation.I.T.primary.I.T.Primary.account.Gw.User.login
+              unsuspend.Gw.Installation_unsuspend.sender.Gw.User.login
+              installation.I.T.primary.I.T.Primary.account.Gw.User.type_)
 
   let process_pull_request_event request_id config storage = function
     | Gw.Pull_request_event.Pull_request_opened

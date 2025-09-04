@@ -2,6 +2,76 @@ let src = Logs.Src.create "vcs_service_github_ep_callback"
 
 module Logs = (val Logs.src_log src : Logs.LOG)
 
+module Webhook = struct
+  type config = {
+    enabled : bool;
+    endpoint : string;
+    secret : string;
+  }
+
+  let config_from_env () =
+    let enabled =
+      match Sys.getenv_opt "TERRATEAM_WEBHOOKS_ENABLED" with
+      | Some "true" -> true
+      | Some "1" -> true
+      | _ -> false
+    in
+    let endpoint =
+      CCOption.get_or ~default:"" (Sys.getenv_opt "TERRATEAM_WEBHOOKS_ENDPOINT")
+    in
+    let secret =
+      CCOption.get_or ~default:"" (Sys.getenv_opt "TERRATEAM_WEBHOOKS_SECRET")
+    in
+    { enabled; endpoint; secret }
+
+  let send_signup_event username email name avatar_url =
+    let cfg = config_from_env () in
+    if not cfg.enabled || cfg.endpoint = "" then
+      Abb.Future.return (Ok ())
+    else
+      let timestamp = 
+        let open Unix in
+        let t = gettimeofday () in
+        let tm = gmtime t in
+        Printf.sprintf "%04d-%02d-%02dT%02d:%02d:%02dZ"
+          (tm.tm_year + 1900) (tm.tm_mon + 1) tm.tm_mday
+          tm.tm_hour tm.tm_min tm.tm_sec
+      in
+      let body = 
+        `Assoc [
+          ("event_type", `String "github_user_signup");
+          ("username", `String username);
+          ("email", `String (CCOption.get_or ~default:"" email));
+          ("name", `String (CCOption.get_or ~default:"" name));
+          ("avatar_url", `String (CCOption.get_or ~default:"" avatar_url));
+          ("timestamp", `String timestamp);
+        ]
+        |> Yojson.Safe.to_string
+      in
+      let headers = 
+        Cohttp.Header.of_list [
+          ("Content-Type", "application/json");
+          ("User-Agent", "Terrateam/1.0");
+          ("Authorization", Printf.sprintf "Bearer %s" cfg.secret);
+        ]
+      in
+      (* Append the specific path for signup webhooks *)
+      let endpoint_url = Printf.sprintf "%s/github-signup" cfg.endpoint in
+      let uri = Uri.of_string endpoint_url in
+      let open Abb.Future.Infix_monad in
+      Cohttp_abb.Client.post ~headers ~body:(Cohttp_abb.Body.of_string body) uri
+      >>= fun (resp, _body) ->
+      let status_code = Cohttp.Code.code_of_status (Cohttp.Response.status resp) in
+      if status_code >= 200 && status_code < 300 then (
+        Logs.info (fun m -> m "Signup webhook sent successfully for user %s" username);
+        Abb.Future.return (Ok ())
+      ) else (
+        Logs.warn (fun m -> 
+          m "Failed to send signup webhook for user %s: HTTP %d" username status_code);
+        Abb.Future.return (Ok ())  (* Don't fail the main operation *)
+      )
+end
+
 module Sql = struct
   let read fname =
     CCOption.get_exn_or
@@ -51,10 +121,21 @@ module Sql = struct
   let insert_github_user_email () =
     Pgsql_io.Typed_sql.(
       sql
-      /^ "insert into github_user_emails (username, email) values($username, $email) on conflict \
-          (username, email) do nothing"
+      /^ "insert into github_user_emails (username, email, is_primary) values($username, $email, \
+          $is_primary) on conflict (username, email) do update set is_primary = EXCLUDED.is_primary"
       /% Var.text "username"
-      /% Var.text "email")
+      /% Var.text "email"
+      /% Var.bool "is_primary")
+
+  let select_user_installations_by_username () =
+    Pgsql_io.Typed_sql.(
+      sql
+      // Ret.text
+      /^ "select gi.id from github_installations gi \
+          inner join github_user_installations2 gui on gui.installation_id = gi.id \
+          inner join github_users2 gu on gu.user_id = gui.user_id \
+          where gu.username = $username and gi.state = 'installed'"
+      /% Var.text "username")
 end
 
 let perform_auth request_id config storage code =
@@ -83,7 +164,8 @@ let perform_auth request_id config storage code =
     match Openapi.Response.value user_emails with
     | `OK emails ->
         CCList.map
-          (fun Githubc2_components.Email.{ primary = Primary.{ email; _ }; _ } -> email)
+          (fun Githubc2_components.Email.{ primary = Primary.{ email; primary; _ }; _ } -> 
+            (email, primary))
           emails
     | _ -> []
   in
@@ -135,14 +217,31 @@ let perform_auth request_id config storage code =
                     username
                   >>= fun () ->
                   Abbs_future_combinators.List_result.iter
-                    ~f:(fun email ->
+                    ~f:(fun (email, is_primary) ->
                       Pgsql_io.Prepared_stmt.execute
                         db
                         (Sql.insert_github_user_email ())
                         username
-                        email)
+                        email
+                        is_primary)
                     emails
-                  >>= fun () -> Abb.Future.return (Ok (Terrat_user.make ~id:user_id ())))
+                  >>= fun () ->
+                  (* Check if user has any installations *)
+                  Pgsql_io.Prepared_stmt.fetch
+                    db
+                    (Sql.select_user_installations_by_username ())
+                    ~f:CCFun.id
+                    username
+                  >>= fun installations ->
+                  (match installations with
+                  | [] ->
+                      (* No installations - this is a new signup, send webhook *)
+                      Logs.info (fun m -> m "New user signup detected: %s (no installations)" username);
+                      Webhook.send_signup_event username email name avatar_url
+                  | _ ->
+                      (* User has installations, no webhook needed *)
+                      Abb.Future.return (Ok ()))
+                  >>= fun _ -> Abb.Future.return (Ok (Terrat_user.make ~id:user_id ())))
           | (user_id, _email, _name, _avatar_url) :: _ ->
               Pgsql_io.Prepared_stmt.execute
                 db
@@ -158,10 +257,26 @@ let perform_auth request_id config storage code =
                 username
               >>= fun () ->
               Abbs_future_combinators.List_result.iter
-                ~f:(fun email ->
-                  Pgsql_io.Prepared_stmt.execute db (Sql.insert_github_user_email ()) username email)
+                ~f:(fun (email, is_primary) ->
+                  Pgsql_io.Prepared_stmt.execute db (Sql.insert_github_user_email ()) username email is_primary)
                 emails
-              >>= fun () -> Abb.Future.return (Ok (Terrat_user.make ~id:user_id ()))))
+              >>= fun () ->
+              (* Check if user has any installations *)
+              Pgsql_io.Prepared_stmt.fetch
+                db
+                (Sql.select_user_installations_by_username ())
+                ~f:CCFun.id
+                username
+              >>= fun installations ->
+              (match installations with
+              | [] ->
+                  (* No installations - this is a new signup, send webhook *)
+                  Logs.info (fun m -> m "New user signup detected: %s (no installations)" username);
+                  Webhook.send_signup_event username email name avatar_url
+              | _ ->
+                  (* User has installations, no webhook needed *)
+                  Abb.Future.return (Ok ()))
+              >>= fun _ -> Abb.Future.return (Ok (Terrat_user.make ~id:user_id ()))))
 
 let get config storage code installation_id_opt =
   let open Abb.Future.Infix_monad in
