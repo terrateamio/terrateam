@@ -1,0 +1,162 @@
+---
+title: GitHub Reusable Workflows
+description: Use GitHub Reusable Workflows to centralize and share Terrateam workflows across multiple repositories
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+GitHub Reusable Workflows allow you to define your Terrateam workflow once and reuse it across multiple repositories. This approach provides centralized management, consistency, and easier updates across your organization's Terraform infrastructure.
+
+:::note[Workflow Updates]
+The Terrateam workflow structure may change over time to add new features or improvements. This guide shows you how to convert the standard Terrateam workflow into a reusable pattern. Always start with the [latest Terrateam workflow](https://raw.githubusercontent.com/terrateamio/terrateam-example/refs/heads/main/github/actions/workflows/default/terrateam.yml) as your reference.
+:::
+
+## Benefits of Reusable Workflows
+
+- **Centralized Management**: Update the workflow in one place and all repositories using it automatically get the updates
+- **Consistency**: Ensure all teams use the same workflow configuration  
+- **Reduced Duplication**: No need to maintain the same workflow in multiple repositories
+- **Security**: Control access to the workflow and manage secrets centrally
+- **Compliance**: Enforce organizational standards and best practices
+
+## Setting Up Reusable Workflows
+
+### Steps
+<Steps>
+1. **Create the Reusable Workflow Repository**
+
+   Create a dedicated repository to host your reusable workflows (e.g., `terrateam`).
+
+2. **Create the Reusable Workflow File**
+
+   In your reusable workflow repository, create a workflow file at `.github/workflows/terrateam.yml`.
+   
+   :::tip[Get the Latest Workflow]
+   The Terrateam workflow structure evolves over time. Always use the latest version as your starting point:
+   
+   **[View Latest Terrateam Workflow →](https://raw.githubusercontent.com/terrateamio/terrateam-example/refs/heads/main/github/actions/workflows/default/terrateam.yml)**
+   :::
+
+   To convert the standard workflow into a reusable workflow, you need to make these key changes:
+
+   **Change the trigger from `workflow_dispatch` to `workflow_call`:**
+   ```yaml
+   # Standard workflow uses:
+   on:
+     workflow_dispatch:
+       inputs:
+         work-token:
+           description: 'Work Token'
+           required: true
+         # ... other inputs
+   
+   # Reusable workflow uses:
+   on:
+     workflow_call:
+       inputs:
+         work-token:
+           description: 'Work Token'
+           required: true
+           type: string  # Note: type is required for workflow_call
+         # ... other inputs with type specifications
+   ```
+
+   **Key differences for reusable workflows:**
+   - Change `workflow_dispatch` to `workflow_call`
+   - Add `type: string` to all string inputs
+   - The `environment` input type remains `string` (not `environment`) in the reusable workflow
+   - Keep all other workflow steps and configuration the same
+
+   <details>
+   <summary>Example reusable workflow structure</summary>
+
+   ```yaml
+   name: 'Terrateam Reusable Workflow'
+   on:
+     workflow_call:
+       inputs:
+         work-token:
+           description: 'Work Token'
+           required: true
+           type: string
+         api-base-url:
+           description: 'API Base URL'
+           type: string
+         environment:
+           description: 'Environment in which to run the action'
+           type: string
+         runs_on:
+           description: 'runs-on configuration'
+           type: string
+           default: '"ubuntu-latest"'
+
+   jobs:
+     terrateam:
+       # Copy the jobs section from the latest workflow
+       # No changes needed here
+       permissions:
+         id-token: write
+         contents: read
+       runs-on: ${{ fromJSON(inputs.runs_on) }}
+       timeout-minutes: 1440
+       name: Terrateam Action
+       environment: '${{ inputs.environment }}'
+       steps:
+         # ... steps remain the same as the standard workflow
+   ```
+   </details>
+
+3. **Create the Caller Workflow**
+
+   In each repository that needs to use Terrateam, create a minimal workflow file at `.github/workflows/terrateam.yml` that calls your reusable workflow:
+
+   ```yaml
+   name: 'Terrateam Workflow'
+   on:
+     workflow_dispatch:
+       inputs:
+         # Copy all inputs from the latest Terrateam workflow
+         # These must match what Terrateam expects
+         work-token:
+           description: 'Work Token'
+           required: true
+         api-base-url:
+           description: 'API Base URL'
+         environment:
+           description: 'Environment in which to run the action'
+           type: environment  # Note: caller uses 'environment' type
+         runs_on:
+           description: 'runs-on configuration'
+           type: string
+           default: '"ubuntu-latest"'
+
+   jobs:
+     terrateam:
+       # Call your reusable workflow
+       uses: YOUR_ORG/terrateam/.github/workflows/terrateam.yml@main
+       with:
+         # Pass all inputs through to the reusable workflow
+         work-token: '${{ github.event.inputs.work-token }}'
+         api-base-url: '${{ github.event.inputs.api-base-url }}'
+         environment: '${{ github.event.inputs.environment }}'
+         runs_on: '${{ github.event.inputs.runs_on }}'
+       secrets: inherit  # Pass all repository secrets to the reusable workflow
+   ```
+
+   :::caution[Important]
+   - Replace `YOUR_ORG/terrateam` with your actual organization and repository name
+   - The caller workflow's inputs must match what Terrateam sends (check the [latest workflow](https://raw.githubusercontent.com/terrateamio/terrateam-example/refs/heads/main/github/actions/workflows/default/terrateam.yml) for any updates)
+   - The `@main` can be replaced with a specific branch, tag, or commit SHA for version control
+   :::
+
+4. **Configure Repository Permissions**
+
+   Ensure the reusable workflow repository has the appropriate visibility:
+   - For organization-wide use: Set the repository to **Internal** or **Public**
+   - For public repositories calling the workflow: The workflow repository must be **Public**
+
+5. **Test the Setup**
+
+   Create a pull request in a repository using the caller workflow to verify Terrateam operations work correctly.
+
+</Steps>
