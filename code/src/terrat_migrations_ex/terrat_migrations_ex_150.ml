@@ -304,7 +304,8 @@ let fill_in_work_manifests_pull_requests (config, storage) =
     (update' Sql.work_manifests_pull_requests_update)
     (while' Sql.work_manifests_pull_requests_while_)
 
-let fill_in_all ctx =
+let fill_in_all (config, storage, _db) =
+  let ctx = (config, storage) in
   let open Abbs_future_combinators.Infix_result_monad in
   fill_in_change_dirspace ctx
   >>= fun () ->
