@@ -304,7 +304,7 @@ export function initializeGitHubLogin(web_base_url: string, clientId: string): v
 }
 
 // Track Reddit conversion for new signups
-async function trackRedditSignupConversion(userId: number): Promise<void> {
+async function trackRedditSignupConversion(userId: string): Promise<void> {
   const analyticsEnabled = (window as any).terrateamConfig?.ui_analytics === 'enabled';
   
   if (!analyticsEnabled) {
