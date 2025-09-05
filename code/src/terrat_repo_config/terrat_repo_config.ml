@@ -51,6 +51,7 @@ module Hook_op = Terrat_repo_config_hook_op
 module Hook_op_drift_create_issue = Terrat_repo_config_hook_op_drift_create_issue
 module Hook_op_env_exec = Terrat_repo_config_hook_op_env_exec
 module Hook_op_env_source = Terrat_repo_config_hook_op_env_source
+module Hook_op_gates = Terrat_repo_config_hook_op_gates
 module Hook_op_oidc = Terrat_repo_config_hook_op_oidc
 module Hook_op_oidc_aws = Terrat_repo_config_hook_op_oidc_aws
 module Hook_op_oidc_gcp = Terrat_repo_config_hook_op_oidc_gcp

@@ -723,6 +723,9 @@
         },
         {
           "$ref": "#/definitions/hook-op-slack"
+        },
+        {
+          "$ref": "#/definitions/hook-op-gates"
         }
       ]
     },
@@ -797,6 +800,35 @@
       "required": [
         "cmd",
         "method",
+        "type"
+      ],
+      "type": "object"
+    },
+    "hook-op-gates": {
+      "additionalProperties": false,
+      "properties": {
+        "cmd": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "env": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "run_on": {
+          "$ref": "#/definitions/run-on"
+        },
+        "type": {
+          "const": "gates",
+          "type": "string"
+        }
+      },
+      "required": [
+        "cmd",
         "type"
       ],
       "type": "object"
@@ -1738,6 +1770,9 @@
           },
           {
             "$ref": "#/definitions/hook-op-oidc"
+          },
+          {
+            "$ref": "#/definitions/hook-op-gates"
           }
         ]
       },

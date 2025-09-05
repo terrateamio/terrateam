@@ -207,6 +207,15 @@ module Workflow_step : sig
     }
     [@@deriving make, show, yojson, eq]
   end
+
+  module Gates : sig
+    type t = {
+      env : string String_map.t option;
+      cmd : Cmd.t;
+      run_on : Run_on.t; [@default Run_on.Success]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
 end
 
 module Access_control : sig
@@ -535,6 +544,7 @@ module Hooks : sig
       | Env of Workflow_step.Env.t
       | Oidc of Workflow_step.Oidc.t
       | Run of Workflow_step.Run.t
+      | Gates of Workflow_step.Gates.t
     [@@deriving show, yojson, eq]
   end
 
@@ -703,6 +713,7 @@ module Workflows : sig
         | Checkov of Workflow_step.Checkov.t
         | Conftest of Workflow_step.Conftest.t
         | Opa of Workflow_step.Opa.t
+        | Gates of Workflow_step.Gates.t
       [@@deriving show, yojson, eq]
     end
 

@@ -5,6 +5,7 @@ type t =
   | Hook_op_oidc of Terrat_repo_config_hook_op_oidc.t
   | Hook_op_run of Terrat_repo_config_hook_op_run.t
   | Hook_op_slack of Terrat_repo_config_hook_op_slack.t
+  | Hook_op_gates of Terrat_repo_config_hook_op_gates.t
 [@@deriving show, eq]
 
 let of_yojson =
@@ -22,6 +23,7 @@ let of_yojson =
        (fun v -> map (fun v -> Hook_op_oidc v) (Terrat_repo_config_hook_op_oidc.of_yojson v));
        (fun v -> map (fun v -> Hook_op_run v) (Terrat_repo_config_hook_op_run.of_yojson v));
        (fun v -> map (fun v -> Hook_op_slack v) (Terrat_repo_config_hook_op_slack.of_yojson v));
+       (fun v -> map (fun v -> Hook_op_gates v) (Terrat_repo_config_hook_op_gates.of_yojson v));
      ])
 
 let to_yojson = function
@@ -31,3 +33,4 @@ let to_yojson = function
   | Hook_op_oidc v -> Terrat_repo_config_hook_op_oidc.to_yojson v
   | Hook_op_run v -> Terrat_repo_config_hook_op_run.to_yojson v
   | Hook_op_slack v -> Terrat_repo_config_hook_op_slack.to_yojson v
+  | Hook_op_gates v -> Terrat_repo_config_hook_op_gates.to_yojson v
