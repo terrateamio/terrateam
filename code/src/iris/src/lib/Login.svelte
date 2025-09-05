@@ -55,6 +55,17 @@
       sessionStorage.setItem('rdt_uuid', rdtUuid);
     }
     
+    // Also check for Reddit UUID cookie if not in URL
+    if (!rdtUuid) {
+      const rdtUuidCookie = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('_rdt_uuid='))
+        ?.split('=')[1];
+      if (rdtUuidCookie) {
+        sessionStorage.setItem('rdt_uuid', rdtUuidCookie);
+      }
+    }
+    
     setVCSProvider(provider);
     
     if (provider === 'github') {

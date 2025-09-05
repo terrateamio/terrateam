@@ -144,6 +144,18 @@ export async function getCurrentUser(): Promise<User | null> {
     user.set(userData);
     isAuthenticated.set(true);
     
+    // Check if this is a new user and track Reddit conversion if applicable
+    const existingUserKey = 'terrateam_known_user';
+    const isExistingUser = localStorage.getItem(existingUserKey) === 'true';
+    
+    if (!isExistingUser) {
+      // Mark user as known for future logins
+      localStorage.setItem(existingUserKey, 'true');
+      
+      // Track Reddit conversion for new signup
+      await trackRedditSignupConversion(userData.id);
+    }
+    
     // Determine which VCS provider the user logged in with
     let provider: 'github' | 'gitlab' = 'github'; // default
     if (userData.vcs && userData.vcs.length > 0) {
@@ -327,18 +339,20 @@ async function trackRedditSignupConversion(userId: string): Promise<void> {
 
     const webhooksUrl = (window as any).terrateamConfig?.webhooks_url || 'https://webhooks.terrateam.workers.dev';
     
+    const payload = {
+      eventType: 'SignUp',
+      userId: userId.toString(),
+      rdt_cid: rdtCid,
+      rdt_uuid: rdtUuid,
+      timestamp: new Date().toISOString()
+    };
+    
     const response = await fetch(`${webhooksUrl}/reddit-conversion`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        eventType: 'SignUp',
-        userId: userId.toString(),
-        rdt_cid: rdtCid,
-        rdt_uuid: rdtUuid,
-        timestamp: new Date().toISOString()
-      })
+      body: JSON.stringify(payload)
     });
 
     if (response.ok) {
