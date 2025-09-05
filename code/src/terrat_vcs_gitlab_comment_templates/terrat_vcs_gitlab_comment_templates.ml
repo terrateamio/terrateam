@@ -196,7 +196,7 @@ module Tmpl = struct
     read "premium_feature_err_require_completed_reviews.tmpl"
 
   let repo_config_merge_err = read "repo_config_merge_err.tmpl"
-  let gate_check_failure = read "gate_check_failure.tmpl"
+  let gate_check_failure = jinja "gate_check_failure.tmpl"
   let tier_check = read "tier_check.tmpl"
   let build_tree_failure = read "build_tree_failure.tmpl"
   let notification_policy_tag_query_err = jinja "notification_policy_tag_query_err.tmpl"

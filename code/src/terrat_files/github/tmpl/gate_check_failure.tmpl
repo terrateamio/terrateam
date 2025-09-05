@@ -9,21 +9,23 @@ This pull request is blocked until  approvals are satisfied.
 
 | Token   | Directory | Workspace | Required Approvers           | Any Approvers | Any Remaining Count |
 |---------|-----------|-----------|------------------------------|----------------|----------------------|
-@#denied-@
-| @token@ | @?dir=@@/dir=@@!dir=@`@dir@`@/dir=@ | @?workspace=@@/workspace=@@!workspace=@`@workspace@`@/workspace=@ | @#all_of@`@q@` @/all_of@ | @#any_of@`@q@` @/any_of@ | @any_of_count@ |
-@/denied-@
+{% for d in denied %}
+| {% if d.token %}`{{ d.token }}`{% endif %} | {% if d.dir %}`{{ d.dir }}`{% endif %} | {% if d.workspace %}`{{ d.workspace }}`{% endif %} | {% for q in d.all_of %}`{{ q }}`{% endfor %} | {% for q in d.any_of %}`{{ q }}`{% endfor %} | {{ d.any_of_count }} |
+{%- endfor %}
 
 ### What to do?
 
-To continue, users matching the `Required Approvers` and `Any Approvers` must approve a token until all approvals are satisfied.
+To continue, users matching the `Required Approvers` and `Any Approvers` must approve the gate until all approvals are satisfied.
 
-To approve a token, comment the following:
+To approve a gate with a token, comment the following:
 
 ```
 terrateam gate approve <token>
 ```
 
 Where `<token>` is the token to be approved.
+
+To approve a gate without a token, approve the pull request.
 
 #### How Gatekeeper requirements work
 
