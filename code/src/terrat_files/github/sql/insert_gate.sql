@@ -4,6 +4,7 @@ insert into gates (
     dir,
     workspace,
     token,
+    name,
     pull_request
 )
 select
@@ -12,6 +13,7 @@ select
         $dir,
         $workspace,
         $token,
+        $name,
         gprm.core_id
 from github_pull_requests_map as gprm
 where gprm.repository_id = $repository and gprm.pull_number = $pull_number

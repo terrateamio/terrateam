@@ -434,7 +434,8 @@ module Publisher_tools = struct
                ( "gates",
                  let module G = Terrat_api_components.Gate in
                  `List
-                   (CCList.map (fun { G.all_of; any_of; any_of_count; dir; token; workspace } ->
+                   (CCList.map
+                      (fun { G.all_of; any_of; any_of_count; dir; token; name; workspace } ->
                         let all_of = CCOption.get_or ~default:[] all_of in
                         let any_of = CCOption.get_or ~default:[] any_of in
                         let any_of_count = CCOption.get_or ~default:0 any_of_count in
@@ -442,7 +443,9 @@ module Publisher_tools = struct
                         let workspace = CCOption.get_or ~default:"" workspace in
                         `Assoc
                           [
-                            ("token", `String token);
+                            ( "token",
+                              CCOption.map_or ~default:`Null (fun token -> `String token) token );
+                            ("name", CCOption.map_or ~default:`Null (fun name -> `String name) name);
                             ("dir", `String dir);
                             ("workspace", `String workspace);
                             ( "all_of",
@@ -454,8 +457,12 @@ module Publisher_tools = struct
                                    (if any_of_count = 0 then [] else any_of)) );
                             ("any_of_count", `Int any_of_count);
                           ])
-                   @@ CCList.sort (fun { G.token = t1; _ } { G.token = t2; _ } ->
-                          CCString.compare t1 t2)
+                   @@ CCList.sort
+                        (fun { G.token = t1; name = n1; _ } { G.token = t2; name = n2; _ } ->
+                          let module Cmp = struct
+                            type t = string option * string option [@@deriving ord]
+                          end in
+                          Cmp.compare (t1, n1) (t2, n2))
                    @@ CCOption.get_or ~default:[] gates) );
              ];
              denied_dirspaces;

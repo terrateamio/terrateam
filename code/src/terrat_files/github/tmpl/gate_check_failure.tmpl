@@ -7,11 +7,31 @@ This pull request is blocked until  approvals are satisfied.
         Expand for list of gates that have not been approved
     </summary>
 
-| Token   | Directory | Workspace | Required Approvers           | Any Approvers | Any Remaining Count |
-|---------|-----------|-----------|------------------------------|----------------|----------------------|
-{% for d in denied %}
-| {% if d.token %}`{{ d.token }}`{% endif %} | {% if d.dir %}`{{ d.dir }}`{% endif %} | {% if d.workspace %}`{{ d.workspace }}`{% endif %} | {% for q in d.all_of %}`{{ q }}`{% endfor %} | {% for q in d.any_of %}`{{ q }}`{% endfor %} | {{ d.any_of_count }} |
+{%- set token_gates = denied | rejectattr("token", "none") %}
+{%- set approval_gates = denied | selectattr("token", "none") %}
+
+{%- if token_gates %}
+
+### Token Gates
+| Token | Directory | Workspace | Required Approvers           | Any Approvers | Any Remaining Count |
+|-------|-----------|-----------|------------------------------|---------------|---------------------|
+{%- for d in token_gates %}
+| `{{ d.token }}` | {% if d.dir %}`{{ d.dir }}`{% endif %} | {% if d.workspace %}`{{ d.workspace }}`{% endif %} | {% for q in d.all_of %}`{{ q }}`{% endfor %} | {% for q in d.any_of %}`{{ q }}`{% endfor %} | {{ d.any_of_count }} |
 {%- endfor %}
+
+These gates are fulfilled by commenting `terrateam gate approve <token>`.
+{%- endif %}
+{%- if approval_gates %}
+
+### Approval Gates
+| Name | Directory | Workspace | Required Approvers           | Any Approvers | Any Remaining Count |
+|------|-----------|-----------|------------------------------|---------------|---------------------|
+{%- for d in approval_gates %}
+| {{ d.name | default('', true) }} | {% if d.dir %}`{{ d.dir }}`{% endif %} | {% if d.workspace %}`{{ d.workspace }}`{% endif %} | {% for q in d.all_of %}`{{ q }}`{% endfor %} | {% for q in d.any_of %}`{{ q }}`{% endfor %} | {{ d.any_of_count }} |
+{%- endfor %}
+
+These gates are fulfilled by approving the pull request.
+{%- endif %}
 
 ### What to do?
 

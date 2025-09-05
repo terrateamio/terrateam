@@ -677,13 +677,13 @@
         "any_of_count": {
           "type": "integer"
         },
+        "name": {
+          "type": "string"
+        },
         "token": {
           "type": "string"
         }
       },
-      "required": [
-        "token"
-      ],
       "type": "object"
     },
     "hook": {
