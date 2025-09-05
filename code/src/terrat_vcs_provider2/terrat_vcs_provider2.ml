@@ -85,7 +85,8 @@ end
 module Gate_eval = struct
   type t = {
     dirspace : Terrat_dirspace.t option;
-    token : string;
+    token : string option;
+    name : string option;
     result : Terrat_gate.Result.t;
   }
   [@@deriving show]

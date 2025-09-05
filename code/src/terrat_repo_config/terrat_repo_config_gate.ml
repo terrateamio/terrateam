@@ -10,6 +10,7 @@ type t = {
   all_of : All_of.t option; [@default None]
   any_of : Any_of.t option; [@default None]
   any_of_count : int option; [@default None]
-  token : string;
+  name : string option; [@default None]
+  token : string option; [@default None]
 }
 [@@deriving yojson { strict = true; meta = true }, make, show, eq]

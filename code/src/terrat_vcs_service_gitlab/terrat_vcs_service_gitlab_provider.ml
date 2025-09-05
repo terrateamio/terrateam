@@ -619,7 +619,8 @@ module Db = struct
       Pgsql_io.Typed_sql.(
         sql
         /^ read "insert_gate.sql"
-        /% Var.text "token"
+        /% Var.(option (text "name"))
+        /% Var.(option (text "token"))
         /% Var.json "gate"
         /% Var.bigint "repository"
         /% Var.bigint "pull_number"
@@ -1039,7 +1040,7 @@ module Db = struct
             let pull_number = CCInt64.of_int @@ Terrat_pull_request.id pr in
             let sha = Api.Ref.to_string @@ Terrat_pull_request.branch_ref pr in
             Abbs_future_combinators.List_result.iter
-              ~f:(fun { G.all_of; any_of; any_of_count; dir; workspace; token } ->
+              ~f:(fun { G.all_of; any_of; any_of_count; dir; workspace; token; name } ->
                 Abb.Future.return
                 @@ CCResult.map_l Terrat_gate.Match.make
                 @@ CCOption.get_or ~default:[] all_of
@@ -1058,6 +1059,7 @@ module Db = struct
                 Pgsql_io.Prepared_stmt.execute
                   db
                   Sql.insert_gate
+                  name
                   token
                   (Yojson.Safe.to_string @@ Terrat_gate.to_yojson gate)
                   repo
@@ -3407,7 +3409,7 @@ module Comment = struct
             [
               ( "denied",
                 `List
-                  (CCList.map (fun { G.dirspace; token; result } ->
+                  (CCList.map (fun { G.dirspace; token; name; result } ->
                        let { Terrat_gate.all_of; any_of; any_of_count } = result in
                        let { Terrat_dirspace.dir; workspace } =
                          CCOption.get_or
@@ -3416,7 +3418,9 @@ module Comment = struct
                        in
                        `Assoc
                          [
-                           ("token", `String token);
+                           ( "token",
+                             CCOption.map_or ~default:`Null (fun token -> `String token) token );
+                           ("name", CCOption.map_or ~default:`Null (fun name -> `String name) name);
                            ("dir", `String dir);
                            ("workspace", `String workspace);
                            ( "all_of",
@@ -3432,7 +3436,11 @@ module Comment = struct
                            ("any_of_count", `Int any_of_count);
                          ])
                   @@ CCList.sort
-                       (fun { G.token = t1; _ } { G.token = t2; _ } -> CCString.compare t1 t2)
+                       (fun { G.token = t1; name = n1; _ } { G.token = t2; name = n2; _ } ->
+                         let module Cmp = struct
+                           type t = string option * string option [@@deriving ord]
+                         end in
+                         Cmp.compare (t1, n1) (t2, n2))
                        denied) );
             ]
         in
