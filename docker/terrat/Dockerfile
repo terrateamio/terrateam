@@ -115,7 +115,9 @@ RUN ulimit -s 524288 && ulimit -a && \
 
 # Final code-indexer image
 FROM alpine:3.18 AS code-indexer
+RUN addgroup -S terrat && adduser -S -G terrat terrat
 COPY --from=code-indexer-build /mono/code/build/release/terrat_code_indexer/terrat_code_indexer.native /usr/local/bin/terrat_code_indexer
+USER terrat
 WORKDIR /mnt
 ENTRYPOINT ["/usr/local/bin/terrat_code_indexer"]
 
@@ -137,8 +139,15 @@ RUN apk add --no-cache \
     python3 \
     runit \
     strace \
+    sudo \
     yj
+RUN addgroup -S terrat && adduser -S -G terrat terrat
 RUN mkdir -p /usr/local/bin /etc/service/terrat /etc/service/nginx /usr/local/share/terrat/ui/assets
+RUN echo 'terrat ALL=(root) NOPASSWD: /usr/sbin/update-ca-certificates' > /etc/sudoers.d/terrat && \
+    chmod 440 /etc/sudoers.d/terrat
+RUN chown -R terrat:terrat /etc/service /usr/local/share/terrat /etc/nginx /var/lib/nginx /var/log/nginx /run && \
+    chgrp terrat /usr/local/share/ca-certificates && \
+    chmod 775 /usr/local/share/ca-certificates
 COPY docker/terrat/service/terrat /etc/service/terrat/run
 COPY docker/terrat/service/nginx /etc/service/nginx/run
 COPY docker/terrat/nginx.conf.template /etc/nginx/nginx.conf.template
@@ -146,6 +155,7 @@ COPY --from=terrat-ee-build /usr/lib/libkqueue.so /usr/lib/libkqueue.so
 COPY --from=terrat-ee-build /usr/lib/libkqueue.so.0 /usr/lib/libkqueue.so.0
 COPY --from=terrat-ee-build /mono/code/build/release/terrat_ee/terrat_ee.native /usr/local/bin/terrat
 COPY --from=terrat-ee-build /mono/code/build/release/iris/dist/ /usr/local/share/terrat/ui/assets/
+USER terrat
 EXPOSE 8080
 CMD ["runsvdir", "/etc/service"]
 
@@ -167,8 +177,15 @@ RUN apk add --no-cache \
     python3 \
     runit \
     strace \
+    sudo \
     yj
+RUN addgroup -S terrat && adduser -S -G terrat terrat
 RUN mkdir -p /usr/local/bin /etc/service/terrat /etc/service/nginx /usr/local/share/terrat/ui/assets
+RUN echo 'terrat ALL=(root) NOPASSWD: /usr/sbin/update-ca-certificates' > /etc/sudoers.d/terrat && \
+    chmod 440 /etc/sudoers.d/terrat
+RUN chown -R terrat:terrat /etc/service /usr/local/share/terrat /etc/nginx /var/lib/nginx /var/log/nginx /run && \
+    chgrp terrat /usr/local/share/ca-certificates && \
+    chmod 775 /usr/local/share/ca-certificates
 COPY docker/terrat/service/terrat /etc/service/terrat/run
 COPY docker/terrat/service/nginx /etc/service/nginx/run
 COPY docker/terrat/nginx.conf.template /etc/nginx/nginx.conf.template
@@ -176,5 +193,6 @@ COPY --from=terrat-oss-build /usr/lib/libkqueue.so /usr/lib/libkqueue.so
 COPY --from=terrat-oss-build /usr/lib/libkqueue.so.0 /usr/lib/libkqueue.so.0
 COPY --from=terrat-oss-build /mono/code/build/release/terrat_oss/terrat_oss.native /usr/local/bin/terrat
 COPY --from=terrat-oss-build /mono/code/build/release/iris/dist/ /usr/local/share/terrat/ui/assets/
+USER terrat
 EXPOSE 8080
 CMD ["runsvdir", "/etc/service"]
