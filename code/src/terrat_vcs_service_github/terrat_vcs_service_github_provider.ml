@@ -3797,44 +3797,41 @@ module Comment = struct
     | Msg.Gate_check_failure denied ->
         let module G = Terrat_vcs_provider2.Gate_eval in
         let kv =
-          Snabela.Kv.(
-            Map.of_list
-              [
-                ( "denied",
-                  list
-                  @@ CCList.map (fun { G.dirspace; token; result } ->
-                         let { Terrat_gate.all_of; any_of; any_of_count } = result in
-                         let { Terrat_dirspace.dir; workspace } =
-                           CCOption.get_or
-                             ~default:{ Terrat_dirspace.dir = ""; workspace = "" }
-                             dirspace
-                         in
-                         Map.of_list
-                           [
-                             ("token", string token);
-                             ("dir", string dir);
-                             ("workspace", string workspace);
-                             ( "all_of",
-                               list
-                               @@ CCList.map
-                                    (fun q ->
-                                      Map.of_list [ ("q", string @@ Terrat_gate.Match.to_string q) ])
-                                    all_of );
-                             ( "any_of",
-                               list
-                               @@ CCList.map
-                                    (fun q ->
-                                      Map.of_list [ ("q", string @@ Terrat_gate.Match.to_string q) ])
-                                    (if any_of_count = 0 then [] else any_of) );
-                             ("any_of_count", int any_of_count);
-                           ])
+          `Assoc
+            [
+              ( "denied",
+                `List
+                  (CCList.map (fun { G.dirspace; token; result } ->
+                       let { Terrat_gate.all_of; any_of; any_of_count } = result in
+                       let { Terrat_dirspace.dir; workspace } =
+                         CCOption.get_or
+                           ~default:{ Terrat_dirspace.dir = ""; workspace = "" }
+                           dirspace
+                       in
+                       `Assoc
+                         [
+                           ("token", `String token);
+                           ("dir", `String dir);
+                           ("workspace", `String workspace);
+                           ( "all_of",
+                             `List
+                               (CCList.map
+                                  (fun q -> `String (Terrat_gate.Match.to_string q))
+                                  all_of) );
+                           ( "any_of",
+                             `List
+                               (CCList.map
+                                  (fun q -> `String (Terrat_gate.Match.to_string q))
+                                  (if any_of_count = 0 then [] else any_of)) );
+                           ("any_of_count", `Int any_of_count);
+                         ])
                   @@ CCList.sort
                        (fun { G.token = t1; _ } { G.token = t2; _ } -> CCString.compare t1 t2)
-                       denied );
-              ])
+                       denied) );
+            ]
         in
         Abbs_future_combinators.Result.ignore
-        @@ Gcm_api.apply_template_and_publish
+        @@ Gcm_api.apply_template_and_publish_jinja
              ~request_id
              client
              pull_request
