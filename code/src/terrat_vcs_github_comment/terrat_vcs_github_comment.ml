@@ -67,6 +67,16 @@ module Sql = struct
       /^ read "select_comment_elements.sql"
       /% Var.bigint "comment_id")
 
+  let select_github_summary_comments =
+    Pgsql_io.Typed_sql.(
+      sql
+      //
+      (* comment_id *)
+      Ret.bigint
+      /^ read "select_github_summary_comment_elements.sql"
+      /% Var.text "dir"
+      /% Var.text "workspace")
+
   let upsert_github_work_manifest_comment =
     Pgsql_io.Typed_sql.(
       sql
@@ -78,6 +88,7 @@ module Sql = struct
       /% Var.uuid "work_manifest"
       /% Var.text "dir"
       /% Var.text "workspace")
+
 end
 
 module S = struct
