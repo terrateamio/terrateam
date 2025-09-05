@@ -1335,9 +1335,7 @@
         "default_tf_version": {
           "$ref": "#/definitions/terraform-version"
         },
-        "definitions": {
-          "type": null
-        },
+        "definitions": {},
         "destination_branches": {
           "items": {
             "oneOf": [
