@@ -50,7 +50,7 @@ Not all [dirspaces](https://docs.terrateam.io/getting-started/concepts/#dirspace
 | `{{ g.token }}` | {% if g.dir %}`{{ g.dir }}`{% endif %} | {% if g.workspace %}`{{ g.workspace }}`{% endif %} | {% for p in g.all_of %}`{{ p.q }}` {% endfor %} | {% for p in g.any_of %}`{{ p.q }}` {% endfor %} | {{ g.any_of_count }} |
     {%- endfor %}
 
-These gates are fulfilled by commenting `terrateam gate approve <token>`.
+These gates are fulfilled by commenting `terrateam gate approve <token1> <token2> ... <tokenN>`.
 {%- endif %}
 {%- if approval_gates %}
 
@@ -74,7 +74,7 @@ To continue, users matching the `Required Approvers` and `Any Approvers` must ap
 To approve a gate with a token, comment the following:
 
 ```
-terrateam gate approve <token>
+terrateam gate approve <token1> <token2> ... <tokenN>
 ```
 
 Where `<token>` is the token to be approved.
