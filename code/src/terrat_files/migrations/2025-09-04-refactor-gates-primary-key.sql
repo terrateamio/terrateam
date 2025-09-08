@@ -7,7 +7,7 @@ alter table gates
 
 -- We'll then create a unique index on gates where we treat nulls as unique.
 -- This gives us our index plus uniqueness when a token is set.
-create unique index gates_token_idx on gates (pull_request, sha, dir, workspace, token) nulls distinct;
+create unique index if not exists gates_token_idx on gates (pull_request, sha, dir, workspace, token);
 
 drop view github_gates;
 
