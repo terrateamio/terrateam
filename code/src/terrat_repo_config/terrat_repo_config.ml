@@ -59,6 +59,7 @@ module Hook_op_run = Terrat_repo_config_hook_op_run
 module Hook_op_slack = Terrat_repo_config_hook_op_slack
 module Integrations = Terrat_repo_config_integrations
 module Notification_policy = Terrat_repo_config_notification_policy
+module Notification_summary = Terrat_repo_config_notification_summary
 module Notifications = Terrat_repo_config_notifications
 module Permission = Terrat_repo_config_permission
 module Retry = Terrat_repo_config_retry

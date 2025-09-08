@@ -1034,6 +1034,16 @@
       ],
       "type": "object"
     },
+    "notification-summary": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": true,
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
     "notifications": {
       "additionalProperties": false,
       "properties": {
@@ -1042,6 +1052,9 @@
             "$ref": "#/definitions/notification-policy"
           },
           "type": "array"
+        },
+        "summary": {
+          "$ref": "#/definitions/notification-summary"
         }
       },
       "type": "object"

@@ -601,12 +601,19 @@ module Notifications : sig
 
     type t = {
       tag_query : Tag_query.t;
-      comment_strategy : Strategy.t; [@default Strategy.Append]
+      comment_strategy : Strategy.t; [@default Strategy.Minimize]
     }
     [@@deriving make, show, yojson, eq]
   end
 
-  type t = { policies : Policy.t list [@default [ Policy.make ~tag_query:Tag_query.any () ]] }
+  module Summary : sig
+    type t = { enabled : bool [@default true] } [@@deriving make, show, yojson, eq]
+  end
+
+  type t = {
+    policies : Policy.t list; [@default [ Policy.make ~tag_query:Tag_query.any () ]]
+    summary : Summary.t; [@default Summary.make ()]
+  }
   [@@deriving make, show, yojson, eq]
 end
 

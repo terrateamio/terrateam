@@ -3708,6 +3708,8 @@ module Comment = struct
           "PULL_REQUEST_NOT_MERGEABLE"
           Tmpl.pull_request_not_mergeable
           kv
+    | Msg.Pull_request_summary { config; db; pull_request; repo_config; synthesized_config } ->
+        raise (Failure "nyi")
     | Msg.Repo_config (provenance, repo_config) ->
         let repo_config_json =
           Terrat_repo_config.Version_1.to_yojson
