@@ -477,6 +477,15 @@ module Workflow_step = struct
     }
     [@@deriving make, show, yojson, eq]
   end
+
+  module Gates = struct
+    type t = {
+      env : string String_map.t option;
+      cmd : Cmd.t;
+      run_on : Run_on.t; [@default Run_on.Success]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
 end
 
 module Access_control = struct
@@ -909,6 +918,7 @@ module Hooks = struct
       | Env of Workflow_step.Env.t
       | Oidc of Workflow_step.Oidc.t
       | Run of Workflow_step.Run.t
+      | Gates of Workflow_step.Gates.t
     [@@deriving show, yojson, eq]
   end
 
@@ -1077,6 +1087,7 @@ module Workflows = struct
         | Checkov of Workflow_step.Checkov.t
         | Conftest of Workflow_step.Conftest.t
         | Opa of Workflow_step.Opa.t
+        | Gates of Workflow_step.Gates.t
       [@@deriving show, yojson, eq]
     end
 
@@ -1553,6 +1564,17 @@ let of_version_1_hook_op =
               ?run_on
               ?on_error
               ()))
+  | Op.Hook_op_gates op ->
+      let open CCResult.Infix in
+      let module Op = Terrat_repo_config_hook_op_gates in
+      let { Op.cmd; env; run_on; type_ = _ } = op in
+      CCResult.map_err
+        (function
+          | `Unknown_run_on err -> `Hooks_unknown_run_on_err err)
+        (map_opt of_version_1_run_on run_on)
+      >>= fun run_on ->
+      map_opt (fun { Op.Env.additional; _ } -> Ok additional) env
+      >>= fun env -> Ok (Hooks.Hook_op.Gates (Workflow_step.Gates.make ~cmd ?env ?run_on ()))
   | Op.Hook_op_slack _ -> assert false
 
 let of_version_1_drift_schedule = function
@@ -1638,6 +1660,16 @@ let of_version_1_workflow_op_list ops =
                   ?visible_on
                   ?on_error
                   ()))
+      | Op.Hook_op_gates op ->
+          let module Op = Terrat_repo_config_hook_op_gates in
+          let { Op.cmd; env; run_on; type_ = _ } = op in
+          map_opt (fun { Op.Env.additional; _ } -> Ok additional) env
+          >>= fun env ->
+          CCResult.map_err
+            (function
+              | `Unknown_run_on err -> `Workflows_unknown_run_on_err err)
+            (map_opt of_version_1_run_on run_on)
+          >>= fun run_on -> Ok (O.Gates (Workflow_step.Gates.make ~cmd ?env ?run_on ()))
       | Op.Hook_op_slack _ -> assert false
       | Op.Hook_op_env_exec op ->
           let module Op = Terrat_repo_config_hook_op_env_exec in
@@ -2898,6 +2930,16 @@ let to_version_1_hooks_op_run r =
     on_error = Some on_error;
   }
 
+let to_version_1_hooks_op_gates g =
+  let module G = Terrat_repo_config.Hook_op_gates in
+  let { Workflow_step.Gates.cmd; env; run_on } = g in
+  {
+    G.cmd;
+    env = CCOption.map (fun env -> G.Env.make ~additional:env Json_schema.Empty_obj.t) env;
+    run_on = Some (Workflow_step.Run_on.to_string run_on);
+    type_ = "gates";
+  }
+
 let to_version_1_hooks_hook_list =
   let module Op = Terrat_repo_config.Hook_op in
   CCList.map (function
@@ -2909,7 +2951,8 @@ let to_version_1_hooks_hook_list =
     | Hooks.Hook_op.Env (Workflow_step.Env.Source env) ->
         Op.Hook_op_env_source (to_version_1_hooks_op_env_source env)
     | Hooks.Hook_op.Oidc oidc -> Op.Hook_op_oidc (to_version_1_hooks_op_oidc oidc)
-    | Hooks.Hook_op.Run r -> Op.Hook_op_run (to_version_1_hooks_op_run r))
+    | Hooks.Hook_op.Run r -> Op.Hook_op_run (to_version_1_hooks_op_run r)
+    | Hooks.Hook_op.Gates g -> Op.Hook_op_gates (to_version_1_hooks_op_gates g))
 
 let to_version_1_hooks_hook hook =
   let module H = Terrat_repo_config.Hook in
@@ -3169,7 +3212,8 @@ let to_version_1_workflows_op =
             ignore_errors;
             run_on = Some (Workflow_step.Run_on.to_string run_on);
             visible_on = Some (Workflow_step.Visible_on.to_string visible_on);
-          })
+          }
+    | Workflows.Entry.Op.Gates gates -> Op.Items.Hook_op_gates (to_version_1_hooks_op_gates gates))
 
 let to_version_1_workflows =
   CCList.map (fun entry ->
