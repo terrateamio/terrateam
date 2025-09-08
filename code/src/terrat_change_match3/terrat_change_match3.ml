@@ -321,11 +321,28 @@ let rec combine_rule accessor nested_lookup stacks vs =
     ~init:[]
     vs
 
+let rec collect_deps ~path ~accessor name stacks =
+  let module V1 = Terrat_base_repo_config_v1 in
+  let module S = V1.Stacks in
+  let stack = String_map.find name stacks in
+  let { S.Stack.rules; _ } = stack in
+  name
+  :: CCList.flat_map
+       (function
+         | n when not (CCList.mem ~eq:CCString.equal n path) ->
+             collect_deps ~path:(name :: path) ~accessor n stacks
+         | _ -> [])
+       (accessor rules)
+
 (* Expand a config by any nested stacks its related to.  This expands it in two ways:
 
    1. For any nested stacks that reference us, we want to expand any rules they have into us.
 
-   2. Any stacks that are referenced in a rule we want to expand to the concrete stack name.
+   2. Any nested stacks that are referenced in a rule we want to expand to the
+      concrete stack name.
+
+   3. All transitive dependencies are expanded out.  So if A depends on B which
+      depends on C, A will depend on B and C.
 
    We also want to do it in this order because we want any nested stacks to then
    be expanded out after they are added to the rules. *)
@@ -362,18 +379,24 @@ let expand_stack_config name config nested_to_stack_lookup stack_to_nested_looku
       R.modified_by =
         String_set.to_list
         @@ String_set.of_list
+        @@ CCList.flat_map (fun n ->
+               collect_deps ~path:[] ~accessor:(fun { R.modified_by; _ } -> modified_by) n stacks)
         @@ CCList.flat_map
              (fun s -> String_map.get_or ~default:[ s ] s nested_to_stack_lookup)
              modified_by;
       plan_after =
         String_set.to_list
         @@ String_set.of_list
+        @@ CCList.flat_map (fun n ->
+               collect_deps ~path:[] ~accessor:(fun { R.plan_after; _ } -> plan_after) n stacks)
         @@ CCList.flat_map
              (fun s -> String_map.get_or ~default:[ s ] s nested_to_stack_lookup)
              plan_after;
       apply_after =
         String_set.to_list
         @@ String_set.of_list
+        @@ CCList.flat_map (fun n ->
+               collect_deps ~path:[] ~accessor:(fun { R.apply_after; _ } -> apply_after) n stacks)
         @@ CCList.flat_map
              (fun s -> String_map.get_or ~default:[ s ] s nested_to_stack_lookup)
              apply_after;
@@ -402,7 +425,9 @@ let synthesize_config ~index repo_config =
     let symlinks = build_symlinks index.R.Index.symlinks in
     let stacks = R.stacks repo_config in
     assert_all_stacks_exist stacks.R.Stacks.names;
+    (* Lookup up for a stack name to the stacks nested under it. *)
     let nested_to_stack_lookup = build_nested_to_stack_lookup stacks.R.Stacks.names in
+    (* Lookup of a stack to any stacks that nest it. *)
     let stack_to_nested_lookup = build_stack_to_nested_lookup stacks.R.Stacks.names in
     let stack_configs =
       String_map.mapi
@@ -592,6 +617,9 @@ let sort topology dirspaces matches =
           @@ Dirspace_map.get_or ~default:[] dirspace topology ))
       matches
   in
+  let match_set =
+    Dirspace_set.of_list @@ CCList.map (fun { Dirspace_config.dirspace; _ } -> dirspace) matches
+  in
   match Tsort.sort topo with
   | Tsort.Sorted sorted ->
       (* The topology as we defined it is (dependency -> dependents) which means our
@@ -604,6 +632,7 @@ let sort topology dirspaces matches =
          not a dependent of any of the elements that proceded it in the list. *)
       let topo = Dirspace_map.of_list topo in
       sorted
+      |> CCList.filter CCFun.(flip Dirspace_set.mem match_set)
       |> CCList.rev
       |> CCList.map (CCFun.flip Dirspace_map.find dirspaces)
       |> group_independent_dirspaces topo
