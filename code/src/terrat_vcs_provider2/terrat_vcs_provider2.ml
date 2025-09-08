@@ -130,6 +130,13 @@ module Msg = struct
     | Premium_feature_err of premium_features
     | Pull_request_not_appliable of ('pull_request * 'apply_requirements)
     | Pull_request_not_mergeable
+    | Pull_request_summary of {
+        db : 'db;
+        config : 'config;
+        pull_request: 'pull_request;
+        repo_config : Terrat_base_repo_config_v1.derived Terrat_base_repo_config_v1.t;
+        synthesized_config : Terrat_change_match3.Config.t;
+      }
     | Repo_config of (string list * Terrat_base_repo_config_v1.derived Terrat_base_repo_config_v1.t)
     | Repo_config_err of Terrat_base_repo_config_v1.of_version_1_err
     | Repo_config_failure of string

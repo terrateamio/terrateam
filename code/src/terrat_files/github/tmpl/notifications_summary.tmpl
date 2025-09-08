@@ -1,0 +1,9 @@
+# Terrateam Summary
+**Updated:** {{ updated_timestamp }}
+
+| Dir | Workspace | Status | Created | Updated | Replaced | Deleted |
+|-----|-----------|--------|---------|---------|----------|---------|
+{%- for item in items %}
+| {{ item.dir }} | `{{ item.workspace }}` | **{{ item.status }}** | {{ item.created }} | {{ item.updated }} | {{ item.replaced }} | {{ item.deleted }} |
+{%- endfor %}
+| **Total** | **-** | **-** | **{{ stats.created }}** | **{{ stats.updated }}** | **{{ stats.replaced }}** | **{{ stats.deleted }}** |

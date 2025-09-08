@@ -980,7 +980,14 @@ module Notifications = struct
     [@@deriving make, show, yojson, eq]
   end
 
-  type t = { policies : Policy.t list [@default [ Policy.make ~tag_query:Tag_query.any () ]] }
+  module Summary = struct
+    type t = { enabled : bool [@default true] } [@@deriving make, show, yojson, eq]
+  end
+
+  type t = {
+    policies : Policy.t list; [@default [ Policy.make ~tag_query:Tag_query.any () ]]
+    summary : Summary.t; [@default Summary.make ()]
+  }
   [@@deriving make, show, yojson, eq]
 end
 
@@ -2317,13 +2324,21 @@ let of_version_1_notification_policy policy =
   | _st -> assert false)
   >>= fun comment_strategy -> Ok { Policy.tag_query; comment_strategy }
 
+let of_version_1_notification_summary summary =
+  let module Ns = Terrat_repo_config_notification_summary in
+  let module Summary = Notifications.Summary in
+  let { Ns.enabled } = CCOption.get_or ~default:(Ns.make ()) summary in
+  Ok { Summary.enabled }
+
 let of_version_1_notifications notifications =
   let open CCResult.Infix in
   let module N = Terrat_repo_config_notifications in
-  let { N.policies } = notifications in
+  let { N.policies; summary } = notifications in
   let policies = CCOption.get_or ~default:[] policies in
   CCResult.map_l of_version_1_notification_policy policies
-  >>= fun policies -> Ok { Notifications.policies }
+  >>= fun policies ->
+  of_version_1_notification_summary summary
+  >>= fun summary -> Ok { Notifications.policies; summary }
 
 let of_version_1_storage storage =
   let open CCResult.Infix in
@@ -3036,10 +3051,18 @@ let to_version_1_notification_policy policy =
   in
   { P.tag_query = Terrat_tag_query.to_string tag_query; comment_strategy }
 
+let to_version_1_notification_summary summary =
+  let module Sm = Terrat_repo_config_notification_summary in
+  let { Notifications.Summary.enabled } = summary in
+  { Sm.enabled }
+
 let to_version_1_notifications notifications =
   let module N = Terrat_repo_config.Notifications in
-  let { Notifications.policies } = notifications in
-  { N.policies = Some (CCList.map to_version_1_notification_policy policies) }
+  let { Notifications.policies; summary } = notifications in
+  {
+    N.policies = Some (CCList.map to_version_1_notification_policy policies);
+    summary = Some (to_version_1_notification_summary summary);
+  }
 
 let to_version_1_storage_plans plans =
   match plans with

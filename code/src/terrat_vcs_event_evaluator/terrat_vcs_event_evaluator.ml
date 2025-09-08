@@ -838,6 +838,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Publish_help
       | Publish_index
       | Publish_repo_config
+      | Publish_summary
       | Publish_unlock
       | React_to_comment
       | Record_feedback
@@ -919,6 +920,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Publish_help -> "publish_help"
       | Publish_index -> "publish_index"
       | Publish_repo_config -> "publish_repo_config"
+      | Publish_summary -> "publish_summary"
       | Publish_unlock -> "publish_unlock"
       | React_to_comment -> "react_to_comment"
       | Record_feedback -> "record_feedback"
@@ -999,6 +1001,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | "publish_help" -> Some Publish_help
       | "publish_index" -> Some Publish_index
       | "publish_repo_config" -> Some Publish_repo_config
+      | "publish_summary" -> Some Publish_summary
       | "publish_unlock" -> Some Publish_unlock
       | "react_to_comment" -> Some React_to_comment
       | "record_feedback" -> Some Record_feedback
@@ -4321,6 +4324,45 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           | Wm.Step.Build_tree -> assert false)
       | None -> Abb.Future.return (Ok None)
 
+    let fetch_configs ctx state =
+      let open Abbs_future_combinators.Infix_result_monad in
+      Abbs_future_combinators.Infix_result_app.(
+        (fun client pull_request repo_config repo_tree ->
+          (client, pull_request, repo_config, repo_tree))
+        <$> Dv.client ctx state
+        <*> Dv.pull_request ctx state
+        <*> Dv.repo_config_with_provenance ctx state
+        <*> Dv.repo_tree_branch ctx state)
+      >>= fun (client, pull_request, (provenance, repo_config), repo_tree) ->
+      Dv.query_index ctx state
+      >>= fun index ->
+      let index =
+        let module R = Terrat_base_repo_config_v1 in
+        match R.indexer repo_config with
+        | { R.Indexer.enabled = true; _ } ->
+            CCOption.map_or
+              ~default:Terrat_base_repo_config_v1.Index.empty
+              (fun { Terrat_vcs_provider2.Index.index; _ } -> index)
+              index
+        | _ -> Terrat_base_repo_config_v1.Index.empty
+      in
+      Abbs_time_it.run (log_time state.State.request_id "DERIVE") (fun () ->
+          Abbs_future_combinators.to_result
+          @@ Abb.Thread.run (fun () ->
+                 Terrat_base_repo_config_v1.derive
+                   ~ctx:
+                     (Terrat_base_repo_config_v1.Ctx.make
+                        ~dest_branch:
+                          (S.Api.Ref.to_string (S.Api.Pull_request.base_branch_name pull_request))
+                        ~branch:(S.Api.Ref.to_string (S.Api.Pull_request.branch_name pull_request))
+                        ())
+                   ~index
+                   ~file_list:repo_tree
+                   repo_config))
+      >>= fun repo_config ->
+      Abb.Future.return (Terrat_change_match3.synthesize_config ~index repo_config)
+      >>= fun synthesized_config -> Abb.Future.return (Ok (repo_config, synthesized_config))
+
     let run_op_work_manifest_iter_result op ctx state result work_manifest =
       let module Wm = Terrat_work_manifest3 in
       let open Abbs_future_combinators.Infix_result_monad in
@@ -4364,53 +4406,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                    (Ctx.storage ctx)
                    (Event.account state.State.event)
                  >>= fun account_status ->
-                 (* TODO: HUGE HACK, redo this later *)
-                 let run =
-                   let open Abbs_future_combinators.Infix_result_monad in
-                   Abbs_future_combinators.Infix_result_app.(
-                     (fun client pull_request repo_config repo_tree ->
-                       (client, pull_request, repo_config, repo_tree))
-                     <$> Dv.client ctx state
-                     <*> Dv.pull_request ctx state
-                     <*> Dv.repo_config_with_provenance ctx state
-                     <*> Dv.repo_tree_branch ctx state)
-                   >>= fun (client, pull_request, (provenance, repo_config), repo_tree) ->
-                   Dv.query_index ctx state
-                   >>= fun index ->
-                   let index =
-                     let module R = Terrat_base_repo_config_v1 in
-                     match R.indexer repo_config with
-                     | { R.Indexer.enabled = true; _ } ->
-                         CCOption.map_or
-                           ~default:Terrat_base_repo_config_v1.Index.empty
-                           (fun { Terrat_vcs_provider2.Index.index; _ } -> index)
-                           index
-                     | _ -> Terrat_base_repo_config_v1.Index.empty
-                   in
-                   Abbs_time_it.run (log_time state.State.request_id "DERIVE") (fun () ->
-                       Abbs_future_combinators.to_result
-                       @@ Abb.Thread.run (fun () ->
-                              Terrat_base_repo_config_v1.derive
-                                ~ctx:
-                                  (Terrat_base_repo_config_v1.Ctx.make
-                                     ~dest_branch:
-                                       (S.Api.Ref.to_string
-                                          (S.Api.Pull_request.base_branch_name pull_request))
-                                     ~branch:
-                                       (S.Api.Ref.to_string
-                                          (S.Api.Pull_request.branch_name pull_request))
-                                     ())
-                                ~index
-                                ~file_list:repo_tree
-                                repo_config))
-                   >>= fun repo_config ->
-                   Abb.Future.return (Terrat_change_match3.synthesize_config ~index repo_config)
-                   >>= fun synthesized_config ->
-                   Abb.Future.return (Ok (repo_config, synthesized_config))
-                 in
-                 run
+                 fetch_configs ctx state
                  >>= fun (repo_config, synthesized_config) ->
-                 (* TODO: HUGE HACK, redo this later *)
                  publish_msg
                    state.State.request_id
                    client
@@ -4827,6 +4824,29 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       in
       let open Abb.Future.Infix_monad in
       run >>= fun _ -> Abb.Future.return (Ok state)
+
+    let publish_summary ctx state =
+      let open Abbs_future_combinators.Infix_result_monad in
+      Dv.client ctx state
+      >>= fun client ->
+      Dv.pull_request ctx state
+      >>= fun pull_request ->
+      H.fetch_configs ctx state
+      >>= fun (repo_config, synthesized_config) ->
+      publish_msg
+        state.State.request_id
+        client
+        (S.Api.User.to_string @@ Event.user state.State.event)
+        pull_request
+        (Msg.Pull_request_summary
+           {
+             config = Ctx.config ctx;
+             db = Ctx.storage ctx;
+             pull_request;
+             repo_config;
+             synthesized_config;
+           })
+      >>= fun () -> Abb.Future.return (Ok state)
 
     let publish_help ctx state =
       let open Abbs_future_combinators.Infix_result_monad in
@@ -7165,6 +7185,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                           though the work has been done.  Whether or not that is
                           a bug depends on your perspective. *)
                        Flow.Step.make ~id:Id.Reset_ctx ~f:(eval_step F.wait_for_initiate) ();
+                       Flow.Step.make ~id:Id.Publish_summary ~f:(eval_step F.publish_summary) ();
                        (* Complete any commit checks for dirspaces with no changes in them. *)
                        Flow.Step.make
                          ~id:Id.Complete_no_change_dirspaces
@@ -7249,6 +7270,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                     manifest, even though the work has been done.  Whether or
                     not that is a bug depends on your perspective. *)
                  Flow.Step.make ~id:Id.Reset_ctx ~f:(eval_step F.wait_for_initiate) ();
+                 Flow.Step.make ~id:Id.Publish_summary ~f:(eval_step F.publish_summary) ();
                ])
             (layers_flow
                op
