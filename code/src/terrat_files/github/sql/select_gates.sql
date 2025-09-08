@@ -3,8 +3,9 @@ dirspaces as (
     select dir, workspace from unnest($dirs, $workspaces) as v(dir, workspace)
 )
 select
-  token,
-  gate,
+  gg.name,
+  gg.token,
+  gg.gate,
   gg.dir,
   gg.workspace
 from github_gates as gg

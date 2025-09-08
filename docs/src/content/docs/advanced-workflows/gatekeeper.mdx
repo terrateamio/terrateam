@@ -12,11 +12,15 @@ Gatekeeper allows you to create manual approval gates in your Terrateam workflow
 When a gated workflow step fails (such as a security scan detecting issues or a policy check finding violations), instead of immediately failing the entire workflow, Gatekeeper:
 
 1. Pauses the workflow execution
-2. Creates an approval request with a unique token
+2. Creates an approval request
 3. Notifies authorized approvers
 4. Waits for manual approval before continuing
 
 This allows teams to maintain strict automated checks while providing flexibility for legitimate exceptions.
+
+Gates can be associated with a token, which requires users to explicitly approve every gate that their approval has been requested on, using a pull request comment.
+
+Gates that are not associated with a token require all requested approvers to approve the pull request in the VCS provider before changes can be applied.
 
 ## How Gatekeeper Works
 
@@ -34,6 +38,8 @@ This allows teams to maintain strict automated checks while providing flexibilit
    ```
    terrateam gate approve <token>
    ```
+   
+   Or approve the pull request if the gate does not have a token.
 
 5. **Workflow continues**: Once approved, the workflow proceeds as if the step had succeeded
 </Steps>
@@ -49,7 +55,8 @@ Gates can be added to the following workflow step types:
 
 | Key | Type | Description |
 |-----|------|-------------|
-| `token` | String | **Required**. A unique identifier for this gate request |
+| `token` | String | A unique identifier for this gate request |
+| `name` | String | A name to give the gate.  This is useful for identifying why the gate was created when a token is not used |
 | `all_of` | List | List of users/teams that must ALL approve the gate |
 | `any_of` | List | List of users/teams where ANY ONE can approve the gate |
 | `any_of_count` | Integer | Number of approvals required from the `any_of` list (default: 1) |
@@ -92,6 +99,23 @@ gate:
 :::caution
 Gates provide a powerful override mechanism. Configure them carefully to maintain security while enabling flexibility.
 :::
+
+### Require approval from specific team based on which resources were modified
+
+Assuming a Rego policy file which defines a value `networking_team_resources_modifed` if any resources that the networking team manages have been modified, require someone from the networking team to approve the pull request before it can be applied.
+
+```yaml
+workflows:
+  - tag_query: ""
+    plan:
+      - type: init
+      - type: plan
+      - type: opa
+        fail_on: defined
+        extra_args: ['-d', 'policy.rego', 'data.terraform.networking_team_resources_modifed']
+        gate:
+          any_of: ["team:networking"]
+```
 
 ### Security Scan Overrides
 

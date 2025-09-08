@@ -677,13 +677,13 @@
         "any_of_count": {
           "type": "integer"
         },
+        "name": {
+          "type": "string"
+        },
         "token": {
           "type": "string"
         }
       },
-      "required": [
-        "token"
-      ],
       "type": "object"
     },
     "hook": {
@@ -1335,9 +1335,7 @@
         "default_tf_version": {
           "$ref": "#/definitions/terraform-version"
         },
-        "definitions": {
-          "type": null
-        },
+        "definitions": {},
         "destination_branches": {
           "items": {
             "oneOf": [

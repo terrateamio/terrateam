@@ -53,7 +53,8 @@ module Workflow_step : sig
       any_of : string list option; [@default None]
       all_of : string list option; [@default None]
       any_of_count : int option; [@default None]
-      token : string;
+      token : string option; [@default None]
+      name : string option; [@default None]
     }
     [@@deriving make, show, yojson, eq]
   end

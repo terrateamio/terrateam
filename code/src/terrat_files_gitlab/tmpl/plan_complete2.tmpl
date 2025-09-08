@@ -38,11 +38,31 @@ Not all [dirspaces](https://docs.terrateam.io/getting-started/concepts/#dirspace
 > [!IMPORTANT]
 > Gates added to the change.
 
-| Token   | Directory | Workspace | Required Approvers           | Any Approvers | Any Remaining Count |
-|---------|-----------|-----------|------------------------------|----------------|----------------------|
-    {%- for g in gates %}
-| {{ g.token }} | {% if g.dir %}`{{ g.dir }}`{% endif %} | {% if g.workspace %}`{{ g.workspace }}`{% endif %} | {% for p in g.all_of %}`{{ p.q }}` {% endfor %} | {% for p in g.any_of %}`{{ p.q }}` {% endfor %} | {{ g.any_of_count }} |
+{%- set token_gates = gates | rejectattr("token", "none") %}
+{%- set approval_gates = gates | selectattr("token", "none") %}
+
+{%- if token_gates %}
+
+### Token Gates
+| Token | Directory | Workspace | Required Approvers           | Any Approvers | Any Remaining Count |
+|------------|-----------|-----------|------------------------------|----------------|--------------------|
+    {%- for g in token_gates %}
+| `{{ g.token }}` | {% if g.dir %}`{{ g.dir }}`{% endif %} | {% if g.workspace %}`{{ g.workspace }}`{% endif %} | {% for p in g.all_of %}`{{ p.q }}` {% endfor %} | {% for p in g.any_of %}`{{ p.q }}` {% endfor %} | {{ g.any_of_count }} |
     {%- endfor %}
+
+These gates are fulfilled by commenting `terrateam gate approve <token>`.
+{%- endif %}
+{%- if approval_gates %}
+
+### Approval Gates
+| Name | Directory | Workspace | Required Approvers           | Any Approvers | Any Remaining Count |
+|------|-----------|-----------|------------------------------|----------------|--------------------|
+    {%- for g in approval_gates %}
+| {{ g.name | default('', true) }} | {% if g.dir %}`{{ g.dir }}`{% endif %} | {% if g.workspace %}`{{ g.workspace }}`{% endif %} | {% for p in g.all_of %}`{{ p.q }}` {% endfor %} | {% for p in g.any_of %}`{{ p.q }}` {% endfor %} | {{ g.any_of_count }} |
+    {%- endfor %}
+
+These gates are fulfilled by approving the pull request.
+{%- endif %}
 
 <details>
   <summary>Expand for details on gates</summary>
@@ -51,13 +71,15 @@ Not all [dirspaces](https://docs.terrateam.io/getting-started/concepts/#dirspace
 
 To continue, users matching the `Required Approvers` and `Any Approvers` must approve a token until all approvals are satisfied.
 
-To approve a token, comment the following:
+To approve a gate with a token, comment the following:
 
 ```
 terrateam gate approve <token>
 ```
 
 Where `<token>` is the token to be approved.
+
+To approve a gate without a token, approve the pull request.
 
 #### How Gatekeeper requirements work
 

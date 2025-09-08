@@ -320,7 +320,8 @@ module Workflow_step = struct
       any_of : string list option; [@default None]
       all_of : string list option; [@default None]
       any_of_count : int option; [@default None]
-      token : string;
+      token : string option; [@default None]
+      name : string option; [@default None]
     }
     [@@deriving make, show, yojson, eq]
   end
@@ -1568,8 +1569,8 @@ let of_version_1_workflow_op_plan_mode = function
 
 let of_version_1_gate gate =
   let module G = Terrat_repo_config_gate in
-  let { G.all_of; any_of; any_of_count; token } = gate in
-  Ok { Workflow_step.Gate.all_of; any_of; any_of_count; token }
+  let { G.all_of; any_of; any_of_count; token; name } = gate in
+  Ok { Workflow_step.Gate.all_of; any_of; any_of_count; token; name }
 
 let of_version_1_workflow_op_list ops =
   let open CCResult.Infix in
@@ -3076,8 +3077,8 @@ let to_version_1_workflow_retry retry =
 
 let to_version_1_gate gate =
   let module G = Terrat_repo_config_gate in
-  let { Workflow_step.Gate.all_of; any_of; any_of_count; token } = gate in
-  { G.all_of; any_of; any_of_count; token }
+  let { Workflow_step.Gate.all_of; any_of; any_of_count; token; name } = gate in
+  { G.all_of; any_of; any_of_count; token; name }
 
 let to_version_1_workflows_op =
   let module Op = Terrat_repo_config.Workflow_op_list in
