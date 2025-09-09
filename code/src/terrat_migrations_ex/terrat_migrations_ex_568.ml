@@ -65,8 +65,8 @@ let while' sql db =
   | [] -> Abb.Future.return (Ok `Done)
   | _ :: _ -> Abb.Future.return (Ok `Cont)
 
-let run_github (config, storage, _db) =
+let run_github (config, storage) =
   run_batch storage (update' Sql.github_perform) (while' Sql.github_more_rows)
 
-let run_gitlab (config, storage, _db) =
+let run_gitlab (config, storage) =
   run_batch storage (update' Sql.gitlab_perform) (while' Sql.gitlab_more_rows)

@@ -1,5 +1,5 @@
 module Migrate = struct
-  type t = Terrat_config.t * Terrat_storage.t * Pgsql_io.t
+  type t = Terrat_config.t * Terrat_storage.t
 
   type err =
     [ Pgsql_io.err
@@ -15,19 +15,18 @@ module Migrate = struct
   let add_migration_sql =
     Pgsql_io.Typed_sql.(sql /^ "insert into migrations (name) values($name)" /% Var.varchar "name")
 
-  (* Ensure that only one migration can be run at a time by blocking the whole
-     table for update. *)
   let get_migrations_sql =
-    Pgsql_io.Typed_sql.(
-      sql // Ret.varchar /^ "select name from migrations order by date asc for update")
+    Pgsql_io.Typed_sql.(sql // Ret.varchar /^ "select name from migrations order by date asc")
 
-  let get_migrations (_config, _storage, db) =
+  let get_migrations (_config, storage) =
     let open Abbs_future_combinators.Infix_result_monad in
-    Pgsql_io.Prepared_stmt.execute db create_migrations_table_sql
-    >>= fun () -> Pgsql_io.Prepared_stmt.fetch db get_migrations_sql ~f:CCFun.id
+    Pgsql_pool.with_conn storage ~f:(fun db ->
+        Pgsql_io.Prepared_stmt.execute db create_migrations_table_sql
+        >>= fun () -> Pgsql_io.Prepared_stmt.fetch db get_migrations_sql ~f:CCFun.id)
 
-  let add_migration (_config, _storage, db) name =
-    Pgsql_io.Prepared_stmt.execute db add_migration_sql name
+  let add_migration (_config, storage) name =
+    Pgsql_pool.with_conn storage ~f:(fun db ->
+        Pgsql_io.Prepared_stmt.execute db add_migration_sql name)
 
   let start_migration _ name =
     Logs.info (fun m -> m "Performing migration for %s" name);
@@ -45,10 +44,8 @@ end
 
 module Mig = Data_mig.Make (Migrate)
 
-let run_file_sql ?(tx = true) fname (config, storage, db) =
-  let tx =
-    if tx then fun ~f -> f db else fun ~f -> Pgsql_pool.with_conn storage ~f:(fun db -> f db)
-  in
+let run_file_sql ?(tx = true) fname (config, storage) =
+  let tx = if tx then fun db ~f -> Pgsql_io.tx db ~f else fun db ~f -> f () in
   match Terrat_files_migrations.read fname with
   | Some file ->
       let stmts =
@@ -56,17 +53,18 @@ let run_file_sql ?(tx = true) fname (config, storage, db) =
         |> CCString.split ~by:";\n\n"
         |> CCList.filter CCFun.(CCString.trim %> CCString.is_empty %> not)
       in
-      tx ~f:(fun db ->
-          Abbs_future_combinators.List_result.iter
-            ~f:(fun stmt ->
-              let open Pgsql_io in
-              Logs.info (fun m -> m "Performing SQL operation: %s" stmt);
-              let stmt_sql = Typed_sql.(sql /^ Pgsql_io.clean_string stmt) in
-              Prepared_stmt.execute db stmt_sql)
-            stmts)
+      Pgsql_pool.with_conn storage ~f:(fun db ->
+          tx db ~f:(fun () ->
+              Abbs_future_combinators.List_result.iter
+                ~f:(fun stmt ->
+                  let open Pgsql_io in
+                  Logs.info (fun m -> m "Performing SQL operation: %s" stmt);
+                  let stmt_sql = Typed_sql.(sql /^ Pgsql_io.clean_string stmt) in
+                  Prepared_stmt.execute db stmt_sql)
+                stmts))
   | None -> failwith ("Could not load file: " ^ fname)
 
-let add_encryption_key (config, storage, _db) =
+let add_encryption_key (config, storage) =
   let key = Mirage_crypto_rng.generate 64 in
   let insert_encryption_key =
     Pgsql_io.Typed_sql.(
@@ -183,11 +181,4 @@ let migrations =
     ("fix-drift-unlock-abort-wm", run_file_sql "2025-09-09-fix-drift-unlock.sql");
   ]
 
-let run config storage =
-  let open Abb.Future.Infix_monad in
-  Pgsql_pool.with_conn storage ~f:(fun db ->
-      Pgsql_io.tx db ~f:(fun () -> Mig.run (config, storage, db) migrations))
-  >>= function
-  | Ok _ as r -> Abb.Future.return r
-  | Error (#Migrate.err as err) -> Abb.Future.return (Error (`Migration_err err))
-  | Error (#Mig.err as err) -> Abb.Future.return (Error err)
+let run config storage = Mig.run (config, storage) migrations
