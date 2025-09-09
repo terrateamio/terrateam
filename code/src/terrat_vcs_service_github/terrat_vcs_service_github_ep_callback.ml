@@ -51,10 +51,12 @@ module Sql = struct
   let insert_github_user_email () =
     Pgsql_io.Typed_sql.(
       sql
-      /^ "insert into github_user_emails (username, email) values($username, $email) on conflict \
-          (username, email) do nothing"
+      /^ "insert into github_user_emails (username, email, is_primary) values($username, $email, \
+          $is_primary) on conflict (username, email) do update set is_primary = \
+          excluded.is_primary"
       /% Var.text "username"
-      /% Var.text "email")
+      /% Var.text "email"
+      /% Var.boolean "is_primary")
 end
 
 let perform_auth request_id config storage code =
@@ -83,7 +85,9 @@ let perform_auth request_id config storage code =
     match Openapi.Response.value user_emails with
     | `OK emails ->
         CCList.map
-          (fun Githubc2_components.Email.{ primary = Primary.{ email; _ }; _ } -> email)
+          (fun Githubc2_components.
+                 { Email.primary = { Email.Primary.email; primary = is_primary; _ }; _ }
+             -> (email, is_primary))
           emails
     | _ -> []
   in
@@ -135,12 +139,13 @@ let perform_auth request_id config storage code =
                     username
                   >>= fun () ->
                   Abbs_future_combinators.List_result.iter
-                    ~f:(fun email ->
+                    ~f:(fun (email, is_primary) ->
                       Pgsql_io.Prepared_stmt.execute
                         db
                         (Sql.insert_github_user_email ())
                         username
-                        email)
+                        email
+                        is_primary)
                     emails
                   >>= fun () -> Abb.Future.return (Ok (Terrat_user.make ~id:user_id ())))
           | (user_id, _email, _name, _avatar_url) :: _ ->
@@ -158,8 +163,13 @@ let perform_auth request_id config storage code =
                 username
               >>= fun () ->
               Abbs_future_combinators.List_result.iter
-                ~f:(fun email ->
-                  Pgsql_io.Prepared_stmt.execute db (Sql.insert_github_user_email ()) username email)
+                ~f:(fun (email, is_primary) ->
+                  Pgsql_io.Prepared_stmt.execute
+                    db
+                    (Sql.insert_github_user_email ())
+                    username
+                    email
+                    is_primary)
                 emails
               >>= fun () -> Abb.Future.return (Ok (Terrat_user.make ~id:user_id ()))))
 

@@ -179,6 +179,7 @@ let migrations =
     ( "fix-missing-repository-mappings",
       run_file_sql "2025-08-21-fix-missing-repository-mappings.sql" );
     ("refactor-gates-primary-key", run_file_sql "2025-09-04-refactor-gates-primary-key.sql");
+    ("add-primary-email-field", run_file_sql "2025-09-09-add-primary-email-field.sql");
   ]
 
 let run config storage =

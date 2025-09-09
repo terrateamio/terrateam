@@ -59,25 +59,32 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         /% Var.text "login"
         /% Var.uuid "org"
         /% Var.text "target_type"
-        /% Var.text "tier")
+        /% Var.text "tier"
+        /% Var.text "installed_by")
 
     let update_github_installation_unsuspend =
       Pgsql_io.Typed_sql.(
         sql
-        /^ "update github_installations set state = 'installed' where id = $id"
-        /% Var.bigint "id")
+        /^ "update github_installations set state = 'installed', last_unsuspended_at = now(), \
+            last_unsuspended_by = $unsuspended_by where id = $id"
+        /% Var.bigint "id"
+        /% Var.text "unsuspended_by")
 
     let update_github_installation_uninstall =
       Pgsql_io.Typed_sql.(
         sql
-        /^ "update github_installations set state = 'uninstalled' where id = $id"
-        /% Var.bigint "id")
+        /^ "update github_installations set state = 'uninstalled', uninstalled_at = now(), \
+            uninstalled_by = $uninstalled_by where id = $id"
+        /% Var.bigint "id"
+        /% Var.text "uninstalled_by")
 
     let update_github_installation_suspended =
       Pgsql_io.Typed_sql.(
         sql
-        /^ "update github_installations set state = 'suspended' where id = $id"
-        /% Var.bigint "id")
+        /^ "update github_installations set state = 'suspended', last_suspended_at = now(), \
+            last_suspended_by = $suspended_by where id = $id"
+        /% Var.bigint "id"
+        /% Var.text "suspended_by")
 
     let insert_org =
       Pgsql_io.Typed_sql.(
@@ -157,6 +164,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
                       org_id
                       installation.Gw.Installation.account.Gw.User.type_
                       (Terrat_config.default_tier @@ P.Api.Config.config config)
+                      created.Gw.Installation_created.sender.Gw.User.login
                 | [] -> assert false)
             | _ :: _ -> Abb.Future.return (Ok ()))
     | Gw.Installation_event.Installation_deleted deleted ->
@@ -172,7 +180,8 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
             Pgsql_io.Prepared_stmt.execute
               db
               Sql.update_github_installation_uninstall
-              (Int64.of_int installation.Gw.Installation.id))
+              (Int64.of_int installation.Gw.Installation.id)
+              deleted.Gw.Installation_deleted.sender.Gw.User.login)
     | Gw.Installation_event.Installation_new_permissions_accepted installation_event ->
         Prmths.Counter.inc_one (Metrics.installation_events_total "new_permissions_accepted");
         let installation =
@@ -199,7 +208,8 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
             Pgsql_io.Prepared_stmt.execute
               db
               Sql.update_github_installation_suspended
-              (Int64.of_int installation.I.T.primary.I.T.Primary.id))
+              (Int64.of_int installation.I.T.primary.I.T.Primary.id)
+              suspended.Gw.Installation_suspend.sender.Gw.User.login)
     | Gw.Installation_event.Installation_unsuspend unsuspend ->
         let installation = unsuspend.Gw.Installation_unsuspend.installation in
         let module I = Gw.Installation_unsuspend.Installation_ in
@@ -214,7 +224,8 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
             Pgsql_io.Prepared_stmt.execute
               db
               Sql.update_github_installation_unsuspend
-              (Int64.of_int installation.I.T.primary.I.T.Primary.id))
+              (Int64.of_int installation.I.T.primary.I.T.Primary.id)
+              unsuspend.Gw.Installation_unsuspend.sender.Gw.User.login)
 
   let process_pull_request_event request_id config storage = function
     | Gw.Pull_request_event.Pull_request_opened
