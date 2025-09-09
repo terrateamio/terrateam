@@ -4726,10 +4726,10 @@ module Work_manifest = struct
           | Error (`Missing_response resp as err)
             when CCString.mem ~sub:"No ref found for:" (Openapi.Response.value resp) ->
               (* If the ref has been deleted while we are looking up the
-                   workflow, just ignore and move on. *)
-              Logs.err (fun m ->
+                 workflow, just ignore and move on. *)
+              Logs.info (fun m ->
                   m
-                    "%s : ERROR : REF_NOT_FOUND : %s : %s : %s : %a"
+                    "%s : REF_NOT_FOUND : %s : %s : %s : %a"
                     request_id
                     (Api.Repo.owner repo)
                     (Api.Repo.name repo)
@@ -4742,6 +4742,15 @@ module Work_manifest = struct
               let module P = struct
                 type t = { message : string } [@@deriving yojson { strict = false }]
               end in
+              Logs.info (fun m ->
+                  m
+                    "%s : FAILED_TO_START : %s : %s : %s : %a"
+                    request_id
+                    (Api.Repo.owner repo)
+                    (Api.Repo.name repo)
+                    branch
+                    Githubc2_abb.pp_call_err
+                    err);
               match
                 CCOption.wrap Yojson.Safe.from_string (Openapi.Response.value resp)
                 |> CCResult.opt_map P.of_yojson
@@ -4750,7 +4759,7 @@ module Work_manifest = struct
                   Abb.Future.return (Error (`Failed_to_start_with_msg_err message))
               | _ -> Abb.Future.return (Error `Failed_to_start))
           | Error (#Githubc2_abb.call_err as err) ->
-              Logs.err (fun m ->
+              Logs.info (fun m ->
                   m
                     "%s : FAILED_TO_START : %s : %s : %s : %a"
                     request_id
@@ -4760,7 +4769,20 @@ module Work_manifest = struct
                     Githubc2_abb.pp_call_err
                     err);
               Abb.Future.return (Error `Failed_to_start))
-      | None -> Abb.Future.return (Error `Missing_workflow)
+      | None ->
+          Terrat_github.list_workflows
+            ~owner:(Api.Repo.owner repo)
+            ~repo:(Api.Repo.name repo)
+            (Api.Client.to_native client)
+          >>= fun workflows ->
+          Logs.err (fun m ->
+              m "%s : WORKFLOW_NOT_FOUND : repo=%s : %s" request_id (Api.Repo.to_string repo) branch);
+          CCList.iter
+            (fun (id, name, path) ->
+              Logs.info (fun m ->
+                  m "%s : WORKFLOWS : id=%d : name=%s : path=%s" request_id id name path))
+            workflows;
+          Abb.Future.return (Error `Missing_workflow)
     in
     let open Abb.Future.Infix_monad in
     run
