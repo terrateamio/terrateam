@@ -73,7 +73,7 @@ RUN eval $(opam env) && \
     opam install -j$(nproc --all) -y --deps-only --no-depexts monorepo && \
     ulimit -s 524288 && ulimit -a && \
     time pds -d && \
-    time make -j$(nproc --all) release-terrat && \
+    time make -j$(nproc --all) test test-terrat release-terrat && \
     mv build /build-cache
 
 # Use provided BASE_IMAGE if specified, otherwise use the build-base stage
