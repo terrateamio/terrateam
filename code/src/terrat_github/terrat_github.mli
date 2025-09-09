@@ -247,6 +247,12 @@ val load_workflow :
   Githubc2_abb.t ->
   (int option, [> get_installation_access_token_err ]) result Abb.Future.t
 
+val list_workflows :
+  owner:string ->
+  repo:string ->
+  Githubc2_abb.t ->
+  ((int * string * string) list, [> get_installation_access_token_err ]) result Abb.Future.t
+
 val publish_comment :
   owner:string ->
   repo:string ->

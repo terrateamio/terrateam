@@ -360,6 +360,29 @@ let get_installation_repos client =
           Abb.Future.return (Error err))
     Githubc2_apps.List_repos_accessible_to_installation.(make Parameters.(make ()))
 
+let list_workflows ~owner ~repo client =
+  Prmths.Counter.inc_one (Metrics.fn_call_total "list_workflow");
+  let open Abbs_future_combinators.Infix_result_monad in
+  Githubc2_abb.fold
+    client
+    ~init:[]
+    ~f:(fun acc resp ->
+      let module Lrwr = Githubc2_actions.List_repo_workflows.Responses.OK in
+      match Openapi.Response.value resp with
+      | `OK { Lrwr.primary = { Lrwr.Primary.workflows; _ }; _ } ->
+          let module Workflow = Githubc2_components.Workflow in
+          let workflows =
+            CCList.map
+              (fun { Workflow.primary; _ } ->
+                let id = primary.Workflow.Primary.id in
+                let name = primary.Workflow.Primary.name in
+                let path = primary.Workflow.Primary.path in
+                (id, name, path))
+              workflows
+          in
+          Abb.Future.return (Ok (workflows @ acc)))
+    Githubc2_actions.List_repo_workflows.(make (Parameters.make ~per_page:100 ~owner ~repo ()))
+
 let load_workflow' ~owner ~repo client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "load_workflow");
   let open Abbs_future_combinators.Infix_result_monad in
