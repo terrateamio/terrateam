@@ -3,11 +3,13 @@ insert into github_installations (
     login,
     org,
     target_type,
-    tier
+    tier,
+    installed_by
 ) values (
     $id,
     $login,
     $org,
     $target_type,
-    $tier
+    $tier,
+    $installed_by
 )
