@@ -15,7 +15,10 @@ To enable drift detection in Terrateam, you need to configure it in your `.terra
 ```yaml
 drift:
   enabled: true
-  schedule: daily
+  schedules:
+    default:
+      tag_query: ''
+      schedule: daily
 ```
 In this example, drift detection is enabled and set to run on a daily schedule. You can choose from `hourly`, `daily`, `weekly`, or `monthly` schedules based on your requirements.
 
@@ -25,8 +28,11 @@ To enable drift reconciliation, add the following to your Terrateam configuratio
 ```yaml
 drift:
   enabled: true
-  reconcile: true
-  schedule: weekly
+  schedules:
+    default:
+      tag_query: ''
+      reconcile: true
+      schedule: weekly
 ```
 With `reconcile` set to `true`, Terrateam will automatically run an `apply` operation against the generated Terraform plan whenever drift is detected. This ensures that your infrastructure is brought back in sync with your Terraform configuration.
 :::caution
@@ -38,9 +44,11 @@ If you have a large repository with multiple directories and workspaces, you may
 Here's an example configuration that limits drift detection to the `production` directory using a [tag query](/advanced-workflows/tags/):
 ```yaml
 drift:
-  - tag_query: "dir:production"
-    enabled: true
-    schedule: hourly
+  enabled: true
+  schedules:
+    prod:
+      tag_query: "dir:production"
+      schedule: hourly
 ```
 By specifying a `tag_query`, Terrateam will only run drift detection on the directories and workspaces that match the given query. This helps reduce noise and focuses on the critical parts of your infrastructure.
 
