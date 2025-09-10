@@ -1,0 +1,191 @@
+= Summary Comments
+:authors: Marcos Benevides
+:state: discussion
+:labels: configuration,comments,database,design,github,gitlab,pull_requests,ui,vcs
+:source-highlighter: highlight.js
+:toc:
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+== Status
+
+In Discussion.
+
+== Goals
+
+. Aggregate community suggestions.
+. Describe the new configuration for https://github.com/terrateamio/terrateam/issues/270[terrateamio/terrateam#270].
+
+== Background
+
+Given the current implementation of https://github.com/terrateamio/terrateam/issues/116[terrateamio/terrateam#116], we now have the required infrastructure to support summary (and later the anchor comments).
+
+=== Community Suggestions
+
+. Display both a "full" view and a "compact" version, for scenarious where we get too many dirspaces.
+. Each dirspace row (that is shown) can be clicked and linked to the Terrateam UI.
+
+
+= Terrateam Summary (Full)
+Updated: 2025-08-22 10:12 UTC
+
+[cols="4,2,2,2,2,2,2",options="header"]
+|===
+|Dir |Workspace |Status |Created |Updated |Replaced |Deleted
+
+|prod/us-east-1/network
+|default
+|Applied
+|2
+|1
+|0
+|0
+
+|staging/eu-west-1/app
+|default
+|Planned
+|10
+|3
+|1
+|2
+
+|staging/us-west-2/cache
+|default
+|Failed
+|3
+|0
+|0
+|1
+
+|Total
+|-
+|-
+|15
+|4
+|1
+|3
+|===
+
+= Terrateam Summary (Compact)
+Updated: 2025-08-22 10:12 UTC
+
+[cols="4,2,2,2,2,2,2",options="header"]
+|===
+|Dir |Workspace |Status |Created |Updated |Replaced |Deleted
+
+|prod/us-east-1/network
+|default
+|Applied
+|2
+|1
+|0
+|0
+
+|staging/eu-west-1/app
+|default
+|Planned
+|10
+|3
+|1
+|2
+
+|staging/us-west-2/cache
+|default
+|Failed
+|3
+|0
+|0
+|1
+
+|staging/us-west-2/ec2
+|default
+|Pending
+|0
+|0
+|0
+|0
+
+| … (57 more scopes truncated - see Full Summary in UI)
+| 
+| 
+| 
+| 
+| 
+|
+
+|Total
+|-
+|-
+|62
+|36
+|25
+|11
+|===
+
+== Semantics
+
+=== Terrateam Configuration
+
+The following is a proposal of how that would look like as a top level key:
+
+[source,yaml]
+----
+notifications:
+  policies:
+    - tag_query: 'dir:tf1'
+      comment_strategy: 'minimize'
+
+    - tag_query: 'dir:tf2'
+      comment_strategy: 'minimize'
+
+  # default values
+  summary:
+    enable: true
+----
+
+=== Accumulated Results
+
+==== Statistics & Statuses
+
+A row can be into the following statuses: 
+
+. `Pending`: Initial state, a dirspace that is not yet `planned/applied` always shows stats set to 0.
+. `Planned`: Plan ran, still waiting for an apply.
+. `Applied`: Apply succeded.
+. `Failed`: Apply failed.
+
+After every `plan/apply` show the following stats:
+. `Created`, `Updated`, `Replaced`, `Deleted` counts.
+
+==== Summary Comment Updates
+
+We have two options when it comes to implementing this:
+
+. Always append a new summary once new information comes in, and minimize/delete old summaries.
+. Create an "anchor comment" that is continously updated.
+
+The latter is harder to implement and verify for correct behaviour, it also raises questions on whether we should set such comment at the "top"/"bottom" of every pull request. The former is doable given our current comment infrastructure.
+
+=== Scenarios
+
+The following are scenarios that will drive the implementation of each option:
+
+Scenario 0 :: Summary comment does not exceed the maximum comment size for GitHub
+
+In such scenarios we list all dirspaces changes with respective status in their own rows.
+
+Scenario 1 :: Summary comment does exceed the maximum comment size for GitHub
+
+In such scenarios, we go with the compact view:
+
+. Show a fixed number of rows (yet to be discussed).
+. Create a "last row" that is a link to the Terrateam UI.
+
+Scenario 2 :: Summary comment for layered runs
+
+In such scenarios we need to keep track of a dinamically number of (initially) pending rows.
