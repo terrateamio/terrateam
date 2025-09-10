@@ -1,5 +1,11 @@
 module Migrate = struct
-  type t = Terrat_config.t * Terrat_storage.t
+  type tx = Pgsql_io.t
+
+  type 'a t = {
+    config : Terrat_config.t;
+    storage : Terrat_storage.t;
+    tx : 'a;
+  }
 
   type err =
     [ Pgsql_io.err
@@ -15,16 +21,36 @@ module Migrate = struct
   let add_migration_sql =
     Pgsql_io.Typed_sql.(sql /^ "insert into migrations (name) values($name)" /% Var.varchar "name")
 
+  (* Get all the migrations but also lock the table so that no other migrations
+     may happen at the same time. *)
   let get_migrations_sql =
-    Pgsql_io.Typed_sql.(sql // Ret.varchar /^ "select name from migrations order by date asc")
+    Pgsql_io.Typed_sql.(
+      sql // Ret.varchar /^ "select name from migrations order by date asc for update")
 
-  let get_migrations (_config, storage) =
+  let tx { config; storage; tx = _ } f =
+    let open Abb.Future.Infix_monad in
+    Pgsql_pool.with_conn storage ~f:(fun db ->
+        Pgsql_io.tx db ~f:(fun () ->
+            (* Handling errors here as well is to make the type checker happy
+               because it gets confused as to what [f] can return and what [tx]
+               can return *)
+            f { config; storage; tx = db }
+            >>= function
+            | Ok _ as r -> Abb.Future.return r
+            | Error ((`Migration_err #err | `Consistency_err) as err) ->
+                Abb.Future.return (Error err)))
+    >>= function
+    | Ok _ as r -> Abb.Future.return r
+    | Error (#err as err) -> Abb.Future.return (Error (`Migration_err err))
+    | Error ((`Migration_err #err | `Consistency_err) as err) -> Abb.Future.return (Error err)
+
+  let get_migrations { config = _; storage; tx = _ } =
     let open Abbs_future_combinators.Infix_result_monad in
     Pgsql_pool.with_conn storage ~f:(fun db ->
         Pgsql_io.Prepared_stmt.execute db create_migrations_table_sql
         >>= fun () -> Pgsql_io.Prepared_stmt.fetch db get_migrations_sql ~f:CCFun.id)
 
-  let add_migration (_config, storage) name =
+  let add_migration { config = _; storage; tx = _ } name =
     Pgsql_pool.with_conn storage ~f:(fun db ->
         Pgsql_io.Prepared_stmt.execute db add_migration_sql name)
 
@@ -44,8 +70,8 @@ end
 
 module Mig = Data_mig.Make (Migrate)
 
-let run_file_sql ?(tx = true) fname (config, storage) =
-  let tx = if tx then fun db ~f -> Pgsql_io.tx db ~f else fun db ~f -> f () in
+let run_file_sql ?(tx = true) fname { Migrate.config; storage; tx = db } =
+  let conn = if tx then fun ~f -> f db else fun ~f -> Pgsql_pool.with_conn storage ~f in
   match Terrat_files_migrations.read fname with
   | Some file ->
       let stmts =
@@ -53,18 +79,17 @@ let run_file_sql ?(tx = true) fname (config, storage) =
         |> CCString.split ~by:";\n\n"
         |> CCList.filter CCFun.(CCString.trim %> CCString.is_empty %> not)
       in
-      Pgsql_pool.with_conn storage ~f:(fun db ->
-          tx db ~f:(fun () ->
-              Abbs_future_combinators.List_result.iter
-                ~f:(fun stmt ->
-                  let open Pgsql_io in
-                  Logs.info (fun m -> m "Performing SQL operation: %s" stmt);
-                  let stmt_sql = Typed_sql.(sql /^ Pgsql_io.clean_string stmt) in
-                  Prepared_stmt.execute db stmt_sql)
-                stmts))
+      conn ~f:(fun db ->
+          Abbs_future_combinators.List_result.iter
+            ~f:(fun stmt ->
+              let open Pgsql_io in
+              Logs.info (fun m -> m "Performing SQL operation: %s" stmt);
+              let stmt_sql = Typed_sql.(sql /^ Pgsql_io.clean_string stmt) in
+              Prepared_stmt.execute db stmt_sql)
+            stmts)
   | None -> failwith ("Could not load file: " ^ fname)
 
-let add_encryption_key (config, storage) =
+let add_encryption_key { Migrate.config; storage = _; tx = db } =
   let key = Mirage_crypto_rng.generate 64 in
   let insert_encryption_key =
     Pgsql_io.Typed_sql.(
@@ -72,8 +97,7 @@ let add_encryption_key (config, storage) =
       /^ "insert into encryption_keys (rank, data) values(0, decode($data, 'base64'))"
       /% Var.(ud (text "data") CCFun.(Cstruct.to_string %> Base64.encode_exn)))
   in
-  Pgsql_pool.with_conn storage ~f:(fun db ->
-      Pgsql_io.Prepared_stmt.execute db insert_encryption_key key)
+  Pgsql_io.Prepared_stmt.execute db insert_encryption_key key
 
 let migrations =
   [
@@ -139,7 +163,9 @@ let migrations =
     ( "refactor-fill-in-missing-github-maps",
       run_file_sql "2025-05-01-refactor-fill-in-missing-github-maps.sql" );
     ("add-repo-tree-id-column", run_file_sql "2025-05-13-add-repo-tree-id-column.sql");
-    ("refactor-fill-in-missing-core-ids", Terrat_migrations_ex_150.fill_in_all);
+    ( "refactor-fill-in-missing-core-ids",
+      fun { Migrate.config; storage; tx = _ } ->
+        Terrat_migrations_ex_150.fill_in_all (config, storage) );
     ( "refactor-remove-null-constraints-on-core-tables",
       run_file_sql "2025-05-19-refactor-remove-null-constraints.sql" );
     ("refactor-add-pkey-indexes", run_file_sql ~tx:false "2025-05-19-refactor-add-pkey-indexes.sql");
@@ -159,12 +185,16 @@ let migrations =
       run_file_sql "2025-07-07-refactor-github-dirspace-locking-phase-1.sql" );
     ( "refactor-github-dirspace-locking-phase-2",
       run_file_sql "2025-07-07-refactor-github-dirspace-locking-phase-2.sql" );
-    ("refactor-github-dirspace-locking-phase-3.1", Terrat_migrations_ex_568.run_github);
+    ( "refactor-github-dirspace-locking-phase-3.1",
+      fun { Migrate.config; storage; tx = _ } ->
+        Terrat_migrations_ex_568.run_github (config, storage) );
     ( "refactor-gihtub-dirspace-locking-phase-3.2",
       run_file_sql "2025-07-09-refactor-github-dirspace-locking-phase-3.sql" );
     ( "refactor-gitlab-dirspace-locking-phase-1",
       run_file_sql "2025-07-14-refactor-gitlab-dirspace-locking-phase-1.sql" );
-    ("refactor-gitlab-dirspace-locking-phase-2", Terrat_migrations_ex_568.run_gitlab);
+    ( "refactor-gitlab-dirspace-locking-phase-2",
+      fun { Migrate.config; storage; tx = _ } ->
+        Terrat_migrations_ex_568.run_gitlab (config, storage) );
     ( "refactor-gitlab-dirspace-locking-phase-3",
       run_file_sql "2025-07-14-refactor-gitlab-dirspace-locking-phase-3.sql" );
     ( "fix-make-gitlab-tables-closer-to-github",
@@ -181,4 +211,4 @@ let migrations =
     ("fix-drift-unlock-abort-wm", run_file_sql "2025-09-09-fix-drift-unlock.sql");
   ]
 
-let run config storage = Mig.run (config, storage) migrations
+let run config storage = Mig.run { Migrate.config; storage; tx = () } migrations
