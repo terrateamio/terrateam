@@ -114,15 +114,16 @@ RUN ulimit -s 524288 && ulimit -a && \
     find . -name '*.tap' -exec cat '{}' \;
 
 # Final code-indexer image
-FROM alpine:3.18 AS code-indexer
+FROM alpine:3.22 AS code-indexer
 COPY --from=code-indexer-build /mono/code/build/release/terrat_code_indexer/terrat_code_indexer.native /usr/local/bin/terrat_code_indexer
 WORKDIR /mnt
 ENTRYPOINT ["/usr/local/bin/terrat_code_indexer"]
 
 # Final terrat-ee image
-FROM alpine:3.18 AS terrat-ee
+FROM alpine:3.22 AS terrat-ee
 RUN apk add --no-cache \
     bash \
+    ca-certificates \
     curl \
     gettext \
     gmp \
@@ -150,9 +151,10 @@ EXPOSE 8080
 CMD ["runsvdir", "/etc/service"]
 
 # Final terrat-oss image
-FROM alpine:3.18 AS terrat-oss
+FROM alpine:3.22 AS terrat-oss
 RUN apk add --no-cache \
     bash \
+    ca-certificates \
     curl \
     gettext \
     gmp \
