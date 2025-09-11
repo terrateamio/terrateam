@@ -3665,9 +3665,16 @@ let derive ~ctx ~index ~file_list repo_config =
          index.Index.deps
          [])
   in
+  let existing_dirs = String_set.of_list @@ CCList.map Filename.dirname file_list in
   let dirs =
-    String_map.mapi
-      (fun dirname config -> update_dir_config ~global_tags ~module_paths ~index dirname config)
+    String_map.filter_map
+      (fun dirname config ->
+        (* It's possible that someone configured a directory that doesn't actually
+           exist, but its file patterns matched something that does exist.  Filter
+           those directories out *)
+        if String_set.mem dirname existing_dirs then
+          Some (update_dir_config ~global_tags ~module_paths ~index dirname config)
+        else None)
       dirs
   in
   { repo_config with View.dirs }
