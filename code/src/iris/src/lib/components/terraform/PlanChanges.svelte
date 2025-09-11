@@ -3,7 +3,7 @@
   import ResourceDiff from './ResourceDiff.svelte';
   import Card from '../ui/Card.svelte';
   import LoadingSpinner from '../ui/LoadingSpinner.svelte';
-  import type { ParsedPlan, TerraformJsonPlan } from '../../types/terraform';
+  import type { ParsedPlan, TerraformJsonPlan, TerraformResourceChange } from '../../types/terraform';
 
   // Props
   export let planJson: string | undefined = undefined;
@@ -99,7 +99,7 @@
   }
 
   // Convert a Terraform resource change to our ResourceNode format
-  function convertResourceChange(change: any): ResourceNode | null {
+  function convertResourceChange(change: TerraformResourceChange): ResourceNode | null {
     const changeType = mapActionsToChangeType(change.change.actions);
     
     if (changeType === 'no-change') {

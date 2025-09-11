@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { WorkManifest } from './types';
+  import type { TerraformJsonPlan } from './types/terraform';
   // Auth handled by PageLayout
   import { api } from './api';
   import { selectedInstallation, installations, currentVCSProvider, serverConfig } from './stores';
@@ -43,7 +44,7 @@
       text?: string;
       plan?: string;
       plan_text?: string;
-      diff?: any; // JSON plan data (object or string)
+      diff?: TerraformJsonPlan | string; // JSON plan data (object or string)
       has_changes?: boolean;
       ignore_errors?: boolean;
       visible_on?: string;
