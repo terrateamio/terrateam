@@ -34,6 +34,9 @@ module type S = sig
   (** Element primitives *)
   val rendered_length : t -> el list -> int
 
+  val repo : t -> int64
+  val pull_request : t -> int64
+
   (** Constraints *)
   val max_comment_length : int
 end

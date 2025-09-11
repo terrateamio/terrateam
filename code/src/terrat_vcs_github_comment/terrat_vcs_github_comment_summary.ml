@@ -164,7 +164,9 @@ module S = struct
         Logs.err (fun m -> m "%s : ERROR : %a" t.request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
 
-  let minimize_comment t comment_id = raise (Failure "nyi")
+  let minimize_comment t comment_id =
+    let request_id = t.request_id in
+    Api.minimize_pull_request_comment ~request_id t.client t.pull_request comment_id
 
   let post_comment t els =
     let open Abbs_future_combinators.Infix_result_monad in
@@ -178,5 +180,11 @@ module S = struct
     >>= fun comment_id -> Abb.Future.return (Ok comment_id)
 
   let rendered_length t els = raise (Failure "nyi")
+  let pull_request t = Api.Pull_request.id t.pull_request
+
+  let repo t =
+    let r = Terrat_pull_request.repo t.pull_request in
+    Int64.of_int (Api.Repo.id r)
+
   let max_comment_length = 65536 / 2
 end
