@@ -212,6 +212,9 @@
           "account_status": {
             "type": "string"
           },
+          "created_at": {
+            "type": "string"
+          },
           "id": {
             "type": "string"
           },
@@ -227,6 +230,7 @@
         },
         "required": [
           "account_status",
+          "created_at",
           "id",
           "name",
           "tier"

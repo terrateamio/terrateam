@@ -1,5 +1,6 @@
 type t = {
   account_status : string;
+  created_at : string;
   id : string;
   name : string;
   tier : Terrat_api_components_tier.t;
