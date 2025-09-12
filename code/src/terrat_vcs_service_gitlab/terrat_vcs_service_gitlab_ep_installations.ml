@@ -46,6 +46,9 @@ module Sql = struct
       //
       (* state *)
       Ret.text
+      //
+      (* created_at *)
+      Ret.text
       /^ read "upsert_user_installations.sql"
       /% Var.uuid "user_id"
       /% Var.(array (bigint "installation_ids")))
@@ -74,13 +77,14 @@ let update_user_installations ~config ~storage ~user () =
       Pgsql_io.Prepared_stmt.fetch
         db
         (Sql.upsert_user_installations ())
-        ~f:(fun installation_id name state ->
+        ~f:(fun installation_id name state created_at ->
           let module I = Terrat_api_components_installation in
           let module T = Terrat_api_components_tier in
           {
             I.id = CCInt64.to_string installation_id;
             name;
             account_status = state;
+            created_at;
             tier = { T.features = { T.Features.num_users_per_month = None }; name = "Unknown" };
             trial_ends_at = None;
           })
