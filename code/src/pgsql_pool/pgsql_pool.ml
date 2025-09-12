@@ -46,6 +46,8 @@ module Server = struct
     on_connect : Pgsql_io.t -> unit Abb.Future.t;
   }
 
+  let ping_timeout = Duration.to_f (Duration.of_sec 5)
+
   let rec conn_timeout_check' timeout w =
     let open Abb.Future.Infix_monad in
     Abb.Sys.sleep @@ Duration.to_f timeout
@@ -65,11 +67,13 @@ module Server = struct
 
   let verify_conn Conn.{ conn; _ } =
     let open Abb.Future.Infix_monad in
-    Pgsql_io.ping conn
+    (* Don't let a ping eat up the whole pool indefinitely, timeout so we can at
+       least make progress, even if it's slow.  *)
+    Abbs_future_combinators.timeout ~timeout:(Abb.Sys.sleep ping_timeout) (Pgsql_io.ping conn)
     >>= function
-    | true ->
+    | `Ok true ->
         Abb.Sys.monotonic () >>= fun last_used -> Abb.Future.return (Some Conn.{ conn; last_used })
-    | false -> Pgsql_io.destroy conn >>= fun () -> Abb.Future.return None
+    | `Ok false | `Timeout -> Pgsql_io.destroy conn >>= fun () -> Abb.Future.return None
 
   let verify_conns t =
     Abbs_future_combinators.List.fold_left
@@ -158,6 +162,11 @@ module Server = struct
         | Some p -> handle_msg t w r (`Ok (Msg.Get p))
         | None -> loop t w r)
     | `Ok Msg.Conn_timeout_check ->
+        (* Every now and then, run through all hte connections and see the last
+           time they were used and if it's over a certain amount of time then
+           clean them out.  This way if we have an intense period where we
+           needed lots of connections, we give those resources back to the DB
+           over time. *)
         let conn_timeout_check = Duration.to_f t.conn_timeout_check in
         Logs.debug (fun m ->
             m
