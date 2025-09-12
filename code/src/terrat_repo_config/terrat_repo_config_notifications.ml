@@ -3,5 +3,8 @@ module Policies = struct
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
-type t = { policies : Policies.t option [@default None] }
+type t = {
+  policies : Policies.t option; [@default None]
+  summary : Terrat_repo_config_notification_summary.t option; [@default None]
+}
 [@@deriving yojson { strict = true; meta = true }, make, show, eq]

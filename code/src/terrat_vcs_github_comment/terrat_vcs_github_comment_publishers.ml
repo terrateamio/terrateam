@@ -278,6 +278,16 @@ module Comment_api = struct
 end
 
 module Publisher_tools = struct
+  type element = {
+    dir : string;
+    workspace : string;
+    status: string;
+    created : int;
+    replaced : int;
+    updated : int;
+    deleted : int;
+  }
+
   let create_run_output
       ~view
       request_id
@@ -476,6 +486,46 @@ module Publisher_tools = struct
       | Wm.Step.Plan :: _ -> Tmpl.plan_complete2
       | Wm.Step.(Apply | Unsafe_apply) :: _ -> Tmpl.apply_complete2
     in
+    match Minijinja.render_template tmpl kv with
+    | Ok body -> body
+    | Error err ->
+        Logs.err (fun m -> m "%s : ERROR : %s" request_id err);
+        assert false
+
+  let create_summary_output request_id elements =
+    let items =
+      CCList.map
+        (fun e ->
+          `Assoc
+            [
+              ("dir", `String e.dir);
+              ("workspace", `String e.workspace);
+              ("status", `String e.status);
+              ("created", `Int e.created);
+              ("updated", `Int e.updated);
+              ("replaced", `Int e.replaced);
+              ("deleted", `Int e.deleted);
+            ])
+        elements
+    in
+    let created, updated, deleted, replaced =
+      CCList.fold_left
+        (fun (c, u, d, r) s ->
+          (c + s.created, u + s.updated, d + s.deleted, r + s.replaced))
+        (0, 0, 0, 0)
+        elements
+    in
+    let st =
+      `Assoc
+        [
+          ("created", `Int created);
+          ("updated", `Int updated);
+          ("deleted", `Int deleted);
+          ("replaced", `Int replaced);
+        ]
+    in
+    let kv = `Assoc [ ("items", `List items); ("stats", st) ] in
+    let tmpl = Tmpl.notifications_summary in
     match Minijinja.render_template tmpl kv with
     | Ok body -> body
     | Error err ->

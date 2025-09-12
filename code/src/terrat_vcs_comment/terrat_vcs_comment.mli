@@ -20,7 +20,7 @@ module type S = sig
       GitHub this is an uint64. *)
   type comment_id [@@deriving ord, show]
 
-  (** DB/Persistence operations *)
+  (** DB/Persistence operations for normal comments *)
   val query_comment_id : t -> el -> (comment_id option, [> `Error ]) result Abb.Future.t
 
   val query_els_for_comment_id : t -> comment_id -> (el list, [> `Error ]) result Abb.Future.t

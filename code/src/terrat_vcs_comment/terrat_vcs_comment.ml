@@ -101,8 +101,7 @@ module Make (M : S) = struct
     let sorted = CCList.sort M.compare_el (El_set.to_list compressed) in
     let split = split_by_size t sorted in
     Alr.iter
-      ~f:(fun es ->
-        M.post_comment t es >>= fun new_cid -> M.upsert_comment_id t es new_cid)
+      ~f:(fun es -> M.post_comment t es >>= fun new_cid -> M.upsert_comment_id t es new_cid)
       split
 
   let append t els =
