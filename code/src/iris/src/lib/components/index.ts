@@ -1,4 +1,5 @@
 // UI Components
+export { default as AlertBanner } from './ui/AlertBanner.svelte';
 export { default as Button } from './ui/Button.svelte';
 export { default as Card } from './ui/Card.svelte';
 export { default as ClickableCard } from './ui/ClickableCard.svelte';
@@ -8,8 +9,13 @@ export { default as ErrorMessage } from './ui/ErrorMessage.svelte';
 export { default as Icon } from './ui/Icon.svelte';
 export { default as LoadingSpinner } from './ui/LoadingSpinner.svelte';
 export { default as SafeOutput } from './ui/SafeOutput.svelte';
+export { default as MiniSparkline } from './ui/MiniSparkline.svelte';
 
 // Layout Components
 export { default as AuthenticationLoader } from './layout/AuthenticationLoader.svelte';
 export { default as PageLayout } from './layout/PageLayout.svelte';
 export { default as RootHandler } from './layout/RootHandler.svelte';
+
+// Nudge Components
+export { default as UpgradeNudgeBar } from './UpgradeNudgeBar.svelte';
+export { default as QueuedJobsNudge } from './QueuedJobsNudge.svelte';

@@ -8,6 +8,7 @@ env TERRATEAM_UI_ANALYTICS;
 env TERRATEAM_UI_SUBSCRIPTION;
 env TERRATEAM_MAINTENANCE;
 env TERRATEAM_MAINTENANCE_MESSAGE;
+env TERRATEAM_UPGRADE_NUDGES;
 
 events {
     worker_connections  1024;
@@ -57,6 +58,7 @@ http {
             sub_filter '%TERRATEAM_UI_SUBSCRIPTION%' '${TERRATEAM_UI_SUBSCRIPTION}';
             sub_filter '%TERRATEAM_MAINTENANCE%' '${TERRATEAM_MAINTENANCE}';
             sub_filter '%TERRATEAM_MAINTENANCE_MESSAGE%' '${TERRATEAM_MAINTENANCE_MESSAGE}';
+            sub_filter '%TERRATEAM_UPGRADE_NUDGES%' '${TERRATEAM_UPGRADE_NUDGES}';
 
             root /usr/local/share/terrat/ui/assets/;
             index index.html index.htm;

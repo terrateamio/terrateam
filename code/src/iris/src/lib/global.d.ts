@@ -7,6 +7,7 @@ declare global {
       ui_subscription?: 'disabled' | 'oss' | 'saas';
       maintenanceMode?: boolean | string;
       maintenanceMessage?: string;
+      upgrade_nudges?: string;
     };
     posthog: {
       init: (key: string, options?: Record<string, unknown>) => void;

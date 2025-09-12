@@ -34,9 +34,12 @@
   import Analytics from './lib/Analytics.svelte';
   import AuditTrail from './lib/AuditTrail.svelte';
   import RootHandler from './lib/components/layout/RootHandler.svelte';
+  import UpgradeNudgeBar from './lib/components/UpgradeNudgeBar.svelte';
+  import QueuedJobsNudge from './lib/components/QueuedJobsNudge.svelte';
   
   // Check for maintenance mode
   const maintenanceConfig = getMaintenanceConfig();
+  
   
   // Define routes - installation-scoped routes with fallbacks for demo mode
   const routes = {
@@ -228,5 +231,12 @@
     <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400"></div>
   </div>
 {:else}
+  <!-- Global upgrade nudge notification bars -->
+  {#if $isAuthenticated}
+    <UpgradeNudgeBar />
+    <QueuedJobsNudge />
+  {/if}
+  
+  <!-- Main app content -->
   <svelte:component this={router} {routes} />
 {/if}

@@ -6,6 +6,7 @@
   import type { WorkManifest } from './types';
   import { validateWorkManifests } from './types';
   import { selectedInstallation } from './stores';
+  import { areUpgradeNudgesEnabled } from './utils/environment';
 
   // State variables
   let loading = true;
@@ -13,6 +14,8 @@
   let workManifests: WorkManifest[] = [];
   let allWorkManifests: WorkManifest[] = []; // Store all data for filtering
   let selectedDateRange = '7d'; // Default to last 7 days
+  let showUpgradeNudge = false; // Show upgrade nudge for >30 day queries on Free tier
+  let nudgeType: 'basic' | 'enterprise' | null = null; // Which upgrade nudge to show
   let selectedUser = 'all';
   let selectedOperation = 'all';
   let selectedStatus = 'all';
@@ -319,6 +322,29 @@
   
   // Handle date range change (requires API call)
   function handleDateRangeChange() {
+    // Check if we should show the upgrade nudge
+    if (areUpgradeNudgesEnabled()) {
+      const tierName = $selectedInstallation?.tier?.name?.toLowerCase();
+      
+      if (tierName === 'free') {
+        // Free tier: show nudge when trying to view beyond 30 days
+        const isBeyond30Days = selectedDateRange === '90d' || selectedDateRange === 'all';
+        showUpgradeNudge = isBeyond30Days;
+        nudgeType = isBeyond30Days ? 'basic' : null;
+      } else if (tierName === 'basic') {
+        // Basic tier: show nudge when trying to view beyond 90 days (all time)
+        const isBeyond90Days = selectedDateRange === 'all';
+        showUpgradeNudge = isBeyond90Days;
+        nudgeType = isBeyond90Days ? 'enterprise' : null;
+      } else {
+        showUpgradeNudge = false;
+        nudgeType = null;
+      }
+    } else {
+      showUpgradeNudge = false;
+      nudgeType = null;
+    }
+    
     loadAuditTrail();
   }
 
@@ -613,6 +639,52 @@
             </tr>
           </thead>
           <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+            {#if showUpgradeNudge}
+              <!-- Upgrade nudge row for limited audit retention -->
+              <tr class="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 border-b-2 border-gray-300 dark:border-gray-600">
+                <td colspan="6" class="px-4 py-4">
+                  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                      <div class="flex-shrink-0">
+                        <svg class="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                      </div>
+                      <div>
+                        {#if nudgeType === 'basic'}
+                          <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            Audit history beyond 30 days is locked
+                          </p>
+                          <p class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                            Free tier includes 30 days of audit history. Upgrade to Basic for 90 days of retention.
+                          </p>
+                        {:else if nudgeType === 'enterprise'}
+                          <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            Audit history beyond 90 days is locked
+                          </p>
+                          <p class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                            Basic tier includes 90 days of audit history. Upgrade to Enterprise for 365+ days of retention.
+                          </p>
+                        {/if}
+                      </div>
+                    </div>
+                    <a
+                      href="#/subscription"
+                      class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 whitespace-nowrap"
+                    >
+                      {#if nudgeType === 'basic'}
+                        Upgrade to Basic
+                      {:else if nudgeType === 'enterprise'}
+                        Upgrade to Enterprise
+                      {/if}
+                      <svg class="ml-1.5 -mr-0.5 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            {/if}
             {#each workManifests as manifest}
               <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                 <!-- Time -->
