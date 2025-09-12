@@ -19,7 +19,7 @@
     "quality-check": "npm run pre-commit",
     "knip": "knip",
     "test": "npm run type-check && npm run check-api-types && npm run check && npm run knip",
-    "download-icons": "node scripts/download-icons.js"
+    "download-icons": "python3 scripts/download-icons.py"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^3.0.0",
