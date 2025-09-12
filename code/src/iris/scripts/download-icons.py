@@ -1,0 +1,284 @@
+#!/usr/bin/env python3
+
+import re
+import sys
+import json
+import asyncio
+import aiohttp
+from pathlib import Path
+from typing import Set, List, Tuple, Dict, Optional
+import argparse
+
+# Get the script directory and project paths
+SCRIPT_DIR = Path(__file__).resolve().parent
+ICONS_DIR = SCRIPT_DIR.parent / 'src' / 'lib' / 'icons'
+SRC_DIR = SCRIPT_DIR.parent / 'src'
+
+# Regex patterns to find icon usage
+ICON_PATTERNS = [
+    # <Icon icon="mdi:something" />
+    r'icon\s*=\s*["\']([a-zA-Z0-9-]+:[a-zA-Z0-9-]+)["\']',
+    # icon: 'mdi:something' or icon: "mdi:something"
+    r'icon\s*:\s*["\']([a-zA-Z0-9-]+:[a-zA-Z0-9-]+)["\']',
+    # iconName: 'mdi:something'
+    r'iconName\s*:\s*["\']([a-zA-Z0-9-]+:[a-zA-Z0-9-]+)["\']',
+    # Dynamic icon usage: icon={condition ? "mdi:check" : "mdi:close"}
+    r'\?\s*["\']([a-zA-Z0-9-]+:[a-zA-Z0-9-]+)["\']\s*:',
+    r':\s*["\']([a-zA-Z0-9-]+:[a-zA-Z0-9-]+)["\']\s*\}',
+]
+
+# Fallback list of core icons (in case scanning fails or for initial setup)
+CORE_ICONS = [
+    'mdi:github',
+    'mdi:check',
+    'mdi:check-circle',
+    'mdi:close',
+    'mdi:alert',
+    'mdi:alert-circle',
+    'mdi:information',
+    'mdi:loading',
+    'logos:aws',
+    'logos:google-cloud',
+    'logos:microsoft-azure'
+]
+
+
+def scan_for_icons() -> List[str]:
+    """Scan the codebase for icon usage."""
+    print('Scanning for icon usage in codebase...\n')
+    
+    found_icons: Set[str] = set()
+    
+    try:
+        # Find all Svelte and TypeScript files
+        patterns = ['**/*.svelte', '**/*.ts', '**/*.js']
+        files = []
+        
+        for pattern in patterns:
+            files.extend(SRC_DIR.glob(pattern))
+        
+        # Filter out unwanted directories
+        files = [
+            f for f in files 
+            if 'node_modules' not in str(f) 
+            and 'dist' not in str(f) 
+            and 'build' not in str(f)
+            and 'lib/icons' not in str(f)
+        ]
+        
+        print(f'Found {len(files)} files to scan\n')
+        
+        # Scan each file for icon usage
+        for file in files:
+            try:
+                content = file.read_text(encoding='utf-8')
+                
+                # Apply all regex patterns
+                for pattern in ICON_PATTERNS:
+                    matches = re.findall(pattern, content)
+                    for match in matches:
+                        if match:
+                            found_icons.add(match)
+            except Exception as e:
+                print(f'Error reading {file}: {e}')
+        
+        # Convert to sorted list
+        icons_list = sorted(list(found_icons))
+        print(f'Found {len(icons_list)} unique icons used in the codebase\n')
+        
+        return icons_list
+    except Exception as e:
+        print(f'Error scanning for icons: {e}')
+        print('Falling back to core icons list\n')
+        return CORE_ICONS
+
+
+def get_existing_icons() -> List[str]:
+    """Get list of already downloaded icons."""
+    try:
+        index_path = ICONS_DIR / 'index.ts'
+        if not index_path.exists():
+            return []
+        
+        content = index_path.read_text(encoding='utf-8')
+        
+        # Extract icon names from the index file
+        pattern = r'["\']([a-zA-Z0-9-]+:[a-zA-Z0-9-]+)["\']\s*:'
+        matches = re.findall(pattern, content)
+        
+        return matches
+    except Exception:
+        # If index doesn't exist, no icons are downloaded yet
+        return []
+
+
+async def download_icon(session: aiohttp.ClientSession, icon_name: str) -> Dict:
+    """Download a single icon from Iconify."""
+    prefix, name = icon_name.split(':')
+    url = f'https://api.iconify.design/{prefix}/{name}.svg'
+    
+    try:
+        async with session.get(url) as response:
+            if response.status != 200:
+                raise Exception(f'Failed to download {icon_name}: {response.status}')
+            
+            svg = await response.text()
+            
+            # Create directory if it doesn't exist
+            icon_dir = ICONS_DIR / prefix
+            icon_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Save the SVG file
+            file_path = icon_dir / f'{name}.svg'
+            file_path.write_text(svg, encoding='utf-8')
+            
+            print(f'✓ Downloaded {icon_name}')
+            return {'iconName': icon_name, 'success': True}
+    except Exception as e:
+        print(f'✗ Failed to download {icon_name}: {e}')
+        return {'iconName': icon_name, 'success': False, 'error': str(e)}
+
+
+async def download_icons(icons_to_download: List[str]) -> List[Dict]:
+    """Download multiple icons concurrently."""
+    async with aiohttp.ClientSession() as session:
+        tasks = [download_icon(session, icon) for icon in icons_to_download]
+        return await asyncio.gather(*tasks)
+
+
+def generate_icon_index(icons: List[str]) -> None:
+    """Generate the TypeScript index file for icons."""
+    index_content = """// Auto-generated icon index
+// DO NOT EDIT MANUALLY - Generated by scripts/download-icons.py
+
+export const iconMap = {
+"""
+    
+    icon_imports = []
+    for icon in icons:
+        prefix, name = icon.split(':')
+        icon_imports.append(f"  '{icon}': () => import('./{prefix}/{name}.svg?raw')")
+    
+    index_content += ',\n'.join(icon_imports)
+    index_content += """\n};
+
+export type IconName = keyof typeof iconMap;
+"""
+    
+    index_path = ICONS_DIR / 'index.ts'
+    index_path.write_text(index_content, encoding='utf-8')
+    print('✓ Generated icon index')
+
+
+async def main(refresh_all: bool = False) -> None:
+    """Main function to orchestrate icon downloading."""
+    print('Icon Management Script\n')
+    print('This script automatically scans your codebase for icon usage')
+    print('and downloads any missing icons from Iconify.\n')
+    
+    try:
+        # Create icons directory
+        ICONS_DIR.mkdir(parents=True, exist_ok=True)
+        
+        # Scan for all icons used in codebase
+        used_icons = scan_for_icons()
+        
+        # Get existing icons
+        existing_icons = get_existing_icons()
+        
+        if existing_icons:
+            print(f'{len(existing_icons)} icons already downloaded\n')
+        
+        # Determine which icons to download
+        if refresh_all:
+            # Download all used icons (refresh mode)
+            icons_to_download = used_icons
+            print('Refreshing all icons...\n')
+        else:
+            # Only download missing icons
+            icons_to_download = [icon for icon in used_icons if icon not in existing_icons]
+            
+            if not icons_to_download:
+                print('✅ All icons are already downloaded!')
+                return
+            
+            print(f'Found {len(icons_to_download)} missing icons to download:\n')
+            for icon in icons_to_download:
+                print(f'  - {icon}')
+        
+        print('\nDownloading icons...\n')
+        
+        # Download icons
+        results = await download_icons(icons_to_download)
+        
+        # Regenerate index with all icons
+        all_icons = sorted(list(set(existing_icons + used_icons)))
+        generate_icon_index(all_icons)
+        
+        # Summary
+        successful = sum(1 for r in results if r['success'])
+        failed = sum(1 for r in results if not r['success'])
+        
+        print(f'\n✅ Successfully downloaded {successful} icons')
+        if failed > 0:
+            print(f'❌ Failed to download {failed} icons')
+            failed_icons = [r for r in results if not r['success']]
+            for r in failed_icons:
+                print(f"  - {r['iconName']}: {r.get('error', 'Unknown error')}")
+        
+        print(f'\n📊 Total icons available: {len(all_icons)}')
+        
+    except Exception as e:
+        print(f'Error: {e}')
+        sys.exit(1)
+
+
+def scan_only() -> None:
+    """Just scan and show icon usage without downloading."""
+    icons = scan_for_icons()
+    existing = get_existing_icons()
+    missing = [icon for icon in icons if icon not in existing]
+    
+    print('\n📊 Icon Usage Summary:')
+    print(f'   Total used: {len(icons)}')
+    print(f'   Downloaded: {len(existing)}')
+    print(f'   Missing: {len(missing)}')
+    
+    if missing:
+        print('\nMissing icons:')
+        for icon in missing:
+            print(f'  - {icon}')
+        print('\n(Run without --scan to download missing icons)')
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description='Icon Download Script - Automatically scan and download Iconify icons',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+This script automatically:
+1. Scans your codebase for icon usage
+2. Compares with existing downloaded icons
+3. Downloads any missing icons from Iconify
+4. Updates the icon index file
+        """
+    )
+    
+    parser.add_argument(
+        '--all',
+        action='store_true',
+        help='Re-download all icons (refresh mode)'
+    )
+    
+    parser.add_argument(
+        '--scan',
+        action='store_true',
+        help='Show icon usage without downloading'
+    )
+    
+    args = parser.parse_args()
+    
+    if args.scan:
+        scan_only()
+    else:
+        asyncio.run(main(refresh_all=args.all))

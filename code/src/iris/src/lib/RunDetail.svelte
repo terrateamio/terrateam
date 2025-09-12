@@ -820,7 +820,9 @@
           </h2>
           <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-1 sm:space-y-0 text-sm text-gray-600 dark:text-gray-400">
             <span>Dirspaces: <span class="font-medium">{run.dirspaces.length}</span></span>
-            <span>{$currentVCSProvider === 'gitlab' ? 'GitLab' : 'GitHub'} Environment: <span class="font-medium">{run.environment || 'default'}</span></span>
+            {#if run.environment}
+              <span>{$currentVCSProvider === 'gitlab' ? 'GitLab' : 'GitHub'} Environment: <span class="font-medium">{run.environment}</span></span>
+            {/if}
           </div>
         </div>
         <div class="flex flex-col items-start lg:items-end space-y-2">
