@@ -518,7 +518,8 @@ export interface components {
             any_of?: string[];
             any_of_count?: number;
             dir?: string;
-            token: string;
+            name?: string;
+            token?: string;
             workspace?: string;
         };
         "github-user": {
@@ -548,6 +549,7 @@ export interface components {
         };
         installation: {
             account_status: string;
+            created_at: string;
             id: string;
             name: string;
             tier: components["schemas"]["tier"];
