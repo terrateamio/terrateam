@@ -278,6 +278,16 @@ module Comment_api = struct
 end
 
 module Publisher_tools = struct
+  type element = {
+    dir : string;
+    workspace : string;
+    status: string;
+    created : int;
+    replaced : int;
+    updated : int;
+    deleted : int;
+  }
+
   let create_run_output
       ~view
       request_id
@@ -482,36 +492,28 @@ module Publisher_tools = struct
         Logs.err (fun m -> m "%s : ERROR : %s" request_id err);
         assert false
 
-  let create_summary_output request_id els =
-    let module D = Terrat_dirspace in
-    let module El = Terrat_vcs_github_comment_summary.S in
-    let module Sm = Terrat_vcs_github_comment_summary in
-    let module St = Terrat_vcs_comment_summary in
+  let create_summary_output request_id elements =
     let items =
       CCList.map
         (fun e ->
-          let { D.dir; workspace } = e.El.dirspace in
-          let status = if e.El.is_success then "SUCCESS" else "FAILED" in
-          let { St.created; updated; deleted; replaced } = e.El.stats in
           `Assoc
             [
-              ("dir", `String dir);
-              ("workspace", `String workspace);
-              ("status", `String status);
-              ("created", `Int created);
-              ("updated", `Int updated);
-              ("replaced", `Int replaced);
-              ("deleted", `Int deleted);
+              ("dir", `String e.dir);
+              ("workspace", `String e.workspace);
+              ("status", `String e.status);
+              ("created", `Int e.created);
+              ("updated", `Int e.updated);
+              ("replaced", `Int e.replaced);
+              ("deleted", `Int e.deleted);
             ])
-        els
+        elements
     in
-    let stats = CCList.map (fun e -> e.El.stats) els in
     let created, updated, deleted, replaced =
       CCList.fold_left
         (fun (c, u, d, r) s ->
-          (c + s.St.created, u + s.St.updated, d + s.St.deleted, r + s.St.replaced))
+          (c + s.created, u + s.updated, d + s.deleted, r + s.replaced))
         (0, 0, 0, 0)
-        stats
+        elements
     in
     let st =
       `Assoc

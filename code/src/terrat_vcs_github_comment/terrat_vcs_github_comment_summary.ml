@@ -170,7 +170,21 @@ module S = struct
 
   let post_comment t els =
     let open Abbs_future_combinators.Infix_result_monad in
-    let body = Publisher_tools.create_summary_output t.request_id els in
+    let module D = Terrat_dirspace in
+    let module Csm = Terrat_vcs_comment_summary in
+    let module Pts = Terrat_vcs_github_comment_publishers.Publisher_tools in
+    let elements : Pts.element list =
+      CCList.map
+        (fun e ->
+          let { D.dir; workspace } = e.dirspace in
+          let status = if e.is_success then "SUCCESS" else "FAILED" in
+          let created, replaced, updated, deleted =
+            (e.stats.Csm.created, e.stats.Csm.replaced, e.stats.Csm.updated, e.stats.Csm.deleted)
+          in
+          { Pts.dir; workspace; status; created; replaced; updated; deleted })
+        els
+    in
+    let body = Pts.create_summary_output t.request_id elements in
     let content_length = CCString.length body in
     Logs.info (fun m -> m "%s : RENDERED_LENGTH %i" t.request_id content_length);
     let request_id = t.request_id in
