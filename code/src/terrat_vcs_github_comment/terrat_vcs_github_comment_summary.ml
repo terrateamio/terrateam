@@ -170,9 +170,7 @@ module S = struct
 
   let post_comment t els =
     let open Abbs_future_combinators.Infix_result_monad in
-    let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
-    (* TODO: just here to make the build work, need to create a proper template for it *)
-    let body = raise (Failure "nyi") in
+    let body = Publisher_tools.create_summary_output t.request_id els in
     let content_length = CCString.length body in
     Logs.info (fun m -> m "%s : RENDERED_LENGTH %i" t.request_id content_length);
     let request_id = t.request_id in
@@ -180,7 +178,7 @@ module S = struct
     >>= fun comment_id -> Abb.Future.return (Ok comment_id)
 
   let rendered_length t els = raise (Failure "nyi")
-  let pull_request t = Api.Pull_request.id t.pull_request
+  let pull_request t = Int64.of_int (Api.Pull_request.id t.pull_request)
 
   let repo t =
     let r = Terrat_pull_request.repo t.pull_request in

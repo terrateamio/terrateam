@@ -55,4 +55,6 @@ module Publisher_tools : sig
       'f )
     Terrat_work_manifest3.t ->
     string
+
+  val create_summary_output : string -> Terrat_vcs_github_comment_summary.S.el list -> string
 end

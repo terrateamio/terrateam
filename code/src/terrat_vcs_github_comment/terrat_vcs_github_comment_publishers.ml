@@ -481,4 +481,52 @@ module Publisher_tools = struct
     | Error err ->
         Logs.err (fun m -> m "%s : ERROR : %s" request_id err);
         assert false
+
+  let create_summary_output request_id els =
+    let module D = Terrat_dirspace in
+    let module El = Terrat_vcs_github_comment_summary.S in
+    let module Sm = Terrat_vcs_github_comment_summary in
+    let module St = Terrat_vcs_comment_summary in
+    let items =
+      CCList.map
+        (fun e ->
+          let { D.dir; workspace } = e.El.dirspace in
+          let status = if e.El.is_success then "SUCCESS" else "FAILED" in
+          let { St.created; updated; deleted; replaced } = e.El.stats in
+          `Assoc
+            [
+              ("dir", `String dir);
+              ("workspace", `String workspace);
+              ("status", `String status);
+              ("created", `Int created);
+              ("updated", `Int updated);
+              ("replaced", `Int replaced);
+              ("deleted", `Int deleted);
+            ])
+        els
+    in
+    let stats = CCList.map (fun e -> e.El.stats) els in
+    let created, updated, deleted, replaced =
+      CCList.fold_left
+        (fun (c, u, d, r) s ->
+          (c + s.St.created, u + s.St.updated, d + s.St.deleted, r + s.St.replaced))
+        (0, 0, 0, 0)
+        stats
+    in
+    let st =
+      `Assoc
+        [
+          ("created", `Int created);
+          ("updated", `Int updated);
+          ("deleted", `Int deleted);
+          ("replaced", `Int replaced);
+        ]
+    in
+    let kv = `Assoc [ ("items", `List items); ("stats", st) ] in
+    let tmpl = Tmpl.notifications_summary in
+    match Minijinja.render_template tmpl kv with
+    | Ok body -> body
+    | Error err ->
+        Logs.err (fun m -> m "%s : ERROR : %s" request_id err);
+        assert false
 end
