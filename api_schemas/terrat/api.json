@@ -615,6 +615,185 @@
         ],
         "type": "object"
       },
+      "kv-cas": {
+        "additionalProperties": false,
+        "properties": {
+          "committed": {
+            "type": "boolean"
+          },
+          "data": {},
+          "idx": {
+            "type": "integer"
+          },
+          "version": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "kv-commit": {
+        "additionalProperties": false,
+        "properties": {
+          "keys": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "idx": {
+                  "type": "integer"
+                },
+                "key": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "key"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "keys"
+        ],
+        "type": "object"
+      },
+      "kv-commit-result": {
+        "additionalProperties": false,
+        "properties": {
+          "keys": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "idx": {
+                  "type": "integer"
+                },
+                "key": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "key",
+                "idx"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "keys"
+        ],
+        "type": "object"
+      },
+      "kv-count": {
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "type": "integer"
+          },
+          "max_idx": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "count",
+          "max_idx"
+        ],
+        "type": "object"
+      },
+      "kv-delete": {
+        "additionalProperties": false,
+        "properties": {
+          "result": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "type": "object"
+      },
+      "kv-record": {
+        "additionalProperties": false,
+        "properties": {
+          "committed": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "data": {},
+          "idx": {
+            "type": "integer"
+          },
+          "key": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer"
+          },
+          "version": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "committed",
+          "created_at",
+          "data",
+          "idx",
+          "key",
+          "size",
+          "version"
+        ],
+        "type": "object"
+      },
+      "kv-record-list": {
+        "additionalProperties": false,
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/kv-record"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object"
+      },
+      "kv-set": {
+        "additionalProperties": false,
+        "properties": {
+          "committed": {
+            "type": "boolean"
+          },
+          "data": {},
+          "idx": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "kv-size": {
+        "additionalProperties": false,
+        "properties": {
+          "size": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "size"
+        ],
+        "type": "object"
+      },
       "output-cost-estimation": {
         "additionalProperties": false,
         "properties": {
@@ -3530,6 +3709,481 @@
           "403": {}
         }
       }
-    }
+    },
+    "/api/v1/{vcs}/kv/{installation_id}/cas/key/{key}": {
+      "put": {
+        "operationId": "kv/cas",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vcs",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "installation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/kv-cas"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/kv-record"
+                }
+              }
+            }
+          },
+          "400": {},
+          "403": {}
+        }
+      }
+    },
+    "/api/v1/{vcs}/kv/{installation_id}/commit": {
+      "post": {
+        "operationId": "kv/commit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vcs",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "installation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/kv-commit"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/kv-commit-result"
+                }
+              }
+            }
+          },
+          "403": {}
+        }
+      }
+    },
+    "/api/v1/{vcs}/kv/{installation_id}/count/key/{key}": {
+      "get": {
+        "operationId": "kv/count",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vcs",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "installation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "committed",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/kv-count"
+                }
+              }
+            }
+          },
+          "403": {},
+          "404": {}
+        }
+      }
+    },
+    "/api/v1/{vcs}/kv/{installation_id}/iter/{key}": {
+      "get": {
+        "operationId": "kv/iter",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vcs",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "installation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "committed",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "idx",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_data",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "inclusive",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "prefix",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "select",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/kv-record-list"
+                }
+              }
+            }
+          },
+          "403": {}
+        }
+      }
+    },
+    "/api/v1/{vcs}/kv/{installation_id}/key/{key}": {
+      "delete": {
+        "operationId": "kv/delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vcs",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "installation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "idx",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "version",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/kv-delete"
+                }
+              }
+            }
+          },
+          "403": {}
+        }
+      },
+      "get": {
+        "operationId": "kv/get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vcs",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "installation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "committed",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "idx",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "select",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/kv-record"
+                }
+              }
+            }
+          },
+          "403": {},
+          "404": {}
+        }
+      },
+      "put": {
+        "operationId": "kv/set",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vcs",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "installation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/kv-set"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/kv-record"
+                }
+              }
+            }
+          },
+          "403": {}
+        }
+      }
+    },
+    "/api/v1/{vcs}/kv/{installation_id}/size/key/{key}": {
+      "get": {
+        "operationId": "kv/size",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vcs",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "installation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "committed",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "idx",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/kv-size"
+                }
+              }
+            }
+          },
+          "403": {},
+          "404": {}
+        }
+      }
   }
 }
