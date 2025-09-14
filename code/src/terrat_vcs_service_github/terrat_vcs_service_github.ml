@@ -21,6 +21,17 @@ struct
   module Events = Terrat_vcs_service_github_ep_events3.Make (Provider)
   module Work_manifest = Terrat_vcs_service_github_ep_work_manifest.Make (Provider)
 
+  module Kv_store =
+    Terrat_vcs_kv_store.Make
+      (Provider)
+      (struct
+        type installation_id = Provider.Api.Account.Id.t
+
+        let namespace_prefix = "github"
+        let route_root () = Brtl_rtng.Route.(rel / "api" / "v1" / "github")
+        let enforce_installation_access = Terrat_vcs_service_github_user.enforce_installation_access
+      end)
+
   module Routes = struct
     module Rt = struct
       (* Apparently at some point Malcolm decided that it made sense to have two
@@ -223,6 +234,7 @@ struct
       let module Ep_inst = Terrat_vcs_service_github_ep_installations in
       let module Ep_user = Terrat_vcs_service_github_ep_user in
       Routes.routes config storage
+      @ Kv_store.routes config storage
       @ Brtl_rtng.Route.
           [
             (* Work manifests *)

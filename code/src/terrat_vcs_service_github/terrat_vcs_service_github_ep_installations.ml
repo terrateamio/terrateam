@@ -41,30 +41,7 @@ module Sql = struct
       /% Var.bigint "installation_id")
 end
 
-let enforce_installation_access storage user installation_id ctx =
-  let open Abb.Future.Infix_monad in
-  Pgsql_pool.with_conn storage ~f:(fun db ->
-      Pgsql_io.Prepared_stmt.fetch
-        db
-        (Sql.select_user_installation ())
-        ~f:CCFun.id
-        (Terrat_user.id user)
-        (CCInt64.of_int installation_id))
-  >>= function
-  | Ok (_ :: _) -> Abb.Future.return (Ok ())
-  | Ok [] -> Abb.Future.return (Error (Brtl_ctx.set_response `Forbidden ctx))
-  | Error (#Pgsql_pool.err as err) ->
-      Logs.err (fun m ->
-          m
-            "ENFORCE_INSTALLATION_ACCESS : %s : ERROR : %a"
-            (Brtl_ctx.token ctx)
-            Pgsql_pool.pp_err
-            err);
-      Abb.Future.return (Error (Brtl_ctx.set_response `Internal_server_error ctx))
-  | Error (#Pgsql_io.err as err) ->
-      Logs.err (fun m ->
-          m "ENFORCE_INSTALLATION_ACCESS : %s : ERROR : %a" (Brtl_ctx.token ctx) Pgsql_io.pp_err err);
-      Abb.Future.return (Error (Brtl_ctx.set_response `Internal_server_error ctx))
+let enforce_installation_access = Terrat_vcs_service_github_user.enforce_installation_access
 
 module Work_manifests = struct
   module Outputs = struct
