@@ -31,6 +31,19 @@ struct
     whoami : Gitlabc_components.API_Entities_UserPublic.t;
   }
 
+  module Kv_store =
+    Terrat_vcs_kv_store.Make
+      (Provider)
+      (struct
+        type installation_id = Provider.Api.Account.Id.t
+
+        let namespace_prefix = "gitlab"
+        let route_root () = Brtl_rtng.Route.(rel / "api" / "v1" / "gitlab")
+
+        let enforce_installation_access =
+          Terrat_vcs_service_gitlab_user.enforce_installation_access'
+      end)
+
   module Routes = struct
     module Rt = struct
       let api () = Brtl_rtng.Route.(rel / "api")
@@ -149,6 +162,7 @@ struct
       let config = t.config in
       let storage = t.storage in
       Routes.routes config storage
+      @ Kv_store.routes config storage
       @ Brtl_rtng.Route.
           [
             (* Installations *)
