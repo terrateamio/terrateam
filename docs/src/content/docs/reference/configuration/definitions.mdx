@@ -1,0 +1,262 @@
+---
+title: definitions
+description: Reusable configuration templates using YAML anchors
+---
+
+The `definitions` configuration provides a dedicated section for defining YAML anchors that can be referenced throughout your Terrateam configuration. This enables DRY (Don't Repeat Yourself) principles by allowing you to define reusable configuration templates.
+
+## Purpose
+
+YAML anchors allow you to:
+- Define configuration once and reuse it multiple times
+- Maintain consistency across similar configurations
+- Reduce configuration file size and complexity
+- Make updates easier by changing values in one place
+
+## Syntax
+
+```yaml
+definitions:
+  # Define anchors here using &anchor_name
+  anchor_name: &anchor_name
+    key: value
+    
+# Reference anchors elsewhere using *anchor_name
+some_config: *anchor_name
+```
+
+## Examples
+
+### Reusable Engine Configuration
+
+Define a standard engine configuration once and reuse it across workflows:
+
+```yaml
+definitions:
+  default_engine: &default_engine
+    version: 1.5.0
+    environment:
+      TF_IN_AUTOMATION: "true"
+      TF_INPUT: "false"
+
+workflows:
+  - name: development
+    tag_query: "dev"
+    engine: *default_engine
+    
+  - name: staging
+    tag_query: "staging"
+    engine: 
+      <<: *default_engine
+      environment:
+        <<: *default_engine.environment
+        ENVIRONMENT: "staging"
+```
+
+### Standard Workflow Steps
+
+Define common workflow step sequences:
+
+```yaml
+definitions:
+  standard_checks: &standard_checks
+    - type: init
+    - type: run
+      cmd: ["terraform", "fmt", "-check"]
+    - type: run
+      cmd: ["terraform", "validate"]
+    - type: checkov
+    - type: cost_estimation
+
+workflows:
+  - name: default
+    plan: 
+      - *standard_checks
+      - type: plan
+    apply:
+      - type: init
+      - type: apply
+```
+
+### Common Access Control Policies
+
+Define reusable access control patterns:
+
+```yaml
+definitions:
+  dev_access: &dev_access
+    plan: ["*"]
+    apply: ["team:developers", "team:platform"]
+    
+  prod_access: &prod_access
+    plan: ["*"]
+    apply: ["team:platform"]
+    apply_force: ["team:sre"]
+
+access_control:
+  enabled: true
+  policies:
+    - tag_query: "dev or staging"
+      <<: *dev_access
+      
+    - tag_query: "production"
+      <<: *prod_access
+```
+
+### Environment-Specific Settings
+
+Define environment configurations:
+
+```yaml
+definitions:
+  aws_dev: &aws_dev
+    AWS_REGION: us-east-1
+    AWS_ROLE_ARN: arn:aws:iam::123456789012:role/terrateam-dev
+    
+  aws_prod: &aws_prod
+    AWS_REGION: us-east-1
+    AWS_ROLE_ARN: arn:aws:iam::123456789012:role/terrateam-prod
+
+workflows:
+  - name: development
+    tag_query: "dev"
+    engine:
+      version: 1.5.0
+      environment: *aws_dev
+      
+  - name: production
+    tag_query: "production"
+    engine:
+      version: 1.5.0
+      environment: *aws_prod
+```
+
+### Complex Workflow Templates
+
+Create sophisticated reusable workflow patterns:
+
+```yaml
+definitions:
+  # Base security scanning
+  security_scan: &security_scan
+    - type: checkov
+      when: always
+    - type: run
+      cmd: ["tfsec", "."]
+      when: always
+      
+  # Standard plan workflow
+  standard_plan: &standard_plan
+    - type: init
+    - type: plan
+    - <<: *security_scan
+    - type: cost_estimation
+      
+  # Production approval requirements
+  prod_requirements: &prod_requirements
+    - approved: 2
+    - status_checks
+    - merge_conflicts
+
+workflows:
+  - name: development
+    tag_query: "dev"
+    plan: *standard_plan
+    apply_requirements:
+      - approved
+      
+  - name: production
+    tag_query: "production"
+    plan: *standard_plan
+    apply_requirements: *prod_requirements
+```
+
+### Shared Directory Configuration
+
+Define common directory settings:
+
+```yaml
+definitions:
+  base_tags: &base_tags
+    - "$dir"
+    - "$workspace"
+    
+  standard_backend: &standard_backend
+    backend: s3
+    backend_config:
+      bucket: terraform-state
+      region: us-east-1
+
+dirs:
+  - path: terraform/networking
+    <<: *standard_backend
+    tags:
+      - *base_tags
+      - networking
+      
+  - path: terraform/compute
+    <<: *standard_backend
+    tags:
+      - *base_tags
+      - compute
+```
+
+## Advanced Usage
+
+### Merging Anchors
+
+You can merge multiple anchors using the `<<:` merge operator:
+
+```yaml
+definitions:
+  base_config: &base_config
+    version: 1.5.0
+    
+  aws_config: &aws_config
+    environment:
+      AWS_REGION: us-east-1
+      
+  extended_config: &extended_config
+    <<: *base_config
+    <<: *aws_config
+    environment:
+      CUSTOM_VAR: value
+
+workflows:
+  - name: default
+    engine: *extended_config
+```
+
+### Anchor Scoping
+
+Anchors defined in `definitions` are available throughout the entire configuration file:
+
+```yaml
+definitions:
+  my_anchor: &my_anchor
+    key: value
+
+# Can be used anywhere in the config
+dirs:
+  - path: terraform
+    custom: *my_anchor
+
+workflows:
+  - name: default
+    custom: *my_anchor
+```
+
+## Best Practices
+
+1. **Use descriptive anchor names** that clearly indicate their purpose
+2. **Group related anchors** together in the definitions section
+3. **Document complex anchors** with comments explaining their use
+4. **Keep anchors focused** on a single responsibility
+5. **Test anchor references** to ensure they resolve correctly
+
+## Limitations
+
+- Anchors must be defined before they are referenced
+- YAML anchors are resolved at parse time, not runtime
+- Cannot use environment variables or dynamic values in anchor definitions
+- Circular references are not supported
