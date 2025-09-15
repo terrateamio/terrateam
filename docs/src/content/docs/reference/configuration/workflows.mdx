@@ -151,7 +151,8 @@ Gates are supported on the following step types:
 
 | Key | Type | Description |
 |-----|------|-------------|
-| token | String | **Required**. A unique identifier for this gate request |
+| token | String | A unique identifier for this gate request |
+| name | String | A name to give to the gate |
 | all_of | List | List of users/teams that must all approve the gate |
 | any_of | List | List of users/teams where any one can approve the gate |
 | any_of_count | Integer | Number of approvals required from the `any_of` list (default: 1) |

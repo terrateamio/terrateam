@@ -69,6 +69,7 @@ type t = {
   db : string;
   db_connect_timeout : float;
   db_host : string;
+  db_idle_tx_timeout : string;
   db_max_pool_size : int;
   db_password : (string[@opaque]);
   db_user : string;
@@ -174,12 +175,18 @@ let load_gitlab () =
 
 let create () =
   let open CCResult.Infix in
+  (* This is required for Terrateam UI to work correctly so we simply check if
+     it is set to we can error to the user if it is not, we do not use it in the
+     actual server. *)
+  env_str "TERRAT_UI_BASE"
+  >>= fun _ ->
   of_opt
     (`Key_error "TERRAT_PORT")
     (CCInt.of_string (CCOption.get_or ~default:"8080" (Sys.getenv_opt "TERRAT_PORT")))
   >>= fun port ->
   env_str "DB_HOST"
   >>= fun db_host ->
+  let db_idle_tx_timeout = CCOption.get_or ~default:"180s" (Sys.getenv_opt "DB_IDLE_TX_TIMEOUT") in
   env_str "DB_USER"
   >>= fun db_user ->
   env_str "DB_PASS"
@@ -235,6 +242,7 @@ let create () =
       db;
       db_connect_timeout;
       db_host;
+      db_idle_tx_timeout;
       db_max_pool_size;
       db_password;
       db_user;
@@ -255,6 +263,7 @@ let api_base t = t.api_base
 let db t = t.db
 let db_connect_timeout t = t.db_connect_timeout
 let db_host t = t.db_host
+let db_idle_tx_timeout t = t.db_idle_tx_timeout
 let db_max_pool_size t = t.db_max_pool_size
 let db_password t = t.db_password
 let db_user t = t.db_user

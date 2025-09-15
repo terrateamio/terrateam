@@ -80,7 +80,7 @@ type delete_comment_err = Githubc2_abb.call_err [@@deriving show]
 
 type minimize_comment_err =
   [ Githubc2_abb.call_err
-  | `Not_found of Githubc2_components.Basic_error.t
+  | `Not_found
   ]
 [@@deriving show]
 
@@ -246,6 +246,12 @@ val load_workflow :
   repo:string ->
   Githubc2_abb.t ->
   (int option, [> get_installation_access_token_err ]) result Abb.Future.t
+
+val list_workflows :
+  owner:string ->
+  repo:string ->
+  Githubc2_abb.t ->
+  ((int * string * string) list, [> get_installation_access_token_err ]) result Abb.Future.t
 
 val publish_comment :
   owner:string ->

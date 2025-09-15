@@ -53,7 +53,8 @@ module Workflow_step : sig
       any_of : string list option; [@default None]
       all_of : string list option; [@default None]
       any_of_count : int option; [@default None]
-      token : string;
+      token : string option; [@default None]
+      name : string option; [@default None]
     }
     [@@deriving make, show, yojson, eq]
   end
@@ -186,6 +187,35 @@ module Workflow_step : sig
     }
     [@@deriving make, show, yojson, eq]
   end
+
+  module Opa : sig
+    module Fail_on : sig
+      type t =
+        | Defined
+        | Undefined
+      [@@deriving show, yojson, eq]
+    end
+
+    type t = {
+      env : string String_map.t option;
+      extra_args : string list; [@default []]
+      fail_on : Fail_on.t; [@default Fail_on.Undefined]
+      gate : Gate.t option; [@default None]
+      ignore_errors : bool; [@default false]
+      run_on : Run_on.t; [@default Run_on.Success]
+      visible_on : Visible_on.t; [@default Visible_on.Failure]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  module Gates : sig
+    type t = {
+      env : string String_map.t option;
+      cmd : Cmd.t;
+      run_on : Run_on.t; [@default Run_on.Success]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
 end
 
 module Access_control : sig
@@ -245,7 +275,7 @@ module Apply_requirements : sig
       all_of : Access_control.Match_list.t; [@default []]
       any_of : Access_control.Match_list.t; [@default []]
       any_of_count : int; [@default 1]
-      enabled : bool; [@default true]
+      enabled : bool; [@default false]
       require_completed_reviews : bool; [@default false]
     }
     [@@deriving make, show, yojson, eq]
@@ -514,6 +544,7 @@ module Hooks : sig
       | Env of Workflow_step.Env.t
       | Oidc of Workflow_step.Oidc.t
       | Run of Workflow_step.Run.t
+      | Gates of Workflow_step.Gates.t
     [@@deriving show, yojson, eq]
   end
 
@@ -580,23 +611,35 @@ module Notifications : sig
 end
 
 module Stacks : sig
-  module On_change : sig
-    type t = { can_apply_after : string list [@default []] } [@@deriving make, show, yojson, eq]
+  module Rules : sig
+    type t = {
+      apply_after : string list; [@default []]
+      auto_apply : bool option; [@default None]
+      modified_by : string list; [@default []]
+      plan_after : string list; [@default []]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  module Type_ : sig
+    type t =
+      | Nested of string list
+      | Stack of Tag_query.t
+    [@@deriving show, yojson, eq]
   end
 
   module Stack : sig
     type t = {
-      tag_query : Tag_query.t;
-      on_change : On_change.t; [@default On_change.make ()]
+      type_ : Type_.t;
+      rules : Rules.t; [@default Rules.make ()]
       variables : string String_map.t; [@default String_map.empty]
     }
     [@@deriving make, show, yojson, eq]
   end
 
   type t = {
-    allow_workspace_in_multiple_stacks : bool; [@default false]
     names : Stack.t String_map.t;
-        [@default String_map.singleton "default" (Stack.make ~tag_query:Tag_query.any ())]
+        [@default String_map.singleton "default" (Stack.make ~type_:(Type_.Stack Tag_query.any) ())]
   }
   [@@deriving make, show, yojson, eq]
 end
@@ -669,6 +712,8 @@ module Workflows : sig
         | Oidc of Workflow_step.Oidc.t
         | Checkov of Workflow_step.Checkov.t
         | Conftest of Workflow_step.Conftest.t
+        | Opa of Workflow_step.Opa.t
+        | Gates of Workflow_step.Gates.t
       [@@deriving show, yojson, eq]
     end
 

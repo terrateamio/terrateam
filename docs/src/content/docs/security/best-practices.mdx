@@ -91,7 +91,10 @@ When designing your Terrateam workflows, consider the following security best pr
          - type: drift_create_issue
    drift:
      enabled: true
-     schedule: daily
+     schedules:
+       default:
+         tag_query: ''
+         schedule: daily
    ```
    This configuration enables drift detection and sets it to run on a daily schedule, automatically creating a GitHub issue to notify you of any detected drift.
 

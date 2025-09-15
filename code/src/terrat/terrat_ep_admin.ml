@@ -54,25 +54,32 @@ module Drift = struct
         unlocked;
       }
 
-    let get admin_token config storage ctx =
-      Brtl_permissions.with_permissions [ admin_token_permission ] ctx admin_token (fun () ->
-          let open Abb.Future.Infix_monad in
-          Pgsql_pool.with_conn storage ~f:(fun db ->
-              Pgsql_io.Prepared_stmt.fetch db (Sql.select_admin_drift_list ()) ~f:make_drift)
-          >>= function
-          | Ok results ->
-              let response = Terrat_api_admin.Drifts.Responses.OK.{ results } in
-              let body =
-                response |> Terrat_api_admin.Drifts.Responses.OK.to_yojson |> Yojson.Safe.to_string
-              in
-              Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK body) ctx)
-          | Error (#Pgsql_io.err as err) ->
-              Logs.err (fun m ->
-                  m "ADMIN : %s : DRIFTS : %a" (Brtl_ctx.token ctx) Pgsql_io.pp_err err);
-              Abb.Future.return
-                (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-          | Error _ ->
-              Abb.Future.return
-                (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
+    let get admin_token config storage =
+      Brtl_ep.run_json ~f:(fun ctx ->
+          Brtl_permissions.with_permissions [ admin_token_permission ] ctx admin_token (fun () ->
+              let open Abb.Future.Infix_monad in
+              Pgsql_pool.with_conn storage ~f:(fun db ->
+                  Pgsql_io.Prepared_stmt.fetch db (Sql.select_admin_drift_list ()) ~f:make_drift)
+              >>= function
+              | Ok results ->
+                  let response = Terrat_api_admin.Drifts.Responses.OK.{ results } in
+                  let body =
+                    response
+                    |> Terrat_api_admin.Drifts.Responses.OK.to_yojson
+                    |> Yojson.Safe.to_string
+                  in
+                  Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK body) ctx)
+              | Error (#Pgsql_io.err as err) ->
+                  Logs.err (fun m ->
+                      m "ADMIN : %s : DRIFTS : %a" (Brtl_ctx.token ctx) Pgsql_io.pp_err err);
+                  Abb.Future.return
+                    (Brtl_ctx.set_response
+                       (Brtl_rspnc.create ~status:`Internal_server_error "")
+                       ctx)
+              | Error _ ->
+                  Abb.Future.return
+                    (Brtl_ctx.set_response
+                       (Brtl_rspnc.create ~status:`Internal_server_error "")
+                       ctx)))
   end
 end

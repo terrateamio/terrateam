@@ -72,7 +72,7 @@ left join latest_drift_manifests as ldm
     on ldm.repository = ds.repository
 left join drift_schedule_windows as dsw
     on (dsw.repository, dsw.name) = (ds.repository, ds.name)
-where (ldm.state is null or ldm.state <> 'running')
+where (ldm.state is null or ldm.state not in ('queued', 'running'))
       and ((ldm.repository is null
             or ds.schedule < (current_timestamp - ldm.created_at)
             or ldm.created_at < ds.updated_at)

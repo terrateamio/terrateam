@@ -43,7 +43,10 @@ module Server = struct
     num_conns : int;
     conns : Conn.t list;
     waiting : (Pgsql_io.t, unit) result Abb.Future.Promise.t Queue.t;
+    on_connect : Pgsql_io.t -> unit Abb.Future.t;
   }
+
+  let ping_timeout = Duration.to_f (Duration.of_sec 5)
 
   let rec conn_timeout_check' timeout w =
     let open Abb.Future.Infix_monad in
@@ -64,11 +67,13 @@ module Server = struct
 
   let verify_conn Conn.{ conn; _ } =
     let open Abb.Future.Infix_monad in
-    Pgsql_io.ping conn
+    (* Don't let a ping eat up the whole pool indefinitely, timeout so we can at
+       least make progress, even if it's slow.  *)
+    Abbs_future_combinators.timeout ~timeout:(Abb.Sys.sleep ping_timeout) (Pgsql_io.ping conn)
     >>= function
-    | true ->
+    | `Ok true ->
         Abb.Sys.monotonic () >>= fun last_used -> Abb.Future.return (Some Conn.{ conn; last_used })
-    | false -> Pgsql_io.destroy conn >>= fun () -> Abb.Future.return None
+    | `Ok false | `Timeout -> Pgsql_io.destroy conn >>= fun () -> Abb.Future.return None
 
   let verify_conns t =
     Abbs_future_combinators.List.fold_left
@@ -130,6 +135,8 @@ module Server = struct
                  t.database)
             >>= function
             | `Ok (Ok conn) ->
+                t.on_connect conn
+                >>= fun () ->
                 Abb.Future.Promise.set p (Ok conn)
                 >>= fun () -> loop { t with num_conns = t.num_conns + 1 } w r
             | `Ok (Error (#Pgsql_io.create_err as err)) ->
@@ -155,6 +162,11 @@ module Server = struct
         | Some p -> handle_msg t w r (`Ok (Msg.Get p))
         | None -> loop t w r)
     | `Ok Msg.Conn_timeout_check ->
+        (* Every now and then, run through all hte connections and see the last
+           time they were used and if it's over a certain amount of time then
+           clean them out.  This way if we have an intense period where we
+           needed lots of connections, we give those resources back to the DB
+           over time. *)
         let conn_timeout_check = Duration.to_f t.conn_timeout_check in
         Logs.debug (fun m ->
             m
@@ -195,11 +207,13 @@ let create
     ?tls_config
     ?passwd
     ?port
+    ?on_connect
     ~connect_timeout
     ~host
     ~user
     ~max_conns
     database =
+  let on_connect = CCOption.get_or ~default:(fun _ -> Abbs_future_combinators.unit) on_connect in
   let t =
     Server.
       {
@@ -217,6 +231,7 @@ let create
         num_conns = 0;
         conns = [];
         waiting = Queue.create ();
+        on_connect;
       }
   in
   Abbs_service_local.create (Server.run t)

@@ -619,7 +619,8 @@ module Db = struct
       Pgsql_io.Typed_sql.(
         sql
         /^ read "insert_gate.sql"
-        /% Var.text "token"
+        /% Var.(option (text "name"))
+        /% Var.(option (text "token"))
         /% Var.json "gate"
         /% Var.bigint "repository"
         /% Var.bigint "pull_number"
@@ -642,7 +643,8 @@ module Db = struct
           Pgsql_io.Prepared_stmt.fetch
             db
             Sql.select_work_manifest_dirspaceflows
-            ~f:(fun dir idx workspace -> { Dsf.dirspace = { Ds.dir; workspace }; workflow = idx })
+            ~f:(fun dir idx workspace ->
+              { Dsf.dirspace = { Ds.dir; workspace }; workflow = idx; variables = None })
             work_manifest_id)
       >>= fun changes ->
       Metrics.Psql_query_time.time
@@ -1038,7 +1040,7 @@ module Db = struct
             let pull_number = CCInt64.of_int @@ Terrat_pull_request.id pr in
             let sha = Api.Ref.to_string @@ Terrat_pull_request.branch_ref pr in
             Abbs_future_combinators.List_result.iter
-              ~f:(fun { G.all_of; any_of; any_of_count; dir; workspace; token } ->
+              ~f:(fun { G.all_of; any_of; any_of_count; dir; workspace; token; name } ->
                 Abb.Future.return
                 @@ CCResult.map_l Terrat_gate.Match.make
                 @@ CCOption.get_or ~default:[] all_of
@@ -1057,6 +1059,7 @@ module Db = struct
                 Pgsql_io.Prepared_stmt.execute
                   db
                   Sql.insert_gate
+                  name
                   token
                   (Yojson.Safe.to_string @@ Terrat_gate.to_yojson gate)
                   repo
@@ -3267,26 +3270,68 @@ module Comment = struct
           "CONFLICTING_WORK_MANIFESTS"
           Tmpl.conflicting_work_manifests
           kv
-    | Msg.Depends_on_cycle cycle ->
+    | Msg.Synthesize_config_err (`Depends_on_cycle_err cycle) ->
         let kv =
-          Snabela.Kv.(
-            Map.of_list
-              [
-                ( "cycle",
-                  list
-                    (CCList.map
-                       (fun { Terrat_dirspace.dir; workspace } ->
-                         Map.of_list [ ("dir", string dir); ("workspace", string workspace) ])
-                       cycle) );
-              ])
+          `Assoc
+            [
+              ( "cycle",
+                `List
+                  (CCList.map
+                     (fun { Terrat_dirspace.dir; workspace } ->
+                       `Assoc [ ("dir", `String dir); ("workspace", `String workspace) ])
+                     cycle) );
+            ]
         in
-        Gcm_api.apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "DEPENDS_ON_CYCLE"
-          Tmpl.depends_on_cycle
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish_jinja
+             ~request_id
+             client
+             pull_request
+             "DEPENDS_ON_CYCLE"
+             Tmpl.synthesize_config_err_cycle
+             kv
+    | Msg.Synthesize_config_err
+        (`Workspace_in_multiple_stacks_err { Terrat_dirspace.dir; workspace }) ->
+        let kv = `Assoc [ ("dir", `String dir); ("workspace", `String workspace) ] in
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish_jinja
+             ~request_id
+             client
+             pull_request
+             "WORKSPACE_IN_MULTIPLE_STACKS"
+             Tmpl.synthesize_config_err_workspace_in_multiple_stacks
+             kv
+    | Msg.Synthesize_config_err
+        (`Workspace_matches_no_stacks_err { Terrat_dirspace.dir; workspace }) ->
+        let kv = `Assoc [ ("dir", `String dir); ("workspace", `String workspace) ] in
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish_jinja
+             ~request_id
+             client
+             pull_request
+             "WORKSPACE_MATCHES_NO_STACKS"
+             Tmpl.synthesize_config_err_workspace_matches_no_stacks
+             kv
+    | Msg.Synthesize_config_err (`Stack_not_found_err stack) ->
+        let kv = `Assoc [ ("stack", `String stack) ] in
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish_jinja
+             ~request_id
+             client
+             pull_request
+             "STACK_NOT_FOUND"
+             Tmpl.synthesize_config_err_stack_not_found
+             kv
+    | Msg.Str_template_err (`Missing_var_err name) ->
+        let kv = `Assoc [ ("var_name", `String name) ] in
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish_jinja
+             ~request_id
+             client
+             pull_request
+             "STR_TEMPLATE"
+             Tmpl.str_template_err_missing_var
+             kv
     | Msg.Dest_branch_no_match pull_request ->
         let kv =
           Snabela.Kv.(
@@ -3360,49 +3405,53 @@ module Comment = struct
     | Msg.Gate_check_failure denied ->
         let module G = Terrat_vcs_provider2.Gate_eval in
         let kv =
-          Snabela.Kv.(
-            Map.of_list
-              [
-                ( "denied",
-                  list
-                  @@ CCList.map (fun { G.dirspace; token; result } ->
-                         let { Terrat_gate.all_of; any_of; any_of_count } = result in
-                         let { Terrat_dirspace.dir; workspace } =
-                           CCOption.get_or
-                             ~default:{ Terrat_dirspace.dir = ""; workspace = "" }
-                             dirspace
-                         in
-                         Map.of_list
-                           [
-                             ("token", string token);
-                             ("dir", string dir);
-                             ("workspace", string workspace);
-                             ( "all_of",
-                               list
-                               @@ CCList.map
-                                    (fun q ->
-                                      Map.of_list [ ("q", string @@ Terrat_gate.Match.to_string q) ])
-                                    all_of );
-                             ( "any_of",
-                               list
-                               @@ CCList.map
-                                    (fun q ->
-                                      Map.of_list [ ("q", string @@ Terrat_gate.Match.to_string q) ])
-                                    (if any_of_count = 0 then [] else any_of) );
-                             ("any_of_count", int any_of_count);
-                           ])
+          `Assoc
+            [
+              ( "denied",
+                `List
+                  (CCList.map (fun { G.dirspace; token; name; result } ->
+                       let { Terrat_gate.all_of; any_of; any_of_count } = result in
+                       let { Terrat_dirspace.dir; workspace } =
+                         CCOption.get_or
+                           ~default:{ Terrat_dirspace.dir = ""; workspace = "" }
+                           dirspace
+                       in
+                       `Assoc
+                         [
+                           ( "token",
+                             CCOption.map_or ~default:`Null (fun token -> `String token) token );
+                           ("name", CCOption.map_or ~default:`Null (fun name -> `String name) name);
+                           ("dir", `String dir);
+                           ("workspace", `String workspace);
+                           ( "all_of",
+                             `List
+                               (CCList.map
+                                  (fun q -> `String (Terrat_gate.Match.to_string q))
+                                  all_of) );
+                           ( "any_of",
+                             `List
+                               (CCList.map
+                                  (fun q -> `String (Terrat_gate.Match.to_string q))
+                                  (if any_of_count = 0 then [] else any_of)) );
+                           ("any_of_count", `Int any_of_count);
+                         ])
                   @@ CCList.sort
-                       (fun { G.token = t1; _ } { G.token = t2; _ } -> CCString.compare t1 t2)
-                       denied );
-              ])
+                       (fun { G.token = t1; name = n1; _ } { G.token = t2; name = n2; _ } ->
+                         let module Cmp = struct
+                           type t = string option * string option [@@deriving ord]
+                         end in
+                         Cmp.compare (t1, n1) (t2, n2))
+                       denied) );
+            ]
         in
-        Gcm_api.apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "GATE_CHECK_FAILURE"
-          Tmpl.gate_check_failure
-          kv
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish_jinja
+             ~request_id
+             client
+             pull_request
+             "GATE_CHECK_FAILURE"
+             Tmpl.gate_check_failure
+             kv
     | Msg.Help ->
         let kv = Snabela.Kv.(Map.of_list []) in
         Gcm_api.apply_template_and_publish

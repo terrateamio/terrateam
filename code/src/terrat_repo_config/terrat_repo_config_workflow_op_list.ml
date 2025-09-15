@@ -5,11 +5,13 @@ module Items = struct
     | Workflow_op_checkov of Terrat_repo_config_workflow_op_checkov.t
     | Workflow_op_conftest of Terrat_repo_config_workflow_op_conftest.t
     | Workflow_op_apply of Terrat_repo_config_workflow_op_apply.t
+    | Workflow_op_opa of Terrat_repo_config_workflow_op_opa.t
     | Hook_op_run of Terrat_repo_config_hook_op_run.t
     | Hook_op_slack of Terrat_repo_config_hook_op_slack.t
     | Hook_op_env_exec of Terrat_repo_config_hook_op_env_exec.t
     | Hook_op_env_source of Terrat_repo_config_hook_op_env_source.t
     | Hook_op_oidc of Terrat_repo_config_hook_op_oidc.t
+    | Hook_op_gates of Terrat_repo_config_hook_op_gates.t
   [@@deriving show, eq]
 
   let of_yojson =
@@ -28,6 +30,8 @@ module Items = struct
              (Terrat_repo_config_workflow_op_conftest.of_yojson v));
          (fun v ->
            map (fun v -> Workflow_op_apply v) (Terrat_repo_config_workflow_op_apply.of_yojson v));
+         (fun v ->
+           map (fun v -> Workflow_op_opa v) (Terrat_repo_config_workflow_op_opa.of_yojson v));
          (fun v -> map (fun v -> Hook_op_run v) (Terrat_repo_config_hook_op_run.of_yojson v));
          (fun v -> map (fun v -> Hook_op_slack v) (Terrat_repo_config_hook_op_slack.of_yojson v));
          (fun v ->
@@ -35,6 +39,7 @@ module Items = struct
          (fun v ->
            map (fun v -> Hook_op_env_source v) (Terrat_repo_config_hook_op_env_source.of_yojson v));
          (fun v -> map (fun v -> Hook_op_oidc v) (Terrat_repo_config_hook_op_oidc.of_yojson v));
+         (fun v -> map (fun v -> Hook_op_gates v) (Terrat_repo_config_hook_op_gates.of_yojson v));
        ])
 
   let to_yojson = function
@@ -43,11 +48,13 @@ module Items = struct
     | Workflow_op_checkov v -> Terrat_repo_config_workflow_op_checkov.to_yojson v
     | Workflow_op_conftest v -> Terrat_repo_config_workflow_op_conftest.to_yojson v
     | Workflow_op_apply v -> Terrat_repo_config_workflow_op_apply.to_yojson v
+    | Workflow_op_opa v -> Terrat_repo_config_workflow_op_opa.to_yojson v
     | Hook_op_run v -> Terrat_repo_config_hook_op_run.to_yojson v
     | Hook_op_slack v -> Terrat_repo_config_hook_op_slack.to_yojson v
     | Hook_op_env_exec v -> Terrat_repo_config_hook_op_env_exec.to_yojson v
     | Hook_op_env_source v -> Terrat_repo_config_hook_op_env_source.to_yojson v
     | Hook_op_oidc v -> Terrat_repo_config_hook_op_oidc.to_yojson v
+    | Hook_op_gates v -> Terrat_repo_config_hook_op_gates.to_yojson v
 end
 
 type t = Items.t list [@@deriving yojson { strict = false; meta = true }, show, eq]

@@ -62,6 +62,9 @@
           "dir": {
             "type": "string"
           },
+          "name": {
+            "type": "string"
+          },
           "token": {
             "type": "string"
           },
@@ -69,9 +72,6 @@
             "type": "string"
           }
         },
-        "required": [
-          "token"
-        ],
         "type": "object"
       },
       "github-user": {
@@ -212,6 +212,9 @@
           "account_status": {
             "type": "string"
           },
+          "created_at": {
+            "type": "string"
+          },
           "id": {
             "type": "string"
           },
@@ -227,6 +230,7 @@
         },
         "required": [
           "account_status",
+          "created_at",
           "id",
           "name",
           "tier"
@@ -1043,6 +1047,15 @@
             "description": "Starts at 0, relative dependency order to perform operation on dir.",
             "type": "integer"
           },
+          "stack_name": {
+            "type": "string"
+          },
+          "variables": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
           "workflow": {
             "type": "integer"
           },
@@ -1052,8 +1065,9 @@
         },
         "required": [
           "path",
-          "workspace",
-          "rank"
+          "rank",
+          "stack_name",
+          "workspace"
         ],
         "type": "object"
       },

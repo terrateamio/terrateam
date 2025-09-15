@@ -58,7 +58,16 @@ module Tmpl = struct
   let missing_plans = read "missing_plans.tmpl"
   let dirspaces_owned_by_other_pull_requests = read "dirspaces_owned_by_other_pull_requests.tmpl"
   let conflicting_work_manifests = read "conflicting_work_manifests.tmpl"
-  let depends_on_cycle = read "depends_on_cycle.tmpl"
+  let synthesize_config_err_cycle = jinja "synthesize_config_err_cycle.tmpl"
+
+  let synthesize_config_err_workspace_in_multiple_stacks =
+    jinja "synthesize_config_err_workspace_in_multiple_stacks.tmpl"
+
+  let synthesize_config_err_workspace_matches_no_stacks =
+    jinja "synthesize_config_err_workspace_matches_no_stacks.tmpl"
+
+  let synthesize_config_err_stack_not_found = jinja "synthesize_config_err_stack_not_found.tmpl"
+  let str_template_err_missing_var = jinja "str_template_err_missing_var.tmpl"
   let maybe_stale_work_manifests = read "maybe_stale_work_manifests.tmpl"
   let repo_config_parse_failure = read "repo_config_parse_failure.tmpl"
   let repo_config_schema_err = read "repo_config_schema_err.tmpl"
@@ -173,8 +182,8 @@ module Tmpl = struct
 
   let plan_complete = read "plan_complete.tmpl"
   let apply_complete = read "apply_complete.tmpl"
-  let plan_complete2 = read "plan_complete2.tmpl"
-  let apply_complete2 = read "apply_complete2.tmpl"
+  let plan_complete2 = jinja "plan_complete2.tmpl"
+  let apply_complete2 = jinja "apply_complete2.tmpl"
   let automerge_failure = read "automerge_error.tmpl"
   let premium_feature_err_access_control = read "premium_feature_err_access_control.tmpl"
 
@@ -187,7 +196,7 @@ module Tmpl = struct
     read "premium_feature_err_require_completed_reviews.tmpl"
 
   let repo_config_merge_err = read "repo_config_merge_err.tmpl"
-  let gate_check_failure = read "gate_check_failure.tmpl"
+  let gate_check_failure = jinja "gate_check_failure.tmpl"
   let tier_check = read "tier_check.tmpl"
   let build_tree_failure = read "build_tree_failure.tmpl"
   let notification_policy_tag_query_err = jinja "notification_policy_tag_query_err.tmpl"

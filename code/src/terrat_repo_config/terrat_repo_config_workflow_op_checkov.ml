@@ -19,17 +19,6 @@ module Type = struct
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
-module Visible_on = struct
-  let t_of_yojson = function
-    | `String "always" -> Ok "always"
-    | `String "failure" -> Ok "failure"
-    | `String "success" -> Ok "success"
-    | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-  type t = (string[@of_yojson t_of_yojson])
-  [@@deriving yojson { strict = false; meta = true }, show, eq]
-end
-
 type t = {
   env : Env.t option; [@default None]
   extra_args : Extra_args.t option; [@default None]
@@ -37,6 +26,6 @@ type t = {
   ignore_errors : bool; [@default false]
   run_on : Terrat_repo_config_run_on.t option; [@default None]
   type_ : Type.t; [@key "type"]
-  visible_on : Visible_on.t option; [@default None]
+  visible_on : Terrat_repo_config_visible_on.t option; [@default None]
 }
 [@@deriving yojson { strict = true; meta = true }, make, show, eq]

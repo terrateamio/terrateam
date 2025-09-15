@@ -123,7 +123,7 @@ type delete_comment_err = Githubc2_abb.call_err [@@deriving show]
 
 type minimize_comment_err =
   [ Githubc2_abb.call_err
-  | `Not_found of Githubc2_components.Basic_error.t
+  | `Not_found
   ]
 [@@deriving show]
 
@@ -360,8 +360,8 @@ let get_installation_repos client =
           Abb.Future.return (Error err))
     Githubc2_apps.List_repos_accessible_to_installation.(make Parameters.(make ()))
 
-let load_workflow' ~owner ~repo client =
-  Prmths.Counter.inc_one (Metrics.fn_call_total "load_workflow");
+let list_workflows ~owner ~repo client =
+  Prmths.Counter.inc_one (Metrics.fn_call_total "list_workflow");
   let open Abbs_future_combinators.Infix_result_monad in
   Githubc2_abb.fold
     client
@@ -381,24 +381,27 @@ let load_workflow' ~owner ~repo client =
               workflows
           in
           Abb.Future.return (Ok (workflows @ acc)))
-    Githubc2_actions.List_repo_workflows.(make (Parameters.make ~owner ~repo ()))
-  >>= fun workflows ->
-  match
-    CCList.filter
-      (fun (_, name, path) ->
-        CCString.equal name terrateam_workflow_name || CCString.equal path terrateam_workflow_path)
-      workflows
-  with
-  | res :: _ -> Abb.Future.return (Ok (Some res))
-  | [] -> Abb.Future.return (Ok None)
+    Githubc2_actions.List_repo_workflows.(make (Parameters.make ~per_page:100 ~owner ~repo ()))
 
 let find_workflow_file ~owner ~repo client =
   Abbs_future_combinators.retry
     ~f:(fun () ->
       let open Abbs_future_combinators.Infix_result_monad in
-      load_workflow' ~owner ~repo client
-      >>= fun res -> Abb.Future.return (Ok (CCOption.map (fun (_, _, path) -> path) res)))
-    ~while_:(Abbs_future_combinators.finite_tries 3 CCResult.is_error)
+      list_workflows ~owner ~repo client
+      >>= fun workflows ->
+      match
+        CCList.filter
+          (fun (_, name, path) ->
+            CCString.equal name terrateam_workflow_name
+            || CCString.equal path terrateam_workflow_path)
+          workflows
+      with
+      | (_, _, path) :: _ -> Abb.Future.return (Ok (Some path))
+      | [] -> Abb.Future.return (Ok None))
+    ~while_:
+      (Abbs_future_combinators.finite_tries 3 (function
+        | Ok (Some _) -> false
+        | Ok None | Error _ -> true))
     ~betwixt:
       (Abbs_future_combinators.series ~start:1.5 ~step:(( *. ) 1.5) (fun n _ ->
            Prmths.Counter.inc_one Metrics.call_retries_total;
@@ -408,9 +411,21 @@ let load_workflow ~owner ~repo client =
   Abbs_future_combinators.retry
     ~f:(fun () ->
       let open Abbs_future_combinators.Infix_result_monad in
-      load_workflow' ~owner ~repo client
-      >>= fun res -> Abb.Future.return (Ok (CCOption.map (fun (id, _, _) -> id) res)))
-    ~while_:(Abbs_future_combinators.finite_tries 3 CCResult.is_error)
+      list_workflows ~owner ~repo client
+      >>= fun workflows ->
+      match
+        CCList.filter
+          (fun (_, name, path) ->
+            CCString.equal name terrateam_workflow_name
+            || CCString.equal path terrateam_workflow_path)
+          workflows
+      with
+      | (id, _, _) :: _ -> Abb.Future.return (Ok (Some id))
+      | [] -> Abb.Future.return (Ok None))
+    ~while_:
+      (Abbs_future_combinators.finite_tries 3 (function
+        | Ok (Some _) -> false
+        | Ok None | Error _ -> true))
     ~betwixt:
       (Abbs_future_combinators.series ~start:1.5 ~step:(( *. ) 1.5) (fun n _ ->
            Prmths.Counter.inc_one Metrics.call_retries_total;
@@ -455,6 +470,33 @@ let minimize_comment ~owner ~repo ~comment_id client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "minimize_comment");
   let module C = Githubc2_components.Issue_comment in
   let open Abbs_future_combinators.Infix_result_monad in
+  let module Body = struct
+    type t = { query : string } [@@deriving to_yojson]
+  end in
+  let create_minimize_request url node_id =
+    let content =
+      Printf.sprintf
+        {|
+        mutation MinCom {
+            minimizeComment(input: {subjectId: "%s", classifier: OUTDATED}) {
+                clientMutationId,
+                minimizedComment {
+                isMinimized
+                }
+            }
+        }
+      |}
+    in
+    let body = { Body.query = content node_id } in
+    Openapi.Request.make
+      ~body:(Body.to_yojson body)
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:[]
+      ~url
+      ~responses:[ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
+      `Post
+  in
   call
     client
     Githubc2_issues.Get_comment.(
@@ -463,38 +505,20 @@ let minimize_comment ~owner ~repo ~comment_id client =
   match Openapi.Response.value resp with
   | `OK { C.primary = { C.Primary.node_id; _ }; _ } -> (
       let url = "/graphql" in
-      let module Body = struct
-        type t = { query : string } [@@deriving to_yojson]
-      end in
-      let content =
-        Printf.sprintf
-          {|
-            mutation MinCom {
-                minimizeComment(input: {subjectId: "%s", classifier: OUTDATED}) {
-                    clientMutationId,
-                    minimizedComment {
-                    isMinimized
-                    }
-                }
-            }
-        |}
-      in
-      let body = { Body.query = content node_id } in
-      let request =
-        Openapi.Request.make
-          ~body:(Body.to_yojson body)
-          ~headers:[]
-          ~url_params:[]
-          ~query_params:[]
-          ~url
-          ~responses:[ ("200", fun _ -> Ok `OK) ]
-          `Post
-      in
+      let request = create_minimize_request url node_id in
       call client request
       >>= fun resp ->
       match Openapi.Response.value resp with
-      | `OK -> Abb.Future.return (Ok ()))
-  | `Not_found _ as err -> Abb.Future.return (Error err)
+      | `OK -> Abb.Future.return (Ok ())
+      | `Not_found -> (
+          let url = "/api/graphql" in
+          let request = create_minimize_request url node_id in
+          call client request
+          >>= fun resp ->
+          match Openapi.Response.value resp with
+          | `OK -> Abb.Future.return (Ok ())
+          | `Not_found -> Abb.Future.return (Error `Not_found)))
+  | `Not_found _ -> Abb.Future.return (Error `Not_found)
 
 let react_to_comment ?(content = "rocket") ~owner ~repo ~comment_id client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "react_to_comment");
@@ -665,7 +689,7 @@ module Commit_status = struct
         Githubc2_abb.collect_all
           client
           Githubc2_repos.List_commit_statuses_for_ref.(
-            make Parameters.(make ~owner ~repo ~ref_:sha ())))
+            make Parameters.(make ~per_page:100 ~owner ~repo ~ref_:sha ())))
       ~while_:(Abbs_future_combinators.finite_tries 3 CCResult.is_error)
       ~betwixt:
         (Abbs_future_combinators.series ~start:1.5 ~step:(( *. ) 1.5) (fun n _ ->
@@ -682,7 +706,9 @@ module Status_check = struct
   let list ~owner ~repo ~ref_ client =
     Prmths.Counter.inc_one (Metrics.fn_call_total "status_check_list");
     let open Abb.Future.Infix_monad in
-    call client Githubc2_checks.List_for_ref.(make Parameters.(make ~owner ~repo ~ref_ ()))
+    call
+      client
+      Githubc2_checks.List_for_ref.(make Parameters.(make ~per_page:100 ~owner ~repo ~ref_ ()))
     >>= function
     | Ok resp ->
         let module OK = Githubc2_checks.List_for_ref.Responses.OK in
@@ -702,7 +728,8 @@ module Pull_request_reviews = struct
     Prmths.Counter.inc_one (Metrics.fn_call_total "pull_request_reviews_list");
     Githubc2_abb.collect_all
       client
-      Githubc2_pulls.List_reviews.(make Parameters.(make ~owner ~repo ~pull_number ()))
+      Githubc2_pulls.List_reviews.(
+        make Parameters.(make ~per_page:100 ~owner ~repo ~pull_number ()))
 end
 
 module Oauth = struct

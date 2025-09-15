@@ -1,6 +1,8 @@
 type synthesize_config_err =
   [ `Depends_on_cycle_err of Terrat_dirspace.t list
   | `Workspace_in_multiple_stacks_err of Terrat_dirspace.t
+  | `Workspace_matches_no_stacks_err of Terrat_dirspace.t
+  | `Stack_not_found_err of string
   ]
 [@@deriving show]
 

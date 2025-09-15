@@ -1,11 +1,13 @@
 module Api = Terrat_vcs_api_gitlab
 module By_scope = Terrat_scope.By_scope
 module Publisher_tools = Terrat_vcs_gitlab_comment_publishers.Publisher_tools
-module Output = Terrat_vcs_gitlab_comment_publishers.Output
 module Scope = Terrat_scope.Scope
 module Tmpl = Terrat_vcs_gitlab_comment_templates.Tmpl
 module Ui = Terrat_vcs_gitlab_comment_ui.Ui
 module Visible_on = Terrat_base_repo_config_v1.Workflow_step.Visible_on
+
+let src = Logs.Src.create "vcs_gitlab_comment"
+module Logs = (val Logs.src_log src : Logs.LOG)
 
 module S = struct
   type t = {
@@ -41,7 +43,7 @@ module S = struct
 
   let create_el t dirspace steps =
     (* TODO: Once proper tables for GitLab exist, replace this function 
-       with a similar implementation that is used in GitHub *)
+       with a similar implementation that is used in GITLAB *)
     let module St = Terrat_vcs_comment.Strategy in
     let compact = false in
     let strategy = St.Append in
@@ -54,7 +56,83 @@ module S = struct
   let minimize_comment t comment_id = raise (Failure "nyi")
 
   let post_comment t els =
-    let open Abbs_future_combinators.Infix_result_monad in
+    let open Abb.Future.Infix_monad in
+    let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
+    (* TODO: Stop using the result, move gates to to t *)
+    let gates = t.result.R2.gates in
+    let by_dirspace = CCList.map (fun el -> (Scope.Dirspace el.dirspace, el.steps)) els in
+    let by_scope = t.hooks @ by_dirspace in
+    let compact = CCList.exists (fun { compact; _ } -> compact) els in
+    let body =
+      Publisher_tools.create_run_output
+        ~view:(if compact then `Compact else `Full)
+        t.request_id
+        t.account_status
+        t.config
+        t.is_layered_run
+        t.remaining_layers
+        by_scope
+        gates
+        t.work_manifest
+    in
+    let content_length = CCString.length body in
+    Logs.info (fun m ->
+        m
+          "%s : RENDERED_LENGTH %i : COMPACTED %b"
+          t.request_id
+          content_length
+          compact);
+    let request_id = t.request_id in
+    Api.comment_on_pull_request ~request_id t.client t.pull_request body
+    >>= function
+    | Ok comment_id -> Abb.Future.return (Ok comment_id)
+    | Error `Error -> (
+        let body =
+          Publisher_tools.create_run_output
+            ~view:`Compact
+            t.request_id
+            t.account_status
+            t.config
+            t.is_layered_run
+            t.remaining_layers
+            by_scope
+            gates
+            t.work_manifest
+        in
+        let content_length = CCString.length body in
+        Logs.info (fun m ->
+            m
+              "%s : RENDERED_LENGTH %i : COMPACTED %b"
+              t.request_id
+              content_length
+              compact);
+        Api.comment_on_pull_request ~request_id t.client t.pull_request body
+        >>= function
+        | Ok comment_id -> Abb.Future.return (Ok comment_id)
+        | Error `Error ->
+            let by_scope = [] in
+            let body =
+              Publisher_tools.create_run_output
+                ~view:`Compact
+                t.request_id
+                t.account_status
+                t.config
+                t.is_layered_run
+                t.remaining_layers
+                by_scope
+                gates
+                t.work_manifest
+            in
+            let content_length = CCString.length body in
+            Logs.info (fun m ->
+                m
+                  "%s : RENDERED_LENGTH %i : COMPACTED %b"
+                  t.request_id
+                  content_length
+                  compact);
+            Api.comment_on_pull_request ~request_id t.client t.pull_request body)
+
+  let rendered_length t els =
     let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
     let gates = t.result.R2.gates in
     let by_dirspace = CCList.map (fun el -> (Scope.Dirspace el.dirspace, el.steps)) els in
@@ -72,30 +150,7 @@ module S = struct
         gates
         t.work_manifest
     in
-    let request_id = t.request_id in
-    let open Abbs_future_combinators.Infix_result_monad in
-    Api.comment_on_pull_request ~request_id t.client t.pull_request body
-    >>= fun comment_id -> Abb.Future.return (Ok comment_id)
-
-  let rendered_length t els =
-    let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
-    let gates = t.result.R2.gates in
-    let by_dirspace = CCList.map (fun el -> (Scope.Dirspace el.dirspace, el.steps)) els in
-    let by_scope = t.hooks @ by_dirspace in
-    let compact = CCList.exists (fun { compact; _ } -> compact) els in
-    let out =
-      Publisher_tools.create_run_output
-        ~view:(if compact then `Compact else `Full)
-        t.request_id
-        t.account_status
-        t.config
-        t.is_layered_run
-        t.remaining_layers
-        by_scope
-        gates
-        t.work_manifest
-    in
-    CCString.length out
+    CCString.length @@ Yojson.Safe.to_string @@ `String body
 
   let dirspace el = el.dirspace
   (* TODO: Remove this once proper GitLab migrations are also merged *)

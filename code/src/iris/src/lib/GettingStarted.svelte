@@ -965,6 +965,7 @@
       const installation: Installation = {
         id: selectedGitLabGroup.id.toString(),
         name: selectedGitLabGroup.name,
+        created_at: new Date().toISOString(),
         account_status: 'active',
         tier: {
           name: 'free',
@@ -1023,6 +1024,7 @@
         id: selectedGitLabDemoGroup.id.toString(),
         name: selectedGitLabDemoGroup.name,
         account_status: 'active',
+        created_at: new Date().toISOString(),
         tier: {
           name: 'free',
           features: {}

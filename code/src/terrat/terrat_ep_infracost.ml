@@ -151,19 +151,20 @@ let post' config storage api_key infracost_uri path ctx =
   | None ->
       Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx)
 
-let post config storage path ctx =
-  let request_id = Brtl_ctx.token ctx in
-  match Terrat_config.infracost config with
-  | Some { Terrat_config.Infracost.endpoint = infracost_uri; api_key } ->
-      Logs.info (fun m -> m "%s : START" request_id);
-      Prmths.Counter.inc_one Metrics.requests_total;
-      Metrics.DefaultHistogram.time Metrics.duration_seconds (fun () ->
-          Prmths.Gauge.track_inprogress Metrics.requests_concurrent (fun () ->
-              Abbs_future_combinators.with_finally
-                (fun () -> post' config storage api_key infracost_uri path ctx)
-                ~finally:(fun () ->
-                  Logs.info (fun m -> m "%s : FINISH" request_id);
-                  Abbs_future_combinators.unit)))
-  | None ->
-      Logs.info (fun m -> m "%s : DISABLED" request_id);
-      Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx)
+let post config storage path =
+  Brtl_ep.run_json ~f:(fun ctx ->
+      let request_id = Brtl_ctx.token ctx in
+      match Terrat_config.infracost config with
+      | Some { Terrat_config.Infracost.endpoint = infracost_uri; api_key } ->
+          Logs.info (fun m -> m "%s : START" request_id);
+          Prmths.Counter.inc_one Metrics.requests_total;
+          Metrics.DefaultHistogram.time Metrics.duration_seconds (fun () ->
+              Prmths.Gauge.track_inprogress Metrics.requests_concurrent (fun () ->
+                  Abbs_future_combinators.with_finally
+                    (fun () -> post' config storage api_key infracost_uri path ctx)
+                    ~finally:(fun () ->
+                      Logs.info (fun m -> m "%s : FINISH" request_id);
+                      Abbs_future_combinators.unit)))
+      | None ->
+          Logs.info (fun m -> m "%s : DISABLED" request_id);
+          Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx))

@@ -997,8 +997,8 @@ module Auth_scram = struct
         let signature_from_client =
           server_signature client_final.server_key client_final.auth_message
         in
-        (* If both match then it's proof that the server has 
-           access to the client's key *)
+        (* If both match then it's proof that the server has access to the
+           client's key *)
         if signature_from_client = signature_from_server then Ok ()
         else Error "Invalid server signature"
     | _, Some error_reason -> Error error_reason
@@ -1228,8 +1228,11 @@ let create
     | Error (`Parse_error _) ) as err -> Abb.Future.return err
 
 let destroy t =
-  t.connected <- false;
-  Abbs_future_combinators.ignore (Abbs_io_buffered.close_writer t.w)
+  (* Destroy is idempotent *)
+  if t.connected then (
+    t.connected <- false;
+    Abbs_future_combinators.ignore (Abbs_io_buffered.close_writer t.w))
+  else Abb.Future.return ()
 
 let connected t = t.connected
 

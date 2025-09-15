@@ -97,35 +97,31 @@ module Make (M : S) = struct
         og_els
         els'
     in
-    (* TODO: Sorting should be done here and not on the `run` function, 
-       make sure to remove it later. *)
-    let sorted = CCList.sort M.compare_el (El_set.to_list union) in
-    M.post_comment t sorted >>= fun new_cid -> M.upsert_comment_id t sorted new_cid
+    let compressed = El_set.map (compact t) union in
+    let sorted = CCList.sort M.compare_el (El_set.to_list compressed) in
+    let split = split_by_size t sorted in
+    Alr.iter
+      ~f:(fun es ->
+        M.post_comment t es >>= fun new_cid -> M.upsert_comment_id t es new_cid)
+      split
 
-  let append t elss =
+  let append t els =
     let open Abbs_future_combinators.Infix_result_monad in
     let module Alr = Abbs_future_combinators.List_result in
     let append_single t els = M.post_comment t els >>= fun cid -> M.upsert_comment_id t els cid in
-    Abbs_future_combinators.List_result.iter ~f:(append_single t) elss
+    let compressed = CCList.map (compact t) els in
+    let sorted = CCList.sort M.compare_el compressed in
+    let split = split_by_size t sorted in
+    Alr.iter ~f:(append_single t) split
 
-  let delete t elss =
-    let open Abbs_future_combinators.Infix_result_monad in
-    let module Alr = Abbs_future_combinators.List_result in
-    Alr.iter ~f:(fetch_and_apply (M.delete_comment t) t) elss
-
-  let minimize t elss =
-    let open Abbs_future_combinators.Infix_result_monad in
-    let module Alr = Abbs_future_combinators.List_result in
-    Alr.iter ~f:(fetch_and_apply (M.minimize_comment t) t) elss
+  let delete t els = fetch_and_apply (M.delete_comment t) t els
+  let minimize t els = fetch_and_apply (M.minimize_comment t) t els
 
   let run t els =
     let open Abbs_future_combinators.Infix_result_monad in
     let module Alr = Abbs_future_combinators.List_result in
-    let compressed = CCList.map (compact t) els in
-    let sorted = CCList.sort M.compare_el compressed in
-    let groups = partition_by_strategy sorted in
-    let split = CCList.map (fun (k, v) -> (k, split_by_size t v)) groups in
-    match split with
+    let groups = partition_by_strategy els in
+    match groups with
     | [] -> M.post_comment t [] >>= fun _ -> Abb.Future.return (Ok ())
     | _ ->
         Abbs_future_combinators.List_result.iter
@@ -133,5 +129,5 @@ module Make (M : S) = struct
             | Strategy.Append, els -> append t els
             | Strategy.Delete, els -> delete t els
             | Strategy.Minimize, els -> minimize t els)
-          split
+          groups
 end

@@ -320,7 +320,8 @@ module Workflow_step = struct
       any_of : string list option; [@default None]
       all_of : string list option; [@default None]
       any_of_count : int option; [@default None]
-      token : string;
+      token : string option; [@default None]
+      name : string option; [@default None]
     }
     [@@deriving make, show, yojson, eq]
   end
@@ -453,6 +454,35 @@ module Workflow_step = struct
       ignore_errors : bool; [@default false]
       run_on : Run_on.t; [@default Run_on.Success]
       visible_on : Visible_on.t; [@default Visible_on.Failure]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  module Opa = struct
+    module Fail_on = struct
+      type t =
+        | Defined
+        | Undefined
+      [@@deriving show, yojson, eq]
+    end
+
+    type t = {
+      env : string String_map.t option;
+      extra_args : string list; [@default []]
+      fail_on : Fail_on.t; [@default Fail_on.Undefined]
+      gate : Gate.t option; [@default None]
+      ignore_errors : bool; [@default false]
+      run_on : Run_on.t; [@default Run_on.Success]
+      visible_on : Visible_on.t; [@default Visible_on.Failure]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  module Gates = struct
+    type t = {
+      env : string String_map.t option;
+      cmd : Cmd.t;
+      run_on : Run_on.t; [@default Run_on.Success]
     }
     [@@deriving make, show, yojson, eq]
   end
@@ -888,6 +918,7 @@ module Hooks = struct
       | Env of Workflow_step.Env.t
       | Oidc of Workflow_step.Oidc.t
       | Run of Workflow_step.Run.t
+      | Gates of Workflow_step.Gates.t
     [@@deriving show, yojson, eq]
   end
 
@@ -954,23 +985,35 @@ module Notifications = struct
 end
 
 module Stacks = struct
-  module On_change = struct
-    type t = { can_apply_after : string list [@default []] } [@@deriving make, show, yojson, eq]
+  module Rules = struct
+    type t = {
+      apply_after : string list; [@default []]
+      auto_apply : bool option; [@default None]
+      modified_by : string list; [@default []]
+      plan_after : string list; [@default []]
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
+  module Type_ = struct
+    type t =
+      | Nested of string list
+      | Stack of Tag_query.t
+    [@@deriving show, yojson, eq]
   end
 
   module Stack = struct
     type t = {
-      tag_query : Tag_query.t;
-      on_change : On_change.t; [@default On_change.make ()]
+      type_ : Type_.t;
+      rules : Rules.t; [@default Rules.make ()]
       variables : string String_map.t; [@default String_map.empty]
     }
     [@@deriving make, show, yojson, eq]
   end
 
   type t = {
-    allow_workspace_in_multiple_stacks : bool; [@default false]
     names : Stack.t String_map.t;
-        [@default String_map.singleton "default" (Stack.make ~tag_query:Tag_query.any ())]
+        [@default String_map.singleton "default" (Stack.make ~type_:(Type_.Stack Tag_query.any) ())]
   }
   [@@deriving make, show, yojson, eq]
 end
@@ -1043,6 +1086,8 @@ module Workflows = struct
         | Oidc of Workflow_step.Oidc.t
         | Checkov of Workflow_step.Checkov.t
         | Conftest of Workflow_step.Conftest.t
+        | Opa of Workflow_step.Opa.t
+        | Gates of Workflow_step.Gates.t
       [@@deriving show, yojson, eq]
     end
 
@@ -1519,6 +1564,17 @@ let of_version_1_hook_op =
               ?run_on
               ?on_error
               ()))
+  | Op.Hook_op_gates op ->
+      let open CCResult.Infix in
+      let module Op = Terrat_repo_config_hook_op_gates in
+      let { Op.cmd; env; run_on; type_ = _ } = op in
+      CCResult.map_err
+        (function
+          | `Unknown_run_on err -> `Hooks_unknown_run_on_err err)
+        (map_opt of_version_1_run_on run_on)
+      >>= fun run_on ->
+      map_opt (fun { Op.Env.additional; _ } -> Ok additional) env
+      >>= fun env -> Ok (Hooks.Hook_op.Gates (Workflow_step.Gates.make ~cmd ?env ?run_on ()))
   | Op.Hook_op_slack _ -> assert false
 
 let of_version_1_drift_schedule = function
@@ -1535,8 +1591,8 @@ let of_version_1_workflow_op_plan_mode = function
 
 let of_version_1_gate gate =
   let module G = Terrat_repo_config_gate in
-  let { G.all_of; any_of; any_of_count; token } = gate in
-  Ok { Workflow_step.Gate.all_of; any_of; any_of_count; token }
+  let { G.all_of; any_of; any_of_count; token; name } = gate in
+  Ok { Workflow_step.Gate.all_of; any_of; any_of_count; token; name }
 
 let of_version_1_workflow_op_list ops =
   let open CCResult.Infix in
@@ -1604,6 +1660,16 @@ let of_version_1_workflow_op_list ops =
                   ?visible_on
                   ?on_error
                   ()))
+      | Op.Hook_op_gates op ->
+          let module Op = Terrat_repo_config_hook_op_gates in
+          let { Op.cmd; env; run_on; type_ = _ } = op in
+          map_opt (fun { Op.Env.additional; _ } -> Ok additional) env
+          >>= fun env ->
+          CCResult.map_err
+            (function
+              | `Unknown_run_on err -> `Workflows_unknown_run_on_err err)
+            (map_opt of_version_1_run_on run_on)
+          >>= fun run_on -> Ok (O.Gates (Workflow_step.Gates.make ~cmd ?env ?run_on ()))
       | Op.Hook_op_slack _ -> assert false
       | Op.Hook_op_env_exec op ->
           let module Op = Terrat_repo_config_hook_op_env_exec in
@@ -1719,6 +1785,43 @@ let of_version_1_workflow_op_list ops =
                (Workflow_step.Checkov.make
                   ?env
                   ~extra_args
+                  ~gate
+                  ~ignore_errors
+                  ?run_on
+                  ?visible_on
+                  ()))
+      | Op.Workflow_op_opa op ->
+          let module Op = Terrat_repo_config_workflow_op_opa in
+          let { Op.env; extra_args; fail_on; gate; ignore_errors; run_on; visible_on; type_ = _ } =
+            op
+          in
+          let fail_on =
+            match fail_on with
+            | "defined" -> Workflow_step.Opa.Fail_on.Defined
+            | "undefined" -> Workflow_step.Opa.Fail_on.Undefined
+            | _ -> assert false
+          in
+          map_opt (fun { Op.Env.additional; _ } -> Ok additional) env
+          >>= fun env ->
+          CCResult.map_err
+            (function
+              | `Unknown_run_on err -> `Workflows_unknown_run_on_err err)
+            (map_opt of_version_1_run_on run_on)
+          >>= fun run_on ->
+          CCResult.map_err
+            (function
+              | `Unknown_visible_on err -> `Workflows_unknown_visible_on_err err)
+            (map_opt of_version_1_visible_on visible_on)
+          >>= fun visible_on ->
+          map_opt of_version_1_gate gate
+          >>= fun gate ->
+          let extra_args = CCOption.get_or ~default:[] extra_args in
+          Ok
+            (O.Opa
+               (Workflow_step.Opa.make
+                  ?env
+                  ~extra_args
+                  ~fail_on
                   ~gate
                   ~ignore_errors
                   ?run_on
@@ -2157,30 +2260,45 @@ let of_version_1_stack_config names =
   let module N = Terrat_repo_config_stacks.Names in
   let { N.additional = configs; _ } = names in
   CCResult.map_l (fun (k, v) ->
+      let module S = Terrat_repo_config_stacks.Names.Additional in
       let module Sc = Terrat_repo_config_stack_config in
-      let { Sc.on_change; tag_query; variables } = v in
-      CCResult.map_err
-        (function
-          | `Tag_query_error err -> `Stack_config_tag_query_err err)
-        (Terrat_tag_query.of_string tag_query)
-      >>= fun tag_query ->
-      map_opt
-        (fun { Sc.On_change.can_apply_after } -> Ok (Stacks.On_change.make ?can_apply_after ()))
-        on_change
-      >>= fun on_change ->
-      let variables =
-        CCOption.map (fun { Sc.Variables.additional = variables; _ } -> variables) variables
+      let module Sn = Terrat_repo_config_stack_nested_config in
+      let module V = Terrat_repo_config_stack_variables in
+      (match v with
+      | S.Stack_config { Sc.tag_query; rules; variables } ->
+          CCResult.map_err
+            (function
+              | `Tag_query_error err -> `Stack_config_tag_query_err err)
+            (Terrat_tag_query.of_string tag_query)
+          >>= fun tag_query -> Ok (Stacks.Type_.Stack tag_query, rules, variables)
+      | S.Stack_nested_config { Sn.stacks; rules; variables } ->
+          Ok (Stacks.Type_.Nested stacks, rules, variables))
+      >>= fun (type_, rules, variables) ->
+      let module R = Terrat_repo_config_stack_rules in
+      let { R.apply_after; auto_apply; modified_by; plan_after } =
+        CCOption.get_or
+          ~default:
+            { R.apply_after = None; auto_apply = None; modified_by = None; plan_after = None }
+          rules
       in
-      Ok (k, Stacks.Stack.make ~tag_query ?on_change ?variables ()))
+      let rules =
+        {
+          Stacks.Rules.apply_after = CCOption.get_or ~default:[] apply_after;
+          auto_apply;
+          modified_by = CCOption.get_or ~default:[] modified_by;
+          plan_after = CCOption.get_or ~default:[] (CCOption.or_ ~else_:modified_by plan_after);
+        }
+      in
+      let variables = CCOption.map (fun { V.additional = variables; _ } -> variables) variables in
+      Ok (k, Stacks.Stack.make ~type_ ~rules ?variables ()))
   @@ String_map.to_list configs
   >>= fun configs -> Ok (String_map.of_list configs)
 
 let of_version_1_stacks stacks =
   let open CCResult.Infix in
   let module S = Terrat_repo_config_stacks in
-  let { S.allow_workspace_in_multiple_stacks; names } = stacks in
-  map_opt of_version_1_stack_config names
-  >>= fun names -> Ok (Stacks.make ~allow_workspace_in_multiple_stacks ?names ())
+  let { S.names } = stacks in
+  map_opt of_version_1_stack_config names >>= fun names -> Ok (Stacks.make ?names ())
 
 let of_version_1_notification_policy policy =
   let open CCResult.Infix in
@@ -2345,6 +2463,7 @@ let of_version_1 v1 =
     create_and_select_workspace;
     default_branch_overrides;
     default_tf_version;
+    definitions = _;
     destination_branches;
     dirs;
     drift;
@@ -2811,6 +2930,16 @@ let to_version_1_hooks_op_run r =
     on_error = Some on_error;
   }
 
+let to_version_1_hooks_op_gates g =
+  let module G = Terrat_repo_config.Hook_op_gates in
+  let { Workflow_step.Gates.cmd; env; run_on } = g in
+  {
+    G.cmd;
+    env = CCOption.map (fun env -> G.Env.make ~additional:env Json_schema.Empty_obj.t) env;
+    run_on = Some (Workflow_step.Run_on.to_string run_on);
+    type_ = "gates";
+  }
+
 let to_version_1_hooks_hook_list =
   let module Op = Terrat_repo_config.Hook_op in
   CCList.map (function
@@ -2822,7 +2951,8 @@ let to_version_1_hooks_hook_list =
     | Hooks.Hook_op.Env (Workflow_step.Env.Source env) ->
         Op.Hook_op_env_source (to_version_1_hooks_op_env_source env)
     | Hooks.Hook_op.Oidc oidc -> Op.Hook_op_oidc (to_version_1_hooks_op_oidc oidc)
-    | Hooks.Hook_op.Run r -> Op.Hook_op_run (to_version_1_hooks_op_run r))
+    | Hooks.Hook_op.Run r -> Op.Hook_op_run (to_version_1_hooks_op_run r)
+    | Hooks.Hook_op.Gates g -> Op.Hook_op_gates (to_version_1_hooks_op_gates g))
 
 let to_version_1_hooks_hook hook =
   let module H = Terrat_repo_config.Hook in
@@ -2854,24 +2984,46 @@ let to_version_1_integrations integrations =
 
 let to_version_1_stacks stacks =
   let module S = Terrat_repo_config_stacks in
-  let { Stacks.allow_workspace_in_multiple_stacks; names } = stacks in
+  let { Stacks.names } = stacks in
   let names =
     S.Names.make
       ~additional:
         (String_map.map
            (fun v ->
-             let { Stacks.Stack.tag_query; on_change; variables } = v in
+             let module S = Terrat_repo_config_stacks.Names.Additional in
              let module Sc = Terrat_repo_config_stack_config in
-             let { Stacks.On_change.can_apply_after } = on_change in
-             {
-               Sc.tag_query = Terrat_tag_query.to_string tag_query;
-               on_change = Some { Sc.On_change.can_apply_after = Some can_apply_after };
-               variables = Some (Sc.Variables.make ~additional:variables Json_schema.Empty_obj.t);
-             })
+             let module Sn = Terrat_repo_config_stack_nested_config in
+             let module V = Terrat_repo_config_stack_variables in
+             let module R = Terrat_repo_config_stack_rules in
+             let { Stacks.Stack.type_; rules; variables } = v in
+             let { Stacks.Rules.modified_by; apply_after; auto_apply; plan_after } = rules in
+             let rules =
+               {
+                 R.modified_by = Some modified_by;
+                 apply_after = Some apply_after;
+                 auto_apply;
+                 plan_after = Some plan_after;
+               }
+             in
+             match type_ with
+             | Stacks.Type_.Stack tag_query ->
+                 S.Stack_config
+                   {
+                     Sc.tag_query = Terrat_tag_query.to_string tag_query;
+                     rules = Some rules;
+                     variables = Some (V.make ~additional:variables Json_schema.Empty_obj.t);
+                   }
+             | Stacks.Type_.Nested stacks ->
+                 S.Stack_nested_config
+                   {
+                     Sn.stacks;
+                     rules = Some rules;
+                     variables = Some (V.make ~additional:variables Json_schema.Empty_obj.t);
+                   })
            names)
       Json_schema.Empty_obj.t
   in
-  { S.allow_workspace_in_multiple_stacks; names = Some names }
+  { S.names = Some names }
 
 let to_version_1_notification_policy policy =
   let module P = Terrat_repo_config_notification_policy in
@@ -2968,8 +3120,8 @@ let to_version_1_workflow_retry retry =
 
 let to_version_1_gate gate =
   let module G = Terrat_repo_config_gate in
-  let { Workflow_step.Gate.all_of; any_of; any_of_count; token } = gate in
-  { G.all_of; any_of; any_of_count; token }
+  let { Workflow_step.Gate.all_of; any_of; any_of_count; token; name } = gate in
+  { G.all_of; any_of; any_of_count; token; name }
 
 let to_version_1_workflows_op =
   let module Op = Terrat_repo_config.Workflow_op_list in
@@ -3038,7 +3190,30 @@ let to_version_1_workflows_op =
             ignore_errors;
             run_on = Some (Workflow_step.Run_on.to_string run_on);
             visible_on = Some (Workflow_step.Visible_on.to_string visible_on);
-          })
+          }
+    | Workflows.Entry.Op.Opa opa ->
+        let module C = Terrat_repo_config.Workflow_op_opa in
+        let { Workflow_step.Opa.env; extra_args; fail_on; gate; ignore_errors; run_on; visible_on }
+            =
+          opa
+        in
+        let fail_on =
+          match fail_on with
+          | Workflow_step.Opa.Fail_on.Defined -> "defined"
+          | Workflow_step.Opa.Fail_on.Undefined -> "undefined"
+        in
+        Op.Items.Workflow_op_opa
+          {
+            C.type_ = "opa";
+            env = CCOption.map (fun env -> C.Env.make ~additional:env Json_schema.Empty_obj.t) env;
+            extra_args = Some extra_args;
+            fail_on;
+            gate = CCOption.map to_version_1_gate gate;
+            ignore_errors;
+            run_on = Some (Workflow_step.Run_on.to_string run_on);
+            visible_on = Some (Workflow_step.Visible_on.to_string visible_on);
+          }
+    | Workflows.Entry.Op.Gates gates -> Op.Items.Hook_op_gates (to_version_1_hooks_op_gates gates))
 
 let to_version_1_workflows =
   CCList.map (fun entry ->
@@ -3137,6 +3312,7 @@ let to_version_1 t =
     create_and_select_workspace;
     default_branch_overrides;
     default_tf_version = None;
+    definitions = None;
     destination_branches =
       map_opt_if_true (( <> ) []) to_version_1_destination_branches destination_branches;
     dirs = map_opt_if_true CCFun.(String_map.is_empty %> not) to_version_1_dirs dirs;
@@ -3489,9 +3665,16 @@ let derive ~ctx ~index ~file_list repo_config =
          index.Index.deps
          [])
   in
+  let existing_dirs = String_set.of_list @@ CCList.map Filename.dirname file_list in
   let dirs =
-    String_map.mapi
-      (fun dirname config -> update_dir_config ~global_tags ~module_paths ~index dirname config)
+    String_map.filter_map
+      (fun dirname config ->
+        (* It's possible that someone configured a directory that doesn't actually
+           exist, but its file patterns matched something that does exist.  Filter
+           those directories out *)
+        if String_set.mem dirname existing_dirs then
+          Some (update_dir_config ~global_tags ~module_paths ~index dirname config)
+        else None)
       dirs
   in
   { repo_config with View.dirs }

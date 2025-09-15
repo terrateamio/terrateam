@@ -51,10 +51,12 @@ module Sql = struct
   let insert_github_user_email () =
     Pgsql_io.Typed_sql.(
       sql
-      /^ "insert into github_user_emails (username, email) values($username, $email) on conflict \
-          (username, email) do nothing"
+      /^ "insert into github_user_emails (username, email, is_primary) values($username, $email, \
+          $is_primary) on conflict (username, email) do update set is_primary = \
+          excluded.is_primary"
       /% Var.text "username"
-      /% Var.text "email")
+      /% Var.text "email"
+      /% Var.boolean "is_primary")
 end
 
 let perform_auth request_id config storage code =
@@ -83,7 +85,9 @@ let perform_auth request_id config storage code =
     match Openapi.Response.value user_emails with
     | `OK emails ->
         CCList.map
-          (fun Githubc2_components.Email.{ primary = Primary.{ email; _ }; _ } -> email)
+          (fun Githubc2_components.
+                 { Email.primary = { Email.Primary.email; primary = is_primary; _ }; _ }
+             -> (email, is_primary))
           emails
     | _ -> []
   in
@@ -135,12 +139,13 @@ let perform_auth request_id config storage code =
                     username
                   >>= fun () ->
                   Abbs_future_combinators.List_result.iter
-                    ~f:(fun email ->
+                    ~f:(fun (email, is_primary) ->
                       Pgsql_io.Prepared_stmt.execute
                         db
                         (Sql.insert_github_user_email ())
                         username
-                        email)
+                        email
+                        is_primary)
                     emails
                   >>= fun () -> Abb.Future.return (Ok (Terrat_user.make ~id:user_id ())))
           | (user_id, _email, _name, _avatar_url) :: _ ->
@@ -158,46 +163,52 @@ let perform_auth request_id config storage code =
                 username
               >>= fun () ->
               Abbs_future_combinators.List_result.iter
-                ~f:(fun email ->
-                  Pgsql_io.Prepared_stmt.execute db (Sql.insert_github_user_email ()) username email)
+                ~f:(fun (email, is_primary) ->
+                  Pgsql_io.Prepared_stmt.execute
+                    db
+                    (Sql.insert_github_user_email ())
+                    username
+                    email
+                    is_primary)
                 emails
               >>= fun () -> Abb.Future.return (Ok (Terrat_user.make ~id:user_id ()))))
 
-let get config storage code installation_id_opt ctx =
+let get config storage code installation_id_opt =
   let open Abb.Future.Infix_monad in
-  perform_auth (Brtl_ctx.token ctx) config storage code
-  >>= function
-  | Ok user ->
-      let ctx = Terrat_session.create_user_session user ctx in
-      let uri =
-        ctx
-        |> Brtl_ctx.uri_base
-        |> CCFun.flip Uri.with_path "/"
-        |> CCFun.flip
-             Uri.with_query
-             (CCOption.map_or
-                ~default:[]
-                (fun installation_id ->
-                  [ ("installation_id", [ Int64.to_string installation_id ]) ])
-                installation_id_opt)
-        |> Uri.to_string
-      in
-      let headers = Cohttp.Header.of_list [ ("location", uri) ] in
-      Abb.Future.return
-        (Brtl_ctx.set_response (Brtl_rspnc.create ~headers ~status:`See_other "") ctx)
-  | Error (#Pgsql_pool.err as err) ->
-      Logs.err (fun m -> m "FAIL : %s" (Pgsql_pool.show_err err));
-      Abb.Future.return
-        (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-  | Error (#Pgsql_io.err as err) ->
-      Logs.err (fun m -> m "FAIL : %s" (Pgsql_io.show_err err));
-      Abb.Future.return
-        (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-  | Error (#Terrat_github.user_err as err) ->
-      Logs.err (fun m -> m "FAIL : %s" (Terrat_github.show_user_err err));
-      Abb.Future.return
-        (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
-  | Error (#Terrat_github.Oauth.authorize_err as err) ->
-      Logs.err (fun m -> m "FAIL : %a" Terrat_github.Oauth.pp_authorize_err err);
-      Abb.Future.return
-        (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+  Brtl_ep.run ~content_type:"text/plain" ~f:(fun ctx ->
+      perform_auth (Brtl_ctx.token ctx) config storage code
+      >>= function
+      | Ok user ->
+          let ctx = Terrat_session.create_user_session user ctx in
+          let uri =
+            ctx
+            |> Brtl_ctx.uri_base
+            |> CCFun.flip Uri.with_path "/"
+            |> CCFun.flip
+                 Uri.with_query
+                 (CCOption.map_or
+                    ~default:[]
+                    (fun installation_id ->
+                      [ ("installation_id", [ Int64.to_string installation_id ]) ])
+                    installation_id_opt)
+            |> Uri.to_string
+          in
+          let headers = Cohttp.Header.of_list [ ("location", uri) ] in
+          Abb.Future.return
+            (Brtl_ctx.set_response (Brtl_rspnc.create ~headers ~status:`See_other "") ctx)
+      | Error (#Pgsql_pool.err as err) ->
+          Logs.err (fun m -> m "FAIL : %s" (Pgsql_pool.show_err err));
+          Abb.Future.return
+            (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m -> m "FAIL : %s" (Pgsql_io.show_err err));
+          Abb.Future.return
+            (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+      | Error (#Terrat_github.user_err as err) ->
+          Logs.err (fun m -> m "FAIL : %s" (Terrat_github.show_user_err err));
+          Abb.Future.return
+            (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+      | Error (#Terrat_github.Oauth.authorize_err as err) ->
+          Logs.err (fun m -> m "FAIL : %a" Terrat_github.Oauth.pp_authorize_err err);
+          Abb.Future.return
+            (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))

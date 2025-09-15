@@ -85,7 +85,8 @@ end
 module Gate_eval = struct
   type t = {
     dirspace : Terrat_dirspace.t option;
-    token : string;
+    token : string option;
+    name : string option;
     result : Terrat_gate.Result.t;
   }
   [@@deriving show]
@@ -116,7 +117,6 @@ module Msg = struct
     | Build_config_failure of string
     | Build_tree_failure of string
     | Conflicting_work_manifests of ('account, 'target) Terrat_work_manifest3.Existing.t list
-    | Depends_on_cycle of Terrat_dirspace.t list
     | Dest_branch_no_match of 'pull_request
     | Dirspaces_owned_by_other_pull_request of (Terrat_change.Dirspace.t * 'pull_request) list
     | Gate_check_failure of Gate_eval.t list
@@ -138,6 +138,8 @@ module Msg = struct
     | Repo_config_schema_err of (string * Jsonschema_check.Validation_err.t list)
     | Run_work_manifest_err of
         [ `Failed_to_start_with_msg_err of string | `Failed_to_start | `Missing_workflow ]
+    | Str_template_err of Str_template.err
+    | Synthesize_config_err of Terrat_change_match3.synthesize_config_err
     | Tag_query_err of Terrat_tag_query_ast.err
     | Tf_op_result of {
         is_layered_run : bool;

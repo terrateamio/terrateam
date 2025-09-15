@@ -31,4 +31,5 @@ val status : t -> Cohttp.Code.status_code
 val body : t -> Http.Response_io.writer -> unit Abb.Future.t
 val headers : t -> Cohttp.Header.t
 val add_header : string -> string -> t -> t
+val add_header_if_not_exists : string -> string -> t -> t
 val response : t -> Response.t

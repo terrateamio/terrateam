@@ -20,7 +20,7 @@ definitions:
   # Define anchors here using &anchor_name
   anchor_name: &anchor_name
     key: value
-    
+
 # Reference anchors elsewhere using *anchor_name
 some_config: *anchor_name
 ```
@@ -43,10 +43,10 @@ workflows:
   - name: development
     tag_query: "dev"
     engine: *default_engine
-    
+
   - name: staging
     tag_query: "staging"
-    engine: 
+    engine:
       <<: *default_engine
       environment:
         <<: *default_engine.environment
@@ -70,7 +70,7 @@ definitions:
 
 workflows:
   - name: default
-    plan: 
+    plan:
       - *standard_checks
       - type: plan
     apply:
@@ -87,7 +87,7 @@ definitions:
   dev_access: &dev_access
     plan: ["*"]
     apply: ["team:developers", "team:platform"]
-    
+
   prod_access: &prod_access
     plan: ["*"]
     apply: ["team:platform"]
@@ -98,7 +98,7 @@ access_control:
   policies:
     - tag_query: "dev or staging"
       <<: *dev_access
-      
+
     - tag_query: "production"
       <<: *prod_access
 ```
@@ -112,7 +112,7 @@ definitions:
   aws_dev: &aws_dev
     AWS_REGION: us-east-1
     AWS_ROLE_ARN: arn:aws:iam::123456789012:role/terrateam-dev
-    
+
   aws_prod: &aws_prod
     AWS_REGION: us-east-1
     AWS_ROLE_ARN: arn:aws:iam::123456789012:role/terrateam-prod
@@ -123,7 +123,7 @@ workflows:
     engine:
       version: 1.5.0
       environment: *aws_dev
-      
+
   - name: production
     tag_query: "production"
     engine:
@@ -144,14 +144,14 @@ definitions:
     - type: run
       cmd: ["tfsec", "."]
       when: always
-      
+
   # Standard plan workflow
   standard_plan: &standard_plan
     - type: init
     - type: plan
     - <<: *security_scan
     - type: cost_estimation
-      
+
   # Production approval requirements
   prod_requirements: &prod_requirements
     - approved: 2
@@ -164,7 +164,7 @@ workflows:
     plan: *standard_plan
     apply_requirements:
       - approved
-      
+
   - name: production
     tag_query: "production"
     plan: *standard_plan
@@ -180,7 +180,7 @@ definitions:
   base_tags: &base_tags
     - "$dir"
     - "$workspace"
-    
+
   standard_backend: &standard_backend
     backend: s3
     backend_config:
@@ -193,7 +193,7 @@ dirs:
     tags:
       - *base_tags
       - networking
-      
+
   - path: terraform/compute
     <<: *standard_backend
     tags:
@@ -211,11 +211,11 @@ You can merge multiple anchors using the `<<:` merge operator:
 definitions:
   base_config: &base_config
     version: 1.5.0
-    
+
   aws_config: &aws_config
     environment:
       AWS_REGION: us-east-1
-      
+
   extended_config: &extended_config
     <<: *base_config
     <<: *aws_config
