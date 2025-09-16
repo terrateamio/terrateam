@@ -7,23 +7,45 @@ This pull request is blocked until  approvals are satisfied.
         Expand for list of gates that have not been approved
     </summary>
 
-| Token   | Directory | Workspace | Required Approvers           | Any Approvers | Any Remaining Count |
-|---------|-----------|-----------|------------------------------|----------------|----------------------|
-@#denied-@
-| @token@ | @?dir=@@/dir=@@!dir=@`@dir@`@/dir=@ | @?workspace=@@/workspace=@@!workspace=@`@workspace@`@/workspace=@ | @#all_of@`@q@` @/all_of@ | @#any_of@`@q@` @/any_of@ | @any_of_count@ |
-@/denied-@
+{%- set token_gates = denied | rejectattr("token", "none") %}
+{%- set approval_gates = denied | selectattr("token", "none") %}
+
+{%- if token_gates %}
+
+### Token Gates
+| Token | Directory | Workspace | Required Approvers           | Any Approvers | Any Remaining Count |
+|-------|-----------|-----------|------------------------------|---------------|---------------------|
+{%- for d in token_gates %}
+| `{{ d.token }}` | {% if d.dir %}`{{ d.dir }}`{% endif %} | {% if d.workspace %}`{{ d.workspace }}`{% endif %} | {% for q in d.all_of %}`{{ q }}`{% endfor %} | {% for q in d.any_of %}`{{ q }}`{% endfor %} | {{ d.any_of_count }} |
+{%- endfor %}
+
+These gates are fulfilled by commenting `terrateam gate approve <token1> <token2> ... <tokenN>`.
+{%- endif %}
+{%- if approval_gates %}
+
+### Approval Gates
+| Name | Directory | Workspace | Required Approvers           | Any Approvers | Any Remaining Count |
+|------|-----------|-----------|------------------------------|---------------|---------------------|
+{%- for d in approval_gates %}
+| {{ d.name | default('', true) }} | {% if d.dir %}`{{ d.dir }}`{% endif %} | {% if d.workspace %}`{{ d.workspace }}`{% endif %} | {% for q in d.all_of %}`{{ q }}`{% endfor %} | {% for q in d.any_of %}`{{ q }}`{% endfor %} | {{ d.any_of_count }} |
+{%- endfor %}
+
+These gates are fulfilled by approving the pull request.
+{%- endif %}
 
 ### What to do?
 
-To continue, users matching the `Required Approvers` and `Any Approvers` must approve a token until all approvals are satisfied.
+To continue, users matching the `Required Approvers` and `Any Approvers` must approve the gate until all approvals are satisfied.
 
-To approve a token, comment the following:
+To approve a gate with a token, comment the following:
 
 ```
-terrateam gate approve <token>
+terrateam gate approve <token1> <token2> ... <tokenN>
 ```
 
 Where `<token>` is the token to be approved.
+
+To approve a gate without a token, approve the pull request.
 
 #### How Gatekeeper requirements work
 

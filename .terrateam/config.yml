@@ -20,25 +20,30 @@ workflows:
     lock_policy: none
     engine:
       name: custom
-      # If plan runs successfully, report no changes.  We are only really
-      # interested in the workflows section being called.
-      plan: ['bash', '-c', 'echo "{}" > $TERRATEAM_PLAN_FILE; exit 2']
     plan:
       - type: run
         cmd: ['${TERRATEAM_ROOT}/bin/verify-commit-msg']
+        visible_on: always
+        on_error:
+          - type: gate
+            token: rfd-commit-msg
+            any_of_count: 1
       - type: run
         cmd: ['${TERRATEAM_ROOT}/rfds/bin/validate-state']
+        visible_on: always
       - type: plan
   - tag_query: code
     lock_policy: none
     engine:
       name: custom
-      # If plan runs successfully, report no changes.  We are only really
-      # interested in the workflows section being called.
-      plan: ['bash', '-c', 'echo "{}" > $TERRATEAM_PLAN_FILE; exit 2']
     plan:
       - type: run
         cmd: ['${TERRATEAM_ROOT}/bin/verify-commit-msg']
+        visible_on: always
+        on_error:
+          - type: gate
+            token: code-commit-msg
+            any_of_count: 1
       - type: plan    
 
 cost_estimation:

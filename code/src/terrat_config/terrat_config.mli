@@ -48,6 +48,7 @@ val create : unit -> (t, [> err ]) result
 val db : t -> string
 val db_connect_timeout : t -> float
 val db_host : t -> string
+val db_idle_tx_timeout : t -> string
 val db_max_pool_size : t -> int
 val db_password : t -> string
 val db_user : t -> string

@@ -1176,6 +1176,9 @@
                             {#if operation.workspace && operation.workspace !== 'default'}
                               <div>Workspace: {operation.workspace}</div>
                             {/if}
+                            {#if operation.environment}
+                              <div>Environment: {operation.environment}</div>
+                            {/if}
                           </div>
 
                         </div>
@@ -1271,6 +1274,14 @@
                             {#if failure.dir}
                               <span class="text-xs text-red-600 dark:text-red-400"> • </span>
                               <span class="text-xs text-red-600 dark:text-red-400 font-mono">{failure.dir}</span>
+                            {/if}
+                            {#if failure.workspace && failure.workspace !== 'default'}
+                              <span class="text-xs text-red-600 dark:text-red-400"> • </span>
+                              <span class="text-xs text-red-600 dark:text-red-400">workspace: {failure.workspace}</span>
+                            {/if}
+                            {#if failure.environment}
+                              <span class="text-xs text-red-600 dark:text-red-400"> • </span>
+                              <span class="text-xs text-red-600 dark:text-red-400">env: {failure.environment}</span>
                             {/if}
                           </div>
                           
@@ -1371,6 +1382,14 @@
                             {#if success.dir}
                               <span class="text-xs text-green-600 dark:text-green-400"> • </span>
                               <span class="text-xs text-green-600 dark:text-green-400 font-mono">{success.dir}</span>
+                            {/if}
+                            {#if success.workspace && success.workspace !== 'default'}
+                              <span class="text-xs text-green-600 dark:text-green-400"> • </span>
+                              <span class="text-xs text-green-600 dark:text-green-400">workspace: {success.workspace}</span>
+                            {/if}
+                            {#if success.environment}
+                              <span class="text-xs text-green-600 dark:text-green-400"> • </span>
+                              <span class="text-xs text-green-600 dark:text-green-400">env: {success.environment}</span>
                             {/if}
                           </div>
                           
@@ -2042,6 +2061,10 @@
                                   {#if run.workspace && run.workspace !== 'default'}
                                     <span class="text-xs text-gray-400 dark:text-gray-500">•</span>
                                     <span class="text-xs text-gray-600 dark:text-gray-400">workspace: {run.workspace}</span>
+                                  {/if}
+                                  {#if run.environment}
+                                    <span class="text-xs text-gray-400 dark:text-gray-500">•</span>
+                                    <span class="text-xs text-gray-600 dark:text-gray-400">env: {run.environment}</span>
                                   {/if}
                                 </div>
                               </div>

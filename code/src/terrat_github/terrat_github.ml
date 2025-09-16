@@ -360,8 +360,8 @@ let get_installation_repos client =
           Abb.Future.return (Error err))
     Githubc2_apps.List_repos_accessible_to_installation.(make Parameters.(make ()))
 
-let load_workflow' ~owner ~repo client =
-  Prmths.Counter.inc_one (Metrics.fn_call_total "load_workflow");
+let list_workflows ~owner ~repo client =
+  Prmths.Counter.inc_one (Metrics.fn_call_total "list_workflow");
   let open Abbs_future_combinators.Infix_result_monad in
   Githubc2_abb.fold
     client
@@ -381,24 +381,27 @@ let load_workflow' ~owner ~repo client =
               workflows
           in
           Abb.Future.return (Ok (workflows @ acc)))
-    Githubc2_actions.List_repo_workflows.(make (Parameters.make ~owner ~repo ()))
-  >>= fun workflows ->
-  match
-    CCList.filter
-      (fun (_, name, path) ->
-        CCString.equal name terrateam_workflow_name || CCString.equal path terrateam_workflow_path)
-      workflows
-  with
-  | res :: _ -> Abb.Future.return (Ok (Some res))
-  | [] -> Abb.Future.return (Ok None)
+    Githubc2_actions.List_repo_workflows.(make (Parameters.make ~per_page:100 ~owner ~repo ()))
 
 let find_workflow_file ~owner ~repo client =
   Abbs_future_combinators.retry
     ~f:(fun () ->
       let open Abbs_future_combinators.Infix_result_monad in
-      load_workflow' ~owner ~repo client
-      >>= fun res -> Abb.Future.return (Ok (CCOption.map (fun (_, _, path) -> path) res)))
-    ~while_:(Abbs_future_combinators.finite_tries 3 CCResult.is_error)
+      list_workflows ~owner ~repo client
+      >>= fun workflows ->
+      match
+        CCList.filter
+          (fun (_, name, path) ->
+            CCString.equal name terrateam_workflow_name
+            || CCString.equal path terrateam_workflow_path)
+          workflows
+      with
+      | (_, _, path) :: _ -> Abb.Future.return (Ok (Some path))
+      | [] -> Abb.Future.return (Ok None))
+    ~while_:
+      (Abbs_future_combinators.finite_tries 3 (function
+        | Ok (Some _) -> false
+        | Ok None | Error _ -> true))
     ~betwixt:
       (Abbs_future_combinators.series ~start:1.5 ~step:(( *. ) 1.5) (fun n _ ->
            Prmths.Counter.inc_one Metrics.call_retries_total;
@@ -408,9 +411,21 @@ let load_workflow ~owner ~repo client =
   Abbs_future_combinators.retry
     ~f:(fun () ->
       let open Abbs_future_combinators.Infix_result_monad in
-      load_workflow' ~owner ~repo client
-      >>= fun res -> Abb.Future.return (Ok (CCOption.map (fun (id, _, _) -> id) res)))
-    ~while_:(Abbs_future_combinators.finite_tries 3 CCResult.is_error)
+      list_workflows ~owner ~repo client
+      >>= fun workflows ->
+      match
+        CCList.filter
+          (fun (_, name, path) ->
+            CCString.equal name terrateam_workflow_name
+            || CCString.equal path terrateam_workflow_path)
+          workflows
+      with
+      | (id, _, _) :: _ -> Abb.Future.return (Ok (Some id))
+      | [] -> Abb.Future.return (Ok None))
+    ~while_:
+      (Abbs_future_combinators.finite_tries 3 (function
+        | Ok (Some _) -> false
+        | Ok None | Error _ -> true))
     ~betwixt:
       (Abbs_future_combinators.series ~start:1.5 ~step:(( *. ) 1.5) (fun n _ ->
            Prmths.Counter.inc_one Metrics.call_retries_total;
@@ -674,7 +689,7 @@ module Commit_status = struct
         Githubc2_abb.collect_all
           client
           Githubc2_repos.List_commit_statuses_for_ref.(
-            make Parameters.(make ~owner ~repo ~ref_:sha ())))
+            make Parameters.(make ~per_page:100 ~owner ~repo ~ref_:sha ())))
       ~while_:(Abbs_future_combinators.finite_tries 3 CCResult.is_error)
       ~betwixt:
         (Abbs_future_combinators.series ~start:1.5 ~step:(( *. ) 1.5) (fun n _ ->
@@ -691,7 +706,9 @@ module Status_check = struct
   let list ~owner ~repo ~ref_ client =
     Prmths.Counter.inc_one (Metrics.fn_call_total "status_check_list");
     let open Abb.Future.Infix_monad in
-    call client Githubc2_checks.List_for_ref.(make Parameters.(make ~owner ~repo ~ref_ ()))
+    call
+      client
+      Githubc2_checks.List_for_ref.(make Parameters.(make ~per_page:100 ~owner ~repo ~ref_ ()))
     >>= function
     | Ok resp ->
         let module OK = Githubc2_checks.List_for_ref.Responses.OK in
@@ -711,7 +728,8 @@ module Pull_request_reviews = struct
     Prmths.Counter.inc_one (Metrics.fn_call_total "pull_request_reviews_list");
     Githubc2_abb.collect_all
       client
-      Githubc2_pulls.List_reviews.(make Parameters.(make ~owner ~repo ~pull_number ()))
+      Githubc2_pulls.List_reviews.(
+        make Parameters.(make ~per_page:100 ~owner ~repo ~pull_number ()))
 end
 
 module Oauth = struct

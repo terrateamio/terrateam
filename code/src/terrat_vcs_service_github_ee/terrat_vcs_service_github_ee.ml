@@ -102,8 +102,11 @@ module Provider :
         Pgsql_io.Typed_sql.(
           sql
           //
+          (* name *)
+          Ret.(option text)
+          //
           (* token *)
-          Ret.text
+          Ret.(option text)
           //
           (* gate *)
           Ret.ud' gate
@@ -165,10 +168,32 @@ module Provider :
             String_map.empty
             approvers
         in
+        Api.fetch_pull_request_reviews
+          ~request_id
+          (Api.Pull_request.repo pull_request)
+          (Api.Pull_request.id pull_request)
+          client
+        >>= fun reviews ->
+        let approved_reviewers =
+          String_set.of_list
+          @@ CCList.filter_map
+               (let module R = Terrat_pull_request_review in
+               function
+               | { R.status = R.Status.Approved; user; _ } -> user
+               | _ -> None)
+               reviews
+        in
+        (* This is all users that have approved this pull request either by the
+           VCS UI or explicit gate keeper *)
+        let all_approvers =
+          String_set.to_list
+            (String_set.union approved_reviewers (String_set.of_list @@ CCList.map snd approvers))
+        in
         Pgsql_io.Prepared_stmt.fetch
           db
           Sql.select_gates
-          ~f:(fun token gate dir workspace -> (token, gate, { Terrat_dirspace.dir; workspace }))
+          ~f:(fun name token gate dir workspace ->
+            (token, name, gate, { Terrat_dirspace.dir; workspace }))
           repo_id
           pull_number
           (CCList.map (fun { Terrat_dirspace.dir; _ } -> dir) dirspaces)
@@ -177,8 +202,8 @@ module Provider :
         let gates_map =
           Terrat_data.Dirspace_map.to_list
           @@ CCList.fold_left
-               (fun acc (token, gate, dirspace) ->
-                 Terrat_data.Dirspace_map.add_to_list dirspace (token, gate) acc)
+               (fun acc (token, name, gate, dirspace) ->
+                 Terrat_data.Dirspace_map.add_to_list dirspace (token, name, gate) acc)
                Terrat_data.Dirspace_map.empty
                gates
         in
@@ -188,19 +213,22 @@ module Provider :
           @@ CCList.flat_map
                (fun (_, gates) ->
                  CCList.flat_map
-                   (fun (_, { Terrat_gate.all_of; any_of; any_of_count = _ }) -> all_of @ any_of)
+                   (fun (_, _, { Terrat_gate.all_of; any_of; any_of_count = _ }) -> all_of @ any_of)
                    gates)
                gates_map
         in
+        (* Given all of the queries and all approvers, match an approver against
+           the query.  This way we can go from query -> list of users who match
+           it. *)
         Abbs_future_combinators.List_result.map
           ~f:(fun q ->
             Abbs_future_combinators.List_result.map
-              ~f:(fun (_, approver) ->
+              ~f:(fun approver ->
                 match_user ~request_id client repo approver q
                 >>= function
                 | true -> Abb.Future.return (Ok (Some approver))
                 | false -> Abb.Future.return (Ok None))
-              approvers
+              all_approvers
             >>= fun res ->
             let res = CCList.filter_map CCFun.id res in
             Abb.Future.return (Ok (q, res)))
@@ -212,36 +240,48 @@ module Provider :
              (CCList.flat_map
                 (fun (dirspace, gates) ->
                   CCList.filter_map
-                    (fun (token, { Terrat_gate.all_of; any_of; any_of_count }) ->
+                    (fun (token, name, { Terrat_gate.all_of; any_of; any_of_count }) ->
                       let { Terrat_dirspace.dir; workspace } = dirspace in
                       Logs.info (fun m ->
                           m
-                            "%s : GATE : dir=%s : workspace=%s : token=%s : all_of=%s"
+                            "%s : GATE : dir=%s : workspace=%s : token=%s : name=%s : all_of=%s"
                             request_id
                             dir
                             workspace
-                            token
+                            (CCOption.get_or ~default:"" token)
+                            (CCOption.get_or ~default:"" name)
                             (CCString.concat " " @@ CCList.map Terrat_gate.Match.to_string all_of));
                       Logs.info (fun m ->
                           m
-                            "%s : GATE : dir=%s : workspace=%s : token=%s : any_of=%s"
+                            "%s : GATE : dir=%s : workspace=%s : token=%s : name=%s : any_of=%s"
                             request_id
                             dir
                             workspace
-                            token
+                            (CCOption.get_or ~default:"" token)
+                            (CCOption.get_or ~default:"" name)
                             (CCString.concat " " @@ CCList.map Terrat_gate.Match.to_string any_of));
                       Logs.info (fun m ->
                           m
-                            "%s : GATE : dir=%s : workspace=%s : token=%s : any_of_count=%d"
+                            "%s : GATE : dir=%s : workspace=%s : token=%s : name=%s : \
+                             any_of_count=%d"
                             request_id
                             dir
                             workspace
-                            token
+                            (CCOption.get_or ~default:"" token)
+                            (CCOption.get_or ~default:"" name)
                             any_of_count);
-                      let token_approvers =
-                        String_set.of_list
-                        @@ CCOption.get_or ~default:[]
-                        @@ String_map.find_opt token approvers_map
+                      (* Given a gate, we want to know if it has been approved
+                         by everyone that must be.  If [token] is [Some string]
+                         then that means we need to match it to the specific
+                         token approvers, if it is not then it means we need to
+                         match it against the VCS approvers. *)
+                      let gate_approvers =
+                        match token with
+                        | Some token ->
+                            String_set.of_list
+                            @@ CCOption.get_or ~default:[]
+                            @@ String_map.find_opt token approvers_map
+                        | None -> approved_reviewers
                       in
                       (* A map of query to users who have approved that token.
                          An empty list for the query means that it has not been
@@ -250,7 +290,7 @@ module Provider :
                         CCList.map
                           (fun m ->
                             ( m,
-                              CCList.filter CCFun.(flip String_set.mem token_approvers)
+                              CCList.filter CCFun.(flip String_set.mem gate_approvers)
                               @@ CCOption.get_or ~default:[]
                               @@ Match_map.find_opt m query_to_users ))
                           all_of
@@ -258,7 +298,7 @@ module Provider :
                       (* Set of users that have approved the token for the any_of matches. *)
                       let any_of_set =
                         String_set.of_list
-                        @@ CCList.filter CCFun.(flip String_set.mem token_approvers)
+                        @@ CCList.filter CCFun.(flip String_set.mem gate_approvers)
                         @@ CCList.flat_map
                              CCFun.(
                                flip Match_map.find_opt query_to_users %> CCOption.get_or ~default:[])
@@ -284,36 +324,43 @@ module Provider :
                       in
                       Logs.info (fun m ->
                           m
-                            "%s : GATE : RESULT : dir=%s : workspace=%s : token=%s : all_of=%s"
+                            "%s : GATE : RESULT : dir=%s : workspace=%s : token=%s : name=%s : \
+                             all_of=%s"
                             request_id
                             dir
                             workspace
-                            token
+                            (CCOption.get_or ~default:"" token)
+                            (CCOption.get_or ~default:"" name)
                             (CCString.concat " " @@ CCList.map Terrat_gate.Match.to_string all_of));
                       Logs.info (fun m ->
                           m
-                            "%s : GATE : RESULT: dir=%s : workspace=%s : token=%s : any_of=%s"
+                            "%s : GATE : RESULT : dir=%s : workspace=%s : token=%s : name=%s : \
+                             any_of=%s"
                             request_id
                             dir
                             workspace
-                            token
+                            (CCOption.get_or ~default:"" token)
+                            (CCOption.get_or ~default:"" name)
                             (CCString.concat " " @@ CCList.map Terrat_gate.Match.to_string any_of));
                       Logs.info (fun m ->
                           m
-                            "%s : GATE : RESULT : dir=%s : workspace=%s : token=%s : \
+                            "%s : GATE : RESULT : dir=%s : workspace=%s : token=%s : name=%s : \
                              any_of_count=%d"
                             request_id
                             dir
                             workspace
-                            token
+                            (CCOption.get_or ~default:"" token)
+                            (CCOption.get_or ~default:"" name)
                             any_of_count);
                       Logs.info (fun m ->
                           m
-                            "%s : GATE : RESULT : dir=%s : workspace=%s : token=%s : passed=%s"
+                            "%s : GATE : RESULT : dir=%s : workspace=%s : token=%s : name=%s : \
+                             passed=%s"
                             request_id
                             dir
                             workspace
-                            token
+                            (CCOption.get_or ~default:"" token)
+                            (CCOption.get_or ~default:"" name)
                             (Bool.to_string passed));
                       if passed then None
                       else
@@ -327,6 +374,7 @@ module Provider :
                                then None
                                else Some dirspace);
                             token;
+                            name;
                             result;
                           })
                     gates)

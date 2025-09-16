@@ -12,6 +12,7 @@
   import LoadingSpinner from './components/ui/LoadingSpinner.svelte';
   import type { Dirspace } from './types';
   import { VCS_PROVIDERS } from './vcs/providers';
+  import { areUpgradeNudgesEnabled, getRunLimitThreshold, getBillingPeriodDates } from './utils/environment';
   
   // Get current VCS provider terminology
   $: currentProvider = $currentVCSProvider || 'github';
@@ -34,6 +35,11 @@
     avgDuration: 0,
     topUsers: [] as Array<{ name: string; count: number }>,
     environments: [] as Array<{ name: string; successRate: number; total: number }>,
+    // Run usage for Free tier (billing period)
+    runCountBillingPeriod: 0,
+    runUsagePercentage: 0,
+    billingPeriodEnd: null as Date | null,
+    daysRemaining: 0
   };
 
   // Recent activity data
@@ -168,6 +174,56 @@
       } else {
         stats.avgDuration = 0;
       }
+      
+      // Check if we need to load billing period run count for Free tier
+      if ($selectedInstallation?.tier?.name?.toLowerCase() === 'free' && areUpgradeNudgesEnabled()) {
+        if (!$selectedInstallation.created_at) {
+          // Fallback to rolling 30-day window if no created_at
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+          const dateFilter30 = thirtyDaysAgo.toISOString().split('T')[0];
+          
+          try {
+            const response30Days = await api.getInstallationDirspaces($selectedInstallation.id, {
+              q: `created_at:${dateFilter30}..`,
+              limit: 100 // API caps at 100
+            });
+            
+            stats.runCountBillingPeriod = response30Days?.dirspaces?.length || 0;
+            stats.runUsagePercentage = (stats.runCountBillingPeriod / getRunLimitThreshold()) * 100;
+          } catch (err) {
+            console.error('Error loading 30-day run count:', err);
+            stats.runCountBillingPeriod = 0;
+            stats.runUsagePercentage = 0;
+          }
+        } else {
+          // Use billing period based on installation creation date
+          const billingPeriod = getBillingPeriodDates($selectedInstallation.created_at);
+          stats.billingPeriodEnd = billingPeriod.end;
+          stats.daysRemaining = billingPeriod.daysRemaining;
+          
+          // Format dates for API query
+          const startDate = billingPeriod.start.toISOString().split('T')[0];
+          const endDate = billingPeriod.end.toISOString().split('T')[0];
+          
+          try {
+            const responseBilling = await api.getInstallationDirspaces($selectedInstallation.id, {
+              q: `created_at:${startDate}..${endDate}`,
+              limit: 100 // API caps at 100
+            });
+            
+            stats.runCountBillingPeriod = responseBilling?.dirspaces?.length || 0;
+            stats.runUsagePercentage = (stats.runCountBillingPeriod / getRunLimitThreshold()) * 100;
+          } catch (err) {
+            console.error('Error loading billing period run count:', err);
+            stats.runCountBillingPeriod = 0;
+            stats.runUsagePercentage = 0;
+          }
+        }
+      } else {
+        stats.runCountBillingPeriod = 0;
+        stats.runUsagePercentage = 0;
+      }
 
     } catch (err) {
       console.error('Error loading dashboard stats:', err);
@@ -269,6 +325,18 @@
   function navigateToDetail(operationId: string): void {
     navigateToRun(operationId);
   }
+  
+  function getUsageColor(percentage: number): string {
+    if (percentage >= 90) return 'bg-red-500';
+    if (percentage >= 70) return 'bg-amber-500';
+    return 'bg-green-500';
+  }
+  
+  function getUsageTextColor(percentage: number): string {
+    if (percentage >= 90) return 'text-red-600 dark:text-red-400';
+    if (percentage >= 70) return 'text-amber-600 dark:text-amber-400';
+    return 'text-green-600 dark:text-green-400';
+  }
 
 </script>
 
@@ -301,6 +369,62 @@
       </div>
     </Card>
   </div>
+
+  <!-- Monthly Usage Banner (Free tier only) -->
+  {#if $selectedInstallation?.tier?.name?.toLowerCase() === 'free' && areUpgradeNudgesEnabled() && !isLoadingStats}
+    <div class="mb-8 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 p-4">
+      <div class="max-w-7xl mx-auto">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <!-- Left side: Usage info -->
+          <div class="flex-1">
+            <div class="flex items-center gap-3 mb-2">
+              <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Monthly Usage</h3>
+              <span class="text-2xl font-bold {getUsageTextColor(stats.runUsagePercentage)}">
+                {stats.runCountBillingPeriod} / {getRunLimitThreshold()} runs
+              </span>
+              <span class="text-sm text-gray-500 dark:text-gray-400">
+                {#if $selectedInstallation?.created_at}
+                  in billing period ({stats.daysRemaining} days left)
+                {:else}
+                  in 30 days
+                {/if}
+              </span>
+            </div>
+            
+            <!-- Progress bar -->
+            <div class="relative">
+              <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3 overflow-hidden">
+                <div 
+                  class="h-3 rounded-full transition-all duration-500 {getUsageColor(stats.runUsagePercentage)}"
+                  style="width: {Math.min(stats.runUsagePercentage, 100)}%"
+                />
+              </div>
+              <!-- Threshold markers -->
+              <div class="absolute top-0 left-[70%] h-3 w-px bg-gray-400 dark:bg-gray-500" />
+              <div class="absolute top-0 left-[90%] h-3 w-px bg-gray-400 dark:bg-gray-500" />
+            </div>
+            
+            <div class="mt-2 text-xs {stats.runUsagePercentage >= 70 ? getUsageTextColor(stats.runUsagePercentage) : 'text-gray-500 dark:text-gray-400'}">
+              {getRunLimitThreshold() - stats.runCountBillingPeriod} runs remaining this billing period
+            </div>
+          </div>
+          
+          <!-- Right side: CTA -->
+          {#if stats.runUsagePercentage >= 70}
+            <a
+              href="#/subscription"
+              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 whitespace-nowrap"
+            >
+              Upgrade for unlimited runs
+              <svg class="ml-2 -mr-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </a>
+          {/if}
+        </div>
+      </div>
+    </div>
+  {/if}
 
   {#if $installationsLoading}
     <div class="flex justify-center items-center py-12 mb-8">
@@ -381,23 +505,23 @@
       </ClickableCard>
       
       <ClickableCard 
-        padding="md" 
-        hover={true}
-        on:click={() => {
-          const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-          navigateToRuns(`created_at:${weekAgo}..`);
-        }}
-        aria-label="View all runs from last 7 days"
-        class="text-center"
-      >
-        <div class="text-2xl md:text-3xl font-bold text-blue-600 dark:text-blue-400">{stats.total7d}</div>
-        <div class="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1">Total Operations</div>
-        <div class="text-xs text-gray-500 dark:text-gray-400">Last 7 days</div>
-      </ClickableCard>
+          padding="md" 
+          hover={true}
+          on:click={() => {
+            const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            navigateToRuns(`created_at:${weekAgo}..`);
+          }}
+          aria-label="View all runs from last 7 days"
+          class="text-center"
+        >
+          <div class="text-2xl md:text-3xl font-bold text-blue-600 dark:text-blue-400">{stats.total7d}</div>
+          <div class="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1">Total Operations</div>
+          <div class="text-xs text-gray-500 dark:text-gray-400">Last 7 days</div>
+        </ClickableCard>
     </div>
 
     <!-- Enhanced Insights -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
       
       <ClickableCard 
         padding="md" 

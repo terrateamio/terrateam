@@ -99,6 +99,9 @@ module Installations = struct
         (* account status *)
         Ret.text
         //
+        (*created_at *)
+        Ret.text
+        //
         (* trial_ends_at *)
         Ret.(option text)
         //
@@ -148,7 +151,7 @@ module Installations = struct
         Pgsql_io.Prepared_stmt.fetch
           db
           (Sql.select_installations ())
-          ~f:(fun id name account_status trial_ends_at tier_name tier_features ->
+          ~f:(fun id name account_status created_at trial_ends_at tier_name tier_features ->
             let module I = Terrat_api_components.Installation in
             let module T = Terrat_api_components.Tier in
             let { Terrat_tier.num_users_per_month; _ } = tier_features in
@@ -163,7 +166,7 @@ module Installations = struct
                   };
               }
             in
-            { I.id = CCInt64.to_string id; name; account_status; trial_ends_at; tier })
+            { I.id = CCInt64.to_string id; name; account_status; created_at; trial_ends_at; tier })
           (CCList.map (fun I.{ primary = Primary.{ id; _ }; _ } -> Int64.of_int id) installations))
 
   let get config storage =

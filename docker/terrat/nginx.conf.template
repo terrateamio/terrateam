@@ -8,6 +8,7 @@ env TERRATEAM_UI_ANALYTICS;
 env TERRATEAM_UI_SUBSCRIPTION;
 env TERRATEAM_MAINTENANCE;
 env TERRATEAM_MAINTENANCE_MESSAGE;
+env TERRATEAM_UPGRADE_NUDGES;
 
 events {
     worker_connections  1024;
@@ -57,11 +58,12 @@ http {
             sub_filter '%TERRATEAM_UI_SUBSCRIPTION%' '${TERRATEAM_UI_SUBSCRIPTION}';
             sub_filter '%TERRATEAM_MAINTENANCE%' '${TERRATEAM_MAINTENANCE}';
             sub_filter '%TERRATEAM_MAINTENANCE_MESSAGE%' '${TERRATEAM_MAINTENANCE_MESSAGE}';
+            sub_filter '%TERRATEAM_UPGRADE_NUDGES%' '${TERRATEAM_UPGRADE_NUDGES}';
 
             root /usr/local/share/terrat/ui/assets/;
             index index.html index.htm;
             try_files $uri $uri/ /index.html =404;
-            add_header Content-Security-Policy "default-src 'self'; img-src 'self' https://avatars.githubusercontent.com https://secure.gravatar.com https://www.redditstatic.com; script-src 'self' 'nonce-$cspNonce' https://*.posthog.com https://www.redditstatic.com; style-src 'self' 'nonce-$cspNonce'; object-src 'none'; connect-src 'self' https://*.posthog.com https://o4509570379677696.ingest.de.sentry.io https://api.web3forms.com https://alb.reddit.com; font-src 'self'; worker-src 'self' blob:; frame-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; manifest-src 'self'; media-src 'none'; upgrade-insecure-requests;";
+            add_header Content-Security-Policy "default-src 'self'; img-src 'self' https://avatars.githubusercontent.com https://secure.gravatar.com https://www.redditstatic.com https://alb.reddit.com; script-src 'self' 'nonce-$cspNonce' https://*.posthog.com https://www.redditstatic.com; style-src 'self' 'nonce-$cspNonce'; object-src 'none'; connect-src 'self' https://*.posthog.com https://o4509570379677696.ingest.de.sentry.io https://api.web3forms.com https://alb.reddit.com https://pixel-config.reddit.com https://conversions-config.reddit.com https://www.redditstatic.com; font-src 'self'; worker-src 'self' blob:; frame-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; manifest-src 'self'; media-src 'none'; upgrade-insecure-requests;";
         }
 
         location /api {
@@ -80,7 +82,7 @@ http {
             proxy_busy_buffers_size 256k;
 
             # This is the limit of how large we of input we allow.
-            client_max_body_size 50m;
+            client_max_body_size 100m;
 
             # Add a long timeout to match the timeouts on the server side.
             proxy_read_timeout 120;

@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { WorkManifest } from './types';
+  import type { TerraformJsonPlan } from './types/terraform';
   // Auth handled by PageLayout
   import { api } from './api';
   import { selectedInstallation, installations, currentVCSProvider, serverConfig } from './stores';
@@ -11,7 +12,6 @@
   import SafeOutput from './components/ui/SafeOutput.svelte';
   import { getWebBaseUrl } from './server-config';
   import PlanChanges from './components/terraform/PlanChanges.svelte';
-  import ApplyChanges from './components/terraform/ApplyChanges.svelte';
   
   export let params: { id: string; installationId?: string } = { id: '' };
   
@@ -35,7 +35,7 @@
   const web_base_url = getWebBaseUrl($currentVCSProvider, $serverConfig);
   
   // Visualization state
-  let visualizationPlanOutput: string = '';
+  let visualizationPlanJson: string | undefined = undefined; // JSON plan data
   let visualizationWorkManifestId: string = '';
   let isFetchingVisualizationData: boolean = false;
   
@@ -44,6 +44,7 @@
       text?: string;
       plan?: string;
       plan_text?: string;
+      diff?: TerraformJsonPlan | string; // JSON plan data (object or string)
       has_changes?: boolean;
       ignore_errors?: boolean;
       visible_on?: string;
@@ -611,30 +612,43 @@
     if (output?.payload?._isLiteMode) {
       isFetchingVisualizationData = true;
       try {
-        // Fetch the full output content
-        const fullOutput = await fetchFullOutput(output);
-        if (fullOutput) {
-          visualizationPlanOutput = fullOutput;
-          visualizationWorkManifestId = run?.id || '';
-          activeOutputTab = 'changes';
+        // Fetch the full output content with JSON plan
+        const fullOutputData = await fetchFullOutputWithJson(output);
+        
+        if (fullOutputData?.json) {
+          visualizationPlanJson = fullOutputData.json;
         } else {
-          console.error('Failed to fetch full output');
+          visualizationPlanJson = undefined;
         }
+        
+        visualizationWorkManifestId = run?.id || '';
+        activeOutputTab = 'changes';
       } catch (error) {
         console.error('Error fetching full output:', error);
+        visualizationPlanJson = undefined;
+        activeOutputTab = 'changes';
       } finally {
         isFetchingVisualizationData = false;
       }
     } else {
-      // Use the existing content
-      visualizationPlanOutput = output.payload?.plan_text || output.payload?.text || '';
+      // Check for diff field which contains JSON plan
+      if (output.payload?.diff) {
+        if (typeof output.payload.diff === 'object') {
+          visualizationPlanJson = JSON.stringify(output.payload.diff);
+        } else if (typeof output.payload.diff === 'string') {
+          visualizationPlanJson = output.payload.diff;
+        }
+      } else {
+        visualizationPlanJson = undefined;
+      }
+      
       visualizationWorkManifestId = run?.id || '';
       activeOutputTab = 'changes';
     }
   }
   
-  // Helper function to fetch full output content
-  async function fetchFullOutput(output: OutputItem): Promise<string | null> {
+  // Helper function to fetch full output content with JSON
+  async function fetchFullOutputWithJson(output: OutputItem): Promise<{ text: string | null; json?: string } | null> {
     if (!run?.id || !$selectedInstallation?.id) return null;
     
     try {
@@ -655,10 +669,25 @@
           out.scope?.workspace === output.scope?.workspace;
       }) as OutputItem | undefined;
       
-      if (fullOutput?.payload?.text) {
-        return fullOutput.payload.text;
-      } else if (fullOutput?.payload?.plan_text) {
-        return fullOutput.payload.plan_text;
+      if (fullOutput?.payload) {
+        
+        // The 'diff' field contains the JSON plan data
+        let jsonData: string | undefined;
+        
+        if (fullOutput.payload.diff) {
+          // diff field contains the JSON plan object
+          if (typeof fullOutput.payload.diff === 'object') {
+            jsonData = JSON.stringify(fullOutput.payload.diff);
+          } else if (typeof fullOutput.payload.diff === 'string') {
+            jsonData = fullOutput.payload.diff;
+          }
+        } else {
+        }
+        
+        return {
+          text: fullOutput.payload.plan_text || fullOutput.payload.text || null,
+          json: jsonData
+        };
       }
       
       return null;
@@ -668,54 +697,17 @@
     }
   }
 
-  // Check if output contains a Terraform plan
+  // Check if output contains a Terraform plan with JSON data
   function isPlanOutput(output: OutputItem): boolean {
-    return !!(output?.step === 'tf/plan' || 
-              output?.payload?.plan_text || 
-              (output?.payload?.text && output.payload.text.includes('Terraform will perform')));
-  }
-  
-  // Check if output contains a Terraform apply
-  function isApplyOutput(output: OutputItem): boolean {
-    return !!(output?.step === 'tf/apply' || 
-              (output?.payload?.text && 
-               (output.payload.text.includes('Creating...') || 
-                output.payload.text.includes('Modifying...') || 
-                output.payload.text.includes('Destroying...') ||
-                output.payload.text.includes('Apply complete!'))));
-  }
-  
-  // Function to open apply changes view
-  async function openApplyChanges(output: OutputItem) {
-    // Check if this is lite mode and we need to fetch the full output
+    // For lite mode, we can't check for diff until we load the full data
+    // So show the button for all tf/plan steps
     if (output?.payload?._isLiteMode) {
-      isFetchingVisualizationData = true;
-      try {
-        // Fetch the full output content
-        const fullOutput = await fetchFullOutput(output);
-        if (fullOutput) {
-          visualizationPlanOutput = fullOutput; // Reusing the same variable for simplicity
-          visualizationWorkManifestId = run?.id || '';
-          activeOutputTab = 'changes';
-        } else {
-          console.error('Failed to fetch full output');
-        }
-      } catch (error) {
-        console.error('Error fetching full output:', error);
-      } finally {
-        isFetchingVisualizationData = false;
-      }
-    } else {
-      // Use the existing full output
-      const outputText = output?.payload?.text || '';
-      if (outputText) {
-        visualizationPlanOutput = outputText;
-        visualizationWorkManifestId = run?.id || '';
-        activeOutputTab = 'changes';
-      }
+      return output?.step === 'tf/plan';
     }
+    // For full data, only show if we have JSON data in diff field
+    return !!(output?.step === 'tf/plan' && output?.payload?.diff);
   }
-
+  
   // Close modal on Escape key
   function handleKeydown(event: KeyboardEvent) {
     if (event.key === 'Escape' && showOutputModal) {
@@ -828,7 +820,9 @@
           </h2>
           <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-1 sm:space-y-0 text-sm text-gray-600 dark:text-gray-400">
             <span>Dirspaces: <span class="font-medium">{run.dirspaces.length}</span></span>
-            <span>{$currentVCSProvider === 'gitlab' ? 'GitLab' : 'GitHub'} Environment: <span class="font-medium">{run.environment || 'default'}</span></span>
+            {#if run.environment}
+              <span>{$currentVCSProvider === 'gitlab' ? 'GitLab' : 'GitHub'} Environment: <span class="font-medium">{run.environment}</span></span>
+            {/if}
           </div>
         </div>
         <div class="flex flex-col items-start lg:items-end space-y-2">
@@ -1022,7 +1016,7 @@
           >
             ❌ Failed
           </button>
-          {#if run?.run_type === 'plan' || run?.run_type === 'apply'}
+          {#if run?.run_type === 'plan'}
             <button 
               on:click={() => activeOutputTab = 'changes'}
               class="px-3 py-1 text-sm font-medium rounded-md transition-colors {activeOutputTab === 'changes' ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}"
@@ -1278,19 +1272,6 @@
                                   <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                                           d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                  </svg>
-                                  View Changes
-                                </button>
-                              {:else if isApplyOutput(typedOutput)}
-                                <button
-                                  type="button"
-                                  on:click={() => openApplyChanges(typedOutput)}
-                                  class="flex-shrink-0 inline-flex items-center px-2 py-1 text-xs font-medium rounded-md text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors"
-                                  title="View apply changes"
-                                >
-                                  <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                   </svg>
                                   View Changes
                                 </button>
@@ -1637,13 +1618,12 @@
             <div class="flex flex-col items-center justify-center py-12">
               <LoadingSpinner size="lg" />
               <p class="mt-4 text-gray-600 dark:text-gray-400">
-                Loading {run?.run_type === 'apply' ? 'apply' : 'plan'} changes...
+                Loading plan changes...
               </p>
             </div>
-          {:else if !visualizationPlanOutput}
-            <!-- First, show list of plans or applies that can view changes -->
+          {:else if !visualizationPlanJson}
+            <!-- First, show list of plans that can view changes -->
             <div class="space-y-4">
-              {#if run?.run_type === 'plan'}
                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
                   Select a Terraform plan output to view changes:
                 </p>
@@ -1676,48 +1656,11 @@
                 {:else}
                   <div class="text-center py-8 text-gray-500 dark:text-gray-400">
                     <div class="text-4xl mb-2">📊</div>
-                    <p>No Terraform plan outputs found</p>
-                    <p class="text-sm mt-2">Run a plan first to see changes</p>
+                    <p>No plan visualization available</p>
+                    <p class="text-sm mt-2">Plan visualization requires JSON-formatted output</p>
+                    <p class="text-xs mt-1">This feature is available for newer plan runs</p>
                   </div>
                 {/each}
-              {:else if run?.run_type === 'apply'}
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  Select a Terraform apply output to view changes:
-                </p>
-                {#each outputs.filter(o => isApplyOutput(o)) as applyOutput}
-                  <Card 
-                    padding="md" 
-                    hover={true}
-                    class="cursor-pointer"
-                  >
-                    <button
-                      class="w-full text-left"
-                      on:click={() => openApplyChanges(applyOutput)}
-                    >
-                      <div class="flex items-center justify-between">
-                        <div>
-                          <h4 class="font-medium text-gray-900 dark:text-white">
-                            {applyOutput.scope?.dir || 'unknown'} / {applyOutput.scope?.workspace || 'default'}
-                          </h4>
-                          <p class="text-sm text-gray-600 dark:text-gray-400">
-                            {getStepLabel(applyOutput.step || 'tf/apply')}
-                          </p>
-                        </div>
-                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                    </button>
-                  </Card>
-                {:else}
-                  <div class="text-center py-8 text-gray-500 dark:text-gray-400">
-                    <div class="text-4xl mb-2">🚀</div>
-                    <p>No Terraform apply outputs found</p>
-                    <p class="text-sm mt-2">Run an apply to see changes</p>
-                  </div>
-                {/each}
-              {/if}
             </div>
           {:else}
             <!-- Show the visualization -->
@@ -1725,26 +1668,18 @@
               <button
                 class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
                 on:click={() => {
-                  visualizationPlanOutput = '';
+                  visualizationPlanJson = undefined;
                   activeOutputTab = 'all';
                 }}
               >
-                ← Back to {run?.run_type === 'apply' ? 'apply' : 'plan'} selection
+                ← Back to plan selection
               </button>
             </div>
-            {#if run?.run_type === 'apply'}
-              <ApplyChanges 
-                applyOutput={visualizationPlanOutput}
-                workManifestId={visualizationWorkManifestId}
-                showHeader={false}
-              />
-            {:else}
               <PlanChanges 
-                planOutput={visualizationPlanOutput}
+                planJson={visualizationPlanJson}
                 workManifestId={visualizationWorkManifestId}
                 showHeader={false}
               />
-            {/if}
           {/if}
         {/if}
         

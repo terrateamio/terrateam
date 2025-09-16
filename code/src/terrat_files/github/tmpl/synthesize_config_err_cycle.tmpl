@@ -1,0 +1,15 @@
+## Cycle in dependency graph
+
+### What is this?
+
+There is a cycle between dirspaces that is preventing operations from being evaluated.  This means that a two or more dirspaces depend on each other.
+
+Here is an example of the cycle:
+
+{% for c in cycle %}
+- `{{ c.dir }}:{{ c.workspace }}`
+{% endfor %}
+
+### What to do?
+
+The cycle must be removed. To do this, modify the `depends_on` or `stacks` sections of the in the configuration file.

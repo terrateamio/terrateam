@@ -42,12 +42,12 @@ module H = struct
 
   let query_comment_id t el1 =
     match !t with
-    (* | Eh.Query_comment_id (el2, cmd_result) :: rest when el1 = el2 -> *)
-    | Eh.Query_comment_id (el2, cmd_result) :: rest ->
+    | Eh.Query_comment_id (el2, cmd_result) :: rest when el1 = el2 ->
         t := rest;
         let abb_result = Abb.Future.return cmd_result in
         (abb_result : ('a, [ `Error ]) result Abb.Future.t :> ('a, [> `Error ]) result Abb.Future.t)
     | es ->
+        Printf.printf "\n\tQUERY COMMENT_ID INPUT: %s%!\n" (Eh.show_el el1);
         Printf.printf "\n\tQUERY COMMENT_ID LOG: %s%!\n" (Eh.show_commands es);
         assert false
 
@@ -58,6 +58,7 @@ module H = struct
         let abb_result = Abb.Future.return cmd_result in
         (abb_result : ('a, [ `Error ]) result Abb.Future.t :> ('a, [> `Error ]) result Abb.Future.t)
     | es ->
+        Printf.printf "\n\tQUERY ELS INPUT: %d%!\n" cid;
         Printf.printf "\n\tQUERY ELS FOR COMMENT_ID LOG: %s%!\n" (Eh.show_commands es);
         assert false
 
@@ -68,6 +69,7 @@ module H = struct
         let abb_result = Abb.Future.return cmd_result in
         (abb_result : ('a, [ `Error ]) result Abb.Future.t :> ('a, [> `Error ]) result Abb.Future.t)
     | es ->
+        Printf.printf "\n\tUPSERT INPUT: %d%!\n" cid;
         Printf.printf "\n\tUPSERT LOG: %s%!\n" (Eh.show_commands es);
         assert false
 
@@ -78,6 +80,7 @@ module H = struct
         let abb_result = Abb.Future.return cmd_result in
         (abb_result : ('a, [ `Error ]) result Abb.Future.t :> ('a, [> `Error ]) result Abb.Future.t)
     | es ->
+        Printf.printf "\n\tDELETE INPUT: %d%!\n" cid;
         Printf.printf "\n\tDELETE LOG: %s%!\n" (Eh.show_commands es);
         assert false
 
@@ -88,6 +91,7 @@ module H = struct
         let abb_result = Abb.Future.return cmd_result in
         (abb_result : ('a, [ `Error ]) result Abb.Future.t :> ('a, [> `Error ]) result Abb.Future.t)
     | es ->
+        Printf.printf "\n\tMINIMIZE INPUT: %d%!\n" cid;
         Printf.printf "\n\tMINIMIZE LOG: %s%!\nCID_INPUT=%d\n%!" (Eh.show_commands es) cid;
         assert false
 
@@ -339,14 +343,14 @@ let test_delete_strategy =
           ref
             [
               Eh.Query_comment_id (el1, Ok None);
+              Eh.Query_comment_id (el2, Ok None);
+              Eh.Query_comment_id (el3, Ok None);
               Eh.Post_comment ([ el1 ], Ok cid1);
               Eh.Upsert_comment_id ([ el1 ], cid1, Ok ());
-              Eh.Query_comment_id (el3, Ok None);
-              Eh.Post_comment ([ el3 ], Ok cid3);
-              Eh.Upsert_comment_id ([ el3 ], cid3, Ok ());
-              Eh.Query_comment_id (el2, Ok None);
-              Eh.Post_comment ([ el2 ], Ok cid2);
-              Eh.Upsert_comment_id ([ el2 ], cid2, Ok ());
+              Eh.Post_comment ([ el3 ], Ok cid2);
+              Eh.Upsert_comment_id ([ el3 ], cid2, Ok ());
+              Eh.Post_comment ([ el2 ], Ok cid3);
+              Eh.Upsert_comment_id ([ el2 ], cid3, Ok ());
             ]
         in
         Make_wrapper.run t els
@@ -378,8 +382,8 @@ let test_delete_strategy =
           ref
             [
               Eh.Query_comment_id (el1, Ok None);
-              Eh.Query_comment_id (el3, Ok None);
               Eh.Query_comment_id (el2, Ok None);
+              Eh.Query_comment_id (el3, Ok None);
               Eh.Post_comment (elsc, Ok cid1);
               Eh.Upsert_comment_id (elsc, cid1, Ok ());
             ]
@@ -415,11 +419,11 @@ let test_delete_strategy =
           ref
             [
               Eh.Query_comment_id (el1, Ok None);
+              Eh.Query_comment_id (el2, Ok None);
               Eh.Query_comment_id (el3, Ok None);
+              Eh.Query_comment_id (el4, Ok None);
               Eh.Post_comment ([ el1; el3 ], Ok cid1);
               Eh.Upsert_comment_id ([ el1; el3 ], cid1, Ok ());
-              Eh.Query_comment_id (el2, Ok None);
-              Eh.Query_comment_id (el4, Ok None);
               Eh.Post_comment ([ el2; el4c ], Ok cid2);
               Eh.Upsert_comment_id ([ el2; el4c ], cid2, Ok ());
             ]
@@ -457,14 +461,53 @@ let test_minimize_strategy =
           ref
             [
               Eh.Query_comment_id (el1, Ok None);
+              Eh.Query_comment_id (el2, Ok None);
+              Eh.Query_comment_id (el3, Ok None);
               Eh.Post_comment ([ el1 ], Ok cid1);
               Eh.Upsert_comment_id ([ el1 ], cid1, Ok ());
-              Eh.Query_comment_id (el3, Ok None);
               Eh.Post_comment ([ el3 ], Ok cid3);
               Eh.Upsert_comment_id ([ el3 ], cid3, Ok ());
-              Eh.Query_comment_id (el2, Ok None);
               Eh.Post_comment ([ el2 ], Ok cid2);
               Eh.Upsert_comment_id ([ el2 ], cid2, Ok ());
+            ]
+        in
+        Make_wrapper.run t els
+        >>= function
+        | Ok () -> Abb.Future.return ()
+        | Error _ -> assert false)
+  in
+  let multiple_small_with_two_groupings =
+    Oth_abb.test
+      ~desc:
+        "Given 4 elements with rendered length smaller than the ceiling, but that can't be \
+         combined into a single cluster, we will generate 2 groupings that will become separate \
+         comments."
+      ~name:"[Minimize] Multiple Small #2"
+      (fun () ->
+        let open Abb.Future.Infix_monad in
+        let module C = Terrat_vcs_comment in
+        let module D = Terrat_dirspace in
+        let module Cm = Terrat_vcs_comment.Make (H) in
+        let st = C.Strategy.Minimize in
+        let el1 = Shared.create_el "A" "A" false 30 st in
+        let el2 = Shared.create_el "B" "B" false 30 st in
+        let el3 = Shared.create_el "C" "C" false 30 st in
+        let el4 = Shared.create_el "D" "D" false 30 st in
+        let els = [ el1; el2; el3; el4 ] in
+        let counter = API_id.create 0 in
+        let cid1 = API_id.next counter in
+        let cid2 = API_id.next counter in
+        let t =
+          ref
+            [
+              Eh.Query_comment_id (el1, Ok None);
+              Eh.Query_comment_id (el2, Ok None);
+              Eh.Query_comment_id (el3, Ok None);
+              Eh.Query_comment_id (el4, Ok None);
+              Eh.Post_comment ([ el1; el2; el3 ], Ok cid1);
+              Eh.Upsert_comment_id ([ el1; el2; el3 ], cid1, Ok ());
+              Eh.Post_comment ([ el4 ], Ok cid2);
+              Eh.Upsert_comment_id ([ el4 ], cid2, Ok ());
             ]
         in
         Make_wrapper.run t els
@@ -478,7 +521,7 @@ let test_minimize_strategy =
         "Given 2 elements with rendered length smaller than the ceiling, but that can't be \
          combined into a single cluster, and 1 comment that is an older version of the first one, \
          We'll generate two new comments and minimize the old one."
-      ~name:"[Minimize] Multiple Small #2"
+      ~name:"[Minimize] Multiple Small #3"
       (fun () ->
         let open Abb.Future.Infix_monad in
         let module C = Terrat_vcs_comment in
@@ -496,9 +539,9 @@ let test_minimize_strategy =
           ref
             [
               Eh.Query_comment_id (el1, Ok None);
+              Eh.Query_comment_id (el2, Ok None);
               Eh.Post_comment ([ el1 ], Ok cid1);
               Eh.Upsert_comment_id ([ el1 ], cid1, Ok ());
-              Eh.Query_comment_id (el2, Ok None);
               Eh.Post_comment ([ el2 ], Ok cid2);
               Eh.Upsert_comment_id ([ el2 ], cid2, Ok ());
             ]
@@ -551,8 +594,8 @@ let test_minimize_strategy =
           ref
             [
               Eh.Query_comment_id (el1, Ok None);
-              Eh.Query_comment_id (el3, Ok None);
               Eh.Query_comment_id (el2, Ok None);
+              Eh.Query_comment_id (el3, Ok None);
               Eh.Post_comment (elsc, Ok cid1);
               Eh.Upsert_comment_id (elsc, cid1, Ok ());
             ]
@@ -586,8 +629,8 @@ let test_minimize_strategy =
           ref
             [
               Eh.Query_comment_id (el1, Ok None);
-              Eh.Query_comment_id (el3, Ok None);
               Eh.Query_comment_id (el2, Ok None);
+              Eh.Query_comment_id (el3, Ok None);
               Eh.Post_comment (elsc, Ok cid1);
               Eh.Upsert_comment_id (elsc, cid1, Ok ());
             ]
@@ -646,11 +689,11 @@ let test_minimize_strategy =
           ref
             [
               Eh.Query_comment_id (el1, Ok None);
+              Eh.Query_comment_id (el2, Ok None);
               Eh.Query_comment_id (el3, Ok None);
+              Eh.Query_comment_id (el4, Ok None);
               Eh.Post_comment ([ el1; el3 ], Ok cid1);
               Eh.Upsert_comment_id ([ el1; el3 ], cid1, Ok ());
-              Eh.Query_comment_id (el2, Ok None);
-              Eh.Query_comment_id (el4, Ok None);
               Eh.Post_comment ([ el2; el4c ], Ok cid2);
               Eh.Upsert_comment_id ([ el2; el4c ], cid2, Ok ());
             ]
@@ -663,6 +706,7 @@ let test_minimize_strategy =
   Oth_abb.parallel
     [
       multiple_small;
+      multiple_small_with_two_groupings;
       multiple_small_with_old_comment;
       multiple_big;
       multiple_big_with_old_comment;

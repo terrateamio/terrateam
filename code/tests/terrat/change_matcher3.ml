@@ -466,7 +466,7 @@ let test_dir_file_pattern =
         R.derive
           ~ctx
           ~index:Terrat_base_repo_config_v1.Index.empty
-          ~file_list:[ "ec2/ec2.tf"; "s3/s3.tf" ]
+          ~file_list:[ "ec2/ec2.tf"; "s3/s3.tf"; "iam/main.tf" ]
           (R.of_view
              (R.View.make
                 ~dirs:

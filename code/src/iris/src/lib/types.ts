@@ -28,6 +28,7 @@ export const InstallationSchema = z.object({
   account_status: z.string(),
   id: z.string(),
   name: z.string(),
+  created_at: z.string(),
   tier: z.object({
     name: z.string(),
     features: z.object({

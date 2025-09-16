@@ -677,13 +677,13 @@
         "any_of_count": {
           "type": "integer"
         },
+        "name": {
+          "type": "string"
+        },
         "token": {
           "type": "string"
         }
       },
-      "required": [
-        "token"
-      ],
       "type": "object"
     },
     "hook": {
@@ -723,6 +723,9 @@
         },
         {
           "$ref": "#/definitions/hook-op-slack"
+        },
+        {
+          "$ref": "#/definitions/hook-op-gates"
         }
       ]
     },
@@ -797,6 +800,35 @@
       "required": [
         "cmd",
         "method",
+        "type"
+      ],
+      "type": "object"
+    },
+    "hook-op-gates": {
+      "additionalProperties": false,
+      "properties": {
+        "cmd": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "env": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "run_on": {
+          "$ref": "#/definitions/run-on"
+        },
+        "type": {
+          "const": "gates",
+          "type": "string"
+        }
+      },
+      "required": [
+        "cmd",
         "type"
       ],
       "type": "object"
@@ -1067,26 +1099,14 @@
     "stack-config": {
       "additionalProperties": false,
       "properties": {
-        "on_change": {
-          "additionalProperties": false,
-          "properties": {
-            "can_apply_after": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            }
-          },
-          "type": "object"
+        "rules": {
+          "$ref": "#/definitions/stack-rules"
         },
         "tag_query": {
           "type": "string"
         },
         "variables": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/definitions/stack-variables"
         }
       },
       "required": [
@@ -1094,20 +1114,80 @@
       ],
       "type": "object"
     },
+    "stack-nested-config": {
+      "additionalProperties": false,
+      "properties": {
+        "rules": {
+          "$ref": "#/definitions/stack-rules"
+        },
+        "stacks": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "variables": {
+          "$ref": "#/definitions/stack-variables"
+        }
+      },
+      "required": [
+        "stacks"
+      ],
+      "type": "object"
+    },
+    "stack-rules": {
+      "additionalProperties": false,
+      "properties": {
+        "apply_after": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "auto_apply": {
+          "type": "boolean"
+        },
+        "modified_by": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "plan_after": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "stack-variables": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
     "stacks": {
       "additionalProperties": false,
       "properties": {
-        "allow_workspace_in_multiple_stacks": {
-          "default": false,
-          "type": "boolean"
-        },
         "names": {
           "additionalProperties": {
-            "$ref": "#/definitions/stack-config"
+            "oneOf": [
+              {
+                "$ref": "#/definitions/stack-config"
+              },
+              {
+                "$ref": "#/definitions/stack-nested-config"
+              }
+            ]
           },
           "type": "object"
         }
       },
+      "require": [
+        "names"
+      ],
       "type": "object"
     },
     "storage-plan-cmd": {
@@ -1287,9 +1367,7 @@
         "default_tf_version": {
           "$ref": "#/definitions/terraform-version"
         },
-        "definitions": {
-          "type": null
-        },
+        "definitions": {},
         "destination_branches": {
           "items": {
             "oneOf": [
@@ -1692,6 +1770,9 @@
           },
           {
             "$ref": "#/definitions/hook-op-oidc"
+          },
+          {
+            "$ref": "#/definitions/hook-op-gates"
           }
         ]
       },

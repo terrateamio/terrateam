@@ -21,18 +21,17 @@ module Output = struct
     { cmd; name; success; text; text_decorator; visible_on }
 
   let to_kv { cmd; name; success; text; text_decorator; visible_on } =
-    Snabela.Kv.(
-      Map.of_list
-        (CCList.flatten
+    `Assoc
+      (CCList.flatten
+         [
            [
-             [
-               ("name", string name);
-               ("text", string text);
-               ("success", bool success);
-               ("text_decorator", string (CCOption.get_or ~default:"" text_decorator));
-             ];
-             CCOption.map_or ~default:[] (fun cmd -> [ ("cmd", string cmd) ]) cmd;
-           ]))
+             ("name", `String name);
+             ("text", `String text);
+             ("success", `Bool success);
+             ("text_decorator", `String (CCOption.get_or ~default:"" text_decorator));
+           ];
+           CCOption.map_or ~default:[] (fun cmd -> [ ("cmd", `String cmd) ]) cmd;
+         ])
 
   let filter ~overall_success =
     CCList.filter (fun { visible_on; _ } ->
@@ -101,43 +100,42 @@ let kv_of_cost_estimation changed_dirspaces output =
     let summary = payload.P.summary in
     let changed_dirspaces = Terrat_data.Dirspace_set.of_list changed_dirspaces in
     Ok
-      Snabela.Kv.(
-        Map.of_list
-          [
-            ("name", string "cost_estimation");
-            ("success", bool output.O.success);
-            ("prev_monthly_cost", float summary.P.S.prev_monthly_cost);
-            ("total_monthly_cost", float summary.P.S.total_monthly_cost);
-            ("diff_monthly_cost", float summary.P.S.diff_monthly_cost);
-            ("currency", string payload.P.currency);
-            ( "dirspaces",
-              list
-                (CCList.filter_map
-                   (fun {
-                          P.Ds.dir;
-                          workspace;
-                          total_monthly_cost;
-                          prev_monthly_cost;
-                          diff_monthly_cost;
-                        }
-                      ->
-                     if
-                       Terrat_data.Dirspace_set.mem
-                         { Terrat_dirspace.dir; workspace }
-                         changed_dirspaces
-                     then
-                       Some
-                         (Map.of_list
-                            [
-                              ("dir", string dir);
-                              ("workspace", string workspace);
-                              ("prev_monthly_cost", float prev_monthly_cost);
-                              ("total_monthly_cost", float total_monthly_cost);
-                              ("diff_monthly_cost", float diff_monthly_cost);
-                            ])
-                     else None)
-                   payload.P.dirspaces) );
-          ])
+      (`Assoc
+         [
+           ("name", `String "cost_estimation");
+           ("success", `Bool output.O.success);
+           ("prev_monthly_cost", `Float summary.P.S.prev_monthly_cost);
+           ("total_monthly_cost", `Float summary.P.S.total_monthly_cost);
+           ("diff_monthly_cost", `Float summary.P.S.diff_monthly_cost);
+           ("currency", `String payload.P.currency);
+           ( "dirspaces",
+             `List
+               (CCList.filter_map
+                  (fun {
+                         P.Ds.dir;
+                         workspace;
+                         total_monthly_cost;
+                         prev_monthly_cost;
+                         diff_monthly_cost;
+                       }
+                     ->
+                    if
+                      Terrat_data.Dirspace_set.mem
+                        { Terrat_dirspace.dir; workspace }
+                        changed_dirspaces
+                    then
+                      Some
+                        (`Assoc
+                           [
+                             ("dir", `String dir);
+                             ("workspace", `String workspace);
+                             ("prev_monthly_cost", `Float prev_monthly_cost);
+                             ("total_monthly_cost", `Float total_monthly_cost);
+                             ("diff_monthly_cost", `Float diff_monthly_cost);
+                           ])
+                    else None)
+                  payload.P.dirspaces) );
+         ])
   else
     let module P = struct
       type t = { text : string } [@@deriving of_yojson { strict = false }]
@@ -145,7 +143,7 @@ let kv_of_cost_estimation changed_dirspaces output =
     let open CCResult.Infix in
     P.of_yojson (O.Payload.to_yojson output.O.payload)
     >>= fun { P.text } ->
-    Ok Snabela.Kv.(Map.of_list [ ("success", bool output.O.success); ("text", string text) ])
+    Ok (`Assoc [ ("success", `Bool output.O.success); ("text", `String text) ])
 
 let output_of_run ?(default_visible_on = Visible_on.Failure) output =
   let module P = struct
@@ -317,40 +315,38 @@ module Publisher_tools = struct
     let num_remaining_layers = CCList.length remaining_dirspace_configs in
     let denied_dirspaces =
       match work_manifest.Wm.denied_dirspaces with
-      | [] -> []
+      | [] -> [ ("denied_dirspaces", `List []) ]
       | dirspaces ->
-          Snabela.Kv.
-            [
-              ( "denied_dirspaces",
-                list
-                  (CCList.map
-                     (fun { Wm.Deny.dirspace = { Terrat_dirspace.dir; workspace }; policy } ->
-                       Map.of_list
-                         (CCList.flatten
-                            [
-                              [ ("dir", string dir); ("workspace", string workspace) ];
-                              (match policy with
-                              | Some policy ->
-                                  [
-                                    ( "policy",
-                                      list
-                                        (CCList.map
-                                           (fun p ->
-                                             Map.of_list
-                                               [
-                                                 ( "item",
-                                                   string
-                                                     (Terrat_base_repo_config_v1.Access_control
-                                                      .Match
-                                                      .to_string
-                                                        p) );
-                                               ])
-                                           policy) );
-                                  ]
-                              | None -> []);
-                            ]))
-                     dirspaces) );
-            ]
+          [
+            ( "denied_dirspaces",
+              `List
+                (CCList.map
+                   (fun { Wm.Deny.dirspace = { Terrat_dirspace.dir; workspace }; policy } ->
+                     `Assoc
+                       (CCList.flatten
+                          [
+                            [ ("dir", `String dir); ("workspace", `String workspace) ];
+                            (match policy with
+                            | Some policy ->
+                                [
+                                  ( "policy",
+                                    `List
+                                      (CCList.map
+                                         (fun p ->
+                                           `Assoc
+                                             [
+                                               ( "item",
+                                                 `String
+                                                   (Terrat_base_repo_config_v1.Access_control.Match
+                                                    .to_string
+                                                      p) );
+                                             ])
+                                         policy) );
+                                ]
+                            | None -> []);
+                          ]))
+                   dirspaces) );
+          ]
     in
     let cost_estimation =
       hooks_pre
@@ -365,109 +361,113 @@ module Publisher_tools = struct
               work_manifest.Wm.changes
           in
           match kv_of_cost_estimation changed_dirspaces o with
-          | Ok kv -> [ ("cost_estimation", Snabela.Kv.list [ kv ]) ]
-          | Error _ -> [ ("cost_estimation", Snabela.Kv.list [ Output.to_kv (output_of_raw o) ]) ])
+          | Ok kv -> [ ("cost_estimation", kv) ]
+          | Error _ -> [ ("cost_estimation", Output.to_kv (output_of_raw o)) ])
     in
     let kv =
-      Snabela.Kv.(
-        Map.of_list
-          (CCList.flatten
+      `Assoc
+        (CCList.flatten
+           [
+             CCOption.map_or
+               ~default:[]
+               (fun work_manifest_url ->
+                 [ ("work_manifest_url", `String (Uri.to_string work_manifest_url)) ])
+               (Ui.work_manifest_url config work_manifest.Wm.account work_manifest);
+             CCOption.map_or
+               ~default:[]
+               (fun env -> [ ("environment", `String env) ])
+               work_manifest.Wm.environment;
              [
-               CCOption.map_or
-                 ~default:[]
-                 (fun work_manifest_url ->
-                   [ ("work_manifest_url", string (Uri.to_string work_manifest_url)) ])
-                 (Ui.work_manifest_url config work_manifest.Wm.account work_manifest);
-               CCOption.map_or
-                 ~default:[]
-                 (fun env -> [ ("environment", string env) ])
-                 work_manifest.Wm.environment;
-               [
-                 ( "account_status",
-                   string
-                     (match account_status with
-                     | `Trial_ending duration when Duration.to_day duration < 15 ->
-                         (* Only mark as trial ending if less than two weeks from now *)
-                         "trial_ending"
-                     | `Trial_ending _ | `Active -> "active"
-                     | `Expired -> "expired"
-                     | `Disabled -> "disabled") );
-                 ( "trial_end_days",
-                   match account_status with
-                   | `Trial_ending duration -> int (Duration.to_day duration)
-                   | _ -> int 0 );
-                 ("is_layered_run", bool is_layered_run);
-                 ("num_more_layers", int num_remaining_layers);
-                 ("overall_success", bool overall_success);
-                 ( "pre_hooks",
-                   hooks_pre
+               ( "account_status",
+                 `String
+                   (match account_status with
+                   | `Trial_ending duration when Duration.to_day duration < 15 ->
+                       (* Only mark as trial ending if less than two weeks from now *)
+                       "trial_ending"
+                   | `Trial_ending _ | `Active -> "active"
+                   | `Expired -> "expired"
+                   | `Disabled -> "disabled") );
+               ( "trial_end_days",
+                 match account_status with
+                 | `Trial_ending duration -> `Int (Duration.to_day duration)
+                 | _ -> `Int 0 );
+               ("is_layered_run", `Bool is_layered_run);
+               ("num_more_layers", `Int num_remaining_layers);
+               ("overall_success", `Bool overall_success);
+               ( "pre_hooks",
+                 `List
+                   (hooks_pre
                    |> CCOption.get_or ~default:[]
                    |> output_of_steps
                    |> Output.filter ~overall_success
-                   |> kv_of_outputs
-                   |> list );
-                 ( "post_hooks",
-                   hooks_post
+                   |> kv_of_outputs) );
+               ( "post_hooks",
+                 `List
+                   (hooks_post
                    |> CCOption.get_or ~default:[]
                    |> output_of_steps
                    |> Output.filter ~overall_success
-                   |> kv_of_outputs
-                   |> list );
-                 ("compact_view", bool (view = `Compact));
-                 ("compact_dirspaces", bool (CCList.length dirspaces > 5));
-                 ( "dirspaces",
-                   list
-                     (CCList.map
-                        (fun ({ Terrat_dirspace.dir; workspace }, steps) ->
-                          let has_changes = steps_has_changes steps in
-                          let success = steps_success steps in
-                          Map.of_list
-                            (CCList.flatten
+                   |> kv_of_outputs) );
+               ("compact_view", `Bool (view = `Compact));
+               ("compact_dirspaces", `Bool (CCList.length dirspaces > 5));
+               ( "dirspaces",
+                 `List
+                   (CCList.map
+                      (fun ({ Terrat_dirspace.dir; workspace }, steps) ->
+                        let has_changes = steps_has_changes steps in
+                        let success = steps_success steps in
+                        `Assoc
+                          (CCList.flatten
+                             [
                                [
-                                 [
-                                   ("dir", string dir);
-                                   ("workspace", string workspace);
-                                   ("success", bool success);
-                                   ( "steps",
-                                     list
-                                       (kv_of_outputs
-                                          (Output.filter ~overall_success (output_of_steps steps)))
-                                   );
-                                   ("has_changes", bool has_changes);
-                                 ];
-                               ]))
-                        dirspaces) );
-                 ( "gates",
-                   let module G = Terrat_api_components.Gate in
-                   list
-                   @@ CCList.map (fun { G.all_of; any_of; any_of_count; dir; token; workspace } ->
-                          let all_of = CCOption.get_or ~default:[] all_of in
-                          let any_of = CCOption.get_or ~default:[] any_of in
-                          let any_of_count = CCOption.get_or ~default:0 any_of_count in
-                          let dir = CCOption.get_or ~default:"" dir in
-                          let workspace = CCOption.get_or ~default:"" workspace in
-                          Map.of_list
-                            [
-                              ("token", string token);
-                              ("dir", string dir);
-                              ("workspace", string workspace);
-                              ( "all_of",
-                                list @@ CCList.map (fun q -> Map.of_list [ ("q", string q) ]) all_of
-                              );
-                              ( "any_of",
-                                list
-                                @@ CCList.map
-                                     (fun q -> Map.of_list [ ("q", string q) ])
-                                     (if any_of_count = 0 then [] else any_of) );
-                              ("any_of_count", int any_of_count);
-                            ])
-                   @@ CCList.sort (fun { G.token = t1; _ } { G.token = t2; _ } ->
-                          CCString.compare t1 t2)
-                   @@ CCOption.get_or ~default:[] gates );
-               ];
-               denied_dirspaces;
-               cost_estimation;
-             ]))
+                                 ("dir", `String dir);
+                                 ("workspace", `String workspace);
+                                 ("success", `Bool success);
+                                 ( "steps",
+                                   `List
+                                     (kv_of_outputs
+                                        (Output.filter ~overall_success (output_of_steps steps))) );
+                                 ("has_changes", `Bool has_changes);
+                               ];
+                             ]))
+                      dirspaces) );
+               ( "gates",
+                 let module G = Terrat_api_components.Gate in
+                 `List
+                   (CCList.map
+                      (fun { G.all_of; any_of; any_of_count; dir; token; name; workspace } ->
+                        let all_of = CCOption.get_or ~default:[] all_of in
+                        let any_of = CCOption.get_or ~default:[] any_of in
+                        let any_of_count = CCOption.get_or ~default:0 any_of_count in
+                        let dir = CCOption.get_or ~default:"" dir in
+                        let workspace = CCOption.get_or ~default:"" workspace in
+                        `Assoc
+                          [
+                            ( "token",
+                              CCOption.map_or ~default:`Null (fun token -> `String token) token );
+                            ("name", CCOption.map_or ~default:`Null (fun name -> `String name) name);
+                            ("dir", `String dir);
+                            ("workspace", `String workspace);
+                            ( "all_of",
+                              `List (CCList.map (fun q -> `Assoc [ ("q", `String q) ]) all_of) );
+                            ( "any_of",
+                              `List
+                                (CCList.map
+                                   (fun q -> `Assoc [ ("q", `String q) ])
+                                   (if any_of_count = 0 then [] else any_of)) );
+                            ("any_of_count", `Int any_of_count);
+                          ])
+                   @@ CCList.sort
+                        (fun { G.token = t1; name = n1; _ } { G.token = t2; name = n2; _ } ->
+                          let module Cmp = struct
+                            type t = string option * string option [@@deriving ord]
+                          end in
+                          Cmp.compare (t1, n1) (t2, n2))
+                   @@ CCOption.get_or ~default:[] gates) );
+             ];
+             denied_dirspaces;
+             cost_estimation;
+           ])
     in
     let tmpl =
       match CCList.rev work_manifest.Wm.steps with
@@ -476,9 +476,9 @@ module Publisher_tools = struct
       | Wm.Step.Plan :: _ -> Tmpl.plan_complete2
       | Wm.Step.(Apply | Unsafe_apply) :: _ -> Tmpl.apply_complete2
     in
-    match Snabela.apply tmpl kv with
+    match Minijinja.render_template tmpl kv with
     | Ok body -> body
-    | Error (#Snabela.err as err) ->
-        Logs.err (fun m -> m "%s : ERROR : %a" request_id Snabela.pp_err err);
+    | Error err ->
+        Logs.err (fun m -> m "%s : ERROR : %s" request_id err);
         assert false
 end

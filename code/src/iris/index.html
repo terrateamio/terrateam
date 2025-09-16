@@ -17,7 +17,8 @@
         ui_analytics: '%TERRATEAM_UI_ANALYTICS%',
         ui_subscription: '%TERRATEAM_UI_SUBSCRIPTION%',
         maintenanceMode: '%TERRATEAM_MAINTENANCE%',
-        maintenanceMessage: '%TERRATEAM_MAINTENANCE_MESSAGE%'
+        maintenanceMessage: '%TERRATEAM_MAINTENANCE_MESSAGE%',
+        upgrade_nudges: '%TERRATEAM_UPGRADE_NUDGES%'
       };
       
       // Handle template replacement fallbacks for development
@@ -37,6 +38,9 @@
               break;
             case 'maintenanceMessage':
               window.terrateamConfig[key] = ''; // Default to empty message
+              break;
+            case 'upgrade_nudges':
+              window.terrateamConfig[key] = 'false'; // Default to disabled
               break;
           }
         }

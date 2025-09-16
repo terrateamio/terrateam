@@ -66,18 +66,20 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
   end
 
   module Plans = struct
-    let post config storage work_manifest_id plan ctx =
+    let post config storage work_manifest_id plan =
       let open Abb.Future.Infix_monad in
-      let request_id = Brtl_ctx.token ctx in
-      Evaluator.run_plan_store
-        ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
-        work_manifest_id
-        plan
-      >>= function
-      | Ok () -> Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
-      | Error `Error ->
-          Abb.Future.return
-            (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
+      Brtl_ep.run_json ~f:(fun ctx ->
+          let request_id = Brtl_ctx.token ctx in
+          Evaluator.run_plan_store
+            ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
+            work_manifest_id
+            plan
+          >>= function
+          | Ok () ->
+              Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
+          | Error `Error ->
+              Abb.Future.return
+                (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
 
     let get config storage work_manifest_id dir workspace =
       let open Abb.Future.Infix_monad in

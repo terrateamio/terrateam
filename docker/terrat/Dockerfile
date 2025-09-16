@@ -73,7 +73,7 @@ RUN eval $(opam env) && \
     opam install -j$(nproc --all) -y --deps-only --no-depexts monorepo && \
     ulimit -s 524288 && ulimit -a && \
     time pds -d && \
-    time make -j$(nproc --all) release-terrat && \
+    time make -j$(nproc --all) test test-terrat release-terrat && \
     mv build /build-cache
 
 # Use provided BASE_IMAGE if specified, otherwise use the build-base stage
@@ -114,7 +114,7 @@ RUN ulimit -s 524288 && ulimit -a && \
     find . -name '*.tap' -exec cat '{}' \;
 
 # Final code-indexer image
-FROM alpine:3.18 AS code-indexer
+FROM alpine:3.22 AS code-indexer
 RUN addgroup -S terrat && adduser -S -G terrat terrat
 COPY --from=code-indexer-build /mono/code/build/release/terrat_code_indexer/terrat_code_indexer.native /usr/local/bin/terrat_code_indexer
 USER terrat
@@ -122,9 +122,10 @@ WORKDIR /mnt
 ENTRYPOINT ["/usr/local/bin/terrat_code_indexer"]
 
 # Final terrat-ee image
-FROM alpine:3.18 AS terrat-ee
+FROM alpine:3.22 AS terrat-ee
 RUN apk add --no-cache \
     bash \
+    ca-certificates \
     curl \
     gettext \
     gmp \
@@ -160,9 +161,10 @@ EXPOSE 8080
 CMD ["runsvdir", "/etc/service"]
 
 # Final terrat-oss image
-FROM alpine:3.18 AS terrat-oss
+FROM alpine:3.22 AS terrat-oss
 RUN apk add --no-cache \
     bash \
+    ca-certificates \
     curl \
     gettext \
     gmp \
