@@ -23,6 +23,12 @@ let create_stream
   { response = Response.make ?version ~headers ~status (); body }
 
 let create ?version ?(headers = Cohttp.Header.init ()) ?(encoding = Encoding.chunked) ~status body =
+  let headers =
+    Cohttp.Header.add_unless_exists
+      headers
+      "content-length"
+      (CCInt.to_string (CCString.length body))
+  in
   create_stream ?version ~headers ~encoding ~status (fun writer ->
       Http.Response_io.write_body writer body)
 
