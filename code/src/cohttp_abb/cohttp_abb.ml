@@ -477,6 +477,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
       read_request (Config.read_header_timeout config) r
       >>= function
       | `Req (`Ok req) -> (
+          Logs.debug (fun m -> m "read request : %a" Request.pp_hum req);
           Abb.Future.await
             (Fut_comb.on_failure
                (fun () ->
