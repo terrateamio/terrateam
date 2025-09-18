@@ -77,6 +77,7 @@ module Oid = struct
   let regconfig = make 3734 3735
   let regdictionary = make 3769 3770
   let jsonb = make 3802 3807
+  let jsonpath = make 4072 4073
   let txid_snapshot = make 2970 2949
   let int4range = make 3904 3905
   let numrange = make 3906 3907
