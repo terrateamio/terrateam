@@ -12,7 +12,9 @@ all: .merlin
 pds.mk: pds.conf $(wildcard src/*/*) $(wildcard test/*/*)
 	pds -d
 
-terrat-schemas: terrat-api terrat-repo-config terrat-webhooks gitlab-api gitlab-webhooks github-api
+terrat-schemas: terrat-api terrat-repo-config terrat-webhooks terrat-capabilities
+
+terrat-schemas: gitlab-api gitlab-webhooks github-api
 
 terrat: release-terrat debug-terrat
 
@@ -55,6 +57,12 @@ terrat-repo-config: debug_json_schema_hooks_cli release_json_schema_hooks_cli
 	rm -f ./src/terrat_repo_config/*.ml
 	env OCAMLRUNPARAM=b ./build/debug/json_schema_hooks_cli/json_schema_hooks_cli.native convert --input ../api_schemas/terrat/config-schema.json --name terrat_repo_config --output-dir=./src/terrat_repo_config/
 	find src/terrat_repo_config/ -type f -exec ocamlformat -i '{}' \;
+
+terrat-capabilities: debug_json_schema_hooks_cli release_json_schema_hooks_cli
+	jq -S . < ../api_schemas/terrat/capabilities.json > /tmp/$$$$.json && mv /tmp/$$$$.json ../api_schemas/terrat/capabilities.json
+	rm -f ./src/terrat_access_token_caps/*.ml
+	env OCAMLRUNPARAM=b ./build/debug/json_schema_hooks_cli/json_schema_hooks_cli.native convert --input ../api_schemas/terrat/capabilities.json --name terrat_access_token_caps --output-dir=./src/terrat_access_token_caps/
+	find src/terrat_access_token_caps/ -type f -exec ocamlformat -i '{}' \;
 
 terrat-webhooks: debug_json_schema_hooks_cli release_json_schema_hooks_cli
 	jq -S . < ../api_schemas/github_webhooks/terrat-schema.json > /tmp/$$$$.json && mv /tmp/$$$$.json ../api_schemas/github_webhooks/terrat-schema.json
