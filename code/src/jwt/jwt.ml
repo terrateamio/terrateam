@@ -98,11 +98,11 @@ module Header = struct
 
   let to_string header =
     let json = to_json header in
-    Yojson.Basic.to_string json
+    Yojson.Safe.to_string json
 
   let of_json =
     CCOption.wrap (fun json ->
-        let assoc = Yojson.Basic.Util.to_assoc json in
+        let assoc = Yojson.Safe.Util.to_assoc json in
         CCList.map
           (fun (c, v) ->
             match v with
@@ -112,7 +112,7 @@ module Header = struct
 
   let of_string str =
     let open CCOption.Infix in
-    CCOption.wrap Yojson.Basic.from_string str >>= fun json -> of_json json
+    CCOption.wrap Yojson.Safe.from_string str >>= fun json -> of_json json
 end
 
 module Claim = struct
@@ -136,17 +136,8 @@ end
 module Payload = struct
   module Claim_map = CCMap.Make (CCString)
 
-  type typs =
-    [ `Bool of bool
-    | `Float of float
-    | `Int of int
-    | `String of string
-    ]
-
+  type typs = Yojson.Safe.t
   type t = typs Claim_map.t
-
-  (* [typs] is a subset of yojson's types, so force the conversion between. *)
-  external to_yojson_json : (Claim.t * typs) list -> (Claim.t * Yojson.Basic.t) list = "%identity"
 
   let empty = Claim_map.empty
   let add_claim claim value t = Claim_map.add claim value t
@@ -175,27 +166,19 @@ module Payload = struct
   let of_json =
     CCOption.wrap (fun json ->
         CCListLabels.fold_left
-          ~f:(fun acc v ->
-            match v with
-            | claim, (`String _ as v)
-            | claim, (`Int _ as v)
-            | claim, (`Float _ as v)
-            | claim, (`Bool _ as v) -> add_claim claim v acc
-            | _ -> failwith "bad json")
+          ~f:(fun acc (claim, v) -> add_claim claim v acc)
           ~init:empty
-          (Yojson.Basic.Util.to_assoc json))
+          (Yojson.Safe.Util.to_assoc json))
 
   let of_string str =
     let open CCOption.Infix in
-    CCOption.wrap Yojson.Basic.from_string str >>= fun json -> of_json json
+    CCOption.wrap Yojson.Safe.from_string str >>= fun json -> of_json json
 
   let to_json t =
-    `Assoc
-      (CCList.sort
-         (fun (c1, _) (c2, _) -> CCString.compare c1 c2)
-         (to_yojson_json (Claim_map.to_list t)))
+    let t = (t : t :> Yojson.Safe.t Claim_map.t) in
+    `Assoc (CCList.sort (fun (c1, _) (c2, _) -> CCString.compare c1 c2) (Claim_map.to_list t))
 
-  let to_string t = Yojson.Basic.to_string (to_json t)
+  let to_string t = Yojson.Safe.to_string (to_json t)
 end
 
 type decoded = string

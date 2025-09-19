@@ -43,6 +43,13 @@ struct
           Terrat_vcs_service_gitlab_user.enforce_installation_access'
       end)
 
+  module Ep_access_token =
+    Terrat_vcs_access_token.Make
+      (Provider)
+      (struct
+        let vcs = "gitlab"
+      end)
+
   module Routes = struct
     module Rt = struct
       let api () = Brtl_rtng.Route.(rel / "api")
@@ -166,6 +173,7 @@ struct
       let storage = t.storage in
       Routes.routes config storage
       @ Kv_store.routes config storage
+      @ Ep_access_token.routes config storage
       @ Brtl_rtng.Route.
           [
             (* Installations *)
