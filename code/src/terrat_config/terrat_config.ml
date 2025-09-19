@@ -228,7 +228,7 @@ let create () =
       (Sys.getenv_opt "TERRAT_WEB_BASE_URL")
   in
   let statement_timeout =
-    CCOption.get_or ~default:"500ms" (Sys.getenv_opt "TERRAT_STATEMENT_TIMEOUT")
+    CCOption.get_or ~default:"5s" (Sys.getenv_opt "TERRAT_STATEMENT_TIMEOUT")
   in
   load_github ()
   >>= fun github ->
