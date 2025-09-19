@@ -1488,7 +1488,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             Abbs_cache.Expiring.on_hit = on_hit "matches";
             on_miss = on_miss "matches";
             on_evict = on_evict "matches";
-            duration = Duration.of_min 5;
+            duration = Duration.of_min 1;
             capacity = cache_capacity_mb_in_kb 10;
           }
 
@@ -1498,7 +1498,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             Abbs_cache.Expiring.on_hit = on_hit "access_control_eval_tf_op";
             on_miss = on_miss "access_control_eval_tf_op";
             on_evict = on_evict "access_control_eval_tf_op";
-            duration = Duration.of_min 5;
+            duration = Duration.of_min 1;
             capacity = cache_capacity_mb_in_kb 5;
           }
 
@@ -1508,7 +1508,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             Abbs_cache.Expiring.on_hit = on_hit "apply_requirements";
             on_miss = on_miss "apply_requirements";
             on_evict = on_evict "apply_requirements";
-            duration = Duration.of_min 5;
+            duration = Duration.of_min 1;
             capacity = 50;
           }
 
@@ -1518,7 +1518,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             Abbs_cache.Expiring.on_hit = on_hit "repo_config";
             on_miss = on_miss "repo_config";
             on_evict = on_evict "repo_config";
-            duration = Duration.of_min 5;
+            duration = Duration.of_min 1;
             capacity = cache_capacity_mb_in_kb 10;
           }
 
@@ -1528,7 +1528,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             Abbs_cache.Expiring.on_hit = on_hit "pull_request";
             on_miss = on_miss "pull_request";
             on_evict = on_evict "pull_request";
-            duration = Duration.of_min 5;
+            duration = Duration.of_min 1;
             capacity = cache_capacity_mb_in_kb 10;
           }
     end
