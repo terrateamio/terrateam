@@ -3,6 +3,73 @@
     "parameters": {},
     "responses": {},
     "schemas": {
+      "access-token": {
+        "additionalProperties": false,
+        "properties": {
+          "refresh_token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "refresh_token"
+        ],
+        "type": "object"
+      },
+      "access-token-capabilities": {
+        "items": {},
+        "type": "array"
+      },
+      "access-token-create": {
+        "additionalProperties": false,
+        "properties": {
+          "capabilities": {
+            "$ref": "#/components/schemas/access-token-capabilities"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "capabilities"
+        ],
+        "type": "object"
+      },
+      "access-token-item": {
+        "additionalProperties": false,
+        "properties": {
+          "capabilities": {
+            "$ref": "#/components/schemas/access-token-capabilities"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "capabilities",
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "access-token-page": {
+        "additionalProperties": false,
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/access-token-item"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object"
+      },
       "bad-request-err": {
         "additionalProperties": false,
         "properties": {
@@ -2370,6 +2437,32 @@
         }
       }
     },
+    "/api/v1/access-token/refresh": {
+      "post": {
+        "operationId": "access-token/refresh",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "token": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "token"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {}
+        }
+      }
+    },
     "/api/v1/admin/drifts": {
       "get": {
         "operationId": "admin/drifts",
@@ -3659,6 +3752,114 @@
         }
       }
     },
+    "/api/v1/{vcs}/access-token": {
+      "delete": {
+        "operationId": "access-token/delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vcs",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {},
+          "403": {},
+          "404": {}
+        }
+      },
+      "get": {
+        "operationId": "access-token/list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vcs",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/access-token-page"
+                }
+              }
+            }
+          },
+          "403": {}
+        }
+      },
+      "post": {
+        "operationId": "access-token/create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vcs",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/access-token-create"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/access-token"
+                }
+              }
+            }
+          },
+          "400": {},
+          "403": {}
+        }
+      }
+    },
     "/api/v1/{vcs}/installations/{installation_id}/repos/{repo_id}/prs/{pull_request_id}/stacks": {
       "get": {
         "operationId": "installations/get-pull-requests-stack",
@@ -4185,5 +4386,6 @@
           "404": {}
         }
       }
+    }
   }
 }

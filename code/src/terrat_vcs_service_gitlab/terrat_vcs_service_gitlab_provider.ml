@@ -65,19 +65,25 @@ end
 let name = "gitlab"
 
 let enforce_installation_access ~request_id user account_id db =
-  let open Abb.Future.Infix_monad in
-  Pgsql_io.Prepared_stmt.fetch
-    db
-    (Sql.select_user_installation ())
-    ~f:CCFun.id
-    (Terrat_user.id user)
-    (CCInt64.of_int account_id)
-  >>= function
-  | Ok [] -> Abb.Future.return (Error `Forbidden)
-  | Ok (_ :: _) -> Abb.Future.return (Ok ())
-  | Error (#Pgsql_io.err as err) ->
-      Logs.err (fun m -> m "%s : ENFORCE_INSTALLATION_ACCESS : %a" request_id Pgsql_io.pp_err err);
-      Abb.Future.return (Error `Forbidden)
+  if
+    Terrat_user.has_capability
+      (Terrat_user.Capability.Installation_id (CCInt.to_string account_id))
+      user
+  then Abb.Future.return (Ok ())
+  else
+    let open Abb.Future.Infix_monad in
+    Pgsql_io.Prepared_stmt.fetch
+      db
+      (Sql.select_user_installation ())
+      ~f:CCFun.id
+      (Terrat_user.id user)
+      (CCInt64.of_int account_id)
+    >>= function
+    | Ok [] -> Abb.Future.return (Error `Forbidden)
+    | Ok (_ :: _) -> Abb.Future.return (Ok ())
+    | Error (#Pgsql_io.err as err) ->
+        Logs.err (fun m -> m "%s : ENFORCE_INSTALLATION_ACCESS : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Forbidden)
 
 module Unlock_id = struct
   type t =

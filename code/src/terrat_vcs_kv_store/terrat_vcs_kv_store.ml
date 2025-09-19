@@ -1,23 +1,34 @@
 module type S = sig
-  type installation_id
+  module Installation_id : Terrat_vcs_api.ID
 
   val namespace_prefix : string
   val route_root : unit -> ('a, 'a) Brtl_rtng.Route.t
 
   val enforce_installation_access :
-    Terrat_storage.t ->
+    request_id:string ->
     Terrat_user.t ->
-    installation_id ->
-    ('a, 'b) Brtl_ctx.t ->
-    (unit, ('a, [> `Forbidden | `Internal_server_error ]) Brtl_ctx.t) result Abb.Future.t
+    Installation_id.t ->
+    Pgsql_io.t ->
+    (unit, [> `Forbidden ]) result Abb.Future.t
 end
 
-module Make (P : Terrat_vcs_provider2.S) (S : S with type installation_id = P.Api.Account.Id.t) =
+module Make (P : Terrat_vcs_provider2.S) (S : S with type Installation_id.t = P.Api.Account.Id.t) =
 struct
   let src = Logs.Src.create ("vcs_kv_store_" ^ S.namespace_prefix)
 
   module Logs = (val Logs.src_log src : Logs.LOG)
   module Cap = Terrat_user.Capability
+
+  let enforce_installation_access storage user installation_id ctx =
+    let open Abb.Future.Infix_monad in
+    Pgsql_pool.with_conn storage ~f:(fun db ->
+        S.enforce_installation_access ~request_id:(Brtl_ctx.token ctx) user installation_id db)
+    >>= function
+    | Ok () -> Abb.Future.return (Ok ())
+    | Error `Forbidden -> Abb.Future.return (Error (Brtl_ctx.set_response `Forbidden ctx))
+    | Error (#Pgsql_pool.err as err) ->
+        Logs.err (fun m -> m "%s : %a" (Brtl_ctx.token ctx) Pgsql_pool.pp_err err);
+        Abb.Future.return (Error (Brtl_ctx.set_response `Internal_server_error ctx))
 
   let make_key installation_id key =
     (S.namespace_prefix ^ ":" ^ P.Api.Account.Id.to_string installation_id, key)
@@ -67,7 +78,7 @@ struct
           let open Abbs_future_combinators.Infix_result_monad in
           Terrat_session.with_session ~caps:[ Cap.Kv_store_read ] ctx
           >>= fun user ->
-          S.enforce_installation_access storage user installation_id ctx
+          enforce_installation_access storage user installation_id ctx
           >>= fun () ->
           let key = make_key installation_id key in
           kv_run
@@ -90,7 +101,7 @@ struct
           let open Abbs_future_combinators.Infix_result_monad in
           Terrat_session.with_session ~caps:[ Cap.Kv_store_write ] ctx
           >>= fun user ->
-          S.enforce_installation_access storage user installation_id ctx
+          enforce_installation_access storage user installation_id ctx
           >>= fun () ->
           let key = make_key installation_id key in
           let { Terrat_api_components_kv_set.committed; data; idx } = body in
@@ -118,7 +129,7 @@ struct
           let open Abbs_future_combinators.Infix_result_monad in
           Terrat_session.with_session ~caps:[ Cap.Kv_store_read; Cap.Kv_store_write ] ctx
           >>= fun user ->
-          S.enforce_installation_access storage user installation_id ctx
+          enforce_installation_access storage user installation_id ctx
           >>= fun () ->
           let key = make_key installation_id key in
           let { Terrat_api_components_kv_cas.committed; data; idx; version } = body in
@@ -148,7 +159,7 @@ struct
           let open Abbs_future_combinators.Infix_result_monad in
           Terrat_session.with_session ~caps:[ Cap.Kv_store_read; Cap.Kv_store_write ] ctx
           >>= fun user ->
-          S.enforce_installation_access storage user installation_id ctx
+          enforce_installation_access storage user installation_id ctx
           >>= fun () ->
           let key = make_key installation_id key in
           kv_run
@@ -170,7 +181,7 @@ struct
           let open Abbs_future_combinators.Infix_result_monad in
           Terrat_session.with_session ~caps:[ Cap.Kv_store_read ] ctx
           >>= fun user ->
-          S.enforce_installation_access storage user installation_id ctx
+          enforce_installation_access storage user installation_id ctx
           >>= fun () ->
           let key = make_key installation_id key in
           kv_run
@@ -194,7 +205,7 @@ struct
           let open Abbs_future_combinators.Infix_result_monad in
           Terrat_session.with_session ~caps:[ Cap.Kv_store_read ] ctx
           >>= fun user ->
-          S.enforce_installation_access storage user installation_id ctx
+          enforce_installation_access storage user installation_id ctx
           >>= fun () ->
           let key = make_key installation_id key in
           kv_run
@@ -217,7 +228,7 @@ struct
           let open Abbs_future_combinators.Infix_result_monad in
           Terrat_session.with_session ~caps:[ Cap.Kv_store_read ] ctx
           >>= fun user ->
-          S.enforce_installation_access storage user installation_id ctx
+          enforce_installation_access storage user installation_id ctx
           >>= fun () ->
           let key = make_key installation_id key in
           kv_run
@@ -239,7 +250,7 @@ struct
           let open Abbs_future_combinators.Infix_result_monad in
           Terrat_session.with_session ~caps:[ Cap.Kv_store_write ] ctx
           >>= fun user ->
-          S.enforce_installation_access storage user installation_id ctx
+          enforce_installation_access storage user installation_id ctx
           >>= fun () ->
           let module C = Terrat_api_components_kv_commit in
           let module R = Terrat_api_components_kv_commit_result in
@@ -262,7 +273,7 @@ struct
   end
 
   module Rt = struct
-    let kv_rt () = Brtl_rtng.Route.(S.route_root () / "kv" /% Path.ud P.Api.Account.Id.of_string)
+    let kv_rt () = Brtl_rtng.Route.(S.route_root () / "kv" /% Path.ud S.Installation_id.of_string)
 
     let kv_get_rt () =
       Brtl_rtng.Route.(

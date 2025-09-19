@@ -1,6 +1,6 @@
-(** Implement parsing and verifying JSON Web Tokens (JWTs). A JWT starts out as
-   a string, then is decoded, and from there it can be verified against the
-   correct verifier, at which point it becomes verified. *)
+(** Implement parsing and verifying JSON Web Tokens (JWTs). A JWT starts out as a string, then is
+    decoded, and from there it can be verified against the correct verifier, at which point it
+    becomes verified. *)
 
 (** Used to verify the signature of a JWT. *)
 module Verifier : sig
@@ -47,9 +47,9 @@ module Header : sig
   val typ : t -> string
   val get : string -> t -> string option
   val to_string : t -> string
-  val to_json : t -> Yojson.Basic.t
+  val to_json : t -> Yojson.Safe.t
   val of_string : string -> t option
-  val of_json : Yojson.Basic.t -> t option
+  val of_json : Yojson.Safe.t -> t option
 end
 
 module Claim : sig
@@ -71,13 +71,7 @@ module Claim : sig
 end
 
 module Payload : sig
-  type typs =
-    [ `Bool of bool
-    | `Float of float
-    | `Int of int
-    | `String of string
-    ]
-
+  type typs = Yojson.Safe.t
   type t
 
   val empty : t
@@ -87,8 +81,8 @@ module Payload : sig
   val find_claim_bool : Claim.t -> t -> bool option
   val find_claim_float : Claim.t -> t -> float option
   val find_claim_int : Claim.t -> t -> int option
-  val of_json : Yojson.Basic.t -> t option
-  val to_json : t -> Yojson.Basic.t
+  val of_json : Yojson.Safe.t -> t option
+  val to_json : t -> Yojson.Safe.t
   val to_string : t -> string
   val of_string : string -> t option
 end
@@ -96,29 +90,28 @@ end
 (** A decoded JWT has just been successfully parsed. *)
 type decoded
 
-(** A verified JWT means that the signature has been verified against the
-   content. *)
+(** A verified JWT means that the signature has been verified against the content. *)
 type verified
 
 type 'a t
 
-(** Create a verified token.  This may throw an exception if the random number
-   generator has not been initialized.  To initialize it, run
-   [Mirage_crypto_rng_unix.initialize] or [Mirage_crypto_rng_lwt.initialize] *)
+(** Create a verified token. This may throw an exception if the random number generator has not been
+    initialized. To initialize it, run [Mirage_crypto_rng_unix.initialize] or
+    [Mirage_crypto_rng_lwt.initialize] *)
 val of_header_and_payload : Signer.t -> Header.t -> Payload.t -> verified t
 
 val header : 'a t -> Header.t
 val payload : 'a t -> Payload.t
 val signature : verified t -> string
 
-(** Convert the JWT into the string representation.  Only a verified token can
-   be converted to a string. *)
+(** Convert the JWT into the string representation. Only a verified token can be converted to a
+    string. *)
 val token : verified t -> string
 
-(** Convert a string representing a JWT into a decoded, but unverified, value.
-   This can further be verified using {!verify}. *)
+(** Convert a string representing a JWT into a decoded, but unverified, value. This can further be
+    verified using {!verify}. *)
 val of_token : string -> decoded t option
 
-(** Verify a decoded JWT against a particular verifier.  The alg in the JWT must
-   match that of the verifier.  This is verified against the un-parse JWT. *)
+(** Verify a decoded JWT against a particular verifier. The alg in the JWT must match that of the
+    verifier. This is verified against the un-parse JWT. *)
 val verify : Verifier.t -> decoded t -> verified t option

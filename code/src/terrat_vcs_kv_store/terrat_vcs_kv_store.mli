@@ -1,20 +1,20 @@
 module type S = sig
-  type installation_id
+  module Installation_id : Terrat_vcs_api.ID
 
   val namespace_prefix : string
   val route_root : unit -> ('a, 'a) Brtl_rtng.Route.t
 
   val enforce_installation_access :
-    Terrat_storage.t ->
+    request_id:string ->
     Terrat_user.t ->
-    installation_id ->
-    ('a, 'b) Brtl_ctx.t ->
-    (unit, ('a, [> `Forbidden | `Internal_server_error ]) Brtl_ctx.t) result Abb.Future.t
+    Installation_id.t ->
+    Pgsql_io.t ->
+    (unit, [> `Forbidden ]) result Abb.Future.t
 end
 
 module Make
     (P : Terrat_vcs_provider2.S)
-    (S : S with type installation_id = P.Api.Account.Id.t) : sig
+    (S : S with type Installation_id.t = P.Api.Account.Id.t) : sig
   val routes :
     P.Api.Config.t ->
     Terrat_storage.t ->
