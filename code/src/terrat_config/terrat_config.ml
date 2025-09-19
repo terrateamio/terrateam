@@ -63,6 +63,18 @@ module Infracost = struct
   [@@deriving show]
 end
 
+module Gc = struct
+  type dynamic_gc = DynamicGc.config = {
+    min_space_overhead : int;
+    max_space_overhead : int;
+    heap_start_worrying_mb : int;
+    heap_really_worry_mb : int;
+  }
+  [@@deriving show]
+
+  type t = { dynamic_gc : dynamic_gc option } [@@deriving show]
+end
+
 type t = {
   admin_token : string option;
   api_base : string;
@@ -74,6 +86,7 @@ type t = {
   db_password : (string[@opaque]);
   db_user : string;
   default_tier : string;
+  gc : Gc.t;
   github : Github.t option;
   gitlab : Gitlab.t option;
   infracost : Infracost.t option;
@@ -173,6 +186,43 @@ let load_gitlab () =
       >>= fun access_token ->
       Ok (Some { Gitlab.access_token; api_base_url; app_id; app_secret; web_base_url })
 
+let load_gc () =
+  let dynamic_gc' () =
+    let open CCOption.Infix in
+    Sys.getenv_opt "TERRAT_GC_MIN_SPACE_OVERHEAD"
+    >>= fun min_space_overhead ->
+    Sys.getenv_opt "TERRAT_GC_MAX_SPACE_OVERHEAD"
+    >>= fun max_space_overhead ->
+    Sys.getenv_opt "TERRAT_GC_HEAP_SPACE_OVERHEAD_START_MB"
+    >>= fun heap_start ->
+    Sys.getenv_opt "TERRAT_GC_HEAP_SPACE_OVERHEAD_REALLY_MB"
+    >>= fun heap_really -> Some (min_space_overhead, max_space_overhead, heap_start, heap_really)
+  in
+  let dynamic_gc () =
+    match dynamic_gc' () with
+    | None -> Ok None
+    | Some (min_space_overhead, max_space_overhead, heap_start, heap_really) ->
+        let open CCResult.Infix in
+        of_opt (`Key_error "TERRAT_GC_MIN_SPACE_OVERHEAD") @@ CCInt.of_string min_space_overhead
+        >>= fun min_space_overhead ->
+        of_opt (`Key_error "TERRAT_GC_MAX_SPACE_OVERHEAD") @@ CCInt.of_string max_space_overhead
+        >>= fun max_space_overhead ->
+        of_opt (`Key_error "TERRAT_GC_HEAP_SPACE_OVERHEAD_START_MB") @@ CCInt.of_string heap_start
+        >>= fun heap_start ->
+        of_opt (`Key_error "TERRAT_GC_HEAP_SPACE_OVERHEAD_REALLY_MB") @@ CCInt.of_string heap_really
+        >>= fun heap_really ->
+        Ok
+          (Some
+             {
+               DynamicGc.min_space_overhead;
+               max_space_overhead;
+               heap_start_worrying_mb = heap_start;
+               heap_really_worry_mb = heap_really;
+             })
+  in
+  let open CCResult.Infix in
+  dynamic_gc () >>= fun dynamic_gc -> Ok { Gc.dynamic_gc }
+
 let create () =
   let open CCResult.Infix in
   (* This is required for Terrateam UI to work correctly so we simply check if
@@ -235,6 +285,8 @@ let create () =
   load_gitlab ()
   >>= fun gitlab ->
   let default_tier = CCOption.get_or ~default:"unlimited" @@ Sys.getenv_opt "TERRAT_DEFAULT_TIER" in
+  load_gc ()
+  >>= fun gc ->
   Ok
     {
       admin_token;
@@ -247,6 +299,7 @@ let create () =
       db_password;
       db_user;
       default_tier;
+      gc;
       github;
       gitlab;
       infracost;
@@ -268,6 +321,7 @@ let db_max_pool_size t = t.db_max_pool_size
 let db_password t = t.db_password
 let db_user t = t.db_user
 let default_tier t = t.default_tier
+let gc t = t.gc
 let github t = t.github
 let gitlab t = t.gitlab
 let infracost t = t.infracost
