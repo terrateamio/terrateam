@@ -233,6 +233,15 @@ module Route = struct
     | Query_var : (('f, 'a -> 'r) t * 'a Query.t) -> ('f, 'r) t
     | Body_var : (('f, 'a -> 'r) t * 'a Body.t) -> ('f, 'r) t
 
+  let rec to_string : type f r. (f, r) t -> string =
+   fun t ->
+    match t with
+    | Rel -> ""
+    | Path_const (t, c) -> to_string t ^ "/" ^ c
+    | Path_var (t, _) -> to_string t ^ "/<var>"
+    | Query_var (t, (n, _)) -> to_string t ^ "(?" ^ n ^ ")"
+    | Body_var (t, _) -> to_string t ^ "<body>"
+
   module Route = struct
     (* Remember the name of Furi.t first *)
     type ('f, 'r) _t = ('f, 'r) t

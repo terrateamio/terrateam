@@ -34,24 +34,24 @@ module Param = struct
 
     let tuple (f1, f2) =
       ud (function
-          | [ x1; x2 ] ->
-              let open CCOption.Infix in
-              (fun a b -> (a, b)) <$> f1 [ x1 ] <*> f2 [ x2 ]
-          | _ -> None)
+        | [ x1; x2 ] ->
+            let open CCOption.Infix in
+            (fun a b -> (a, b)) <$> f1 [ x1 ] <*> f2 [ x2 ]
+        | _ -> None)
 
     let tuple3 (f1, f2, f3) =
       ud (function
-          | [ x1; x2; x3 ] ->
-              let open CCOption.Infix in
-              (fun a b c -> (a, b, c)) <$> f1 [ x1 ] <*> f2 [ x2 ] <*> f3 [ x3 ]
-          | _ -> None)
+        | [ x1; x2; x3 ] ->
+            let open CCOption.Infix in
+            (fun a b c -> (a, b, c)) <$> f1 [ x1 ] <*> f2 [ x2 ] <*> f3 [ x3 ]
+        | _ -> None)
 
     let tuple4 (f1, f2, f3, f4) =
       ud (function
-          | [ x1; x2; x3; x4 ] ->
-              let open CCOption.Infix in
-              (fun a b c d -> (a, b, c, d)) <$> f1 [ x1 ] <*> f2 [ x2 ] <*> f3 [ x3 ] <*> f4 [ x4 ]
-          | _ -> None)
+        | [ x1; x2; x3; x4 ] ->
+            let open CCOption.Infix in
+            (fun a b c d -> (a, b, c, d)) <$> f1 [ x1 ] <*> f2 [ x2 ] <*> f3 [ x3 ] <*> f4 [ x4 ]
+        | _ -> None)
   end
 
   type 'a t = Dir.t * 'a
@@ -73,7 +73,9 @@ let update_page_param page_param cursor dir uri =
   |> CCFun.flip Uri.remove_query_param page_param
   |> fun uri ->
   CCOption.map
-    (fun cursor -> Uri.add_query_param uri (page_param, string_of_dir dir :: cursor))
+    (fun cursor ->
+      Uri.add_query_params' uri
+      @@ CCList.map (fun q -> (page_param, q)) (string_of_dir dir :: cursor))
     cursor
 
 let encode_link rel uri = Printf.sprintf "<%s>; rel=\"%s\"" (Uri.to_string uri) rel
