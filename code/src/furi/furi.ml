@@ -16,8 +16,8 @@ module Path = struct
 
   let string =
     ud (function
-        | s when CCString.length s > 0 -> Some s
-        | _ -> None)
+      | s when CCString.length s > 0 -> Some s
+      | _ -> None)
 
   let int = ud (CCFun.compose int_of_string CCOption.return)
 
@@ -160,7 +160,22 @@ let rec test_uri : type f r. Uri.t -> (f, r) t -> (int * (f, r) Witness.t) optio
       let open CCOption.Infix in
       test_uri uri t
       >>= fun (idx, wit) ->
-      let q = Uri.get_query_param' uri n in
+      (* The Uri library gives you all query params as mappings to list with
+         [query], so we filter the one we care about, which will be a list of
+         lists, and if that list is empty we know that there is query param, so
+         we map that to [None] other wise we flatten the list so it's like (name
+         -> list), and operate on that. *)
+      let q =
+        let qp =
+          CCList.filter_map (function
+            | qn, vs when CCString.equal qn n -> Some vs
+            | _ -> None)
+          @@ Uri.query uri
+        in
+        match qp with
+        | [] -> None
+        | vs -> Some (CCList.flatten vs)
+      in
       v q >>= fun value -> Some (idx, Witness.Var (wit, value, Witness.Query (n, q)))
   | Fragment_var (t, v) ->
       let open CCOption.Infix in
