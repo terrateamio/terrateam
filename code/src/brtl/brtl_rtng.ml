@@ -86,9 +86,9 @@ module Route = struct
 
     let bool n =
       ud n (function
-          | "true" -> Some true
-          | "false" -> Some false
-          | _ -> None)
+        | "true" -> Some true
+        | "false" -> Some false
+        | _ -> None)
 
     let rec apply_arr' acc f = function
       | [] -> Some (List.rev acc)
@@ -233,6 +233,15 @@ module Route = struct
     | Query_var : (('f, 'a -> 'r) t * 'a Query.t) -> ('f, 'r) t
     | Body_var : (('f, 'a -> 'r) t * 'a Body.t) -> ('f, 'r) t
 
+  let rec to_string : type f r. (f, r) t -> string =
+   fun t ->
+    match t with
+    | Rel -> ""
+    | Path_const (t, c) -> to_string t ^ "/" ^ c
+    | Path_var (t, _) -> to_string t ^ "/<var>"
+    | Query_var (t, (n, _)) -> to_string t ^ "(?" ^ n ^ ")"
+    | Body_var (t, _) -> to_string t ^ "<body>"
+
   module Route = struct
     (* Remember the name of Furi.t first *)
     type ('f, 'r) _t = ('f, 'r) t
@@ -253,8 +262,7 @@ module Route = struct
       | Var : (('f, 'a -> 'r) t * 'a) -> ('f, 'r) t
   end
 
-  let rec test_ctx :
-      type f r.
+  let rec test_ctx : type f r.
       ('a, 'b) Brtl_ctx.t -> (module BODY_DECODER) -> (f, r) t -> (int * (f, r) Witness.t) option =
    fun ctx body t ->
     let uri = Brtl_ctx.Request.uri (Brtl_ctx.request ctx) in
@@ -281,7 +289,22 @@ module Route = struct
         let open CCOption.Infix in
         test_ctx ctx body t
         >>= fun (idx, wit) ->
-        let q = Uri.get_query_param' uri n in
+        (* The Uri library gives you all query params as mappings to list with
+           [query], so we filter the one we care about, which will be a list of
+           lists, and if that list is empty we know that there is query param,
+           so we map that to [None] other wise we flatten the list so it's like
+           (name -> list), and operate on that. *)
+        let q =
+          let qp =
+            CCList.filter_map (function
+              | qn, vs when CCString.equal qn n -> Some vs
+              | _ -> None)
+            @@ Uri.query uri
+          in
+          match qp with
+          | [] -> None
+          | vs -> Some (CCList.flatten vs)
+        in
         v q >>= fun value -> Some (idx, Witness.Var (wit, value))
     | Body_var (t, body_var) ->
         let open CCOption.Infix in
