@@ -472,6 +472,14 @@ module List_dirspaces = struct
         /% Var.option (Var.uuid "prev_id"))
   end
 
+  let state_query _ = function
+    | "aborted" -> Ok "state = 'aborted'"
+    | "success" -> Ok "state = 'completed' and success"
+    | "failure" -> Ok "state = 'completed' and not success"
+    | "running" -> Ok "state = 'running'"
+    | "pending" | "queued" -> Ok "state = 'queued'"
+    | s -> Error (`Error ("Invalid state: " ^ s))
+
   let tag_map =
     Terrat_sql_of_tag_query.Tag_map.
       [
@@ -483,7 +491,7 @@ module List_dirspaces = struct
         ("kind", (String, "kind"));
         ("pr", (Bigint, "pull_number"));
         ("repo", (String, "name"));
-        ("state", (String, "state"));
+        ("state", (Raw state_query, ""));
         ("type", (String, "run_type"));
         ("user", (String, "username"));
         ("workspace", (String, "workspace"));

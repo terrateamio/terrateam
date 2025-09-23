@@ -14,6 +14,9 @@ module Tag_map : sig
     | Int
     | Json_array of string
     | Json_obj of string
+    | Raw of (int -> string -> (string, [ `Error of string ]) result)
+        (** Give raw access to building the query string. The first parameter is the index into the
+            'strings' array this entry is, the second is the value of the tag. *)
     | Smallint
     | String
     | Uuid

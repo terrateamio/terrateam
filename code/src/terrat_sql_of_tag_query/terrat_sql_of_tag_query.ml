@@ -14,6 +14,7 @@ module Tag_map = struct
     | Int
     | Json_array of string
     | Json_obj of string
+    | Raw of (int -> string -> (string, [ `Error of string ]) result)
     | Smallint
     | String
     | Uuid
@@ -144,6 +145,14 @@ let eq_datetime t n v =
        (CCVector.size t.strings));
   Ok ()
 
+let eq_raw t f v =
+  let open CCResult.Infix in
+  CCVector.push t.strings v;
+  f (CCVector.size t.strings) v
+  >>= fun query ->
+  Buffer.add_string t.q ("(" ^ query ^ ")");
+  Ok ()
+
 let date_only s = not (CCString.contains s ' ')
 
 let rec of_ast' ~tag_map t =
@@ -183,6 +192,10 @@ let rec of_ast' ~tag_map t =
           | Some (Tag_map.Uuid, n) -> eq_uuid t n value
           | Some (Tag_map.Json_array k, n) -> eq_json_array t n k value
           | Some (Tag_map.Json_obj k, n) -> eq_json_obj t n k value
+          | Some (Tag_map.Raw f, _) -> (
+              match eq_raw t f value with
+              | Ok () -> Ok ()
+              | Error (`Error err) -> Error (`Error err))
           | Some (Tag_map.Bool, _) -> assert false))
   | T.Or (l, r) ->
       let open CCResult.Infix in
