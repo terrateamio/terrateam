@@ -4,6 +4,10 @@ let cache_capacity_mb_in_kb = ( * ) 1024
 let kb_of_bytes b = CCInt.max 1 (b / 1024)
 let result_version = 2
 
+(* If the number of dirspaces are over this arbitrary threshold, do not create
+   dirspace checks. *)
+let dirspace_check_threshold = 50
+
 module Metrics = struct
   module DefaultHistogram = Prmths.DefaultHistogram
 
@@ -3320,21 +3324,23 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             ]
           in
           let dirspace_checks =
-            let module Ds = Terrat_change.Dirspace in
-            let module Dsf = Terrat_change.Dirspaceflow in
-            CCList.map
-              (fun { Dsf.dirspace; _ } ->
-                S.Commit_check.make_dirspace
-                  ~config
-                  ~description
-                  ~run_type
-                  ~dirspace
-                  ~status
-                  ~work_manifest
-                  ~repo
-                  ~account
-                  ())
-              dirspaces
+            if CCList.length dirspaces <= dirspace_check_threshold then
+              let module Ds = Terrat_change.Dirspace in
+              let module Dsf = Terrat_change.Dirspaceflow in
+              CCList.map
+                (fun { Dsf.dirspace; _ } ->
+                  S.Commit_check.make_dirspace
+                    ~config
+                    ~description
+                    ~run_type
+                    ~dirspace
+                    ~status
+                    ~work_manifest
+                    ~repo
+                    ~account
+                    ())
+                dirspaces
+            else []
           in
           let checks = aggregate @ dirspace_checks in
           create_commit_checks request_id client repo ref_ checks
@@ -3385,21 +3391,23 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         ]
       in
       let dirspace_checks =
-        let module Ds = Terrat_change.Dirspace in
-        let module Dsf = Terrat_change.Dirspaceflow in
-        CCList.map
-          (fun (dirspace, success) ->
-            S.Commit_check.make_dirspace
-              ~config
-              ~description:(description success)
-              ~run_type
-              ~dirspace
-              ~status:(status success)
-              ~work_manifest
-              ~repo
-              ~account
-              ())
-          result.Wmr.dirspaces_success
+        if CCList.length result.Wmr.dirspaces_success <= dirspace_check_threshold then
+          let module Ds = Terrat_change.Dirspace in
+          let module Dsf = Terrat_change.Dirspaceflow in
+          CCList.map
+            (fun (dirspace, success) ->
+              S.Commit_check.make_dirspace
+                ~config
+                ~description:(description success)
+                ~run_type
+                ~dirspace
+                ~status:(status success)
+                ~work_manifest
+                ~repo
+                ~account
+                ())
+            result.Wmr.dirspaces_success
+        else []
       in
       let checks = aggregate @ dirspace_checks in
       create_commit_checks request_id client repo ref_ checks
@@ -3462,28 +3470,31 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           |> String_set.of_list
         in
         let missing_commit_checks =
-          all_matches
-          |> CCList.filter_map
-               (fun
-                 {
-                   Terrat_change_match3.Dirspace_config.dirspace;
-                   when_modified = { Terrat_base_repo_config_v1.When_modified.autoapply; _ };
-                   _;
-                 }
-               ->
-                 let name = S.Commit_check.make_dirspace_title ~run_type:"apply" dirspace in
-                 if (not autoapply) && not (String_set.mem name commit_check_titles) then
-                   Some
-                     (S.Commit_check.make_dirspace
-                        ~config
-                        ~description:"Waiting"
-                        ~run_type:"apply"
-                        ~dirspace
-                        ~status:Terrat_commit_check.Status.Queued
-                        ~repo
-                        ~account
-                        ())
-                 else None)
+          let checks =
+            all_matches
+            |> CCList.filter_map
+                 (fun
+                   {
+                     Terrat_change_match3.Dirspace_config.dirspace;
+                     when_modified = { Terrat_base_repo_config_v1.When_modified.autoapply; _ };
+                     _;
+                   }
+                 ->
+                   let name = S.Commit_check.make_dirspace_title ~run_type:"apply" dirspace in
+                   if (not autoapply) && not (String_set.mem name commit_check_titles) then
+                     Some
+                       (S.Commit_check.make_dirspace
+                          ~config
+                          ~description:"Waiting"
+                          ~run_type:"apply"
+                          ~dirspace
+                          ~status:Terrat_commit_check.Status.Queued
+                          ~repo
+                          ~account
+                          ())
+                   else None)
+          in
+          if CCList.length checks <= dirspace_check_threshold then checks else []
         in
         let missing_apply_check =
           if not (String_set.mem "terrateam apply" commit_check_titles) then
