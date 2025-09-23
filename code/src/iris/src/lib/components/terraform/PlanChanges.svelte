@@ -250,10 +250,6 @@
         <p class="text-gray-600 dark:text-gray-400">{parseError}</p>
         <p class="text-sm text-gray-500 dark:text-gray-500 mt-4">
           Plan visualization requires Terraform to output plans in JSON format.
-          The current plan is in text format.
-        </p>
-        <p class="text-sm text-gray-500 dark:text-gray-500 mt-2">
-          To enable visualization, ensure your Terraform workflow is configured to generate JSON-formatted plans.
         </p>
       </div>
     </Card>
