@@ -144,11 +144,14 @@ RUN apk add --no-cache \
     yj
 RUN addgroup -S terrat && adduser -S -G terrat terrat
 RUN mkdir -p /usr/local/bin /etc/service/terrat /etc/service/nginx /usr/local/share/terrat/ui/assets
-RUN echo 'terrat ALL=(root) NOPASSWD: /usr/sbin/update-ca-certificates' > /etc/sudoers.d/terrat && \
+# Copy the certificate installation script and set proper permissions
+COPY docker/terrat/install-ca-cert.sh /usr/local/bin/install-ca-cert
+RUN chmod 755 /usr/local/bin/install-ca-cert && \
+    chown root:root /usr/local/bin/install-ca-cert
+# Allow terrat user to only execute the specific script as root
+RUN echo 'terrat ALL=(root) NOPASSWD: /usr/local/bin/install-ca-cert' > /etc/sudoers.d/terrat && \
     chmod 440 /etc/sudoers.d/terrat
-RUN chown -R terrat:terrat /etc/service /usr/local/share/terrat /etc/nginx /var/lib/nginx /var/log/nginx /run && \
-    chgrp terrat /usr/local/share/ca-certificates && \
-    chmod 775 /usr/local/share/ca-certificates
+RUN chown -R terrat:terrat /etc/service /usr/local/share/terrat /etc/nginx /var/lib/nginx /var/log/nginx /run
 COPY docker/terrat/service/terrat /etc/service/terrat/run
 COPY docker/terrat/service/nginx /etc/service/nginx/run
 COPY docker/terrat/nginx.conf.template /etc/nginx/nginx.conf.template
@@ -183,11 +186,14 @@ RUN apk add --no-cache \
     yj
 RUN addgroup -S terrat && adduser -S -G terrat terrat
 RUN mkdir -p /usr/local/bin /etc/service/terrat /etc/service/nginx /usr/local/share/terrat/ui/assets
-RUN echo 'terrat ALL=(root) NOPASSWD: /usr/sbin/update-ca-certificates' > /etc/sudoers.d/terrat && \
+# Copy the certificate installation script and set proper permissions
+COPY docker/terrat/install-ca-cert.sh /usr/local/bin/install-ca-cert
+RUN chmod 755 /usr/local/bin/install-ca-cert && \
+    chown root:root /usr/local/bin/install-ca-cert
+# Allow terrat user to only execute the specific script as root
+RUN echo 'terrat ALL=(root) NOPASSWD: /usr/local/bin/install-ca-cert' > /etc/sudoers.d/terrat && \
     chmod 440 /etc/sudoers.d/terrat
-RUN chown -R terrat:terrat /etc/service /usr/local/share/terrat /etc/nginx /var/lib/nginx /var/log/nginx /run && \
-    chgrp terrat /usr/local/share/ca-certificates && \
-    chmod 775 /usr/local/share/ca-certificates
+RUN chown -R terrat:terrat /etc/service /usr/local/share/terrat /etc/nginx /var/lib/nginx /var/log/nginx /run
 COPY docker/terrat/service/terrat /etc/service/terrat/run
 COPY docker/terrat/service/nginx /etc/service/nginx/run
 COPY docker/terrat/nginx.conf.template /etc/nginx/nginx.conf.template

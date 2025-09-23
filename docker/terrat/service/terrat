@@ -16,13 +16,41 @@ def setup_environment():
         certs = [cert
                  for cert in os.getenv('CUSTOM_CA_CERT').split('-----END CERTIFICATE-----')
                  if cert.strip()]
+        print(f"Processing {len(certs)} certificate(s)...")
         for idx in range(len(certs)):
             cert_path = os.path.join(cert_path_root, 'custom-ca-cert-{}.crt'.format(idx))
-            with open(cert_path, 'w') as cert_file:
-                cert_file.write((certs[idx] + '-----END CERTIFICATE-----').strip())
-        subprocess.check_call(['sudo', 'update-ca-certificates'])
+            cert_content = (certs[idx] + '-----END CERTIFICATE-----').strip()
+
+            # Use the root-owned install script to safely install certificates
+            # Format: cert_path|cert_content
+            input_data = f"{cert_path}|{cert_content}"
+
+            try:
+                # Run the root-owned certificate installation script
+                process = subprocess.Popen(['sudo', '/usr/local/bin/install-ca-cert'],
+                                         stdin=subprocess.PIPE,
+                                         stdout=subprocess.PIPE,
+                                         stderr=subprocess.PIPE)
+                stdout, stderr = process.communicate(input_data.encode())
+
+                if process.returncode == 0:
+                    print(f"Certificate {idx} installed successfully")
+                    if stdout:
+                        print(stdout.decode())
+                else:
+                    print(f"Failed to install certificate {idx}")
+                    if stderr:
+                        print(f"Error: {stderr.decode()}")
+                    raise RuntimeError(f"Certificate installation failed")
+
+            except Exception as e:
+                print(f"Failed to install certificate {idx}: {e}")
+                print("Attempting to continue without custom certificates...")
+                # Don't fail completely if certificates can't be updated
+                break
+
         os.environ['CERTS_DIR'] = '/etc/ssl/certs'
-        print(f"Self-signed certificate installed to {cert_path}")
+        print(f"All custom certificates processed")
     if 'GITHUB_APP_PEM' in os.environ:
         os.environ['GITHUB_APP_PEM'] = os.environ['GITHUB_APP_PEM'].replace('\\n', '\n')
     os.environ['TERRAT_PYTHON_EXEC'] = '/usr/bin/python3'
