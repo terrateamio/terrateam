@@ -1920,7 +1920,12 @@ module Apply_requirements = struct
             || CCList.mem
                  ~eq:CCString.equal
                  title
-                 [ "terrateam apply pre-hooks"; "terrateam apply post-hooks" ]
+                 [
+                   "terrateam apply post-hooks";
+                   "terrateam apply pre-hooks";
+                   "terrateam plan post-hooks";
+                   "terrateam plan pre-hooks";
+                 ]
             || CCList.exists CCFun.(Lua_pattern.find title %> CCOption.is_some) ignore_matching_pats
             || CCList.exists (CCString.equal title) ignore_matching))
         commit_checks
