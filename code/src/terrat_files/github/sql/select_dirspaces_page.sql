@@ -48,19 +48,8 @@ q as (
         gwm.created_at,
         gwm.sha as branch_ref,
         gwm.run_type as run_type,
-        (case
-         when gwm.state = 'aborted' then 'aborted'
-         when gwmr.success then 'success'
-         when not gwmr.success then 'failure'
-         when (gdwm.work_manifest is null
-               and lu.unlocked_at is not null
-               and gwm.created_at <= lu.unlocked_at) then 'aborted'
-         when (gdwm.work_manifest is not null
-               and ldu.unlocked_at is not null
-               and gwm.created_at <= ldu.unlocked_at) then 'aborted'
-         when gwm.state in ('running', 'queued') then gwm.state
-         else 'unknown'
-         end) as state,
+        gwm.state as state,
+        gwmr.success as success,
         gwm.tag_query as tag_query,
         gwm.repository as repository,
         gwm.pull_number as pull_number,
@@ -105,7 +94,11 @@ select
     to_char(gwm.completed_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as completed_at,
     to_char(gwm.created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
     unified_run_type,
-    state,
+    (case
+       when state = 'completed' and success then 'success'
+       when state = 'completed' and not success then 'failure'
+       else state
+    end) as state,
     tag_query,
     pull_number,
     base_branch,
