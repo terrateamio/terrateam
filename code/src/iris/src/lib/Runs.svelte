@@ -61,7 +61,6 @@
   let hasMoreResults: boolean = false;
   let isLoadingMore: boolean = false;
   let nextPageUrl: string | null = null; // URL for next page from Link header
-  let allLoadedIds: Set<string> = new Set(); // Track all loaded IDs to prevent duplicates
   
   // Basic mode filter state
   let basicFilters = {
@@ -483,7 +482,6 @@
       currentPage = 1;
       hasMoreResults = false;
       nextPageUrl = null;
-      allLoadedIds.clear();
     }
     error = null;
     
@@ -561,23 +559,11 @@
         const actualResults = dirspaces;
         
         if (loadMore) {
-          // With proper Link header pagination, we shouldn't get duplicates
-          // but let's still check just in case
-          const newResults = actualResults.filter(r => !allLoadedIds.has(r.id));
-          
-          
-          // Add new IDs to our tracking set
-          newResults.forEach(r => allLoadedIds.add(r.id));
-          
           // Append to existing results
-          workManifests = [...workManifests, ...newResults];
+          workManifests = [...workManifests, ...actualResults];
         } else {
           // Replace results for new search
           workManifests = actualResults;
-          
-          // Reset and track IDs
-          allLoadedIds.clear();
-          actualResults.forEach(r => allLoadedIds.add(r.id));
         }
         
         currentPage = loadMore ? currentPage + 1 : 1;
@@ -902,7 +888,6 @@
     currentPage = 1;
     hasMoreResults = false;
     nextPageUrl = null;
-    allLoadedIds.clear();
   }
 
   // Store search context when navigating to run detail
