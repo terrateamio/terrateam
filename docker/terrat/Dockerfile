@@ -74,7 +74,7 @@ RUN eval $(opam env) && \
     opam install -j$(nproc --all) -y --deps-only --no-depexts monorepo && \
     ulimit -s 524288 && ulimit -a && \
     time pds -d && \
-    time make -j$(nproc --all) test test-terrat release-terrat && \
+    time make -j$(nproc --all) test test-terrat release-terrat release-ttm && \
     mv build /build-cache
 
 # Use provided BASE_IMAGE if specified, otherwise use the build-base stage
@@ -92,6 +92,17 @@ RUN ulimit -s 524288 && ulimit -a && \
     eval $(opam env) && pds && \
     (time make -j$(nproc --all) -k release_terrat_code_indexer test \
         || time make -j1 release_terrat_code_indexer test) && \
+    find . -name '*.tap' -exec cat '{}' \;
+
+# Build target for ttm
+FROM build-setup AS ttm-build
+WORKDIR /mono/code
+RUN ulimit -s 524288 && ulimit -a && \
+    mv /build-cache ./build && \
+    eval $(opam env) && pds && \
+    (time make -j$(nproc --all) -k release-ttm \
+    || time make -j1 release-ttm) && \
+    build/release/ttm/ttm.native --help && \
     find . -name '*.tap' -exec cat '{}' \;
 
 # Build target for terrat-ee
@@ -121,6 +132,12 @@ COPY --from=code-indexer-build /mono/code/build/release/terrat_code_indexer/terr
 USER terrat
 WORKDIR /mnt
 ENTRYPOINT ["/usr/local/bin/terrat_code_indexer"]
+
+# Final ttm image
+FROM alpine:3.22 AS ttm
+COPY --from=ttm-build /mono/code/build/release/ttm/ttm.native /usr/local/bin/ttm
+WORKDIR /mnt
+ENTRYPOINT ["/usr/local/bin/ttm"]
 
 # Final terrat-ee image
 FROM alpine:3.22 AS terrat-ee

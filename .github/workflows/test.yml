@@ -29,6 +29,7 @@ jobs:
           - code-indexer
           - terrat-ee
           - terrat-oss
+          - ttm
 
     steps:
       - name: Checkout code
@@ -98,6 +99,7 @@ jobs:
           - code-indexer
           - terrat-ee
           - terrat-oss
+          - ttm
 
     steps:
       - name: Checkout code
