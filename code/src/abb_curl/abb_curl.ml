@@ -553,18 +553,17 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
             in
             Logs.debug (fun m -> m "RET : %d" ret)
 
-      let maybe_set_body_writer handle = function
-        | Some body ->
-            let pos = ref 0 in
-            let length = CCString.length body in
-            Curl.set_readfunction handle (fun n ->
-                if !pos < length then (
-                  let len = length - !pos in
-                  let pos' = !pos in
-                  pos := !pos + CCInt.min n len;
-                  CCString.sub body pos' (CCInt.min n len))
-                else "")
-        | None -> ()
+      let maybe_set_body_writer handle body =
+        let body = CCOption.get_or ~default:"" body in
+        let pos = ref 0 in
+        let length = CCString.length body in
+        Curl.set_readfunction handle (fun n ->
+            if !pos < length then (
+              let len = length - !pos in
+              let pos' = !pos in
+              pos := !pos + CCInt.min n len;
+              CCString.sub body pos' (CCInt.min n len))
+            else "")
 
       let setup_request handle meth_ headers uri =
         let debug_enabled = ref false in
@@ -577,11 +576,11 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
         | `GET -> ()
         | `PUT body ->
             Curl.set_put handle true;
-            maybe_set_body_writer handle @@ Some (CCOption.get_or ~default:"" body)
+            maybe_set_body_writer handle body
         | `POST body ->
             Curl.set_post handle true;
             (* Ensure that a post always has a body, requests seem to hang otherwise. *)
-            maybe_set_body_writer handle @@ Some (CCOption.get_or ~default:"" body)
+            maybe_set_body_writer handle body
         | `DELETE body ->
             Curl.set_customrequest handle "DELETE";
             maybe_set_body_writer handle body
@@ -595,9 +594,17 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
         Curl.set_writefunction handle (fun s ->
             Buffer.add_string response_body s;
             CCString.length s);
+        let content_length =
+          match meth_ with
+          | `GET -> 0
+          | `PUT body | `POST body | `DELETE body | `PATCH body | `Custom (_, body) ->
+              CCOption.map_or ~default:0 CCString.length body
+        in
         Curl.set_httpheader
           handle
-          (CCList.map (fun (k, v) -> k ^ ": " ^ v) (Headers.to_list headers))
+          (CCList.map
+             (fun (k, v) -> k ^ ": " ^ v)
+             (("content-length", CCInt.to_string content_length) :: Headers.to_list headers))
 
       let setup_response t handle id =
         Curl.set_headerfunction handle (fun s ->
