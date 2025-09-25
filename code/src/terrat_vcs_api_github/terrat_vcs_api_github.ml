@@ -242,7 +242,7 @@ module Client = struct
           Abbs_cache.Expiring.on_hit = on_hit "fetch_file_by_rev";
           on_miss = on_miss "fetch_file_by_rev";
           on_evict = on_evict "fetch_file_by_rev";
-          duration = Duration.of_min 10;
+          duration = Duration.of_min 1;
           capacity = cache_capacity_mb_in_kb 100;
         }
 
@@ -262,7 +262,7 @@ module Client = struct
           Abbs_cache.Expiring.on_hit = on_hit "fetch_tree_by_rev";
           on_miss = on_miss "fetch_tree_by_rev";
           on_evict = on_evict "fetch_tree_by_rev";
-          duration = Duration.of_min 10;
+          duration = Duration.of_min 1;
           capacity = cache_capacity_mb_in_kb 100;
         }
   end

@@ -168,6 +168,10 @@ struct
       | Ok config ->
           let open Abb.Future.Infix_monad in
           print_endline (Terrat_config.show config);
+          CCOption.iter (fun config ->
+              Logs.info (fun m -> m "DYNAMIC_GC : START");
+              DynamicGc.setup_dynamic_tuning config)
+          @@ (Terrat_config.gc config).Terrat_config.Gc.dynamic_gc;
           Terrat_storage.create config
           >>= fun storage ->
           maybe_start_github config storage

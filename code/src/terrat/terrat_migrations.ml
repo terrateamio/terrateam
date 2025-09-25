@@ -209,6 +209,8 @@ let migrations =
     ("refactor-gates-primary-key", run_file_sql "2025-09-04-refactor-gates-primary-key.sql");
     ("add-primary-email-field", run_file_sql "2025-09-09-add-primary-email-field.sql");
     ("fix-drift-unlock-abort-wm", run_file_sql "2025-09-09-fix-drift-unlock.sql");
+    ("fix-unlocked-prs", run_file_sql "2025-09-23-fix-unlocked-prs.sql");
+    ("add-repo-created_at-index", run_file_sql ~tx:false "2025-09-23-add-repo-created_at-index.sql");
   ]
 
 let run config storage = Mig.run { Migrate.config; storage; tx = () } migrations

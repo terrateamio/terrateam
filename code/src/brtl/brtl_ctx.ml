@@ -36,7 +36,8 @@ let uri_base t =
     t.request
     |> Request.headers
     |> CCFun.flip Cohttp.Header.get "x-forwarded-base"
-    |> CCOption.map Uri.of_string
+    (* Remove any trailing slashes *)
+    |> CCOption.map CCFun.(CCString.rdrop_while (( = ) '/') %> Uri.of_string)
   in
   CCOption.get_lazy (fun () -> Uri.with_path (uri t) "/") forwarded_base
 
