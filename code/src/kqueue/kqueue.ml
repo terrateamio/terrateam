@@ -61,20 +61,24 @@ module Timeout = struct
 end
 
 module Bindings = struct
-  let kqueue = F.foreign "kqueue" C.(void @-> returning int)
+  (* We wrap values in a [fat] to ensure that the Ocaml value travels with its pointer value
+     and therefore the gc won't clean it up or move it *)
+  type 'a fat = {
+    v : 'a;
+    ptr : nativeint;
+  }
 
-  let kevent =
-    F.foreign
-      ~release_runtime_lock:true
-      "kevent"
-      C.(
-        int
-        @-> ptr Stubs.Kevent.t
-        @-> int
-        @-> ptr Stubs.Kevent.t
-        @-> int
-        @-> ptr Stubs.Timespec.t
-        @-> returning int)
+  external kqueue : unit -> int = "caml_kqueue"
+
+  external kevent :
+    int ->
+    Stubs.Kevent.t C.ptr fat ->
+    int ->
+    Stubs.Kevent.t C.ptr fat ->
+    int ->
+    Stubs.Timespec.t C.ptr fat ->
+    int
+    = "caml_kevent_byte" "caml_kevent"
 end
 
 type t = int
@@ -93,11 +97,17 @@ let kevent t ~changelist ~eventlist ~timeout =
   let ret =
     Bindings.kevent
       t
-      changelist.Eventlist.kevents
+      {
+        Bindings.v = changelist.Eventlist.kevents;
+        ptr = Ctypes.raw_address_of_ptr (Ctypes.to_voidp changelist.Eventlist.kevents);
+      }
       changelist.Eventlist.size
-      eventlist.Eventlist.kevents
+      {
+        Bindings.v = eventlist.Eventlist.kevents;
+        ptr = Ctypes.raw_address_of_ptr (Ctypes.to_voidp eventlist.Eventlist.kevents);
+      }
       eventlist.Eventlist.capacity
-      timeout
+      { Bindings.v = timeout; ptr = Ctypes.raw_address_of_ptr (Ctypes.to_voidp timeout) }
   in
   if ret > -1 then eventlist.Eventlist.size <- ret;
   ret
