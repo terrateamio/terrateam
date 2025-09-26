@@ -4,7 +4,7 @@ with grouped_work_manifest_by_id as (
     wm.run_type,
     case 
       when wm.run_type in ('autoplan', 'plan') then 'plan'
-      when wm.run_type in ('autoapply', 'apply') then 'apply'
+      when wm.run_type in ('autoapply', 'apply', 'unsafe-apply') then 'apply'
       else wm.run_type
     end as run_group
   from work_manifests wm
@@ -17,7 +17,7 @@ grouped_work_manifest_with_pr as (
     wm.run_type,
     case 
       when wm.run_type in ('autoplan', 'plan') then 'plan'
-      when wm.run_type in ('autoapply', 'apply') then 'apply'
+      when wm.run_type in ('autoapply', 'apply', 'unsafe-apply') then 'apply'
       else wm.run_type
     end as run_group
   from work_manifests wm

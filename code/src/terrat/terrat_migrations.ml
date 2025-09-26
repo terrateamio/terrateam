@@ -211,6 +211,7 @@ let migrations =
     ("fix-drift-unlock-abort-wm", run_file_sql "2025-09-09-fix-drift-unlock.sql");
     ("fix-unlocked-prs", run_file_sql "2025-09-23-fix-unlocked-prs.sql");
     ("add-repo-created_at-index", run_file_sql ~tx:false "2025-09-23-add-repo-created_at-index.sql");
+    ("add-github-summary-comment", run_file_sql "2025-09-24-add-github-summary-comment.sql");
   ]
 
 let run config storage = Mig.run { Migrate.config; storage; tx = () } migrations

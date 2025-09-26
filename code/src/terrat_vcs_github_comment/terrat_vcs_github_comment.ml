@@ -78,6 +78,7 @@ module Sql = struct
       /% Var.uuid "work_manifest"
       /% Var.text "dir"
       /% Var.text "workspace")
+
 end
 
 module S = struct
