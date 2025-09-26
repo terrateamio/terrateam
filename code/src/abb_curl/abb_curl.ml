@@ -855,7 +855,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
                      ~timeout:None
                  in
                  if ret <> 0 then (
-                   Logs.err (fun m -> m "kevent_error");
+                   Logs.err (fun m -> m "kevent_error ret=%d" ret);
                    raise (Failure "kevent error"));
                  loop t
                with exn ->
