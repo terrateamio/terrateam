@@ -61,20 +61,36 @@ module Timeout = struct
 end
 
 module Bindings = struct
-  let kqueue = F.foreign "kqueue" C.(void @-> returning int)
+  external kqueue : unit -> int = "caml_kqueue"
 
-  let kevent =
-    F.foreign
-      ~release_runtime_lock:true
-      "kevent"
-      C.(
-        int
-        @-> ptr Stubs.Kevent.t
-        @-> int
-        @-> ptr Stubs.Kevent.t
-        @-> int
-        @-> ptr Stubs.Timespec.t
-        @-> returning int)
+  (* external kevent : *)
+  (*   int -> *)
+  (*   Stubs.Kevent.t C.ptr -> *)
+  (*   int -> *)
+  (*   Stubs.Kevent.t C.ptr -> *)
+  (*   int -> *)
+  (*   Stubs.Timespec.t C.ptr -> *)
+  (*   int *)
+  (*   = "caml_kevent_byte" "caml_kevent" *)
+
+  external kevent :
+    int -> nativeint -> int -> nativeint -> int -> nativeint -> int
+    = "caml_kevent_byte" "caml_kevent"
+
+  (* let kqueue = F.foreign "kqueue" C.(void @-> returning int) *)
+
+  (* let kevent = *)
+  (*   F.foreign *)
+  (*     ~release_runtime_lock:true *)
+  (*     "kevent" *)
+  (*     C.( *)
+  (*       int *)
+  (*       @-> ptr Stubs.Kevent.t *)
+  (*       @-> int *)
+  (*       @-> ptr Stubs.Kevent.t *)
+  (*       @-> int *)
+  (*       @-> ptr Stubs.Timespec.t *)
+  (*       @-> returning int) *)
 end
 
 type t = int
@@ -93,11 +109,11 @@ let kevent t ~changelist ~eventlist ~timeout =
   let ret =
     Bindings.kevent
       t
-      changelist.Eventlist.kevents
+      (Ctypes.raw_address_of_ptr @@ Ctypes.to_voidp changelist.Eventlist.kevents)
       changelist.Eventlist.size
-      eventlist.Eventlist.kevents
+      (Ctypes.raw_address_of_ptr @@ Ctypes.to_voidp eventlist.Eventlist.kevents)
       eventlist.Eventlist.capacity
-      timeout
+      (Ctypes.raw_address_of_ptr @@ Ctypes.to_voidp timeout)
   in
   if ret > -1 then eventlist.Eventlist.size <- ret;
   ret

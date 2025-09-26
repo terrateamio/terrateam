@@ -69,6 +69,7 @@ module Typed_sql : sig
     val tsquery : string v
     val uuid : Uuidm.t v
     val json : string v
+    val jsonpath : string v
 
     (** Boolean types *)
     val boolean : bool v

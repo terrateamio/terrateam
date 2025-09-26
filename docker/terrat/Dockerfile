@@ -15,6 +15,7 @@ RUN apk add --no-cache \
     coreutils \
     curl \
     curl-dev \
+    curl-static \
     git \
     gmp-dev \
     libffi-dev \
@@ -73,7 +74,7 @@ RUN eval $(opam env) && \
     opam install -j$(nproc --all) -y --deps-only --no-depexts monorepo && \
     ulimit -s 524288 && ulimit -a && \
     time pds -d && \
-    time make -j$(nproc --all) test test-terrat release-terrat && \
+    time make -j$(nproc --all) test test-terrat release-terrat release-ttm && \
     mv build /build-cache
 
 # Use provided BASE_IMAGE if specified, otherwise use the build-base stage
@@ -88,9 +89,35 @@ FROM build-setup AS code-indexer-build
 WORKDIR /mono/code
 RUN ulimit -s 524288 && ulimit -a && \
     mv /build-cache ./build && \
-    eval $(opam env) && pds && \
+    eval $(opam env) && pds -d && \
     (time make -j$(nproc --all) -k release_terrat_code_indexer test \
         || time make -j1 release_terrat_code_indexer test) && \
+    find . -name '*.tap' -exec cat '{}' \;
+
+# Build target for ttm
+FROM build-setup AS ttm-build
+WORKDIR /mono/code
+
+RUN apk add --no-cache \
+    curl-static \
+    zstd-static \
+    zstd-dev \
+    nghttp2-static \
+    libssh2-static \
+    zlib-static \
+    brotli-static \
+    libpsl-static \
+    openssl-libs-static \
+    libunistring-static \
+    libidn2-static \
+    musl-dev
+
+RUN ulimit -s 524288 && ulimit -a && \
+    mv /build-cache ./build && \
+    eval $(opam env) && pds -d && \
+    (time make -j$(nproc --all) -k release-ttm \
+    || time make -j1 release-ttm) && \
+    # build/release/ttm/ttm.native --help && \
     find . -name '*.tap' -exec cat '{}' \;
 
 # Build target for terrat-ee
@@ -98,7 +125,7 @@ FROM build-setup AS terrat-ee-build
 WORKDIR /mono/code
 RUN ulimit -s 524288 && ulimit -a && \
     mv /build-cache ./build && \
-    eval $(opam env) && pds && \
+    eval $(opam env) && pds -d && \
     (time make -j$(nproc --all) -k test test-terrat release_terrat_ee release_iris \
      || time make -j1 test test-terrat release_terrat_ee release_iris) && \
     find . -name '*.tap' -exec cat '{}' \;
@@ -108,7 +135,7 @@ FROM build-setup AS terrat-oss-build
 WORKDIR /mono/code
 RUN ulimit -s 524288 && ulimit -a && \
     mv /build-cache ./build && \
-    eval $(opam env) && pds && \
+    eval $(opam env) && pds -d && \
     (time make -j$(nproc --all) -k test test-terrat release_terrat_oss release_iris \
      || time make -j1 test test-terrat release_terrat_oss release_iris) && \
     find . -name '*.tap' -exec cat '{}' \;
@@ -118,6 +145,12 @@ FROM alpine:3.22 AS code-indexer
 COPY --from=code-indexer-build /mono/code/build/release/terrat_code_indexer/terrat_code_indexer.native /usr/local/bin/terrat_code_indexer
 WORKDIR /mnt
 ENTRYPOINT ["/usr/local/bin/terrat_code_indexer"]
+
+# Final ttm image
+FROM alpine:3.22 AS ttm
+COPY --from=ttm-build /mono/code/build/release/ttm/ttm.native /usr/local/bin/ttm
+WORKDIR /mnt
+ENTRYPOINT ["/usr/local/bin/ttm"]
 
 # Final terrat-ee image
 FROM alpine:3.22 AS terrat-ee

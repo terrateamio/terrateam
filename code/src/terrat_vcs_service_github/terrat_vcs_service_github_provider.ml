@@ -794,7 +794,6 @@ module Db = struct
     Metrics.Psql_query_time.time
       (Metrics.psql_query_time "insert_github_installation_repository")
       (fun () ->
-        let open Abbs_future_combinators.Infix_result_monad in
         Pgsql_io.Prepared_stmt.execute
           db
           Sql.insert_github_installation_repository
