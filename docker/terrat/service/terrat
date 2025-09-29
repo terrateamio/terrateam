@@ -11,8 +11,9 @@ GITHUB_API_BASE_URL = 'GITHUB_API_BASE_URL'
 REQUIRED_ENV_KEYS = []
 
 def setup_environment():
-    if os.getenv('CUSTOM_CA_CERT'):
-        print("Installing custom CA certificates...")
+    custom_ca_cert = os.getenv('CUSTOM_CA_CERT')
+    if custom_ca_cert:
+        print(f"Installing custom CA certificates... (found {len(custom_ca_cert)} chars)")
         try:
             # Run the root-owned certificate installation script
             # The script will handle all the logic for splitting and installing certificates
@@ -36,6 +37,8 @@ def setup_environment():
             print("Attempting to continue without custom certificates...")
 
         os.environ['CERTS_DIR'] = '/etc/ssl/certs'
+    else:
+        print("No CUSTOM_CA_CERT environment variable found, skipping certificate installation")
     if 'GITHUB_APP_PEM' in os.environ:
         os.environ['GITHUB_APP_PEM'] = os.environ['GITHUB_APP_PEM'].replace('\\n', '\n')
     os.environ['TERRAT_PYTHON_EXEC'] = '/usr/bin/python3'
