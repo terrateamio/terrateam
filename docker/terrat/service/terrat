@@ -1,10 +1,13 @@
-#! /usr/bin/env python3
+#!/usr/bin/env python3
 
 import os
 import subprocess
 import sys
 import time
 import requests
+
+# Debug output to confirm script is running
+print("[TERRAT-WRAPPER] Starting terrat service wrapper script...", flush=True)
 
 TERRAT_API_BASE = 'TERRAT_API_BASE'
 GITHUB_API_BASE_URL = 'GITHUB_API_BASE_URL'
@@ -13,7 +16,7 @@ REQUIRED_ENV_KEYS = []
 def setup_environment():
     custom_ca_cert = os.getenv('CUSTOM_CA_CERT')
     if custom_ca_cert:
-        print(f"Installing custom CA certificates... (found {len(custom_ca_cert)} chars)")
+        print(f"Installing custom CA certificates... (found {len(custom_ca_cert)} chars)", flush=True)
         try:
             # Run the root-owned certificate installation script
             # The script will handle all the logic for splitting and installing certificates
@@ -22,23 +25,23 @@ def setup_environment():
                                   text=True)
 
             if result.returncode == 0:
-                print("Custom CA certificates installed successfully")
+                print("Custom CA certificates installed successfully", flush=True)
                 if result.stdout:
-                    print(result.stdout)
+                    print(result.stdout, flush=True)
             else:
-                print("Failed to install custom CA certificates")
+                print("Failed to install custom CA certificates", flush=True)
                 if result.stderr:
-                    print(f"Error: {result.stderr}")
+                    print(f"Error: {result.stderr}", flush=True)
                 # Don't fail completely if certificates can't be updated
-                print("Attempting to continue without custom certificates...")
+                print("Attempting to continue without custom certificates...", flush=True)
 
         except Exception as e:
-            print(f"Failed to install certificates: {e}")
+            print(f"Failed to install certificates: {e}", flush=True)
             print("Attempting to continue without custom certificates...")
 
         os.environ['CERTS_DIR'] = '/etc/ssl/certs'
     else:
-        print("No CUSTOM_CA_CERT environment variable found, skipping certificate installation")
+        print("No CUSTOM_CA_CERT environment variable found, skipping certificate installation", flush=True)
     if 'GITHUB_APP_PEM' in os.environ:
         os.environ['GITHUB_APP_PEM'] = os.environ['GITHUB_APP_PEM'].replace('\\n', '\n')
     os.environ['TERRAT_PYTHON_EXEC'] = '/usr/bin/python3'
@@ -56,8 +59,8 @@ def assert_required_env_keys():
     ]
 
     if missing_keys:
-        print('Missing environment variables: {}'.format(' '.join(missing_keys)))
-        print('Please see https://docs.terrateam.io/self-hosted for what variables are required')
+        print('Missing environment variables: {}'.format(' '.join(missing_keys)), flush=True)
+        print('Please see https://docs.terrateam.io/self-hosted for what variables are required', flush=True)
         sys.exit(1)
 
 def get_tunnel_hostname(terratunnel_endpoint):
@@ -68,17 +71,17 @@ def get_tunnel_hostname(terratunnel_endpoint):
         if data.get('connected') and data.get('tunnel_hostname'):
             return data['tunnel_hostname']
     except Exception as e:
-        print(f"Failed to fetch tunnel hostname: {e}")
+        print(f"Failed to fetch tunnel hostname: {e}", flush=True)
     return None
 
 def assert_run_mode():
     if not os.environ.get(TERRAT_API_BASE):
-        print('TERRAT_API_BASE must be set')
-        print('Please see https://docs.terrateam.io/self-hosted for more information')
+        print('TERRAT_API_BASE must be set', flush=True)
+        print('Please see https://docs.terrateam.io/self-hosted for more information', flush=True)
         sys.exit(1)
 
 def main():
-    print('Starting...')
+    print('Starting...', flush=True)
 
     # Sleep in case we're in a bad runit loop
     time.sleep(3)
@@ -87,13 +90,13 @@ def main():
 
     # Try to set TERRAT_API_BASE from terratunnel if not already set
     if not os.environ.get(TERRAT_API_BASE) and os.environ.get('TERRATUNNEL_API_ENDPOINT'):
-        print('TERRAT_API_BASE not set, attempting to fetch from terratunnel...')
+        print('TERRAT_API_BASE not set, attempting to fetch from terratunnel...', flush=True)
         tunnel_hostname = get_tunnel_hostname(os.environ['TERRATUNNEL_API_ENDPOINT'])
         if tunnel_hostname:
             os.environ[TERRAT_API_BASE] = f"https://{tunnel_hostname}/api"
-            print(f"Set TERRAT_API_BASE to: {os.environ[TERRAT_API_BASE]}")
+            print(f"Set TERRAT_API_BASE to: {os.environ[TERRAT_API_BASE]}", flush=True)
         else:
-            print("Failed to get tunnel hostname from terratunnel")
+            print("Failed to get tunnel hostname from terratunnel", flush=True)
 
     assert_run_mode()
 
