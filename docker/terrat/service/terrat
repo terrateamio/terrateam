@@ -16,7 +16,7 @@ def setup_environment():
         try:
             # Run the root-owned certificate installation script
             # The script will handle all the logic for splitting and installing certificates
-            result = subprocess.run(['sudo', '/usr/bin/python3', '/usr/local/bin/install-ca-cert'],
+            result = subprocess.run(['sudo', '-E', '/usr/local/bin/install-ca-cert'],
                                   capture_output=True,
                                   text=True)
 

@@ -148,8 +148,8 @@ RUN mkdir -p /usr/local/bin /etc/service/terrat /etc/service/nginx /usr/local/sh
 COPY docker/terrat/install-ca-cert.py /usr/local/bin/install-ca-cert
 RUN chmod 755 /usr/local/bin/install-ca-cert && \
     chown root:root /usr/local/bin/install-ca-cert
-# Allow terrat user to only execute the specific script as root
-RUN echo 'terrat ALL=(root) NOPASSWD: /usr/local/bin/install-ca-cert' > /etc/sudoers.d/terrat && \
+# Allow terrat user to only execute the specific script as root with CUSTOM_CA_CERT env var
+RUN echo 'terrat ALL=(root) NOPASSWD:SETENV: /usr/local/bin/install-ca-cert' > /etc/sudoers.d/terrat && \
     chmod 440 /etc/sudoers.d/terrat
 RUN chown -R terrat:terrat /etc/service /usr/local/share/terrat /etc/nginx /var/lib/nginx /var/log/nginx /run
 COPY docker/terrat/service/terrat /etc/service/terrat/run
@@ -190,8 +190,8 @@ RUN mkdir -p /usr/local/bin /etc/service/terrat /etc/service/nginx /usr/local/sh
 COPY docker/terrat/install-ca-cert.py /usr/local/bin/install-ca-cert
 RUN chmod 755 /usr/local/bin/install-ca-cert && \
     chown root:root /usr/local/bin/install-ca-cert
-# Allow terrat user to only execute the specific script as root
-RUN echo 'terrat ALL=(root) NOPASSWD: /usr/local/bin/install-ca-cert' > /etc/sudoers.d/terrat && \
+# Allow terrat user to only execute the specific script as root with CUSTOM_CA_CERT env var
+RUN echo 'terrat ALL=(root) NOPASSWD:SETENV: /usr/local/bin/install-ca-cert' > /etc/sudoers.d/terrat && \
     chmod 440 /etc/sudoers.d/terrat
 RUN chown -R terrat:terrat /etc/service /usr/local/share/terrat /etc/nginx /var/lib/nginx /var/log/nginx /run
 COPY docker/terrat/service/terrat /etc/service/terrat/run
