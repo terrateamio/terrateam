@@ -145,7 +145,7 @@ RUN apk add --no-cache \
 RUN addgroup -S terrat && adduser -S -G terrat terrat
 RUN mkdir -p /usr/local/bin /etc/service/terrat /etc/service/nginx /usr/local/share/terrat/ui/assets
 # Copy the certificate installation script and set proper permissions
-COPY docker/terrat/install-ca-cert.sh /usr/local/bin/install-ca-cert
+COPY docker/terrat/install-ca-cert.py /usr/local/bin/install-ca-cert
 RUN chmod 755 /usr/local/bin/install-ca-cert && \
     chown root:root /usr/local/bin/install-ca-cert
 # Allow terrat user to only execute the specific script as root
@@ -187,7 +187,7 @@ RUN apk add --no-cache \
 RUN addgroup -S terrat && adduser -S -G terrat terrat
 RUN mkdir -p /usr/local/bin /etc/service/terrat /etc/service/nginx /usr/local/share/terrat/ui/assets
 # Copy the certificate installation script and set proper permissions
-COPY docker/terrat/install-ca-cert.sh /usr/local/bin/install-ca-cert
+COPY docker/terrat/install-ca-cert.py /usr/local/bin/install-ca-cert
 RUN chmod 755 /usr/local/bin/install-ca-cert && \
     chown root:root /usr/local/bin/install-ca-cert
 # Allow terrat user to only execute the specific script as root

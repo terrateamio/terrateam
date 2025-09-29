@@ -12,45 +12,30 @@ REQUIRED_ENV_KEYS = []
 
 def setup_environment():
     if os.getenv('CUSTOM_CA_CERT'):
-        cert_path_root = '/usr/local/share/ca-certificates/'
-        certs = [cert
-                 for cert in os.getenv('CUSTOM_CA_CERT').split('-----END CERTIFICATE-----')
-                 if cert.strip()]
-        print(f"Processing {len(certs)} certificate(s)...")
-        for idx in range(len(certs)):
-            cert_path = os.path.join(cert_path_root, 'custom-ca-cert-{}.crt'.format(idx))
-            cert_content = (certs[idx] + '-----END CERTIFICATE-----').strip()
+        print("Installing custom CA certificates...")
+        try:
+            # Run the root-owned certificate installation script
+            # The script will handle all the logic for splitting and installing certificates
+            result = subprocess.run(['sudo', '/usr/bin/python3', '/usr/local/bin/install-ca-cert'],
+                                  capture_output=True,
+                                  text=True)
 
-            # Use the root-owned install script to safely install certificates
-            # Format: cert_path|cert_content
-            input_data = f"{cert_path}|{cert_content}"
-
-            try:
-                # Run the root-owned certificate installation script
-                process = subprocess.Popen(['sudo', '/usr/local/bin/install-ca-cert'],
-                                         stdin=subprocess.PIPE,
-                                         stdout=subprocess.PIPE,
-                                         stderr=subprocess.PIPE)
-                stdout, stderr = process.communicate(input_data.encode())
-
-                if process.returncode == 0:
-                    print(f"Certificate {idx} installed successfully")
-                    if stdout:
-                        print(stdout.decode())
-                else:
-                    print(f"Failed to install certificate {idx}")
-                    if stderr:
-                        print(f"Error: {stderr.decode()}")
-                    raise RuntimeError(f"Certificate installation failed")
-
-            except Exception as e:
-                print(f"Failed to install certificate {idx}: {e}")
-                print("Attempting to continue without custom certificates...")
+            if result.returncode == 0:
+                print("Custom CA certificates installed successfully")
+                if result.stdout:
+                    print(result.stdout)
+            else:
+                print("Failed to install custom CA certificates")
+                if result.stderr:
+                    print(f"Error: {result.stderr}")
                 # Don't fail completely if certificates can't be updated
-                break
+                print("Attempting to continue without custom certificates...")
+
+        except Exception as e:
+            print(f"Failed to install certificates: {e}")
+            print("Attempting to continue without custom certificates...")
 
         os.environ['CERTS_DIR'] = '/etc/ssl/certs'
-        print(f"All custom certificates processed")
     if 'GITHUB_APP_PEM' in os.environ:
         os.environ['GITHUB_APP_PEM'] = os.environ['GITHUB_APP_PEM'].replace('\\n', '\n')
     os.environ['TERRAT_PYTHON_EXEC'] = '/usr/bin/python3'
@@ -112,7 +97,22 @@ def main():
     setup_environment()
 
     # Run db migration
-    subprocess.check_call(['/usr/local/bin/terrat', 'migrate', '--verbosity=debug'])
+    if os.environ.get('TERRAT_STRACE'):
+        subprocess.check_call([
+            '/usr/bin/strace',
+            '-ff',
+            '-o',
+            '/tmp/strace-migrate.log',
+            '-t',
+            '-s',
+            '100',
+            '-v',
+            '/usr/local/bin/terrat',
+            'migrate',
+            '--verbosity=debug'
+        ])
+    else:
+        subprocess.check_call(['/usr/local/bin/terrat', 'migrate', '--verbosity=debug'])
 
     # Run server
     if os.environ.get('TERRAT_STRACE'):
