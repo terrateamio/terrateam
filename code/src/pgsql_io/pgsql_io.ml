@@ -1,3 +1,7 @@
+let src = Logs.Src.create "pgsql.io"
+
+module Logs = (val Logs.src_log src : Logs.LOG)
+
 let buf_size = 1024 * 8
 let buf_size_threshold = 1024 * 8
 
@@ -58,7 +62,7 @@ module Io = struct
   let send_frame conn frame =
     if conn.connected then (
       let send_frame' =
-        (* Printf.printf "Tx %s\n%!" (Pgsql_codec.Frame.Frontend.show frame); *)
+        Logs.debug (fun m -> m "Tx %a" Pgsql_codec.Frame.Frontend.pp frame);
         let open Abbs_future_combinators.Infix_result_monad in
         let bytes = encode_frame conn.scratch frame in
         Abbs_io_buffered.write conn.w ~bufs:[ write_buf bytes ]
@@ -90,7 +94,7 @@ module Io = struct
             conn.connected <- false;
             Abb.Future.return (Error `Disconnected)
         | Ok n ->
-            (* Printf.printf "Rx = %S\n%!" (Bytes.to_string (Bytes.sub conn.buf 0 n)); *)
+            (* Logs.debug (fun m -> m "Rx = %S%!" (Bytes.to_string (Bytes.sub conn.buf 0 n))); *)
             backend_msg conn n conn.buf >>= fun ret -> wait_for_frames' conn ret)
     | r -> wait_for_frames' conn r
 
@@ -98,7 +102,9 @@ module Io = struct
     | Ok [] when Pgsql_codec.Decode.needed_bytes conn.decoder = None -> wait_for_frames conn
     | Ok [] -> wait_for_frame_needed_bytes conn
     | Ok fs as r ->
-        (* List.iter (fun frame -> Printf.printf "Rx %s\n%!" (Pgsql_codec.Frame.Backend.show frame)) fs; *)
+        List.iter
+          (fun frame -> Logs.debug (fun m -> m "Rx %a" Pgsql_codec.Frame.Backend.pp frame))
+          fs;
         Abb.Future.return r
     | Error err -> Abb.Future.return (Error (`Parse_error err))
 
@@ -1031,13 +1037,16 @@ let rec create_sm
     ~user
     database =
   let open Abbs_future_combinators.Infix_result_monad in
+  Logs.info (fun m -> m "Connecting to %s" host);
   Abbs_happy_eyeballs.connect host [ port ]
   >>= fun (_, tcp) ->
   match tls_config with
   | None ->
       let r, w = Abbs_io_buffered.Of.of_tcp_socket ~size:buf_size tcp in
+      Logs.info (fun m -> m "Initiating clear text protocol");
       create_sm_perform_login r w ?passwd ~notice_response ~buf_size_threshold ~user database
   | Some (`Require tls_config) ->
+      Logs.info (fun m -> m "Requiring encrypted protocol");
       create_sm_ssl_conn
         ?passwd
         ~buf_size_threshold
@@ -1050,6 +1059,7 @@ let rec create_sm
         tcp
         database
   | Some (`Prefer tls_config) ->
+      Logs.info (fun m -> m "Preferring encrypted protocol");
       create_sm_ssl_conn
         ?passwd
         ~buf_size_threshold
@@ -1085,15 +1095,20 @@ and create_sm_ssl_conn
   Abbs_io_buffered.read r ~buf:bytes ~pos:0 ~len:(Bytes.length bytes)
   >>= function
   | n when n = 1 && Bytes.get bytes 0 = 'S' -> (
+      Logs.info (fun m -> m "Secure connection state machine initiated");
       match Abbs_tls.client_tcp ~size:buf_size tcp tls_config host with
       | Ok (r, w) ->
           create_sm_perform_login r w ?passwd ~notice_response ~buf_size_threshold ~user database
       | Error (#Abb_tls.err as err) -> Abb.Future.return (Error (`Tls_negotiate_err err)))
   | n when n = 1 && Bytes.get bytes 0 = 'N' && not required ->
+      Logs.info (fun m -> m "Clear text connection state machine initiated");
       create_sm_perform_login r w ?passwd ~notice_response ~buf_size_threshold ~user database
   | n when n = 1 && Bytes.get bytes 0 = 'N' && required ->
+      Logs.info (fun m -> m "Secure connection denied");
       Abb.Future.return (Error `Tls_required_but_denied_err)
-  | n -> Abb.Future.return (Error (`Tls_unexpected_response (n, Bytes.sub_string bytes 0 n)))
+  | n ->
+      Logs.info (fun m -> m "Create connection unexpected response");
+      Abb.Future.return (Error (`Tls_unexpected_response (n, Bytes.sub_string bytes 0 n)))
 
 and create_sm_perform_login r w ?passwd ~notice_response ~buf_size_threshold ~user database =
   let open Abbs_future_combinators.Infix_result_monad in
@@ -1119,11 +1134,15 @@ and create_sm_perform_login r w ?passwd ~notice_response ~buf_size_threshold ~us
   in
   let msgs = [ ("user", user); ("database", database) ] in
   let startup = Pgsql_codec.Frame.Frontend.(StartupMessage { msgs }) in
+  Logs.debug (fun m -> m "Sent startup frame");
   Io.send_frame t startup >>= fun () -> create_sm_login ?passwd ~user t
 
 and create_sm_login ?passwd ~user t =
   let open Abbs_future_combinators.Infix_result_monad in
-  Io.wait_for_frames t >>= fun frames -> create_sm_process_login_frames ?passwd ~user t frames
+  Io.wait_for_frames t
+  >>= fun frames ->
+  Logs.debug (fun m -> m "Received frames");
+  create_sm_process_login_frames ?passwd ~user t frames
 
 (* TODO: Maybe it's worth aglutinating step_02 and step_03
    under the same recursive function, left it for a future
@@ -1134,6 +1153,7 @@ and create_sm_scram_sha256_step_03 ?passwd ~user client_final t =
   Io.wait_for_frames t
   >>= function
   | B.AuthenticationSASLFinal { data } :: fs -> (
+      Logs.debug (fun m -> m "Received AuthenticationSASLFinal");
       match Auth_scram.verify_server_final client_final data with
       | Ok _ ->
           (* Should be waiting for the next frame as an AuthenticationOk *)
@@ -1147,20 +1167,27 @@ and create_sm_scram_sha256_step_02 ?passwd ~user client_request t =
   Io.wait_for_frames t
   >>= function
   | B.AuthenticationSASLContinue { data } :: fs -> (
+      Logs.debug (fun m -> m "Received AuthenticationSASLContinue %S" data);
       match Auth_scram.parse_server_reply data with
       | Some server_response ->
           let client_final, data = Auth_scram.client_final client_request server_response in
+          Logs.debug (fun m -> m "Sending SASLResponse");
           Io.send_frame t Pgsql_codec.Frame.Frontend.(SASLResponse { data })
           >>= fun () -> create_sm_scram_sha256_step_03 ?passwd ~user client_final t
-      | _ -> Abb.Future.return (Error `Unsupported_auth_sasl_err))
+      | _ ->
+          Logs.debug (fun m -> m "Received unexpected SASL response");
+          Abb.Future.return (Error `Unsupported_auth_sasl_err))
   | fs -> Abb.Future.return (Error (`Unmatching_frame fs))
 
 and create_sm_process_login_frames ?passwd ~user t =
   let open Pgsql_codec.Frame.Backend in
   function
   | [] -> create_sm_login ?passwd ~user t
-  | AuthenticationOk :: fs -> create_sm_process_login_frames ?passwd ~user t fs
+  | AuthenticationOk :: fs ->
+      Logs.info (fun m -> m "Received AuthenticationOk");
+      create_sm_process_login_frames ?passwd ~user t fs
   | AuthenticationCleartextPassword :: fs -> (
+      Logs.info (fun m -> m "Received AuthenticationCleartextPassword");
       let open Abbs_future_combinators.Infix_result_monad in
       match passwd with
       | Some password ->
@@ -1168,6 +1195,7 @@ and create_sm_process_login_frames ?passwd ~user t =
           >>= fun () -> create_sm_process_login_frames ?passwd ~user t fs
       | None -> Abb.Future.return (Error `Connect_missing_password_err))
   | AuthenticationMD5Password { salt } :: fs -> (
+      Logs.info (fun m -> m "Received AuthenticationMD5Password");
       let open Abbs_future_combinators.Infix_result_monad in
       match passwd with
       | Some password ->
@@ -1181,7 +1209,9 @@ and create_sm_process_login_frames ?passwd ~user t =
   | BackendKeyData { pid; secret_key } :: fs ->
       let t = { t with backend_key_data = Backend_key_data.{ pid; secret_key } } in
       create_sm_process_login_frames ?passwd ~user t fs
-  | [ ReadyForQuery _ ] -> Abb.Future.return (Ok t)
+  | [ ReadyForQuery _ ] ->
+      Logs.info (fun m -> m "Received ReadyForQuery");
+      Abb.Future.return (Ok t)
   | AuthenticationSCMCredential :: _ ->
       Abb.Future.return (Error `Unsupported_auth_scm_credential_err)
   | AuthenticationGSS :: _ -> Abb.Future.return (Error `Unsupported_auth_gss_err)
@@ -1189,9 +1219,11 @@ and create_sm_process_login_frames ?passwd ~user t =
     when CCList.mem ~eq:CCString.equal "SCRAM-SHA-256" auth_mechanisms -> (
       match passwd with
       | Some password ->
+          Logs.info (fun m -> m "Received AuthenticationSASL");
           let open Abbs_future_combinators.Infix_result_monad in
           let client_first, data = Auth_scram.client_first Auth_scram.SCRAM_SHA256 user password in
           let auth_mechanism = "SCRAM-SHA-256" in
+          Logs.debug (fun m -> m "Sending SASLInitialResponse");
           Io.send_frame t Pgsql_codec.Frame.Frontend.(SASLInitialResponse { auth_mechanism; data })
           >>= fun () -> create_sm_scram_sha256_step_02 ?passwd ~user client_first t
       | None -> Abb.Future.return (Error `Connect_missing_password_err))
@@ -1275,11 +1307,14 @@ let tx_rollback t =
       [ equal (CommandComplete { tag = "ROLLBACK" }); equal (ReadyForQuery { status = 'I' }) ]
 
 let tx t ~f =
-  if t.in_tx then raise Nested_tx_not_supported;
+  if t.in_tx then (
+    Logs.info (fun m -> m "In tx already, failing");
+    raise Nested_tx_not_supported);
   Abbs_future_combinators.on_failure
     (fun () ->
       let open Abb.Future.Infix_monad in
       t.in_tx <- true;
+      Logs.info (fun m -> m "Starting tx");
       Io.send_frame t Pgsql_codec.Frame.Frontend.(Query { query = "BEGIN" })
       >>= fun _ ->
       Io.consume_matching
@@ -1289,15 +1324,20 @@ let tx t ~f =
           [ equal (CommandComplete { tag = "BEGIN" }); equal (ReadyForQuery { status = 'T' }) ]
       >>= function
       | Ok [] -> (
+          Logs.debug (fun m -> m "Tx code executing");
           f ()
           >>= function
           | Ok _ as r ->
               let open Abbs_future_combinators.Infix_result_monad in
               tx_commit t >>= fun _ -> Abb.Future.return r
           | Error _ as r -> tx_rollback t >>= fun _ -> Abb.Future.return r)
-      | Ok fs -> tx_rollback t >>= fun _ -> Abb.Future.return (Error (`Unmatching_frame fs))
+      | Ok fs ->
+          Logs.debug (fun m -> m "Tx received unexpected frames, failing");
+          tx_rollback t >>= fun _ -> Abb.Future.return (Error (`Unmatching_frame fs))
       | Error _ as err -> tx_rollback t >>= fun _ -> Abb.Future.return err)
-    ~failure:(fun () -> Abbs_future_combinators.ignore (tx_rollback t))
+    ~failure:(fun () ->
+      Logs.info (fun m -> m "Tx failed, rolling back");
+      Abbs_future_combinators.ignore (tx_rollback t))
 
 let clean_string s =
   s
