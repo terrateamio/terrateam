@@ -1135,6 +1135,9 @@
       "work-manifest-apply": {
         "additionalProperties": false,
         "properties": {
+          "api_base_url": {
+            "type": "string"
+          },
           "base_ref": {
             "type": "string"
           },
@@ -1153,6 +1156,12 @@
           "config": {
             "type": null
           },
+          "installation_id": {
+            "type": "string"
+          },
+          "protocol_version": {
+            "type": "integer"
+          },
           "result_version": {
             "type": "integer"
           },
@@ -1168,10 +1177,12 @@
           }
         },
         "required": [
+          "api_base_url",
           "base_ref",
           "capabilities",
           "changed_dirspaces",
           "config",
+          "installation_id",
           "result_version",
           "run_kind",
           "token",
@@ -1497,6 +1508,9 @@
       "work-manifest-plan": {
         "additionalProperties": false,
         "properties": {
+          "api_base_url": {
+            "type": "string"
+          },
           "base_dirspaces": {
             "items": {
               "$ref": "#/components/schemas/work-manifest-dir"
@@ -1527,6 +1541,12 @@
             },
             "type": "array"
           },
+          "installation_id": {
+            "type": "string"
+          },
+          "protocol_version": {
+            "type": "integer"
+          },
           "result_version": {
             "type": "integer"
           },
@@ -1549,12 +1569,14 @@
           }
         },
         "required": [
+          "api_base_url",
           "base_dirspaces",
           "base_ref",
           "capabilities",
           "changed_dirspaces",
           "config",
           "dirspaces",
+          "installation_id",
           "result_version",
           "run_kind",
           "token",
