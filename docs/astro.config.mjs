@@ -130,6 +130,7 @@ export default defineConfig({
             { label: "Docker Compose", link: "/self-hosted/docker-compose" },
             { label: "Kubernetes", link: "/self-hosted/kubernetes" },
             { label: "Environment Variables", link: "/self-hosted/environment-variables" },
+            { label: "Observability and Metrics", link: "/self-hosted/observability-metrics" },
             { label: "Editions", link: "/self-hosted/editions" },
           ],
         },
