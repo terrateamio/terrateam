@@ -347,6 +347,7 @@ module Options = struct
   type opt =
     | Follow_location
     | Http_version of [ `Http2 | `Http1_1 ]
+    | Curlopts of Curl.curlOption list
 
   type t = opt list
 
@@ -438,6 +439,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
         out_event : Out_event.t Queue.t;
         mutex : Mutex.t;
         mt : Curl.Multi.mt;
+        curl_opts : Curl.curlOption list;
         mutable poll_in : Int_set.t;
         mutable poll_out : Int_set.t;
         mutable requests : Request.t Id_map.t;
@@ -647,11 +649,13 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
             { Response.status = `Internal_server_error; headers = Headers.empty }
             t.responses;
         t.handles <- Id_map.add id handle t.handles;
+        CCList.iter (fun opt -> Curl.setopt handle opt) t.curl_opts;
         CCList.iter
           (function
             | Options.Follow_location -> Curl.set_followlocation handle true
             | Options.Http_version `Http1_1 -> Curl.set_httpversion handle Curl.HTTP_VERSION_1_1
-            | Options.Http_version `Http2 -> Curl.set_httpversion handle Curl.HTTP_VERSION_2)
+            | Options.Http_version `Http2 -> Curl.set_httpversion handle Curl.HTTP_VERSION_2
+            | Options.Curlopts opts -> CCList.iter (fun opt -> Curl.setopt handle opt) opts)
           options;
         (* Use our id to track this *)
         Curl.setopt handle (Curl.CURLOPT_PRIVATE id);
@@ -802,6 +806,21 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
           trigger_out_events t;
           loop t)
 
+      let curlopts_of_env () =
+        CCList.filter_map
+          (fun (env, f) ->
+            match Sys.getenv_opt env with
+            | Some env -> f env
+            | None -> None)
+          [
+            ( "CURL_SSL_OPTS",
+              function
+              | "n" -> Some (Curl.CURLOPT_SSL_OPTIONS [ Curl.CURLSSLOPT_NATIVE_CA ])
+              | _ -> None );
+            ("SSL_CERT_DIR", fun path -> Some (Curl.CURLOPT_CAPATH path));
+            ("SSL_CERT_FILE", fun path -> Some (Curl.CURLOPT_CAINFO path));
+          ]
+
       let start () =
         let wait_loop_eventfd, trigger_server_eventfd = Unix.pipe ~cloexec:true () in
         let wait_server_eventfd, trigger_loop_eventfd = Unix.pipe ~cloexec:true () in
@@ -819,6 +838,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
             out_event = Queue.create ();
             mutex = Mutex.create ();
             mt = Curl.Multi.create ();
+            curl_opts = curlopts_of_env ();
             poll_in = Int_set.empty;
             poll_out = Int_set.empty;
             requests = Id_map.empty;
