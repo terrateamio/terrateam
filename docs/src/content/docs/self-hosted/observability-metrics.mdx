@@ -1,0 +1,415 @@
+---
+title: Observability and Metrics
+description: Prometheus metrics reference for monitoring and observing Terrateam Self-Hosted deployments.
+---
+
+Terrateam exposes Prometheus-compatible metrics at the `/metrics` endpoint for comprehensive observability. This guide helps Site Reliability Engineers (SREs) and operators understand which metrics are available and how to use them for monitoring Terrateam's health and performance.
+
+## Metrics Endpoint
+
+All metrics are exposed at:
+```
+http://<terrateam-host>/metrics
+```
+
+Most Terrateam metrics use the `terrat` namespace prefix.
+
+## Core Error Tracking
+
+### `terrat_errors_total`
+
+- **Type:** Counter
+- **Labels:** `module`, `type`
+- **Description:** Counts errors across all Terrateam modules
+
+This is the primary error counter used throughout the application. Different modules and error types are tracked via labels.
+
+## Health Check Metrics
+
+### `terrat_ep_health_check_duration_seconds`
+
+- **Type:** Histogram
+- **Description:** Time to perform database health checks
+
+### `terrat_ep_health_check_requests_total`
+
+- **Type:** Counter
+- **Description:** Total number of health check requests
+
+### `terrat_ep_health_check_responses_total`
+
+- **Type:** Counter
+- **Labels:** `result`
+- **Description:** Health check response outcomes
+- **Result values:** `success`, `ping_fail`, `pgsql_pool_fail`
+
+### `terrat_ep_health_check_requests_concurrent`
+
+- **Type:** Gauge
+- **Description:** Number of health check requests currently in progress
+
+## Database Connection Pool
+
+### `terrat_storage_num_conns`
+
+- **Type:** Gauge
+- **Description:** Total number of PostgreSQL connections created
+
+### `terrat_storage_num_idle_conns`
+
+- **Type:** Gauge
+- **Description:** Number of idle connections in the PostgreSQL connection pool
+
+## GitHub Event Processing
+
+### GitHub Webhook Events
+
+#### `terrat_ep_github_events_events_duration_seconds`
+
+- **Type:** Histogram
+- **Buckets:** `[0.005, 0.5, 1.0, 5.0, 10.0, 15.0, 20.0]`
+- **Description:** Duration in seconds for processing incoming GitHub webhook events
+
+#### `terrat_ep_github_events_events_total`
+
+- **Type:** Counter
+- **Labels:** `type`, `action`
+- **Description:** Total number of GitHub webhook events received
+- **Event types and actions:**
+  - Type: `comment`, Actions: `not_terrateam`, `tag_query`, `unknown_action`, `noop`
+  - Type: `pr`, Actions: `open`, `sync`, `reopen`, `close`, `ready_for_review`
+  - Type: `installation`, Actions: `created`, `deleted`, `new_permissions_accepted`, `suspended`, `unsuspended`
+
+#### `terrat_ep_github_events_events_concurrent`
+
+- **Type:** Gauge
+- **Description:** Number of GitHub webhook events currently being processed
+
+### GitHub API Client
+
+#### `terrat_github_call_retries_total`
+
+- **Type:** Counter
+- **Description:** Number of retries when calling GitHub API
+
+#### `terrat_github_rate_limit_retry_wait_seconds`
+
+- **Type:** Histogram
+- **Buckets:** Exponential (start: 30.0, factor: 1.2, count: 20)
+- **Description:** Time spent waiting for GitHub API rate limits before retrying
+
+#### `terrat_github_rate_limit_remaining_count`
+
+- **Type:** Histogram
+- **Buckets:** `[100.0, 500.0, 1000.0, 2000.0, 3000.0, 4000.0, 5000.0, 6000.0, 10000.0]`
+- **Description:** Number of API calls remaining in the GitHub rate limit window
+
+#### `terrat_github_fn_call_total`
+
+- **Type:** Counter
+- **Labels:** `fn`
+- **Description:** Number of calls to specific GitHub API functions
+
+### GitHub VCS API
+
+#### `terrat_vcs_api_github_cache_fn_call_count`
+
+- **Type:** Counter
+- **Labels:** `lifetime`, `fn`, `type`
+- **Description:** Cache performance metrics for GitHub API calls
+- **Type values:** `hit`, `miss`, `evict`
+
+#### `terrat_vcs_api_github_fetch_pull_request_errors_total`
+
+- **Type:** Counter
+- **Description:** Errors encountered when fetching pull request data from GitHub
+
+#### `terrat_vcs_api_github_pull_request_mergeable_state_count`
+
+- **Type:** Counter
+- **Labels:** `mergeable_state`
+- **Description:** Distribution of pull request mergeable states returned by GitHub API
+
+### GitHub Evaluator
+
+#### `terrat_github_evaluator_psql_query_time`
+
+- **Type:** Histogram
+- **Labels:** `q`
+- **Buckets:** Linear (start: 0.0, interval: 0.1, count: 15)
+- **Description:** PostgreSQL query execution time for GitHub event processing
+
+#### `terrat_github_evaluator_run_overall_result_count`
+
+- **Type:** Counter
+- **Labels:** `success`
+- **Description:** Count of Terraform workflow run results initiated from GitHub
+
+## GitLab Event Processing
+
+### GitLab Webhook Events
+
+#### `terrat_ep_gitlab_events_events_duration_seconds`
+
+- **Type:** Histogram
+- **Buckets:** `[0.005, 0.5, 1.0, 5.0, 10.0, 15.0, 20.0]`
+- **Description:** Duration in seconds for processing incoming GitLab webhook events
+
+#### `terrat_ep_gitlab_events_events_total`
+
+- **Type:** Counter
+- **Labels:** `type`, `action`
+- **Description:** Total number of GitLab webhook events received
+
+#### `terrat_ep_gitlab_events_events_concurrent`
+
+- **Type:** Gauge
+- **Description:** Number of GitLab webhook events currently being processed
+
+### GitLab API Client
+
+#### `terrat_vcs_api_gitlab_call_retries_total`
+
+- **Type:** Counter
+- **Description:** Number of retries when calling GitLab API
+
+#### `terrat_vcs_api_gitlab_rate_limit_retry_wait_seconds`
+
+- **Type:** Histogram
+- **Buckets:** Exponential (start: 30.0, factor: 1.2, count: 20)
+- **Description:** Time spent waiting for GitLab API rate limits before retrying
+
+#### `terrat_vcs_api_gitlab_rate_limit_remaining_count`
+
+- **Type:** Histogram
+- **Buckets:** `[100.0, 500.0, 1000.0, 2000.0, 3000.0, 4000.0, 5000.0, 6000.0, 10000.0]`
+- **Description:** Number of API calls remaining in the GitLab rate limit window
+
+#### `terrat_vcs_api_gitlab_fn_call_total`
+
+- **Type:** Counter
+- **Labels:** `fn`
+- **Description:** Number of calls to specific GitLab API functions
+
+### GitLab Provider
+
+#### `terrat_vcs_service_gitlab_provider_psql_query_time`
+
+- **Type:** Histogram
+- **Labels:** `q`
+- **Buckets:** Linear (start: 0.0, interval: 0.1, count: 15)
+- **Description:** PostgreSQL query execution time for GitLab event processing
+
+#### `terrat_vcs_service_gitlab_provider_run_overall_result_count`
+
+- **Type:** Counter
+- **Labels:** `success`
+- **Description:** Count of Terraform workflow run results initiated from GitLab
+
+## Event Evaluator
+
+### `terrat_evaluator_op_on_account_disabled_total`
+
+- **Type:** Counter
+- **Description:** Count of operations attempted on disabled accounts
+
+### `terrat_evaluator_access_control_total`
+
+- **Type:** Counter
+- **Labels:** `type`, `result`
+- **Description:** Access control check results
+- **Result values:** `allowed`, `denied`
+
+### `terrat_evaluator_cache_dv_call_count`
+
+- **Type:** Counter
+- **Labels:** `v`, `type`
+- **Description:** Cache performance for derived values
+- **Type values:** `hit`, `miss`, `evict`
+
+## Infracost Integration
+
+### `terrat_ep_infracost_duration_seconds`
+
+- **Type:** Histogram
+- **Buckets:** `[0.005, 0.5, 1.0, 5.0, 10.0, 15.0, 20.0]`
+- **Description:** Time to process Infracost API proxy requests
+
+### `terrat_ep_infracost_requests_total`
+
+- **Type:** Counter
+- **Description:** Total number of Infracost API proxy requests
+
+### `terrat_ep_infracost_responses_total`
+
+- **Type:** Counter
+- **Labels:** `result`
+- **Description:** Infracost API response outcomes
+- **Result values:** `success`, `error`, `timeout`
+
+### `terrat_ep_infracost_requests_concurrent`
+
+- **Type:** Gauge
+- **Description:** Number of Infracost requests currently in progress
+- **Note:** Maximum 10 concurrent requests
+
+## Terraform Version Manager (Tenv)
+
+### `terrat_ep_tenv_cache_fn_call_count`
+
+- **Type:** Counter
+- **Labels:** `lifetime`, `fn`, `type`
+- **Description:** Cache performance for Terraform/OpenTofu version downloads
+- **Type values:** `hit`, `miss`, `evict`
+
+## Nginx Reverse Proxy Metrics
+
+### `terrat_nginx_active_connections`
+
+- **Type:** Gauge
+- **Description:** Current number of active Nginx connections
+
+### `terrat_nginx_accepts_count`
+
+- **Type:** Gauge
+- **Description:** Cumulative count of accepted Nginx connections
+
+### `terrat_nginx_handled_count`
+
+- **Type:** Gauge
+- **Description:** Cumulative count of handled Nginx connections
+
+### `terrat_nginx_requests_count`
+
+- **Type:** Gauge
+- **Description:** Cumulative count of Nginx requests processed
+
+### `terrat_nginx_reading`
+
+- **Type:** Gauge
+- **Description:** Number of Nginx connections currently in reading state
+
+### `terrat_nginx_writing`
+
+- **Type:** Gauge
+- **Description:** Number of Nginx connections currently in writing state
+
+### `terrat_nginx_waiting`
+
+- **Type:** Gauge
+- **Description:** Number of Nginx connections currently in waiting/keepalive state
+
+## Sample Prometheus Queries
+
+### Event Processing Rate
+```
+rate(terrat_ep_github_events_events_total[5m])
+```
+
+### Error Rate
+```
+rate(terrat_errors_total[5m])
+```
+
+### P99 Event Processing Latency
+```
+histogram_quantile(0.99, rate(terrat_ep_github_events_events_duration_seconds_bucket[5m]))
+```
+
+### API Rate Limit Remaining (Median)
+```
+histogram_quantile(0.50, rate(terrat_github_rate_limit_remaining_count_bucket[5m]))
+```
+
+### Database Connection Pool Utilization
+```
+(terrat_storage_num_conns - terrat_storage_num_idle_conns) / terrat_storage_num_conns
+```
+
+### Health Check Failure Rate
+```
+rate(terrat_ep_health_check_responses_total{result!="success"}[5m])
+```
+
+## Recommended Alerts
+
+### Critical Alerts
+
+#### Health Check Failures
+```
+rate(terrat_ep_health_check_responses_total{result!="success"}[5m]) > 0
+```
+Alert when database health checks are failing.
+
+#### High Error Rate
+```
+rate(terrat_errors_total[5m]) > 10
+```
+Alert when error rate exceeds 10 errors per second.
+
+#### Database Connection Pool Exhaustion
+```
+terrat_storage_num_idle_conns == 0
+```
+Alert when no idle database connections are available.
+
+### Warning Alerts
+
+#### GitHub Rate Limit Low
+```
+histogram_quantile(0.50, rate(terrat_github_rate_limit_remaining_count_bucket[5m])) < 500
+```
+Alert when median GitHub API rate limit remaining is below 500.
+
+#### High Event Processing Latency
+```
+histogram_quantile(0.99, rate(terrat_ep_github_events_events_duration_seconds_bucket[5m])) > 10
+```
+Alert when p99 event processing time exceeds 10 seconds.
+
+#### Event Processing Backlog
+```
+terrat_ep_github_events_events_concurrent > 50
+```
+Alert when too many events are being processed concurrently.
+
+#### Infracost Concurrency Limit
+```
+terrat_ep_infracost_requests_concurrent >= 10
+```
+Alert when Infracost API concurrency limit is reached.
+
+## Grafana Dashboard Suggestions
+
+Consider creating panels for:
+
+1. **System Health Row:**
+   - Health check success rate (time series)
+   - Database connection pool status (gauge)
+   - Error rate by module and type (time series)
+
+2. **Event Processing Row:**
+   - GitHub event processing rate by type/action (time series)
+   - GitLab event processing rate by type/action (time series)
+   - Event processing latency p50/p95/p99 (time series)
+   - Concurrent events being processed (gauge)
+
+3. **API Health Row:**
+   - API rate limit remaining (GitHub and GitLab) (gauge)
+   - API retry rate (time series)
+   - API call rate by function (time series)
+
+4. **Workflow Execution Row:**
+   - Terraform run success/failure rate (time series)
+   - PostgreSQL query performance (heatmap)
+
+5. **Cache Performance Row:**
+   - Cache hit rates for various subsystems (gauge)
+   - Cache operations by type (time series)
+
+## Notes on Metric Collection
+
+- All histogram metrics use specific bucket configurations optimized for their use case
+- Metrics are reset when the Terrateam service restarts
+- Configure Prometheus with appropriate scrape intervals (recommended: 15-30 seconds)
+- For long-term retention, consider using Thanos, Cortex, or similar long-term storage solutions
