@@ -3,6 +3,7 @@ module Msg = Terrat_vcs_provider2.Msg
 let cache_capacity_mb_in_kb = ( * ) 1024
 let kb_of_bytes b = CCInt.max 1 (b / 1024)
 let result_version = 2
+let protocol_version = 1
 
 (* If the number of dirspaces are over this arbitrary threshold, do not create
    dirspace checks. *)
@@ -4215,7 +4216,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       let open Abbs_future_combinators.Infix_result_monad in
       initiate_work_manifest state state.State.request_id (Ctx.storage ctx) run_id sha work_manifest
       >>= function
-      | Some { Wm.steps; base_ref; branch_ref; changes; target; _ } -> (
+      | Some { Wm.account; steps; base_ref; branch_ref; changes; target; _ } -> (
           Dv.base_branch_name ctx state
           >>= fun base_branch_name ->
           let step =
@@ -4307,6 +4308,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                         Work_manifest.Work_manifest_plan
                           {
                             Work_manifest_plan.token;
+                            api_base_url =
+                              Terrat_config.api_base @@ S.Api.Config.config @@ Ctx.config ctx;
+                            installation_id = S.Api.Account.Id.to_string @@ S.Api.Account.id account;
                             base_dirspaces;
                             base_ref = S.Api.Ref.to_string base_branch_name;
                             changed_dirspaces = changed_dirspaces config changes;
@@ -4315,6 +4319,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                             run_kind_data;
                             type_ = "plan";
                             result_version;
+                            protocol_version = Some protocol_version;
                             config =
                               repo_config
                               |> Terrat_base_repo_config_v1.to_version_1
@@ -4374,11 +4379,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                         Work_manifest.Work_manifest_apply
                           {
                             Work_manifest_apply.token;
+                            api_base_url =
+                              Terrat_config.api_base @@ S.Api.Config.config @@ Ctx.config ctx;
+                            installation_id = S.Api.Account.Id.to_string @@ S.Api.Account.id account;
                             base_ref = S.Api.Ref.to_string base_branch_name;
                             changed_dirspaces = changed_dirspaces config changes;
                             run_kind = run_kind_str;
                             type_ = "apply";
                             result_version;
+                            protocol_version = Some protocol_version;
                             config =
                               repo_config
                               |> Terrat_base_repo_config_v1.to_version_1
