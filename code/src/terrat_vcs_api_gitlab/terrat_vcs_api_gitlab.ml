@@ -341,7 +341,7 @@ let fetch_centralized_repo ~request_id client owner =
             err);
       Abb.Future.return (Error `Error)
 
-let create_client ~request_id config account =
+let create_client ~request_id config account db =
   let vcs_config = Config.vcs_config config in
   let gitlab_client =
     Openapic_abb.create

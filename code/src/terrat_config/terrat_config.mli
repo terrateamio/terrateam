@@ -14,6 +14,7 @@ end
 module Gitlab : sig
   type t [@@deriving show]
 
+  (* #899 Comment the line below and get it to compile again *) 
   val access_token : t -> string
   val api_base_url : t -> Uri.t
   val app_id : t -> string

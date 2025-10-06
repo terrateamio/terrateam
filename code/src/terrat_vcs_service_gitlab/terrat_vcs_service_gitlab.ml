@@ -117,6 +117,15 @@ struct
                       of_param Typ.(tuple4 (string, string, string, ud' Uuidm.of_string)))))
           /? Query.(option_default 20 (Query.int "limit")))
 
+      let gitlab_installation_tokens () =
+        Brtl_rtng.Route.(
+          gitlab_installations ()
+          /% Path.int
+          / "access-token"
+          /* Body.decode
+               ~json:Terrat_api_gitlab_installations.Create_access_token.Request_body.of_yojson
+               ())
+
       let gitlab_installation_work_manifests () =
         Brtl_rtng.Route.(
           gitlab_installations ()
@@ -167,6 +176,9 @@ struct
               --> Terrat_vcs_service_gitlab_ep_installations.List_work_manifest_outputs.get
                     config
                     storage );
+            ( `PUT,
+              Rt.gitlab_installation_tokens ()
+              --> Terrat_vcs_service_gitlab_ep_installations.Token.put config storage );
             (* Work manifests *)
             (`POST, Rt.gitlab_work_manifest_plan () --> Work_manifest.Plans.post config storage);
             (`GET, Rt.gitlab_get_work_manifest_plan () --> Work_manifest.Plans.get config storage);
