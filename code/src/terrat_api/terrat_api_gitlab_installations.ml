@@ -69,6 +69,46 @@ module Get_webhook = struct
       `Get
 end
 
+module Create_access_token = struct
+  module Parameters = struct
+    type t = { installation_id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Terrat_api_components.Gitlab_access_token.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Forbidden = struct end
+
+    type t =
+      [ `OK
+      | `Forbidden
+      ]
+    [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK); ("403", fun _ -> Ok `Forbidden) ]
+  end
+
+  let url = "/api/v1/gitlab/installations/{installation_id}/access-token"
+
+  let make ~body =
+   fun params ->
+    Openapi.Request.make
+      ~body:(Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("installation_id", Var (params.installation_id, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Put
+end
+
 module List_dirspaces = struct
   module Parameters = struct
     module D = struct

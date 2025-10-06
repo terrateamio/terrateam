@@ -93,9 +93,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     let set_storage storage t = { t with storage }
   end
 
-  let create_client request_id config account =
+  let create_client request_id config account db =
     Abbs_time_it.run (log_time request_id "CREATE_CLIENT") (fun () ->
-        S.Api.create_client ~request_id config account)
+        S.Api.create_client ~request_id config account db)
 
   let store_account_repository request_id db account repo =
     Abbs_time_it.run
@@ -1560,7 +1560,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           Abb.Future.return (Ok (V1.of_view system_defaults))
 
     let client ctx state =
-      create_client state.State.request_id (Ctx.config ctx) (Event.account state.State.event)
+      create_client state.State.request_id (Ctx.config ctx) (Event.account state.State.event) (Ctx.storage ctx)
 
     let pull_request_safe ctx state =
       match Event.pull_request_id_safe state.State.event with
@@ -1570,7 +1570,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           let repo = Event.repo state.State.event in
           let fetch () =
             let open Abbs_future_combinators.Infix_result_monad in
-            create_client state.State.request_id (Ctx.config ctx) account
+            create_client state.State.request_id (Ctx.config ctx) account (Ctx.storage ctx)
             >>= fun client ->
             fetch_pull_request state.State.request_id account client repo pull_request_id
           in
@@ -7511,7 +7511,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               >>= function
               | Some work_manifest -> (
                   let run =
-                    create_client request_id (Ctx.config ctx) work_manifest.Wm.account
+                    create_client request_id (Ctx.config ctx) work_manifest.Wm.account db
                     >>= fun client ->
                     run_work_manifest request_id (Ctx.config ctx) client work_manifest
                   in

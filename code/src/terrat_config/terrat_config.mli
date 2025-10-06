@@ -14,6 +14,7 @@ end
 module Gitlab : sig
   type t [@@deriving show]
 
+  (* #899 TODO This will be removed once the migration is done *)
   val access_token : t -> string
   val api_base_url : t -> Uri.t
   val app_id : t -> string

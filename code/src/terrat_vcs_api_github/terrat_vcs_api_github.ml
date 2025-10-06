@@ -380,7 +380,7 @@ let create_client' config { Account.installation_id } =
   let github_client = Terrat_github.create config.Config.github (`Token access_token) in
   Abb.Future.return (Ok github_client)
 
-let create_client ~request_id config account =
+let create_client ~request_id config account db =
   let open Abb.Future.Infix_monad in
   let fetch () =
     create_client' config account

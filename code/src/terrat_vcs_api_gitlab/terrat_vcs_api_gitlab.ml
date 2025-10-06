@@ -341,13 +341,37 @@ let fetch_centralized_repo ~request_id client owner =
             err);
       Abb.Future.return (Error `Error)
 
-let create_client ~request_id config account =
+let create_client ~request_id config account db =
+  let open Abb.Future.Infix_monad in
+  (* #899 TODO The section below also won't be needed once the migration is done *)
+  let read fname =
+    CCOption.get_exn_or
+      fname
+      (CCOption.map Pgsql_io.clean_string (Terrat_files_gitlab_sql.read fname))
+  in
+  let update_installation_with_token_from_config () =
+    Pgsql_io.Typed_sql.(
+      sql
+      /^ read "update_installation_with_token_from_config.sql"
+      /% Var.bigint "installation_id"
+      /% Var.text "access_token_from_terrat_config")
+  in
   let vcs_config = Config.vcs_config config in
+  (* #899 TODO Access Token will be removed from the Config once the migration is done *)
+  let access_token = Terrat_config.Gitlab.access_token vcs_config in
+  let installation_id = Account.id account in
+  Abbs_future_combinators.ignore
+    (Pgsql_io.Prepared_stmt.execute
+       db
+       (update_installation_with_token_from_config ())
+       (CCInt64.of_int installation_id)
+       access_token)
+  >>= fun () ->
   let gitlab_client =
     Openapic_abb.create
       ~user_agent:"Terrateam"
       ~base_url:(Terrat_config.Gitlab.api_base_url vcs_config)
-      (`Bearer (Terrat_config.Gitlab.access_token vcs_config))
+      (`Bearer access_token)
   in
   Abb.Future.return (Ok (Client.make ~account ~config ~client:gitlab_client ()))
 
