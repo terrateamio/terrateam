@@ -113,8 +113,8 @@ module S = struct
       let dirspace = { Terrat_dirspace.dir; workspace } in
       let status =
         match (unified_run_type, state, is_success) with
-        | Wm_step.Apply, Wm_state.Completed, true -> "APPLIED"
-        | Wm_step.Apply, Wm_state.Completed, false -> "FAILED"
+        | Wm_step.Apply, _, true -> "APPLIED"
+        | Wm_step.Apply, _, false -> "FAILED"
         | Wm_step.Plan, Wm_state.Completed, true -> "PLANNED"
         | Wm_step.Plan, Wm_state.Completed, false -> "FAILED"
         | _, Wm_state.Queued, _ -> "PENDING"
