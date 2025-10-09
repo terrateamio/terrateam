@@ -96,7 +96,7 @@ select
     unified_run_type,
     (case
        when state = 'completed' and success then 'success'
-       when state = 'completed' and not success then 'failure'
+       when state = 'completed' and success is null or not success then 'failure'
        else state
     end) as state,
     tag_query,
