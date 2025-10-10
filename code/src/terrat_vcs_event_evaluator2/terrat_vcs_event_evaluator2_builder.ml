@@ -17,9 +17,10 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     | `Closed
     | repo_config_fetch_err
     | Terrat_change_match3.synthesize_config_err
-    | `Suspend_eval_err of string
+    | `Suspend_eval of string
     | `Work_manifest_err of Uuidm.t
     | `Noop
+    | `Loop
     | Pgsql_io.err
     | Pgsql_pool.err
     | Str_template.err

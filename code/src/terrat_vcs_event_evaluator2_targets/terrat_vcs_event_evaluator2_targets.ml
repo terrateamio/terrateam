@@ -338,6 +338,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     Hmap.Key.create "check_valid_destination_branch"
 
   let check_access_control_plan : unit Hmap.key = Hmap.Key.create "check_access_control_plan"
+  let check_access_control_apply : unit Hmap.key = Hmap.Key.create "check_access_control_apply"
   let check_account_status_expired : unit Hmap.key = Hmap.Key.create "check_account_status_expired"
   let check_account_tier : unit Hmap.key = Hmap.Key.create "check_account_tier"
   let check_merge_conflict : unit Hmap.key = Hmap.Key.create "check_merge_conflict"
@@ -345,8 +346,22 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   let check_conflicting_plan_work_manifests : unit Hmap.key =
     Hmap.Key.create "check_conflicting_plan_work_manifests"
 
+  let check_conflicting_apply_work_manifests : unit Hmap.key =
+    Hmap.Key.create "check_conflicting_apply_work_manifests"
+
+  let check_dirspaces_missing_plans : unit Hmap.key =
+    Hmap.Key.create "check_dirspaces_missing_plans"
+
+  let check_gates : unit Hmap.key = Hmap.Key.create "check_gates"
+
+  let check_dirspaces_owned_by_other_pull_requests : unit Hmap.key =
+    Hmap.Key.create "check_dirspaces_owned_by_other_pull_requests"
+
   let check_pull_request_state : unit Hmap.key = Hmap.Key.create "check_pull_request_state"
+  let can_run_plan : unit Hmap.key = Hmap.Key.create "can_run_plan"
   let publish_plan : unit Hmap.key = Hmap.Key.create "publish_plan"
+  let can_run_apply : unit Hmap.key = Hmap.Key.create "can_run_apply"
+  let publish_apply : unit Hmap.key = Hmap.Key.create "publish_apply"
 
   (* Context management *)
   let store_repository : unit Hmap.key = Hmap.Key.create "store_repository"
@@ -363,4 +378,5 @@ module Make (S : Terrat_vcs_provider2.S) = struct
 
   let eval_work_manifest_event : unit Hmap.key = Hmap.Key.create "eval_work_manifest_event"
   let eval_job : unit Hmap.key = Hmap.Key.create "eval_job"
+  let iter_job : unit Hmap.key = Hmap.Key.create "iter_job"
 end
