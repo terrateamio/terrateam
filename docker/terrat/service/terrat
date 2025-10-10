@@ -3,767 +3,101 @@
 import os
 import subprocess
 import sys
-import time
-import requests
-from datetime import datetime
-from urllib.parse import quote_plus
 
-# Debug output to confirm script is running
-print("[TERRAT-WRAPPER] Starting terrat service wrapper script...", flush=True)
-print(f"[TERRAT-WRAPPER] Timestamp: {datetime.now().isoformat()}", flush=True)
-
-TERRAT_API_BASE = 'TERRAT_API_BASE'
-GITHUB_API_BASE_URL = 'GITHUB_API_BASE_URL'
-REQUIRED_ENV_KEYS = []
+print("[TERRAT-WRAPPER] Starting terrat service wrapper...", flush=True)
 
 def setup_environment():
+    """Setup required environment variables"""
+    # Handle custom CA certificates
     custom_ca_cert = os.getenv('CUSTOM_CA_CERT')
     if custom_ca_cert:
-        print(f"Installing custom CA certificates... (found {len(custom_ca_cert)} chars)", flush=True)
+        print(f"Installing custom CA certificates...", flush=True)
         try:
-            # Run the root-owned certificate installation script
-            # The script will handle all the logic for splitting and installing certificates
             result = subprocess.run(['sudo', '-E', '/usr/local/bin/install-ca-cert'],
-                                  capture_output=True,
-                                  text=True)
-
+                                  capture_output=True, text=True)
             if result.returncode == 0:
                 print("Custom CA certificates installed successfully", flush=True)
-                if result.stdout:
-                    print(result.stdout, flush=True)
             else:
                 print("Failed to install custom CA certificates", flush=True)
-                if result.stderr:
-                    print(f"Error: {result.stderr}", flush=True)
-                # Don't fail completely if certificates can't be updated
-                print("Attempting to continue without custom certificates...", flush=True)
-
+                print(f"Error: {result.stderr}", flush=True)
         except Exception as e:
             print(f"Failed to install certificates: {e}", flush=True)
-            print("Attempting to continue without custom certificates...")
-
         os.environ['CERTS_DIR'] = '/etc/ssl/certs'
-    else:
-        print("No CUSTOM_CA_CERT environment variable found, skipping certificate installation", flush=True)
+
+    # Setup environment variables
     if 'GITHUB_APP_PEM' in os.environ:
         os.environ['GITHUB_APP_PEM'] = os.environ['GITHUB_APP_PEM'].replace('\\n', '\n')
+
     os.environ['TERRAT_PYTHON_EXEC'] = '/usr/bin/python3'
-    # OCAMLRUNPARAM is now set in check_ocaml_runtime_settings() with more comprehensive configuration
     os.environ['NGINX_STATUS_URI'] = 'http://localhost:8080/nginx_status'
     os.environ['TERRAT_PORT'] = '8180'
-    os.environ.setdefault(GITHUB_API_BASE_URL, 'https://api.github.com')
+    os.environ.setdefault('GITHUB_API_BASE_URL', 'https://api.github.com')
     os.environ.setdefault('INFRACOST_PRICING_API_ENDPOINT', '')
     os.environ.setdefault('SELF_HOSTED_INFRACOST_API_KEY', '')
 
-def assert_required_env_keys():
-    missing_keys = [
-      k for k in REQUIRED_ENV_KEYS
-      if k not in os.environ
-    ]
-
-    if missing_keys:
-        print('Missing environment variables: {}'.format(' '.join(missing_keys)), flush=True)
-        print('Please see https://docs.terrateam.io/self-hosted for what variables are required', flush=True)
-        sys.exit(1)
-
-def get_tunnel_hostname(terratunnel_endpoint):
-    try:
-        response = requests.get(f"{terratunnel_endpoint}/status", timeout=5)
-        response.raise_for_status()
-        data = response.json()
-        if data.get('connected') and data.get('tunnel_hostname'):
-            return data['tunnel_hostname']
-    except Exception as e:
-        print(f"Failed to fetch tunnel hostname: {e}", flush=True)
-    return None
-
-def assert_run_mode():
-    if not os.environ.get(TERRAT_API_BASE):
-        print('TERRAT_API_BASE must be set', flush=True)
-        print('Please see https://docs.terrateam.io/self-hosted for more information', flush=True)
-        sys.exit(1)
-
-def check_database_connectivity():
-    db_host = os.environ.get('DB_HOST')
-    if not db_host:
-        print("=" * 70, flush=True)
-        print("DATABASE CONNECTIVITY CHECK: SKIPPED (DB_HOST not set)", flush=True)
-        print("=" * 70, flush=True)
-        return
-
-    print("=" * 70, flush=True)
-    print(f"DATABASE CONNECTIVITY CHECK: Testing connection to {db_host}:5432", flush=True)
-    print("-" * 70, flush=True)
-
-    try:
-        result = subprocess.run(
-            ['nc', '-z', '-v', '-w', '1', db_host, '5432'],
-            capture_output=True,
-            text=True,
-            timeout=3
-        )
-
-        # nc outputs to stderr even on success when using -v
-        output = (result.stderr + result.stdout).strip()
-
-        if result.returncode == 0:
-            print("✓ DATABASE CONNECTIVITY CHECK: SUCCESS", flush=True)
-            print(f"  Successfully connected to {db_host}:5432", flush=True)
-            if output:
-                print(f"  {output}", flush=True)
-        else:
-            print("✗ DATABASE CONNECTIVITY CHECK: FAILURE", flush=True)
-            print(f"  Could not connect to {db_host}:5432", flush=True)
-            if output:
-                print(f"  {output}", flush=True)
-
-    except subprocess.TimeoutExpired:
-        print("✗ DATABASE CONNECTIVITY CHECK: TIMEOUT", flush=True)
-        print(f"  Connection to {db_host}:5432 timed out after 3 seconds", flush=True)
-    except FileNotFoundError:
-        print("✗ DATABASE CONNECTIVITY CHECK: ERROR", flush=True)
-        print("  nc (netcat) command not found in system", flush=True)
-    except Exception as e:
-        print("✗ DATABASE CONNECTIVITY CHECK: ERROR", flush=True)
-        print(f"  Unexpected error: {str(e)}", flush=True)
-
-    print("=" * 70, flush=True)
-
-def test_postgres_query():
-    """Test actual PostgreSQL query execution"""
-    db_host = os.environ.get('DB_HOST')
-    db_port = os.environ.get('DB_PORT', '5432')
-    db_name = os.environ.get('DB_NAME')
-    db_user = os.environ.get('DB_USER')
-    db_pass = os.environ.get('DB_PASS')
-
-    if not all([db_host, db_name, db_user, db_pass]):
-        print("=" * 70, flush=True)
-        print("POSTGRES QUERY TEST: SKIPPED (missing DB credentials)", flush=True)
-        print("=" * 70, flush=True)
-        return
-
-    print("=" * 70, flush=True)
-    print(f"POSTGRES QUERY TEST: Testing query execution on {db_host}:{db_port}/{db_name}", flush=True)
-    print("-" * 70, flush=True)
-
-    try:
-        # URL-encode credentials for PostgreSQL URI
-        encoded_user = quote_plus(db_user)
-        encoded_pass = quote_plus(db_pass)
-        encoded_host = quote_plus(db_host)
-        encoded_db = quote_plus(db_name)
-
-        connection_string = f'postgresql://{encoded_user}:{encoded_pass}@{encoded_host}:{db_port}/{encoded_db}'
-
-        # Test with psql if available
-        result = subprocess.run(
-            ['psql',
-             connection_string,
-             '-c', 'SELECT version();',
-             '-c', 'SELECT current_database(), current_user;',
-             '-c', 'SELECT COUNT(*) FROM pg_stat_activity;'],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
-
-        if result.returncode == 0:
-            print("✓ POSTGRES QUERY TEST: SUCCESS", flush=True)
-            print(f"  Output:", flush=True)
-            for line in result.stdout.split('\n')[:20]:  # Limit output
-                if line.strip():
-                    print(f"    {line}", flush=True)
-        else:
-            print("✗ POSTGRES QUERY TEST: FAILURE", flush=True)
-            print(f"  Error: {result.stderr[:500]}", flush=True)
-
-    except FileNotFoundError:
-        print("⊘ POSTGRES QUERY TEST: SKIPPED (psql not installed)", flush=True)
-    except subprocess.TimeoutExpired:
-        print("✗ POSTGRES QUERY TEST: TIMEOUT (>10s)", flush=True)
-    except Exception as e:
-        print(f"✗ POSTGRES QUERY TEST: ERROR - {str(e)}", flush=True)
-
-    print("=" * 70, flush=True)
-
-def check_network_diagnostics():
-    """Check network configuration and routing"""
-    print("=" * 70, flush=True)
-    print("NETWORK DIAGNOSTICS", flush=True)
-    print("-" * 70, flush=True)
-
-    # Check port 8180
-    try:
-        result = subprocess.run(['netstat', '-tulpn'], capture_output=True, text=True, timeout=2)
-        if '8180' in result.stdout:
-            print("⚠ WARNING: Port 8180 might already be in use!", flush=True)
-            for line in result.stdout.split('\n'):
-                if '8180' in line:
-                    print(f"  {line}", flush=True)
-        else:
-            print("✓ Port 8180 appears to be available", flush=True)
-    except:
-        print("  (netstat check skipped)", flush=True)
-
-    # Show routing table
-    try:
-        result = subprocess.run(['ip', 'route'], capture_output=True, text=True, timeout=2)
-        print(f"\nRouting table:", flush=True)
-        for line in result.stdout.split('\n')[:10]:
-            if line.strip():
-                print(f"  {line}", flush=True)
-    except:
-        print("  (route check skipped)", flush=True)
-
-    # Show interfaces
-    try:
-        result = subprocess.run(['ip', 'addr', 'show'], capture_output=True, text=True, timeout=2)
-        print(f"\nNetwork interfaces:", flush=True)
-        for line in result.stdout.split('\n')[:20]:
-            if line.strip():
-                print(f"  {line}", flush=True)
-    except:
-        print("  (interface check skipped)", flush=True)
-
-    # DNS resolution for DB host
-    db_host = os.environ.get('DB_HOST')
-    if db_host:
-        try:
-            result = subprocess.run(['nslookup', db_host], capture_output=True, text=True, timeout=3)
-            print(f"\nDNS resolution for {db_host}:", flush=True)
-            for line in result.stdout.split('\n')[:10]:
-                if line.strip():
-                    print(f"  {line}", flush=True)
-        except:
-            print(f"  (DNS check for {db_host} skipped)", flush=True)
-
-    print("=" * 70, flush=True)
-
-def check_system_resources():
-    """Check system resources and process state"""
-    print("=" * 70, flush=True)
-    print("SYSTEM RESOURCES", flush=True)
-    print("-" * 70, flush=True)
-
-    # Memory
-    try:
-        with open('/proc/meminfo', 'r') as f:
-            mem_lines = [f.readline() for _ in range(3)]
-        print("Memory:", flush=True)
-        for line in mem_lines:
-            print(f"  {line.strip()}", flush=True)
-    except:
-        print("  (memory check skipped)", flush=True)
-
-    # Process tree
-    try:
-        result = subprocess.run(['ps', 'auxf'], capture_output=True, text=True, timeout=2)
-        print(f"\nProcess tree:", flush=True)
-        for line in result.stdout.split('\n')[:30]:
-            if line.strip():
-                print(f"  {line}", flush=True)
-    except:
-        print("  (process check skipped)", flush=True)
-
-    # File descriptors
-    try:
-        result = subprocess.run(['ls', '-la', '/proc/self/fd'], capture_output=True, text=True, timeout=1)
-        print(f"\nOpen file descriptors:", flush=True)
-        for line in result.stdout.split('\n')[:15]:
-            if line.strip():
-                print(f"  {line}", flush=True)
-    except:
-        print("  (fd check skipped)", flush=True)
-
-    print("=" * 70, flush=True)
-
-def verify_terrat_binary():
-    """Verify terrat binary exists and is executable"""
-    print("=" * 70, flush=True)
-    print("TERRAT BINARY VERIFICATION", flush=True)
-    print("-" * 70, flush=True)
-
-    terrat_path = '/usr/local/bin/terrat'
-
-    try:
-        # Check if file exists
-        if os.path.exists(terrat_path):
-            print(f"✓ Binary exists at {terrat_path}", flush=True)
-
-            # Check permissions
-            stat_info = os.stat(terrat_path)
-            print(f"  Permissions: {oct(stat_info.st_mode)}", flush=True)
-            print(f"  Size: {stat_info.st_size} bytes", flush=True)
-
-            # Check if executable
-            if os.access(terrat_path, os.X_OK):
-                print(f"✓ Binary is executable", flush=True)
-            else:
-                print(f"✗ Binary is NOT executable!", flush=True)
-
-            # Try to get version
-            try:
-                result = subprocess.run([terrat_path, '--version'], capture_output=True, text=True, timeout=5)
-                if result.returncode == 0:
-                    print(f"  Version: {result.stdout.strip()}", flush=True)
-            except:
-                print(f"  (version check failed)", flush=True)
-
-        else:
-            print(f"✗ Binary NOT FOUND at {terrat_path}!", flush=True)
-
-    except Exception as e:
-        print(f"✗ Error checking binary: {str(e)}", flush=True)
-
-    print("=" * 70, flush=True)
-
-def check_ocaml_runtime_settings():
-    """Check and configure OCaml 5.x multicore runtime settings"""
-    print("=" * 70, flush=True)
-    print("OCAML RUNTIME CONFIGURATION", flush=True)
-    print("-" * 70, flush=True)
-
-    # Show current CPU/core information
-    try:
-        with open('/proc/cpuinfo', 'r') as f:
-            cpu_count = sum(1 for line in f if line.startswith('processor'))
-        print(f"Available CPU cores: {cpu_count}", flush=True)
-    except:
-        print("Could not determine CPU count", flush=True)
-
-    # Check current OCAMLRUNPARAM
-    current_ocamlrunparam = os.environ.get('OCAMLRUNPARAM', '(not set)')
-    print(f"Current OCAMLRUNPARAM: {current_ocamlrunparam}", flush=True)
-
-    # OCaml 5.x specific settings for domain pool
-    # The 'v' parameter controls verbosity (useful for debugging)
-    # The 'p' parameter can affect domain pool behavior
-    print("\nOCaml 5.x Domain Pool Settings:", flush=True)
-
-    # Add verbose runtime parameter for debugging domain pool issues
-    # Format: OCAMLRUNPARAM=b,v=0x01 where:
-    # - b = backtrace on uncaught exception
-    # - v=0x01 = verbose GC/domain messages
-    new_params = ['b']  # Always keep backtrace
-
-    # Parse existing params if any
-    if current_ocamlrunparam != '(not set)' and current_ocamlrunparam:
-        existing = [p.strip() for p in current_ocamlrunparam.split(',') if p.strip()]
-        # Keep existing params that aren't 'b' or 'v'
-        new_params.extend([p for p in existing if not p.startswith(('b', 'v'))])
-
-    # Add verbose flag for domain debugging
-    # v=0x1f gives maximum verbosity: GC, domains, minor GC, major GC, finalizers
-    new_params.append('v=0x1f')  # Maximum verbosity for domain/GC operations
-
-    os.environ['OCAMLRUNPARAM'] = ','.join(new_params)
-    print(f"  Set OCAMLRUNPARAM: {os.environ['OCAMLRUNPARAM']}", flush=True)
-    print(f"  This will produce verbose output for domain creation, GC, and runtime operations", flush=True)
-
-    # Check for potential resource limits that might affect domains
-    print("\nResource limits affecting OCaml domains:", flush=True)
-    try:
-        result = subprocess.run(['ulimit', '-a'], capture_output=True, text=True, shell=True, timeout=2)
-        for line in result.stdout.split('\n')[:15]:
-            if any(keyword in line.lower() for keyword in ['stack', 'threads', 'processes', 'cpu', 'memory']):
-                print(f"  {line}", flush=True)
-    except:
-        print("  (ulimit check skipped)", flush=True)
-
-    # Check for any signals that might be blocked
-    print("\nSignal handling:", flush=True)
-    try:
-        # Try to read current signal mask
-        result = subprocess.run(['grep', 'SigBlk', '/proc/self/status'], capture_output=True, text=True, timeout=1)
-        if result.returncode == 0:
-            print(f"  {result.stdout.strip()}", flush=True)
-    except:
-        print("  (signal mask check skipped)", flush=True)
-
-    print("=" * 70, flush=True)
-
-def test_kqueue_syscall():
-    """Test if kqueue syscall works in this environment"""
-    print("=" * 80, flush=True)
-    print("TEST: kqueue syscall availability", flush=True)
-    print("=" * 80, flush=True)
-
-    try:
-        import ctypes
-
-        # Try to load libkqueue
-        try:
-            libkqueue = ctypes.CDLL("libkqueue.so")
-            print("✓ libkqueue.so loaded successfully", flush=True)
-        except Exception as e:
-            print(f"✗ Failed to load libkqueue.so: {e}", flush=True)
-            print("=" * 80, flush=True)
-            return
-
-        # Try to create a kqueue
-        try:
-            kq_fd = libkqueue.kqueue()
-            if kq_fd < 0:
-                err = ctypes.get_errno()
-                print(f"✗ kqueue() returned error: fd={kq_fd}, errno={err}", flush=True)
-            else:
-                print(f"✓ kqueue() succeeded: fd={kq_fd}", flush=True)
-                # Try to close it
-                import os as os_module
-                try:
-                    os_module.close(kq_fd)
-                    print(f"✓ kqueue fd closed successfully", flush=True)
-                except Exception as e:
-                    print(f"⚠ Could not close kqueue fd: {e}", flush=True)
-        except Exception as e:
-            print(f"✗ kqueue() call failed: {e}", flush=True)
-
-    except Exception as e:
-        print(f"✗ Test failed: {e}", flush=True)
-
-    print("=" * 80, flush=True)
-
-def test_pthread_creation():
-    """Test if pthread creation works"""
-    print("=" * 80, flush=True)
-    print("TEST: pthread creation", flush=True)
-    print("=" * 80, flush=True)
-
-    import threading
-
-    result = {"success": False, "error": None}
-
-    def worker():
-        result["success"] = True
-        print("  ✓ pthread worker function executed", flush=True)
-
-    try:
-        thread = threading.Thread(target=worker)
-        print("  Starting pthread...", flush=True)
-        thread.start()
-        thread.join(timeout=2.0)
-
-        if result["success"]:
-            print("✓ pthread created and executed successfully", flush=True)
-        else:
-            print("✗ pthread created but didn't execute within timeout", flush=True)
-    except Exception as e:
-        print(f"✗ pthread creation failed: {e}", flush=True)
-
-    print("=" * 80, flush=True)
-
-def check_resource_limits_detailed():
-    """Check ulimits that might affect thread/domain creation"""
-    print("=" * 80, flush=True)
-    print("TEST: Resource limits for thread creation", flush=True)
-    print("=" * 80, flush=True)
-
-    import resource
-
-    limits_to_check = [
-        ('RLIMIT_NPROC', resource.RLIMIT_NPROC, 'Max number of processes'),
-        ('RLIMIT_NOFILE', resource.RLIMIT_NOFILE, 'Max number of open files'),
-        ('RLIMIT_STACK', resource.RLIMIT_STACK, 'Max stack size'),
-        ('RLIMIT_AS', resource.RLIMIT_AS, 'Max address space'),
-    ]
-
-    for name, limit_type, desc in limits_to_check:
-        try:
-            soft, hard = resource.getrlimit(limit_type)
-            soft_str = 'unlimited' if soft == resource.RLIM_INFINITY else str(soft)
-            hard_str = 'unlimited' if hard == resource.RLIM_INFINITY else str(hard)
-            print(f"{name:20} ({desc})", flush=True)
-            print(f"  soft: {soft_str}, hard: {hard_str}", flush=True)
-        except Exception as e:
-            print(f"{name:20} - Error: {e}", flush=True)
-
-    # Also check /proc limits
-    print("\n/proc/self/limits:", flush=True)
-    try:
-        with open('/proc/self/limits', 'r') as f:
-            for line in f:
-                print(f"  {line.rstrip()}", flush=True)
-    except Exception as e:
-        print(f"  Could not read /proc/self/limits: {e}", flush=True)
-
-    print("=" * 80, flush=True)
-
-def check_syscall_availability():
-    """Check if key syscalls are available"""
-    print("=" * 80, flush=True)
-    print("TEST: Syscall availability", flush=True)
-    print("=" * 80, flush=True)
-
-    try:
-        import ctypes
-        import ctypes.util
-
-        libc = ctypes.CDLL(ctypes.util.find_library('c'))
-
-        # Test clone (used by pthread_create and Domain.spawn)
-        syscalls_to_test = [
-            ('clone', 56),  # SYS_clone on x86_64
-            ('epoll_create', 213),  # Used by kqueue emulation
-            ('eventfd', 284),  # Used by various async operations
-        ]
-
-        for name, syscall_num in syscalls_to_test:
-            try:
-                # Set errno to 0 first
-                ctypes.set_errno(0)
-                # Try to call syscall with invalid args to see if it's blocked
-                result = libc.syscall(syscall_num, 0)
-                errno_val = ctypes.get_errno()
-                if errno_val == 38:  # ENOSYS
-                    print(f"✗ {name} (syscall {syscall_num}): NOT AVAILABLE (ENOSYS)", flush=True)
-                else:
-                    print(f"✓ {name} (syscall {syscall_num}): available (errno={errno_val})", flush=True)
-            except Exception as e:
-                print(f"? {name} (syscall {syscall_num}): {e}", flush=True)
-    except Exception as e:
-        print(f"✗ Syscall availability test failed: {e}", flush=True)
-
-    print("=" * 80, flush=True)
-
-def test_ocaml_domain_spawn():
-    """Test if OCaml can spawn domains by running a minimal test"""
-    print("=" * 80, flush=True)
-    print("TEST: OCaml Domain.spawn (via minimal OCaml program)", flush=True)
-    print("=" * 80, flush=True)
-
-    import tempfile
-
-    # Create a minimal OCaml program that tests Domain.spawn
-    test_program = '''let () =
-  print_endline "Starting domain spawn test...";
-  flush stdout;
-  try
-    let d = Domain.spawn (fun () ->
-      print_endline "Domain spawned successfully!";
-      flush stdout;
-      42
-    ) in
-    let result = Domain.join d in
-    Printf.printf "Domain joined with result: %d\\n" result;
-    flush stdout;
-    exit 0
-  with e ->
-    Printf.printf "Domain spawn failed: %s\\n" (Printexc.to_string e);
-    flush stdout;
-    exit 1
-'''
-
-    try:
-        # Write test program to a temp file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.ml', delete=False) as f:
-            f.write(test_program)
-            test_file = f.name
-
-        print(f"  Compiling test program at {test_file}...", flush=True)
-
-        # Try to compile it
-        compile_result = subprocess.run(
-            ['ocamlopt', '-o', '/tmp/domain_test', test_file],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
-
-        if compile_result.returncode == 0:
-            print("  ✓ Test program compiled successfully", flush=True)
-            print("  Running test program (5 second timeout)...", flush=True)
-
-            run_result = subprocess.run(
-                ['/tmp/domain_test'],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
-
-            print(f"  stdout: {run_result.stdout}", flush=True)
-            if run_result.stderr:
-                print(f"  stderr: {run_result.stderr}", flush=True)
-            print(f"  exit code: {run_result.returncode}", flush=True)
-
-            if run_result.returncode == 0 and "Domain spawned successfully" in run_result.stdout:
-                print("✓ Domain.spawn works perfectly!", flush=True)
-            elif run_result.returncode == 0:
-                print("⚠ Domain.spawn completed but output unexpected", flush=True)
-            else:
-                print("✗ Domain.spawn test failed", flush=True)
-        else:
-            print(f"✗ Compilation failed:", flush=True)
-            print(f"  {compile_result.stderr}", flush=True)
-
-        # Cleanup
-        try:
-            os.unlink(test_file)
-            if os.path.exists('/tmp/domain_test'):
-                os.unlink('/tmp/domain_test')
-        except:
-            pass
-
-    except subprocess.TimeoutExpired:
-        print("✗ Test TIMED OUT - Domain.spawn is likely HANGING!", flush=True)
-        print("  This strongly suggests Domain.spawn does not work in this environment", flush=True)
-    except FileNotFoundError as e:
-        print(f"⊘ Test skipped - ocamlopt not found: {e}", flush=True)
-        print("  (This is expected in production containers)", flush=True)
-    except Exception as e:
-        print(f"✗ Test failed: {e}", flush=True)
-
-    print("=" * 80, flush=True)
+    # Set OCaml runtime params for verbose output
+    os.environ['OCAMLRUNPARAM'] = 'b,v=0x1f'
 
 def main():
-    start_time = time.time()
     print('=' * 80, flush=True)
-    print('TERRAT SERVICE STARTUP - COMPREHENSIVE DIAGNOSTICS', flush=True)
+    print('TERRAT SERVICE STARTUP', flush=True)
     print('=' * 80, flush=True)
-    print(f'[{datetime.now().isoformat()}] Starting...', flush=True)
 
-    # Run all diagnostic checks
-    check_database_connectivity()
-    test_postgres_query()
-    check_network_diagnostics()
-    check_system_resources()
-    verify_terrat_binary()
-    check_ocaml_runtime_settings()
-
-    # Run additional deep diagnostic tests
-    print("\n" + "=" * 80, flush=True)
-    print("DEEP DIAGNOSTIC TESTS FOR DOMAIN SPAWNING ISSUE", flush=True)
-    print("=" * 80, flush=True)
-    test_kqueue_syscall()
-    test_pthread_creation()
-    check_resource_limits_detailed()
-    check_syscall_availability()
-    test_ocaml_domain_spawn()
-    print("=" * 80, flush=True)
-    print("ALL DIAGNOSTIC TESTS COMPLETE", flush=True)
-    print("=" * 80, flush=True)
-
-    # Sleep in case we're in a bad runit loop
-    print(f"\n[{datetime.now().isoformat()}] Sleeping for 3 seconds...", flush=True)
-    time.sleep(3)
-
-    assert_required_env_keys()
-
-    # Try to set TERRAT_API_BASE from terratunnel if not already set
-    if not os.environ.get(TERRAT_API_BASE) and os.environ.get('TERRATUNNEL_API_ENDPOINT'):
-        print(f"[{datetime.now().isoformat()}] TERRAT_API_BASE not set, attempting to fetch from terratunnel...", flush=True)
-        tunnel_hostname = get_tunnel_hostname(os.environ['TERRATUNNEL_API_ENDPOINT'])
-        if tunnel_hostname:
-            os.environ[TERRAT_API_BASE] = f"https://{tunnel_hostname}/api"
-            print(f"[{datetime.now().isoformat()}] Set TERRAT_API_BASE to: {os.environ[TERRAT_API_BASE]}", flush=True)
-        else:
-            print(f"[{datetime.now().isoformat()}] Failed to get tunnel hostname from terratunnel", flush=True)
-
-    assert_run_mode()
-
-    print(f"\n[{datetime.now().isoformat()}] Setting up environment...", flush=True)
     setup_environment()
 
-    # Show critical environment variables (redacted)
-    print("\n" + "=" * 70, flush=True)
-    print("CRITICAL ENVIRONMENT VARIABLES", flush=True)
-    print("-" * 70, flush=True)
-    for key in ['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'TERRAT_PORT', 'TERRAT_API_BASE', 'TERRAT_UI_BASE']:
-        value = os.environ.get(key, '(not set)')
-        print(f"  {key}={value}", flush=True)
-    print(f"  DB_PASS={'(set)' if os.environ.get('DB_PASS') else '(not set)'}", flush=True)
-    print("=" * 70, flush=True)
+    # Verify TERRAT_API_BASE is set
+    if not os.environ.get('TERRAT_API_BASE'):
+        print('ERROR: TERRAT_API_BASE must be set', flush=True)
+        sys.exit(1)
 
-    # Run db migration
-    migrate_start = time.time()
-    print(f"\n[{datetime.now().isoformat()}] ========================================", flush=True)
-    print(f"[{datetime.now().isoformat()}] STARTING DATABASE MIGRATION", flush=True)
-    print(f"[{datetime.now().isoformat()}] ========================================", flush=True)
-    print(f"[{datetime.now().isoformat()}] OCAMLRUNPARAM at migration time: {os.environ.get('OCAMLRUNPARAM', '(not set)')}", flush=True)
-    print(f"[{datetime.now().isoformat()}] If migration hangs after domain pool initialization, this indicates", flush=True)
-    print(f"[{datetime.now().isoformat()}] an issue with OCaml 5.x multicore domain spawning in Cloud Run", flush=True)
-    print(f"[{datetime.now().isoformat()}] ========================================", flush=True)
+    print(f"Environment ready:", flush=True)
+    print(f"  DB_HOST: {os.environ.get('DB_HOST', '(not set)')}", flush=True)
+    print(f"  DB_NAME: {os.environ.get('DB_NAME', '(not set)')}", flush=True)
+    print(f"  TERRAT_API_BASE: {os.environ.get('TERRAT_API_BASE')}", flush=True)
+    print(f"  OCAMLRUNPARAM: {os.environ.get('OCAMLRUNPARAM')}", flush=True)
+    print('=' * 80, flush=True)
+
+    # Run migration with strace
+    print("\nStarting database migration with strace...", flush=True)
+    print("Command: strace -ff -t -s 100 -v /usr/local/bin/terrat migrate", flush=True)
+    print('=' * 80, flush=True)
 
     try:
-        if os.environ.get('TERRAT_STRACE'):
-            print(f"[{datetime.now().isoformat()}] Running migration with strace enabled...", flush=True)
-            subprocess.check_call([
-                '/usr/bin/strace',
-                '-ff',
-                '-t',
-                '-s',
-                '100',
-                '-v',
-                '/usr/local/bin/terrat',
-                'migrate',
-                '--verbosity=debug'
-            ])
-        else:
-            print(f"[{datetime.now().isoformat()}] Running migration...", flush=True)
-            print(f"[{datetime.now().isoformat()}] Command: /usr/local/bin/terrat migrate --verbosity=debug", flush=True)
-            subprocess.check_call(['/usr/local/bin/terrat', 'migrate', '--verbosity=debug'])
-
-        migrate_duration = time.time() - migrate_start
-        print(f"\n[{datetime.now().isoformat()}] ========================================", flush=True)
-        print(f"[{datetime.now().isoformat()}] MIGRATION COMPLETED SUCCESSFULLY", flush=True)
-        print(f"[{datetime.now().isoformat()}] Duration: {migrate_duration:.2f} seconds", flush=True)
-        print(f"[{datetime.now().isoformat()}] ========================================", flush=True)
-
+        subprocess.check_call([
+            'strace',
+            '-ff',           # Follow forks
+            '-t',            # Print timestamps
+            '-s', '100',     # String length
+            '-v',            # Verbose
+            '/usr/local/bin/terrat',
+            'migrate'
+        ])
+        print("\n" + "=" * 80, flush=True)
+        print("MIGRATION COMPLETED SUCCESSFULLY", flush=True)
+        print("=" * 80, flush=True)
     except subprocess.CalledProcessError as e:
-        print(f"\n[{datetime.now().isoformat()}] ✗ MIGRATION FAILED WITH EXIT CODE {e.returncode}", flush=True)
+        print(f"\nMIGRATION FAILED WITH EXIT CODE {e.returncode}", flush=True)
         sys.exit(1)
     except Exception as e:
-        print(f"\n[{datetime.now().isoformat()}] ✗ MIGRATION FAILED WITH ERROR: {str(e)}", flush=True)
+        print(f"\nMIGRATION FAILED: {str(e)}", flush=True)
         sys.exit(1)
 
-    # Check system state after migration
-    print(f"\n[{datetime.now().isoformat()}] Checking system state after migration...", flush=True)
-    check_system_resources()
-
-    # Test database again after migration
-    print(f"[{datetime.now().isoformat()}] Testing database connectivity after migration...", flush=True)
-    test_postgres_query()
-
-    # Run server
-    total_startup_time = time.time() - start_time
-    print(f"\n[{datetime.now().isoformat()}] ========================================", flush=True)
-    print(f"[{datetime.now().isoformat()}] STARTING TERRAT SERVER", flush=True)
-    print(f"[{datetime.now().isoformat()}] Total startup time so far: {total_startup_time:.2f} seconds", flush=True)
-    print(f"[{datetime.now().isoformat()}] ========================================", flush=True)
-
-    # One final check before server start
-    print(f"[{datetime.now().isoformat()}] Final pre-server checks:", flush=True)
-    print(f"  - Binary path: /usr/local/bin/terrat", flush=True)
-    print(f"  - Binary exists: {os.path.exists('/usr/local/bin/terrat')}", flush=True)
-    print(f"  - Binary executable: {os.access('/usr/local/bin/terrat', os.X_OK)}", flush=True)
-    print(f"  - TERRAT_STRACE enabled: {bool(os.environ.get('TERRAT_STRACE'))}", flush=True)
-    print(f"  - Current PID: {os.getpid()}", flush=True)
-    print(f"  - Current working directory: {os.getcwd()}", flush=True)
-
-    print(f"\n[{datetime.now().isoformat()}] About to exec terrat server...", flush=True)
-    print(f"[{datetime.now().isoformat()}] THIS IS THE LAST MESSAGE FROM THE WRAPPER", flush=True)
-    print(f"[{datetime.now().isoformat()}] If you don't see terrat server logs after this, the server process is hanging during startup", flush=True)
-    print("=" * 80, flush=True)
+    # Start server with strace
+    print("\nStarting terrat server with strace...", flush=True)
+    print("Command: strace -ff -t -s 100 -v /usr/local/bin/terrat server", flush=True)
+    print('=' * 80, flush=True)
     sys.stdout.flush()
     sys.stderr.flush()
 
-    # Give a moment for logs to flush
-    time.sleep(0.5)
-
-    if os.environ.get('TERRAT_STRACE'):
-        os.execv('/usr/bin/strace',
-                 [
-                     '/usr/bin/strace',
-                     '-ff',
-                     '-t',
-                     '-s',
-                     '100',
-                     '-v',
-                     '/usr/local/bin/terrat',
-                     'server', '--verbosity=debug'
-                 ])
-    else:
-        os.execv('/usr/local/bin/terrat', ['/usr/local/bin/terrat', 'server', '--verbosity=debug'])
+    os.execv('/usr/bin/strace', [
+        '/usr/bin/strace',
+        '-ff',
+        '-t',
+        '-s', '100',
+        '-v',
+        '/usr/local/bin/terrat',
+        'server'
+    ])
 
 if __name__ == '__main__':
     main()
