@@ -42,7 +42,7 @@ module Metrics = struct
 end
 
 module Make (P : Terrat_vcs_provider2_github.S) = struct
-  module Evaluator = Terrat_vcs_event_evaluator.Make (P)
+  (* module Evaluator = Terrat_vcs_event_evaluator.Make (P) *)
   module Evaluator2 = Terrat_vcs_event_evaluator2.Make (P)
   module Gw = Terrat_github_webhooks
 
@@ -369,13 +369,14 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
             ~owner:repository.Gw.Repository.owner.Gw.User.login
             ()
         in
-        Evaluator.run_pull_request_ready_for_review
-          ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
-          ~account
-          ~user
-          ~repo
-          ~pull_request_id
-          ()
+        raise (Failure "nyi")
+        (* Evaluator.run_pull_request_ready_for_review *)
+        (*   ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ()) *)
+        (*   ~account *)
+        (*   ~user *)
+        (*   ~repo *)
+        (*   ~pull_request_id *)
+        (*   () *)
     | Gw.Pull_request_event.Pull_request_opened _ -> failwith "Invalid pull_request_open event"
     | Gw.Pull_request_event.Pull_request_synchronize _ ->
         failwith "Invalid pull_request_synchronize event"
@@ -409,13 +410,14 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
             ~owner:repository.Gw.Repository.owner.Gw.User.login
             ()
         in
-        Evaluator.run_pull_request_close
-          ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
-          ~account
-          ~user
-          ~repo
-          ~pull_request_id
-          ()
+        raise (Failure "nyi")
+        (* Evaluator.run_pull_request_close *)
+        (*   ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ()) *)
+        (*   ~account *)
+        (*   ~user *)
+        (*   ~repo *)
+        (*   ~pull_request_id *)
+        (*   () *)
     | Gw.Pull_request_event.Pull_request_closed _ -> failwith "Invalid pull_request_closed event"
     | Gw.Pull_request_event.Pull_request_assigned _ ->
         Logs.debug (fun m -> m "%s : NOOP : PULL_REQUEST_ASSIGNED" request_id);
@@ -578,15 +580,16 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
                 ~owner:repository.Gw.Repository.owner.Gw.User.login
                 ()
             in
-            Evaluator.run_pull_request_comment
-              ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
-              ~account
-              ~user
-              ~comment
-              ~repo
-              ~pull_request_id
-              ~comment_id
-              ()
+            raise (Failure "nyi")
+            (* Evaluator.run_pull_request_comment *)
+            (*   ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ()) *)
+            (*   ~account *)
+            (*   ~user *)
+            (*   ~comment *)
+            (*   ~repo *)
+            (*   ~pull_request_id *)
+            (*   ~comment_id *)
+            (*   () *)
         | Error `Not_terrateam ->
             Prmths.Counter.inc_one (Metrics.comment_events_total "not_terrateam");
             Abb.Future.return (Ok ())
@@ -669,9 +672,10 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
             | [] -> Abb.Future.return (Ok None))
         >>= function
         | Some work_manifest_id ->
-            Evaluator.run_work_manifest_failure
-              ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
-              work_manifest_id
+            raise (Failure "nyi")
+            (* Evaluator.run_work_manifest_failure *)
+            (*   ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ()) *)
+            (*   work_manifest_id *)
         | None ->
             Logs.info (fun m ->
                 m
@@ -699,13 +703,14 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
             ()
         in
         let user = P.Api.User.make event.Gw.Push_event.sender.Gw.User.login in
-        Evaluator.run_push
-          ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
-          ~account
-          ~user
-          ~repo
-          ~branch:(P.Api.Ref.of_string default_branch)
-          ()
+        raise (Failure "nyi")
+        (* Evaluator.run_push *)
+        (*   ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ()) *)
+        (*   ~account *)
+        (*   ~user *)
+        (*   ~repo *)
+        (*   ~branch:(P.Api.Ref.of_string default_branch) *)
+        (*   () *)
     | Some _ | None ->
         Logs.debug (fun m -> m "%s : PUSH_EVENT : NOOP" request_id);
         Abb.Future.return (Ok ())

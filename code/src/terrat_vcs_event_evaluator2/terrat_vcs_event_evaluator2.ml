@@ -28,7 +28,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     build
     >>= function
     | Ok v -> Abb.Future.return (Ok (Some v))
-    | Error (`Suspend_eval_err _ as err) ->
+    | Error (`Suspend_eval _ as err) ->
         Logs.info (fun m -> m "%s : %a" request_id Builder.pp_err err);
         Abb.Future.return (Ok None)
     | Error #err as err -> Abb.Future.return err
@@ -38,7 +38,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     Abb.Future.await_bind
       (function
         | `Det (Ok ret) -> Abb.Future.return (Ok ret)
-        | `Det (Error (`Suspend_eval_err _) as err) -> Abb.Future.return err
+        | `Det (Error (`Suspend_eval _) as err) -> Abb.Future.return err
         | `Det (Error (#Builder.err as err)) ->
             Logs.err (fun m -> m "%s : %a" request_id Builder.pp_err err);
             Abb.Future.return (Error err)
@@ -125,58 +125,76 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       () =
     let open Abb.Future.Infix_monad in
     log_err ~request_id
-    @@ Pgsql_pool.with_conn storage ~f:(fun db ->
-           Pgsql_io.tx db ~f:(fun () ->
-               let open Irm in
-               S.Job_context.create_or_get_for_pull_request
-                 ~request_id
-                 db
-                 account
-                 repo
-                 pull_request_id
-               >>= fun context ->
-               S.Job_context.Job.create ~request_id db type_ context (Some user)
-               >>= fun job ->
-               Logs.info (fun m ->
-                   m
-                     "%s : target=%s : context_id=%a : job_id=%a"
-                     request_id
-                     (Hmap.Key.info Keys.eval_job)
-                     Uuidm.pp
-                     context.Tjc.Context.id
-                     Uuidm.pp
-                     job.Tjc.Job.id);
-               let open Abb.Future.Infix_monad in
-               let store =
-                 store |> Hmap.add Keys.job job |> Hmap.add Keys.context_id context.Tjc.Context.id
-               in
-               Builder.State.make ~log_id:(Uuidm.to_string job.Tjc.Job.id) ~config ~store ~db ()
-               >>= fun s ->
-               match context.Tjc.Context.scope with
-               | Tjc.Context.Scope.Setup ->
-                   let open Irm in
-                   Logs.info (fun m ->
-                       m
-                         "%s : SETUP_CONTEXT : context=%a"
-                         (Builder.log_id s)
-                         Uuidm.pp
-                         context.Tjc.Context.id);
-                   Bs.build
-                     Builder.rebuilder
-                     tasks
-                     Keys.update_context_for_pull_request
-                     (Bs.St.create s)
-                   >>= fun () ->
-                   Logs.info (fun m ->
-                       m "%s : target=%s" (Builder.log_id s) (Hmap.Key.info Keys.eval_job));
-                   wrap_build ~request_id
-                   @@ Bs.build Builder.rebuilder tasks Keys.eval_job (Bs.St.create s)
-               | _ ->
-                   Logs.info (fun m ->
-                       m "%s : target=%s" (Builder.log_id s) (Hmap.Key.info Keys.eval_job));
-                   wrap_build ~request_id
-                   @@ Bs.build Builder.rebuilder tasks Keys.eval_job (Bs.St.create s)))
-    >>= fun _ -> run_next_pending_compute ~request_id ~config ~storage ()
+    @@ Abbs_future_combinators.with_finally
+         (fun () ->
+           Abbs_future_combinators.retry
+             ~f:(fun () ->
+               Pgsql_pool.with_conn storage ~f:(fun db ->
+                   Pgsql_io.tx db ~f:(fun () ->
+                       let open Irm in
+                       S.Job_context.create_or_get_for_pull_request
+                         ~request_id
+                         db
+                         account
+                         repo
+                         pull_request_id
+                       >>= fun context ->
+                       S.Job_context.Job.create ~request_id db type_ context (Some user)
+                       >>= fun job ->
+                       Logs.info (fun m ->
+                           m
+                             "%s : target=%s : context_id=%a : job_id=%a"
+                             request_id
+                             (Hmap.Key.info Keys.eval_job)
+                             Uuidm.pp
+                             context.Tjc.Context.id
+                             Uuidm.pp
+                             job.Tjc.Job.id);
+                       let open Abb.Future.Infix_monad in
+                       let store =
+                         store
+                         |> Hmap.add Keys.job job
+                         |> Hmap.add Keys.context_id context.Tjc.Context.id
+                       in
+                       Builder.State.make
+                         ~log_id:(Uuidm.to_string job.Tjc.Job.id)
+                         ~config
+                         ~store
+                         ~db
+                         ()
+                       >>= fun s ->
+                       match context.Tjc.Context.scope with
+                       | Tjc.Context.Scope.Setup ->
+                           let open Irm in
+                           Logs.info (fun m ->
+                               m
+                                 "%s : SETUP_CONTEXT : context=%a"
+                                 (Builder.log_id s)
+                                 Uuidm.pp
+                                 context.Tjc.Context.id);
+                           Bs.build
+                             Builder.rebuilder
+                             tasks
+                             Keys.update_context_for_pull_request
+                             (Bs.St.create s)
+                           >>= fun () ->
+                           Logs.info (fun m ->
+                               m "%s : target=%s" (Builder.log_id s) (Hmap.Key.info Keys.eval_job));
+                           wrap_build ~request_id
+                           @@ Bs.build Builder.rebuilder tasks Keys.eval_job (Bs.St.create s)
+                       | _ ->
+                           Logs.info (fun m ->
+                               m "%s : target=%s" (Builder.log_id s) (Hmap.Key.info Keys.eval_job));
+                           wrap_build ~request_id
+                           @@ Bs.build Builder.rebuilder tasks Keys.eval_job (Bs.St.create s))))
+             ~while_:
+               (Abbs_future_combinators.finite_tries 100 (function
+                 | Error `Loop -> true
+                 | Ok _ | Error _ -> false))
+             ~betwixt:(fun _ -> Abb.Future.return ()))
+         ~finally:(fun () ->
+           Abbs_future_combinators.ignore
+           @@ run_next_pending_compute ~request_id ~config ~storage ())
 
   let pull_request_open ~request_id ~config ~storage ~account ~repo ~pull_request_id ~user () =
     let store =
