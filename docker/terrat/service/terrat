@@ -6,6 +6,7 @@ import sys
 import time
 import requests
 from datetime import datetime
+from urllib.parse import quote_plus
 
 # Debug output to confirm script is running
 print("[TERRAT-WRAPPER] Starting terrat service wrapper script...", flush=True)
@@ -47,7 +48,7 @@ def setup_environment():
     if 'GITHUB_APP_PEM' in os.environ:
         os.environ['GITHUB_APP_PEM'] = os.environ['GITHUB_APP_PEM'].replace('\\n', '\n')
     os.environ['TERRAT_PYTHON_EXEC'] = '/usr/bin/python3'
-    os.environ['OCAMLRUNPARAM'] = 'b'
+    # OCAMLRUNPARAM is now set in check_ocaml_runtime_settings() with more comprehensive configuration
     os.environ['NGINX_STATUS_URI'] = 'http://localhost:8080/nginx_status'
     os.environ['TERRAT_PORT'] = '8180'
     os.environ.setdefault(GITHUB_API_BASE_URL, 'https://api.github.com')
@@ -147,10 +148,18 @@ def test_postgres_query():
     print("-" * 70, flush=True)
 
     try:
+        # URL-encode credentials for PostgreSQL URI
+        encoded_user = quote_plus(db_user)
+        encoded_pass = quote_plus(db_pass)
+        encoded_host = quote_plus(db_host)
+        encoded_db = quote_plus(db_name)
+
+        connection_string = f'postgresql://{encoded_user}:{encoded_pass}@{encoded_host}:{db_port}/{encoded_db}'
+
         # Test with psql if available
         result = subprocess.run(
             ['psql',
-             f'postgresql://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}',
+             connection_string,
              '-c', 'SELECT version();',
              '-c', 'SELECT current_database(), current_user;',
              '-c', 'SELECT COUNT(*) FROM pg_stat_activity;'],
@@ -309,6 +318,69 @@ def verify_terrat_binary():
 
     print("=" * 70, flush=True)
 
+def check_ocaml_runtime_settings():
+    """Check and configure OCaml 5.x multicore runtime settings"""
+    print("=" * 70, flush=True)
+    print("OCAML RUNTIME CONFIGURATION", flush=True)
+    print("-" * 70, flush=True)
+
+    # Show current CPU/core information
+    try:
+        with open('/proc/cpuinfo', 'r') as f:
+            cpu_count = sum(1 for line in f if line.startswith('processor'))
+        print(f"Available CPU cores: {cpu_count}", flush=True)
+    except:
+        print("Could not determine CPU count", flush=True)
+
+    # Check current OCAMLRUNPARAM
+    current_ocamlrunparam = os.environ.get('OCAMLRUNPARAM', '(not set)')
+    print(f"Current OCAMLRUNPARAM: {current_ocamlrunparam}", flush=True)
+
+    # OCaml 5.x specific settings for domain pool
+    # The 'v' parameter controls verbosity (useful for debugging)
+    # The 'p' parameter can affect domain pool behavior
+    print("\nOCaml 5.x Domain Pool Settings:", flush=True)
+
+    # Add verbose runtime parameter for debugging domain pool issues
+    # Format: OCAMLRUNPARAM=b,v=0x01 where:
+    # - b = backtrace on uncaught exception
+    # - v=0x01 = verbose GC/domain messages
+    new_params = ['b']  # Always keep backtrace
+
+    # Parse existing params if any
+    if current_ocamlrunparam != '(not set)' and current_ocamlrunparam:
+        existing = [p.strip() for p in current_ocamlrunparam.split(',') if p.strip()]
+        # Keep existing params that aren't 'b' or 'v'
+        new_params.extend([p for p in existing if not p.startswith(('b', 'v'))])
+
+    # Add verbose flag for domain debugging
+    new_params.append('v=0x01')  # Minimal verbosity for domain operations
+
+    os.environ['OCAMLRUNPARAM'] = ','.join(new_params)
+    print(f"  Set OCAMLRUNPARAM: {os.environ['OCAMLRUNPARAM']}", flush=True)
+
+    # Check for potential resource limits that might affect domains
+    print("\nResource limits affecting OCaml domains:", flush=True)
+    try:
+        result = subprocess.run(['ulimit', '-a'], capture_output=True, text=True, shell=True, timeout=2)
+        for line in result.stdout.split('\n')[:15]:
+            if any(keyword in line.lower() for keyword in ['stack', 'threads', 'processes', 'cpu', 'memory']):
+                print(f"  {line}", flush=True)
+    except:
+        print("  (ulimit check skipped)", flush=True)
+
+    # Check for any signals that might be blocked
+    print("\nSignal handling:", flush=True)
+    try:
+        # Try to read current signal mask
+        result = subprocess.run(['grep', 'SigBlk', '/proc/self/status'], capture_output=True, text=True, timeout=1)
+        if result.returncode == 0:
+            print(f"  {result.stdout.strip()}", flush=True)
+    except:
+        print("  (signal mask check skipped)", flush=True)
+
+    print("=" * 70, flush=True)
+
 def main():
     start_time = time.time()
     print('=' * 80, flush=True)
@@ -322,6 +394,7 @@ def main():
     check_network_diagnostics()
     check_system_resources()
     verify_terrat_binary()
+    check_ocaml_runtime_settings()
 
     # Sleep in case we're in a bad runit loop
     print(f"\n[{datetime.now().isoformat()}] Sleeping for 3 seconds...", flush=True)
