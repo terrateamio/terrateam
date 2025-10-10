@@ -126,7 +126,7 @@ struct
               ~work_manifest:id
               db
               response)
-        >>= fun () -> Abb.Future.return (Error (`Suspend_eval_err name))
+        >>= fun () -> Abb.Future.return (Error (`Suspend_eval name))
     | Some (E.Fail { work_manifest }) when eq work_manifest -> (
         Logs.info (fun m -> m "%s : WM : FAIL : name=%s" (Builder.log_id s) name);
         fail work_manifest s fetcher
@@ -135,7 +135,7 @@ struct
         >>= function
         | wms when all_wms_completed @@ CCList.filter eq wms ->
             Abb.Future.return (Ok (CCList.filter eq wms))
-        | _ -> Abb.Future.return (Error (`Suspend_eval_err name)))
+        | _ -> Abb.Future.return (Error (`Suspend_eval name)))
     | Some (E.Result { work_manifest; result = wm_result }) when eq work_manifest -> (
         Logs.info (fun m -> m "%s : WM : RESULT : name=%s" (Builder.log_id s) name);
         result work_manifest wm_result s fetcher
@@ -151,7 +151,7 @@ struct
         >>= function
         | wms when all_wms_completed @@ CCList.filter eq wms ->
             Abb.Future.return (Ok (CCList.filter eq wms))
-        | _ -> Abb.Future.return (Error (`Suspend_eval_err name)))
+        | _ -> Abb.Future.return (Error (`Suspend_eval name)))
     | Some _ | None -> (
         fetch Keys.work_manifests_for_job
         >>= fun wms ->
@@ -177,7 +177,7 @@ struct
                           ~work_manifest_id
                           ())
                       wms)
-                >>= fun () -> Abb.Future.return (Error (`Suspend_eval_err name)))
+                >>= fun () -> Abb.Future.return (Error (`Suspend_eval name)))
         | wms when all_wms_completed wms ->
             Logs.info (fun m ->
                 m "%s : WM : CREATE : name=%s : all_wms_completed" (Builder.log_id s) name);
@@ -185,5 +185,5 @@ struct
         | _ ->
             Logs.info (fun m ->
                 m "%s : WM : CREATE : name=%s : not_all_wms_completed" (Builder.log_id s) name);
-            Abb.Future.return (Error (`Suspend_eval_err name)))
+            Abb.Future.return (Error (`Suspend_eval name)))
 end

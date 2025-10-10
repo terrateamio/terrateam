@@ -3,7 +3,7 @@ let src = Logs.Src.create "vcs_service_github_ep_work_manifest"
 module Logs = (val Logs.src_log src : Logs.LOG)
 
 module Make (P : Terrat_vcs_provider2_github.S) = struct
-  module Evaluator = Terrat_vcs_event_evaluator.Make (P)
+  (* module Evaluator = Terrat_vcs_event_evaluator.Make (P) *)
   module Evaluator2 = Terrat_vcs_event_evaluator2.Make (P)
 
   module Sql = struct
@@ -68,13 +68,23 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
       let open Abb.Future.Infix_monad in
       Brtl_ep.run_json ~f:(fun ctx ->
           let request_id = Brtl_ctx.token ctx in
-          Evaluator.run_plan_store
-            ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
-            work_manifest_id
-            plan
+          Pgsql_pool.with_conn storage ~f:(fun db ->
+              let module Pc = Terrat_api_components.Plan_create in
+              let { Pc.path; workspace; plan_data; has_changes } = plan in
+              P.Db.store_plan
+                ~request_id
+                db
+                work_manifest_id
+                { Terrat_dirspace.dir = path; workspace }
+                (Base64.decode_exn plan_data)
+                has_changes)
           >>= function
           | Ok () ->
               Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
+          | Error (#Pgsql_pool.err as err) ->
+              Logs.err (fun m -> m "%s : %a" request_id Pgsql_pool.pp_err err);
+              Abb.Future.return
+                (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
           | Error `Error ->
               Abb.Future.return
                 (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
@@ -83,10 +93,9 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
       let open Abb.Future.Infix_monad in
       Brtl_ep.run_json ~f:(fun ctx ->
           let request_id = Brtl_ctx.token ctx in
-          Evaluator.run_plan_fetch
-            ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
-            work_manifest_id
-            { Terrat_dirspace.dir; workspace }
+          Pgsql_pool.with_conn storage ~f:(fun db ->
+              let module Pc = Terrat_api_components.Plan_create in
+              P.Db.query_plan ~request_id db work_manifest_id { Terrat_dirspace.dir; workspace })
           >>= function
           | Ok (Some data) ->
               let response =
@@ -97,6 +106,10 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
           | Ok None ->
               Abb.Future.return
                 (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Not_found "") ctx)
+          | Error (#Pgsql_pool.err as err) ->
+              Logs.err (fun m -> m "%s : %a" request_id Pgsql_pool.pp_err err);
+              Abb.Future.return
+                (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)
           | Error `Error ->
               Abb.Future.return
                 (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
