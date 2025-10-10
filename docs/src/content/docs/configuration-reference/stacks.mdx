@@ -1,0 +1,197 @@
+---
+title: stacks
+description: Configure stacks to group and orchestrate infrastructure workspaces with dependencies and shared variables.
+---
+
+The `stacks` key defines named groups of dirspaces (directory + workspace combinations) with shared configuration, variables, and orchestration rules.
+
+## Default Configuration
+
+```yaml
+stacks:
+  names: {}
+```
+
+## Keys
+
+### `stacks`
+
+| Key | Type | Description |
+|---|---|---|
+| `names` | Map | A map of stack names to their configurations |
+
+### `stacks.names.<name>`
+
+Each named stack can be either a **regular stack** (with `tag_query`) or a **nested stack** (with `stacks`).
+
+#### Regular Stack Configuration
+
+| Key | Type | Description |
+|---|---|---|
+| `tag_query` | String | **Required**. Tag query expression to match dirspaces for this stack |
+| `variables` | Map | Optional. Key-value pairs of variables accessible in workflows |
+| `rules` | Object | Optional. Orchestration rules for this stack |
+
+#### Nested Stack Configuration
+
+| Key | Type | Description |
+|---|---|---|
+| `stacks` | List | **Required**. List of stack names to include in this nested stack |
+| `variables` | Map | Optional. Key-value pairs of variables accessible in workflows |
+| `rules` | Object | Optional. Orchestration rules for this stack |
+
+### `stacks.names.<name>.rules`
+
+| Key | Type | Description |
+|---|---|---|
+| `plan_after` | List | Stack names that must be applied before this stack can plan |
+| `apply_after` | List | Stack names that must be applied before this stack can apply |
+| `modified_by` | List | Stack names that, when modified, trigger this stack as modified |
+| `auto_apply` | Boolean | Whether to automatically apply this stack after successful plan |
+
+
+## Examples
+
+### Basic Environment Stacks
+
+```yaml
+stacks:
+  names:
+    development:
+      tag_query: 'development'
+      variables:
+        environment: dev
+        aws_account: "111111111111"
+      rules:
+        auto_apply: true
+
+    staging:
+      tag_query: 'staging'
+      variables:
+        environment: staging
+        aws_account: "222222222222"
+      rules:
+        apply_after:
+          - development
+
+    production:
+      tag_query: 'production'
+      variables:
+        environment: prod
+        aws_account: "333333333333"
+      rules:
+        apply_after:
+          - staging
+```
+
+### Layered Infrastructure
+
+```yaml
+stacks:
+  names:
+    network:
+      tag_query: 'network'
+
+    data:
+      tag_query: 'database'
+      rules:
+        plan_after:
+          - network
+
+    compute:
+      tag_query: 'compute'
+      rules:
+        plan_after:
+          - network
+
+    application:
+      tag_query: 'application'
+      rules:
+        plan_after:
+          - data
+          - compute
+```
+
+### Nested Stacks
+
+```yaml
+stacks:
+  names:
+    us-east-1:
+      tag_query: 'us-east-1'
+      variables:
+        region: us-east-1
+
+    us-west-2:
+      tag_query: 'us-west-2'
+      variables:
+        region: us-west-2
+
+    all-regions:
+      stacks:
+        - us-east-1
+        - us-west-2
+      rules:
+        auto_apply: true
+```
+
+### Modified By Rules
+
+```yaml
+stacks:
+  names:
+    shared:
+      tag_query: 'dir:shared/*'
+
+    base:
+      tag_query: 'dir:base/*'
+      rules:
+        modified_by:
+          - shared
+        # plan_after is implicitly set to [shared]
+
+    services:
+      tag_query: 'dir:services/*'
+      rules:
+        modified_by:
+          - base
+        plan_after:
+          - shared
+        # Explicit plan_after, so no implicit construction
+```
+
+### Using Stack Variables
+
+```yaml
+stacks:
+  names:
+    production:
+      tag_query: 'production'
+      variables:
+        tf_version: "1.5.7"
+        region: "us-east-1"
+
+workflows:
+  - tag_query: ''
+    engine:
+      tf_version: '${tf_version}'
+    plan:
+      - type: init
+        extra_args: ['-backend-config=region=${region}']
+      - type: plan
+```
+
+### Integration with Access Control
+
+```yaml
+stacks:
+  names:
+    production:
+      tag_query: 'production'
+
+access_control:
+  policies:
+    - tag_query: 'stack_name:production'
+      plan: ['*']
+      apply: ['team:sre']
+```

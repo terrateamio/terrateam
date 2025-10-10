@@ -1,0 +1,505 @@
+---
+title: Grouping Infrastructure with Stacks
+description: Organize related infrastructure into stacks with dependencies, promotion gates, and cascading changes
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import MermaidDiagram from '../../../components/MermaidDiagram.astro';
+
+Stacks enable the grouping of related infrastructure components and the ability to orchestrate their deployment across multiple environments with sophisticated dependency management. This guide walks through building a production-grade deployment pipeline using Stacks.
+
+## Why Use Stacks?
+
+Stacks allow for giving a name to a group of directories and workspaces and defining rules around when those groups may be operated on relative to other groupings.
+
+Some example use cases:
+
+1. You have a development and production environment and these environments may be planned together but production can only be applied after development has been applied.
+2. You want to automatically perform an operation after applying a change, for example automatically running an Ansible script.
+3. Directory B depends on directory A, and B should be planned and applied if directory A changes.
+
+## Core Concepts
+
+Stacks are defined in the `stacks` section of the configuration file.
+
+1. There are two types of stacks:
+  1. A stack which is a collection of directories and workspaces, these are defined using a tag query.
+  2. A stack which is a collection of other stacks, these are defined by specifying a list of stacks.
+2. A directory and workspace can be part of one, and only one stack.
+3. Stack rules are transitive.  That is, if stack C requires B to be applied before planning, and B requires A to be applied before planning, if a change modifies A and C but not B, then the relationship between C and A is maintained: C cannot be planned until A is applied.
+4. Stacks can define variables.
+  1. These variables can be accessed in the `workflows` section of the configuration file.
+  2. These variables are available in the pipeline run as environment variables.
+
+
+## Building Your First Stack Architecture
+
+Let's build a real-world deployment pipeline for a typical three-tier application deployed across multiple environments.
+
+### Step 1: Define Your Infrastructure Components
+
+Start by organizing your Terraform modules into logical groups:
+
+```
+infrastructure/
+├── ansible/            # Perform operations on infrastructure
+├── base/
+│   └── networking/     # VPCs, subnets, security groups
+├── dev/
+│   ├── database/       # RDS instances
+│   ├── compute/        # ECS/EKS clusters
+│   └── application/    # Application deployments
+├── staging/
+│   ├── database/
+│   ├── compute/
+│   └── application/
+└── production/
+    ├── database/
+    ├── compute/
+    └── application/
+```
+
+### Step 2: Create Environment Stacks
+
+Begin with basic environment separation. Each environment becomes a stack with its own configuration.  Importantly, these rules only take effect when multiple stacks are modified.  For example, modifying `dev` does not force `staging` to be run, however if `dev` and `staging` are modified in the same change, then `staging` can only be applied after `dev`.
+
+```yaml
+dirs:
+  'dev/**':
+    tags: [dev]
+  'staging/**':
+    tags: [staging]
+  'production/**':
+    tags: [production]
+
+stacks:
+  names:
+    dev:
+      tag_query: 'dev'
+      variables:
+        environment: development
+      rules:
+        auto_apply: true  # Auto-apply for rapid development
+
+    staging:
+      tag_query: 'staging'
+      variables:
+        environment: staging
+      rules:
+        apply_after:
+          - dev  # Can only apply after dev succeeds
+
+    production:
+      tag_query: 'production'
+      variables:
+        environment: production
+      rules:
+        apply_after:
+          - staging  # Requires staging to be applied first
+
+workflows:
+  - tag_query: ''
+    environment: '${environment}'
+```
+
+This configuration ensures changes flow from dev → staging → production, but only when a change is made to each environment.  It also makes use of stack variables for specifying the execution environment.
+
+### Step 3: Add Infrastructure Layers
+
+The above configuration allows each component within the `dev`, `staging`, and `production` stacks to be run at the same time.  In reality, we likely want some ordering of operations within a stack, such as the database component should be run before the compute and compute component should be run before the application.
+
+Now let's add dependency management within each environment.  This creates one stack per layer, and `dev`, `staging`, and `production` stacks which nest the layers.  It also moves the `environment` variable to the nested stack, rather than defining it in each nested stack.  Finally, it also moves the rules which define when the `dev`, `staging`, and `production` stacks can be applied relative to each other into each stack's definition.
+
+```yaml
+stacks:
+  names:
+    # Development layers
+    dev-database:
+      tag_query: 'dir:dev/database'
+      variables:
+        layer: database
+
+    dev-compute:
+      tag_query: 'dir:dev/compute'
+      variables:
+        layer: compute
+      rules:
+        plan_after:
+          - dev-database  # Must wait for database
+
+    dev-application:
+      tag_query: 'dir:dev/application'
+      variables:
+        layer: application
+      rules:
+        plan_after:
+          - dev-compute  # Must wait for compute
+
+    dev:
+      stacks:
+        - dev-database
+        - dev-compute
+        - dev-application
+
+      variables:
+        environment: development
+
+      rules:
+        auto_apply: true
+
+    # Staging layers
+    staging-database:
+      tag_query: 'dir:staging/database'
+      variables:
+        layer: database
+
+    staging-compute:
+      tag_query: 'dir:staging/compute'
+      variables:
+        layer: compute
+      rules:
+        plan_after:
+          - staging-database  # Must wait for database
+
+    staging-application:
+      tag_query: 'dir:staging/application'
+      variables:
+        layer: application
+      rules:
+        plan_after:
+          - staging-compute  # Must wait for compute
+
+    staging:
+      stacks:
+        - staging-database
+        - staging-compute
+        - staging-application
+
+      variables:
+        environment: staging
+
+      rules:
+        apply_after:
+          - dev
+
+    # Production layers
+    production-database:
+      tag_query: 'dir:production/database'
+      variables:
+        layer: database
+
+    production-compute:
+      tag_query: 'dir:production/compute'
+      variables:
+        layer: compute
+      rules:
+        plan_after:
+          - production-database  # Must wait for database
+
+    production-application:
+      tag_query: 'dir:production/application'
+      variables:
+        layer: application
+      rules:
+        plan_after:
+          - production-compute  # Must wait for compute
+
+    production:
+      stacks:
+        - production-database
+        - production-compute
+        - production-application
+
+      variables:
+        environment: production
+
+      rules:
+        apply_after:
+          - staging
+
+workflows:
+  - tag_query: ''
+    environment: '${environment}'
+```
+
+### Step 4: Shared infrastructure
+
+Finally, there is some shared infrastructure, in the `shared` directory, which impacts every stack.  When the shared infrastructure changes, want to trigger runs on all of our downstream stacks, even if they do not have an explicit change.  This is achieved using the `modified_by` rule, which has defined in each dependent stack.
+
+```yaml
+stacks:
+  names:
+    # Base infrastructure
+    base-networking:
+      tag_query: 'dir:base/networking'
+
+    base:
+      stacks:
+        - base-networking
+
+    # Development layers
+    dev-database:
+      tag_query: 'dir:dev/database'
+      variables:
+        layer: database
+
+    dev-compute:
+      tag_query: 'dir:dev/compute'
+      variables:
+        layer: compute
+      rules:
+        plan_after:
+          - dev-database  # Must wait for database
+
+    dev-application:
+      tag_query: 'dir:dev/application'
+      variables:
+        layer: application
+      rules:
+        plan_after:
+          - dev-compute  # Must wait for compute
+
+    dev:
+      stacks:
+        - dev-database
+        - dev-compute
+        - dev-application
+
+      variables:
+        environment: development
+
+      rules:
+        auto_apply: true
+        modified_by:
+          - base
+
+    # Staging layers
+    staging-database:
+      tag_query: 'dir:staging/database'
+      variables:
+        layer: database
+
+    staging-compute:
+      tag_query: 'dir:staging/compute'
+      variables:
+        layer: compute
+      rules:
+        plan_after:
+          - staging-database  # Must wait for database
+
+    staging-application:
+      tag_query: 'dir:staging/application'
+      variables:
+        layer: application
+      rules:
+        plan_after:
+          - staging-compute  # Must wait for compute
+
+    staging:
+      stacks:
+        - staging-database
+        - staging-compute
+        - staging-application
+
+      variables:
+        environment: staging
+
+      rules:
+        apply_after:
+          - dev
+        modified_by:
+          - base
+
+    # Production layers
+    production-database:
+      tag_query: 'dir:production/database'
+      variables:
+        layer: database
+
+    production-compute:
+      tag_query: 'dir:production/compute'
+      variables:
+        layer: compute
+      rules:
+        plan_after:
+          - production-database  # Must wait for database
+
+    production-application:
+      tag_query: 'dir:production/application'
+      variables:
+        layer: application
+      rules:
+        plan_after:
+          - production-compute  # Must wait for compute
+
+    production:
+      stacks:
+        - production-database
+        - production-compute
+        - production-application
+
+      variables:
+        environment: production
+
+      rules:
+        apply_after:
+          - staging
+        modified_by:
+          - base
+
+workflows:
+  - tag_query: 'stack_name:base'
+  - tag_query: ''
+    environment: '${environment}'
+```
+
+### Step 5: Automatically perform Ansible operations on production after applying
+
+If we have some post-apply operations to perform we can use `modified_by` combined with `auto_apply` to initiate the run of a stack automatically whenever another stack is modified.  The `auto_apply` configuration only performs an apply automatically if all apply requirements for that stack have passed, otherwise it waits for human input before continuing.
+
+```yaml
+stacks:
+  names:
+    # Ansible
+    ansible:
+      tag_query: 'dir:ansible'
+
+      rules:
+        auto_apply: true   # Automatically apply if all apply requirements pass
+        modified_by:
+          - production
+
+    # Base infrastructure
+    base-networking:
+      tag_query: 'dir:base/networking'
+
+    base:
+      stacks:
+        - base-networking
+
+    # Development layers
+    dev-database:
+      tag_query: 'dir:dev/database'
+      variables:
+        layer: database
+
+    dev-compute:
+      tag_query: 'dir:dev/compute'
+      variables:
+        layer: compute
+      rules:
+        plan_after:
+          - dev-database  # Must wait for database
+
+    dev-application:
+      tag_query: 'dir:dev/application'
+      variables:
+        layer: application
+      rules:
+        plan_after:
+          - dev-compute  # Must wait for compute
+
+    dev:
+      stacks:
+        - dev-database
+        - dev-compute
+        - dev-application
+
+      variables:
+        environment: development
+
+      rules:
+        auto_apply: true
+        modified_by:
+          - base
+
+    # Staging layers
+    staging-database:
+      tag_query: 'dir:staging/database'
+      variables:
+        layer: database
+
+    staging-compute:
+      tag_query: 'dir:staging/compute'
+      variables:
+        layer: compute
+      rules:
+        plan_after:
+          - staging-database  # Must wait for database
+
+    staging-application:
+      tag_query: 'dir:staging/application'
+      variables:
+        layer: application
+      rules:
+        plan_after:
+          - staging-compute  # Must wait for compute
+
+    staging:
+      stacks:
+        - staging-database
+        - staging-compute
+        - staging-application
+
+      variables:
+        environment: staging
+
+      rules:
+        apply_after:
+          - dev
+        modified_by:
+          - base
+
+    # Production layers
+    production-database:
+      tag_query: 'dir:production/database'
+      variables:
+        layer: database
+
+    production-compute:
+      tag_query: 'dir:production/compute'
+      variables:
+        layer: compute
+      rules:
+        plan_after:
+          - production-database  # Must wait for database
+
+    production-application:
+      tag_query: 'dir:production/application'
+      variables:
+        layer: application
+      rules:
+        plan_after:
+          - production-compute  # Must wait for compute
+
+    production:
+      stacks:
+        - production-database
+        - production-compute
+        - production-application
+
+      variables:
+        environment: production
+
+      rules:
+        apply_after:
+          - staging
+        modified_by:
+          - base
+
+workflows:
+  - tag_query: 'stack_name:ansible'
+    engine:
+      name: custom
+      plan: ['${TERRATEAM_ROOT}/bin/ansible-plan']
+      apply: ['${TERRATEAM_ROOT}/bin/ansible-apply']
+  - tag_query: 'stack_name:base'
+  - tag_query: ''
+    environment: '${environment}'
+```
+
+## The 'default' Stack
+
+All workspaces must map to exactly one stack.  Terrateam will produce an error if a workspace matches more than one stack or zero stacks.
+
+An special, implicit, stack called `default` is defined where all workspaces that do not match an existing stack are assigned to.  However, this behavior is overridden if a stack is explicitly defined named `default`.  In that case, the `default` stack has the same properties as any other stack.
