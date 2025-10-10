@@ -208,7 +208,7 @@ module List_repos = struct
       `Get
 end
 
-module Validate_token = struct
+module Create_token = struct
   module Parameters = struct end
 
   module Responses = struct

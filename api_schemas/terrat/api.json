@@ -2927,7 +2927,7 @@
     },
     "/api/v1/gitlab/installations/{installation_id}/token": {
       "post": {
-        "operationId": "gitlab-installations/validate-token",
+        "operationId": "gitlab-installations/create-token",
         "responses": {
           "200": {
             "content": {
