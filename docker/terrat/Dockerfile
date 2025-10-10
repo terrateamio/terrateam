@@ -125,14 +125,18 @@ ENTRYPOINT ["/usr/local/bin/terrat_code_indexer"]
 FROM alpine:3.22 AS terrat-ee
 RUN apk add --no-cache \
     bash \
+    bind-tools \
     ca-certificates \
     curl \
     gettext \
     gmp \
+    iproute2 \
     jq \
     libffi \
     libretls \
+    net-tools \
     nginx \
+    postgresql-client \
     py3-cryptography \
     py3-jwt \
     py3-requests \
@@ -167,14 +171,18 @@ CMD ["runsvdir", "/etc/service"]
 FROM alpine:3.22 AS terrat-oss
 RUN apk add --no-cache \
     bash \
+    bind-tools \
     ca-certificates \
     curl \
     gettext \
     gmp \
+    iproute2 \
     jq \
     libffi \
     libretls \
+    net-tools \
     nginx \
+    postgresql-client \
     py3-cryptography \
     py3-jwt \
     py3-requests \
