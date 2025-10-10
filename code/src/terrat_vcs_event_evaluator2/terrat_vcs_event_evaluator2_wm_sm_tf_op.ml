@@ -377,165 +377,171 @@ struct
           })
       changes
 
+  let create op s { Bs.Fetcher.fetch } =
+    let open Irm in
+    fetch Keys.account
+    >>= fun account ->
+    fetch Keys.repo
+    >>= fun repo ->
+    fetch Keys.dest_branch_ref
+    >>= fun dest_branch_ref ->
+    fetch Keys.branch_ref
+    >>= fun branch_ref ->
+    fetch Keys.working_branch_ref
+    >>= fun working_branch_ref ->
+    fetch Keys.initiator
+    >>= fun initiator ->
+    fetch Keys.target
+    >>= fun target ->
+    fetch Keys.repo_config
+    >>= fun repo_config ->
+    fetch Keys.matches
+    >>= fun matches ->
+    fetch
+      (match op with
+      | `Plan -> Keys.access_control_eval_plan
+      | `Apply -> Keys.access_control_eval_apply)
+    >>= fun access_control_results ->
+    Abb.Future.return
+      (let module R = Terrat_access_control2.R in
+      (access_control_results
+        : (R.t, Terrat_access_control2.err) result
+        :> (R.t, [> Terrat_access_control2.err ]) result))
+    >>= fun access_control_results ->
+    let { Terrat_access_control2.R.pass = passed_dirspaces; deny = denied_dirspaces } =
+      access_control_results
+    in
+    Abb.Future.return
+      (dirspaceflows_of_changes_with_branch_target
+         repo_config
+         (CCList.flatten matches.Keys.Matches.all_matches))
+    >>= fun all_dirspaceflows ->
+    Builder.run_db s ~f:(fun db ->
+        S.Db.store_dirspaceflows
+          ~request_id:(Builder.log_id s)
+          ~base_ref:dest_branch_ref
+          ~branch_ref
+          db
+          repo
+          all_dirspaceflows)
+    >>= fun () ->
+    Abb.Future.return (dirspaceflows_of_changes repo_config passed_dirspaces)
+    >>= fun dirspaceflows ->
+    let denied_dirspaces =
+      let module Ac = Terrat_access_control2 in
+      let module Dc = Terrat_change_match3.Dirspace_config in
+      CCList.map
+        (fun { Ac.R.Deny.change_match = { Dc.dirspace; _ }; policy } ->
+          { Wm.Deny.dirspace; policy })
+        denied_dirspaces
+    in
+    let module V1 = Terrat_base_repo_config_v1 in
+    let max_workspaces_per_batch =
+      if (V1.batch_runs repo_config).V1.Batch_runs.enabled then
+        (V1.batch_runs repo_config).V1.Batch_runs.max_workspaces_per_batch
+      else CCInt.max_int
+    in
+    let dirspaceflows_by_run_params =
+      partition_by_run_params ~max_workspaces_per_batch dirspaceflows
+    in
+    fetch Keys.target
+    >>= fun target ->
+    fetch Keys.initiator
+    >>= fun initiator ->
+    fetch Keys.job
+    >>= fun job ->
+    let tag_query =
+      let module Tjc = Terrat_job_context in
+      let module T = Tjc.Job.Type_ in
+      match job.Tjc.Job.type_ with
+      | T.Plan { tag_query } | T.Apply { tag_query } -> tag_query
+      | T.Autoapply | T.Autoplan -> Terrat_tag_query.any
+      | T.Repo_config | T.Unlock _ -> assert false
+    in
+    Abbs_future_combinators.List_result.map
+      ~f:(fun ((environment, runs_on), dirspaceflows) ->
+        let changes =
+          let module Dsf = Terrat_change.Dirspaceflow in
+          CCList.map
+            (fun ({ Dsf.workflow; _ } as dsf) ->
+              { dsf with Dsf.workflow = CCOption.map (fun Dsf.Workflow.{ idx; _ } -> idx) workflow })
+            dirspaceflows
+        in
+        let work_manifest =
+          {
+            Wm.account;
+            base_ref = S.Api.Ref.to_string dest_branch_ref;
+            branch_ref = S.Api.Ref.to_string branch_ref;
+            changes;
+            completed_at = None;
+            created_at = ();
+            denied_dirspaces;
+            environment;
+            id = ();
+            initiator;
+            run_id = ();
+            runs_on;
+            state = ();
+            steps =
+              [
+                (match op with
+                | `Plan -> Wm.Step.Plan
+                | `Apply -> Wm.Step.Apply);
+              ];
+            tag_query;
+            target;
+          }
+        in
+        Builder.run_db s ~f:(fun db ->
+            S.Work_manifest.create ~request_id:(Builder.log_id s) db work_manifest)
+        >>= fun work_manifest ->
+        Logs.info (fun m ->
+            m
+              "%s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s : env=%s : \
+               runs_on=%s"
+              (Builder.log_id s)
+              Uuidm.pp
+              work_manifest.Wm.id
+              (S.Api.Ref.to_string dest_branch_ref)
+              (S.Api.Ref.to_string branch_ref)
+              (CCOption.get_or ~default:"" work_manifest.Wm.environment)
+              (CCOption.map_or ~default:"" Yojson.Safe.to_string work_manifest.Wm.runs_on));
+        fetch Keys.is_interactive
+        >>= function
+        | true ->
+            fetch Keys.client
+            >>= fun client ->
+            create_op_commit_checks
+              (Builder.log_id s)
+              (Builder.State.config s)
+              client
+              account
+              repo
+              branch_ref
+              work_manifest
+              "Queued"
+              Terrat_commit_check.Status.Queued
+            >>= fun () ->
+            maybe_create_pending_apply_commit_checks
+              (Builder.log_id s)
+              (Builder.State.config s)
+              client
+              account
+              repo
+              branch_ref
+              (CCList.flatten matches.Keys.Matches.all_matches)
+              (Terrat_base_repo_config_v1.apply_requirements repo_config)
+            >>= fun () -> Abb.Future.return (Ok work_manifest)
+        | false -> Abb.Future.return (Ok work_manifest))
+      dirspaceflows_by_run_params
+
   module Plan = struct
     let eq base_ref' branch_ref' { Wm.base_ref; branch_ref; steps; _ } =
       base_ref = S.Api.Ref.to_string base_ref'
       && branch_ref = S.Api.Ref.to_string branch_ref'
       && steps = [ Wm.Step.Plan ]
 
-    let create s { Bs.Fetcher.fetch } =
-      let open Irm in
-      fetch Keys.account
-      >>= fun account ->
-      fetch Keys.repo
-      >>= fun repo ->
-      fetch Keys.dest_branch_ref
-      >>= fun dest_branch_ref ->
-      fetch Keys.branch_ref
-      >>= fun branch_ref ->
-      fetch Keys.working_branch_ref
-      >>= fun working_branch_ref ->
-      fetch Keys.initiator
-      >>= fun initiator ->
-      fetch Keys.target
-      >>= fun target ->
-      fetch Keys.repo_config
-      >>= fun repo_config ->
-      fetch Keys.matches
-      >>= fun matches ->
-      fetch Keys.access_control_eval_plan
-      >>= fun access_control_results ->
-      Abb.Future.return
-        (let module R = Terrat_access_control2.R in
-        (access_control_results
-          : (R.t, Terrat_access_control2.err) result
-          :> (R.t, [> Terrat_access_control2.err ]) result))
-      >>= fun access_control_results ->
-      let { Terrat_access_control2.R.pass = passed_dirspaces; deny = denied_dirspaces } =
-        access_control_results
-      in
-      Abb.Future.return
-        (dirspaceflows_of_changes_with_branch_target
-           repo_config
-           (CCList.flatten matches.Keys.Matches.all_matches))
-      >>= fun all_dirspaceflows ->
-      Builder.run_db s ~f:(fun db ->
-          S.Db.store_dirspaceflows
-            ~request_id:(Builder.log_id s)
-            ~base_ref:dest_branch_ref
-            ~branch_ref
-            db
-            repo
-            all_dirspaceflows)
-      >>= fun () ->
-      let all_dirspaceflows = strip_lock_branch_target all_dirspaceflows in
-      Abb.Future.return (dirspaceflows_of_changes repo_config passed_dirspaces)
-      >>= fun dirspaceflows ->
-      let denied_dirspaces =
-        let module Ac = Terrat_access_control2 in
-        let module Dc = Terrat_change_match3.Dirspace_config in
-        CCList.map
-          (fun { Ac.R.Deny.change_match = { Dc.dirspace; _ }; policy } ->
-            { Wm.Deny.dirspace; policy })
-          denied_dirspaces
-      in
-      let module V1 = Terrat_base_repo_config_v1 in
-      let max_workspaces_per_batch =
-        if (V1.batch_runs repo_config).V1.Batch_runs.enabled then
-          (V1.batch_runs repo_config).V1.Batch_runs.max_workspaces_per_batch
-        else CCInt.max_int
-      in
-      let dirspaceflows_by_run_params =
-        partition_by_run_params ~max_workspaces_per_batch dirspaceflows
-      in
-      fetch Keys.target
-      >>= fun target ->
-      fetch Keys.initiator
-      >>= fun initiator ->
-      fetch Keys.job
-      >>= fun job ->
-      let tag_query =
-        let module Tjc = Terrat_job_context in
-        let module T = Tjc.Job.Type_ in
-        match job.Tjc.Job.type_ with
-        | T.Plan { tag_query } | T.Apply { tag_query } -> tag_query
-        | T.Autoapply | T.Autoplan -> Terrat_tag_query.any
-        | T.Repo_config | T.Unlock _ -> assert false
-      in
-      Abbs_future_combinators.List_result.map
-        ~f:(fun ((environment, runs_on), dirspaceflows) ->
-          let changes =
-            let module Dsf = Terrat_change.Dirspaceflow in
-            CCList.map
-              (fun ({ Dsf.workflow; _ } as dsf) ->
-                {
-                  dsf with
-                  Dsf.workflow = CCOption.map (fun Dsf.Workflow.{ idx; _ } -> idx) workflow;
-                })
-              dirspaceflows
-          in
-          let work_manifest =
-            {
-              Wm.account;
-              base_ref = S.Api.Ref.to_string dest_branch_ref;
-              branch_ref = S.Api.Ref.to_string branch_ref;
-              changes;
-              completed_at = None;
-              created_at = ();
-              denied_dirspaces;
-              environment;
-              id = ();
-              initiator;
-              run_id = ();
-              runs_on;
-              state = ();
-              steps = [ Wm.Step.Plan ];
-              tag_query;
-              target;
-            }
-          in
-          Builder.run_db s ~f:(fun db ->
-              S.Work_manifest.create ~request_id:(Builder.log_id s) db work_manifest)
-          >>= fun work_manifest ->
-          Logs.info (fun m ->
-              m
-                "%s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s : env=%s : \
-                 runs_on=%s"
-                (Builder.log_id s)
-                Uuidm.pp
-                work_manifest.Wm.id
-                (S.Api.Ref.to_string dest_branch_ref)
-                (S.Api.Ref.to_string branch_ref)
-                (CCOption.get_or ~default:"" work_manifest.Wm.environment)
-                (CCOption.map_or ~default:"" Yojson.Safe.to_string work_manifest.Wm.runs_on));
-          fetch Keys.is_interactive
-          >>= function
-          | true ->
-              fetch Keys.client
-              >>= fun client ->
-              create_op_commit_checks
-                (Builder.log_id s)
-                (Builder.State.config s)
-                client
-                account
-                repo
-                branch_ref
-                work_manifest
-                "Queued"
-                Terrat_commit_check.Status.Queued
-              >>= fun () ->
-              maybe_create_pending_apply_commit_checks
-                (Builder.log_id s)
-                (Builder.State.config s)
-                client
-                account
-                repo
-                branch_ref
-                (CCList.flatten matches.Keys.Matches.all_matches)
-                (Terrat_base_repo_config_v1.apply_requirements repo_config)
-              >>= fun () -> Abb.Future.return (Ok work_manifest)
-          | false -> Abb.Future.return (Ok work_manifest))
-        dirspaceflows_by_run_params
+    let create = create `Plan
 
     let initiate ({ Wm.id; _ } as work_manifest) s { Bs.Fetcher.fetch } =
       let open Irm in
@@ -622,7 +628,42 @@ struct
       in
       Abb.Future.return (Ok response)
 
-    let fail work_manifest s { Bs.Fetcher.fetch } = raise (Failure "nyi")
+    let fail work_manifest s { Bs.Fetcher.fetch } =
+      let open Irm in
+      fetch Keys.is_interactive
+      >>= function
+      | true ->
+          fetch Keys.account
+          >>= fun account ->
+          fetch Keys.repo
+          >>= fun repo ->
+          fetch Keys.client
+          >>= fun client ->
+          fetch Keys.branch_ref
+          >>= fun branch_ref ->
+          fetch Keys.user
+          >>= fun user ->
+          fetch Keys.pull_request
+          >>= fun pull_request ->
+          let module Status = Terrat_commit_check.Status in
+          create_op_commit_checks
+            (Builder.log_id s)
+            (Builder.State.config s)
+            client
+            account
+            repo
+            branch_ref
+            work_manifest
+            "Failed"
+            Status.Failed
+          >>= fun () ->
+          S.Comment.publish_comment
+            ~request_id:(Builder.log_id s)
+            client
+            (CCOption.map_or ~default:"" S.Api.User.to_string user)
+            pull_request
+            Msg.Unexpected_temporary_err
+      | false -> Abb.Future.return (Ok ())
 
     let result work_manifest result s { Bs.Fetcher.fetch } =
       let open Irm in
@@ -640,90 +681,84 @@ struct
                 work_manifest.Wm.id
                 result)
           >>= fun () ->
-          (if work_manifest.Wm.state <> Wm.State.Aborted then
-             (* In the case of an abort, we do not report back to the user, we
+          if work_manifest.Wm.state <> Wm.State.Aborted then
+            (* In the case of an abort, we do not report back to the user, we
                 just want to store the results. *)
-             fetch Keys.is_interactive
-             >>= function
-             | true ->
-                 fetch Keys.pull_request
-                 >>= fun pull_request ->
-                 fetch Keys.user
-                 >>= fun user ->
-                 create_op_commit_checks_of_result
-                   (Builder.log_id s)
-                   (Builder.State.config s)
-                   client
-                   work_manifest.Wm.account
-                   (S.Api.Pull_request.repo pull_request)
-                   (S.Api.Pull_request.branch_ref pull_request)
-                   work_manifest
-                   work_manifest_result
-                 >>= fun () ->
-                 fetch Keys.account_status
-                 >>= fun account_status ->
-                 (* TODO: HUGE HACK, redo this later *)
-                 let run =
-                   let open Irm in
-                   Ira.(
-                     (fun client pull_request repo_config repo_tree ->
-                       (client, pull_request, repo_config, repo_tree))
-                     <$> fetch Keys.client
-                     <*> fetch Keys.pull_request
-                     <*> fetch Keys.repo_config_with_provenance
-                     <*> fetch Keys.repo_tree_branch)
-                   >>= fun (client, pull_request, (provenance, repo_config), repo_tree) ->
-                   fetch Keys.repo_index_branch
-                   >>= fun index ->
-                   Abbs_future_combinators.to_result
-                   @@ Abb.Thread.run (fun () ->
-                          Terrat_base_repo_config_v1.derive
-                            ~ctx:
-                              (Terrat_base_repo_config_v1.Ctx.make
-                                 ~dest_branch:
-                                   (S.Api.Ref.to_string
-                                      (S.Api.Pull_request.base_branch_name pull_request))
-                                 ~branch:
-                                   (S.Api.Ref.to_string
-                                      (S.Api.Pull_request.branch_name pull_request))
-                                 ())
-                            ~index
-                            ~file_list:repo_tree
-                            repo_config)
-                   >>= fun repo_config ->
-                   Abb.Future.return (Terrat_change_match3.synthesize_config ~index repo_config)
-                   >>= fun synthesized_config ->
-                   Abb.Future.return (Ok (repo_config, synthesized_config))
-                 in
-                 run
-                 >>= fun (repo_config, synthesized_config) ->
-                 (* TODO: HUGE HACK, redo this later *)
-                 Builder.run_db s ~f:(fun db ->
-                     S.Comment.publish_comment
-                       ~request_id:(Builder.log_id s)
-                       client
-                       (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                       pull_request
-                       (Msg.Tf_op_result2
-                          {
-                            account_status;
-                            config = Builder.State.config s;
-                            db;
-                            is_layered_run = CCList.length matches.Keys.Matches.all_matches > 1;
-                            remaining_layers = matches.Keys.Matches.all_unapplied_matches;
-                            result;
-                            repo_config;
-                            synthesized_config;
-                            work_manifest;
-                          }))
-                 >>= fun () -> Abb.Future.return (Ok ())
-             | false -> raise (Failure "nyi")
-           else Abb.Future.return (Ok ()))
-          >>= fun () ->
-          let module Wmr = Terrat_vcs_provider2.Work_manifest_result in
-          if not work_manifest_result.Wmr.overall_success then
-            (* If the run failed, then we're done. *)
-            Abb.Future.return (Error `Noop)
+            fetch Keys.is_interactive
+            >>= function
+            | true ->
+                fetch Keys.pull_request
+                >>= fun pull_request ->
+                fetch Keys.user
+                >>= fun user ->
+                create_op_commit_checks_of_result
+                  (Builder.log_id s)
+                  (Builder.State.config s)
+                  client
+                  work_manifest.Wm.account
+                  (S.Api.Pull_request.repo pull_request)
+                  (S.Api.Pull_request.branch_ref pull_request)
+                  work_manifest
+                  work_manifest_result
+                >>= fun () ->
+                fetch Keys.account_status
+                >>= fun account_status ->
+                (* TODO: HUGE HACK, redo this later *)
+                let run =
+                  let open Irm in
+                  Ira.(
+                    (fun client pull_request repo_config repo_tree ->
+                      (client, pull_request, repo_config, repo_tree))
+                    <$> fetch Keys.client
+                    <*> fetch Keys.pull_request
+                    <*> fetch Keys.repo_config_with_provenance
+                    <*> fetch Keys.repo_tree_branch)
+                  >>= fun (client, pull_request, (provenance, repo_config), repo_tree) ->
+                  fetch Keys.repo_index_branch
+                  >>= fun index ->
+                  Abbs_future_combinators.to_result
+                  @@ Abb.Thread.run (fun () ->
+                         Terrat_base_repo_config_v1.derive
+                           ~ctx:
+                             (Terrat_base_repo_config_v1.Ctx.make
+                                ~dest_branch:
+                                  (S.Api.Ref.to_string
+                                     (S.Api.Pull_request.base_branch_name pull_request))
+                                ~branch:
+                                  (S.Api.Ref.to_string
+                                     (S.Api.Pull_request.branch_name pull_request))
+                                ())
+                           ~index
+                           ~file_list:repo_tree
+                           repo_config)
+                  >>= fun repo_config ->
+                  Abb.Future.return (Terrat_change_match3.synthesize_config ~index repo_config)
+                  >>= fun synthesized_config ->
+                  Abb.Future.return (Ok (repo_config, synthesized_config))
+                in
+                run
+                >>= fun (repo_config, synthesized_config) ->
+                (* TODO: HUGE HACK, redo this later *)
+                Builder.run_db s ~f:(fun db ->
+                    S.Comment.publish_comment
+                      ~request_id:(Builder.log_id s)
+                      client
+                      (CCOption.map_or ~default:"" S.Api.User.to_string user)
+                      pull_request
+                      (Msg.Tf_op_result2
+                         {
+                           account_status;
+                           config = Builder.State.config s;
+                           db;
+                           is_layered_run = CCList.length matches.Keys.Matches.all_matches > 1;
+                           remaining_layers = matches.Keys.Matches.all_unapplied_matches;
+                           result;
+                           repo_config;
+                           synthesized_config;
+                           work_manifest;
+                         }))
+                >>= fun () -> Abb.Future.return (Ok ())
+            | false -> raise (Failure "nyi")
           else Abb.Future.return (Ok ())
       | Wmr.Work_manifest_tf_operation_result result ->
           let open Irm in
@@ -739,44 +774,38 @@ struct
                 work_manifest.Wm.id
                 result)
           >>= fun () ->
-          (if work_manifest.Wm.state <> Wm.State.Aborted then
-             fetch Keys.is_interactive
-             >>= function
-             | true ->
-                 fetch Keys.pull_request
-                 >>= fun pull_request ->
-                 fetch Keys.user
-                 >>= fun user ->
-                 create_op_commit_checks_of_result
-                   (Builder.log_id s)
-                   (Builder.State.config s)
-                   client
-                   work_manifest.Wm.account
-                   (S.Api.Pull_request.repo pull_request)
-                   (S.Api.Pull_request.branch_ref pull_request)
-                   work_manifest
-                   work_manifest_result
-                 >>= fun () ->
-                 S.Comment.publish_comment
-                   ~request_id:(Builder.log_id s)
-                   client
-                   (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                   pull_request
-                   (Msg.Tf_op_result
-                      {
-                        is_layered_run = CCList.length matches.Keys.Matches.all_matches > 1;
-                        remaining_layers = matches.Keys.Matches.all_unapplied_matches;
-                        result;
-                        work_manifest;
-                      })
-                 >>= fun () -> Abb.Future.return (Ok ())
-             | false -> Abb.Future.return (Ok ())
-           else Abb.Future.return (Ok ()))
-          >>= fun () ->
-          let module Wmr = Terrat_vcs_provider2.Work_manifest_result in
-          if not work_manifest_result.Wmr.overall_success then
-            (* If the run failed, then we're done. *)
-            Abb.Future.return (Error `Noop)
+          if work_manifest.Wm.state <> Wm.State.Aborted then
+            fetch Keys.is_interactive
+            >>= function
+            | true ->
+                fetch Keys.pull_request
+                >>= fun pull_request ->
+                fetch Keys.user
+                >>= fun user ->
+                create_op_commit_checks_of_result
+                  (Builder.log_id s)
+                  (Builder.State.config s)
+                  client
+                  work_manifest.Wm.account
+                  (S.Api.Pull_request.repo pull_request)
+                  (S.Api.Pull_request.branch_ref pull_request)
+                  work_manifest
+                  work_manifest_result
+                >>= fun () ->
+                S.Comment.publish_comment
+                  ~request_id:(Builder.log_id s)
+                  client
+                  (CCOption.map_or ~default:"" S.Api.User.to_string user)
+                  pull_request
+                  (Msg.Tf_op_result
+                     {
+                       is_layered_run = CCList.length matches.Keys.Matches.all_matches > 1;
+                       remaining_layers = matches.Keys.Matches.all_unapplied_matches;
+                       result;
+                       work_manifest;
+                     })
+                >>= fun () -> Abb.Future.return (Ok ())
+            | false -> Abb.Future.return (Ok ())
           else Abb.Future.return (Ok ())
       | Wmr.Work_manifest_index_result _ -> assert false
       | Wmr.Work_manifest_build_config_result _ -> assert false
@@ -793,10 +822,124 @@ struct
       && branch_ref = S.Api.Ref.to_string branch_ref'
       && steps = [ Wm.Step.Apply ]
 
-    let create s { Bs.Fetcher.fetch } = raise (Failure "nyi")
-    let initiate ({ Wm.id; _ } as work_manifest) s { Bs.Fetcher.fetch } = raise (Failure "nyi")
-    let fail work_manifest s { Bs.Fetcher.fetch } = raise (Failure "nyi")
-    let result work_manifest result s { Bs.Fetcher.fetch } = raise (Failure "nyi")
+    let create = create `Apply
+
+    let initiate ({ Wm.id; _ } as work_manifest) s { Bs.Fetcher.fetch } =
+      let open Irm in
+      fetch Keys.is_interactive
+      >>= (function
+      | true ->
+          fetch Keys.account
+          >>= fun account ->
+          fetch Keys.repo
+          >>= fun repo ->
+          fetch Keys.client
+          >>= fun client ->
+          fetch Keys.branch_ref
+          >>= fun branch_ref ->
+          fetch Keys.pull_request
+          >>= fun pull_request ->
+          let module Status = Terrat_commit_check.Status in
+          create_op_commit_checks
+            (Builder.log_id s)
+            (Builder.State.config s)
+            client
+            account
+            repo
+            branch_ref
+            work_manifest
+            "Running"
+            Status.Running
+          >>= fun () -> Abb.Future.return (Ok ())
+      | false -> Abb.Future.return (Ok ()))
+      >>= fun () ->
+      let { Wm.base_ref; branch_ref; changes; target; _ } = work_manifest in
+      let run_kind =
+        match target with
+        | P2.Target.Pr pr -> `Pull_request pr
+        | P2.Target.Drift _ -> `Drift
+      in
+      let run_kind_str =
+        match run_kind with
+        | `Pull_request _ -> "pr"
+        | `Drift -> "drift"
+      in
+      (* I think this should actually be in apply, not sure why it isn't *)
+      (* let run_kind_data = *)
+      (*   let module Rkd = Terrat_api_components.Work_manifest_plan.Run_kind_data in *)
+      (*   let module Rkdpr = Terrat_api_components.Run_kind_data_pull_request in *)
+      (*   match run_kind with *)
+      (*   | `Pull_request pr -> *)
+      (*       Some *)
+      (*         (Rkd.Run_kind_data_pull_request *)
+      (*            { Rkdpr.id = S.Api.Pull_request.Id.to_string (S.Api.Pull_request.id pr) }) *)
+      (*   | `Drift -> None *)
+      (* in *)
+      fetch Keys.derived_repo_config
+      >>= fun (_, repo_config) ->
+      fetch Keys.synthesized_config
+      >>= fun synthesized_config ->
+      fetch Keys.dest_branch_name
+      >>= fun dest_branch_name ->
+      fetch Keys.encryption_key
+      >>= fun encryption_key ->
+      let response =
+        Terrat_api_components.(
+          Work_manifest.Work_manifest_apply
+            {
+              Work_manifest_apply.token = Wm_sm.token encryption_key work_manifest.Wm.id;
+              base_ref = S.Api.Ref.to_string dest_branch_name;
+              changed_dirspaces = changed_dirspaces synthesized_config changes;
+              run_kind = run_kind_str;
+              type_ = "apply";
+              result_version;
+              config =
+                repo_config
+                |> Terrat_base_repo_config_v1.to_version_1
+                |> Terrat_repo_config.Version_1.to_yojson;
+              capabilities = [ "tenv" ];
+            })
+      in
+      Abb.Future.return (Ok response)
+
+    let fail work_manifest s { Bs.Fetcher.fetch } =
+      let open Irm in
+      fetch Keys.is_interactive
+      >>= function
+      | true ->
+          fetch Keys.account
+          >>= fun account ->
+          fetch Keys.repo
+          >>= fun repo ->
+          fetch Keys.client
+          >>= fun client ->
+          fetch Keys.branch_ref
+          >>= fun branch_ref ->
+          fetch Keys.user
+          >>= fun user ->
+          fetch Keys.pull_request
+          >>= fun pull_request ->
+          let module Status = Terrat_commit_check.Status in
+          create_op_commit_checks
+            (Builder.log_id s)
+            (Builder.State.config s)
+            client
+            account
+            repo
+            branch_ref
+            work_manifest
+            "Failed"
+            Status.Failed
+          >>= fun () ->
+          S.Comment.publish_comment
+            ~request_id:(Builder.log_id s)
+            client
+            (CCOption.map_or ~default:"" S.Api.User.to_string user)
+            pull_request
+            Msg.Unexpected_temporary_err
+      | false -> Abb.Future.return (Ok ())
+
+    let result = Plan.result
 
     let run ~dest_branch_ref ~branch_ref ~name =
       Wm_sm.run ~name ~eq:(eq dest_branch_ref branch_ref) ~create ~initiate ~fail ~result
