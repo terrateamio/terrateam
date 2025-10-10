@@ -3,7 +3,7 @@ let src = Logs.Src.create "vcs_service_github_ep_work_manifest"
 module Logs = (val Logs.src_log src : Logs.LOG)
 
 module Make (P : Terrat_vcs_provider2_github.S) = struct
-  module Evaluator = Terrat_vcs_event_evaluator.Make (P)
+  (* module Evaluator = Terrat_vcs_event_evaluator.Make (P) *)
   module Evaluator2 = Terrat_vcs_event_evaluator2.Make (P)
 
   module Sql = struct
@@ -68,38 +68,40 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
       let open Abb.Future.Infix_monad in
       Brtl_ep.run_json ~f:(fun ctx ->
           let request_id = Brtl_ctx.token ctx in
-          Evaluator.run_plan_store
-            ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
-            work_manifest_id
-            plan
-          >>= function
-          | Ok () ->
-              Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
-          | Error `Error ->
-              Abb.Future.return
-                (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
+          raise (Failure "nyi")
+          (* Evaluator.run_plan_store *)
+          (*   ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ()) *)
+          (*   work_manifest_id *)
+          (*   plan *)
+          (* >>= function *)
+          (* | Ok () -> *)
+          (*     Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx) *)
+          (* | Error `Error -> *)
+          (*     Abb.Future.return *)
+          (*       (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx) *))
 
     let get config storage work_manifest_id dir workspace =
       let open Abb.Future.Infix_monad in
       Brtl_ep.run_json ~f:(fun ctx ->
           let request_id = Brtl_ctx.token ctx in
-          Evaluator.run_plan_fetch
-            ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ())
-            work_manifest_id
-            { Terrat_dirspace.dir; workspace }
-          >>= function
-          | Ok (Some data) ->
-              let response =
-                Terrat_api_work_manifest.Plan_get.Responses.OK.({ data } |> to_yojson)
-                |> Yojson.Safe.to_string
-              in
-              Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK response) ctx)
-          | Ok None ->
-              Abb.Future.return
-                (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Not_found "") ctx)
-          | Error `Error ->
-              Abb.Future.return
-                (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
+          raise (Failure "nyi")
+          (* Evaluator.run_plan_fetch *)
+          (*   ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ()) *)
+          (*   work_manifest_id *)
+          (*   { Terrat_dirspace.dir; workspace } *)
+          (* >>= function *)
+          (* | Ok (Some data) -> *)
+          (*     let response = *)
+          (*       Terrat_api_work_manifest.Plan_get.Responses.OK.({ data } |> to_yojson) *)
+          (*       |> Yojson.Safe.to_string *)
+          (*     in *)
+          (*     Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK response) ctx) *)
+          (* | Ok None -> *)
+          (*     Abb.Future.return *)
+          (*       (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Not_found "") ctx) *)
+          (* | Error `Error -> *)
+          (*     Abb.Future.return *)
+          (*       (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx) *))
   end
 
   module Results = struct
