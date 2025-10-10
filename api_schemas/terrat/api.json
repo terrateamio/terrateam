@@ -2925,6 +2925,31 @@
         }
       }
     },
+    "/api/v1/gitlab/installations/{installation_id}/token": {
+      "post": {
+        "operationId": "gitlab-installations/validate-token",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "access_token": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "access_token"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/gitlab/installations/{installation_id}/work-manifests": {
       "get": {
         "operationId": "gitlab-installations/list-work-manifests",

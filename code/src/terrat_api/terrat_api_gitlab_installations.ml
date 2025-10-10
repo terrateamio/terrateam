@@ -208,6 +208,32 @@ module List_repos = struct
       `Get
 end
 
+module Validate_token = struct
+  module Parameters = struct end
+
+  module Responses = struct
+    module OK = struct
+      type t = { access_token : string }
+      [@@deriving yojson { strict = false; meta = true }, show, eq]
+    end
+
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
+
+    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
+  end
+
+  let url = "/api/v1/gitlab/installations/{installation_id}/token"
+
+  let make () =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
 module List_work_manifests = struct
   module Parameters = struct
     module D = struct
