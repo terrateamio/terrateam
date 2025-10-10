@@ -354,10 +354,12 @@ def check_ocaml_runtime_settings():
         new_params.extend([p for p in existing if not p.startswith(('b', 'v'))])
 
     # Add verbose flag for domain debugging
-    new_params.append('v=0x01')  # Minimal verbosity for domain operations
+    # v=0x1f gives maximum verbosity: GC, domains, minor GC, major GC, finalizers
+    new_params.append('v=0x1f')  # Maximum verbosity for domain/GC operations
 
     os.environ['OCAMLRUNPARAM'] = ','.join(new_params)
     print(f"  Set OCAMLRUNPARAM: {os.environ['OCAMLRUNPARAM']}", flush=True)
+    print(f"  This will produce verbose output for domain creation, GC, and runtime operations", flush=True)
 
     # Check for potential resource limits that might affect domains
     print("\nResource limits affecting OCaml domains:", flush=True)
@@ -432,6 +434,10 @@ def main():
     print(f"\n[{datetime.now().isoformat()}] ========================================", flush=True)
     print(f"[{datetime.now().isoformat()}] STARTING DATABASE MIGRATION", flush=True)
     print(f"[{datetime.now().isoformat()}] ========================================", flush=True)
+    print(f"[{datetime.now().isoformat()}] OCAMLRUNPARAM at migration time: {os.environ.get('OCAMLRUNPARAM', '(not set)')}", flush=True)
+    print(f"[{datetime.now().isoformat()}] If migration hangs after domain pool initialization, this indicates", flush=True)
+    print(f"[{datetime.now().isoformat()}] an issue with OCaml 5.x multicore domain spawning in Cloud Run", flush=True)
+    print(f"[{datetime.now().isoformat()}] ========================================", flush=True)
 
     try:
         if os.environ.get('TERRAT_STRACE'):
@@ -449,6 +455,7 @@ def main():
             ])
         else:
             print(f"[{datetime.now().isoformat()}] Running migration...", flush=True)
+            print(f"[{datetime.now().isoformat()}] Command: /usr/local/bin/terrat migrate --verbosity=debug", flush=True)
             subprocess.check_call(['/usr/local/bin/terrat', 'migrate', '--verbosity=debug'])
 
         migrate_duration = time.time() - migrate_start
