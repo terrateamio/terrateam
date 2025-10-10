@@ -1364,3 +1364,35 @@ module Repos = struct
                    (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)))
   end
 end
+
+module Tokens = struct
+  module Sql = struct
+    let read fname =
+      CCOption.get_exn_or
+        fname
+        (CCOption.map Pgsql_io.clean_string (Terrat_files_github_sql.read fname))
+
+    let insert_token () =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* id *)
+        Ret.bigint
+        //
+        (* installation_id *)
+        Ret.bigint
+        //
+        (* name *)
+        Ret.text
+        //
+        (* updated_at *)
+        Ret.text
+        //
+        (* setup *)
+        Ret.boolean
+        /^ read "select_installation_repos_page.sql"
+        /% Var.uuid "user_id"
+        /% Var.bigint "installation_id"
+        /% Var.(option (text "prev_name")))
+  end
+end
