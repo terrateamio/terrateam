@@ -107,8 +107,6 @@ def main():
         subprocess.check_call([
             '/usr/bin/strace',
             '-ff',
-            '-o',
-            '/tmp/strace-migrate.log',
             '-t',
             '-s',
             '100',
@@ -126,8 +124,6 @@ def main():
                  [
                      '/usr/bin/strace',
                      '-ff',
-                     '-o',
-                     '/tmp/strace.log',
                      '-t',
                      '-s',
                      '100',
