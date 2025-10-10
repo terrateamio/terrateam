@@ -197,4 +197,5 @@ module Tmpl = struct
   let tier_check = read "tier_check.tmpl"
   let build_tree_failure = read "build_tree_failure.tmpl"
   let notification_policy_tag_query_err = jinja "notification_policy_tag_query_err.tmpl"
+  let notifications_summary = jinja "notifications_summary.tmpl"
 end

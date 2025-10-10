@@ -36,6 +36,16 @@ module Comment_api : sig
 end
 
 module Publisher_tools : sig
+  type element = {
+    dir : string;
+    workspace : string;
+    status: string;
+    created : int;
+    replaced : int;
+    updated : int;
+    deleted : int;
+  }
+
   val create_run_output :
     view:[> `Compact ] ->
     string ->
@@ -55,4 +65,6 @@ module Publisher_tools : sig
       'f )
     Terrat_work_manifest3.t ->
     string
+
+  val create_summary_output : string -> element list -> string
 end

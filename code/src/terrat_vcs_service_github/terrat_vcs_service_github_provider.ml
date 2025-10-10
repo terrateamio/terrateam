@@ -2346,6 +2346,7 @@ module Comment = struct
 
     module Publisher3 = struct
       module Gcm = Terrat_vcs_comment.Make (Terrat_vcs_github_comment.S)
+      module Gcs = Terrat_vcs_comment_summary.Make (Terrat_vcs_github_comment_summary.S)
 
       let post_comment
           request_id
@@ -2360,6 +2361,7 @@ module Comment = struct
           pull_request
           synthesized_config
           work_manifest =
+        let open Abb.Future.Infix_monad in
         let module Tcm = Terrat_vcs_github_comment in
         let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
         let pull_request =
@@ -2392,14 +2394,27 @@ module Comment = struct
           }
         in
         let work_manifest_id = work_manifest.Terrat_work_manifest3.id in
-        let els =
-          CCList.filter_map
-            (function
-              | Scope.Dirspace dirspace, steps -> Tcm.S.create_el t ~work_manifest_id dirspace steps
-              | Scope.Run _, _ -> None)
-            by_scope
+        Abb.Thread.run (fun () ->
+            CCList.filter_map
+              (function
+                | Scope.Dirspace dirspace, steps ->
+                    Tcm.S.create_el t ~work_manifest_id dirspace steps
+                | Scope.Run _, _ -> None)
+              by_scope)
+        >>= fun els -> Gcm.run t els
+
+      let post_summary request_id config client db repo_config pull_request synthesized_config =
+        let open Abb.Future.Infix_monad in
+        let module Gh_sm = Terrat_vcs_github_comment_summary in
+        let module N = Terrat_base_repo_config_v1.Notifications in
+        let module Ns = N.Summary in
+        let pull_request =
+          Api.Pull_request.set_diff () pull_request |> Api.Pull_request.set_checks ()
         in
-        Gcm.run t els
+        let t =
+          { Gh_sm.S.request_id; config; client; db; pull_request; repo_config; synthesized_config }
+        in
+        Gcs.run t
     end
   end
 
@@ -4119,6 +4134,15 @@ module Comment = struct
              "PULL_REQUEST_NOT_MERGEABLE"
              Tmpl.pull_request_not_mergeable
              kv
+    | Msg.Pull_request_summary { config; db; pull_request; repo_config; synthesized_config } ->
+        Result.Publisher3.post_summary
+          request_id
+          config
+          client
+          db
+          repo_config
+          pull_request
+          synthesized_config
     | Msg.Repo_config (provenance, repo_config) ->
         let repo_config_json =
           Terrat_repo_config.Version_1.to_yojson
@@ -4259,7 +4283,7 @@ module Comment = struct
           result;
           synthesized_config;
           work_manifest;
-        } -> (
+        } ->
         let open Abb.Future.Infix_monad in
         Result.Publisher3.post_comment
           request_id
@@ -4274,9 +4298,6 @@ module Comment = struct
           pull_request
           synthesized_config
           work_manifest
-        >>= function
-        | Ok cid -> Abb.Future.return (Ok cid)
-        | Error _ -> Abb.Future.return (Error `Error))
     | Msg.Tier_check checks ->
         let module C = Terrat_tier.Check in
         let { C.tier_name; users_per_month } = checks in
