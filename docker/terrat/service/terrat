@@ -383,6 +383,238 @@ def check_ocaml_runtime_settings():
 
     print("=" * 70, flush=True)
 
+def test_kqueue_syscall():
+    """Test if kqueue syscall works in this environment"""
+    print("=" * 80, flush=True)
+    print("TEST: kqueue syscall availability", flush=True)
+    print("=" * 80, flush=True)
+
+    try:
+        import ctypes
+
+        # Try to load libkqueue
+        try:
+            libkqueue = ctypes.CDLL("libkqueue.so")
+            print("✓ libkqueue.so loaded successfully", flush=True)
+        except Exception as e:
+            print(f"✗ Failed to load libkqueue.so: {e}", flush=True)
+            print("=" * 80, flush=True)
+            return
+
+        # Try to create a kqueue
+        try:
+            kq_fd = libkqueue.kqueue()
+            if kq_fd < 0:
+                err = ctypes.get_errno()
+                print(f"✗ kqueue() returned error: fd={kq_fd}, errno={err}", flush=True)
+            else:
+                print(f"✓ kqueue() succeeded: fd={kq_fd}", flush=True)
+                # Try to close it
+                import os as os_module
+                try:
+                    os_module.close(kq_fd)
+                    print(f"✓ kqueue fd closed successfully", flush=True)
+                except Exception as e:
+                    print(f"⚠ Could not close kqueue fd: {e}", flush=True)
+        except Exception as e:
+            print(f"✗ kqueue() call failed: {e}", flush=True)
+
+    except Exception as e:
+        print(f"✗ Test failed: {e}", flush=True)
+
+    print("=" * 80, flush=True)
+
+def test_pthread_creation():
+    """Test if pthread creation works"""
+    print("=" * 80, flush=True)
+    print("TEST: pthread creation", flush=True)
+    print("=" * 80, flush=True)
+
+    import threading
+
+    result = {"success": False, "error": None}
+
+    def worker():
+        result["success"] = True
+        print("  ✓ pthread worker function executed", flush=True)
+
+    try:
+        thread = threading.Thread(target=worker)
+        print("  Starting pthread...", flush=True)
+        thread.start()
+        thread.join(timeout=2.0)
+
+        if result["success"]:
+            print("✓ pthread created and executed successfully", flush=True)
+        else:
+            print("✗ pthread created but didn't execute within timeout", flush=True)
+    except Exception as e:
+        print(f"✗ pthread creation failed: {e}", flush=True)
+
+    print("=" * 80, flush=True)
+
+def check_resource_limits_detailed():
+    """Check ulimits that might affect thread/domain creation"""
+    print("=" * 80, flush=True)
+    print("TEST: Resource limits for thread creation", flush=True)
+    print("=" * 80, flush=True)
+
+    import resource
+
+    limits_to_check = [
+        ('RLIMIT_NPROC', resource.RLIMIT_NPROC, 'Max number of processes'),
+        ('RLIMIT_NOFILE', resource.RLIMIT_NOFILE, 'Max number of open files'),
+        ('RLIMIT_STACK', resource.RLIMIT_STACK, 'Max stack size'),
+        ('RLIMIT_AS', resource.RLIMIT_AS, 'Max address space'),
+    ]
+
+    for name, limit_type, desc in limits_to_check:
+        try:
+            soft, hard = resource.getrlimit(limit_type)
+            soft_str = 'unlimited' if soft == resource.RLIM_INFINITY else str(soft)
+            hard_str = 'unlimited' if hard == resource.RLIM_INFINITY else str(hard)
+            print(f"{name:20} ({desc})", flush=True)
+            print(f"  soft: {soft_str}, hard: {hard_str}", flush=True)
+        except Exception as e:
+            print(f"{name:20} - Error: {e}", flush=True)
+
+    # Also check /proc limits
+    print("\n/proc/self/limits:", flush=True)
+    try:
+        with open('/proc/self/limits', 'r') as f:
+            for line in f:
+                print(f"  {line.rstrip()}", flush=True)
+    except Exception as e:
+        print(f"  Could not read /proc/self/limits: {e}", flush=True)
+
+    print("=" * 80, flush=True)
+
+def check_syscall_availability():
+    """Check if key syscalls are available"""
+    print("=" * 80, flush=True)
+    print("TEST: Syscall availability", flush=True)
+    print("=" * 80, flush=True)
+
+    try:
+        import ctypes
+        import ctypes.util
+
+        libc = ctypes.CDLL(ctypes.util.find_library('c'))
+
+        # Test clone (used by pthread_create and Domain.spawn)
+        syscalls_to_test = [
+            ('clone', 56),  # SYS_clone on x86_64
+            ('epoll_create', 213),  # Used by kqueue emulation
+            ('eventfd', 284),  # Used by various async operations
+        ]
+
+        for name, syscall_num in syscalls_to_test:
+            try:
+                # Set errno to 0 first
+                ctypes.set_errno(0)
+                # Try to call syscall with invalid args to see if it's blocked
+                result = libc.syscall(syscall_num, 0)
+                errno_val = ctypes.get_errno()
+                if errno_val == 38:  # ENOSYS
+                    print(f"✗ {name} (syscall {syscall_num}): NOT AVAILABLE (ENOSYS)", flush=True)
+                else:
+                    print(f"✓ {name} (syscall {syscall_num}): available (errno={errno_val})", flush=True)
+            except Exception as e:
+                print(f"? {name} (syscall {syscall_num}): {e}", flush=True)
+    except Exception as e:
+        print(f"✗ Syscall availability test failed: {e}", flush=True)
+
+    print("=" * 80, flush=True)
+
+def test_ocaml_domain_spawn():
+    """Test if OCaml can spawn domains by running a minimal test"""
+    print("=" * 80, flush=True)
+    print("TEST: OCaml Domain.spawn (via minimal OCaml program)", flush=True)
+    print("=" * 80, flush=True)
+
+    import tempfile
+
+    # Create a minimal OCaml program that tests Domain.spawn
+    test_program = '''let () =
+  print_endline "Starting domain spawn test...";
+  flush stdout;
+  try
+    let d = Domain.spawn (fun () ->
+      print_endline "Domain spawned successfully!";
+      flush stdout;
+      42
+    ) in
+    let result = Domain.join d in
+    Printf.printf "Domain joined with result: %d\\n" result;
+    flush stdout;
+    exit 0
+  with e ->
+    Printf.printf "Domain spawn failed: %s\\n" (Printexc.to_string e);
+    flush stdout;
+    exit 1
+'''
+
+    try:
+        # Write test program to a temp file
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.ml', delete=False) as f:
+            f.write(test_program)
+            test_file = f.name
+
+        print(f"  Compiling test program at {test_file}...", flush=True)
+
+        # Try to compile it
+        compile_result = subprocess.run(
+            ['ocamlopt', '-o', '/tmp/domain_test', test_file],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+
+        if compile_result.returncode == 0:
+            print("  ✓ Test program compiled successfully", flush=True)
+            print("  Running test program (5 second timeout)...", flush=True)
+
+            run_result = subprocess.run(
+                ['/tmp/domain_test'],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+
+            print(f"  stdout: {run_result.stdout}", flush=True)
+            if run_result.stderr:
+                print(f"  stderr: {run_result.stderr}", flush=True)
+            print(f"  exit code: {run_result.returncode}", flush=True)
+
+            if run_result.returncode == 0 and "Domain spawned successfully" in run_result.stdout:
+                print("✓ Domain.spawn works perfectly!", flush=True)
+            elif run_result.returncode == 0:
+                print("⚠ Domain.spawn completed but output unexpected", flush=True)
+            else:
+                print("✗ Domain.spawn test failed", flush=True)
+        else:
+            print(f"✗ Compilation failed:", flush=True)
+            print(f"  {compile_result.stderr}", flush=True)
+
+        # Cleanup
+        try:
+            os.unlink(test_file)
+            if os.path.exists('/tmp/domain_test'):
+                os.unlink('/tmp/domain_test')
+        except:
+            pass
+
+    except subprocess.TimeoutExpired:
+        print("✗ Test TIMED OUT - Domain.spawn is likely HANGING!", flush=True)
+        print("  This strongly suggests Domain.spawn does not work in this environment", flush=True)
+    except FileNotFoundError as e:
+        print(f"⊘ Test skipped - ocamlopt not found: {e}", flush=True)
+        print("  (This is expected in production containers)", flush=True)
+    except Exception as e:
+        print(f"✗ Test failed: {e}", flush=True)
+
+    print("=" * 80, flush=True)
+
 def main():
     start_time = time.time()
     print('=' * 80, flush=True)
@@ -397,6 +629,19 @@ def main():
     check_system_resources()
     verify_terrat_binary()
     check_ocaml_runtime_settings()
+
+    # Run additional deep diagnostic tests
+    print("\n" + "=" * 80, flush=True)
+    print("DEEP DIAGNOSTIC TESTS FOR DOMAIN SPAWNING ISSUE", flush=True)
+    print("=" * 80, flush=True)
+    test_kqueue_syscall()
+    test_pthread_creation()
+    check_resource_limits_detailed()
+    check_syscall_availability()
+    test_ocaml_domain_spawn()
+    print("=" * 80, flush=True)
+    print("ALL DIAGNOSTIC TESTS COMPLETE", flush=True)
+    print("=" * 80, flush=True)
 
     # Sleep in case we're in a bad runit loop
     print(f"\n[{datetime.now().isoformat()}] Sleeping for 3 seconds...", flush=True)
