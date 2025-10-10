@@ -4497,8 +4497,10 @@ module Commit_check = struct
         CCString.sub Sha256.(to_hex (string (dir ^ ":" ^ workspace))) 0 short_hash_length
       in
       (* Heuristic guessing that the end of a dir path is probably more unique *)
-      let short_dir = CCString.rev @@ CCString.sub (CCString.rev dir) 0 40 in
-      let short_workspace = CCString.sub workspace 0 20 in
+      let short_dir =
+        CCString.rev @@ CCString.sub (CCString.rev dir) 0 (CCInt.min 40 (CCString.length dir))
+      in
+      let short_workspace = CCString.sub workspace 0 (CCInt.min 20 (CCString.length workspace)) in
       Printf.sprintf "terrateam %s: ...%s %s... %s" run_type short_dir short_workspace short_hash
     else title
 
