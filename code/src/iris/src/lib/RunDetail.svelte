@@ -11,7 +11,6 @@
   import Card from './components/ui/Card.svelte';
   import SafeOutput from './components/ui/SafeOutput.svelte';
   import { getWebBaseUrl } from './server-config';
-  import PlanChanges from './components/terraform/PlanChanges.svelte';
   
   export let params: { id: string; installationId?: string } = { id: '' };
   
@@ -31,14 +30,9 @@
   let isLoadingOutputs: boolean = false;
   let outputsError: string | null = null;
   let expandedDirspaces: Set<string> = new Set();
-  let activeOutputTab: 'all' | 'raw' | 'cost' | 'failed' | 'changes' = 'all';
+  let activeOutputTab: 'all' | 'raw' | 'cost' | 'failed' = 'all';
   const web_base_url = getWebBaseUrl($currentVCSProvider, $serverConfig);
-  
-  // Visualization state
-  let visualizationPlanJson: string | undefined = undefined; // JSON plan data
-  let visualizationWorkManifestId: string = '';
-  let isFetchingVisualizationData: boolean = false;
-  
+
   interface OutputItem {
     payload?: {
       text?: string;
@@ -606,108 +600,6 @@
     document.body.classList.remove('modal-open');
   }
 
-  // Function to open plan changes view
-  async function openPlanChanges(output: OutputItem) {
-    // Check if this is lite mode and we need to fetch the full output
-    if (output?.payload?._isLiteMode) {
-      isFetchingVisualizationData = true;
-      try {
-        // Fetch the full output content with JSON plan
-        const fullOutputData = await fetchFullOutputWithJson(output);
-        
-        if (fullOutputData?.json) {
-          visualizationPlanJson = fullOutputData.json;
-        } else {
-          visualizationPlanJson = undefined;
-        }
-        
-        visualizationWorkManifestId = run?.id || '';
-        activeOutputTab = 'changes';
-      } catch (error) {
-        console.error('Error fetching full output:', error);
-        visualizationPlanJson = undefined;
-        activeOutputTab = 'changes';
-      } finally {
-        isFetchingVisualizationData = false;
-      }
-    } else {
-      // Check for diff field which contains JSON plan
-      if (output.payload?.diff) {
-        if (typeof output.payload.diff === 'object') {
-          visualizationPlanJson = JSON.stringify(output.payload.diff);
-        } else if (typeof output.payload.diff === 'string') {
-          visualizationPlanJson = output.payload.diff;
-        }
-      } else {
-        visualizationPlanJson = undefined;
-      }
-      
-      visualizationWorkManifestId = run?.id || '';
-      activeOutputTab = 'changes';
-    }
-  }
-  
-  // Helper function to fetch full output content with JSON
-  async function fetchFullOutputWithJson(output: OutputItem): Promise<{ text: string | null; json?: string } | null> {
-    if (!run?.id || !$selectedInstallation?.id) return null;
-    
-    try {
-      // Get the full outputs (not lite mode)
-      const response = await api.getWorkManifestOutputs(
-        $selectedInstallation.id,
-        run.id,
-        {
-          lite: false  // Force full content
-        }
-      );
-      
-      // Find the matching output by step and scope
-      const fullOutput = response.outputs.find((o: unknown) => {
-        const out = o as OutputItem;
-        return out.step === output.step && 
-          out.scope?.dir === output.scope?.dir &&
-          out.scope?.workspace === output.scope?.workspace;
-      }) as OutputItem | undefined;
-      
-      if (fullOutput?.payload) {
-        
-        // The 'diff' field contains the JSON plan data
-        let jsonData: string | undefined;
-        
-        if (fullOutput.payload.diff) {
-          // diff field contains the JSON plan object
-          if (typeof fullOutput.payload.diff === 'object') {
-            jsonData = JSON.stringify(fullOutput.payload.diff);
-          } else if (typeof fullOutput.payload.diff === 'string') {
-            jsonData = fullOutput.payload.diff;
-          }
-        } else {
-        }
-        
-        return {
-          text: fullOutput.payload.plan_text || fullOutput.payload.text || null,
-          json: jsonData
-        };
-      }
-      
-      return null;
-    } catch (error) {
-      console.error('Error fetching full outputs:', error);
-      return null;
-    }
-  }
-
-  // Check if output contains a Terraform plan with JSON data
-  function isPlanOutput(output: OutputItem): boolean {
-    // For lite mode, we can't check for diff until we load the full data
-    // So show the button for all tf/plan steps
-    if (output?.payload?._isLiteMode) {
-      return output?.step === 'tf/plan';
-    }
-    // For full data, only show if we have JSON data in diff field
-    return !!(output?.step === 'tf/plan' && output?.payload?.diff);
-  }
-  
   // Close modal on Escape key
   function handleKeydown(event: KeyboardEvent) {
     if (event.key === 'Escape' && showOutputModal) {
@@ -1010,20 +902,12 @@
             💰 Cost <span class="hidden sm:inline">({costEstimation.length})</span>
             <span class="sm:hidden text-[10px]">({costEstimation.length})</span>
           </button>
-          <button 
+          <button
             on:click={() => activeOutputTab = 'failed'}
             class="px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium rounded-md transition-colors whitespace-nowrap {activeOutputTab === 'failed' ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}"
           >
             ❌ Failed
           </button>
-          {#if run?.run_type === 'plan'}
-            <button 
-              on:click={() => activeOutputTab = 'changes'}
-              class="px-3 py-1 text-sm font-medium rounded-md transition-colors {activeOutputTab === 'changes' ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}"
-            >
-              📊 Changes
-            </button>
-          {/if}
         </div>
       </div>
 
@@ -1262,20 +1146,6 @@
                                 {/if}
                                 <span class="text-xs text-gray-500">idx: {typedOutput?.idx}</span>
                               </div>
-                              {#if isPlanOutput(typedOutput)}
-                                <button
-                                  type="button"
-                                  on:click={() => openPlanChanges(typedOutput)}
-                                  class="flex-shrink-0 inline-flex items-center px-2 py-1 text-xs font-medium rounded-md text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
-                                  title="View plan changes"
-                                >
-                                  <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                  </svg>
-                                  View Changes
-                                </button>
-                              {/if}
                             </div>
                             {#if typedOutput?.payload?.text}
                               <!-- Output not loaded - click to view -->
@@ -1609,77 +1479,6 @@
                 </div>
               {/each}
             </div>
-          {/if}
-        
-        <!-- Changes Tab -->
-        {:else if activeOutputTab === 'changes'}
-          {#if isFetchingVisualizationData}
-            <!-- Loading state while fetching full output -->
-            <div class="flex flex-col items-center justify-center py-12">
-              <LoadingSpinner size="lg" />
-              <p class="mt-4 text-gray-600 dark:text-gray-400">
-                Loading plan changes...
-              </p>
-            </div>
-          {:else if !visualizationPlanJson}
-            <!-- First, show list of plans that can view changes -->
-            <div class="space-y-4">
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  Select a Terraform plan output to view changes:
-                </p>
-                {#each outputs.filter(o => isPlanOutput(o)) as planOutput}
-                  <Card 
-                    padding="md" 
-                    hover={true}
-                    class="cursor-pointer"
-                  >
-                    <button
-                      class="w-full text-left"
-                      on:click={() => openPlanChanges(planOutput)}
-                    >
-                      <div class="flex items-center justify-between">
-                        <div>
-                          <h4 class="font-medium text-gray-900 dark:text-white">
-                            {planOutput.scope?.dir || 'unknown'} / {planOutput.scope?.workspace || 'default'}
-                          </h4>
-                          <p class="text-sm text-gray-600 dark:text-gray-400">
-                            {getStepLabel(planOutput.step || 'tf/plan')}
-                          </p>
-                        </div>
-                        <svg class="w-5 h-5 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                        </svg>
-                      </div>
-                    </button>
-                  </Card>
-                {:else}
-                  <div class="text-center py-8 text-gray-500 dark:text-gray-400">
-                    <div class="text-4xl mb-2">📊</div>
-                    <p>No plan visualization available</p>
-                    <p class="text-sm mt-2">Plan visualization requires JSON-formatted output</p>
-                    <p class="text-xs mt-1">This feature is available for newer plan runs</p>
-                  </div>
-                {/each}
-            </div>
-          {:else}
-            <!-- Show the visualization -->
-            <div class="mb-4">
-              <button
-                class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-                on:click={() => {
-                  visualizationPlanJson = undefined;
-                  activeOutputTab = 'all';
-                }}
-              >
-                ← Back to plan selection
-              </button>
-            </div>
-              <PlanChanges 
-                planJson={visualizationPlanJson}
-                workManifestId={visualizationWorkManifestId}
-                showHeader={false}
-              />
           {/if}
         {/if}
         
