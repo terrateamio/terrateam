@@ -80,8 +80,57 @@ def assert_run_mode():
         print('Please see https://docs.terrateam.io/self-hosted for more information', flush=True)
         sys.exit(1)
 
+def check_database_connectivity():
+    db_host = os.environ.get('DB_HOST')
+    if not db_host:
+        print("=" * 70, flush=True)
+        print("DATABASE CONNECTIVITY CHECK: SKIPPED (DB_HOST not set)", flush=True)
+        print("=" * 70, flush=True)
+        return
+
+    print("=" * 70, flush=True)
+    print(f"DATABASE CONNECTIVITY CHECK: Testing connection to {db_host}:5432", flush=True)
+    print("-" * 70, flush=True)
+
+    try:
+        result = subprocess.run(
+            ['nc', '-z', '-v', '-w', '1', db_host, '5432'],
+            capture_output=True,
+            text=True,
+            timeout=3
+        )
+
+        # nc outputs to stderr even on success when using -v
+        output = (result.stderr + result.stdout).strip()
+
+        if result.returncode == 0:
+            print("✓ DATABASE CONNECTIVITY CHECK: SUCCESS", flush=True)
+            print(f"  Successfully connected to {db_host}:5432", flush=True)
+            if output:
+                print(f"  {output}", flush=True)
+        else:
+            print("✗ DATABASE CONNECTIVITY CHECK: FAILURE", flush=True)
+            print(f"  Could not connect to {db_host}:5432", flush=True)
+            if output:
+                print(f"  {output}", flush=True)
+
+    except subprocess.TimeoutExpired:
+        print("✗ DATABASE CONNECTIVITY CHECK: TIMEOUT", flush=True)
+        print(f"  Connection to {db_host}:5432 timed out after 3 seconds", flush=True)
+    except FileNotFoundError:
+        print("✗ DATABASE CONNECTIVITY CHECK: ERROR", flush=True)
+        print("  nc (netcat) command not found in system", flush=True)
+    except Exception as e:
+        print("✗ DATABASE CONNECTIVITY CHECK: ERROR", flush=True)
+        print(f"  Unexpected error: {str(e)}", flush=True)
+
+    print("=" * 70, flush=True)
+
 def main():
     print('Starting...', flush=True)
+
+    # Check database connectivity first
+    check_database_connectivity()
 
     # Sleep in case we're in a bad runit loop
     time.sleep(3)
