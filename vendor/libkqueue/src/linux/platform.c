@@ -1197,6 +1197,8 @@ linux_get_descriptor_type(struct knote *kn)
             switch (errno) {
                 case ENOTSOCK:   /* same as lsock = 0 */
                     break;
+                case ENOPROTOOPT: /* Gvisor does not support SO_GET_FILTER */
+                    break;
                 default:
                     dbg_perror("getsockopt(3)");
                     return (-1);

@@ -55,6 +55,7 @@ RUN eval $(opam env) && \
     opam switch create -y 5.3.0 && \
     eval $(opam env) && \
     opam repository add opam-acsl mono/opam && \
+    opam pin add -y cmdliner 1.3.0 && \
     opam pin add -y containers 3.12 && \
     opam pin add -y pds 6.54 --no-depexts && \
     opam pin add -y hll 4.3 --no-depexts && \
