@@ -31,21 +31,22 @@ module Make (Abb : Abb_intf.S) = struct
       (fun () -> f file)
       ~finally:(fun () -> Fut_comb.ignore (Abb.File.close file))
 
-  let read_file ?(buf_size = 1024) fname =
-    with_file_in fname ~f:(fun file ->
-        let buffer = Buffer.create 1024 in
-        let bytes = Bytes.create buf_size in
-        let len = Bytes.length bytes in
-        let rec read_data buffer file bytes =
-          let open Fut_comb.Infix_result_monad in
-          Abb.File.read file ~buf:bytes ~pos:0 ~len
-          >>= function
-          | 0 -> Abb.Future.return (Ok (Buffer.contents buffer))
-          | n ->
-              Buffer.add_subbytes buffer bytes 0 n;
-              read_data buffer file bytes
-        in
-        read_data buffer file bytes)
+  let read_all ?(buf_size = 4096) fin =
+    let buffer = Buffer.create buf_size in
+    let bytes = Bytes.create buf_size in
+    let len = Bytes.length bytes in
+    let rec read_data buffer file bytes =
+      let open Fut_comb.Infix_result_monad in
+      Abb.File.read fin ~buf:bytes ~pos:0 ~len
+      >>= function
+      | 0 -> Abb.Future.return (Ok (Buffer.contents buffer))
+      | n ->
+          Buffer.add_subbytes buffer bytes 0 n;
+          read_data buffer file bytes
+    in
+    read_data buffer fin bytes
+
+  let read_file ?buf_size fname = with_file_in fname ~f:(read_all ?buf_size)
 
   let write_file ~fname content =
     with_file_out fname ~f:(fun file ->
