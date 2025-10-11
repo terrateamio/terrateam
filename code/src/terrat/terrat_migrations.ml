@@ -233,6 +233,8 @@ let migrations =
     ("fix-unlocked-prs", run_file_sql "2025-09-23-fix-unlocked-prs.sql");
     ( "add-repo-created_at-index",
       run_file_sql ~mode:`Async "2025-09-23-add-repo-created_at-index.sql" );
+    ("add-kv-store", run_file_sql "2025-09-17-add-kv-store.sql");
+    ("add-access-token-table", run_file_sql "2025-09-24-add-access-token-table.sql");
   ]
 
 let run config storage = Mig.run { Migrate.config; storage; tx = () } migrations
