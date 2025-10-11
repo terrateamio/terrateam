@@ -21,10 +21,13 @@ module Type = struct
 end
 
 type t = {
+  api_base_url : string;
   base_ref : string;
   capabilities : Capabilities.t;
   changed_dirspaces : Changed_dirspaces.t;
   config : Config.t;
+  installation_id : string;
+  protocol_version : int option; [@default None]
   result_version : int;
   run_kind : string;
   token : string;
