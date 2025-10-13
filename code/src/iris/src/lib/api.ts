@@ -66,14 +66,14 @@ export class ValidatedApiClient {
   }
 
   private lastResponseHeaders: Headers | null = null;
-  
+
   // Parse Link header according to RFC 5988
   private parseLinkHeader(linkHeader: string): LinkHeader {
     const links: LinkHeader = {};
-    
+
     // Split by comma, but be careful of commas within URLs
     const parts = linkHeader.split(/,\s*(?=<)/);
-    
+
     for (const part of parts) {
       const match = part.match(/<([^>]+)>;\s*rel="([^"]+)"/);
       if (match) {
@@ -81,16 +81,16 @@ export class ValidatedApiClient {
         links[rel as keyof LinkHeader] = url;
       }
     }
-    
+
     return links;
   }
-  
+
   // Get parsed Link headers from last response
   public getLastLinkHeaders(): LinkHeader | null {
     const linkHeader = this.lastResponseHeaders?.get('Link') || this.lastResponseHeaders?.get('link');
     return linkHeader ? this.parseLinkHeader(linkHeader) : null;
   }
-  
+
   private async request<T>(
     endpoint: string,
     options: ApiRequestOptions = {}
@@ -124,12 +124,12 @@ export class ValidatedApiClient {
     }
 
     try {
-      
+
       const response = await fetch(url, requestOptions);
-      
+
       // Store headers for pagination
       this.lastResponseHeaders = response.headers;
-      
+
       const responseText = await response.text();
 
       // Add breadcrumb for all API calls
@@ -150,14 +150,14 @@ export class ValidatedApiClient {
         } catch {
           errorData = responseText;
         }
-        
+
         const apiError = new ApiError(
           `HTTP ${response.status}: ${response.statusText}`,
           response.status,
           response,
           errorData
         );
-        
+
         // Track API error in Sentry
         const currentInstallation = get(selectedInstallation);
         sentryService.captureApiError(
@@ -177,7 +177,7 @@ export class ValidatedApiClient {
             errorData
           }
         );
-        
+
         throw apiError;
       }
 
@@ -187,7 +187,7 @@ export class ValidatedApiClient {
         throw error;
       }
       console.error('API request failed:', error);
-      
+
       // Track network error in Sentry
       if (error instanceof Error) {
         const currentInstallation = get(selectedInstallation);
@@ -199,7 +199,7 @@ export class ValidatedApiClient {
           currentInstallation?.id
         );
       }
-      
+
       throw new ApiError(
         error instanceof Error ? error.message : 'Network error',
         0
@@ -211,13 +211,13 @@ export class ValidatedApiClient {
   async get<T>(endpoint: string, params?: Record<string, string>): Promise<T> {
     return this.request<T>(endpoint, { method: 'GET', params });
   }
-  
+
   // Get raw response from a full URL (for pagination)
   async getFromUrl<T>(fullUrl: string): Promise<T> {
     try {
       // Fix double slash issue if present
       const fixedUrl = fullUrl.replace('//api/', '/api/');
-      
+
       const response = await fetch(fixedUrl, {
         method: 'GET',
         headers: {
@@ -225,12 +225,12 @@ export class ValidatedApiClient {
         },
         credentials: 'include',
       });
-      
+
       // Store headers for pagination
       this.lastResponseHeaders = response.headers;
-      
+
       const responseText = await response.text();
-      
+
       if (!response.ok) {
         let errorData: unknown;
         try {
@@ -238,7 +238,7 @@ export class ValidatedApiClient {
         } catch {
           errorData = responseText;
         }
-        
+
         throw new ApiError(
           `HTTP ${response.status}: ${response.statusText}`,
           response.status,
@@ -246,7 +246,7 @@ export class ValidatedApiClient {
           errorData
         );
       }
-      
+
       return responseText ? JSON.parse(responseText) : ({} as T);
     } catch (error) {
       if (error instanceof ApiError) {
@@ -296,7 +296,7 @@ export class ValidatedApiClient {
   async getVCSUser(provider?: VCSProvider): Promise<{ avatar_url?: string; username: string }> {
     const providerPath = this.getProviderPath(provider);
     const response = await this.get(`${providerPath}/whoami`);
-    
+
     // Validate the VCS user response structure
     if (!response || typeof response !== 'object' || !('username' in response)) {
       throw new ApiError('Invalid VCS user response format', 422);
@@ -313,7 +313,7 @@ export class ValidatedApiClient {
   // Installations
   async getUserInstallations(provider?: VCSProvider): Promise<{ installations: Installation[] }> {
     const currentProvider = provider || get(currentVCSProvider);
-    
+
     // GitLab uses a different path structure than GitHub
     let endpoint: string;
     if (currentProvider === 'gitlab') {
@@ -322,9 +322,9 @@ export class ValidatedApiClient {
       // GitHub uses /user/github/installations
       endpoint = '/api/v1/user/github/installations';
     }
-    
+
     const response = await this.get(endpoint);
-    
+
     // Validate the response structure
     if (!response || typeof response !== 'object' || !('installations' in response)) {
       throw new ApiError('Invalid installations response format', 422);
@@ -342,115 +342,58 @@ export class ValidatedApiClient {
 
   // Repositories with cursor-based pagination
   async getInstallationRepos(
-    installationId: string, 
-    params?: { cursor?: string; page?: number },
+    installationId: string,
+    params?: { cursor?: string; },
     provider?: VCSProvider
   ): Promise<{ repositories: Repository[]; nextCursor?: string; hasMore: boolean }> {
     const providerPath = this.getProviderPath(provider);
-    
+
     // Build the URL manually to avoid encoding issues with the cursor
     let endpoint = `${providerPath}/installations/${installationId}/repos`;
-    
+
     if (params?.cursor) {
-      // The API expects the cursor value without URL encoding
-      // So we build the URL manually instead of using URLSearchParams
-      endpoint += `?page=${params.cursor}`;
+      // If there is a cursor, it's actually our next page URL
+      endpoint = params?.cursor
     }
-    
+
     // Use the endpoint directly without additional params
     const response = await this.request(endpoint, { method: 'GET' });
-    
+
     // Check Link header for pagination
     const linkHeader = this.lastResponseHeaders?.get('Link') || this.lastResponseHeaders?.get('link');
-    
+
     // Validate the response structure
     if (!response || typeof response !== 'object' || !('repositories' in response)) {
       throw new ApiError('Invalid repositories response format', 422);
     }
 
     const repositories = validateRepositories(response.repositories);
-    
+
     // Extract pagination info from Link header
     let nextCursor: string | undefined;
     let hasMore = false;
-    
+
     // Parse Link header for pagination (RFC 5988)
     if (linkHeader) {
       const links = this.parseLinkHeader(linkHeader);
-      
+
       if (links.next) {
         // Extract page parameter from next URL
         try {
           // Fix double slash issue if present
-          const fixedUrl = links.next.replace('//api/', '/api/');
-          
-          // The URL might be relative, so we need to handle it carefully
-          const nextUrl = fixedUrl.startsWith('http') 
-            ? new URL(fixedUrl)
-            : new URL(fixedUrl, 'https://app.terrateam.io');
-          
-          nextCursor = nextUrl.searchParams.get('page') || undefined;
+          const nextUrl = links.next.replace('//api/', '/api/');
+
+          nextCursor = nextUrl;
           hasMore = true;
         } catch (e) {
           console.error('Failed to parse next URL from Link header:', e);
         }
       }
     }
-    
-    // Only check response body for pagination if we didn't find it in Link headers
-    if (!nextCursor && !hasMore) {
-      // Check for various pagination field formats
-      // 1. Check for pagination metadata object
-      if ('pagination' in response && response.pagination && typeof response.pagination === 'object') {
-        const pagination = response.pagination as Record<string, any>;
-        nextCursor = pagination.next_cursor || pagination.nextCursor || pagination.next || pagination.cursor;
-        hasMore = pagination.has_more !== undefined ? pagination.has_more : 
-                  pagination.hasMore !== undefined ? pagination.hasMore : !!nextCursor;
-      }
-      // 2. Check for next_cursor at top level
-      else if ('next_cursor' in response || 'nextCursor' in response) {
-        const resp = response as any;
-        nextCursor = (resp.next_cursor || resp.nextCursor) as string | undefined;
-        hasMore = !!nextCursor;
-      }
-      // 3. Check for next_page at top level
-      else if ('next_page' in response || 'nextPage' in response) {
-        const resp = response as any;
-        nextCursor = (resp.next_page || resp.nextPage) as string | undefined;
-        hasMore = !!nextCursor;
-      }
-      // 4. Check for next at top level
-      else if ('next' in response) {
-        nextCursor = response.next as string | undefined;
-        hasMore = !!nextCursor;
-      }
-      // 5. Check for page_info object
-      else if ('page_info' in response || 'pageInfo' in response) {
-        const resp = response as any;
-        const pageInfo = (resp.page_info || resp.pageInfo) as Record<string, any>;
-        nextCursor = pageInfo.next_cursor || pageInfo.nextCursor || pageInfo.endCursor;
-        hasMore = pageInfo.has_next_page !== undefined ? pageInfo.has_next_page : 
-                  pageInfo.hasNextPage !== undefined ? pageInfo.hasNextPage : !!nextCursor;
-      }
-      // 6. Check meta/metadata
-      else if ('meta' in response || 'metadata' in response) {
-        const resp = response as any;
-        const meta = (resp.meta || resp.metadata) as Record<string, any>;
-        nextCursor = meta.next_cursor || meta.nextCursor || meta.next;
-        hasMore = meta.has_more !== undefined ? meta.has_more : !!nextCursor;
-      }
-      // No pagination info found
-      else {
-        // If we didn't find pagination info and got exactly 20 repositories, assume there might be more
-        if (repositories.length === 20) {
-          hasMore = true;
-        }
-      }
-    }
-    
+
     return { repositories, nextCursor, hasMore };
   }
-  
+
 
   async getRepository(installationId: string, repoId: string, provider?: VCSProvider): Promise<Repository> {
     const providerPath = this.getProviderPath(provider);
@@ -461,46 +404,46 @@ export class ValidatedApiClient {
   async refreshInstallationRepos(installationId: string, provider?: VCSProvider): Promise<{ id: string }> {
     const providerPath = this.getProviderPath(provider);
     const response = await this.post(`${providerPath}/installations/${installationId}/repos/refresh`);
-    
+
     // Validate the response structure
     if (!response || typeof response !== 'object' || !('id' in response)) {
       throw new ApiError('Invalid refresh response format', 422);
     }
-    
+
     return { id: response.id as string };
   }
 
   // Dirspaces with pagination
   async getInstallationDirspaces(
-    installationId: string, 
+    installationId: string,
     params?: { q?: string; tz?: string; limit?: number; d?: string; page?: string[] },
     provider?: VCSProvider
   ): Promise<{ dirspaces: Dirspace[]; nextCursor?: string; hasMore: boolean; linkHeaders?: LinkHeader }> {
     const providerPath = this.getProviderPath(provider);
-    
+
     // Always use dirspaces endpoint - it handles all Tag Query Language queries including repo: filters
     let endpoint = `${providerPath}/installations/${installationId}/dirspaces`;
-    
+
     if (params) {
       const queryParams = new URLSearchParams();
       if (params.q) queryParams.set('q', params.q);
       if (params.tz) queryParams.set('tz', params.tz);
       if (params.limit) queryParams.set('limit', params.limit.toString());
       if (params.d) queryParams.set('d', params.d);
-      
+
       // Handle page array parameter for cursor-based pagination
       if (params.page && params.page.length > 0) {
         params.page.forEach(cursor => {
           queryParams.append('page', cursor);
         });
       }
-      
+
       const queryString = queryParams.toString();
       if (queryString) endpoint += `?${queryString}`;
     }
-    
+
     const response = await this.get(endpoint);
-    
+
     // Validate the response structure
     if (!response || typeof response !== 'object') {
       throw new ApiError('Invalid response format', 422);
@@ -508,7 +451,7 @@ export class ValidatedApiClient {
 
     if ('dirspaces' in response) {
       const dirspaces = validateDirspaces(response.dirspaces);
-      
+
       // Get Link headers for pagination
       const linkHeaders = this.getLastLinkHeaders() || undefined;
       const hasMore = linkHeaders?.next !== undefined;
@@ -529,7 +472,7 @@ export class ValidatedApiClient {
   async getInstallationWorkManifests(installationId: string, provider?: VCSProvider): Promise<{ work_manifests: WorkManifest[] }> {
     const providerPath = this.getProviderPath(provider);
     const response = await this.get(`${providerPath}/installations/${installationId}/work-manifests`);
-    
+
     // Validate the response structure
     if (!response || typeof response !== 'object' || !('work_manifests' in response)) {
       throw new ApiError('Invalid work manifests response format', 422);
@@ -541,12 +484,12 @@ export class ValidatedApiClient {
 
   // Get work manifests with query parameters for audit trail
   async getWorkManifestsWithQuery(
-    installationId: string, 
+    installationId: string,
     params?: { q?: string; tz?: string; limit?: number; d?: string; page?: string; lite?: boolean },
     provider?: VCSProvider
   ): Promise<{ work_manifests: WorkManifest[]; hasMore: boolean }> {
     const providerPath = this.getProviderPath(provider);
-    
+
     // Build query params
     const queryParams: Record<string, string> = {};
     if (params?.q) queryParams.q = params.q;
@@ -555,20 +498,20 @@ export class ValidatedApiClient {
     if (params?.d) queryParams.d = params.d;
     if (params?.page) queryParams.page = params.page;
     if (params?.lite) queryParams.lite = 'true';
-    
+
     const response = await this.get(`${providerPath}/installations/${installationId}/work-manifests`, queryParams);
-    
+
     // Validate the response structure
     if (!response || typeof response !== 'object' || !('work_manifests' in response)) {
       throw new ApiError('Invalid work manifests response format', 422);
     }
 
     const work_manifests = validateWorkManifests(response.work_manifests);
-    
+
     // Check if we have more results based on Link headers
     const linkHeaders = this.getLastLinkHeaders();
     const hasMore = linkHeaders?.next !== undefined;
-    
+
     return { work_manifests, hasMore };
   }
 
@@ -578,28 +521,28 @@ export class ValidatedApiClient {
     const response = await this.get(`${providerPath}/installations/${installationId}/work-manifests`, {
       q: `id:${workManifestId}`
     });
-    
+
     // Validate the response structure
     if (!response || typeof response !== 'object' || !('work_manifests' in response)) {
       throw new ApiError('Invalid work manifests response format', 422);
     }
 
     const work_manifests = validateWorkManifests(response.work_manifests);
-    
+
     if (work_manifests.length === 0) {
       throw new ApiError(`Work manifest not found: ${workManifestId}`, 404);
     }
-    
+
     return work_manifests[0];
   }
 
   // Work Manifest Outputs
   async getWorkManifestOutputs(
-    installationId: string, 
-    workManifestId: string, 
-    params?: { 
-      q?: string; 
-      limit?: number; 
+    installationId: string,
+    workManifestId: string,
+    params?: {
+      q?: string;
+      limit?: number;
       lite?: boolean;
       page?: string;
     },
@@ -607,20 +550,20 @@ export class ValidatedApiClient {
   ): Promise<{ outputs: unknown[] }> {
     const providerPath = this.getProviderPath(provider);
     let endpoint = `${providerPath}/installations/${installationId}/work-manifests/${workManifestId}/outputs`;
-    
+
     if (params) {
       const queryParams = new URLSearchParams();
       if (params.q) queryParams.set('q', params.q);
       if (params.limit) queryParams.set('limit', params.limit.toString());
       if (params.lite !== undefined) queryParams.set('lite', params.lite.toString());
       if (params.page) queryParams.set('page', params.page);
-      
+
       const queryString = queryParams.toString();
       if (queryString) endpoint += `?${queryString}`;
     }
-    
+
     const response = await this.get(endpoint);
-    
+
     // API returns { steps: [...] } not { outputs: [...] }
     if (!response || typeof response !== 'object' || !('steps' in response)) {
       throw new ApiError('Invalid outputs response format', 422);
@@ -633,7 +576,7 @@ export class ValidatedApiClient {
   // Note: Workflow steps endpoint not available in API
   // async getInstallationWorkflowSteps(installationId: string): Promise<{ steps: unknown[] }> {
   //   const response = await this.get(`/api/v1/github/installations/${installationId}/workflow-steps`);
-  //   
+  //
   //   // Note: workflow steps don't have a specific schema yet, so we return as unknown
   //   if (!response || typeof response !== 'object' || !('steps' in response)) {
   //     throw new ApiError('Invalid workflow steps response format', 422);
@@ -660,7 +603,7 @@ export class ValidatedApiClient {
     unlocked: boolean;
   }> }> {
     const response = await this.get('/api/v1/admin/drifts');
-    
+
     // Validate the response structure
     if (!response || typeof response !== 'object' || !('results' in response)) {
       throw new ApiError('Invalid admin drifts response format', 422);
@@ -686,10 +629,10 @@ export class ValidatedApiClient {
     updated_at: string;
   }> {
     const response = await this.get(`/api/v1/tasks/${taskId}`);
-    
+
     // Validate the response structure
-    if (!response || typeof response !== 'object' || 
-        !('id' in response) || !('name' in response) || 
+    if (!response || typeof response !== 'object' ||
+        !('id' in response) || !('name' in response) ||
         !('state' in response) || !('updated_at' in response)) {
       throw new ApiError('Invalid task response format', 422);
     }
@@ -705,23 +648,23 @@ export class ValidatedApiClient {
   // GitLab-specific operations
   async getGitLabGroups(): Promise<GitLabGroup[]> {
     const response = await this.get('/api/v1/gitlab/groups');
-    
+
     // API returns array directly, not wrapped in object
     if (!Array.isArray(response)) {
       throw new ApiError('Invalid GitLab groups response format', 422);
     }
-    
+
     return validateGitLabGroups(response);
   }
 
   async checkGitLabGroupMembership(groupId: number): Promise<boolean> {
     const response = await this.get(`/api/v1/gitlab/groups/${groupId}/is-member`);
-    
+
     // Validate the response structure
     if (!response || typeof response !== 'object' || !('result' in response)) {
       throw new ApiError('Invalid GitLab group membership response format', 422);
     }
-    
+
     return response.result as boolean;
   }
 
