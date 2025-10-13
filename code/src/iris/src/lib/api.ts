@@ -343,7 +343,7 @@ export class ValidatedApiClient {
   // Repositories with cursor-based pagination
   async getInstallationRepos(
     installationId: string,
-    params?: { cursor?: string; page?: number },
+    params?: { cursor?: string; },
     provider?: VCSProvider
   ): Promise<{ repositories: Repository[]; nextCursor?: string; hasMore: boolean }> {
     const providerPath = this.getProviderPath(provider);
@@ -352,9 +352,8 @@ export class ValidatedApiClient {
     let endpoint = `${providerPath}/installations/${installationId}/repos`;
 
     if (params?.cursor) {
-      // The API expects the cursor value without URL encoding
-      // So we build the URL manually instead of using URLSearchParams
-      endpoint += `?page=${params.cursor}`;
+      // If there is a cursor, it's actually our next page URL
+      endpoint = params?.cursor
     }
 
     // Use the endpoint directly without additional params
@@ -382,68 +381,12 @@ export class ValidatedApiClient {
         // Extract page parameter from next URL
         try {
           // Fix double slash issue if present
-          const fixedUrl = links.next.replace('//api/', '/api/');
+          const nextUrl = links.next.replace('//api/', '/api/');
 
-          // The URL might be relative, so we need to handle it carefully
-          const nextUrl = fixedUrl.startsWith('http')
-            ? new URL(fixedUrl)
-            : new URL(fixedUrl, 'https://app.terrateam.io');
-
-          nextCursor = nextUrl.searchParams.get('page') || undefined;
+          nextCursor = nextUrl;
           hasMore = true;
         } catch (e) {
           console.error('Failed to parse next URL from Link header:', e);
-        }
-      }
-    }
-
-    // Only check response body for pagination if we didn't find it in Link headers
-    if (!nextCursor && !hasMore) {
-      // Check for various pagination field formats
-      // 1. Check for pagination metadata object
-      if ('pagination' in response && response.pagination && typeof response.pagination === 'object') {
-        const pagination = response.pagination as Record<string, any>;
-        nextCursor = pagination.next_cursor || pagination.nextCursor || pagination.next || pagination.cursor;
-        hasMore = pagination.has_more !== undefined ? pagination.has_more :
-                  pagination.hasMore !== undefined ? pagination.hasMore : !!nextCursor;
-      }
-      // 2. Check for next_cursor at top level
-      else if ('next_cursor' in response || 'nextCursor' in response) {
-        const resp = response as any;
-        nextCursor = (resp.next_cursor || resp.nextCursor) as string | undefined;
-        hasMore = !!nextCursor;
-      }
-      // 3. Check for next_page at top level
-      else if ('next_page' in response || 'nextPage' in response) {
-        const resp = response as any;
-        nextCursor = (resp.next_page || resp.nextPage) as string | undefined;
-        hasMore = !!nextCursor;
-      }
-      // 4. Check for next at top level
-      else if ('next' in response) {
-        nextCursor = response.next as string | undefined;
-        hasMore = !!nextCursor;
-      }
-      // 5. Check for page_info object
-      else if ('page_info' in response || 'pageInfo' in response) {
-        const resp = response as any;
-        const pageInfo = (resp.page_info || resp.pageInfo) as Record<string, any>;
-        nextCursor = pageInfo.next_cursor || pageInfo.nextCursor || pageInfo.endCursor;
-        hasMore = pageInfo.has_next_page !== undefined ? pageInfo.has_next_page :
-                  pageInfo.hasNextPage !== undefined ? pageInfo.hasNextPage : !!nextCursor;
-      }
-      // 6. Check meta/metadata
-      else if ('meta' in response || 'metadata' in response) {
-        const resp = response as any;
-        const meta = (resp.meta || resp.metadata) as Record<string, any>;
-        nextCursor = meta.next_cursor || meta.nextCursor || meta.next;
-        hasMore = meta.has_more !== undefined ? meta.has_more : !!nextCursor;
-      }
-      // No pagination info found
-      else {
-        // If we didn't find pagination info and got exactly 20 repositories, assume there might be more
-        if (repositories.length === 20) {
-          hasMore = true;
         }
       }
     }
