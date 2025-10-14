@@ -75,6 +75,8 @@ let add_encryption_key (config, storage) =
   Pgsql_pool.with_conn storage ~f:(fun db ->
       Pgsql_io.Prepared_stmt.execute db insert_encryption_key key)
 
+let noop _ = Abb.Future.return (Ok ())
+
 let migrations =
   [
     ("initial-tables", run_file_sql "2021-12-03-initial-tables.sql");
@@ -173,6 +175,13 @@ let migrations =
       run_file_sql "2025-07-22-refactor-manage-github-maps-via-triggers.sql" );
     ("fix-gitlab-installation-state", run_file_sql "2025-07-21-fix-gitlab-installation-state.sql");
     ("add-github-emails-table", run_file_sql "2025-08-19-add-emails-table.sql");
+    ("add-comment-tracking", noop);
+    ("fix-missing-repository-mappings", noop);
+    ("refactor-gates-primary-key", noop);
+    ("add-primary-email-field", noop);
+    ("fix-drift-unlock-abort-wm", noop);
+    ("fix-unlocked-prs", noop);
+    ("add-repo-created_at-index", noop);
   ]
 
 let run config storage = Mig.run (config, storage) migrations
