@@ -31,6 +31,7 @@ module Oid : sig
   val internal : t
   val json : t
   val jsonb : t
+  val jsonpath : t
   val macaddr : t
   val macaddr8 : t
   val money : t

@@ -64,6 +64,7 @@ module Cmdline = struct
         "dns_cache";
         "dns_client";
         "happy-eyeballs";
+        "pgsql.io";
         "pgsql.pool";
       ]
     in

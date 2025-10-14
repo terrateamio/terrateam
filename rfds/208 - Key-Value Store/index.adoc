@@ -1,0 +1,700 @@
+= Key-Value Store
+:authors: Malcolm Matalka <malcolm@terrateam.io>, Marcos Benevides <marcos@terrateam.io>
+:state: committed
+:labels: environments, workflows, stacks
+:source-highlighter: highlight.js
+:toc:
+
+== Motivation
+
+There are several uses of Terrateam that require or would benefit from being
+able to store large pieces of data.
+
+Existing use cases include the output of operations and logs.
+
+Desired use cases include being able to store data between plan and apply, for
+example a Lambda Zip file or other build artifacts.
+
+This is more than just adding new functionality but also important for the
+stability of the system.  Currently, the outputs of workflow steps are stored as
+a large JSON blob in the `workflow_step_outputs` table.  Workflow steps can be
+quite large, in the hundreds of megabytes, and managing such large JSON blobs
+stresses the system and PostgreSQL.
+
+The UI suffers from this in multiple ways:
+
+. Because we do not have a good way to "sip" large amounts of data, the UI does
+a lot to protect itself from trying to load a large JSON blob.  However, this
+turns into a less pleasant experience for the user as the UI has a lot of extra
+steps in it to avoid loading too much data, and if a user actually wants to view
+the data the UI often crashes or fails in some way due to the size.
+. It cannot display more sophisticated outputs to the user because the risk of
+loading a large output is too expensive.
+
+In order to guarantee the scalability of the system, Terrateam must support
+being able to store large amounts of data in a way that does not push the system
+into instability.
+
+With this ability, we can create more features that involve consume large
+amounts of data.
+
+== Proposal
+
+Constraints around the KV-store are:
+
+. It must be simple.  That is to say: we will not concern ourselves with
+functioning at S3-like scales.  We want an API that is simple, as easy to
+implement as possible, and robust against the scenarios we are interested in.
+. It must be able to grow with use cases.  As we add functionality such as
+quotes, RBAC, etc, the foundational KV store must not require change.
+. It must be able to store data sizes bound only by how much data is available
+to the database system.
+
+
+=== The `store` table
+
+The `store` table is the core to the system.  It has the following schema:
+
+[source,sql]
+----
+create table kv_store (
+    namespace text not null,
+    key text not null,
+    idx smallint not null default 0,
+    data jsonb not null,
+    committed boolean not null default true,
+    created_at timestamp with time zone not null default (now()),
+    data_size integer generated always as (char_length(data::text)) stored,
+    version smallint not null default 0,
+    primary key (namespace, key, idx)
+)
+----
+
+. All data is namespaced `namespace` which is an opaque string, ensuring keys
+  are isolated.  Other parts of the system can use it to apply access control
+  and other forms of isolation to parts of the key space.
+. A key can have multiple values, through `idx`.  This allows large pieces of
+  data to be represented across multiple entries for that key.  This could be
+  achieved by encoding the index information in the key name, however it is felt
+  that this is a common-enough need that encoding it in the scheme is superior.
+. The data stored is a JSON blob.
+. The `committed` field allows for explicitly making a piece of data visible.
+  This is useful if data will be inserted over multiple keys or indices and
+  should only be made visible once all data is uploaded.
+. All rows should have a `created_at`, it's just really useful.
+. In order to get a rough idea of how large a piece of data is, the data size is
+  explicitly stored so that we do not need to load the data from disk.  This is
+  useful for returning a content length in an HTTP call, or for a quota system.
+. The `version` field tracks how many updates this has had.  Any insert will
+  increment the `version` field by at least `1`.  This is useful for
+  implementing `compare-and-swap` functionality.
+
+
+=== Operations on the `store` table
+
+==== `get`
+
+Get a value from the store.
+
+===== Inputs
+
+[cols="1,1,1,3"]
+|===
+|Name |Type |Required |Description
+
+| `key`
+| String
+| `true`
+| The exact key to look up
+
+| `idx`
+| Integer
+| `false`
+| The index in key to get.  Default is `0`.
+
+| `select`
+| String List List
+| `false`
+| List of keys in the data object to select.  Each key is a list of strings
+  representing the path in the object to return.  The value `null` returns all
+  keys.  `[]` returns an empty object.  If `data` is not a JSON object, `select`
+  has no effect and the full value is returned.
+
+| `committed`
+| Boolean
+| `true`
+| Return the value only if it is committed.
+|===
+
+===== Outputs
+
+[cols="1,1,3"]
+|===
+|Name |Type |Description
+
+| `created_at`
+| String
+| ISO8601 formatted date when the key was created.
+
+| `version`
+| Integer
+| Version of the key.
+
+| `committed`
+| Boolean
+| If the value is committed or not.
+
+| `data`
+| Object
+| The data.  If `select` has been specified it will contain only the values for
+  keys specified.
+|===
+
+==== `set`
+
+Unconditionally sets a `key` to a `value`.  If the value exists in the database
+already, its `version` is incremented by one.
+
+===== Inputs
+
+[cols="1,1,1,3"]
+|===
+|Name |Type |Required |Description
+
+| `key`
+| String
+| `true`
+| Key to set.
+
+| `idx`
+| Integer
+| `false`
+| Index of the key to set.  Default is `0`.  There is no requirement that the
+  index must be exactly one after the previous index.
+
+| `committed`
+| Boolean
+| `false`
+| Whether to commit the value or not.  Default is `true`.
+
+| `data`
+| Object
+| `true`
+| Value to set the key.
+|===
+
+===== Outputs
+
+[cols="1,1,3"]
+|===
+|Name |Type |Description
+
+| `created_at`
+| String
+| ISO8601 formatted date when the key was created.
+
+| `version`
+| Integer
+| The version of the key.
+|===
+
+==== `cas`
+
+Perform a *set* iff `version` in the store is equal to the passed in value.
+
+===== Inputs
+
+[cols="1,1,1,3"]
+|===
+|Name |Type |Required |Description
+
+| `key`
+| String
+| `true`
+| Key to set.
+
+| `idx`
+| Integer
+| `false`
+| Index of the key to set.  Default is `0`.  There is no requirement that the
+  index must be exactly one after the previous index.
+
+| `committed`
+| Boolean
+| `false`
+| Whether to commit the value or not.  Default is `true`.
+
+| `data`
+| Object
+| `true`
+| Value to set the key.
+
+| `version`
+| Integer
+| `false`
+| The existing key must have this version for the for the set to succeed.  A
+  value of `null` means that the key must not be present.
+|===
+
+
+===== Outputs
+
+[cols="1,1,3"]
+|===
+|Name |Type |Description
+
+| `created_at`
+| String
+| ISO8601 formatted date when the key was created.
+
+| `version`
+| Integer
+| The version of the key.
+|===
+
+==== `delete`
+
+Removes a key.
+
+===== Inputs
+
+[cols="1,1,1,3"]
+|===
+|Name |Type |Required |Description
+
+| `key`
+| String
+| `true`
+| The key to get the count of.
+
+| `idx`
+| Integer
+| `false`
+| Index in key to delete.  If `idx` is `null`, delete the entire key. Default is
+  `null`.
+
+| `version`
+| Integer
+| `false`
+| Only delete the key if version matches.  If `null`, no version check is
+  performed.
+|===
+
+===== Outputs
+
+No outputs.
+
+==== `count`
+
+Return how many entries a key has and the maximum index.  There is no guarantee
+that maximum index is less than count.  For example, a key could be set with an
+index of `192` but its count would be `1`.  Count is always greater than `0`.
+
+===== Inputs
+
+[cols="1,1,1,3"]
+|===
+|Name |Type |Required |Description
+
+| `key`
+| String
+| `true`
+| The key to get the count of.
+
+| `committed`
+| Boolean
+| `false`
+| Whether to return the value of uncommitted.
+|===
+
+===== Outputs
+
+[cols="1,1,3"]
+|===
+|Name |Type |Description
+
+| `count`
+| Integer
+| Number of elements, always greater than `0`.
+
+| `max_idx`
+| Integer
+| The maximum index for the key.  It is not guaranteed that `max_idx` < `count`.
+|===
+
+
+==== `size`
+
+Returns the size, in bytes, of a key, either at the specific index or the sum of
+all indices.  `size` is always greater than `0`.
+
+The size does not necessarily correspond to the on-the-wire size that would be
+returned but rather is meant to be approximate size of the data.
+
+===== Inputs
+
+[cols="1,1,1,3"]
+|===
+|Name |Type |Required |Description
+
+| `key`
+| String
+| `true`
+| Key to get the size.
+
+| `idx`
+| Integer
+| `false`
+| Index to get the size of.  If `idx` is not set, the size of all indices in the
+  key is returned.
+
+| `committed`
+| Boolean
+| `false`
+| Whether to return the value of uncommitted.
+|===
+
+===== Outputs
+
+[cols="1,1,3"]
+|===
+|Name |Type |Description
+
+| `size`
+| Integer
+| Approximate number of bytes the data of key consumes.
+|===
+
+==== `iter`
+
+Fetch a list of values starting from a key.  This allows paging through the
+store.
+
+When `inclusive` is set to `true`, this starts iterating at the first key that
+is greater than or equal to the passed in key.  If `inclusive` is set to
+`false`, it starts at the first key greater than the specified key.
+
+The `iter` interface does not provide a specific pagination API because itself
+is the pagination API.  In order to iterate through every key in the store:
+
+. Perform an initial API call with `key: ''`.
+. Perform subsequent API calls with `key: $last_key_in_results, idx:
+$idx_of_last_result, inclusive: false`.
+
+The second call will start iterating from the key starting directly after the
+last key provided in the result of previous call.
+
+===== Inputs
+
+[cols="1,1,1,3"]
+|===
+|Name |Type |Required |Description
+
+| `key`
+| String
+| `true`
+| Prefix to start iterating from.
+
+| `idx`
+| Integer
+| `false`
+| Index to start iterating from.  This only applies when `store.key =
+  inputs.key`.  Default is `0`.
+
+| `inclusive`
+| Boolean
+| `false`
+| Whether or not to start at keys including the `key` or after.  Effectively
+  this specifies if the comparison is `store.key > inputs.key` or `store.key >=
+  inputs.key`.  The default is `true` which corresponds to `>=`.
+
+| `committed`
+| Boolean
+| `false`
+| Whether or not the returned keys must be committed.  The default is `true`.
+
+| `limit`
+| Integer
+| `false`
+| Limit the results to be no more than the specified limit. The default is `30`.
+
+| `size_limit`
+| Integer
+| `false`
+| Limit the results such that the response is no larger than the specified size.
+  This is an approximate limit.  The limit can be violated if a single key has a
+  size larger than the size limit, the key is returned alone.
+
+| `include_data`
+| Boolean
+| `false`
+| If `true`, include the `data` in the iterated output.  If `false`, do not.
+  The default is `true`.
+|===
+
+===== Outputs
+
+[cols="1,1,3"]
+|===
+|Name |Type |Description
+
+| `results`
+| Object List
+| A list where each object in the list corresponds to the value returned by `get`.
+|===
+
+
+==== `commit`
+
+Sets `committed` to `true` for a set of keys.
+
+===== Inputs
+
+[cols="1,1,1,3"]
+|===
+|Name |Type |Required |Description
+
+| `keys`
+| String List
+| `true`
+| List of keys to set to committed.
+|===
+
+===== Outputs
+
+Not output.
+
+=== Links
+
+The key and data representation of `store` is very flexible, allowing the same
+data to be represented multiple ways.  For example, take the following JSON
+object:
+
+[source,json]
+----
+{
+  "name": "Malcolm",
+  "address": {
+    "street": "Infinity Loop",
+    "number": 1,
+    "city": "The Moon"
+  },
+  "title": "Cool Guy"
+}
+----
+
+And we give it the key `people.malcolm`.
+
+We could represent this straight forwardly as the key and valid in the `store.`
+We could also deconstruct it with the following set of keys and values:
+
+[cols="1,1"]
+|===
+|Key |Value
+
+| `people.malcolm.name`
+| `"Malcolm"`
+
+| `people.malcolm.address.street`
+| `"Infinity Loop"`
+
+| `people.malcolm.address.number`
+| `1`
+
+| `people.malcolm.address.city`
+| `"The Moon"`
+
+| `people.malcolm.title`
+| `"Cool Guy"`
+|===
+
+Or any variation in between.
+
+But it is quite possible that we want to represent data as its natural shape,
+but some attributes in the object need to be stored in separate keys because
+they can be, potentially, very large.
+
+For example, consider the following entry for running `tofu plan`.  The out of
+`tofu plan` can possibly be quite large, in the tens of megabytes.  Storing the
+data in its natural form (below) would make it difficult to work with.  However
+decomposing it also becomes awkward.
+
+[source,json]
+----
+{
+  "cmd": [
+    "tofu",
+    "plan"
+  ],
+  "stdout": "..."
+}
+----
+
+
+To address this, the convention of "links" is proposed where a key can be
+prefixed with a `@` indicating that the value its value but a string linking to
+another key in the store.
+
+[source,json]
+----
+{
+  "cmd": [
+    "tofu",
+    "plan"
+  ],
+  "@stdout": "path.to.stdout"
+}
+----
+
+The value of `stdout` can be found at the key `path.to.stdout`.  This key can be
+broken up across multiple indices as well, allow it to be of any size.
+
+Linking is purely a convention and the store has no built-in support for it.
+The system does not enforce that links do exist in the store.  It is the
+responsibility of the client create links and follow them.
+
+=== Client sympathy
+
+The KV store requires sympathy with the client to work well.  With the addition
+of the KV store, aggressive limits can be set on the size of an API payload,
+and the client is required to chunk data at reasonable sizes.
+
+=== Use cases
+
+==== Plan Storage
+
+Right now plans are stored in a specific table as a single binary blob.  Large
+plans stress the system.  By moving plans to the KV store, large plans can be
+broken up into multiple blocks and stored and accessed more efficiently.
+
+To support plan storage, the existing plans table would remain, however the
+instead of storing the data in the plans table it would store the key to the
+plan data.
+
+The existing interface to plans would remain to support legacy interactions
+however the new interface would be:
+
+
+* Storing a plan
+.. Store the plan in the KV store under the key
+`$work_manifest_id.plans.$dir.$workspace` as uncommitted.
+.. Call the plan storage API with the name of the key of the plan.  This API
+call saves the plan with a foreign key relation to the store and marks the plan
+as "committed".
+* Fetching a plan
+.. Using the plan API, fetch details about the plan and the key in the store
+that the plan can be found.
+.. Fetch the plan from the store.
+
+The legacy plan API would wrap this new interface.
+
+==== Workflow step outputs
+
+Currently the workflow steps table stores each step in a workflow manifest
+execution as a row, including some metadata about the step and a JSON payload
+representing the output.
+
+This is problematic for issues already discussed, specifically that the payload
+can be very large.
+
+With the KV store, the `workflow_step_outputs` table will be replaced entirely
+by the `store` table.  Steps will be stored in the key
+`$work_manifest_id.steps.outputs` where each `idx` is a step.
+
+The client will be responsible for using links to keep the payload of a workflow
+step small.  For example, a `tf/plan` step has the following payload structure:
+
+[source,json]
+----
+{
+  "plan": "... tofu show -json output of plan, potentially large ...",
+  "text": "... stdout/stderr output of running tofu plan, potentially large",
+  "diff": [ "... JSON representation of plan, potentially large ..." ],
+  "has_changes": true,
+  "... other keys ...": "... other values ..."
+}
+----
+
+The client would instead store a payload like:
+
+[source,json]
+----
+{
+  "@plan": "$work_manifest_id.steps.outputs.ds.$dir.$workspace.plan",
+  "@text": "$work_manifest_id.steps.outputs.ds.$dir.$worskpace.text",
+  "@diff": "$work_manifest_id.steps.outputs.ds.$dir.$workspace.diff",
+  "has_changes": true,
+  "... other keys ...": "... other values ..."
+}
+----
+
+`plan` and `text` can be stored across multiple indices if they are large.
+
+As of this writing, the JSON representation of the `diff` will be stored as a
+single JSON blob.  The diff can be large, however, portions of the blob can be
+extracted using `select` in the `get`, reducing the load on the system.  It is
+the responsibility of a future RFD for how to store the diff in the KV store in
+a better way.
+
+* Inserting workflow step outputs
+.. On the execution of each step, for any keys in the payload that can have
+large values, the step writes output to
+`$work_manifest.steps.outputs.$scope.$key`.  Where `$scope` is `hooks.pre` or
+`hooks.post` if the workflow step is a hook and `ds.$dir.$workspace` if it is a
+dirspace scope.  `$key` is the name that the key would have in the payload.  The
+keys are set `uncommitted`.
+.. The workflow step returns a payload which has links to the created keys.
+.. Pushing results is done by writing to each step to the key
+`$work_manifest_id.steps.outputs` where each index is the step, uncommitted.
+.. The work manifest result API is called with a list of all keys created in
+the run.  The API call performs any result work, including committing all keys.
+
+==== Real-time logging
+
+With the above implementation, the output of operations can be pushed to the
+server in real-time.  The UI can then query the KV store for output and consume
+them as they are produced.
+
+The algorithm could be:
+
+. Look up work manifest.
+. Check if it is in a `running` state.
+. If yes, look at which dirspaces are being run in the work manifest.
+. The UI can then use `iter` periodically poll the KV store for keys matching
+`$work_manifest_id.steps,outputs.$scope`, including those that are uncommitted.
+. For any found keys, it can keep on querying, using the `version` to know if
+it's been updated.  Using `iter` it can keep on querying, checking if another
+index has been added.
+
+The actual implementation could be different and we could add more metadata keys
+into the store to make doing real-time logs more efficient, but given the
+interface of KV we could implement it.
+
+=== Transitioning to the new interfaces
+
+There are three components that need to change to make complete use of the new
+interface:
+
+. The backend
+. The UI
+. The action
+
+The backend and UI are the easiest to handle because they are bundled together.
+They can transition to the new interfaces, migrating data over as necessary. The
+backend can also provide compatible interfaces over the new data to remain
+compatible.
+
+The action is more difficult in that it is a separate piece of software that is
+shipped independently.  The backend already provides information to the backend
+in terms of which result types it supports.  The backend would increment this
+value.  If the backend supports the new version, the action will use the new
+protocol to return results.  Otherwise it will translate the result to the
+supported version.  In this case, it's a bit more complicated than previous
+result versions because it changes how each step interacts with the server
+rather than the format the result gets sent back to the server.
+
+== Conclusion
+
+The KV store has simple, straightforward, semantics that can easily be built
+upon for other purposes.  Being able to store large data will improve the
+stability of the system and allow the addition of new features.

@@ -22,6 +22,9 @@ module Make (Abb : Abb_intf.S) : sig
     string ->
     ('a, ([> with_file_err ] as 'e)) result Abb.Future.t
 
+  val read_all :
+    ?buf_size:int -> Abb.File.t -> (string, [> Abb_intf.Errors.read ]) result Abb.Future.t
+
   val read_file :
     ?buf_size:int ->
     string ->

@@ -14,7 +14,7 @@ module type S = sig
     'a t -> (tx t -> ('r, err Error.t) result Abb.Future.t) -> ('r, err Error.t) result Abb.Future.t
 
   val start_migration : tx t -> string -> unit Abb.Future.t
-  val complete_migration : tx t -> string -> unit Abb.Future.t
+  val complete_migration : 'a t -> string -> unit Abb.Future.t
   val list_migrations : 'a t -> string list -> unit Abb.Future.t
   val get_migrations : tx t -> (string list, err) result Abb.Future.t
   val add_migration : tx t -> string -> (unit, err) result Abb.Future.t
@@ -24,14 +24,16 @@ module Make (M : S) = struct
   type err = M.err Error.t
 
   module Migration = struct
-    type t = M.tx M.t -> (unit, M.err) result Abb.Future.t
+    type 'a t =
+      M.tx M.t ->
+      ([ `Sync | `Async of 'a M.t -> (unit, M.err) result Abb.Future.t ], M.err) result Abb.Future.t
   end
 
   let run_migration m mt =
     let open Abb.Future.Infix_monad in
     m mt
     >>| function
-    | Ok () -> Ok ()
+    | Ok r -> Ok r
     | Error err -> Error (`Migration_err err)
 
   let get_migrations mt =
@@ -60,7 +62,10 @@ module Make (M : S) = struct
     let open Abbs_future_combinators.Infix_result_monad in
     start_migration mt name
     >>= fun () ->
-    run_migration m mt >>= fun () -> add_migration mt name >>= fun () -> complete_migration mt name
+    run_migration m mt
+    >>= fun r ->
+    add_migration mt name
+    >>= fun () -> complete_migration mt name >>= fun () -> Abb.Future.return (Ok r)
 
   let rec verify_consistency migrations ms =
     match (migrations, ms) with
@@ -87,11 +92,12 @@ module Make (M : S) = struct
                 M.list_migrations tx [ fst migration ]
                 >>= fun () ->
                 let open Abbs_future_combinators.Infix_result_monad in
-                exec tx migration >>= fun () -> Abb.Future.return (Ok `Cont)
+                exec tx migration >>= fun r -> Abb.Future.return (Ok (`Cont r))
             | None -> Abb.Future.return (Error `Consistency_err)))
     >>= function
     | `Done -> Abb.Future.return (Ok ())
-    | `Cont -> run' mt ms
+    | `Cont `Sync -> run' mt ms
+    | `Cont (`Async mig) -> run_migration mig mt >>= fun () -> run' mt ms
 
   let run mt ms =
     (run' mt ms : (unit, err) result Abb.Future.t :> (unit, [> err ]) result Abb.Future.t)
