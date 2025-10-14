@@ -96,18 +96,26 @@ let get config storage _origin work_manifest_id path ctx =
         let open Abbs_future_combinators.Infix_result_monad in
         let url = Uri.with_path (Uri.of_string "https://github.com") path in
         Http.get url
-        >>= fun (resp, body) ->
-        let headers = Http.Response.headers resp in
-        let headers_of_interest =
-          CCList.filter_map
-            (fun h -> CCOption.map (fun v -> (h, v)) @@ Http.Headers.get h headers)
-            [ "content-length"; "content-type" ]
-        in
-        let body_path = Filename.concat cache_path @@ Digest.to_hex @@ Digest.string body in
-        Abb_io_file.write_file ~fname:(body_path ^ ".tmp") body
-        >>= fun () ->
-        Abb.File.rename ~src:(body_path ^ ".tmp") ~dst:body_path
-        >>= fun () -> Abb.Future.return (Ok { V.body_path; headers = headers_of_interest })
+        >>= function
+        | resp, body when Http.(Status.is_success @@ Response.status resp) ->
+            let headers = Http.Response.headers resp in
+            let headers_of_interest =
+              CCList.filter_map
+                (fun h -> CCOption.map (fun v -> (h, v)) @@ Http.Headers.get h headers)
+                [ "content-length"; "content-type" ]
+            in
+            let body_path = Filename.concat cache_path @@ Digest.to_hex @@ Digest.string body in
+            Abb_io_file.write_file ~fname:(body_path ^ ".tmp") body
+            >>= fun () ->
+            Abb.File.rename ~src:(body_path ^ ".tmp") ~dst:body_path
+            >>= fun () -> Abb.Future.return (Ok { V.body_path; headers = headers_of_interest })
+        | resp, _ ->
+            Abb.Future.return
+              (Error
+                 (`Curl_err
+                    (Printf.sprintf
+                       "Bad response: %s"
+                       (Http.Status.to_string @@ Http.Response.status resp))))
       in
       Tenv_cache.fetch tenv_cache path fetch
       >>= function
