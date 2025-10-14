@@ -573,7 +573,15 @@ module Db = struct
     let cleanup_repo_configs = Pgsql_io.Typed_sql.(sql /^ read "cleanup_repo_configs.sql")
     let delete_stale_flow_states_query = read "delete_stale_flow_states.sql"
     let delete_stale_flow_states () = Pgsql_io.Typed_sql.(sql /^ delete_stale_flow_states_query)
-    let delete_old_plans = Pgsql_io.Typed_sql.(sql /^ read "delete_old_terraform_plans.sql")
+
+    let delete_old_plans =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* count *)
+        Ret.integer
+        /^ read "delete_old_terraform_plans.sql")
+
     let insert_pull_request_unlock_query = read "insert_pull_request_unlock.sql"
 
     let insert_pull_request_unlock () =
@@ -1674,9 +1682,12 @@ module Db = struct
   let cleanup_plans ~request_id db =
     let open Abb.Future.Infix_monad in
     Metrics.Psql_query_time.time (Metrics.psql_query_time "delete_old_plans") (fun () ->
-        Pgsql_io.Prepared_stmt.execute db Sql.delete_old_plans)
+        Pgsql_io.Prepared_stmt.fetch db Sql.delete_old_plans ~f:CCFun.id)
     >>= function
-    | Ok () -> Abb.Future.return (Ok ())
+    | Ok [] -> assert false
+    | Ok (count :: _) ->
+        Logs.info (fun m -> m "PLAN_CLEANUP : %d" (Int32.to_int count));
+        Abb.Future.return (Ok ())
     | Error (#Pgsql_io.err as err) ->
         Logs.err (fun m -> m "%s: ERROR : %a" request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
