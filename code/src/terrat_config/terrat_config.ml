@@ -33,7 +33,7 @@ module Gitlab = struct
   let default_gitlab_web_base_url = Uri.of_string "https://gitlab.com"
 
   type t = {
-    access_token : (string[@opaque]);
+    (* access_token : (string[@opaque]); *)
     api_base_url : Uri.t;
     app_id : string;
     app_secret : (string[@opaque]);
@@ -41,7 +41,7 @@ module Gitlab = struct
   }
   [@@deriving show]
 
-  let access_token t = t.access_token
+  (* let access_token t = t.access_token *)
   let api_base_url t = t.api_base_url
   let app_id t = t.app_id
   let app_secret t = t.app_secret
@@ -183,8 +183,8 @@ let load_gitlab () =
         @@ Sys.getenv_opt "GITLAB_WEB_BASE_URL"
       in
       env_str "GITLAB_ACCESS_TOKEN"
-      >>= fun access_token ->
-      Ok (Some { Gitlab.access_token; api_base_url; app_id; app_secret; web_base_url })
+      >>= fun _access_token ->
+      Ok (Some { Gitlab.api_base_url; app_id; app_secret; web_base_url })
 
 let load_gc () =
   let dynamic_gc' () =

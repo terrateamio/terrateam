@@ -274,7 +274,9 @@ struct
         <*> Abb.Future.fork (plan_cleanup config storage)
         <*> Abb.Future.fork (repo_config_cleanup config storage))
       >>= fun (drift, flow_state_cleanup, plan_cleanup, repo_config_cleanup) ->
-      let access_token = Terrat_config.Gitlab.access_token vcs_config in
+      (* #899 TODO work on this *)
+      (* let access_token = Terrat_config.Gitlab.access_token vcs_config in *)
+      let access_token = raise (Failure "nyi") in
       let client =
         Openapic_abb.create
           ~user_agent:"Terrateam"

@@ -167,13 +167,25 @@ module Webhook = struct
     Abb.Future.return (Ok name)
 
   let get' config storage user installation_id webhook_url =
+    let module Tsql = Terrat_vcs_service_gitlab_sql_queries in
     let open Abbs_future_combinators.Infix_result_monad in
     let vcs_config = Terrat_vcs_service_gitlab_provider.Api.Config.vcs_config config in
+    Pgsql_pool.with_conn storage ~f:(fun db ->
+        Pgsql_io.Prepared_stmt.fetch
+          db
+          (Tsql.select_access_token ())
+          ~f:CCFun.id
+          (CCInt64.of_int installation_id))
+    >>= (function
+    (* #899 This section will be erased after the migration is over *)
+    | [] -> assert false (* Terrat_config.Gitlab.access_token vcs_config *)
+    | access_token :: _ -> Abb.Future.return (Ok access_token))
+    >>= fun access_token ->
     let client =
       Openapic_abb.create
         ~user_agent:"Terrateam"
         ~base_url:(Terrat_config.Gitlab.api_base_url vcs_config)
-        (`Bearer (Terrat_config.Gitlab.access_token vcs_config))
+        (`Bearer access_token)
     in
     Pgsql_pool.with_conn storage ~f:(fun db -> User.query_user_id db user)
     >>= fun user_id ->
@@ -1397,32 +1409,11 @@ end
 
 (* TODO: #899 Finish this *)
 module Token = struct
-  module Sql = struct
-    let read fname =
-      CCOption.get_exn_or
-        fname
-        (CCOption.map
-           (fun s ->
-             s
-             |> CCString.split_on_char '\n'
-             |> CCList.filter CCFun.(CCString.prefix ~pre:"--" %> not)
-             |> CCString.concat "\n")
-           (Terrat_files_gitlab_sql.read fname))
-
-    let upsert_token () =
-      Pgsql_io.Typed_sql.(
-        sql
-        /^ read "upsert_gitlab_access_token.sql"
-        /% Var.bigint "installation_id"
-        /% Var.text "access_token"
-        /% Var.uuid "access_token_updated_by"
-        /% Var.text "group_name")
-  end
-
   let put' config storage user installation_id access_token =
     let open Abbs_future_combinators.Infix_result_monad in
     let module Gt = Terrat_api_components.Gitlab_access_token in
     let module Oauth = Terrat_vcs_service_gitlab_user.Oauth in
+    let module Tsql = Terrat_vcs_service_gitlab_sql_queries in
     let module W = Webhook in
     let vcs_config = Terrat_vcs_service_gitlab_provider.Api.Config.vcs_config config in
     Pgsql_pool.with_conn storage ~f:(fun db -> Oauth.access_token ~config:vcs_config db user)
@@ -1444,7 +1435,7 @@ module Token = struct
     Pgsql_pool.with_conn storage ~f:(fun db ->
         Pgsql_io.Prepared_stmt.execute
           db
-          (Sql.upsert_token ())
+          (Tsql.upsert_token ())
           (CCInt64.of_int installation_id)
           access_token
           (Terrat_user.id user)

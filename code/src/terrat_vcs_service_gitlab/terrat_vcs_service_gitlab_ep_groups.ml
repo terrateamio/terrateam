@@ -64,15 +64,29 @@ end
 module Is_member = struct
   module U = Gitlabc_components.API_Entities_UserPublic
 
-  let get' user_id config group_id =
+  let get' user_id config storage group_id =
     let module Glg = Gitlabc_groups_members.GetApiV4GroupsIdMembersAllUserId in
-    let vcs_config = Terrat_vcs_service_gitlab_provider.Api.Config.vcs_config config in
+    let module Tsql = Terrat_vcs_service_gitlab_sql_queries in
     let open Abbs_future_combinators.Infix_result_monad in
+    let vcs_config = Terrat_vcs_service_gitlab_provider.Api.Config.vcs_config config in
+    (* #899 TODO Properly fetch this data *)
+    let installation_id = raise (Failure "nyi") in
+    Pgsql_pool.with_conn storage ~f:(fun db ->
+        Pgsql_io.Prepared_stmt.fetch
+          db
+          (Tsql.select_access_token ())
+          ~f:CCFun.id
+          (CCInt64.of_int installation_id))
+    >>= (function
+    (* #899 This section will be erased after the migration is over *)
+    | [] -> assert false (* Terrat_config.Gitlab.access_token vcs_config *)
+    | access_token :: _ -> Abb.Future.return (Ok access_token))
+    >>= fun access_token ->
     let client =
       Openapic_abb.create
         ~user_agent:"Terrateam"
         ~base_url:(Terrat_config.Gitlab.api_base_url vcs_config)
-        (`Bearer (Terrat_config.Gitlab.access_token vcs_config))
+        (`Bearer access_token)
     in
     Openapic_abb.call client Glg.(make (Parameters.make ~id:(CCInt.to_string group_id) ~user_id))
     >>= fun resp ->
@@ -92,7 +106,7 @@ module Is_member = struct
               Uuidm.pp
               (Terrat_user.id user));
         let open Abb.Future.Infix_monad in
-        get' id config group_id
+        get' id config storage group_id
         >>= function
         | Ok result ->
             let body =
@@ -102,6 +116,11 @@ module Is_member = struct
             Abb.Future.return (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK body) ctx))
         | Error (#Openapic_abb.call_err as err) ->
             Logs.err (fun m -> m "group_id=%d : %a" group_id Openapic_abb.pp_call_err err);
+            Abb.Future.return
+              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
+        (* #899 TODO Properly finish this match *)
+        | Error _ ->
+            Logs.err (fun m -> m "group_id=%d : " group_id);
             Abb.Future.return
               (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)))
 end

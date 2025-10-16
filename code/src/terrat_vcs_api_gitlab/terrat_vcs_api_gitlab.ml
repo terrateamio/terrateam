@@ -343,11 +343,13 @@ let fetch_centralized_repo ~request_id client owner =
 
 let create_client ~request_id config account db =
   let vcs_config = Config.vcs_config config in
+  (* #899 TODO *)
+  let access_token = raise (Failure "nyi") in
   let gitlab_client =
     Openapic_abb.create
       ~user_agent:"Terrateam"
       ~base_url:(Terrat_config.Gitlab.api_base_url vcs_config)
-      (`Bearer (Terrat_config.Gitlab.access_token vcs_config))
+      (`Bearer access_token)
   in
   Abb.Future.return (Ok (Client.make ~account ~config ~client:gitlab_client ()))
 
