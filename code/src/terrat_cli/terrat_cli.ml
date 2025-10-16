@@ -27,7 +27,7 @@ module Cmdline = struct
         Format.kfprintf
           k
           ppf
-          ("[%s] %a [%s] @[" ^^ fmt ^^ "@]@.")
+          ("[%s] %a [%s] " ^^ fmt ^^ "@.")
           time_str
           Logs.pp_header
           (level, h)
