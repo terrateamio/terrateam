@@ -28,7 +28,6 @@ struct
     plan_cleanup : unit Abb.Future.t;
     repo_config_cleanup : unit Abb.Future.t;
     storage : Terrat_storage.t;
-    whoami : Gitlabc_components.API_Entities_UserPublic.t;
   }
 
   module Routes = struct
@@ -37,7 +36,6 @@ struct
       let api_v1 () = Brtl_rtng.Route.(api () / "v1")
       let gitlab_v1 () = Brtl_rtng.Route.(api_v1 () / "gitlab")
       let gitlab_whoami () = Brtl_rtng.Route.(gitlab_v1 () / "whoami")
-      let gitlab_whoareyou () = Brtl_rtng.Route.(gitlab_v1 () / "whoareyou")
       let gitlab_events () = Brtl_rtng.Route.(gitlab_v1 () / "events")
 
       (* Pipeline api base *)
@@ -84,10 +82,6 @@ struct
         Brtl_rtng.Route.(gitlab_v1 () / "callback" /? Query.string "code" /? Query.string "state")
 
       let gitlab_groups () = Brtl_rtng.Route.(gitlab_v1 () / "groups")
-
-      let gitlab_groups_is_bot_member () =
-        Brtl_rtng.Route.(gitlab_v1 () / "groups" /% Path.int / "is-member")
-
       let gitlab_installations () = Brtl_rtng.Route.(gitlab_v1 () / "installations")
 
       let gitlab_installations_webhook () =
@@ -116,6 +110,15 @@ struct
                     Brtl_ep_paginate.Param.(
                       of_param Typ.(tuple4 (string, string, string, ud' Uuidm.of_string)))))
           /? Query.(option_default 20 (Query.int "limit")))
+
+      let gitlab_installation_tokens () =
+        Brtl_rtng.Route.(
+          gitlab_installations ()
+          /% Path.int
+          / "access-token"
+          /* Body.decode
+               ~json:Terrat_api_gitlab_installations.Create_access_token.Request_body.of_yojson
+               ())
 
       let gitlab_installation_work_manifests () =
         Brtl_rtng.Route.(
@@ -167,6 +170,9 @@ struct
               --> Terrat_vcs_service_gitlab_ep_installations.List_work_manifest_outputs.get
                     config
                     storage );
+            ( `PUT,
+              Rt.gitlab_installation_tokens ()
+              --> Terrat_vcs_service_gitlab_ep_installations.Token.put config storage );
             (* Work manifests *)
             (`POST, Rt.gitlab_work_manifest_plan () --> Work_manifest.Plans.post config storage);
             (`GET, Rt.gitlab_get_work_manifest_plan () --> Work_manifest.Plans.get config storage);
@@ -184,17 +190,11 @@ struct
               Rt.gitlab_installations_webhook ()
               --> Terrat_vcs_service_gitlab_ep_installations.Webhook.get config storage );
             ( `GET,
-              Rt.gitlab_groups_is_bot_member ()
-              --> Terrat_vcs_service_gitlab_ep_groups.Is_member.get t.whoami config storage );
-            ( `GET,
               Rt.gitlab_groups () --> Terrat_vcs_service_gitlab_ep_groups.List.get config storage );
             ( `GET,
               Rt.gitlab_callback () --> Terrat_vcs_service_gitlab_ep_callback.get config storage );
             ( `GET,
               Rt.gitlab_whoami () --> Terrat_vcs_service_gitlab_ep_user.Whoami.get config storage );
-            ( `GET,
-              Rt.gitlab_whoareyou ()
-              --> Terrat_vcs_service_gitlab_ep_user.Whoareyou.get t.whoami config storage );
           ]
   end
 
@@ -262,33 +262,8 @@ struct
         <*> Abb.Future.fork (plan_cleanup config storage)
         <*> Abb.Future.fork (repo_config_cleanup config storage))
       >>= fun (drift, flow_state_cleanup, plan_cleanup, repo_config_cleanup) ->
-      let access_token = Terrat_config.Gitlab.access_token vcs_config in
-      let client =
-        Openapic_abb.create
-          ~user_agent:"Terrateam"
-          ~base_url:(Terrat_config.Gitlab.api_base_url vcs_config)
-          (`Bearer access_token)
-      in
-      Openapic_abb.call client Gitlabc_user.GetApiV3User.(make ())
-      >>= function
-      | Ok resp ->
-          let module U = Gitlabc_components.API_Entities_UserPublic in
-          let (`OK whoami) = Openapi.Response.value resp in
-          Logs.info (fun m -> m "START : username=%s" whoami.U.username);
-          Abb.Future.return
-            (Ok
-               {
-                 config;
-                 drift;
-                 flow_state_cleanup;
-                 plan_cleanup;
-                 repo_config_cleanup;
-                 storage;
-                 whoami;
-               })
-      | Error (#Openapic_abb.call_err as err) ->
-          Logs.err (fun m -> m "Failed to fetch user: %a" Openapic_abb.pp_call_err err);
-          Abb.Future.return (Error `Error)
+      Abb.Future.return
+        (Ok { config; drift; flow_state_cleanup; plan_cleanup; repo_config_cleanup; storage })
 
     let stop t = raise (Failure "nyi")
     let routes t = Routes.routes t

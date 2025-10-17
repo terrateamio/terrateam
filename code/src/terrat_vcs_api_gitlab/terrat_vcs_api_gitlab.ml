@@ -341,15 +341,39 @@ let fetch_centralized_repo ~request_id client owner =
             err);
       Abb.Future.return (Error `Error)
 
-let create_client ~request_id config account =
+let create_client ~request_id config account db =
+  let open Abb.Future.Infix_monad in
   let vcs_config = Config.vcs_config config in
-  let gitlab_client =
-    Openapic_abb.create
-      ~user_agent:"Terrateam"
-      ~base_url:(Terrat_config.Gitlab.api_base_url vcs_config)
-      (`Bearer (Terrat_config.Gitlab.access_token vcs_config))
+  let installation_id = Account.id account in
+  let select_access_token () =
+    Pgsql_io.Typed_sql.(
+      sql
+      //
+      (* access_token *)
+      Ret.text
+      /^ "select gi.access_token from gitlab_installations gi where gi.id = $installation_id"
+      /% Var.bigint "installation_id")
   in
-  Abb.Future.return (Ok (Client.make ~account ~config ~client:gitlab_client ()))
+  Pgsql_io.Prepared_stmt.fetch
+    db
+    (select_access_token ())
+    ~f:CCFun.id
+    (CCInt64.of_int installation_id)
+  >>= function
+  | Ok [] ->
+      Logs.err (fun m -> m "%s : GITLAB_ACCESS_TOKEN_NOT_FOUND" request_id);
+      Abb.Future.return (Error `Error)
+  | Ok (access_token :: _) ->
+      let gitlab_client =
+        Openapic_abb.create
+          ~user_agent:"Terrateam"
+          ~base_url:(Terrat_config.Gitlab.api_base_url vcs_config)
+          (`Bearer access_token)
+      in
+      Abb.Future.return (Ok (Client.make ~account ~config ~client:gitlab_client ()))
+  | Error (#Pgsql_io.err as err) ->
+      Logs.err (fun m -> m "%s : %a" request_id Pgsql_io.pp_err err);
+      Abb.Future.return (Error `Error)
 
 let fetch_tree ~request_id client repo ref_ =
   let module Gl = Gitlabc_projects_repository.GetApiV4ProjectsIdRepositoryTree in

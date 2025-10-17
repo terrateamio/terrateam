@@ -167,13 +167,17 @@ module Webhook = struct
     Abb.Future.return (Ok name)
 
   let get' config storage user installation_id webhook_url =
+    let module Tsql = Terrat_vcs_service_gitlab_sql_queries in
+    let module Oauth = Terrat_vcs_service_gitlab_user.Oauth in
     let open Abbs_future_combinators.Infix_result_monad in
     let vcs_config = Terrat_vcs_service_gitlab_provider.Api.Config.vcs_config config in
+    Pgsql_pool.with_conn storage ~f:(fun db -> Oauth.access_token ~config:vcs_config db user)
+    >>= fun access_token ->
     let client =
       Openapic_abb.create
         ~user_agent:"Terrateam"
         ~base_url:(Terrat_config.Gitlab.api_base_url vcs_config)
-        (`Bearer (Terrat_config.Gitlab.access_token vcs_config))
+        (`Bearer access_token)
     in
     Pgsql_pool.with_conn storage ~f:(fun db -> User.query_user_id db user)
     >>= fun user_id ->
@@ -214,6 +218,46 @@ module Webhook = struct
               webhook |> Terrat_api_components.Gitlab_webhook.to_yojson |> Yojson.Safe.to_string
             in
             Abb.Future.return (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK body) ctx))
+        | Error (`Access_level_err access_level) ->
+            Logs.err (fun m ->
+                m "installation_id=%d : ACCESS_LEVEL : level=%d" installation_id access_level);
+            Abb.Future.return
+              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Forbidden "") ctx))
+        | Error `Bad_refresh_token ->
+            Logs.err (fun m ->
+                m "installation_id=%d : BAD_REFRESH_TOKEN %s" installation_id (Brtl_ctx.token ctx));
+            Abb.Future.return
+              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Forbidden "") ctx))
+        | Error `Cancelled ->
+            Logs.err (fun m -> m "installation_id=%d : CANCELLED" installation_id);
+            Abb.Future.return
+              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
+        | Error `Closed ->
+            Logs.err (fun m -> m "installation_id=%d : CLOSED" installation_id);
+            Abb.Future.return
+              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
+        | Error (`Curl_err err) ->
+            Logs.err (fun m -> m "installation_id=%d : CURL_ERR %s" installation_id err);
+            Abb.Future.return
+              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
+        | Error (#Openapic_abb.call_err as err) ->
+            Logs.err (fun m ->
+                m "installation_id=%d : %a" installation_id Openapic_abb.pp_call_err err);
+            Abb.Future.return
+              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
+        | Error (#Pgsql_io.err as err) ->
+            Logs.err (fun m -> m "installation_id=%d : %a" installation_id Pgsql_io.pp_err err);
+            Abb.Future.return
+              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
+        | Error (#Pgsql_pool.err as err) ->
+            Logs.err (fun m -> m "installation_id=%d : %a" installation_id Pgsql_pool.pp_err err);
+            Abb.Future.return
+              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
+        | Error (`Refresh_err err) ->
+            Logs.err (fun m ->
+                m "installation_id=%d : %s : %s" installation_id (Brtl_ctx.token ctx) err);
+            Abb.Future.return
+              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Forbidden "") ctx))
         | Error `User_not_found_in_group_err ->
             Logs.err (fun m -> m "installation_id=%d : USER_NOT_FOUND_IN_GROUP" installation_id);
             Abb.Future.return
@@ -227,22 +271,13 @@ module Webhook = struct
                   user);
             Abb.Future.return
               (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-        | Error (`Access_level_err access_level) ->
+        | Error (`User_not_found user) ->
             Logs.err (fun m ->
-                m "installation_id=%d : ACCESS_LEVEL : level=%d" installation_id access_level);
-            Abb.Future.return
-              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Forbidden "") ctx))
-        | Error (#Openapic_abb.call_err as err) ->
-            Logs.err (fun m ->
-                m "installation_id=%d : %a" installation_id Openapic_abb.pp_call_err err);
-            Abb.Future.return
-              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-        | Error (#Pgsql_io.err as err) ->
-            Logs.err (fun m -> m "installation_id=%d : %a" installation_id Pgsql_io.pp_err err);
-            Abb.Future.return
-              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-        | Error (#Pgsql_pool.err as err) ->
-            Logs.err (fun m -> m "installation_id=%d : %a" installation_id Pgsql_pool.pp_err err);
+                m
+                  "installation_id=%d : USER_NOT_FOUND : user=%a"
+                  installation_id
+                  Terrat_user.pp
+                  user);
             Abb.Future.return
               (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)))
 end
@@ -1391,6 +1426,115 @@ module List_work_manifests = struct
         | Error (#Pgsql_io.err as err) ->
             Logs.err (fun m ->
                 m "INSTALLATION : %s : LIST_REPOS : %a" (Brtl_ctx.token ctx) Pgsql_io.pp_err err);
+            Abb.Future.return
+              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)))
+end
+
+module Token = struct
+  let put' config storage user installation_id access_token =
+    let open Abbs_future_combinators.Infix_result_monad in
+    let module Gt = Terrat_api_components.Gitlab_access_token in
+    let module Oauth = Terrat_vcs_service_gitlab_user.Oauth in
+    let module Tsql = Terrat_vcs_service_gitlab_sql_queries in
+    let module W = Webhook in
+    let vcs_config = Terrat_vcs_service_gitlab_provider.Api.Config.vcs_config config in
+    Pgsql_pool.with_conn storage ~f:(fun db -> Oauth.access_token ~config:vcs_config db user)
+    >>= fun token ->
+    let client =
+      Openapic_abb.create
+        ~base_url:(Terrat_config.Gitlab.api_base_url vcs_config)
+        ~user_agent:"Terrateam"
+        (`Bearer token)
+    in
+    Pgsql_pool.with_conn storage ~f:(fun db -> User.query_user_id db user)
+    >>= fun user_id ->
+    Abbs_future_combinators.Infix_result_app.(
+      (fun name () -> name)
+      <$> W.fetch_group_name client installation_id
+      <*> W.affirm_is_admin client installation_id user_id)
+    >>= fun group_name ->
+    let { Gt.access_token } = access_token in
+    Pgsql_pool.with_conn storage ~f:(fun db ->
+        Pgsql_io.Prepared_stmt.execute
+          db
+          (Tsql.upsert_token ())
+          (CCInt64.of_int installation_id)
+          access_token
+          (Terrat_user.id user)
+          group_name)
+
+  (* PUT /api/v1/gitlab/installations/{installation_id}/access-token *)
+  let put config storage installation_id token =
+    let open Abbs_future_combinators.Infix_result_monad in
+    Brtl_ep.run_result_json ~f:(fun ctx ->
+        Terrat_session.with_session ctx
+        >>= fun user ->
+        let open Abb.Future.Infix_monad in
+        put' config storage user installation_id token
+        >>= function
+        | Ok () ->
+            Logs.debug (fun m -> m "installation_id=%d : %s" installation_id (Brtl_ctx.token ctx));
+            Abb.Future.return (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx))
+        | Error (`Access_level_err access_level) ->
+            Logs.err (fun m ->
+                m "installation_id=%d : ACCESS_LEVEL : level=%d" installation_id access_level);
+            Abb.Future.return
+              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Forbidden "") ctx))
+        | Error `Bad_refresh_token ->
+            Logs.err (fun m ->
+                m "installation_id=%d : BAD_REFRESH_TOKEN %s" installation_id (Brtl_ctx.token ctx));
+            Abb.Future.return
+              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Forbidden "") ctx))
+        | Error `Cancelled ->
+            Logs.err (fun m -> m "installation_id=%d : CANCELLED" installation_id);
+            Abb.Future.return
+              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
+        | Error `Closed ->
+            Logs.err (fun m -> m "installation_id=%d : CLOSED" installation_id);
+            Abb.Future.return
+              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
+        | Error (`Curl_err err) ->
+            Logs.err (fun m -> m "installation_id=%d : CURL_ERR %s" installation_id err);
+            Abb.Future.return
+              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
+        | Error (#Openapic_abb.call_err as err) ->
+            Logs.err (fun m ->
+                m "installation_id=%d : %a" installation_id Openapic_abb.pp_call_err err);
+            Abb.Future.return
+              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
+        | Error (#Pgsql_io.err as err) ->
+            Logs.err (fun m -> m "installation_id=%d : %a" installation_id Pgsql_io.pp_err err);
+            Abb.Future.return
+              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
+        | Error (#Pgsql_pool.err as err) ->
+            Logs.err (fun m -> m "installation_id=%d : %a" installation_id Pgsql_pool.pp_err err);
+            Abb.Future.return
+              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
+        | Error (`Refresh_err err) ->
+            Logs.err (fun m ->
+                m "installation_id=%d : %s : %s" installation_id (Brtl_ctx.token ctx) err);
+            Abb.Future.return
+              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Forbidden "") ctx))
+        | Error `User_not_found_in_group_err ->
+            Logs.err (fun m -> m "installation_id=%d : USER_NOT_FOUND_IN_GROUP" installation_id);
+            Abb.Future.return
+              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
+        | Error (`User_not_found user) ->
+            Logs.err (fun m ->
+                m
+                  "installation_id=%d : USER_NOT_FOUND : user=%a"
+                  installation_id
+                  Terrat_user.pp
+                  user);
+            Abb.Future.return
+              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
+        | Error (`User_not_found_err user) ->
+            Logs.err (fun m ->
+                m
+                  "installation_id=%d : USER_NOT_FOUND : user=%a"
+                  installation_id
+                  Terrat_user.pp
+                  user);
             Abb.Future.return
               (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)))
 end

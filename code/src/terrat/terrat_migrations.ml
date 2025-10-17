@@ -116,6 +116,22 @@ let add_encryption_key { Migrate.config; storage = _; tx = db } =
   Pgsql_io.Prepared_stmt.execute db insert_encryption_key key
   >>= fun () -> Abb.Future.return (Ok `Sync)
 
+let add_gitlab_token_from_config { Migrate.config; storage = _; tx = db } =
+  let open Abbs_future_combinators.Infix_result_monad in
+  let module Gc = Terrat_config.Gitlab in
+  let add_gitlab_token_from_config () =
+    Pgsql_io.Typed_sql.(
+      sql
+      /^ "update gitlab_installations set access_token = $access_token_from_terrat_config"
+      /% Var.text "access_token_from_terrat_config")
+  in
+  match Terrat_config.gitlab config with
+  | Some gc ->
+      let access_token = Gc.access_token gc in
+      Pgsql_io.Prepared_stmt.execute db (add_gitlab_token_from_config ()) access_token
+      >>= fun () -> Abb.Future.return (Ok `Sync)
+  | None -> Abb.Future.return (Ok `Sync)
+
 let migrations =
   [
     ("initial-tables", run_file_sql "2021-12-03-initial-tables.sql");
@@ -235,6 +251,8 @@ let migrations =
       run_file_sql ~mode:`Async "2025-09-23-add-repo-created_at-index.sql" );
     ("add-kv-store", run_file_sql "2025-09-17-add-kv-store.sql");
     ("add-access-token-table", run_file_sql "2025-09-24-add-access-token-table.sql");
+    ("refactor-gitlab-access-tokens", run_file_sql "2025-10-06-refactor-gitlab-tokens.sql");
+    ("add-gitlab-token-from-config", add_gitlab_token_from_config);
   ]
 
 let run config storage = Mig.run { Migrate.config; storage; tx = () } migrations
