@@ -308,6 +308,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gitlab/installations/{installation_id}/access-token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["gitlab-installations/create-access-token"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/gitlab/installations/{installation_id}/dirspaces": {
         parameters: {
             query?: never;
@@ -525,6 +541,9 @@ export interface components {
         "github-user": {
             avatar_url?: string;
             username: string;
+        };
+        "gitlab-access-token": {
+            access_token: string;
         };
         "gitlab-group": {
             id: number;
@@ -1554,6 +1573,35 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["gitlab-webhook"];
                 };
+            };
+        };
+    };
+    "gitlab-installations/create-access-token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                installation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["gitlab-access-token"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
