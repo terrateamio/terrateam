@@ -35,24 +35,24 @@ latest_merged_pull_request as (
 ),
 work_manifest_results as (
     select
-        gwm.id as id,
-        gwm.repository as repository,
-        gwm.pull_number as pull_number,
-        gwm.base_sha as base_sha,
-        gwm.sha as sha,
-        gwm.run_type as run_type,
+        wm.id as id,
+        wm.repository as repository,
+        wm.pull_number as pull_number,
+        wm.base_sha as base_sha,
+        wm.sha as sha,
+        wm.run_type as run_type,
         gwmr.path as path,
         gwmr.workspace as workspace,
         gwmr.success as success,
         row_number() over (partition by
                                gwmr.path,
                                gwmr.workspace
-                           order by gwm.created_at desc) as rn
-    from github_work_manifests as gwm
+                           order by wm.created_at desc) as rn
+    from wm
     inner join work_manifest_results as gwmr
-        on gwmr.work_manifest = gwm.id
-    where gwm.repository = $repo_id and gwm.pull_number = $pull_number
-    order by gwm.created_at desc
+        on gwmr.work_manifest = wm.id
+    where wm.repository = $repo_id and wm.pull_number = $pull_number
+    order by wm.created_at desc
 ),
 plans_with_no_changes as (
     select distinct
