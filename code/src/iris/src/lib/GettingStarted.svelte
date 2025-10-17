@@ -8,7 +8,6 @@
   import { currentVCSProvider } from './stores';
   import { get } from 'svelte/store';
   import { VCS_PROVIDERS } from './vcs/providers';
-  import GitLabSetup from './GitLabSetup.svelte';
   import { analytics } from './analytics';
   import { onDestroy } from 'svelte';
 
@@ -18,9 +17,9 @@
   // Wizard state
   type WizardStep = 'assessment' | 'path-selection' | 'github-demo-setup' | 'gitlab-demo-setup' | 'github-repo-setup' | 'gitlab-setup' | 'validation' | 'success';
   type DemoStep = 'install-app' | 'fork' | 'enable-actions' | 'make-changes' | 'success';
-  type GitLabDemoStep = 'select-group' | 'fork' | 'add-bot' | 'configure-webhook' | 'push-test' | 'configure-variables' | 'make-changes' | 'success';
+  type GitLabDemoStep = 'select-group' | 'fork' | 'submit-token' | 'add-bot' | 'configure-webhook' | 'push-test' | 'configure-variables' | 'make-changes' | 'success';
   type RepoStep = 'install-app' | 'select-repo' | 'add-workflow' | 'configure' | 'test' | 'success';
-  type GitLabStep = 'select-group' | 'select-repo' | 'add-bot' | 'configure-webhook' | 'push-test' | 'configure-variables' | 'add-pipeline' | 'success';
+  type GitLabStep = 'select-group' | 'select-repo' | 'submit-token' | 'add-bot' | 'configure-webhook' | 'push-test' | 'configure-variables' | 'add-pipeline' | 'success';
   let currentStep: WizardStep = 'assessment';
   let selectedPath: 'demo' | 'repo' | null = null;
   let currentDemoStep: DemoStep = 'install-app';
@@ -45,9 +44,6 @@
   let hasConfiguredRepos = false;
   let recommendedPath: 'demo' | 'repo' = 'demo';
   
-  // GitLab setup state
-  let showGitLabSetup = false;
-  
   // Get current VCS provider terminology
   $: currentProvider = $currentVCSProvider || 'github';
   $: terminology = VCS_PROVIDERS[currentProvider]?.terminology || VCS_PROVIDERS.github.terminology;
@@ -65,6 +61,7 @@
   let gitlabDemoStepCompleted = {
     'select-group': false,
     fork: false,
+    'submit-token': false,
     'add-bot': false,
     'configure-webhook': false,
     'push-test': false,
@@ -102,12 +99,19 @@
   let gitlabStepCompleted = {
     'select-group': false,
     'select-repo': false,
+    'submit-token': false,
     'add-bot': false,
     'configure-webhook': false,
     'push-test': false,
     'configure-variables': false,
     'add-pipeline': false
   };
+
+  // Token submission state
+  let gitlabAccessToken = '';
+  let isSubmittingGitLabToken = false;
+  let gitlabTokenSubmitted = false;
+  let gitlabTokenError: string | null = null;
   let gitlabGroups: GitLabGroup[] = [];
   let selectedGitLabGroup: GitLabGroup | null = null;
   let isLoadingGitLabSetupGroups = false;
@@ -183,16 +187,14 @@
           installations = installationsResponse.installations;
           hasInstallations = installations.length > 0;
         } catch (error) {
-          // If GitLab installations endpoint returns 404, show setup wizard
+          // If GitLab installations endpoint returns 404, user needs to go through setup
           if (isApiError(error) && error.status === 404) {
-            showGitLabSetup = true;
-            currentStep = 'path-selection';
-            isLoadingAssessment = false;
-            // Load GitLab bot username
-            await loadGitLabBotUsername();
-            return;
+            // No installations yet - proceed with normal flow
+            hasInstallations = false;
+            installations = [];
+          } else {
+            throw error;
           }
-          throw error;
         }
       } else {
         // GitHub flow remains the same
@@ -319,20 +321,6 @@
     window.open(url, '_blank');
   }
   
-  // GitLab setup handlers
-  function handleGitLabSetupComplete(groupId: number): void {
-    showGitLabSetup = false;
-    
-    // After setup is complete, navigate to the dashboard with proper GitLab installation ID
-    // GitLab installations use the group ID as the installation ID
-    window.location.hash = `#/i/${groupId}/dashboard`;
-  }
-  
-  function handleGitLabSetupCancel(): void {
-    showGitLabSetup = false;
-    currentStep = 'assessment';
-    runSmartAssessment();
-  }
 
   function openConfigurationWizard(): void {
     if (selectedInstallation) {
@@ -421,12 +409,12 @@
       path: 'demo',
       vcs_provider: 'gitlab',
       step: step,
-      step_index: ['select-group', 'fork', 'add-bot', 'configure-webhook', 'push-test', 'configure-variables', 'make-changes'].indexOf(step) + 1,
+      step_index: ['select-group', 'fork', 'submit-token', 'add-bot', 'configure-webhook', 'push-test', 'configure-variables', 'make-changes'].indexOf(step) + 1,
       group: selectedGitLabDemoGroup?.name
     });
 
     // Auto-advance to next step
-    const steps: GitLabDemoStep[] = ['select-group', 'fork', 'add-bot', 'configure-webhook', 'push-test', 'configure-variables', 'make-changes', 'success'];
+    const steps: GitLabDemoStep[] = ['select-group', 'fork', 'submit-token', 'add-bot', 'configure-webhook', 'push-test', 'configure-variables', 'make-changes', 'success'];
     const currentIndex = steps.indexOf(currentGitLabDemoStep);
     if (currentIndex < steps.length - 1) {
       currentGitLabDemoStep = steps[currentIndex + 1];
@@ -770,13 +758,13 @@
       path: 'repo',
       vcs_provider: 'gitlab',
       step: step,
-      step_index: ['select-group', 'select-repo', 'add-bot', 'configure-webhook', 'push-test', 'configure-variables', 'add-pipeline'].indexOf(step) + 1,
+      step_index: ['select-group', 'select-repo', 'submit-token', 'add-bot', 'configure-webhook', 'push-test', 'configure-variables', 'add-pipeline'].indexOf(step) + 1,
       group: selectedGitLabGroup?.name,
       repository: manualGitLabProject
     });
     
     // Auto-advance to next step
-    const steps: GitLabStep[] = ['select-group', 'select-repo', 'add-bot', 'configure-webhook', 'push-test', 'configure-variables', 'add-pipeline', 'success'];
+    const steps: GitLabStep[] = ['select-group', 'select-repo', 'submit-token', 'add-bot', 'configure-webhook', 'push-test', 'configure-variables', 'add-pipeline', 'success'];
     const currentIndex = steps.indexOf(currentGitLabStep);
     if (currentIndex < steps.length - 1) {
       currentGitLabStep = steps[currentIndex + 1];
@@ -1064,16 +1052,68 @@
     loadGitLabSetupGroups();
   }
   
+  async function submitGitLabAccessToken(): Promise<void> {
+    if (!gitlabAccessToken.trim()) {
+      gitlabTokenError = 'Please enter an access token';
+      return;
+    }
+
+    if (!selectedGitLabGroup) {
+      gitlabTokenError = 'No group selected';
+      return;
+    }
+
+    try {
+      isSubmittingGitLabToken = true;
+      gitlabTokenError = null;
+      // Use the selected group ID as the installation ID
+      await api.submitGitLabAccessToken(selectedGitLabGroup.id.toString(), gitlabAccessToken);
+      gitlabTokenSubmitted = true;
+      markGitLabStepComplete('submit-token');
+    } catch (error) {
+      console.error('Failed to submit access token:', error);
+      gitlabTokenError = 'Failed to submit access token. Please verify it is valid and try again.';
+    } finally {
+      isSubmittingGitLabToken = false;
+    }
+  }
+
+  async function submitGitLabDemoAccessToken(): Promise<void> {
+    if (!gitlabAccessToken.trim()) {
+      gitlabTokenError = 'Please enter an access token';
+      return;
+    }
+
+    if (!selectedGitLabDemoGroup) {
+      gitlabTokenError = 'No group selected';
+      return;
+    }
+
+    try {
+      isSubmittingGitLabToken = true;
+      gitlabTokenError = null;
+      // Use the selected demo group ID as the installation ID
+      await api.submitGitLabAccessToken(selectedGitLabDemoGroup.id.toString(), gitlabAccessToken);
+      gitlabTokenSubmitted = true;
+      markGitLabDemoStepComplete('submit-token');
+    } catch (error) {
+      console.error('Failed to submit access token:', error);
+      gitlabTokenError = 'Failed to submit access token. Please verify it is valid and try again.';
+    } finally {
+      isSubmittingGitLabToken = false;
+    }
+  }
+
   async function verifyWebhook(): Promise<void> {
     if (!selectedGitLabGroup) return;
-    
+
     try {
       checkingWebhook = true;
       webhookVerificationError = null;
-      
+
       const config = await api.getGitLabWebhookConfig(selectedGitLabGroup.id.toString());
       const isActive = config.state === 'active';
-      
+
       if (isActive) {
         webhookVerificationError = null;
         markGitLabStepComplete('configure-webhook');
@@ -1162,14 +1202,7 @@
 
       {:else if currentStep === 'path-selection'}
         <!-- Path Selection Step -->
-        {#if showGitLabSetup && currentProvider === 'gitlab'}
-          <!-- GitLab Setup Wizard -->
-          <GitLabSetup 
-            onComplete={handleGitLabSetupComplete}
-            onCancel={handleGitLabSetupCancel}
-          />
-        {:else}
-          <div class="mb-6">
+        <div class="mb-6">
             <h2 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Choose Your Setup Path</h2>
             
             <!-- Assessment Results -->
@@ -1282,7 +1315,6 @@
             </div>
           </button>
         </div>
-        {/if}
 
       {:else if currentStep === 'github-demo-setup'}
         <!-- GitHub Demo Setup Wizard -->
@@ -1670,31 +1702,34 @@
 
           <!-- GitLab Demo Steps Progress -->
           <div class="mb-8">
-            <div class="grid grid-cols-8 gap-1 mb-4 px-1">
+            <div class="grid grid-cols-9 gap-1 mb-4 px-1">
               {#each [
                 {step: 'select-group', index: 0, label: '1'},
                 {step: 'fork', index: 1, label: '2'},
-                {step: 'add-bot', index: 2, label: '3'},
-                {step: 'configure-webhook', index: 3, label: '4'},
-                {step: 'push-test', index: 4, label: '5'},
-                {step: 'configure-variables', index: 5, label: '6'},
-                {step: 'make-changes', index: 6, label: '7'},
-                {step: 'success', index: 7, label: '8'}
+                {step: 'submit-token', index: 2, label: '3'},
+                {step: 'add-bot', index: 3, label: '4'},
+                {step: 'configure-webhook', index: 4, label: '5'},
+                {step: 'push-test', index: 5, label: '6'},
+                {step: 'configure-variables', index: 6, label: '7'},
+                {step: 'make-changes', index: 7, label: '8'},
+                {step: 'success', index: 8, label: '9'}
               ] as stepInfo}
                 <div class="flex justify-center">
                   <div class="flex items-center justify-center w-8 h-8 rounded-full text-xs font-medium
-                              {currentGitLabDemoStep === stepInfo.step ? 'bg-blue-600 text-white' : 
+                              {currentGitLabDemoStep === stepInfo.step ? 'bg-blue-600 text-white' :
                                (stepInfo.step === 'select-group' && gitlabDemoStepCompleted['select-group']) ||
                                (stepInfo.step === 'fork' && gitlabDemoStepCompleted.fork) ||
+                               (stepInfo.step === 'submit-token' && gitlabDemoStepCompleted['submit-token']) ||
                                (stepInfo.step === 'add-bot' && gitlabDemoStepCompleted['add-bot']) ||
                                (stepInfo.step === 'configure-webhook' && gitlabDemoStepCompleted['configure-webhook']) ||
                                (stepInfo.step === 'push-test' && gitlabDemoStepCompleted['push-test']) ||
                                (stepInfo.step === 'configure-variables' && gitlabDemoStepCompleted['configure-variables']) ||
                                (stepInfo.step === 'make-changes' && gitlabDemoStepCompleted['make-changes'])
-                               ? 'bg-green-600 text-white' : 
+                               ? 'bg-green-600 text-white' :
                                'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-400'}">
                     {#if (stepInfo.step === 'select-group' && gitlabDemoStepCompleted['select-group']) ||
                          (stepInfo.step === 'fork' && gitlabDemoStepCompleted.fork) ||
+                         (stepInfo.step === 'submit-token' && gitlabDemoStepCompleted['submit-token']) ||
                          (stepInfo.step === 'add-bot' && gitlabDemoStepCompleted['add-bot']) ||
                          (stepInfo.step === 'configure-webhook' && gitlabDemoStepCompleted['configure-webhook']) ||
                          (stepInfo.step === 'push-test' && gitlabDemoStepCompleted['push-test']) ||
@@ -1709,7 +1744,7 @@
               {/each}
             </div>
             <div class="text-center text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-              Step {['select-group', 'fork', 'add-bot', 'configure-webhook', 'push-test', 'configure-variables', 'make-changes', 'success'].indexOf(currentGitLabDemoStep) + 1} of 8
+              Step {['select-group', 'fork', 'submit-token', 'add-bot', 'configure-webhook', 'push-test', 'configure-variables', 'make-changes', 'success'].indexOf(currentGitLabDemoStep) + 1} of 9
             </div>
           </div>
 
@@ -1825,6 +1860,108 @@
                       class="border border-blue-600 text-blue-600 dark:text-blue-400 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-900/30"
                     >
                       Continue
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          {:else if currentGitLabDemoStep === 'submit-token'}
+            <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 sm:p-6">
+              <div class="flex flex-col sm:flex-row sm:items-start gap-4">
+                <div class="flex-shrink-0 flex justify-center sm:block">
+                  <div class="w-12 h-12 sm:w-10 sm:h-10 bg-orange-600 rounded-lg flex items-center justify-center">
+                    <Icon icon="mdi:key" class="text-white" width="20" />
+                  </div>
+                </div>
+                <div class="ml-4 flex-1">
+                  <h3 class="text-lg font-semibold text-orange-900 dark:text-orange-100 mb-2">Submit GitLab Access Token</h3>
+                  <p class="text-orange-800 dark:text-orange-200 mb-4">
+                    Provide a GitLab access token with API access to allow Terrateam to manage your repositories.
+                  </p>
+
+                  <div class="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4 border border-orange-200 dark:border-orange-700">
+                    <div class="space-y-3 text-sm">
+                      <div class="flex items-start">
+                        <Icon icon="mdi:numeric-1-circle" class="text-orange-600 mr-2 mt-0.5" width="16" />
+                        <div class="text-gray-700 dark:text-gray-300">Go to GitLab Settings → Access Tokens</div>
+                      </div>
+
+                      <div class="flex items-start">
+                        <Icon icon="mdi:numeric-2-circle" class="text-orange-600 mr-2 mt-0.5" width="16" />
+                        <div class="text-gray-700 dark:text-gray-300">Create a new access token with <strong>"api"</strong> scope</div>
+                      </div>
+
+                      <div class="flex items-start">
+                        <Icon icon="mdi:numeric-3-circle" class="text-orange-600 mr-2 mt-0.5" width="16" />
+                        <div class="text-gray-700 dark:text-gray-300">Set an appropriate expiration date</div>
+                      </div>
+
+                      <div class="flex items-start">
+                        <Icon icon="mdi:numeric-4-circle" class="text-orange-600 mr-2 mt-0.5" width="16" />
+                        <div class="text-gray-700 dark:text-gray-300">Copy the generated token and paste it below</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mb-4">
+                    <label for="gitlab-demo-access-token" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Access Token
+                    </label>
+                    <input
+                      id="gitlab-demo-access-token"
+                      type="password"
+                      bind:value={gitlabAccessToken}
+                      placeholder="Enter your GitLab access token"
+                      class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+                             bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+                             focus:ring-2 focus:ring-orange-500 focus:border-orange-500
+                             disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={isSubmittingGitLabToken || gitlabTokenSubmitted}
+                    />
+                  </div>
+
+                  {#if gitlabTokenError}
+                    <div class="bg-red-50 dark:bg-red-900/30 rounded p-3 mb-4">
+                      <div class="flex items-start">
+                        <Icon icon="mdi:alert-circle" class="text-red-600 mr-2 mt-0.5" width="16" />
+                        <div class="text-sm text-red-800 dark:text-red-200">{gitlabTokenError}</div>
+                      </div>
+                    </div>
+                  {/if}
+
+                  {#if gitlabTokenSubmitted}
+                    <div class="bg-green-50 dark:bg-green-900/30 rounded p-3 mb-4">
+                      <div class="flex items-start">
+                        <Icon icon="mdi:check-circle" class="text-green-600 mr-2 mt-0.5" width="16" />
+                        <div class="text-sm text-green-800 dark:text-green-200">
+                          <strong>Success!</strong> Access token submitted successfully.
+                        </div>
+                      </div>
+                    </div>
+                  {/if}
+
+                  <div class="flex items-center justify-end space-x-3">
+                    <button
+                      on:click={() => goToGitLabDemoStep('fork')}
+                      class="border border-gray-300 text-gray-600 dark:text-gray-400 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      Go Back
+                    </button>
+                    <button
+                      on:click={submitGitLabDemoAccessToken}
+                      disabled={isSubmittingGitLabToken || gitlabTokenSubmitted || !gitlabAccessToken.trim()}
+                      class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                    >
+                      {#if isSubmittingGitLabToken}
+                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Submitting...
+                      {:else if gitlabTokenSubmitted}
+                        <Icon icon="mdi:check" class="mr-2" width="16" />
+                        Submitted
+                      {:else}
+                        Submit Token
+                      {/if}
                     </button>
                   </div>
                 </div>
@@ -2895,31 +3032,34 @@
 
           <!-- GitLab Steps Progress -->
           <div class="mb-8">
-            <div class="grid grid-cols-8 gap-1 mb-4 px-1">
+            <div class="grid grid-cols-9 gap-1 mb-4 px-1">
               {#each [
                 {step: 'select-group', index: 0, label: '1'},
                 {step: 'select-repo', index: 1, label: '2'},
-                {step: 'add-bot', index: 2, label: '3'},
-                {step: 'configure-webhook', index: 3, label: '4'},
-                {step: 'push-test', index: 4, label: '5'},
-                {step: 'configure-variables', index: 5, label: '6'},
-                {step: 'add-pipeline', index: 6, label: '7'},
-                {step: 'success', index: 7, label: '8'}
+                {step: 'submit-token', index: 2, label: '3'},
+                {step: 'add-bot', index: 3, label: '4'},
+                {step: 'configure-webhook', index: 4, label: '5'},
+                {step: 'push-test', index: 5, label: '6'},
+                {step: 'configure-variables', index: 6, label: '7'},
+                {step: 'add-pipeline', index: 7, label: '8'},
+                {step: 'success', index: 8, label: '9'}
               ] as stepInfo}
                 <div class="flex justify-center">
                   <div class="flex items-center justify-center w-8 h-8 rounded-full text-xs font-medium
-                              {currentGitLabStep === stepInfo.step ? 'bg-blue-600 text-white' : 
+                              {currentGitLabStep === stepInfo.step ? 'bg-blue-600 text-white' :
                                (stepInfo.step === 'select-group' && gitlabStepCompleted['select-group']) ||
                                (stepInfo.step === 'select-repo' && gitlabStepCompleted['select-repo']) ||
+                               (stepInfo.step === 'submit-token' && gitlabStepCompleted['submit-token']) ||
                                (stepInfo.step === 'add-bot' && gitlabStepCompleted['add-bot']) ||
                                (stepInfo.step === 'configure-webhook' && gitlabStepCompleted['configure-webhook']) ||
                                (stepInfo.step === 'push-test' && gitlabStepCompleted['push-test']) ||
                                (stepInfo.step === 'configure-variables' && gitlabStepCompleted['configure-variables']) ||
                                (stepInfo.step === 'add-pipeline' && gitlabStepCompleted['add-pipeline'])
-                               ? 'bg-green-600 text-white' : 
+                               ? 'bg-green-600 text-white' :
                                'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-400'}">
                     {#if (stepInfo.step === 'select-group' && gitlabStepCompleted['select-group']) ||
                          (stepInfo.step === 'select-repo' && gitlabStepCompleted['select-repo']) ||
+                         (stepInfo.step === 'submit-token' && gitlabStepCompleted['submit-token']) ||
                          (stepInfo.step === 'add-bot' && gitlabStepCompleted['add-bot']) ||
                          (stepInfo.step === 'configure-webhook' && gitlabStepCompleted['configure-webhook']) ||
                          (stepInfo.step === 'push-test' && gitlabStepCompleted['push-test']) ||
@@ -2934,7 +3074,7 @@
               {/each}
             </div>
             <div class="text-center text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-              Step {['select-group', 'select-repo', 'add-bot', 'configure-webhook', 'push-test', 'configure-variables', 'add-pipeline', 'success'].indexOf(currentGitLabStep) + 1} of 8
+              Step {['select-group', 'select-repo', 'submit-token', 'add-bot', 'configure-webhook', 'push-test', 'configure-variables', 'add-pipeline', 'success'].indexOf(currentGitLabStep) + 1} of 9
             </div>
           </div>
 
@@ -3076,6 +3216,108 @@
                       class="border border-gray-300 text-gray-600 dark:text-gray-400 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
                       Go Back
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          {:else if currentGitLabStep === 'submit-token'}
+            <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 sm:p-6">
+              <div class="flex flex-col sm:flex-row sm:items-start gap-4">
+                <div class="flex-shrink-0 flex justify-center sm:block">
+                  <div class="w-12 h-12 sm:w-10 sm:h-10 bg-orange-600 rounded-lg flex items-center justify-center">
+                    <Icon icon="mdi:key" class="text-white" width="20" />
+                  </div>
+                </div>
+                <div class="ml-4 flex-1">
+                  <h3 class="text-lg font-semibold text-orange-900 dark:text-orange-100 mb-2">Submit GitLab Access Token</h3>
+                  <p class="text-orange-800 dark:text-orange-200 mb-4">
+                    Provide a GitLab access token with API access to allow Terrateam to manage your repositories.
+                  </p>
+
+                  <div class="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4 border border-orange-200 dark:border-orange-700">
+                    <div class="space-y-3 text-sm">
+                      <div class="flex items-start">
+                        <Icon icon="mdi:numeric-1-circle" class="text-orange-600 mr-2 mt-0.5" width="16" />
+                        <div class="text-gray-700 dark:text-gray-300">Go to GitLab Settings → Access Tokens</div>
+                      </div>
+
+                      <div class="flex items-start">
+                        <Icon icon="mdi:numeric-2-circle" class="text-orange-600 mr-2 mt-0.5" width="16" />
+                        <div class="text-gray-700 dark:text-gray-300">Create a new access token with <strong>"api"</strong> scope</div>
+                      </div>
+
+                      <div class="flex items-start">
+                        <Icon icon="mdi:numeric-3-circle" class="text-orange-600 mr-2 mt-0.5" width="16" />
+                        <div class="text-gray-700 dark:text-gray-300">Set an appropriate expiration date</div>
+                      </div>
+
+                      <div class="flex items-start">
+                        <Icon icon="mdi:numeric-4-circle" class="text-orange-600 mr-2 mt-0.5" width="16" />
+                        <div class="text-gray-700 dark:text-gray-300">Copy the generated token and paste it below</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mb-4">
+                    <label for="gitlab-access-token" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Access Token
+                    </label>
+                    <input
+                      id="gitlab-access-token"
+                      type="password"
+                      bind:value={gitlabAccessToken}
+                      placeholder="Enter your GitLab access token"
+                      class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+                             bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+                             focus:ring-2 focus:ring-orange-500 focus:border-orange-500
+                             disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={isSubmittingGitLabToken || gitlabTokenSubmitted}
+                    />
+                  </div>
+
+                  {#if gitlabTokenError}
+                    <div class="bg-red-50 dark:bg-red-900/30 rounded p-3 mb-4">
+                      <div class="flex items-start">
+                        <Icon icon="mdi:alert-circle" class="text-red-600 mr-2 mt-0.5" width="16" />
+                        <div class="text-sm text-red-800 dark:text-red-200">{gitlabTokenError}</div>
+                      </div>
+                    </div>
+                  {/if}
+
+                  {#if gitlabTokenSubmitted}
+                    <div class="bg-green-50 dark:bg-green-900/30 rounded p-3 mb-4">
+                      <div class="flex items-start">
+                        <Icon icon="mdi:check-circle" class="text-green-600 mr-2 mt-0.5" width="16" />
+                        <div class="text-sm text-green-800 dark:text-green-200">
+                          <strong>Success!</strong> Access token submitted successfully.
+                        </div>
+                      </div>
+                    </div>
+                  {/if}
+
+                  <div class="flex items-center justify-end space-x-3">
+                    <button
+                      on:click={() => goToGitLabStep('select-repo')}
+                      class="border border-gray-300 text-gray-600 dark:text-gray-400 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      Go Back
+                    </button>
+                    <button
+                      on:click={submitGitLabAccessToken}
+                      disabled={isSubmittingGitLabToken || gitlabTokenSubmitted || !gitlabAccessToken.trim()}
+                      class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                    >
+                      {#if isSubmittingGitLabToken}
+                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Submitting...
+                      {:else if gitlabTokenSubmitted}
+                        <Icon icon="mdi:check" class="mr-2" width="16" />
+                        Submitted
+                      {:else}
+                        Submit Token
+                      {/if}
                     </button>
                   </div>
                 </div>

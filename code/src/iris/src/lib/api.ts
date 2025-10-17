@@ -13,6 +13,7 @@ import {
   type GitLabUser,
   type GitLabWebhook,
   type GitLabWhoAreYou,
+  type GitLabAccessToken,
   validateRepository,
   validateUser,
   validateDirspace,
@@ -25,6 +26,7 @@ import {
   validateGitLabUser,
   validateGitLabWebhook,
   validateGitLabWhoAreYou,
+  validateGitLabAccessToken,
 } from './types';
 import { sentryService } from './sentry';
 import { get } from 'svelte/store';
@@ -685,6 +687,12 @@ export class ValidatedApiClient {
     return validateGitLabWhoAreYou(response);
   }
 
+  // Submit GitLab access token
+  async submitGitLabAccessToken(installationId: string, accessToken: string): Promise<void> {
+    const payload: GitLabAccessToken = validateGitLabAccessToken({ access_token: accessToken });
+    await this.put(`/api/v1/gitlab/installations/${installationId}/access-token`, payload);
+  }
+
 }
 
 // Create and export the API client instance
@@ -708,6 +716,7 @@ export {
   validateGitLabGroups,
   validateGitLabUser,
   validateGitLabWebhook,
+  validateGitLabAccessToken,
 } from './types';
 
 // Type-safe error handling utility
