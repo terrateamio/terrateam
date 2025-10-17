@@ -156,7 +156,7 @@ module Server = struct
         >>= fun () ->
         Pgsql_io.destroy conn
         >>= fun () ->
-        verify_conns t
+        verify_conns { t with num_conns = t.num_conns - 1 }
         >>= fun t ->
         match take_until_undet t.waiting with
         | Some p -> handle_msg t w r (`Ok (Msg.Get p))

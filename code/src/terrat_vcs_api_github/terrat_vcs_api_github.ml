@@ -242,7 +242,7 @@ module Client = struct
           Abbs_cache.Expiring.on_hit = on_hit "fetch_file_by_rev";
           on_miss = on_miss "fetch_file_by_rev";
           on_evict = on_evict "fetch_file_by_rev";
-          duration = Duration.of_min 10;
+          duration = Duration.of_min 1;
           capacity = cache_capacity_mb_in_kb 100;
         }
 
@@ -262,7 +262,7 @@ module Client = struct
           Abbs_cache.Expiring.on_hit = on_hit "fetch_tree_by_rev";
           on_miss = on_miss "fetch_tree_by_rev";
           on_evict = on_evict "fetch_tree_by_rev";
-          duration = Duration.of_min 10;
+          duration = Duration.of_min 1;
           capacity = cache_capacity_mb_in_kb 100;
         }
   end
@@ -545,11 +545,18 @@ let fetch_pull_request' request_id account client repo pull_request_id =
   Prmths.Counter.inc_one (Metrics.pull_request_mergeable_state_count mergeable_state);
   Logs.info (fun m ->
       m
-        "%s : MERGEABLE : merged=%s : mergeable_state=%s : merge_commit_sha=%s"
+        "%s : PULL_REQUEST : pull_number=%d : base_branch_name=%s : base_ref=%s : branch_name=%s : \
+         branch_ref=%s : merged=%s : mergable_state=%s : merge_commit_sha=%s : merged_at=%s"
         request_id
+        pull_request_id
+        base_branch_name
+        base_sha
+        branch_name
+        head_sha
         (Bool.to_string merged)
         mergeable_state
-        (CCOption.get_or ~default:"" merge_commit_sha));
+        (CCOption.get_or ~default:"" merge_commit_sha)
+        (CCOption.get_or ~default:"" merged_at));
   Abb.Future.return
     (Ok
        ( mergeable_state,

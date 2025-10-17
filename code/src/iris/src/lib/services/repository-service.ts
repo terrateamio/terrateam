@@ -36,7 +36,7 @@ export class RepositoryService {
    * @returns Promise with repositories and metadata
    */
   async loadRepositories(
-    installation: Installation, 
+    installation: Installation,
     forceRefresh: boolean = false
   ): Promise<RepositoryLoadResult> {
     const installationId = installation.id;
@@ -82,50 +82,50 @@ export class RepositoryService {
 
     // Load from API
     repositoriesCacheLoading.set(true);
-    
+
     try {
       const allRepos: RepositoryWithStats[] = [];
       let cursor: string | undefined;
       let pageCount = 0;
-      
+
       // Load all pages
       do {
         pageCount++;
-        
+
         const response = await api.getInstallationRepos(
-          installationId, 
+          installationId,
           cursor ? { cursor } : undefined
         );
-        
+
         if (response && response.repositories) {
           const baseRepos = response.repositories;
-          
+
           // Add stats placeholder (we skip expensive run statistics)
           const reposWithStats = baseRepos.map(repo => ({
             ...repo,
             runCount: undefined,
             lastRun: undefined
           } as RepositoryWithStats));
-          
+
           allRepos.push(...reposWithStats);
-          
+
           // Update pagination state
           cursor = response.nextCursor;
-          
+
         } else {
           console.warn('No repositories found in response:', response);
           break;
         }
       } while (cursor);
-      
+
       // Update the persistent cache
       cachedRepositories.set(allRepos, installationId);
-      
+
       return {
         repositories: allRepos,
         fromCache: false
       };
-      
+
     } catch (err) {
       console.error('Error loading repositories:', err);
       return {

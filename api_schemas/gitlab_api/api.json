@@ -8821,72 +8821,15 @@
         "additionalProperties": false,
         "description": "API_Entities_UserPublic model",
         "properties": {
-          "avatar_path": {
-            "example": "/user/avatar/28/The-Big-Lebowski-400-400.png",
-            "type": "string"
-          },
           "avatar_url": {
             "example": "https://gravatar.com/avatar/1",
-            "type": "string"
-          },
-          "bio": {
-            "type": "string"
-          },
-          "bot": {
-            "type": "boolean"
-          },
-          "can_create_group": {
-            "example": true,
-            "type": "boolean"
-          },
-          "can_create_project": {
-            "example": true,
-            "type": "boolean"
-          },
-          "color_scheme_id": {
-            "example": 1,
-            "format": "int32",
-            "type": "integer"
-          },
-          "commit_email": {
-            "type": "string"
-          },
-          "confirmed_at": {
-            "example": "2015-09-03T07:24:01.670Z",
-            "format": "date-time",
             "type": "string"
           },
           "created_at": {
             "type": "string"
           },
-          "current_sign_in_at": {
-            "example": "2015-09-03T07:24:01.670Z",
-            "format": "date-time",
-            "type": "string"
-          },
-          "custom_attributes": {
-            "items": {
-              "$ref": "#/components/schemas/API_Entities_CustomAttribute"
-            },
-            "type": "array"
-          },
-          "discord": {
-            "type": "string"
-          },
           "email": {
             "example": "john@example.com",
-            "type": "string"
-          },
-          "external": {
-            "type": "boolean"
-          },
-          "extra_shared_runners_minutes_limit": {
-            "type": "string"
-          },
-          "followers": {
-            "type": "string"
-          },
-          "following": {
             "type": "string"
           },
           "id": {
@@ -8894,102 +8837,19 @@
             "format": "int32",
             "type": "integer"
           },
-          "identities": {
-            "items": {
-              "$ref": "#/components/schemas/API_Entities_Identity"
-            },
-            "type": "array"
-          },
-          "is_followed": {
-            "type": "string"
-          },
-          "job_title": {
-            "type": "string"
-          },
-          "last_activity_on": {
-            "example": "2015-09-03T07:24:01.670Z",
-            "format": "date-time",
-            "type": "string"
-          },
-          "last_sign_in_at": {
-            "example": "2015-09-03T07:24:01.670Z",
-            "format": "date-time",
-            "type": "string"
-          },
-          "linkedin": {
-            "type": "string"
-          },
-          "local_time": {
-            "type": "string"
-          },
-          "location": {
-            "type": "string"
-          },
-          "locked": {
-            "type": "boolean"
-          },
           "name": {
             "example": "Administrator",
             "type": "string"
           },
-          "organization": {
-            "type": "string"
-          },
-          "private_profile": {
-            "example": "null",
-            "type": "boolean"
-          },
-          "projects_limit": {
-            "example": 10,
-            "format": "int32",
-            "type": "integer"
-          },
-          "pronouns": {
-            "type": "string"
-          },
           "public_email": {
-            "type": "string"
-          },
-          "scim_identities": {
-            "items": {
-              "$ref": "#/components/schemas/API_Entities_ScimIdentity"
-            },
-            "type": "array"
-          },
-          "shared_runners_minutes_limit": {
-            "type": "string"
-          },
-          "skype": {
             "type": "string"
           },
           "state": {
             "example": "active",
             "type": "string"
           },
-          "theme_id": {
-            "example": 2,
-            "format": "int32",
-            "type": "integer"
-          },
-          "twitter": {
-            "type": "string"
-          },
-          "two_factor_enabled": {
-            "example": true,
-            "type": "boolean"
-          },
           "username": {
             "example": "admin",
-            "type": "string"
-          },
-          "web_url": {
-            "example": "https://gitlab.example.com/root",
-            "type": "string"
-          },
-          "website_url": {
-            "type": "string"
-          },
-          "work_information": {
             "type": "string"
           }
         },

@@ -6,13 +6,15 @@ module Route : sig
   (** A URL pattern. *)
   type ('f, 'r) t
 
+  (** Create a string representation of a route. This is vaguely URL-like but not a URL. *)
+  val to_string : ('f, 'r) t -> string
+
   (** Extractions from the URI path. *)
   module Path : sig
     type 'a t
 
-    (** A user defined extraction.  The function is passed the string which
-        contains a segment of a URI path, which is the content between two slashes
-        or at the end of the string. *)
+    (** A user defined extraction. The function is passed the string which contains a segment of a
+        URI path, which is the content between two slashes or at the end of the string. *)
     val ud : (string -> 'a option) -> 'a t
 
     (** Extract a string from the path. *)
@@ -21,10 +23,10 @@ module Route : sig
     (** Extract an int from the path. *)
     val int : int t
 
-    (** Extract whatever remains of the path.  There must be something left on the
-     rest of the path.  For example, if a route only as [Path.any] and the URI
-     is [http://test.com], this will not match the [Path.any], but
-     [http://test.com/] will.  This applies for any point in the path. *)
+    (** Extract whatever remains of the path. There must be something left on the rest of the path.
+        For example, if a route only as [Path.any] and the URI is [http://test.com], this will not
+        match the [Path.any], but [http://test.com/] will. This applies for any point in the path.
+    *)
     val any : string t
   end
 
@@ -32,8 +34,8 @@ module Route : sig
   module Query : sig
     type 'a t
 
-    (** Given the name of a query parameter, pass the value into the string and
-        convert it to the type. *)
+    (** Given the name of a query parameter, pass the value into the string and convert it to the
+        type. *)
     val ud : string -> (string -> 'a option) -> 'a t
 
     val ud_array : string -> (string list -> 'a option) -> 'a t
@@ -81,19 +83,17 @@ module Route : sig
     (** Extract a bool from the query parameters. *)
     val bool : bool v
 
-    (** Optional value.  This only applies if the value is there and is
-       successfully extracted or it is not present at all.  If the key is found
-       but does not successfully convert, it this fails. *)
+    (** Optional value. This only applies if the value is there and is successfully extracted or it
+        is not present at all. If the key is found but does not successfully convert, it this fails.
+    *)
     val option : string -> 'a v -> 'a option t
 
-    (** Same but applies a default value in the case that the key is no found at
-       all. *)
+    (** Same but applies a default value in the case that the key is no found at all. *)
     val option_default : string -> 'a -> 'a v -> 'a t
 
-    (** Convert the whole body to an object using the various decoders.  This
-       works by reviewing the [content-type] of the request and dispatching the
-       correct decoder.  If the coder for the [content-type] is not present, the
-       request fails to match this route. *)
+    (** Convert the whole body to an object using the various decoders. This works by reviewing the
+        [content-type] of the request and dispatching the correct decoder. If the coder for the
+        [content-type] is not present, the request fails to match this route. *)
     val decode :
       ?json:(Yojson.Safe.t -> ('a, string) result) ->
       ?form:((string * string list) list -> 'a option) ->
@@ -101,8 +101,7 @@ module Route : sig
       'a t
   end
 
-  (** Represents a route, which is a URL pattern and the function it should be
-      applied to. *)
+  (** Represents a route, which is a URL pattern and the function it should be applied to. *)
   module Route : sig
     type 'r t
   end
@@ -122,20 +121,18 @@ module Route : sig
   (** Extract a variable from the body *)
   val ( /* ) : ('f, 'a -> 'r) t -> 'a Body.t -> ('f, 'r) t
 
-  (** Create a route of a URL and a function that matches the types being
-      extracted. *)
+  (** Create a route of a URL and a function that matches the types being extracted. *)
   val route : ('f, 'r) t -> 'f -> 'r Route.t
 
   (** Infix operator for {!route}. *)
   val ( --> ) : ('f, 'r) t -> 'f -> 'r Route.t
 
-  (** Given a list of routes, match an input URI and execute the associated
-     route function.  If no matches are found, execute the [default] function.
+  (** Given a list of routes, match an input URI and execute the associated route function. If no
+      matches are found, execute the [default] function.
 
-     If the request type is [POST], the body will be decoded based on the
-     content-type.  Only JSON and form encoded are supported.  If the body fails
-     to decode then the request matching will continue on without the decoded
-     body. *)
+      If the request type is [POST], the body will be decoded based on the content-type. Only JSON
+      and form encoded are supported. If the body fails to decode then the request matching will
+      continue on without the decoded body. *)
   val match_ctx :
     default:((string, unit) Brtl_ctx.t -> 'r) -> 'r Route.t list -> (string, unit) Brtl_ctx.t -> 'r
 end

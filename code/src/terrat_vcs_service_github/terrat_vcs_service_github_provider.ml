@@ -794,7 +794,6 @@ module Db = struct
     Metrics.Psql_query_time.time
       (Metrics.psql_query_time "insert_github_installation_repository")
       (fun () ->
-        let open Abbs_future_combinators.Infix_result_monad in
         Pgsql_io.Prepared_stmt.execute
           db
           Sql.insert_github_installation_repository
@@ -1920,7 +1919,12 @@ module Apply_requirements = struct
             || CCList.mem
                  ~eq:CCString.equal
                  title
-                 [ "terrateam apply pre-hooks"; "terrateam apply post-hooks" ]
+                 [
+                   "terrateam apply post-hooks";
+                   "terrateam apply pre-hooks";
+                   "terrateam plan post-hooks";
+                   "terrateam plan pre-hooks";
+                 ]
             || CCList.exists CCFun.(Lua_pattern.find title %> CCOption.is_some) ignore_matching_pats
             || CCList.exists (CCString.equal title) ignore_matching))
         commit_checks
@@ -4492,8 +4496,10 @@ module Commit_check = struct
         CCString.sub Sha256.(to_hex (string (dir ^ ":" ^ workspace))) 0 short_hash_length
       in
       (* Heuristic guessing that the end of a dir path is probably more unique *)
-      let short_dir = CCString.rev @@ CCString.sub (CCString.rev dir) 0 40 in
-      let short_workspace = CCString.sub workspace 0 20 in
+      let short_dir =
+        CCString.rev @@ CCString.sub (CCString.rev dir) 0 (CCInt.min 40 (CCString.length dir))
+      in
+      let short_workspace = CCString.sub workspace 0 (CCInt.min 20 (CCString.length workspace)) in
       Printf.sprintf "terrateam %s: ...%s %s... %s" run_type short_dir short_workspace short_hash
     else title
 

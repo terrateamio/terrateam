@@ -42,6 +42,18 @@ module Infracost : sig
   [@@deriving show]
 end
 
+module Gc : sig
+  type dynamic_gc = DynamicGc.config = {
+    min_space_overhead : int;
+    max_space_overhead : int;
+    heap_start_worrying_mb : int;
+    heap_really_worry_mb : int;
+  }
+  [@@deriving show]
+
+  type t = { dynamic_gc : dynamic_gc option } [@@deriving show]
+end
+
 val admin_token : t -> string option
 val api_base : t -> string
 val create : unit -> (t, [> err ]) result
@@ -53,6 +65,7 @@ val db_max_pool_size : t -> int
 val db_password : t -> string
 val db_user : t -> string
 val default_tier : t -> string
+val gc : t -> Gc.t
 val github : t -> Github.t option
 val gitlab : t -> Gitlab.t option
 val infracost : t -> Infracost.t option
