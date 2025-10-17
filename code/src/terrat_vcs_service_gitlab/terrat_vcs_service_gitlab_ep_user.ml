@@ -72,19 +72,3 @@ module Whoami = struct
             Abb.Future.return
               (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)))
 end
-
-module Whoareyou = struct
-  module U = Gitlabc_components.API_Entities_UserPublic
-
-  let get { U.id; username; _ } config storage =
-    Brtl_ep.run_result_json ~f:(fun ctx ->
-        let open Abbs_future_combinators.Infix_result_monad in
-        Terrat_session.with_session ctx
-        >>= fun user ->
-        let open Abb.Future.Infix_monad in
-        let body =
-          Terrat_api_components.Gitlab_whoareyou.(
-            { id; username } |> to_yojson |> Yojson.Safe.to_string)
-        in
-        Abb.Future.return (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK body) ctx)))
-end
