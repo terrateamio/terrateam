@@ -8,7 +8,6 @@
   import { currentVCSProvider } from './stores';
   import { get } from 'svelte/store';
   import { VCS_PROVIDERS } from './vcs/providers';
-  import GitLabSetup from './GitLabSetup.svelte';
   import { analytics } from './analytics';
   import { onDestroy } from 'svelte';
 
@@ -44,9 +43,6 @@
   let hasInstallations = false;
   let hasConfiguredRepos = false;
   let recommendedPath: 'demo' | 'repo' = 'demo';
-  
-  // GitLab setup state
-  let showGitLabSetup = false;
   
   // Get current VCS provider terminology
   $: currentProvider = $currentVCSProvider || 'github';
@@ -191,16 +187,14 @@
           installations = installationsResponse.installations;
           hasInstallations = installations.length > 0;
         } catch (error) {
-          // If GitLab installations endpoint returns 404, show setup wizard
+          // If GitLab installations endpoint returns 404, user needs to go through setup
           if (isApiError(error) && error.status === 404) {
-            showGitLabSetup = true;
-            currentStep = 'path-selection';
-            isLoadingAssessment = false;
-            // Load GitLab bot username
-            await loadGitLabBotUsername();
-            return;
+            // No installations yet - proceed with normal flow
+            hasInstallations = false;
+            installations = [];
+          } else {
+            throw error;
           }
-          throw error;
         }
       } else {
         // GitHub flow remains the same
@@ -327,20 +321,6 @@
     window.open(url, '_blank');
   }
   
-  // GitLab setup handlers
-  function handleGitLabSetupComplete(groupId: number): void {
-    showGitLabSetup = false;
-    
-    // After setup is complete, navigate to the dashboard with proper GitLab installation ID
-    // GitLab installations use the group ID as the installation ID
-    window.location.hash = `#/i/${groupId}/dashboard`;
-  }
-  
-  function handleGitLabSetupCancel(): void {
-    showGitLabSetup = false;
-    currentStep = 'assessment';
-    runSmartAssessment();
-  }
 
   function openConfigurationWizard(): void {
     if (selectedInstallation) {
@@ -1222,14 +1202,7 @@
 
       {:else if currentStep === 'path-selection'}
         <!-- Path Selection Step -->
-        {#if showGitLabSetup && currentProvider === 'gitlab'}
-          <!-- GitLab Setup Wizard -->
-          <GitLabSetup 
-            onComplete={handleGitLabSetupComplete}
-            onCancel={handleGitLabSetupCancel}
-          />
-        {:else}
-          <div class="mb-6">
+        <div class="mb-6">
             <h2 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Choose Your Setup Path</h2>
             
             <!-- Assessment Results -->
@@ -1342,7 +1315,6 @@
             </div>
           </button>
         </div>
-        {/if}
 
       {:else if currentStep === 'github-demo-setup'}
         <!-- GitHub Demo Setup Wizard -->
