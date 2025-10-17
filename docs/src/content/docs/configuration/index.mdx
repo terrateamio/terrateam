@@ -1,0 +1,268 @@
+---
+title: Configuration 
+description: Understanding the Terrateam configuration file and how to customize your workflow
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Terrateam uses a `.terrateam/config.yml` file to customize how it interacts with your GitHub or GitLab repository and Terraform code.
+
+:::note[Do I need a config file?]
+Terrateam uses sensible defaults if `.terrateam/config.yml` doesn’t exist. Add a config file only if you need custom workflows, OIDC, policies, or other advanced settings.
+:::
+
+## Basic Structure
+
+The `config.yml` file is written in YAML and has the following basic structure:
+
+```yaml
+access_control:
+  # Specifies user permissions for operations
+apply_requirements:
+  # Defines preconditions for applying changes
+dirs:
+  # Maps directories to tags, workspaces, and behaviors
+hooks:
+  # Executes custom commands before or after operations
+workflows:
+  # Configures specialized plan and apply steps
+```
+
+Each section serves a specific purpose in customizing Terrateam's behavior:
+
+- `access_control`: Controls who can run plan and apply operations
+- `apply_requirements`: Defines conditions that must be met before changes can be applied
+- `dirs`: Maps your repository's directory structure to Terrateam's concepts
+- `hooks`: Allows custom actions before or after operations
+- `workflows`: Creates specialized processing for different workspaces
+
+## Access Control
+
+Access Control allows you to define policies for who can perform various Terrateam operations, such as planning and applying changes. You can configure access based on individual users, teams, or repository collaborator roles.
+
+Here's an example `access_control` configuration:
+
+```yaml
+access_control:
+  policies:
+    - tag_query: ''  # Empty string matches all workspaces
+      plan: ['*']    # Anyone can plan
+      apply: ['team:sre']  # Only SRE team members can apply
+```
+
+This configuration allows anyone to trigger a Plan operation but restricts Apply operations to members of the `sre` team.
+
+Access the [Access Control](/reference/configuration/access-control) page to see the complete list of configurations available. 
+
+## Apply Requirements
+
+Apply Requirements allows you to specify conditions that must be met before an Apply operation can be performed on an unmerged pull request or merge request. This helps ensure that changes are properly reviewed and validated before being applied.
+
+Here's an example `apply_requirements` configuration with explanations:
+
+```yaml
+apply_requirements:
+  # Creates a status check that prevents merging until apply is complete
+  create_pending_apply_check: true
+  
+  checks:
+    - tag_query: ""  # Apply to all workspaces
+      
+      # Requires PR approvals
+      approved:
+        enabled: true        # Enable approval checking
+        any_of: []           # No specific approvers required
+        any_of_count: 2      # Requires at least two approvals
+        all_of: []           # No mandatory approvers
+      
+      # Prevents apply if merge conflicts exist
+      merge_conflicts:
+        enabled: true
+      
+      # Requires all status checks to pass
+      status_checks:
+        enabled: true              # Enable status check verification
+        ignore_matching:           # Regex patterns for checks to ignore
+          - "ci/.*"                # Ignores all CI status checks
+```
+
+This configuration requires that the pull request has at least two approvals, no merge conflicts, and all status checks (except those matching `ci/.*`) have passed before an apply can be performed.
+
+When `create_pending_apply_check` is enabled, Terrateam will create a `Terrateam Apply` status check. Combined with branch protection rules, this prevents the pull request or merge request from being merged until all Apply operations have completed.
+
+See [Apply Requirements](/reference/configuration/apply-requirements) for details.
+
+## Dirs
+
+Dirs allow you to define which [Tags](/advanced-workflows/tags), Workspaces, and [When Modified](/reference/configuration/when-modified) rules apply to specific directories in your repository.
+
+Here's an example `dirs` configuration:
+
+```yaml
+dirs:
+  ec2:  # Directory name (relative to repository root)
+    tags: [aws, ec2]  # Directory-level tags
+    workspaces:
+      production:  # Workspace name
+        tags: [production]  # Workspace-specific tags
+    when_modified:
+      file_patterns: ["${DIR}/*.tf", "${DIR}/*.tfvars", "iam/*.tf", "iam/*.tfvars"]
+  iam:
+    tags: [aws, iam]
+```
+
+This configuration:
+
+1. Assigns directory-level tags `aws` and `ec2` to the `ec2` directory
+2. Assigns directory-level tags `aws` and `iam` to the `iam` directory
+3. Creates a `production` workspace for the `ec2` directory with the tag `production`
+4. Specifies custom file patterns that, when modified, will trigger Terrateam operations for the `ec2` directory
+
+:::note[Directory vs. Workspace Tags]
+- **Directory tags** (`tags` at the directory level) apply to all operations in that directory across all workspaces
+- **Workspace tags** (`tags` under a specific workspace) only apply when operating on that specific workspace
+- Tags are used in tag queries (like `tag_query: "aws"`) to target specific operations
+:::
+
+Terrateam also supports glob patterns in the `dirs` directive, allowing you to match multiple directories with similar configurations. The `${DIR}` variable can be used to specify the directory that Terrateam is working against, relative to the root of the repository.
+
+See [Dirs](/reference/configuration/dirs) for details.
+
+## Hooks
+
+Hooks allow you to run custom commands or set environment variables before (pre-hooks) or after (post-hooks) Terrateam operations. There are three types of Hooks:
+
+- `all`: Executed for both Plan and Apply operations
+- `plan`: Executed only for Plan operations
+- `apply`: Executed only for Apply operations
+
+Here's an example `hooks` configuration:
+
+```yaml
+hooks:
+  all:  # Apply to all operations (plan & apply)
+    pre:  # Run before the operation
+      - type: run
+        cmd: ['echo', 'Running pre-hook for all operations']
+  plan:  # Apply only to plan operations
+    post:  # Run after the operation
+      - type: run
+        cmd: ['echo', 'Running post-hook for plan operations']
+```
+
+See [Hooks](/reference/configuration/hooks) for details.
+
+## Workflows
+
+Workflows allow you to define custom steps for Terrateam's Plan and Apply operations. You can use Workflows to replace or augment the default behavior.
+
+Here's a basic workflow that slightly modifies the default behavior:
+
+```yaml
+workflows:
+  # Apply to all workspaces
+  - tag_query: ""
+    plan:
+      - type: init  # Run terraform init
+      - type: plan  # Run terraform plan
+    apply:
+      - type: init  # Run terraform init
+      - type: apply # Run terraform apply
+```
+
+This simple workflow explicitly defines the standard Terraform workflow steps.
+1. Initialization(`init`): Runs `terraform init` to prepare the directory for planning or applying changes.
+2. Planning(`plan`): Runs `terraform plan` to generate an execution plan for the changes.
+3. Apply(`apply`): Applies the changes to the infrastructure.
+
+
+For more complex scenarios, you can create specialized workflows, such as the next one:
+
+```yaml
+workflows:
+  # This workflow applies to any directory tagged with "production"
+  - tag_query: "production"
+    plan:
+      - type: init  # Run terraform init
+      - type: plan  # Run terraform plan
+        extra_args: ["-var-file=production.tfvars"]  # With these extra arguments
+    apply:
+      - type: init  # Run terraform init for apply
+      - type: apply  # Run terraform apply
+      - type: run   # Run a custom command
+        cmd: ['echo', 'Error running apply']
+        run_on: failure  # Only if apply fails
+```
+
+This advanced workflow runs a custom plan and apply process for any directories tagged with `production`. It adds production-specific variables during planning and executes error handling after failed applies.
+
+See [Workflows](/reference/configuration/workflows) for details.
+
+## Other Configuration Options
+
+The `config.yml` file supports many other configuration options, including:
+
+- `engine`: Set the IaC tool to be used for operations.
+- `when_modified`: Configure when Terrateam should trigger based on file changes
+- `cost_estimation`: Enable and configure cost estimation for Terraform plans
+- `automerge`: Automatically merge pull requests or merge requests after successful applies
+
+See the [Configuration Reference](/configuration-reference) for a complete list of available options.
+
+## Basic Example
+
+Here's a complete example of a `config.yml` file containing a basic workflow that combines the configurations from the previous sections:
+
+```yaml
+# Basic Terrateam configuration example
+access_control:
+  policies:
+    - tag_query: ''  # All directories and workspaces
+      plan: ['*']    # Anyone can plan
+      apply: ['team:infra', 'team:platform']  # Only specific teams can apply
+
+apply_requirements:
+  create_pending_apply_check: true
+  checks:
+    - tag_query: ""  # All directories
+      approved:
+        enabled: true
+        any_of_count: 1  # Requires at least 1 approval
+      
+dirs:
+  staging:
+    tags: [aws, staging]
+  production:
+    tags: [aws, production, critical]
+    workspaces:
+      default:
+        tags: [default]
+
+hooks:
+  all:
+    pre:
+      - type: run
+        cmd: ['echo', 'Starting Terraform operation']
+
+workflows:
+  - tag_query: "staging"
+    plan:
+      - type: init
+      - type: plan
+        extra_args: ["-var-file=staging.tfvars"]
+  
+  - tag_query: "production"
+    plan:
+      - type: init
+      - type: plan
+        extra_args: ["-var-file=production.tfvars"]
+```
+
+This configuration:
+1. Allows anyone to plan, but only members of `infra` or `platform` teams to apply.
+2. Requires at least one approval before applying.
+3. Defines staging and production directories with appropriate tags.
+4. Runs a simple pre-hook for all operations.
+5. Uses custom workflows for staging and production environments, applying the appropriate variable files.
+
+You can start with a basic configuration like this and gradually add more advanced features as your deployment needs grow.

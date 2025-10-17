@@ -1,0 +1,85 @@
+---
+title: Plan and Apply
+description: Understanding and using Terraform Plan and Apply operations with Terrateam
+---
+import { Steps } from '@astrojs/starlight/components';
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+The Plan and Apply operations are the core of Terrateam's functionality. They allow you to preview and execute changes to your infrastructure in a controlled and collaborative manner.
+
+## Plan
+
+The Plan operation generates a preview of changes that will be made to your infrastructure when you apply your Terraform code. This preview is called a "plan" in Terraform terminology.
+
+The following example shows a common usage of the plan feature, enabling you to review changes and collaborate with your team before the changes are applied:
+<Steps>
+1. Open a pull request (GitHub) or merge request (GitLab) with changes to your Terraform code.
+
+   ![Terrateam pull request](/src/assets/nibbler-pull-request.png)
+
+2. Terrateam automatically triggers a Plan operation.
+
+3. Review the plan output in the PR/MR comment. It shows what will be created, modified, or destroyed:
+
+    ![Terrateam plan](/src/assets/nibbler-terrateam-plan.png)
+
+</Steps>
+
+You can manually trigger another Plan by commenting `terrateam plan` on the pull request or merge request.
+
+:::note
+Plans are read-only operations that don't change your infrastructure, so they're safe to run repeatedly as you refine your code.
+:::
+
+## Apply
+
+The Apply operation executes the changes previewed in the Plan. This is when actual infrastructure changes occur.
+Here's an example of a common usage of the apply feature:
+<Steps>
+1. Ensure your pull request or merge request has a successful Plan operation.
+
+2. Comment `terrateam apply` on the pull request or merge request.
+
+3. Terrateam acquires a lock on the affected directories to prevent conflicting changes.
+
+4. Terrateam runs the Apply operation:
+
+   ![Terrateam Apply](/src/assets/nibbler-terrateam-apply.png)
+
+5. Verify the apply was successful by reviewing the output.
+
+6. Merge the pull request or merge request to complete your workflow.
+
+7. Terrateam automatically releases the lock.
+</Steps>
+
+:::caution
+If another PR/MR is trying to apply changes to the same directory, it will be blocked until the [current lock is released](/advanced-workflows/locks-and-concurrency/). Locks prevent conflicting changes from being applied simultaneously.
+:::
+
+
+
+### Apply Requirements
+
+Terrateam has a set of [Apply Requirements](/reference/configuration/apply-requirements) that must be met before an Apply operation can be triggered. These include:
+
+- Requiring a certain number of [approvals](/reference/configuration/apply-requirements#approved) on the pull request or merge request.
+- Ensuring there are no [merge conflicts](/reference/configuration/apply-requirements#merge-conflicts).
+- Checking that all [status checks](/reference/configuration/apply-requirements#status-checks) have passed.
+
+You can configure these requirements in your [Terrateam configuration file](/getting-started/configuration).
+### Auto-Apply
+If you want to automatically apply changes when a pull request or merge request is merged, you can use the [When Modified](/reference/configuration/when-modified) feature.
+```yaml
+when_modified:
+  autoapply: true
+```
+:::note 
+   Auto-Apply is disabled by default.
+:::
+## Apply Before Merge vs. After Merge
+Terrateam supports two main approaches based on when infrastructure changes are applied, either before or after a pull request or merge request is merged. This flexibility lets you match your deployment process to your team's needs.
+
+Terrateam lets you define the sequence of steps during Plan and Apply. You can customize these steps to enforce approvals, manage concurrency, or trigger applies at the right time.
+
+If you want to validate and apply changes before merging, you can use a pre-merge approach combined with [automerge](/reference/configuration/automerge) to apply changes automatically once checks pass.

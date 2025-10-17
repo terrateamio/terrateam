@@ -1,0 +1,61 @@
+---
+title: terrateam plan
+description: Execute the plan workflow against changes in a pull request
+---
+
+Execute Terraform plan to preview infrastructure changes before applying them.
+
+## Usage
+
+```
+terrateam plan [tag-query]
+```
+
+## Examples
+
+### Plan All Changes
+```
+terrateam plan
+```
+
+### Target Specific Resources
+
+```bash
+# Plan a specific directory
+terrateam plan dir:staging
+
+# Plan a specific workspace
+terrateam plan workspace:production
+
+# Plan multiple directories
+terrateam plan dir:app or dir:database
+
+# Complex tag queries
+terrateam plan production and dir:us-east-1
+```
+
+## Tag Query Support
+
+The plan command supports [tag queries](/reference/configuration/tag-queries) to filter which directories to plan:
+
+- `dir:<path>` - Target specific directory
+- `workspace:<name>` - Target specific workspace
+- Tags can be referenced directly (e.g., `production`, `staging`)
+- Logical operators: `and`, `or`, `not`
+
+## Workflow Configuration
+
+The plan command executes the workflow defined in your `.terrateam/config.yml`. See [workflow configuration](/reference/configuration/workflows) for customization options.
+
+## Plan Storage
+
+Plan files are automatically stored for later apply operations. Configure storage options in your [storage configuration](/reference/configuration/storage).
+
+## Access Control
+
+Plan permissions can be restricted using [access control](/reference/configuration/access-control).
+
+## Related Commands
+
+- [terrateam apply](/reference/commands/apply) - Apply planned changes
+- [terrateam apply-autoapprove](/reference/commands/apply-autoapprove) - Plan and apply in one step

@@ -1,0 +1,174 @@
+---
+title: Secrets and Variables
+description: Using secrets, variables, and tfvars in Terrateam
+---
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import { Aside } from '@astrojs/starlight/components';
+
+Terrateam offers multiple ways to manage sensitive information and customize your Terraform configurations using GitHub secrets, GitLab CI/CD variables, or `.tfvars` files. All methods produce the same outcome, allowing you to choose the approach that best fits your workflow and needs for managing Terraform variables.
+
+## Secrets and Variables
+
+### Environment Variables
+
+GitHub [Secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets) and [Variables](https://docs.github.com/en/actions/learn-github-actions/variables), or GitLab [CI/CD Variables](https://docs.gitlab.com/ee/ci/variables/), can be used to set environment variables. They are translated into environment variables in the Terrateam runtime environment. These environment variables may be referenced in your Terraform code.
+
+## Defining Secrets
+
+You can use the CLI or web interface to define secrets in GitHub or GitLab.
+
+### GitHub
+
+#### Using GitHub CLI
+
+1. Open your terminal.
+2. Run the following command to create a secret named `AWS_ACCESS_KEY_ID`:
+
+    ```bash
+    gh secret set AWS_ACCESS_KEY_ID --body "<YOUR_ACTUAL_AWS_ACCESS_KEY_ID>"
+    ```
+
+#### Using GitHub Web Interface
+
+1. Access the repository with the Terrateam app installed.
+2. Navigate to **Settings** → **Secrets and variables** → **Actions**.
+    ![Step 2: Navigate to Secrets](/src/assets/navigate-secrets.png)
+3. Click on **New repository secret**.
+    ![Step 3: New repository secret](/src/assets/new-repo-secret.png)
+4. Specify the **Name** (`AWS_ACCESS_KEY_ID`) and a **Secret value** (replace with your actual AWS access key ID).
+5. Click **Add secret**.
+    ![Step 5: Add secret](/src/assets/add-secret.png)
+
+### GitLab
+
+#### Using GitLab Web Interface
+
+1. Access your GitLab project.
+2. Navigate to **Settings** → **CI/CD** → **Variables**.
+3. Click **Add variable**.
+4. Specify the **Key** (`AWS_ACCESS_KEY_ID`) and **Value** (replace with your actual AWS access key ID).
+5. Select **Mask variable** to hide it in logs.
+6. Click **Add variable**.
+
+## Using Secrets in Terraform
+
+Secrets and variables that start with `TF_VAR_` are treated specially by Terrateam.
+
+Secrets and variables are typically uppercase, however by convention Terraform variables are lowercase. Terrateam automatically finds all secrets that start with `TF_VAR_` and creates a new environment variable that has the lowercase name. If the lowercase name exists, no action is taken. The uppercase environment variable is left unchanged. For example, the secret `TF_VAR_LOGIN_TOKEN` will create a new environment variable called `TF_VAR_login_token`.
+
+This will create an environment variable `TF_VAR_database_password` which Terraform can automatically map to a variable named `database_password` in your Terraform configuration.
+
+```hcl
+variable "database_password" {
+  description = "Password for database connection"
+  type        = string
+  sensitive   = true
+}
+
+resource "aws_db_instance" "example" {
+  # Other configuration...
+  password = var.database_password
+}
+```
+### Security
+
+Secrets are stored encrypted at rest and are only decrypted when used in workflows. 
+
+When Terrateam runs your Terraform operations:
+
+1. Encrypted secrets are decrypted within the runtime environment.
+2. Decrypted secrets are made available as environment variables within the runner.
+
+<Aside type="tip" title="Your data is protected">
+Terrateam does not store unencrypted secrets on its servers. Secrets are decrypted only within the runtime environment and are treated as sensitive environment variables.
+
+To prevent accidental exposure, secrets are automatically masked in logs and comments, including when Terraform output is posted back to pull requests or merge requests.
+</Aside>
+
+The Terraform plan files, which may contain sensitive data such as decrypted secrets, are stored temporarily during the plan and apply phases, then immediately deleted.
+
+For more details on how we handle sensitive data, visit our [Security page](https://terrateam.io/security).
+
+## Hooks and Workflows
+
+Terrateam also allows you to set environment variables using [Hooks](/reference/configuration/hooks) and [Workflows](/reference/configuration/workflows).
+
+### Hooks
+
+You can set an environment variable at the very start of a Terrateam operation using Hooks.
+
+```yaml
+hooks:
+  plan:
+    pre:
+      - type: env
+        name: FOO
+        cmd: ['echo', 'BAR']
+  apply:
+    pre:
+      - type: env
+        name: BAZ
+        cmd: ['echo', 'QUX']
+```
+
+The following code snippet shows how to set a dynamic environment variable based on the current Git branch:
+
+```yaml
+hooks:
+  plan:
+    pre:
+      - type: env
+        name: CURRENT_GIT_BRANCH
+        cmd: ['bash', '-c', 'echo $(git rev-parse --abbrev-ref HEAD)']
+```
+
+### Workflows
+
+You can also set an environment variable at the start of each Plan and Apply operation.
+
+```yaml
+workflows:
+  - tag_query: ""
+    plan:
+      - type: init
+      - type: env
+        name: FOO
+        cmd: ["echo", "BAR"]
+      - type: plan
+    apply:
+      - type: init
+      - type: env
+        name: FOO
+        cmd: ["echo", "BAR"]
+      - type: apply
+```
+
+## `.tfvars` Files
+
+Terraform allows you to define variables in `.tfvars` files, which can be used to customize your Terraform configurations.
+
+To use a `.tfvars` file with Terrateam, you can specify the file path in your workflow configuration using the `extra_args` option.
+
+```yaml
+workflows:
+  - tag_query: ""
+    plan:
+      - type: init
+      - type: plan
+        extra_args: ["-var-file=qa.tfvars"]
+    apply:
+      - type: init
+      - type: apply
+```
+
+The following code snippet shows an example of a `.tfvars` file:
+
+```hcl
+# qa.tfvars
+region        = "us-west-2"
+instance_type = "t3.micro"
+vpc_cidr      = "10.0.0.0/16"
+environment   = "qa"
+```
+
+In this example, the `qa.tfvars` file will be used during the plan step, providing environment-specific variable values to your Terraform configuration.

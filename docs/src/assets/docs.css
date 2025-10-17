@@ -34,34 +34,34 @@
   --overlay-blurple: hsla(var(--purple-hsl), 0.2);
 
   /* Override Starlight's text size variables */
-  /* Base sizes - increase from default */
-  --sl-text-base: 1.375rem !important;  /* 22px instead of 16px */
-  --sl-text-body: 1.375rem !important;  /* 22px for body text */
-  --sl-text-sm: 1.25rem !important;     /* 20px instead of 14px */
-  --sl-text-xs: 1.125rem !important;    /* 18px instead of 13px */
-  --sl-text-lg: 1.625rem !important;    /* 26px instead of 18px */
-  --sl-text-xl: 1.875rem !important;    /* 30px instead of 20px */
+  /* Base sizes - standard web defaults */
+  --sl-text-base: 1rem !important;      /* 16px - industry standard */
+  --sl-text-body: 1rem !important;      /* 16px for body text */
+  --sl-text-sm: 0.875rem !important;    /* 14px for small text */
+  --sl-text-xs: 0.8125rem !important;   /* 13px for extra small */
+  --sl-text-lg: 1.125rem !important;    /* 18px for large text */
+  --sl-text-xl: 1.25rem !important;     /* 20px for extra large */
 
-  /* Heading sizes - increase proportionally */
-  --sl-text-h1: 3rem !important;        /* 48px */
-  --sl-text-h2: 2.5rem !important;      /* 40px */
-  --sl-text-h3: 2rem !important;        /* 32px */
-  --sl-text-h4: 1.75rem !important;     /* 28px */
-  --sl-text-h5: 1.5rem !important;      /* 24px */
+  /* Heading sizes - standard proportions */
+  --sl-text-h1: 2rem !important;        /* 32px */
+  --sl-text-h2: 1.5rem !important;      /* 24px */
+  --sl-text-h3: 1.25rem !important;     /* 20px */
+  --sl-text-h4: 1.125rem !important;    /* 18px */
+  --sl-text-h5: 1rem !important;        /* 16px */
 
-  /* Code text - keep readable but slightly larger */
-  --sl-text-code: 1.125rem !important;  /* 18px instead of 14px */
-  --sl-text-code-sm: 1.063rem !important; /* 17px instead of 13px */
+  /* Code text - standard monospace sizes */
+  --sl-text-code: 0.875rem !important;  /* 14px - standard for code */
+  --sl-text-code-sm: 0.8125rem !important; /* 13px */
 
   /* Responsive sizes for larger screens */
-  --sl-text-2xl: 2.25rem !important;    /* 36px on mobile */
-  --sl-text-3xl: 2.75rem !important;    /* 44px on mobile */
-  --sl-text-4xl: 3.25rem !important;    /* 52px on mobile */
-  --sl-text-5xl: 4rem !important;       /* 64px on mobile */
+  --sl-text-2xl: 1.5rem !important;     /* 24px on mobile */
+  --sl-text-3xl: 1.875rem !important;   /* 30px on mobile */
+  --sl-text-4xl: 2.25rem !important;    /* 36px on mobile */
+  --sl-text-5xl: 3rem !important;       /* 48px on mobile */
 
   /* Line height improvements */
-  --sl-line-height: 1.7 !important;
-  --sl-line-height-headings: 1.2 !important;
+  --sl-line-height: 1.6 !important;
+  --sl-line-height-headings: 1.3 !important;
 
   /* Dark mode colors. */
   --sl-color-accent-low: #003d66;
@@ -80,10 +80,11 @@
 /* Ensure proper sizes on larger screens */
 @media (min-width: 50rem) {
   :root {
-    --sl-text-2xl: 2.5rem !important;   /* 40px on desktop */
-    --sl-text-3xl: 3rem !important;     /* 48px on desktop */
-    --sl-text-4xl: 3.5rem !important;   /* 56px on desktop */
-    --sl-text-5xl: 4.5rem !important;   /* 72px on desktop */
+    --sl-text-h1: 2.25rem !important;   /* 36px on desktop */
+    --sl-text-2xl: 1.75rem !important;  /* 28px on desktop */
+    --sl-text-3xl: 2.25rem !important;  /* 36px on desktop */
+    --sl-text-4xl: 2.75rem !important;  /* 44px on desktop */
+    --sl-text-5xl: 3.5rem !important;   /* 56px on desktop */
   }
 }
 
@@ -184,13 +185,13 @@ summary > * {
 .sl-markdown-content li,
 .sl-markdown-content td,
 .sl-markdown-content div {
-  font-size: 1.375rem !important; /* 22px */
-  line-height: 1.7 !important;
+  font-size: 1rem !important; /* 16px - standard */
+  line-height: 1.6 !important;
 }
 
 /* Also set for the body and main content areas */
 body {
-  font-size: 1.375rem !important;
+  font-size: 1rem !important;
 }
 
 /* Ensure headings use the variables */

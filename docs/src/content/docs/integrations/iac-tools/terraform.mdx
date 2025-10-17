@@ -1,0 +1,69 @@
+---
+title: Terraform Versions
+description: Learn how to configure and use different Terraform versions for your Terrateam operations
+---
+
+When working with Terraform and Terrateam, you may have different requirements for the Terraform CLI version depending on your project's needs, module compatibility, or provider constraints. Terrateam allows you to manage and specify Terraform versions at various levels, providing flexibility and control over the version used for each operation.
+
+## Specifying Terraform Versions
+Terrateam supports multiple ways to specify the Terraform CLI version for your operations. The versions are evaluated in the following order, with the first match being used:
+
+**1.** `.terraform-version` file in the directory where Terraform is being executed
+
+**2.** `.terraform-version` file in the root directory of the repository
+
+**3.** Custom workflow configuration in `.terrateam/config.yml`
+
+**4.** `engine.version` setting in `.terrateam/config.yml`
+
+### Directory-specific `.terraform-version` File
+You can specify the Terraform version for a specific directory by creating a `.terraform-version` file within that directory. When Terraform is executed in that directory, Terrateam will use the version specified in the file.
+
+For example, if you have a directory structure like this:
+```
+prod/
+  ec2/
+    .terraform-version
+    main.tf
+```
+The `.terraform-version` file in the `prod/ec2/` directory will determine the Terraform version used for operations in that directory.
+
+### Root-level `.terraform-version` File
+If you want to set a default Terraform version for your entire repository, you can create a `.terraform-version` file in the root directory of your repository. This version will be used for all directories that don't have a specific `.terraform-version` file.
+
+### Custom Workflow Configuration
+Terrateam's [workflow](/reference/configuration/workflows) feature allows you to define custom workflows for different sets of directories or [tags](/advanced-workflows/tags). You can specify the Terraform version to be used for each workflow in the `.terrateam/config.yml` file.
+
+Here's an example workflow configuration that specifies different Terraform versions for different tag queries:
+```yaml
+dirs:
+  ec2/us-east-1/production:
+    tags: [ec2, us-east-1, production]
+  ec2/us-west-1/production:
+    tags: [ec2, us-west-1, production]
+workflows:
+  - tag_query: ec2 us-east-1 production
+    engine:
+      name: terraform
+      version: 1.2.2
+  - tag_query: ec2 us-west-1 production
+    engine:
+      name: terraform
+      version: 0.15.5
+```
+In this example, directories tagged with `ec2`, `us-east-1`, and `production` will use Terraform version 1.2.2, while directories tagged with `ec2`, `us-west-1`, and `production` will use Terraform version 0.15.5.
+
+### Default Terraform Version
+If none of the above methods specify a Terraform version for a particular directory or operation, Terrateam will fall back to `engine.version` setting in the `.terrateam/config.yml` file.
+You can set the default Terraform version like this:
+```yaml
+engine:
+  name: terraform
+  version: 1.5.7
+```
+This version will be used for all operations that don't have a specific version specified through other methods.
+
+## Best Practices
+When managing Terraform versions with Terrateam, consider the following best practices:
+- Explicitly specify a default Terraform version in your repository using the `engine.version` setting. This ensures consistency between runs and avoids unexpected version upgrades.
+- Use directory-specific or workflow-specific versions only when necessary, such as when dealing with version-dependent modules or providers.

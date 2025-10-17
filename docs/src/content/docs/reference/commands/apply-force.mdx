@@ -1,0 +1,59 @@
+---
+title: terrateam apply-force
+description: Run an apply even if the change has not passed apply requirements
+---
+
+Force an apply operation even when apply requirements are not met.
+
+## Usage
+
+```
+terrateam apply-force [tag-query]
+```
+
+:::caution
+This command bypasses safety checks. Use only when absolutely necessary.
+:::
+
+## Examples
+
+### Force Apply All Plans
+```
+terrateam apply-force
+```
+
+### Target Specific Resources
+
+```bash
+# Force apply a specific directory
+terrateam apply-force dir:hotfix
+
+# Force apply production changes
+terrateam apply-force production
+
+# Force apply with complex query
+terrateam apply-force dir:critical and workspace:prod
+```
+
+## Access Control
+
+:::warning
+Restrict apply-force to trusted users only. All force applies are logged for audit.
+:::
+
+Configure permissions in [access control](/reference/configuration/access-control).
+
+## Tag Query Support
+
+Supports [tag queries](/reference/configuration/tag-queries) to filter operations:
+
+- `dir:<path>` - Target specific directory
+- `workspace:<name>` - Target specific workspace
+- Tags can be referenced directly (e.g., `production`, `staging`)
+- Logical operators: `and`, `or`, `not`
+
+## Related Commands
+
+- [terrateam apply](/reference/commands/apply) - Standard apply with requirements
+- [terrateam apply-autoapprove](/reference/commands/apply-autoapprove) - Skip manual approval
+- [terrateam gate approve](/reference/commands/gate-approve) - Approve validation gates

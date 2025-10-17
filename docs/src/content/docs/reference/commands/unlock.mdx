@@ -1,0 +1,52 @@
+---
+title: terrateam unlock
+description: Release any locks a pull request owns
+---
+
+Release directory locks held by a pull request to allow other operations to proceed.
+
+## Usage
+
+```
+terrateam unlock
+terrateam unlock <pull-request-number> [pull-request-number...]
+```
+
+## Examples
+
+### Unlock Current PR's Locks
+```
+terrateam unlock
+```
+Releases all locks owned by the current pull request.
+
+### Unlock Specific Pull Requests
+```bash
+# Unlock locks from PR #123
+terrateam unlock 123
+
+# Unlock locks from multiple PRs
+terrateam unlock 123 456 789
+```
+Useful for cleaning up locks from closed or abandoned pull requests.
+
+## Scope
+
+The unlock command releases all locks owned by the specified pull request(s).
+
+## Access Control
+
+:::caution
+Unlocking can disrupt active operations. Restrict access to trusted users.
+:::
+
+Configure unlock permissions in [access control](/reference/configuration/access-control).
+
+## Lock Management
+
+For more information about lock behavior and configuration, see [lock management](/workflows/advanced/lock-management).
+
+## Related Commands
+
+- [terrateam plan](/reference/commands/plan) - Creates read locks
+- [terrateam apply](/reference/commands/apply) - Creates write locks
