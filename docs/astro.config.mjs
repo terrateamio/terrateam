@@ -70,15 +70,6 @@ export default defineConfig({
           items: [
             { label: "Getting Started", link: "/quickstart/" },
             { label: "First Plan & Apply", link: "/quickstart/cloud/first-plan-apply" },
-            {
-              label: "Migration Guides",
-              collapsed: true,
-              items: [
-                { label: "From Terraform Cloud", link: "/quickstart/migration/from-terraform-cloud" },
-                { label: "From Atlantis", link: "/quickstart/migration/from-atlantis" },
-                { label: "From GitHub Actions", link: "/quickstart/migration/from-github-actions" },
-              ],
-            },
           ],
         },
         {
@@ -112,6 +103,8 @@ export default defineConfig({
                 { label: "Tag System", link: "/workflows/advanced/tag-system" },
                 { label: "Lock Management", link: "/workflows/advanced/lock-management" },
                 { label: "Multi-Environment", link: "/workflows/advanced/multi-environment" },
+                { label: "Stacks", link: "/workflows/advanced/stacks" },
+                { label: "YAML Anchors", link: "/workflows/advanced/yaml-anchors" },
                 { label: "GitHub Reusable Workflows", link: "/workflows/advanced/github-reusable-workflows" },
               ],
             },
@@ -152,6 +145,7 @@ export default defineConfig({
                 { label: "Terragrunt", link: "/integrations/iac-tools/terragrunt" },
                 { label: "Pulumi", link: "/integrations/iac-tools/pulumi" },
                 { label: "CDK for Terraform", link: "/integrations/iac-tools/cdktf" },
+                { label: "Migrate from Terraform Cloud", link: "/integrations/iac-tools/terraform-cloud-migration" },
               ],
             },
             {
@@ -164,7 +158,6 @@ export default defineConfig({
                 { label: "Webhooks", link: "/integrations/external-tools/webhooks" },
                 { label: "Resourcely", link: "/integrations/external-tools/resourcely" },
                 { label: "Installing Packages", link: "/integrations/external-tools/installing-packages" },
-                { label: "Plan File Storage", link: "/integrations/external-tools/plan-file-storage" },
               ],
             },
           ],
@@ -180,6 +173,7 @@ export default defineConfig({
                 { label: "Best Practices", link: "/security/best-practices" },
                 { label: "Audit Trail", link: "/security/audit-trail" },
                 { label: "Cloud Credentials", link: "/security/cloud-credentials" },
+                { label: "Plan File Storage", link: "/security/plan-file-storage" },
                 { label: "GitHub Environments", link: "/integrations/external-tools/github-environments" },
                 { label: "Private Runners", link: "/security/private-runners" },
                 { label: "Self-Signed Certs", link: "/security/self-signed-certificates" },
@@ -220,10 +214,13 @@ export default defineConfig({
               items: [
                 { label: "plan", link: "/reference/commands/plan" },
                 { label: "apply", link: "/reference/commands/apply" },
-                { label: "apply --force", link: "/reference/commands/apply-force" },
-                { label: "apply --autoapprove", link: "/reference/commands/apply-autoapprove" },
+                { label: "apply-force", link: "/reference/commands/apply-force" },
+                { label: "apply-autoapprove", link: "/reference/commands/apply-autoapprove" },
                 { label: "unlock", link: "/reference/commands/unlock" },
+                { label: "gate approve", link: "/reference/commands/gate-approve" },
+                { label: "repo-config", link: "/reference/commands/repo-config" },
                 { label: "feedback", link: "/reference/commands/feedback" },
+                { label: "help", link: "/reference/commands/help" },
               ],
             },
             {
@@ -234,10 +231,10 @@ export default defineConfig({
                 { label: "apply-requirements", link: "/reference/configuration/apply-requirements" },
                 { label: "automerge", link: "/reference/configuration/automerge" },
                 { label: "batch-runs", link: "/reference/configuration/batch-runs" },
-                { label: "checkout-strategy", link: "/reference/configuration/checkout-strategy" },
                 { label: "config-builder", link: "/reference/configuration/config-builder" },
                 { label: "cost-estimation", link: "/reference/configuration/cost-estimation" },
                 { label: "default-branch-overrides", link: "/reference/configuration/default-branch-overrides" },
+                { label: "definitions", link: "/reference/configuration/definitions" },
                 { label: "destination-branches", link: "/reference/configuration/destination-branches" },
                 { label: "dirs", link: "/reference/configuration/dirs" },
                 { label: "drift", link: "/reference/configuration/drift" },
@@ -248,6 +245,7 @@ export default defineConfig({
                 { label: "indexer", link: "/reference/configuration/indexer" },
                 { label: "notifications", link: "/reference/configuration/notifications" },
                 { label: "parallel-runs", link: "/reference/configuration/parallel-runs" },
+                { label: "stacks", link: "/reference/configuration/stacks" },
                 { label: "storage", link: "/reference/configuration/storage" },
                 { label: "tag-queries", link: "/reference/configuration/tag-queries" },
                 { label: "tags", link: "/reference/configuration/tags" },
@@ -261,6 +259,7 @@ export default defineConfig({
         },
         {
           label: "Company",
+          collapsed: true,
           items: [
             { label: "Support", link: "/support" },
             { label: "Billing", link: "/billing" },
@@ -275,6 +274,10 @@ export default defineConfig({
   redirects: {
     // Root redirect
     '/': '/overview/',
+    // Main section redirects
+    '/cloud-providers': '/integrations/cloud-providers/aws/',
+    '/integrations': '/integrations/cloud-providers/aws/',
+    '/self-hosted': '/quickstart/self-hosted/',
     // Old structure redirects
     '/how-it-works': '/overview/how-it-works',
     '/quickstart-guide': '/quickstart/',
@@ -307,7 +310,6 @@ export default defineConfig({
     '/security-and-compliance/rollbacks': '/workflows/rollbacks',
     '/security-and-compliance/scan-plans-with-checkov': '/integrations/external-tools/checkov',
     '/security-and-compliance/self-signed-certificates': '/security/self-signed-certificates',
-    '/governance/multi-environment': '/workflows/advanced/multi-environment',
     '/advanced-workflows/multiple-environments': '/workflows/advanced/multi-environment',
     
     // Self-hosted
@@ -329,16 +331,13 @@ export default defineConfig({
     '/configuration-reference/drift': '/reference/configuration/drift',
     '/configuration-reference/automerge': '/reference/configuration/automerge',
     '/configuration-reference/batch-runs': '/reference/configuration/batch-runs',
-    '/configuration-reference/checkout-strategy': '/reference/configuration/checkout-strategy',
     '/configuration-reference/config-builder': '/reference/configuration/config-builder',
     '/configuration-reference/cost-estimation': '/reference/configuration/cost-estimation',
     '/configuration-reference/default-branch-overrides': '/reference/configuration/default-branch-overrides',
     '/configuration-reference/destination-branches': '/reference/configuration/destination-branches',
     '/configuration-reference/enabled': '/reference/configuration/enabled',
-    '/configuration-reference/ignore-patterns': '/reference/configuration/ignore-patterns',
     '/configuration-reference/notifications': '/reference/configuration/notifications',
     '/configuration-reference/parallel-runs': '/reference/configuration/parallel-runs',
-    '/configuration-reference/tag-queries': '/reference/configuration/tag-queries',
     '/configuration-reference/tags': '/reference/configuration/tags',
     '/configuration-reference/tree-builder': '/reference/configuration/tree-builder',
     '/configuration-reference/version': '/reference/configuration/version',
@@ -379,16 +378,29 @@ export default defineConfig({
     '/integrations/github-environments': '/integrations/external-tools/github-environments',
     '/integrations/installing-packages': '/integrations/external-tools/installing-packages',
     '/integrations/opentofu': '/integrations/iac-tools/opentofu',
-    '/integrations/plan-file-storage': '/integrations/external-tools/plan-file-storage',
+    '/integrations/plan-file-storage': '/security/plan-file-storage',
     '/integrations/pulumi': '/integrations/iac-tools/pulumi',
     '/integrations/resourcely': '/integrations/external-tools/resourcely',
     '/integrations/terraform-versions': '/integrations/iac-tools/terraform',
     '/integrations/terragrunt': '/integrations/iac-tools/terragrunt',
     '/integrations/webhooks': '/integrations/external-tools/webhooks',
-    
+
     // Guides
-    '/guides/migrating-from-terraform-cloud': '/quickstart/migration/from-terraform-cloud',
-    
+    '/guides/migrating-from-terraform-cloud': '/integrations/iac-tools/terraform-cloud-migration',
+
+    // Missing redirects for code references
+    '/advanced-workflows/gatekeeper-requirements': '/governance/gatekeeper',
+    '/cloud-provider-setup/aws': '/integrations/cloud-providers/aws/',
+    '/cloud-provider-setup/gcp': '/integrations/cloud-providers/gcp/',
+    '/cloud-provider-setup/azure': '/integrations/cloud-providers/azure/',
+    '/cloud-provider-setup/other': '/integrations/cloud-providers/other',
+    '/getting-started': '/quickstart/',
+
+    // Missing stacks redirect
+    '/configuration-reference/stacks': '/reference/configuration/stacks',
+    '/advanced-workflows/stacks': '/workflows/advanced/stacks',
+    '/advanced-workflows/yaml-anchors': '/workflows/advanced/yaml-anchors',
+
     // Company
     '/company/billing': '/billing',
     '/company/support': '/support',

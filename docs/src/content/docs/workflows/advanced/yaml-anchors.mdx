@@ -1,0 +1,427 @@
+---
+title: YAML Anchors for Configuration Reuse
+description: Use YAML anchors and the definitions key to create reusable configuration templates
+---
+
+YAML anchors enable DRY (Don't Repeat Yourself) principles in your Terrateam configuration by defining reusable templates. This reduces configuration size, ensures consistency, and makes updates easier.
+
+## When to Use YAML Anchors
+
+Use YAML anchors when you have:
+- Multiple workflows with similar configurations
+- Repeated engine settings across environments
+- Common workflow step sequences
+- Standardized access control patterns
+- Shared directory configurations
+
+## Basic Syntax
+
+Define anchors in the `definitions` section and reference them throughout your configuration:
+
+```yaml
+definitions:
+  my_config: &my_config
+    key: value
+
+workflows:
+  - name: default
+    custom: *my_config
+```
+
+## Common Patterns
+
+### Shared Engine Configuration
+
+Define once, use everywhere:
+
+```yaml
+definitions:
+  standard_engine: &standard_engine
+    version: 1.6.0
+    environment:
+      TF_IN_AUTOMATION: "true"
+      TF_INPUT: "false"
+
+workflows:
+  - name: development
+    tag_query: "dev"
+    engine: *standard_engine
+    
+  - name: production
+    tag_query: "prod"
+    engine: 
+      <<: *standard_engine
+      environment:
+        <<: *standard_engine.environment
+        PRODUCTION: "true"
+```
+
+### Reusable Workflow Steps
+
+Create standard workflow patterns:
+
+```yaml
+definitions:
+  validation_steps: &validation_steps
+    - type: init
+    - type: run
+      cmd: ["terraform", "fmt", "-check"]
+    - type: run
+      cmd: ["terraform", "validate"]
+    
+  security_steps: &security_steps
+    - type: checkov
+    - type: run
+      cmd: ["tfsec", "."]
+
+workflows:
+  - name: default
+    plan:
+      - *validation_steps
+      - *security_steps
+      - type: plan
+      - type: cost_estimation
+```
+
+### Environment-Specific Configurations
+
+Manage multiple environments efficiently:
+
+```yaml
+definitions:
+  # AWS environment configurations
+  aws_dev: &aws_dev
+    AWS_REGION: us-east-1
+    AWS_ROLE_ARN: arn:aws:iam::123456789012:role/terrateam-dev
+    ENVIRONMENT: development
+    
+  aws_staging: &aws_staging
+    AWS_REGION: us-east-1
+    AWS_ROLE_ARN: arn:aws:iam::123456789012:role/terrateam-staging
+    ENVIRONMENT: staging
+    
+  aws_prod: &aws_prod
+    AWS_REGION: us-east-1
+    AWS_ROLE_ARN: arn:aws:iam::123456789012:role/terrateam-prod
+    ENVIRONMENT: production
+
+  # Standard requirements
+  basic_requirements: &basic_requirements
+    - approved
+    - status_checks
+    
+  strict_requirements: &strict_requirements
+    - approved: 2
+    - status_checks
+    - merge_conflicts
+
+workflows:
+  - name: development
+    tag_query: "dev"
+    engine:
+      version: 1.6.0
+      environment: *aws_dev
+    apply_requirements: *basic_requirements
+    
+  - name: staging
+    tag_query: "staging"
+    engine:
+      version: 1.6.0
+      environment: *aws_staging
+    apply_requirements: *basic_requirements
+    
+  - name: production
+    tag_query: "production"
+    engine:
+      version: 1.6.0
+      environment: *aws_prod
+    apply_requirements: *strict_requirements
+```
+
+### Standardized Access Control
+
+Define access patterns once:
+
+```yaml
+definitions:
+  dev_team_access: &dev_team_access
+    plan: ["*"]
+    apply: ["team:developers", "team:platform"]
+    
+  platform_only: &platform_only
+    plan: ["*"]
+    apply: ["team:platform"]
+    apply_force: ["team:sre"]
+
+access_control:
+  enabled: true
+  policies:
+    - tag_query: "dev or staging"
+      <<: *dev_team_access
+      
+    - tag_query: "production"
+      <<: *platform_only
+      
+    - tag_query: "infrastructure"
+      <<: *platform_only
+```
+
+### Complex Workflow Templates
+
+Build sophisticated reusable patterns:
+
+```yaml
+definitions:
+  # Base configuration for all workflows
+  base_config: &base_config
+    engine:
+      version: 1.6.0
+      tf_version: 1.5.0
+    
+  # Standard validation for all plans
+  plan_validation: &plan_validation
+    - type: init
+    - type: run
+      cmd: ["terraform", "fmt", "-check"]
+    - type: run
+      cmd: ["terraform", "validate"]
+      
+  # Security scanning template
+  security_scan: &security_scan
+    - type: checkov
+      when: always
+    - type: run
+      cmd: ["tfsec", ".", "--format", "json"]
+      when: always
+      
+  # Complete plan workflow
+  full_plan: &full_plan
+    - *plan_validation
+    - type: plan
+    - *security_scan
+    - type: cost_estimation
+      when: always
+      
+  # Notification template
+  notifications: &notifications
+    - type: run
+      cmd: ["echo", "Deployment complete"]
+      when: apply_succeeded
+
+workflows:
+  - name: feature-branch
+    <<: *base_config
+    tag_query: "feature"
+    plan: *full_plan
+    
+  - name: main-branch
+    <<: *base_config
+    tag_query: "main"
+    plan: *full_plan
+    apply:
+      - type: init
+      - type: apply
+      - *notifications
+```
+
+### Directory Configuration Templates
+
+Share configurations across directories:
+
+```yaml
+definitions:
+  # S3 backend configuration
+  s3_backend: &s3_backend
+    backend: s3
+    backend_config:
+      bucket: terraform-state
+      region: us-east-1
+      encrypt: true
+      
+  # Standard tags for all directories
+  base_tags: &base_tags
+    - "$dir"
+    - "$workspace"
+    
+  # Module directories configuration
+  module_config: &module_config
+    autoplan: false
+    tags:
+      - *base_tags
+      - "module"
+
+dirs:
+  - path: terraform/networking
+    <<: *s3_backend
+    tags:
+      - *base_tags
+      - "networking"
+      - "core"
+      
+  - path: terraform/compute
+    <<: *s3_backend
+    tags:
+      - *base_tags
+      - "compute"
+      - "application"
+      
+  - path: modules/**
+    <<: *module_config
+```
+
+## Advanced Techniques
+
+### Merging Multiple Anchors
+
+Combine configurations using the merge operator:
+
+```yaml
+definitions:
+  base: &base
+    version: 1.6.0
+    
+  aws: &aws
+    environment:
+      AWS_REGION: us-east-1
+      
+  monitoring: &monitoring
+    environment:
+      DATADOG_API_KEY: ${DATADOG_API_KEY}
+      
+  complete: &complete
+    <<: *base
+    <<: *aws
+    <<: *monitoring
+    environment:
+      CUSTOM: value
+
+workflows:
+  - name: monitored
+    engine: *complete
+```
+
+### Conditional Patterns
+
+Create flexible templates:
+
+```yaml
+definitions:
+  # Base steps all workflows need
+  required_steps: &required_steps
+    - type: init
+    - type: plan
+    
+  # Optional compliance steps
+  compliance_steps: &compliance_steps
+    - type: checkov
+    - type: cost_estimation
+    - type: run
+      cmd: ["compliance-check"]
+      
+  # Development workflow - basic
+  dev_plan: &dev_plan
+    - *required_steps
+    
+  # Production workflow - full compliance
+  prod_plan: &prod_plan
+    - *required_steps
+    - *compliance_steps
+
+workflows:
+  - name: development
+    tag_query: "dev"
+    plan: *dev_plan
+    
+  - name: production
+    tag_query: "production"
+    plan: *prod_plan
+```
+
+## Best Practices
+
+1. **Name anchors descriptively** - Use clear names that indicate purpose
+2. **Group related anchors** - Keep similar configurations together
+3. **Document complex anchors** - Add comments explaining usage
+4. **Start simple** - Begin with basic patterns and evolve as needed
+5. **Test thoroughly** - Verify anchors resolve correctly before deploying
+
+## Example: Complete Multi-Environment Setup
+
+```yaml
+definitions:
+  # Terraform versions
+  tf_latest: &tf_latest
+    version: 1.6.0
+    tf_version: 1.5.0
+    
+  # Validation steps
+  validate: &validate
+    - type: init
+    - type: run
+      cmd: ["terraform", "fmt", "-check"]
+    - type: run
+      cmd: ["terraform", "validate"]
+      
+  # Security scanning
+  security: &security
+    - type: checkov
+    - type: cost_estimation
+    
+  # Environment credentials
+  dev_env: &dev_env
+    AWS_ROLE_ARN: arn:aws:iam::111111111111:role/terrateam-dev
+    AWS_REGION: us-east-1
+    
+  prod_env: &prod_env
+    AWS_ROLE_ARN: arn:aws:iam::222222222222:role/terrateam-prod
+    AWS_REGION: us-east-1
+    
+  # Access patterns
+  dev_access: &dev_access
+    plan: ["*"]
+    apply: ["team:developers"]
+    
+  prod_access: &prod_access
+    plan: ["*"]
+    apply: ["team:platform"]
+    apply_force: ["team:sre"]
+
+# Apply configurations
+workflows:
+  - name: development
+    <<: *tf_latest
+    tag_query: "dev"
+    engine:
+      <<: *tf_latest
+      environment: *dev_env
+    plan:
+      - *validate
+      - type: plan
+      - *security
+    apply_requirements:
+      - approved
+      
+  - name: production
+    <<: *tf_latest
+    tag_query: "production"
+    engine:
+      <<: *tf_latest
+      environment: *prod_env
+    plan:
+      - *validate
+      - type: plan
+      - *security
+    apply_requirements:
+      - approved: 2
+      - status_checks
+
+access_control:
+  enabled: true
+  policies:
+    - tag_query: "dev"
+      <<: *dev_access
+    - tag_query: "production"
+      <<: *prod_access
+```
+
+This approach reduces a 200+ line configuration to under 100 lines while improving maintainability and consistency.

@@ -1,0 +1,26 @@
+---
+title: terrateam repo-config
+description: Output the evaluated repository configuration
+---
+
+Display the fully evaluated repository configuration, including all config builder and indexer outputs incorporated.
+
+## Usage
+
+```
+terrateam repo-config
+```
+
+## Purpose
+
+This command helps debug and understand your Terrateam configuration by showing:
+- The final merged configuration after all processing
+- Config builder outputs incorporated
+- Indexer discovered directories
+- Evaluated tag queries and workflows
+- Resolved environment variables
+
+## Related Commands
+
+- [terrateam plan](/reference/commands/plan) - Use the evaluated config to run plans
+- [terrateam apply](/reference/commands/apply) - Use the evaluated config to run applies

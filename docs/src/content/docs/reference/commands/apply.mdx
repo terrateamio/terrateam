@@ -3,31 +3,66 @@ title: terrateam apply
 description: Execute the apply workflow against a stored plan file for changes in a pull request
 ---
 
-The `terrateam apply` command executes the apply workflow against a stored plan file for changes in a pull request.
+Apply previously planned Terraform changes to update your infrastructure.
 
-## All Plans
-To apply all plan files, use the following command:
+## Usage
+
+```
+terrateam apply [tag-query]
+```
+
+## Prerequisites
+
+- A successful `terrateam plan` must be run first
+- Apply requirements must be met (unless using apply-force)
+- User must have apply permissions
+
+## Examples
+
+### Apply All Plans
 ```
 terrateam apply
 ```
 
-## Target a Directory
-To apply a specific directory, use the `dir` implicit tag:
-```
-terrateam apply dir:directory-name
-```
-Replace `directory-name` with the name of the directory you want to target.
+### Target Specific Resources
 
-## Target a Workspace
-To apply a specific workspace, use the `workspace` implicit tag:
-```
-terrateam apply workspace:workspace-name
-```
-Replace `workspace-name` with the name of the workspace you want to target.
+```bash
+# Apply a specific directory
+terrateam apply dir:staging
 
-## Target a Tag Query
-To apply a specific tag query, use the following command:
+# Apply a specific workspace  
+terrateam apply workspace:production
+
+# Apply multiple directories
+terrateam apply dir:app or dir:database
+
+# Complex tag queries
+terrateam apply production and dir:us-east-1
 ```
-terrateam apply <tag-query>
-```
-Replace `<tag-query>` with your desired tag query. [Learn more about our tag queries](/advanced-workflows/tags).
+
+## Tag Query Support
+
+The apply command supports [tag queries](/reference/configuration/tag-queries) to filter which plans to apply:
+
+- `dir:<path>` - Target specific directory
+- `workspace:<name>` - Target specific workspace  
+- Tags can be referenced directly (e.g., `production`, `staging`)
+- Logical operators: `and`, `or`, `not`
+
+## Apply Requirements
+
+The apply command respects configured requirements before allowing changes to be applied. See [apply-requirements](/reference/configuration/apply-requirements) for configuration details.
+
+## Workflow Configuration
+
+The apply command executes the workflow defined in your `.terrateam/config.yml`. See [workflow configuration](/reference/configuration/workflows) for customization options.
+
+## Access Control
+
+Apply permissions can be restricted using [access control](/reference/configuration/access-control).
+
+## Related Commands
+
+- [terrateam plan](/reference/commands/plan) - Create a plan before applying
+- [terrateam apply-force](/reference/commands/apply-force) - Apply without meeting requirements
+- [terrateam apply-autoapprove](/reference/commands/apply-autoapprove) - Plan and apply in one step

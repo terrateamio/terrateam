@@ -1,0 +1,31 @@
+---
+title: terrateam gate approve
+description: Approve a gated workflow step that failed validation
+---
+
+When a workflow step with [gate configuration](/reference/configuration/workflows#gate-configuration) fails (such as security scanning, policy checks, or custom validation), Terrateam creates an approval request that authorized users can approve to continue the workflow.
+
+## Usage
+
+```
+terrateam gate approve <token>
+```
+
+## Parameters
+
+- `<token>` - The unique token identifier for the gate request (provided in the gate failure message)
+
+## Related Commands
+
+- [terrateam apply-force](/reference/commands/apply-force) - Force an apply without meeting apply requirements
+- [terrateam apply-autoapprove](/reference/commands/apply-autoapprove) - Skip approvals entirely
+
+## Security Considerations
+
+:::caution
+Gate approvals bypass failed validation checks. Ensure only trusted users have approval permissions and maintain an audit trail of all approvals.
+:::
+
+- Limit gate approval permissions to appropriate teams
+- Use descriptive tokens to identify what's being approved
+- Consider requiring multiple approvers for critical workflows
