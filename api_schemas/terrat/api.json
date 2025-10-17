@@ -89,6 +89,18 @@
         ],
         "type": "object"
       },
+      "gitlab-access-token": {
+        "additionalProperties": false,
+        "properties": {
+          "access_token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "access_token"
+        ],
+        "type": "object"
+      },
       "gitlab-group": {
         "additionalProperties": false,
         "properties": {
@@ -2772,6 +2784,39 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/v1/gitlab/installations/{installation_id}/access-token": {
+      "put": {
+        "operationId": "gitlab-installations/create-access-token",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "installation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/gitlab-access-token"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {}
+          },
+          "403": {
+            "content": {}
           }
         }
       }

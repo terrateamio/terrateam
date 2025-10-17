@@ -33,6 +33,7 @@ module Gitlab = struct
   let default_gitlab_web_base_url = Uri.of_string "https://gitlab.com"
 
   type t = {
+    (* #899 TODO Access Token will be removed once the migration is done *)
     access_token : (string[@opaque]);
     api_base_url : Uri.t;
     app_id : string;
@@ -41,6 +42,7 @@ module Gitlab = struct
   }
   [@@deriving show]
 
+  (* #899 TODO Access Token will be removed once the migration is done *)
   let access_token t = t.access_token
   let api_base_url t = t.api_base_url
   let app_id t = t.app_id
@@ -184,6 +186,7 @@ let load_gitlab () =
       in
       env_str "GITLAB_ACCESS_TOKEN"
       >>= fun access_token ->
+      (* #899 TODO Access Token will be removed once migration is over *)
       Ok (Some { Gitlab.access_token; api_base_url; app_id; app_secret; web_base_url })
 
 let load_gc () =

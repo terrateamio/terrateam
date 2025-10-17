@@ -58,3 +58,12 @@ module List_work_manifests : sig
     int ->
     Brtl_rtng.Handler.t
 end
+
+module Token : sig
+  val put :
+    Terrat_vcs_service_gitlab_provider.Api.Config.t ->
+    Terrat_storage.t ->
+    int ->
+    Terrat_api_components_gitlab_access_token.t ->
+    Brtl_rtng.Handler.t
+end

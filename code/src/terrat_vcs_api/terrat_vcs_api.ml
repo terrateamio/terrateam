@@ -97,7 +97,7 @@ module type S = sig
   end
 
   val create_client :
-    request_id:string -> Config.t -> Account.t -> (Client.t, [> `Error ]) result Abb.Future.t
+    request_id:string -> Config.t -> Account.t -> Pgsql_io.t -> (Client.t, [> `Error ]) result Abb.Future.t
 
   val fetch_branch_sha :
     request_id:string ->
