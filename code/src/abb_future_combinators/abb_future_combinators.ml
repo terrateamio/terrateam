@@ -89,6 +89,20 @@ module Make (Fut : Abb_intf.Future.S) = struct
     Std_list.iter ~f:(fun d -> link d fut) l;
     fut
 
+  let all2 a b = Fut.Infix_app.((fun a b -> (a, b)) <$> a <*> b)
+  let all3 a b c = Fut.Infix_app.((fun a b c -> (a, b, c)) <$> a <*> b <*> c)
+  let all4 a b c d = Fut.Infix_app.((fun a b c d -> (a, b, c, d)) <$> a <*> b <*> c <*> d)
+
+  let all5 a b c d e =
+    Fut.Infix_app.((fun a b c d e -> (a, b, c, d, e)) <$> a <*> b <*> c <*> d <*> e)
+
+  let all6 a b c d e f =
+    Fut.Infix_app.((fun a b c d e f -> (a, b, c, d, e, f)) <$> a <*> b <*> c <*> d <*> e <*> f)
+
+  let all7 a b c d e f g =
+    Fut.Infix_app.(
+      (fun a b c d e f g -> (a, b, c, d, e, f, g)) <$> a <*> b <*> c <*> d <*> e <*> f <*> g)
+
   let with_finally f ~finally =
     try
       let fut = f () in
@@ -334,5 +348,19 @@ module Make (Fut : Abb_intf.Future.S) = struct
       >>= function
       | Ok _ -> Fut.return (Ok ())
       | Error err -> Fut.return (Error err)
+
+    let all2 a b = Infix_result_app.((fun a b -> (a, b)) <$> a <*> b)
+    let all3 a b c = Infix_result_app.((fun a b c -> (a, b, c)) <$> a <*> b <*> c)
+    let all4 a b c d = Infix_result_app.((fun a b c d -> (a, b, c, d)) <$> a <*> b <*> c <*> d)
+
+    let all5 a b c d e =
+      Infix_result_app.((fun a b c d e -> (a, b, c, d, e)) <$> a <*> b <*> c <*> d <*> e)
+
+    let all6 a b c d e f =
+      Infix_result_app.((fun a b c d e f -> (a, b, c, d, e, f)) <$> a <*> b <*> c <*> d <*> e <*> f)
+
+    let all7 a b c d e f g =
+      Infix_result_app.(
+        (fun a b c d e f g -> (a, b, c, d, e, f, g)) <$> a <*> b <*> c <*> d <*> e <*> f <*> g)
   end
 end
