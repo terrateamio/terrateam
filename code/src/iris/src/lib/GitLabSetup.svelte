@@ -10,13 +10,19 @@
   export let onComplete: (groupId: number) => void = () => {};
   export let onCancel: () => void = () => {};
 
-  type SetupStep = 'select-group' | 'add-user' | 'configure-webhook' | 'complete';
-  
+  type SetupStep = 'select-group' | 'submit-token' | 'add-user' | 'configure-webhook' | 'complete';
+
   let currentStep: SetupStep = 'select-group';
   let selectedGroup: GitLabGroup | null = null;
   let groups: GitLabGroup[] = [];
   let isLoadingGroups = true;
   let groupsError: string | null = null;
+
+  // Token submission step state
+  let accessToken = '';
+  let isSubmittingToken = false;
+  let tokenSubmitted = false;
+  let tokenSubmitError: string | null = null;
   
   // Bot user step state
   let botUsername = '';
@@ -114,9 +120,39 @@
     }
   }
 
+  // Submit access token
+  async function submitAccessToken() {
+    if (!accessToken.trim()) {
+      tokenSubmitError = 'Please enter an access token';
+      return;
+    }
+
+    if (!selectedGroup) {
+      tokenSubmitError = 'No group selected';
+      return;
+    }
+
+    try {
+      isSubmittingToken = true;
+      tokenSubmitError = null;
+      // Use the selected group ID as the installation ID
+      await api.submitGitLabAccessToken(selectedGroup.id.toString(), accessToken);
+      tokenSubmitted = true;
+    } catch (error) {
+      console.error('Failed to submit access token:', error);
+      tokenSubmitError = 'Failed to submit access token. Please verify it is valid and try again.';
+    } finally {
+      isSubmittingToken = false;
+    }
+  }
+
   // Navigation functions
   function selectGroup(group: GitLabGroup) {
     selectedGroup = group;
+    currentStep = 'submit-token';
+  }
+
+  function goToAddUserStep() {
     currentStep = 'add-user';
     loadBotInfo();
   }
@@ -142,15 +178,17 @@
     <div class="mb-8">
       <div class="flex items-center justify-between">
         {#each [
+          { step: 'submit-token', label: 'GitLab Token', icon: 'mdi:key' },
           { step: 'add-user', label: 'Add Bot User', icon: 'mdi:account-plus' },
           { step: 'configure-webhook', label: 'Configure Webhook', icon: 'mdi:webhook' }
         ] as stepInfo, index}
-          <div class="flex items-center {index < 1 ? 'flex-1' : ''}">
+          <div class="flex items-center {index < 2 ? 'flex-1' : ''}">
             <div class="flex items-center">
               <div class="flex items-center justify-center w-10 h-10 rounded-full {
                 currentStep === stepInfo.step ? 'bg-blue-600 text-white' :
+                (stepInfo.step === 'submit-token' && (currentStep === 'add-user' || currentStep === 'configure-webhook')) ||
                 (stepInfo.step === 'add-user' && currentStep === 'configure-webhook')
-                  ? 'bg-green-600 text-white' 
+                  ? 'bg-green-600 text-white'
                   : 'bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400'
               }">
                 <Icon icon={stepInfo.icon} width="20" />
@@ -159,12 +197,13 @@
                 currentStep === stepInfo.step ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'
               }">{stepInfo.label}</span>
             </div>
-            {#if index < 1}
+            {#if index < 2}
               <div class="flex-1 mx-4">
                 <div class="h-1 bg-gray-300 dark:bg-gray-600 rounded-full">
                   <div class="h-1 rounded-full w-full {
+                    (stepInfo.step === 'submit-token' && (currentStep === 'add-user' || currentStep === 'configure-webhook')) ||
                     (stepInfo.step === 'add-user' && currentStep === 'configure-webhook')
-                      ? 'bg-green-600' 
+                      ? 'bg-green-600'
                       : 'bg-transparent'
                   }"></div>
                 </div>
@@ -242,6 +281,83 @@
         </Button>
       </div>
     {/if}
+
+  {:else if currentStep === 'submit-token'}
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+        Submit GitLab Access Token
+      </h1>
+      <p class="text-lg text-gray-600 dark:text-gray-400">
+        Provide a GitLab access token with API access
+      </p>
+    </div>
+
+    <Card padding="lg">
+      <div class="space-y-6">
+        <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+          <h3 class="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+            Instructions:
+          </h3>
+          <ol class="list-decimal list-inside space-y-2 text-blue-800 dark:text-blue-200">
+            <li>Go to GitLab Settings > Access Tokens</li>
+            <li>Create a new access token with "api" scope</li>
+            <li>Set an appropriate expiration date</li>
+            <li>Copy the generated token</li>
+            <li>Paste it below and click Submit</li>
+          </ol>
+        </div>
+
+        <div>
+          <label for="access-token" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Access Token
+          </label>
+          <input
+            id="access-token"
+            type="password"
+            bind:value={accessToken}
+            placeholder="Enter your GitLab access token"
+            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+                   bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+                   focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                   disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isSubmittingToken || tokenSubmitted}
+          />
+        </div>
+
+        {#if tokenSubmitError}
+          <ErrorMessage type="error" message={tokenSubmitError} />
+        {/if}
+
+        {#if tokenSubmitted}
+          <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-4">
+            <div class="flex items-center">
+              <Icon icon="mdi:check-circle" class="text-green-600 text-xl mr-2" />
+              <span class="text-green-800 dark:text-green-200">
+                Access token submitted successfully! Click Next to continue.
+              </span>
+            </div>
+          </div>
+        {/if}
+
+        <div class="flex justify-center space-x-4">
+          <Button
+            variant="primary"
+            on:click={submitAccessToken}
+            loading={isSubmittingToken}
+            disabled={isSubmittingToken || tokenSubmitted || !accessToken.trim()}
+          >
+            {tokenSubmitted ? 'Submitted' : 'Submit'}
+          </Button>
+          <Button
+            variant="accent"
+            on:click={goToAddUserStep}
+            disabled={!tokenSubmitted}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
+    </Card>
 
   {:else if currentStep === 'add-user'}
     <div class="text-center mb-8">
