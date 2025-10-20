@@ -85,10 +85,30 @@ foo
 ```
 You can customize the policy directory by setting the `CONFTEST_POLICY` environment variable in your Terrateam workflow configuration.
 
-## Example with Custom Options
+## Customizing Conftest Options
 
 Conftest provides various configuration options that can be set using environment variables. You can find the full list of options [here](https://www.conftest.dev/options/).
 
+### Specifying Conftest Version
+You can specify a particular version of Conftest to use by setting the `CONFTEST_VERSION` environment variable. This is useful for ensuring consistent behavior across your team or for testing new Conftest features before upgrading globally.
+
+```yaml
+workflows:
+  - tag_query: ''
+    plan:
+      - type: env
+        name: CONFTEST_VERSION
+        cmd: ['echo', '0.40.0']
+      - type: init
+      - type: plan
+      - type: conftest
+```
+
+In this configuration:
+- The `env` step sets the `CONFTEST_VERSION` environment variable to `0.40.0`, ensuring that specific version of Conftest is used.
+- If `CONFTEST_VERSION` is not specified, Terrateam will use the default version installed in the environment.
+
+### Specifying a Custom Policy Directory
 Here's an example of how to specify a different policy directory using the `CONFTEST_POLICY` environment variable in your Terrateam workflow:
 ```yaml
 workflows:

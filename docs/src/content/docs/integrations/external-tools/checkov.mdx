@@ -48,6 +48,27 @@ Here's an example of a Terrateam plan failing due to a Checkov scan detecting mi
 
 ## Customizing Checkov Options
 Checkov provides various configuration options that can be customized using environment variables. You can find the full list of Checkov configuration options [here](https://www.checkov.io/2.Basics/CLI%20Command%20Reference.html#cli-command-reference).
+
+### Specifying Checkov Version
+You can specify a particular version of Checkov to use by setting the `CHECKOV_VERSION` environment variable. This is useful for ensuring consistent behavior across your team or for testing new Checkov features before upgrading globally.
+
+```yaml
+workflows:
+  - tag_query: ''
+    plan:
+      - type: env
+        name: CHECKOV_VERSION
+        cmd: ['echo', '2.3.123']
+      - type: init
+      - type: plan
+      - type: checkov
+```
+
+In this configuration:
+- The `env` step sets the `CHECKOV_VERSION` environment variable to `2.3.123`, ensuring that specific version of Checkov is used.
+- If `CHECKOV_VERSION` is not specified, Terrateam will use the default version installed in the environment.
+
+### Skipping Specific Checks
 Here's an example of how to skip a specific check using the `CKV_SKIP_CHECK` environment variable in your Terrateam workflow:
 ```yaml
 workflows:
