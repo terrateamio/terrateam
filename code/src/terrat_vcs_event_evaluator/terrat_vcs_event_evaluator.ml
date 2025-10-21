@@ -93,9 +93,22 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     let set_storage storage t = { t with storage }
   end
 
-  let create_client request_id config account db =
+  let create_client request_id config account =
+    let open Abb.Future.Infix_monad in
+    let terrat_config = S.Api.Config.config config in
     Abbs_time_it.run (log_time request_id "CREATE_CLIENT") (fun () ->
-        S.Api.create_client ~request_id config account db)
+        Abbs_future_combinators.protect_finally
+          ~setup:(fun () -> Terrat_storage.create terrat_config)
+          (fun pool ->
+            Pgsql_pool.with_conn pool ~f:(fun db ->
+                S.Api.create_client ~request_id config account db))
+          ~finally:Pgsql_pool.destroy)
+    >>= function
+    | Ok client -> Abb.Future.return (Ok client)
+    | Error `Error -> Abb.Future.return (Error `Error)
+    | Error (#Pgsql_pool.err as err) ->
+        Logs.err (fun m -> m "%s : %a" request_id Pgsql_pool.pp_err err);
+        Abb.Future.return (Error `Error)
 
   let store_account_repository request_id db account repo =
     Abbs_time_it.run
@@ -1111,6 +1124,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       [ `Error
       | Repo_config.fetch_err
       | Terrat_change_match3.synthesize_config_err
+      | Pgsql_pool.err
       | `Noop of (t[@opaque])
       ]
     [@@deriving show]
@@ -1560,7 +1574,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           Abb.Future.return (Ok (V1.of_view system_defaults))
 
     let client ctx state =
-      create_client state.State.request_id (Ctx.config ctx) (Event.account state.State.event) (Ctx.storage ctx)
+      create_client state.State.request_id (Ctx.config ctx) (Event.account state.State.event)
 
     let pull_request_safe ctx state =
       match Event.pull_request_id_safe state.State.event with
@@ -1570,7 +1584,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           let repo = Event.repo state.State.event in
           let fetch () =
             let open Abbs_future_combinators.Infix_result_monad in
-            create_client state.State.request_id (Ctx.config ctx) account (Ctx.storage ctx)
+            create_client state.State.request_id (Ctx.config ctx) account
             >>= fun client ->
             fetch_pull_request state.State.request_id account client repo pull_request_id
           in
@@ -7511,7 +7525,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               >>= function
               | Some work_manifest -> (
                   let run =
-                    create_client request_id (Ctx.config ctx) work_manifest.Wm.account db
+                    create_client request_id (Ctx.config ctx) work_manifest.Wm.account
                     >>= fun client ->
                     run_work_manifest request_id (Ctx.config ctx) client work_manifest
                   in

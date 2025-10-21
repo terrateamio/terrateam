@@ -202,6 +202,7 @@ module Webhook = struct
   let get config storage installation_id =
     Brtl_ep.run_result_json ~f:(fun ctx ->
         let open Abbs_future_combinators.Infix_result_monad in
+        let module Oauth = Terrat_vcs_service_gitlab_user.Oauth in
         Terrat_session.with_session ctx
         >>= fun user ->
         let open Abb.Future.Infix_monad in
@@ -220,64 +221,59 @@ module Webhook = struct
             Abb.Future.return (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK body) ctx))
         | Error (`Access_level_err access_level) ->
             Logs.err (fun m ->
-                m "installation_id=%d : ACCESS_LEVEL : level=%d" installation_id access_level);
+                m
+                  "%s : installation_id=%d : ACCESS_LEVEL : level=%d"
+                  (Brtl_ctx.token ctx)
+                  installation_id
+                  access_level);
             Abb.Future.return
               (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Forbidden "") ctx))
-        | Error `Bad_refresh_token ->
+        | Error (#Oauth.access_token_err as err) ->
             Logs.err (fun m ->
-                m "installation_id=%d : BAD_REFRESH_TOKEN %s" installation_id (Brtl_ctx.token ctx));
+                m
+                  "%s : installation_id=%d : %a"
+                  (Brtl_ctx.token ctx)
+                  installation_id
+                  Oauth.pp_access_token_err
+                  err);
             Abb.Future.return
               (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Forbidden "") ctx))
-        | Error `Cancelled ->
-            Logs.err (fun m -> m "installation_id=%d : CANCELLED" installation_id);
-            Abb.Future.return
-              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-        | Error `Closed ->
-            Logs.err (fun m -> m "installation_id=%d : CLOSED" installation_id);
-            Abb.Future.return
-              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-        | Error (`Curl_err err) ->
-            Logs.err (fun m -> m "installation_id=%d : CURL_ERR %s" installation_id err);
-            Abb.Future.return
-              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
         | Error (#Openapic_abb.call_err as err) ->
             Logs.err (fun m ->
-                m "installation_id=%d : %a" installation_id Openapic_abb.pp_call_err err);
-            Abb.Future.return
-              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-        | Error (#Pgsql_io.err as err) ->
-            Logs.err (fun m -> m "installation_id=%d : %a" installation_id Pgsql_io.pp_err err);
+                m
+                  "%s : installation_id=%d : %a"
+                  (Brtl_ctx.token ctx)
+                  installation_id
+                  Openapic_abb.pp_call_err
+                  err);
             Abb.Future.return
               (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
         | Error (#Pgsql_pool.err as err) ->
-            Logs.err (fun m -> m "installation_id=%d : %a" installation_id Pgsql_pool.pp_err err);
+            Logs.err (fun m ->
+                m
+                  "%s : installation_id=%d : %a"
+                  (Brtl_ctx.token ctx)
+                  installation_id
+                  Pgsql_pool.pp_err
+                  err);
             Abb.Future.return
               (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-        | Error (`Refresh_err err) ->
+        | Error (#User.query_user_id_err as err) ->
             Logs.err (fun m ->
-                m "installation_id=%d : %s : %s" installation_id (Brtl_ctx.token ctx) err);
+                m
+                  "%s : installation_id=%d : %a"
+                  (Brtl_ctx.token ctx)
+                  installation_id
+                  User.pp_query_user_id_err
+                  err);
             Abb.Future.return
-              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Forbidden "") ctx))
+              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
         | Error `User_not_found_in_group_err ->
-            Logs.err (fun m -> m "installation_id=%d : USER_NOT_FOUND_IN_GROUP" installation_id);
-            Abb.Future.return
-              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-        | Error (`User_not_found_err user) ->
             Logs.err (fun m ->
                 m
-                  "installation_id=%d : USER_NOT_FOUND : user=%a"
-                  installation_id
-                  Terrat_user.pp
-                  user);
-            Abb.Future.return
-              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-        | Error (`User_not_found user) ->
-            Logs.err (fun m ->
-                m
-                  "installation_id=%d : USER_NOT_FOUND : user=%a"
-                  installation_id
-                  Terrat_user.pp
-                  user);
+                  "%s : installation_id=%d : USER_NOT_FOUND_IN_GROUP"
+                  (Brtl_ctx.token ctx)
+                  installation_id);
             Abb.Future.return
               (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)))
 end
@@ -1466,6 +1462,7 @@ module Token = struct
   (* PUT /api/v1/gitlab/installations/{installation_id}/access-token *)
   let put config storage installation_id token =
     let open Abbs_future_combinators.Infix_result_monad in
+    let module Oauth = Terrat_vcs_service_gitlab_user.Oauth in
     Brtl_ep.run_result_json ~f:(fun ctx ->
         Terrat_session.with_session ctx
         >>= fun user ->
@@ -1473,68 +1470,62 @@ module Token = struct
         put' config storage user installation_id token
         >>= function
         | Ok () ->
-            Logs.debug (fun m -> m "installation_id=%d : %s" installation_id (Brtl_ctx.token ctx));
             Abb.Future.return (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx))
         | Error (`Access_level_err access_level) ->
             Logs.err (fun m ->
-                m "installation_id=%d : ACCESS_LEVEL : level=%d" installation_id access_level);
+                m
+                  "%s : installation_id=%d : ACCESS_LEVEL : level=%d"
+                  (Brtl_ctx.token ctx)
+                  installation_id
+                  access_level);
             Abb.Future.return
               (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Forbidden "") ctx))
-        | Error `Bad_refresh_token ->
+        | Error (#Oauth.access_token_err as err) ->
             Logs.err (fun m ->
-                m "installation_id=%d : BAD_REFRESH_TOKEN %s" installation_id (Brtl_ctx.token ctx));
+                m
+                  "%s : installation_id=%d : %a"
+                  (Brtl_ctx.token ctx)
+                  installation_id
+                  Oauth.pp_access_token_err
+                  err);
             Abb.Future.return
               (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Forbidden "") ctx))
-        | Error `Cancelled ->
-            Logs.err (fun m -> m "installation_id=%d : CANCELLED" installation_id);
-            Abb.Future.return
-              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-        | Error `Closed ->
-            Logs.err (fun m -> m "installation_id=%d : CLOSED" installation_id);
-            Abb.Future.return
-              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-        | Error (`Curl_err err) ->
-            Logs.err (fun m -> m "installation_id=%d : CURL_ERR %s" installation_id err);
-            Abb.Future.return
-              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
         | Error (#Openapic_abb.call_err as err) ->
             Logs.err (fun m ->
-                m "installation_id=%d : %a" installation_id Openapic_abb.pp_call_err err);
-            Abb.Future.return
-              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-        | Error (#Pgsql_io.err as err) ->
-            Logs.err (fun m -> m "installation_id=%d : %a" installation_id Pgsql_io.pp_err err);
+                m
+                  "%s : installation_id=%d : %a"
+                  (Brtl_ctx.token ctx)
+                  installation_id
+                  Openapic_abb.pp_call_err
+                  err);
             Abb.Future.return
               (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
         | Error (#Pgsql_pool.err as err) ->
-            Logs.err (fun m -> m "installation_id=%d : %a" installation_id Pgsql_pool.pp_err err);
+            Logs.err (fun m ->
+                m
+                  "%s : installation_id=%d : %a"
+                  (Brtl_ctx.token ctx)
+                  installation_id
+                  Pgsql_pool.pp_err
+                  err);
             Abb.Future.return
               (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-        | Error (`Refresh_err err) ->
+        | Error (#User.query_user_id_err as err) ->
             Logs.err (fun m ->
-                m "installation_id=%d : %s : %s" installation_id (Brtl_ctx.token ctx) err);
+                m
+                  "%s : installation_id=%d : %a"
+                  (Brtl_ctx.token ctx)
+                  installation_id
+                  User.pp_query_user_id_err
+                  err);
             Abb.Future.return
-              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Forbidden "") ctx))
+              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
         | Error `User_not_found_in_group_err ->
-            Logs.err (fun m -> m "installation_id=%d : USER_NOT_FOUND_IN_GROUP" installation_id);
-            Abb.Future.return
-              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-        | Error (`User_not_found user) ->
             Logs.err (fun m ->
                 m
-                  "installation_id=%d : USER_NOT_FOUND : user=%a"
-                  installation_id
-                  Terrat_user.pp
-                  user);
-            Abb.Future.return
-              (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx))
-        | Error (`User_not_found_err user) ->
-            Logs.err (fun m ->
-                m
-                  "installation_id=%d : USER_NOT_FOUND : user=%a"
-                  installation_id
-                  Terrat_user.pp
-                  user);
+                  "%s : installation_id=%d : USER_NOT_FOUND_IN_GROUP"
+                  (Brtl_ctx.token ctx)
+                  installation_id);
             Abb.Future.return
               (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)))
 end
