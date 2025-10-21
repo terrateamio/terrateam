@@ -2,10 +2,11 @@ let src = Logs.Src.create "terrat_github"
 
 module Logs = (val Logs.src_log src : Logs.LOG)
 
-let one_minute = Duration.(to_f (of_min 1))
+let thirty_seconds = Duration.(to_f (of_sec 30))
+let three_minutes = Duration.(to_f (of_min 3))
 let terrateam_workflow_name = "Terrateam Workflow"
 let terrateam_workflow_path = ".github/workflows/terrateam.yml"
-let installation_expiration_sec = one_minute
+let installation_expiration_sec = three_minutes
 let call_timeout = Duration.(to_f (of_sec 10))
 
 module Org_admin = CCMap.Make (CCInt)
@@ -164,7 +165,7 @@ let rate_limit_wait resp =
         Logs.debug (fun m -> m "RATE_LIMIT : RETRY_AFTER : %s" ra);
         Abb.Future.return
           (CCOption.map_or
-             ~default:(Some one_minute)
+             ~default:(Some thirty_seconds)
              CCFun.(CCInt.of_string %> CCOption.map CCFloat.of_int)
              retry_after)
     | None, Some "0", Some retry_time -> (
@@ -175,8 +176,8 @@ let rate_limit_wait resp =
             Abb.Sys.time ()
             >>= fun now ->
             (* Make sure we wait at least one minute before retrying *)
-            Abb.Future.return (Some (CCFloat.max one_minute (retry_time -. now)))
-        | None -> Abb.Future.return (Some one_minute))
+            Abb.Future.return (Some (retry_time -. now))
+        | None -> Abb.Future.return (Some thirty_seconds))
     | _, _, _ -> Abb.Future.return None
   else Abb.Future.return None
 
@@ -198,11 +199,17 @@ let with_client config auth f =
 
 let retry_wait default_wait resp =
   let open Abb.Future.Infix_monad in
+  (* Get the retry determined by the header *)
   rate_limit_wait resp
   >>= function
   | Some retry_after ->
       Metrics.Call_retry_wait_histograph.observe Metrics.rate_limit_retry_wait_seconds retry_after;
-      Abb.Future.return retry_after
+      (* But, we don't want to wait forever, so even though [retry_limit_wait]
+         gives us back whatever the API says, we want to put a cap on how long
+         we will wait so that we don't hold the system up forever.  If we have
+         to wait an hour for the rate limit, then this operation is done
+         anyways, so just move on. *)
+      Abb.Future.return (CCFloat.min thirty_seconds retry_after)
   | None -> Abb.Future.return default_wait
 
 let call ?(tries = 3) t req =
