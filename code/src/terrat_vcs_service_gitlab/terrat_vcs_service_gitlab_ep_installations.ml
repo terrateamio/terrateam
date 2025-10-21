@@ -1473,7 +1473,6 @@ module Token = struct
         put' config storage user installation_id token
         >>= function
         | Ok () ->
-            Logs.debug (fun m -> m "installation_id=%d : %s" installation_id (Brtl_ctx.token ctx));
             Abb.Future.return (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx))
         | Error (`Access_level_err access_level) ->
             Logs.err (fun m ->
