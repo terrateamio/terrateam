@@ -17,9 +17,9 @@
   // Wizard state
   type WizardStep = 'assessment' | 'path-selection' | 'github-demo-setup' | 'gitlab-demo-setup' | 'github-repo-setup' | 'gitlab-setup' | 'validation' | 'success';
   type DemoStep = 'install-app' | 'fork' | 'enable-actions' | 'make-changes' | 'success';
-  type GitLabDemoStep = 'select-group' | 'fork' | 'submit-token' | 'add-bot' | 'configure-webhook' | 'push-test' | 'configure-variables' | 'make-changes' | 'success';
+  type GitLabDemoStep = 'select-group' | 'fork' | 'submit-token' | 'configure-webhook' | 'push-test' | 'configure-variables' | 'make-changes' | 'success';
   type RepoStep = 'install-app' | 'select-repo' | 'add-workflow' | 'configure' | 'test' | 'success';
-  type GitLabStep = 'select-group' | 'select-repo' | 'submit-token' | 'add-bot' | 'configure-webhook' | 'push-test' | 'configure-variables' | 'add-pipeline' | 'success';
+  type GitLabStep = 'select-group' | 'select-repo' | 'submit-token' | 'configure-webhook' | 'push-test' | 'configure-variables' | 'add-pipeline' | 'success';
   let currentStep: WizardStep = 'assessment';
   let selectedPath: 'demo' | 'repo' | null = null;
   let currentDemoStep: DemoStep = 'install-app';
@@ -62,14 +62,11 @@
     'select-group': false,
     fork: false,
     'submit-token': false,
-    'add-bot': false,
     'configure-webhook': false,
     'push-test': false,
     'configure-variables': false,
     'make-changes': false
   };
-  let checkingBotAdded = false;
-  let botVerificationError: string | null = null;
   let gitlabDemoGroups: GitLabGroup[] = [];
   let selectedGitLabDemoGroup: GitLabGroup | null = null;
   let isLoadingGitLabGroups = false;
@@ -100,7 +97,6 @@
     'select-group': false,
     'select-repo': false,
     'submit-token': false,
-    'add-bot': false,
     'configure-webhook': false,
     'push-test': false,
     'configure-variables': false,
@@ -119,9 +115,6 @@
   let gitlabRepos: Repository[] = [];
   let manualGitLabProject = '';
   let isAddingGitLabProject = false;
-  let checkingGitLabBot = false;
-  let gitlabBotError: string | null = null;
-  let gitlabBotUsername: string | null = null;
   let copiedYaml = false;
   let isCheckingPushTest = false;
   let pushTestError: string | null = null;
@@ -145,10 +138,6 @@
     }
 
     await runSmartAssessment();
-    // Fetch GitLab bot username if we're showing GitLab setup
-    if (get(currentVCSProvider) === 'gitlab') {
-      await loadGitLabBotUsername();
-    }
   });
 
   onDestroy(() => {
@@ -260,8 +249,6 @@
         currentStep = 'gitlab-demo-setup';
         // Load GitLab groups for demo
         loadGitLabGroups();
-        // Load GitLab bot username
-        loadGitLabBotUsername();
       } else {
         currentStep = 'github-demo-setup';
       }
@@ -270,8 +257,6 @@
       if (currentProvider === 'gitlab') {
         currentStep = 'gitlab-setup';
         loadGitLabSetupGroups();
-        // Load GitLab bot username
-        loadGitLabBotUsername();
       } else {
         currentStep = 'github-repo-setup';
         // Always start at the install-app step to give users the option to install on different orgs
@@ -409,12 +394,12 @@
       path: 'demo',
       vcs_provider: 'gitlab',
       step: step,
-      step_index: ['select-group', 'fork', 'submit-token', 'add-bot', 'configure-webhook', 'push-test', 'configure-variables', 'make-changes'].indexOf(step) + 1,
+      step_index: ['select-group', 'fork', 'configure-webhook', 'push-test', 'submit-token', 'configure-variables', 'make-changes'].indexOf(step) + 1,
       group: selectedGitLabDemoGroup?.name
     });
 
     // Auto-advance to next step
-    const steps: GitLabDemoStep[] = ['select-group', 'fork', 'submit-token', 'add-bot', 'configure-webhook', 'push-test', 'configure-variables', 'make-changes', 'success'];
+    const steps: GitLabDemoStep[] = ['select-group', 'fork', 'configure-webhook', 'push-test', 'submit-token', 'configure-variables', 'make-changes', 'success'];
     const currentIndex = steps.indexOf(currentGitLabDemoStep);
     if (currentIndex < steps.length - 1) {
       currentGitLabDemoStep = steps[currentIndex + 1];
@@ -488,54 +473,6 @@
       webhookVerificationError = 'Unable to verify webhook. Please ensure you\'ve added it and tested with a Push Event.';
     } finally {
       checkingWebhook = false;
-    }
-  }
-
-  async function checkBotAdded(): Promise<void> {
-    try {
-      checkingBotAdded = true;
-      botVerificationError = null;
-      
-      // Track bot verification attempt
-      analytics.track('getting_started_gitlab_bot_check', {
-        path: 'demo',
-        vcs_provider: 'gitlab',
-        group: selectedGitLabDemoGroup?.name
-      });
-
-      // For GitLab demo, check if the bot was added to the selected group
-      if (selectedGitLabDemoGroup) {
-        // Always check via API, even for personal namespace
-        try {
-          const isAdded = await api.checkGitLabGroupMembership(Number(selectedGitLabDemoGroup.id));
-          if (isAdded) {
-            botVerificationError = null;
-
-            // Track successful bot addition
-            analytics.track('getting_started_gitlab_bot_added', {
-              path: 'demo',
-              vcs_provider: 'gitlab',
-              group: selectedGitLabDemoGroup.name
-            });
-            
-            markGitLabDemoStepComplete('add-bot');
-          } else {
-            botVerificationError = `The bot has not been added yet. Please add @${gitlabBotUsername || 'terrateam-bot'} as a Developer to your group.`;
-          }
-        } catch (apiError) {
-          // If the check fails, show an error
-          console.error('Failed to check bot membership:', apiError);
-          botVerificationError = `Unable to verify bot was added. Please ensure @${gitlabBotUsername || 'terrateam-bot'} is added as a Developer to your group.`;
-        }
-      } else {
-        botVerificationError = 'No group selected. Please go back and select a group.';
-      }
-      
-    } catch (error) {
-      console.error('Failed to check bot status:', error);
-      botVerificationError = 'Unable to check bot status. You can continue manually using "Skip Verification".';
-    } finally {
-      checkingBotAdded = false;
     }
   }
 
@@ -758,13 +695,13 @@
       path: 'repo',
       vcs_provider: 'gitlab',
       step: step,
-      step_index: ['select-group', 'select-repo', 'submit-token', 'add-bot', 'configure-webhook', 'push-test', 'configure-variables', 'add-pipeline'].indexOf(step) + 1,
+      step_index: ['select-group', 'select-repo', 'configure-webhook', 'push-test', 'submit-token', 'configure-variables', 'add-pipeline'].indexOf(step) + 1,
       group: selectedGitLabGroup?.name,
       repository: manualGitLabProject
     });
     
     // Auto-advance to next step
-    const steps: GitLabStep[] = ['select-group', 'select-repo', 'submit-token', 'add-bot', 'configure-webhook', 'push-test', 'configure-variables', 'add-pipeline', 'success'];
+    const steps: GitLabStep[] = ['select-group', 'select-repo', 'configure-webhook', 'push-test', 'submit-token', 'configure-variables', 'add-pipeline', 'success'];
     const currentIndex = steps.indexOf(currentGitLabStep);
     if (currentIndex < steps.length - 1) {
       currentGitLabStep = steps[currentIndex + 1];
@@ -879,55 +816,6 @@
       // Set defaults if API fails
       webhookUrl = 'https://api.terrateam.io/webhook/gitlab';
       webhookSecret = 'Contact support for webhook secret';
-    }
-  }
-
-  async function loadGitLabBotUsername(): Promise<void> {
-    try {
-      const botInfo = await api.getGitLabBotInfo();
-      gitlabBotUsername = botInfo.username;
-    } catch (error) {
-      console.error('Failed to load GitLab bot username:', error);
-      // Fallback to default if API fails
-      gitlabBotUsername = 'terrateam-bot';
-    }
-  }
-
-  async function verifyBotAdded(): Promise<void> {
-    if (!selectedGitLabGroup) return;
-    
-    try {
-      checkingGitLabBot = true;
-      gitlabBotError = null;
-      
-      // Track bot verification attempt
-      analytics.track('getting_started_gitlab_bot_check', {
-        path: 'repo',
-        vcs_provider: 'gitlab',
-        group: selectedGitLabGroup.name
-      });
-      
-      // Check if the bot has been added to the group
-      const isMember = await api.checkGitLabGroupMembership(selectedGitLabGroup.id);
-      
-      if (isMember) {
-        // Track successful bot addition
-        analytics.track('getting_started_gitlab_bot_added', {
-          path: 'repo',
-          vcs_provider: 'gitlab',
-          group: selectedGitLabGroup.name
-        });
-        
-        // Bot is verified, proceed to next step
-        markGitLabStepComplete('add-bot');
-      } else {
-        gitlabBotError = `The Terrateam bot (@${gitlabBotUsername || 'terrateam-bot'}) has not been added to the group yet. Please add the bot as a Developer first.`;
-      }
-    } catch (error) {
-      console.error('Failed to verify bot membership:', error);
-      gitlabBotError = 'Failed to verify bot status. Please try again.';
-    } finally {
-      checkingGitLabBot = false;
     }
   }
 
@@ -1336,9 +1224,8 @@
               {#each (currentProvider === 'gitlab' ? [
                 {step: 'fork', index: 0, label: '1'},
                 {step: 'enable-pipelines', index: 1, label: '2'},
-                {step: 'add-bot', index: 2, label: '3'},
-                {step: 'make-changes', index: 3, label: '4'},
-                {step: 'success', index: 4, label: '5'}
+                {step: 'make-changes', index: 2, label: '4'},
+                {step: 'success', index: 3, label: '5'}
               ] : [
                 {step: 'install-app', index: 0, label: '1'},
                 {step: 'fork', index: 1, label: '2'},
@@ -1706,13 +1593,12 @@
               {#each [
                 {step: 'select-group', index: 0, label: '1'},
                 {step: 'fork', index: 1, label: '2'},
-                {step: 'submit-token', index: 2, label: '3'},
-                {step: 'add-bot', index: 3, label: '4'},
-                {step: 'configure-webhook', index: 4, label: '5'},
-                {step: 'push-test', index: 5, label: '6'},
-                {step: 'configure-variables', index: 6, label: '7'},
-                {step: 'make-changes', index: 7, label: '8'},
-                {step: 'success', index: 8, label: '9'}
+                {step: 'configure-webhook', index: 2, label: '3'},
+                {step: 'push-test', index: 3, label: '4'},
+                {step: 'submit-token', index: 4, label: '5'},
+                {step: 'configure-variables', index: 5, label: '6'},
+                {step: 'make-changes', index: 6, label: '7'},
+                {step: 'success', index: 7, label: '8'}
               ] as stepInfo}
                 <div class="flex justify-center">
                   <div class="flex items-center justify-center w-8 h-8 rounded-full text-xs font-medium
@@ -1720,7 +1606,6 @@
                                (stepInfo.step === 'select-group' && gitlabDemoStepCompleted['select-group']) ||
                                (stepInfo.step === 'fork' && gitlabDemoStepCompleted.fork) ||
                                (stepInfo.step === 'submit-token' && gitlabDemoStepCompleted['submit-token']) ||
-                               (stepInfo.step === 'add-bot' && gitlabDemoStepCompleted['add-bot']) ||
                                (stepInfo.step === 'configure-webhook' && gitlabDemoStepCompleted['configure-webhook']) ||
                                (stepInfo.step === 'push-test' && gitlabDemoStepCompleted['push-test']) ||
                                (stepInfo.step === 'configure-variables' && gitlabDemoStepCompleted['configure-variables']) ||
@@ -1730,7 +1615,6 @@
                     {#if (stepInfo.step === 'select-group' && gitlabDemoStepCompleted['select-group']) ||
                          (stepInfo.step === 'fork' && gitlabDemoStepCompleted.fork) ||
                          (stepInfo.step === 'submit-token' && gitlabDemoStepCompleted['submit-token']) ||
-                         (stepInfo.step === 'add-bot' && gitlabDemoStepCompleted['add-bot']) ||
                          (stepInfo.step === 'configure-webhook' && gitlabDemoStepCompleted['configure-webhook']) ||
                          (stepInfo.step === 'push-test' && gitlabDemoStepCompleted['push-test']) ||
                          (stepInfo.step === 'configure-variables' && gitlabDemoStepCompleted['configure-variables']) ||
@@ -1744,7 +1628,7 @@
               {/each}
             </div>
             <div class="text-center text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-              Step {['select-group', 'fork', 'submit-token', 'add-bot', 'configure-webhook', 'push-test', 'configure-variables', 'make-changes', 'success'].indexOf(currentGitLabDemoStep) + 1} of 9
+              Step {['select-group', 'fork', 'configure-webhook', 'push-test', 'submit-token', 'configure-variables', 'make-changes', 'success'].indexOf(currentGitLabDemoStep) + 1} of 9
             </div>
           </div>
 
@@ -1968,80 +1852,6 @@
               </div>
             </div>
 
-          {:else if currentGitLabDemoStep === 'add-bot'}
-            <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 sm:p-6">
-              <div class="flex flex-col sm:flex-row sm:items-start gap-4">
-                <div class="flex-shrink-0 flex justify-center sm:block">
-                  <div class="flex items-center justify-center w-12 h-12 sm:w-10 sm:h-10 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                    <Icon icon="mdi:robot" class="text-green-600 dark:text-green-400" width="24" />
-                  </div>
-                </div>
-                <div class="flex-1">
-                  <h3 class="text-lg sm:text-xl font-semibold text-green-900 dark:text-green-100 mb-3 text-center sm:text-left">
-                    Add Terrateam Bot
-                  </h3>
-                  <p class="text-sm sm:text-base text-green-800 dark:text-green-200 mb-6 text-center sm:text-left">
-                    Add the Terrateam bot to the <strong class="text-green-700 dark:text-green-300 break-all">{selectedGitLabDemoGroup?.name || 'selected'}</strong> group. This bot will manage Terraform operations and provide feedback on merge requests.
-                  </p>
-
-                  <div class="bg-green-100 dark:bg-green-900/30 rounded-lg p-4 sm:p-5 mb-4">
-                    <h4 class="font-semibold text-green-900 dark:text-green-100 mb-3 text-center sm:text-left">Instructions:</h4>
-                    <ol class="list-decimal list-inside space-y-3 text-sm sm:text-base text-green-800 dark:text-green-200">
-                      <li>
-                        <a 
-                          href="https://gitlab.com/groups/{selectedGitLabDemoGroup?.name || ''}/-/group_members" 
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          class="inline-flex items-center font-medium text-green-700 dark:text-green-300 underline hover:text-green-600 dark:hover:text-green-200 break-words"
-                        >
-                          <span>Open your group members page</span>
-                          <Icon icon="mdi:open-in-new" class="ml-1 flex-shrink-0" width="16" />
-                        </a>
-                      </li>
-                      <li>Click <strong>Invite members</strong></li>
-                      <li>Add user: <code class="bg-green-200 dark:bg-green-800 px-1 rounded break-all">@{gitlabBotUsername || 'terrateam-bot'}</code></li>
-                      <li>Set role to <strong>Developer</strong> or higher</li>
-                      <li>Click <strong>Invite</strong></li>
-                    </ol>
-                  </div>
-
-                  {#if botVerificationError}
-                    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4 mb-4">
-                      <div class="flex items-start">
-                        <Icon icon="mdi:alert-circle" class="text-red-600 dark:text-red-400 mr-2 mt-0.5" width="20" />
-                        <p class="text-sm text-red-800 dark:text-red-200">{botVerificationError}</p>
-                      </div>
-                    </div>
-                  {/if}
-
-                  <div class="flex flex-col sm:flex-row gap-3">
-                    <button
-                      on:click={checkBotAdded}
-                      disabled={checkingBotAdded}
-                      class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center w-full sm:w-auto"
-                    >
-                      {#if checkingBotAdded}
-                        <svg class="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
-                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                        </svg>
-                        Checking...
-                      {:else}
-                        <Icon icon="mdi:check" class="mr-2" width="16" />
-                        Verify Bot Added
-                      {/if}
-                    </button>
-                    <button
-                      on:click={() => markGitLabDemoStepComplete('add-bot')}
-                      class="border border-green-600 text-green-600 dark:text-green-400 px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-50 dark:hover:bg-green-900/30 w-full sm:w-auto text-center"
-                    >
-                      Skip Verification
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
           {:else if currentGitLabDemoStep === 'configure-webhook'}
             <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 sm:p-6">
               <div class="flex flex-col sm:flex-row sm:items-start gap-4">
@@ -2243,7 +2053,7 @@
                     <div class="flex items-start">
                       <Icon icon="mdi:shield-lock" class="text-amber-600 mr-2 mt-0.5" width="16" />
                       <div class="text-sm text-amber-800 dark:text-amber-200">
-                        <strong>Why this is needed:</strong> This setting allows the Terrateam bot (@{gitlabBotUsername || 'terrateam-bot'} with Developer role) to run pipelines with variables that contain your cloud credentials and Terraform configuration.
+                        <strong>Why this is needed:</strong> This setting allows Terrateam to run pipelines with variables that contain your cloud credentials and Terraform configuration.
                       </div>
                     </div>
                   </div>
@@ -3036,13 +2846,12 @@
               {#each [
                 {step: 'select-group', index: 0, label: '1'},
                 {step: 'select-repo', index: 1, label: '2'},
-                {step: 'submit-token', index: 2, label: '3'},
-                {step: 'add-bot', index: 3, label: '4'},
-                {step: 'configure-webhook', index: 4, label: '5'},
-                {step: 'push-test', index: 5, label: '6'},
-                {step: 'configure-variables', index: 6, label: '7'},
-                {step: 'add-pipeline', index: 7, label: '8'},
-                {step: 'success', index: 8, label: '9'}
+                {step: 'configure-webhook', index: 2, label: '3'},
+                {step: 'push-test', index: 3, label: '4'},
+                {step: 'submit-token', index: 4, label: '5'},
+                {step: 'configure-variables', index: 5, label: '6'},
+                {step: 'add-pipeline', index: 6, label: '7'},
+                {step: 'success', index: 7, label: '8'}
               ] as stepInfo}
                 <div class="flex justify-center">
                   <div class="flex items-center justify-center w-8 h-8 rounded-full text-xs font-medium
@@ -3050,7 +2859,6 @@
                                (stepInfo.step === 'select-group' && gitlabStepCompleted['select-group']) ||
                                (stepInfo.step === 'select-repo' && gitlabStepCompleted['select-repo']) ||
                                (stepInfo.step === 'submit-token' && gitlabStepCompleted['submit-token']) ||
-                               (stepInfo.step === 'add-bot' && gitlabStepCompleted['add-bot']) ||
                                (stepInfo.step === 'configure-webhook' && gitlabStepCompleted['configure-webhook']) ||
                                (stepInfo.step === 'push-test' && gitlabStepCompleted['push-test']) ||
                                (stepInfo.step === 'configure-variables' && gitlabStepCompleted['configure-variables']) ||
@@ -3060,7 +2868,6 @@
                     {#if (stepInfo.step === 'select-group' && gitlabStepCompleted['select-group']) ||
                          (stepInfo.step === 'select-repo' && gitlabStepCompleted['select-repo']) ||
                          (stepInfo.step === 'submit-token' && gitlabStepCompleted['submit-token']) ||
-                         (stepInfo.step === 'add-bot' && gitlabStepCompleted['add-bot']) ||
                          (stepInfo.step === 'configure-webhook' && gitlabStepCompleted['configure-webhook']) ||
                          (stepInfo.step === 'push-test' && gitlabStepCompleted['push-test']) ||
                          (stepInfo.step === 'configure-variables' && gitlabStepCompleted['configure-variables']) ||
@@ -3074,7 +2881,7 @@
               {/each}
             </div>
             <div class="text-center text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-              Step {['select-group', 'select-repo', 'submit-token', 'add-bot', 'configure-webhook', 'push-test', 'configure-variables', 'add-pipeline', 'success'].indexOf(currentGitLabStep) + 1} of 9
+              Step {['select-group', 'select-repo', 'configure-webhook', 'submit-token', 'push-test', 'configure-variables', 'add-pipeline', 'success'].indexOf(currentGitLabStep) + 1} of 9
             </div>
           </div>
 
@@ -3324,86 +3131,6 @@
               </div>
             </div>
 
-          {:else if currentGitLabStep === 'add-bot'}
-            <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 md:p-6">
-              <div class="flex items-start">
-                <div class="flex-shrink-0">
-                  <div class="flex items-center justify-center w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                    <Icon icon="mdi:robot" class="text-green-600 dark:text-green-400" width="20" />
-                  </div>
-                </div>
-                <div class="ml-4 flex-1">
-                  <h3 class="text-base md:text-lg font-medium text-green-900 dark:text-green-100 mb-2">
-                    Add Terrateam Bot
-                  </h3>
-                  <p class="text-green-800 dark:text-green-200 mb-4">
-                    Add the Terrateam bot to the <strong>{selectedGitLabGroup?.name || 'selected'}</strong> group. This bot will manage Terraform operations and provide feedback on merge requests.
-                  </p>
-
-                  <div class="bg-green-100 dark:bg-green-900/30 rounded-lg p-4 mb-4">
-                    <h4 class="font-medium text-green-900 dark:text-green-100 mb-2">Instructions:</h4>
-                    <ol class="list-decimal list-inside space-y-1 text-sm text-green-800 dark:text-green-200">
-                      <li>
-                        <a 
-                          href="https://gitlab.com/groups/{selectedGitLabGroup?.name || ''}/-/group_members" 
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          class="inline-flex items-center font-medium text-green-700 dark:text-green-300 underline hover:text-green-600 dark:hover:text-green-200"
-                        >
-                          Open your group members page
-                          <Icon icon="mdi:open-in-new" class="ml-1" width="16" />
-                        </a>
-                      </li>
-                      <li>Click <strong>Invite members</strong></li>
-                      <li>Add user: <code class="bg-green-200 dark:bg-green-800 px-1 rounded break-all">@{gitlabBotUsername || 'terrateam-bot'}</code></li>
-                      <li>Set role to <strong>Developer</strong> or higher</li>
-                      <li>Click <strong>Invite</strong></li>
-                    </ol>
-                  </div>
-
-                  {#if gitlabBotError}
-                    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4 mb-4">
-                      <div class="flex items-start">
-                        <Icon icon="mdi:alert-circle" class="text-red-600 dark:text-red-400 mr-2 mt-0.5" width="20" />
-                        <p class="text-sm text-red-800 dark:text-red-200">{gitlabBotError}</p>
-                      </div>
-                    </div>
-                  {/if}
-
-                  <div class="flex items-center space-x-3">
-                    <button
-                      on:click={verifyBotAdded}
-                      disabled={checkingGitLabBot}
-                      class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                    >
-                      {#if checkingGitLabBot}
-                        <svg class="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
-                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                        </svg>
-                        Checking...
-                      {:else}
-                        <Icon icon="mdi:check" class="mr-2" width="16" />
-                        Verify Bot Added
-                      {/if}
-                    </button>
-                    <button
-                      on:click={() => markGitLabStepComplete('add-bot')}
-                      class="border border-green-600 text-green-600 dark:text-green-400 px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-50 dark:hover:bg-green-900/30"
-                    >
-                      Skip Verification
-                    </button>
-                    <button
-                      on:click={() => goToGitLabStep('select-repo')}
-                      class="border border-gray-300 text-gray-600 dark:text-gray-400 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700"
-                    >
-                      Go Back
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
           {:else if currentGitLabStep === 'configure-webhook'}
             <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-6">
               <div class="flex items-start">
@@ -3620,7 +3347,7 @@
                         <Icon icon="mdi:numeric-4-circle" class="text-purple-600 mr-2 mt-0.5" width="16" />
                         <div>
                           <div class="text-gray-700 dark:text-gray-300">Select <strong>Developer</strong> from the dropdown</div>
-                          <div class="text-gray-500 dark:text-gray-400 text-xs">This allows the Terrateam bot (@{gitlabBotUsername || 'terrateam-bot'}) to use pipeline variables</div>
+                          <div class="text-gray-500 dark:text-gray-400 text-xs">This allows Terrateam to use pipeline variables</div>
                         </div>
                       </div>
                       
@@ -3637,7 +3364,7 @@
                     <div class="flex items-start">
                       <Icon icon="mdi:shield-lock" class="text-amber-600 mr-2 mt-0.5" width="16" />
                       <div class="text-sm text-amber-800 dark:text-amber-200">
-                        <strong>Important:</strong> This allows the Terrateam bot (@{gitlabBotUsername || 'terrateam-bot'}) to run pipelines with variables containing your cloud credentials and Terraform configuration.
+                        <strong>Important:</strong> This allows Terrateam to run pipelines with variables containing your cloud credentials and Terraform configuration.
                       </div>
                     </div>
                   </div>
