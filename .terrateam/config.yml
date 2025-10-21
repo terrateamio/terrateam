@@ -4,6 +4,7 @@ apply_requirements:
 when_modified:
   file_patterns: []
   autoplan_draft_pr: false
+  autoapply: true
 
 dirs:
   'rfds/**/index*':
@@ -45,6 +46,11 @@ workflows:
             token: code-commit-msg
             any_of_count: 1
       - type: plan    
+    apply:
+      - type: run
+        cmd: ['${TERRATEAM_ROOT}/bin/commit-changelog']
+        visible_on: always
+      - type: apply
 
 cost_estimation:
   enabled: false

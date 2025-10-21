@@ -1,0 +1,167 @@
+= Automated Changelog Generation
+:authors: Josh Pollara <josh@terrateam.io>
+:state: discussion
+:labels: developer-experience, documentation, automation
+:source-highlighter: highlight.js
+:toc:
+
+== Motivation
+
+Customers have been asking for a customer-facing changelog to understand what changes are being released in Terrateam. Currently, we use GitHub's auto-generated release notes which are:
+
+. Too technical - They describe implementation details rather than user impact
+. PR-focused - They reference pull request numbers and developer commits rather than explaining what changed
+. Not customer-friendly - They don't explain WHY a change matters to users
+
+We need a changelog that:
+
+. Explains changes in plain English
+. Focuses on user impact (WHAT changed and WHY it matters)
+. Follows industry standards (Keep a Changelog format)
+. Is automatically maintained without manual overhead
+. Integrates with our existing workflow
+
+== Proposal
+
+Create an automated changelog system that uses Claude AI to generate customer-facing entries from code changes, integrated into our existing PR workflow and Terrateam automation.
+
+=== Architecture
+
+The system consists of three main components:
+
+==== 1. Developer Tool: `bin/generate-changelog`
+
+A CLI tool that developers run when creating a PR:
+
+[source,bash]
+----
+./bin/generate-changelog [ISSUE_NUMBER]
+----
+
+The script:
+
+. Auto-detects issue number from branch name (e.g., `123-feature` → issue #123)
+. Analyzes git diff (uncommitted changes or branch vs main)
+. Calls `claude --print` with a specialized prompt to generate plain-English entry
+. Presents entry to developer for review
+. Adds entry to `CHANGELOG.md` under "## Unreleased" section
+
+The prompt instructs Claude to:
+
+* Write in plain English for customers
+* Focus on WHAT changed and WHY it matters
+* Support markdown formatting (bullets, bold, italics)
+* Avoid implementation details, PR numbers, developer names
+
+==== 2. Post-Apply Automation: `bin/commit-changelog`
+
+A script executed by Terrateam after merge on main branch:
+
+[source,bash]
+----
+.terrateam/config.yml:
+  workflows:
+    - tag_query: code
+      apply:
+        - type: run
+          cmd: ['${TERRATEAM_ROOT}/bin/commit-changelog']
+        - type: apply
+----
+
+This script:
+
+. Runs only on main branch (post-merge)
+. Waits for `release.yml` to create the git tag (polls for up to 2 minutes)
+. Reads the tag using `git tag --points-at HEAD` to get the VERSION_TAG
+. Moves "## Unreleased" entries to versioned section (e.g., `## [20251021-1430-abc1234] - 2025-10-21`)
+. Commits CHANGELOG.md with proper issue reference
+. Pushes to main (bypasses branch protection since Terrateam Action is on bypass list)
+
+**Why wait for the tag?** The VERSION_TAG format includes a timestamp (`YYYYMMDD-HHMM-shortsha`). If Terrateam calculated its own tag, it would differ from the tag `release.yml` creates, causing a mismatch between the CHANGELOG version and the actual release tag. By waiting for and reading the tag created by `release.yml`, we ensure consistency.
+
+==== 3. Backfill Tool: `bin/generate-changelog --backfill`
+
+For regenerating changelog from historical releases:
+
+[source,bash]
+----
+./bin/generate-changelog --backfill [N]  # Default: 20 releases
+----
+
+This mode:
+
+. Fetches releases using `gh release list`
+. Maps each release tag to its merge commit
+. Extracts issue number from merge commit message format: `Merge pull request #XXX from terrateamio/123-branch-name`
+. Generates changelog entry by analyzing the PR diff
+. Inserts into CHANGELOG.md in chronological order (newest first)
+
+=== Integration with Existing Workflow
+
+The system integrates into our development process:
+
+==== Developer Flow
+
+[source]
+----
+1. Create feature branch: 123-add-webhooks
+2. Make code changes
+3. Run: ./bin/generate-changelog
+4. Review generated entry
+5. Entry added to CHANGELOG.md under "Unreleased"
+6. git add CHANGELOG.md
+7. git commit -m "#123 ADD Support for custom webhooks"
+8. Create PR and merge
+----
+
+==== Post-Merge Automation
+
+[source]
+----
+1. PR merges to main
+2. GitHub Actions starts release workflow
+3. Terrateam runs apply workflow
+4. bin/commit-changelog executes:
+   - Generates VERSION_TAG: 20251021-1430-abc1234
+   - Moves Unreleased → ## [VERSION_TAG] - DATE
+   - Commits: "#123 REFACTOR Finalize CHANGELOG for VERSION_TAG"
+   - Pushes to main (bypasses branch protection)
+5. GitHub Actions creates release with VERSION_TAG
+----
+
+== Trade-offs
+
+=== Claude Dependency
+
+*Trade-off:* Relies on `claude` CLI being installed and authenticated.
+
+*Mitigation:*
+
+* Claude is already used in development
+* Fallback: developer can write entry manually
+* Future: could support multiple AI providers
+
+=== Branch Protection Bypass
+
+*Trade-off:* Terrateam Action can bypass branch protection to commit CHANGELOG.
+
+*Mitigation:*
+
+* Only modifies CHANGELOG.md (low risk)
+* All commits traceable with issue numbers
+* Changes already reviewed in PR (just moving sections)
+* Alternative would be manual backfill, losing automation
+
+=== VERSION_TAG Sequencing
+
+*Challenge:* VERSION_TAG uses timestamp (`YYYYMMDD-HHMM-shortsha`), but we need the same tag in both CHANGELOG and git releases.
+
+*Solution:*
+
+* `release.yml` runs first on merge, calculates and creates the git tag immediately
+* `bin/commit-changelog` waits for the tag to exist (polls up to 2 minutes)
+* Reads the tag using `git tag --points-at HEAD`
+* Uses that tag to finalize CHANGELOG
+* `release.yml` ignores CHANGELOG.md commits via `paths-ignore` to prevent double-triggering
+
+*Why not calculate twice?* If both scripts independently run `date +'%Y%m%d-%H%M'`, they could execute in different minutes, creating mismatched tags (e.g., `20251021-1430-abc1234` vs `20251021-1431-abc1234`).
