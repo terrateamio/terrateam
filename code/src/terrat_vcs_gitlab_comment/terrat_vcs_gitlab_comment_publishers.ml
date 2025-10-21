@@ -1,3 +1,6 @@
+let src = Logs.Src.create "vcs_gitlab_comment_publishers"
+
+module Logs = (val Logs.src_log src : Logs.LOG)
 module Api = Terrat_vcs_api_gitlab
 module Scope = Terrat_scope.Scope
 module By_scope = Terrat_scope.By_scope
@@ -263,6 +266,7 @@ module Comment_api = struct
     >>= fun comment_id -> Abb.Future.return (Ok comment_id)
 
   let apply_template_and_publish ~request_id client pull_request msg_type template kv =
+    Logs.info (fun m -> m "%s : PUBLISH : %s" request_id msg_type);
     match Snabela.apply template kv with
     | Ok body ->
         Abbs_future_combinators.Result.ignore
@@ -272,6 +276,7 @@ module Comment_api = struct
         Abb.Future.return (Error `Error)
 
   let apply_template_and_publish_jinja ~request_id client pull_request msg_type template kv =
+    Logs.info (fun m -> m "%s : PUBLISH : %s" request_id msg_type);
     match Minijinja.render_template template kv with
     | Ok body -> comment_on_pull_request ~request_id client pull_request msg_type body
     | Error err ->
