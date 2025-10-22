@@ -1706,6 +1706,11 @@ module PutApiV4ProjectsIdMergeRequestsMergeRequestIidMerge = struct
     [@@deriving make, show, eq]
   end
 
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdMergeRequestsMergeRequestIidMerge.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
   module Responses = struct
     module OK = struct
       type t = Gitlabc_components.API_Entities_MergeRequest.t
@@ -1762,8 +1767,10 @@ module PutApiV4ProjectsIdMergeRequestsMergeRequestIidMerge = struct
 
   let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/merge"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in

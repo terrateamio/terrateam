@@ -773,9 +773,29 @@ let fetch_pull_request_reviews ~request_id client repo pull_number =
 let fetch_pull_request_requested_reviews ~request_id repo pull_number client =
   Abb.Future.return (Ok [])
 
-let merge_pull_request ~request_id client pull_request =
+let merge_pull_request ~request_id client pull_request merge_strategy =
   let module Gl =
     Gitlabc_projects_merge_requests.PutApiV4ProjectsIdMergeRequestsMergeRequestIidMerge
+  in
+  let module Glb = Gitlabc_components_putapiv4projectsidmergerequestsmergerequestiidmerge in
+  let module Ms = Terrat_base_repo_config_v1.Automerge.Merge_strategy in
+  let merge_commit_message = None in
+  let merge_when_pipeline_succeeds = None in
+  let sha = None in
+  let should_remove_source_branch = None in
+  let skip_merge_train = None in
+  let squash = Some (merge_strategy = Ms.Squash) in
+  let squash_commit_message = None in
+  let body =
+    {
+      Glb.merge_commit_message;
+      merge_when_pipeline_succeeds;
+      sha;
+      should_remove_source_branch;
+      skip_merge_train;
+      squash;
+      squash_commit_message;
+    }
   in
   let run =
     let open Abbs_future_combinators.Infix_result_monad in
@@ -783,6 +803,7 @@ let merge_pull_request ~request_id client pull_request =
       client.Client.client
       Gl.(
         make
+          ~body
           (Parameters.make
              ~id:(CCInt.to_string @@ Repo.id @@ Terrat_pull_request.repo pull_request)
              ~merge_request_iid:(Terrat_pull_request.id pull_request)))

@@ -572,10 +572,16 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun () ->
         S.Db.query_dirspaces_owned_by_other_pull_requests ~request_id db pull_request dirspaces)
 
-  let merge_pull_request request_id client pull_request =
+  let merge_pull_request request_id client pull_request merge_strategy =
     Abbs_time_it.run
-      (fun time -> Logs.info (fun m -> m "%s : MERGE_PULL_REQUEST : time=%f" request_id time))
-      (fun () -> S.Api.merge_pull_request ~request_id client pull_request)
+      (fun time ->
+        Logs.info (fun m ->
+            m
+              "%s : MERGE_PULL_REQUEST : METHOD %s : time=%f"
+              request_id
+              (Terrat_base_repo_config_v1.Automerge.Merge_strategy.to_string merge_strategy)
+              time))
+      (fun () -> S.Api.merge_pull_request ~request_id client pull_request merge_strategy)
 
   let delete_branch request_id client repo branch =
     Abbs_time_it.run
@@ -5955,12 +5961,17 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               Dv.repo_config ctx state
               >>= fun repo_config ->
               let module Am = Terrat_base_repo_config_v1.Automerge in
-              let { Am.enabled; delete_branch = delete_branch'; require_explicit_apply } =
+              let {
+                Am.enabled;
+                delete_branch = delete_branch';
+                merge_strategy;
+                require_explicit_apply;
+              } =
                 automerge_config repo_config
               in
               if enabled && ((not require_explicit_apply) || op <> `Plan) then
                 let open Abb.Future.Infix_monad in
-                merge_pull_request state.State.request_id client pull_request
+                merge_pull_request state.State.request_id client pull_request merge_strategy
                 >>= function
                 | Ok () ->
                     if delete_branch' then

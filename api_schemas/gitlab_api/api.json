@@ -59375,6 +59375,15 @@
         "produces": [
           "application/json"
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/putApiV4ProjectsIdMergeRequestsMergeRequestIidMerge"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "content": {
