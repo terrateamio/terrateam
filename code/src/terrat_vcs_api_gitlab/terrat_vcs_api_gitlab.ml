@@ -773,9 +773,19 @@ let fetch_pull_request_reviews ~request_id client repo pull_number =
 let fetch_pull_request_requested_reviews ~request_id repo pull_number client =
   Abb.Future.return (Ok [])
 
-let merge_pull_request ~request_id client pull_request =
+let merge_pull_request ~request_id client pull_request merge_strategy =
   let module Gl =
     Gitlabc_projects_merge_requests.PutApiV4ProjectsIdMergeRequestsMergeRequestIidMerge
+  in
+  let module Ms = Terrat_base_repo_config_v1.Automerge.Merge_strategy in
+  (* TODO #837 Properly support gitlab's merge options *)
+  (* TODO #837 or does it even make sense to have this on GitLab? Given that a GitLab repo
+     can only have a single merge method as far as I can see *)
+  let _merge_method =
+    match merge_strategy with
+    | Ms.Merge -> "merge"
+    | Ms.Squash -> "squash"
+    | Ms.Rebase -> "rebase_merge"
   in
   let run =
     let open Abbs_future_combinators.Infix_result_monad in

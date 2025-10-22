@@ -318,9 +318,21 @@ module Apply_requirements : sig
 end
 
 module Automerge : sig
+  module Merge_strategy : sig
+    type t =
+      | Merge
+      | Rebase
+      | Squash
+    [@@deriving show, yojson, eq]
+
+    val make : string -> (t, [> `Merge_strategy_parse_err of string ]) result
+    val to_string : t -> string
+  end
+
   type t = {
     delete_branch : bool; [@default false]
     enabled : bool; [@default false]
+    merge_strategy : Merge_strategy.t; [@default Merge_strategy.Merge]
     require_explicit_apply : bool; [@default false]
   }
   [@@deriving make, show, yojson, eq]
@@ -827,6 +839,7 @@ type of_version_1_err =
   | `Glob_parse_err of string * string
   | `Hooks_unknown_run_on_err of Terrat_repo_config_run_on.t
   | `Hooks_unknown_visible_on_err of string
+  | `Merge_strategy_parse_err of string
   | `Notification_policy_tag_query_err of string * string
   | `Pattern_parse_err of string
   | `Stack_config_tag_query_err of string * string
