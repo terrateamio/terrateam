@@ -45,6 +45,16 @@ module Pull_requests : sig
     int64 Brtl_ep_paginate.Param.t option ->
     int ->
     Brtl_rtng.Handler.t
+
+  module Stacks : sig
+    val post :
+      Terrat_vcs_service_github_provider.Api.Config.t ->
+      Terrat_storage.t ->
+      int ->
+      string ->
+      string ->
+      Brtl_rtng.Handler.t
+  end
 end
 
 module Repos : sig

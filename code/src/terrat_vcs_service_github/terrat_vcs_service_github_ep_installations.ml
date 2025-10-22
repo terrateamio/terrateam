@@ -1016,6 +1016,16 @@ module Dirspaces = struct
 end
 
 module Pull_requests = struct
+  module Stacks = struct
+    let post config storage installation_id repo_id pull_request_id =
+      Brtl_ep.run_result_json ~f:(fun ctx ->
+          let open Abbs_future_combinators.Infix_result_monad in
+          Terrat_session.with_session ctx
+          >>= fun user ->
+          enforce_installation_access storage user installation_id ctx
+          >>= fun () -> raise (Failure "nyi"))
+  end
+
   module Sql = struct
     let read fname =
       CCOption.get_exn_or

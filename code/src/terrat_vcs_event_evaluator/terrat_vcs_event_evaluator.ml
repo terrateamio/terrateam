@@ -4808,6 +4808,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         >>= fun repo_config ->
         match Terrat_change_match3.synthesize_config ~index repo_config with
         | Ok config ->
+            Printf.printf "config =\n%s\n%!" (Terrat_change_match3.Config.show config);
             publish_msg
               state.State.request_id
               client

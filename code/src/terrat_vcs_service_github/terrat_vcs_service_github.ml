@@ -203,6 +203,16 @@ struct
                  (ud_array "page" Brtl_ep_paginate.Param.(of_param Typ.(ud' CCInt64.of_string_opt))))
           /? Query.(option_default 20 (Query.int "limit")))
 
+      let installation_pull_requests_stacks_rt () =
+        Brtl_rtng.Route.(
+          installation_api_rt ()
+          /% Path.int
+          / "repos"
+          /% Path.string
+          / "prs"
+          /% Path.string
+          / "stacks")
+
       let installation_repos_rt () =
         Brtl_rtng.Route.(
           installation_api_rt ()
@@ -256,6 +266,9 @@ struct
             ( `GET,
               Rt.installation_pull_requests_manifests_rt ()
               --> Ep_inst.Pull_requests.get config storage );
+            ( `POST,
+              Rt.installation_pull_requests_stacks_rt ()
+              --> Ep_inst.Pull_requests.Stacks.post config storage );
             (`GET, Rt.installation_repos_rt () --> Ep_inst.Repos.get config storage);
             ( `POST,
               Rt.installation_repos_refresh_rt () --> Ep_inst.Repos.Refresh.post config storage );
