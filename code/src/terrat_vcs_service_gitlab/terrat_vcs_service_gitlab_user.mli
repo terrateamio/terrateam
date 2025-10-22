@@ -67,3 +67,10 @@ val enforce_installation_access :
   Terrat_user.t ->
   int ->
   (unit, [> enforce_installation_access_err ]) result Abb.Future.t
+
+val enforce_installation_access' :
+  Terrat_storage.t ->
+  Terrat_user.t ->
+  int ->
+  ('a, 'b) Brtl_ctx.t ->
+  (unit, ('a, [> `Forbidden | `Internal_server_error ]) Brtl_ctx.t) result Abb.Future.t

@@ -244,3 +244,26 @@ let enforce_installation_access db user installation_id =
   >>= function
   | [] -> Abb.Future.return (Error `Forbidden)
   | _ :: _ -> Abb.Future.return (Ok ())
+
+let enforce_installation_access' storage user installation_id ctx =
+  if
+    Terrat_user.has_capability
+      (Terrat_user.Capability.Installation_id (CCInt.to_string installation_id))
+      user
+  then Abb.Future.return (Ok ())
+  else
+    let open Abb.Future.Infix_monad in
+    Pgsql_pool.with_conn storage ~f:(fun db ->
+        Pgsql_io.Prepared_stmt.fetch
+          db
+          (Sql.select_user_installation ())
+          ~f:CCFun.id
+          (Terrat_user.id user)
+          (CCInt64.of_int installation_id))
+    >>= function
+    | Ok [] -> Abb.Future.return (Error (Brtl_ctx.set_response `Forbidden ctx))
+    | Ok (_ :: _) -> Abb.Future.return (Ok ())
+    | Error (#Pgsql_pool.err as err) ->
+        Abb.Future.return (Error (Brtl_ctx.set_response `Internal_server_error ctx))
+    | Error (#Pgsql_io.err as err) ->
+        Abb.Future.return (Error (Brtl_ctx.set_response `Internal_server_error ctx))
