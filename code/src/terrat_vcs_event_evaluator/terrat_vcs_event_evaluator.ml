@@ -94,8 +94,21 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   end
 
   let create_client request_id config account =
+    let open Abb.Future.Infix_monad in
+    let terrat_config = S.Api.Config.config config in
     Abbs_time_it.run (log_time request_id "CREATE_CLIENT") (fun () ->
-        S.Api.create_client ~request_id config account)
+        Abbs_future_combinators.protect_finally
+          ~setup:(fun () -> Terrat_storage.create terrat_config)
+          (fun pool ->
+            Pgsql_pool.with_conn pool ~f:(fun db ->
+                S.Api.create_client ~request_id config account db))
+          ~finally:Pgsql_pool.destroy)
+    >>= function
+    | Ok client -> Abb.Future.return (Ok client)
+    | Error `Error -> Abb.Future.return (Error `Error)
+    | Error (#Pgsql_pool.err as err) ->
+        Logs.err (fun m -> m "%s : %a" request_id Pgsql_pool.pp_err err);
+        Abb.Future.return (Error `Error)
 
   let store_account_repository request_id db account repo =
     Abbs_time_it.run
@@ -1111,6 +1124,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       [ `Error
       | Repo_config.fetch_err
       | Terrat_change_match3.synthesize_config_err
+      | Pgsql_pool.err
       | `Noop of (t[@opaque])
       ]
     [@@deriving show]

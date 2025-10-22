@@ -3,6 +3,7 @@ module Dirspace_state = Terrat_api_components_dirspace_state
 module Error = Terrat_api_components_error
 module Gate = Terrat_api_components_gate
 module Github_user = Terrat_api_components_github_user
+module Gitlab_access_token = Terrat_api_components_gitlab_access_token
 module Gitlab_group = Terrat_api_components_gitlab_group
 module Gitlab_user = Terrat_api_components_gitlab_user
 module Gitlab_webhook = Terrat_api_components_gitlab_webhook
