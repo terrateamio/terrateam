@@ -1,66 +1,79 @@
-module Work_manifests : sig
-  module Outputs : sig
+module type S = sig
+  module Account_id : Terrat_vcs_api.ID
+
+  val enforce_installation_access :
+    request_id:string ->
+    Terrat_user.t ->
+    Account_id.t ->
+    Pgsql_io.t ->
+    (unit, [> `Forbidden ]) result Abb.Future.t
+end
+
+module Make (S : S with type Account_id.t = int) : sig
+  module Work_manifests : sig
+    module Outputs : sig
+      val get :
+        Terrat_vcs_service_github_provider.Api.Config.t ->
+        Terrat_storage.t ->
+        int ->
+        Uuidm.t ->
+        string option ->
+        string option ->
+        int Brtl_ep_paginate.Param.t option ->
+        int ->
+        bool ->
+        Brtl_rtng.Handler.t
+    end
+
     val get :
       Terrat_vcs_service_github_provider.Api.Config.t ->
       Terrat_storage.t ->
       int ->
-      Uuidm.t ->
       string option ->
       string option ->
-      int Brtl_ep_paginate.Param.t option ->
+      (string * Uuidm.t) Brtl_ep_paginate.Param.t option ->
       int ->
-      bool ->
       Brtl_rtng.Handler.t
   end
 
-  val get :
-    Terrat_vcs_service_github_provider.Api.Config.t ->
-    Terrat_storage.t ->
-    int ->
-    string option ->
-    string option ->
-    (string * Uuidm.t) Brtl_ep_paginate.Param.t option ->
-    int ->
-    Brtl_rtng.Handler.t
-end
-
-module Dirspaces : sig
-  val get :
-    Terrat_vcs_service_github_provider.Api.Config.t ->
-    Terrat_storage.t ->
-    int ->
-    string option ->
-    string option ->
-    (string * string * string * Uuidm.t) Brtl_ep_paginate.Param.t option ->
-    int ->
-    Brtl_rtng.Handler.t
-end
-
-module Pull_requests : sig
-  val get :
-    Terrat_vcs_service_github_provider.Api.Config.t ->
-    Terrat_storage.t ->
-    int ->
-    int option ->
-    int64 Brtl_ep_paginate.Param.t option ->
-    int ->
-    Brtl_rtng.Handler.t
-end
-
-module Repos : sig
-  val get :
-    Terrat_vcs_service_github_provider.Api.Config.t ->
-    Terrat_storage.t ->
-    int ->
-    string Brtl_ep_paginate.Param.t option ->
-    int ->
-    Brtl_rtng.Handler.t
-
-  module Refresh : sig
-    val post :
+  module Dirspaces : sig
+    val get :
       Terrat_vcs_service_github_provider.Api.Config.t ->
       Terrat_storage.t ->
       int ->
+      string option ->
+      string option ->
+      (string * string * string * Uuidm.t) Brtl_ep_paginate.Param.t option ->
+      int ->
       Brtl_rtng.Handler.t
+  end
+
+  module Pull_requests : sig
+    val get :
+      Terrat_vcs_service_github_provider.Api.Config.t ->
+      Terrat_storage.t ->
+      int ->
+      int option ->
+      int64 Brtl_ep_paginate.Param.t option ->
+      int ->
+      Brtl_rtng.Handler.t
+  end
+
+  module Repos : sig
+    val get :
+      Terrat_vcs_service_github_provider.Api.Config.t ->
+      Terrat_storage.t ->
+      int ->
+      string Brtl_ep_paginate.Param.t option ->
+      int ->
+      Brtl_rtng.Handler.t
+
+    module Refresh : sig
+      val post :
+        Terrat_vcs_service_github_provider.Api.Config.t ->
+        Terrat_storage.t ->
+        int ->
+        Brtl_rtng.Handler.t
+    end
   end
 end

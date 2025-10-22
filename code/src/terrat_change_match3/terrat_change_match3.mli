@@ -7,6 +7,17 @@ type synthesize_config_err =
   ]
 [@@deriving show]
 
+module Stack_config : sig
+  type t = {
+    name : string;
+    paths : string list list;
+        (** A list of all hierarchical paths that reach this stack, furthest away to closets. Each
+            list always ends in [stack_name]. *)
+    config : Terrat_base_repo_config_v1.Stacks.Stack.t;
+  }
+  [@@deriving show, to_yojson]
+end
+
 module Dirspace_config : sig
   type t = {
     dirspace : Terrat_change.Dirspace.t;
@@ -23,6 +34,11 @@ end
 
 module Config : sig
   type t [@@deriving show, to_yojson]
+
+  val dirspace_configs : t -> Dirspace_config.t Terrat_data.Dirspace_map.t
+
+  (** Given a config, calculate the topology of all of the stacks *)
+  val stack_topology : t -> Stack_config.t list list
 end
 
 val synthesize_config :

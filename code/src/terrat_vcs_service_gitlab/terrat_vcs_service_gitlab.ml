@@ -19,6 +19,13 @@ module Make
 struct
   module Evaluator = Terrat_vcs_event_evaluator.Make (Provider)
   module Ep_events = Terrat_vcs_service_gitlab_ep_events.Make (Provider)
+
+  module Ep_inst = Terrat_vcs_service_gitlab_ep_installations.Make (struct
+    module Account_id = Provider.Api.Account.Id
+
+    let enforce_installation_access = Provider.enforce_installation_access
+  end)
+
   module Work_manifest = Terrat_vcs_service_gitlab_ep_work_manifest.Make (Provider)
 
   type t = {
@@ -152,27 +159,19 @@ struct
       let config = t.config in
       let storage = t.storage in
       Routes.routes config storage
+      @ Provider.Stacks.routes config storage
       @ Brtl_rtng.Route.
           [
             (* Installations *)
-            ( `GET,
-              Rt.gitlab_installation_dirspaces ()
-              --> Terrat_vcs_service_gitlab_ep_installations.List_dirspaces.get config storage );
-            ( `GET,
-              Rt.gitlab_installations_repos ()
-              --> Terrat_vcs_service_gitlab_ep_installations.List_repos.get config storage );
+            (`GET, Rt.gitlab_installation_dirspaces () --> Ep_inst.List_dirspaces.get config storage);
+            (`GET, Rt.gitlab_installations_repos () --> Ep_inst.List_repos.get config storage);
             ( `GET,
               Rt.gitlab_installation_work_manifests ()
-              --> Terrat_vcs_service_gitlab_ep_installations.List_work_manifests.get config storage
-            );
+              --> Ep_inst.List_work_manifests.get config storage );
             ( `GET,
               Rt.gitlab_installation_work_manifest_outputs ()
-              --> Terrat_vcs_service_gitlab_ep_installations.List_work_manifest_outputs.get
-                    config
-                    storage );
-            ( `PUT,
-              Rt.gitlab_installation_tokens ()
-              --> Terrat_vcs_service_gitlab_ep_installations.Token.put config storage );
+              --> Ep_inst.List_work_manifest_outputs.get config storage );
+            (`PUT, Rt.gitlab_installation_tokens () --> Ep_inst.Token.put config storage);
             (* Work manifests *)
             (`POST, Rt.gitlab_work_manifest_plan () --> Work_manifest.Plans.post config storage);
             (`GET, Rt.gitlab_get_work_manifest_plan () --> Work_manifest.Plans.get config storage);
@@ -183,12 +182,8 @@ struct
               Rt.gitlab_work_manifest_workspaces () --> Work_manifest.Workspaces.get config storage
             );
             (`POST, Rt.gitlab_events () --> Ep_events.post config storage);
-            ( `GET,
-              Rt.gitlab_installations ()
-              --> Terrat_vcs_service_gitlab_ep_installations.List.get config storage );
-            ( `GET,
-              Rt.gitlab_installations_webhook ()
-              --> Terrat_vcs_service_gitlab_ep_installations.Webhook.get config storage );
+            (`GET, Rt.gitlab_installations () --> Ep_inst.List.get config storage);
+            (`GET, Rt.gitlab_installations_webhook () --> Ep_inst.Webhook.get config storage);
             ( `GET,
               Rt.gitlab_groups () --> Terrat_vcs_service_gitlab_ep_groups.List.get config storage );
             ( `GET,

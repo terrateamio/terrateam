@@ -15,6 +15,15 @@ type synthesize_config_err =
 
 exception Synthesize_config_err of synthesize_config_err
 
+module Stack_config = struct
+  type t = {
+    name : string;
+    paths : string list list;
+    config : Terrat_base_repo_config_v1.Stacks.Stack.t;
+  }
+  [@@deriving show, to_yojson]
+end
+
 module Dirspace_config = struct
   type t = {
     dirspace : Terrat_dirspace.t;
@@ -54,21 +63,6 @@ module Dirspace_config = struct
         tags = Terrat_tag_set.to_list t.tags;
         when_modified = t.when_modified;
       }
-end
-
-module Config = struct
-  type t = {
-    symlinks : string list CCTrie.String.t; [@opaque]
-    dirspaces : Dirspace_config.t Dirspace_map.t;
-    topology : Terrat_dirspace.t list Dirspace_map.t;
-  }
-  [@@deriving show]
-
-  let to_yojson t =
-    let module T = struct
-      type t = Dirspace_config.t list [@@deriving to_yojson]
-    end in
-    T.to_yojson (Iter.to_list (Dirspace_map.values t.dirspaces))
 end
 
 let match_dependency ~dependent ~dependency =
@@ -112,6 +106,122 @@ let match_plan_after_dependency ~dependent ~dependency =
          let ctx = Terrat_tag_query.Ctx.make ~working_dirspace ~dirspace () in
          Terrat_tag_query.match_ ~ctx ~tag_set:tags depends_on)
        depends_on
+
+(* [matches] are those dirspace configs that we have identified from the diff.
+   [dirspaces] is all dirspaces in the configuration file.  [topology] maps a
+   dirspace to every dirspace that depends on it.  From this we produce every
+   dirspace that is modified or should be considered modified based on the
+   "modified_by" configuration. *)
+let rec collect_depends_on_dependents topology dirspaces matches =
+  CCList.flat_map
+    (fun ({ Dirspace_config.dirspace; stack_name; _ } as dirspace_config) ->
+      dirspace_config
+      :: collect_depends_on_dependents
+           topology
+           dirspaces
+           (CCList.filter_map
+              (fun ds ->
+                let open CCOption.Infix in
+                Dirspace_map.get ds dirspaces
+                >>= fun dependency ->
+                if match_dependency ~dependent:dirspace_config ~dependency then Some dependency
+                else None)
+              (Dirspace_map.get_or ~default:[] dirspace topology)))
+    matches
+
+let rec collect_modified_by_dependents ~path modifies_lookup dirspaces matches =
+  let module Wm = R.When_modified in
+  let module S = R.Stacks.Stack in
+  let module Rules = R.Stacks.Rules in
+  CCList.flat_map
+    (fun ({ Dirspace_config.dirspace; stack_name; _ } as dirspace_config) ->
+      if not (CCList.mem ~eq:CCString.equal stack_name path) then
+        dirspace_config
+        :: collect_modified_by_dependents
+             ~path:(stack_name :: path)
+             modifies_lookup
+             dirspaces
+             (String_map.get_or ~default:[] stack_name modifies_lookup)
+      else [])
+    matches
+
+let group_independent_dirspaces topology dirspace_configs =
+  CCList.rev
+    (CCListLabels.fold_left
+       ~f:(fun acc ({ Dirspace_config.dirspace; _ } as dirspace_config) ->
+         match acc with
+         | [] -> [ [ dirspace_config ] ]
+         | dirspace_configs :: rest ->
+             let dependents =
+               Dirspace_set.of_list
+                 (CCList.flat_map
+                    (fun { Dirspace_config.dirspace; _ } ->
+                      Dirspace_map.get_or ~default:[] dirspace topology)
+                    dirspace_configs)
+             in
+             if Dirspace_set.mem dirspace dependents then [ dirspace_config ] :: acc
+             else (dirspace_config :: dirspace_configs) :: rest)
+       ~init:[]
+       dirspace_configs)
+
+let sort topology dirspaces matches =
+  let topo =
+    CCList.map
+      (fun ({ Dirspace_config.dirspace; _ } as dependent) ->
+        ( dirspace,
+          CCList.filter_map (fun ds ->
+              let open CCOption.Infix in
+              Dirspace_map.get ds dirspaces
+              >>= fun dependency ->
+              if match_plan_after_dependency ~dependent ~dependency then Some ds else None)
+          @@ Dirspace_map.get_or ~default:[] dirspace topology ))
+      matches
+  in
+  let match_set =
+    Dirspace_set.of_list @@ CCList.map (fun { Dirspace_config.dirspace; _ } -> dirspace) matches
+  in
+  match Tsort.sort topo with
+  | Tsort.Sorted sorted ->
+      (* The topology as we defined it is (dependency -> dependents) which means our
+         sort is going to come back in the opposite order we want to execute it.
+
+         Additionally, we want to group things that can be executed in parallel together,
+         so we need to group successive elements that are part of the same layer.
+
+         What does it mean to be part of the same layer?  It means an element is
+         not a dependent of any of the elements that proceded it in the list. *)
+      let topo = Dirspace_map.of_list topo in
+      sorted
+      |> CCList.filter CCFun.(flip Dirspace_set.mem match_set)
+      |> CCList.rev
+      |> CCList.map (CCFun.flip Dirspace_map.find dirspaces)
+      |> group_independent_dirspaces topo
+  | Tsort.ErrorCycle _ ->
+      (* This should be detected in the synthesize step *)
+      assert false
+
+module Config = struct
+  type t = {
+    symlinks : string list CCTrie.String.t; [@opaque]
+    dirspaces : Dirspace_config.t Dirspace_map.t;
+    topology : Terrat_dirspace.t list Dirspace_map.t;
+  }
+  [@@deriving show]
+
+  let to_yojson t =
+    let module T = struct
+      type t = Dirspace_config.t list [@@deriving to_yojson]
+    end in
+    T.to_yojson (Iter.to_list (Dirspace_map.values t.dirspaces))
+
+  let dirspace_configs t = t.dirspaces
+
+  let stack_topology t =
+    CCList.map
+      (CCList.map (fun { Dirspace_config.stack_config; stack_name; stack_paths; _ } ->
+           { Stack_config.name = stack_name; paths = stack_paths; config = stack_config }))
+    @@ sort t.topology t.dirspaces (Iter.to_list @@ Dirspace_map.values t.dirspaces)
+end
 
 (* We are actually going to build the topology in the reverse direction.  It
    should be (A -> B_list) A depends on the results of B_list.  But we're going
@@ -591,102 +701,6 @@ let match_dir_map dirspaces dir_map =
            acc)
        dir_map
        (dirspaces, []))
-
-(* [matches] are those dirspace configs that we have identified from the diff.
-   [dirspaces] is all dirspaces in the configuration file.  [topology] maps a
-   dirspace to every dirspace that depends on it.  From this we produce every
-   dirspace that is modified or should be considered modified based on the
-   "modified_by" configuration. *)
-let rec collect_depends_on_dependents topology dirspaces matches =
-  let module Wm = R.When_modified in
-  let module S = R.Stacks.Stack in
-  let module Rules = R.Stacks.Rules in
-  CCList.flat_map
-    (fun ({ Dirspace_config.dirspace; stack_name; _ } as dirspace_config) ->
-      dirspace_config
-      :: collect_depends_on_dependents
-           topology
-           dirspaces
-           (CCList.filter_map
-              (fun ds ->
-                let open CCOption.Infix in
-                Dirspace_map.get ds dirspaces
-                >>= fun dependency ->
-                if match_dependency ~dependent:dirspace_config ~dependency then Some dependency
-                else None)
-              (Dirspace_map.get_or ~default:[] dirspace topology)))
-    matches
-
-let rec collect_modified_by_dependents ~path modifies_lookup dirspaces matches =
-  let module Wm = R.When_modified in
-  let module S = R.Stacks.Stack in
-  let module Rules = R.Stacks.Rules in
-  CCList.flat_map
-    (fun ({ Dirspace_config.dirspace; stack_name; _ } as dirspace_config) ->
-      if not (CCList.mem ~eq:CCString.equal stack_name path) then
-        dirspace_config
-        :: collect_modified_by_dependents
-             ~path:(stack_name :: path)
-             modifies_lookup
-             dirspaces
-             (String_map.get_or ~default:[] stack_name modifies_lookup)
-      else [])
-    matches
-
-let group_independent_dirspaces topology dirspace_configs =
-  CCList.rev
-    (CCListLabels.fold_left
-       ~f:(fun acc ({ Dirspace_config.dirspace; _ } as dirspace_config) ->
-         match acc with
-         | [] -> [ [ dirspace_config ] ]
-         | dirspace_configs :: rest ->
-             let dependents =
-               Dirspace_set.of_list
-                 (CCList.flat_map
-                    (fun { Dirspace_config.dirspace; _ } ->
-                      Dirspace_map.get_or ~default:[] dirspace topology)
-                    dirspace_configs)
-             in
-             if Dirspace_set.mem dirspace dependents then [ dirspace_config ] :: acc
-             else (dirspace_config :: dirspace_configs) :: rest)
-       ~init:[]
-       dirspace_configs)
-
-let sort topology dirspaces matches =
-  let topo =
-    CCList.map
-      (fun ({ Dirspace_config.dirspace; _ } as dependent) ->
-        ( dirspace,
-          CCList.filter_map (fun ds ->
-              let open CCOption.Infix in
-              Dirspace_map.get ds dirspaces
-              >>= fun dependency ->
-              if match_plan_after_dependency ~dependent ~dependency then Some ds else None)
-          @@ Dirspace_map.get_or ~default:[] dirspace topology ))
-      matches
-  in
-  let match_set =
-    Dirspace_set.of_list @@ CCList.map (fun { Dirspace_config.dirspace; _ } -> dirspace) matches
-  in
-  match Tsort.sort topo with
-  | Tsort.Sorted sorted ->
-      (* The topology as we defined it is (dependency -> dependents) which means our
-         sort is going to come back in the opposite order we want to execute it.
-
-         Additionally, we want to group things that can be executed in parallel together,
-         so we need to group successive elements that are part of the same layer.
-
-         What does it mean to be part of the same layer?  It means an element is
-         not a dependent of any of the elements that proceded it in the list. *)
-      let topo = Dirspace_map.of_list topo in
-      sorted
-      |> CCList.filter CCFun.(flip Dirspace_set.mem match_set)
-      |> CCList.rev
-      |> CCList.map (CCFun.flip Dirspace_map.find dirspaces)
-      |> group_independent_dirspaces topo
-  | Tsort.ErrorCycle _ ->
-      (* This should be detected in the synthesize step *)
-      assert false
 
 let match_diff_list ?(force_matches = []) config diff_list =
   let map_symlink_file_path symlinks fpath =

@@ -447,3 +447,55 @@ module Get_work_manifest_outputs = struct
       ~responses:Responses.t
       `Get
 end
+
+module Get_pull_requests_stack = struct
+  module Parameters = struct
+    type t = {
+      installation_id : string;
+      pull_request_id : string;
+      repo_id : string;
+      vcs : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Terrat_api_components.Stacks.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Forbidden = struct end
+
+    type t =
+      [ `OK of OK.t
+      | `Forbidden
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson); ("403", fun _ -> Ok `Forbidden);
+      ]
+  end
+
+  let url =
+    "/api/v1/{vcs}/installations/{installation_id}/repos/{repo_id}/prs/{pull_request_id}/stacks"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("installation_id", Var (params.installation_id, String));
+           ("vcs", Var (params.vcs, String));
+           ("repo_id", Var (params.repo_id, String));
+           ("pull_request_id", Var (params.pull_request_id, String));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end

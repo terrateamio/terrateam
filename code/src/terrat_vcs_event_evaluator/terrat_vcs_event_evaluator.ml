@@ -861,6 +861,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Store_account_repository
       | Store_gate_approval
       | Store_pull_request
+      | Store_stacks
       | Synthesize_pull_request_sync
       | Test_account_status
       | Test_batch_runs
@@ -942,6 +943,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Store_account_repository -> "store_account_repository"
       | Store_gate_approval -> "store_gate_approval"
       | Store_pull_request -> "store_pull_request"
+      | Store_stacks -> "store_stacks"
       | Synthesize_pull_request_sync -> "synthesize_pull_request_sync"
       | Test_account_status -> "test_account_status"
       | Test_batch_runs -> "test_batch_runs"
@@ -1022,6 +1024,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | "store_account_repository" -> Some Store_account_repository
       | "store_gate_approval" -> Some Store_gate_approval
       | "store_pull_request" -> Some Store_pull_request
+      | "store_stacks" -> Some Store_stacks
       | "synthesize_pull_request_sync" -> Some Synthesize_pull_request_sync
       | "test_account_status" -> Some Test_account_status
       | "test_batch_runs" -> Some Test_batch_runs
@@ -4776,6 +4779,62 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         ~result:H.generate_index_work_manifest_result
         ~fallthrough:H.log_state_err_iter
 
+    let store_stacks ctx state =
+      H.run_interactive ctx state (fun () ->
+          let open Abbs_future_combinators.Infix_result_monad in
+          let account = Event.account state.State.event in
+          let repo = Event.repo state.State.event in
+          Dv.repo_config ctx state
+          >>= fun repo_config ->
+          Dv.repo_tree_branch ctx state
+          >>= fun repo_tree ->
+          Dv.base_branch_name ctx state
+          >>= fun base_branch_name ->
+          Dv.branch_name ctx state
+          >>= fun branch_name ->
+          Dv.query_index ctx state
+          >>= fun index ->
+          let index =
+            CCOption.map_or
+              ~default:Terrat_base_repo_config_v1.Index.empty
+              (fun { Terrat_vcs_provider2.Index.index; _ } -> index)
+              index
+          in
+          Dv.query_repo_tree ctx state
+          >>= fun built_repo_tree ->
+          let repo_tree =
+            let module I = Terrat_api_components.Work_manifest_build_tree_result.Files.Items in
+            CCOption.map_or
+              ~default:repo_tree
+              (fun built_tree -> CCList.map (fun { I.path; _ } -> path) built_tree)
+              built_repo_tree
+          in
+          Abbs_time_it.run (log_time state.State.request_id "DERIVE") (fun () ->
+              Abbs_future_combinators.to_result
+              @@ Abb.Thread.run (fun () ->
+                     Terrat_base_repo_config_v1.derive
+                       ~ctx:
+                         (Terrat_base_repo_config_v1.Ctx.make
+                            ~dest_branch:(S.Api.Ref.to_string base_branch_name)
+                            ~branch:(S.Api.Ref.to_string branch_name)
+                            ())
+                       ~index
+                       ~file_list:repo_tree
+                       repo_config))
+          >>= fun repo_config ->
+          Abb.Future.return (Terrat_change_match3.synthesize_config ~index repo_config)
+          >>= fun config ->
+          Dv.pull_request ctx state
+          >>= fun pull_request ->
+          S.Stacks.store
+            ~request_id:(Ctx.request_id ctx)
+            ~installation_id:(S.Api.Account.id account)
+            ~repo_id:(S.Api.Repo.id repo)
+            ~pull_request_id:(S.Api.Pull_request.id pull_request)
+            config
+            (Ctx.storage ctx)
+          >>= fun () -> Abb.Future.return (Ok state))
+
     (* This is run for its side effect.  If the repo config is not valid, the
        surrounding [eval_step] will publish the error. *)
     let test_repo_config_validity ctx state =
@@ -7032,22 +7091,24 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       Flow.Flow.(
         seq tree_builder_flow
         @@ seq config_builder_flow
-        @@ choice
-             ~id:Id.Test_index_required
-             ~f:F.test_index_required
-             [
-               ( Id.Index_required,
-                 seq
-                   (action
-                      [
-                        Flow.Step.make
-                          ~id:Id.Run_work_manifest_iter
-                          ~f:(eval_step F.run_index_work_manifest_iter)
-                          ();
-                      ])
-                   maybe_complete_work_manifest_flow );
-               (Id.Index_not_required, action []);
-             ])
+        @@ seq
+             (choice
+                ~id:Id.Test_index_required
+                ~f:F.test_index_required
+                [
+                  ( Id.Index_required,
+                    seq
+                      (action
+                         [
+                           Flow.Step.make
+                             ~id:Id.Run_work_manifest_iter
+                             ~f:(eval_step F.run_index_work_manifest_iter)
+                             ();
+                         ])
+                      maybe_complete_work_manifest_flow );
+                  (Id.Index_not_required, action []);
+                ])
+             (action [ Flow.Step.make ~id:Id.Store_stacks ~f:(eval_step F.store_stacks) () ]))
     in
     let event_kind_op_flow =
       let layers_flow ~stack_auto_apply_flow op next_layer_flow =

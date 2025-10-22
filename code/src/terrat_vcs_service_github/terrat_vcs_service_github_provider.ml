@@ -45,7 +45,39 @@ module Metrics = struct
       "run_overall_result_count"
 end
 
+module Sql = struct
+  let read fname =
+    CCOption.get_exn_or
+      fname
+      (CCOption.map Pgsql_io.clean_string (Terrat_files_github_sql.read fname))
+
+  let select_user_installation () =
+    Pgsql_io.Typed_sql.(
+      sql
+      //
+      (* installation_id *)
+      Ret.bigint
+      /^ read "select_user_installation.sql"
+      /% Var.uuid "user_id"
+      /% Var.bigint "installation_id")
+end
+
 let name = "github"
+
+let enforce_installation_access ~request_id user account_id db =
+  let open Abb.Future.Infix_monad in
+  Pgsql_io.Prepared_stmt.fetch
+    db
+    (Sql.select_user_installation ())
+    ~f:CCFun.id
+    (Terrat_user.id user)
+    (CCInt64.of_int account_id)
+  >>= function
+  | Ok (_ :: _) -> Abb.Future.return (Ok ())
+  | Ok [] -> Abb.Future.return (Error `Forbidden)
+  | Error (#Pgsql_io.err as err) ->
+      Logs.err (fun m -> m "%s : ENFORCE_INSTALLATION_ACCESS : %a" request_id Pgsql_io.pp_err err);
+      Abb.Future.return (Error `Forbidden)
 
 module Unlock_id = struct
   type t =
@@ -5181,4 +5213,107 @@ module Work_manifest = struct
       post_hooks_success;
       dirspaces_success;
     }
+end
+
+module Stacks = struct
+  include Terrat_vcs_stacks.Make (struct
+    module Installation_id = Api.Account.Id
+    module Repo_id = Api.Repo.Id
+    module Pull_request_id = Api.Pull_request.Id
+    module Config = Api.Config
+
+    type db = Db.t
+
+    let vcs = name
+    let route_root () = Brtl_rtng.Route.(rel / "api" / "v1")
+
+    module Sql = struct
+      let read fname =
+        CCOption.get_exn_or
+          fname
+          (CCOption.map Pgsql_io.clean_string (Terrat_files_github_sql.read fname))
+
+      let select_stacks () =
+        Pgsql_io.Typed_sql.(
+          sql
+          //
+          (* stacks *)
+          Ret.ud'
+            CCFun.(
+              CCOption.wrap Yojson.Safe.from_string
+              %> CCOption.flat_map (Terrat_api_components.Stacks.of_yojson %> CCOption.of_result))
+          /^ read "select_stacks.sql"
+          /% Var.bigint "repo_id"
+          /% Var.bigint "pull_number")
+
+      let upsert_stacks () =
+        Pgsql_io.Typed_sql.(
+          sql
+          /^ read "upsert_stacks.sql"
+          /% Var.bigint "repo_id"
+          /% Var.bigint "pull_number"
+          /% Var.json "stacks")
+
+      let select_dirspace_states () =
+        Pgsql_io.Typed_sql.(
+          sql
+          //
+          (* dir *)
+          Ret.text
+          //
+          (* workspace *)
+          Ret.text
+          //
+          (* state *)
+          Ret.text
+          /^ read "select_dirspace_stack_states.sql"
+          /% Var.bigint "repo_id"
+          /% Var.bigint "pull_number")
+    end
+
+    let store_stacks ~request_id ~installation_id:_ ~repo_id ~pull_request_id stacks db =
+      let open Abb.Future.Infix_monad in
+      Pgsql_io.Prepared_stmt.execute
+        db
+        (Sql.upsert_stacks ())
+        (CCInt64.of_int repo_id)
+        (CCInt64.of_int pull_request_id)
+        (Yojson.Safe.to_string @@ Terrat_api_components.Stacks.to_yojson stacks)
+      >>= function
+      | Ok _ as r -> Abb.Future.return r
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m -> m "%s : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
+
+    let query_stacks ~request_id ~installation_id:_ ~repo_id ~pull_request_id db =
+      let open Abb.Future.Infix_monad in
+      Pgsql_io.Prepared_stmt.fetch
+        db
+        (Sql.select_stacks ())
+        ~f:CCFun.id
+        (CCInt64.of_int repo_id)
+        (CCInt64.of_int pull_request_id)
+      >>= function
+      | Ok r -> Abb.Future.return (Ok (CCOption.of_list r))
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m -> m "%s : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
+
+    let query_dirspace_states ~request_id ~installation_id:_ ~repo_id ~pull_request_id db =
+      let open Abb.Future.Infix_monad in
+      Pgsql_io.Prepared_stmt.fetch
+        db
+        (Sql.select_dirspace_states ())
+        ~f:(fun dir workspace state ->
+          { Terrat_vcs_stacks.Dirspace_state.dirspace = { Terrat_dirspace.dir; workspace }; state })
+        (CCInt64.of_int repo_id)
+        (CCInt64.of_int pull_request_id)
+      >>= function
+      | Ok _ as r -> Abb.Future.return r
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m -> m "%s : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
+
+    let enforce_installation_access = enforce_installation_access
+  end)
 end

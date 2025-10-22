@@ -1,4 +1,5 @@
 let name = "nyi"
+let enforce_installation_access ~request_id use account_id db = raise (Failure "nyi")
 
 module Api = Terrat_vcs_api_nyi
 
@@ -126,4 +127,29 @@ end
 
 module Ui = struct
   let work_manifest_url config account = raise (Failure "nyi")
+end
+
+module Stacks = struct
+  include Terrat_vcs_stacks.Make (struct
+    module Installation_id = Api.Account.Id
+    module Repo_id = Api.Repo.Id
+    module Pull_request_id = Api.Pull_request.Id
+    module Config = Api.Config
+
+    type db = Db.t
+
+    let vcs = name
+    let route_root () = raise (Failure "nyi")
+
+    let store_stacks ~request_id ~installation_id:_ ~repo_id ~pull_request_id stacks db =
+      raise (Failure "nyi")
+
+    let query_stacks ~request_id ~installation_id:_ ~repo_id ~pull_request_id db =
+      raise (Failure "nyi")
+
+    let query_dirspace_states ~request_id ~installation_id:_ ~repo_id ~pull_request_id db =
+      raise (Failure "nyi")
+
+    let enforce_installation_access ~request_id user installation_id db = raise (Failure "nyi")
+  end)
 end

@@ -1,5 +1,6 @@
 module Provider : Terrat_vcs_provider2_gitlab.S = struct
   let name = Terrat_vcs_service_gitlab_provider.name
+  let enforce_installation_access = Terrat_vcs_service_gitlab_provider.enforce_installation_access
 
   module Api = Terrat_vcs_api_gitlab
   module Unlock_id = Terrat_vcs_service_gitlab_provider.Unlock_id
@@ -13,6 +14,7 @@ module Provider : Terrat_vcs_provider2_gitlab.S = struct
   module Comment = Terrat_vcs_service_gitlab_provider.Comment
   module Commit_check = Terrat_vcs_service_gitlab_provider.Commit_check
   module Ui = Terrat_vcs_service_gitlab_provider.Ui
+  module Stacks = Terrat_vcs_service_gitlab_provider.Stacks
 end
 
 include

@@ -168,6 +168,13 @@ module type S = sig
 
   module Api : Terrat_vcs_api.S
 
+  val enforce_installation_access :
+    request_id:string ->
+    Terrat_user.t ->
+    Api.Account.Id.t ->
+    Pgsql_io.t ->
+    (unit, [> `Forbidden ]) result Abb.Future.t
+
   module Unlock_id : sig
     type t
 
@@ -575,4 +582,12 @@ module type S = sig
     val work_manifest_url :
       Api.Config.t -> Api.Account.t -> ('a, 'b) Terrat_work_manifest3.Existing.t -> Uri.t option
   end
+
+  module Stacks :
+    Terrat_vcs_stacks.S
+      with type Installation_id.t = Api.Account.Id.t
+       and type Repo_id.t = Api.Repo.Id.t
+       and type Pull_request_id.t = Api.Pull_request.Id.t
+       and type Config.t = Api.Config.t
+       and type db = Db.t
 end
