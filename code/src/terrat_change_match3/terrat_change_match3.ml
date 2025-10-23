@@ -9,6 +9,7 @@ type synthesize_config_err =
   | `Workspace_in_multiple_stacks_err of Terrat_dirspace.t
   | `Workspace_matches_no_stacks_err of Terrat_dirspace.t
   | `Stack_not_found_err of string
+  | `Stack_cycle_err of string list
   ]
 [@@deriving show]
 
@@ -420,11 +421,33 @@ let assert_all_stacks_exist stacks =
       CCList.iter (fun s -> ignore (stack_lookup s stacks)) all_stacks)
     stacks
 
+let assert_no_stack_cycle stacks =
+  let module V1 = Terrat_base_repo_config_v1 in
+  let module S = V1.Stacks in
+  let deps =
+    String_map.fold
+      (fun k { S.Stack.type_; rules; _ } acc ->
+        let stacks =
+          match type_ with
+          | S.Type_.Nested stacks -> stacks
+          | S.Type_.Stack _ -> []
+        in
+        let { S.Rules.plan_after; apply_after; _ } = rules in
+        String_map.add k (stacks @ plan_after @ apply_after) acc)
+      stacks
+      String_map.empty
+  in
+  let topo = String_map.to_list deps in
+  match Tsort.sort topo with
+  | Tsort.Sorted _ -> ()
+  | Tsort.ErrorCycle cycle -> raise (Synthesize_config_err (`Stack_cycle_err cycle))
+
 let synthesize_config ~index repo_config =
   try
     let symlinks = build_symlinks index.R.Index.symlinks in
     let stacks = R.stacks repo_config in
     assert_all_stacks_exist stacks.R.Stacks.names;
+    assert_no_stack_cycle stacks.R.Stacks.names;
     (* Lookup up for a stack name to the stacks nested under it. *)
     let nested_to_stack_lookup = build_nested_to_stack_lookup stacks.R.Stacks.names in
     (* Lookup of a stack to any stacks that nest it. *)
