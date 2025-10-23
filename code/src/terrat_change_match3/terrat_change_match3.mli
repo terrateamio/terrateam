@@ -14,6 +14,9 @@ module Dirspace_config : sig
     lock_branch_target : Terrat_base_repo_config_v1.Dirs.Dir.Branch_target.t;
     stack_config : Terrat_base_repo_config_v1.Stacks.Stack.t;
     stack_name : string;
+    stack_paths : string list list;
+        (** A list of all hierarchical paths that reach this stack, furthest away to closets. Each
+            list always ends in [stack_name]. *)
     tags : Terrat_tag_set.t;
     when_modified : Terrat_base_repo_config_v1.When_modified.t;
   }
