@@ -3270,6 +3270,16 @@ module Comment = struct
           "CONFLICTING_WORK_MANIFESTS"
           Tmpl.conflicting_work_manifests
           kv
+    | Msg.Synthesize_config_err (`Stack_cycle_err cycle) ->
+        let kv = `Assoc [ ("cycle", `List (CCList.map (fun stack -> `String stack) cycle)) ] in
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish_jinja
+             ~request_id
+             client
+             pull_request
+             "STACK_CYCLE"
+             Tmpl.synthesize_config_err_stack_cycle
+             kv
     | Msg.Synthesize_config_err (`Depends_on_cycle_err cycle) ->
         let kv =
           `Assoc
