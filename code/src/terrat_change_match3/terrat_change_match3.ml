@@ -22,6 +22,7 @@ module Dirspace_config = struct
     lock_branch_target : Terrat_base_repo_config_v1.Dirs.Dir.Branch_target.t;
     stack_config : Terrat_base_repo_config_v1.Stacks.Stack.t;
     stack_name : string;
+    stack_paths : string list list;
     tags : Terrat_tag_set.t;
     when_modified : Terrat_base_repo_config_v1.When_modified.t;
   }
@@ -187,6 +188,34 @@ let match_stacks dirspace tags stacks =
       | _ -> false)
     stacks
 
+let build_stack_paths_lookup stacks =
+  let module V1 = Terrat_base_repo_config_v1 in
+  let module S = V1.Stacks in
+  let deps =
+    String_map.fold
+      (fun k { S.Stack.type_; _ } acc ->
+        let stacks =
+          match type_ with
+          | S.Type_.Nested stacks -> stacks
+          | S.Type_.Stack _ -> []
+        in
+        CCListLabels.fold_left ~f:(fun acc s -> String_map.add_to_list s k acc) ~init:acc stacks)
+      stacks
+      String_map.empty
+  in
+  let rec go ~path name =
+    match String_map.find_opt name deps with
+    | Some parents -> CCList.flat_map (fun p -> go ~path:(p :: path) p) parents
+    | None -> [ path ]
+  in
+  String_map.fold
+    (fun k { S.Stack.type_; _ } acc ->
+      match type_ with
+      | S.Type_.Nested _ -> acc
+      | S.Type_.Stack _ -> String_map.add k (go ~path:[ k ] k) acc)
+    stacks
+    String_map.empty
+
 (* We want to support two operations around nested stacks.
 
    1. When a nested stack is defined we want to take its rules and variables
@@ -256,13 +285,7 @@ let build_stack_lookup kv stacks =
   let rec collect_stacks path k =
     match stack_lookup k stacks with
     | { S.Stack.type_ = S.Type_.Nested ss; _ } ->
-        CCList.flatten
-        @@ CCList.filter_map
-             (fun s ->
-               if not (CCList.mem ~eq:CCString.equal s path) then
-                 Some (collect_stacks (k :: path) s)
-               else None)
-             ss
+        CCList.flatten @@ CCList.map (fun s -> collect_stacks (k :: path) s) ss
     | { S.Stack.type_ = S.Type_.Stack _; _ } -> [ k ]
   in
   String_map.fold
@@ -448,6 +471,7 @@ let synthesize_config ~index repo_config =
     let stacks = R.stacks repo_config in
     assert_all_stacks_exist stacks.R.Stacks.names;
     assert_no_stack_cycle stacks.R.Stacks.names;
+    let stack_paths_lookup = build_stack_paths_lookup stacks.R.Stacks.names in
     (* Lookup up for a stack name to the stacks nested under it. *)
     let nested_to_stack_lookup = build_nested_to_stack_lookup stacks.R.Stacks.names in
     (* Lookup of a stack to any stacks that nest it. *)
@@ -524,6 +548,7 @@ let synthesize_config ~index repo_config =
                            lock_branch_target = config.D.lock_branch_target;
                            stack_config;
                            stack_name;
+                           stack_paths = String_map.find stack_name stack_paths_lookup;
                            tags;
                            when_modified = workspace_config.Ws.when_modified;
                          } );
