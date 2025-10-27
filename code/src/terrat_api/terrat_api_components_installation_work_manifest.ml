@@ -39,6 +39,7 @@ type t = {
   kind : Kind.t;
   owner : string;
   repo : string;
+  repo_id : string;
   run_id : string option; [@default None]
   run_type : Terrat_api_components_run_type.t;
   state : Terrat_api_components_work_manifest_state.t;

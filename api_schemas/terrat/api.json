@@ -497,6 +497,9 @@
           "repo": {
             "type": "string"
           },
+          "repo_id": {
+            "type": "string"
+          },
           "run_id": {
             "type": "string"
           },
@@ -526,6 +529,7 @@
           "owner",
           "ref",
           "repo",
+          "repo_id",
           "repository",
           "run_type",
           "state",

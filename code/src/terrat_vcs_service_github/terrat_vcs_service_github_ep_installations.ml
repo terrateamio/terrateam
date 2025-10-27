@@ -366,6 +366,9 @@ module Make (S : S with type Account_id.t = int) = struct
           (* owner *)
           Ret.text
           //
+          (* repo_id *)
+          Ret.bigint
+          //
           (* repo *)
           Ret.text
           //
@@ -483,6 +486,7 @@ module Make (S : S with type Account_id.t = int) = struct
                           pull_number
                           base_branch
                           owner
+                          repo_id
                           repo
                           run_kind
                           dirspaces
@@ -516,6 +520,7 @@ module Make (S : S with type Account_id.t = int) = struct
                             | _ -> assert false);
                           owner;
                           repo;
+                          repo_id = CCInt64.to_string repo_id;
                           run_id;
                           run_type = Terrat_work_manifest3.Step.to_string run_type;
                           state = Terrat_work_manifest3.State.to_string state;
