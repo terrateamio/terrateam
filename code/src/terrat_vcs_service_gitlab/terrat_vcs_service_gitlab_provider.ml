@@ -4283,35 +4283,22 @@ module Work_manifest = struct
       let body =
         {
           Pipeline.ref_ = get_branch work_manifest;
-          variables =
+          inputs =
             Some
-              Pipeline.Variables.Items.(
-                CCList.flatten
-                  [
-                    [
-                      { key = "TERRATEAM_TRIGGER"; value = "true"; variable_type = "env_var" };
-                      {
-                        key = "WORK_TOKEN";
-                        value = Ouuid.to_string work_manifest.Wm.id;
-                        variable_type = "env_var";
-                      };
-                      {
-                        key = "API_BASE_URL";
-                        value = Terrat_config.api_base (Api.Config.config config) ^ "/gitlab";
-                        variable_type = "env_var";
-                      };
-                    ];
-                    (match work_manifest.Wm.runs_on with
+              Pipeline.Inputs.
+                {
+                  primary = Json_schema.Empty_obj.t;
+                  additional = Json_schema.String_map.of_list
+                  ([
+                    ("TERRATEAM_TRIGGER", `Bool (true));
+                    ("WORK_TOKEN", `String (Ouuid.to_string work_manifest.Wm.id));
+                    ("API_BASE_URL", `String (Terrat_config.api_base (Api.Config.config config) ^ "/gitlab"));
+                  ] @
+                  match work_manifest.Wm.runs_on with
                     | Some runs_on ->
-                        [
-                          {
-                            key = "RUNS_ON";
-                            value = Yojson.Safe.to_string runs_on;
-                            variable_type = "env_var";
-                          };
-                        ]
+                      [ ("RUNS_ON", `String (Yojson.Safe.to_string runs_on)) ]
                     | None -> []);
-                  ]);
+                };
         }
       in
       Openapic_abb.call
