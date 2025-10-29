@@ -138,6 +138,7 @@ export const WorkManifestSchema = z.object({
   ]),
   owner: z.string(),
   repo: z.string(),
+  repo_id: z.string(),
   run_id: z.string().optional(),
   run_type: z.enum(['apply', 'build-config', 'build-tree', 'index', 'plan']),
   state: WorkManifestStateSchema,

@@ -3,8 +3,20 @@ type synthesize_config_err =
   | `Workspace_in_multiple_stacks_err of Terrat_dirspace.t
   | `Workspace_matches_no_stacks_err of Terrat_dirspace.t
   | `Stack_not_found_err of string
+  | `Stack_cycle_err of string list
   ]
 [@@deriving show]
+
+module Stack_config : sig
+  type t = {
+    name : string;
+    paths : string list list;
+        (** A list of all hierarchical paths that reach this stack, furthest away to closets. Each
+            list always ends in [stack_name]. *)
+    config : Terrat_base_repo_config_v1.Stacks.Stack.t;
+  }
+  [@@deriving show, to_yojson]
+end
 
 module Dirspace_config : sig
   type t = {
@@ -13,6 +25,7 @@ module Dirspace_config : sig
     lock_branch_target : Terrat_base_repo_config_v1.Dirs.Dir.Branch_target.t;
     stack_config : Terrat_base_repo_config_v1.Stacks.Stack.t;
     stack_name : string;
+    stack_paths : string list list;
     tags : Terrat_tag_set.t;
     when_modified : Terrat_base_repo_config_v1.When_modified.t;
   }
@@ -21,6 +34,11 @@ end
 
 module Config : sig
   type t [@@deriving show, to_yojson]
+
+  val dirspace_configs : t -> Dirspace_config.t Terrat_data.Dirspace_map.t
+
+  (** Given a config, calculate the topology of all of the stacks *)
+  val stack_topology : t -> Stack_config.t list list
 end
 
 val synthesize_config :

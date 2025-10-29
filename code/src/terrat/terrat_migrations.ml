@@ -253,6 +253,7 @@ let migrations =
     ("add-access-token-table", run_file_sql "2025-09-24-add-access-token-table.sql");
     ("refactor-gitlab-access-tokens", run_file_sql "2025-10-06-refactor-gitlab-tokens.sql");
     ("add-gitlab-token-from-config", add_gitlab_token_from_config);
+    ("add-stacks", run_file_sql "2025-10-22-add-stacks.sql");
   ]
 
 let run config storage = Mig.run { Migrate.config; storage; tx = () } migrations

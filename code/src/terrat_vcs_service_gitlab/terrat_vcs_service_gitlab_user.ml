@@ -189,16 +189,6 @@ module Sql = struct
       Ret.bigint
       /^ read "select_gitlab_user2_by_user_id.sql"
       /% Var.uuid "user_id")
-
-  let select_user_installation () =
-    Pgsql_io.Typed_sql.(
-      sql
-      //
-      (* installation_id *)
-      Ret.bigint
-      /^ read "select_user_installation.sql"
-      /% Var.uuid "user_id"
-      /% Var.bigint "installation_id")
 end
 
 type query_user_id_err =
@@ -208,12 +198,6 @@ type query_user_id_err =
 [@@deriving show]
 
 type query_user_id_ex_err = Pgsql_io.err [@@deriving show]
-
-type enforce_installation_access_err =
-  [ `Forbidden
-  | Pgsql_io.err
-  ]
-[@@deriving show]
 
 let query_user_id' db user =
   let open Abbs_future_combinators.Infix_result_monad in
@@ -232,15 +216,3 @@ let query_user_id db user =
   >>= function
   | Some user_id -> Abb.Future.return (Ok user_id)
   | None -> Abb.Future.return (Error (`User_not_found_err user))
-
-let enforce_installation_access db user installation_id =
-  let open Abbs_future_combinators.Infix_result_monad in
-  Pgsql_io.Prepared_stmt.fetch
-    db
-    (Sql.select_user_installation ())
-    ~f:CCFun.id
-    (Terrat_user.id user)
-    (CCInt64.of_int installation_id)
-  >>= function
-  | [] -> Abb.Future.return (Error `Forbidden)
-  | _ :: _ -> Abb.Future.return (Ok ())

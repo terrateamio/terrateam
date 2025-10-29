@@ -82,6 +82,7 @@ select
     pull_number,
     base_branch,
     owner,
+    repository,
     name,
     kind,
     to_jsonb((select jsonb_agg(jsonb_build_object(

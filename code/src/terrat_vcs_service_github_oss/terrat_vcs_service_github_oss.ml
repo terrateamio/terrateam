@@ -6,6 +6,7 @@ module Provider :
   Terrat_vcs_provider2_github.S
     with type Api.Config.t = Terrat_vcs_service_github_provider.Api.Config.t = struct
   let name = Terrat_vcs_service_github_provider.name
+  let enforce_installation_access = Terrat_vcs_service_github_provider.enforce_installation_access
 
   module Api = Terrat_vcs_api_github
   module Unlock_id = Terrat_vcs_service_github_provider.Unlock_id
@@ -19,6 +20,7 @@ module Provider :
   module Comment = Terrat_vcs_service_github_provider.Comment
   module Commit_check = Terrat_vcs_service_github_provider.Commit_check
   module Ui = Terrat_vcs_service_github_provider.Ui
+  module Stacks = Terrat_vcs_service_github_provider.Stacks
 end
 
 include

@@ -5,15 +5,17 @@ module type ID = sig
   val to_string : t -> string
 end
 
-module type S = sig
-  module Config : sig
-    type t
-    type vcs_config
+module type CONFIG = sig
+  type t
+  type vcs_config
 
-    val make : config:Terrat_config.t -> vcs_config:vcs_config -> unit -> t
-    val config : t -> Terrat_config.t
-    val vcs_config : t -> vcs_config
-  end
+  val make : config:Terrat_config.t -> vcs_config:vcs_config -> unit -> t
+  val config : t -> Terrat_config.t
+  val vcs_config : t -> vcs_config
+end
+
+module type S = sig
+  module Config : CONFIG
 
   module User : sig
     module Id : ID
@@ -97,7 +99,11 @@ module type S = sig
   end
 
   val create_client :
-    request_id:string -> Config.t -> Account.t -> Pgsql_io.t -> (Client.t, [> `Error ]) result Abb.Future.t
+    request_id:string ->
+    Config.t ->
+    Account.t ->
+    Pgsql_io.t ->
+    (Client.t, [> `Error ]) result Abb.Future.t
 
   val fetch_branch_sha :
     request_id:string ->

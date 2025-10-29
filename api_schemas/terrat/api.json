@@ -18,6 +18,22 @@
         ],
         "type": "object"
       },
+      "dirspace": {
+        "additionalProperties": false,
+        "properties": {
+          "dir": {
+            "type": "string"
+          },
+          "workspace": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "dir",
+          "workspace"
+        ],
+        "type": "object"
+      },
       "dirspace-state": {
         "enum": [
           "aborted",
@@ -481,6 +497,9 @@
           "repo": {
             "type": "string"
           },
+          "repo_id": {
+            "type": "string"
+          },
           "run_id": {
             "type": "string"
           },
@@ -510,6 +529,7 @@
           "owner",
           "ref",
           "repo",
+          "repo_id",
           "repository",
           "run_type",
           "state",
@@ -798,6 +818,105 @@
           "app_id",
           "redirect_url",
           "web_base_url"
+        ],
+        "type": "object"
+      },
+      "stack-inner": {
+        "additionalProperties": false,
+        "properties": {
+          "dirspaces": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "dirspace": {
+                  "$ref": "#/components/schemas/dirspace"
+                },
+                "state": {
+                  "$ref": "#/components/schemas/stack-state"
+                }
+              },
+              "required": [
+                "dirspace",
+                "state"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "name": {
+            "type": "string"
+          },
+          "paths": {
+            "items": {
+              "$ref": "#/components/schemas/stack-path"
+            },
+            "type": "array"
+          },
+          "state": {
+            "$ref": "#/components/schemas/stack-state"
+          }
+        },
+        "required": [
+          "dirspaces",
+          "name",
+          "paths",
+          "state"
+        ],
+        "type": "object"
+      },
+      "stack-outer": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "stacks": {
+            "items": {
+              "$ref": "#/components/schemas/stack-inner"
+            },
+            "type": "array"
+          },
+          "state": {
+            "$ref": "#/components/schemas/stack-state"
+          }
+        },
+        "required": [
+          "name",
+          "stacks",
+          "state"
+        ],
+        "type": "object"
+      },
+      "stack-path": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "stack-state": {
+        "enum": [
+          "apply_failed",
+          "apply_pending",
+          "apply_ready",
+          "apply_success",
+          "no_changes",
+          "plan_failed",
+          "plan_pending"
+        ],
+        "type": "string"
+      },
+      "stacks": {
+        "additionalProperties": false,
+        "properties": {
+          "stacks": {
+            "items": {
+              "$ref": "#/components/schemas/stack-outer"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "stacks"
         ],
         "type": "object"
       },
@@ -3358,6 +3477,57 @@
           "403": {
             "content": {}
           }
+        }
+      }
+    },
+    "/api/v1/{vcs}/installations/{installation_id}/repos/{repo_id}/prs/{pull_request_id}/stacks": {
+      "post": {
+        "operationId": "installations/get-pull-requests-stack",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "installation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "vcs",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "repo_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "pull_request_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/stacks"
+                }
+              }
+            }
+          },
+          "403": {}
         }
       }
     }

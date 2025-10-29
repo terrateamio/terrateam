@@ -21,6 +21,14 @@ struct
   module Events = Terrat_vcs_service_github_ep_events3.Make (Provider)
   module Work_manifest = Terrat_vcs_service_github_ep_work_manifest.Make (Provider)
 
+  module Ep_inst = Terrat_vcs_service_github_ep_installations.Make (struct
+    module Account_id = Provider.Api.Account.Id
+
+    let enforce_installation_access = Provider.enforce_installation_access
+  end)
+
+  module Ep_user = Terrat_vcs_service_github_ep_user
+
   module Routes = struct
     module Rt = struct
       (* Apparently at some point Malcolm decided that it made sense to have two
@@ -220,9 +228,8 @@ struct
     end
 
     let routes config storage =
-      let module Ep_inst = Terrat_vcs_service_github_ep_installations in
-      let module Ep_user = Terrat_vcs_service_github_ep_user in
       Routes.routes config storage
+      @ Provider.Stacks.routes config storage
       @ Brtl_rtng.Route.
           [
             (* Work manifests *)

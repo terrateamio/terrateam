@@ -49,21 +49,9 @@ type query_user_id_err =
 
 type query_user_id_ex_err = Pgsql_io.err [@@deriving show]
 
-type enforce_installation_access_err =
-  [ `Forbidden
-  | Pgsql_io.err
-  ]
-[@@deriving show]
-
 (** Query a user id from a user, fails if the user is not found *)
 val query_user_id : Pgsql_io.t -> Terrat_user.t -> (int, [> query_user_id_err ]) result Abb.Future.t
 
 (** Extended function that does not fail if user does no exist *)
 val query_user_id' :
   Pgsql_io.t -> Terrat_user.t -> (int option, [> query_user_id_ex_err ]) result Abb.Future.t
-
-val enforce_installation_access :
-  Pgsql_io.t ->
-  Terrat_user.t ->
-  int ->
-  (unit, [> enforce_installation_access_err ]) result Abb.Future.t

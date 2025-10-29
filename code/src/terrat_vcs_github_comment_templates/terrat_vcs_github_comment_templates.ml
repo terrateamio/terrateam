@@ -58,6 +58,7 @@ module Tmpl = struct
   let missing_plans = read "missing_plans.tmpl"
   let dirspaces_owned_by_other_pull_requests = read "dirspaces_owned_by_other_pull_requests.tmpl"
   let conflicting_work_manifests = read "conflicting_work_manifests.tmpl"
+  let synthesize_config_err_stack_cycle = jinja "synthesize_config_err_stack_cycle.tmpl"
   let synthesize_config_err_cycle = jinja "synthesize_config_err_cycle.tmpl"
 
   let synthesize_config_err_workspace_in_multiple_stacks =
