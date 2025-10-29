@@ -343,11 +343,23 @@ module GetApiV4GroupsIdMembersUserId = struct
   end
 
   module Responses = struct
-    module OK = struct end
+    module OK = struct
+      type t = Gitlabc_components.API_Entities_Member.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
 
-    type t = [ `OK ] [@@deriving show, eq]
+    module Not_found = struct end
 
-    let t = [ ("200", fun _ -> Ok `OK) ]
+    type t =
+      [ `OK of OK.t
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson); ("404", fun _ -> Ok `Not_found);
+      ]
   end
 
   let url = "/api/v4/groups/{id}/members/{user_id}"

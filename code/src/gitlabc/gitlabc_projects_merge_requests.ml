@@ -682,16 +682,23 @@ module GetApiV4ProjectsIdMergeRequestsMergeRequestIidApprovals = struct
   end
 
   module Responses = struct
-    module OK = struct end
+    module OK = struct
+      type t = Gitlabc_components.API_Entities_MergeRequestApprovals.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
     module Not_found = struct end
 
     type t =
-      [ `OK
+      [ `OK of OK.t
       | `Not_found
       ]
     [@@deriving show, eq]
 
-    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson); ("404", fun _ -> Ok `Not_found);
+      ]
   end
 
   let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/approvals"
@@ -2722,16 +2729,23 @@ module GetApiV4ProjectsIdMergeRequestsMergeRequestIidReviewers = struct
   end
 
   module Responses = struct
-    module OK = struct end
+    module OK = struct
+      type t = Gitlabc_components.API_Entities_MergeRequestReviewer.t list
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
     module Not_found = struct end
 
     type t =
-      [ `OK
+      [ `OK of OK.t
       | `Not_found
       ]
     [@@deriving show, eq]
 
-    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson); ("404", fun _ -> Ok `Not_found);
+      ]
   end
 
   let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/reviewers"

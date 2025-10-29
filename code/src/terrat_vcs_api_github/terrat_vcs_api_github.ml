@@ -757,11 +757,11 @@ let fetch_pull_request_requested_reviews ~request_id repo pull_number client =
   | Ok _ as r -> Abb.Future.return r
   | Error (#Resp.t as err) ->
       Prmths.Counter.inc_one Metrics.github_errors_total;
-      Logs.info (fun m -> m "%s : FETCH_PULL_REQUEST_REVIEWS : %a" request_id Resp.pp err);
+      Logs.info (fun m -> m "%s : FETCH_PULL_REQUEST_REQUESTED_REVIEWS : %a" request_id Resp.pp err);
       Abb.Future.return (Error `Error)
   | Error (#Githubc2_abb.call_err as err) ->
       Logs.err (fun m ->
-          m "%s : FETCH_PULL_REQUEST_REVIEWS: %a" request_id Githubc2_abb.pp_call_err err);
+          m "%s : FETCH_PULL_REQUEST_REQUESTED_REVIEWS: %a" request_id Githubc2_abb.pp_call_err err);
       Abb.Future.return (Error `Error)
 
 let merge_pull_request' request_id client pull_request merge_strategy =

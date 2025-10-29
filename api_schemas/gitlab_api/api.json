@@ -112,6 +112,9 @@
             "$ref": "#/components/schemas/API_Entities_UserBasic"
           }
         },
+        "required": [
+          "user"
+        ],
         "type": "object"
       },
       "API_Entities_Avatar": {
@@ -4671,17 +4674,11 @@
         "additionalProperties": false,
         "description": "API_Entities_MergeRequestApprovals model",
         "properties": {
-          "approved": {
-            "type": "boolean"
-          },
           "approved_by": {
-            "$ref": "#/components/schemas/API_Entities_Approvals"
-          },
-          "user_can_approve": {
-            "type": "boolean"
-          },
-          "user_has_approved": {
-            "type": "boolean"
+            "items": {
+              "$ref": "#/components/schemas/API_Entities_Approvals"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -5196,6 +5193,10 @@
             "$ref": "#/components/schemas/API_Entities_UserBasic"
           }
         },
+        "required": [
+          "state",
+          "user"
+        ],
         "type": "object"
       },
       "API_Entities_Metadata": {
@@ -36096,11 +36097,16 @@
         ],
         "responses": {
           "200": {
-            "description": "Gets a member of a group or project.",
-            "schema": {
-              "$ref": "#/components/schemas/API_Entities_Member"
+            "content": {
+              "application/json": {
+                "description": "Gets a member of a group or project.",
+                "schema": {
+                  "$ref": "#/components/schemas/API_Entities_Member"
+                }
+              }
             }
-          }
+          },
+          "404": {}
         },
         "tags": [
           "members"
@@ -58106,9 +58112,13 @@
         ],
         "responses": {
           "200": {
-            "description": "List approvals for merge request",
-            "schema": {
-              "$ref": "#/components/schemas/API_Entities_MergeRequestApprovals"
+            "content": {
+              "application/json": {
+                "description": "List approvals for merge request",
+                "schema": {
+                  "$ref": "#/components/schemas/API_Entities_MergeRequestApprovals"
+                }
+              }
             }
           },
           "404": {
@@ -60513,9 +60523,16 @@
         ],
         "responses": {
           "200": {
-            "description": "Get single merge request reviewers",
-            "schema": {
-              "$ref": "#/components/schemas/API_Entities_MergeRequestReviewer"
+            "content": {
+              "application/json": {
+                "description": "Get single merge request reviewers",
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/API_Entities_MergeRequestReviewer"
+                  },
+                  "type": "array"
+                }
+              }
             }
           },
           "404": {
