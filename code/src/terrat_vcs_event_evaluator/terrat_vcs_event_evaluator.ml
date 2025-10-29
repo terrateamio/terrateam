@@ -3088,6 +3088,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         <*> Dv.base_branch_name ctx state
         <*> Dv.branch_name ctx state)
       >>= fun (client, repo_config, repo_tree, base_branch_name', branch_name') ->
+      Dv.query_repo_tree ctx state
+      >>= fun built_repo_tree ->
+      let repo_tree =
+        let module I = Terrat_api_components.Work_manifest_build_tree_result.Files.Items in
+        CCOption.map_or
+          ~default:repo_tree
+          (fun built_tree -> CCList.map (fun { I.path; _ } -> path) built_tree)
+          built_repo_tree
+      in
       let dest_branch = S.Api.Ref.to_string base_branch_name' in
       let branch = S.Api.Ref.to_string branch_name' in
       Abbs_time_it.run (log_time state.State.request_id "DERIVE") (fun () ->
@@ -3149,6 +3158,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           >>= fun repo_config ->
           Dv.repo_tree_branch ctx state
           >>= fun repo_tree ->
+          Dv.query_repo_tree ctx state
+          >>= fun built_repo_tree ->
+          let repo_tree =
+            let module I = Terrat_api_components.Work_manifest_build_tree_result.Files.Items in
+            CCOption.map_or
+              ~default:repo_tree
+              (fun built_tree -> CCList.map (fun { I.path; _ } -> path) built_tree)
+              built_repo_tree
+          in
           Dv.base_branch_name ctx state
           >>= fun base_branch_name ->
           Dv.branch_name ctx state
@@ -4239,6 +4257,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               >>= fun repo_config ->
               Dv.repo_tree_branch ctx state
               >>= fun repo_tree ->
+              Dv.query_repo_tree ctx state
+              >>= fun built_repo_tree ->
+              let repo_tree =
+                let module I = Terrat_api_components.Work_manifest_build_tree_result.Files.Items in
+                CCOption.map_or
+                  ~default:repo_tree
+                  (fun built_tree -> CCList.map (fun { I.path; _ } -> path) built_tree)
+                  built_repo_tree
+              in
               Dv.base_branch_name ctx state
               >>= fun base_branch_name ->
               Dv.branch_name ctx state
@@ -4294,6 +4321,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               >>= fun repo_config ->
               Dv.repo_tree_branch ctx state
               >>= fun repo_tree ->
+              Dv.query_repo_tree ctx state
+              >>= fun built_repo_tree ->
+              let repo_tree =
+                let module I = Terrat_api_components.Work_manifest_build_tree_result.Files.Items in
+                CCOption.map_or
+                  ~default:repo_tree
+                  (fun built_tree -> CCList.map (fun { I.path; _ } -> path) built_tree)
+                  built_repo_tree
+              in
               Dv.base_branch_name ctx state
               >>= fun base_branch_name ->
               Dv.branch_name ctx state
@@ -4398,6 +4434,17 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                      <*> Dv.repo_config_with_provenance ctx state
                      <*> Dv.repo_tree_branch ctx state)
                    >>= fun (client, pull_request, (provenance, repo_config), repo_tree) ->
+                   Dv.query_repo_tree ctx state
+                   >>= fun built_repo_tree ->
+                   let repo_tree =
+                     let module I =
+                       Terrat_api_components.Work_manifest_build_tree_result.Files.Items
+                     in
+                     CCOption.map_or
+                       ~default:repo_tree
+                       (fun built_tree -> CCList.map (fun { I.path; _ } -> path) built_tree)
+                       built_repo_tree
+                   in
                    Dv.query_index ctx state
                    >>= fun index ->
                    let index =
@@ -4858,6 +4905,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           <*> Dv.repo_config_with_provenance ctx state
           <*> Dv.repo_tree_branch ctx state)
         >>= fun (client, pull_request, (provenance, repo_config), repo_tree) ->
+        Dv.query_repo_tree ctx state
+        >>= fun built_repo_tree ->
+        let repo_tree =
+          let module I = Terrat_api_components.Work_manifest_build_tree_result.Files.Items in
+          CCOption.map_or
+            ~default:repo_tree
+            (fun built_tree -> CCList.map (fun { I.path; _ } -> path) built_tree)
+            built_repo_tree
+        in
         Dv.query_index ctx state
         >>= fun index ->
         let index =
@@ -6618,6 +6674,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               >>= fun repo_config ->
               Dv.repo_tree_branch ctx state
               >>= fun repo_tree ->
+              Dv.query_repo_tree ctx state
+              >>= fun built_repo_tree ->
+              let repo_tree =
+                let module I = Terrat_api_components.Work_manifest_build_tree_result.Files.Items in
+                CCOption.map_or
+                  ~default:repo_tree
+                  (fun built_tree -> CCList.map (fun { I.path; _ } -> path) built_tree)
+                  built_repo_tree
+              in
               Dv.query_index ctx state
               >>= fun index ->
               Dv.base_branch_name ctx state
