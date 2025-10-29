@@ -3190,6 +3190,16 @@ module Comment = struct
              "HOOKS_UNKNOWN_VISIBLE_ON_ERR"
              Tmpl.repo_config_err_hooks_unknown_visible_on_err
              kv
+    | `Merge_strategy_parse_err s ->
+        let kv = `Assoc [ ("strategy", `String s) ] in
+        Abbs_future_combinators.Result.ignore
+        @@ Gcm_api.apply_template_and_publish_jinja
+             ~request_id
+             client
+             pull_request
+             "MERGE_STRATEGY_PARSE_ERR"
+             Tmpl.merge_strategy_parse_err
+             kv
     | `Pattern_parse_err s ->
         let kv = Snabela.Kv.(Map.of_list [ ("pattern", string s) ]) in
         Abbs_future_combinators.Result.ignore

@@ -615,9 +615,30 @@ module Apply_requirements = struct
 end
 
 module Automerge = struct
+  module Merge_strategy = struct
+    type t =
+      | Merge
+      | Rebase
+      | Squash
+    [@@deriving show, yojson, eq]
+
+    let make str =
+      match str with
+      | "merge" -> Ok Merge
+      | "rebase" -> Ok Rebase
+      | "squash" -> Ok Squash
+      | _ -> Error (`Merge_strategy_parse_err str)
+
+    let to_string = function
+      | Merge -> "merge"
+      | Rebase -> "rebase"
+      | Squash -> "squash"
+  end
+
   type t = {
     delete_branch : bool; [@default false]
     enabled : bool; [@default false]
+    merge_strategy : Merge_strategy.t; [@default Merge_strategy.Merge]
     require_explicit_apply : bool; [@default false]
   }
   [@@deriving make, show, yojson, eq]
@@ -1207,6 +1228,7 @@ type of_version_1_err =
   | `Glob_parse_err of string * string
   | `Hooks_unknown_run_on_err of Terrat_repo_config_run_on.t
   | `Hooks_unknown_visible_on_err of string
+  | `Merge_strategy_parse_err of string
   | `Notification_policy_tag_query_err of string * string
   | `Pattern_parse_err of string
   | `Stack_config_tag_query_err of string * string
@@ -2002,9 +2024,12 @@ let of_version_1_apply_requirements apply_requirements =
        ())
 
 let of_version_automerge automerge =
+  let open CCResult.Infix in
   let module Am = Terrat_repo_config_automerge in
-  let { Am.delete_branch; enabled; require_explicit_apply } = automerge in
-  Ok (Automerge.make ~delete_branch ~enabled ~require_explicit_apply ())
+  let { Am.delete_branch; enabled; merge_strategy; require_explicit_apply } = automerge in
+  Automerge.Merge_strategy.make merge_strategy
+  >>= fun merge_strategy ->
+  Ok (Automerge.make ~delete_branch ~enabled ~merge_strategy ~require_explicit_apply ())
 
 let of_version_1_batch_runs batch_runs =
   let module Br = Terrat_repo_config_batch_runs in
@@ -2687,8 +2712,10 @@ let to_version_1_apply_requirements ar =
 
 let to_version_1_automerge automerge =
   let module Am = Terrat_repo_config.Automerge in
-  let { Automerge.delete_branch; enabled; require_explicit_apply } = automerge in
-  { Am.delete_branch; enabled; require_explicit_apply }
+  let module Ms = Automerge.Merge_strategy in
+  let { Automerge.delete_branch; enabled; merge_strategy; require_explicit_apply } = automerge in
+  let merge_strategy = Ms.to_string merge_strategy in
+  { Am.delete_branch; enabled; merge_strategy; require_explicit_apply }
 
 let to_version_1_batch_runs batch_runs =
   let module Br = Terrat_repo_config.Batch_runs in

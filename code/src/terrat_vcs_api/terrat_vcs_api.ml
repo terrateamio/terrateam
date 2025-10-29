@@ -205,6 +205,7 @@ module type S = sig
     request_id:string ->
     Client.t ->
     ('diff, 'checks) Pull_request.t ->
+    Terrat_base_repo_config_v1.Automerge.Merge_strategy.t ->
     (unit, [> `Error | `Merge_err of string ]) result Abb.Future.t
 
   val delete_branch :
