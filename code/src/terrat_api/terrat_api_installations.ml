@@ -497,5 +497,5 @@ module Get_pull_requests_stack = struct
       ~query_params:[]
       ~url
       ~responses:Responses.t
-      `Post
+      `Get
 end

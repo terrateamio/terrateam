@@ -3481,7 +3481,7 @@
       }
     },
     "/api/v1/{vcs}/installations/{installation_id}/repos/{repo_id}/prs/{pull_request_id}/stacks": {
-      "post": {
+      "get": {
         "operationId": "installations/get-pull-requests-stack",
         "parameters": [
           {
