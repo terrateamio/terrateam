@@ -617,6 +617,7 @@ end
 module Automerge = struct
   module Merge_strategy = struct
     type t =
+      | Auto
       | Merge
       | Rebase
       | Squash
@@ -624,12 +625,14 @@ module Automerge = struct
 
     let make str =
       match str with
+      | "auto" -> Ok Auto
       | "merge" -> Ok Merge
       | "rebase" -> Ok Rebase
       | "squash" -> Ok Squash
       | _ -> Error (`Merge_strategy_parse_err str)
 
     let to_string = function
+      | Auto -> "auto"
       | Merge -> "merge"
       | Rebase -> "rebase"
       | Squash -> "squash"
@@ -638,7 +641,7 @@ module Automerge = struct
   type t = {
     delete_branch : bool; [@default false]
     enabled : bool; [@default false]
-    merge_strategy : Merge_strategy.t; [@default Merge_strategy.Merge]
+    merge_strategy : Merge_strategy.t; [@default Merge_strategy.Auto]
     require_explicit_apply : bool; [@default false]
   }
   [@@deriving make, show, yojson, eq]

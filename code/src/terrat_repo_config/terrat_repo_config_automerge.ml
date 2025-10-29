@@ -1,5 +1,6 @@
 module Merge_strategy = struct
   let t_of_yojson = function
+    | `String "auto" -> Ok "auto"
     | `String "merge" -> Ok "merge"
     | `String "rebase" -> Ok "rebase"
     | `String "squash" -> Ok "squash"
@@ -12,7 +13,7 @@ end
 type t = {
   delete_branch : bool; [@default false]
   enabled : bool; [@default false]
-  merge_strategy : Merge_strategy.t; [@default "merge"]
+  merge_strategy : Merge_strategy.t; [@default "auto"]
   require_explicit_apply : bool; [@default false]
 }
 [@@deriving yojson { strict = true; meta = true }, make, show, eq]

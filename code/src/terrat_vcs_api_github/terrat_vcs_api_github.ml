@@ -770,6 +770,7 @@ let merge_pull_request' request_id client pull_request merge_strategy =
   let repo = Terrat_pull_request.repo pull_request in
   let merge_method =
     match merge_strategy with
+    | Ms.Auto -> "merge"
     | Ms.Merge -> "merge"
     | Ms.Squash -> "squash"
     | Ms.Rebase -> "rebase"
@@ -808,18 +809,32 @@ let merge_pull_request' request_id client pull_request merge_strategy =
   | `OK _ -> Abb.Future.return (Ok ())
   | `Method_not_allowed { Mna.primary = { Mna.Primary.message = Some message; _ }; _ }
     when CCString.equal "Merge already in progress" message -> Abb.Future.return (Ok ())
-  | `Method_not_allowed _ as err ->
+  | `Method_not_allowed _ when merge_strategy = Ms.Auto -> (
       Logs.info (fun m ->
           m
-            "%s : MERGE_METHOD_NOT_ALLOWED : %s : %s : %s : %d"
+            "%s : MERGE_METHOD_NOT_ALLOWED : METHOD %s : %s : %s : %d"
             request_id
+            merge_method
             (Repo.owner repo)
             (Repo.name repo)
-            merge_method
             (Terrat_pull_request.id pull_request));
-      Abb.Future.return (Error err)
-  | (`Conflict _ | `Forbidden _ | `Not_found _ | `Unprocessable_entity _) as err ->
-      Abb.Future.return (Error err)
+      Githubc2_abb.call
+        client.Client.client
+        Githubc2_pulls.Merge.(
+          make
+            ~body:Request_body.(make Primary.(make ~merge_method:(Some "squash") ()))
+            Parameters.(
+              make
+                ~owner:repo.Repo.owner
+                ~repo:repo.Repo.name
+                ~pull_number:(Terrat_pull_request.id pull_request)))
+      >>= fun resp ->
+      match Openapi.Response.value resp with
+      | `OK _ -> Abb.Future.return (Ok ())
+      | (`Method_not_allowed _ | `Conflict _ | `Forbidden _ | `Not_found _ | `Unprocessable_entity _)
+        as err -> Abb.Future.return (Error err))
+  | (`Conflict _ | `Forbidden _ | `Method_not_allowed _ | `Not_found _ | `Unprocessable_entity _) as
+    err -> Abb.Future.return (Error err)
 
 let merge_pull_request ~request_id client pull_request merge_strategy =
   let num_tries = 3 in

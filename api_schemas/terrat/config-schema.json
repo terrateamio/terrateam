@@ -252,8 +252,9 @@
           "type": "boolean"
         },
         "merge_strategy": {
-          "default": "merge",
+          "default": "auto",
           "enum": [
+            "auto",
             "merge",
             "rebase",
             "squash"

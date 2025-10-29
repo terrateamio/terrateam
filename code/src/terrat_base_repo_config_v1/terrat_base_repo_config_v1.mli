@@ -320,6 +320,7 @@ end
 module Automerge : sig
   module Merge_strategy : sig
     type t =
+      | Auto
       | Merge
       | Rebase
       | Squash
