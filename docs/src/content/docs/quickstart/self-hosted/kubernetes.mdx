@@ -41,7 +41,7 @@ Before you begin, ensure you have:
 
    ```sh
    # From the terrateam/docker/terrat directory
-   source ./dotenv
+   source ./dotenv && .env export
    ```
 
 2. **Create Kubernetes secrets for GitHub App**
@@ -147,6 +147,67 @@ Before you begin, ensure you have:
 5. **Choose your deployment configuration**
 
    Select one of the deployment options below based on your infrastructure.
+
+</Steps>
+
+</TabItem>
+<TabItem label="Enterprise Edition">
+
+<Steps>
+
+1. **Identify your enterprise image**
+
+   Terrateam will provide you with a specific container image URL for the Enterprise Edition. This image includes additional features and enterprise-level support.
+
+2. **Follow GitHub or GitLab setup steps**
+
+   Complete steps 1-4 from either the GitHub or GitLab tab above to:
+   - Source your application settings
+   - Create Kubernetes secrets
+   - Create database password secret
+   - Add Terrateam Helm repository
+
+3. **Deploy with enterprise image**
+
+   You can override the default image using any of these methods:
+
+   **Method 1: Command-line flags**
+
+   Add image configuration flags to your helm install command:
+
+   ```sh
+   helm install terrateam terrateamio/terrateam \
+     --set terrateam.image.repository="<terrateam-enterprise-docker-image-url>" \
+     --set terrateam.image.tag="<image-tag>" \
+     --set terrateam.image.pullPolicy="IfNotPresent" \
+     --set terrateam.config.fqdn="terrateam.example.com" \
+     # ... add other configuration flags as needed
+   ```
+
+   **Method 2: Values file**
+
+   Create a file named `values.yaml`:
+
+   ```yaml
+   terrateam:
+     image:
+       repository: <terrateam-enterprise-docker-image-url>
+       tag: <image-tag>
+       pullPolicy: IfNotPresent
+     config:
+       fqdn: terrateam.example.com
+       # Add other configuration as needed
+   ```
+
+   Then deploy using the values file:
+
+   ```sh
+   helm install terrateam terrateamio/terrateam -f values.yaml
+   ```
+
+3. **Choose your deployment configuration**
+
+   After configuring the enterprise image, proceed to the Deployment Options section below to complete your setup based on your infrastructure.
 
 </Steps>
 
