@@ -1,7 +1,7 @@
-type t = {
-  approved : bool option; [@default None]
-  approved_by : Gitlabc_components_api_entities_approvals.t option; [@default None]
-  user_can_approve : bool option; [@default None]
-  user_has_approved : bool option; [@default None]
-}
+module Approved_by = struct
+  type t = Gitlabc_components_api_entities_approvals.t list
+  [@@deriving yojson { strict = false; meta = true }, show, eq]
+end
+
+type t = { approved_by : Approved_by.t option [@default None] }
 [@@deriving yojson { strict = false; meta = true }, show, eq]

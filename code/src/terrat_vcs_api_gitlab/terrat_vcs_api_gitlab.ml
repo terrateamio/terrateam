@@ -766,12 +766,129 @@ let fetch_commit_checks ~request_id client repo ref_ =
       Logs.err (fun m -> m "%s : FETCH_COMMIT_CHECKS : %a" request_id Openapic_abb.pp_call_err err);
       Abb.Future.return (Error `Error)
 
-let fetch_pull_request_reviews ~request_id client repo pull_number =
-  (* TODO: Implement *)
-  Abb.Future.return (Ok [])
+let fetch_pull_request_approvals' ~request_id repo pull_number client =
+  let module Gl =
+    Gitlabc_projects_merge_requests.GetApiV4ProjectsIdMergeRequestsMergeRequestIidApprovals
+  in
+  let run =
+    let open Abbs_future_combinators.Infix_result_monad in
+    call
+      client.Client.client
+      Gl.(make (Parameters.make ~id:(Repo.id repo) ~merge_request_iid:pull_number))
+    >>= fun resp ->
+    let module Resp = Gitlabc_components.API_Entities_MergeRequestApprovals in
+    match Openapi.Response.value resp with
+    | `OK { Resp.approved_by } ->
+        let module A = Gitlabc_components.API_Entities_Approvals in
+        let module Ub = Gitlabc_components.API_Entities_UserBasic in
+        let module Prr = Terrat_pull_request_review in
+        Abb.Future.return
+          (Ok
+             (CCList.map (fun { A.user = { Ub.username; _ } } ->
+                  { Prr.id = username; status = Prr.Status.Approved; user = Some username })
+             @@ CCOption.get_or ~default:[] approved_by))
+    | `Not_found -> Abb.Future.return (Error `Not_found)
+  in
+  let open Abb.Future.Infix_monad in
+  run
+  >>= function
+  | Ok _ as r -> Abb.Future.return r
+  | Error (#Gl.Responses.t as err) ->
+      Logs.err (fun m -> m "%s : FETCH_PULL_REQUEST_APPROVALS : %a" request_id Gl.Responses.pp err);
+      Abb.Future.return (Error `Error)
+  | Error (#Openapic_abb.call_err as err) ->
+      Logs.err (fun m ->
+          m "%s : FETCH_PULL_REQUEST_APPROVALS : %a" request_id Openapic_abb.pp_call_err err);
+      Abb.Future.return (Error `Error)
+
+let fetch_pull_request_reviews' ~request_id repo pull_number client =
+  let module Gl =
+    Gitlabc_projects_merge_requests.GetApiV4ProjectsIdMergeRequestsMergeRequestIidReviewers
+  in
+  let run =
+    let open Abbs_future_combinators.Infix_result_monad in
+    call
+      client.Client.client
+      Gl.(
+        make (Parameters.make ~id:(CCInt.to_string @@ Repo.id repo) ~merge_request_iid:pull_number))
+    >>= fun resp ->
+    match Openapi.Response.value resp with
+    | `OK reviews ->
+        let module R = Gitlabc_components.API_Entities_MergeRequestReviewer in
+        let module Ub = Gitlabc_components.API_Entities_UserBasic in
+        let module Prr = Terrat_pull_request_review in
+        Abb.Future.return
+          (Ok
+             (CCList.map
+                (function
+                  | { R.state = "reviewed"; user = { Ub.username; _ }; _ } ->
+                      { Prr.id = username; status = Prr.Status.Approved; user = Some username }
+                  | { R.user = { Ub.username; _ }; _ } ->
+                      { Prr.id = username; status = Prr.Status.Unknown; user = Some username })
+                reviews))
+    | `Not_found -> Abb.Future.return (Error `Not_found)
+  in
+  let open Abb.Future.Infix_monad in
+  run
+  >>= function
+  | Ok _ as r -> Abb.Future.return r
+  | Error (#Gl.Responses.t as err) ->
+      Logs.err (fun m -> m "%s : FETCH_PULL_REQUEST_REVIEWS : %a" request_id Gl.Responses.pp err);
+      Abb.Future.return (Error `Error)
+  | Error (#Openapic_abb.call_err as err) ->
+      Logs.err (fun m ->
+          m "%s : FETCH_PULL_REQUEST_REVIEWS : %a" request_id Openapic_abb.pp_call_err err);
+      Abb.Future.return (Error `Error)
+
+let fetch_pull_request_reviews ~request_id repo pull_number client =
+  let run =
+    Abbs_future_combinators.Infix_result_app.(
+      ( @ )
+      <$> fetch_pull_request_approvals' ~request_id repo pull_number client
+      <*> fetch_pull_request_reviews' ~request_id repo pull_number client)
+  in
+  let open Abb.Future.Infix_monad in
+  run
+  >>= function
+  | Ok _ as r -> Abb.Future.return r
+  | Error `Error -> Abb.Future.return (Error `Error)
 
 let fetch_pull_request_requested_reviews ~request_id repo pull_number client =
-  Abb.Future.return (Ok [])
+  let module Gl =
+    Gitlabc_projects_merge_requests.GetApiV4ProjectsIdMergeRequestsMergeRequestIidReviewers
+  in
+  let run =
+    let open Abbs_future_combinators.Infix_result_monad in
+    call
+      client.Client.client
+      Gl.(
+        make (Parameters.make ~id:(CCInt.to_string @@ Repo.id repo) ~merge_request_iid:pull_number))
+    >>= fun resp ->
+    match Openapi.Response.value resp with
+    | `OK reviews ->
+        let module R = Gitlabc_components.API_Entities_MergeRequestReviewer in
+        let module Ub = Gitlabc_components.API_Entities_UserBasic in
+        let module Prr = Terrat_pull_request_review in
+        Abb.Future.return
+          (Ok
+             (CCList.map
+                (fun { R.user = { Ub.username; _ }; _ } ->
+                  Terrat_base_repo_config_v1.Access_control.Match.User username)
+                reviews))
+    | `Not_found -> Abb.Future.return (Error `Not_found)
+  in
+  let open Abb.Future.Infix_monad in
+  run
+  >>= function
+  | Ok id as r -> Abb.Future.return r
+  | Error (#Gl.Responses.t as err) ->
+      Logs.err (fun m ->
+          m "%s : FETCH_PULL_REQUEST_REQUESTED_REVIEWS : %a" request_id Gl.Responses.pp err);
+      Abb.Future.return (Error `Error)
+  | Error (#Openapic_abb.call_err as err) ->
+      Logs.err (fun m ->
+          m "%s : FETCH_PULL_REQUEST_REQUESTED_REVIEWS : %a" request_id Openapic_abb.pp_call_err err);
+      Abb.Future.return (Error `Error)
 
 let merge_pull_request ~request_id client pull_request merge_strategy =
   let module Gl =
@@ -857,7 +974,7 @@ let delete_branch ~request_id client repo branch =
 
 let fetch_member_of_team ~request_id ~team ~user client =
   let module Glu = Gitlabc_users.GetApiV4Users in
-  let module Glg = Gitlabc_groups_members.GetApiV4GroupsIdMembersAllUserId in
+  let module Glg = Gitlabc_groups_members.GetApiV4GroupsIdMembersUserId in
   let run =
     let open Abbs_future_combinators.Infix_result_monad in
     call client.Client.client Glu.(make (Parameters.make ~username:(Some (User.to_string user)) ()))
