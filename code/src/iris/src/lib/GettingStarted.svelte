@@ -3433,10 +3433,33 @@
                             <button
                               on:click={() => {
                                 const yamlContent = `# .gitlab-ci.yml - Using the terrateam template
-
+spec:
+  inputs:
+    TERRATEAM_TRIGGER:
+      description: "Is this being triggered by terrateam?"
+      type: boolean
+      default: false
+    WORK_TOKEN:
+      description: "The work token from terrateam"
+      type: string
+      default: ""
+    API_BASE_URL:
+      description: "The base url for the terrateam api"
+      type: string
+      default: ""
+    RUNS_ON:
+      description: "The tags to use for the runner"
+      type: array
+      default: []
+---
 include:
   - project: 'terrateam-io/terrateam-template'
     file: 'terrateam-template.yml'
+    inputs:
+      TERRATEAM_TRIGGER: $[[ inputs.TERRATEAM_TRIGGER ]]
+      WORK_TOKEN: $[[ inputs.WORK_TOKEN ]]
+      API_BASE_URL: $[[ inputs.API_BASE_URL ]]
+      RUNS_ON: $[[ inputs.RUNS_ON ]]
 
 stages:
   - terrateam
@@ -3453,10 +3476,33 @@ terrateam_job:
                               {copiedYaml ? 'Copied!' : 'Copy'}
                             </button>
                             <pre class="text-xs text-gray-800 dark:text-gray-200 overflow-x-auto pr-16"><code># .gitlab-ci.yml - Using the terrateam template
-
+spec:
+  inputs:
+    TERRATEAM_TRIGGER:
+      description: "Is this being triggered by terrateam?"
+      type: boolean
+      default: false
+    WORK_TOKEN:
+      description: "The work token from terrateam"
+      type: string
+      default: ""
+    API_BASE_URL:
+      description: "The base url for the terrateam api"
+      type: string
+      default: ""
+    RUNS_ON:
+      description: "The tags to use for the runner"
+      type: array
+      default: []
+---
 include:
   - project: 'terrateam-io/terrateam-template'
     file: 'terrateam-template.yml'
+    inputs:
+      TERRATEAM_TRIGGER: $[[ inputs.TERRATEAM_TRIGGER ]]
+      WORK_TOKEN: $[[ inputs.WORK_TOKEN ]]
+      API_BASE_URL: $[[ inputs.API_BASE_URL ]]
+      RUNS_ON: $[[ inputs.RUNS_ON ]]
 
 stages:
   - terrateam
