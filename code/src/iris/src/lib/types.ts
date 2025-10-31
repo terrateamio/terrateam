@@ -17,6 +17,13 @@ export type WorkManifest = ApiSchemas['installation-work-manifest'];
 export type User = ApiSchemas['user'];
 export type ServerConfig = ApiSchemas['server-config'];
 
+// Stack types for hierarchical infrastructure visualization
+export type Stacks = ApiSchemas['stacks'];
+export type StackOuter = ApiSchemas['stack-outer'];
+export type StackInner = ApiSchemas['stack-inner'];
+export type StackState = ApiSchemas['stack-state'];
+export type StackPath = ApiSchemas['stack-path'];
+
 // GitLab-specific types
 export type GitLabGroup = ApiSchemas['gitlab-group'];
 export type GitLabUser = ApiSchemas['gitlab-user'];
@@ -146,6 +153,45 @@ export const WorkManifestSchema = z.object({
   user: z.string().optional(),
 });
 
+// Stack schemas for hierarchical infrastructure visualization
+export const StackStateSchema = z.enum([
+  'apply_failed',
+  'apply_pending',
+  'apply_ready',
+  'apply_success',
+  'no_changes',
+  'plan_failed',
+  'plan_pending'
+]);
+
+export const StackPathSchema = z.array(z.string());
+
+// Simplified dirspace schema used in stacks (only has dir and workspace)
+export const StackDirspaceSchema = z.object({
+  dir: z.string(),
+  workspace: z.string(),
+});
+
+export const StackInnerSchema = z.object({
+  dirspaces: z.array(z.object({
+    dirspace: StackDirspaceSchema,  // Use simplified schema
+    state: StackStateSchema
+  })),
+  name: z.string(),
+  paths: z.array(StackPathSchema),
+  state: StackStateSchema
+});
+
+export const StackOuterSchema = z.object({
+  name: z.string(),
+  stacks: z.array(StackInnerSchema),
+  state: StackStateSchema
+});
+
+export const StacksSchema = z.object({
+  stacks: z.array(StackOuterSchema)
+});
+
 // GitLab-specific schemas
 export const GitLabGroupSchema = z.object({
   id: z.number(),
@@ -218,6 +264,18 @@ export function validateWorkManifest(data: unknown): WorkManifest {
 
 export function validateServerConfig(data: unknown): ServerConfig {
   return ServerConfigSchema.parse(data);
+}
+
+export function validateStacks(data: unknown): Stacks {
+  return StacksSchema.parse(data);
+}
+
+export function validateStackOuter(data: unknown): StackOuter {
+  return StackOuterSchema.parse(data);
+}
+
+export function validateStackInner(data: unknown): StackInner {
+  return StackInnerSchema.parse(data);
 }
 
 // Array validation functions

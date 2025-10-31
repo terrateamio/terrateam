@@ -432,7 +432,7 @@
     } catch (error) {
       console.error('Failed to load webhook config:', error);
       // Set defaults if API fails
-      webhookUrl = 'https://api.terrateam.io/webhook/gitlab';
+      webhookUrl = 'https://app.terrateam.io/webhook/gitlab';
       webhookSecret = 'Contact support for webhook secret';
     }
   }
@@ -814,7 +814,7 @@
     } catch (error) {
       console.error('Failed to load GitLab webhook config:', error);
       // Set defaults if API fails
-      webhookUrl = 'https://api.terrateam.io/webhook/gitlab';
+      webhookUrl = 'https://app.terrateam.io/webhook/gitlab';
       webhookSecret = 'Contact support for webhook secret';
     }
   }

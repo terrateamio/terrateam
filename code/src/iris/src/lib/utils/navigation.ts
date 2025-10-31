@@ -97,3 +97,20 @@ export function navigateToWorkspace(repo: string, dir: string, workspace: string
 export function navigateToDashboard(installationId?: string): void {
   navigateToInstallationPath('/dashboard', installationId);
 }
+
+/**
+ * Navigate to pull requests list
+ * @param installationId - Optional specific installation ID
+ */
+export function navigateToPullRequests(installationId?: string): void {
+  navigateToInstallationPath('/pull-requests', installationId);
+}
+
+/**
+ * Navigate to a pull request detail page
+ * @param prNumber - The pull request number
+ * @param installationId - Optional specific installation ID
+ */
+export function navigateToPullRequest(prNumber: string | number, installationId?: string): void {
+  navigateToInstallationPath(`/pull-requests/${prNumber}`, installationId);
+}

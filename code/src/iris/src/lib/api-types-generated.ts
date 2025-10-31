@@ -516,6 +516,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/{vcs}/installations/{installation_id}/repos/{repo_id}/prs/{pull_request_id}/stacks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["installations/get-pull-requests-stack"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -523,6 +539,10 @@ export interface components {
         "bad-request-err": {
             data?: string;
             id: string;
+        };
+        dirspace: {
+            dir: string;
+            workspace: string;
         };
         /** @enum {string} */
         "dirspace-state": "aborted" | "failure" | "queued" | "running" | "success" | "unknown";
@@ -631,6 +651,7 @@ export interface components {
             kind: components["schemas"]["kind-drift"] | components["schemas"]["kind-index"] | components["schemas"]["kind-pull-request"];
             owner: string;
             repo: string;
+            repo_id: string;
             run_id?: string;
             run_type: components["schemas"]["run-type"];
             state: components["schemas"]["work-manifest-state"];
@@ -712,6 +733,26 @@ export interface components {
             app_id: string;
             redirect_url: string;
             web_base_url: string;
+        };
+        "stack-inner": {
+            dirspaces: {
+                dirspace: components["schemas"]["dirspace"];
+                state: components["schemas"]["stack-state"];
+            }[];
+            name: string;
+            paths: components["schemas"]["stack-path"][];
+            state: components["schemas"]["stack-state"];
+        };
+        "stack-outer": {
+            name: string;
+            stacks: components["schemas"]["stack-inner"][];
+            state: components["schemas"]["stack-state"];
+        };
+        "stack-path": string[];
+        /** @enum {string} */
+        "stack-state": "apply_failed" | "apply_pending" | "apply_ready" | "apply_success" | "no_changes" | "plan_failed" | "plan_pending";
+        stacks: {
+            stacks: components["schemas"]["stack-outer"][];
         };
         task: {
             id: string;
@@ -1961,6 +2002,36 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["user"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "installations/get-pull-requests-stack": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                installation_id: string;
+                vcs: string;
+                repo_id: string;
+                pull_request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["stacks"];
                 };
             };
             403: {

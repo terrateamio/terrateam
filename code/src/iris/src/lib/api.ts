@@ -5,10 +5,12 @@ import type { ApiRequestOptions } from './types';
 import {
   type Installation,
   type Repository,
+  type PullRequest,
   type Dirspace,
   type WorkManifest,
   type User,
   type ServerConfig,
+  type Stacks,
   type GitLabGroup,
   type GitLabUser,
   type GitLabWebhook,
@@ -20,8 +22,10 @@ import {
   validateServerConfig,
   validateInstallations,
   validateRepositories,
+  validatePullRequests,
   validateDirspaces,
   validateWorkManifests,
+  validateStacks,
   validateGitLabGroups,
   validateGitLabUser,
   validateGitLabWebhook,
@@ -693,6 +697,64 @@ export class ValidatedApiClient {
     await this.put(`/api/v1/gitlab/installations/${installationId}/access-token`, payload);
   }
 
+  // Pull Requests
+  async getInstallationPullRequests(
+    installationId: string,
+    params?: { page?: string[]; pr?: number },
+    provider?: VCSProvider
+  ): Promise<{ pull_requests: PullRequest[]; nextCursor?: string; hasMore: boolean; linkHeaders?: LinkHeader }> {
+    const providerPath = this.getProviderPath(provider);
+    let endpoint = `${providerPath}/installations/${installationId}/pull-requests`;
+
+    if (params) {
+      const queryParams = new URLSearchParams();
+      if (params.pr) queryParams.set('pr', params.pr.toString());
+
+      // Handle page array parameter for cursor-based pagination
+      if (params.page && params.page.length > 0) {
+        params.page.forEach(cursor => {
+          queryParams.append('page', cursor);
+        });
+      }
+
+      const queryString = queryParams.toString();
+      if (queryString) endpoint += `?${queryString}`;
+    }
+
+    const response = await this.get(endpoint);
+
+    // Validate the response structure
+    if (!response || typeof response !== 'object' || !('pull_requests' in response)) {
+      throw new ApiError('Invalid pull requests response format', 422);
+    }
+
+    const pull_requests = validatePullRequests(response.pull_requests);
+
+    // Get Link headers for pagination
+    const linkHeaders = this.getLastLinkHeaders() || undefined;
+    const hasMore = linkHeaders?.next !== undefined;
+    const nextCursor = linkHeaders?.next;
+
+    return { pull_requests, hasMore, nextCursor, linkHeaders };
+  }
+
+  // Get Stacks for a Pull Request
+  async getPullRequestStacks(
+    installationId: string,
+    repoId: string,
+    pullRequestId: string,
+    provider?: VCSProvider
+  ): Promise<Stacks> {
+    const providerPath = this.getProviderPath(provider);
+    const endpoint = `${providerPath}/installations/${installationId}/repos/${repoId}/prs/${pullRequestId}/stacks`;
+
+    // API uses GET method for this endpoint
+    const response = await this.get(endpoint);
+    const validated = validateStacks(response);
+
+    return validated;
+  }
+
 }
 
 // Create and export the API client instance
@@ -711,8 +773,10 @@ export {
   validateServerConfig,
   validateInstallations,
   validateRepositories,
+  validatePullRequests,
   validateDirspaces,
   validateWorkManifests,
+  validateStacks,
   validateGitLabGroups,
   validateGitLabUser,
   validateGitLabWebhook,
