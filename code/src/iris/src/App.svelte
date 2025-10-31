@@ -26,6 +26,7 @@
   import WorkspaceDetail from './lib/WorkspaceDetail.svelte';
   import Runs from './lib/Runs.svelte';
   import RunDetail from './lib/RunDetail.svelte';
+  import RunsPRDetail from './lib/RunsPRDetail.svelte';
   import Configuration from './lib/Configuration.svelte';
   import Subscription from './lib/Subscription.svelte';
   import Support from './lib/Support.svelte';
@@ -58,11 +59,12 @@
     '/workspaces/:repo/:dir/:workspace': WorkspaceDetail,
     '/runs': Runs,
     '/runs/:id': RunDetail,
+    '/runs/pr/:prNumber': RunsPRDetail,
     '/configuration': Configuration,
     '/subscription': Subscription,
     '/analytics': Analytics,
     '/audit-trail': AuditTrail,
-    
+
     // Installation-scoped routes (when installations exist)
     '/i/:installationId/dashboard': Dashboard,
     '/i/:installationId/repositories': Repositories,
@@ -71,6 +73,7 @@
     '/i/:installationId/workspaces/:repo/:dir/:workspace': WorkspaceDetail,
     '/i/:installationId/runs': Runs,
     '/i/:installationId/runs/:id': RunDetail,
+    '/i/:installationId/runs/pr/:prNumber': RunsPRDetail,
     '/i/:installationId/configuration': Configuration,
     '/i/:installationId/subscription': Subscription,
     '/i/:installationId/analytics': Analytics,
