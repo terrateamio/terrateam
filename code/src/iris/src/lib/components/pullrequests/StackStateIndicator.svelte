@@ -4,7 +4,7 @@
   export let state: StackState;
   export let size: 'sm' | 'md' | 'lg' = 'md';
 
-  // Map states to colors and labels based on UX PDF specification
+  // Map states to colors and labels
   function getStateStyles(state: StackState): { bgClass: string; textClass: string; label: string } {
     switch (state) {
       case 'no_changes':
