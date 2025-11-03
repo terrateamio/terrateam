@@ -15,7 +15,7 @@ module Stack_config : sig
             list always ends in [stack_name]. *)
     config : Terrat_base_repo_config_v1.Stacks.Stack.t;
   }
-  [@@deriving show, to_yojson]
+  [@@deriving show, eq, to_yojson]
 end
 
 module Dirspace_config : sig
