@@ -134,7 +134,13 @@ module Make (M : M with type db = Pgsql_io.t) = struct
 
   let store ~request_id ~installation_id ~repo_id ~pull_request_id config db =
     let module Tac = Terrat_api_components in
-    let topology = CCList.flatten @@ Tcm.Config.stack_topology config in
+    let topology =
+      CCList.uniq_succ
+        ~eq:(fun { Tcm.Stack_config.name = n1; _ } { Tcm.Stack_config.name = n2; _ } ->
+          CCString.equal n1 n2)
+      @@ CCList.flatten
+      @@ Tcm.Config.stack_topology config
+    in
     (* Group all stack entries together if their paths start with the same first
        element.  There can be multiple paths but we're just going to ignore that
        for simplicity for now. *)
