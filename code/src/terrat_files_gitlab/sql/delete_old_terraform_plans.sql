@@ -11,16 +11,17 @@ with deleted_plans as (
 -- less space.
 empty_plans_limited as (
     select
-        gwm.id as id
-    from gitlab_work_manifests as gwm
-    inner join plans as p
-        on p.work_manifest = gwm.id
-    where gwm.created_at < now() - interval '14 days' and not p.has_changes and data <> ''
+        p.work_manifest as id
+    from plans as p
+    inner join gitlab_work_manifests as gwm
+        on gwm.id = p.work_manifest
+    where p.created_at < now() - interval '14 days' and not p.has_changes and data is not null and gwm.id = p.work_manifest
+    order by p.created_at 
     limit 5000
 ),
 empty_plans as (
     update plans as p
-        set data = ''
+        set data = null
     from empty_plans_limited as e
     where p.work_manifest = e.id
     returning (p.work_manifest, p.path, p.workspace)
