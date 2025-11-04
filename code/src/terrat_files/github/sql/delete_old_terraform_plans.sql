@@ -1,7 +1,7 @@
 with deleted_plans as (
     delete from plans as p
     using github_work_manifests as gwm
-    where p.work_manifest = gwm.id and gwm.created_at < now() - interval '14 days' and p.has_changes
+    where p.work_manifest = gwm.id and p.created_at < now() - interval '14 days' and p.has_changes and data is not null
     returning (p.work_manifest, p.path, p.workspace)
 ),
 -- Plans that don't have changes are used as a record of if a dirspace should be
@@ -16,7 +16,7 @@ empty_plans_limited as (
     inner join github_work_manifests as gwm
         on gwm.id = p.work_manifest
     where p.created_at < now() - interval '14 days' and not p.has_changes and data is not null and gwm.id = p.work_manifest
-    order by p.created_at    
+    order by p.created_at
     limit 5000
 ),
 empty_plans as (
