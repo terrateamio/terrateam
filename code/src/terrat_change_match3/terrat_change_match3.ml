@@ -21,7 +21,7 @@ module Stack_config = struct
     paths : string list list;
     config : Terrat_base_repo_config_v1.Stacks.Stack.t;
   }
-  [@@deriving show, to_yojson]
+  [@@deriving show, eq, to_yojson]
 end
 
 module Dirspace_config = struct
