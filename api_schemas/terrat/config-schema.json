@@ -348,6 +348,10 @@
           "default": true,
           "type": "boolean"
         },
+        "create_if_missing": {
+          "default": false,
+          "type": "boolean"
+        },
         "lock_branch_target": {
           "enum": [
             "all",

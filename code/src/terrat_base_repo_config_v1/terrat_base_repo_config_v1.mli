@@ -434,6 +434,7 @@ module Dirs : sig
 
     type t = {
       create_and_select_workspace : bool; [@default true]
+      create_if_missing : bool; [@default false]
       lock_branch_target : Branch_target.t; [@default Branch_target.All]
       stacks : Workspace.t String_map.t; [@default String_map.empty]
       tags : string list; [@default []]
