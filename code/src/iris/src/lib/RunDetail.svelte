@@ -754,14 +754,34 @@
       {#if getPullRequestInfo(run.kind).pullNumber}
         {@const prInfo = getPullRequestInfo(run.kind)}
         <div class="border-t border-gray-200 dark:border-gray-700 pt-6 mb-6">
-          <h3 class="text-lg font-semibold text-blue-600 dark:text-blue-400 mb-4">Pull Request Details</h3>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-blue-600 dark:text-blue-400">Pull Request Details</h3>
+            <button
+              on:click={() => {
+                // Store the current run ID so PR detail page can navigate back
+                if (typeof window !== 'undefined' && params.id) {
+                  sessionStorage.setItem('lastRunId', params.id);
+                }
+                const prUrl = $selectedInstallation
+                  ? `#/i/${$selectedInstallation.id}/runs/pr/${prInfo.pullNumber}`
+                  : `#/runs/pr/${prInfo.pullNumber}`;
+                window.location.hash = prUrl;
+              }}
+              class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700 rounded-md hover:bg-indigo-200 dark:hover:bg-indigo-900/50 transition-colors"
+            >
+              <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+              </svg>
+              View Stacks & All Runs
+            </button>
+          </div>
           <div class="flex flex-col md:grid md:grid-cols-2 gap-4 md:gap-6">
             <div>
               <div class="flex items-center space-x-2 mb-3">
                 <svg class="w-5 h-5 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 16 16">
                   <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zM4.5 7.5a.5.5 0 0 0 0 1h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H4.5z"/>
                 </svg>
-                <a 
+                <a
                   href={getPullRequestUrl(run.owner, run.repo, prInfo.pullNumber || 0)}
                   target="_blank"
                   rel="noopener noreferrer"
