@@ -1,7 +1,6 @@
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 import starlightImageZoom from "starlight-image-zoom";
-import { pluginLineNumbers } from '@expressive-code/plugin-line-numbers';
 
 export default defineConfig({
   vite: {
@@ -17,15 +16,6 @@ export default defineConfig({
         SiteTitle: './src/components/SiteTitle.astro',
       },
       plugins: [starlightImageZoom()],
-      expressiveCode: {
-        themes: ["starlight-dark", "solarized-light"],
-        styleOverrides: { borderRadius: "0.7rem" },
-        defaultProps: {
-          wrap: true,
-          showLineNumbers: false,
-        },
-        plugins: [pluginLineNumbers()],
-      },
       description: "Terraform and OpenTofu automation on GitHub",
       logo: {
         src: "/src/assets/logo-wordmark.svg",
@@ -46,9 +36,13 @@ export default defineConfig({
           : []
         ),
       ],
-      social: {
-        github: "https://github.com/terrateamio/terrateam",
-      },
+      social: [
+        {
+          icon: "github",
+          label: "GitHub",
+          href: "https://github.com/terrateamio/terrateam",
+        },
+      ],
       customCss: process.env.NO_GRADIENTS
         ? []
         : [
