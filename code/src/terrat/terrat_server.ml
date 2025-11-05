@@ -23,6 +23,9 @@ module Rt = struct
   (* Tenv *)
   let tenv_rt () =
     Brtl_rtng.Route.(rel / "api" /% Path.string / "tenv" /% Path.ud Uuidm.of_string /% Path.any)
+
+  (* Access token *)
+  let access_token_refresh_rt () = Brtl_rtng.Route.(rel / "api" / "v1" / "access-token" / "refresh")
 end
 
 let response_404 =
@@ -64,6 +67,10 @@ let rtng config storage services =
         @ [
             (* Tenv *)
             (`GET, Rt.tenv_rt () --> Terrat_ep_tenv.get config storage);
+            (* Access token *)
+            ( `POST,
+              Rt.access_token_refresh_rt () --> Terrat_ep_access_token.Refresh.post config storage
+            );
             (* User *)
             (`GET, Rt.whoami () --> Terrat_ep_whoami.get config storage services);
             (`POST, Rt.logout () --> Terrat_ep_logout.post storage);
@@ -112,7 +119,8 @@ let run config storage services =
       create Config.{ remote_ip_header = Some "X-Forwarded-For"; extra_key = (fun _ -> None) })
   in
   Logs.info (fun m -> m "Creating storage connection");
-  let mw_session = Terrat_session.create storage in
+  Terrat_session.create storage
+  >>= fun mw_session ->
   let mw = Brtl_mw.create [ mw_log; mw_session ] in
   Logs.info (fun m -> m "Starting server");
   start_telemetry config

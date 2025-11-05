@@ -35,6 +35,16 @@ module Sql = struct
       /% Var.(option (timestamptz "expiration"))
       /% Var.(option (text "refresh_token"))
       /% Var.(option (timestamptz "refresh_expiration")))
+
+  let select_user_installation () =
+    Pgsql_io.Typed_sql.(
+      sql
+      //
+      (* installation_id *)
+      Ret.bigint
+      /^ read "select_user_installation.sql"
+      /% Var.uuid "user_id"
+      /% Var.bigint "installation_id")
 end
 
 let get_token config storage user =
@@ -76,3 +86,38 @@ let get_token config storage user =
             refresh_expiration
           >>= fun () -> Abb.Future.return (Ok oauth.Oauth.access_token))
   | (token, false, _) :: _ -> Abb.Future.return (Ok token)
+
+let enforce_installation_access storage user installation_id ctx =
+  if
+    Terrat_user.has_capability
+      (Terrat_user.Capability.Installation_id (CCInt.to_string installation_id))
+      user
+  then Abb.Future.return (Ok ())
+  else
+    let open Abb.Future.Infix_monad in
+    Pgsql_pool.with_conn storage ~f:(fun db ->
+        Pgsql_io.Prepared_stmt.fetch
+          db
+          (Sql.select_user_installation ())
+          ~f:CCFun.id
+          (Terrat_user.id user)
+          (CCInt64.of_int installation_id))
+    >>= function
+    | Ok (_ :: _) -> Abb.Future.return (Ok ())
+    | Ok [] -> Abb.Future.return (Error (Brtl_ctx.set_response `Forbidden ctx))
+    | Error (#Pgsql_pool.err as err) ->
+        Logs.err (fun m ->
+            m
+              "ENFORCE_INSTALLATION_ACCESS : %s : ERROR : %a"
+              (Brtl_ctx.token ctx)
+              Pgsql_pool.pp_err
+              err);
+        Abb.Future.return (Error (Brtl_ctx.set_response `Internal_server_error ctx))
+    | Error (#Pgsql_io.err as err) ->
+        Logs.err (fun m ->
+            m
+              "ENFORCE_INSTALLATION_ACCESS : %s : ERROR : %a"
+              (Brtl_ctx.token ctx)
+              Pgsql_io.pp_err
+              err);
+        Abb.Future.return (Error (Brtl_ctx.set_response `Internal_server_error ctx))

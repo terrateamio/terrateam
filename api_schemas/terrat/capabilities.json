@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "access-token-create": {
+      "const": "access_token_create",
+      "type": "string"
+    },
+    "access-token-refresh": {
+      "const": "access_token_refresh",
+      "type": "string"
+    },
+    "installation-id": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "const": "installation_id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "id"
+      ],
+      "type": "object"
+    },
+    "kv-store-read": {
+      "const": "kv_store_read",
+      "type": "string"
+    },
+    "kv-store-write": {
+      "const": "kv_store_write",
+      "type": "string"
+    },
+    "vcs": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "const": "vcs",
+          "type": "string"
+        },
+        "vcs": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "vcs"
+      ],
+      "type": "object"
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/definitions/access-token-refresh"
+    },
+    {
+      "$ref": "#/definitions/access-token-create"
+    },
+    {
+      "$ref": "#/definitions/kv-store-read"
+    },
+    {
+      "$ref": "#/definitions/kv-store-write"
+    },
+    {
+      "$ref": "#/definitions/installation-id"
+    },
+    {
+      "$ref": "#/definitions/vcs"
+    }
+  ]
+}

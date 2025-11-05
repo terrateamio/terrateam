@@ -37,6 +37,24 @@ struct
     storage : Terrat_storage.t;
   }
 
+  module Kv_store =
+    Terrat_vcs_kv_store.Make
+      (Provider)
+      (struct
+        module Installation_id = Provider.Api.Account.Id
+
+        let namespace_prefix = "gitlab"
+        let route_root () = Brtl_rtng.Route.(rel / "api" / "v1" / "gitlab")
+        let enforce_installation_access = Provider.enforce_installation_access
+      end)
+
+  module Ep_access_token =
+    Terrat_vcs_access_token.Make
+      (Provider)
+      (struct
+        let vcs = "gitlab"
+      end)
+
   module Routes = struct
     module Rt = struct
       let api () = Brtl_rtng.Route.(rel / "api")
@@ -160,6 +178,8 @@ struct
       let storage = t.storage in
       Routes.routes config storage
       @ Provider.Stacks.routes config storage
+      @ Kv_store.routes config storage
+      @ Ep_access_token.routes config storage
       @ Brtl_rtng.Route.
           [
             (* Installations *)

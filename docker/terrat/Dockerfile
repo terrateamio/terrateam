@@ -7,6 +7,7 @@ FROM alpine:3.22 AS build-base
 # Install base packages
 RUN apk add --no-cache \
     bash \
+    brotli-static \
     bsd-compat-headers \
     ca-certificates \
     cargo \
@@ -15,18 +16,28 @@ RUN apk add --no-cache \
     coreutils \
     curl \
     curl-dev \
+    curl-static \
     git \
     gmp-dev \
     libffi-dev \
+    libidn2-static \
+    libpsl-static \
     libretls \
     libretls-dev \
+    libssh2-static \
+    libssh2-dev \
+    libunistring-static \
+    libunistring \
     m4 \
     make \
     mercurial \
     musl-dev \
+    nghttp2-static \
+    nghttp2-dev \
     npm \
     opam \
     openssh \
+    openssl-libs-static \
     perl \
     pkgconf \
     py3-yaml \
@@ -34,7 +45,10 @@ RUN apk add --no-cache \
     rsync \
     rust \
     sqlite-dev \
-    zlib-dev
+    zlib-dev \
+    zlib-static \
+    zstd-dev \
+    zstd-static
 
 # Initialize opam
 RUN opam init -ay --disable-sandboxing --bare
@@ -57,6 +71,7 @@ RUN eval $(opam env) && \
     opam repository add opam-acsl mono/opam && \
     opam pin add -y cmdliner 1.3.0 && \
     opam pin add -y containers 3.12 && \
+    opam pin add -y cmdliner 1.3.0 && \
     opam pin add -y pds 6.54 --no-depexts && \
     opam pin add -y hll 4.3 --no-depexts && \
     mkdir -p opam-mono/compilers opam-mono/packages && \
@@ -74,7 +89,7 @@ RUN eval $(opam env) && \
     opam install -j$(nproc --all) -y --deps-only --no-depexts monorepo && \
     ulimit -s 524288 && ulimit -a && \
     time pds -d && \
-    time make -j$(nproc --all) test test-terrat release-terrat && \
+    time make -j$(nproc --all) test test-terrat release-terrat release-ttm && \
     mv build /build-cache
 
 # Use provided BASE_IMAGE if specified, otherwise use the build-base stage
@@ -89,9 +104,21 @@ FROM build-setup AS code-indexer-build
 WORKDIR /mono/code
 RUN ulimit -s 524288 && ulimit -a && \
     mv /build-cache ./build && \
-    eval $(opam env) && pds && \
+    eval $(opam env) && pds -d && \
     (time make -j$(nproc --all) -k release_terrat_code_indexer test \
         || time make -j1 release_terrat_code_indexer test) && \
+    find . -name '*.tap' -exec cat '{}' \;
+
+# Build target for ttm
+FROM build-setup AS ttm-build
+WORKDIR /mono/code
+
+RUN ulimit -s 524288 && ulimit -a && \
+    mv /build-cache ./build && \
+    eval $(opam env) && pds -d && \
+    (time make -j$(nproc --all) -k release-ttm \
+    || time make -j1 release-ttm) && \
+    build/release/ttm/ttm.native --help && \
     find . -name '*.tap' -exec cat '{}' \;
 
 # Build target for terrat-ee
@@ -99,7 +126,7 @@ FROM build-setup AS terrat-ee-build
 WORKDIR /mono/code
 RUN ulimit -s 524288 && ulimit -a && \
     mv /build-cache ./build && \
-    eval $(opam env) && pds && \
+    eval $(opam env) && pds -d && \
     (time make -j$(nproc --all) -k test test-terrat release_terrat_ee release_iris \
      || time make -j1 test test-terrat release_terrat_ee release_iris) && \
     find . -name '*.tap' -exec cat '{}' \;
@@ -109,7 +136,7 @@ FROM build-setup AS terrat-oss-build
 WORKDIR /mono/code
 RUN ulimit -s 524288 && ulimit -a && \
     mv /build-cache ./build && \
-    eval $(opam env) && pds && \
+    eval $(opam env) && pds -d && \
     (time make -j$(nproc --all) -k test test-terrat release_terrat_oss release_iris \
      || time make -j1 test test-terrat release_terrat_oss release_iris) && \
     find . -name '*.tap' -exec cat '{}' \;
@@ -121,6 +148,12 @@ COPY --from=code-indexer-build /mono/code/build/release/terrat_code_indexer/terr
 USER terrat
 WORKDIR /mnt
 ENTRYPOINT ["/usr/local/bin/terrat_code_indexer"]
+
+# Final ttm image
+FROM alpine:3.22 AS ttm
+COPY --from=ttm-build /mono/code/build/release/ttm/ttm.native /usr/local/bin/ttm
+WORKDIR /mnt
+ENTRYPOINT ["/usr/local/bin/ttm"]
 
 # Final terrat-ee image
 FROM alpine:3.22 AS terrat-ee

@@ -3,6 +3,7 @@ module Msg = Terrat_vcs_provider2.Msg
 let cache_capacity_mb_in_kb = ( * ) 1024
 let kb_of_bytes b = CCInt.max 1 (b / 1024)
 let result_version = 2
+let protocol_version = 1
 
 (* If the number of dirspaces are over this arbitrary threshold, do not create
    dirspace checks. *)
@@ -3137,19 +3138,23 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       in
       Abb.Future.return (Ok { wm with Wm.changes })
 
-    let token encryption_key id =
-      Base64.encode_exn
-        (Cstruct.to_string
-           (Mirage_crypto.Hash.SHA256.hmac
-              ~key:encryption_key
-              (Cstruct.of_string (Ouuid.to_string id))))
+    let create_token installation_id work_manifest_id db =
+      let open Abbs_future_combinators.Infix_result_monad in
+      Terrat_user.create_system_user
+        ~access_token_id:work_manifest_id
+        ~capabilities:
+          Terrat_user.Capability.[ Installation_id installation_id; Kv_store_read; Kv_store_write ]
+        db
+      >>= fun user -> Terrat_user.Token.to_token db user
 
     let generate_index_work_manifest_initiate ctx state encryption_key run_id sha work_manifest =
       let module Wm = Terrat_work_manifest3 in
       let open Abbs_future_combinators.Infix_result_monad in
       initiate_work_manifest state state.State.request_id (Ctx.storage ctx) run_id sha work_manifest
       >>= function
-      | Some ({ Wm.id; branch_ref; base_ref; state = Wm.State.(Queued | Running); _ } as wm) ->
+      | Some
+          ({ Wm.account; id; branch_ref; base_ref; state = Wm.State.(Queued | Running); _ } as wm)
+        ->
           generate_index_run_dirs ctx state wm
           >>= fun wm ->
           Dv.base_ref ctx state
@@ -3184,6 +3189,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                        ~file_list:repo_tree
                        repo_config))
           >>= fun repo_config ->
+          create_token (S.Api.Account.Id.to_string @@ S.Api.Account.id account) id (Ctx.storage ctx)
+          >>= fun token ->
           let module I = Terrat_api_components.Work_manifest_index in
           let dirs =
             wm.Wm.changes
@@ -3197,13 +3204,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           in
           let response =
             Terrat_api_components.Work_manifest.Work_manifest_index
-              {
-                I.dirs;
-                base_ref = S.Api.Ref.to_string base_ref';
-                token = token encryption_key id;
-                type_ = "index";
-                config;
-              }
+              { I.dirs; base_ref = S.Api.Ref.to_string base_ref'; token; type_ = "index"; config }
           in
           Abb.Future.return (Ok (Some response))
       | Some _ | None -> Abb.Future.return (Ok None)
@@ -4215,7 +4216,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       let open Abbs_future_combinators.Infix_result_monad in
       initiate_work_manifest state state.State.request_id (Ctx.storage ctx) run_id sha work_manifest
       >>= function
-      | Some { Wm.steps; base_ref; branch_ref; changes; target; _ } -> (
+      | Some { Wm.account; steps; base_ref; branch_ref; changes; target; _ } -> (
           Dv.base_branch_name ctx state
           >>= fun base_branch_name ->
           let step =
@@ -4295,13 +4296,21 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               >>= fun config ->
               Dv.dirspaces ctx state
               >>= fun (base_dirspaces, dirspaces) ->
+              create_token
+                (S.Api.Account.Id.to_string @@ S.Api.Account.id account)
+                work_manifest.Wm.id
+                (Ctx.storage ctx)
+              >>= fun token ->
               Abb.Future.return
                 (Ok
                    (Some
                       Terrat_api_components.(
                         Work_manifest.Work_manifest_plan
                           {
-                            Work_manifest_plan.token = token encryption_key work_manifest.Wm.id;
+                            Work_manifest_plan.token;
+                            api_base_url =
+                              Terrat_config.api_base @@ S.Api.Config.config @@ Ctx.config ctx;
+                            installation_id = S.Api.Account.Id.to_string @@ S.Api.Account.id account;
                             base_dirspaces;
                             base_ref = S.Api.Ref.to_string base_branch_name;
                             changed_dirspaces = changed_dirspaces config changes;
@@ -4310,6 +4319,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                             run_kind_data;
                             type_ = "plan";
                             result_version;
+                            protocol_version = Some protocol_version;
                             config =
                               repo_config
                               |> Terrat_base_repo_config_v1.to_version_1
@@ -4357,18 +4367,27 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               >>= fun repo_config ->
               Abb.Future.return (Terrat_change_match3.synthesize_config ~index repo_config)
               >>= fun config ->
+              create_token
+                (S.Api.Account.Id.to_string @@ S.Api.Account.id account)
+                work_manifest.Wm.id
+                (Ctx.storage ctx)
+              >>= fun token ->
               Abb.Future.return
                 (Ok
                    (Some
                       Terrat_api_components.(
                         Work_manifest.Work_manifest_apply
                           {
-                            Work_manifest_apply.token = token encryption_key work_manifest.Wm.id;
+                            Work_manifest_apply.token;
+                            api_base_url =
+                              Terrat_config.api_base @@ S.Api.Config.config @@ Ctx.config ctx;
+                            installation_id = S.Api.Account.Id.to_string @@ S.Api.Account.id account;
                             base_ref = S.Api.Ref.to_string base_branch_name;
                             changed_dirspaces = changed_dirspaces config changes;
                             run_kind = run_kind_str;
                             type_ = "apply";
                             result_version;
+                            protocol_version = Some protocol_version;
                             config =
                               repo_config
                               |> Terrat_base_repo_config_v1.to_version_1
@@ -6383,11 +6402,16 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             sha
             work_manifest
           >>= function
-          | Some { Wm.id; branch_ref; base_ref; state = Wm.State.(Queued | Running); _ } ->
+          | Some { Wm.account; id; branch_ref; base_ref; state = Wm.State.(Queued | Running); _ } ->
               Dv.base_branch_name ctx state
               >>= fun base_branch_name' ->
               Dv.repo_config ctx state
               >>= fun repo_config ->
+              H.create_token
+                (S.Api.Account.Id.to_string @@ S.Api.Account.id account)
+                id
+                (Ctx.storage ctx)
+              >>= fun token ->
               let module B = Terrat_api_components.Work_manifest_build_tree in
               let config =
                 repo_config
@@ -6398,7 +6422,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                 Terrat_api_components.Work_manifest.Work_manifest_build_tree
                   {
                     B.base_ref = S.Api.Ref.to_string base_branch_name';
-                    token = H.token encryption_key id;
+                    token;
                     type_ = "build-tree";
                     config;
                   }
@@ -6669,7 +6693,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             sha
             work_manifest
           >>= function
-          | Some { Wm.id; branch_ref; base_ref; state = Wm.State.(Queued | Running); _ } ->
+          | Some { Wm.account; id; branch_ref; base_ref; state = Wm.State.(Queued | Running); _ } ->
               Dv.repo_config ctx state
               >>= fun repo_config ->
               Dv.repo_tree_branch ctx state
@@ -6706,6 +6730,11 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                            ~file_list:repo_tree
                            repo_config))
               >>= fun repo_config ->
+              H.create_token
+                (S.Api.Account.Id.to_string @@ S.Api.Account.id account)
+                id
+                (Ctx.storage ctx)
+              >>= fun token ->
               let module B = Terrat_api_components.Work_manifest_build_config in
               let config =
                 repo_config
@@ -6716,7 +6745,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                 Terrat_api_components.Work_manifest.Work_manifest_build_config
                   {
                     B.base_ref = S.Api.Ref.to_string base_branch_name;
-                    token = H.token encryption_key id;
+                    token;
                     type_ = "build-config";
                     config;
                   }
@@ -7053,6 +7082,10 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             Abb.Future.return (`Failure `Error)
         | Error (#Pgsql_io.err as err) ->
             Logs.err (fun m -> m "%s : ERROR : %a" state.State.request_id Pgsql_io.pp_err err);
+            Abb.Future.return (`Failure `Error)
+        | Error (#Terrat_user.Token.to_token_err as err) ->
+            Logs.err (fun m ->
+                m "%s : ERROR : %a" state.State.request_id Terrat_user.Token.pp_to_token_err err);
             Abb.Future.return (`Failure `Error))
 
   (* Flow start *)

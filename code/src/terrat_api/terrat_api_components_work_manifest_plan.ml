@@ -49,12 +49,15 @@ module Type = struct
 end
 
 type t = {
+  api_base_url : string;
   base_dirspaces : Base_dirspaces.t;
   base_ref : string;
   capabilities : Capabilities.t;
   changed_dirspaces : Changed_dirspaces.t;
   config : Config.t;
   dirspaces : Dirspaces.t;
+  installation_id : string;
+  protocol_version : int option; [@default None]
   result_version : int;
   run_kind : string;
   run_kind_data : Run_kind_data.t option; [@default None]

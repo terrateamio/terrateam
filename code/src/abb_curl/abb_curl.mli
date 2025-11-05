@@ -123,6 +123,7 @@ module Options : sig
   type opt =
     | Follow_location
     | Http_version of [ `Http2 | `Http1_1 ]
+    | Curlopts of Curl.curlOption list
 
   type t = opt list
 
