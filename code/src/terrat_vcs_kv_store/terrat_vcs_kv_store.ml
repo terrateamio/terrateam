@@ -19,6 +19,9 @@ struct
   module Logs = (val Logs.src_log src : Logs.LOG)
   module Cap = Terrat_user.Capability
 
+  let caps_of_yojson = [%of_yojson: Terrat_user.Capability.t list]
+  let yojson_of_caps = [%to_yojson: Terrat_user.Capability.t list]
+
   let enforce_installation_access storage user installation_id ctx =
     let open Abb.Future.Infix_monad in
     Pgsql_pool.with_conn storage ~f:(fun db ->
@@ -42,6 +45,8 @@ struct
       key = snd @@ Terrat_kv_store.Record.key r;
       size = Terrat_kv_store.Record.size r;
       version = Terrat_kv_store.Record.version r;
+      read_caps = CCOption.map yojson_of_caps @@ Terrat_kv_store.Record.read_caps r;
+      write_caps = CCOption.map yojson_of_caps @@ Terrat_kv_store.Record.write_caps r;
     }
 
   let rec is_syntax_err = function
@@ -52,10 +57,10 @@ struct
         else is_syntax_err fs
     | _ :: fs -> is_syntax_err fs
 
-  let kv_run ctx storage r f =
+  let kv_run ctx storage user r f =
     let open Abb.Future.Infix_monad in
     Pgsql_pool.with_conn storage ~f:(fun db ->
-        f db
+        f { Terrat_kv_store.db; user_caps = Terrat_user.capabilities user }
         >>= function
         | Ok _ as r -> Abb.Future.return r
         | Error #Terrat_kv_store.err as err -> Abb.Future.return err)
@@ -84,6 +89,7 @@ struct
           kv_run
             ctx
             storage
+            user
             (function
               | Some r ->
                   Brtl_ctx.set_response
@@ -104,23 +110,36 @@ struct
           enforce_installation_access storage user installation_id ctx
           >>= fun () ->
           let key = make_key installation_id key in
-          let { Terrat_api_components_kv_set.committed; data; idx } = body in
-          kv_run
-            ctx
-            storage
-            (fun r ->
-              Brtl_ctx.set_response
-                (Brtl_rspnc.create
-                   ~status:`OK
-                   (Yojson.Safe.to_string
-                   @@ Terrat_api_components_kv_record.to_yojson
-                   (* We remove data from the returned response for bandwidth
+          let { Terrat_api_components_kv_set.committed; data; idx; read_caps; write_caps } = body in
+          match
+            (CCResult.opt_map caps_of_yojson read_caps, CCResult.opt_map caps_of_yojson write_caps)
+          with
+          | Ok read_caps, Ok write_caps ->
+              kv_run
+                ctx
+                storage
+                user
+                (fun r ->
+                  Brtl_ctx.set_response
+                    (Brtl_rspnc.create
+                       ~status:`OK
+                       (Yojson.Safe.to_string
+                       @@ Terrat_api_components_kv_record.to_yojson
+                       (* We remove data from the returned response for bandwidth
                       reasons.  We replace it with Null, which is valid
                       JSON. Gotta save those bytes *)
-                   @@ (fun r -> { r with Terrat_api_components_kv_record.data = `Null })
-                   @@ ror r))
-                ctx)
-            (Terrat_kv_store.set ?idx ?committed ~key data))
+                       @@ (fun r -> { r with Terrat_api_components_kv_record.data = `Null })
+                       @@ ror r))
+                    ctx)
+                (Terrat_kv_store.set ?read_caps ?write_caps ?idx ?committed ~key data)
+          | Error read_caps_err, _ ->
+              Logs.info (fun m -> m "%s : READ_CAPS : %s" (Brtl_ctx.token ctx) read_caps_err);
+              Abb.Future.return
+                (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx))
+          | _, Error write_caps_err ->
+              Logs.info (fun m -> m "%s : WRITE_CAPS : %s" (Brtl_ctx.token ctx) write_caps_err);
+              Abb.Future.return
+                (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx)))
   end
 
   module Cas = struct
@@ -132,25 +151,41 @@ struct
           enforce_installation_access storage user installation_id ctx
           >>= fun () ->
           let key = make_key installation_id key in
-          let { Terrat_api_components_kv_cas.committed; data; idx; version } = body in
-          kv_run
-            ctx
-            storage
-            (function
-              | Some r ->
-                  Brtl_ctx.set_response
-                    (Brtl_rspnc.create
-                       ~status:`OK
-                       (Yojson.Safe.to_string
-                       @@ Terrat_api_components_kv_record.to_yojson
-                       (* We remove data from the returned response for
+          let { Terrat_api_components_kv_cas.committed; data; idx; version; read_caps; write_caps }
+              =
+            body
+          in
+          match
+            (CCResult.opt_map caps_of_yojson read_caps, CCResult.opt_map caps_of_yojson write_caps)
+          with
+          | Ok read_caps, Ok write_caps ->
+              kv_run
+                ctx
+                storage
+                user
+                (function
+                  | Some r ->
+                      Brtl_ctx.set_response
+                        (Brtl_rspnc.create
+                           ~status:`OK
+                           (Yojson.Safe.to_string
+                           @@ Terrat_api_components_kv_record.to_yojson
+                           (* We remove data from the returned response for
                           bandwidth reasons.  We replace it with Null, which is
                           valid JSON. Gotta save those bytes *)
-                       @@ (fun r -> { r with Terrat_api_components_kv_record.data = `Null })
-                       @@ ror r))
-                    ctx
-              | None -> Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx)
-            (Terrat_kv_store.cas ?idx ?committed ?version ~key data))
+                           @@ (fun r -> { r with Terrat_api_components_kv_record.data = `Null })
+                           @@ ror r))
+                        ctx
+                  | None -> Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx)
+                (Terrat_kv_store.cas ?read_caps ?write_caps ?idx ?committed ?version ~key data)
+          | Error read_caps_err, _ ->
+              Logs.info (fun m -> m "%s : READ_CAPS : %s" (Brtl_ctx.token ctx) read_caps_err);
+              Abb.Future.return
+                (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx))
+          | _, Error write_caps_err ->
+              Logs.info (fun m -> m "%s : WRITE_CAPS : %s" (Brtl_ctx.token ctx) write_caps_err);
+              Abb.Future.return
+                (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx)))
   end
 
   module Delete = struct
@@ -165,6 +200,7 @@ struct
           kv_run
             ctx
             storage
+            user
             (fun r ->
               Brtl_ctx.set_response
                 (Brtl_rspnc.create
@@ -187,6 +223,7 @@ struct
           kv_run
             ctx
             storage
+            user
             (function
               | Some { Kv_store_intf.Count.count; max_idx } ->
                   Brtl_ctx.set_response
@@ -211,6 +248,7 @@ struct
           kv_run
             ctx
             storage
+            user
             (function
               | Some size ->
                   Brtl_ctx.set_response
@@ -234,6 +272,7 @@ struct
           kv_run
             ctx
             storage
+            user
             (fun results ->
               let module R = Terrat_api_components_kv_record_list in
               Brtl_ctx.set_response
@@ -261,6 +300,7 @@ struct
           kv_run
             ctx
             storage
+            user
             (fun r ->
               Brtl_ctx.set_response
                 (Brtl_rspnc.create

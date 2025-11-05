@@ -9,6 +9,22 @@ let default_api_base = "https://app.terrateam.io"
 module Cli = struct
   module C = Cmdliner
 
+  let cap_conv =
+    C.Arg.conv
+      ( (fun s ->
+          (* If the string starts with a mustache then assume it's a JSON object
+             literal, otherwise wrap it in quotes because it's a string. *)
+          let s =
+            if not (CCString.starts_with ~prefix:"{" (CCString.trim s)) then "\"" ^ s ^ "\"" else s
+          in
+          try
+            let json = Yojson.Safe.from_string s in
+            match Terrat_user_caps.of_yojson json with
+            | Ok cap -> Ok cap
+            | Error s -> Error (`Msg s)
+          with Yojson.Json_error s -> Error (`Msg s)),
+        Terrat_user_caps.pp )
+
   let draft =
     let doc = "Data is uncommitted (default false)" in
     C.Arg.(value & flag & info [ "draft"; "d" ] ~doc)
@@ -28,6 +44,14 @@ module Cli = struct
   let select =
     let doc = "Select part of data.  Empty string means 'nothing'" in
     C.Arg.(value & opt_all string [] & info [ "select"; "s" ] ~doc)
+
+  let read_caps =
+    let doc = "List of capabilities required to read the row (can be specified multiple times)" in
+    C.Arg.(value & opt_all cap_conv [] & info [ "read-cap" ] ~doc)
+
+  let write_caps =
+    let doc = "List of capabilities required to update the row (can be specified multiple times)" in
+    C.Arg.(value & opt_all cap_conv [] & info [ "write-cap" ] ~doc)
 
   let prefix =
     let doc = "Require key starts with prefix" in
@@ -84,6 +108,10 @@ module Cli = struct
     in
     C.Arg.(required & pos ~rev:true 0 (some string) None & info [] ~doc ~docv:"DST")
 end
+
+let wrap_opt_list = function
+  | [] -> None
+  | xs -> Some xs
 
 let run f =
   match Abb.Scheduler.run_with_state f with
@@ -153,9 +181,11 @@ module Get = struct
 end
 
 module Set = struct
-  let run api_base vcs installation draft idx output key () =
+  let run api_base vcs installation read_caps write_caps draft idx output key () =
     let f () =
       let open Abbs_future_combinators.Infix_result_monad in
+      let read_caps = wrap_opt_list read_caps in
+      let write_caps = wrap_opt_list write_caps in
       try
         Abbs_io_file.read_all ~buf_size:4096 Abb.File.stdin
         >>= fun data ->
@@ -173,7 +203,7 @@ module Set = struct
                 @@ Yojson.Safe.pretty_to_string
                 @@ Ttm_kv_store.data_record_to_yojson r;
                 Ok 0)
-          (Ttm_kv_store.set ?idx ~committed:(not draft) ~key data store)
+          (Ttm_kv_store.set ?read_caps ?write_caps ?idx ~committed:(not draft) ~key data store)
       with Yojson.Json_error err ->
         Printf.eprintf "Error parsing data: %s\n" err;
         Abb.Future.return (Ok 1)
@@ -191,6 +221,8 @@ module Set = struct
         $ Cli.api_base
         $ Cli.vcs
         $ Cli.installation_id
+        $ Cli.read_caps
+        $ Cli.write_caps
         $ Cli.draft
         $ Cli.idx
         $ Cli.output
@@ -199,9 +231,11 @@ module Set = struct
 end
 
 module Cas = struct
-  let run api_base vcs installation draft idx output version key () =
+  let run api_base vcs installation read_caps write_caps draft idx output version key () =
     let f () =
       let open Abbs_future_combinators.Infix_result_monad in
+      let read_caps = wrap_opt_list read_caps in
+      let write_caps = wrap_opt_list write_caps in
       try
         Abbs_io_file.read_all ~buf_size:4096 Abb.File.stdin
         >>= fun data ->
@@ -220,7 +254,15 @@ module Cas = struct
                 @@ Ttm_kv_store.data_record_to_yojson r;
                 Ok 0
             | None -> Ok 1)
-          (Ttm_kv_store.cas ?idx ~committed:(not draft) ?version ~key data store)
+          (Ttm_kv_store.cas
+             ?read_caps
+             ?write_caps
+             ?idx
+             ~committed:(not draft)
+             ?version
+             ~key
+             data
+             store)
       with Yojson.Json_error err ->
         Printf.eprintf "Error parsing data: %s\n" err;
         Abb.Future.return (Ok 1)
@@ -238,6 +280,8 @@ module Cas = struct
         $ Cli.api_base
         $ Cli.vcs
         $ Cli.installation_id
+        $ Cli.read_caps
+        $ Cli.write_caps
         $ Cli.draft
         $ Cli.idx
         $ Cli.output
@@ -470,12 +514,12 @@ module Cp = struct
         Logs.err (fun m -> m "%a" Abbs_io_file.pp_with_file_err err);
         Abb.Future.return (Ok 1)
 
-  let run_upload store draft src dst =
+  let run_upload store draft read_caps write_caps src dst =
     let upload_chunk draft idx checksum chunk =
       let open Abb.Future.Infix_monad in
       let data = `Assoc [ ("chk", `String checksum); ("data", `String chunk) ] in
       Logs.debug (fun m -> m "Uploading: idx=%d : chk=%s" idx checksum);
-      Ttm_kv_store.cas ~idx ~committed:(not draft) ~key:dst data store
+      Ttm_kv_store.cas ?read_caps ?write_caps ~idx ~committed:(not draft) ~key:dst data store
       >>= function
       | Ok _ -> Abb.Future.return (Ok ())
       | Error (#Ttm_kv_store.err as err) -> Abb.Future.return (Error err)
@@ -530,12 +574,14 @@ module Cp = struct
         Logs.err (fun m -> m "%a" Abbs_io_file.pp_with_file_err err);
         Abb.Future.return (Ok 1)
 
-  let run_op store draft = function
+  let run_op store draft read_caps write_caps = function
     | `Download (src, dst) -> run_download store draft src dst
-    | `Upload (src, dst) -> run_upload store draft src dst
+    | `Upload (src, dst) -> run_upload store draft read_caps write_caps src dst
 
-  let run api_base vcs installation draft src dst () =
+  let run api_base vcs installation read_caps write_caps draft src dst () =
     let f () =
+      let read_caps = wrap_opt_list read_caps in
+      let write_caps = wrap_opt_list write_caps in
       try
         let open Abbs_future_combinators.Infix_result_monad in
         Logs.debug (fun m -> m "Validating paths %s %s" src dst);
@@ -544,7 +590,7 @@ module Cp = struct
         Ttm_client.create ~base_url:(Uri.of_string api_base) ()
         >>= fun client ->
         let store = Ttm_kv_store.create ~vcs ~installation client in
-        run_op store draft op
+        run_op store draft read_caps write_caps op
       with Invalid_path_combination_exn ->
         Logs.err (fun m ->
             m
@@ -565,6 +611,8 @@ module Cp = struct
         $ Cli.api_base
         $ Cli.vcs
         $ Cli.installation_id
+        $ Cli.read_caps
+        $ Cli.write_caps
         $ Cli.draft
         $ Cli.src
         $ Cli.dst

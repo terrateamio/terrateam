@@ -30,6 +30,14 @@
       "const": "kv_store_read",
       "type": "string"
     },
+    "kv-store-system-read": {
+      "const": "kv_store_system_read",
+      "type": "string"
+    },
+    "kv-store-system-write": {
+      "const": "kv_store_system_write",
+      "type": "string"
+    },
     "kv-store-write": {
       "const": "kv_store_write",
       "type": "string"
@@ -64,6 +72,12 @@
     },
     {
       "$ref": "#/definitions/kv-store-write"
+    },
+    {
+      "$ref": "#/definitions/kv-store-system-read"
+    },
+    {
+      "$ref": "#/definitions/kv-store-system-write"
     },
     {
       "$ref": "#/definitions/installation-id"

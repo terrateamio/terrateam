@@ -18,6 +18,9 @@ module type S = sig
   (** The type of data stored in the store. *)
   type data
 
+  (** A capability. *)
+  type cap
+
   (** The compute model of the store. *)
   module C : sig
     type 'a t
@@ -36,6 +39,8 @@ module type S = sig
     val key : 'a t -> key
     val size : 'a t -> int
     val version : 'a t -> int
+    val read_caps : 'a t -> cap list option
+    val write_caps : 'a t -> cap list option
   end
 
   (** Get the record that corresponds to [key] from the store if it exists.
@@ -53,7 +58,15 @@ module type S = sig
       If [committed] is unset the default is [true]
 
       The default [idx] is [0]. *)
-  val set : ?idx:int -> ?committed:bool -> key:key -> data -> t -> data Record.t C.t
+  val set :
+    ?read_caps:cap list ->
+    ?write_caps:cap list ->
+    ?idx:int ->
+    ?committed:bool ->
+    key:key ->
+    data ->
+    t ->
+    data Record.t C.t
 
   (** Perform a "compare and set" of the record for [key] at [idx]. The default value of [idx] is
       [0]. If the operation fails, [None] is returned.
@@ -61,7 +74,15 @@ module type S = sig
       If [version] is set, the record in the database much have the same version for [cas] to
       succeed. If [version] is not set, the record must not exist for [cas] to succeed. *)
   val cas :
-    ?idx:int -> ?committed:bool -> ?version:int -> key:key -> data -> t -> data Record.t option C.t
+    ?read_caps:cap list ->
+    ?write_caps:cap list ->
+    ?idx:int ->
+    ?committed:bool ->
+    ?version:int ->
+    key:key ->
+    data ->
+    t ->
+    data Record.t option C.t
 
   (** Delete the record for [key] at [idx] (the default is [0]). If [version] is set, the version of
       the existing record must match for the delete to be successful. If [version] is not set, the

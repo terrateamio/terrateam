@@ -3143,7 +3143,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       Terrat_user.create_system_user
         ~access_token_id:work_manifest_id
         ~capabilities:
-          Terrat_user.Capability.[ Installation_id installation_id; Kv_store_read; Kv_store_write ]
+          Terrat_user.Capability.
+            [
+              Installation_id installation_id;
+              Kv_store_read;
+              Kv_store_write;
+              Kv_store_system_read;
+              Kv_store_system_write;
+            ]
         db
       >>= fun user -> Terrat_user.Token.to_token db user
 
