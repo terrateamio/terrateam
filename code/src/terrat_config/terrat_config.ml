@@ -15,6 +15,7 @@ module Github = struct
     app_url : Uri.t;
     web_base_url : Uri.t;
     webhook_secret : (string[@opaque]) option;
+    workflow_path_override : string option;
   }
   [@@deriving show]
 
@@ -26,6 +27,7 @@ module Github = struct
   let app_url t = t.app_url
   let web_base_url t = t.web_base_url
   let webhook_secret t = t.webhook_secret
+  let workflow_path_override t = t.workflow_path_override
 end
 
 module Gitlab = struct
@@ -156,6 +158,7 @@ let load_github () =
           Uri.of_string
           (Sys.getenv_opt "GITHUB_APP_URL")
       in
+      let workflow_path_override = Sys.getenv_opt "GITHUB_WORKFLOW_PATH_OVERRIDE" in
       Ok
         (Some
            {
@@ -167,6 +170,7 @@ let load_github () =
              app_url;
              web_base_url;
              webhook_secret;
+             workflow_path_override;
            })
 
 let load_gitlab () =

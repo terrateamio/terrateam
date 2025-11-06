@@ -9,6 +9,7 @@ module Github : sig
   val app_url : t -> Uri.t
   val web_base_url : t -> Uri.t
   val webhook_secret : t -> string option
+  val workflow_path_override : t -> string option
 end
 
 module Gitlab : sig

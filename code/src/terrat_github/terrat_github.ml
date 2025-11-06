@@ -414,7 +414,7 @@ let find_workflow_file ~owner ~repo client =
            Prmths.Counter.inc_one Metrics.call_retries_total;
            Abb.Sys.sleep n))
 
-let load_workflow ~owner ~repo client =
+let load_workflow ?override_path ~owner ~repo client =
   Abbs_future_combinators.retry
     ~f:(fun () ->
       let open Abbs_future_combinators.Infix_result_monad in
@@ -423,8 +423,12 @@ let load_workflow ~owner ~repo client =
       match
         CCList.filter
           (fun (_, name, path) ->
-            CCString.equal name terrateam_workflow_name
-            || CCString.equal path terrateam_workflow_path)
+            (* If override path is specified, choose it, or if override_path is
+               none, then match against the default *)
+            CCOption.map_or ~default:false (CCString.equal path) override_path
+            || CCOption.is_none override_path
+               && (CCString.equal name terrateam_workflow_name
+                  || CCString.equal path terrateam_workflow_path))
           workflows
       with
       | (id, _, _) :: _ -> Abb.Future.return (Ok (Some id))

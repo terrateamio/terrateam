@@ -242,6 +242,7 @@ val find_workflow_file :
   (string option, [> get_installation_access_token_err ]) result Abb.Future.t
 
 val load_workflow :
+  ?override_path:string ->
   owner:string ->
   repo:string ->
   Githubc2_abb.t ->

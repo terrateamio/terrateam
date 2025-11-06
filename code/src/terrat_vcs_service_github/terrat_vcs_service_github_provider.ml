@@ -4739,7 +4739,10 @@ module Work_manifest = struct
       let open Abbs_future_combinators.Infix_result_monad in
       let repo = get_repo work_manifest in
       let branch = get_branch work_manifest in
+      let github_config = Api.Config.vcs_config config in
+      let override_path = Terrat_config.Github.workflow_path_override github_config in
       Terrat_github.load_workflow
+        ?override_path
         ~owner:(Api.Repo.owner repo)
         ~repo:(Api.Repo.name repo)
         (Api.Client.to_native client)
