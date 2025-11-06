@@ -508,10 +508,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               time))
       (fun () -> S.Db.query_plan ~request_id db work_manifest_id dirspace)
 
-  let cleanup_plans request_id db =
-    Abbs_time_it.run
-      (fun time -> Logs.info (fun m -> m "%s : CLEANUP_PLANS : time=%f" request_id time))
-      (fun () -> S.Db.cleanup_plans ~request_id db)
+  let cleanup_plans request_id db = S.Db.cleanup_plans ~request_id db
 
   let store_plan request_id db work_manifest_id dirspace data has_changes =
     Abbs_time_it.run
@@ -8134,8 +8131,11 @@ module Make (S : Terrat_vcs_provider2.S) = struct
 
   let run_plan_cleanup ctx =
     let open Abb.Future.Infix_monad in
-    Logs.info (fun m -> m "%s : PLAN_CLEANUP" (Ctx.request_id ctx));
-    Pgsql_pool.with_conn (Ctx.storage ctx) ~f:(fun db -> cleanup_plans (Ctx.request_id ctx) db)
+    Logs.info (fun m -> m "%s : PLAN_CLEANUP : START" (Ctx.request_id ctx));
+    Abbs_time_it.run
+      (fun t -> Logs.info (fun m -> m "%s : PLAN_CLEANUP : END : time=%f" (Ctx.request_id ctx) t))
+      (fun () ->
+        Pgsql_pool.with_conn (Ctx.storage ctx) ~f:(fun db -> cleanup_plans (Ctx.request_id ctx) db))
     >>= function
     | Ok () -> Abb.Future.return (Ok ())
     | Error `Error -> Abb.Future.return (Error `Error)
