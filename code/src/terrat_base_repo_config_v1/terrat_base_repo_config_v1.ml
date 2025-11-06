@@ -809,6 +809,7 @@ module Dirs = struct
 
     type t = {
       create_and_select_workspace : bool; [@default true]
+      create_if_missing : bool; [@default false]
       lock_branch_target : Branch_target.t; [@default Branch_target.All]
       stacks : Workspace.t String_map.t; [@default String_map.empty]
       tags : string list; [@default []]
@@ -2108,6 +2109,7 @@ let of_version_1_dirs default_when_modified { V1.Dirs.additional; _ } =
     (fun ( dir,
            {
              D.create_and_select_workspace;
+             create_if_missing;
              lock_branch_target;
              stacks;
              tags;
@@ -2143,6 +2145,7 @@ let of_version_1_dirs default_when_modified { V1.Dirs.additional; _ } =
         ( dir,
           Dirs.Dir.make
             ~create_and_select_workspace
+            ~create_if_missing
             ?lock_branch_target
             ?stacks
             ?tags
@@ -2784,13 +2787,21 @@ let to_version_1_dirs_dir dirs =
   let module D = Terrat_repo_config.Dir in
   String_map.fold
     (fun k v acc ->
-      let { Dirs.Dir.create_and_select_workspace; lock_branch_target; stacks; tags; workspaces } =
+      let {
+        Dirs.Dir.create_and_select_workspace;
+        create_if_missing;
+        lock_branch_target;
+        stacks;
+        tags;
+        workspaces;
+      } =
         v
       in
       Json_schema.String_map.add
         k
         {
           D.create_and_select_workspace;
+          create_if_missing;
           lock_branch_target =
             (match lock_branch_target with
             | Dirs.Dir.Branch_target.All -> Some "all"

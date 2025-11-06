@@ -10,6 +10,7 @@ end
 
 type t = {
   create_and_select_workspace : bool; [@default true]
+  create_if_missing : bool; [@default false]
   lock_branch_target : Lock_branch_target.t option; [@default None]
   stacks : Terrat_repo_config_workspaces.t option; [@default None]
   tags : Terrat_repo_config_tags.t option; [@default None]
