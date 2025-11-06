@@ -143,19 +143,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               time))
       (fun () -> S.Api.fetch_branch_sha ~request_id client repo ref_)
 
-  let fetch_file request_id client repo ref_ path =
-    Abbs_time_it.run
-      (fun time ->
-        Logs.info (fun m ->
-            m
-              "%s : FETCH_FILE : repo=%s : ref=%s : path=%s : time=%f"
-              request_id
-              (S.Api.Repo.to_string repo)
-              (S.Api.Ref.to_string ref_)
-              path
-              time))
-      (fun () -> S.Api.fetch_file ~request_id client repo ref_ path)
-
   let fetch_remote_repo request_id client repo =
     Abbs_time_it.run
       (fun time ->
@@ -166,13 +153,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               (S.Api.Repo.to_string repo)
               time))
       (fun () -> S.Api.fetch_remote_repo ~request_id client repo)
-
-  let fetch_centralized_repo request_id client owner =
-    Abbs_time_it.run
-      (fun time ->
-        Logs.info (fun m ->
-            m "%s : FETCH_CENTRALIZED_REPO : owner=%s : time=%f" request_id owner time))
-      (fun () -> S.Api.fetch_centralized_repo ~request_id client owner)
 
   let fetch_tree request_id client repo ref_ =
     Abbs_time_it.run
@@ -3850,7 +3830,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         (Event.repo state.State.event)
         all_dirspaceflows
       >>= fun () ->
-      let all_dirspaceflows = strip_lock_branch_target all_dirspaceflows in
       Abb.Future.return (dirspaceflows_of_changes repo_config passed_dirspaces)
       >>= fun dirspaceflows ->
       let denied_dirspaces =
@@ -4185,13 +4164,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             err
           >>= fun () -> Abb.Future.return (Ok state))
       >>= fun _ -> Abb.Future.return (Ok ())
-
-    let token encryption_key id =
-      Base64.encode_exn
-        (Cstruct.to_string
-           (Mirage_crypto.Hash.SHA256.hmac
-              ~key:encryption_key
-              (Cstruct.of_string (Uuidm.to_string id))))
 
     let changed_dirspaces config changes =
       let module Tcm = Terrat_change_match3 in
