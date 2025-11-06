@@ -205,6 +205,8 @@ module Config = struct
     symlinks : string list CCTrie.String.t; [@opaque]
     dirspaces : Dirspace_config.t Dirspace_map.t;
     topology : Terrat_dirspace.t list Dirspace_map.t;
+    stack_topology : string list String_map.t;
+    stacks : Stack_config.t String_map.t;
   }
   [@@deriving show]
 
@@ -215,12 +217,8 @@ module Config = struct
     T.to_yojson (Iter.to_list (Dirspace_map.values t.dirspaces))
 
   let dirspace_configs t = t.dirspaces
-
-  let stack_topology t =
-    CCList.map
-      (CCList.map (fun { Dirspace_config.stack_config; stack_name; stack_paths; _ } ->
-           { Stack_config.name = stack_name; paths = stack_paths; config = stack_config }))
-    @@ sort t.topology t.dirspaces (Iter.to_list @@ Dirspace_map.values t.dirspaces)
+  let stack_topology t = t.stack_topology
+  let stacks t = t.stacks
 end
 
 (* We are actually going to build the topology in the reverse direction.  It
@@ -576,6 +574,8 @@ let assert_no_stack_cycle stacks =
   | Tsort.ErrorCycle cycle -> raise (Synthesize_config_err (`Stack_cycle_err cycle))
 
 let synthesize_config ~index repo_config =
+  let module V1 = Terrat_base_repo_config_v1 in
+  let module S = V1.Stacks in
   try
     let symlinks = build_symlinks index.R.Index.symlinks in
     let stacks = R.stacks repo_config in
@@ -586,11 +586,9 @@ let synthesize_config ~index repo_config =
     let nested_to_stack_lookup = build_nested_to_stack_lookup stacks.R.Stacks.names in
     (* Lookup of a stack to any stacks that nest it. *)
     let stack_to_nested_lookup = build_stack_to_nested_lookup stacks.R.Stacks.names in
-    let stack_configs =
+    let stacks =
       String_map.mapi
         (fun name config ->
-          let module V1 = Terrat_base_repo_config_v1 in
-          let module S = V1.Stacks in
           match config with
           | { S.Stack.type_ = S.Type_.Stack _; _ } ->
               expand_stack_config
@@ -602,8 +600,11 @@ let synthesize_config ~index repo_config =
           | { S.Stack.type_ = S.Type_.Nested _; _ } -> config)
         stacks.R.Stacks.names
     in
-    let no_default_stack = not (String_map.mem "default" stack_configs) in
-    let stack_configs = Terrat_data.String_map.to_list stack_configs in
+    let stack_topology =
+      String_map.map (fun { S.Stack.rules = { S.Rules.plan_after; _ }; _ } -> plan_after) stacks
+    in
+    let no_default_stack = not (String_map.mem "default" stacks) in
+    let stack_configs = Terrat_data.String_map.to_list stacks in
     let dirspaces =
       repo_config
       |> R.dirs
@@ -658,16 +659,48 @@ let synthesize_config ~index repo_config =
                            lock_branch_target = config.D.lock_branch_target;
                            stack_config;
                            stack_name;
-                           stack_paths = String_map.find stack_name stack_paths_lookup;
+                           stack_paths =
+                             (match String_map.find_opt stack_name stack_paths_lookup with
+                             | Some paths -> paths
+                             | None when CCString.equal stack_name "default" -> [ [ "default" ] ]
+                             | None -> assert false);
                            tags;
                            when_modified = workspace_config.Ws.when_modified;
                          } );
                      ])
                (String_map.to_list config.D.workspaces @ String_map.to_list config.D.stacks))
-      |> Dirspace_map.of_list
     in
+    let default_stack =
+      CCList.find_opt
+        (fun (_, { Dirspace_config.stack_name; _ }) -> CCString.equal "default" stack_name)
+        dirspaces
+    in
+    (* Construct our stacks.  The one sticky part is that if there is no
+       configured "default" stack but one has been discovered while processing
+       all the dirspaces, then we need to add it to our stacks. *)
+    let stacks, stack_topology =
+      let stacks =
+        String_map.filter_map
+          (fun name config ->
+            match config with
+            | { S.Stack.type_ = S.Type_.Nested _; _ } -> None
+            | config ->
+                Some { Stack_config.name; config; paths = String_map.find name stack_paths_lookup })
+          stacks
+      in
+      match default_stack with
+      | Some
+          (_, { Dirspace_config.stack_name = name; stack_paths = paths; stack_config = config; _ })
+        when not (String_map.mem "default" stacks) ->
+          (* Add the default stack information *)
+          let stacks = String_map.add "default" { Stack_config.name; config; paths } stacks in
+          let stack_topology = String_map.add "default" [] stack_topology in
+          (stacks, stack_topology)
+      | Some _ | None -> (stacks, stack_topology)
+    in
+    let dirspaces = Dirspace_map.of_list dirspaces in
     let topology = topology_of_dirspace_configs dirspaces in
-    Ok { Config.symlinks; dirspaces; topology }
+    Ok { Config.symlinks; dirspaces; topology; stack_topology; stacks }
   with Synthesize_config_err err ->
     Error (err : synthesize_config_err :> [> synthesize_config_err ])
 

@@ -54,6 +54,7 @@ select
        when wm.run_type = 'apply' and not wm.success then 'apply_failed'
        when wm.run_type = 'apply' then 'apply_success'
        when wm.run_type = 'plan' and not wm.success then 'plan_failed'
+       when wm.run_type = 'plan' and (p.work_manifest is null or not p.has_changes) then 'apply_success'
        when wm.run_type = 'plan' then 'apply_pending'
        else 'plan_pending'
      end)
@@ -65,3 +66,7 @@ left join work_manifests as wm
        and wm.pull_number = pr.pull_number
        and wm.path = cd.path
        and wm.workspace = cd.workspace
+left join plans as p
+    on p.work_manifest = wm.id
+       and p.path = wm.path
+       and p.workspace = wm.workspace
