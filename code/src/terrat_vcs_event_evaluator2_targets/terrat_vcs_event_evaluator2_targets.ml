@@ -297,7 +297,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   let publish_repo_config : unit Hmap.key = Hmap.Key.create "publish_repo_config"
   let comment_id : int Hmap.key = Hmap.Key.create "comment_id"
   let react_to_comment : unit Hmap.key = Hmap.Key.create "react_to_comment"
-  let encryption_key : Cstruct.t Hmap.key = Hmap.Key.create "encryption_key"
 
   let job_work_manifests :
       ( S.Api.Account.t,

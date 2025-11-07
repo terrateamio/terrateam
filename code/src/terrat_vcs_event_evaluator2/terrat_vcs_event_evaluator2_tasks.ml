@@ -44,13 +44,6 @@ struct
     | Terrat_vcs_provider2.Target.Drift _ -> raise (Failure "nyi")
 
   module H = struct
-    let token encryption_key id =
-      Base64.encode_exn
-      @@ Cstruct.to_string
-      @@ Mirage_crypto.Hash.SHA256.hmac ~key:encryption_key
-      @@ Cstruct.of_string
-      @@ Ouuid.to_string id
-
     let match_tag_queries ~accessor ~changes queries =
       CCList.map
         (fun change ->
@@ -222,7 +215,8 @@ struct
           let open Irm in
           fetch Keys.account
           >>= fun account ->
-          S.Api.create_client ~request_id:(Builder.log_id s) (Builder.State.config s) account)
+          Builder.run_db s ~f:(fun db ->
+              S.Api.create_client ~request_id:(Builder.log_id s) (Builder.State.config s) account db))
 
     let context =
       run ~name:"context" (fun s { Bs.Fetcher.fetch } ->
@@ -1551,25 +1545,6 @@ struct
           Builder.run_db s ~f:(fun db ->
               S.Db.store_pull_request ~request_id:(Builder.log_id s) db pull_request))
 
-    let encryption_key =
-      let select_encryption_key () =
-        (* The hex conversion is so that there are no issues with escaping
-           the string *)
-        Pgsql_io.Typed_sql.(
-          sql
-          //
-          (* data *)
-          Ret.ud' CCFun.(Cstruct.of_hex %> CCOption.return)
-          /^ "select encode(data, 'hex') from encryption_keys order by rank limit 1")
-      in
-      run ~name:"encryption_key" (fun s _ ->
-          let open Irm in
-          Builder.run_db s ~f:(fun db ->
-              Pgsql_io.Prepared_stmt.fetch db (select_encryption_key ()) ~f:CCFun.id)
-          >>= function
-          | [] -> Abb.Future.return (Error (`Missing_dep_err "encryption_key"))
-          | key :: _ -> Abb.Future.return (Ok key))
-
     let compute_node =
       run ~name:"compute_node" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
@@ -2711,7 +2686,7 @@ struct
           | None -> assert false)
 
     let iter_job =
-      run ~name:"iter_job" (fun s ({ Bs.Fetcher.fetch } as fetcher) ->
+      run ~name:"iter_job" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
           fetch Keys.job
           >>= fun job ->
@@ -2842,7 +2817,6 @@ struct
     |> Hmap.add (coerce Keys.dest_branch_dirspaces) Tasks.dest_branch_dirspaces
     |> Hmap.add (coerce Keys.dest_branch_name) Tasks.dest_branch_name
     |> Hmap.add (coerce Keys.dest_branch_ref) Tasks.dest_branch_ref
-    |> Hmap.add (coerce Keys.encryption_key) Tasks.encryption_key
     |> Hmap.add (coerce Keys.eval_compute_node_poll) (Tasks.eval_compute_node_poll default_tasks)
     |> Hmap.add (coerce Keys.eval_job) Tasks.eval_job
     |> Hmap.add (coerce Keys.iter_job) Tasks.iter_job

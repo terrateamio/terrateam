@@ -8,7 +8,19 @@ module Make
       ((unit, unit) S.Api.Pull_request.t, S.Api.Repo.t) Terrat_vcs_provider2.Target.t )
     Terrat_work_manifest3.Existing.t
 
-  val token : Cstruct.t -> Uuidm.t -> string
+  val create_token :
+    S.Api.Account.Id.t ->
+    Uuidm.t ->
+    S.Db.t ->
+    (string, [> Terrat_user.Token.to_token_err ]) result Abb.Future.t
+
+  (** Same as [create_token] but logs the error and turns it into a generic failure. *)
+  val create_token' :
+    log_id:string ->
+    S.Api.Account.Id.t ->
+    Uuidm.t ->
+    S.Db.t ->
+    (string, [> `Error ]) result Abb.Future.t
 
   val match_tag_queries :
     accessor:('a -> Terrat_tag_query.t) ->
