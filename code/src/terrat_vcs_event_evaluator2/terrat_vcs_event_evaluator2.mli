@@ -28,4 +28,15 @@ module Make (S : Terrat_vcs_provider2.S) : sig
     work_manifest_id:Uuidm.t ->
     Terrat_api_components.Work_manifest_result.t ->
     (unit, [> `Error ]) result Abb.Future.t
+
+  val push :
+    request_id:string ->
+    config:S.Api.Config.t ->
+    storage:Terrat_storage.t ->
+    account:S.Api.Account.t ->
+    repo:S.Api.Repo.t ->
+    branch:S.Api.Ref.t ->
+    user:S.Api.User.t ->
+    unit ->
+    unit Abb.Future.t
 end

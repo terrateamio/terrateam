@@ -77,6 +77,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         log_id : string;
         config : S.Api.Config.t;
         db : Pgsql_io.t Serializer.Mutex.t;
+        orig_store : Hmap.t;
         mutable store : Hmap.t;
         mutable dirty : Key_repr.t list;
       }
@@ -115,10 +116,11 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       Serializer.create ()
       >>= fun serializer ->
       let db = Serializer.Mutex.create serializer db in
-      Abb.Future.return { B.State.log_id; config; store; dirty = []; db }
+      Abb.Future.return { B.State.log_id; config; orig_store = store; store; dirty = []; db }
 
     let config t = t.B.State.config
     let mark_dirty t k = t.B.State.dirty <- B.key_repr_of_key k :: t.B.State.dirty
+    let reset_store t = t.B.State.store <- t.B.State.orig_store
     let store t = t.B.State.store
   end
 
