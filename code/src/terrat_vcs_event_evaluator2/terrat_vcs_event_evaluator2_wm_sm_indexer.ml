@@ -80,11 +80,11 @@ struct
 
   let initiate ({ Wm.id; _ } as work_manifest) s { Bs.Fetcher.fetch } =
     let open Irm in
+    fetch Keys.account
+    >>= fun account ->
     fetch Keys.is_interactive
     >>= (function
     | true ->
-        fetch Keys.account
-        >>= fun account ->
         fetch Keys.repo
         >>= fun repo ->
         fetch Keys.client
@@ -105,8 +105,6 @@ struct
         S.Api.create_commit_checks ~request_id:(Builder.log_id s) client repo branch_ref [ check ]
     | false -> Abb.Future.return (Ok ()))
     >>= fun () ->
-    fetch Keys.encryption_key
-    >>= fun encryption_key ->
     fetch Keys.dest_branch_name
     >>= fun dest_branch_name ->
     fetch Keys.repo_config_raw
@@ -131,6 +129,9 @@ struct
     >>= fun matches ->
     Abb.Future.return (Wm_sm.dirspaceflows_of_changes repo_config_raw matches)
     >>= fun dirspaceflows ->
+    Builder.run_db s ~f:(fun db ->
+        Wm_sm.create_token' ~log_id:(Builder.log_id s) (S.Api.Account.id account) id db)
+    >>= fun token ->
     let module Dsf = Terrat_change.Dirspaceflow in
     let dirs =
       CCList.map (fun Terrat_change.Dirspace.{ dir; _ } -> dir)
@@ -148,13 +149,7 @@ struct
     in
     let response =
       Terrat_api_components.Work_manifest.Work_manifest_index
-        {
-          I.dirs;
-          base_ref = S.Api.Ref.to_string dest_branch_name;
-          token = Wm_sm.token encryption_key id;
-          type_ = "index";
-          config;
-        }
+        { I.dirs; base_ref = S.Api.Ref.to_string dest_branch_name; token; type_ = "index"; config }
     in
     Abb.Future.return (Ok response)
 

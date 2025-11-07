@@ -82,11 +82,11 @@ struct
 
   let initiate ({ Wm.id; _ } as work_manifest) s { Bs.Fetcher.fetch } =
     let open Irm in
+    fetch Keys.account
+    >>= fun account ->
     fetch Keys.is_interactive
     >>= (function
     | true ->
-        fetch Keys.account
-        >>= fun account ->
         fetch Keys.repo
         >>= fun repo ->
         fetch Keys.client
@@ -107,8 +107,6 @@ struct
         S.Api.create_commit_checks ~request_id:(Builder.log_id s) client repo branch_ref [ check ]
     | false -> Abb.Future.return (Ok ()))
     >>= fun () ->
-    fetch Keys.encryption_key
-    >>= fun encryption_key ->
     fetch Keys.dest_branch_name
     >>= fun dest_branch_name ->
     fetch Keys.branch_name
@@ -117,6 +115,9 @@ struct
     >>= fun repo_tree ->
     fetch Keys.repo_config_raw'
     >>= fun (_, repo_config_raw) ->
+    Builder.run_db s ~f:(fun db ->
+        Wm_sm.create_token' ~log_id:(Builder.log_id s) (S.Api.Account.id account) id db)
+    >>= fun token ->
     (* FIX: Index *)
     let index = None in
     Abbs_future_combinators.to_result
@@ -143,12 +144,7 @@ struct
     in
     let response =
       Terrat_api_components.Work_manifest.Work_manifest_build_config
-        {
-          B.base_ref = S.Api.Ref.to_string dest_branch_name;
-          token = Wm_sm.token encryption_key id;
-          type_ = "build-config";
-          config;
-        }
+        { B.base_ref = S.Api.Ref.to_string dest_branch_name; token; type_ = "build-config"; config }
     in
     Abb.Future.return (Ok response)
 
