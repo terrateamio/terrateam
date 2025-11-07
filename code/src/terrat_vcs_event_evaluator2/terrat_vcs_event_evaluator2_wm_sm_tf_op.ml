@@ -17,6 +17,7 @@ struct
   module Wmr = Terrat_api_components.Work_manifest_result
 
   let result_version = 2
+  let protocol_version = 1
 
   (* If the number of dirspaces are over this arbitrary threshold, do not create
    dirspace checks. *)
@@ -545,11 +546,11 @@ struct
 
     let initiate ({ Wm.id; _ } as work_manifest) s { Bs.Fetcher.fetch } =
       let open Irm in
+      fetch Keys.account
+      >>= fun account ->
       fetch Keys.is_interactive
       >>= (function
       | true ->
-          fetch Keys.account
-          >>= fun account ->
           fetch Keys.repo
           >>= fun repo ->
           fetch Keys.client
@@ -599,18 +600,21 @@ struct
       >>= fun synthesized_config ->
       fetch Keys.dest_branch_name
       >>= fun dest_branch_name ->
-      fetch Keys.encryption_key
-      >>= fun encryption_key ->
       Ira.(
         (fun branch_dirspaces dest_branch_dirspaces -> (branch_dirspaces, dest_branch_dirspaces))
         <$> fetch Keys.branch_dirspaces
         <*> fetch Keys.dest_branch_dirspaces)
       >>= fun (dirspaces, base_dirspaces) ->
+      Builder.run_db s ~f:(fun db ->
+          Wm_sm.create_token' ~log_id:(Builder.log_id s) (S.Api.Account.id account) id db)
+      >>= fun token ->
       let response =
         Terrat_api_components.(
           Work_manifest.Work_manifest_plan
             {
-              Work_manifest_plan.token = Wm_sm.token encryption_key work_manifest.Wm.id;
+              Work_manifest_plan.token;
+              api_base_url = Terrat_config.api_base @@ S.Api.Config.config @@ Builder.State.config s;
+              installation_id = S.Api.Account.Id.to_string @@ S.Api.Account.id account;
               base_dirspaces;
               base_ref = S.Api.Ref.to_string dest_branch_name;
               changed_dirspaces = changed_dirspaces synthesized_config changes;
@@ -619,6 +623,7 @@ struct
               run_kind_data;
               type_ = "plan";
               result_version;
+              protocol_version = Some protocol_version;
               config =
                 repo_config
                 |> Terrat_base_repo_config_v1.to_version_1
@@ -826,11 +831,11 @@ struct
 
     let initiate ({ Wm.id; _ } as work_manifest) s { Bs.Fetcher.fetch } =
       let open Irm in
+      fetch Keys.account
+      >>= fun account ->
       fetch Keys.is_interactive
       >>= (function
       | true ->
-          fetch Keys.account
-          >>= fun account ->
           fetch Keys.repo
           >>= fun repo ->
           fetch Keys.client
@@ -881,18 +886,22 @@ struct
       >>= fun synthesized_config ->
       fetch Keys.dest_branch_name
       >>= fun dest_branch_name ->
-      fetch Keys.encryption_key
-      >>= fun encryption_key ->
+      Builder.run_db s ~f:(fun db ->
+          Wm_sm.create_token' ~log_id:(Builder.log_id s) (S.Api.Account.id account) id db)
+      >>= fun token ->
       let response =
         Terrat_api_components.(
           Work_manifest.Work_manifest_apply
             {
-              Work_manifest_apply.token = Wm_sm.token encryption_key work_manifest.Wm.id;
+              Work_manifest_apply.token;
+              api_base_url = Terrat_config.api_base @@ S.Api.Config.config @@ Builder.State.config s;
+              installation_id = S.Api.Account.Id.to_string @@ S.Api.Account.id account;
               base_ref = S.Api.Ref.to_string dest_branch_name;
               changed_dirspaces = changed_dirspaces synthesized_config changes;
               run_kind = run_kind_str;
               type_ = "apply";
               result_version;
+              protocol_version = Some protocol_version;
               config =
                 repo_config
                 |> Terrat_base_repo_config_v1.to_version_1

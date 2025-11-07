@@ -16,12 +16,28 @@ struct
       ((unit, unit) S.Api.Pull_request.t, S.Api.Repo.t) Terrat_vcs_provider2.Target.t )
     Terrat_work_manifest3.Existing.t
 
-  let token encryption_key id =
-    Base64.encode_exn
-    @@ Cstruct.to_string
-    @@ Mirage_crypto.Hash.SHA256.hmac ~key:encryption_key
-    @@ Cstruct.of_string
-    @@ Ouuid.to_string id
+  let create_token installation_id work_manifest_id db =
+    let open Abbs_future_combinators.Infix_result_monad in
+    Terrat_user.create_system_user
+      ~access_token_id:work_manifest_id
+      ~capabilities:
+        Terrat_user.Capability.
+          [
+            Installation_id (S.Api.Account.Id.to_string installation_id);
+            Kv_store_read;
+            Kv_store_write;
+          ]
+      db
+    >>= fun user -> Terrat_user.Token.to_token db user
+
+  let create_token' ~log_id installation_id work_manifest_id db =
+    let open Abb.Future.Infix_monad in
+    create_token installation_id work_manifest_id db
+    >>= function
+    | Ok _ as r -> Abb.Future.return r
+    | Error (#Terrat_user.Token.to_token_err as err) ->
+        Logs.err (fun m -> m "%s : CREATE_TOKEN : %a" log_id Terrat_user.Token.pp_to_token_err err);
+        Abb.Future.return (Error `Error)
 
   let match_tag_queries ~accessor ~changes queries =
     CCList.map

@@ -82,7 +82,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                   ~capabilities:{ Tjc.Compute_node.Capabilities.flags = []; sha = wm.Wm.branch_ref }
                   db
                 >>= fun compute_node ->
-                S.Api.create_client ~request_id config wm.Wm.account
+                S.Api.create_client ~request_id config wm.Wm.account db
                 >>= fun client ->
                 let open Abb.Future.Infix_monad in
                 S.Work_manifest.run ~request_id config client wm
