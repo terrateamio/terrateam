@@ -128,6 +128,9 @@ struct
           | Error (`Suspend_eval _) as err ->
               Logs.info (fun m -> m "%s : TASK : SUSPEND : name=%s" (Builder.log_id s) name);
               Abb.Future.return err
+          | Error (`Noop as err) ->
+              Logs.info (fun m -> m "%s : TASK : NOOP : name=%s" (Builder.log_id s) name);
+              Abb.Future.return (Error err)
           | Error (#Builder.err as err) ->
               Logs.info (fun m -> m "%s : TASK : FAIL : name=%s" (Builder.log_id s) name);
               Abb.Future.return (Error err))
@@ -2685,15 +2688,64 @@ struct
                       Bs.build Builder.rebuilder tasks Keys.iter_job (Bs.St.create s)))
           | None -> assert false)
 
+    let maybe_create_completed_apply_check s { Bs.Fetcher.fetch } =
+      let module R = Terrat_base_repo_config_v1 in
+      let open Irm in
+      (* FIX: A hack, we should actually be running this in a sub-build with a
+         reset store.  The reason is that some data has been updated after
+         completing the work manifests, so we want a fresh start to re-evaluate
+         everything. *)
+      Builder.State.reset_store s;
+      fetch Keys.repo_config
+      >>= fun repo_config ->
+      let apply_requirements = R.apply_requirements repo_config in
+      let create_completed_apply_check_on_noop =
+        apply_requirements.R.Apply_requirements.create_completed_apply_check_on_noop
+      in
+      fetch Keys.all_matches
+      >>= fun all_matches ->
+      fetch Keys.all_unapplied_matches
+      >>= fun all_unapplied_matches ->
+      match (all_unapplied_matches, all_matches, create_completed_apply_check_on_noop) with
+      | [], [], true | [], _, _ ->
+          fetch Keys.client
+          >>= fun client ->
+          fetch Keys.account
+          >>= fun account ->
+          fetch Keys.pull_request
+          >>= fun pull_request ->
+          fetch Keys.repo
+          >>= fun repo ->
+          let checks =
+            [
+              S.Commit_check.make_str
+                ~config:(Builder.State.config s)
+                ~description:"Completed"
+                ~status:Terrat_commit_check.Status.Completed
+                ~repo
+                ~account
+                "terrateam apply";
+            ]
+          in
+          S.Api.create_commit_checks
+            ~request_id:(Builder.log_id s)
+            client
+            repo
+            (S.Api.Pull_request.branch_ref pull_request)
+            checks
+      | _ -> Abb.Future.return (Ok ())
+
     let iter_job =
-      run ~name:"iter_job" (fun s { Bs.Fetcher.fetch } ->
+      run ~name:"iter_job" (fun s ({ Bs.Fetcher.fetch } as fetcher) ->
           let open Irm in
           fetch Keys.job
           >>= fun job ->
           let go =
             match job.Tjc.Job.type_ with
-            | Tjc.Job.Type_.Apply _ | Tjc.Job.Type_.Autoapply -> fetch Keys.publish_apply
-            | Tjc.Job.Type_.Autoplan | Tjc.Job.Type_.Plan _ -> fetch Keys.publish_plan
+            | Tjc.Job.Type_.Apply _ | Tjc.Job.Type_.Autoapply ->
+                fetch Keys.publish_apply >>= fun () -> maybe_create_completed_apply_check s fetcher
+            | Tjc.Job.Type_.Autoplan | Tjc.Job.Type_.Plan _ ->
+                fetch Keys.publish_plan >>= fun () -> maybe_create_completed_apply_check s fetcher
             | Tjc.Job.Type_.Repo_config -> fetch Keys.publish_repo_config
             | Tjc.Job.Type_.Unlock _ -> fetch Keys.publish_unlock
           in

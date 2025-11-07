@@ -410,14 +410,18 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
             ~owner:repository.Gw.Repository.owner.Gw.User.login
             ()
         in
-        raise (Failure "nyi")
-        (* Evaluator.run_pull_request_close *)
-        (*   ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ()) *)
-        (*   ~account *)
-        (*   ~user *)
-        (*   ~repo *)
-        (*   ~pull_request_id *)
-        (*   () *)
+        (* Should we have a "closed" job type or reuse autoplan which does
+           nothing on close? *)
+        Abbs_future_combinators.to_result
+        @@ Evaluator2.pull_request_job
+             ~request_id
+             ~config
+             ~storage
+             ~account
+             ~repo
+             ~pull_request_id
+             ~user
+             Terrat_job_context.Job.Type_.Autoplan
     | Gw.Pull_request_event.Pull_request_closed _ -> failwith "Invalid pull_request_closed event"
     | Gw.Pull_request_event.Pull_request_assigned _ ->
         Logs.debug (fun m -> m "%s : NOOP : PULL_REQUEST_ASSIGNED" request_id);
@@ -703,14 +707,16 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
             ()
         in
         let user = P.Api.User.make event.Gw.Push_event.sender.Gw.User.login in
-        raise (Failure "nyi")
-        (* Evaluator.run_push *)
-        (*   ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ()) *)
-        (*   ~account *)
-        (*   ~user *)
-        (*   ~repo *)
-        (*   ~branch:(P.Api.Ref.of_string default_branch) *)
-        (*   () *)
+        Abbs_future_combinators.to_result
+        @@ Evaluator2.push
+             ~request_id
+             ~config
+             ~storage
+             ~account
+             ~repo
+             ~branch:(P.Api.Ref.of_string default_branch)
+             ~user
+             ()
     | Some _ | None ->
         Logs.debug (fun m -> m "%s : PUSH_EVENT : NOOP" request_id);
         Abb.Future.return (Ok ())
