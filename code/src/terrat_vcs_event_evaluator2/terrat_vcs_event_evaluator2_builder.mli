@@ -44,6 +44,10 @@ module Make (S : Terrat_vcs_provider2.S) : sig
 
     val config : t -> S.Api.Config.t
     val mark_dirty : t -> 'v Bs.k -> unit
+
+    (** Reset the store back to a state when it was first run. *)
+    val reset_store : t -> unit
+
     val store : t -> Hmap.t
   end
 

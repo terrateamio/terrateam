@@ -312,4 +312,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     | Error _ ->
         run_next_pending_compute ~request_id ~config ~storage ()
         >>= fun _ -> Abb.Future.return (Error `Error)
+
+  let push ~request_id ~config ~storage ~account ~repo ~branch ~user () =
+    (* TODO: Implement *)
+    Abb.Future.return ()
 end
