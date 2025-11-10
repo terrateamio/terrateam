@@ -143,9 +143,9 @@ module Io = struct
             | Error err -> Abb.Future.return (Error (`Parse_error err))))
     | None -> assert false
 
-  let rec consume_until conn f =
+  let rec consume_until ?(fs = []) conn f =
     let open Abbs_future_combinators.Infix_result_monad in
-    wait_for_frames conn
+    (if fs <> [] then Abb.Future.return (Ok fs) else wait_for_frames conn)
     >>= fun received_fs ->
     match CCList.drop_while (fun fr -> not (f fr)) received_fs with
     | [] -> consume_until conn f
@@ -154,10 +154,10 @@ module Io = struct
          * List.iter (fun frame -> Printf.printf "Fs %s\n%!" (Pgsql_codec.Frame.Backend.show frame)) fs; *)
         Abb.Future.return (Ok fs)
 
-  let error_response conn =
+  let error_response conn fs =
     let open Abbs_future_combinators.Infix_result_monad in
     conn.expected_frames <- [];
-    consume_until conn (function
+    consume_until ~fs conn (function
       | Pgsql_codec.Frame.Backend.ReadyForQuery { status = 'T' | 'E' } when conn.in_tx -> true
       | Pgsql_codec.Frame.Backend.ReadyForQuery { status = 'I' } when not conn.in_tx -> true
       | _ -> false)
@@ -205,7 +205,7 @@ module Io = struct
         match_frames ~skip_leading_unmatched conn fs rfs
     | _, (Pgsql_codec.Frame.Backend.ErrorResponse { msgs } :: _ as r_fs) ->
         let open Abb.Future.Infix_monad in
-        error_response conn >>= fun _ -> Abb.Future.return (Error (handle_err_frame msgs r_fs))
+        error_response conn r_fs >>= fun _ -> Abb.Future.return (Error (handle_err_frame msgs r_fs))
     | _, _ :: r_fs when skip_leading_unmatched -> match_frames ~skip_leading_unmatched conn fs r_fs
     | _, _ ->
         let open Abb.Future.Infix_monad in
@@ -579,7 +579,8 @@ module Cursor = struct
     | Pgsql_codec.Frame.Backend.DataRow _ :: _ -> assert false
     | Pgsql_codec.Frame.Backend.ErrorResponse { msgs } :: _ as fs ->
         let open Abb.Future.Infix_monad in
-        Io.error_response conn >>= fun _ -> Abb.Future.return (Error (Io.handle_err_frame msgs fs))
+        Io.error_response conn fs
+        >>= fun _ -> Abb.Future.return (Error (Io.handle_err_frame msgs fs))
     | Pgsql_codec.Frame.Backend.NoticeResponse { msgs } :: fs ->
         conn.notice_response msgs;
         consume_exec_frames conn row_func st fs
@@ -621,7 +622,8 @@ module Cursor = struct
         consume_fetch_process_frame conn row_func st fs data
     | Pgsql_codec.Frame.Backend.ErrorResponse { msgs } :: _ as fs ->
         let open Abb.Future.Infix_monad in
-        Io.error_response conn >>= fun _ -> Abb.Future.return (Error (Io.handle_err_frame msgs fs))
+        Io.error_response conn fs
+        >>= fun _ -> Abb.Future.return (Error (Io.handle_err_frame msgs fs))
     | Pgsql_codec.Frame.Backend.NoticeResponse { msgs } :: fs ->
         conn.notice_response msgs;
         consume_fetch_frames conn row_func st fs
