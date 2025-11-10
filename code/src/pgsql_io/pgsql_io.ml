@@ -780,7 +780,7 @@ module Prepared_stmt = struct
             ~finally:(fun () ->
               conn.busy <- false;
               Abbs_future_combinators.ignore (destroy stmt)))
-        else raise (Failure "SQL connection busy"))
+        else raise (Failure ("SQL connection busy: " ^ CCResult.get_exn @@ Typed_sql.to_query sql)))
       sql
 
   let bind_execute t =
@@ -829,7 +829,7 @@ module Prepared_stmt = struct
             ~finally:(fun () ->
               conn.busy <- false;
               Abbs_future_combinators.ignore (destroy stmt)))
-        else raise (Failure "SQL connection busy"))
+        else raise (Failure ("SQL connection busy: " ^ CCResult.get_exn @@ Typed_sql.to_query sql)))
       sql
 
   let kbind :
