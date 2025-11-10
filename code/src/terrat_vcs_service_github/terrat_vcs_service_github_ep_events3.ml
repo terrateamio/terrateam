@@ -574,7 +574,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
                  ~comment_id
                  ~user
                  (Terrat_job_context.Job.Type_.Unlock unlocks)
-        | Ok comment ->
+        | Ok (Terrat_comment.Gate_approval { tokens }) ->
             let account = P.Api.Account.make installation_id in
             let user = P.Api.User.make sender.Gw.User.login in
             let repo =
@@ -584,6 +584,31 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
                 ~owner:repository.Gw.Repository.owner.Gw.User.login
                 ()
             in
+            Abbs_future_combinators.to_result
+            @@ Evaluator2.pull_request_job
+                 ~request_id
+                 ~config
+                 ~storage
+                 ~account
+                 ~repo
+                 ~pull_request_id
+                 ~comment_id
+                 ~user
+                 (Terrat_job_context.Job.Type_.Gate_approval { tokens })
+        | Ok (Terrat_comment.Apply_autoapprove _)
+        | Ok (Terrat_comment.Apply_force _)
+        | Ok (Terrat_comment.Feedback _)
+        | Ok Terrat_comment.Help
+        | Ok Terrat_comment.Index ->
+            (* let account = P.Api.Account.make installation_id in *)
+            (* let user = P.Api.User.make sender.Gw.User.login in *)
+            (* let repo = *)
+            (*   P.Api.Repo.make *)
+            (*     ~id:repository.Gw.Repository.id *)
+            (*     ~name:repository.Gw.Repository.name *)
+            (*     ~owner:repository.Gw.Repository.owner.Gw.User.login *)
+            (*     () *)
+            (* in *)
             raise (Failure "nyi")
             (* Evaluator.run_pull_request_comment *)
             (*   ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ()) *)
