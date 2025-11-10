@@ -23,6 +23,7 @@ module Job = struct
       | Autoapply
       | Autoplan
       | Plan of { tag_query : Terrat_tag_query.t }
+      | Gate_approval of { tokens : string list }
       | Repo_config
       | Unlock of string list
     [@@deriving show, eq]
