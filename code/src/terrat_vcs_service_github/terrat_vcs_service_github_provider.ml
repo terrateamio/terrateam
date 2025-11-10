@@ -5441,6 +5441,7 @@ module Job_context = struct
           type_ : string; [@key "type"]
           tag_query : string option; [@default None]
           unlocks : string list option; [@default None]
+          tokens : string list option; [@default None]
         }
         [@@deriving yojson]
       end
@@ -5454,17 +5455,24 @@ module Job_context = struct
                 P.type_ = "apply";
                 tag_query = Some (Terrat_tag_query.to_string tag_query);
                 unlocks = None;
+                tokens = None;
               }
-          | T.Autoapply -> { P.type_ = "autoapply"; tag_query = None; unlocks = None }
-          | T.Autoplan -> { P.type_ = "autoplan"; tag_query = None; unlocks = None }
+          | T.Autoapply ->
+              { P.type_ = "autoapply"; tag_query = None; unlocks = None; tokens = None }
+          | T.Autoplan -> { P.type_ = "autoplan"; tag_query = None; unlocks = None; tokens = None }
           | T.Plan { tag_query } ->
               {
                 P.type_ = "plan";
                 tag_query = Some (Terrat_tag_query.to_string tag_query);
                 unlocks = None;
+                tokens = None;
               }
-          | T.Repo_config -> { P.type_ = "repo_config"; tag_query = None; unlocks = None }
-          | T.Unlock unlocks -> { P.type_ = "unlock"; tag_query = None; unlocks = Some unlocks })
+          | T.Gate_approval { tokens } ->
+              { P.type_ = "gate_approval"; tag_query = None; unlocks = None; tokens = Some tokens }
+          | T.Repo_config ->
+              { P.type_ = "repo_config"; tag_query = None; unlocks = None; tokens = None }
+          | T.Unlock unlocks ->
+              { P.type_ = "unlock"; tag_query = None; unlocks = Some unlocks; tokens = None })
           %> P.to_yojson
           %> Yojson.Safe.to_string)
 
@@ -5487,6 +5495,8 @@ module Job_context = struct
                | { P.type_ = "repo_config"; _ } -> Some T.Repo_config
                | { P.type_ = "unlock"; unlocks; _ } ->
                    Some (T.Unlock (CCOption.get_or ~default:[] unlocks))
+               | { P.type_ = "gate_approval"; tokens = Some tokens; _ } ->
+                   Some (T.Gate_approval { tokens })
                | _ -> None))
     end
 

@@ -78,6 +78,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         config : S.Api.Config.t;
         db : Pgsql_io.t Serializer.Mutex.t;
         orig_store : Hmap.t;
+        tasks : Hmap.t;
         mutable store : Hmap.t;
         mutable dirty : Key_repr.t list;
       }
@@ -111,31 +112,21 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   module State = struct
     type t = B.State.t
 
-    let make ~log_id ~store ~config ~db () =
+    let make ~log_id ~store ~config ~db ~tasks () =
       let open Abb.Future.Infix_monad in
       Serializer.create ()
       >>= fun serializer ->
       let db = Serializer.Mutex.create serializer db in
-      Abb.Future.return { B.State.log_id; config; orig_store = store; store; dirty = []; db }
+      Abb.Future.return { B.State.log_id; config; orig_store = store; tasks; store; dirty = []; db }
 
+    let set_log_id log_id t = { t with B.State.log_id }
     let config t = t.B.State.config
     let mark_dirty t k = t.B.State.dirty <- B.key_repr_of_key k :: t.B.State.dirty
-    let reset_store t = t.B.State.store <- t.B.State.orig_store
-    let store t = t.B.State.store
+    let orig_store t = t.B.State.orig_store
+    let set_orig_store store t = { t with B.State.store; orig_store = store }
   end
 
   external coerce_to_task : 'a B.k -> 'a Bs.Task.t B.k = "%identity"
-
-  let union_tasks { Bs.Tasks.get = t1 } { Bs.Tasks.get = t2 } =
-    {
-      Bs.Tasks.get =
-        (fun s k ->
-          let open B.C in
-          t1 s k
-          >>= function
-          | Some _ as r -> return r
-          | None -> t2 s k);
-    }
 
   let run_db s ~f =
     let open Abb.Future.Infix_monad in
@@ -146,4 +137,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     | `Closed -> Abb.Future.return (Error `Closed)
 
   let log_id state = state.B.State.log_id
+
+  let make_tasks tasks_map =
+    { Bs.Tasks.get = (fun s k -> Abb.Future.return (Ok (Hmap.find (coerce_to_task k) tasks_map))) }
+
+  let eval s k =
+    Logs.info (fun m -> m "%s : BUILDER : EVAL : target=%s" (log_id s) (Hmap.Key.info k));
+    Bs.build
+      rebuilder
+      (make_tasks s.B.State.tasks)
+      k
+      (Bs.St.create { s with B.State.store = s.B.State.orig_store })
 end
