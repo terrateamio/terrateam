@@ -21,7 +21,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   type err = Builder.err
 
   (* The default set of tasks *)
-  let tasks = Tasks.make_tasks @@ Tasks.default_tasks ()
+  let tasks = Tasks.default_tasks ()
 
   let wrap_build ~request_id build =
     let open Abb.Future.Infix_monad in
@@ -29,6 +29,10 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     >>= function
     | Ok v -> Abb.Future.return (Ok (Some v))
     | Error (`Suspend_eval _ as err) ->
+        Logs.info (fun m -> m "%s : %a" request_id Builder.pp_err err);
+        Abb.Future.return (Ok None)
+    | Error (`Noop as err) ->
+        (* A Noop isn't an error, it just means tehre is nothing to do *)
         Logs.info (fun m -> m "%s : %a" request_id Builder.pp_err err);
         Abb.Future.return (Ok None)
     | Error #err as err -> Abb.Future.return err
@@ -60,10 +64,10 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       let open Abb.Future.Infix_monad in
       let target = Keys.eval_work_manifest_event in
       let store = Hmap.empty |> Hmap.add Keys.work_manifest_event (Some event) in
-      Builder.State.make ~log_id:request_id ~config ~store ~db ()
+      Builder.State.make ~log_id:request_id ~config ~store ~db ~tasks ()
       >>= fun s ->
       Logs.info (fun m -> m "%s : target=%s" (Builder.log_id s) (Hmap.Key.info target));
-      Bs.build Builder.rebuilder tasks target (Bs.St.create s)
+      Builder.eval s target
     in
     log_err ~request_id run
 
@@ -123,7 +127,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       ~type_
       ~store
       () =
-    let open Abb.Future.Infix_monad in
     log_err ~request_id
     @@ Abbs_future_combinators.with_finally
          (fun () ->
@@ -161,6 +164,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                          ~config
                          ~store
                          ~db
+                         ~tasks
                          ()
                        >>= fun s ->
                        match context.Tjc.Context.scope with
@@ -172,21 +176,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                                  (Builder.log_id s)
                                  Uuidm.pp
                                  context.Tjc.Context.id);
-                           Bs.build
-                             Builder.rebuilder
-                             tasks
-                             Keys.update_context_for_pull_request
-                             (Bs.St.create s)
+                           Builder.eval s Keys.update_context_for_pull_request
                            >>= fun () ->
                            Logs.info (fun m ->
                                m "%s : target=%s" (Builder.log_id s) (Hmap.Key.info Keys.eval_job));
-                           wrap_build ~request_id
-                           @@ Bs.build Builder.rebuilder tasks Keys.eval_job (Bs.St.create s)
+                           wrap_build ~request_id @@ Builder.eval s Keys.eval_job
                        | _ ->
                            Logs.info (fun m ->
                                m "%s : target=%s" (Builder.log_id s) (Hmap.Key.info Keys.eval_job));
-                           wrap_build ~request_id
-                           @@ Bs.build Builder.rebuilder tasks Keys.eval_job (Bs.St.create s))))
+                           wrap_build ~request_id @@ Builder.eval s Keys.eval_job)))
              ~while_:
                (Abbs_future_combinators.finite_tries 100 (function
                  | Error `Loop -> true
@@ -195,29 +193,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
          ~finally:(fun () ->
            Abbs_future_combinators.ignore
            @@ run_next_pending_compute ~request_id ~config ~storage ())
-
-  let pull_request_open ~request_id ~config ~storage ~account ~repo ~pull_request_id ~user () =
-    let store =
-      Hmap.empty
-      |> Hmap.add Keys.account account
-      |> Hmap.add Keys.pull_request_id pull_request_id
-      |> Hmap.add Keys.repo repo
-      |> Hmap.add Keys.user (Some user)
-      |> Hmap.add Keys.work_manifest_event None
-    in
-    Abbs_future_combinators.ignore
-    @@ Abb.Future.fork
-    @@ run_pull_request_context
-         ~request_id
-         ~config
-         ~storage
-         ~account
-         ~repo
-         ~pull_request_id
-         ~user
-         ~type_:Terrat_job_context.Job.Type_.Autoplan
-         ~store
-         ()
 
   let pull_request_job
       ?comment_id
@@ -263,10 +238,10 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       in
       Pgsql_pool.with_conn storage ~f:(fun db ->
           Pgsql_io.tx db ~f:(fun () ->
-              Builder.State.make ~log_id:request_id ~config ~store ~db ()
+              Builder.State.make ~log_id:request_id ~config ~store ~db ~tasks ()
               >>= fun s ->
               Logs.info (fun m -> m "%s : target=%s" (Builder.log_id s) (Hmap.Key.info target));
-              Bs.build Builder.rebuilder tasks target (Bs.St.create s)))
+              Builder.eval s target))
     in
     Abbs_future_combinators.protect (fun () -> log_err ~request_id run)
     >>= function
@@ -294,12 +269,11 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                         |> Hmap.add Keys.work_manifest_event (Some work_manifest_event)
                       in
                       let open Abb.Future.Infix_monad in
-                      Builder.State.make ~log_id:request_id ~config ~store ~db ()
+                      Builder.State.make ~log_id:request_id ~config ~store ~db ~tasks ()
                       >>= fun s ->
                       Logs.info (fun m ->
                           m "%s : target=%s" (Builder.log_id s) (Hmap.Key.info target));
-                      wrap_build ~request_id
-                      @@ Bs.build Builder.rebuilder tasks target (Bs.St.create s)
+                      wrap_build ~request_id @@ Builder.eval s target
                   | None -> raise (Failure "nyi"))
               | None -> raise (Failure "nyi")))
     in

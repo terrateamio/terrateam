@@ -242,6 +242,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   let dest_branch_dirspaces : Terrat_api_components.Work_manifest_dir.t list Hmap.key =
     Hmap.Key.create "dest_branch_dirspaces"
 
+  let store_stacks : unit Hmap.key = Hmap.Key.create "store_stacks"
+
   (* Built repo config branch *)
   let built_repo_config_dest_branch : Yojson.Safe.t option Hmap.key =
     Hmap.Key.create "built_repo_config_dest_branch"
@@ -297,15 +299,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   let publish_repo_config : unit Hmap.key = Hmap.Key.create "publish_repo_config"
   let comment_id : int Hmap.key = Hmap.Key.create "comment_id"
   let react_to_comment : unit Hmap.key = Hmap.Key.create "react_to_comment"
-
-  let job_work_manifests :
-      ( S.Api.Account.t,
-        ((unit, unit) S.Api.Pull_request.t, S.Api.Repo.t) Terrat_vcs_provider2.Target.t )
-      Terrat_work_manifest3.Existing.t
-      list
-      Hmap.key =
-    Hmap.Key.create "job_work_manifests"
-
   let work_manifest_id : Uuidm.t option Hmap.key = Hmap.Key.create "work_manifest_id"
 
   let work_manifest :
@@ -352,6 +345,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     Hmap.Key.create "check_dirspaces_missing_plans"
 
   let check_gates : unit Hmap.key = Hmap.Key.create "check_gates"
+  let store_gate_approval : unit Hmap.key = Hmap.Key.create "store_gate_approval"
 
   let check_dirspaces_owned_by_other_pull_requests : unit Hmap.key =
     Hmap.Key.create "check_dirspaces_owned_by_other_pull_requests"
@@ -361,6 +355,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   let publish_plan : unit Hmap.key = Hmap.Key.create "publish_plan"
   let can_run_apply : unit Hmap.key = Hmap.Key.create "can_run_apply"
   let publish_apply : unit Hmap.key = Hmap.Key.create "publish_apply"
+  let run_next_layer : unit Hmap.key = Hmap.Key.create "run_next_layer"
+  let complete_no_change_dirspaces : unit Hmap.key = Hmap.Key.create "complete_no_change_dirspaces"
 
   (* Context management *)
   let store_repository : unit Hmap.key = Hmap.Key.create "store_repository"
