@@ -5,6 +5,7 @@ include
     with type key = string
      and type path = string
      and type data = Yojson.Safe.t
+     and type cap = Terrat_user_caps.t
      and type 'a C.t = ('a, err) result Abb.Future.t
 
 val data_record_to_yojson : data Record.t -> Yojson.Safe.t

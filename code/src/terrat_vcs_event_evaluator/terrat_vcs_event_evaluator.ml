@@ -143,19 +143,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               time))
       (fun () -> S.Api.fetch_branch_sha ~request_id client repo ref_)
 
-  let fetch_file request_id client repo ref_ path =
-    Abbs_time_it.run
-      (fun time ->
-        Logs.info (fun m ->
-            m
-              "%s : FETCH_FILE : repo=%s : ref=%s : path=%s : time=%f"
-              request_id
-              (S.Api.Repo.to_string repo)
-              (S.Api.Ref.to_string ref_)
-              path
-              time))
-      (fun () -> S.Api.fetch_file ~request_id client repo ref_ path)
-
   let fetch_remote_repo request_id client repo =
     Abbs_time_it.run
       (fun time ->
@@ -166,13 +153,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               (S.Api.Repo.to_string repo)
               time))
       (fun () -> S.Api.fetch_remote_repo ~request_id client repo)
-
-  let fetch_centralized_repo request_id client owner =
-    Abbs_time_it.run
-      (fun time ->
-        Logs.info (fun m ->
-            m "%s : FETCH_CENTRALIZED_REPO : owner=%s : time=%f" request_id owner time))
-      (fun () -> S.Api.fetch_centralized_repo ~request_id client owner)
 
   let fetch_tree request_id client repo ref_ =
     Abbs_time_it.run
@@ -508,10 +488,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               time))
       (fun () -> S.Db.query_plan ~request_id db work_manifest_id dirspace)
 
-  let cleanup_plans request_id db =
-    Abbs_time_it.run
-      (fun time -> Logs.info (fun m -> m "%s : CLEANUP_PLANS : time=%f" request_id time))
-      (fun () -> S.Db.cleanup_plans ~request_id db)
+  let cleanup_plans request_id db = S.Db.cleanup_plans ~request_id db
 
   let store_plan request_id db work_manifest_id dirspace data has_changes =
     Abbs_time_it.run
@@ -3143,7 +3120,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       Terrat_user.create_system_user
         ~access_token_id:work_manifest_id
         ~capabilities:
-          Terrat_user.Capability.[ Installation_id installation_id; Kv_store_read; Kv_store_write ]
+          Terrat_user.Capability.
+            [
+              Installation_id installation_id;
+              Kv_store_read;
+              Kv_store_write;
+              Kv_store_system_read;
+              Kv_store_system_write;
+            ]
         db
       >>= fun user -> Terrat_user.Token.to_token db user
 
@@ -3846,7 +3830,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         (Event.repo state.State.event)
         all_dirspaceflows
       >>= fun () ->
-      let all_dirspaceflows = strip_lock_branch_target all_dirspaceflows in
       Abb.Future.return (dirspaceflows_of_changes repo_config passed_dirspaces)
       >>= fun dirspaceflows ->
       let denied_dirspaces =
@@ -4181,13 +4164,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             err
           >>= fun () -> Abb.Future.return (Ok state))
       >>= fun _ -> Abb.Future.return (Ok ())
-
-    let token encryption_key id =
-      Base64.encode_exn
-        (Cstruct.to_string
-           (Mirage_crypto.Hash.SHA256.hmac
-              ~key:encryption_key
-              (Cstruct.of_string (Uuidm.to_string id))))
 
     let changed_dirspaces config changes =
       let module Tcm = Terrat_change_match3 in
@@ -8127,8 +8103,11 @@ module Make (S : Terrat_vcs_provider2.S) = struct
 
   let run_plan_cleanup ctx =
     let open Abb.Future.Infix_monad in
-    Logs.info (fun m -> m "%s : PLAN_CLEANUP" (Ctx.request_id ctx));
-    Pgsql_pool.with_conn (Ctx.storage ctx) ~f:(fun db -> cleanup_plans (Ctx.request_id ctx) db)
+    Logs.info (fun m -> m "%s : PLAN_CLEANUP : START" (Ctx.request_id ctx));
+    Abbs_time_it.run
+      (fun t -> Logs.info (fun m -> m "%s : PLAN_CLEANUP : END : time=%f" (Ctx.request_id ctx) t))
+      (fun () ->
+        Pgsql_pool.with_conn (Ctx.storage ctx) ~f:(fun db -> cleanup_plans (Ctx.request_id ctx) db))
     >>= function
     | Ok () -> Abb.Future.return (Ok ())
     | Error `Error -> Abb.Future.return (Error `Error)

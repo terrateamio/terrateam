@@ -5,20 +5,7 @@
 type create_system_user_err = Pgsql_io.err [@@deriving show]
 type t [@@deriving show, eq]
 
-module Capability : sig
-  type t =
-    | Access_token_create
-    | Access_token_refresh
-    | Installation_id of string
-    | Kv_store_read
-    | Kv_store_write
-    | Vcs of string
-  [@@deriving show, eq, yojson]
-
-  (** Given a mask and a set of capabilities, return a new set capabilities that has, at most, the
-      capabilities in the mask. *)
-  val mask : mask:t list -> t list -> t list
-end
+module Capability : module type of Terrat_user_caps
 
 val make : ?access_token_id:Uuidm.t -> ?capabilities:Capability.t list -> id:Uuidm.t -> unit -> t
 

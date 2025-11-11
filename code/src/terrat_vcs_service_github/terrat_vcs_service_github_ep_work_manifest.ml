@@ -109,7 +109,6 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
 
   module Plans = struct
     let post config storage work_manifest_id plan =
-      let open Abb.Future.Infix_monad in
       Brtl_ep.run_result_json ~f:(fun ctx ->
           let open Abbs_future_combinators.Infix_result_monad in
           (* TODO: Uncomment once all runs are on new work manifest access tokens *)

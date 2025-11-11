@@ -692,9 +692,11 @@
           "idx": {
             "type": "integer"
           },
+          "read_caps": {},
           "version": {
             "type": "integer"
-          }
+          },
+          "write_caps": {}
         },
         "required": [
           "data"
@@ -800,12 +802,14 @@
           "key": {
             "type": "string"
           },
+          "read_caps": {},
           "size": {
             "type": "integer"
           },
           "version": {
             "type": "integer"
-          }
+          },
+          "write_caps": {}
         },
         "required": [
           "committed",
@@ -842,7 +846,9 @@
           "data": {},
           "idx": {
             "type": "integer"
-          }
+          },
+          "read_caps": {},
+          "write_caps": {}
         },
         "required": [
           "data"

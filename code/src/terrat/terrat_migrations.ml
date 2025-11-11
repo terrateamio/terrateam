@@ -255,6 +255,7 @@ let migrations =
     ("add-gitlab-token-from-config", add_gitlab_token_from_config);
     ("add-stacks", run_file_sql "2025-10-22-add-stacks.sql");
     ("add-plans-cleanup-idx", run_file_sql "2025-11-04-add-plans-cleanup-idx.sql");
+    ("add-kv-store-caps", run_file_sql "2025-11-05-add-kv-store-caps.sql");
   ]
 
 let run config storage = Mig.run { Migrate.config; storage; tx = () } migrations

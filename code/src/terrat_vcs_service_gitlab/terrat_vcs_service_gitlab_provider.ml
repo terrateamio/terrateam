@@ -1674,10 +1674,10 @@ module Db = struct
     >>= function
     | Ok [] -> assert false
     | Ok (count :: _) ->
-        Logs.info (fun m -> m "PLAN_CLEANUP : %d" (Int32.to_int count));
+        Logs.info (fun m -> m "%s : PLAN_CLEANUP : %d" request_id (Int32.to_int count));
         Abb.Future.return (Ok ())
     | Error (#Pgsql_io.err as err) ->
-        Logs.err (fun m -> m "%s: ERROR : %a" request_id Pgsql_io.pp_err err);
+        Logs.err (fun m -> m "%s : %a" request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
 
   let unlock' db repo = function
