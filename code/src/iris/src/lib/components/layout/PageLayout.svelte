@@ -1,8 +1,10 @@
 <script lang="ts">
   import { isAuthenticated, storeIntendedUrl } from '../../auth';
-  import { installations, installationsLoading, currentVCSProvider } from '../../stores';
+  import { installations, installationsLoading, currentVCSProvider, selectedInstallation } from '../../stores';
   import Sidebar from '../../Sidebar.svelte';
   import { VCS_PROVIDERS } from '../../vcs/providers';
+  import EmailRequiredBanner from '../ui/EmailRequiredBanner.svelte';
+  import { isSaasBillingMode } from '../../utils/environment';
 
   export let activeItem: string;
   export let title: string;
@@ -11,10 +13,18 @@
 
   // Mobile menu state
   let mobileMenuOpen = false;
-  
+
   // Get current VCS provider terminology
   $: currentProvider = $currentVCSProvider || 'github';
   $: terminology = VCS_PROVIDERS[currentProvider]?.terminology || VCS_PROVIDERS.github.terminology;
+
+  // Check if we should show the email required banner/modal
+  // Only show in SaaS deployments, not self-hosted installations
+  $: showEmailBanner = isSaasBillingMode() &&
+                       $selectedInstallation &&
+                       !$selectedInstallation.email &&
+                       activeItem !== 'login' &&
+                       activeItem !== 'getting-started';
 
   // Redirect to login if not authenticated, storing the intended URL
   $: if (!$isAuthenticated) {
@@ -83,6 +93,11 @@
           </div>
         </div>
       </header>
+    {/if}
+
+    <!-- Email Required Banner (shows banner, escalates to modal after dismissals) -->
+    {#if showEmailBanner}
+      <EmailRequiredBanner />
     {/if}
 
     <!-- Getting Started Banner (shown when no installations are connected) -->

@@ -254,6 +254,7 @@ let migrations =
     ("refactor-gitlab-access-tokens", run_file_sql "2025-10-06-refactor-gitlab-tokens.sql");
     ("add-gitlab-token-from-config", add_gitlab_token_from_config);
     ("add-stacks", run_file_sql "2025-10-22-add-stacks.sql");
+    ("add-installation-emails", run_file_sql "2025-11-02-add-installation-emails.sql");
     ("add-plans-cleanup-idx", run_file_sql "2025-11-04-add-plans-cleanup-idx.sql");
   ]
 

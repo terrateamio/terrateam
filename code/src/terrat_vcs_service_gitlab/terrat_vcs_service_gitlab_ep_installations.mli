@@ -79,4 +79,13 @@ module Make (S : S with type Account_id.t = int) : sig
       Terrat_api_components_gitlab_access_token.t ->
       Brtl_rtng.Handler.t
   end
+
+  module Email : sig
+    val put :
+      Terrat_vcs_service_gitlab_provider.Api.Config.t ->
+      Terrat_storage.t ->
+      int ->
+      Terrat_api_gitlab_installations.Update_email.Request_body.t ->
+      Brtl_rtng.Handler.t
+  end
 end

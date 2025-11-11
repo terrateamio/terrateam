@@ -240,6 +240,13 @@ struct
       let installation_repos_refresh_rt () =
         Brtl_rtng.Route.(installation_api_rt () /% Path.int / "repos" / "refresh")
 
+      let installation_email_rt () =
+        Brtl_rtng.Route.(
+          installation_api_rt ()
+          /% Path.int
+          / "email"
+          /* Body.decode ~json:Terrat_api_installations.Update_email.Request_body.of_yojson ())
+
       (* User API *)
       let user_api_rt () = Brtl_rtng.Route.(api_v1 () / "user")
       let user_installations_rt () = Brtl_rtng.Route.(user_api_rt () / "github" / "installations")
@@ -286,6 +293,7 @@ struct
             (`GET, Rt.installation_repos_rt () --> Ep_inst.Repos.get config storage);
             ( `POST,
               Rt.installation_repos_refresh_rt () --> Ep_inst.Repos.Refresh.post config storage );
+            (`PUT, Rt.installation_email_rt () --> Ep_inst.Email.put storage);
             (`GET, Rt.user_installations_rt () --> Ep_user.Installations.get config storage);
             (* Legacy Installations *)
             (`GET, Rt.legacy_installation_dirspaces_rt () --> Ep_inst.Dirspaces.get config storage);

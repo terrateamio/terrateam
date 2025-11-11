@@ -17,6 +17,7 @@ select
     gi.id,
     gi.name,
     gi.state,
+    gi.email,
     to_char(gi.created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at
 from all_installation_ids as ai
 inner join gitlab_installations as gi

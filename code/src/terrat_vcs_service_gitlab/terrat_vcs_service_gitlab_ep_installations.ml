@@ -58,6 +58,9 @@ module Sql = struct
       (* state *)
       Ret.text
       //
+      (* email *)
+      Ret.(option text)
+      //
       (* created_at *)
       Ret.text
       /^ read "upsert_user_installations.sql"
@@ -88,13 +91,14 @@ let update_user_installations ~config ~storage ~user () =
       Pgsql_io.Prepared_stmt.fetch
         db
         (Sql.upsert_user_installations ())
-        ~f:(fun installation_id name state created_at ->
+        ~f:(fun installation_id name state email created_at ->
           let module I = Terrat_api_components_installation in
           let module T = Terrat_api_components_tier in
           {
             I.id = CCInt64.to_string installation_id;
             name;
             account_status = state;
+            email;
             created_at;
             tier = { T.features = { T.Features.num_users_per_month = None }; name = "Unknown" };
             trial_ends_at = None;
@@ -1587,5 +1591,88 @@ module Make (S : S with type Account_id.t = int) = struct
               Abb.Future.return
                 (Ok
                    (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Internal_server_error "") ctx)))
+  end
+
+  module Email = struct
+    module Sql = struct
+      let read fname =
+        CCOption.get_exn_or
+          fname
+          (CCOption.map Pgsql_io.clean_string (Terrat_files_gitlab_sql.read fname))
+
+      let update_installation_email =
+        Pgsql_io.Typed_sql.(sql /^ read "update_installation_email.sql" /% Var.bigint "id" /% Var.text "email")
+    end
+
+    (* PUT /api/v1/gitlab/installations/{installation_id}/email *)
+    let put config storage installation_id email_data =
+      let open Abbs_future_combinators.Infix_result_monad in
+      Brtl_ep.run_result_json ~f:(fun ctx ->
+          Terrat_session.with_session ctx
+          >>= fun user ->
+          let open Abb.Future.Infix_monad in
+          Pgsql_pool.with_conn storage ~f:(fun db ->
+              enforce_installation_access user installation_id db ctx)
+          >>= function
+          | Ok () ->
+              let module E = Terrat_api_gitlab_installations.Update_email.Request_body in
+              let { E.email } = email_data in
+              Pgsql_pool.with_conn storage ~f:(fun db ->
+                  Pgsql_io.Prepared_stmt.execute
+                    db
+                    Sql.update_installation_email
+                    (CCInt64.of_int installation_id)
+                    email)
+              >>= (function
+              | Ok () ->
+                  Abb.Future.return
+                    (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx))
+              | Error (#Pgsql_pool.err as err) ->
+                  Logs.err (fun m ->
+                      m
+                        "%s : installation_id=%d : UPDATE_EMAIL : %a"
+                        (Brtl_ctx.token ctx)
+                        installation_id
+                        Pgsql_pool.pp_err
+                        err);
+                  Abb.Future.return
+                    (Ok
+                       (Brtl_ctx.set_response
+                          (Brtl_rspnc.create ~status:`Internal_server_error "")
+                          ctx))
+              | Error (#Pgsql_io.err as err) ->
+                  Logs.err (fun m ->
+                      m
+                        "%s : installation_id=%d : UPDATE_EMAIL : %a"
+                        (Brtl_ctx.token ctx)
+                        installation_id
+                        Pgsql_io.pp_err
+                        err);
+                  Abb.Future.return
+                    (Ok
+                       (Brtl_ctx.set_response
+                          (Brtl_rspnc.create ~status:`Internal_server_error "")
+                          ctx)))
+          | Error `Forbidden ->
+              Logs.err (fun m ->
+                  m
+                    "%s : installation_id=%d : UPDATE_EMAIL : FORBIDDEN"
+                    (Brtl_ctx.token ctx)
+                    installation_id);
+              Abb.Future.return
+                (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Forbidden "") ctx))
+          | Error (#Pgsql_pool.err as err) ->
+              Logs.err (fun m ->
+                  m
+                    "%s : installation_id=%d : UPDATE_EMAIL : %a"
+                    (Brtl_ctx.token ctx)
+                    installation_id
+                    Pgsql_pool.pp_err
+                    err);
+              Abb.Future.return
+                (Ok
+                   (Brtl_ctx.set_response
+                      (Brtl_rspnc.create ~status:`Internal_server_error "")
+                      ctx)))
   end
 end
