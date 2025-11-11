@@ -453,18 +453,18 @@ let rec combine_rule accessor nested_lookup stacks vs =
     ~init:[]
     vs
 
-let rec collect_deps ~path ~accessor name stacks =
+let rec collect_deps ?(acc = []) ~accessor stacks names =
   let module V1 = Terrat_base_repo_config_v1 in
   let module S = V1.Stacks in
-  let stack = String_map.find name stacks in
-  let { S.Stack.rules; _ } = stack in
-  name
-  :: CCList.flat_map
-       (function
-         | n when not (CCList.mem ~eq:CCString.equal n path) ->
-             collect_deps ~path:(name :: path) ~accessor n stacks
-         | _ -> [])
-       (accessor rules)
+  names
+  @ CCListLabels.fold_left
+      ~f:(fun acc n ->
+        if not (CCList.mem ~eq:CCString.equal n acc) then
+          collect_deps ~acc:(n :: acc) ~accessor stacks [ n ]
+        else acc)
+      ~init:acc
+  @@ CCList.flat_map (fun { S.Stack.rules; _ } -> accessor rules)
+  @@ CCList.map (CCFun.flip String_map.find stacks) names
 
 (* Expand a config by any nested stacks its related to.  This expands it in two ways:
 
@@ -511,24 +511,21 @@ let expand_stack_config name config nested_to_stack_lookup stack_to_nested_looku
       R.modified_by =
         String_set.to_list
         @@ String_set.of_list
-        @@ CCList.flat_map (fun n ->
-               collect_deps ~path:[] ~accessor:(fun { R.modified_by; _ } -> modified_by) n stacks)
+        @@ collect_deps ~accessor:(fun { R.modified_by; _ } -> modified_by) stacks
         @@ CCList.flat_map
              (fun s -> String_map.get_or ~default:[ s ] s nested_to_stack_lookup)
              modified_by;
       plan_after =
         String_set.to_list
         @@ String_set.of_list
-        @@ CCList.flat_map (fun n ->
-               collect_deps ~path:[] ~accessor:(fun { R.plan_after; _ } -> plan_after) n stacks)
+        @@ collect_deps ~accessor:(fun { R.plan_after; _ } -> plan_after) stacks
         @@ CCList.flat_map
              (fun s -> String_map.get_or ~default:[ s ] s nested_to_stack_lookup)
              plan_after;
       apply_after =
         String_set.to_list
         @@ String_set.of_list
-        @@ CCList.flat_map (fun n ->
-               collect_deps ~path:[] ~accessor:(fun { R.apply_after; _ } -> apply_after) n stacks)
+        @@ collect_deps ~accessor:(fun { R.apply_after; _ } -> apply_after) stacks
         @@ CCList.flat_map
              (fun s -> String_map.get_or ~default:[ s ] s nested_to_stack_lookup)
              apply_after;
