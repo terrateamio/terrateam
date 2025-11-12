@@ -161,63 +161,49 @@
   <!-- Status Dashboard -->
   <div class="mb-4 bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
     <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Stack Status Summary</h3>
-    <div class="flex flex-wrap gap-4">
-      {#if stateCounts.apply_success > 0}
-        <div class="flex items-center gap-2">
-          <div class="w-3 h-3 rounded-full bg-green-500"></div>
-          <span class="text-sm text-gray-900 dark:text-gray-100">
-            <span class="font-semibold">{stateCounts.apply_success}</span> Apply success
-          </span>
-        </div>
-      {/if}
-      {#if stateCounts.apply_failed > 0}
-        <div class="flex items-center gap-2">
-          <div class="w-3 h-3 rounded-full bg-red-500"></div>
-          <span class="text-sm text-gray-900 dark:text-gray-100">
-            <span class="font-semibold">{stateCounts.apply_failed}</span> Apply failed
-          </span>
-        </div>
-      {/if}
-      {#if stateCounts.apply_ready > 0}
-        <div class="flex items-center gap-2">
-          <div class="w-3 h-3 rounded-full bg-blue-500"></div>
-          <span class="text-sm text-gray-900 dark:text-gray-100">
-            <span class="font-semibold">{stateCounts.apply_ready}</span> Apply ready
-          </span>
-        </div>
-      {/if}
-      {#if stateCounts.apply_pending > 0}
-        <div class="flex items-center gap-2">
-          <div class="w-3 h-3 rounded-full bg-purple-500"></div>
-          <span class="text-sm text-gray-900 dark:text-gray-100">
-            <span class="font-semibold">{stateCounts.apply_pending}</span> Apply pending
-          </span>
-        </div>
-      {/if}
-      {#if stateCounts.plan_pending > 0}
-        <div class="flex items-center gap-2">
-          <div class="w-3 h-3 rounded-full bg-pink-500"></div>
-          <span class="text-sm text-gray-900 dark:text-gray-100">
-            <span class="font-semibold">{stateCounts.plan_pending}</span> Plan pending
-          </span>
-        </div>
-      {/if}
-      {#if stateCounts.plan_failed > 0}
-        <div class="flex items-center gap-2">
-          <div class="w-3 h-3 rounded-full bg-orange-500"></div>
-          <span class="text-sm text-gray-900 dark:text-gray-100">
-            <span class="font-semibold">{stateCounts.plan_failed}</span> Plan failed
-          </span>
-        </div>
-      {/if}
-      {#if stateCounts.no_changes > 0}
-        <div class="flex items-center gap-2">
-          <div class="w-3 h-3 rounded-full bg-gray-400"></div>
-          <span class="text-sm text-gray-900 dark:text-gray-100">
-            <span class="font-semibold">{stateCounts.no_changes}</span> No changes
-          </span>
-        </div>
-      {/if}
+    <div class="flex flex-col gap-2">
+      <div class="flex items-center gap-2">
+        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+        <span class="text-sm text-gray-900 dark:text-gray-100">
+          <span class="font-semibold">{stateCounts.apply_success}</span> Apply success
+        </span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+        <span class="text-sm text-gray-900 dark:text-gray-100">
+          <span class="font-semibold">{stateCounts.apply_failed}</span> Apply failed
+        </span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+        <span class="text-sm text-gray-900 dark:text-gray-100">
+          <span class="font-semibold">{stateCounts.apply_ready}</span> Apply ready
+        </span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-3 h-3 rounded-full bg-purple-500"></div>
+        <span class="text-sm text-gray-900 dark:text-gray-100">
+          <span class="font-semibold">{stateCounts.apply_pending}</span> Apply pending
+        </span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-3 h-3 rounded-full bg-pink-500"></div>
+        <span class="text-sm text-gray-900 dark:text-gray-100">
+          <span class="font-semibold">{stateCounts.plan_pending}</span> Plan pending
+        </span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-3 h-3 rounded-full bg-orange-500"></div>
+        <span class="text-sm text-gray-900 dark:text-gray-100">
+          <span class="font-semibold">{stateCounts.plan_failed}</span> Plan failed
+        </span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-3 h-3 rounded-full bg-gray-400"></div>
+        <span class="text-sm text-gray-900 dark:text-gray-100">
+          <span class="font-semibold">{stateCounts.no_changes}</span> No changes
+        </span>
+      </div>
     </div>
   </div>
 

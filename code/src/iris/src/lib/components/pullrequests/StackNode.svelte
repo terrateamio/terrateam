@@ -68,9 +68,45 @@
     }
   }
 
+  // Get color for state indicator dots
+  function getStateDotColor(state: string): string {
+    switch (state) {
+      case 'apply_success':
+        return 'bg-green-500';
+      case 'apply_failed':
+        return 'bg-red-500';
+      case 'apply_pending':
+        return 'bg-purple-500';
+      case 'apply_ready':
+        return 'bg-blue-500';
+      case 'plan_pending':
+        return 'bg-pink-500';
+      case 'plan_failed':
+        return 'bg-orange-500';
+      case 'no_changes':
+        return 'bg-gray-400';
+      default:
+        return 'bg-gray-400';
+    }
+  }
+
+  // Count workspaces by state for inner stacks
+  function getWorkspaceStateCounts(stack: StackOuter | StackInner): Record<string, number> {
+    if (!isStackInner(stack)) {
+      return {};
+    }
+
+    const counts: Record<string, number> = {};
+    stack.dirspaces.forEach(({ state }) => {
+      counts[state] = (counts[state] || 0) + 1;
+    });
+    return counts;
+  }
+
   $: bgClass = getBackgroundClass(level);
   $: borderWidthClass = getBorderClass(level);
   $: borderColorClass = getBorderColorClass(stack.state);
+  $: workspaceStateCounts = getWorkspaceStateCounts(stack);
 
   function toggleExpanded() {
     expanded = !expanded;
@@ -105,50 +141,47 @@
             d="M9 5l7 7-7 7"
           />
         </svg>
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 {level > 0 ? 'ml-4' : ''}">
-          {stack.name}
+        <div class="flex flex-col gap-1">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 {level > 0 ? 'ml-4' : ''}">
+            {stack.name}
+          </h3>
           {#if isStackInner(stack) && stack.dirspaces.length > 0}
-            <span class="ml-2 text-xs font-normal text-gray-500 dark:text-gray-400">
-              ({stack.dirspaces.length} workspace{stack.dirspaces.length !== 1 ? 's' : ''})
-            </span>
+            <div class="flex items-center gap-2 {level > 0 ? 'ml-4' : ''}">
+              {#each Object.entries(workspaceStateCounts) as [state, count]}
+                <div class="flex items-center gap-1" title="{count} workspace{count !== 1 ? 's' : ''} {state.replace(/_/g, ' ')}">
+                  <div class="w-2 h-2 rounded-full {getStateDotColor(state)}"></div>
+                  <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{count}</span>
+                </div>
+              {/each}
+            </div>
           {/if}
-        </h3>
+        </div>
       </div>
       <StackStateIndicator state={stack.state} size="md" />
     </button>
   {:else}
     <!-- Non-expandable stack (leaf node) - not clickable -->
     <div class="flex items-center justify-between mb-3">
-      <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 {level > 0 ? 'ml-4' : ''}">
-        {stack.name}
+      <div class="flex flex-col gap-1">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 {level > 0 ? 'ml-4' : ''}">
+          {stack.name}
+        </h3>
         {#if isStackInner(stack) && stack.dirspaces.length > 0}
-          <span class="ml-2 text-xs font-normal text-gray-500 dark:text-gray-400">
-            ({stack.dirspaces.length} workspace{stack.dirspaces.length !== 1 ? 's' : ''})
-          </span>
+          <div class="flex items-center gap-2 {level > 0 ? 'ml-4' : ''}">
+            {#each Object.entries(workspaceStateCounts) as [state, count]}
+              <div class="flex items-center gap-1" title="{count} workspace{count !== 1 ? 's' : ''} {state.replace(/_/g, ' ')}">
+                <div class="w-2 h-2 rounded-full {getStateDotColor(state)}"></div>
+                <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{count}</span>
+              </div>
+            {/each}
+          </div>
         {/if}
-      </h3>
+      </div>
       <StackStateIndicator state={stack.state} size="md" />
     </div>
   {/if}
 
   {#if expanded}
-    <!-- Show directory information for all leaf stacks -->
-    {#if isStackInner(stack) && stack.dirspaces.length > 0}
-      <div class="mb-3 text-sm text-gray-700 dark:text-gray-300 {level > 0 ? 'ml-4' : ''}">
-        {#each stack.dirspaces as { dirspace }}
-          <p>
-            <span class="font-medium">Directory:</span>
-            {dirspace.dir}
-            {#if dirspace.workspace !== 'default'}
-              <span class="ml-1">
-                (<span class="font-medium">workspace:</span> {dirspace.workspace})
-              </span>
-            {/if}
-          </p>
-        {/each}
-      </div>
-    {/if}
-
     <!-- Render nested stacks (for StackOuter) -->
     {#if isStackOuter(stack) && stack.stacks.length > 0}
       <div class="mt-4 space-y-4">
@@ -161,19 +194,22 @@
     <!-- Render dirspaces (for StackInner leaf nodes) -->
     {#if isStackInner(stack) && stack.dirspaces.length > 0 && showWorkspaces}
       <div class="mt-3 space-y-2 {level > 0 ? 'ml-4' : ''}">
-        <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Workspaces: ({stack.dirspaces.length})
-        </div>
         {#each stack.dirspaces as { dirspace, state }}
           <div
-            class="flex items-center justify-between p-3 rounded-md bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+            class="flex items-center gap-3 p-2 rounded-md bg-gray-50 dark:bg-gray-800 text-sm"
           >
-            <div class="flex-1">
-              <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                {dirspace.dir} / {dirspace.workspace}
-              </div>
+            <div class="flex-1 font-mono text-xs text-gray-700 dark:text-gray-300">
+              {dirspace.dir}
             </div>
-            <StackStateIndicator state={state} size="sm" />
+            <div class="text-xs font-medium text-gray-600 dark:text-gray-400">
+              {dirspace.workspace}
+            </div>
+            <div class="flex items-center gap-1.5 px-2 py-1 rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600">
+              <div class="w-2 h-2 rounded-full {getStateDotColor(state)}"></div>
+              <span class="text-xs font-medium text-gray-700 dark:text-gray-300">
+                {state.replace(/_/g, ' ')}
+              </span>
+            </div>
           </div>
         {/each}
       </div>
