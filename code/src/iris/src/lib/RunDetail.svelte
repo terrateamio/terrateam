@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import type { WorkManifest } from './types';
   import type { TerraformJsonPlan } from './types/terraform';
   // Auth handled by PageLayout
@@ -9,15 +10,36 @@
   import LoadingSpinner from './components/ui/LoadingSpinner.svelte';
   import ErrorMessage from './components/ui/ErrorMessage.svelte';
   import Card from './components/ui/Card.svelte';
-  import SafeOutput from './components/ui/SafeOutput.svelte';
+  import TerraformPlanOutput from './components/ui/TerraformPlanOutput.svelte';
   import { getWebBaseUrl } from './server-config';
-  
+
   export let params: { id: string; installationId?: string } = { id: '' };
-  
+
   let run: WorkManifest | null = null;
   let isLoading: boolean = false;
   let error: string | null = null;
-  
+
+  // Plan highlighting preference
+  let enablePlanHighlighting = false;
+
+  // Load preference from localStorage on mount
+  onMount(() => {
+    const saved = localStorage.getItem('enablePlanHighlighting');
+    enablePlanHighlighting = saved === 'true';
+  });
+
+  // Save preference when toggled
+  function toggleHighlighting() {
+    localStorage.setItem('enablePlanHighlighting', String(enablePlanHighlighting));
+  }
+
+  // Force re-render of outputs when preference changes
+  $: if (enablePlanHighlighting !== undefined) {
+    // Force Svelte to re-evaluate by reassigning the arrays
+    outputs = [...outputs];
+    allOutputs = [...allOutputs];
+  }
+
   // Set initial loading state if we have a run ID
   $: if (params.id && !run && !error) {
     isLoading = true;
@@ -357,7 +379,7 @@
   function getDisplayState(output: OutputItem): { state: string, color: string } {
     const originalState = output?.state || 'unknown';
     const ignoreErrors = output?.payload?.ignore_errors;
-    
+
     // If the step failed but errors are ignored, show as "ignored" instead of "failure"
     if ((originalState === 'failure' || originalState === 'error') && ignoreErrors === true) {
       return {
@@ -365,12 +387,36 @@
         color: 'text-yellow-600 bg-yellow-100'
       };
     }
-    
+
     // Otherwise use the original state
     return {
       state: originalState,
       color: getStateColor(originalState)
     };
+  }
+
+  // Determine if a step output should be highlighted as a Terraform plan
+  function shouldHighlightAsPlan(output: OutputItem): boolean {
+    // Check user preference first
+    if (!enablePlanHighlighting) {
+      return false;
+    }
+
+    const step = output?.step || '';
+    const state = output?.state || '';
+
+    // Only highlight plan steps (not apply, init, etc.)
+    // Include common plan step names
+    const isPlanStep = step === 'tf/plan' ||
+                      step === 'pulumi/plan' ||
+                      step === 'custom/plan' ||
+                      step.includes('/plan');
+
+    // Only highlight successful or completed plans (exit codes 0 or 2)
+    // Exit code 2 typically means "plan succeeded with changes"
+    const isSuccessful = state === 'success' || state === 'completed';
+
+    return isPlanStep && isSuccessful && !!output?.payload?.text;
   }
 
   // Terraform summary extraction removed for memory safety
@@ -898,7 +944,7 @@
     <Card padding="lg" class="mb-6">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <h3 class="text-lg font-semibold text-blue-600 dark:text-blue-400">Execution Outputs</h3>
-        
+
         <!-- Output Filter Tabs -->
         <div class="flex flex-wrap gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
           <button 
@@ -929,6 +975,21 @@
             ❌ Failed
           </button>
         </div>
+      </div>
+
+      <!-- Plan Highlighting Toggle -->
+      <div class="mb-4 flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          id="enable-highlighting"
+          bind:checked={enablePlanHighlighting}
+          on:change={toggleHighlighting}
+          class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+        />
+        <label for="enable-highlighting" class="cursor-pointer select-none text-gray-700 dark:text-gray-300">
+          Enable plan syntax highlighting
+          <span class="text-xs text-gray-500 dark:text-gray-400 ml-1">(Beta)</span>
+        </label>
       </div>
 
       {#if isLoadingOutputs}
@@ -1203,7 +1264,7 @@
                                       <span class="text-green-600 dark:text-green-400 font-medium">(loaded on demand)</span>
                                     {/if}
                                   </div>
-                                  <SafeOutput 
+                                  <TerraformPlanOutput
                                     content={typedOutput.payload.text}
                                     title={`${getStepLabel(typedOutput?.step || 'Unknown Step')} - ${typedOutput?.scope?.dir || 'unknown'}:${typedOutput?.scope?.workspace || 'unknown'}`}
                                     githubUrl={run?.owner && run?.repo && run?.run_id ? getGitHubActionsUrl(run.owner, run.repo, run.run_id) : ''}
@@ -1212,6 +1273,7 @@
                                     prNumber={typeof run?.kind === 'object' && run.kind?.pull_number ? run.kind.pull_number : ''}
                                     runType={run?.run_type || ''}
                                     stepName={typedOutput?.step || ''}
+                                    isPlan={shouldHighlightAsPlan(typedOutput)}
                                     on:expand={(e) => openOutputModal(e.detail.content, e.detail.title)}
                                   />
                                 </div>
@@ -1346,7 +1408,7 @@
                                       <span class="text-green-600 dark:text-green-400 font-medium">(loaded on demand)</span>
                                     {/if}
                                   </div>
-                                  <SafeOutput 
+                                  <TerraformPlanOutput
                                     content={typedOutput.payload.text}
                                     title={`${getStepLabel(typedOutput?.step || 'Unknown Step')} - ${typedOutput?.scope?.dir || 'unknown'}:${typedOutput?.scope?.workspace || 'unknown'}`}
                                     githubUrl={run?.owner && run?.repo && run?.run_id ? getGitHubActionsUrl(run.owner, run.repo, run.run_id) : ''}
@@ -1355,6 +1417,7 @@
                                     prNumber={typeof run?.kind === 'object' && run.kind?.pull_number ? run.kind.pull_number : ''}
                                     runType={run?.run_type || ''}
                                     stepName={typedOutput?.step || ''}
+                                    isPlan={shouldHighlightAsPlan(typedOutput)}
                                     on:expand={(e) => openOutputModal(e.detail.content, e.detail.title)}
                                   />
                                 </div>
@@ -1467,7 +1530,7 @@
                                       <span class="ml-2 text-green-600 font-medium">(loaded on demand)</span>
                                     {/if}
                                   </div>
-                                  <SafeOutput 
+                                  <TerraformPlanOutput
                                     content={typedOutput.payload.text}
                                     title={`Failed: ${getStepLabel(typedOutput?.step || 'Unknown Step')} - ${typedOutput?.scope?.dir || 'unknown'}:${typedOutput?.scope?.workspace || 'unknown'}`}
                                     githubUrl={run?.owner && run?.repo && run?.run_id ? getGitHubActionsUrl(run.owner, run.repo, run.run_id) : ''}
@@ -1476,6 +1539,7 @@
                                     prNumber={typeof run?.kind === 'object' && run.kind?.pull_number ? run.kind.pull_number : ''}
                                     runType={run?.run_type || ''}
                                     stepName={typedOutput?.step || ''}
+                                    isPlan={shouldHighlightAsPlan(typedOutput)}
                                     on:expand={(e) => openOutputModal(e.detail.content, e.detail.title)}
                                   />
                                 </div>

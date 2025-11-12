@@ -470,6 +470,52 @@ body {
   color: #ffa657 !important;
 }
 
+/* Terraform Plan syntax highlighting */
+.plan-hljs {
+  background: transparent !important;
+}
+
+/* Light mode - diff colors for Terraform plans */
+.plan-hljs .hljs-addition {
+  color: #22863a !important; /* Green for additions (+) */
+  background-color: #f0fff4 !important;
+}
+
+.plan-hljs .hljs-deletion {
+  color: #b31d28 !important; /* Red for deletions (-) */
+  background-color: #ffeef0 !important;
+}
+
+.plan-hljs .hljs-change {
+  color: #e36209 !important; /* Orange for changes (!) */
+  background-color: #fff8f2 !important;
+}
+
+/* Default text color for non-highlighted lines in light mode */
+.plan-hljs {
+  color: #24292e !important;
+}
+
+/* Dark mode - diff colors for Terraform plans */
+.dark .plan-hljs {
+  color: #e6edf3 !important; /* Light gray for better visibility */
+}
+
+.dark .plan-hljs .hljs-addition {
+  color: #3fb950 !important;
+  background-color: rgba(46, 160, 67, 0.15) !important;
+}
+
+.dark .plan-hljs .hljs-deletion {
+  color: #f85149 !important;
+  background-color: rgba(248, 81, 73, 0.15) !important;
+}
+
+.dark .plan-hljs .hljs-change {
+  color: #ffa657 !important;
+  background-color: rgba(187, 128, 9, 0.15) !important;
+}
+
 .modal-open {
   overflow: hidden;
 }
