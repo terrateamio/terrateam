@@ -1370,7 +1370,7 @@ module Make (S : S with type Account_id.t = int) = struct
     end
 
     (* PUT /api/v1/github/installations/{installation_id}/email *)
-    let put storage installation_id email_data =
+    let put api_config storage installation_id email_data =
       let open Abbs_future_combinators.Infix_result_monad in
       Brtl_ep.run_result_json ~f:(fun ctx ->
           Terrat_session.with_session ctx

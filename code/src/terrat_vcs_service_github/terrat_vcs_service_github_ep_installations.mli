@@ -79,6 +79,7 @@ module Make (S : S with type Account_id.t = int) : sig
 
   module Email : sig
     val put :
+      Terrat_vcs_service_github_provider.Api.Config.t ->
       Terrat_storage.t ->
       int ->
       Terrat_api_installations.Update_email.Request_body.t ->

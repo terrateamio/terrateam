@@ -310,6 +310,9 @@
           "created_at": {
             "type": "string"
           },
+          "email": {
+            "type": "string"
+          },
           "id": {
             "type": "string"
           },
@@ -3873,6 +3876,70 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/access-token"
+                }
+              }
+            }
+          },
+          "400": {},
+          "403": {}
+        }
+      }
+    },
+    "/api/v1/{vcs}/installations/{installation_id}/email": {
+      "put": {
+        "operationId": "installations/update-email",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vcs",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "installation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "email"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ],
+                  "type": "object"
                 }
               }
             }
