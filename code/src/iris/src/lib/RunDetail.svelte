@@ -10,7 +10,7 @@
   import LoadingSpinner from './components/ui/LoadingSpinner.svelte';
   import ErrorMessage from './components/ui/ErrorMessage.svelte';
   import Card from './components/ui/Card.svelte';
-  import TerraformPlanOutput from './components/ui/TerraformPlanOutput.svelte';
+  import SafeOutput from './components/ui/SafeOutput.svelte';
   import { getWebBaseUrl } from './server-config';
 
   export let params: { id: string; installationId?: string } = { id: '' };
@@ -1264,7 +1264,7 @@
                                       <span class="text-green-600 dark:text-green-400 font-medium">(loaded on demand)</span>
                                     {/if}
                                   </div>
-                                  <TerraformPlanOutput
+                                  <SafeOutput
                                     content={typedOutput.payload.text}
                                     title={`${getStepLabel(typedOutput?.step || 'Unknown Step')} - ${typedOutput?.scope?.dir || 'unknown'}:${typedOutput?.scope?.workspace || 'unknown'}`}
                                     githubUrl={run?.owner && run?.repo && run?.run_id ? getGitHubActionsUrl(run.owner, run.repo, run.run_id) : ''}
@@ -1408,7 +1408,7 @@
                                       <span class="text-green-600 dark:text-green-400 font-medium">(loaded on demand)</span>
                                     {/if}
                                   </div>
-                                  <TerraformPlanOutput
+                                  <SafeOutput
                                     content={typedOutput.payload.text}
                                     title={`${getStepLabel(typedOutput?.step || 'Unknown Step')} - ${typedOutput?.scope?.dir || 'unknown'}:${typedOutput?.scope?.workspace || 'unknown'}`}
                                     githubUrl={run?.owner && run?.repo && run?.run_id ? getGitHubActionsUrl(run.owner, run.repo, run.run_id) : ''}
@@ -1530,7 +1530,7 @@
                                       <span class="ml-2 text-green-600 font-medium">(loaded on demand)</span>
                                     {/if}
                                   </div>
-                                  <TerraformPlanOutput
+                                  <SafeOutput
                                     content={typedOutput.payload.text}
                                     title={`Failed: ${getStepLabel(typedOutput?.step || 'Unknown Step')} - ${typedOutput?.scope?.dir || 'unknown'}:${typedOutput?.scope?.workspace || 'unknown'}`}
                                     githubUrl={run?.owner && run?.repo && run?.run_id ? getGitHubActionsUrl(run.owner, run.repo, run.run_id) : ''}

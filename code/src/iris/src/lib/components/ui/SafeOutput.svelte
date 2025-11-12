@@ -1,19 +1,30 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  
+  import hljs from 'highlight.js/lib/core';
+  import diffLang from 'highlight.js/lib/languages/diff';
+  import 'highlight.js/styles/github-dark.css';
+  import { transformPlanToDiff } from '../../utils/planDiffTransform';
+  import { sentryService } from '../../sentry';
+
   export let content: string = '';
   export let title: string = '';
   export const maxPreviewSize: number = 5000000; // 5MB
   export let githubUrl: string = '';
-  
+  export let isPlan: boolean = false; // Whether to apply plan highlighting
+
   // Optional props for enhanced filename generation
   export let orgName: string = '';
   export let repoName: string = '';
   export let prNumber: string | number = '';
   export let runType: string = ''; // 'plan', 'apply', etc.
   export let stepName: string = ''; // 'tf/plan', 'tf/apply', etc.
-  
+
   const dispatch = createEventDispatcher();
+
+  // Register diff language for highlight.js immediately
+  if (!hljs.getLanguage('diff')) {
+    hljs.registerLanguage('diff', diffLang);
+  }
   
   // Size thresholds (in characters) - Updated for modern browser capabilities
   const SMALL_SIZE = 1000000;   // 1MB - show inline, typical for most Terraform plans
@@ -37,17 +48,49 @@
   let showContent = false; // Will be set to true for small content below
   let showFullContent = false;
   let previewContent = '';
+  let highlightedContent = '';
+  let highlightedPreview = '';
   
-  // Generate preview (first 5000 lines or 1MB, whichever is smaller)
+  // Generate preview and apply syntax highlighting if needed
   $: {
     if (content) {
       const lines = content.split('\n');
+      let preview: string;
+
       if (lines.length > 5000) {
-        previewContent = lines.slice(0, 5000).join('\n') + '\n\n... (truncated, showing first 5000 lines)';
+        preview = lines.slice(0, 5000).join('\n') + '\n\n... (truncated, showing first 5000 lines)';
       } else if (contentSize > 1000000) {
-        previewContent = content.substring(0, 1000000) + '\n\n... (truncated)';
+        preview = content.substring(0, 1000000) + '\n\n... (truncated)';
       } else {
-        previewContent = content;
+        preview = content;
+      }
+
+      previewContent = preview;
+
+      // Apply syntax highlighting if this is a plan output
+      if (isPlan) {
+        try {
+          const transformedContent = transformPlanToDiff(content);
+          highlightedContent = hljs.highlight(transformedContent, { language: 'diff' }).value;
+
+          const transformedPreview = transformPlanToDiff(preview);
+          highlightedPreview = hljs.highlight(transformedPreview, { language: 'diff' }).value;
+        } catch (error) {
+          console.error('Error highlighting plan output:', error);
+
+          // Capture to Sentry with context
+          sentryService.captureError(error as Error, {
+            feature: 'plan-highlighting',
+            component: 'SafeOutput',
+            contentSize: content.length,
+            stepName: stepName || 'unknown',
+            isPlan: isPlan
+          });
+
+          // Fallback to plain text if highlighting fails
+          highlightedContent = '';
+          highlightedPreview = '';
+        }
       }
     }
   }
@@ -251,9 +294,17 @@
       </div>
     </div>
     
-    <pre class="text-xs bg-gray-900 dark:bg-gray-950 text-gray-100 dark:text-gray-200 p-3 rounded overflow-x-auto whitespace-pre-wrap font-mono {showFullContent ? '' : 'max-h-96'}">
-      {showFullContent ? content : previewContent}
-    </pre>
+    {#if isPlan && highlightedContent}
+      <!-- Syntax-highlighted plan output -->
+      <pre class="plan-hljs text-xs bg-gray-900 dark:bg-gray-950 p-3 rounded overflow-x-auto whitespace-pre-wrap font-mono {showFullContent ? '' : 'max-h-96'}">
+        <code>{@html showFullContent ? highlightedContent : highlightedPreview}</code>
+      </pre>
+    {:else}
+      <!-- Plain text output (non-plan or highlighting failed) -->
+      <pre class="text-xs bg-gray-900 dark:bg-gray-950 text-gray-100 dark:text-gray-200 p-3 rounded overflow-x-auto whitespace-pre-wrap font-mono {showFullContent ? '' : 'max-h-96'}">
+        {showFullContent ? content : previewContent}
+      </pre>
+    {/if}
     
     {#if !showFullContent && (isMedium || isLarge)}
       <div class="text-center">
