@@ -1357,4 +1357,64 @@ module Make (S : S with type Account_id.t = int) = struct
                         ctx)))
     end
   end
+
+  module Email = struct
+    module Sql = struct
+      let read fname =
+        CCOption.get_exn_or
+          fname
+          (CCOption.map Pgsql_io.clean_string (Terrat_files_github_sql.read fname))
+
+      let update_installation_email =
+        Pgsql_io.Typed_sql.(sql /^ read "update_installation_email.sql" /% Var.bigint "id" /% Var.text "email")
+    end
+
+    (* PUT /api/v1/github/installations/{installation_id}/email *)
+    let put storage installation_id email_data =
+      let open Abbs_future_combinators.Infix_result_monad in
+      Brtl_ep.run_result_json ~f:(fun ctx ->
+          Terrat_session.with_session ctx
+          >>= fun user ->
+          enforce_installation_access storage user installation_id ctx
+          >>= fun () ->
+          let module E = Terrat_api_installations.Update_email.Request_body in
+          let { E.email } = email_data in
+          let open Abb.Future.Infix_monad in
+          Pgsql_pool.with_conn storage ~f:(fun db ->
+              Pgsql_io.Prepared_stmt.execute
+                db
+                Sql.update_installation_email
+                (CCInt64.of_int installation_id)
+                email)
+          >>= function
+          | Ok () ->
+              Abb.Future.return
+                (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx))
+          | Error (#Pgsql_pool.err as err) ->
+              Logs.err (fun m ->
+                  m
+                    "%s : installation_id=%d : UPDATE_EMAIL : %a"
+                    (Brtl_ctx.token ctx)
+                    installation_id
+                    Pgsql_pool.pp_err
+                    err);
+              Abb.Future.return
+                (Ok
+                   (Brtl_ctx.set_response
+                      (Brtl_rspnc.create ~status:`Internal_server_error "")
+                      ctx))
+          | Error (#Pgsql_io.err as err) ->
+              Logs.err (fun m ->
+                  m
+                    "%s : installation_id=%d : UPDATE_EMAIL : %a"
+                    (Brtl_ctx.token ctx)
+                    installation_id
+                    Pgsql_io.pp_err
+                    err);
+              Abb.Future.return
+                (Ok
+                   (Brtl_ctx.set_response
+                      (Brtl_rspnc.create ~status:`Internal_server_error "")
+                      ctx)))
+  end
 end

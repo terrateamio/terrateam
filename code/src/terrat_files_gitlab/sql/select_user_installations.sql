@@ -1,7 +1,8 @@
 select
   gi.id,
-  gi.login,
+  gi.name,
   gi.account_status,
+  gi.email,
   to_char(gi.created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
   to_char(gi.trial_ends_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as trial_ends_at,
   tiers.name,

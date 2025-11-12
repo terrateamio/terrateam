@@ -419,6 +419,12 @@ export class ValidatedApiClient {
     return { id: response.id as string };
   }
 
+  // Update installation email
+  async updateInstallationEmail(installationId: string, email: string, provider?: VCSProvider): Promise<void> {
+    const providerPath = this.getProviderPath(provider);
+    await this.put(`${providerPath}/installations/${installationId}/email`, { email });
+  }
+
   // Dirspaces with pagination
   async getInstallationDirspaces(
     installationId: string,

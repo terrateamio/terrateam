@@ -9,7 +9,8 @@ export type ApiComponents = components;
 export type ApiSchemas = components['schemas'];
 
 // Core API Types using generated schemas as base
-export type Installation = ApiSchemas['installation'];
+// Override Installation type to use Zod schema with email field
+export type Installation = z.infer<typeof InstallationSchema>;
 export type Repository = ApiSchemas['installation-repo'];
 export type PullRequest = ApiSchemas['installation-pull-request'];
 export type Dirspace = ApiSchemas['installation-dirspace'];
@@ -36,6 +37,7 @@ export const InstallationSchema = z.object({
   account_status: z.string(),
   id: z.string(),
   name: z.string(),
+  email: z.string().email().optional(),
   created_at: z.string(),
   tier: z.object({
     name: z.string(),

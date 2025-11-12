@@ -84,6 +84,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/access-token/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["access-token/refresh"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/drifts": {
         parameters: {
             query?: never;
@@ -516,7 +532,55 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/{vcs}/access-token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["access-token/list"];
+        put?: never;
+        post: operations["access-token/create"];
+        delete: operations["access-token/delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/{vcs}/installations/{installation_id}/repos/{repo_id}/prs/{pull_request_id}/stacks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["installations/get-pull-requests-stack"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/{vcs}/kv/{installation_id}/cas/key/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["kv/cas"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/{vcs}/kv/{installation_id}/commit": {
         parameters: {
             query?: never;
             header?: never;
@@ -525,7 +589,71 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["installations/get-pull-requests-stack"];
+        post: operations["kv/commit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/{vcs}/kv/{installation_id}/count/key/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["kv/count"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/{vcs}/kv/{installation_id}/iter/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["kv/iter"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/{vcs}/kv/{installation_id}/key/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["kv/get"];
+        put: operations["kv/set"];
+        post?: never;
+        delete: operations["kv/delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/{vcs}/kv/{installation_id}/size/key/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["kv/size"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -536,6 +664,22 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        "access-token": {
+            refresh_token: string;
+        };
+        "access-token-capabilities": unknown[];
+        "access-token-create": {
+            capabilities: components["schemas"]["access-token-capabilities"];
+            name: string;
+        };
+        "access-token-item": {
+            capabilities: components["schemas"]["access-token-capabilities"];
+            id: string;
+            name: string;
+        };
+        "access-token-page": {
+            results: components["schemas"]["access-token-item"][];
+        };
         "bad-request-err": {
             data?: string;
             id: string;
@@ -681,6 +825,51 @@ export interface components {
             pull_number: number;
             pull_request_title?: string;
         };
+        "kv-cas": {
+            committed?: boolean;
+            data: unknown;
+            idx?: number;
+            version?: number;
+        };
+        "kv-commit": {
+            keys: {
+                idx?: number;
+                key: string;
+            }[];
+        };
+        "kv-commit-result": {
+            keys: {
+                idx: number;
+                key: string;
+            }[];
+        };
+        "kv-count": {
+            count: number;
+            max_idx: number;
+        };
+        "kv-delete": {
+            result: boolean;
+        };
+        "kv-record": {
+            committed: boolean;
+            created_at: string;
+            data: unknown;
+            idx: number;
+            key: string;
+            size: number;
+            version: number;
+        };
+        "kv-record-list": {
+            results: components["schemas"]["kv-record"][];
+        };
+        "kv-set": {
+            committed?: boolean;
+            data: unknown;
+            idx?: number;
+        };
+        "kv-size": {
+            size: number;
+        };
         "output-cost-estimation": {
             cost_estimation: {
                 currency: string;
@@ -773,10 +962,13 @@ export interface components {
         };
         "work-manifest": components["schemas"]["work-manifest-plan"] | components["schemas"]["work-manifest-apply"] | components["schemas"]["work-manifest-index"] | components["schemas"]["work-manifest-unsafe-apply"] | components["schemas"]["work-manifest-build-config"] | components["schemas"]["work-manifest-done"] | components["schemas"]["work-manifest-build-tree"];
         "work-manifest-apply": {
+            api_base_url: string;
             base_ref: string;
             capabilities: string[];
             changed_dirspaces: components["schemas"]["work-manifest-dir"][];
             config: Record<string, never>;
+            installation_id: string;
+            protocol_version?: number;
             result_version: number;
             run_kind: string;
             token: string;
@@ -871,12 +1063,15 @@ export interface components {
             sha: string;
         };
         "work-manifest-plan": {
+            api_base_url: string;
             base_dirspaces: components["schemas"]["work-manifest-dir"][];
             base_ref: string;
             capabilities: string[];
             changed_dirspaces: components["schemas"]["work-manifest-dir"][];
             config: Record<string, never>;
             dirspaces: components["schemas"]["work-manifest-dir"][];
+            installation_id: string;
+            protocol_version?: number;
             result_version: number;
             run_kind: string;
             run_kind_data?: components["schemas"]["run-kind-data-pull-request"];
@@ -1173,6 +1368,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["work-manifest-workspaces"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "access-token/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        token: string;
+                    };
                 };
             };
             403: {
@@ -2012,6 +2234,106 @@ export interface operations {
             };
         };
     };
+    "access-token/list": {
+        parameters: {
+            query?: {
+                limit?: number;
+                page?: string[];
+            };
+            header?: never;
+            path: {
+                vcs: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["access-token-page"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "access-token/create": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vcs: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["access-token-create"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["access-token"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "access-token/delete": {
+        parameters: {
+            query: {
+                id: string;
+            };
+            header?: never;
+            path: {
+                vcs: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     "installations/get-pull-requests-stack": {
         parameters: {
             query?: never;
@@ -2035,6 +2357,293 @@ export interface operations {
                 };
             };
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "kv/cas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vcs: string;
+                installation_id: string;
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["kv-cas"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["kv-record"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "kv/commit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vcs: string;
+                installation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["kv-commit"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["kv-commit-result"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "kv/count": {
+        parameters: {
+            query?: {
+                committed?: boolean;
+            };
+            header?: never;
+            path: {
+                vcs: string;
+                installation_id: string;
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["kv-count"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "kv/iter": {
+        parameters: {
+            query?: {
+                committed?: boolean;
+                idx?: number;
+                limit?: number;
+                include_data?: boolean;
+                inclusive?: boolean;
+                prefix?: boolean;
+                select?: string[];
+            };
+            header?: never;
+            path: {
+                vcs: string;
+                installation_id: string;
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["kv-record-list"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "kv/get": {
+        parameters: {
+            query?: {
+                committed?: boolean;
+                idx?: number;
+                select?: string[];
+            };
+            header?: never;
+            path: {
+                vcs: string;
+                installation_id: string;
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["kv-record"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "kv/set": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vcs: string;
+                installation_id: string;
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["kv-set"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["kv-record"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "kv/delete": {
+        parameters: {
+            query?: {
+                idx?: number;
+                version?: number;
+            };
+            header?: never;
+            path: {
+                vcs: string;
+                installation_id: string;
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["kv-delete"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "kv/size": {
+        parameters: {
+            query?: {
+                committed?: boolean;
+                idx?: number;
+            };
+            header?: never;
+            path: {
+                vcs: string;
+                installation_id: string;
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["kv-size"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

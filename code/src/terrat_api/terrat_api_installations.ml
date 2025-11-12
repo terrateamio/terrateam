@@ -499,3 +499,42 @@ module Get_pull_requests_stack = struct
       ~responses:Responses.t
       `Get
 end
+
+module Update_email = struct
+  module Parameters = struct
+    type t = { installation_id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = { email : string } [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Forbidden = struct end
+
+    type t =
+      [ `OK
+      | `Forbidden
+      ]
+    [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK); ("403", fun _ -> Ok `Forbidden) ]
+  end
+
+  let url = "/api/v1/github/installations/{installation_id}/email"
+
+  let make ~body =
+   fun params ->
+    Openapi.Request.make
+      ~body:(Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("installation_id", Var (params.installation_id, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Put
+end

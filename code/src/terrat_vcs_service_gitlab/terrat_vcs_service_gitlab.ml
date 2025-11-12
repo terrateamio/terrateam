@@ -145,6 +145,15 @@ struct
                ~json:Terrat_api_gitlab_installations.Create_access_token.Request_body.of_yojson
                ())
 
+      let gitlab_installation_email () =
+        Brtl_rtng.Route.(
+          gitlab_installations ()
+          /% Path.int
+          / "email"
+          /* Body.decode
+               ~json:Terrat_api_gitlab_installations.Update_email.Request_body.of_yojson
+               ())
+
       let gitlab_installation_work_manifests () =
         Brtl_rtng.Route.(
           gitlab_installations ()
@@ -192,6 +201,7 @@ struct
               Rt.gitlab_installation_work_manifest_outputs ()
               --> Ep_inst.List_work_manifest_outputs.get config storage );
             (`PUT, Rt.gitlab_installation_tokens () --> Ep_inst.Token.put config storage);
+            (`PUT, Rt.gitlab_installation_email () --> Ep_inst.Email.put config storage);
             (* Work manifests *)
             (`POST, Rt.gitlab_work_manifest_plan () --> Work_manifest.Plans.post config storage);
             (`GET, Rt.gitlab_get_work_manifest_plan () --> Work_manifest.Plans.get config storage);
