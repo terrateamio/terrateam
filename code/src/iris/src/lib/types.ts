@@ -31,6 +31,23 @@ export type GitLabWebhook = ApiSchemas['gitlab-webhook'];
 export type GitLabWhoAreYou = ApiSchemas['gitlab-whoareyou'];
 export type GitLabAccessToken = ApiSchemas['gitlab-access-token'];
 
+// API Access Token types
+export type AccessToken = ApiSchemas['access-token'];
+export type AccessTokenCreate = ApiSchemas['access-token-create'];
+export type AccessTokenItem = ApiSchemas['access-token-item'];
+export type AccessTokenPage = ApiSchemas['access-token-page'];
+
+// Capability can be either a string or a scoped object
+export type Capability =
+  | 'access_token_create'
+  | 'access_token_refresh'
+  | 'kv_store_read'
+  | 'kv_store_write'
+  | 'kv_store_system_read'
+  | 'kv_store_system_write'
+  | { name: 'installation_id'; id: string }
+  | { name: 'vcs'; vcs: string };
+
 // Zod validation schemas matching the API specification
 export const InstallationSchema = z.object({
   account_status: z.string(),
@@ -218,6 +235,45 @@ export const GitLabAccessTokenSchema = z.object({
   access_token: z.string(),
 });
 
+// API Access Token schemas
+export const CapabilitySchema = z.union([
+  z.enum([
+    'access_token_create',
+    'access_token_refresh',
+    'kv_store_read',
+    'kv_store_write',
+    'kv_store_system_read',
+    'kv_store_system_write',
+  ]),
+  z.object({
+    name: z.literal('installation_id'),
+    id: z.string(),
+  }),
+  z.object({
+    name: z.literal('vcs'),
+    vcs: z.string(),
+  }),
+]);
+
+export const AccessTokenItemSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  capabilities: z.array(CapabilitySchema),
+});
+
+export const AccessTokenPageSchema = z.object({
+  results: z.array(AccessTokenItemSchema),
+});
+
+export const AccessTokenCreateSchema = z.object({
+  name: z.string(),
+  capabilities: z.array(CapabilitySchema),
+});
+
+export const AccessTokenSchema = z.object({
+  refresh_token: z.string(),
+});
+
 // API Response wrapper schemas
 export const ApiResponseSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
   z.object({
@@ -322,6 +378,27 @@ export function validateGitLabWhoAreYou(data: unknown): GitLabWhoAreYou {
 
 export function validateGitLabAccessToken(data: unknown): GitLabAccessToken {
   return GitLabAccessTokenSchema.parse(data);
+}
+
+// Access Token validation functions
+export function validateAccessToken(data: unknown): AccessToken {
+  return AccessTokenSchema.parse(data);
+}
+
+export function validateAccessTokenItem(data: unknown): AccessTokenItem {
+  return AccessTokenItemSchema.parse(data);
+}
+
+export function validateAccessTokenPage(data: unknown): AccessTokenPage {
+  return AccessTokenPageSchema.parse(data);
+}
+
+export function validateAccessTokenCreate(data: unknown): AccessTokenCreate {
+  return AccessTokenCreateSchema.parse(data);
+}
+
+export function validateCapability(data: unknown): Capability {
+  return CapabilitySchema.parse(data);
 }
 
 // Legacy/Additional types for compatibility
