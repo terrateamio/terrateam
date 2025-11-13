@@ -397,7 +397,6 @@
 
   // Determine if a step output should be highlighted as a Terraform plan
   function shouldHighlightAsPlan(output: OutputItem): boolean {
-    // Check user preference first
     if (!enablePlanHighlighting) {
       return false;
     }
@@ -405,18 +404,11 @@
     const step = output?.step || '';
     const state = output?.state || '';
 
-    // Only highlight plan steps (not apply, init, etc.)
-    // Include common plan step names
-    const isPlanStep = step === 'tf/plan' ||
-                      step === 'pulumi/plan' ||
-                      step === 'custom/plan' ||
-                      step.includes('/plan');
-
-    // Only highlight successful or completed plans (exit codes 0 or 2)
-    // Exit code 2 typically means "plan succeeded with changes"
+    // Only highlight successful tf/plan steps
+    const isPlanStep = step === 'tf/plan';
     const isSuccessful = state === 'success' || state === 'completed';
 
-    return isPlanStep && isSuccessful && !!output?.payload?.text;
+    return isPlanStep && isSuccessful && !!output?.payload?.plan;
   }
 
   // Terraform summary extraction removed for memory safety

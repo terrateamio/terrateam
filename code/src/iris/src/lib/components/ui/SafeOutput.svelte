@@ -3,7 +3,6 @@
   import hljs from 'highlight.js/lib/core';
   import diffLang from 'highlight.js/lib/languages/diff';
   import 'highlight.js/styles/github-dark.css';
-  import { transformPlanToDiff } from '../../utils/planDiffTransform';
   import { sentryService } from '../../sentry';
 
   export let content: string = '';
@@ -69,15 +68,14 @@
       previewContent = preview;
 
       // Apply syntax highlighting if this is a plan output
-      if (isPlan) {
+      if (isPlan && planDiff) {
         try {
-          const sourceForHighlight = planDiff || content;
-          const transformedContent = transformPlanToDiff(sourceForHighlight);
-          highlightedContent = hljs.highlight(transformedContent, { language: 'diff' }).value;
+          highlightedContent = hljs.highlight(planDiff, { language: 'diff' }).value;
 
-          const previewForHighlight = planDiff ? (planDiff.split('\n').length > 5000 ? planDiff.split('\n').slice(0, 5000).join('\n') : planDiff) : preview;
-          const transformedPreview = transformPlanToDiff(previewForHighlight);
-          highlightedPreview = hljs.highlight(transformedPreview, { language: 'diff' }).value;
+          const previewForHighlight = planDiff.split('\n').length > 5000
+            ? planDiff.split('\n').slice(0, 5000).join('\n')
+            : planDiff;
+          highlightedPreview = hljs.highlight(previewForHighlight, { language: 'diff' }).value;
         } catch (error) {
           console.error('Error highlighting plan output:', error);
 
