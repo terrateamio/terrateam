@@ -1266,6 +1266,7 @@
                                   </div>
                                   <SafeOutput
                                     content={typedOutput.payload.text}
+                                    planDiff={typedOutput.payload.plan || ''}
                                     title={`${getStepLabel(typedOutput?.step || 'Unknown Step')} - ${typedOutput?.scope?.dir || 'unknown'}:${typedOutput?.scope?.workspace || 'unknown'}`}
                                     githubUrl={run?.owner && run?.repo && run?.run_id ? getGitHubActionsUrl(run.owner, run.repo, run.run_id) : ''}
                                     orgName={run?.owner || ''}
@@ -1410,6 +1411,7 @@
                                   </div>
                                   <SafeOutput
                                     content={typedOutput.payload.text}
+                                    planDiff={typedOutput.payload.plan || ''}
                                     title={`${getStepLabel(typedOutput?.step || 'Unknown Step')} - ${typedOutput?.scope?.dir || 'unknown'}:${typedOutput?.scope?.workspace || 'unknown'}`}
                                     githubUrl={run?.owner && run?.repo && run?.run_id ? getGitHubActionsUrl(run.owner, run.repo, run.run_id) : ''}
                                     orgName={run?.owner || ''}
@@ -1532,6 +1534,7 @@
                                   </div>
                                   <SafeOutput
                                     content={typedOutput.payload.text}
+                                    planDiff={typedOutput.payload.plan || ''}
                                     title={`Failed: ${getStepLabel(typedOutput?.step || 'Unknown Step')} - ${typedOutput?.scope?.dir || 'unknown'}:${typedOutput?.scope?.workspace || 'unknown'}`}
                                     githubUrl={run?.owner && run?.repo && run?.run_id ? getGitHubActionsUrl(run.owner, run.repo, run.run_id) : ''}
                                     orgName={run?.owner || ''}

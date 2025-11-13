@@ -11,6 +11,7 @@
   export const maxPreviewSize: number = 5000000; // 5MB
   export let githubUrl: string = '';
   export let isPlan: boolean = false; // Whether to apply plan highlighting
+  export let planDiff: string = ''; // Pre-formatted plan diff from payload.plan
 
   // Optional props for enhanced filename generation
   export let orgName: string = '';
@@ -70,10 +71,12 @@
       // Apply syntax highlighting if this is a plan output
       if (isPlan) {
         try {
-          const transformedContent = transformPlanToDiff(content);
+          const sourceForHighlight = planDiff || content;
+          const transformedContent = transformPlanToDiff(sourceForHighlight);
           highlightedContent = hljs.highlight(transformedContent, { language: 'diff' }).value;
 
-          const transformedPreview = transformPlanToDiff(preview);
+          const previewForHighlight = planDiff ? (planDiff.split('\n').length > 5000 ? planDiff.split('\n').slice(0, 5000).join('\n') : planDiff) : preview;
+          const transformedPreview = transformPlanToDiff(previewForHighlight);
           highlightedPreview = hljs.highlight(transformedPreview, { language: 'diff' }).value;
         } catch (error) {
           console.error('Error highlighting plan output:', error);
