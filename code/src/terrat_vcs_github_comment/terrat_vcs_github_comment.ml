@@ -7,6 +7,7 @@ module Ui = Terrat_vcs_github_comment_ui.Ui
 module Visible_on = Terrat_base_repo_config_v1.Workflow_step.Visible_on
 
 let src = Logs.Src.create "vcs_github_comment"
+
 module Logs = (val Logs.src_log src : Logs.LOG)
 
 module Sql = struct
@@ -65,7 +66,8 @@ module Sql = struct
       (* steps.step *)
       Ret.text
       /^ read "select_comment_elements.sql"
-      /% Var.bigint "comment_id")
+      /% Var.bigint "comment_id"
+      /% Var.uuid "work_manifest")
 
   let upsert_github_work_manifest_comment =
     Pgsql_io.Typed_sql.(
@@ -171,7 +173,7 @@ module S = struct
     let module Step = Terrat_api_components_workflow_step_output in
     let module Scope = Terrat_api_components_workflow_step_output_scope in
     let cid = Api.Comment.Id.to_string comment_id |> Int64.of_string in
-
+    let current_work_manifest = t.work_manifest.Terrat_work_manifest3.id in
     let module By_scope = Terrat_data.Group_by (struct
       type t = Uuidm.t * string * Step.t
       type key = Uuidm.t * string * Terrat_dirspace.t [@@deriving ord]
@@ -191,6 +193,7 @@ module S = struct
       ~f:(fun wmid _ _ run_type ignore_errors payload scope success step ->
         (wmid, run_type, { Step.ignore_errors; payload; scope; step; success }))
       cid
+      current_work_manifest
     >>= function
     | Ok elements ->
         let groups = By_scope.group elements in
@@ -261,11 +264,7 @@ module S = struct
     in
     let content_length = CCString.length body in
     Logs.info (fun m ->
-        m
-          "%s : RENDERED_LENGTH %i : COMPACTED %b"
-          t.request_id
-          content_length
-          compact);
+        m "%s : RENDERED_LENGTH %i : COMPACTED %b" t.request_id content_length compact);
     let request_id = t.request_id in
     Api.comment_on_pull_request ~request_id t.client t.pull_request body
     >>= function
@@ -285,11 +284,7 @@ module S = struct
         in
         let content_length = CCString.length body in
         Logs.info (fun m ->
-            m
-              "%s : RENDERED_LENGTH %i : COMPACTED %b"
-              t.request_id
-              content_length
-              compact);
+            m "%s : RENDERED_LENGTH %i : COMPACTED %b" t.request_id content_length compact);
         Api.comment_on_pull_request ~request_id t.client t.pull_request body
         >>= function
         | Ok comment_id -> Abb.Future.return (Ok comment_id)
@@ -309,11 +304,7 @@ module S = struct
             in
             let content_length = CCString.length body in
             Logs.info (fun m ->
-                m
-                  "%s : RENDERED_LENGTH %i : COMPACTED %b"
-                  t.request_id
-                  content_length
-                  compact);
+                m "%s : RENDERED_LENGTH %i : COMPACTED %b" t.request_id content_length compact);
             Api.comment_on_pull_request ~request_id t.client t.pull_request body)
 
   let rendered_length t els =
