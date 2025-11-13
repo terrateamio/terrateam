@@ -13073,7 +13073,7 @@
         "properties": {
           "inputs": {
             "additionalProperties": true,
-            "description": "Key value pairs matching the expected inputa",
+            "description": "Key value pairs matching the expected input",
             "nullable": true,
             "type": "object"
           },
