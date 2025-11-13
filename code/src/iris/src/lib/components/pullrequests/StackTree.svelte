@@ -163,27 +163,9 @@
     <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Stack Status Summary</h3>
     <div class="flex flex-col gap-2">
       <div class="flex items-center gap-2">
-        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+        <div class="w-3 h-3 rounded-full bg-gray-400"></div>
         <span class="text-sm text-gray-900 dark:text-gray-100">
-          <span class="font-semibold">{stateCounts.apply_success}</span> Apply success
-        </span>
-      </div>
-      <div class="flex items-center gap-2">
-        <div class="w-3 h-3 rounded-full bg-red-500"></div>
-        <span class="text-sm text-gray-900 dark:text-gray-100">
-          <span class="font-semibold">{stateCounts.apply_failed}</span> Apply failed
-        </span>
-      </div>
-      <div class="flex items-center gap-2">
-        <div class="w-3 h-3 rounded-full bg-blue-500"></div>
-        <span class="text-sm text-gray-900 dark:text-gray-100">
-          <span class="font-semibold">{stateCounts.apply_ready}</span> Apply ready
-        </span>
-      </div>
-      <div class="flex items-center gap-2">
-        <div class="w-3 h-3 rounded-full bg-purple-500"></div>
-        <span class="text-sm text-gray-900 dark:text-gray-100">
-          <span class="font-semibold">{stateCounts.apply_pending}</span> Apply pending
+          <span class="font-semibold">{stateCounts.no_changes}</span> No changes
         </span>
       </div>
       <div class="flex items-center gap-2">
@@ -199,9 +181,27 @@
         </span>
       </div>
       <div class="flex items-center gap-2">
-        <div class="w-3 h-3 rounded-full bg-gray-400"></div>
+        <div class="w-3 h-3 rounded-full bg-blue-500"></div>
         <span class="text-sm text-gray-900 dark:text-gray-100">
-          <span class="font-semibold">{stateCounts.no_changes}</span> No changes
+          <span class="font-semibold">{stateCounts.apply_ready}</span> Apply ready
+        </span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-3 h-3 rounded-full bg-purple-500"></div>
+        <span class="text-sm text-gray-900 dark:text-gray-100">
+          <span class="font-semibold">{stateCounts.apply_pending}</span> Apply pending
+        </span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+        <span class="text-sm text-gray-900 dark:text-gray-100">
+          <span class="font-semibold">{stateCounts.apply_success}</span> Apply success
+        </span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+        <span class="text-sm text-gray-900 dark:text-gray-100">
+          <span class="font-semibold">{stateCounts.apply_failed}</span> Apply failed
         </span>
       </div>
     </div>
