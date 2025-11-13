@@ -594,6 +594,10 @@ module Cursor = struct
         Io.wait_for_frames conn >>= fun frames -> consume_exec_end conn row_func st frames
     | [ Pgsql_codec.Frame.Backend.ReadyForQuery _ ] ->
         Abb.Future.return (Ok (row_func.Row_func.fin st))
+    | Pgsql_codec.Frame.Backend.ErrorResponse { msgs } :: _ as fs ->
+        let open Abb.Future.Infix_monad in
+        Io.error_response conn fs
+        >>= fun _ -> Abb.Future.return (Error (Io.handle_err_frame msgs fs))
     | _ -> assert false
 
   let execute t =
@@ -642,6 +646,10 @@ module Cursor = struct
         Io.wait_for_frames conn >>= fun frames -> consume_fetch_end conn row_func st frames
     | [ Pgsql_codec.Frame.Backend.ReadyForQuery _ ] ->
         Abb.Future.return (Ok (row_func.Row_func.fin st))
+    | Pgsql_codec.Frame.Backend.ErrorResponse { msgs } :: _ as fs ->
+        let open Abb.Future.Infix_monad in
+        Io.error_response conn fs
+        >>= fun _ -> Abb.Future.return (Error (Io.handle_err_frame msgs fs))
     | _ -> assert false
 
   let fetch ?(n = 0) t =
