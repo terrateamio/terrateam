@@ -141,6 +141,9 @@
         <div class="flex items-center gap-2">
           <h2 class="text-lg md:text-xl font-bold text-gray-900 dark:text-gray-100">API Access Tokens</h2>
           <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
+            ENTERPRISE
+          </span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
             BETA
           </span>
         </div>

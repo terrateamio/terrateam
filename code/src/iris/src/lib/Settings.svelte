@@ -8,9 +8,7 @@
   import Card from './components/ui/Card.svelte';
   import LoadingSpinner from './components/ui/LoadingSpinner.svelte';
   import { VCS_PROVIDERS } from './vcs/providers';
-  import { isOssMode } from './utils/environment';
   import AccessTokenSection from './components/settings/AccessTokenSection.svelte';
-  import ApiAccessUpsellCard from './components/settings/ApiAccessUpsellCard.svelte';
 
   // Tab management
   type SettingsTab = 'organization' | 'api-keys' | 'diagnostics';
@@ -41,10 +39,6 @@
   // Helper functions for proper capitalization and articles
   $: capitalizedOrganization = terminology.organization.charAt(0).toUpperCase() + terminology.organization.slice(1);
   $: articleForOrganization = terminology.organization.match(/^[aeiou]/i) ? 'an' : 'a';
-
-  // API Access feature gate - only based on OSS mode
-  // OSS mode = show upsell, EE/SaaS mode = show feature
-  $: hasApiAccess = !isOssMode();
 
   // Connection diagnostics state
   let serverConfig: ServerConfig | null = null;
@@ -273,11 +267,7 @@
 
         {:else if activeTab === 'api-keys'}
         <!-- API Keys Tab -->
-        {#if hasApiAccess}
-          <AccessTokenSection />
-        {:else}
-          <ApiAccessUpsellCard isOssMode={isOssMode()} />
-        {/if}
+        <AccessTokenSection />
 
         {:else if activeTab === 'diagnostics'}
         <!-- Connection Diagnostics Card -->
