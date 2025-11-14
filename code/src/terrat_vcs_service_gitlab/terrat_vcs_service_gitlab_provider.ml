@@ -4283,6 +4283,25 @@ module Work_manifest = struct
       let body =
         {
           Pipeline.ref_ = get_branch work_manifest;
+          inputs =
+            Some
+              Pipeline.Inputs.
+                {
+                  primary = Json_schema.Empty_obj.t;
+                  additional =
+                    Json_schema.String_map.of_list
+                      ([
+                         ("TERRATEAM_TRIGGER", `Bool true);
+                         ("WORK_TOKEN", `String (Ouuid.to_string work_manifest.Wm.id));
+                         ( "API_BASE_URL",
+                           `String (Terrat_config.api_base (Api.Config.config config) ^ "/gitlab")
+                         );
+                       ]
+                      @
+                      match work_manifest.Wm.runs_on with
+                      | Some runs_on -> [ ("RUNS_ON", `String (Yojson.Safe.to_string runs_on)) ]
+                      | None -> []);
+                };
           variables =
             Some
               Pipeline.Variables.Items.(

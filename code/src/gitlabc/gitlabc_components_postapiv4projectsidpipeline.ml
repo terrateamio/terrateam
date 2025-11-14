@@ -1,3 +1,7 @@
+module Inputs = struct
+  include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Json_schema.Obj)
+end
+
 module Variables = struct
   module Items = struct
     module Variable_type = struct
@@ -22,6 +26,7 @@ module Variables = struct
 end
 
 type t = {
+  inputs : Inputs.t option; [@default None]
   ref_ : string; [@key "ref"]
   variables : Variables.t option; [@default None]
 }
