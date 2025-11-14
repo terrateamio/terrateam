@@ -684,7 +684,14 @@ end
 module Routes = struct
   type config = Provider.Api.Config.t
 
-  let routes _config _storage = []
+  module Ep_access_token =
+    Terrat_vcs_access_token.Make
+      (Provider)
+      (struct
+        let vcs = "github"
+      end)
+
+  let routes config storage = Ep_access_token.routes config storage
 end
 
 include Terrat_vcs_service_github.Make (Provider) (Routes)

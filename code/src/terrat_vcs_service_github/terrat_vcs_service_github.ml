@@ -40,13 +40,6 @@ struct
         let enforce_installation_access = Provider.enforce_installation_access
       end)
 
-  module Ep_access_token =
-    Terrat_vcs_access_token.Make
-      (Provider)
-      (struct
-        let vcs = "github"
-      end)
-
   module Routes = struct
     module Rt = struct
       (* Apparently at some point Malcolm decided that it made sense to have two
@@ -249,7 +242,6 @@ struct
       Routes.routes config storage
       @ Provider.Stacks.routes config storage
       @ Kv_store.routes config storage
-      @ Ep_access_token.routes config storage
       @ Brtl_rtng.Route.
           [
             (* Work manifests *)
