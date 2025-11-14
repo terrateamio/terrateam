@@ -324,14 +324,14 @@
   function handleDateRangeChange() {
     // Check if we should show the upgrade nudge
     if (areUpgradeNudgesEnabled()) {
-      const tierName = $selectedInstallation?.tier?.name?.toLowerCase() || '';
+      const tierName = $selectedInstallation?.tier?.name?.toLowerCase();
 
-      if (tierName.startsWith('free')) {
+      if (tierName === 'free') {
         // Free tier: show nudge when trying to view beyond 30 days
         const isBeyond30Days = selectedDateRange === '90d' || selectedDateRange === 'all';
         showUpgradeNudge = isBeyond30Days;
         nudgeType = isBeyond30Days ? 'basic' : null;
-      } else if (tierName.startsWith('basic')) {
+      } else if (tierName === 'basic') {
         // Basic tier: show nudge when trying to view beyond 90 days (all time)
         const isBeyond90Days = selectedDateRange === 'all';
         showUpgradeNudge = isBeyond90Days;

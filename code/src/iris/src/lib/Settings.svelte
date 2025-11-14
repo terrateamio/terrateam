@@ -42,11 +42,9 @@
   $: capitalizedOrganization = terminology.organization.charAt(0).toUpperCase() + terminology.organization.slice(1);
   $: articleForOrganization = terminology.organization.match(/^[aeiou]/i) ? 'an' : 'a';
 
-  // Enterprise feature gate for API Access
-  $: isInOssMode = isOssMode();
-  $: tierName = $selectedInstallation?.tier?.name?.toLowerCase() || '';
-  // Allow access if tier is enterprise, regardless of OSS/SaaS mode (for self-hosted EE)
-  $: hasEnterpriseAccess = tierName.startsWith('enterprise');
+  // API Access feature gate - only based on OSS mode
+  // OSS mode = show upsell, EE/SaaS mode = show feature
+  $: hasApiAccess = !isOssMode();
 
   // Connection diagnostics state
   let serverConfig: ServerConfig | null = null;
@@ -275,10 +273,10 @@
 
         {:else if activeTab === 'api-keys'}
         <!-- API Keys Tab -->
-        {#if hasEnterpriseAccess}
+        {#if hasApiAccess}
           <AccessTokenSection />
         {:else}
-          <ApiAccessUpsellCard isOssMode={isInOssMode} />
+          <ApiAccessUpsellCard isOssMode={isOssMode()} />
         {/if}
 
         {:else if activeTab === 'diagnostics'}
