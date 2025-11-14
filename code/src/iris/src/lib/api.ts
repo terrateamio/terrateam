@@ -135,18 +135,7 @@ export class ValidatedApiClient {
     }
 
     try {
-      // Add timeout to prevent hanging forever (60 seconds for slow operations like DELETE)
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        controller.abort();
-      }, 60000);
-
-      try {
-        const response = await fetch(url, {
-          ...requestOptions,
-          signal: controller.signal
-        });
-        clearTimeout(timeoutId);
+      const response = await fetch(url, requestOptions);
 
       // Store headers for pagination
       this.lastResponseHeaders = response.headers;
@@ -203,18 +192,6 @@ export class ValidatedApiClient {
       }
 
       return responseText ? JSON.parse(responseText) : ({} as T);
-      } catch (fetchError) {
-        clearTimeout(timeoutId);
-
-        // Handle abort/timeout specifically
-        if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-          throw new ApiError(
-            `Request timeout after 60 seconds: ${method} ${endpoint}`,
-            0
-          );
-        }
-        throw fetchError;
-      }
     } catch (error) {
       if (error instanceof ApiError) {
         throw error;
