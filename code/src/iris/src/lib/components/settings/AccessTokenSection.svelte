@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { api, isApiError } from '../../api';
-  import type { AccessTokenItem } from '../../types';
+  import type { AccessTokenItem, Capability } from '../../types';
   import Card from '../ui/Card.svelte';
   import LoadingSpinner from '../ui/LoadingSpinner.svelte';
   import Button from '../ui/Button.svelte';
@@ -97,8 +97,7 @@
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function formatCapability(cap: any): string {
+  function formatCapability(cap: Capability): string {
     if (typeof cap === 'string') {
       // Convert snake_case to Title Case
       return cap
@@ -113,8 +112,7 @@
     return String(cap);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function getCapabilityClass(cap: any): string {
+  function getCapabilityClass(cap: Capability): string {
     if (typeof cap === 'string') {
       if (cap.includes('read')) {
         return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
@@ -140,7 +138,12 @@
         </svg>
       </div>
       <div>
-        <h2 class="text-lg md:text-xl font-bold text-gray-900 dark:text-gray-100">API Access Tokens</h2>
+        <div class="flex items-center gap-2">
+          <h2 class="text-lg md:text-xl font-bold text-gray-900 dark:text-gray-100">API Access Tokens</h2>
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
+            BETA
+          </span>
+        </div>
         <p class="text-xs md:text-sm text-gray-600 dark:text-gray-400">
           Create and manage API tokens for programmatic access
         </p>
@@ -205,7 +208,7 @@
               </td>
               <td class="px-6 py-4">
                 <div class="flex flex-wrap gap-2">
-                  {#each token.capabilities as capability}
+                  {#each token.capabilities.filter(cap => typeof cap === 'string') as capability}
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {getCapabilityClass(capability)}">
                       {formatCapability(capability)}
                     </span>
@@ -227,8 +230,37 @@
     </div>
   {/if}
 
+  <!-- API Usage Documentation -->
+  <div class="mt-6 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+    <div class="flex items-start">
+      <svg class="w-5 h-5 text-purple-400 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+      <div class="text-sm text-purple-700 dark:text-purple-300">
+        <p class="font-medium mb-1">API Usage</p>
+        <p class="mb-2">
+          Learn how to use your access tokens to interact with the Terrateam API.
+          <a
+            href="https://docs.terrateam.io/reference/api"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center font-medium text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 underline ml-1"
+          >
+            See the docs
+            <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </a>
+        </p>
+        <p class="text-xs bg-purple-100 dark:bg-purple-900/40 border border-purple-200 dark:border-purple-700 rounded px-2 py-1.5">
+          <strong>Beta Notice:</strong> The API is in beta. Some operations may not yet require explicit capabilities, but this may change in future updates. API endpoints and capability requirements are subject to change.
+        </p>
+      </div>
+    </div>
+  </div>
+
   <!-- Security Notice -->
-  <div class="mt-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+  <div class="mt-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
     <div class="flex items-start">
       <svg class="w-5 h-5 text-blue-400 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />

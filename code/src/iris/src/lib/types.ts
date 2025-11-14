@@ -31,11 +31,8 @@ export type GitLabWebhook = ApiSchemas['gitlab-webhook'];
 export type GitLabWhoAreYou = ApiSchemas['gitlab-whoareyou'];
 export type GitLabAccessToken = ApiSchemas['gitlab-access-token'];
 
-// API Access Token types
+// API Access Token types - defined after schemas below using z.infer for proper typing
 export type AccessToken = ApiSchemas['access-token'];
-export type AccessTokenCreate = ApiSchemas['access-token-create'];
-export type AccessTokenItem = ApiSchemas['access-token-item'];
-export type AccessTokenPage = ApiSchemas['access-token-page'];
 
 // Capability can be either a string or a scoped object
 export type Capability =
@@ -273,6 +270,11 @@ export const AccessTokenCreateSchema = z.object({
 export const AccessTokenSchema = z.object({
   refresh_token: z.string(),
 });
+
+// Infer types from Zod schemas for proper typing (especially for capabilities)
+export type AccessTokenItem = z.infer<typeof AccessTokenItemSchema>;
+export type AccessTokenPage = z.infer<typeof AccessTokenPageSchema>;
+export type AccessTokenCreate = z.infer<typeof AccessTokenCreateSchema>;
 
 // API Response wrapper schemas
 export const ApiResponseSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>

@@ -2,7 +2,6 @@
   import { createEventDispatcher } from 'svelte';
   import { api, isApiError } from '../../api';
   import type { AccessTokenCreate, Capability } from '../../types';
-  import { installations } from '../../stores';
   import Button from '../ui/Button.svelte';
 
   const dispatch = createEventDispatcher<{
@@ -14,28 +13,16 @@
   let isCreating = false;
   let error: string | null = null;
 
-  // Simple capability checkboxes
+  // Simple capability checkboxes - only the allowed capabilities
   let capabilities: {
     access_token_create: boolean;
-    access_token_refresh: boolean;
     kv_store_read: boolean;
     kv_store_write: boolean;
-    kv_store_system_read: boolean;
-    kv_store_system_write: boolean;
   } = {
     access_token_create: false,
-    access_token_refresh: false,
     kv_store_read: false,
     kv_store_write: false,
-    kv_store_system_read: false,
-    kv_store_system_write: false,
   };
-
-  // Scoping options
-  let scopeToInstallation = false;
-  let selectedInstallationId: string = '';
-  let scopeToVCS = false;
-  let selectedVCS: string = '';
 
   // Reactive computation for validation - must compute inline for proper reactivity
   $: hasCapability = Object.values(capabilities).some(v => v);
@@ -56,20 +43,11 @@
   function buildCapabilitiesArray(): Capability[] {
     const caps: Capability[] = [];
 
-    // Add simple string capabilities
+    // Add selected string capabilities
     for (const [key, value] of Object.entries(capabilities)) {
       if (value) {
         caps.push(key as Capability);
       }
-    }
-
-    // Add scoped capabilities
-    if (scopeToInstallation && selectedInstallationId) {
-      caps.push({ name: 'installation_id', id: selectedInstallationId });
-    }
-
-    if (scopeToVCS && selectedVCS) {
-      caps.push({ name: 'vcs', vcs: selectedVCS });
     }
 
     return caps;
@@ -189,169 +167,54 @@
           Select the permissions this token should have. Grant only the minimum capabilities needed.
         </p>
 
-        <!-- Token Management Capabilities -->
-        <div class="mb-4">
-          <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">
-            Token Management
-          </h4>
-          <div class="space-y-2">
-            <label class="flex items-start">
-              <input
-                type="checkbox"
-                bind:checked={capabilities.access_token_create}
-                disabled={isCreating}
-                class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mt-0.5"
-              />
-              <span class="ml-3 text-sm text-gray-900 dark:text-gray-100">
-                <span class="font-medium">Create access tokens</span>
-                <span class="block text-xs text-gray-500 dark:text-gray-400">
-                  Allow this token to create new access tokens
-                </span>
+        <div class="space-y-3">
+          <!-- Token Management -->
+          <label class="flex items-start">
+            <input
+              type="checkbox"
+              bind:checked={capabilities.access_token_create}
+              disabled={isCreating}
+              class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mt-0.5"
+            />
+            <span class="ml-3 text-sm text-gray-900 dark:text-gray-100">
+              <span class="font-medium">Create access tokens</span>
+              <span class="block text-xs text-gray-500 dark:text-gray-400">
+                Allow this token to create new access tokens
               </span>
-            </label>
-            <label class="flex items-start">
-              <input
-                type="checkbox"
-                bind:checked={capabilities.access_token_refresh}
-                disabled={isCreating}
-                class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mt-0.5"
-              />
-              <span class="ml-3 text-sm text-gray-900 dark:text-gray-100">
-                <span class="font-medium">Refresh access tokens</span>
-                <span class="block text-xs text-gray-500 dark:text-gray-400">
-                  Allow this token to refresh existing tokens
-                </span>
-              </span>
-            </label>
-          </div>
-        </div>
+            </span>
+          </label>
 
-        <!-- KV Store Capabilities -->
-        <div class="mb-4">
-          <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">
-            Key-Value Store Access
-          </h4>
-          <div class="space-y-2">
-            <label class="flex items-start">
-              <input
-                type="checkbox"
-                bind:checked={capabilities.kv_store_read}
-                disabled={isCreating}
-                class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mt-0.5"
-              />
-              <span class="ml-3 text-sm text-gray-900 dark:text-gray-100">
-                <span class="font-medium">Read from KV store</span>
-                <span class="block text-xs text-gray-500 dark:text-gray-400">
-                  Read data from the key-value store
-                </span>
+          <!-- KV Store Read -->
+          <label class="flex items-start">
+            <input
+              type="checkbox"
+              bind:checked={capabilities.kv_store_read}
+              disabled={isCreating}
+              class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mt-0.5"
+            />
+            <span class="ml-3 text-sm text-gray-900 dark:text-gray-100">
+              <span class="font-medium">Read from KV store</span>
+              <span class="block text-xs text-gray-500 dark:text-gray-400">
+                Read data from the key-value store
               </span>
-            </label>
-            <label class="flex items-start">
-              <input
-                type="checkbox"
-                bind:checked={capabilities.kv_store_write}
-                disabled={isCreating}
-                class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mt-0.5"
-              />
-              <span class="ml-3 text-sm text-gray-900 dark:text-gray-100">
-                <span class="font-medium">Write to KV store</span>
-                <span class="block text-xs text-gray-500 dark:text-gray-400">
-                  Write data to the key-value store
-                </span>
-              </span>
-            </label>
-            <label class="flex items-start">
-              <input
-                type="checkbox"
-                bind:checked={capabilities.kv_store_system_read}
-                disabled={isCreating}
-                class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mt-0.5"
-              />
-              <span class="ml-3 text-sm text-gray-900 dark:text-gray-100">
-                <span class="font-medium">System-level read</span>
-                <span class="block text-xs text-gray-500 dark:text-gray-400">
-                  Read system-level key-value data (advanced)
-                </span>
-              </span>
-            </label>
-            <label class="flex items-start">
-              <input
-                type="checkbox"
-                bind:checked={capabilities.kv_store_system_write}
-                disabled={isCreating}
-                class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mt-0.5"
-              />
-              <span class="ml-3 text-sm text-gray-900 dark:text-gray-100">
-                <span class="font-medium">System-level write</span>
-                <span class="block text-xs text-gray-500 dark:text-gray-400">
-                  Write system-level key-value data (advanced)
-                </span>
-              </span>
-            </label>
-          </div>
-        </div>
+            </span>
+          </label>
 
-        <!-- Scoping Options -->
-        <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-          <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-3">
-            Scope Restrictions (Optional)
-          </h4>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
-            Limit this token to specific installations or VCS providers.
-          </p>
-
-          <!-- Installation Scope -->
-          <div class="mb-3">
-            <label class="flex items-center mb-2">
-              <input
-                type="checkbox"
-                bind:checked={scopeToInstallation}
-                disabled={isCreating}
-                class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <span class="ml-3 text-sm font-medium text-gray-900 dark:text-gray-100">
-                Limit to specific installation
+          <!-- KV Store Write -->
+          <label class="flex items-start">
+            <input
+              type="checkbox"
+              bind:checked={capabilities.kv_store_write}
+              disabled={isCreating}
+              class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mt-0.5"
+            />
+            <span class="ml-3 text-sm text-gray-900 dark:text-gray-100">
+              <span class="font-medium">Write to KV store</span>
+              <span class="block text-xs text-gray-500 dark:text-gray-400">
+                Write data to the key-value store
               </span>
-            </label>
-            {#if scopeToInstallation}
-              <select
-                bind:value={selectedInstallationId}
-                disabled={isCreating}
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 text-sm"
-              >
-                <option value="">Select installation...</option>
-                {#each $installations as installation}
-                  <option value={installation.id}>{installation.name}</option>
-                {/each}
-              </select>
-            {/if}
-          </div>
-
-          <!-- VCS Scope -->
-          <div>
-            <label class="flex items-center mb-2">
-              <input
-                type="checkbox"
-                bind:checked={scopeToVCS}
-                disabled={isCreating}
-                class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <span class="ml-3 text-sm font-medium text-gray-900 dark:text-gray-100">
-                Limit to specific VCS provider
-              </span>
-            </label>
-            {#if scopeToVCS}
-              <select
-                bind:value={selectedVCS}
-                disabled={isCreating}
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 text-sm"
-              >
-                <option value="">Select VCS provider...</option>
-                <option value="github">GitHub</option>
-                <option value="gitlab">GitLab</option>
-              </select>
-            {/if}
-          </div>
+            </span>
+          </label>
         </div>
       </div>
 

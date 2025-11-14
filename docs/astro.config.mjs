@@ -203,6 +203,7 @@ export default defineConfig({
           label: "Reference",
           collapsed: true,
           items: [
+            { label: "API Reference", link: "/reference/api/" },
             {
               label: "Commands",
               collapsed: true,
