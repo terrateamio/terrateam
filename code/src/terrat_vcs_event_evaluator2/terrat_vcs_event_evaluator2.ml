@@ -8,9 +8,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   let src = Logs.Src.create ("vcs_event_evaluator2." ^ S.name)
 
   module Logs = (val Logs.src_log src : Logs.LOG)
-
-  type job = (S.Api.Pull_request.Id.t, S.Api.Ref.t, S.Api.User.t option) Terrat_job_context.Job.t
-
   module Keys = Terrat_vcs_event_evaluator2_targets.Make (S)
   module Hmap = Keys.Hmap
   module Builder = Terrat_vcs_event_evaluator2_builder.Make (S)
@@ -38,7 +35,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     | Error #err as err -> Abb.Future.return err
 
   let log_err ~request_id fut =
-    let open Abb.Future.Infix_monad in
     Abb.Future.await_bind
       (function
         | `Det (Ok ret) -> Abb.Future.return (Ok ret)
@@ -132,9 +128,10 @@ module Make (S : Terrat_vcs_provider2.S) = struct
          (fun () ->
            Abbs_future_combinators.retry
              ~f:(fun () ->
+               let open Irm in
                Pgsql_pool.with_conn storage ~f:(fun db ->
                    Pgsql_io.tx db ~f:(fun () ->
-                       let open Irm in
+                       (* Do any setup for context or repo in its own transaction so we don't block anything else *)
                        S.Job_context.create_or_get_for_pull_request
                          ~request_id
                          db
@@ -177,14 +174,13 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                                  Uuidm.pp
                                  context.Tjc.Context.id);
                            Builder.eval s Keys.update_context_for_pull_request
-                           >>= fun () ->
-                           Logs.info (fun m ->
-                               m "%s : target=%s" (Builder.log_id s) (Hmap.Key.info Keys.eval_job));
-                           wrap_build ~request_id @@ Builder.eval s Keys.eval_job
-                       | _ ->
-                           Logs.info (fun m ->
-                               m "%s : target=%s" (Builder.log_id s) (Hmap.Key.info Keys.eval_job));
-                           wrap_build ~request_id @@ Builder.eval s Keys.eval_job)))
+                           >>= fun () -> Abb.Future.return (Ok s)
+                       | _ -> Abb.Future.return (Ok s))
+                   >>= fun s ->
+                   Pgsql_io.tx db ~f:(fun () ->
+                       Logs.info (fun m ->
+                           m "%s : target=%s" (Builder.log_id s) (Hmap.Key.info Keys.eval_job));
+                       wrap_build ~request_id @@ Builder.eval s Keys.eval_job)))
              ~while_:
                (Abbs_future_combinators.finite_tries 100 (function
                  | Error `Loop -> true
