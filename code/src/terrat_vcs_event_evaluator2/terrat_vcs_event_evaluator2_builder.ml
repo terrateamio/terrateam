@@ -124,6 +124,11 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     let mark_dirty t k = t.B.State.dirty <- B.key_repr_of_key k :: t.B.State.dirty
     let orig_store t = t.B.State.orig_store
     let set_orig_store store t = { t with B.State.store; orig_store = store }
+
+    let forward_store_value k t m =
+      match Hmap.find k t.B.State.store with
+      | Some v -> Hmap.add k v m
+      | None -> m
   end
 
   external coerce_to_task : 'a B.k -> 'a Bs.Task.t B.k = "%identity"
@@ -142,10 +147,16 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     { Bs.Tasks.get = (fun s k -> Abb.Future.return (Ok (Hmap.find (coerce_to_task k) tasks_map))) }
 
   let eval s k =
-    Logs.info (fun m -> m "%s : BUILDER : EVAL : target=%s" (log_id s) (Hmap.Key.info k));
-    Bs.build
-      rebuilder
-      (make_tasks s.B.State.tasks)
-      k
-      (Bs.St.create { s with B.State.store = s.B.State.orig_store })
+    Abbs_time_it.run
+      (fun t ->
+        Logs.info (fun m ->
+            m "%s : BUILDER : EVAL : END : target=%s : time=%f" (log_id s) (Hmap.Key.info k) t))
+      (fun () ->
+        Logs.info (fun m ->
+            m "%s : BUILDER : EVAL : START : target=%s" (log_id s) (Hmap.Key.info k));
+        Bs.build
+          rebuilder
+          (make_tasks s.B.State.tasks)
+          k
+          (Bs.St.create { s with B.State.store = s.B.State.orig_store }))
 end

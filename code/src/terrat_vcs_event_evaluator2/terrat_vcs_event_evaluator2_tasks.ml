@@ -344,9 +344,7 @@ struct
                       layer
                       |> CCList.filter (Terrat_change_match3.match_tag_query ~tag_query)
                       |> CCList.filter
-                           (fun
-                             ({ Dc.stack_config = { S.rules = { Oc.apply_after; _ }; _ }; _ } as dc)
-                           ->
+                           (fun { Dc.stack_config = { S.rules = { Oc.apply_after; _ }; _ }; _ } ->
                              not
                                (CCList.exists
                                   (fun { Dc.stack_name; _ } ->
@@ -2138,8 +2136,7 @@ struct
                         tokens)
                   >>= function
                   | Ok _ as r -> Abb.Future.return r
-                  | Error (#Terrat_vcs_provider2.gate_add_approval_err as err) ->
-                      raise (Failure "nyi")
+                  | Error #Terrat_vcs_provider2.gate_add_approval_err -> raise (Failure "nyi")
                   | Error `Closed -> raise (Failure "nyi"))
               | _ -> assert false)
           | None -> assert false)
@@ -2854,12 +2851,34 @@ struct
           let go =
             match job.Tjc.Job.type_ with
             | Tjc.Job.Type_.Apply _ | Tjc.Job.Type_.Autoapply ->
-                fetch Keys.publish_apply >>= fun () -> Builder.eval s Keys.run_next_layer
+                fetch Keys.publish_apply
+                >>= fun () ->
+                (* This is a little performance tweak.  We know querying the
+                   repo config can take a bit but we know it can't have changed,
+                   so let's just forward it on. *)
+                let s' =
+                  s
+                  |> Builder.State.orig_store
+                  |> Builder.State.forward_store_value Keys.repo_config_with_provenance s
+                  |> Builder.State.forward_store_value Keys.repo_config_raw s
+                  |> CCFun.flip Builder.State.set_orig_store s
+                in
+                Builder.eval s' Keys.run_next_layer
             | Tjc.Job.Type_.Autoplan | Tjc.Job.Type_.Plan _ ->
                 fetch Keys.publish_plan
                 >>= fun () ->
-                Builder.eval s Keys.complete_no_change_dirspaces
-                >>= fun () -> Builder.eval s Keys.run_next_layer
+                (* This is a little performance tweak.  We know querying the
+                   repo config can take a bit but we know it can't have changed,
+                   so let's just forward it on. *)
+                let s' =
+                  s
+                  |> Builder.State.orig_store
+                  |> Builder.State.forward_store_value Keys.repo_config_with_provenance s
+                  |> Builder.State.forward_store_value Keys.repo_config_raw s
+                  |> CCFun.flip Builder.State.set_orig_store s
+                in
+                Builder.eval s' Keys.complete_no_change_dirspaces
+                >>= fun () -> Builder.eval s' Keys.run_next_layer
             | Tjc.Job.Type_.Repo_config -> fetch Keys.publish_repo_config
             | Tjc.Job.Type_.Unlock _ -> fetch Keys.publish_unlock
             | Tjc.Job.Type_.Gate_approval _ -> assert false
@@ -3032,6 +3051,8 @@ struct
                   |> Builder.State.orig_store
                   |> Hmap.add Keys.job job
                   |> Hmap.add Keys.work_manifest_event None
+                  |> Builder.State.forward_store_value Keys.repo_config_with_provenance s
+                  |> Builder.State.forward_store_value Keys.repo_config_raw s
                   |> CCFun.flip Builder.State.set_orig_store s
                   |> Builder.State.set_log_id (Uuidm.to_string job.Tjc.Job.id)
                 in
@@ -3057,6 +3078,8 @@ struct
                       |> Builder.State.orig_store
                       |> Hmap.add Keys.job job
                       |> Hmap.add Keys.work_manifest_event None
+                      |> Builder.State.forward_store_value Keys.repo_config_with_provenance s
+                      |> Builder.State.forward_store_value Keys.repo_config_raw s
                       |> CCFun.flip Builder.State.set_orig_store s
                       |> Builder.State.set_log_id (Uuidm.to_string job.Tjc.Job.id)
                     in
