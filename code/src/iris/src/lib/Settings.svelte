@@ -8,6 +8,26 @@
   import Card from './components/ui/Card.svelte';
   import LoadingSpinner from './components/ui/LoadingSpinner.svelte';
   import { VCS_PROVIDERS } from './vcs/providers';
+  import AccessTokenSection from './components/settings/AccessTokenSection.svelte';
+
+  // Tab management
+  type SettingsTab = 'organization' | 'api-keys' | 'diagnostics';
+  let activeTab: SettingsTab = 'organization';
+
+  // Parse URL hash for initial tab
+  const urlParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
+  const tabParam = urlParams.get('tab');
+  if (tabParam === 'api-keys' || tabParam === 'diagnostics' || tabParam === 'organization') {
+    activeTab = tabParam;
+  }
+
+  // Update URL when tab changes
+  function setActiveTab(tab: SettingsTab): void {
+    activeTab = tab;
+    const currentHash = window.location.hash.split('?')[0];
+    const newUrl = `${currentHash}?tab=${tab}`;
+    window.history.replaceState({}, '', newUrl);
+  }
 
   let selectedDefaultInstallation: string | null = $defaultInstallationId;
   let selectedTheme: ThemeMode = $theme;
@@ -15,11 +35,11 @@
   // Get current VCS provider terminology
   $: currentProvider = $currentVCSProvider || 'github';
   $: terminology = VCS_PROVIDERS[currentProvider]?.terminology || VCS_PROVIDERS.github.terminology;
-  
+
   // Helper functions for proper capitalization and articles
   $: capitalizedOrganization = terminology.organization.charAt(0).toUpperCase() + terminology.organization.slice(1);
   $: articleForOrganization = terminology.organization.match(/^[aeiou]/i) ? 'an' : 'a';
-  
+
   // Connection diagnostics state
   let serverConfig: ServerConfig | null = null;
   let isLoadingDiagnostics = false;
@@ -81,6 +101,57 @@
           </div>
         </div>
 
+        <!-- Tab Navigation -->
+        <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
+          <nav class="-mb-px flex space-x-8" aria-label="Settings tabs">
+            <button
+              on:click={() => setActiveTab('organization')}
+              class="whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors
+                {activeTab === 'organization'
+                  ? 'border-brand-primary text-brand-primary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                }"
+              aria-current={activeTab === 'organization' ? 'page' : undefined}
+            >
+              <svg class="w-5 h-5 inline-block mr-2 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Organization Settings
+            </button>
+            <button
+              on:click={() => setActiveTab('api-keys')}
+              class="whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors
+                {activeTab === 'api-keys'
+                  ? 'border-brand-primary text-brand-primary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                }"
+              aria-current={activeTab === 'api-keys' ? 'page' : undefined}
+            >
+              <svg class="w-5 h-5 inline-block mr-2 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+              </svg>
+              API Keys
+            </button>
+            <button
+              on:click={() => setActiveTab('diagnostics')}
+              class="whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors
+                {activeTab === 'diagnostics'
+                  ? 'border-brand-primary text-brand-primary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                }"
+              aria-current={activeTab === 'diagnostics' ? 'page' : undefined}
+            >
+              <svg class="w-5 h-5 inline-block mr-2 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              Connection Diagnostics
+            </button>
+          </nav>
+        </div>
+
+        <!-- Tab Content -->
+        {#if activeTab === 'organization'}
         <!-- {terminology.organization} Settings Card -->
         <div class="card-bg rounded-lg shadow border mb-6">
           <div class="px-4 py-6 md:px-6 md:py-8">
@@ -175,6 +246,30 @@
           </div>
         </div>
 
+        <!-- Settings Information -->
+        <div class="bg-brand-tertiary rounded-lg p-4 md:p-6 border border-brand-secondary">
+          <div class="flex items-start">
+            <div class="flex-shrink-0">
+              <svg class="w-5 h-5 md:w-6 md:h-6 brand-icon-color" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div class="ml-3 md:ml-4">
+              <h3 class="text-base md:text-lg font-semibold text-brand-primary mb-2">About Default {capitalizedOrganization}</h3>
+              <p class="text-sm md:text-base text-brand-secondary">
+                When you set a default {terminology.organization.toLowerCase()}, it will be automatically selected when you log in or refresh the application.
+                You can still switch between {terminology.organizations.toLowerCase()} at any time using the dropdown in the sidebar.
+                Your preference is saved locally in your browser.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {:else if activeTab === 'api-keys'}
+        <!-- API Keys Tab -->
+        <AccessTokenSection />
+
+        {:else if activeTab === 'diagnostics'}
         <!-- Connection Diagnostics Card -->
         <Card padding="md" class="mb-6">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -375,24 +470,8 @@
             </div>
           {/if}
         </Card>
-
-        <!-- Settings Information -->
-        <div class="bg-brand-tertiary rounded-lg p-4 md:p-6 border border-brand-secondary">
-          <div class="flex items-start">
-            <div class="flex-shrink-0">
-              <svg class="w-5 h-5 md:w-6 md:h-6 brand-icon-color" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div class="ml-3 md:ml-4">
-              <h3 class="text-base md:text-lg font-semibold text-brand-primary mb-2">About Default {capitalizedOrganization}</h3>
-              <p class="text-sm md:text-base text-brand-secondary">
-                When you set a default {terminology.organization.toLowerCase()}, it will be automatically selected when you log in or refresh the application. 
-                You can still switch between {terminology.organizations.toLowerCase()} at any time using the dropdown in the sidebar. 
-                Your preference is saved locally in your browser.
-              </p>
-            </div>
-          </div>
+        {/if}
+        <!-- End of tab content -->
       </div>
-    </div>
+    </main>
 </PageLayout>

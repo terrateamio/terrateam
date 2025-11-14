@@ -325,7 +325,7 @@
     // Check if we should show the upgrade nudge
     if (areUpgradeNudgesEnabled()) {
       const tierName = $selectedInstallation?.tier?.name?.toLowerCase();
-      
+
       if (tierName === 'free') {
         // Free tier: show nudge when trying to view beyond 30 days
         const isBeyond30Days = selectedDateRange === '90d' || selectedDateRange === 'all';

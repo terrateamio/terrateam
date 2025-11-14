@@ -16,6 +16,9 @@ import {
   type GitLabWebhook,
   type GitLabWhoAreYou,
   type GitLabAccessToken,
+  type AccessToken,
+  type AccessTokenCreate,
+  type AccessTokenPage,
   validateRepository,
   validateUser,
   validateDirspace,
@@ -31,6 +34,8 @@ import {
   validateGitLabWebhook,
   validateGitLabWhoAreYou,
   validateGitLabAccessToken,
+  validateAccessToken,
+  validateAccessTokenPage,
 } from './types';
 import { sentryService } from './sentry';
 import { get } from 'svelte/store';
@@ -119,18 +124,17 @@ export class ValidatedApiClient {
     const requestOptions: RequestInit = {
       method,
       headers: {
-        'Content-Type': 'application/json',
+        ...(body && body.length > 0 ? { 'Content-Type': 'application/json' } : {}),
         ...headers,
       },
       credentials: 'include',
     };
 
-    if (body) {
+    if (body !== undefined) {
       requestOptions.body = body;
     }
 
     try {
-
       const response = await fetch(url, requestOptions);
 
       // Store headers for pagination
@@ -281,7 +285,8 @@ export class ValidatedApiClient {
   }
 
   async delete<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: 'DELETE' });
+    // Send empty body so browser sets Content-Length: 0 automatically
+    return this.request<T>(endpoint, { method: 'DELETE', body: '' });
   }
 
   // Validated API methods with runtime type checking
@@ -755,6 +760,78 @@ export class ValidatedApiClient {
     return validated;
   }
 
+  // Access Token Management
+
+  /**
+   * List all access tokens for the current user
+   * @param provider - VCS provider (defaults to current provider)
+   * @param params - Optional pagination parameters
+   * @returns AccessTokenPage with list of tokens
+   */
+  async getAccessTokens(
+    provider?: VCSProvider,
+    params?: { after?: string; limit?: number }
+  ): Promise<AccessTokenPage> {
+    const providerPath = this.getProviderPath(provider);
+    const endpoint = `${providerPath}/access-token`;
+
+    // Convert number to string and filter undefined values for API call
+    const stringParams: Record<string, string> | undefined = params ?
+      Object.fromEntries(
+        Object.entries({
+          after: params.after,
+          limit: params.limit?.toString(),
+        }).filter(([, value]) => value !== undefined)
+      ) as Record<string, string>
+      : undefined;
+
+    const response = await this.get(endpoint, stringParams);
+    return validateAccessTokenPage(response);
+  }
+
+  /**
+   * Create a new access token
+   * @param data - Token creation data (name and capabilities)
+   * @param provider - VCS provider (defaults to current provider)
+   * @returns AccessToken with refresh_token (ONLY shown once!)
+   */
+  async createAccessToken(
+    data: AccessTokenCreate,
+    provider?: VCSProvider
+  ): Promise<AccessToken> {
+    const providerPath = this.getProviderPath(provider);
+    const endpoint = `${providerPath}/access-token`;
+
+    const response = await this.post(endpoint, data);
+    return validateAccessToken(response);
+  }
+
+  /**
+   * Delete an access token
+   * @param tokenId - ID of the token to delete
+   * @param provider - VCS provider (defaults to current provider)
+   */
+  async deleteAccessToken(
+    tokenId: string,
+    provider?: VCSProvider
+  ): Promise<void> {
+    const providerPath = this.getProviderPath(provider);
+    const endpoint = `${providerPath}/access-token?id=${encodeURIComponent(tokenId)}`;
+
+    await this.delete(endpoint);
+  }
+
+  /**
+   * Refresh an access token (token rotation)
+   * @returns New AccessToken
+   */
+  async refreshAccessToken(): Promise<AccessToken> {
+    const endpoint = '/api/v1/access-token/refresh';
+
+    const response = await this.post(endpoint);
+    return validateAccessToken(response);
+  }
+
 }
 
 // Create and export the API client instance
@@ -781,6 +858,9 @@ export {
   validateGitLabUser,
   validateGitLabWebhook,
   validateGitLabAccessToken,
+  validateAccessToken,
+  validateAccessTokenPage,
+  validateAccessTokenCreate,
 } from './types';
 
 // Type-safe error handling utility
