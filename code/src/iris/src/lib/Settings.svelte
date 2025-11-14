@@ -8,7 +8,9 @@
   import Card from './components/ui/Card.svelte';
   import LoadingSpinner from './components/ui/LoadingSpinner.svelte';
   import { VCS_PROVIDERS } from './vcs/providers';
+  import { isOssMode } from './utils/environment';
   import AccessTokenSection from './components/settings/AccessTokenSection.svelte';
+  import ApiAccessUpsellCard from './components/settings/ApiAccessUpsellCard.svelte';
 
   // Tab management
   type SettingsTab = 'organization' | 'api-keys' | 'diagnostics';
@@ -35,11 +37,17 @@
   // Get current VCS provider terminology
   $: currentProvider = $currentVCSProvider || 'github';
   $: terminology = VCS_PROVIDERS[currentProvider]?.terminology || VCS_PROVIDERS.github.terminology;
-  
+
   // Helper functions for proper capitalization and articles
   $: capitalizedOrganization = terminology.organization.charAt(0).toUpperCase() + terminology.organization.slice(1);
   $: articleForOrganization = terminology.organization.match(/^[aeiou]/i) ? 'an' : 'a';
-  
+
+  // Enterprise feature gate for API Access
+  $: isInOssMode = isOssMode();
+  $: tierName = $selectedInstallation?.tier?.name?.toLowerCase() || '';
+  // Allow access if tier is enterprise, regardless of OSS/SaaS mode (for self-hosted EE)
+  $: hasEnterpriseAccess = tierName.startsWith('enterprise');
+
   // Connection diagnostics state
   let serverConfig: ServerConfig | null = null;
   let isLoadingDiagnostics = false;
@@ -267,7 +275,11 @@
 
         {:else if activeTab === 'api-keys'}
         <!-- API Keys Tab -->
-        <AccessTokenSection />
+        {#if hasEnterpriseAccess}
+          <AccessTokenSection />
+        {:else}
+          <ApiAccessUpsellCard isOssMode={isInOssMode} />
+        {/if}
 
         {:else if activeTab === 'diagnostics'}
         <!-- Connection Diagnostics Card -->

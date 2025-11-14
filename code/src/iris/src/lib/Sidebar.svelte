@@ -186,9 +186,10 @@
           <div class="flex items-center space-x-2 text-xs">
             <!-- Tier Badge -->
             {#if $selectedInstallation.tier && $selectedInstallation.tier.name.toLowerCase() !== 'unknown'}
+              {@const tierLower = $selectedInstallation.tier.name.toLowerCase()}
               <span class="inline-flex items-center px-2 py-0.5 rounded-full font-medium
-                {$selectedInstallation.tier.name.toLowerCase() === 'enterprise' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400' : 
-                 $selectedInstallation.tier.name.toLowerCase() === 'pro' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : 
+                {tierLower.startsWith('enterprise') ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400' :
+                 tierLower.startsWith('pro') ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
                  'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}">
                 {$selectedInstallation.tier.name}
               </span>
