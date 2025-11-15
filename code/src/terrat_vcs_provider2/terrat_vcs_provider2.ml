@@ -40,6 +40,7 @@ module Account_status = struct
     | `Disabled
     | `Trial_ending of Duration.t
     ]
+  [@@deriving show]
 end
 
 module Work_manifest_result = struct
@@ -64,6 +65,7 @@ module Target = struct
         repo : 'repo;
         branch : string;
       }
+  [@@deriving show]
 end
 
 module Index = struct
@@ -583,7 +585,7 @@ module type S = sig
       Api.Config.t -> Api.Account.t -> ('a, 'b) Terrat_work_manifest3.Existing.t -> Uri.t option
   end
 
-module Job_context : sig
+  module Job_context : sig
     val create_or_get_for_pull_request :
       request_id:string ->
       Db.t ->

@@ -15,6 +15,7 @@ struct
     ( S.Api.Account.t,
       ((unit, unit) S.Api.Pull_request.t, S.Api.Repo.t) Terrat_vcs_provider2.Target.t )
     Terrat_work_manifest3.Existing.t
+  [@@deriving show]
 
   let create_token installation_id work_manifest_id db =
     let open Abbs_future_combinators.Infix_result_monad in
@@ -108,6 +109,16 @@ struct
     dirspaceflows_of_changes_with_branch_target repo_config changes
     >>= fun dirspaceflows -> Ok (strip_lock_branch_target dirspaceflows)
 
+  let update_wm_state ~request_id work_manifest_id state db =
+    Logs.info (fun m ->
+        m
+          "%s : WM : UPDATE_STATE : wm=%a : state=%s"
+          request_id
+          Uuidm.pp
+          work_manifest_id
+          (Terrat_work_manifest3.State.to_string state));
+    S.Work_manifest.update_state ~request_id db work_manifest_id state
+
   let all_wms_completed =
     CCList.for_all (function
       | { Wm.state = Wm.State.(Completed | Aborted); _ } -> true
@@ -127,9 +138,10 @@ struct
       when eq work_manifest ->
         Logs.info (fun m -> m "%s : WM : INITIATE : name=%s" (Builder.log_id s) name);
         Builder.run_db s ~f:(fun db ->
+            Logs.info (fun m ->
+                m "%s : WM : UPDATE_STATE : wm=%a : run_id=%s" (Builder.log_id s) Uuidm.pp id run_id);
             S.Work_manifest.update_run_id ~request_id:(Builder.log_id s) db id run_id
-            >>= fun () ->
-            S.Work_manifest.update_state ~request_id:(Builder.log_id s) db id Wm.State.Running)
+            >>= fun () -> update_wm_state ~request_id:(Builder.log_id s) id Wm.State.Running db)
         >>= fun () ->
         initiate work_manifest s fetcher
         >>= fun response ->
@@ -156,21 +168,40 @@ struct
         Logs.info (fun m -> m "%s : WM : RESULT : name=%s" (Builder.log_id s) name);
         result work_manifest wm_result s fetcher
         >>= fun () ->
+        Builder.run_db
+          s
+          ~f:(update_wm_state ~request_id:(Builder.log_id s) work_manifest.Wm.id Wm.State.Completed)
+        >>= fun () ->
+        fetch Keys.job
+        >>= fun job ->
+        (* Explicitly query the work manifests for this job because we might
+           have already created work manifests in parallel operations so we
+           don't need to do it again. *)
         Builder.run_db s ~f:(fun db ->
-            S.Work_manifest.update_state
+            S.Job_context.Job.query_work_manifests
               ~request_id:(Builder.log_id s)
               db
-              work_manifest.Wm.id
-              Wm.State.Completed)
-        >>= fun () ->
-        fetch Keys.work_manifests_for_job
+              ~job_id:job.Tjc.Job.id
+              ())
         >>= function
         | wms when all_wms_completed @@ CCList.filter eq wms ->
             Abb.Future.return (Ok (CCList.filter eq wms))
         | _ -> Abb.Future.return (Error (`Suspend_eval name)))
     | Some _ | None -> (
-        fetch Keys.work_manifests_for_job
+        fetch Keys.job
+        >>= fun job ->
+        (* Explicitly query the work manifests for this job because we might
+           have already created work manifests in parallel operations so we
+           don't need to do it again. *)
+        Builder.run_db s ~f:(fun db ->
+            S.Job_context.Job.query_work_manifests
+              ~request_id:(Builder.log_id s)
+              db
+              ~job_id:job.Tjc.Job.id
+              ())
         >>= fun wms ->
+        let show = [%show: existing_wm list] in
+        Printf.printf "wms = %s\n%!" (show wms);
         match CCList.filter eq wms with
         | [] -> (
             Logs.info (fun m -> m "%s : WM : CREATE : name=%s" (Builder.log_id s) name);

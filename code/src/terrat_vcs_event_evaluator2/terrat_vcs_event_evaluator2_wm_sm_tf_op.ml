@@ -542,7 +542,9 @@ struct
       && branch_ref = S.Api.Ref.to_string branch_ref'
       && steps = [ Wm.Step.Plan ]
 
-    let create = create `Plan
+    let create s ({ Bs.Fetcher.fetch } as fetcher) =
+      let open Irm in
+      fetch Keys.can_run_plan >>= fun () -> create `Plan s fetcher
 
     let initiate ({ Wm.id; _ } as work_manifest) s { Bs.Fetcher.fetch } =
       let open Irm in
@@ -827,7 +829,9 @@ struct
       && branch_ref = S.Api.Ref.to_string branch_ref'
       && steps = [ Wm.Step.Apply ]
 
-    let create = create `Apply
+    let create s ({ Bs.Fetcher.fetch } as fetcher) =
+      let open Irm in
+      fetch Keys.can_run_apply >>= fun () -> create `Apply s fetcher
 
     let initiate ({ Wm.id; _ } as work_manifest) s { Bs.Fetcher.fetch } =
       let open Irm in
