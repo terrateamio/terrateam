@@ -214,6 +214,9 @@ module Db = struct
         //
         (* runs_on *)
         Ret.(option (ud' (CCOption.wrap Yojson.Safe.from_string)))
+        //
+        (* branch *)
+        Ret.(option text)
         /^ select_work_manifest_query
         /% Var.uuid "id")
 
@@ -725,10 +728,12 @@ module Db = struct
                 name
                 environment
                 runs_on
+                branch
               ->
               {
                 Wm.account = Api.Account.make (CCInt64.to_int installation_id);
                 base_ref;
+                branch;
                 branch_ref;
                 changes;
                 completed_at;
@@ -4647,16 +4652,17 @@ module Work_manifest = struct
         Ret.text
         /^ insert_work_manifest_query
         /% Var.text "base_sha"
-        /% Var.(option (bigint "pull_number"))
+        /% Var.(option @@ bigint "pull_number")
         /% Var.bigint "repository"
         /% Var.text "run_type"
         /% Var.text "sha"
         /% Var.text "tag_query"
-        /% Var.(option (text "username"))
+        /% Var.(option @@ text "username")
         /% Var.json "dirspaces"
         /% Var.text "run_kind"
-        /% Var.(option (text "environment"))
-        /% Var.(option (json "runs_on")))
+        /% Var.(option @@ text "environment")
+        /% Var.(option @@ json "runs_on")
+        /% Var.(option @@ text "branch"))
 
     let insert_work_manifest_access_control_denied_dirspace =
       Pgsql_io.Typed_sql.(
@@ -4727,6 +4733,7 @@ module Work_manifest = struct
       | { Wm.target = Terrat_vcs_provider2.Target.Drift { repo; _ }; _ } -> repo
     in
     let get_branch = function
+      | { Wm.branch = Some branch; _ } -> branch
       | { Wm.target = Terrat_vcs_provider2.Target.Pr pr; _ } -> (
           match Api.Pull_request.state pr with
           | Terrat_pull_request.State.(Open _ | Closed) ->
@@ -5007,7 +5014,8 @@ module Work_manifest = struct
             dirspaces
             run_kind
             work_manifest.Wm.environment
-            (CCOption.map Yojson.Safe.to_string work_manifest.Wm.runs_on))
+            (CCOption.map Yojson.Safe.to_string work_manifest.Wm.runs_on)
+            work_manifest.Wm.branch)
       >>= function
       | [] -> assert false
       | (id, state, created_at) :: _ -> (
