@@ -19,16 +19,12 @@ struct
     && branch_ref = S.Api.Ref.to_string branch_ref'
     && steps = [ Wm.Step.Index ]
 
-  let create s { Bs.Fetcher.fetch } =
+  let create ~dest_branch_ref ~branch_ref s { Bs.Fetcher.fetch } =
     let open Irm in
     fetch Keys.account
     >>= fun account ->
     fetch Keys.repo
     >>= fun repo ->
-    fetch Keys.dest_branch_ref
-    >>= fun dest_branch_ref ->
-    fetch Keys.working_branch_ref
-    >>= fun working_branch_ref ->
     fetch Keys.initiator
     >>= fun initiator ->
     fetch Keys.target
@@ -37,7 +33,7 @@ struct
       {
         Wm.account;
         base_ref = S.Api.Ref.to_string dest_branch_ref;
-        branch_ref = S.Api.Ref.to_string working_branch_ref;
+        branch_ref = S.Api.Ref.to_string branch_ref;
         changes = [];
         completed_at = None;
         created_at = ();
@@ -236,5 +232,13 @@ struct
     | Wmr.Work_manifest_build_result_failure _ -> assert false
 
   let run ~dest_branch_ref ~branch_ref ~name =
-    Wm_sm.run ~name ~eq:(eq dest_branch_ref branch_ref) ~create ~initiate ~fail ~result
+    Wm_sm.run
+      ~name
+      ~eq:(eq dest_branch_ref branch_ref)
+      ~dest_branch_ref
+      ~branch_ref
+      ~create
+      ~initiate
+      ~fail
+      ~result
 end

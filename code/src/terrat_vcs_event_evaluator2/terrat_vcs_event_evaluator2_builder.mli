@@ -12,32 +12,12 @@ module Make (S : Terrat_vcs_provider2.S) : sig
   module Keys : module type of Terrat_vcs_event_evaluator2_targets.Make (S)
   module Hmap : module type of Keys.Hmap
 
-  type repo_config_fetch_err = Terrat_vcs_provider2.fetch_repo_config_with_provenance_err
-  [@@deriving show]
+  type err = Keys.err [@@deriving show]
 
-  type err =
-    [ `Missing_dep_err of string
-    | `Error
-    | `Closed
-    | repo_config_fetch_err
-    | Terrat_change_match3.synthesize_config_err
-    | `Suspend_eval of string
-    | `Work_manifest_err of Uuidm.t
-    | `Noop
-    | `Loop
-    | Pgsql_io.err
-    | Pgsql_pool.err
-    | Str_template.err
-    ]
-  [@@deriving show]
-
-  module B : Buildsys.S with type 'v k = 'v Hmap.key and type 'a C.t = ('a, err) result Abb.Future.t
+  module B : Buildsys.S with type 'v k = 'v Hmap.key and type 'a C.t = 'a Abb.Future.t
 
   module Bs :
-    Buildsys.T
-      with type 'a k = 'a B.k
-       and type 'a c = ('a, err) result Abb.Future.t
-       and type state = B.State.t
+    Buildsys.T with type 'a k = 'a B.k and type 'a c = 'a Abb.Future.t and type state = B.State.t
 
   val rebuilder : Bs.Rebuilder.t
 

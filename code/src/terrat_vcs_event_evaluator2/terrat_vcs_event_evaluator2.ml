@@ -59,7 +59,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     let run =
       let open Abb.Future.Infix_monad in
       let target = Keys.eval_work_manifest_event in
-      let store = Hmap.empty |> Hmap.add Keys.work_manifest_event (Some event) in
+      let store = Hmap.empty |> Keys.Key.add Keys.work_manifest_event (Some event) in
       Builder.State.make ~log_id:request_id ~config ~store ~db ~tasks ()
       >>= fun s ->
       Logs.info (fun m -> m "%s : target=%s" (Builder.log_id s) (Hmap.Key.info target));
@@ -153,8 +153,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                        let open Abb.Future.Infix_monad in
                        let store =
                          store
-                         |> Hmap.add Keys.job job
-                         |> Hmap.add Keys.context_id context.Tjc.Context.id
+                         |> Keys.Key.add Keys.job job
+                         |> Keys.Key.add Keys.context_id context.Tjc.Context.id
                        in
                        Builder.State.make
                          ~log_id:(Uuidm.to_string job.Tjc.Job.id)
@@ -202,12 +202,12 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       type_ =
     let store =
       Hmap.empty
-      |> Hmap.add Keys.account account
-      |> (fun m -> CCOption.map_or ~default:m (fun c -> Hmap.add Keys.comment_id c m) comment_id)
-      |> Hmap.add Keys.pull_request_id pull_request_id
-      |> Hmap.add Keys.repo repo
-      |> Hmap.add Keys.user (Some user)
-      |> Hmap.add Keys.work_manifest_event None
+      |> Keys.Key.add Keys.account account
+      |> Keys.Key.add Keys.comment_id comment_id
+      |> Keys.Key.add Keys.pull_request_id pull_request_id
+      |> Keys.Key.add Keys.repo repo
+      |> Keys.Key.add Keys.user (Some user)
+      |> Keys.Key.add Keys.work_manifest_event None
     in
     Abbs_future_combinators.ignore
     @@ Abb.Future.fork
@@ -229,8 +229,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       let target = Keys.eval_compute_node_poll in
       let store =
         Hmap.empty
-        |> Hmap.add Keys.compute_node_id compute_node_id
-        |> Hmap.add Keys.compute_node_offering offering
+        |> Keys.Key.add Keys.compute_node_id compute_node_id
+        |> Keys.Key.add Keys.compute_node_offering offering
       in
       Pgsql_pool.with_conn storage ~f:(fun db ->
           Pgsql_io.tx db ~f:(fun () ->
@@ -261,8 +261,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                       in
                       let store =
                         Hmap.empty
-                        |> Hmap.add Keys.compute_node compute_node
-                        |> Hmap.add Keys.work_manifest_event (Some work_manifest_event)
+                        |> Keys.Key.add Keys.compute_node compute_node
+                        |> Keys.Key.add Keys.work_manifest_event (Some work_manifest_event)
                       in
                       let open Abb.Future.Infix_monad in
                       Builder.State.make ~log_id:request_id ~config ~store ~db ~tasks ()
