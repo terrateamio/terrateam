@@ -129,6 +129,7 @@ struct
       ~eq
       ~dest_branch_ref
       ~branch_ref
+      ~branch
       ~create
       ~initiate
       ~fail
@@ -210,12 +211,10 @@ struct
               ~job_id:job.Tjc.Job.id
               ())
         >>= fun wms ->
-        let show = [%show: existing_wm list] in
-        Printf.printf "wms = %s\n%!" (show wms);
         match CCList.filter eq wms with
         | [] -> (
             Logs.info (fun m -> m "%s : WM : CREATE : name=%s" (Builder.log_id s) name);
-            create ~dest_branch_ref ~branch_ref s fetcher
+            create ~dest_branch_ref ~branch_ref ~branch s fetcher
             >>= function
             | [] ->
                 Logs.info (fun m ->

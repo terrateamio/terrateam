@@ -40,9 +40,11 @@ module Make
     eq:(existing_wm -> bool) ->
     dest_branch_ref:S.Api.Ref.t ->
     branch_ref:S.Api.Ref.t ->
+    branch:S.Api.Ref.t ->
     create:
       (dest_branch_ref:S.Api.Ref.t ->
       branch_ref:S.Api.Ref.t ->
+      branch:S.Api.Ref.t ->
       Builder.B.State.t ->
       Builder.Bs.Fetcher.t ->
       (existing_wm list, Builder.err) result Abb.Future.t) ->
