@@ -4,6 +4,7 @@ module State = struct
     | Running
     | Completed
     | Aborted
+  [@@deriving show]
 
   let to_string = function
     | Queued -> "queued"
@@ -27,6 +28,7 @@ module Step = struct
     | Index
     | Plan
     | Unsafe_apply
+  [@@deriving show]
 
   let to_string = function
     | Apply -> "apply"
@@ -54,12 +56,14 @@ module Deny = struct
     dirspace : Terrat_change.Dirspace.t;
     policy : Terrat_base_repo_config_v1.Access_control.Match_list.t option;
   }
+  [@@deriving show]
 end
 
 module Initiator = struct
   type t =
     | User of string
     | System
+  [@@deriving show]
 end
 
 type ('account, 'id, 'created_at, 'run_id, 'state, 'changes, 'denied_dirspaces, 'target) t = {
@@ -80,10 +84,15 @@ type ('account, 'id, 'created_at, 'run_id, 'state, 'changes, 'denied_dirspaces, 
   tag_query : Terrat_tag_query.t;
   target : 'target;
 }
+[@@deriving show]
 
 module New = struct
+  type ('account, 'id, 'created_at, 'run_id, 'state, 'changes, 'denied_dirspaces, 'target) t' =
+    ('account, 'id, 'created_at, 'run_id, 'state, 'changes, 'denied_dirspaces, 'target) t
+  [@@deriving show]
+
   (** A new work manifest has no id, create time, run id, or state *)
-  type nonrec ('account, 'target) t =
+  type ('account, 'target) t =
     ( 'account,
       unit,
       unit,
@@ -92,12 +101,17 @@ module New = struct
       int option Terrat_change.Dirspaceflow.t list,
       Deny.t list,
       'target )
-    t
+    t'
+  [@@deriving show]
 end
 
 module Existing = struct
+  type ('account, 'id, 'created_at, 'run_id, 'state, 'changes, 'denied_dirspaces, 'target) t' =
+    ('account, 'id, 'created_at, 'run_id, 'state, 'changes, 'denied_dirspaces, 'target) t
+  [@@deriving show]
+
   (** An existing work manifest has all of the fillings *)
-  type nonrec ('account, 'target) t =
+  type ('account, 'target) t =
     ( 'account,
       Uuidm.t,
       string,
@@ -106,5 +120,6 @@ module Existing = struct
       int option Terrat_change.Dirspaceflow.t list,
       Deny.t list,
       'target )
-    t
+    t'
+  [@@deriving show]
 end

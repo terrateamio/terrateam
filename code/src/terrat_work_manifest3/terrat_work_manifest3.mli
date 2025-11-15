@@ -4,6 +4,7 @@ module State : sig
     | Running
     | Completed
     | Aborted
+  [@@deriving show]
 
   val to_string : t -> string
   val of_string : string -> t option
@@ -17,6 +18,7 @@ module Step : sig
     | Index
     | Plan
     | Unsafe_apply
+  [@@deriving show]
 
   val to_string : t -> string
   val of_string : string -> t option
@@ -27,6 +29,7 @@ module Deny : sig
     dirspace : Terrat_change.Dirspace.t;
     policy : Terrat_base_repo_config_v1.Access_control.Match_list.t option;
   }
+  [@@deriving show]
 end
 
 module Initiator : sig
@@ -53,10 +56,15 @@ type ('account, 'id, 'created_at, 'run_id, 'state, 'changes, 'denied_dirspaces, 
   tag_query : Terrat_tag_query.t;
   target : 'target;
 }
+[@@deriving show]
 
 module New : sig
+  type ('account, 'id, 'created_at, 'run_id, 'state, 'changes, 'denied_dirspaces, 'target) t' =
+    ('account, 'id, 'created_at, 'run_id, 'state, 'changes, 'denied_dirspaces, 'target) t
+  [@@deriving show]
+
   (** A new work manifest has no id, create time, run id, or state *)
-  type nonrec ('account, 'target) t =
+  type ('account, 'target) t =
     ( 'account,
       unit,
       unit,
@@ -65,12 +73,17 @@ module New : sig
       int option Terrat_change.Dirspaceflow.t list,
       Deny.t list,
       'target )
-    t
+    t'
+  [@@deriving show]
 end
 
 module Existing : sig
+  type ('account, 'id, 'created_at, 'run_id, 'state, 'changes, 'denied_dirspaces, 'target) t' =
+    ('account, 'id, 'created_at, 'run_id, 'state, 'changes, 'denied_dirspaces, 'target) t
+  [@@deriving show]
+
   (** An existing work manifest has all of the fillings *)
-  type nonrec ('account, 'target) t =
+  type ('account, 'target) t =
     ( 'account,
       Uuidm.t,
       string,
@@ -79,5 +92,6 @@ module Existing : sig
       int option Terrat_change.Dirspaceflow.t list,
       Deny.t list,
       'target )
-    t
+    t'
+  [@@deriving show]
 end
