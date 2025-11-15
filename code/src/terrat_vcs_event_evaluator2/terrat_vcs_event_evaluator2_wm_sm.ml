@@ -124,7 +124,17 @@ struct
       | { Wm.state = Wm.State.(Completed | Aborted); _ } -> true
       | _ -> false)
 
-  let run ~name ~eq ~create ~initiate ~fail ~result s ({ Builder.Bs.Fetcher.fetch } as fetcher) =
+  let run
+      ~name
+      ~eq
+      ~dest_branch_ref
+      ~branch_ref
+      ~create
+      ~initiate
+      ~fail
+      ~result
+      s
+      ({ Builder.Bs.Fetcher.fetch } as fetcher) =
     let open Irm in
     let module E = Keys.Work_manifest_event in
     fetch Keys.work_manifest_event
@@ -205,13 +215,28 @@ struct
         match CCList.filter eq wms with
         | [] -> (
             Logs.info (fun m -> m "%s : WM : CREATE : name=%s" (Builder.log_id s) name);
-            create s fetcher
+            create ~dest_branch_ref ~branch_ref s fetcher
             >>= function
             | [] ->
                 Logs.info (fun m ->
                     m "%s : WM : CREATE : name=%s : NO_WORK_MANIFESTS" (Builder.log_id s) name);
                 Abb.Future.return (Ok [])
             | wms ->
+                CCList.iter
+                  (fun { Terrat_work_manifest3.id; base_ref; branch_ref; environment; runs_on; _ }
+                     ->
+                    Logs.info (fun m ->
+                        m
+                          "%s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s : \
+                           env=%s : runs_on=%s"
+                          (Builder.log_id s)
+                          Uuidm.pp
+                          id
+                          base_ref
+                          branch_ref
+                          (CCOption.get_or ~default:"" environment)
+                          (CCOption.map_or ~default:"" Yojson.Safe.to_string runs_on)))
+                  wms;
                 fetch Keys.job
                 >>= fun job ->
                 Builder.run_db s ~f:(fun db ->

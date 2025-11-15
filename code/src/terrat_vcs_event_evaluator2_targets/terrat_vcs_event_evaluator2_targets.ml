@@ -5,6 +5,31 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     type 'a t = string
   end)
 
+  type repo_config_fetch_err = Terrat_vcs_provider2.fetch_repo_config_with_provenance_err
+  [@@deriving show]
+
+  type err =
+    [ `Missing_dep_err of string
+    | `Error
+    | `Closed
+    | repo_config_fetch_err
+    | Terrat_change_match3.synthesize_config_err
+    | `Suspend_eval of string
+    | `Work_manifest_err of Uuidm.t
+    | `Noop
+    | `Loop
+    | Pgsql_io.err
+    | Pgsql_pool.err
+    | Str_template.err
+    ]
+  [@@deriving show]
+
+  module Key = struct
+    type 'a t = ('a, err) result Hmap.key
+
+    let add k v m = Hmap.add k (Ok v) m
+  end
+
   module Work_manifest_event = struct
     type t =
       | Initiate of {
@@ -65,57 +90,56 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   end
 
   (* Ya basic *)
-  let account : S.Api.Account.t Hmap.key = Hmap.Key.create "account"
-  let account_status : P2.Account_status.t Hmap.key = Hmap.Key.create "account_status"
-  let branch_name : S.Api.Ref.t Hmap.key = Hmap.Key.create "branch_name"
-  let branch_ref : S.Api.Ref.t Hmap.key = Hmap.Key.create "branch_ref"
-  let client : S.Api.Client.t Hmap.key = Hmap.Key.create "client"
+  let account : S.Api.Account.t Key.t = Hmap.Key.create "account"
+  let account_status : P2.Account_status.t Key.t = Hmap.Key.create "account_status"
+  let branch_name : S.Api.Ref.t Key.t = Hmap.Key.create "branch_name"
+  let branch_ref : S.Api.Ref.t Key.t = Hmap.Key.create "branch_ref"
+  let client : S.Api.Client.t Key.t = Hmap.Key.create "client"
 
-  let context : (S.Api.Pull_request.Id.t, S.Api.Ref.t) Terrat_job_context.Context.t Hmap.key =
+  let context : (S.Api.Pull_request.Id.t, S.Api.Ref.t) Terrat_job_context.Context.t Key.t =
     Hmap.Key.create "context"
 
-  let context_id : Uuidm.t Hmap.key = Hmap.Key.create "context_id"
-  let default_branch_sha : S.Api.Ref.t Hmap.key = Hmap.Key.create "default_branch_sha"
-  let dest_branch_name : S.Api.Ref.t Hmap.key = Hmap.Key.create "dest_branch_name"
-  let dest_branch_ref : S.Api.Ref.t Hmap.key = Hmap.Key.create "dest_branch_ref"
-  let initiator : Terrat_work_manifest3.Initiator.t Hmap.key = Hmap.Key.create "initiator"
-  let is_interactive : bool Hmap.key = Hmap.Key.create "is_interactive"
+  let context_id : Uuidm.t Key.t = Hmap.Key.create "context_id"
+  let default_branch_sha : S.Api.Ref.t Key.t = Hmap.Key.create "default_branch_sha"
+  let dest_branch_name : S.Api.Ref.t Key.t = Hmap.Key.create "dest_branch_name"
+  let dest_branch_ref : S.Api.Ref.t Key.t = Hmap.Key.create "dest_branch_ref"
+  let initiator : Terrat_work_manifest3.Initiator.t Key.t = Hmap.Key.create "initiator"
+  let is_interactive : bool Key.t = Hmap.Key.create "is_interactive"
 
   let job :
-      (S.Api.Pull_request.Id.t, S.Api.Ref.t, S.Api.User.t option) Terrat_job_context.Job.t Hmap.key
-      =
+      (S.Api.Pull_request.Id.t, S.Api.Ref.t, S.Api.User.t option) Terrat_job_context.Job.t Key.t =
     Hmap.Key.create "job"
 
-  let pull_request_id : S.Api.Pull_request.Id.t Hmap.key = Hmap.Key.create "pull_request_id"
-  let repo : S.Api.Repo.t Hmap.key = Hmap.Key.create "repo"
+  let pull_request_id : S.Api.Pull_request.Id.t Key.t = Hmap.Key.create "pull_request_id"
+  let repo : S.Api.Repo.t Key.t = Hmap.Key.create "repo"
 
-  let target :
-      ((unit, unit) S.Api.Pull_request.t, S.Api.Repo.t) Terrat_vcs_provider2.Target.t Hmap.key =
+  let target : ((unit, unit) S.Api.Pull_request.t, S.Api.Repo.t) Terrat_vcs_provider2.Target.t Key.t
+      =
     Hmap.Key.create "target"
 
-  let user : S.Api.User.t option Hmap.key = Hmap.Key.create "user"
-  let working_branch_ref : S.Api.Ref.t Hmap.key = Hmap.Key.create "working_branch_ref"
+  let user : S.Api.User.t option Key.t = Hmap.Key.create "user"
+  let working_branch_ref : S.Api.Ref.t Key.t = Hmap.Key.create "working_branch_ref"
 
   (* Matches *)
-  let matches : Matches.t Hmap.key = Hmap.Key.create "matches"
+  let matches : Matches.t Key.t = Hmap.Key.create "matches"
 
-  let working_set_matches : Terrat_change_match3.Dirspace_config.t list Hmap.key =
+  let working_set_matches : Terrat_change_match3.Dirspace_config.t list Key.t =
     Hmap.Key.create "working_set_matches"
 
-  let all_matches : Terrat_change_match3.Dirspace_config.t list list Hmap.key =
+  let all_matches : Terrat_change_match3.Dirspace_config.t list list Key.t =
     Hmap.Key.create "all_matches"
 
-  let all_unapplied_matches : Terrat_change_match3.Dirspace_config.t list list Hmap.key =
+  let all_unapplied_matches : Terrat_change_match3.Dirspace_config.t list list Key.t =
     Hmap.Key.create "all_unapplied_matches"
 
-  let all_tag_query_matches : Terrat_change_match3.Dirspace_config.t list list Hmap.key =
+  let all_tag_query_matches : Terrat_change_match3.Dirspace_config.t list list Key.t =
     Hmap.Key.create "all_tag_query_matches"
 
-  let working_layer : Terrat_change_match3.Dirspace_config.t list Hmap.key =
+  let working_layer : Terrat_change_match3.Dirspace_config.t list Key.t =
     Hmap.Key.create "working_layer"
 
   (* Work manifest state machine *)
-  let work_manifest_event : Work_manifest_event.t option Hmap.key =
+  let work_manifest_event : Work_manifest_event.t option Key.t =
     Hmap.Key.create "work_manifest_event"
 
   let work_manifests_for_job :
@@ -123,34 +147,34 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         ((unit, unit) S.Api.Pull_request.t, S.Api.Repo.t) Terrat_vcs_provider2.Target.t )
       Terrat_work_manifest3.Existing.t
       list
-      Hmap.key =
+      Key.t =
     Hmap.Key.create "work_manifests_for_job"
 
   (* Compute node *)
-  let compute_node_offering : Terrat_api_components.Work_manifest_initiate.t Hmap.key =
+  let compute_node_offering : Terrat_api_components.Work_manifest_initiate.t Key.t =
     Hmap.Key.create "compute_node_offering"
 
-  let compute_node_id : Uuidm.t Hmap.key = Hmap.Key.create "compute_node_id"
-  let compute_node : Terrat_job_context.Compute_node.t Hmap.key = Hmap.Key.create "compute_node"
+  let compute_node_id : Uuidm.t Key.t = Hmap.Key.create "compute_node_id"
+  let compute_node : Terrat_job_context.Compute_node.t Key.t = Hmap.Key.create "compute_node"
 
   (* Pull request *)
-  let pull_request : (Terrat_change.Diff.t list, bool) S.Api.Pull_request.t Hmap.key =
+  let pull_request : (Terrat_change.Diff.t list, bool) S.Api.Pull_request.t Key.t =
     Hmap.Key.create "pull_request"
 
-  let pull_request_diff : Terrat_change.Diff.t list Hmap.key = Hmap.Key.create "pull_request_diff"
+  let pull_request_diff : Terrat_change.Diff.t list Key.t = Hmap.Key.create "pull_request_diff"
 
   (* Indexer branch *)
   let repo_index_branch_wm_completed :
       ( S.Api.Account.t,
         ((unit, unit) S.Api.Pull_request.t, S.Api.Repo.t) Terrat_vcs_provider2.Target.t )
       Terrat_work_manifest3.Existing.t
-      Hmap.key =
+      Key.t =
     Hmap.Key.create "repo_index_branch_wm_completed"
 
-  let built_repo_index_branch : Terrat_base_repo_config_v1.Index.t Hmap.key =
+  let built_repo_index_branch : Terrat_base_repo_config_v1.Index.t Key.t =
     Hmap.Key.create "built_repo_index_branch"
 
-  let repo_index_branch : Terrat_base_repo_config_v1.Index.t Hmap.key =
+  let repo_index_branch : Terrat_base_repo_config_v1.Index.t Key.t =
     Hmap.Key.create "repo_index_branch"
 
   (* Indexer dest branch *)
@@ -158,220 +182,214 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       ( S.Api.Account.t,
         ((unit, unit) S.Api.Pull_request.t, S.Api.Repo.t) Terrat_vcs_provider2.Target.t )
       Terrat_work_manifest3.Existing.t
-      Hmap.key =
+      Key.t =
     Hmap.Key.create "repo_index_dest_branch_wm_completed"
 
-  let built_repo_index_dest_branch : Terrat_base_repo_config_v1.Index.t Hmap.key =
+  let built_repo_index_dest_branch : Terrat_base_repo_config_v1.Index.t Key.t =
     Hmap.Key.create "built_repo_index_dest_branch"
 
-  let repo_index_dest_branch : Terrat_base_repo_config_v1.Index.t Hmap.key =
+  let repo_index_dest_branch : Terrat_base_repo_config_v1.Index.t Key.t =
     Hmap.Key.create "repo_index_dest_branch"
 
   (* Repo tree branch *)
-  let repo_tree_branch : string list Hmap.key = Hmap.Key.create "repo_tree_branch"
+  let repo_tree_branch : string list Key.t = Hmap.Key.create "repo_tree_branch"
 
   let repo_tree_branch_wm_completed :
       ( S.Api.Account.t,
         ((unit, unit) S.Api.Pull_request.t, S.Api.Repo.t) Terrat_vcs_provider2.Target.t )
       Terrat_work_manifest3.Existing.t
-      Hmap.key =
+      Key.t =
     Hmap.Key.create "repo_tree_branch_wm_completed"
 
-  let built_repo_tree_branch : string list Hmap.key = Hmap.Key.create "built_repo_tree_branch"
+  let built_repo_tree_branch : string list Key.t = Hmap.Key.create "built_repo_tree_branch"
 
   (* Repo tree dest branch *)
-  let repo_tree_dest_branch : string list Hmap.key = Hmap.Key.create "repo_tree_dest_branch"
+  let repo_tree_dest_branch : string list Key.t = Hmap.Key.create "repo_tree_dest_branch"
 
   let repo_tree_dest_branch_wm_completed :
       ( S.Api.Account.t,
         ((unit, unit) S.Api.Pull_request.t, S.Api.Repo.t) Terrat_vcs_provider2.Target.t )
       Terrat_work_manifest3.Existing.t
-      Hmap.key =
+      Key.t =
     Hmap.Key.create "repo_tree_dest_branch_wm_completed"
 
-  let built_repo_tree_dest_branch : string list Hmap.key =
+  let built_repo_tree_dest_branch : string list Key.t =
     Hmap.Key.create "built_repo_tree_dest_branch"
 
-  let repo_tree_dest_branch : string list Hmap.key = Hmap.Key.create "repo_tree_dest_branch"
+  let repo_tree_dest_branch : string list Key.t = Hmap.Key.create "repo_tree_dest_branch"
 
   (* Built repo config branch *)
-  let built_repo_config_branch : Yojson.Safe.t option Hmap.key =
+  let built_repo_config_branch : Yojson.Safe.t option Key.t =
     Hmap.Key.create "built_repo_config_branch"
 
   let built_repo_config_branch_wm_completed :
       ( S.Api.Account.t,
         ((unit, unit) S.Api.Pull_request.t, S.Api.Repo.t) Terrat_vcs_provider2.Target.t )
       Terrat_work_manifest3.Existing.t
-      Hmap.key =
+      Key.t =
     Hmap.Key.create "built_repo_config_branch_wm_completed"
 
   (* Repository config branch *)
   let repo_config_system_defaults :
-      Terrat_base_repo_config_v1.raw Terrat_base_repo_config_v1.t Hmap.key =
+      Terrat_base_repo_config_v1.raw Terrat_base_repo_config_v1.t Key.t =
     Hmap.Key.create "repo_config_system_defaults"
 
   let repo_config_raw' :
-      (string list * Terrat_base_repo_config_v1.raw Terrat_base_repo_config_v1.t) Hmap.key =
+      (string list * Terrat_base_repo_config_v1.raw Terrat_base_repo_config_v1.t) Key.t =
     Hmap.Key.create "repo_config_raw'"
 
   let repo_config_raw :
-      (string list * Terrat_base_repo_config_v1.raw Terrat_base_repo_config_v1.t) Hmap.key =
+      (string list * Terrat_base_repo_config_v1.raw Terrat_base_repo_config_v1.t) Key.t =
     Hmap.Key.create "repo_config_raw"
 
   let repo_config_with_provenance :
-      (string list * Terrat_base_repo_config_v1.derived Terrat_base_repo_config_v1.t) Hmap.key =
+      (string list * Terrat_base_repo_config_v1.derived Terrat_base_repo_config_v1.t) Key.t =
     Hmap.Key.create "repo_config_with_provenance"
 
-  let repo_config : Terrat_base_repo_config_v1.derived Terrat_base_repo_config_v1.t Hmap.key =
+  let repo_config : Terrat_base_repo_config_v1.derived Terrat_base_repo_config_v1.t Key.t =
     Hmap.Key.create "repo_config"
 
   let derived_repo_config_empty_index :
-      (string list * Terrat_base_repo_config_v1.derived Terrat_base_repo_config_v1.t) Hmap.key =
+      (string list * Terrat_base_repo_config_v1.derived Terrat_base_repo_config_v1.t) Key.t =
     Hmap.Key.create "derived_repo_config_empty_index"
 
   let derived_repo_config :
-      (string list * Terrat_base_repo_config_v1.derived Terrat_base_repo_config_v1.t) Hmap.key =
+      (string list * Terrat_base_repo_config_v1.derived Terrat_base_repo_config_v1.t) Key.t =
     Hmap.Key.create "derived_repo_config"
 
-  let synthesized_config_empty_index : Terrat_change_match3.Config.t Hmap.key =
+  let synthesized_config_empty_index : Terrat_change_match3.Config.t Key.t =
     Hmap.Key.create "synthesized_config_empty_index"
 
-  let synthesized_config : Terrat_change_match3.Config.t Hmap.key =
+  let synthesized_config : Terrat_change_match3.Config.t Key.t =
     Hmap.Key.create "synthesized_config"
 
-  let dest_branch_dirspaces : Terrat_api_components.Work_manifest_dir.t list Hmap.key =
+  let dest_branch_dirspaces : Terrat_api_components.Work_manifest_dir.t list Key.t =
     Hmap.Key.create "dest_branch_dirspaces"
 
-  let store_stacks : unit Hmap.key = Hmap.Key.create "store_stacks"
+  let store_stacks : unit Key.t = Hmap.Key.create "store_stacks"
 
   (* Built repo config branch *)
-  let built_repo_config_dest_branch : Yojson.Safe.t option Hmap.key =
+  let built_repo_config_dest_branch : Yojson.Safe.t option Key.t =
     Hmap.Key.create "built_repo_config_dest_branch"
 
   let built_repo_config_dest_branch_wm_completed :
       ( S.Api.Account.t,
         ((unit, unit) S.Api.Pull_request.t, S.Api.Repo.t) Terrat_vcs_provider2.Target.t )
       Terrat_work_manifest3.Existing.t
-      Hmap.key =
+      Key.t =
     Hmap.Key.create "built_repo_config_dest_branch_wm_completed"
 
   (* Repository config dest branch *)
   let repo_config_dest_branch_raw' :
-      (string list * Terrat_base_repo_config_v1.raw Terrat_base_repo_config_v1.t) Hmap.key =
+      (string list * Terrat_base_repo_config_v1.raw Terrat_base_repo_config_v1.t) Key.t =
     Hmap.Key.create "repo_config_dest_branch_raw'"
 
   let repo_config_dest_branch_raw :
-      (string list * Terrat_base_repo_config_v1.raw Terrat_base_repo_config_v1.t) Hmap.key =
+      (string list * Terrat_base_repo_config_v1.raw Terrat_base_repo_config_v1.t) Key.t =
     Hmap.Key.create "repo_config_dest_branch_raw"
 
   let repo_config_dest_branch_with_provenance :
-      (string list * Terrat_base_repo_config_v1.derived Terrat_base_repo_config_v1.t) Hmap.key =
+      (string list * Terrat_base_repo_config_v1.derived Terrat_base_repo_config_v1.t) Key.t =
     Hmap.Key.create "repo_config_dest_branch_with_provenance"
 
   let repo_config_dest_branch :
-      Terrat_base_repo_config_v1.derived Terrat_base_repo_config_v1.t Hmap.key =
+      Terrat_base_repo_config_v1.derived Terrat_base_repo_config_v1.t Key.t =
     Hmap.Key.create "repo_config_dest_branch"
 
   let derived_repo_config_dest_branch_empty_index :
-      (string list * Terrat_base_repo_config_v1.derived Terrat_base_repo_config_v1.t) Hmap.key =
+      (string list * Terrat_base_repo_config_v1.derived Terrat_base_repo_config_v1.t) Key.t =
     Hmap.Key.create "derived_repo_config_dest_branch_empty_index"
 
   let derived_repo_config_dest_branch :
-      (string list * Terrat_base_repo_config_v1.derived Terrat_base_repo_config_v1.t) Hmap.key =
+      (string list * Terrat_base_repo_config_v1.derived Terrat_base_repo_config_v1.t) Key.t =
     Hmap.Key.create "derived_repo_config_dest_branch"
 
-  let synthesized_config_dest_branch_empty_index : Terrat_change_match3.Config.t Hmap.key =
+  let synthesized_config_dest_branch_empty_index : Terrat_change_match3.Config.t Key.t =
     Hmap.Key.create "synthesized_config_dest_branch_empty_index"
 
-  let synthesized_config_dest_branch : Terrat_change_match3.Config.t Hmap.key =
+  let synthesized_config_dest_branch : Terrat_change_match3.Config.t Key.t =
     Hmap.Key.create "synthesized_config"
 
   (* Unlocks *)
-  let publish_unlock : unit Hmap.key = Hmap.Key.create "publish_unlock"
+  let publish_unlock : unit Key.t = Hmap.Key.create "publish_unlock"
 
   (* Dirspaces *)
-  let dest_branch_dirspaces : Terrat_api_components.Work_manifest_dir.t list Hmap.key =
+  let dest_branch_dirspaces : Terrat_api_components.Work_manifest_dir.t list Key.t =
     Hmap.Key.create "dest_branch_dirspaces"
 
-  let branch_dirspaces : Terrat_api_components.Work_manifest_dir.t list Hmap.key =
+  let branch_dirspaces : Terrat_api_components.Work_manifest_dir.t list Key.t =
     Hmap.Key.create "branch_dirspaces"
 
-  let publish_repo_config : unit Hmap.key = Hmap.Key.create "publish_repo_config"
-  let comment_id : int Hmap.key = Hmap.Key.create "comment_id"
-  let react_to_comment : unit Hmap.key = Hmap.Key.create "react_to_comment"
-  let work_manifest_id : Uuidm.t option Hmap.key = Hmap.Key.create "work_manifest_id"
+  let publish_repo_config : unit Key.t = Hmap.Key.create "publish_repo_config"
+  let comment_id : int option Key.t = Hmap.Key.create "comment_id"
+  let react_to_comment : unit Key.t = Hmap.Key.create "react_to_comment"
+  let work_manifest_id : Uuidm.t option Key.t = Hmap.Key.create "work_manifest_id"
 
   let work_manifest :
       ( S.Api.Account.t,
         ((unit, unit) S.Api.Pull_request.t, S.Api.Repo.t) Terrat_vcs_provider2.Target.t )
       Terrat_work_manifest3.Existing.t
-      Hmap.key =
+      Key.t =
     Hmap.Key.create "work_manifest"
 
-  let access_control : Access_control_engine.t Hmap.key = Hmap.Key.create "access_control"
+  let access_control : Access_control_engine.t Key.t = Hmap.Key.create "access_control"
 
   let access_control_eval_plan :
-      (Terrat_access_control2.R.t, Terrat_access_control2.err) result Hmap.key =
+      (Terrat_access_control2.R.t, Terrat_access_control2.err) result Key.t =
     Hmap.Key.create "access_control_eval_plan"
 
   let access_control_eval_apply :
-      (Terrat_access_control2.R.t, Terrat_access_control2.err) result Hmap.key =
+      (Terrat_access_control2.R.t, Terrat_access_control2.err) result Key.t =
     Hmap.Key.create "access_control_eval_apply"
 
-  let check_access_control_ci_change : unit Hmap.key =
-    Hmap.Key.create "check_access_control_ci_change"
+  let check_access_control_ci_change : unit Key.t = Hmap.Key.create "check_access_control_ci_change"
+  let check_access_control_files : unit Key.t = Hmap.Key.create "check_access_control_files"
 
-  let check_access_control_files : unit Hmap.key = Hmap.Key.create "check_access_control_files"
-
-  let check_access_control_repo_config : unit Hmap.key =
+  let check_access_control_repo_config : unit Key.t =
     Hmap.Key.create "check_access_control_repo_config"
 
-  let check_valid_destination_branch : unit Hmap.key =
-    Hmap.Key.create "check_valid_destination_branch"
+  let check_valid_destination_branch : unit Key.t = Hmap.Key.create "check_valid_destination_branch"
+  let check_access_control_plan : unit Key.t = Hmap.Key.create "check_access_control_plan"
+  let check_access_control_apply : unit Key.t = Hmap.Key.create "check_access_control_apply"
+  let check_account_status_expired : unit Key.t = Hmap.Key.create "check_account_status_expired"
+  let check_account_tier : unit Key.t = Hmap.Key.create "check_account_tier"
+  let check_merge_conflict : unit Key.t = Hmap.Key.create "check_merge_conflict"
 
-  let check_access_control_plan : unit Hmap.key = Hmap.Key.create "check_access_control_plan"
-  let check_access_control_apply : unit Hmap.key = Hmap.Key.create "check_access_control_apply"
-  let check_account_status_expired : unit Hmap.key = Hmap.Key.create "check_account_status_expired"
-  let check_account_tier : unit Hmap.key = Hmap.Key.create "check_account_tier"
-  let check_merge_conflict : unit Hmap.key = Hmap.Key.create "check_merge_conflict"
-
-  let check_conflicting_plan_work_manifests : unit Hmap.key =
+  let check_conflicting_plan_work_manifests : unit Key.t =
     Hmap.Key.create "check_conflicting_plan_work_manifests"
 
-  let check_conflicting_apply_work_manifests : unit Hmap.key =
+  let check_conflicting_apply_work_manifests : unit Key.t =
     Hmap.Key.create "check_conflicting_apply_work_manifests"
 
-  let check_dirspaces_missing_plans : unit Hmap.key =
-    Hmap.Key.create "check_dirspaces_missing_plans"
+  let check_dirspaces_missing_plans : unit Key.t = Hmap.Key.create "check_dirspaces_missing_plans"
+  let check_gates : unit Key.t = Hmap.Key.create "check_gates"
+  let store_gate_approval : unit Key.t = Hmap.Key.create "store_gate_approval"
 
-  let check_gates : unit Hmap.key = Hmap.Key.create "check_gates"
-  let store_gate_approval : unit Hmap.key = Hmap.Key.create "store_gate_approval"
-
-  let check_dirspaces_owned_by_other_pull_requests : unit Hmap.key =
+  let check_dirspaces_owned_by_other_pull_requests : unit Key.t =
     Hmap.Key.create "check_dirspaces_owned_by_other_pull_requests"
 
-  let check_pull_request_state : unit Hmap.key = Hmap.Key.create "check_pull_request_state"
-  let can_run_plan : unit Hmap.key = Hmap.Key.create "can_run_plan"
-  let publish_plan : unit Hmap.key = Hmap.Key.create "publish_plan"
-  let can_run_apply : unit Hmap.key = Hmap.Key.create "can_run_apply"
-  let publish_apply : unit Hmap.key = Hmap.Key.create "publish_apply"
-  let run_next_layer : unit Hmap.key = Hmap.Key.create "run_next_layer"
-  let complete_no_change_dirspaces : unit Hmap.key = Hmap.Key.create "complete_no_change_dirspaces"
+  let check_pull_request_state : unit Key.t = Hmap.Key.create "check_pull_request_state"
+  let can_run_plan : unit Key.t = Hmap.Key.create "can_run_plan"
+  let publish_plan : unit Key.t = Hmap.Key.create "publish_plan"
+  let can_run_apply : unit Key.t = Hmap.Key.create "can_run_apply"
+  let publish_apply : unit Key.t = Hmap.Key.create "publish_apply"
+  let run_next_layer : unit Key.t = Hmap.Key.create "run_next_layer"
+  let complete_no_change_dirspaces : unit Key.t = Hmap.Key.create "complete_no_change_dirspaces"
 
   (* Context management *)
-  let store_repository : unit Hmap.key = Hmap.Key.create "store_repository"
-  let store_pull_request : unit Hmap.key = Hmap.Key.create "store_pull_request"
-  let tag_query : Terrat_tag_query.t Hmap.key = Hmap.Key.create "tag_query"
+  let store_repository : unit Key.t = Hmap.Key.create "store_repository"
+  let store_pull_request : unit Key.t = Hmap.Key.create "store_pull_request"
+  let tag_query : Terrat_tag_query.t Key.t = Hmap.Key.create "tag_query"
 
   (* API facing targets *)
 
-  let update_context_for_pull_request : unit Hmap.key =
+  let update_context_for_pull_request : unit Key.t =
     Hmap.Key.create "update_context_for_pull_request"
 
-  let eval_compute_node_poll : Terrat_api_components.Work_manifest.t Hmap.key =
+  let eval_compute_node_poll : Terrat_api_components.Work_manifest.t Key.t =
     Hmap.Key.create "eval_compute_node_poll"
 
-  let eval_work_manifest_event : unit Hmap.key = Hmap.Key.create "eval_work_manifest_event"
-  let eval_job : unit Hmap.key = Hmap.Key.create "eval_job"
-  let iter_job : unit Hmap.key = Hmap.Key.create "iter_job"
+  let eval_work_manifest_event : unit Key.t = Hmap.Key.create "eval_work_manifest_event"
+  let eval_job : unit Key.t = Hmap.Key.create "eval_job"
+  let iter_job : unit Key.t = Hmap.Key.create "iter_job"
 end

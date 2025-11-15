@@ -28,9 +28,9 @@ struct
     match target with
     | Terrat_vcs_provider2.Target.Pr pr ->
         store
-        |> Hmap.add Keys.account account
-        |> Hmap.add Keys.pull_request_id (S.Api.Pull_request.id pr)
-        |> Hmap.add Keys.repo (S.Api.Pull_request.repo pr)
+        |> Keys.Key.add Keys.account account
+        |> Keys.Key.add Keys.pull_request_id (S.Api.Pull_request.id pr)
+        |> Keys.Key.add Keys.repo (S.Api.Pull_request.repo pr)
     | Terrat_vcs_provider2.Target.Drift _ -> raise (Failure "nyi")
 
   module H = struct
@@ -1463,20 +1463,22 @@ struct
             pull_request
             (Msg.Repo_config repo_config_with_provenance))
 
+    let comment_id =
+      run ~name:"comment_id" (fun s { Bs.Fetcher.fetch } ->
+          (* This is a default value in case no comment id is set in the store
+             by the runner. *)
+          Abb.Future.return (Ok None))
+
     let react_to_comment =
       run ~name:"react_to_comment" (fun s { Bs.Fetcher.fetch } ->
-          let open Abb.Future.Infix_monad in
+          let open Irm in
           fetch Keys.comment_id
           >>= function
-          | Ok comment_id ->
-              let open Irm in
-              Fc.Result.all3 (fetch Keys.comment_id) (fetch Keys.pull_request) (fetch Keys.client)
-              >>= fun (comment_id, pull_request, client) ->
+          | Some comment_id ->
+              Fc.Result.all2 (fetch Keys.pull_request) (fetch Keys.client)
+              >>= fun (pull_request, client) ->
               S.Api.react_to_comment ~request_id:(Builder.log_id s) client pull_request comment_id
-          | Error (`Missing_dep_err "comment_id") ->
-              (* It's OK if no comment_id exists, this is an error we'll just ignore. *)
-              Abb.Future.return (Ok ())
-          | Error #Builder.err as err -> Abb.Future.return err)
+          | None -> Abb.Future.return (Ok ()))
 
     let pull_request =
       run ~name:"pull_request" (fun s { Bs.Fetcher.fetch } ->
@@ -2780,7 +2782,7 @@ struct
                         let s' =
                           s
                           |> Builder.State.orig_store
-                          |> Hmap.add Keys.work_manifest_event (Some work_manifest_event)
+                          |> Keys.Key.add Keys.work_manifest_event (Some work_manifest_event)
                           |> CCFun.flip Builder.State.set_orig_store s
                         in
                         Builder.eval s' Keys.eval_work_manifest_event
@@ -2836,10 +2838,10 @@ struct
                   let s' =
                     s
                     |> Builder.State.orig_store
-                    |> Hmap.add Keys.job job
-                    |> Hmap.add Keys.context context
-                    |> Hmap.add Keys.work_manifest_event (Some event)
-                    |> Hmap.add Keys.user job.Tjc.Job.initiator
+                    |> Keys.Key.add Keys.job job
+                    |> Keys.Key.add Keys.context context
+                    |> Keys.Key.add Keys.work_manifest_event (Some event)
+                    |> Keys.Key.add Keys.user job.Tjc.Job.initiator
                     |> add_work_manifest_keys work_manifest
                     |> CCFun.flip Builder.State.set_orig_store s
                     |> Builder.State.set_log_id (Uuidm.to_string job.Tjc.Job.id)
@@ -3055,8 +3057,8 @@ struct
                 let s' =
                   s
                   |> Builder.State.orig_store
-                  |> Hmap.add Keys.job job
-                  |> Hmap.add Keys.work_manifest_event None
+                  |> Keys.Key.add Keys.job job
+                  |> Keys.Key.add Keys.work_manifest_event None
                   |> Builder.State.forward_store_value Keys.repo_config_with_provenance s
                   |> Builder.State.forward_store_value Keys.repo_config_raw s
                   |> CCFun.flip Builder.State.set_orig_store s
@@ -3082,8 +3084,8 @@ struct
                     let s' =
                       s
                       |> Builder.State.orig_store
-                      |> Hmap.add Keys.job job
-                      |> Hmap.add Keys.work_manifest_event None
+                      |> Keys.Key.add Keys.job job
+                      |> Keys.Key.add Keys.work_manifest_event None
                       |> Builder.State.forward_store_value Keys.repo_config_with_provenance s
                       |> Builder.State.forward_store_value Keys.repo_config_raw s
                       |> CCFun.flip Builder.State.set_orig_store s
@@ -3196,6 +3198,7 @@ struct
          Tasks.check_access_control_repo_config
     |> Hmap.add (coerce Keys.check_account_status_expired) Tasks.check_account_status_expired
     |> Hmap.add (coerce Keys.check_account_tier) Tasks.check_account_tier
+    |> Hmap.add (coerce Keys.comment_id) Tasks.comment_id
     |> Hmap.add
          (coerce Keys.check_conflicting_apply_work_manifests)
          Tasks.check_conflicting_apply_work_manifests

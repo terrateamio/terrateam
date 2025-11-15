@@ -8,24 +8,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   module Keys = Terrat_vcs_event_evaluator2_targets.Make (S)
   module Hmap = Keys.Hmap
 
-  type repo_config_fetch_err = Terrat_vcs_provider2.fetch_repo_config_with_provenance_err
-  [@@deriving show]
-
-  type err =
-    [ `Missing_dep_err of string
-    | `Error
-    | `Closed
-    | repo_config_fetch_err
-    | Terrat_change_match3.synthesize_config_err
-    | `Suspend_eval of string
-    | `Work_manifest_err of Uuidm.t
-    | `Noop
-    | `Loop
-    | Pgsql_io.err
-    | Pgsql_pool.err
-    | Str_template.err
-    ]
-  [@@deriving show]
+  type err = Keys.err [@@deriving show]
 
   module B = struct
     module Key_repr = struct
@@ -39,15 +22,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     let key_repr_of_key = Hmap.Key.hide_type
 
     module C = struct
-      type 'a t = ('a, err) result Abb.Future.t
+      type 'a t = 'a Abb.Future.t
 
-      let return v = Abb.Future.return (Ok v)
-      let ( >>= ) = Irm.( >>= )
+      let return v = Abb.Future.return v
+      let ( >>= ) = Abb.Future.Infix_monad.( >>= )
 
       let protect f =
         let open Abb.Future.Infix_monad in
         (* Wrap ret in another deferred so that it can be unwrapped with (>>=) *)
-        f () >>= fun ret -> Abb.Future.return (Ok (Abb.Future.return ret))
+        f () >>= fun ret -> Abb.Future.return (Abb.Future.return ret)
     end
 
     module Notify = struct
@@ -64,12 +47,12 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         let p = Abb.Future.Promise.create () in
         let fut = Abb.Future.Promise.future p in
         t := (fut, p);
-        Abb.Future.Promise.set notify () >>= fun () -> Abb.Future.return (Ok ())
+        Abb.Future.Promise.set notify () >>= fun () -> Abb.Future.return ()
 
       let wait t =
         let open Abb.Future.Infix_monad in
         let wait, _ = !t in
-        wait >>= fun () -> Abb.Future.return (Ok ())
+        wait >>= fun () -> Abb.Future.return ()
     end
 
     module State = struct
@@ -85,14 +68,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
 
       let set_k t k v =
         t.store <- Hmap.add k v t.store;
-        Abb.Future.return (Ok ())
+        Abb.Future.return ()
 
       let get_k t k =
         match Hmap.find k t.store with
-        | Some v -> Abb.Future.return (Ok v)
-        | None -> Abb.Future.return (Error (`Missing_dep_err (Hmap.Key.info k)))
+        | Some v -> Abb.Future.return v
+        | None -> raise (Failure ("Missing_dep_err " ^ Hmap.Key.info k))
 
-      let get_k_opt t k = Abb.Future.return (Ok (Hmap.find k t.store))
+      let get_k_opt t k = Abb.Future.return (Hmap.find k t.store)
     end
   end
 
@@ -106,7 +89,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           if is_dirty then
             s.B.State.dirty <-
               CCList.filter CCFun.(B.Key_repr.equal (B.key_repr_of_key k) %> not) s.B.State.dirty;
-          Abb.Future.return (Ok is_dirty));
+          Abb.Future.return is_dirty);
     }
 
   module State = struct
@@ -144,7 +127,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   let log_id state = state.B.State.log_id
 
   let make_tasks tasks_map =
-    { Bs.Tasks.get = (fun s k -> Abb.Future.return (Ok (Hmap.find (coerce_to_task k) tasks_map))) }
+    { Bs.Tasks.get = (fun s k -> Abb.Future.return (Hmap.find (coerce_to_task k) tasks_map)) }
 
   let eval s k =
     Abbs_time_it.run
