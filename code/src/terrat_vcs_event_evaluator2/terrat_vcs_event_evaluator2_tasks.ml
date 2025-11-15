@@ -2548,7 +2548,7 @@ struct
             fetch Keys.check_pull_request_state
             >>= fun () ->
             Abbs_future_combinators.Infix_result_app.(
-              (fun () () () () () () () () () () () -> ())
+              (fun () () () () () () () () () () _ _ -> ())
               <$> fetch Keys.check_access_control_ci_change
               <*> fetch Keys.check_access_control_files
               <*> fetch Keys.check_access_control_repo_config
@@ -2559,7 +2559,9 @@ struct
               <*> fetch Keys.check_merge_conflict
               <*> fetch Keys.check_conflicting_plan_work_manifests
               <*> fetch Keys.store_stacks
-              <*> fetch Keys.react_to_comment)
+                  (* Ensure that various information is built before trying to run the plan *)
+              <*> fetch Keys.branch_dirspaces
+              <*> fetch Keys.dest_branch_dirspaces)
           in
           let open Abb.Future.Infix_monad in
           run
@@ -2647,7 +2649,7 @@ struct
             fetch Keys.check_pull_request_state
             >>= fun () ->
             Abbs_future_combinators.Infix_result_app.(
-              (fun () () () () () () () () () () () () () -> ())
+              (fun () () () () () () () () () () () () _ _ -> ())
               <$> fetch Keys.check_access_control_ci_change
               <*> fetch Keys.check_access_control_apply
               <*> fetch Keys.check_access_control_files
@@ -2660,7 +2662,9 @@ struct
               <*> fetch Keys.check_gates
               <*> fetch Keys.check_merge_conflict
               <*> fetch Keys.check_pull_request_state
-              <*> fetch Keys.react_to_comment)
+              (* Ensure that various information is built before trying to run the plan *)
+              <*> fetch Keys.branch_dirspaces
+              <*> fetch Keys.dest_branch_dirspaces)
           in
           let open Abb.Future.Infix_monad in
           run
@@ -2910,12 +2914,14 @@ struct
           let open Irm in
           fetch Keys.job
           >>= fun job ->
+          fetch Keys.react_to_comment
+          >>= fun () ->
           let go =
             match job.Tjc.Job.type_ with
-            | Tjc.Job.Type_.Apply _ | Tjc.Job.Type_.Autoapply ->
-                fetch Keys.can_run_apply >>= fun () -> fetch Keys.iter_job
-            | Tjc.Job.Type_.Autoplan | Tjc.Job.Type_.Plan _ ->
-                fetch Keys.can_run_plan >>= fun () -> fetch Keys.iter_job
+            | Tjc.Job.Type_.Apply _
+            | Tjc.Job.Type_.Autoapply
+            | Tjc.Job.Type_.Autoplan
+            | Tjc.Job.Type_.Plan _ -> fetch Keys.iter_job
             | Tjc.Job.Type_.Repo_config -> fetch Keys.publish_repo_config
             | Tjc.Job.Type_.Unlock _ -> fetch Keys.publish_unlock
             | Tjc.Job.Type_.Gate_approval _ -> fetch Keys.store_gate_approval
