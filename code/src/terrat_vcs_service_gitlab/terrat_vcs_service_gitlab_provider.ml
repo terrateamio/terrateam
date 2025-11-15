@@ -214,6 +214,9 @@ module Db = struct
         //
         (* runs_on *)
         Ret.(option (ud' (CCOption.wrap Yojson.Safe.from_string)))
+        //
+        (* branch *)
+        Ret.(option text)
         /^ select_work_manifest_query
         /% Var.uuid "id")
 
@@ -725,10 +728,12 @@ module Db = struct
                 name
                 environment
                 runs_on
+                branch
               ->
               {
                 Wm.account = Api.Account.make (CCInt64.to_int installation_id);
                 base_ref;
+                branch;
                 branch_ref;
                 changes;
                 completed_at;

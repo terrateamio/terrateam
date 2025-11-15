@@ -378,7 +378,7 @@ struct
           })
       changes
 
-  let create ~dest_branch_ref ~branch_ref op s { Bs.Fetcher.fetch } =
+  let create ~dest_branch_ref ~branch_ref ~branch op s { Bs.Fetcher.fetch } =
     let open Irm in
     fetch Keys.account
     >>= fun account ->
@@ -466,6 +466,7 @@ struct
           {
             Wm.account;
             base_ref = S.Api.Ref.to_string dest_branch_ref;
+            branch = Some (S.Api.Ref.to_string branch);
             branch_ref = S.Api.Ref.to_string branch_ref;
             changes;
             completed_at = None;
@@ -525,9 +526,10 @@ struct
       && branch_ref = S.Api.Ref.to_string branch_ref'
       && steps = [ Wm.Step.Plan ]
 
-    let create ~dest_branch_ref ~branch_ref s ({ Bs.Fetcher.fetch } as fetcher) =
+    let create ~dest_branch_ref ~branch_ref ~branch s ({ Bs.Fetcher.fetch } as fetcher) =
       let open Irm in
-      fetch Keys.can_run_plan >>= fun () -> create ~dest_branch_ref ~branch_ref `Plan s fetcher
+      fetch Keys.can_run_plan
+      >>= fun () -> create ~dest_branch_ref ~branch_ref ~branch `Plan s fetcher
 
     let initiate ({ Wm.id; _ } as work_manifest) s { Bs.Fetcher.fetch } =
       let open Irm in
@@ -802,12 +804,13 @@ struct
       | Wmr.Work_manifest_build_result_failure _ -> assert false
       | Wmr.Work_manifest_build_tree_result _ -> assert false
 
-    let run ~dest_branch_ref ~branch_ref ~name =
+    let run ~dest_branch_ref ~branch_ref ~branch ~name =
       Wm_sm.run
         ~name
         ~eq:(eq dest_branch_ref branch_ref)
         ~dest_branch_ref
         ~branch_ref
+        ~branch
         ~create
         ~initiate
         ~fail
@@ -820,9 +823,10 @@ struct
       && branch_ref = S.Api.Ref.to_string branch_ref'
       && steps = [ Wm.Step.Apply ]
 
-    let create ~dest_branch_ref ~branch_ref s ({ Bs.Fetcher.fetch } as fetcher) =
+    let create ~dest_branch_ref ~branch_ref ~branch s ({ Bs.Fetcher.fetch } as fetcher) =
       let open Irm in
-      fetch Keys.can_run_apply >>= fun () -> create ~dest_branch_ref ~branch_ref `Apply s fetcher
+      fetch Keys.can_run_apply
+      >>= fun () -> create ~dest_branch_ref ~branch_ref ~branch `Apply s fetcher
 
     let initiate ({ Wm.id; _ } as work_manifest) s { Bs.Fetcher.fetch } =
       let open Irm in
@@ -945,12 +949,13 @@ struct
 
     let result = Plan.result
 
-    let run ~dest_branch_ref ~branch_ref ~name =
+    let run ~dest_branch_ref ~branch_ref ~branch ~name =
       Wm_sm.run
         ~name
         ~eq:(eq dest_branch_ref branch_ref)
         ~dest_branch_ref
         ~branch_ref
+        ~branch
         ~create
         ~initiate
         ~fail

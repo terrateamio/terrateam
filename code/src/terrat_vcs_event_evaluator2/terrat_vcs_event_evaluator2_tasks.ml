@@ -605,7 +605,15 @@ struct
           >>= fun dest_branch_ref ->
           fetch Keys.branch_ref
           >>= fun branch_ref ->
-          Repo_tree_wm.run ~dest_branch_ref ~branch_ref ~name:"repo_tree_branch_wm" s fetcher
+          fetch Keys.branch_name
+          >>= fun branch ->
+          Repo_tree_wm.run
+            ~dest_branch_ref
+            ~branch_ref
+            ~branch
+            ~name:"repo_tree_branch_wm"
+            s
+            fetcher
           >>= function
           | [] -> assert false
           | wm :: _ ->
@@ -653,9 +661,12 @@ struct
           >>= fun dest_branch_ref ->
           fetch Keys.branch_ref
           >>= fun branch_ref ->
+          fetch Keys.branch_name
+          >>= fun branch ->
           Build_config_wm.run
             ~dest_branch_ref
             ~branch_ref
+            ~branch
             ~name:"repo_build_config_branch_wm"
             s
             fetcher
@@ -684,9 +695,12 @@ struct
           let open Irm in
           fetch Keys.dest_branch_ref
           >>= fun dest_branch_ref ->
+          fetch Keys.dest_branch_name
+          >>= fun branch ->
           Repo_tree_wm.run
             ~dest_branch_ref
             ~branch_ref:dest_branch_ref
+            ~branch
             ~name:"repo_tree_dest_branch_wm"
             s
             fetcher
@@ -725,9 +739,12 @@ struct
           let open Irm in
           fetch Keys.dest_branch_ref
           >>= fun dest_branch_ref ->
+          fetch Keys.dest_branch_name
+          >>= fun branch ->
           Build_config_wm.run
             ~dest_branch_ref
             ~branch_ref:dest_branch_ref
+            ~branch
             ~name:"repo_build_config_dest_branch_wm"
             s
             fetcher
@@ -1108,7 +1125,9 @@ struct
           >>= fun dest_branch_ref ->
           fetch Keys.branch_ref
           >>= fun branch_ref ->
-          Indexer_wm.run ~dest_branch_ref ~branch_ref ~name:"repo_index_branch_wm" s fetcher
+          fetch Keys.branch_name
+          >>= fun branch ->
+          Indexer_wm.run ~dest_branch_ref ~branch_ref ~branch ~name:"repo_index_branch_wm" s fetcher
           >>= function
           | [] -> assert false
           | wm :: _ ->
@@ -1133,13 +1152,35 @@ struct
           >>= function
           | Some { I.index; _ } -> Abb.Future.return (Ok index)
           | None -> (
-              fetch Keys.repo_index_branch_wm_completed
-              >>= fun _ ->
-              Builder.run_db s ~f:(fun db ->
-                  S.Db.query_index ~request_id:(Builder.log_id s) db account working_branch_ref)
+              Fc.Result.all3
+                (fetch Keys.repo_config_raw)
+                (fetch Keys.repo_tree_branch)
+                (fetch Keys.synthesized_config_empty_index)
+              >>= fun ((_, repo_config_raw), repo_tree, config) ->
+              Abbs_time_it.run
+                (fun t ->
+                  Logs.info (fun m -> m "%s : MATCH_DIFF_LIST : time=%f" (Builder.log_id s) t))
+                (fun () ->
+                  Abbs_future_combinators.to_result
+                  @@ Abb.Thread.run (fun () ->
+                         CCList.filter
+                           (Terrat_change_match3.match_tag_query ~tag_query:Terrat_tag_query.any)
+                           (CCList.flatten
+                              (Terrat_change_match3.match_diff_list
+                                 config
+                                 (CCList.map
+                                    (fun filename -> Terrat_change.Diff.(Change { filename }))
+                                    repo_tree)))))
               >>= function
-              | Some { I.index; _ } -> Abb.Future.return (Ok index)
-              | None -> assert false))
+              | [] -> Abb.Future.return (Ok Terrat_base_repo_config_v1.Index.empty)
+              | _ -> (
+                  fetch Keys.repo_index_branch_wm_completed
+                  >>= fun _ ->
+                  Builder.run_db s ~f:(fun db ->
+                      S.Db.query_index ~request_id:(Builder.log_id s) db account working_branch_ref)
+                  >>= function
+                  | Some { I.index; _ } -> Abb.Future.return (Ok index)
+                  | None -> assert false)))
 
     let repo_index_branch =
       run ~name:"repo_index_branch" (fun s { Bs.Fetcher.fetch } ->
@@ -1156,9 +1197,12 @@ struct
           let open Irm in
           fetch Keys.dest_branch_ref
           >>= fun dest_branch_ref ->
+          fetch Keys.dest_branch_name
+          >>= fun branch ->
           Indexer_wm.run
             ~dest_branch_ref
             ~branch_ref:dest_branch_ref
+            ~branch
             ~name:"repo_index_dest_branch_wm"
             s
             fetcher
@@ -1182,13 +1226,35 @@ struct
           >>= function
           | Some { I.index; _ } -> Abb.Future.return (Ok index)
           | None -> (
-              fetch Keys.repo_index_dest_branch_wm_completed
-              >>= fun _ ->
-              Builder.run_db s ~f:(fun db ->
-                  S.Db.query_index ~request_id:(Builder.log_id s) db account dest_branch_ref)
+              Fc.Result.all3
+                (fetch Keys.repo_config_dest_branch_raw)
+                (fetch Keys.repo_tree_dest_branch)
+                (fetch Keys.synthesized_config_empty_index)
+              >>= fun ((_, repo_config_raw), repo_tree, config) ->
+              Abbs_time_it.run
+                (fun t ->
+                  Logs.info (fun m -> m "%s : MATCH_DIFF_LIST : time=%f" (Builder.log_id s) t))
+                (fun () ->
+                  Abbs_future_combinators.to_result
+                  @@ Abb.Thread.run (fun () ->
+                         CCList.filter
+                           (Terrat_change_match3.match_tag_query ~tag_query:Terrat_tag_query.any)
+                           (CCList.flatten
+                              (Terrat_change_match3.match_diff_list
+                                 config
+                                 (CCList.map
+                                    (fun filename -> Terrat_change.Diff.(Change { filename }))
+                                    repo_tree)))))
               >>= function
-              | Some { I.index; _ } -> Abb.Future.return (Ok index)
-              | None -> assert false))
+              | [] -> Abb.Future.return (Ok Terrat_base_repo_config_v1.Index.empty)
+              | _ -> (
+                  fetch Keys.repo_index_dest_branch_wm_completed
+                  >>= fun _ ->
+                  Builder.run_db s ~f:(fun db ->
+                      S.Db.query_index ~request_id:(Builder.log_id s) db account dest_branch_ref)
+                  >>= function
+                  | Some { I.index; _ } -> Abb.Future.return (Ok index)
+                  | None -> assert false)))
 
     let repo_index_dest_branch =
       run ~name:"repo_index_dest_branch" (fun s { Bs.Fetcher.fetch } ->
@@ -2599,8 +2665,10 @@ struct
           >>= fun dest_branch_ref ->
           fetch Keys.branch_ref
           >>= fun branch_ref ->
+          fetch Keys.branch_name
+          >>= fun branch ->
           let open Abb.Future.Infix_monad in
-          Tf_op_wm.Plan.run ~dest_branch_ref ~branch_ref ~name:"plan_wm" s fetcher
+          Tf_op_wm.Plan.run ~dest_branch_ref ~branch_ref ~branch ~name:"plan_wm" s fetcher
           >>= function
           | Ok wms ->
               (* Do something useful here? *)
@@ -2702,7 +2770,9 @@ struct
           >>= fun dest_branch_ref ->
           fetch Keys.branch_ref
           >>= fun branch_ref ->
-          Tf_op_wm.Apply.run ~dest_branch_ref ~branch_ref ~name:"apply_wm" s fetcher
+          fetch Keys.branch_name
+          >>= fun branch ->
+          Tf_op_wm.Apply.run ~dest_branch_ref ~branch_ref ~branch ~name:"apply_wm" s fetcher
           >>= fun wms ->
           (* Do something useful here? *)
           Abb.Future.return (Ok ()))

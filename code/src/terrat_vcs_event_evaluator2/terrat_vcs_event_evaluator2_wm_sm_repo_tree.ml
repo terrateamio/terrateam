@@ -21,7 +21,7 @@ struct
     && branch_ref = S.Api.Ref.to_string branch_ref'
     && steps = [ Wm.Step.Build_tree ]
 
-  let create ~dest_branch_ref ~branch_ref s { Bs.Fetcher.fetch } =
+  let create ~dest_branch_ref ~branch_ref ~branch s { Bs.Fetcher.fetch } =
     let open Irm in
     fetch Keys.account
     >>= fun account ->
@@ -35,6 +35,7 @@ struct
       {
         Wm.account;
         base_ref = S.Api.Ref.to_string dest_branch_ref;
+        branch = Some (S.Api.Ref.to_string branch);
         branch_ref = S.Api.Ref.to_string branch_ref;
         changes = [];
         completed_at = None;
@@ -245,12 +246,13 @@ struct
         assert false
     | Terrat_api_components_work_manifest_result.Work_manifest_index_result _ -> assert false
 
-  let run ~dest_branch_ref ~branch_ref ~name =
+  let run ~dest_branch_ref ~branch_ref ~branch ~name =
     Wm_sm.run
       ~name
       ~eq:(eq dest_branch_ref branch_ref)
       ~dest_branch_ref
       ~branch_ref
+      ~branch
       ~create
       ~initiate
       ~fail

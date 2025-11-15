@@ -8,6 +8,7 @@ module Make
     val run :
       dest_branch_ref:S.Api.Ref.t ->
       branch_ref:S.Api.Ref.t ->
+      branch:S.Api.Ref.t ->
       name:string ->
       Builder.B.State.t ->
       Builder.Bs.Fetcher.t ->
@@ -18,6 +19,7 @@ module Make
     val run :
       dest_branch_ref:S.Api.Ref.t ->
       branch_ref:S.Api.Ref.t ->
+      branch:S.Api.Ref.t ->
       name:string ->
       Builder.B.State.t ->
       Builder.Bs.Fetcher.t ->
