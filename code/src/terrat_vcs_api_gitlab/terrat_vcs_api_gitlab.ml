@@ -162,7 +162,7 @@ module Account = struct
     let to_string = CCInt.to_string
   end
 
-  type t = { installation_id : int } [@@deriving make, yojson, eq]
+  type t = { installation_id : int } [@@deriving make, show, yojson, eq]
 
   let make installation_id = { installation_id }
   let id t = t.installation_id
@@ -196,7 +196,7 @@ module Repo = struct
     owner : string;
     name : string;
   }
-  [@@deriving eq, yojson]
+  [@@deriving show, eq, yojson]
 
   let make ~id ~name ~owner () = { id; owner; name }
   let name t = t.name
@@ -219,7 +219,7 @@ module Remote_repo = struct
 end
 
 module Ref = struct
-  type t = string [@@deriving eq, yojson]
+  type t = string [@@deriving show, eq, yojson]
 
   let to_string = CCFun.id
   let of_string = CCFun.id
@@ -236,7 +236,7 @@ module Pull_request = struct
   include Terrat_pull_request
 
   type ('diff, 'checks) t = (Id.t, 'diff, 'checks, Repo.t, Ref.t) Terrat_pull_request.t
-  [@@deriving to_yojson]
+  [@@deriving show, to_yojson]
 end
 
 module Client = struct
