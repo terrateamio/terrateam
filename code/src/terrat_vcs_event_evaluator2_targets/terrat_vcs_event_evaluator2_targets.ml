@@ -92,8 +92,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   (* Ya basic *)
   let account : S.Api.Account.t Key.t = Hmap.Key.create "account"
   let account_status : P2.Account_status.t Key.t = Hmap.Key.create "account_status"
-  let branch_name : S.Api.Ref.t Key.t = Hmap.Key.create "branch_name"
-  let branch_ref : S.Api.Ref.t Key.t = Hmap.Key.create "branch_ref"
   let client : S.Api.Client.t Key.t = Hmap.Key.create "client"
 
   let context : (S.Api.Pull_request.Id.t, S.Api.Ref.t) Terrat_job_context.Context.t Key.t =
@@ -101,8 +99,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
 
   let context_id : Uuidm.t Key.t = Hmap.Key.create "context_id"
   let default_branch_sha : S.Api.Ref.t Key.t = Hmap.Key.create "default_branch_sha"
+
+  (* Different ways to access the branch we're working with  *)
+  let branch_name : S.Api.Ref.t Key.t = Hmap.Key.create "branch_name"
+  let branch_ref : S.Api.Ref.t Key.t = Hmap.Key.create "branch_ref"
   let dest_branch_name : S.Api.Ref.t Key.t = Hmap.Key.create "dest_branch_name"
   let dest_branch_ref : S.Api.Ref.t Key.t = Hmap.Key.create "dest_branch_ref"
+  let working_branch_ref : S.Api.Ref.t Key.t = Hmap.Key.create "working_branch_ref"
+  let working_branch_name : S.Api.Ref.t Key.t = Hmap.Key.create "working_branch_name"
   let initiator : Terrat_work_manifest3.Initiator.t Key.t = Hmap.Key.create "initiator"
   let is_interactive : bool Key.t = Hmap.Key.create "is_interactive"
 
@@ -118,7 +122,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     Hmap.Key.create "target"
 
   let user : S.Api.User.t option Key.t = Hmap.Key.create "user"
-  let working_branch_ref : S.Api.Ref.t Key.t = Hmap.Key.create "working_branch_ref"
 
   (* Matches *)
   let matches : Matches.t Key.t = Hmap.Key.create "matches"

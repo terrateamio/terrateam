@@ -496,6 +496,8 @@ struct
         | true ->
             fetch Keys.client
             >>= fun client ->
+            fetch Keys.branch_ref
+            >>= fun branch_ref ->
             create_op_commit_checks
               (Builder.log_id s)
               (Builder.State.config s)

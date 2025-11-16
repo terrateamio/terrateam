@@ -259,6 +259,17 @@ struct
               Abb.Future.return (Ok (S.Api.Pull_request.branch_ref pull_request))
           | Terrat_pull_request.State.Merged _ -> fetch Keys.default_branch_sha)
 
+    let working_branch_name =
+      run ~name:"working_branch_name" (fun s { Bs.Fetcher.fetch } ->
+          let open Irm in
+          fetch Keys.pull_request
+          >>= fun pull_request ->
+          match S.Api.Pull_request.state pull_request with
+          | Terrat_pull_request.State.Open _ | Terrat_pull_request.State.Closed ->
+              Abb.Future.return (Ok (S.Api.Pull_request.branch_name pull_request))
+          | Terrat_pull_request.State.Merged _ ->
+              Abb.Future.return (Ok (S.Api.Pull_request.base_branch_name pull_request)))
+
     let matches =
       run ~name:"matches" (fun s { Bs.Fetcher.fetch } ->
           let compute_matches
@@ -603,9 +614,9 @@ struct
           let open Irm in
           fetch Keys.dest_branch_ref
           >>= fun dest_branch_ref ->
-          fetch Keys.branch_ref
+          fetch Keys.working_branch_ref
           >>= fun branch_ref ->
-          fetch Keys.branch_name
+          fetch Keys.working_branch_name
           >>= fun branch ->
           Repo_tree_wm.run
             ~dest_branch_ref
@@ -659,9 +670,9 @@ struct
           let open Irm in
           fetch Keys.dest_branch_ref
           >>= fun dest_branch_ref ->
-          fetch Keys.branch_ref
+          fetch Keys.working_branch_ref
           >>= fun branch_ref ->
-          fetch Keys.branch_name
+          fetch Keys.working_branch_name
           >>= fun branch ->
           Build_config_wm.run
             ~dest_branch_ref
@@ -789,7 +800,7 @@ struct
       run ~name:"repo_tree_dest_branch" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
           let module V1 = Terrat_base_repo_config_v1 in
-          fetch Keys.repo_config_raw'
+          fetch Keys.repo_config_dest_branch_raw'
           >>= fun (_, repo_config_raw) ->
           let tree_builder = V1.tree_builder repo_config_raw in
           if tree_builder.V1.Tree_builder.enabled then fetch Keys.built_repo_tree_dest_branch
@@ -1123,9 +1134,9 @@ struct
           let open Irm in
           fetch Keys.dest_branch_ref
           >>= fun dest_branch_ref ->
-          fetch Keys.branch_ref
+          fetch Keys.working_branch_ref
           >>= fun branch_ref ->
-          fetch Keys.branch_name
+          fetch Keys.working_branch_name
           >>= fun branch ->
           Indexer_wm.run ~dest_branch_ref ~branch_ref ~branch ~name:"repo_index_branch_wm" s fetcher
           >>= function
@@ -1260,7 +1271,7 @@ struct
       run ~name:"repo_index_dest_branch" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
           let module V1 = Terrat_base_repo_config_v1 in
-          fetch Keys.repo_config_raw
+          fetch Keys.repo_config_dest_branch_raw
           >>= fun (_, repo_config_raw) ->
           let indexer = V1.indexer repo_config_raw in
           if indexer.V1.Indexer.enabled then fetch Keys.built_repo_index_dest_branch
@@ -2663,9 +2674,9 @@ struct
           >>= fun () ->
           fetch Keys.dest_branch_ref
           >>= fun dest_branch_ref ->
-          fetch Keys.branch_ref
+          fetch Keys.working_branch_ref
           >>= fun branch_ref ->
-          fetch Keys.branch_name
+          fetch Keys.working_branch_name
           >>= fun branch ->
           let open Abb.Future.Infix_monad in
           Tf_op_wm.Plan.run ~dest_branch_ref ~branch_ref ~branch ~name:"plan_wm" s fetcher
@@ -2768,9 +2779,9 @@ struct
           >>= fun () ->
           fetch Keys.dest_branch_ref
           >>= fun dest_branch_ref ->
-          fetch Keys.branch_ref
+          fetch Keys.working_branch_ref
           >>= fun branch_ref ->
-          fetch Keys.branch_name
+          fetch Keys.working_branch_name
           >>= fun branch ->
           Tf_op_wm.Apply.run ~dest_branch_ref ~branch_ref ~branch ~name:"apply_wm" s fetcher
           >>= fun wms ->
@@ -3352,6 +3363,7 @@ struct
     |> Hmap.add (coerce Keys.target) Tasks.target
     |> Hmap.add (coerce Keys.update_context_for_pull_request) Tasks.update_context_for_pull_request
     |> Hmap.add (coerce Keys.work_manifests_for_job) Tasks.work_manifests_for_job
+    |> Hmap.add (coerce Keys.working_branch_name) Tasks.working_branch_name
     |> Hmap.add (coerce Keys.working_branch_ref) Tasks.working_branch_ref
     |> Hmap.add (coerce Keys.working_layer) Tasks.working_layer
     |> Hmap.add (coerce Keys.working_set_matches) Tasks.working_set_matches

@@ -222,17 +222,26 @@ struct
                 Abb.Future.return (Ok [])
             | wms ->
                 CCList.iter
-                  (fun { Terrat_work_manifest3.id; base_ref; branch_ref; environment; runs_on; _ }
+                  (fun {
+                         Terrat_work_manifest3.id;
+                         base_ref;
+                         branch_ref;
+                         environment;
+                         runs_on;
+                         steps;
+                         _;
+                       }
                      ->
                     Logs.info (fun m ->
                         m
                           "%s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s : \
-                           env=%s : runs_on=%s"
+                           run_type=%s :env=%s : runs_on=%s"
                           (Builder.log_id s)
                           Uuidm.pp
                           id
                           base_ref
                           branch_ref
+                          (CCOption.map_or ~default:"" Wm.Step.to_string @@ CCList.head_opt steps)
                           (CCOption.get_or ~default:"" environment)
                           (CCOption.map_or ~default:"" Yojson.Safe.to_string runs_on)))
                   wms;
