@@ -161,16 +161,14 @@ struct
           Msg.Unexpected_temporary_err
     | false -> Abb.Future.return (Ok ())
 
-  let result work_manifest result s { Bs.Fetcher.fetch } =
+  let result ~branch_ref work_manifest result s { Bs.Fetcher.fetch } =
     let open Irm in
     match result with
     | Wmr.Work_manifest_build_tree_result { Bt.files } -> (
         fetch Keys.account
         >>= fun account ->
-        fetch Keys.working_branch_ref
-        >>= fun working_branch_ref ->
         Builder.run_db s ~f:(fun db ->
-            S.Db.store_repo_tree ~request_id:(Builder.log_id s) db account working_branch_ref files)
+            S.Db.store_repo_tree ~request_id:(Builder.log_id s) db account branch_ref files)
         >>= fun () ->
         fetch Keys.is_interactive
         >>= function
@@ -256,5 +254,5 @@ struct
       ~create
       ~initiate
       ~fail
-      ~result
+      ~result:(result ~branch_ref)
 end

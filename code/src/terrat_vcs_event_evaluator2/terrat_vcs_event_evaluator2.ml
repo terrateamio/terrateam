@@ -70,44 +70,49 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   let rec run_next_pending_compute ~request_id ~config ~storage () =
     let module Wm = Terrat_work_manifest3 in
     let open Abbs_future_combinators.Infix_result_monad in
-    Pgsql_pool.with_conn storage ~f:(fun db ->
-        Pgsql_io.tx db ~f:(fun () ->
-            S.Db.query_next_pending_work_manifest ~request_id db
-            >>= function
-            | Some wm -> (
-                Logs.info (fun m -> m "%s : RUN_WORK_MANIFEST : id=%a" request_id Uuidm.pp wm.Wm.id);
-                S.Job_context.Compute_node.create
-                  ~request_id
-                  ~id:wm.Wm.id
-                  ~capabilities:{ Tjc.Compute_node.Capabilities.flags = []; sha = wm.Wm.branch_ref }
-                  db
-                >>= fun compute_node ->
-                S.Api.create_client ~request_id config wm.Wm.account db
-                >>= fun client ->
-                let open Abb.Future.Infix_monad in
-                S.Work_manifest.run ~request_id config client wm
+    Abbs_time_it.run
+      (fun t -> Logs.info (fun m -> m "%s : RUN_WORK_MANIFEST : time=%f" request_id t))
+      (fun () ->
+        Pgsql_pool.with_conn storage ~f:(fun db ->
+            Pgsql_io.tx db ~f:(fun () ->
+                S.Db.query_next_pending_work_manifest ~request_id db
                 >>= function
-                | Ok () ->
-                    let open Abbs_future_combinators.Infix_result_monad in
-                    S.Work_manifest.update_state ~request_id db wm.Wm.id Wm.State.Running
-                    >>= fun () -> Abb.Future.return (Ok `Cont)
-                | Error err ->
-                    let open Abbs_future_combinators.Infix_result_monad in
-                    S.Work_manifest.update_state ~request_id db wm.Wm.id Wm.State.Aborted
-                    >>= fun () ->
-                    S.Job_context.Compute_node.update_state
+                | Some wm -> (
+                    Logs.info (fun m ->
+                        m "%s : RUN_WORK_MANIFEST : id=%a" request_id Uuidm.pp wm.Wm.id);
+                    S.Job_context.Compute_node.create
                       ~request_id
-                      ~compute_node_id:compute_node.Tjc.Compute_node.id
+                      ~id:wm.Wm.id
+                      ~capabilities:
+                        { Tjc.Compute_node.Capabilities.flags = []; sha = wm.Wm.branch_ref }
                       db
-                      Tjc.Compute_node.State.Terminated
-                    >>= fun () ->
-                    run_work_manifest_event
-                      ~request_id
-                      ~config
-                      ~db
-                      (Keys.Work_manifest_event.Fail { work_manifest = wm })
-                    >>= fun () -> Abb.Future.return (Ok `Cont))
-            | None -> Abb.Future.return (Ok `Done)))
+                    >>= fun compute_node ->
+                    S.Api.create_client ~request_id config wm.Wm.account db
+                    >>= fun client ->
+                    let open Abb.Future.Infix_monad in
+                    S.Work_manifest.run ~request_id config client wm
+                    >>= function
+                    | Ok () ->
+                        let open Abbs_future_combinators.Infix_result_monad in
+                        S.Work_manifest.update_state ~request_id db wm.Wm.id Wm.State.Running
+                        >>= fun () -> Abb.Future.return (Ok `Cont)
+                    | Error err ->
+                        let open Abbs_future_combinators.Infix_result_monad in
+                        S.Work_manifest.update_state ~request_id db wm.Wm.id Wm.State.Aborted
+                        >>= fun () ->
+                        S.Job_context.Compute_node.update_state
+                          ~request_id
+                          ~compute_node_id:compute_node.Tjc.Compute_node.id
+                          db
+                          Tjc.Compute_node.State.Terminated
+                        >>= fun () ->
+                        run_work_manifest_event
+                          ~request_id
+                          ~config
+                          ~db
+                          (Keys.Work_manifest_event.Fail { work_manifest = wm })
+                        >>= fun () -> Abb.Future.return (Ok `Cont))
+                | None -> Abb.Future.return (Ok `Done))))
     >>= function
     | `Cont -> run_next_pending_compute ~request_id ~config ~storage ()
     | `Done -> Abb.Future.return (Ok ())
@@ -188,6 +193,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
              ~betwixt:(fun _ -> Abb.Future.return ()))
          ~finally:(fun () ->
            Abbs_future_combinators.ignore
+           @@ Abb.Future.fork
            @@ run_next_pending_compute ~request_id ~config ~storage ())
 
   let pull_request_job
@@ -274,14 +280,16 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               | None -> raise (Failure "nyi")))
     in
     let open Abb.Future.Infix_monad in
-    log_err ~request_id run
-    >>= function
-    | Ok _ ->
-        run_next_pending_compute ~request_id ~config ~storage ()
-        >>= fun _ -> Abb.Future.return (Ok ())
-    | Error _ ->
-        run_next_pending_compute ~request_id ~config ~storage ()
-        >>= fun _ -> Abb.Future.return (Error `Error)
+    Abbs_future_combinators.with_finally
+      (fun () ->
+        log_err ~request_id run
+        >>= function
+        | Ok _ -> Abb.Future.return (Ok ())
+        | Error _ -> Abb.Future.return (Error `Error))
+      ~finally:(fun () ->
+        Abbs_future_combinators.ignore
+        @@ Abb.Future.fork
+        @@ run_next_pending_compute ~request_id ~config ~storage ())
 
   let push ~request_id ~config ~storage ~account ~repo ~branch ~user () =
     (* TODO: Implement *)
