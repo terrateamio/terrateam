@@ -117,9 +117,15 @@ struct
     >>= fun dest_branch_name ->
     fetch Keys.branch_name
     >>= fun branch_name ->
-    fetch Keys.repo_tree_branch
+    let repo_config_raw', repo_tree =
+      if branch = branch_name then (Keys.repo_config_raw', Keys.repo_tree_branch)
+      else if branch = dest_branch_name then
+        (Keys.repo_config_dest_branch_raw', Keys.repo_tree_dest_branch)
+      else assert false
+    in
+    fetch repo_tree
     >>= fun repo_tree ->
-    fetch Keys.repo_config_raw'
+    fetch repo_config_raw'
     >>= fun (_, repo_config_raw) ->
     Builder.run_db s ~f:(fun db ->
         Wm_sm.create_token' ~log_id:(Builder.log_id s) (S.Api.Account.id account) id db)
@@ -194,7 +200,7 @@ struct
           Msg.Unexpected_temporary_err
     | false -> Abb.Future.return (Ok ())
 
-  let result ~branch work_manifest result s { Bs.Fetcher.fetch } =
+  let result ~branch_ref ~branch work_manifest result s { Bs.Fetcher.fetch } =
     let open Irm in
     let fail msg =
       fetch Keys.is_interactive
@@ -245,14 +251,12 @@ struct
             let open Irm in
             fetch Keys.account
             >>= fun account ->
-            fetch Keys.working_branch_ref
-            >>= fun working_branch_ref ->
             Builder.run_db s ~f:(fun db ->
                 S.Db.store_repo_config_json
                   ~request_id:(Builder.log_id s)
                   db
                   account
-                  working_branch_ref
+                  branch_ref
                   config)
             >>= fun () ->
             fetch Keys.is_interactive
@@ -307,5 +311,5 @@ struct
       ~create
       ~initiate:(initiate ~branch)
       ~fail:(fail ~branch)
-      ~result:(result ~branch)
+      ~result:(result ~branch_ref ~branch)
 end
