@@ -235,7 +235,7 @@ struct
                     Logs.info (fun m ->
                         m
                           "%s : CREATED_WORK_MANIFEST : id=%a : base_ref=%s : branch_ref=%s : \
-                           run_type=%s :env=%s : runs_on=%s"
+                           run_type=%s : env=%s : runs_on=%s"
                           (Builder.log_id s)
                           Uuidm.pp
                           id
