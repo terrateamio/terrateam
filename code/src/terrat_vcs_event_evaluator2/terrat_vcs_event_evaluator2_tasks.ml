@@ -748,6 +748,9 @@ struct
         (fun s ({ Bs.Fetcher.fetch } as fetcher) ->
           let module Wm = Terrat_work_manifest3 in
           let open Irm in
+          (* Ensure the tree is accessible, building if necessary *)
+          fetch Keys.repo_tree_dest_branch
+          >>= fun _ ->
           fetch Keys.dest_branch_ref
           >>= fun dest_branch_ref ->
           fetch Keys.dest_branch_name
@@ -813,6 +816,9 @@ struct
       run ~name:"built_repo_config_branch" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
           let module V1 = Terrat_base_repo_config_v1 in
+          (* Ensure the tree is accessible, building if necessary *)
+          fetch Keys.repo_tree_branch
+          >>= fun _ ->
           fetch Keys.account
           >>= fun account ->
           fetch Keys.branch_ref
@@ -1600,17 +1606,19 @@ struct
             >>= fun _ ->
             fetch Keys.account
             >>= fun account ->
-            fetch Keys.working_branch_ref
-            >>= fun working_branch_ref ->
+            fetch Keys.branch_ref
+            >>= fun branch_ref ->
             fetch Keys.dest_branch_ref
             >>= fun dest_branch_ref ->
+            Fc.Result.all2 (fetch Keys.repo_tree_branch) (fetch Keys.repo_tree_dest_branch)
+            >>= fun (_, _) ->
             Builder.run_db s ~f:(fun db ->
                 S.Db.query_repo_tree
                   ~request_id:(Builder.log_id s)
                   ~base_ref:dest_branch_ref
                   db
                   account
-                  working_branch_ref)
+                  branch_ref)
             >>= function
             | Some repo_tree ->
                 Abb.Future.return
@@ -1642,6 +1650,11 @@ struct
           let open Irm in
           fetch Keys.pull_request
           >>= fun pull_request ->
+          Logs.info (fun m ->
+              m
+                "%s : STORE_PULL_REQUEST : pull_number=%s"
+                (Builder.log_id s)
+                (S.Api.Pull_request.Id.to_string @@ S.Api.Pull_request.id pull_request));
           Builder.run_db s ~f:(fun db ->
               S.Db.store_pull_request ~request_id:(Builder.log_id s) db pull_request))
 
@@ -2930,6 +2943,66 @@ struct
                   Builder.eval s' Keys.iter_job)
           | None -> assert false)
 
+    let eval_pull_request_event =
+      run ~name:"eval_pull_request_event" (fun s { Bs.Fetcher.fetch } ->
+          let module E = Keys.Pull_request_event in
+          let open Irm in
+          fetch Keys.context
+          >>= fun context ->
+          fetch Keys.user
+          >>= fun user ->
+          fetch Keys.store_pull_request
+          >>= fun () ->
+          fetch Keys.pull_request_event
+          >>= fun pull_request_event ->
+          let job_type =
+            match pull_request_event with
+            | E.Open | E.Sync | E.Ready_for_review -> Some Tjc.Job.Type_.Autoplan
+            | E.Close -> Some Tjc.Job.Type_.Autoapply
+            | E.Comment { comment_id; comment } -> (
+                match comment with
+                | Terrat_comment.Apply { tag_query } -> Some (Tjc.Job.Type_.Apply { tag_query })
+                | Terrat_comment.Gate_approval { tokens } ->
+                    Some (Tjc.Job.Type_.Gate_approval { tokens })
+                | Terrat_comment.Plan { tag_query } -> Some (Tjc.Job.Type_.Plan { tag_query })
+                | Terrat_comment.Repo_config -> Some Tjc.Job.Type_.Repo_config
+                | Terrat_comment.Unlock unlocks -> Some (Tjc.Job.Type_.Unlock unlocks)
+                | Terrat_comment.Help
+                | Terrat_comment.Index
+                | Terrat_comment.Apply_autoapprove _
+                | Terrat_comment.Apply_force _
+                | Terrat_comment.Feedback _ -> raise (Failure "nyi"))
+          in
+          match job_type with
+          | Some job_type ->
+              let comment_id =
+                match pull_request_event with
+                | E.Comment { comment_id; _ } -> Some comment_id
+                | _ -> None
+              in
+              Builder.run_db s ~f:(fun db ->
+                  S.Job_context.Job.create ~request_id:(Builder.log_id s) db job_type context user)
+              >>= fun job ->
+              Logs.info (fun m ->
+                  m
+                    "%s : target=%s : context_id=%a : job_id=%a"
+                    (Builder.log_id s)
+                    (Hmap.Key.info Keys.eval_job)
+                    Uuidm.pp
+                    context.Tjc.Context.id
+                    Uuidm.pp
+                    job.Tjc.Job.id);
+              let s' =
+                s
+                |> Builder.State.orig_store
+                |> Keys.Key.add Keys.job job
+                |> Keys.Key.add Keys.comment_id comment_id
+                |> CCFun.flip Builder.State.set_orig_store s
+                |> Builder.State.set_log_id (Uuidm.to_string job.Tjc.Job.id)
+              in
+              Builder.eval s' Keys.eval_job
+          | None -> Abb.Future.return (Error `Noop))
+
     let iter_job =
       run ~name:"iter_job" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
@@ -3074,6 +3147,75 @@ struct
               checks
         | _ -> Abb.Future.return (Ok ())
       in
+      let maybe_automerge s { Bs.Fetcher.fetch } =
+        let module V1 = Terrat_base_repo_config_v1 in
+        let module Am = V1.Automerge in
+        let open Irm in
+        fetch Keys.all_matches
+        >>= function
+        | [] -> Abb.Future.return (Ok ())
+        | _ :: _ ->
+            fetch Keys.repo_config
+            >>= fun repo_config ->
+            let {
+              Am.enabled;
+              delete_branch = delete_branch';
+              merge_strategy;
+              require_explicit_apply;
+            } =
+              V1.automerge repo_config
+            in
+            fetch Keys.job
+            >>= fun job ->
+            let is_plan =
+              match job.Tjc.Job.type_ with
+              | Tjc.Job.Type_.(Plan _ | Autoplan) -> true
+              | _ -> false
+            in
+            if enabled && ((not require_explicit_apply) || is_plan) then (
+              fetch Keys.client
+              >>= fun client ->
+              fetch Keys.user
+              >>= fun user ->
+              fetch Keys.pull_request
+              >>= fun pull_request ->
+              let open Abb.Future.Infix_monad in
+              Logs.info (fun m ->
+                  m
+                    "%s : MERGE_PULL_REQUEST : METHOD=%s"
+                    (Builder.log_id s)
+                    (Am.Merge_strategy.to_string merge_strategy));
+              S.Api.merge_pull_request
+                ~request_id:(Builder.log_id s)
+                client
+                pull_request
+                merge_strategy
+              >>= function
+              | Ok () ->
+                  if delete_branch' then (
+                    let repo = S.Api.Pull_request.repo pull_request in
+                    let branch =
+                      S.Api.Ref.to_string (S.Api.Pull_request.branch_name pull_request)
+                    in
+                    Logs.info (fun m ->
+                        m
+                          "%s : DELETE_BRANCH : repo=%s : branch=%s"
+                          (Builder.log_id s)
+                          (S.Api.Repo.to_string repo)
+                          branch);
+                    S.Api.delete_branch ~request_id:(Builder.log_id s) client repo branch
+                    >>= fun _ -> Abb.Future.return (Ok ()))
+                  else Abb.Future.return (Ok ())
+              | Error (`Merge_err reason) ->
+                  S.Comment.publish_comment
+                    ~request_id:(Builder.log_id s)
+                    client
+                    (CCOption.map_or ~default:"" S.Api.User.to_string user)
+                    pull_request
+                    (Msg.Automerge_failure (pull_request, reason))
+              | Error `Error as err -> Abb.Future.return err)
+            else Abb.Future.return (Ok ())
+      in
       let can_stack_auto_apply =
         let module V1 = Terrat_base_repo_config_v1 in
         let module S = V1.Stacks in
@@ -3087,7 +3229,9 @@ struct
           let open Irm in
           fetch Keys.all_unapplied_matches
           >>= function
-          | [] -> maybe_create_completed_apply_check s fetcher
+          | [] ->
+              Logs.info (fun m -> m "%s : ALL_DIRSPACES_APPLIED" (Builder.log_id s));
+              maybe_create_completed_apply_check s fetcher >>= fun () -> maybe_automerge s fetcher
           | _ -> (
               let module Dc = Terrat_change_match3.Dirspace_config in
               fetch Keys.working_layer
@@ -3311,6 +3455,7 @@ struct
     |> Hmap.add (coerce Keys.eval_compute_node_poll) Tasks.eval_compute_node_poll
     |> Hmap.add (coerce Keys.eval_job) Tasks.eval_job
     |> Hmap.add (coerce Keys.iter_job) Tasks.iter_job
+    |> Hmap.add (coerce Keys.eval_pull_request_event) Tasks.eval_pull_request_event
     |> Hmap.add (coerce Keys.eval_work_manifest_event) Tasks.eval_work_manifest_event
     |> Hmap.add (coerce Keys.initiator) Tasks.initiator
     |> Hmap.add (coerce Keys.is_interactive) Tasks.is_interactive
@@ -3343,8 +3488,6 @@ struct
          Tasks.repo_index_dest_branch_wm_completed
     |> Hmap.add (coerce Keys.repo_tree_branch) Tasks.repo_tree_branch
     |> Hmap.add (coerce Keys.repo_tree_branch_wm_completed) Tasks.repo_tree_branch_wm_completed
-    |> Hmap.add (coerce Keys.repo_tree_dest_branch) Tasks.repo_tree_dest_branch
-    |> Hmap.add (coerce Keys.repo_tree_dest_branch) Tasks.repo_tree_dest_branch
     |> Hmap.add (coerce Keys.repo_tree_dest_branch) Tasks.repo_tree_dest_branch
     |> Hmap.add
          (coerce Keys.repo_tree_dest_branch_wm_completed)

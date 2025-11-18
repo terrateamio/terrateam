@@ -17,7 +17,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     | `Suspend_eval of string
     | `Work_manifest_err of Uuidm.t
     | `Noop
-    | `Loop
     | Pgsql_io.err
     | Pgsql_pool.err
     | Str_template.err
@@ -51,6 +50,18 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               ((unit, unit) S.Api.Pull_request.t, S.Api.Repo.t) Terrat_vcs_provider2.Target.t )
             Terrat_work_manifest3.Existing.t;
           result : Terrat_api_components.Work_manifest_result.t;
+        }
+  end
+
+  module Pull_request_event = struct
+    type t =
+      | Open
+      | Close
+      | Sync
+      | Ready_for_review
+      | Comment of {
+          comment_id : int;
+          comment : Terrat_comment.t;
         }
   end
 
@@ -98,9 +109,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     Hmap.Key.create "context"
 
   let context_id : Uuidm.t Key.t = Hmap.Key.create "context_id"
-  let default_branch_sha : S.Api.Ref.t Key.t = Hmap.Key.create "default_branch_sha"
+
+  let job :
+      (S.Api.Pull_request.Id.t, S.Api.Ref.t, S.Api.User.t option) Terrat_job_context.Job.t Key.t =
+    Hmap.Key.create "job"
+
+  let pull_request_event : Pull_request_event.t Key.t = Hmap.Key.create "pull_request_event"
 
   (* Different ways to access the branch we're working with  *)
+  let default_branch_sha : S.Api.Ref.t Key.t = Hmap.Key.create "default_branch_sha"
   let branch_name : S.Api.Ref.t Key.t = Hmap.Key.create "branch_name"
   let branch_ref : S.Api.Ref.t Key.t = Hmap.Key.create "branch_ref"
   let dest_branch_name : S.Api.Ref.t Key.t = Hmap.Key.create "dest_branch_name"
@@ -109,11 +126,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   let working_branch_name : S.Api.Ref.t Key.t = Hmap.Key.create "working_branch_name"
   let initiator : Terrat_work_manifest3.Initiator.t Key.t = Hmap.Key.create "initiator"
   let is_interactive : bool Key.t = Hmap.Key.create "is_interactive"
-
-  let job :
-      (S.Api.Pull_request.Id.t, S.Api.Ref.t, S.Api.User.t option) Terrat_job_context.Job.t Key.t =
-    Hmap.Key.create "job"
-
   let pull_request_id : S.Api.Pull_request.Id.t Key.t = Hmap.Key.create "pull_request_id"
   let repo : S.Api.Repo.t Key.t = Hmap.Key.create "repo"
 
@@ -393,6 +405,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     Hmap.Key.create "eval_compute_node_poll"
 
   let eval_work_manifest_event : unit Key.t = Hmap.Key.create "eval_work_manifest_event"
+  let eval_pull_request_event : unit Key.t = Hmap.Key.create "eval_pull_request_event"
   let eval_job : unit Key.t = Hmap.Key.create "eval_job"
   let iter_job : unit Key.t = Hmap.Key.create "iter_job"
 end

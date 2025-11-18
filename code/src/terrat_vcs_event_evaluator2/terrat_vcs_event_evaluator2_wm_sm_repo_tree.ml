@@ -21,6 +21,11 @@ struct
     && branch_ref = S.Api.Ref.to_string branch_ref'
     && steps = [ Wm.Step.Build_tree ]
 
+  let status_name ~branch ~branch_name =
+    let branch = S.Api.Ref.to_string branch in
+    let branch_name = S.Api.Ref.to_string branch_name in
+    if branch = branch_name then "terrateam build-tree" else "terrateam build-tree " ^ branch
+
   let create ~dest_branch_ref ~branch_ref ~branch s { Bs.Fetcher.fetch } =
     let open Irm in
     fetch Keys.account
@@ -60,6 +65,8 @@ struct
     | true ->
         fetch Keys.branch_ref
         >>= fun branch_ref ->
+        fetch Keys.branch_name
+        >>= fun branch_name ->
         let module Status = Terrat_commit_check.Status in
         let check =
           S.Commit_check.make_str
@@ -69,7 +76,7 @@ struct
             ~work_manifest
             ~repo
             ~account
-            "terrateam build-tree"
+            (status_name ~branch ~branch_name)
         in
         fetch Keys.client
         >>= fun client ->
@@ -77,7 +84,7 @@ struct
         >>= fun () -> Abb.Future.return (Ok [ work_manifest ])
     | false -> Abb.Future.return (Ok [ work_manifest ])
 
-  let initiate ({ Wm.id; _ } as work_manifest) s { Bs.Fetcher.fetch } =
+  let initiate ~branch ({ Wm.id; _ } as work_manifest) s { Bs.Fetcher.fetch } =
     let open Irm in
     fetch Keys.account
     >>= fun account ->
@@ -90,6 +97,8 @@ struct
         >>= fun client ->
         fetch Keys.branch_ref
         >>= fun branch_ref ->
+        fetch Keys.branch_name
+        >>= fun branch_name ->
         let module Status = Terrat_commit_check.Status in
         let check =
           S.Commit_check.make_str
@@ -99,14 +108,19 @@ struct
             ~work_manifest
             ~repo
             ~account
-            "terrateam build-tree"
+            (status_name ~branch ~branch_name)
         in
         S.Api.create_commit_checks ~request_id:(Builder.log_id s) client repo branch_ref [ check ]
     | false -> Abb.Future.return (Ok ()))
     >>= fun () ->
     fetch Keys.dest_branch_name
     >>= fun dest_branch_name ->
-    fetch Keys.repo_config_raw
+    fetch Keys.branch_name
+    >>= fun branch_name ->
+    let repo_config_raw =
+      if branch = branch_name then Keys.repo_config_raw else Keys.repo_config_dest_branch_raw
+    in
+    fetch repo_config_raw
     >>= fun (_, repo_config_raw) ->
     Builder.run_db s ~f:(fun db ->
         Wm_sm.create_token' ~log_id:(Builder.log_id s) (S.Api.Account.id account) id db)
@@ -123,7 +137,7 @@ struct
     in
     Abb.Future.return (Ok response)
 
-  let fail work_manifest s { Bs.Fetcher.fetch } =
+  let fail ~branch work_manifest s { Bs.Fetcher.fetch } =
     let open Irm in
     fetch Keys.is_interactive
     >>= function
@@ -136,6 +150,8 @@ struct
         >>= fun client ->
         fetch Keys.branch_ref
         >>= fun branch_ref ->
+        fetch Keys.branch_name
+        >>= fun branch_name ->
         fetch Keys.user
         >>= fun user ->
         fetch Keys.pull_request
@@ -149,7 +165,7 @@ struct
             ~work_manifest
             ~repo
             ~account
-            "terrateam build-tree"
+            (status_name ~branch ~branch_name)
         in
         S.Api.create_commit_checks ~request_id:(Builder.log_id s) client repo branch_ref [ check ]
         >>= fun () ->
@@ -161,12 +177,17 @@ struct
           Msg.Unexpected_temporary_err
     | false -> Abb.Future.return (Ok ())
 
-  let result ~branch_ref work_manifest result s { Bs.Fetcher.fetch } =
+  let result ~branch ~branch_ref work_manifest result s { Bs.Fetcher.fetch } =
     let open Irm in
     match result with
     | Wmr.Work_manifest_build_tree_result { Bt.files } -> (
         fetch Keys.account
         >>= fun account ->
+        Logs.info (fun m ->
+            m
+              "%s : REPO_TREE : STORE : branch_ref=%s"
+              (Builder.log_id s)
+              (S.Api.Ref.to_string branch_ref));
         Builder.run_db s ~f:(fun db ->
             S.Db.store_repo_tree ~request_id:(Builder.log_id s) db account branch_ref files)
         >>= fun () ->
@@ -177,6 +198,8 @@ struct
             >>= fun repo ->
             fetch Keys.branch_ref
             >>= fun branch_ref ->
+            fetch Keys.branch_name
+            >>= fun branch_name ->
             fetch Keys.client
             >>= fun client ->
             let module Status = Terrat_commit_check.Status in
@@ -188,7 +211,7 @@ struct
                 ~work_manifest
                 ~repo
                 ~account
-                "terrateam build-tree"
+                (status_name ~branch ~branch_name)
             in
             S.Api.create_commit_checks
               ~request_id:(Builder.log_id s)
@@ -207,6 +230,8 @@ struct
             >>= fun repo ->
             fetch Keys.branch_ref
             >>= fun branch_ref ->
+            fetch Keys.branch_name
+            >>= fun branch_name ->
             fetch Keys.client
             >>= fun client ->
             fetch Keys.user
@@ -222,7 +247,7 @@ struct
                 ~work_manifest
                 ~repo
                 ~account
-                "terrateam build-tree"
+                (status_name ~branch ~branch_name)
             in
             S.Api.create_commit_checks
               ~request_id:(Builder.log_id s)
@@ -252,7 +277,7 @@ struct
       ~branch_ref
       ~branch
       ~create
-      ~initiate
-      ~fail
-      ~result:(result ~branch_ref)
+      ~initiate:(initiate ~branch)
+      ~fail:(fail ~branch)
+      ~result:(result ~branch ~branch_ref)
 end

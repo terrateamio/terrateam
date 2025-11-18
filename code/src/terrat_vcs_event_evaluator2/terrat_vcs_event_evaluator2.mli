@@ -1,8 +1,19 @@
 module Make (S : Terrat_vcs_provider2.S) : sig
   type err = Terrat_vcs_event_evaluator2_builder.Make(S).err
 
-  val pull_request_job :
-    ?comment_id:int ->
+  module Pull_request_event : sig
+    type t =
+      | Open
+      | Close
+      | Sync
+      | Ready_for_review
+      | Comment of {
+          comment_id : int;
+          comment : Terrat_comment.t;
+        }
+  end
+
+  val pull_request_event :
     request_id:string ->
     config:S.Api.Config.t ->
     storage:Terrat_storage.t ->
@@ -10,7 +21,7 @@ module Make (S : Terrat_vcs_provider2.S) : sig
     repo:S.Api.Repo.t ->
     pull_request_id:S.Api.Pull_request.Id.t ->
     user:S.Api.User.t ->
-    Terrat_job_context.Job.Type_.t ->
+    Pull_request_event.t ->
     unit Abb.Future.t
 
   val compute_node_poll :
