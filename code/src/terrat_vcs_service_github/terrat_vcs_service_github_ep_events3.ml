@@ -243,10 +243,11 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         Prmths.Counter.inc_one (Metrics.pr_events_total "open");
         Logs.info (fun m ->
             m
-              "%s : PULL_REQUEST_EVENT : owner=%s : repo=%s : sender=%s"
+              "%s : PULL_REQUEST_EVENT : OPEN : owner=%s : repo=%s : pull_number=%d : sender=%s"
               request_id
               repository.Gw.Repository.owner.Gw.User.login
               repository.Gw.Repository.name
+              pull_request_id
               sender.Gw.User.login);
         let account = P.Api.Account.make installation_id in
         let user = P.Api.User.make sender.Gw.User.login in
@@ -258,7 +259,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
             ()
         in
         Abbs_future_combinators.to_result
-        @@ Evaluator2.pull_request_job
+        @@ Evaluator2.pull_request_event
              ~request_id
              ~config
              ~storage
@@ -266,7 +267,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
              ~repo
              ~pull_request_id
              ~user
-             Terrat_job_context.Job.Type_.Autoplan
+             Evaluator2.Pull_request_event.Open
     | Gw.Pull_request_event.Pull_request_synchronize
         {
           Gw.Pull_request_synchronize.installation =
@@ -279,10 +280,11 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         Prmths.Counter.inc_one (Metrics.pr_events_total "sync");
         Logs.info (fun m ->
             m
-              "%s : PULL_REQUEST_EVENT : owner=%s : repo=%s : sender=%s"
+              "%s : PULL_REQUEST_EVENT : SYNC : owner=%s : repo=%s : pull_number=%d : sender=%s"
               request_id
               repository.Gw.Repository.owner.Gw.User.login
               repository.Gw.Repository.name
+              pull_request_id
               sender.Gw.User.login);
         let account = P.Api.Account.make installation_id in
         let user = P.Api.User.make sender.Gw.User.login in
@@ -294,7 +296,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
             ()
         in
         Abbs_future_combinators.to_result
-        @@ Evaluator2.pull_request_job
+        @@ Evaluator2.pull_request_event
              ~request_id
              ~config
              ~storage
@@ -302,7 +304,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
              ~repo
              ~pull_request_id
              ~user
-             Terrat_job_context.Job.Type_.Autoplan
+             Evaluator2.Pull_request_event.Sync
     | Gw.Pull_request_event.Pull_request_reopened
         {
           Gw.Pull_request_reopened.installation =
@@ -317,10 +319,11 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         Prmths.Counter.inc_one (Metrics.pr_events_total "reopen");
         Logs.info (fun m ->
             m
-              "%s : PULL_REQUEST_EVENT : owner=%s : repo=%s : sender=%s"
+              "%s : PULL_REQUEST_EVENT : REOPEN : owner=%s : repo=%s : pull_number=%d : sender=%s"
               request_id
               repository.Gw.Repository.owner.Gw.User.login
               repository.Gw.Repository.name
+              pull_request_id
               sender.Gw.User.login);
         let account = P.Api.Account.make installation_id in
         let user = P.Api.User.make sender.Gw.User.login in
@@ -332,7 +335,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
             ()
         in
         Abbs_future_combinators.to_result
-        @@ Evaluator2.pull_request_job
+        @@ Evaluator2.pull_request_event
              ~request_id
              ~config
              ~storage
@@ -340,7 +343,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
              ~repo
              ~pull_request_id
              ~user
-             Terrat_job_context.Job.Type_.Autoplan
+             Evaluator2.Pull_request_event.Open
     | Gw.Pull_request_event.Pull_request_ready_for_review
         {
           Gw.Pull_request_ready_for_review.installation =
@@ -355,10 +358,12 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         Prmths.Counter.inc_one (Metrics.pr_events_total "ready_for_review");
         Logs.info (fun m ->
             m
-              "%s : PULL_REQUEST_EVENT : owner=%s : repo=%s : sender=%s"
+              "%s : PULL_REQUEST_EVENT : READY_FOR_REVIEW : owner=%s : repo=%s : pull_number=%d : \
+               sender=%s"
               request_id
               repository.Gw.Repository.owner.Gw.User.login
               repository.Gw.Repository.name
+              pull_request_id
               sender.Gw.User.login);
         let account = P.Api.Account.make installation_id in
         let user = P.Api.User.make sender.Gw.User.login in
@@ -369,14 +374,16 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
             ~owner:repository.Gw.Repository.owner.Gw.User.login
             ()
         in
-        raise (Failure "nyi")
-        (* Evaluator.run_pull_request_ready_for_review *)
-        (*   ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ()) *)
-        (*   ~account *)
-        (*   ~user *)
-        (*   ~repo *)
-        (*   ~pull_request_id *)
-        (*   () *)
+        Abbs_future_combinators.to_result
+        @@ Evaluator2.pull_request_event
+             ~request_id
+             ~config
+             ~storage
+             ~account
+             ~repo
+             ~pull_request_id
+             ~user
+             Evaluator2.Pull_request_event.Ready_for_review
     | Gw.Pull_request_event.Pull_request_opened _ -> failwith "Invalid pull_request_open event"
     | Gw.Pull_request_event.Pull_request_synchronize _ ->
         failwith "Invalid pull_request_synchronize event"
@@ -396,10 +403,11 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         Prmths.Counter.inc_one (Metrics.pr_events_total "close");
         Logs.info (fun m ->
             m
-              "%s : PULL_REQUEST_CLOSED_EVENT : owner=%s : repo=%s : sender=%s"
+              "%s : PULL_REQUEST_EVENT : CLOSE : owner=%s : repo=%s : pull_number=%d : sender=%s"
               request_id
               repository.Gw.Repository.owner.Gw.User.login
               repository.Gw.Repository.name
+              pull_request_id
               sender.Gw.User.login);
         let account = P.Api.Account.make installation_id in
         let user = P.Api.User.make sender.Gw.User.login in
@@ -413,7 +421,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         (* Should we have a "closed" job type or reuse autoplan which does
            nothing on close? *)
         Abbs_future_combinators.to_result
-        @@ Evaluator2.pull_request_job
+        @@ Evaluator2.pull_request_event
              ~request_id
              ~config
              ~storage
@@ -421,7 +429,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
              ~repo
              ~pull_request_id
              ~user
-             Terrat_job_context.Job.Type_.Autoplan
+             Evaluator2.Pull_request_event.Close
     | Gw.Pull_request_event.Pull_request_closed _ -> failwith "Invalid pull_request_closed event"
     | Gw.Pull_request_event.Pull_request_assigned _ ->
         Logs.debug (fun m -> m "%s : NOOP : PULL_REQUEST_ASSIGNED" request_id);
@@ -490,7 +498,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
               repository.Gw.Repository.name
               sender.Gw.User.login);
         match Terrat_comment.parse comment_body with
-        | Ok Terrat_comment.Repo_config ->
+        | Ok comment ->
             let account = P.Api.Account.make installation_id in
             let user = P.Api.User.make sender.Gw.User.login in
             let repo =
@@ -501,124 +509,15 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
                 ()
             in
             Abbs_future_combinators.to_result
-            @@ Evaluator2.pull_request_job
+            @@ Evaluator2.pull_request_event
                  ~request_id
                  ~config
                  ~storage
                  ~account
                  ~repo
                  ~pull_request_id
-                 ~comment_id
                  ~user
-                 Terrat_job_context.Job.Type_.Repo_config
-        | Ok (Terrat_comment.Apply { tag_query }) ->
-            let account = P.Api.Account.make installation_id in
-            let user = P.Api.User.make sender.Gw.User.login in
-            let repo =
-              P.Api.Repo.make
-                ~id:repository.Gw.Repository.id
-                ~name:repository.Gw.Repository.name
-                ~owner:repository.Gw.Repository.owner.Gw.User.login
-                ()
-            in
-            Abbs_future_combinators.to_result
-            @@ Evaluator2.pull_request_job
-                 ~request_id
-                 ~config
-                 ~storage
-                 ~account
-                 ~repo
-                 ~pull_request_id
-                 ~comment_id
-                 ~user
-                 (Terrat_job_context.Job.Type_.Apply { tag_query })
-        | Ok (Terrat_comment.Plan { tag_query }) ->
-            let account = P.Api.Account.make installation_id in
-            let user = P.Api.User.make sender.Gw.User.login in
-            let repo =
-              P.Api.Repo.make
-                ~id:repository.Gw.Repository.id
-                ~name:repository.Gw.Repository.name
-                ~owner:repository.Gw.Repository.owner.Gw.User.login
-                ()
-            in
-            Abbs_future_combinators.to_result
-            @@ Evaluator2.pull_request_job
-                 ~request_id
-                 ~config
-                 ~storage
-                 ~account
-                 ~repo
-                 ~pull_request_id
-                 ~comment_id
-                 ~user
-                 (Terrat_job_context.Job.Type_.Plan { tag_query })
-        | Ok (Terrat_comment.Unlock unlocks) ->
-            let account = P.Api.Account.make installation_id in
-            let user = P.Api.User.make sender.Gw.User.login in
-            let repo =
-              P.Api.Repo.make
-                ~id:repository.Gw.Repository.id
-                ~name:repository.Gw.Repository.name
-                ~owner:repository.Gw.Repository.owner.Gw.User.login
-                ()
-            in
-            Abbs_future_combinators.to_result
-            @@ Evaluator2.pull_request_job
-                 ~request_id
-                 ~config
-                 ~storage
-                 ~account
-                 ~repo
-                 ~pull_request_id
-                 ~comment_id
-                 ~user
-                 (Terrat_job_context.Job.Type_.Unlock unlocks)
-        | Ok (Terrat_comment.Gate_approval { tokens }) ->
-            let account = P.Api.Account.make installation_id in
-            let user = P.Api.User.make sender.Gw.User.login in
-            let repo =
-              P.Api.Repo.make
-                ~id:repository.Gw.Repository.id
-                ~name:repository.Gw.Repository.name
-                ~owner:repository.Gw.Repository.owner.Gw.User.login
-                ()
-            in
-            Abbs_future_combinators.to_result
-            @@ Evaluator2.pull_request_job
-                 ~request_id
-                 ~config
-                 ~storage
-                 ~account
-                 ~repo
-                 ~pull_request_id
-                 ~comment_id
-                 ~user
-                 (Terrat_job_context.Job.Type_.Gate_approval { tokens })
-        | Ok (Terrat_comment.Apply_autoapprove _)
-        | Ok (Terrat_comment.Apply_force _)
-        | Ok (Terrat_comment.Feedback _)
-        | Ok Terrat_comment.Help
-        | Ok Terrat_comment.Index ->
-            (* let account = P.Api.Account.make installation_id in *)
-            (* let user = P.Api.User.make sender.Gw.User.login in *)
-            (* let repo = *)
-            (*   P.Api.Repo.make *)
-            (*     ~id:repository.Gw.Repository.id *)
-            (*     ~name:repository.Gw.Repository.name *)
-            (*     ~owner:repository.Gw.Repository.owner.Gw.User.login *)
-            (*     () *)
-            (* in *)
-            raise (Failure "nyi")
-            (* Evaluator.run_pull_request_comment *)
-            (*   ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ()) *)
-            (*   ~account *)
-            (*   ~user *)
-            (*   ~comment *)
-            (*   ~repo *)
-            (*   ~pull_request_id *)
-            (*   ~comment_id *)
-            (*   () *)
+                 (Evaluator2.Pull_request_event.Comment { comment_id; comment })
         | Error `Not_terrateam ->
             Prmths.Counter.inc_one (Metrics.comment_events_total "not_terrateam");
             Abb.Future.return (Ok ())
