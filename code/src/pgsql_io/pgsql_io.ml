@@ -28,6 +28,7 @@ type t = {
   mutable in_tx : bool;
   mutable busy : bool;
   buf_size_threshold : int;
+  id : Uuidm.t;
 }
 
 let add_expected_frame t frame = t.expected_frames <- frame :: t.expected_frames
@@ -62,7 +63,8 @@ module Io = struct
   let send_frame conn frame =
     if conn.connected then (
       let send_frame' =
-        Logs.debug (fun m -> m "Tx %a" Pgsql_codec.Frame.Frontend.pp frame);
+        Logs.debug (fun m ->
+            m "%s Tx %a" (Uuidm.to_string conn.id) Pgsql_codec.Frame.Frontend.pp frame);
         let open Abbs_future_combinators.Infix_result_monad in
         let bytes = encode_frame conn.scratch frame in
         Abbs_io_buffered.write conn.w ~bufs:[ write_buf bytes ]
@@ -103,7 +105,9 @@ module Io = struct
     | Ok [] -> wait_for_frame_needed_bytes conn
     | Ok fs as r ->
         List.iter
-          (fun frame -> Logs.debug (fun m -> m "Rx %a" Pgsql_codec.Frame.Backend.pp frame))
+          (fun frame ->
+            Logs.debug (fun m ->
+                m "%s Rx %a" (Uuidm.to_string conn.id) Pgsql_codec.Frame.Backend.pp frame))
           fs;
         Abb.Future.return r
     | Error err -> Abb.Future.return (Error (`Parse_error err))
@@ -1140,6 +1144,7 @@ and create_sm_perform_login r w ?passwd ~notice_response ~buf_size_threshold ~us
       in_tx = false;
       busy = false;
       buf_size_threshold;
+      id = Ouuid.v4 ();
     }
   in
   let msgs = [ ("user", user); ("database", database) ] in
@@ -1278,6 +1283,7 @@ let destroy t =
   else Abb.Future.return ()
 
 let connected t = t.connected
+let id t = t.id
 
 let ping t =
   if t.connected then (
@@ -1318,7 +1324,7 @@ let tx_rollback t =
 
 let tx t ~f =
   if t.in_tx then (
-    Logs.info (fun m -> m "In tx already, failing");
+    Logs.info (fun m -> m "%s In tx already, failing" (Uuidm.to_string t.id));
     raise Nested_tx_not_supported);
   Abbs_future_combinators.on_failure
     (fun () ->
@@ -1334,7 +1340,7 @@ let tx t ~f =
           [ equal (CommandComplete { tag = "BEGIN" }); equal (ReadyForQuery { status = 'T' }) ]
       >>= function
       | Ok [] -> (
-          Logs.debug (fun m -> m "Tx code executing");
+          Logs.debug (fun m -> m "%s Tx code executing" (Uuidm.to_string t.id));
           f ()
           >>= function
           | Ok _ as r ->
@@ -1342,11 +1348,11 @@ let tx t ~f =
               tx_commit t >>= fun _ -> Abb.Future.return r
           | Error _ as r -> tx_rollback t >>= fun _ -> Abb.Future.return r)
       | Ok fs ->
-          Logs.debug (fun m -> m "Tx received unexpected frames, failing");
+          Logs.debug (fun m -> m "%s Tx received unexpected frames, failing" (Uuidm.to_string t.id));
           tx_rollback t >>= fun _ -> Abb.Future.return (Error (`Unmatching_frame fs))
       | Error _ as err -> tx_rollback t >>= fun _ -> Abb.Future.return err)
     ~failure:(fun () ->
-      Logs.info (fun m -> m "Tx failed, rolling back");
+      Logs.info (fun m -> m "%s Tx failed, rolling back" (Uuidm.to_string t.id));
       Abbs_future_combinators.ignore (tx_rollback t))
 
 let clean_string s =

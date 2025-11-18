@@ -248,10 +248,13 @@ let with_conn t ~f =
       | `Ok () -> Abb.Future.Promise.future p
       | `Closed -> raise Pgsql_pool_closed)
     (function
-      | Ok conn -> f conn
+      | Ok conn ->
+          Logs.debug (fun m -> m "GET : %s" (Uuidm.to_string @@ Pgsql_io.id conn));
+          f conn
       | Error () -> Abb.Future.return (Error `Pgsql_pool_error))
     ~finally:(function
       | Ok conn -> (
+          Logs.debug (fun m -> m "RETURN : %s" (Uuidm.to_string @@ Pgsql_io.id conn));
           Abbs_channel.send t (Msg.Return conn)
           >>= function
           | `Ok () -> Abb.Future.return ()
