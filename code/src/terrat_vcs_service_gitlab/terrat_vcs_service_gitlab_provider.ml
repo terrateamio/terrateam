@@ -4276,6 +4276,43 @@ module Work_manifest = struct
               Api.Ref.to_string @@ Terrat_pull_request.base_branch_name pr)
       | { Wm.target = Terrat_vcs_provider2.Target.Drift { branch; _ }; _ } -> branch
     in
+    let build_pipeline_variables ~work_manifest ~config () =
+      let module Pipeline = Gitlabc_components.PostApiV4ProjectsIdPipeline in
+      let base_variables =
+        [
+          ("TERRATEAM_TRIGGER", "true", "env_var");
+          ("WORK_TOKEN", Ouuid.to_string work_manifest.Wm.id, "env_var");
+          ("API_BASE_URL", Terrat_config.api_base (Api.Config.config config) ^ "/gitlab", "env_var");
+        ]
+      in
+      let runs_on_variables =
+        match work_manifest.Wm.runs_on with
+        | Some runs_on -> [ ("RUNS_ON", Yojson.Safe.to_string runs_on, "env_var") ]
+        | None -> []
+      in
+      CCList.map
+        (fun (key, value, var_type) ->
+          { Pipeline.Variables.Items.key; value; variable_type = var_type })
+        (base_variables @ runs_on_variables)
+    in
+    (* TODO #949: Moving this around so we can try to support both Variables
+       and Inputs. Also investigate if we define a merge strategy if values are 
+       repeated in both. *)
+    let build_pipeline_inputs ~work_manifest ~config () =
+      let base_inputs =
+        [
+          ("TERRATEAM_TRIGGER", `Bool true);
+          ("WORK_TOKEN", `String (Ouuid.to_string work_manifest.Wm.id));
+          ("API_BASE_URL", `String (Terrat_config.api_base (Api.Config.config config) ^ "/gitlab"));
+        ]
+      in
+      let runs_on_inputs =
+        match work_manifest.Wm.runs_on with
+        | Some runs_on -> [ ("RUNS_ON", runs_on) ]
+        | None -> []
+      in
+      Json_schema.String_map.of_list (base_inputs @ runs_on_inputs)
+    in
     let run =
       let open Abbs_future_combinators.Infix_result_monad in
       let module Pipeline = Gitlabc_components.PostApiV4ProjectsIdPipeline in
@@ -4288,49 +4325,9 @@ module Work_manifest = struct
               Pipeline.Inputs.
                 {
                   primary = Json_schema.Empty_obj.t;
-                  additional =
-                    Json_schema.String_map.of_list
-                      ([
-                         ("TERRATEAM_TRIGGER", `Bool true);
-                         ("WORK_TOKEN", `String (Ouuid.to_string work_manifest.Wm.id));
-                         ( "API_BASE_URL",
-                           `String (Terrat_config.api_base (Api.Config.config config) ^ "/gitlab")
-                         );
-                       ]
-                      @
-                      match work_manifest.Wm.runs_on with
-                      | Some runs_on -> [ ("RUNS_ON", `String (Yojson.Safe.to_string runs_on)) ]
-                      | None -> []);
+                  additional = build_pipeline_inputs ~work_manifest ~config ();
                 };
-          variables =
-            Some
-              Pipeline.Variables.Items.(
-                CCList.flatten
-                  [
-                    [
-                      { key = "TERRATEAM_TRIGGER"; value = "true"; variable_type = "env_var" };
-                      {
-                        key = "WORK_TOKEN";
-                        value = Ouuid.to_string work_manifest.Wm.id;
-                        variable_type = "env_var";
-                      };
-                      {
-                        key = "API_BASE_URL";
-                        value = Terrat_config.api_base (Api.Config.config config) ^ "/gitlab";
-                        variable_type = "env_var";
-                      };
-                    ];
-                    (match work_manifest.Wm.runs_on with
-                    | Some runs_on ->
-                        [
-                          {
-                            key = "RUNS_ON";
-                            value = Yojson.Safe.to_string runs_on;
-                            variable_type = "env_var";
-                          };
-                        ]
-                    | None -> []);
-                  ]);
+          variables = Some (build_pipeline_variables ~work_manifest ~config ());
         }
       in
       Openapic_abb.call
