@@ -4344,6 +4344,16 @@ module Work_manifest = struct
              we care about is somewhere in the JSON error rather than decoding
              it. *)
           Abb.Future.return (Error (`Failed_to_start_with_msg_err "IDENTITY_VERIFICATION_ERR"))
+      | `Bad_request json
+        when CCString.find
+               ~sub:"Given inputs not defined in the `spec` section"
+               (Yojson.Safe.to_string json)
+             <> -1 ->
+          let err_msg =
+            "User's .gitlab-ci.yml has spec:inputs but is missing required inputs with defaults"
+          in
+          Logs.err (fun m -> m "%s : %s " request_id err_msg);
+          Abb.Future.return (Error (`Failed_to_start_with_msg_err "GITLAB_INPUTS_MISSING_DEFAULTS"))
       | (`Bad_request _ | `Unauthorized _ | `Forbidden _ | `Not_found _) as err ->
           Abb.Future.return (Error err)
     in
