@@ -1,8 +1,24 @@
+module Error = struct
+  type key_repr = string [@@deriving show]
+
+  type t = {
+    blocking : (key_repr * key_repr list) list;
+    cycle : key_repr list;
+    k : key_repr;
+    path : key_repr list;
+    running : (key_repr * key_repr list) list;
+  }
+  [@@deriving show]
+
+  exception Fetch_cycle_exn of t
+end
+
 module type S = sig
   module Key_repr : sig
     type t
 
     val equal : t -> t -> bool
+    val to_string : t -> string
   end
 
   type 'v k
@@ -36,6 +52,7 @@ end
 
 module type T = sig
   type 'v k
+  type key_repr
   type 'a c
   type state
 
@@ -44,7 +61,7 @@ module type T = sig
   end
 
   module Task : sig
-    type 'v t = state -> Fetcher.t -> 'v c
+    type 'v t = key_repr list -> state -> Fetcher.t -> 'v c
   end
 
   module Tasks : sig
@@ -66,8 +83,13 @@ module type T = sig
 end
 
 module Make (M : S) :
-  T with type 'a k = 'a M.k and type 'a c = 'a M.C.t and type state = M.State.t = struct
+  T
+    with type 'a k = 'a M.k
+     and type key_repr = M.Key_repr.t
+     and type 'a c = 'a M.C.t
+     and type state = M.State.t = struct
   type 'a k = 'a M.k
+  type key_repr = M.Key_repr.t
   type 'a c = 'a M.C.t
   type state = M.State.t
 
@@ -76,7 +98,7 @@ module Make (M : S) :
   end
 
   module Task = struct
-    type 'v t = M.State.t -> Fetcher.t -> 'v M.C.t
+    type 'v t = M.Key_repr.t list -> M.State.t -> Fetcher.t -> 'v M.C.t
   end
 
   module Tasks = struct
@@ -90,48 +112,93 @@ module Make (M : S) :
   module St = struct
     type t = {
       state : M.State.t;
-      mutable running : M.Key_repr.t list;
+      mutable running : (M.Key_repr.t * M.Key_repr.t list) list;
+      mutable blocking : (M.Key_repr.t * M.Key_repr.t list) list;
       notify : M.Notify.t;
     }
 
-    let create state = { state; running = []; notify = M.Notify.create () }
+    let create state = { state; running = []; blocking = []; notify = M.Notify.create () }
     let get_state t = t.state
 
-    let rec block_k t k f =
+    let assert_no_cycle k path t =
+      let running = t.running in
+      let blocking = t.blocking in
+      let topo =
+        CCList.filter_map
+          (fun (_, p) ->
+            match CCList.rev p with
+            | k :: vs -> Some (k, vs)
+            | [] -> None)
+          ((k, path) :: blocking)
+      in
+      match Tsort.sort topo with
+      | Tsort.Sorted _ -> ()
+      | Tsort.ErrorCycle cycle ->
+          raise
+            (Error.Fetch_cycle_exn
+               {
+                 Error.blocking =
+                   CCList.map
+                     (fun (k, p) -> (M.Key_repr.to_string k, CCList.map M.Key_repr.to_string p))
+                     blocking;
+                 cycle = CCList.map M.Key_repr.to_string cycle;
+                 k = M.Key_repr.to_string k;
+                 path = CCList.map M.Key_repr.to_string path;
+                 running =
+                   CCList.map
+                     (fun (k, p) -> (M.Key_repr.to_string k, CCList.map M.Key_repr.to_string p))
+                     running;
+               })
+
+    let rec block_k path t k f =
       let repr = M.key_repr_of_key k in
-      if CCList.mem ~eq:M.Key_repr.equal repr t.running then
+      if CCList.mem ~eq:(fun (k1, _) (k2, _) -> M.Key_repr.equal k1 k2) (repr, path) t.running then (
         let open M.C in
-        M.Notify.wait t.notify >>= fun () -> block_k t k f
+        t.blocking <- (repr, path) :: t.blocking;
+        assert_no_cycle repr path t;
+        M.Notify.wait t.notify
+        >>= fun () ->
+        t.blocking <-
+          CCList.remove
+            ~eq:(fun (k1, _) (k2, _) -> M.Key_repr.equal k1 k2)
+            ~key:(repr, path)
+            t.blocking;
+        block_k path t k f)
       else
         let open M.C in
-        t.running <- repr :: t.running;
+        t.running <- (repr, path) :: t.running;
         protect f
         >>= fun ret ->
-        t.running <- CCList.remove ~eq:M.Key_repr.equal ~key:repr t.running;
+        t.running <-
+          CCList.remove
+            ~eq:(fun (k1, _) (k2, _) -> M.Key_repr.equal k1 k2)
+            ~key:(repr, path)
+            t.running;
         M.Notify.notify t.notify >>= fun () -> ret
   end
 
   let build rebuilder tasks k st =
-    let rec fetch : 'r. 'r M.k -> 'r M.C.t =
-     fun k ->
+    let rec fetch : 'r. M.Key_repr.t list -> 'r M.k -> 'r M.C.t =
+     fun path k ->
       let open M.C in
+      let path = path @ [ M.key_repr_of_key k ] in
       tasks.Tasks.get (St.get_state st) k
       >>= function
       | None -> M.State.get_k (St.get_state st) k
       | Some task ->
-          St.block_k st k (fun () ->
+          St.block_k path st k (fun () ->
               M.State.get_k_opt (St.get_state st) k
               >>= function
               | Some v -> (
                   rebuilder.Rebuilder.run (St.get_state st) k v
                   >>= function
                   | true ->
-                      task (St.get_state st) { Fetcher.fetch }
+                      task path (St.get_state st) { Fetcher.fetch = (fun k -> fetch path k) }
                       >>= fun v -> M.State.set_k (St.get_state st) k v >>= fun () -> return v
                   | false -> return v)
               | None ->
-                  task (St.get_state st) { Fetcher.fetch }
+                  task path (St.get_state st) { Fetcher.fetch = (fun k -> fetch path k) }
                   >>= fun v -> M.State.set_k (St.get_state st) k v >>= fun () -> return v)
     in
-    fetch k
+    fetch [] k
 end
