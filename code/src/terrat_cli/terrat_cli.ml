@@ -38,6 +38,7 @@ module Cmdline = struct
     { Logs.report }
 
   let setup_log level loggers =
+    Format.set_geometry ~max_indent:490 ~margin:500;
     let loggers =
       CCOption.map_or
         ~default:[]
@@ -66,6 +67,8 @@ module Cmdline = struct
         "happy-eyeballs";
         "pgsql.io";
         "pgsql.pool";
+        "vcs_event_evaluator2_builder.github.run_db";
+        "vcs_event_evaluator2_builder.gitlab.run_db";
       ]
     in
     let loggers =
