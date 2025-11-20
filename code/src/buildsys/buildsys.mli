@@ -1,8 +1,24 @@
+module Error : sig
+  type key_repr = string [@@deriving show]
+
+  type t = {
+    blocking : (key_repr * key_repr list) list;
+    cycle : key_repr list;
+    k : key_repr;
+    path : key_repr list;
+    running : (key_repr * key_repr list) list;
+  }
+  [@@deriving show]
+
+  exception Fetch_cycle_exn of t
+end
+
 module type S = sig
   module Key_repr : sig
     type t
 
     val equal : t -> t -> bool
+    val to_string : t -> string
   end
 
   type 'v k
@@ -39,6 +55,7 @@ end
 
 module type T = sig
   type 'v k
+  type key_repr
   type 'a c
   type state
 
@@ -47,7 +64,7 @@ module type T = sig
   end
 
   module Task : sig
-    type 'v t = state -> Fetcher.t -> 'v c
+    type 'v t = key_repr list -> state -> Fetcher.t -> 'v c
   end
 
   module Tasks : sig
@@ -68,4 +85,9 @@ module type T = sig
   val build : Rebuilder.t -> Tasks.t -> 'v k -> St.t -> 'v c
 end
 
-module Make (M : S) : T with type 'a k = 'a M.k and type 'a c = 'a M.C.t and type state = M.State.t
+module Make (M : S) :
+  T
+    with type 'a k = 'a M.k
+     and type key_repr = M.Key_repr.t
+     and type 'a c = 'a M.C.t
+     and type state = M.State.t
