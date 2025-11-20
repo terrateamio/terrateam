@@ -4276,32 +4276,11 @@ module Work_manifest = struct
               Api.Ref.to_string @@ Terrat_pull_request.base_branch_name pr)
       | { Wm.target = Terrat_vcs_provider2.Target.Drift { branch; _ }; _ } -> branch
     in
-    let build_pipeline_variables ~work_manifest ~config () =
-      let module Pipeline = Gitlabc_components.PostApiV4ProjectsIdPipeline in
-      let base_variables =
-        [
-          ("TERRATEAM_TRIGGER", "true", "env_var");
-          ("WORK_TOKEN", Ouuid.to_string work_manifest.Wm.id, "env_var");
-          ("API_BASE_URL", Terrat_config.api_base (Api.Config.config config) ^ "/gitlab", "env_var");
-        ]
-      in
-      let runs_on_variables =
-        match work_manifest.Wm.runs_on with
-        | Some runs_on -> [ ("RUNS_ON", Yojson.Safe.to_string runs_on, "env_var") ]
-        | None -> []
-      in
-      CCList.map
-        (fun (key, value, var_type) ->
-          { Pipeline.Variables.Items.key; value; variable_type = var_type })
-        (base_variables @ runs_on_variables)
-    in
-    (* TODO #949: Moving this around so we can try to support both Variables
-       and Inputs. Also investigate if we define a merge strategy if values are 
-       repeated in both. *)
+    (* TODO #949 *)
     let build_pipeline_inputs ~work_manifest ~config () =
       let base_inputs =
         [
-          ("TERRATEAM_TRIGGER", `Bool true);
+          ("TERRATEAM_TRIGGER", `String "true");
           ("WORK_TOKEN", `String (Ouuid.to_string work_manifest.Wm.id));
           ("API_BASE_URL", `String (Terrat_config.api_base (Api.Config.config config) ^ "/gitlab"));
         ]
@@ -4327,7 +4306,7 @@ module Work_manifest = struct
                   primary = Json_schema.Empty_obj.t;
                   additional = build_pipeline_inputs ~work_manifest ~config ();
                 };
-          variables = Some (build_pipeline_variables ~work_manifest ~config ());
+          variables = None;
         }
       in
       Openapic_abb.call
@@ -4350,9 +4329,9 @@ module Work_manifest = struct
                (Yojson.Safe.to_string json)
              <> -1 ->
           let err_msg =
-            "User's .gitlab-ci.yml has spec:inputs but is missing required inputs with defaults"
+            "Given inputs not defined in the `spec` section"
           in
-          Logs.err (fun m -> m "%s : %s " request_id err_msg);
+          Logs.err (fun m -> m "%s : %s : %s" request_id err_msg (Yojson.Safe.to_string json));
           Abb.Future.return (Error (`Failed_to_start_with_msg_err "GITLAB_INPUTS_MISSING_DEFAULTS"))
       | (`Bad_request _ | `Unauthorized _ | `Forbidden _ | `Not_found _) as err ->
           Abb.Future.return (Error err)
