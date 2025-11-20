@@ -44,6 +44,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         | `Det (Error (#Builder.err as err)) ->
             Logs.err (fun m -> m "%s : %a" request_id Builder.pp_err err);
             Abb.Future.return (Error err)
+        | `Exn (Buildsys.Error.Fetch_cycle_exn exn, bt_opt) ->
+            Logs.err (fun m -> m "%s : %a" request_id Buildsys.Error.pp exn);
+            CCOption.iter
+              (fun bt ->
+                Logs.err (fun m ->
+                    m "%s : BACKTRACE: %s" request_id (Printexc.raw_backtrace_to_string bt)))
+              bt_opt;
+            Abb.Future.return (Error `Error)
         | `Exn (exn, bt_opt) ->
             Logs.err (fun m -> m "%s : %s" request_id (Printexc.to_string exn));
             CCOption.iter

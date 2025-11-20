@@ -323,7 +323,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     Hmap.Key.create "synthesized_config_dest_branch_empty_index"
 
   let synthesized_config_dest_branch : Terrat_change_match3.Config.t Key.t =
-    Hmap.Key.create "synthesized_config"
+    Hmap.Key.create "synthesized_config_dest_branch"
 
   (* Unlocks *)
   let publish_unlock : unit Key.t = Hmap.Key.create "publish_unlock"
@@ -406,6 +406,5 @@ module Make (S : Terrat_vcs_provider2.S) = struct
 
   let eval_work_manifest_event : unit Key.t = Hmap.Key.create "eval_work_manifest_event"
   let eval_pull_request_event : unit Key.t = Hmap.Key.create "eval_pull_request_event"
-  let eval_job : unit Key.t = Hmap.Key.create "eval_job"
   let iter_job : unit Key.t = Hmap.Key.create "iter_job"
 end
