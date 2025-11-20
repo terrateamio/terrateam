@@ -2,9 +2,19 @@ module Irm = Abbs_future_combinators.Infix_result_monad
 module Serializer = Abb_service_serializer.Make (Abb.Future)
 
 module Make (S : Terrat_vcs_provider2.S) = struct
+  module Logs' = Logs
+
+  (* General logger *)
   let src = Logs.Src.create ("vcs_event_evaluator2_builder." ^ S.name)
 
   module Logs = (val Logs.src_log src : Logs.LOG)
+
+  (* Specific logger for run_db *)
+  let src_run_db = Logs'.Src.create ("vcs_event_evaluator2_builder." ^ S.name ^ ".run_db")
+
+  module Logs_run_db = (val Logs'.src_log src_run_db : Logs'.LOG)
+
+  (* Targets/keys *)
   module Keys = Terrat_vcs_event_evaluator2_targets.Make (S)
   module Hmap = Keys.Hmap
 
@@ -12,14 +22,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
 
   module B = struct
     module Key_repr = struct
-      type t = Hmap.Key.t
+      type t = string [@@deriving eq]
 
-      let equal = Hmap.Key.equal
+      let to_string = CCFun.id
     end
 
     type 'v k = 'v Hmap.key
 
-    let key_repr_of_key = Hmap.Key.hide_type
+    let key_repr_of_key = Hmap.Key.info
 
     module C = struct
       type 'a t = 'a Abb.Future.t
@@ -116,15 +126,39 @@ module Make (S : Terrat_vcs_provider2.S) = struct
 
   external coerce_to_task : 'a B.k -> 'a Bs.Task.t B.k = "%identity"
 
+  let log_id state = state.B.State.log_id
+
   let run_db s ~f =
     let open Abb.Future.Infix_monad in
-    Serializer.Mutex.run s.B.State.db ~f
+    Serializer.Mutex.run s.B.State.db ~f:(fun db ->
+        Abbs_future_combinators.with_finally
+          (fun () ->
+            Logs_run_db.info (fun m ->
+                m
+                  "%s : DATABASE : MUTEX : ENTER : conn=%s"
+                  (log_id s)
+                  (Uuidm.to_string @@ Pgsql_io.id db));
+            Abbs_future_combinators.timeout ~timeout:(Abb.Sys.sleep 10.0) (f db)
+            >>= function
+            | `Ok r -> Abb.Future.return r
+            | `Timeout ->
+                Logs_run_db.err (fun m ->
+                    m
+                      "%s : DATABASE : TIMEOUT : conn=%s"
+                      (log_id s)
+                      (Uuidm.to_string @@ Pgsql_io.id db));
+                assert false)
+          ~finally:(fun () ->
+            Logs_run_db.info (fun m ->
+                m
+                  "%s : DATABASE : MUTEX : EXIT : conn=%s"
+                  (log_id s)
+                  (Uuidm.to_string @@ Pgsql_io.id db));
+            Abb.Future.return ()))
     >>= function
     | `Ok (Ok v) -> Abb.Future.return (Ok v)
     | `Ok (Error err) -> Abb.Future.return (Error err)
     | `Closed -> Abb.Future.return (Error `Closed)
-
-  let log_id state = state.B.State.log_id
 
   let make_tasks tasks_map =
     { Bs.Tasks.get = (fun s k -> Abb.Future.return (Hmap.find (coerce_to_task k) tasks_map)) }
