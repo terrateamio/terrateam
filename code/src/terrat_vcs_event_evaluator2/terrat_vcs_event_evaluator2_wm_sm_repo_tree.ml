@@ -117,10 +117,10 @@ struct
     >>= fun dest_branch_name ->
     fetch Keys.branch_name
     >>= fun branch_name ->
-    let repo_config_raw =
-      if branch = branch_name then Keys.repo_config_raw else Keys.repo_config_dest_branch_raw
+    let repo_config_raw' =
+      if branch = branch_name then Keys.repo_config_raw' else Keys.repo_config_dest_branch_raw'
     in
-    fetch repo_config_raw
+    fetch repo_config_raw'
     >>= fun (_, repo_config_raw) ->
     Builder.run_db s ~f:(fun db ->
         Wm_sm.create_token' ~log_id:(Builder.log_id s) (S.Api.Account.id account) id db)

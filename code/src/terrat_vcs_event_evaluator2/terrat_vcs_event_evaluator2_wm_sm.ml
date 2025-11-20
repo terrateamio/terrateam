@@ -109,11 +109,12 @@ struct
     dirspaceflows_of_changes_with_branch_target repo_config changes
     >>= fun dirspaceflows -> Ok (strip_lock_branch_target dirspaceflows)
 
-  let update_wm_state ~request_id work_manifest_id state db =
+  let update_wm_state ~request_id ~name work_manifest_id state db =
     Logs.info (fun m ->
         m
-          "%s : WM : UPDATE_STATE : wm=%a : state=%s"
+          "%s : WM : UPDATE_STATE : name=%s : wm=%a : state=%s"
           request_id
+          name
           Uuidm.pp
           work_manifest_id
           (Terrat_work_manifest3.State.to_string state));
@@ -138,6 +139,7 @@ struct
       ({ Builder.Bs.Fetcher.fetch } as fetcher) =
     let open Irm in
     let module E = Keys.Work_manifest_event in
+    Logs.info (fun m -> m "%s : WM : RUN : name=%s" (Builder.log_id s) name);
     fetch Keys.work_manifest_event
     >>= function
     | Some
@@ -150,9 +152,16 @@ struct
         Logs.info (fun m -> m "%s : WM : INITIATE : name=%s" (Builder.log_id s) name);
         Builder.run_db s ~f:(fun db ->
             Logs.info (fun m ->
-                m "%s : WM : UPDATE_STATE : wm=%a : run_id=%s" (Builder.log_id s) Uuidm.pp id run_id);
+                m
+                  "%s : WM : UPDATE_RUN_ID : name=%s : wm=%a : run_id=%s"
+                  (Builder.log_id s)
+                  name
+                  Uuidm.pp
+                  id
+                  run_id);
             S.Work_manifest.update_run_id ~request_id:(Builder.log_id s) db id run_id
-            >>= fun () -> update_wm_state ~request_id:(Builder.log_id s) id Wm.State.Running db)
+            >>= fun () ->
+            update_wm_state ~request_id:(Builder.log_id s) ~name id Wm.State.Running db)
         >>= fun () ->
         initiate work_manifest s fetcher
         >>= fun response ->
@@ -181,7 +190,12 @@ struct
         >>= fun () ->
         Builder.run_db
           s
-          ~f:(update_wm_state ~request_id:(Builder.log_id s) work_manifest.Wm.id Wm.State.Completed)
+          ~f:
+            (update_wm_state
+               ~request_id:(Builder.log_id s)
+               ~name
+               work_manifest.Wm.id
+               Wm.State.Completed)
         >>= fun () ->
         fetch Keys.job
         >>= fun job ->

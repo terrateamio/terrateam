@@ -21,3 +21,4 @@ from job_contexts as jc
 left join github_pull_requests_map as gprm
   on gprm.core_id = jc.pull_request
 where jc.id = $id
+

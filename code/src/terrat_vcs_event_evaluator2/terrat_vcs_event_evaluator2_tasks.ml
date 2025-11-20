@@ -105,13 +105,18 @@ struct
   end
 
   module Tasks = struct
-    let run ~name f s fetcher =
+    let run ~name f path s fetcher =
       Abbs_time_it.run
         (fun t ->
           Logs.info (fun m -> m "%s : TASK : END : name=%s : time=%f" (Builder.log_id s) name t))
         (fun () ->
           let open Abb.Future.Infix_monad in
-          Logs.info (fun m -> m "%s : TASK : START : name=%s" (Builder.log_id s) name);
+          Logs.info (fun m ->
+              m
+                "%s : TASK : START : name=%s : path=[%s]"
+                (Builder.log_id s)
+                name
+                (CCString.concat ", " path));
           f s fetcher
           >>= function
           | Ok _ as r -> Abb.Future.return r
@@ -668,6 +673,9 @@ struct
       run ~name:"built_repo_config_branch_wm_completed" (fun s ({ Bs.Fetcher.fetch } as fetcher) ->
           let module Wm = Terrat_work_manifest3 in
           let open Irm in
+          (* Ensure the tree is accessible, building if necessary *)
+          fetch Keys.repo_tree_branch
+          >>= fun _ ->
           fetch Keys.dest_branch_ref
           >>= fun dest_branch_ref ->
           fetch Keys.working_branch_ref
@@ -816,9 +824,6 @@ struct
       run ~name:"built_repo_config_branch" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
           let module V1 = Terrat_base_repo_config_v1 in
-          (* Ensure the tree is accessible, building if necessary *)
-          fetch Keys.repo_tree_branch
-          >>= fun _ ->
           fetch Keys.account
           >>= fun account ->
           fetch Keys.branch_ref
@@ -2987,7 +2992,7 @@ struct
                   m
                     "%s : target=%s : context_id=%a : job_id=%a"
                     (Builder.log_id s)
-                    (Hmap.Key.info Keys.eval_job)
+                    (Hmap.Key.info Keys.iter_job)
                     Uuidm.pp
                     context.Tjc.Context.id
                     Uuidm.pp
@@ -3000,7 +3005,7 @@ struct
                 |> CCFun.flip Builder.State.set_orig_store s
                 |> Builder.State.set_log_id (Uuidm.to_string job.Tjc.Job.id)
               in
-              Builder.eval s' Keys.eval_job
+              Builder.eval s' Keys.iter_job
           | None -> Abb.Future.return (Error `Noop))
 
     let iter_job =
@@ -3048,6 +3053,7 @@ struct
           >>= function
           | Ok () | Error `Noop ->
               let open Irm in
+              Logs.info (fun m -> m "%s : UPDATE JOB : COMPLETED" (Builder.log_id s));
               Builder.run_db s ~f:(fun db ->
                   S.Job_context.Job.update_state
                     ~request_id:(Builder.log_id s)
@@ -3055,8 +3061,10 @@ struct
                     ~job_id:job.Tjc.Job.id
                     Tjc.Job.State.Completed)
               >>= fun () -> Abb.Future.return (Ok ())
+          | Error (`Suspend_eval _) as err -> Abb.Future.return err
           | Error (#Builder.err as err) ->
               let open Irm in
+              Logs.info (fun m -> m "%s : UPDATE JOB : FAILED" (Builder.log_id s));
               Builder.run_db s ~f:(fun db ->
                   S.Job_context.Job.update_state
                     ~request_id:(Builder.log_id s)
@@ -3065,44 +3073,21 @@ struct
                     Tjc.Job.State.Failed)
               >>= fun () -> Abb.Future.return (Error err))
 
-    let eval_job =
-      run ~name:"eval_job" (fun s { Bs.Fetcher.fetch } ->
-          let open Irm in
-          fetch Keys.job
-          >>= fun job ->
-          fetch Keys.react_to_comment
-          >>= fun () ->
-          let go =
-            match job.Tjc.Job.type_ with
-            | Tjc.Job.Type_.Apply _
-            | Tjc.Job.Type_.Autoapply
-            | Tjc.Job.Type_.Autoplan
-            | Tjc.Job.Type_.Plan _ -> fetch Keys.iter_job
-            | Tjc.Job.Type_.Repo_config -> fetch Keys.publish_repo_config
-            | Tjc.Job.Type_.Unlock _ -> fetch Keys.publish_unlock
-            | Tjc.Job.Type_.Gate_approval _ -> fetch Keys.store_gate_approval
-          in
-          let open Abb.Future.Infix_monad in
-          go
-          >>= function
-          | Ok () | Error `Noop ->
-              let open Irm in
-              Builder.run_db s ~f:(fun db ->
-                  S.Job_context.Job.update_state
-                    ~request_id:(Builder.log_id s)
-                    db
-                    ~job_id:job.Tjc.Job.id
-                    Tjc.Job.State.Completed)
-              >>= fun () -> Abb.Future.return (Ok ())
-          | Error (#Builder.err as err) ->
-              let open Irm in
-              Builder.run_db s ~f:(fun db ->
-                  S.Job_context.Job.update_state
-                    ~request_id:(Builder.log_id s)
-                    db
-                    ~job_id:job.Tjc.Job.id
-                    Tjc.Job.State.Failed)
-              >>= fun () -> Abb.Future.return (Error err))
+    (* let eval_job = *)
+    (*   run ~name:"eval_job" (fun s { Bs.Fetcher.fetch } -> *)
+    (*       let open Irm in *)
+    (*       fetch Keys.job *)
+    (*       >>= fun job -> *)
+    (*       fetch Keys.react_to_comment *)
+    (*       >>= fun () -> *)
+    (*       match job.Tjc.Job.type_ with *)
+    (*       | Tjc.Job.Type_.Apply _ *)
+    (*       | Tjc.Job.Type_.Autoapply *)
+    (*       | Tjc.Job.Type_.Autoplan *)
+    (*       | Tjc.Job.Type_.Plan _ -> fetch Keys.iter_job *)
+    (*       | Tjc.Job.Type_.Repo_config -> fetch Keys.publish_repo_config *)
+    (*       | Tjc.Job.Type_.Unlock _ -> fetch Keys.publish_unlock *)
+    (*       | Tjc.Job.Type_.Gate_approval _ -> fetch Keys.store_gate_approval) *)
 
     let run_next_layer =
       let maybe_create_completed_apply_check s { Bs.Fetcher.fetch } =
@@ -3453,7 +3438,7 @@ struct
     |> Hmap.add (coerce Keys.dest_branch_name) Tasks.dest_branch_name
     |> Hmap.add (coerce Keys.dest_branch_ref) Tasks.dest_branch_ref
     |> Hmap.add (coerce Keys.eval_compute_node_poll) Tasks.eval_compute_node_poll
-    |> Hmap.add (coerce Keys.eval_job) Tasks.eval_job
+    (* |> Hmap.add (coerce Keys.eval_job) Tasks.eval_job *)
     |> Hmap.add (coerce Keys.iter_job) Tasks.iter_job
     |> Hmap.add (coerce Keys.eval_pull_request_event) Tasks.eval_pull_request_event
     |> Hmap.add (coerce Keys.eval_work_manifest_event) Tasks.eval_work_manifest_event

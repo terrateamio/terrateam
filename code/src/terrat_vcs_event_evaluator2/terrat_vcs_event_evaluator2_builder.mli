@@ -17,7 +17,11 @@ module Make (S : Terrat_vcs_provider2.S) : sig
   module B : Buildsys.S with type 'v k = 'v Hmap.key and type 'a C.t = 'a Abb.Future.t
 
   module Bs :
-    Buildsys.T with type 'a k = 'a B.k and type 'a c = 'a Abb.Future.t and type state = B.State.t
+    Buildsys.T
+      with type 'a k = 'a B.k
+       and type key_repr = string
+       and type 'a c = 'a Abb.Future.t
+       and type state = B.State.t
 
   val rebuilder : Bs.Rebuilder.t
 
