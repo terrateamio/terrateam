@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Check for required arguments
+if [[ $# -lt 1 ]]; then
+  echo "Usage: $0 <asset-path> [<asset-path> ...]"
+  exit 1
+fi
+
+# Validate required environment variables
+: "${GITHUB_TOKEN:?GITHUB_TOKEN is required}"
+: "${GITHUB_REPOSITORY:?GITHUB_REPOSITORY is required}"
+: "${VERSION_TAG:?VERSION_TAG is required}"
+
+echo "Uploading release assets to ${VERSION_TAG}..."
+
+# Upload all assets provided as arguments
+if ! gh release upload "${VERSION_TAG}" \
+  "$@" \
+  --clobber \
+  --repo "${GITHUB_REPOSITORY}"; then
+  echo "Error: Failed to upload release assets" >&2
+  exit 1
+fi
+
+echo "Successfully uploaded ${#} asset(s) to release ${VERSION_TAG}"

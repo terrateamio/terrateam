@@ -52,7 +52,7 @@ jobs:
 
     strategy:
       matrix:
-        target: [code-indexer, terrat-ee, terrat-oss]
+        target: [code-indexer, terrat-ee, terrat-oss, ttm]
 
     env:
       VERSION_TAG: ${{ needs.set-version-tag.outputs.version_tag }}
@@ -94,6 +94,22 @@ jobs:
             BASE_IMAGE=${{ env.BASE_IMAGE }}
           tags: ghcr.io/${{ github.repository_owner }}/${{ matrix.target }}:${{ env.VERSION_TAG }}-amd64
 
+      - name: Extract ttm binary (amd64)
+        if: matrix.target == 'ttm'
+        run: |
+          docker create --name ttm-extract ghcr.io/${{ github.repository_owner }}/ttm:${{ env.VERSION_TAG }}-amd64
+          docker cp ttm-extract:/usr/local/bin/ttm ./ttm-linux-amd64
+          docker rm ttm-extract
+          chmod +x ./ttm-linux-amd64
+
+      - name: Upload ttm binary (amd64)
+        if: matrix.target == 'ttm'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ttm-linux-amd64
+          path: ttm-linux-amd64
+          retention-days: 7
+
   build-arm64:
     needs: set-version-tag
     runs-on: ubuntu-22.04-arm64
@@ -101,7 +117,7 @@ jobs:
 
     strategy:
       matrix:
-        target: [code-indexer, terrat-ee, terrat-oss]
+        target: [code-indexer, terrat-ee, terrat-oss, ttm]
 
     env:
       VERSION_TAG: ${{ needs.set-version-tag.outputs.version_tag }}
@@ -143,6 +159,22 @@ jobs:
             BASE_IMAGE=${{ env.BASE_IMAGE }}
           tags: ghcr.io/${{ github.repository_owner }}/${{ matrix.target }}:${{ env.VERSION_TAG }}-arm64
 
+      - name: Extract ttm binary (arm64)
+        if: matrix.target == 'ttm'
+        run: |
+          docker create --name ttm-extract ghcr.io/${{ github.repository_owner }}/ttm:${{ env.VERSION_TAG }}-arm64
+          docker cp ttm-extract:/usr/local/bin/ttm ./ttm-linux-arm64
+          docker rm ttm-extract
+          chmod +x ./ttm-linux-arm64
+
+      - name: Upload ttm binary (arm64)
+        if: matrix.target == 'ttm'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ttm-linux-arm64
+          path: ttm-linux-arm64
+          retention-days: 7
+
   create-multi-arch-manifest:
     needs: [set-version-tag, build-amd64, build-arm64]
     runs-on: ubuntu-22.04
@@ -176,7 +208,7 @@ jobs:
 
       - name: Create and push multi-arch manifest
         run: |
-          ./scripts/create_manifest code-indexer terrat-ee terrat-oss
+          ./scripts/create_manifest code-indexer terrat-ee terrat-oss ttm
 
   release-notify:
     needs: [set-version-tag, create-multi-arch-manifest]
@@ -197,9 +229,25 @@ jobs:
         with:
           fetch-tags: true
 
+      - name: Download ttm binary (amd64)
+        uses: actions/download-artifact@v4
+        with:
+          name: ttm-linux-amd64
+          path: ./binaries
+
+      - name: Download ttm binary (arm64)
+        uses: actions/download-artifact@v4
+        with:
+          name: ttm-linux-arm64
+          path: ./binaries
+
       - name: Create release
         run: |
           ./scripts/create_release
+
+      - name: Upload ttm binaries to release
+        run: |
+          ./scripts/upload_release_assets ./binaries/ttm-linux-*
 
       - name: Notify Slack
         run: |
