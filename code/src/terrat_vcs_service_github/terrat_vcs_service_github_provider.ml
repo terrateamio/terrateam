@@ -4822,8 +4822,7 @@ module Work_manifest = struct
                     Githubc2_abb.pp_call_err
                     err);
               Abb.Future.return (Ok ())
-          | Error (`Missing_response resp as err)
-            when CCString.mem ~sub:"does not exist" (Openapi.Response.value resp) -> (
+          | Error (`Missing_response resp as err) -> (
               let module P = struct
                 type t = { message : string } [@@deriving yojson { strict = false }]
               end in

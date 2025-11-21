@@ -2819,7 +2819,6 @@ struct
           >>= fun pull_request ->
           fetch Keys.context
           >>= fun context ->
-          Builder.State.mark_dirty s Keys.context;
           Builder.run_db s ~f:(fun db ->
               S.Job_context.update_for_pull_request
                 ~request_id:(Builder.log_id s)
@@ -2912,7 +2911,7 @@ struct
                 match event with
                 | Keys.Work_manifest_event.(
                     ( Initiate { work_manifest; _ }
-                    | Fail { work_manifest }
+                    | Fail { work_manifest; _ }
                     | Result { work_manifest; _ } )) -> work_manifest
               in
               Builder.run_db s ~f:(fun db ->
@@ -3072,22 +3071,6 @@ struct
                     ~job_id:job.Tjc.Job.id
                     Tjc.Job.State.Failed)
               >>= fun () -> Abb.Future.return (Error err))
-
-    (* let eval_job = *)
-    (*   run ~name:"eval_job" (fun s { Bs.Fetcher.fetch } -> *)
-    (*       let open Irm in *)
-    (*       fetch Keys.job *)
-    (*       >>= fun job -> *)
-    (*       fetch Keys.react_to_comment *)
-    (*       >>= fun () -> *)
-    (*       match job.Tjc.Job.type_ with *)
-    (*       | Tjc.Job.Type_.Apply _ *)
-    (*       | Tjc.Job.Type_.Autoapply *)
-    (*       | Tjc.Job.Type_.Autoplan *)
-    (*       | Tjc.Job.Type_.Plan _ -> fetch Keys.iter_job *)
-    (*       | Tjc.Job.Type_.Repo_config -> fetch Keys.publish_repo_config *)
-    (*       | Tjc.Job.Type_.Unlock _ -> fetch Keys.publish_unlock *)
-    (*       | Tjc.Job.Type_.Gate_approval _ -> fetch Keys.store_gate_approval) *)
 
     let run_next_layer =
       let maybe_create_completed_apply_check s { Bs.Fetcher.fetch } =

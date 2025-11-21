@@ -33,6 +33,13 @@ type gate_add_approval_err =
 type gate_eval_err = [ `Error ] [@@deriving show]
 type tier_check_err = [ `Error ] [@@deriving show]
 
+type run_work_manifest_err =
+  [ `Failed_to_start_with_msg_err of string
+  | `Failed_to_start
+  | `Missing_workflow
+  | `Error
+  ]
+
 module Account_status = struct
   type t =
     [ `Active
@@ -512,11 +519,7 @@ module type S = sig
       ( Api.Account.t,
         ((unit, unit) Api.Pull_request.t, Api.Repo.t) Target.t )
       Terrat_work_manifest3.Existing.t ->
-      ( unit,
-        [> `Failed_to_start_with_msg_err of string | `Failed_to_start | `Missing_workflow | `Error ]
-      )
-      result
-      Abb.Future.t
+      (unit, [> run_work_manifest_err ]) result Abb.Future.t
 
     val create :
       request_id:string ->

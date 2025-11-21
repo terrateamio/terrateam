@@ -120,7 +120,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                           ~request_id
                           ~config
                           ~db
-                          (Keys.Work_manifest_event.Fail { work_manifest = wm })
+                          (Keys.Work_manifest_event.Fail { work_manifest = wm; error = err })
                         >>= fun () -> Abb.Future.return (Ok `Cont))
                 | None -> Abb.Future.return (Ok `Done))))
     >>= function
