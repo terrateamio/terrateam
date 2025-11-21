@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Stacks, StackOuter, StackInner, StackState } from '../../types';
   import StackNode from './StackNode.svelte';
+  import { aggregateStacks } from '../../utils/stackAggregation';
 
   export let stacks: Stacks | null = null;
   export let loading: boolean = false;
@@ -10,17 +11,20 @@
   let showWorkspaces: boolean = false;
   let searchQuery: string = '';
 
+  // Aggregate stacks with the same name before rendering
+  $: aggregatedStacks = aggregateStacks(stacks);
+
   // Check if stacks have been loaded (not null) and have data
-  $: hasStacks = stacks && stacks.stacks && stacks.stacks.length > 0;
+  $: hasStacks = aggregatedStacks && aggregatedStacks.stacks && aggregatedStacks.stacks.length > 0;
 
   // Check if stacks have been loaded (API call completed)
   // null = not loaded yet, { stacks: [] } = loaded but empty
   $: stacksLoaded = stacks !== null;
 
-  $: filteredStacks = filterStacks(stacks, searchQuery);
+  $: filteredStacks = filterStacks(aggregatedStacks, searchQuery);
 
   // Compute state counts for dashboard
-  $: stateCounts = computeStateCounts(stacks);
+  $: stateCounts = computeStateCounts(aggregatedStacks);
 
   function computeStateCounts(stacks: Stacks | null): Record<StackState, number> {
     const counts: Record<StackState, number> = {
