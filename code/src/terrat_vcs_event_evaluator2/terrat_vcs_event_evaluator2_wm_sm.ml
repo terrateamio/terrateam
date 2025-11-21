@@ -125,6 +125,27 @@ struct
       | { Wm.state = Wm.State.(Completed | Aborted); _ } -> true
       | _ -> false)
 
+  let publish_fail s { Builder.Bs.Fetcher.fetch } = function
+    | (`Failed_to_start_with_msg_err _ | `Failed_to_start | `Missing_workflow) as err -> (
+        let open Irm in
+        fetch Keys.client
+        >>= fun client ->
+        fetch Keys.user
+        >>= fun user ->
+        fetch Keys.pull_request
+        >>= fun pull_request ->
+        fetch Keys.is_interactive
+        >>= function
+        | true ->
+            S.Comment.publish_comment
+              ~request_id:(Builder.log_id s)
+              client
+              (CCOption.map_or ~default:"" S.Api.User.to_string user)
+              pull_request
+              (Terrat_vcs_provider2.Msg.Run_work_manifest_err err)
+        | false -> Abb.Future.return (Ok ()))
+    | `Error -> Abb.Future.return (Ok ())
+
   let run
       ~name
       ~eq
@@ -175,9 +196,11 @@ struct
               db
               response)
         >>= fun () -> Abb.Future.return (Error (`Suspend_eval name))
-    | Some (E.Fail { work_manifest }) when eq work_manifest -> (
+    | Some (E.Fail { work_manifest; error }) when eq work_manifest -> (
         Logs.info (fun m -> m "%s : WM : FAIL : name=%s" (Builder.log_id s) name);
         fail work_manifest s fetcher
+        >>= fun () ->
+        publish_fail s fetcher error
         >>= fun () ->
         fetch Keys.work_manifests_for_job
         >>= function

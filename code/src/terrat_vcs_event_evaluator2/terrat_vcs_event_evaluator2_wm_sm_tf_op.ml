@@ -650,13 +650,6 @@ struct
             work_manifest
             "Failed"
             Status.Failed
-          >>= fun () ->
-          S.Comment.publish_comment
-            ~request_id:(Builder.log_id s)
-            client
-            (CCOption.map_or ~default:"" S.Api.User.to_string user)
-            pull_request
-            Msg.Unexpected_temporary_err
       | false -> Abb.Future.return (Ok ())
 
     let result work_manifest result s { Bs.Fetcher.fetch } =
