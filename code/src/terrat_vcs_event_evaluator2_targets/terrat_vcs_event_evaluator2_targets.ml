@@ -43,6 +43,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             ( S.Api.Account.t,
               ((unit, unit) S.Api.Pull_request.t, S.Api.Repo.t) Terrat_vcs_provider2.Target.t )
             Terrat_work_manifest3.Existing.t;
+          error : Terrat_vcs_provider2.run_work_manifest_err;
         }
       | Result of {
           work_manifest :
