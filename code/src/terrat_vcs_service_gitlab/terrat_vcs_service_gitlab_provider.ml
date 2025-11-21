@@ -4328,9 +4328,7 @@ module Work_manifest = struct
                ~sub:"Given inputs not defined in the `spec` section"
                (Yojson.Safe.to_string json)
              <> -1 ->
-          let err_msg =
-            "Given inputs not defined in the `spec` section"
-          in
+          let err_msg = "Given inputs not defined in the `spec` section" in
           Logs.err (fun m -> m "%s : %s : %s" request_id err_msg (Yojson.Safe.to_string json));
           Abb.Future.return (Error (`Failed_to_start_with_msg_err "GITLAB_INPUTS_MISSING_DEFAULTS"))
       | (`Bad_request _ | `Unauthorized _ | `Forbidden _ | `Not_found _) as err ->
