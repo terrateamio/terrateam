@@ -1,5 +1,23 @@
 module List = ListLabels
 
+module Assert = struct
+  exception Failure of string
+
+  let ok ~pp r =
+    match r with
+    | Ok v -> v
+    | Error e -> raise (Failure (Format.asprintf "Expected Ok (_), got Error:\n%a" pp e))
+
+  let some ~fail_msg opt =
+    match opt with
+    | Some v -> v
+    | None -> raise (Failure fail_msg)
+
+  let eq ~eq ~pp expected actual =
+    if not (eq expected actual) then
+      raise (Failure (Format.asprintf "Expected:\n%a\nGot:\n%a" pp expected pp actual))
+end
+
 (*
  * This isn't here actually but will be used to propogate
  * options at some point
@@ -33,6 +51,11 @@ end
 module Outputter = struct
   type t = Run_result.t -> unit
 
+  let string_of_exn exn =
+    match exn with
+    | Assert.Failure msg -> msg
+    | _ -> Printexc.to_string exn
+
   let basic_stdout =
     List.iter ~f:(fun tr ->
         match tr.Test_result.res with
@@ -48,7 +71,7 @@ module Outputter = struct
               tr.Test_result.name
               (Duration.to_f tr.Test_result.duration);
             CCOption.iter (Printf.printf "Description: %s\n") tr.Test_result.desc;
-            Printf.printf "Exn: %s\n" (Printexc.to_string exn);
+            Printf.printf "Exn: %s\n" (string_of_exn exn);
             CCOption.iter
               (Printf.printf "Backtrace: %s\n")
               (CCOption.map Printexc.raw_backtrace_to_string bt_opt))
@@ -101,7 +124,7 @@ module Outputter = struct
               Printf.fprintf
                 oc
                 "# Exn: %s\n"
-                (CCString.replace ~which:`All ~sub:"\n" ~by:"\n# " (Printexc.to_string exn));
+                (CCString.replace ~which:`All ~sub:"\n" ~by:"\n# " (string_of_exn exn));
               Printf.fprintf
                 oc
                 "# Backtrace: %s\n"
@@ -109,7 +132,9 @@ module Outputter = struct
                    ~which:`All
                    ~sub:"\n"
                    ~by:"\n# "
-                   (CCOption.get_or ~default:"" (CCOption.map Printexc.raw_backtrace_to_string bt_opt))));
+                   (CCOption.get_or
+                      ~default:""
+                      (CCOption.map Printexc.raw_backtrace_to_string bt_opt))));
           output_test (n + 1) trs
     in
     output_test start_test rr;
@@ -199,3 +224,27 @@ let loop n test state =
 
 let verbose = CCFun.id
 let silent = CCFun.id
+
+module Diff = struct
+  let diff_files ~expected_file_path ~actual_file_path =
+    let command = Printf.sprintf "diff -u %s %s" expected_file_path actual_file_path in
+    match Sys.command command with
+    | 0 -> ()
+    | _ ->
+        print_endline
+          (Format.sprintf
+             "Output does not match expected. Run the following command to see the diff:\n\
+              diff -u %s %s"
+             expected_file_path
+             actual_file_path);
+        assert false
+
+  let check ~tmp_dir_name ~expected_file_path ~actual_content =
+    if String.equal (CCOption.get_or ~default:"0" (Sys.getenv_opt "OTH_CREATE_EXPECTED_FILES")) "1"
+    then CCIO.with_out expected_file_path (fun oc -> output_string oc actual_content)
+    else
+      let tmp_dir = Filename.temp_dir (tmp_dir_name ^ "-") "-XXX" in
+      let actual_file_path = Filename.concat tmp_dir "actual.txt" in
+      CCIO.with_out actual_file_path (fun oc -> output_string oc actual_content);
+      diff_files ~expected_file_path ~actual_file_path
+end
