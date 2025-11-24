@@ -26,9 +26,18 @@ Schema: `access-token-create`
 ```json
 {
   "name": "string",
-  "capabilities": []
+  "capabilities": [
+    "kv_store_read",
+    "kv_store_write",
+    {
+      "name": "installation_id",
+      "id": "12345"
+    }
+  ]
 }
 ```
+
+See [Available Capabilities](#available-capabilities) below for all options.
 
 **Responses:**
 
@@ -55,7 +64,7 @@ curl -X POST \
   -H "Content-Type: application/json" \
   -d '{
     "name": "CI/CD Token",
-    "capabilities": []
+    "capabilities": ["kv_store_read", "kv_store_write"]
   }'
 ```
 
@@ -95,7 +104,14 @@ Schema: `access-token-page`
     {
       "id": "string",
       "name": "string",
-      "capabilities": []
+      "capabilities": [
+        "kv_store_read",
+        "kv_store_write",
+        {
+          "name": "installation_id",
+          "id": "12345"
+        }
+      ]
     }
   ]
 }
@@ -226,6 +242,91 @@ API keys can be managed through both the Terrateam dashboard at **Settings > API
 - Access tokens expire after 60 seconds, minimizing the risk if intercepted
 - Implement token refresh logic in your applications to handle expiration
 :::
+
+---
+
+## Available Capabilities
+
+When creating an API access token, you can specify one or more capabilities that define what the token can do. Capabilities can be either simple strings or objects with additional properties.
+
+### String Capabilities
+
+These capabilities are specified as simple strings:
+
+| Capability | Description |
+|------------|-------------|
+| `access_token_refresh` | Allows refreshing access tokens to get new short-lived tokens |
+| `access_token_create` | Allows creating new API access tokens |
+| `kv_store_read` | Grants read access to the key-value store |
+| `kv_store_write` | Grants write access to the key-value store |
+| `kv_store_system_read` | Grants read access to the system key-value store |
+| `kv_store_system_write` | Grants write access to the system key-value store |
+
+**Example:**
+```json
+{
+  "name": "My Token",
+  "capabilities": ["kv_store_read", "kv_store_write"]
+}
+```
+
+### Object Capabilities
+
+These capabilities require additional properties:
+
+#### Installation ID
+
+Scope the token to a specific installation.
+
+```json
+{
+  "name": "installation_id",
+  "id": "12345"
+}
+```
+
+**Properties:**
+- `name`: Must be `"installation_id"`
+- `id`: The installation ID string
+
+#### VCS Provider
+
+Scope the token to a specific VCS provider.
+
+```json
+{
+  "name": "vcs",
+  "vcs": "github"
+}
+```
+
+**Properties:**
+- `name`: Must be `"vcs"`
+- `vcs`: The VCS provider (`"github"` or `"gitlab"`)
+
+### Combined Example
+
+You can mix string and object capabilities:
+
+```json
+{
+  "name": "Production Token",
+  "capabilities": [
+    "kv_store_read",
+    "kv_store_write",
+    {
+      "name": "installation_id",
+      "id": "67890"
+    },
+    {
+      "name": "vcs",
+      "vcs": "github"
+    }
+  ]
+}
+```
+
+---
 
 ## Authentication
 
