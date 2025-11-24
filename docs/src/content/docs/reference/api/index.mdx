@@ -3,14 +3,182 @@ title: API Reference
 description: REST API documentation for Terrateam
 ---
 
-**Documentation coming soon**
+import { Card, CardGrid } from '@astrojs/starlight/components';
 
-The Terrateam API is currently in beta. Full documentation is under development.
+The Terrateam REST API allows you to programmatically interact with Terrateam installations, work manifests, repositories, and more. Use the API to integrate Terrateam into your CI/CD pipelines, build custom workflows, and automate infrastructure operations.
+
+:::note[Beta]
+The API is in beta and subject to change. We recommend versioning your integrations and monitoring for updates.
+:::
 
 ## Getting Started
 
-Create API access tokens in **Settings > API Access** to interact with the Terrateam API programmatically.
+### Authentication Workflow
 
-:::note[Beta]
-The API is in beta and subject to change.
+The Terrateam API uses a two-step authentication process:
+
+#### Step 1: Create an API Key
+
+1. Navigate to **Settings > API Access** in the Terrateam dashboard
+2. Click **Create Token**
+3. Provide a name and select the required capabilities
+4. Copy the API key (it will only be shown once)
+5. Store the API key securely
+
+The API key is long-lived and can only be used to obtain access tokens.
+
+#### Step 2: Get an Access Token
+
+Use your API key to call the refresh endpoint and obtain an access token:
+
+```bash
+curl -X POST https://app.terrateam.io/api/v1/access-token/refresh \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+Response:
+```json
+{
+  "token": "eyJhbGc..."
+}
+```
+
+The access token inherits the capabilities you selected when creating the API key.
+
+#### Step 3: Make API Requests
+
+Use the access token for all API requests:
+
+```bash
+curl -X GET https://app.terrateam.io/api/v1/whoami \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+:::tip[Token Expiration]
+Access tokens expire after **60 seconds**. You'll need to call the refresh endpoint frequently to get new tokens for ongoing API operations.
 :::
+
+### Example: Long-Running Script
+
+For scripts that make multiple API calls over time, you'll need to refresh tokens regularly:
+
+```bash
+#!/bin/bash
+API_KEY="your_api_key_here"
+
+# Function to get a fresh access token
+get_access_token() {
+  curl -s -X POST https://app.terrateam.io/api/v1/access-token/refresh \
+    -H "Authorization: Bearer $API_KEY" | jq -r '.token'
+}
+
+# Get initial token
+ACCESS_TOKEN=$(get_access_token)
+
+# Make API requests
+# Refresh token every 50 seconds to be safe (before 60s expiration)
+while true; do
+  # Use the token
+  curl -X GET https://app.terrateam.io/api/v1/whoami \
+    -H "Authorization: Bearer $ACCESS_TOKEN"
+
+  # Wait and refresh
+  sleep 50
+  ACCESS_TOKEN=$(get_access_token)
+done
+```
+
+## Base URL
+
+```
+https://app.terrateam.io
+```
+
+For self-hosted installations, use your custom domain.
+
+## API Categories
+
+<CardGrid>
+  <Card title="GitHub Installations" icon="github">
+    Manage GitHub installations, repositories, pull requests, and work manifests.
+
+    [View Endpoints →](/reference/api/github-installations)
+  </Card>
+
+  <Card title="GitLab Installations" icon="gitlab">
+    Manage GitLab installations, groups, repositories, and work manifests.
+
+    [View Endpoints →](/reference/api/gitlab-installations)
+  </Card>
+
+  <Card title="Access Tokens" icon="seti:lock">
+    Create, list, refresh, and delete API access tokens for authentication.
+
+    [View Endpoints →](/reference/api/access-tokens)
+  </Card>
+
+  <Card title="Key-Value Store" icon="seti:db">
+    Store and retrieve persistent data across workflow runs using the KV store.
+
+    [View Endpoints →](/reference/api/kv-store)
+  </Card>
+
+  <Card title="Authentication" icon="approve-check">
+    Retrieve user information and manage authentication sessions.
+
+    [View Endpoints →](/reference/api/authentication)
+  </Card>
+
+  <Card title="Stacks" icon="list">
+    Retrieve stack information and dependencies for pull requests.
+
+    [View Endpoints →](/reference/api/stacks)
+  </Card>
+
+  <Card title="System & Admin" icon="setting">
+    Admin operations, server configuration, task management, and system utilities.
+
+    [View Endpoints →](/reference/api/system-admin)
+  </Card>
+</CardGrid>
+
+## Common Patterns
+
+### Pagination
+
+Many list endpoints support pagination using the `page` and `limit` query parameters:
+
+```bash
+GET /api/v1/github/installations/{installation_id}/repos?limit=50&page=...
+```
+
+### Filtering and Sorting
+
+Use `q` for search queries and `d` for sort direction (`asc` or `desc`):
+
+```bash
+GET /api/v1/github/installations/{installation_id}/work-manifests?q=terraform&d=desc
+```
+
+### VCS Parameter
+
+Endpoints with `{vcs}` path parameter accept:
+- `github` - For GitHub integrations
+- `gitlab` - For GitLab integrations
+
+## Rate Limiting
+
+API requests are rate limited to prevent abuse and ensure fair usage. Requests exceeding the limit will receive `429 Too Many Requests`.
+
+If you encounter rate limits, implement exponential backoff and retry logic in your client applications.
+
+## Error Responses
+
+The API uses standard HTTP status codes:
+
+| Code | Description |
+|------|-------------|
+| **200** | Request successful |
+| **400** | Bad request - Invalid parameters |
+| **403** | Forbidden - Invalid or missing authentication |
+| **404** | Resource not found |

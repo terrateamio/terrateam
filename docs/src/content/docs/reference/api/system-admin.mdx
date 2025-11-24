@@ -1,0 +1,155 @@
+---
+title: System & Admin APIs
+description: API endpoints for system administration, configuration, and task management
+---
+
+These endpoints provide system-level functionality including server configuration, OAuth setup, and asynchronous task management.
+
+## System Configuration
+
+### Get Server Configuration
+
+Retrieve server configuration and feature flags.
+
+**Endpoint:** `GET /api/v1/server/config`
+
+**Responses:**
+
+- **200**: Success - Returns server configuration
+
+**Example Request:**
+
+```bash
+curl -X GET \
+  https://app.terrateam.io/api/v1/server/config
+```
+
+**Use Cases:**
+- Detect available features for client applications
+- Determine API version and capabilities
+- Configure client behavior based on server settings
+- Self-hosted instance configuration verification
+
+---
+
+### Get GitHub Client ID
+
+Retrieve the GitHub OAuth client ID for the Terrateam installation.
+
+**Endpoint:** `GET /api/v1/github/client_id`
+
+**Responses:**
+
+- **200**: Success - Returns client ID
+- **403**: Forbidden
+
+**Response Schema (200):**
+
+```json
+{
+  "client_id": "string"
+}
+```
+
+**Example Request:**
+
+```bash
+curl -X GET \
+  https://app.terrateam.io/api/v1/github/client_id
+```
+
+:::tip[OAuth Integration]
+This endpoint is typically used during OAuth flows to obtain the client ID for authentication. It does not require authentication, making it accessible for initial OAuth setup.
+:::
+
+**Use Cases:**
+- Implement custom OAuth flows
+- Build third-party integrations
+- Configure authentication in client applications
+- Verify GitHub App configuration
+
+---
+
+## Task Management
+
+### Get Task Status
+
+Retrieve the status of an asynchronous task by ID.
+
+**Endpoint:** `GET /api/v1/tasks/{id}`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `id` | string | Yes | The task identifier |
+
+**Responses:**
+
+- **200**: Success - Returns task status
+- **403**: Forbidden
+- **404**: Not Found
+
+**Example Request:**
+
+```bash
+curl -X GET \
+  https://app.terrateam.io/api/v1/tasks/{task_id} \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+**Understanding Async Tasks:**
+
+Some operations in Terrateam run asynchronously to avoid blocking the API response. When you trigger such an operation, you receive a task ID that you can use to poll for completion status.
+
+**Common Async Operations:**
+- Repository refresh (`/repos/refresh` endpoint returns task ID)
+- Large data imports or exports
+- Bulk operations across multiple resources
+
+**Polling Pattern:**
+
+```bash
+#!/bin/bash
+TASK_ID="task_id_from_async_operation"
+
+while true; do
+  STATUS=$(curl -s "https://app.terrateam.io/api/v1/tasks/$TASK_ID" \
+    -H "Authorization: Bearer $ACCESS_TOKEN")
+
+  echo "Task status: $STATUS"
+
+  # Check if task is complete (adjust based on actual response structure)
+  if echo "$STATUS" | grep -q "completed"; then
+    echo "Task completed!"
+    break
+  fi
+
+  sleep 5
+done
+```
+
+:::tip[Best Practices]
+- Poll at reasonable intervals (5-10 seconds) to avoid rate limiting
+- Implement exponential backoff for long-running tasks
+- Set a maximum timeout to avoid infinite loops
+- Handle error states appropriately
+:::
+
+---
+
+## Authentication
+
+All endpoints (except `/api/v1/github/client_id`) require authentication using a short-lived access token:
+
+```
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+**To get an access token:**
+
+1. Create an API key in **Settings > API Access** in the Terrateam dashboard
+2. Call `POST /api/v1/access-token/refresh` with your API key to get an access token
+3. Use the access token for API requests
+
+See the [Authentication guide](/reference/api/authentication) for detailed instructions.

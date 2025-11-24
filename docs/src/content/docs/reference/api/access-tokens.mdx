@@ -1,0 +1,342 @@
+---
+title: Access Tokens API
+description: API endpoints for managing API access tokens
+---
+
+API access tokens allow you to programmatically interact with the Terrateam API. These endpoints enable you to create, list, refresh, and delete tokens.
+
+## Create Access Token
+
+Create a new API access token.
+
+**Endpoint:** `POST /api/v1/{vcs}/access-token`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `vcs` | string | Yes | VCS provider: `github` or `gitlab` |
+
+**Request Body:**
+
+Content-Type: `application/json`
+
+Schema: `access-token-create`
+
+```json
+{
+  "name": "string",
+  "capabilities": [
+    "kv_store_read",
+    "kv_store_write",
+    {
+      "name": "installation_id",
+      "id": "12345"
+    }
+  ]
+}
+```
+
+See [Available Capabilities](#available-capabilities) below for all options.
+
+**Responses:**
+
+- **200**: Success - Returns the created access token
+- **400**: Bad Request
+- **403**: Forbidden
+
+**Response Schema (200):**
+
+Schema: `access-token`
+
+```json
+{
+  "refresh_token": "string"
+}
+```
+
+**Example Request:**
+
+```bash
+curl -X POST \
+  https://app.terrateam.io/api/v1/github/access-token \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "CI/CD Token",
+    "capabilities": ["kv_store_read", "kv_store_write"]
+  }'
+```
+
+---
+
+## List Access Tokens
+
+Retrieve a paginated list of access tokens.
+
+**Endpoint:** `GET /api/v1/{vcs}/access-token`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `vcs` | string | Yes | VCS provider: `github` or `gitlab` |
+
+**Query Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `limit` | integer | No | Maximum number of results |
+| `page` | array[string] | No | Pagination token |
+
+**Responses:**
+
+- **200**: Success - Returns access token page
+- **403**: Forbidden
+
+**Response Schema (200):**
+
+Schema: `access-token-page`
+
+```json
+{
+  "results": [
+    {
+      "id": "string",
+      "name": "string",
+      "capabilities": [
+        "kv_store_read",
+        "kv_store_write",
+        {
+          "name": "installation_id",
+          "id": "12345"
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Example Request:**
+
+```bash
+curl -X GET \
+  "https://app.terrateam.io/api/v1/github/access-token?limit=50" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+---
+
+## Delete Access Token
+
+Delete an access token by ID.
+
+**Endpoint:** `DELETE /api/v1/{vcs}/access-token`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `vcs` | string | Yes | VCS provider: `github` or `gitlab` |
+
+**Query Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `id` | string | Yes | The access token ID to delete |
+
+**Responses:**
+
+- **200**: Success
+- **403**: Forbidden
+- **404**: Not Found
+
+**Example Request:**
+
+```bash
+curl -X DELETE \
+  "https://app.terrateam.io/api/v1/github/access-token?id=TOKEN_ID" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+---
+
+## Refresh Access Token
+
+Exchange your API key for a short-lived access token with the capabilities you selected when creating the API key.
+
+**Endpoint:** `POST /api/v1/access-token/refresh`
+
+**Authentication:** Use your API key (created in the Terrateam UI) as the Bearer token.
+
+**Responses:**
+
+- **200**: Success - Returns new access token
+- **403**: Forbidden
+
+**Response Schema (200):**
+
+```json
+{
+  "token": "string"
+}
+```
+
+**Example Request:**
+
+```bash
+curl -X POST \
+  https://app.terrateam.io/api/v1/access-token/refresh \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+**Response:**
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+:::tip[How It Works]
+1. Create an API key in **Settings > API Access** with specific capabilities
+2. The API key can only be used to call this refresh endpoint
+3. This endpoint returns an access token with the capabilities you selected
+4. Use the access token for all other API requests
+5. Access tokens expire after **60 seconds** - call refresh again to get a new one
+:::
+
+:::note
+This is the **only** endpoint where you use your API key directly. All other endpoints require the access token returned by this endpoint.
+:::
+
+---
+
+## Token Management
+
+### Understanding the Token Types
+
+**API Key (Long-lived)**
+- Created in the Terrateam UI at **Settings > API Access**
+- Has one capability: refreshing to get access tokens
+- Stores the actual capabilities you select in the UI
+- Should be stored securely and rotated periodically
+- Managed via the `/api/v1/{vcs}/access-token` endpoints
+
+**Access Token (Short-lived)**
+- Obtained by calling `/api/v1/access-token/refresh` with your API key
+- Inherits the capabilities from the API key
+- Used for actual API requests
+- **Expires after 60 seconds** (refresh to get a new one)
+
+:::tip
+API keys can be managed through both the Terrateam dashboard at **Settings > API Access** and the API endpoints on this page.
+:::
+
+:::caution[Security]
+- Store API keys securely (environment variables, secrets manager)
+- Never commit API keys to version control
+- Rotate API keys regularly
+- Delete unused API keys
+- Use the minimum required capabilities for each API key
+- Access tokens expire after 60 seconds, minimizing the risk if intercepted
+- Implement token refresh logic in your applications to handle expiration
+:::
+
+---
+
+## Available Capabilities
+
+When creating an API access token, you can specify one or more capabilities that define what the token can do. Capabilities can be either simple strings or objects with additional properties.
+
+### String Capabilities
+
+These capabilities are specified as simple strings:
+
+| Capability | Description |
+|------------|-------------|
+| `access_token_refresh` | Allows refreshing access tokens to get new short-lived tokens |
+| `access_token_create` | Allows creating new API access tokens |
+| `kv_store_read` | Grants read access to the key-value store |
+| `kv_store_write` | Grants write access to the key-value store |
+| `kv_store_system_read` | Grants read access to the system key-value store |
+| `kv_store_system_write` | Grants write access to the system key-value store |
+
+**Example:**
+```json
+{
+  "name": "My Token",
+  "capabilities": ["kv_store_read", "kv_store_write"]
+}
+```
+
+### Object Capabilities
+
+These capabilities require additional properties:
+
+#### Installation ID
+
+Scope the token to a specific installation.
+
+```json
+{
+  "name": "installation_id",
+  "id": "12345"
+}
+```
+
+**Properties:**
+- `name`: Must be `"installation_id"`
+- `id`: The installation ID string
+
+#### VCS Provider
+
+Scope the token to a specific VCS provider.
+
+```json
+{
+  "name": "vcs",
+  "vcs": "github"
+}
+```
+
+**Properties:**
+- `name`: Must be `"vcs"`
+- `vcs`: The VCS provider (`"github"` or `"gitlab"`)
+
+### Combined Example
+
+You can mix string and object capabilities:
+
+```json
+{
+  "name": "Production Token",
+  "capabilities": [
+    "kv_store_read",
+    "kv_store_write",
+    {
+      "name": "installation_id",
+      "id": "67890"
+    },
+    {
+      "name": "vcs",
+      "vcs": "github"
+    }
+  ]
+}
+```
+
+---
+
+## Authentication
+
+The endpoints on this page manage API keys. To use these endpoints, you need an access token:
+
+1. **For `/api/v1/access-token/refresh`**: Use your API key (the one you created in the UI)
+2. **For all other endpoints** (`/api/v1/{vcs}/access-token`): Use an access token obtained from the refresh endpoint
+
+```
+Authorization: Bearer YOUR_TOKEN
+```
+
+See the [Authentication guide](/reference/api/authentication) for detailed instructions.

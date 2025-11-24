@@ -1,0 +1,202 @@
+---
+title: Authentication API
+description: API endpoints for user authentication and identity
+---
+
+These endpoints provide information about the authenticated user and manage authentication sessions.
+
+## Get Current User
+
+Retrieve information about the currently authenticated user.
+
+**Endpoint:** `GET /api/v1/whoami`
+
+**Responses:**
+
+- **200**: Success - Returns user information
+- **403**: Forbidden
+
+**Response Schema (200):**
+
+Schema: `user`
+
+**Example Request:**
+
+```bash
+curl -X GET \
+  https://app.terrateam.io/api/v1/whoami \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+---
+
+## Get GitHub User
+
+Retrieve GitHub-specific user information.
+
+**Endpoint:** `GET /api/v1/github/whoami`
+
+**Responses:**
+
+- **200**: Success - Returns GitHub user details
+- **403**: Forbidden
+
+**Response Schema (200):**
+
+Schema: `github-user`
+
+**Example Request:**
+
+```bash
+curl -X GET \
+  https://app.terrateam.io/api/v1/github/whoami \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+---
+
+## Get GitLab User
+
+Retrieve GitLab-specific user information for the authenticated user.
+
+**Endpoint:** `GET /api/v1/gitlab/whoami`
+
+**Responses:**
+
+- **200**: Success - Returns GitLab user details
+- **403**: Forbidden
+
+**Example Request:**
+
+```bash
+curl -X GET \
+  https://app.terrateam.io/api/v1/gitlab/whoami \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+---
+
+## Authentication Methods
+
+### Two-Step Authentication Process
+
+Terrateam uses a two-step authentication workflow:
+
+#### 1. API Key (Long-lived)
+
+Create an API key in the Terrateam dashboard:
+
+1. Navigate to **Settings > API Access**
+2. Click **Create Token**
+3. Provide a name and select capabilities
+4. Copy the API key (it won't be shown again)
+5. Store it securely (environment variable, secrets manager)
+
+**The API key has only one capability: refreshing tokens.**
+
+#### 2. Access Token (Short-lived)
+
+Use your API key to obtain an access token:
+
+```bash
+curl -X POST https://app.terrateam.io/api/v1/access-token/refresh \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+The returned access token inherits the capabilities you selected when creating the API key in the UI.
+
+```json
+{
+  "token": "eyJhbGc..."
+}
+```
+
+#### 3. Making API Requests
+
+Use the access token for all API requests:
+
+```
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+Example:
+```bash
+curl -X GET https://app.terrateam.io/api/v1/whoami \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+:::tip[Token Expiration]
+Access tokens expire after **60 seconds**. Call the refresh endpoint again with your API key to get a new token when needed.
+:::
+
+### Handling Token Expiration
+
+Since access tokens expire after 60 seconds, you'll need to implement token refresh logic in your applications:
+
+**Python Example:**
+
+```python
+import requests
+import time
+from datetime import datetime, timedelta
+
+class TerrateamClient:
+    def __init__(self, api_key):
+        self.api_key = api_key
+        self.access_token = None
+        self.token_expires_at = None
+        self.base_url = "https://app.terrateam.io"
+
+    def refresh_token(self):
+        """Get a new access token"""
+        response = requests.post(
+            f"{self.base_url}/api/v1/access-token/refresh",
+            headers={"Authorization": f"Bearer {self.api_key}"}
+        )
+        self.access_token = response.json()["token"]
+        # Set expiration to 55 seconds (5 second buffer)
+        self.token_expires_at = datetime.now() + timedelta(seconds=55)
+
+    def get_headers(self):
+        """Get headers with valid access token"""
+        if not self.access_token or datetime.now() >= self.token_expires_at:
+            self.refresh_token()
+        return {"Authorization": f"Bearer {self.access_token}"}
+
+    def whoami(self):
+        """Example API call"""
+        response = requests.get(
+            f"{self.base_url}/api/v1/whoami",
+            headers=self.get_headers()
+        )
+        return response.json()
+
+# Usage
+client = TerrateamClient("your_api_key")
+user = client.whoami()
+```
+
+### Token Security Best Practices
+
+:::tip[Security]
+- **Store API keys securely**: Keep API keys in environment variables or secret management systems
+- **Rotate regularly**: Create new API keys and delete old ones periodically
+- **Minimum permissions**: Grant only the capabilities needed for each API key
+- **Monitor usage**: Review API key activity in the dashboard
+- **Delete unused keys**: Remove API keys that are no longer needed
+- **Never commit keys**: Don't commit API keys to version control
+:::
+
+## Response Codes
+
+| Code | Description |
+|------|-------------|
+| **200** | Request successful |
+| **403** | Forbidden - Invalid or missing authentication |
+| **404** | Resource not found |
+
+---
+
+## Related Endpoints
+
+- [Access Tokens API](/reference/api/access-tokens) - Manage API access tokens
