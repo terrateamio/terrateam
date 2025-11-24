@@ -3,58 +3,7 @@ title: System & Admin APIs
 description: API endpoints for system administration, configuration, and task management
 ---
 
-These endpoints provide system-level functionality including administrative operations, server configuration, OAuth setup, and asynchronous task management.
-
-## Administrative Endpoints
-
-### Get Drift Detection Results
-
-Retrieve drift detection results across all repositories (admin only).
-
-**Endpoint:** `GET /api/v1/admin/drifts`
-
-**Responses:**
-
-- **200**: Success - Returns drift detection results
-
-**Response Schema (200):**
-
-```json
-{
-  "results": [
-    {
-      "id": "string",
-      "name": "string",
-      "owner": "string",
-      "run_type": "...",
-      "state": "string",
-      "created_at": "string",
-      "completed_at": "string",
-      "unlocked": true
-    }
-  ]
-}
-```
-
-**Example Request:**
-
-```bash
-curl -X GET \
-  https://app.terrateam.io/api/v1/admin/drifts \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
-```
-
-:::note[Admin Access Required]
-This endpoint requires administrator privileges. Regular users will receive a 403 Forbidden response.
-:::
-
-**Use Cases:**
-- Monitor drift across all repositories from a central dashboard
-- Generate drift reports for compliance
-- Identify infrastructure that has diverged from code
-- Track drift detection frequency and results
-
----
+These endpoints provide system-level functionality including server configuration, OAuth setup, and asynchronous task management.
 
 ## System Configuration
 

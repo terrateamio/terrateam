@@ -76,50 +76,6 @@ curl -X GET \
 
 ---
 
-## Get GitLab Identity
-
-Retrieve GitLab identity information.
-
-**Endpoint:** `GET /api/v1/gitlab/whoareyou`
-
-**Responses:**
-
-- **200**: Success - Returns GitLab identity information
-
-**Example Request:**
-
-```bash
-curl -X GET \
-  https://app.terrateam.io/api/v1/gitlab/whoareyou \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
-```
-
----
-
-## Logout
-
-End the current authentication session.
-
-**Endpoint:** `GET /api/v1/logout`
-
-**Responses:**
-
-- **200**: Success - Session terminated
-
-**Example Request:**
-
-```bash
-curl -X GET \
-  https://app.terrateam.io/api/v1/logout \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
-```
-
-:::caution
-After logout, the access token will no longer be valid. You will need to create a new token to continue using the API.
-:::
-
----
-
 ## Authentication Methods
 
 ### Two-Step Authentication Process

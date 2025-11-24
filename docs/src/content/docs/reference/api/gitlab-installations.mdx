@@ -3,57 +3,7 @@ title: GitLab Installations API
 description: API endpoints for managing GitLab installations and repositories
 ---
 
-These endpoints allow you to manage GitLab installations, groups, repositories, and work manifests within Terrateam.
-
-## List GitLab Groups
-
-Retrieve GitLab groups accessible to the user.
-
-**Endpoint:** `GET /api/v1/gitlab/groups`
-
-**Responses:**
-
-- **200**: Success - Returns array of GitLab groups
-
-**Response Schema (200):**
-
-Returns an array of GitLab group objects.
-
-**Example Request:**
-
-```bash
-curl -X GET \
-  https://app.terrateam.io/api/v1/gitlab/groups \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
-```
-
----
-
-## Check Group Membership
-
-Check if the user is a member of a specific GitLab group.
-
-**Endpoint:** `GET /api/v1/gitlab/groups/{id}/is-member`
-
-**Path Parameters:**
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `id` | integer | Yes | The GitLab group ID |
-
-**Responses:**
-
-- **200**: Success
-
-**Response Schema (200):**
-
-```json
-{
-  "result": true
-}
-```
-
----
+These endpoints allow you to manage GitLab installations, repositories, and work manifests within Terrateam.
 
 ## List GitLab Installations
 
@@ -73,24 +23,6 @@ Get all GitLab installations.
   "installations": [...]
 }
 ```
-
----
-
-## Get Webhook
-
-Retrieve webhook configuration for a GitLab installation.
-
-**Endpoint:** `GET /api/v1/gitlab/installations/{id}/webhook`
-
-**Path Parameters:**
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `id` | integer | Yes | The installation ID |
-
-**Responses:**
-
-- **200**: Success - Returns webhook configuration
 
 ---
 

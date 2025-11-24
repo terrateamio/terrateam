@@ -236,6 +236,37 @@ Retrieve outputs and steps for a work manifest.
 
 ---
 
+## List Workspaces
+
+Get available workspaces for a work manifest.
+
+**Endpoint:** `POST /api/github/v1/work-manifests/{work_manifest_id}/workspaces`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `work_manifest_id` | string | Yes | The unique identifier of the work manifest |
+
+**Responses:**
+
+- **200**: Success - Returns workspace information
+- **403**: Forbidden
+
+**Response Schema (200):**
+
+Schema: `work-manifest-workspaces`
+
+**Example Request:**
+
+```bash
+curl -X POST \
+  https://app.terrateam.io/api/github/v1/work-manifests/{work_manifest_id}/workspaces \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+---
+
 ## List User GitHub Installations
 
 Get all GitHub installations accessible to the current user.

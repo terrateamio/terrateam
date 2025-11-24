@@ -25,6 +25,18 @@ Content-Type: `application/json`
 
 Schema: `kv-set`
 
+```json
+{
+  "data": "string",
+  "idx": 0
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `data` | string | Yes | The value to store (JSON stringified if needed) |
+| `idx` | integer | No | Index for versioning (default: 0) |
+
 **Responses:**
 
 - **200**: Success - Returns the stored record
@@ -34,6 +46,24 @@ Schema: `kv-set`
 
 Schema: `kv-record`
 
+```json
+{
+  "key": "string",
+  "data": "string",
+  "idx": 0,
+  "version": 1,
+  "committed": true
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `key` | string | The key name |
+| `data` | string | The stored value |
+| `idx` | integer | Index version |
+| `version` | integer | Record version for optimistic locking |
+| `committed` | boolean | Whether the record is committed |
+
 **Example Request:**
 
 ```bash
@@ -41,7 +71,7 @@ curl -X PUT \
   https://app.terrateam.io/api/v1/github/kv/{installation_id}/key/my-key \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{...}'
+  -d '{"data": "my-value", "idx": 0}'
 ```
 
 ---
@@ -118,6 +148,16 @@ Delete a key-value pair.
 
 Schema: `kv-delete`
 
+```json
+{
+  "deleted": true
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `deleted` | boolean | Whether the key was successfully deleted |
+
 ---
 
 ## Compare-and-Swap (CAS)
@@ -140,15 +180,29 @@ Content-Type: `application/json`
 
 Schema: `kv-cas`
 
+```json
+{
+  "data": "string",
+  "idx": 0,
+  "version": 1
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `data` | string | Yes | The new value to store |
+| `idx` | integer | No | Index for versioning |
+| `version` | integer | Yes | Expected current version (CAS will fail if version doesn't match) |
+
 **Responses:**
 
 - **200**: Success - Returns the updated record
-- **400**: Bad Request - CAS condition failed
+- **400**: Bad Request - CAS condition failed (version mismatch)
 - **403**: Forbidden
 
 **Response Schema (200):**
 
-Schema: `kv-record`
+Returns a `kv-record` (see Set Value endpoint for schema details)
 
 **Example Request:**
 
@@ -157,7 +211,7 @@ curl -X PUT \
   https://app.terrateam.io/api/v1/github/kv/{installation_id}/cas/key/my-key \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{...}'
+  -d '{"data": "new-value", "version": 1}'
 ```
 
 ---
@@ -196,6 +250,24 @@ Retrieve multiple keys matching a pattern or prefix.
 **Response Schema (200):**
 
 Schema: `kv-record-list`
+
+```json
+{
+  "records": [
+    {
+      "key": "string",
+      "data": "string",
+      "idx": 0,
+      "version": 1,
+      "committed": true
+    }
+  ]
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `records` | array | Array of `kv-record` objects (see Set Value for record schema) |
 
 **Example Request:**
 
@@ -236,6 +308,16 @@ Count the number of keys matching a pattern or prefix.
 
 Schema: `kv-count`
 
+```json
+{
+  "count": 42
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `count` | integer | Number of keys matching the query |
+
 ---
 
 ## Get Size
@@ -269,6 +351,16 @@ Get the storage size of a key or key prefix.
 
 Schema: `kv-size`
 
+```json
+{
+  "size": 1024
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `size` | integer | Size in bytes of the stored data |
+
 ---
 
 ## Commit Transaction
@@ -290,6 +382,16 @@ Content-Type: `application/json`
 
 Schema: `kv-commit`
 
+```json
+{
+  "idx": 0
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `idx` | integer | Yes | Index to commit |
+
 **Responses:**
 
 - **200**: Success - Returns commit result
@@ -299,6 +401,18 @@ Schema: `kv-commit`
 
 Schema: `kv-commit-result`
 
+```json
+{
+  "committed": true,
+  "idx": 0
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `committed` | boolean | Whether the commit succeeded |
+| `idx` | integer | The committed index |
+
 **Example Request:**
 
 ```bash
@@ -306,7 +420,7 @@ curl -X POST \
   https://app.terrateam.io/api/v1/github/kv/{installation_id}/commit \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{...}'
+  -d '{"idx": 0}'
 ```
 
 ---

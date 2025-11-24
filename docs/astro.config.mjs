@@ -208,7 +208,6 @@ export default defineConfig({
               collapsed: true,
               items: [
                 { label: "Overview", link: "/reference/api/" },
-                { label: "Work Manifests", link: "/reference/api/work-manifests" },
                 { label: "GitHub Installations", link: "/reference/api/github-installations" },
                 { label: "GitLab Installations", link: "/reference/api/gitlab-installations" },
                 { label: "Access Tokens", link: "/reference/api/access-tokens" },
