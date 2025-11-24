@@ -1,0 +1,282 @@
+---
+title: GitHub Installations API
+description: API endpoints for managing GitHub installations and repositories
+---
+
+These endpoints allow you to manage GitHub installations, repositories, pull requests, and work manifests within Terrateam.
+
+## List Dirspaces
+
+Retrieve directory-workspace pairs (dirspaces) for an installation.
+
+**Endpoint:** `GET /api/v1/github/installations/{installation_id}/dirspaces`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `installation_id` | string | Yes | The installation identifier |
+
+**Query Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `page` | array[string] | No | Pagination token |
+| `q` | string | No | Search query |
+| `d` | string | No | Sort direction: `asc` or `desc` |
+| `tz` | string | No | Timezone for date filtering |
+| `limit` | integer | No | Maximum number of results |
+
+**Responses:**
+
+- **200**: Success - Returns dirspaces list
+- **400**: Bad Request
+- **403**: Forbidden
+
+**Response Schema (200):**
+
+```json
+{
+  "dirspaces": [...]
+}
+```
+
+---
+
+## List Pull Requests
+
+Get pull requests for an installation.
+
+**Endpoint:** `GET /api/v1/github/installations/{installation_id}/pull-requests`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `installation_id` | string | Yes | The installation identifier |
+
+**Query Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `page` | array[string] | No | Pagination token |
+| `pr` | integer | No | Filter by pull request number |
+
+**Responses:**
+
+- **200**: Success - Returns pull requests
+- **403**: Forbidden
+
+**Response Schema (200):**
+
+```json
+{
+  "pull_requests": [...]
+}
+```
+
+---
+
+## List Repositories
+
+Retrieve repositories for an installation.
+
+**Endpoint:** `GET /api/v1/github/installations/{installation_id}/repos`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `installation_id` | string | Yes | The installation identifier |
+
+**Query Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `page` | array[string] | No | Pagination token |
+
+**Responses:**
+
+- **200**: Success - Returns repositories
+- **403**: Forbidden
+
+**Response Schema (200):**
+
+```json
+{
+  "repositories": [...]
+}
+```
+
+---
+
+## Refresh Repositories
+
+Trigger a refresh of repositories for an installation.
+
+**Endpoint:** `POST /api/v1/github/installations/{installation_id}/repos/refresh`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `installation_id` | string | Yes | The installation identifier |
+
+**Responses:**
+
+- **200**: Success - Returns task ID
+- **403**: Forbidden
+
+**Response Schema (200):**
+
+```json
+{
+  "id": "string"
+}
+```
+
+---
+
+## List Work Manifests
+
+Retrieve work manifests for an installation.
+
+**Endpoint:** `GET /api/v1/github/installations/{installation_id}/work-manifests`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `installation_id` | string | Yes | The installation identifier |
+
+**Query Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `page` | array[string] | No | Pagination token |
+| `q` | string | No | Search query |
+| `d` | string | No | Sort direction: `asc` or `desc` |
+| `tz` | string | No | Timezone for date filtering |
+| `limit` | integer | No | Maximum number of results |
+
+**Responses:**
+
+- **200**: Success - Returns work manifests
+- **400**: Bad Request
+- **403**: Forbidden
+
+**Response Schema (200):**
+
+```json
+{
+  "work_manifests": [...]
+}
+```
+
+---
+
+## Get Work Manifest
+
+Retrieve a specific work manifest by ID.
+
+**Endpoint:** `GET /api/v1/github/installations/{installation_id}/work-manifests/{work_manifest_id}`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `installation_id` | string | Yes | The installation identifier |
+| `work_manifest_id` | string | Yes | The work manifest identifier |
+
+**Responses:**
+
+- **200**: Success - Returns work manifest details
+- **403**: Forbidden
+- **404**: Not Found
+
+---
+
+## Get Work Manifest Outputs
+
+Retrieve outputs and steps for a work manifest.
+
+**Endpoint:** `GET /api/v1/github/installations/{installation_id}/work-manifests/{work_manifest_id}/outputs`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `installation_id` | string | Yes | The installation identifier |
+| `work_manifest_id` | string | Yes | The work manifest identifier |
+
+**Query Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `q` | string | No | Search query |
+| `page` | array[string] | No | Pagination token |
+| `tz` | string | No | Timezone for date filtering |
+| `limit` | integer | No | Maximum number of results |
+| `lite` | boolean | No | Return lightweight response (default: false) |
+
+**Responses:**
+
+- **200**: Success - Returns workflow step outputs
+- **400**: Bad Request
+- **403**: Forbidden
+- **404**: Not Found
+
+**Response Schema (200):**
+
+```json
+{
+  "steps": [...]
+}
+```
+
+---
+
+## List User GitHub Installations
+
+Get all GitHub installations accessible to the current user.
+
+**Endpoint:** `GET /api/v1/user/github/installations`
+
+**Responses:**
+
+- **200**: Success - Returns installations
+- **403**: Forbidden
+
+**Response Schema (200):**
+
+```json
+{
+  "installations": [...]
+}
+```
+
+**Example Request:**
+
+```bash
+curl -X GET \
+  https://app.terrateam.io/api/v1/user/github/installations \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+---
+
+## Authentication
+
+All endpoints require authentication using a short-lived access token:
+
+```
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+**To get an access token:**
+
+1. Create an API key in **Settings > API Access** in the Terrateam dashboard
+2. Call `POST /api/v1/access-token/refresh` with your API key to get an access token
+3. Use the access token for API requests
+
+See the [Authentication guide](/reference/api/authentication) for detailed instructions.

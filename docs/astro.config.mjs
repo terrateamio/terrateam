@@ -203,7 +203,21 @@ export default defineConfig({
           label: "Reference",
           collapsed: true,
           items: [
-            { label: "API Reference", link: "/reference/api/" },
+            {
+              label: "API Reference",
+              collapsed: true,
+              items: [
+                { label: "Overview", link: "/reference/api/" },
+                { label: "Work Manifests", link: "/reference/api/work-manifests" },
+                { label: "GitHub Installations", link: "/reference/api/github-installations" },
+                { label: "GitLab Installations", link: "/reference/api/gitlab-installations" },
+                { label: "Access Tokens", link: "/reference/api/access-tokens" },
+                { label: "Key-Value Store", link: "/reference/api/kv-store" },
+                { label: "Authentication", link: "/reference/api/authentication" },
+                { label: "Stacks", link: "/reference/api/stacks" },
+                { label: "System & Admin", link: "/reference/api/system-admin" },
+              ],
+            },
             {
               label: "Commands",
               collapsed: true,

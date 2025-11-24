@@ -1,0 +1,237 @@
+---
+title: Work Manifests API
+description: API endpoints for managing work manifests in Terrateam
+---
+
+Work manifests represent the execution context for Terraform/OpenTofu operations in Terrateam. These endpoints allow you to interact with work manifests during CI/CD workflows.
+
+## Submit Work Manifest Results
+
+Update a work manifest with execution results.
+
+**Endpoint:** `PUT /api/github/v1/work-manifests/{work_manifest_id}`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `work_manifest_id` | string | Yes | The unique identifier of the work manifest |
+
+**Request Body:**
+
+Content-Type: `application/json`
+
+Schema: `work-manifest-result`
+
+**Responses:**
+
+- **200**: Success
+- **403**: Forbidden
+
+**Example Request:**
+
+```bash
+curl -X PUT \
+  https://app.terrateam.io/api/github/v1/work-manifests/{work_manifest_id} \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{...}'
+```
+
+---
+
+## Get Access Token
+
+Retrieve an access token for a specific work manifest.
+
+**Endpoint:** `POST /api/github/v1/work-manifests/{work_manifest_id}/access-token`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `work_manifest_id` | string | Yes | The unique identifier of the work manifest |
+
+**Responses:**
+
+- **200**: Success
+
+**Response Schema (200):**
+
+```json
+{
+  "access_token": "string"
+}
+```
+
+**Example Request:**
+
+```bash
+curl -X POST \
+  https://app.terrateam.io/api/github/v1/work-manifests/{work_manifest_id}/access-token \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+---
+
+## Initiate Work Manifest
+
+Initialize a work manifest for execution.
+
+**Endpoint:** `POST /api/github/v1/work-manifests/{work_manifest_id}/initiate`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `work_manifest_id` | string | Yes | The unique identifier of the work manifest |
+
+**Request Body:**
+
+Content-Type: `application/json`
+
+Schema: `work-manifest-initiate`
+
+**Responses:**
+
+- **200**: Success - Returns the work manifest
+- **403**: Forbidden
+
+**Response Schema (200):**
+
+Schema: `work-manifest`
+
+**Example Request:**
+
+```bash
+curl -X POST \
+  https://app.terrateam.io/api/github/v1/work-manifests/{work_manifest_id}/initiate \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{...}'
+```
+
+---
+
+## Get Plan
+
+Retrieve plan data for a specific directory and workspace.
+
+**Endpoint:** `GET /api/github/v1/work-manifests/{work_manifest_id}/plans`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `work_manifest_id` | string | Yes | The unique identifier of the work manifest |
+
+**Query Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `dir` | string | Yes | The directory path |
+| `workspace` | string | Yes | The workspace name |
+
+**Responses:**
+
+- **200**: Success
+
+**Response Schema (200):**
+
+```json
+{
+  "data": "string"
+}
+```
+
+**Example Request:**
+
+```bash
+curl -X GET \
+  "https://app.terrateam.io/api/github/v1/work-manifests/{work_manifest_id}/plans?dir=/terraform&workspace=default" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+---
+
+## Create Plan
+
+Submit plan data for a work manifest.
+
+**Endpoint:** `POST /api/github/v1/work-manifests/{work_manifest_id}/plans`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `work_manifest_id` | string | Yes | The unique identifier of the work manifest |
+
+**Request Body:**
+
+Content-Type: `application/json`
+
+Schema: `plan-create`
+
+**Responses:**
+
+- **200**: Success
+- **403**: Forbidden
+
+**Example Request:**
+
+```bash
+curl -X POST \
+  https://app.terrateam.io/api/github/v1/work-manifests/{work_manifest_id}/plans \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{...}'
+```
+
+---
+
+## List Workspaces
+
+Get available workspaces for a work manifest.
+
+**Endpoint:** `POST /api/github/v1/work-manifests/{work_manifest_id}/workspaces`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `work_manifest_id` | string | Yes | The unique identifier of the work manifest |
+
+**Responses:**
+
+- **200**: Success - Returns workspace information
+- **403**: Forbidden
+
+**Response Schema (200):**
+
+Schema: `work-manifest-workspaces`
+
+**Example Request:**
+
+```bash
+curl -X POST \
+  https://app.terrateam.io/api/github/v1/work-manifests/{work_manifest_id}/workspaces \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+---
+
+## Authentication
+
+All endpoints require authentication using a short-lived access token:
+
+```
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+**To get an access token:**
+
+1. Create an API key in **Settings > API Access** in the Terrateam dashboard
+2. Call `POST /api/v1/access-token/refresh` with your API key to get an access token
+3. Use the access token for API requests
+
+See the [Authentication guide](/reference/api/authentication) for detailed instructions.

@@ -1,0 +1,342 @@
+---
+title: Key-Value Store API
+description: API endpoints for the Terrateam key-value storage system
+---
+
+The KV Store provides persistent key-value storage for Terrateam installations. These endpoints allow you to store, retrieve, and manage data across workflow runs.
+
+## Set Value
+
+Store or update a key-value pair.
+
+**Endpoint:** `PUT /api/v1/{vcs}/kv/{installation_id}/key/{key}`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `vcs` | string | Yes | VCS provider: `github` or `gitlab` |
+| `installation_id` | string | Yes | The installation identifier |
+| `key` | string | Yes | The key name |
+
+**Request Body:**
+
+Content-Type: `application/json`
+
+Schema: `kv-set`
+
+**Responses:**
+
+- **200**: Success - Returns the stored record
+- **403**: Forbidden
+
+**Response Schema (200):**
+
+Schema: `kv-record`
+
+**Example Request:**
+
+```bash
+curl -X PUT \
+  https://app.terrateam.io/api/v1/github/kv/{installation_id}/key/my-key \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{...}'
+```
+
+---
+
+## Get Value
+
+Retrieve a value by key.
+
+**Endpoint:** `GET /api/v1/{vcs}/kv/{installation_id}/key/{key}`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `vcs` | string | Yes | VCS provider: `github` or `gitlab` |
+| `installation_id` | string | Yes | The installation identifier |
+| `key` | string | Yes | The key name |
+
+**Query Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `committed` | boolean | No | Only return committed values |
+| `idx` | integer | No | Specific index to retrieve |
+| `select` | array[string] | No | Fields to select from the record |
+
+**Responses:**
+
+- **200**: Success - Returns the record
+- **403**: Forbidden
+- **404**: Not Found
+
+**Response Schema (200):**
+
+Schema: `kv-record`
+
+**Example Request:**
+
+```bash
+curl -X GET \
+  "https://app.terrateam.io/api/v1/github/kv/{installation_id}/key/my-key?committed=true" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+---
+
+## Delete Value
+
+Delete a key-value pair.
+
+**Endpoint:** `DELETE /api/v1/{vcs}/kv/{installation_id}/key/{key}`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `vcs` | string | Yes | VCS provider: `github` or `gitlab` |
+| `installation_id` | string | Yes | The installation identifier |
+| `key` | string | Yes | The key name |
+
+**Query Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `idx` | integer | No | Specific index to delete |
+| `version` | integer | No | Version number for optimistic locking |
+
+**Responses:**
+
+- **200**: Success
+- **403**: Forbidden
+
+**Response Schema (200):**
+
+Schema: `kv-delete`
+
+---
+
+## Compare-and-Swap (CAS)
+
+Atomically update a value only if it matches the expected version.
+
+**Endpoint:** `PUT /api/v1/{vcs}/kv/{installation_id}/cas/key/{key}`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `vcs` | string | Yes | VCS provider: `github` or `gitlab` |
+| `installation_id` | string | Yes | The installation identifier |
+| `key` | string | Yes | The key name |
+
+**Request Body:**
+
+Content-Type: `application/json`
+
+Schema: `kv-cas`
+
+**Responses:**
+
+- **200**: Success - Returns the updated record
+- **400**: Bad Request - CAS condition failed
+- **403**: Forbidden
+
+**Response Schema (200):**
+
+Schema: `kv-record`
+
+**Example Request:**
+
+```bash
+curl -X PUT \
+  https://app.terrateam.io/api/v1/github/kv/{installation_id}/cas/key/my-key \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{...}'
+```
+
+---
+
+## Iterate Keys
+
+Retrieve multiple keys matching a pattern or prefix.
+
+**Endpoint:** `GET /api/v1/{vcs}/kv/{installation_id}/iter/{key}`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `vcs` | string | Yes | VCS provider: `github` or `gitlab` |
+| `installation_id` | string | Yes | The installation identifier |
+| `key` | string | Yes | The key or key prefix |
+
+**Query Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `committed` | boolean | No | Only return committed values |
+| `idx` | integer | No | Starting index for iteration |
+| `limit` | integer | No | Maximum number of records to return |
+| `include_data` | boolean | No | Include record data in response |
+| `inclusive` | boolean | No | Include the starting key in results |
+| `prefix` | boolean | No | Treat key as prefix for matching |
+| `select` | array[string] | No | Fields to select from records |
+
+**Responses:**
+
+- **200**: Success - Returns list of records
+- **403**: Forbidden
+
+**Response Schema (200):**
+
+Schema: `kv-record-list`
+
+**Example Request:**
+
+```bash
+curl -X GET \
+  "https://app.terrateam.io/api/v1/github/kv/{installation_id}/iter/my-prefix?prefix=true&limit=100" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+---
+
+## Count Keys
+
+Count the number of keys matching a pattern or prefix.
+
+**Endpoint:** `GET /api/v1/{vcs}/kv/{installation_id}/count/key/{key}`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `vcs` | string | Yes | VCS provider: `github` or `gitlab` |
+| `installation_id` | string | Yes | The installation identifier |
+| `key` | string | Yes | The key or key prefix |
+
+**Query Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `committed` | boolean | No | Only count committed values |
+
+**Responses:**
+
+- **200**: Success - Returns the count
+- **403**: Forbidden
+
+**Response Schema (200):**
+
+Schema: `kv-count`
+
+---
+
+## Get Size
+
+Get the storage size of a key or key prefix.
+
+**Endpoint:** `GET /api/v1/{vcs}/kv/{installation_id}/size/key/{key}`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `vcs` | string | Yes | VCS provider: `github` or `gitlab` |
+| `installation_id` | string | Yes | The installation identifier |
+| `key` | string | Yes | The key or key prefix |
+
+**Query Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `committed` | boolean | No | Only measure committed values |
+| `idx` | integer | No | Specific index to measure |
+
+**Responses:**
+
+- **200**: Success - Returns the size
+- **403**: Forbidden
+- **404**: Not Found
+
+**Response Schema (200):**
+
+Schema: `kv-size`
+
+---
+
+## Commit Transaction
+
+Commit a batch of KV operations atomically.
+
+**Endpoint:** `POST /api/v1/{vcs}/kv/{installation_id}/commit`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `vcs` | string | Yes | VCS provider: `github` or `gitlab` |
+| `installation_id` | string | Yes | The installation identifier |
+
+**Request Body:**
+
+Content-Type: `application/json`
+
+Schema: `kv-commit`
+
+**Responses:**
+
+- **200**: Success - Returns commit result
+- **403**: Forbidden
+
+**Response Schema (200):**
+
+Schema: `kv-commit-result`
+
+**Example Request:**
+
+```bash
+curl -X POST \
+  https://app.terrateam.io/api/v1/github/kv/{installation_id}/commit \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{...}'
+```
+
+---
+
+## Use Cases
+
+The KV Store is useful for:
+
+- Sharing state between workflow runs
+- Storing metadata and configuration
+- Implementing counters and locks
+- Caching expensive computations
+- Coordinating across multiple pull requests
+
+:::tip
+Use the `committed` parameter to ensure you're reading stable, committed data in production workflows.
+:::
+
+## Authentication
+
+All endpoints require authentication using a short-lived access token:
+
+```
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+**To get an access token:**
+
+1. Create an API key in **Settings > API Access** in the Terrateam dashboard
+2. Call `POST /api/v1/access-token/refresh` with your API key to get an access token
+3. Use the access token for API requests
+
+See the [Authentication guide](/reference/api/authentication) for detailed instructions.

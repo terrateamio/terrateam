@@ -1,0 +1,104 @@
+---
+title: Stacks API
+description: API endpoints for managing Terraform/OpenTofu stacks
+---
+
+Stacks represent logical groupings of Terraform/OpenTofu resources that are managed together. The Stacks API allows you to retrieve stack information for pull requests.
+
+## What are Stacks?
+
+Stacks in Terrateam allow you to organize your infrastructure into logical groups that can be planned and applied together. This is particularly useful for:
+
+- Managing dependencies between infrastructure components
+- Coordinating changes across multiple directories
+- Implementing layered infrastructure patterns
+- Ensuring consistent ordering of operations
+
+Learn more in the [Stacks documentation](/workflows/advanced/stacks).
+
+---
+
+## Get Pull Request Stacks
+
+Retrieve stack configuration and status for a specific pull request.
+
+**Endpoint:** `GET /api/v1/{vcs}/installations/{installation_id}/repos/{repo_id}/prs/{pull_request_id}/stacks`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `vcs` | string | Yes | VCS provider: `github` or `gitlab` |
+| `installation_id` | string | Yes | The installation identifier |
+| `repo_id` | string | Yes | The repository identifier |
+| `pull_request_id` | string | Yes | The pull request identifier |
+
+**Responses:**
+
+- **200**: Success - Returns stacks information
+- **403**: Forbidden
+
+**Response Schema (200):**
+
+Schema: `stacks`
+
+The response includes information about:
+- Stack definitions and dependencies
+- Current stack states
+- Plan/apply status for each stack
+- Ordering information based on dependencies
+
+**Example Request:**
+
+```bash
+curl -X GET \
+  "https://app.terrateam.io/api/v1/github/installations/{installation_id}/repos/{repo_id}/prs/{pull_request_id}/stacks" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+**Example Use Cases:**
+
+1. **CI/CD Integration**: Retrieve stack information to coordinate deployments
+2. **Status Dashboards**: Display stack status across pull requests
+3. **Dependency Visualization**: Build tooling to visualize stack dependencies
+4. **Custom Automation**: Trigger actions based on stack states
+
+---
+
+## Understanding Stack Responses
+
+The stacks endpoint returns detailed information about how Terrateam will process the infrastructure changes in a pull request:
+
+**Key Information Included:**
+- **Stack Graph**: The dependency graph showing execution order
+- **Dirspaces**: Which directory-workspace pairs belong to each stack
+- **Status**: Current state of each stack (pending, running, completed, failed)
+- **Dependencies**: Which stacks must complete before others can start
+
+This information is essential for understanding the execution plan and coordinating complex infrastructure changes.
+
+---
+
+## Authentication
+
+All endpoints require authentication using a short-lived access token:
+
+```
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+**To get an access token:**
+
+1. Create an API key in **Settings > API Access** in the Terrateam dashboard
+2. Call `POST /api/v1/access-token/refresh` with your API key to get an access token
+3. Use the access token for API requests
+
+See the [Authentication guide](/reference/api/authentication) for detailed instructions.
+
+---
+
+## Related Documentation
+
+- [Stacks Workflow Guide](/workflows/advanced/stacks) - Learn how to configure and use stacks
+- [Tag Queries](/reference/configuration/tag-queries) - Filter dirspaces for stack assignment
+- [Layered Runs](/workflows/advanced/layered-runs) - Alternative approach to ordering operations
