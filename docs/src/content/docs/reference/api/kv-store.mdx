@@ -28,7 +28,10 @@ Schema: `kv-set`
 ```json
 {
   "data": "string",
-  "idx": 0
+  "idx": 0,
+  "committed": false,
+  "read_caps": [],
+  "write_caps": []
 }
 ```
 
@@ -36,6 +39,9 @@ Schema: `kv-set`
 |-------|------|----------|-------------|
 | `data` | string | Yes | The value to store (JSON stringified if needed) |
 | `idx` | integer | No | Index for versioning (default: 0) |
+| `committed` | boolean | No | Whether to commit the value immediately |
+| `read_caps` | array | No | Array of read capability restrictions for this key |
+| `write_caps` | array | No | Array of write capability restrictions for this key |
 
 **Responses:**
 
@@ -52,17 +58,25 @@ Schema: `kv-record`
   "data": "string",
   "idx": 0,
   "version": 1,
-  "committed": true
+  "committed": true,
+  "created_at": "2025-01-15T10:30:00Z",
+  "size": 1024,
+  "read_caps": [],
+  "write_caps": []
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `key` | string | The key name |
-| `data` | string | The stored value |
-| `idx` | integer | Index version |
-| `version` | integer | Record version for optimistic locking |
-| `committed` | boolean | Whether the record is committed |
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `key` | string | Yes | The key name |
+| `data` | string | Yes | The stored value |
+| `idx` | integer | Yes | Index version |
+| `version` | integer | Yes | Record version for optimistic locking |
+| `committed` | boolean | Yes | Whether the record is committed |
+| `created_at` | string | Yes | ISO 8601 timestamp of when the record was created |
+| `size` | integer | Yes | Size of the stored data in bytes |
+| `read_caps` | array | No | Array of read capability restrictions for this key |
+| `write_caps` | array | No | Array of write capability restrictions for this key |
 
 **Example Request:**
 
@@ -150,13 +164,13 @@ Schema: `kv-delete`
 
 ```json
 {
-  "deleted": true
+  "result": true
 }
 ```
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `deleted` | boolean | Whether the key was successfully deleted |
+| `result` | boolean | Whether the key was successfully deleted |
 
 ---
 
@@ -184,7 +198,10 @@ Schema: `kv-cas`
 {
   "data": "string",
   "idx": 0,
-  "version": 1
+  "version": 1,
+  "committed": false,
+  "read_caps": [],
+  "write_caps": []
 }
 ```
 
@@ -193,6 +210,9 @@ Schema: `kv-cas`
 | `data` | string | Yes | The new value to store |
 | `idx` | integer | No | Index for versioning |
 | `version` | integer | Yes | Expected current version (CAS will fail if version doesn't match) |
+| `committed` | boolean | No | Whether to commit the value immediately |
+| `read_caps` | array | No | Array of read capability restrictions for this key |
+| `write_caps` | array | No | Array of write capability restrictions for this key |
 
 **Responses:**
 
@@ -310,13 +330,15 @@ Schema: `kv-count`
 
 ```json
 {
-  "count": 42
+  "count": 42,
+  "max_idx": 5
 }
 ```
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `count` | integer | Number of keys matching the query |
+| `max_idx` | integer | Maximum index value among the counted keys |
 
 ---
 
@@ -384,13 +406,20 @@ Schema: `kv-commit`
 
 ```json
 {
-  "idx": 0
+  "keys": [
+    {
+      "key": "string",
+      "idx": 0
+    }
+  ]
 }
 ```
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `idx` | integer | Yes | Index to commit |
+| `keys` | array | Yes | Array of key objects to commit |
+| `keys[].key` | string | Yes | The key name to commit |
+| `keys[].idx` | integer | No | Optional index for the key |
 
 **Responses:**
 
@@ -403,15 +432,20 @@ Schema: `kv-commit-result`
 
 ```json
 {
-  "committed": true,
-  "idx": 0
+  "keys": [
+    {
+      "key": "string",
+      "idx": 0
+    }
+  ]
 }
 ```
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `committed` | boolean | Whether the commit succeeded |
-| `idx` | integer | The committed index |
+| `keys` | array | Array of committed key objects |
+| `keys[].key` | string | The key name that was committed |
+| `keys[].idx` | integer | The index that was committed |
 
 **Example Request:**
 
@@ -420,7 +454,7 @@ curl -X POST \
   https://app.terrateam.io/api/v1/github/kv/{installation_id}/commit \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"idx": 0}'
+  -d '{"keys": [{"key": "my-key", "idx": 0}]}'
 ```
 
 ---
