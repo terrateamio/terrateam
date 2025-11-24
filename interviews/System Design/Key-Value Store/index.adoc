@@ -1,0 +1,31 @@
+= Key-Value Store
+:authors: Malcolm Matalka <malcolm@terrateam.io>
+:labels: interview, system design, key-value store
+:source-highlighter: highlight.js
+:toc:
+
+== Background
+
+Many Terrateam customers want a way to persist data between `plan` and
+`apply`. The most common cases are storing a Lambda build generated during the
+plan so the same artifact is used during apply, or saving data created in the
+plan that needs to be shown to the user in the apply output. Customers prefer
+Terrateam to provide this capability directly rather than relying on an external
+service.
+
+To solve this, you are going to design a generic key-value store for Terrateam.
+
+== Requirements
+
+The key-value store has the following requirements:
+
+. It must use the same underlying database that Terrateam uses (PostgreSQL).
+. It must be able to store values up to 1 gigabyte.  This can be achieved with
+support from the client if necessary.
+. It must have a cap in how much memory the server will consume in handling
+an API call.  That is to say, the API should not allow unbounded inputs.  If a
+user wishes to store a 1 gigabyte value, the server must not use 1 gigabyte
+of RAM.  This can be achieved with support from the client if necessary.
+. It must support authentication via an API key.  Given that there can be a lot
+of key-value store API calls, the authentication choice should take into account
+the amount of load it will add to the system.
