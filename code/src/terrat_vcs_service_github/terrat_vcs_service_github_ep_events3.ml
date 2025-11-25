@@ -492,10 +492,11 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         } -> (
         Logs.info (fun m ->
             m
-              "%s : COMMENT_CREATED_EVENT : owner=%s : repo=%s : sender=%s"
+              "%s : COMMENT_CREATED_EVENT : owner=%s : repo=%s : pull_number=%d : sender=%s"
               request_id
               repository.Gw.Repository.owner.Gw.User.login
               repository.Gw.Repository.name
+              pull_request_id
               sender.Gw.User.login);
         match Terrat_comment.parse comment_body with
         | Ok comment ->

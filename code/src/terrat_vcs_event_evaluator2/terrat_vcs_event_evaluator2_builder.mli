@@ -56,5 +56,6 @@ module Make (S : Terrat_vcs_provider2.S) : sig
     ('a, ([> `Closed ] as 'e)) result Abb.Future.t
 
   val log_id : B.State.t -> string
+  val mk_log_id : request_id:string -> Uuidm.t -> string
   val eval : State.t -> 'v Bs.k -> 'v Bs.c
 end

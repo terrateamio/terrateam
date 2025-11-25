@@ -115,6 +115,11 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (S.Api.Pull_request.Id.t, S.Api.Ref.t, S.Api.User.t option) Terrat_job_context.Job.t Key.t =
     Hmap.Key.create "job"
 
+  let work_manifest_event_job :
+      (S.Api.Pull_request.Id.t, S.Api.Ref.t, S.Api.User.t option) Terrat_job_context.Job.t option
+      Key.t =
+    Hmap.Key.create "work_manifest_event_job"
+
   let pull_request_event : Pull_request_event.t Key.t = Hmap.Key.create "pull_request_event"
 
   (* Different ways to access the branch we're working with  *)
@@ -378,6 +383,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     Hmap.Key.create "check_conflicting_apply_work_manifests"
 
   let check_dirspaces_missing_plans : unit Key.t = Hmap.Key.create "check_dirspaces_missing_plans"
+  let check_dirspaces_to_plan : unit Key.t = Hmap.Key.create "check_dirspaces_to_plan"
+  let check_dirspaces_to_apply : unit Key.t = Hmap.Key.create "check_dirspaces_to_apply"
   let check_gates : unit Key.t = Hmap.Key.create "check_gates"
   let store_gate_approval : unit Key.t = Hmap.Key.create "store_gate_approval"
 
@@ -385,12 +392,20 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     Hmap.Key.create "check_dirspaces_owned_by_other_pull_requests"
 
   let check_pull_request_state : unit Key.t = Hmap.Key.create "check_pull_request_state"
+
+  let maybe_create_completed_apply_check : unit Key.t =
+    Hmap.Key.create "maybe_create_completed_apply_check"
+
   let can_run_plan : unit Key.t = Hmap.Key.create "can_run_plan"
-  let publish_plan : unit Key.t = Hmap.Key.create "publish_plan"
+  let run_plan : unit Key.t = Hmap.Key.create "run_plan"
   let can_run_apply : unit Key.t = Hmap.Key.create "can_run_apply"
-  let publish_apply : unit Key.t = Hmap.Key.create "publish_apply"
+  let run_apply : unit Key.t = Hmap.Key.create "run_apply"
   let run_next_layer : unit Key.t = Hmap.Key.create "run_next_layer"
   let complete_no_change_dirspaces : unit Key.t = Hmap.Key.create "complete_no_change_dirspaces"
+  let maybe_complete_job : unit Key.t = Hmap.Key.create "maybe_complete_job"
+
+  let maybe_complete_job_from_work_manifest_event : unit Key.t =
+    Hmap.Key.create "maybe_complete_job_from_work_manifest_event"
 
   (* Context management *)
   let store_repository : unit Key.t = Hmap.Key.create "store_repository"
@@ -406,6 +421,10 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     Hmap.Key.create "eval_compute_node_poll"
 
   let eval_work_manifest_event : unit Key.t = Hmap.Key.create "eval_work_manifest_event"
-  let eval_pull_request_event : unit Key.t = Hmap.Key.create "eval_pull_request_event"
+
+  let eval_pull_request_event :
+      (S.Api.Pull_request.Id.t, S.Api.Ref.t, S.Api.User.t option) Terrat_job_context.Job.t Key.t =
+    Hmap.Key.create "eval_pull_request_event"
+
   let iter_job : unit Key.t = Hmap.Key.create "iter_job"
 end

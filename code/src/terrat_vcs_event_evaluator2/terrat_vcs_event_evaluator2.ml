@@ -22,18 +22,23 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   (* The default set of tasks *)
   let tasks = Tasks.default_tasks ()
 
-  let wrap_build ~request_id build =
+  (* Because it's just simpler to work with, we have builds return a [result],
+     that way we already have a monad that can short circuit when we do not want
+     to continue.  But not all [Error] branches are actually errors. But if we
+     return [Error] in a [tx], it gets rolledback.  So this function turns those
+     [Error] branches tat are not actually errors into [Ok] branches. *)
+  let tx_safe ~request_id build =
     let open Abb.Future.Infix_monad in
     build
     >>= function
-    | Ok v -> Abb.Future.return (Ok (Some v))
+    | Ok v -> Abb.Future.return (Ok (`Ok v))
     | Error (`Suspend_eval _ as err) ->
         Logs.info (fun m -> m "%s : %a" request_id Builder.pp_err err);
-        Abb.Future.return (Ok None)
+        Abb.Future.return (Ok err)
     | Error (`Noop as err) ->
         (* A Noop isn't an error, it just means tehre is nothing to do *)
         Logs.info (fun m -> m "%s : %a" request_id Builder.pp_err err);
-        Abb.Future.return (Ok None)
+        Abb.Future.return (Ok `Noop)
     | Error #err as err -> Abb.Future.return err
 
   let log_err ~request_id fut =
@@ -179,9 +184,61 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                       "%s : target=%s"
                       (Builder.log_id s)
                       (Hmap.Key.info Keys.eval_pull_request_event));
-                log_err ~request_id
-                @@ wrap_build ~request_id
-                @@ Builder.eval s Keys.eval_pull_request_event)))
+                log_err ~request_id @@ Builder.eval s Keys.eval_pull_request_event)
+            >>= fun job ->
+            let open Abb.Future.Infix_monad in
+            Pgsql_io.tx db ~f:(fun () ->
+                let s' =
+                  s
+                  |> Builder.State.orig_store
+                  |> Keys.Key.add Keys.job job
+                  |> CCFun.flip Builder.State.set_orig_store s
+                  |> Builder.State.set_log_id (Builder.mk_log_id ~request_id job.Tjc.Job.id)
+                in
+                log_err ~request_id @@ tx_safe ~request_id @@ Builder.eval s' Keys.iter_job)
+            >>= function
+            | Ok (`Ok _) ->
+                Pgsql_io.tx db ~f:(fun () ->
+                    let s' =
+                      s
+                      |> Builder.State.orig_store
+                      |> Keys.Key.add Keys.job job
+                      |> CCFun.flip Builder.State.set_orig_store s
+                      |> Builder.State.set_log_id (Builder.mk_log_id ~request_id job.Tjc.Job.id)
+                    in
+                    log_err ~request_id
+                    @@ tx_safe ~request_id
+                    @@ Builder.eval s' Keys.run_next_layer)
+            | Ok (`Suspend_eval _) ->
+                Pgsql_io.tx db ~f:(fun () ->
+                    let s' =
+                      s
+                      |> Builder.State.orig_store
+                      |> Keys.Key.add Keys.job job
+                      |> CCFun.flip Builder.State.set_orig_store s
+                      |> Builder.State.set_log_id (Builder.mk_log_id ~request_id job.Tjc.Job.id)
+                    in
+                    log_err ~request_id
+                    @@ tx_safe ~request_id
+                    @@ Builder.eval s' Keys.maybe_complete_job)
+            | Ok `Noop -> Abb.Future.return (Ok `Noop)
+            | Error err ->
+                let open Irm in
+                Logs.info (fun m ->
+                    m
+                      "%s : JOB : FAILED : job_id= %a : %a"
+                      request_id
+                      Uuidm.pp
+                      job.Tjc.Job.id
+                      Builder.pp_err
+                      err);
+                Builder.run_db s ~f:(fun db ->
+                    S.Job_context.Job.update_state
+                      ~request_id
+                      ~job_id:job.Tjc.Job.id
+                      db
+                      Tjc.Job.State.Failed)
+                >>= fun () -> Abb.Future.return (Ok `Noop)))
       ~finally:(fun () ->
         Abbs_future_combinators.ignore
         @@ Abb.Future.fork
@@ -224,41 +281,97 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               Builder.State.make ~log_id:request_id ~config ~store ~db ~tasks ()
               >>= fun s ->
               Logs.info (fun m -> m "%s : target=%s" (Builder.log_id s) (Hmap.Key.info target));
-              Builder.eval s target))
+              tx_safe ~request_id @@ Builder.eval s target))
     in
     Abbs_future_combinators.protect (fun () -> log_err ~request_id run)
     >>= function
-    | Ok _ as r -> Abb.Future.return r
-    | Error _ -> Abb.Future.return (Error `Error)
+    | Ok (`Ok r) -> Abb.Future.return (Ok r)
+    | Ok (`Suspend_eval _) | Ok `Noop | Error _ -> Abb.Future.return (Error `Error)
 
   let work_manifest_result ~request_id ~config ~storage ~work_manifest_id result =
+    let query_work_manifest db =
+      let open Irm in
+      S.Work_manifest.query ~request_id db work_manifest_id
+      >>= function
+      | Some work_manifest -> Abb.Future.return (Ok work_manifest)
+      | None -> Abb.Future.return (Error `Error)
+    in
+    let query_compute_node db =
+      let open Irm in
+      S.Job_context.Compute_node.query ~request_id ~compute_node_id:work_manifest_id db
+      >>= function
+      | Some compute_node -> Abb.Future.return (Ok compute_node)
+      | None -> Abb.Future.return (Error `Error)
+    in
+    let add_work_manifest_keys work_manifest store =
+      let module Wm = Terrat_work_manifest3 in
+      let { Wm.id; account; target; _ } = work_manifest in
+      match target with
+      | Terrat_vcs_provider2.Target.Pr pr ->
+          store
+          |> Keys.Key.add Keys.account account
+          |> Keys.Key.add Keys.pull_request_id (S.Api.Pull_request.id pr)
+          |> Keys.Key.add Keys.repo (S.Api.Pull_request.repo pr)
+      | Terrat_vcs_provider2.Target.Drift _ -> raise (Failure "nyi")
+    in
     let run =
-      let open Abbs_future_combinators.Infix_result_monad in
+      let open Abb.Future.Infix_monad in
+      Logs.info (fun m ->
+          m "%s : WORK_MANIFEST_RESULT : work_manifest_id=%a" request_id Uuidm.pp work_manifest_id);
       Pgsql_pool.with_conn storage ~f:(fun db ->
           Pgsql_io.tx db ~f:(fun () ->
+              let open Irm in
+              query_work_manifest db
+              >>= fun work_manifest ->
+              query_compute_node db
+              >>= fun compute_node ->
+              let work_manifest_event = Keys.Work_manifest_event.Result { work_manifest; result } in
+              let store =
+                Hmap.empty
+                |> Keys.Key.add Keys.compute_node compute_node
+                |> Keys.Key.add Keys.work_manifest_event (Some work_manifest_event)
+              in
+              let open Abb.Future.Infix_monad in
+              Builder.State.make ~log_id:request_id ~config ~store ~db ~tasks ()
+              >>= fun s ->
+              let open Irm in
               let target = Keys.eval_work_manifest_event in
-              S.Work_manifest.query ~request_id db work_manifest_id
-              >>= function
-              | Some work_manifest -> (
-                  S.Job_context.Compute_node.query ~request_id ~compute_node_id:work_manifest_id db
+              Logs.info (fun m -> m "%s : target=%s" (Builder.log_id s) (Hmap.Key.info target));
+              log_err ~request_id @@ tx_safe ~request_id @@ Builder.eval s target
+              >>= fun r -> Abb.Future.return (Ok (s, r)))
+          >>= function
+          | Ok (s, `Ok _) ->
+              let open Irm in
+              Pgsql_io.tx db ~f:(fun () ->
+                  S.Work_manifest.query ~request_id db work_manifest_id
                   >>= function
-                  | Some compute_node ->
-                      let work_manifest_event =
-                        Keys.Work_manifest_event.Result { work_manifest; result }
-                      in
-                      let store =
-                        Hmap.empty
-                        |> Keys.Key.add Keys.compute_node compute_node
-                        |> Keys.Key.add Keys.work_manifest_event (Some work_manifest_event)
-                      in
-                      let open Abb.Future.Infix_monad in
-                      Builder.State.make ~log_id:request_id ~config ~store ~db ~tasks ()
-                      >>= fun s ->
-                      Logs.info (fun m ->
-                          m "%s : target=%s" (Builder.log_id s) (Hmap.Key.info target));
-                      log_err ~request_id @@ wrap_build ~request_id @@ Builder.eval s target
-                  | None -> raise (Failure "nyi"))
-              | None -> raise (Failure "nyi")))
+                  | Some work_manifest -> (
+                      S.Job_context.Job.query_by_work_manifest_id
+                        ~request_id
+                        ~work_manifest_id
+                        db
+                        ()
+                      >>= function
+                      | Some job ->
+                          let s' =
+                            s
+                            |> Builder.State.orig_store
+                            |> Keys.Key.add Keys.job job
+                            |> add_work_manifest_keys work_manifest
+                            |> CCFun.flip Builder.State.set_orig_store s
+                          in
+                          log_err ~request_id
+                          @@ tx_safe ~request_id
+                          @@ Builder.eval s' Keys.run_next_layer
+                      | None -> assert false)
+                  | None -> assert false)
+          | Ok (s, `Suspend_eval _) ->
+              Pgsql_io.tx db ~f:(fun () ->
+                  log_err ~request_id
+                  @@ tx_safe ~request_id
+                  @@ Builder.eval s Keys.maybe_complete_job_from_work_manifest_event)
+          | Ok (_, `Noop) -> Abb.Future.return (Ok `Noop)
+          | Error _ -> raise (Failure "nyi"))
     in
     let open Abb.Future.Infix_monad in
     Abbs_future_combinators.with_finally

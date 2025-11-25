@@ -818,9 +818,38 @@ struct
       && branch_ref = S.Api.Ref.to_string branch_ref'
       && steps = [ Wm.Step.Apply ]
 
+    let maybe_comment_autoapply_running s { Bs.Fetcher.fetch } =
+      let module Tjc = Terrat_job_context in
+      let open Irm in
+      fetch Keys.is_interactive
+      >>= function
+      | true -> (
+          fetch Keys.job
+          >>= function
+          | { Tjc.Job.type_ = Tjc.Job.Type_.Autoapply; _ } -> (
+              fetch Keys.pull_request
+              >>= fun pull_request ->
+              match S.Api.Pull_request.state pull_request with
+              | Terrat_pull_request.State.Merged _ ->
+                  fetch Keys.client
+                  >>= fun client ->
+                  fetch Keys.user
+                  >>= fun user ->
+                  S.Comment.publish_comment
+                    ~request_id:(Builder.log_id s)
+                    client
+                    (CCOption.map_or ~default:"" S.Api.User.to_string user)
+                    pull_request
+                    Msg.Autoapply_running
+              | _ -> Abb.Future.return (Ok ()))
+          | _ -> Abb.Future.return (Ok ()))
+      | false -> Abb.Future.return (Ok ())
+
     let create ~dest_branch_ref ~branch_ref ~branch s ({ Bs.Fetcher.fetch } as fetcher) =
       let open Irm in
       fetch Keys.can_run_apply
+      >>= fun () ->
+      maybe_comment_autoapply_running s fetcher
       >>= fun () -> create ~dest_branch_ref ~branch_ref ~branch `Apply s fetcher
 
     let initiate ({ Wm.id; _ } as work_manifest) s { Bs.Fetcher.fetch } =
