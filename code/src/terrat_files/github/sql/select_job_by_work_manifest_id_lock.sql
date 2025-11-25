@@ -11,4 +11,4 @@ from jobs
 inner join job_work_manifests as jwm
     on jwm.job_id = jobs.id
 where jwm.work_manifest = $work_manifest
-
+for update of jobs

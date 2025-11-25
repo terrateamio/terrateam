@@ -102,6 +102,34 @@ struct
       let open CCResult.Infix in
       dirspaceflows_of_changes_with_branch_target repo_config changes
       >>= fun dirspaceflows -> Ok (strip_lock_branch_target dirspaceflows)
+
+    let complete_job s job fut =
+      let open Abb.Future.Infix_monad in
+      fut
+      >>= function
+      | (Ok () | Error `Noop) as ret ->
+          let open Irm in
+          Logs.info (fun m ->
+              m "%s : JOB : UPDATE : COMPLETED : job= %a" (Builder.log_id s) Uuidm.pp job.Tjc.Job.id);
+          Builder.run_db s ~f:(fun db ->
+              S.Job_context.Job.update_state
+                ~request_id:(Builder.log_id s)
+                db
+                ~job_id:job.Tjc.Job.id
+                Tjc.Job.State.Completed)
+          >>= fun () -> Abb.Future.return ret
+      | Error (`Suspend_eval _) as err -> Abb.Future.return err
+      | Error (#Builder.err as err) ->
+          let open Irm in
+          Logs.info (fun m ->
+              m "%s : JOB : UPDATE : FAILED : job= %a" (Builder.log_id s) Uuidm.pp job.Tjc.Job.id);
+          Builder.run_db s ~f:(fun db ->
+              S.Job_context.Job.update_state
+                ~request_id:(Builder.log_id s)
+                db
+                ~job_id:job.Tjc.Job.id
+                Tjc.Job.State.Failed)
+          >>= fun () -> Abb.Future.return (Error err)
   end
 
   module Tasks = struct
@@ -227,6 +255,12 @@ struct
           | Some context -> Abb.Future.return (Ok context)
           | None -> assert false)
 
+    let work_manifest_event =
+      run ~name:"work_manifest_event" (fun _s { Bs.Fetcher.fetch } ->
+          (* This is a default value in case no work manifest event is set in the store
+             by the runner. *)
+          Abb.Future.return (Ok None))
+
     let work_manifests_for_job =
       run ~name:"work_manifests_for_job" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
@@ -329,10 +363,11 @@ struct
                       CCList.exists (CCString.prefix ~pre:d) repo_tree)
                 dirs
             in
-            (* Filter out any dirspaces that have been applied or refer to a directory
-           that no longer exists. This could happen because of
-           [out_of_change_applies], these may refer to directories that no longer
-           exist, and thus we can't do much about them other than ignore them. *)
+            (* Filter out any dirspaces that have been applied or refer to a
+               directory that no longer exists. This could happen because of
+               [out_of_change_applies], these may refer to directories that no
+               longer exist, and thus we can't do much about them other than
+               ignore them. *)
             let all_unapplied_matches =
               CCList.filter_map
                 (fun layer ->
@@ -352,8 +387,9 @@ struct
               | layer :: _ -> (
                   match job.Tjc.Job.type_ with
                   | Tjc.Job.Type_.(Apply _ | Autoapply) ->
-                      (* If it's an apply, we limit the working set to only those
-                     that can be applied, based on stacks configuration. *)
+                      (* If it's an apply, we limit the working set to only
+                         those that can be applied, based on stacks
+                         configuration. *)
                       let module S = Terrat_base_repo_config_v1.Stacks.Stack in
                       let module Oc = Terrat_base_repo_config_v1.Stacks.Rules in
                       let flat_all_unapplied_matches = CCList.flatten all_unapplied_matches in
@@ -361,6 +397,8 @@ struct
                       |> CCList.filter (Terrat_change_match3.match_tag_query ~tag_query)
                       |> CCList.filter
                            (fun { Dc.stack_config = { S.rules = { Oc.apply_after; _ }; _ }; _ } ->
+                             (* Filter this dirspace from the layer if its is meant to apply after
+                                any other unapplied stack. *)
                              not
                                (CCList.exists
                                   (fun { Dc.stack_name; _ } ->
@@ -538,14 +576,19 @@ struct
                          working_layer;
                        })
               | T.Autoapply ->
+                  let module V1 = Terrat_base_repo_config_v1 in
+                  let module Tcm = Terrat_change_match3 in
+                  let module Dc = Tcm.Dirspace_config in
+                  let module S = V1.Stacks.Stack in
+                  let module Oc = V1.Stacks.Rules in
                   let working_set_matches =
                     CCList.filter
                       (fun {
-                             Terrat_change_match3.Dirspace_config.when_modified =
-                               { Terrat_base_repo_config_v1.When_modified.autoapply; _ };
+                             Dc.stack_config = { S.rules = { Oc.auto_apply; _ }; _ };
+                             when_modified = { V1.When_modified.autoapply; _ };
                              _;
                            }
-                         -> autoapply)
+                         -> autoapply || CCOption.get_or ~default:false auto_apply)
                       working_set_matches
                   in
                   Abb.Future.return
@@ -568,16 +611,6 @@ struct
                          working_layer;
                        })
               | T.Gate_approval _ | T.Repo_config | T.Unlock _ -> assert false)
-          | Error (`Missing_dep_err "pull_request") ->
-              Abb.Future.return
-                (Ok
-                   {
-                     Keys.Matches.working_set_matches;
-                     all_matches;
-                     all_tag_query_matches;
-                     all_unapplied_matches;
-                     working_layer;
-                   })
           | Error #Builder.err as err -> Abb.Future.return err)
 
     let working_set_matches =
@@ -1445,8 +1478,6 @@ struct
       run ~name:"publish_unlock" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
           let eval_access_control () =
-            fetch Keys.react_to_comment
-            >>= fun () ->
             fetch Keys.repo_config
             >>= fun repo_config ->
             fetch Keys.access_control
@@ -1536,14 +1567,13 @@ struct
     let publish_repo_config =
       run ~name:"publish_repo_config" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
-          Fc.Result.all6
+          Fc.Result.all5
             (fetch Keys.client)
             (fetch Keys.pull_request)
             (fetch Keys.repo_config_with_provenance)
             (fetch Keys.user)
             (fetch Keys.store_stacks)
-            (fetch Keys.react_to_comment)
-          >>= fun (client, pull_request, repo_config_with_provenance, user, (), ()) ->
+          >>= fun (client, pull_request, repo_config_with_provenance, user, ()) ->
           S.Comment.publish_comment
             ~request_id:(Builder.log_id s)
             client
@@ -1800,19 +1830,23 @@ struct
           fetch Keys.pull_request
           >>= fun pull_request ->
           match S.Api.Pull_request.state pull_request with
-          | Terrat_pull_request.State.(Open Open_status.Merge_conflict) ->
-              Logs.info (fun m -> m "%s : MERGE_CONFLICT" (Builder.log_id s));
-              fetch Keys.client
-              >>= fun client ->
-              fetch Keys.user
-              >>= fun user ->
-              S.Comment.publish_comment
-                ~request_id:(Builder.log_id s)
-                client
-                (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                pull_request
-                Msg.Pull_request_not_mergeable
-              >>= fun () -> Abb.Future.return (Error `Noop)
+          | Terrat_pull_request.State.(Open Open_status.Merge_conflict) -> (
+              fetch Keys.all_matches
+              >>= function
+              | [] -> Abb.Future.return (Error `Noop)
+              | _ :: _ ->
+                  Logs.info (fun m -> m "%s : MERGE_CONFLICT" (Builder.log_id s));
+                  fetch Keys.client
+                  >>= fun client ->
+                  fetch Keys.user
+                  >>= fun user ->
+                  S.Comment.publish_comment
+                    ~request_id:(Builder.log_id s)
+                    client
+                    (CCOption.map_or ~default:"" S.Api.User.to_string user)
+                    pull_request
+                    Msg.Pull_request_not_mergeable
+                  >>= fun () -> Abb.Future.return (Error `Noop))
           | Terrat_pull_request.State.Open _
           | Terrat_pull_request.State.Closed
           | Terrat_pull_request.State.Merged _ -> Abb.Future.return (Ok ()))
@@ -2185,6 +2219,49 @@ struct
                 (Msg.Missing_plans dirspaces)
               >>= fun () -> Abb.Future.return (Error `Noop))
 
+    let check_dirspaces_to_plan =
+      run ~name:"check_dirspaces_to_plan" (fun s { Bs.Fetcher.fetch } ->
+          let open Irm in
+          fetch Keys.job
+          >>= function
+          | { Tjc.Job.type_ = Tjc.Job.Type_.Plan _; _ } -> (
+              fetch Keys.all_matches
+              >>= function
+              | [] -> (
+                  fetch Keys.is_interactive
+                  >>= function
+                  | true ->
+                      fetch Keys.client
+                      >>= fun client ->
+                      fetch Keys.user
+                      >>= fun user ->
+                      fetch Keys.pull_request
+                      >>= fun pull_request ->
+                      Fc.Result.all2
+                        (fetch Keys.maybe_create_completed_apply_check)
+                        (S.Comment.publish_comment
+                           ~request_id:(Builder.log_id s)
+                           client
+                           (CCOption.map_or ~default:"" S.Api.User.to_string user)
+                           pull_request
+                           Msg.Plan_no_matching_dirspaces)
+                      >>= fun ((), ()) -> Abb.Future.return (Error `Noop)
+                  | false -> Abb.Future.return (Error `Noop))
+              | _ :: _ -> Abb.Future.return (Ok ()))
+          | _ -> Abb.Future.return (Ok ()))
+
+    let check_dirspaces_to_apply =
+      run ~name:"check_dirspaces_to_apply" (fun s { Bs.Fetcher.fetch } ->
+          let open Irm in
+          fetch Keys.job
+          >>= function
+          | { Tjc.Job.type_ = Tjc.Job.Type_.Autoapply; _ } -> (
+              fetch Keys.working_set_matches
+              >>= function
+              | [] -> Abb.Future.return (Error `Noop)
+              | _ :: _ -> Abb.Future.return (Ok ()))
+          | _ -> Abb.Future.return (Ok ()))
+
     let check_gates =
       run ~name:"check_gates" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
@@ -2213,8 +2290,8 @@ struct
     let store_gate_approval =
       run ~name:"store_gate_approval" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
-          Fc.Result.all3 (fetch Keys.user) (fetch Keys.pull_request) (fetch Keys.react_to_comment)
-          >>= fun (user, pull_request, ()) ->
+          Fc.Result.all2 (fetch Keys.user) (fetch Keys.pull_request)
+          >>= fun (user, pull_request) ->
           match user with
           | Some user -> (
               fetch Keys.job
@@ -2645,7 +2722,7 @@ struct
             fetch Keys.check_pull_request_state
             >>= fun () ->
             Abbs_future_combinators.Infix_result_app.(
-              (fun () () () () () () () () () () _ _ -> ())
+              (fun () () () () () () () () () () () _ _ -> ())
               <$> fetch Keys.check_access_control_ci_change
               <*> fetch Keys.check_access_control_files
               <*> fetch Keys.check_access_control_repo_config
@@ -2655,8 +2732,9 @@ struct
               <*> fetch Keys.check_account_tier
               <*> fetch Keys.check_merge_conflict
               <*> fetch Keys.check_conflicting_plan_work_manifests
+              <*> fetch Keys.check_dirspaces_to_plan
               <*> fetch Keys.store_stacks
-                  (* Ensure that various information is built before trying to run the plan *)
+              (* Ensure that various information is built before trying to run the plan *)
               <*> fetch Keys.branch_dirspaces
               <*> fetch Keys.dest_branch_dirspaces)
           in
@@ -2685,8 +2763,8 @@ struct
               CCOption.map_or ~default:(Abb.Future.return (Ok ())) maybe_publish_msg msg
               >>= fun () -> Abb.Future.return (Error err))
 
-    let publish_plan =
-      run ~name:"publish_plan" (fun s ({ Bs.Fetcher.fetch } as fetcher) ->
+    let run_plan =
+      run ~name:"run_plan" (fun s ({ Bs.Fetcher.fetch } as fetcher) ->
           let open Irm in
           fetch Keys.check_pull_request_state
           >>= fun () ->
@@ -2748,7 +2826,7 @@ struct
             fetch Keys.check_pull_request_state
             >>= fun () ->
             Abbs_future_combinators.Infix_result_app.(
-              (fun () () () () () () () () () () () () _ _ -> ())
+              (fun () () () () () () () () () () () () () _ _ -> ())
               <$> fetch Keys.check_access_control_ci_change
               <*> fetch Keys.check_access_control_apply
               <*> fetch Keys.check_access_control_files
@@ -2758,6 +2836,7 @@ struct
               <*> fetch Keys.check_conflicting_apply_work_manifests
               <*> fetch Keys.check_dirspaces_missing_plans
               <*> fetch Keys.check_dirspaces_owned_by_other_pull_requests
+              <*> fetch Keys.check_dirspaces_to_apply
               <*> fetch Keys.check_gates
               <*> fetch Keys.check_merge_conflict
               <*> fetch Keys.check_pull_request_state
@@ -2790,8 +2869,8 @@ struct
               CCOption.map_or ~default:(Abb.Future.return (Ok ())) maybe_publish_msg msg
               >>= fun () -> Abb.Future.return (Error err))
 
-    let publish_apply =
-      run ~name:"publish_apply" (fun s ({ Bs.Fetcher.fetch } as fetcher) ->
+    let run_apply =
+      run ~name:"run_apply" (fun s ({ Bs.Fetcher.fetch } as fetcher) ->
           let open Irm in
           fetch Keys.check_pull_request_state
           >>= fun () ->
@@ -2805,6 +2884,98 @@ struct
           >>= fun wms ->
           (* Do something useful here? *)
           Abb.Future.return (Ok ()))
+
+    let maybe_complete_job =
+      run ~name:"maybe_complete_job" (fun s { Bs.Fetcher.fetch } ->
+          let open Irm in
+          fetch Keys.job
+          >>= fun job ->
+          (* Query from the database so we get the latest value and lock it *)
+          Builder.run_db s ~f:(fun db ->
+              S.Job_context.Job.query ~request_id:(Builder.log_id s) ~job_id:job.Tjc.Job.id db)
+          >>= function
+          | Some { Tjc.Job.state = Tjc.Job.State.(Completed | Failed); _ } ->
+              Logs.info (fun m ->
+                  m "%s : JOB_COMPLETE : job_id= %a" (Builder.log_id s) Uuidm.pp job.Tjc.Job.id);
+              Abb.Future.return (Error `Noop)
+          | Some ({ Tjc.Job.state = Tjc.Job.State.Running; _ } as job) -> (
+              match job.Tjc.Job.type_ with
+              | Tjc.Job.Type_.Apply _ | Tjc.Job.Type_.Autoapply ->
+                  H.complete_job s job @@ fetch Keys.run_apply
+                  >>= fun () ->
+                  (* This is a little performance tweak.  We know querying the
+                     repo config can take a bit but we know it can't have
+                     changed, so let's just forward it on. *)
+                  let s' =
+                    s
+                    |> Builder.State.orig_store
+                    |> Builder.State.forward_store_value Keys.repo_config_with_provenance s
+                    |> Builder.State.forward_store_value Keys.repo_config_raw s
+                    |> CCFun.flip Builder.State.set_orig_store s
+                  in
+                  Builder.eval s' Keys.run_next_layer
+              | Tjc.Job.Type_.Autoplan | Tjc.Job.Type_.Plan _ ->
+                  H.complete_job s job @@ fetch Keys.run_plan
+                  >>= fun () ->
+                  (* This is a little performance tweak.  We know querying the
+                     repo config can take a bit but we know it can't have
+                     changed, so let's just forward it on. *)
+                  let s' =
+                    s
+                    |> Builder.State.orig_store
+                    |> Builder.State.forward_store_value Keys.repo_config_with_provenance s
+                    |> Builder.State.forward_store_value Keys.repo_config_raw s
+                    |> CCFun.flip Builder.State.set_orig_store s
+                  in
+                  Builder.eval s' Keys.complete_no_change_dirspaces
+                  >>= fun () -> Builder.eval s' Keys.run_next_layer
+              | Tjc.Job.Type_.Repo_config -> H.complete_job s job @@ fetch Keys.publish_repo_config
+              | Tjc.Job.Type_.Unlock _ -> H.complete_job s job @@ fetch Keys.publish_unlock
+              | Tjc.Job.Type_.Gate_approval _ -> assert false)
+          | None -> assert false)
+
+    let maybe_complete_job_from_work_manifest_event =
+      run ~name:"maybe_complete_job_from_work_manifest_event" (fun s { Bs.Fetcher.fetch } ->
+          let module Wm = Terrat_work_manifest3 in
+          let open Irm in
+          fetch Keys.work_manifest_event
+          >>= function
+          | Some event -> (
+              let work_manifest =
+                match event with
+                | Keys.Work_manifest_event.(
+                    ( Initiate { work_manifest; _ }
+                    | Fail { work_manifest; _ }
+                    | Result { work_manifest; _ } )) -> work_manifest
+              in
+              fetch Keys.work_manifest_event_job
+              >>= function
+              | None -> raise (Failure "nyi")
+              | Some job ->
+                  let context = job.Tjc.Job.context in
+                  Logs.info (fun m ->
+                      m
+                        "%s : context_id=%a : job_id= %a : initiator=%s"
+                        (Builder.log_id s)
+                        Uuidm.pp
+                        context.Tjc.Context.id
+                        Uuidm.pp
+                        job.Tjc.Job.id
+                        (CCOption.map_or ~default:"" S.Api.User.to_string job.Tjc.Job.initiator));
+                  let s' =
+                    s
+                    |> Builder.State.orig_store
+                    |> Keys.Key.add Keys.job job
+                    |> Keys.Key.add Keys.context context
+                    |> Keys.Key.add Keys.work_manifest_event None
+                    |> Keys.Key.add Keys.user job.Tjc.Job.initiator
+                    |> add_work_manifest_keys work_manifest
+                    |> CCFun.flip Builder.State.set_orig_store s
+                    |> Builder.State.set_log_id
+                         (Builder.mk_log_id ~request_id:(Builder.log_id s) job.Tjc.Job.id)
+                  in
+                  Builder.eval s' Keys.maybe_complete_job)
+          | None -> assert false)
 
     (* User facing tasks *)
     let update_context_for_pull_request =
@@ -2841,11 +3012,11 @@ struct
           | { C.state = C.State.Terminated; _ } ->
               Abb.Future.return (Ok (Wmc.Work_manifest_done { Wmd.type_ = "done" }))
           | compute_node ->
+              (* TODO: Decouple compute node id and work manifest id *)
+              let work_manifest_id = compute_node.C.id in
               fetch Keys.compute_node_offering
               >>= fun offering ->
               if compute_node.C.capabilities.C.Capabilities.sha = offering.Offering.sha then
-                (* TODO: Decouple compute node id and work manifest id *)
-                let work_manifest_id = compute_node.C.id in
                 (* If a work manifest response already exists for the compute node,
                    then deliver it. *)
                 Builder.run_db s ~f:(fun db ->
@@ -2900,6 +3071,28 @@ struct
                     | None -> raise (Failure "nyi"))
               else raise (Failure "nyi"))
 
+    let work_manifest_event_job =
+      run ~name:"work_manifest_event_job" (fun s { Bs.Fetcher.fetch } ->
+          let module Wm = Terrat_work_manifest3 in
+          let open Irm in
+          fetch Keys.work_manifest_event
+          >>= function
+          | Some event ->
+              let work_manifest =
+                match event with
+                | Keys.Work_manifest_event.(
+                    ( Initiate { work_manifest; _ }
+                    | Fail { work_manifest; _ }
+                    | Result { work_manifest; _ } )) -> work_manifest
+              in
+              Builder.run_db s ~f:(fun db ->
+                  S.Job_context.Job.query_by_work_manifest_id
+                    ~request_id:(Builder.log_id s)
+                    db
+                    ~work_manifest_id:work_manifest.Wm.id
+                    ())
+          | None -> Abb.Future.return (Ok None))
+
     let eval_work_manifest_event =
       run ~name:"eval_work_manifest_event" (fun s { Bs.Fetcher.fetch } ->
           let module Wm = Terrat_work_manifest3 in
@@ -2914,14 +3107,13 @@ struct
                     | Fail { work_manifest; _ }
                     | Result { work_manifest; _ } )) -> work_manifest
               in
-              Builder.run_db s ~f:(fun db ->
-                  S.Job_context.Job.query_by_work_manifest_id
-                    ~request_id:(Builder.log_id s)
-                    db
-                    ~work_manifest_id:work_manifest.Wm.id
-                    ())
+              fetch Keys.work_manifest_event_job
               >>= function
               | None -> raise (Failure "nyi")
+              | Some { Tjc.Job.id; state = Tjc.Job.State.(Completed | Failed); _ } ->
+                  Logs.info (fun m ->
+                      m "%s : JOB_ALREADY_COMPLETED : job_id= %a" (Builder.log_id s) Uuidm.pp id);
+                  Abb.Future.return (Error `Noop)
               | Some job ->
                   let context = job.Tjc.Job.context in
                   Logs.info (fun m ->
@@ -2942,7 +3134,8 @@ struct
                     |> Keys.Key.add Keys.user job.Tjc.Job.initiator
                     |> add_work_manifest_keys work_manifest
                     |> CCFun.flip Builder.State.set_orig_store s
-                    |> Builder.State.set_log_id (Uuidm.to_string job.Tjc.Job.id)
+                    |> Builder.State.set_log_id
+                         (Builder.mk_log_id ~request_id:(Builder.log_id s) job.Tjc.Job.id)
                   in
                   Builder.eval s' Keys.iter_job)
           | None -> assert false)
@@ -2989,13 +3182,15 @@ struct
               >>= fun job ->
               Logs.info (fun m ->
                   m
-                    "%s : target=%s : context_id=%a : job_id=%a"
+                    "%s : target=%s : context_id=%a : job_id=%a : job_type=%a"
                     (Builder.log_id s)
                     (Hmap.Key.info Keys.iter_job)
                     Uuidm.pp
                     context.Tjc.Context.id
                     Uuidm.pp
-                    job.Tjc.Job.id);
+                    job.Tjc.Job.id
+                    Tjc.Job.Type_.pp
+                    job.Tjc.Job.type_);
               let s' =
                 s
                 |> Builder.State.orig_store
@@ -3004,7 +3199,7 @@ struct
                 |> CCFun.flip Builder.State.set_orig_store s
                 |> Builder.State.set_log_id (Uuidm.to_string job.Tjc.Job.id)
               in
-              Builder.eval s' Keys.iter_job
+              Builder.eval s' Keys.react_to_comment >>= fun () -> Abb.Future.return (Ok job)
           | None -> Abb.Future.return (Error `Noop))
 
     let iter_job =
@@ -3012,109 +3207,68 @@ struct
           let open Irm in
           fetch Keys.job
           >>= fun job ->
-          let go =
-            match job.Tjc.Job.type_ with
-            | Tjc.Job.Type_.Apply _ | Tjc.Job.Type_.Autoapply ->
-                fetch Keys.publish_apply
-                >>= fun () ->
-                (* This is a little performance tweak.  We know querying the
-                   repo config can take a bit but we know it can't have changed,
-                   so let's just forward it on. *)
-                let s' =
-                  s
-                  |> Builder.State.orig_store
-                  |> Builder.State.forward_store_value Keys.repo_config_with_provenance s
-                  |> Builder.State.forward_store_value Keys.repo_config_raw s
-                  |> CCFun.flip Builder.State.set_orig_store s
-                in
-                Builder.eval s' Keys.run_next_layer
-            | Tjc.Job.Type_.Autoplan | Tjc.Job.Type_.Plan _ ->
-                fetch Keys.publish_plan
-                >>= fun () ->
-                (* This is a little performance tweak.  We know querying the
-                   repo config can take a bit but we know it can't have changed,
-                   so let's just forward it on. *)
-                let s' =
-                  s
-                  |> Builder.State.orig_store
-                  |> Builder.State.forward_store_value Keys.repo_config_with_provenance s
-                  |> Builder.State.forward_store_value Keys.repo_config_raw s
-                  |> CCFun.flip Builder.State.set_orig_store s
-                in
-                Builder.eval s' Keys.complete_no_change_dirspaces
-                >>= fun () -> Builder.eval s' Keys.run_next_layer
-            | Tjc.Job.Type_.Repo_config -> fetch Keys.publish_repo_config
-            | Tjc.Job.Type_.Unlock _ -> fetch Keys.publish_unlock
-            | Tjc.Job.Type_.Gate_approval _ -> assert false
+          match job.Tjc.Job.type_ with
+          | Tjc.Job.Type_.Apply _ | Tjc.Job.Type_.Autoapply ->
+              H.complete_job s job @@ fetch Keys.run_apply
+          | Tjc.Job.Type_.Autoplan | Tjc.Job.Type_.Plan _ ->
+              H.complete_job s job @@ fetch Keys.run_plan
+              >>= fun () ->
+              let s' =
+                s
+                |> Builder.State.orig_store
+                |> Builder.State.forward_store_value Keys.repo_config_with_provenance s
+                |> Builder.State.forward_store_value Keys.repo_config_raw s
+                |> CCFun.flip Builder.State.set_orig_store s
+              in
+              Builder.eval s' Keys.complete_no_change_dirspaces
+          | Tjc.Job.Type_.Repo_config -> H.complete_job s job @@ fetch Keys.publish_repo_config
+          | Tjc.Job.Type_.Unlock _ -> H.complete_job s job @@ fetch Keys.publish_unlock
+          | Tjc.Job.Type_.Gate_approval _ -> assert false)
+
+    let maybe_create_completed_apply_check =
+      run ~name:"maybe_create_completed_apply_check" (fun s { Bs.Fetcher.fetch } ->
+          let module R = Terrat_base_repo_config_v1 in
+          let open Irm in
+          fetch Keys.repo_config
+          >>= fun repo_config ->
+          let apply_requirements = R.apply_requirements repo_config in
+          let create_completed_apply_check_on_noop =
+            apply_requirements.R.Apply_requirements.create_completed_apply_check_on_noop
           in
-          let open Abb.Future.Infix_monad in
-          go
-          >>= function
-          | Ok () | Error `Noop ->
-              let open Irm in
-              Logs.info (fun m -> m "%s : UPDATE JOB : COMPLETED" (Builder.log_id s));
-              Builder.run_db s ~f:(fun db ->
-                  S.Job_context.Job.update_state
-                    ~request_id:(Builder.log_id s)
-                    db
-                    ~job_id:job.Tjc.Job.id
-                    Tjc.Job.State.Completed)
-              >>= fun () -> Abb.Future.return (Ok ())
-          | Error (`Suspend_eval _) as err -> Abb.Future.return err
-          | Error (#Builder.err as err) ->
-              let open Irm in
-              Logs.info (fun m -> m "%s : UPDATE JOB : FAILED" (Builder.log_id s));
-              Builder.run_db s ~f:(fun db ->
-                  S.Job_context.Job.update_state
-                    ~request_id:(Builder.log_id s)
-                    db
-                    ~job_id:job.Tjc.Job.id
-                    Tjc.Job.State.Failed)
-              >>= fun () -> Abb.Future.return (Error err))
+          fetch Keys.all_matches
+          >>= fun all_matches ->
+          fetch Keys.all_unapplied_matches
+          >>= fun all_unapplied_matches ->
+          match (all_unapplied_matches, all_matches, create_completed_apply_check_on_noop) with
+          | [], [], true | [], _, _ ->
+              fetch Keys.client
+              >>= fun client ->
+              fetch Keys.account
+              >>= fun account ->
+              fetch Keys.pull_request
+              >>= fun pull_request ->
+              fetch Keys.repo
+              >>= fun repo ->
+              let checks =
+                [
+                  S.Commit_check.make_str
+                    ~config:(Builder.State.config s)
+                    ~description:"Completed"
+                    ~status:Terrat_commit_check.Status.Completed
+                    ~repo
+                    ~account
+                    "terrateam apply";
+                ]
+              in
+              S.Api.create_commit_checks
+                ~request_id:(Builder.log_id s)
+                client
+                repo
+                (S.Api.Pull_request.branch_ref pull_request)
+                checks
+          | _ -> Abb.Future.return (Ok ()))
 
     let run_next_layer =
-      let maybe_create_completed_apply_check s { Bs.Fetcher.fetch } =
-        let module R = Terrat_base_repo_config_v1 in
-        let open Irm in
-        fetch Keys.repo_config
-        >>= fun repo_config ->
-        let apply_requirements = R.apply_requirements repo_config in
-        let create_completed_apply_check_on_noop =
-          apply_requirements.R.Apply_requirements.create_completed_apply_check_on_noop
-        in
-        fetch Keys.all_matches
-        >>= fun all_matches ->
-        fetch Keys.all_unapplied_matches
-        >>= fun all_unapplied_matches ->
-        match (all_unapplied_matches, all_matches, create_completed_apply_check_on_noop) with
-        | [], [], true | [], _, _ ->
-            fetch Keys.client
-            >>= fun client ->
-            fetch Keys.account
-            >>= fun account ->
-            fetch Keys.pull_request
-            >>= fun pull_request ->
-            fetch Keys.repo
-            >>= fun repo ->
-            let checks =
-              [
-                S.Commit_check.make_str
-                  ~config:(Builder.State.config s)
-                  ~description:"Completed"
-                  ~status:Terrat_commit_check.Status.Completed
-                  ~repo
-                  ~account
-                  "terrateam apply";
-              ]
-            in
-            S.Api.create_commit_checks
-              ~request_id:(Builder.log_id s)
-              client
-              repo
-              (S.Api.Pull_request.branch_ref pull_request)
-              checks
-        | _ -> Abb.Future.return (Ok ())
-      in
       let maybe_automerge s { Bs.Fetcher.fetch } =
         let module V1 = Terrat_base_repo_config_v1 in
         let module Am = V1.Automerge in
@@ -3195,32 +3349,39 @@ struct
       run ~name:"run_next_layer" (fun s ({ Bs.Fetcher.fetch } as fetcher) ->
           let module Wm = Terrat_work_manifest3 in
           let open Irm in
-          fetch Keys.all_unapplied_matches
+          fetch Keys.job
           >>= function
-          | [] ->
-              Logs.info (fun m -> m "%s : ALL_DIRSPACES_APPLIED" (Builder.log_id s));
-              maybe_create_completed_apply_check s fetcher >>= fun () -> maybe_automerge s fetcher
-          | _ -> (
-              let module Dc = Terrat_change_match3.Dirspace_config in
-              fetch Keys.working_layer
-              >>= fun working_layer ->
-              let working_layer_dirspaces =
-                Terrat_data.Dirspace_set.of_list
-                  (CCList.map (fun { Dc.dirspace; _ } -> dirspace) working_layer)
-              in
-              fetch Keys.work_manifests_for_job
-              >>= fun work_manifests ->
-              fetch Keys.job
-              >>= fun job ->
-              let changes =
-                Terrat_data.Dirspace_set.of_list
-                @@ CCList.flat_map
-                     (fun { Wm.changes; _ } ->
-                       CCList.map Terrat_change.Dirspaceflow.to_dirspace changes)
-                     work_manifests
-              in
-              if Terrat_data.Dirspace_set.disjoint changes working_layer_dirspaces then (
-                (* If there is no overlap between the dirspaces that were just
+          | { Tjc.Job.type_ = Tjc.Job.Type_.Apply _; _ }
+          | { Tjc.Job.type_ = Tjc.Job.Type_.Autoapply; _ }
+          | { Tjc.Job.type_ = Tjc.Job.Type_.Autoplan; _ }
+          | { Tjc.Job.type_ = Tjc.Job.Type_.Plan _; _ } -> (
+              fetch Keys.all_unapplied_matches
+              >>= function
+              | [] ->
+                  Logs.info (fun m -> m "%s : ALL_DIRSPACES_APPLIED" (Builder.log_id s));
+                  fetch Keys.maybe_create_completed_apply_check
+                  >>= fun () -> maybe_automerge s fetcher
+              | _ -> (
+                  let module Dc = Terrat_change_match3.Dirspace_config in
+                  fetch Keys.working_layer
+                  >>= fun working_layer ->
+                  let working_layer_dirspaces =
+                    Terrat_data.Dirspace_set.of_list
+                      (CCList.map (fun { Dc.dirspace; _ } -> dirspace) working_layer)
+                  in
+                  fetch Keys.work_manifests_for_job
+                  >>= fun work_manifests ->
+                  fetch Keys.job
+                  >>= fun job ->
+                  let changes =
+                    Terrat_data.Dirspace_set.of_list
+                    @@ CCList.flat_map
+                         (fun { Wm.changes; _ } ->
+                           CCList.map Terrat_change.Dirspaceflow.to_dirspace changes)
+                         work_manifests
+                  in
+                  if Terrat_data.Dirspace_set.disjoint changes working_layer_dirspaces then (
+                    (* If there is no overlap between the dirspaces that were just
                    ran as part of the work manifest and the remaining unapplied
                    dirspaces, that means we can safely try to run the remaining
                    layers.  If there is overlap then it means we should not try
@@ -3236,39 +3397,12 @@ struct
                    things being merged in an order we did not anticipate) in
                    which case this also prevents us from getting into an
                    infinite loop. *)
-                let { Tjc.Job.context; initiator; _ } = job in
-                Builder.run_db s ~f:(fun db ->
-                    S.Job_context.Job.create
-                      ~request_id:(Builder.log_id s)
-                      db
-                      Tjc.Job.Type_.Autoplan
-                      context
-                      initiator)
-                >>= fun job ->
-                Logs.info (fun m ->
-                    m "%s : CREATE_JOB : new_job=%a" (Builder.log_id s) Uuidm.pp job.Tjc.Job.id);
-                let s' =
-                  s
-                  |> Builder.State.orig_store
-                  |> Keys.Key.add Keys.job job
-                  |> Keys.Key.add Keys.work_manifest_event None
-                  |> Builder.State.forward_store_value Keys.repo_config_with_provenance s
-                  |> Builder.State.forward_store_value Keys.repo_config_raw s
-                  |> CCFun.flip Builder.State.set_orig_store s
-                  |> Builder.State.set_log_id (Uuidm.to_string job.Tjc.Job.id)
-                in
-                Builder.eval s' Keys.publish_plan)
-              else
-                match job with
-                | { Tjc.Job.type_ = Tjc.Job.Type_.Apply _; _ } -> Abb.Future.return (Ok ())
-                | { Tjc.Job.type_ = Tjc.Job.Type_.(Plan _ | Autoplan); _ }
-                  when can_stack_auto_apply working_layer ->
                     let { Tjc.Job.context; initiator; _ } = job in
                     Builder.run_db s ~f:(fun db ->
                         S.Job_context.Job.create
                           ~request_id:(Builder.log_id s)
                           db
-                          Tjc.Job.Type_.Autoapply
+                          Tjc.Job.Type_.Autoplan
                           context
                           initiator)
                     >>= fun job ->
@@ -3281,17 +3415,53 @@ struct
                       |> Keys.Key.add Keys.work_manifest_event None
                       |> Builder.State.forward_store_value Keys.repo_config_with_provenance s
                       |> Builder.State.forward_store_value Keys.repo_config_raw s
+                      |> Builder.State.forward_store_value Keys.matches s
                       |> CCFun.flip Builder.State.set_orig_store s
                       |> Builder.State.set_log_id (Uuidm.to_string job.Tjc.Job.id)
                     in
-                    Builder.eval s' Keys.publish_apply
-                | { Tjc.Job.type_ = Tjc.Job.Type_.(Plan _ | Autoplan); _ } ->
-                    Abb.Future.return (Ok ())
-                | {
-                 Tjc.Job.type_ =
-                   Tjc.Job.Type_.(Autoapply | Gate_approval _ | Repo_config | Unlock _);
-                 _;
-                } -> Abb.Future.return (Ok ())))
+                    Builder.eval s' Keys.run_plan)
+                  else
+                    match job with
+                    | { Tjc.Job.type_ = Tjc.Job.Type_.Apply _; _ } -> Abb.Future.return (Ok ())
+                    | { Tjc.Job.type_ = Tjc.Job.Type_.(Plan _ | Autoplan); _ }
+                      when can_stack_auto_apply working_layer ->
+                        let { Tjc.Job.context; initiator; _ } = job in
+                        Builder.run_db s ~f:(fun db ->
+                            S.Job_context.Job.create
+                              ~request_id:(Builder.log_id s)
+                              db
+                              Tjc.Job.Type_.Autoapply
+                              context
+                              initiator)
+                        >>= fun job ->
+                        Logs.info (fun m ->
+                            m
+                              "%s : CREATE_JOB : new_job=%a"
+                              (Builder.log_id s)
+                              Uuidm.pp
+                              job.Tjc.Job.id);
+                        let s' =
+                          s
+                          |> Builder.State.orig_store
+                          |> Keys.Key.add Keys.job job
+                          |> Keys.Key.add Keys.work_manifest_event None
+                          |> Builder.State.forward_store_value Keys.repo_config_with_provenance s
+                          |> Builder.State.forward_store_value Keys.repo_config_raw s
+                          |> Builder.State.forward_store_value Keys.matches s
+                          |> CCFun.flip Builder.State.set_orig_store s
+                          |> Builder.State.set_log_id (Uuidm.to_string job.Tjc.Job.id)
+                        in
+                        Builder.eval s' Keys.run_apply
+                    | { Tjc.Job.type_ = Tjc.Job.Type_.(Plan _ | Autoplan); _ } ->
+                        Abb.Future.return (Ok ())
+                    | {
+                     Tjc.Job.type_ =
+                       Tjc.Job.Type_.(Autoapply | Gate_approval _ | Repo_config | Unlock _);
+                     _;
+                    } -> Abb.Future.return (Ok ())))
+          | { Tjc.Job.type_ = Tjc.Job.Type_.Gate_approval _; _ }
+          | { Tjc.Job.type_ = Tjc.Job.Type_.Repo_config; _ }
+          | { Tjc.Job.type_ = Tjc.Job.Type_.Unlock _; _ } -> Abb.Future.return (Ok ()))
 
     let complete_no_change_dirspaces =
       run ~name:"complete_no_change_dirspaces" (fun s { Bs.Fetcher.fetch } ->
@@ -3391,6 +3561,8 @@ struct
          Tasks.check_access_control_repo_config
     |> Hmap.add (coerce Keys.check_account_status_expired) Tasks.check_account_status_expired
     |> Hmap.add (coerce Keys.check_account_tier) Tasks.check_account_tier
+    |> Hmap.add (coerce Keys.check_dirspaces_to_apply) Tasks.check_dirspaces_to_apply
+    |> Hmap.add (coerce Keys.check_dirspaces_to_plan) Tasks.check_dirspaces_to_plan
     |> Hmap.add (coerce Keys.comment_id) Tasks.comment_id
     |> Hmap.add
          (coerce Keys.check_conflicting_apply_work_manifests)
@@ -3421,17 +3593,21 @@ struct
     |> Hmap.add (coerce Keys.dest_branch_name) Tasks.dest_branch_name
     |> Hmap.add (coerce Keys.dest_branch_ref) Tasks.dest_branch_ref
     |> Hmap.add (coerce Keys.eval_compute_node_poll) Tasks.eval_compute_node_poll
-    (* |> Hmap.add (coerce Keys.eval_job) Tasks.eval_job *)
     |> Hmap.add (coerce Keys.iter_job) Tasks.iter_job
     |> Hmap.add (coerce Keys.eval_pull_request_event) Tasks.eval_pull_request_event
     |> Hmap.add (coerce Keys.eval_work_manifest_event) Tasks.eval_work_manifest_event
     |> Hmap.add (coerce Keys.initiator) Tasks.initiator
     |> Hmap.add (coerce Keys.is_interactive) Tasks.is_interactive
     |> Hmap.add (coerce Keys.matches) Tasks.matches
+    |> Hmap.add (coerce Keys.maybe_complete_job) Tasks.maybe_complete_job
+    |> Hmap.add
+         (coerce Keys.maybe_complete_job_from_work_manifest_event)
+         Tasks.maybe_complete_job_from_work_manifest_event
+    |> Hmap.add
+         (coerce Keys.maybe_create_completed_apply_check)
+         Tasks.maybe_create_completed_apply_check
     |> Hmap.add (coerce Keys.can_run_apply) Tasks.can_run_apply
     |> Hmap.add (coerce Keys.can_run_plan) Tasks.can_run_plan
-    |> Hmap.add (coerce Keys.publish_apply) Tasks.publish_apply
-    |> Hmap.add (coerce Keys.publish_plan) Tasks.publish_plan
     |> Hmap.add (coerce Keys.publish_repo_config) Tasks.publish_repo_config
     |> Hmap.add (coerce Keys.publish_unlock) Tasks.publish_unlock
     |> Hmap.add (coerce Keys.pull_request) Tasks.pull_request
@@ -3460,7 +3636,9 @@ struct
     |> Hmap.add
          (coerce Keys.repo_tree_dest_branch_wm_completed)
          Tasks.repo_tree_dest_branch_wm_completed
+    |> Hmap.add (coerce Keys.run_apply) Tasks.run_apply
     |> Hmap.add (coerce Keys.run_next_layer) Tasks.run_next_layer
+    |> Hmap.add (coerce Keys.run_plan) Tasks.run_plan
     |> Hmap.add (coerce Keys.store_gate_approval) Tasks.store_gate_approval
     |> Hmap.add (coerce Keys.store_pull_request) Tasks.store_pull_request
     |> Hmap.add (coerce Keys.store_repository) Tasks.store_repository
@@ -3473,6 +3651,8 @@ struct
     |> Hmap.add (coerce Keys.synthesized_config_empty_index) Tasks.synthesized_config_empty_index
     |> Hmap.add (coerce Keys.target) Tasks.target
     |> Hmap.add (coerce Keys.update_context_for_pull_request) Tasks.update_context_for_pull_request
+    |> Hmap.add (coerce Keys.work_manifest_event) Tasks.work_manifest_event
+    |> Hmap.add (coerce Keys.work_manifest_event_job) Tasks.work_manifest_event_job
     |> Hmap.add (coerce Keys.work_manifests_for_job) Tasks.work_manifests_for_job
     |> Hmap.add (coerce Keys.working_branch_name) Tasks.working_branch_name
     |> Hmap.add (coerce Keys.working_branch_ref) Tasks.working_branch_ref

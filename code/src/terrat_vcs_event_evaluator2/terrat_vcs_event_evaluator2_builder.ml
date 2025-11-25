@@ -128,6 +128,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
 
   let log_id state = state.B.State.log_id
 
+  let mk_log_id ~request_id job_id =
+    Uuidm.to_string job_id ^ "." ^ CCString.take 5 @@ Digest.to_hex @@ Digest.string request_id
+
   let run_db s ~f =
     let open Abb.Future.Infix_monad in
     Serializer.Mutex.run s.B.State.db ~f:(fun db ->
@@ -138,16 +141,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                   "%s : DATABASE : MUTEX : ENTER : conn=%s"
                   (log_id s)
                   (Uuidm.to_string @@ Pgsql_io.id db));
-            Abbs_future_combinators.timeout ~timeout:(Abb.Sys.sleep 10.0) (f db)
-            >>= function
-            | `Ok r -> Abb.Future.return r
-            | `Timeout ->
-                Logs_run_db.err (fun m ->
-                    m
-                      "%s : DATABASE : TIMEOUT : conn=%s"
-                      (log_id s)
-                      (Uuidm.to_string @@ Pgsql_io.id db));
-                assert false)
+            f db)
           ~finally:(fun () ->
             Logs_run_db.info (fun m ->
                 m

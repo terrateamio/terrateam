@@ -5528,6 +5528,36 @@ module Job_context = struct
         /% Var.ud (Var.json "parameters") Type_.to_json
         /% Var.ud (Var.option (Var.text "initiator")) (CCOption.map string_of_initiator))
 
+    let select_job_by_id =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* id *)
+        Ret.uuid
+        //
+        (* context_id *)
+        Ret.uuid
+        //
+        (* type *)
+        Ret.(ud' Type_.of_json)
+        //
+        (* state *)
+        Ret.(ud' state_of_string)
+        //
+        (* initiator *)
+        Ret.(option (ud' initiator_of_string))
+        //
+        (* created_at *)
+        Ret.text
+        //
+        (* updated_at *)
+        Ret.text
+        //
+        (* completed_at *)
+        Ret.(option text)
+        /^ read "select_job_by_id.sql"
+        /% Var.uuid "id")
+
     let select_job_by_work_manifest_id =
       Pgsql_io.Typed_sql.(
         sql
@@ -5556,6 +5586,36 @@ module Job_context = struct
         (* completed_at *)
         Ret.(option text)
         /^ read "select_job_by_work_manifest_id.sql"
+        /% Var.uuid "work_manifest")
+
+    let select_job_by_work_manifest_id_lock =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* id *)
+        Ret.uuid
+        //
+        (* context_id *)
+        Ret.uuid
+        //
+        (* type *)
+        Ret.(ud' Type_.of_json)
+        //
+        (* state *)
+        Ret.(ud' state_of_string)
+        //
+        (* initiator *)
+        Ret.(option (ud' initiator_of_string))
+        //
+        (* created_at *)
+        Ret.text
+        //
+        (* updated_at *)
+        Ret.text
+        //
+        (* completed_at *)
+        Ret.(option text)
+        /^ read "select_job_by_work_manifest_id_lock.sql"
         /% Var.uuid "work_manifest")
 
     let update_job_state =
@@ -5797,13 +5857,56 @@ module Job_context = struct
           Logs.err (fun m -> m "%s : JOB : CREATE : %a" request_id Pgsql_io.pp_err err);
           Abb.Future.return (Error `Error)
 
-    let query ~request_id db ~job_id = raise (Failure "nyi")
+    let query ~request_id db ~job_id =
+      let run =
+        let open Abbs_future_combinators.Infix_result_monad in
+        Pgsql_io.Prepared_stmt.fetch
+          db
+          Sql.select_job_by_id
+          ~f:(fun id context_id type_ state initiator created_at updated_at completed_at ->
+            (id, context_id, type_, state, initiator, created_at, updated_at, completed_at))
+          job_id
+        >>= function
+        | [] -> Abb.Future.return (Ok None)
+        | (id, context_id, type_, state, initiator, created_at, updated_at, completed_at) :: _ -> (
+            query_context ~request_id db context_id
+            >>= function
+            | None -> assert false
+            | Some context ->
+                let module J = Terrat_job_context.Job in
+                Abb.Future.return
+                  (Ok
+                     (Some
+                        {
+                          J.completed_at;
+                          context;
+                          created_at;
+                          id;
+                          initiator;
+                          state;
+                          type_;
+                          updated_at;
+                        })))
+      in
+      let open Abb.Future.Infix_monad in
+      run
+      >>= function
+      | Ok _ as r -> Abb.Future.return r
+      | Error `Error -> Abb.Future.return (Error `Error)
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m -> m "%s : JOB : QUERY : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
+
     let query_all_by_context_id ~request_id db ~context_id () = raise (Failure "nyi")
     let query_pending_by_context_id ~request_id db ~context_id () = raise (Failure "nyi")
 
-    let query_by_work_manifest_id ~request_id db ~work_manifest_id () =
+    let query_by_work_manifest_id ?(lock = false) ~request_id db ~work_manifest_id () =
       let run =
         let open Abbs_future_combinators.Infix_result_monad in
+        let sql =
+          if lock then Sql.select_job_by_work_manifest_id_lock
+          else Sql.select_job_by_work_manifest_id
+        in
         Pgsql_io.Prepared_stmt.fetch
           db
           Sql.select_job_by_work_manifest_id

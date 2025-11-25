@@ -65,9 +65,9 @@ struct
     if access_control.Ace.config.Ac.enabled then
       let policies =
         (* Policies have been specified, but that doesn't mean the specific
-             operation that is being executed has a configuration.  So iterate
-             through and pluck out the specific configuration and take the
-             default if that configuration was not specified. *)
+           operation that is being executed has a configuration.  So iterate
+           through and pluck out the specific configuration and take the default
+           if that configuration was not specified. *)
         access_control.Ace.config.Ac.policies
         |> CCList.map (fun ({ P.tag_query; _ } as p) ->
                Terrat_access_control2.Policy.{ tag_query; policy = selector p })

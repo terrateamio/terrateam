@@ -168,10 +168,16 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
           (*   storage *)
           (*   ctx *)
           (* >>= fun () -> *)
+          let request_id = Brtl_ctx.token ctx in
+          Logs.info (fun m ->
+              m
+                "%s : WORK_MANIFEST_RESULT : work_manifest_id=%a"
+                request_id
+                Uuidm.pp
+                work_manifest_id);
           enforce_work_manifest_access (Some work_manifest_id) work_manifest_id storage ctx
           >>= fun () ->
           let open Abb.Future.Infix_monad in
-          let request_id = Brtl_ctx.token ctx in
           Evaluator2.work_manifest_result ~request_id ~config ~storage ~work_manifest_id result
           >>= fun r ->
           match r with

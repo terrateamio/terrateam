@@ -664,6 +664,7 @@ module type S = sig
         Abb.Future.t
 
       val query_by_work_manifest_id :
+        ?lock:bool ->
         request_id:string ->
         Db.t ->
         work_manifest_id:Uuidm.t ->
