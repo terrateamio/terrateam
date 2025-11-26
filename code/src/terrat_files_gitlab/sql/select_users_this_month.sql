@@ -6,5 +6,6 @@ inner join gitlab_installations as gi
 where gwm.username is not null and gi.id = $installation_id
       and gwm.created_at >= date_trunc('month', current_date)
       and gwm.created_at < date_trunc('month', current_date + interval '1 month')
+      and gwm.run_type in ('autoplan', 'autoapply', 'plan', 'apply')
 group by gwm.username
 order by min(gwm.created_at)
