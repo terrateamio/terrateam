@@ -118,7 +118,7 @@ No output shown due to comment size.
 {%- endif %}
 {%- for d in dirspaces %}
 
-## {{ d.dir }} {% if d.success %}:white_check_mark:{% else %}:heavy_multiplication_x:{% endif %}
+## {{ d.dir }} | {{ d.workspace }} | {% if d.success %}:white_check_mark:{% else %}:heavy_multiplication_x:{% endif %}
   {%- if compact_dirspaces %}
 
 <details>

@@ -175,7 +175,7 @@ No output shown due to comment size.
 {%- endif %}
 {%- for d in dirspaces %}
 
-## Dir: {{ d.dir }} | {% if d.success %}{% if d.has_changes is defined and d.has_changes %}Success :thumbsup:{% elif d.has_changes is defined and not d.has_changes %}No changes{% endif %}{% else %}:heavy_multiplication_x:{% endif %}
+## {{ d.dir }} | {{ d.workspace }} | {% if d.success %}{% if d.has_changes is defined and d.has_changes %}Success {% if compact_view %}:eyes:{% else %}:thumbsup:{% endif %}{% elif d.has_changes is defined and not d.has_changes %}No changes{% endif %}{% else %}:heavy_multiplication_x:{% endif %}
   {%- if compact_dirspaces %}
 <details>
   <summary>Expand for details</summary>
