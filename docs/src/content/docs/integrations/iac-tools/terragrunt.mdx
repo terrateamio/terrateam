@@ -54,6 +54,35 @@ You can continue to use this repository, but it's recommended to mirror the repo
 The Terrateam GitHub application must be installed on module repositories for Terrateam to successfully clone the repository during plan and apply operations.
 :::
 
+## Automatic Discovery for Large Monorepos
+
+For repositories with many Terragrunt modules, manually configuring each module in `.terrateam/config.yml` can be tedious and error-prone. Terrateam includes a built-in config builder that automatically discovers all `terragrunt.hcl` files and generates configuration with proper dependency tracking.
+
+See the [Terragrunt Config Builder](/workflows/advanced/terragrunt-config-builder) guide for detailed setup and usage.
+
+### Quick Example
+
+Instead of manually configuring hundreds of `dirs` entries, enable automatic discovery:
+
+```yaml
+engine:
+  name: terragrunt
+  version: 0.69.3
+
+config_builder:
+  enabled: true
+  script: terragrunt-config-builder
+```
+
+This will automatically:
+- Discover all terragrunt.hcl files in your repository
+- Parse `dependency` and `include` blocks
+- Generate `when_modified` patterns for each module
+- Create `depends_on` relationships for layered execution
+- Recognize `extra_terrateam_dependencies` (or `extra_atlantis_dependencies`) for custom file tracking
+
+For complete documentation, see the [Terragrunt Config Builder](/workflows/advanced/terragrunt-config-builder) guide.
+
 ## Making Changes
 
 With your `infrastructure-live` repository set up and configured for Terragrunt and Terrateam, you can start making changes and creating pull requests.

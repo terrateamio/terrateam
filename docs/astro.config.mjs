@@ -90,6 +90,7 @@ export default defineConfig({
                 { label: "GitFlow", link: "/workflows/advanced/gitflow" },
                 { label: "Layered Runs", link: "/workflows/advanced/layered-runs" },
                 { label: "Dynamic Config", link: "/workflows/advanced/dynamic-configuration" },
+                { label: "Terragrunt Config Builder", link: "/workflows/advanced/terragrunt-config-builder" },
                 { label: "Custom Workflows", link: "/workflows/advanced/custom-commands" },
                 { label: "Custom Runners", link: "/workflows/advanced/runs-on" },
                 { label: "Engine Setup", link: "/workflows/advanced/engine-setup" },
