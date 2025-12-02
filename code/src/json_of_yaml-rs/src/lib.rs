@@ -33,10 +33,22 @@ pub unsafe extern "C" fn json_of_yaml(yaml_str: *const c_char) -> ConversionResu
     };
 
     // Parse YAML
-    let yaml_value: serde_yaml::Value = match serde_yaml::from_str(c_str) {
+    let mut yaml_value: serde_yaml::Value = match serde_yaml::from_str(c_str) {
         Ok(v) => v,
         Err(e) => {
             let error_msg = CString::new(format!("YAML parsing error: {}", e)).unwrap();
+            return ConversionResult {
+                success: false,
+                data: error_msg.into_raw(),
+            };
+        }
+    };
+
+    // Apply merge any anchors
+    match yaml_value.apply_merge() {
+        Ok(()) => (),
+        Err(e) => {
+            let error_msg = CString::new(format!("Error merging anchors: {}", e)).unwrap();
             return ConversionResult {
                 success: false,
                 data: error_msg.into_raw(),
