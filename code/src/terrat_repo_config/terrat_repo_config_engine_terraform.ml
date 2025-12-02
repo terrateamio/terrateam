@@ -9,6 +9,7 @@ end
 
 type t = {
   name : Name.t;
+  outputs : Terrat_repo_config_engine_tf_outputs.t option; [@default None]
   override_tf_cmd : string option; [@default None]
   version : string option; [@default None]
 }

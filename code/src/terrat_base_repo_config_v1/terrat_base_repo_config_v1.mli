@@ -488,8 +488,13 @@ module Drift : sig
 end
 
 module Engine : sig
+  module Tf_outputs : sig
+    type t = { collect : bool [@default true] } [@@deriving make, show, yojson, eq]
+  end
+
   module Cdktf : sig
     type t = {
+      outputs : Tf_outputs.t; [@default Tf_outputs.make ()]
       override_tf_cmd : string option;
       tf_cmd : string; [@default "terraform"]
       tf_version : string; [@default "latest"]
@@ -515,6 +520,7 @@ module Engine : sig
 
   module Opentofu : sig
     type t = {
+      outputs : Tf_outputs.t; [@default Tf_outputs.make ()]
       override_tf_cmd : string option;
       version : string option;
     }
@@ -523,6 +529,7 @@ module Engine : sig
 
   module Terraform : sig
     type t = {
+      outputs : Tf_outputs.t; [@default Tf_outputs.make ()]
       override_tf_cmd : string option;
       version : string option;
     }
@@ -531,6 +538,7 @@ module Engine : sig
 
   module Terragrunt : sig
     type t = {
+      outputs : Tf_outputs.t; [@default Tf_outputs.make ()]
       override_tf_cmd : string option;
       tf_cmd : string; [@default "terraform"]
       tf_version : string option;
