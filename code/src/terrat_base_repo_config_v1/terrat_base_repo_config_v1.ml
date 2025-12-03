@@ -873,6 +873,10 @@ module Drift = struct
 end
 
 module Engine = struct
+  module Tf_outputs = struct
+    type t = { collect : bool [@default true] } [@@deriving make, show, yojson, eq]
+  end
+
   module Custom = struct
     type t = {
       apply : string list option;
@@ -891,6 +895,7 @@ module Engine = struct
 
   module Cdktf = struct
     type t = {
+      outputs : Tf_outputs.t; [@default Tf_outputs.make ()]
       override_tf_cmd : string option;
       tf_cmd : string; [@default "terraform"]
       tf_version : string; [@default "latest"]
@@ -900,6 +905,7 @@ module Engine = struct
 
   module Opentofu = struct
     type t = {
+      outputs : Tf_outputs.t; [@default Tf_outputs.make ()]
       override_tf_cmd : string option;
       version : string option;
     }
@@ -908,6 +914,7 @@ module Engine = struct
 
   module Terraform = struct
     type t = {
+      outputs : Tf_outputs.t; [@default Tf_outputs.make ()]
       override_tf_cmd : string option;
       version : string option;
     }
@@ -916,6 +923,7 @@ module Engine = struct
 
   module Terragrunt = struct
     type t = {
+      outputs : Tf_outputs.t; [@default Tf_outputs.make ()]
       override_tf_cmd : string option;
       tf_cmd : string; [@default "terraform"]
       tf_version : string option;
@@ -1855,16 +1863,26 @@ let of_version_1_workflow_op_list ops =
                   ())))
     ops
 
+let of_version_1_engine_tf_outputs outputs =
+  let module O = Terrat_repo_config.Engine_tf_outputs in
+  let { O.collect } = outputs in
+  Engine.Tf_outputs.make ?collect ()
+
 let of_version_1_workflow_engine cdktf terraform_version terragrunt default_engine engine =
-  let default_tf_cmd, default_tf_version, default_override_tf_cmd, default_wrapper_version =
+  let ( default_tf_cmd,
+        default_tf_version,
+        default_override_tf_cmd,
+        default_wrapper_version,
+        default_tf_outputs ) =
     match default_engine with
-    | Some Engine.(Opentofu { Opentofu.version; override_tf_cmd; _ }) ->
-        (Some "tofu", version, override_tf_cmd, None)
-    | Some Engine.(Terragrunt { Terragrunt.tf_cmd; tf_version; version; override_tf_cmd; _ }) ->
-        (Some tf_cmd, tf_version, override_tf_cmd, version)
-    | Some Engine.(Terraform { Terraform.version; override_tf_cmd; _ }) ->
-        (Some "terraform", version, override_tf_cmd, None)
-    | _ -> (Some "terraform", None, None, None)
+    | Some Engine.(Opentofu { Opentofu.version; override_tf_cmd; outputs; _ }) ->
+        (Some "tofu", version, override_tf_cmd, None, Some outputs)
+    | Some
+        Engine.(Terragrunt { Terragrunt.tf_cmd; tf_version; version; override_tf_cmd; outputs; _ })
+      -> (Some tf_cmd, tf_version, override_tf_cmd, version, Some outputs)
+    | Some Engine.(Terraform { Terraform.version; override_tf_cmd; outputs; _ }) ->
+        (Some "terraform", version, override_tf_cmd, None, Some outputs)
+    | _ -> (Some "terraform", None, None, None, None)
   in
   match (cdktf, terraform_version, terragrunt, engine) with
   | _, _, _, Some engine -> (
@@ -1886,6 +1904,9 @@ let of_version_1_workflow_engine cdktf terraform_version terragrunt default_engi
                Engine.(
                  Cdktf
                    (Cdktf.make
+                      ?outputs:
+                        (CCOption.or_ ~else_:default_tf_outputs
+                        @@ CCOption.map of_version_1_engine_tf_outputs cdktf.E.outputs)
                       ?override_tf_cmd:
                         (CCOption.or_ ~else_:default_override_tf_cmd cdktf.E.override_tf_cmd)
                       ?tf_cmd:(CCOption.or_ ~else_:default_tf_cmd cdktf.E.tf_cmd)
@@ -1899,6 +1920,9 @@ let of_version_1_workflow_engine cdktf terraform_version terragrunt default_engi
                  Opentofu
                    (Opentofu.make
                       ?version:(CCOption.or_ ~else_:default_tf_version ot.E.version)
+                      ?outputs:
+                        (CCOption.or_ ~else_:default_tf_outputs
+                        @@ CCOption.map of_version_1_engine_tf_outputs ot.E.outputs)
                       ?override_tf_cmd:
                         (CCOption.or_ ~else_:default_override_tf_cmd ot.E.override_tf_cmd)
                       ())))
@@ -1910,6 +1934,9 @@ let of_version_1_workflow_engine cdktf terraform_version terragrunt default_engi
                  Terraform
                    (Terraform.make
                       ?version:(CCOption.or_ ~else_:default_tf_version tf.E.version)
+                      ?outputs:
+                        (CCOption.or_ ~else_:default_tf_outputs
+                        @@ CCOption.map of_version_1_engine_tf_outputs tf.E.outputs)
                       ?override_tf_cmd:
                         (CCOption.or_ ~else_:default_override_tf_cmd tf.E.override_tf_cmd)
                       ())))
@@ -1920,6 +1947,9 @@ let of_version_1_workflow_engine cdktf terraform_version terragrunt default_engi
                Engine.(
                  Terragrunt
                    (Terragrunt.make
+                      ?outputs:
+                        (CCOption.or_ ~else_:default_tf_outputs
+                        @@ CCOption.map of_version_1_engine_tf_outputs tg.E.outputs)
                       ?override_tf_cmd:
                         (CCOption.or_ ~else_:default_override_tf_cmd tg.E.override_tf_cmd)
                       ?tf_cmd:(CCOption.or_ ~else_:default_tf_cmd tg.E.tf_cmd)
@@ -2222,6 +2252,7 @@ let of_version_1_engine default_tf_version engine =
                    (Cdktf.make
                       ?tf_cmd:cdktf.E.tf_cmd
                       ?tf_version:cdktf.E.tf_version
+                      ?outputs:(CCOption.map of_version_1_engine_tf_outputs cdktf.E.outputs)
                       ?override_tf_cmd:cdktf.E.override_tf_cmd
                       ())))
       | E.Engine_opentofu ot ->
@@ -2230,14 +2261,22 @@ let of_version_1_engine default_tf_version engine =
             (Some
                Engine.(
                  Opentofu
-                   (Opentofu.make ?version:ot.E.version ?override_tf_cmd:ot.E.override_tf_cmd ())))
+                   (Opentofu.make
+                      ?version:ot.E.version
+                      ?outputs:(CCOption.map of_version_1_engine_tf_outputs ot.E.outputs)
+                      ?override_tf_cmd:ot.E.override_tf_cmd
+                      ())))
       | E.Engine_terraform tf ->
           let module E = Terrat_repo_config_engine_terraform in
           Ok
             (Some
                Engine.(
                  Terraform
-                   (Terraform.make ?version:tf.E.version ?override_tf_cmd:tf.E.override_tf_cmd ())))
+                   (Terraform.make
+                      ?version:tf.E.version
+                      ?outputs:(CCOption.map of_version_1_engine_tf_outputs tf.E.outputs)
+                      ?override_tf_cmd:tf.E.override_tf_cmd
+                      ())))
       | E.Engine_terragrunt tg ->
           let module E = Terrat_repo_config_engine_terragrunt in
           Ok
@@ -2248,6 +2287,7 @@ let of_version_1_engine default_tf_version engine =
                       ?tf_cmd:tg.E.tf_cmd
                       ?tf_version:tg.E.tf_version
                       ?version:tg.E.version
+                      ?outputs:(CCOption.map of_version_1_engine_tf_outputs tg.E.outputs)
                       ?override_tf_cmd:tg.E.override_tf_cmd
                       ())))
       | E.Engine_pulumi _ -> Ok (Some Engine.Pulumi))
@@ -2851,6 +2891,11 @@ let to_version_1_drift drift =
           Json_schema.Empty_obj.t;
     }
 
+let to_version_1_engine_tf_outputs outputs =
+  let module O = Terrat_repo_config.Engine_tf_outputs in
+  let { Engine.Tf_outputs.collect } = outputs in
+  { O.collect = Some collect }
+
 let to_version_1_engine engine =
   let module E = Terrat_repo_config.Engine in
   let module O = Terrat_repo_config_engine_other in
@@ -2866,27 +2911,47 @@ let to_version_1_engine engine =
       E.Engine_fly { Fly.name = "fly"; config_file }
   | Engine.Cdktf cdktf ->
       let module Cdktf = Terrat_repo_config.Engine_cdktf in
-      let { Engine.Cdktf.tf_cmd; tf_version; override_tf_cmd } = cdktf in
+      let { Engine.Cdktf.tf_cmd; tf_version; outputs; override_tf_cmd } = cdktf in
       E.Engine_cdktf
         {
           Cdktf.name = "cdktf";
           tf_cmd = Some tf_cmd;
           tf_version = Some tf_version;
+          outputs = Some (to_version_1_engine_tf_outputs outputs);
           override_tf_cmd;
         }
   | Engine.Opentofu ot ->
       let module Ot = Terrat_repo_config.Engine_opentofu in
-      let { Engine.Opentofu.version; override_tf_cmd } = ot in
-      E.Engine_opentofu { Ot.name = "tofu"; version; override_tf_cmd }
+      let { Engine.Opentofu.version; outputs; override_tf_cmd } = ot in
+      E.Engine_opentofu
+        {
+          Ot.name = "tofu";
+          version;
+          outputs = Some (to_version_1_engine_tf_outputs outputs);
+          override_tf_cmd;
+        }
   | Engine.Terraform tf ->
       let module Tf = Terrat_repo_config.Engine_terraform in
-      let { Engine.Terraform.version; override_tf_cmd } = tf in
-      E.Engine_terraform { Tf.name = "terraform"; version; override_tf_cmd }
+      let { Engine.Terraform.version; outputs; override_tf_cmd } = tf in
+      E.Engine_terraform
+        {
+          Tf.name = "terraform";
+          version;
+          outputs = Some (to_version_1_engine_tf_outputs outputs);
+          override_tf_cmd;
+        }
   | Engine.Terragrunt tg ->
       let module Tg = Terrat_repo_config.Engine_terragrunt in
-      let { Engine.Terragrunt.tf_cmd; tf_version; version; override_tf_cmd } = tg in
+      let { Engine.Terragrunt.tf_cmd; tf_version; version; outputs; override_tf_cmd } = tg in
       E.Engine_terragrunt
-        { Tg.name = "terragrunt"; tf_cmd = Some tf_cmd; tf_version; version; override_tf_cmd }
+        {
+          Tg.name = "terragrunt";
+          tf_cmd = Some tf_cmd;
+          tf_version;
+          version;
+          outputs = Some (to_version_1_engine_tf_outputs outputs);
+          override_tf_cmd;
+        }
   | Engine.Pulumi ->
       let module P = Terrat_repo_config.Engine_pulumi in
       E.Engine_pulumi { P.name = "pulumi" }
