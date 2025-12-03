@@ -10,7 +10,7 @@ on:
     branches:
       - main
     paths:
-      - 'docs/**'
+      - "docs/**"
 
 jobs:
   deploy:
@@ -18,7 +18,7 @@ jobs:
     environment: production
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
