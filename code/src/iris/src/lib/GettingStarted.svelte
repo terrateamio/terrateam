@@ -3437,16 +3437,16 @@ spec:
   inputs:
     TERRATEAM_TRIGGER:
       description: "Is this being triggered by terrateam?"
-      type: boolean
-      default: false
+      type: string 
+      default: "$TERRATEAM_TRIGGER"
     WORK_TOKEN:
       description: "The work token from terrateam"
       type: string
-      default: ""
+      default: "$WORK_TOKEN"
     API_BASE_URL:
       description: "The base url for the terrateam api"
       type: string
-      default: ""
+      default: "$API_BASE_URL"
     RUNS_ON:
       description: "The tags to use for the runner"
       type: array
@@ -3480,16 +3480,16 @@ spec:
   inputs:
     TERRATEAM_TRIGGER:
       description: "Is this being triggered by terrateam?"
-      type: boolean
-      default: false
+      type: string 
+      default: "$TERRATEAM_TRIGGER"
     WORK_TOKEN:
       description: "The work token from terrateam"
       type: string
-      default: ""
+      default: "$WORK_TOKEN"
     API_BASE_URL:
       description: "The base url for the terrateam api"
       type: string
-      default: ""
+      default: "$API_BASE_URL"
     RUNS_ON:
       description: "The tags to use for the runner"
       type: array
