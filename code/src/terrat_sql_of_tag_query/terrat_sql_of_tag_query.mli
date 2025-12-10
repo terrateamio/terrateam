@@ -17,6 +17,8 @@ module Tag_map : sig
     | Raw of (int -> string -> (string, [ `Error of string ]) result)
         (** Give raw access to building the query string. The first parameter is the index into the
             'strings' array this entry is, the second is the value of the tag. *)
+    | Really_raw of (string CCVector.vector -> string -> (string, [ `Error of string ]) result)
+        (** Get access to the underlying "strings" variable and do with it what you will. *)
     | Smallint
     | String
     | Uuid
