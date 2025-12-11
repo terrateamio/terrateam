@@ -13071,43 +13071,16 @@
         "additionalProperties": false,
         "description": "Create a new pipeline",
         "properties": {
+          "inputs": {
+            "additionalProperties": true,
+            "description": "Key value pairs matching the expected inputa",
+            "nullable": true,
+            "type": "object"
+          },
           "ref": {
             "description": "Reference",
             "example": "develop",
             "type": "string"
-          },
-          "variables": {
-            "description": "Array of variables available in the pipeline",
-            "items": {
-              "additionalProperties": false,
-              "properties": {
-                "key": {
-                  "description": "The key of the variable",
-                  "example": "UPLOAD_TO_S3",
-                  "type": "string"
-                },
-                "value": {
-                  "description": "The value of the variable",
-                  "example": "true",
-                  "type": "string"
-                },
-                "variable_type": {
-                  "default": "env_var",
-                  "description": "The type of variable, must be one of env_var or file. Defaults to env_var",
-                  "enum": [
-                    "env_var",
-                    "file"
-                  ],
-                  "type": "string"
-                }
-              },
-              "required": [
-                "key",
-                "value"
-              ],
-              "type": "object"
-            },
-            "type": "array"
           }
         },
         "required": [
