@@ -1,12 +1,14 @@
 <script lang="ts">
   import type { StackInner, StackOuter } from '../../types';
   import StackStateIndicator from './StackStateIndicator.svelte';
+  import DependencyInfo from './DependencyInfo.svelte';
 
   // Can be either an outer or inner stack
   export let stack: StackOuter | StackInner;
   export let level: number = 0;
   export let forceExpanded: boolean = true;
   export let showWorkspaces: boolean = false;
+  export let showDependencies: boolean = false;
 
   let expanded: boolean = true;
 
@@ -181,12 +183,17 @@
     </div>
   {/if}
 
+  <!-- Show dependency information for StackInner with pending states (only if checkbox enabled) -->
+  {#if showDependencies && isStackInner(stack) && stack.paths && stack.paths.length > 0}
+    <DependencyInfo paths={stack.paths} state={stack.state} stackName={stack.name} />
+  {/if}
+
   {#if expanded}
     <!-- Render nested stacks (for StackOuter) -->
     {#if isStackOuter(stack) && stack.stacks.length > 0}
       <div class="mt-4 space-y-4">
         {#each stack.stacks as innerStack}
-          <svelte:self stack={innerStack} level={level + 1} {forceExpanded} {showWorkspaces} />
+          <svelte:self stack={innerStack} level={level + 1} {forceExpanded} {showWorkspaces} {showDependencies} />
         {/each}
       </div>
     {/if}

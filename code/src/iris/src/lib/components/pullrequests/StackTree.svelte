@@ -9,6 +9,7 @@
 
   let allExpanded: boolean = true;
   let showWorkspaces: boolean = false;
+  let showDependencies: boolean = false;
   let searchQuery: string = '';
 
   // Aggregate stacks with the same name before rendering
@@ -269,13 +270,24 @@
         Show Workspaces
       </span>
     </label>
+
+    <label class="inline-flex items-center cursor-pointer">
+      <input
+        type="checkbox"
+        bind:checked={showDependencies}
+        class="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-brand-primary focus:ring-brand-primary focus:ring-offset-0 cursor-pointer"
+      />
+      <span class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+        Show Dependencies
+      </span>
+    </label>
   </div>
 
   <!-- Render stacks vertically layered -->
   {#if filteredStacks && filteredStacks.stacks && filteredStacks.stacks.length > 0}
     <div class="space-y-6" role="list" aria-label="Stack list">
       {#each filteredStacks.stacks as stack}
-        <StackNode {stack} level={0} forceExpanded={allExpanded} {showWorkspaces} />
+        <StackNode {stack} level={0} forceExpanded={allExpanded} {showWorkspaces} {showDependencies} />
       {/each}
     </div>
   {:else if searchQuery}
