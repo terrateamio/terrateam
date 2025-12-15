@@ -4218,16 +4218,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             | `Build_config -> "build-config"
             | `Build_tree -> "build-tree"
           in
-          let run_kind_data =
-            let module Rkd = Terrat_api_components.Work_manifest_plan.Run_kind_data in
-            let module Rkdpr = Terrat_api_components.Run_kind_data_pull_request in
-            match run_kind with
-            | `Pull_request pr ->
-                Some
-                  (Rkd.Run_kind_data_pull_request
-                     { Rkdpr.id = S.Api.Pull_request.Id.to_string (S.Api.Pull_request.id pr) })
-            | `Index | `Drift | `Build_config | `Build_tree -> None
-          in
           match step with
           | Wm.Step.Plan ->
               Dv.repo_config ctx state
@@ -4277,6 +4267,16 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                 work_manifest.Wm.id
                 (Ctx.storage ctx)
               >>= fun token ->
+              let run_kind_data =
+                let module Rkd = Terrat_api_components.Work_manifest_plan.Run_kind_data in
+                let module Rkdpr = Terrat_api_components.Run_kind_data_pull_request in
+                match run_kind with
+                | `Pull_request pr ->
+                    Some
+                      (Rkd.Run_kind_data_pull_request
+                         { Rkdpr.id = S.Api.Pull_request.Id.to_string (S.Api.Pull_request.id pr) })
+                | `Index | `Drift | `Build_config | `Build_tree -> None
+              in
               Abb.Future.return
                 (Ok
                    (Some
@@ -4348,6 +4348,16 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                 work_manifest.Wm.id
                 (Ctx.storage ctx)
               >>= fun token ->
+              let run_kind_data =
+                let module Rkd = Terrat_api_components.Work_manifest_apply.Run_kind_data in
+                let module Rkdpr = Terrat_api_components.Run_kind_data_pull_request in
+                match run_kind with
+                | `Pull_request pr ->
+                    Some
+                      (Rkd.Run_kind_data_pull_request
+                         { Rkdpr.id = S.Api.Pull_request.Id.to_string (S.Api.Pull_request.id pr) })
+                | `Index | `Drift | `Build_config | `Build_tree -> None
+              in
               Abb.Future.return
                 (Ok
                    (Some
@@ -4361,6 +4371,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                             base_ref = S.Api.Ref.to_string base_branch_name;
                             changed_dirspaces = changed_dirspaces config changes;
                             run_kind = run_kind_str;
+                            run_kind_data;
                             type_ = "apply";
                             result_version;
                             protocol_version = Some protocol_version;

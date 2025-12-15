@@ -58,7 +58,6 @@ module Make (P : Terrat_vcs_provider2.S) (S : S) = struct
           Terrat_session.with_session ~caps:[ Terrat_user.Capability.Access_token_create ] ctx
           >>= fun user ->
           let run =
-            let open Abbs_future_combinators.Infix_result_monad in
             Pgsql_pool.with_conn storage ~f:(fun db ->
                 Pgsql_io.Prepared_stmt.fetch
                   db
@@ -174,7 +173,6 @@ module Make (P : Terrat_vcs_provider2.S) (S : S) = struct
           Terrat_session.with_session ~caps:[ Terrat_user.Capability.Access_token_create ] ctx
           >>= fun user ->
           let run =
-            let open Abbs_future_combinators.Infix_result_monad in
             Pgsql_pool.with_conn storage ~f:(fun db ->
                 Pgsql_io.Prepared_stmt.execute
                   db
