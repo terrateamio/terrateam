@@ -1305,6 +1305,13 @@
           "run_kind": {
             "type": "string"
           },
+          "run_kind_data": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/run-kind-data-pull-request"
+              }
+            ]
+          },
           "token": {
             "type": "string"
           },
