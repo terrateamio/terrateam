@@ -121,12 +121,13 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                           db
                           Tjc.Compute_node.State.Terminated
                         >>= fun () ->
+                        let open Abb.Future.Infix_monad in
                         run_work_manifest_event
                           ~request_id
                           ~config
                           ~db
                           (Keys.Work_manifest_event.Fail { work_manifest = wm; error = err })
-                        >>= fun () -> Abb.Future.return (Ok `Cont))
+                        >>= fun _ -> Abb.Future.return (Ok `Cont))
                 | None -> Abb.Future.return (Ok `Done))))
     >>= function
     | `Cont -> run_next_pending_compute ~request_id ~config ~storage ()
@@ -209,7 +210,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                     log_err ~request_id
                     @@ tx_safe ~request_id
                     @@ Builder.eval s' Keys.run_next_layer)
-            | Ok (`Suspend_eval _) ->
+            | Ok (`Suspend_eval _) -> (
                 Pgsql_io.tx db ~f:(fun () ->
                     let s' =
                       s
@@ -221,6 +222,20 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                     log_err ~request_id
                     @@ tx_safe ~request_id
                     @@ Builder.eval s' Keys.maybe_complete_job)
+                >>= function
+                | Ok (`Ok ()) ->
+                    Pgsql_io.tx db ~f:(fun () ->
+                        let s' =
+                          s
+                          |> Builder.State.orig_store
+                          |> Keys.Key.add Keys.job job
+                          |> CCFun.flip Builder.State.set_orig_store s
+                          |> Builder.State.set_log_id (Builder.mk_log_id ~request_id job.Tjc.Job.id)
+                        in
+                        log_err ~request_id
+                        @@ tx_safe ~request_id
+                        @@ Builder.eval s' Keys.run_next_layer)
+                | (Ok (`Suspend_eval _ | `Noop) | Error _) as r -> Abb.Future.return r)
             | Ok `Noop -> Abb.Future.return (Ok `Noop)
             | Error err ->
                 let open Irm in
@@ -365,11 +380,28 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                           @@ Builder.eval s' Keys.run_next_layer
                       | None -> assert false)
                   | None -> assert false)
-          | Ok (s, `Suspend_eval _) ->
+          | Ok (s, `Suspend_eval _) -> (
               Pgsql_io.tx db ~f:(fun () ->
                   log_err ~request_id
                   @@ tx_safe ~request_id
                   @@ Builder.eval s Keys.maybe_complete_job_from_work_manifest_event)
+              >>= function
+              | Ok (`Ok ()) ->
+                  let s' =
+                    s
+                    |> Builder.State.orig_store
+                    |> Builder.State.forward_store_value Keys.repo_config_with_provenance s
+                    |> Builder.State.forward_store_value Keys.repo_config_raw s
+                    |> Builder.State.forward_store_value Keys.repo_config_raw' s
+                    |> Builder.State.forward_store_value Keys.pull_request s
+                    |> Builder.State.forward_store_value Keys.work_manifests_for_job s
+                    |> CCFun.flip Builder.State.set_orig_store s
+                  in
+                  Pgsql_io.tx db ~f:(fun () ->
+                      log_err ~request_id
+                      @@ tx_safe ~request_id
+                      @@ Builder.eval s' Keys.run_next_layer)
+              | (Ok (`Suspend_eval _ | `Noop) | Error _) as r -> Abb.Future.return r)
           | Ok (_, `Noop) -> Abb.Future.return (Ok `Noop)
           | Error _ -> raise (Failure "nyi"))
     in

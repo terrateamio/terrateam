@@ -490,16 +490,18 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
           sender;
           _;
         } -> (
-        Logs.info (fun m ->
-            m
-              "%s : COMMENT_CREATED_EVENT : owner=%s : repo=%s : pull_number=%d : sender=%s"
-              request_id
-              repository.Gw.Repository.owner.Gw.User.login
-              repository.Gw.Repository.name
-              pull_request_id
-              sender.Gw.User.login);
         match Terrat_comment.parse comment_body with
         | Ok comment ->
+            Logs.info (fun m ->
+                m
+                  "%s : COMMENT_CREATED_EVENT : owner=%s : repo=%s : pull_number=%d : sender=%s : \
+                   body=%s"
+                  request_id
+                  repository.Gw.Repository.owner.Gw.User.login
+                  repository.Gw.Repository.name
+                  pull_request_id
+                  sender.Gw.User.login
+                  comment_body);
             let account = P.Api.Account.make installation_id in
             let user = P.Api.User.make sender.Gw.User.login in
             let repo =
