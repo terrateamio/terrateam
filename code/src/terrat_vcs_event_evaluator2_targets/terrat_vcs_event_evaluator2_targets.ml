@@ -11,6 +11,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   type err =
     [ `Missing_dep_err of string
     | `Error
+    | `Msg_err of string
     | `Closed
     | repo_config_fetch_err
     | Terrat_change_match3.synthesize_config_err
@@ -330,6 +331,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
 
   let synthesized_config_dest_branch : Terrat_change_match3.Config.t Key.t =
     Hmap.Key.create "synthesized_config_dest_branch"
+
+  (* Index *)
+  let publish_index_complete : unit Key.t = Hmap.Key.create "publish_index_complete"
 
   (* Unlocks *)
   let publish_unlock : unit Key.t = Hmap.Key.create "publish_unlock"

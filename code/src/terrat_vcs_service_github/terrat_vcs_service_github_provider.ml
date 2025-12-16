@@ -5476,6 +5476,7 @@ module Job_context = struct
               }
           | T.Gate_approval { tokens } ->
               { P.type_ = "gate_approval"; tag_query = None; unlocks = None; tokens = Some tokens }
+          | T.Index -> { P.type_ = "index"; tag_query = None; unlocks = None; tokens = None }
           | T.Repo_config ->
               { P.type_ = "repo_config"; tag_query = None; unlocks = None; tokens = None }
           | T.Unlock unlocks ->
@@ -5504,6 +5505,7 @@ module Job_context = struct
                    Some (T.Unlock (CCOption.get_or ~default:[] unlocks))
                | { P.type_ = "gate_approval"; tokens = Some tokens; _ } ->
                    Some (T.Gate_approval { tokens })
+               | { P.type_ = "index"; _ } -> Some T.Index
                | _ -> None))
     end
 

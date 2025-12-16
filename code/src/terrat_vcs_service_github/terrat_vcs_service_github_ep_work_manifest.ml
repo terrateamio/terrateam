@@ -47,7 +47,6 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         initiate
 
     let post config storage work_manifest_id initiate =
-      let open Abbs_future_combinators.Infix_result_monad in
       Brtl_ep.run_result_json ~f:(fun ctx ->
           let open Abb.Future.Infix_monad in
           post' config storage work_manifest_id initiate ctx

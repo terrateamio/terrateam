@@ -451,7 +451,7 @@ struct
       match job.Tjc.Job.type_ with
       | T.Plan { tag_query } | T.Apply { tag_query } -> tag_query
       | T.Autoapply | T.Autoplan -> Terrat_tag_query.any
-      | T.Gate_approval _ | T.Repo_config | T.Unlock _ -> assert false
+      | T.Gate_approval _ | T.Index | T.Repo_config | T.Unlock _ -> assert false
     in
     Abbs_future_combinators.List_result.map
       ~f:(fun ((environment, runs_on), dirspaceflows) ->
@@ -892,17 +892,16 @@ struct
         | `Pull_request _ -> "pr"
         | `Drift -> "drift"
       in
-      (* I think this should actually be in apply, not sure why it isn't *)
-      (* let run_kind_data = *)
-      (*   let module Rkd = Terrat_api_components.Work_manifest_plan.Run_kind_data in *)
-      (*   let module Rkdpr = Terrat_api_components.Run_kind_data_pull_request in *)
-      (*   match run_kind with *)
-      (*   | `Pull_request pr -> *)
-      (*       Some *)
-      (*         (Rkd.Run_kind_data_pull_request *)
-      (*            { Rkdpr.id = S.Api.Pull_request.Id.to_string (S.Api.Pull_request.id pr) }) *)
-      (*   | `Drift -> None *)
-      (* in *)
+      let run_kind_data =
+        let module Rkd = Terrat_api_components.Work_manifest_apply.Run_kind_data in
+        let module Rkdpr = Terrat_api_components.Run_kind_data_pull_request in
+        match run_kind with
+        | `Pull_request pr ->
+            Some
+              (Rkd.Run_kind_data_pull_request
+                 { Rkdpr.id = S.Api.Pull_request.Id.to_string (S.Api.Pull_request.id pr) })
+        | `Drift -> None
+      in
       fetch Keys.derived_repo_config
       >>= fun (_, repo_config) ->
       fetch Keys.synthesized_config
@@ -922,6 +921,7 @@ struct
               base_ref = S.Api.Ref.to_string dest_branch_name;
               changed_dirspaces = changed_dirspaces synthesized_config changes;
               run_kind = run_kind_str;
+              run_kind_data;
               type_ = "apply";
               result_version;
               protocol_version = Some protocol_version;
