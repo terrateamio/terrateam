@@ -24,6 +24,280 @@ export type StackInner = ApiSchemas['stack-inner'];
 export type StackState = ApiSchemas['stack-state'];
 export type StackPath = ApiSchemas['stack-path'];
 
+// Enhanced stack type with associated runs (for Stacks page)
+export interface StackWithRuns {
+  // Stack metadata
+  stackOuter: StackOuter;
+  stackInner: StackInner;
+
+  // PR association
+  prNumber: number;
+  prTitle?: string;
+  repo: string;
+  repoId: string;
+
+  // Recent runs for this stack (filtered by dir:workspace)
+  recentRuns: Dirspace[];
+
+  // Aggregated state (from stack)
+  state: StackState;
+
+  // Activity metadata
+  lastActivity: string;
+  lastUser?: string;
+  runningCount: number;
+  failureCount: number;
+  successCount: number;
+}
+
+// Summary of a stack for PR-level grouping
+export interface StackSummary {
+  stackOuter: StackOuter;
+  stackInner: StackInner;
+  state: StackState;
+  recentRunsCount: number;
+}
+
+// PR with its associated stacks (PR-centric view)
+export interface PRWithStacks {
+  // PR metadata
+  prNumber: number;
+  prTitle?: string;
+  repo: string;
+  repoId: string;
+
+  // Aggregate state (worst state across all stacks, for display badge)
+  aggregateState: 'failed' | 'pending' | 'ready' | 'success' | 'no_changes';
+
+  // Stack summaries
+  stacks: StackSummary[];
+
+  // Activity metadata (aggregated across all stacks)
+  lastActivity: string;
+  lastUser?: string;
+  totalRunningCount: number;
+  totalFailureCount: number;
+  totalSuccessCount: number;
+
+  // Stack counts by actual stack states
+  stackStateCounts: {
+    apply_success: number;
+    apply_failed: number;
+    apply_pending: number;
+    apply_ready: number;
+    plan_pending: number;
+    plan_failed: number;
+    no_changes: number;
+  };
+}
+
+// Repository with its associated PRs (Repository-centric view - DEPRECATED, use RepositoryWithStacks)
+export interface RepositoryWithPRs {
+  // Repository metadata
+  repo: string;
+  repoId?: string;
+
+  // PRs in this repository
+  prs: PRWithStacks[];
+
+  // Aggregate counts
+  totalPRs: number;
+  totalStacks: number;
+
+  // Aggregate state (worst state across all PRs)
+  aggregateState: 'failed' | 'pending' | 'ready' | 'success' | 'no_changes';
+
+  // Stack counts across all PRs
+  stackStateCounts: {
+    apply_success: number;
+    apply_failed: number;
+    apply_pending: number;
+    apply_ready: number;
+    plan_pending: number;
+    plan_failed: number;
+    no_changes: number;
+  };
+
+  // Activity metadata
+  lastActivity: string;
+  lastUser?: string;
+}
+
+// Repository with its stacks hierarchically organized (Combined Repositories + Stacks view)
+export interface RepositoryWithStacks {
+  // Repository metadata
+  repo: string;
+  repoId?: string;
+
+  // Unique stacks in this repository
+  stacks: Array<{
+    // Stack metadata
+    stackName: string; // "outer/inner"
+    stackOuter: StackOuter;
+    stackInner: StackInner;
+
+    // Dirspaces for this stack
+    dirspaces: Array<{ dir: string; workspace: string }>;
+
+    // PRs that touch this stack in this repository
+    prs: Array<{
+      prNumber: number;
+      prTitle?: string;
+      state: 'failed' | 'pending' | 'ready' | 'success' | 'no_changes';
+      lastActivity: string;
+      runCount: number;
+    }>;
+
+    // Stack aggregate state
+    state: StackState;
+    lastActivity: string;
+  }>;
+
+  // Aggregate counts
+  totalStacks: number;
+  totalPRs: number;
+
+  // Aggregate state (worst state across all stacks)
+  aggregateState: 'failed' | 'pending' | 'ready' | 'success' | 'no_changes';
+
+  // Stack state counts
+  stackStateCounts: {
+    apply_success: number;
+    apply_failed: number;
+    apply_pending: number;
+    apply_ready: number;
+    plan_pending: number;
+    plan_failed: number;
+    no_changes: number;
+  };
+
+  // Activity metadata
+  lastActivity: string;
+  lastUser?: string;
+}
+
+// Stack with its associated PRs (Stack-centric view)
+export interface StackWithPRs {
+  // Stack metadata
+  stackName: string; // "outer/inner"
+  stackOuter: StackOuter;
+  stackInner: StackInner;
+
+  // Dirspaces (dir:workspace combinations) for this stack
+  dirspaces: Array<{ dir: string; workspace: string }>;
+
+  // PRs that touch this stack
+  prs: Array<{
+    prNumber: number;
+    prTitle?: string;
+    repo: string;
+    repoId: string;
+    state: 'failed' | 'pending' | 'ready' | 'success' | 'no_changes';
+    lastActivity: string;
+    runCount: number;
+  }>;
+
+  // Aggregate data
+  totalPRs: number;
+  aggregateState: StackState;
+
+  // Activity metadata
+  lastActivity: string;
+  lastUser?: string;
+}
+
+// Dashboard metrics and KPIs (Dashboard view)
+export interface DashboardMetrics {
+  // Overall counts
+  totalPRs: number;
+  totalStacks: number;
+  totalRuns: number;
+  uniqueRepos: number;
+
+  // PR state distribution
+  prStateCounts: {
+    failed: number;
+    pending: number;
+    ready: number;
+    success: number;
+    no_changes: number;
+  };
+
+  // Stack state distribution
+  stackStateCounts: {
+    apply_success: number;
+    apply_failed: number;
+    apply_pending: number;
+    apply_ready: number;
+    plan_pending: number;
+    plan_failed: number;
+    no_changes: number;
+  };
+
+  // Failure metrics
+  failureRate: number; // Percentage of failed runs
+
+  // Top failing stacks
+  topFailingStacks: Array<{
+    stackName: string;
+    failureCount: number;
+    prCount: number;
+  }>;
+
+  // Top failing repos
+  topFailingRepos: Array<{
+    repo: string;
+    failureCount: number;
+    prCount: number;
+  }>;
+
+  // Activity over time
+  activityByDay: Array<{
+    date: string; // YYYY-MM-DD
+    runs: number;
+    prs: number;
+  }>;
+
+  // Open PRs
+  openPRs: Array<{
+    prNumber: number;
+    prTitle: string;
+    repo: string;
+    state: 'failed' | 'pending' | 'ready' | 'success' | 'no_changes';
+    stackCount: number;
+    lastActivity: string;
+  }>;
+
+  // Time range used for metrics
+  timeRange: number;
+}
+
+// Timeline event (Timeline view)
+export interface TimelineEvent {
+  // Event identification
+  id: string; // dirspace.id
+  timestamp: string; // created_at or completed_at
+
+  // Event type and state
+  type: 'run_started' | 'run_completed' | 'run_failed';
+  runId?: string;
+  runType: 'apply' | 'plan' | 'build-config' | 'build-tree' | 'index';
+  runState: 'success' | 'failure' | 'running' | 'queued' | 'aborted' | 'unknown';
+
+  // PR context
+  prNumber?: number;
+  prTitle?: string;
+
+  // Repository and stack context
+  repo: string;
+  stackName?: string; // May not be available for all runs
+  dir: string;
+  workspace: string;
+
+  // User who triggered
+  user?: string;
+}
+
 // GitLab-specific types
 export type GitLabGroup = ApiSchemas['gitlab-group'];
 export type GitLabUser = ApiSchemas['gitlab-user'];
