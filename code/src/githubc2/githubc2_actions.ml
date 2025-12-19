@@ -6627,11 +6627,16 @@ module Create_workflow_dispatch = struct
   end
 
   module Responses = struct
+    module OK = struct end
     module No_content = struct end
 
-    type t = [ `No_content ] [@@deriving show, eq]
+    type t =
+      [ `OK
+      | `No_content
+      ]
+    [@@deriving show, eq]
 
-    let t = [ ("204", fun _ -> Ok `No_content) ]
+    let t = [ ("200", fun _ -> Ok `OK); ("204", fun _ -> Ok `No_content) ]
   end
 
   let url = "/repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches"
