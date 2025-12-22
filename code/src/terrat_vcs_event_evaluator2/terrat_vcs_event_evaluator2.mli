@@ -24,6 +24,16 @@ module Make (S : Terrat_vcs_provider2.S) : sig
     Pull_request_event.t ->
     unit Abb.Future.t
 
+  val work_manifest_job_failed :
+    request_id:string ->
+    config:S.Api.Config.t ->
+    storage:Terrat_storage.t ->
+    account:S.Api.Account.t ->
+    repo:S.Api.Repo.t ->
+    run_id:string ->
+    unit ->
+    unit Abb.Future.t
+
   val compute_node_poll :
     request_id:string ->
     config:S.Api.Config.t ->

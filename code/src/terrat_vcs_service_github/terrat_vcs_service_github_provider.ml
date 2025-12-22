@@ -4713,6 +4713,15 @@ module Work_manifest = struct
 
     let update_run_type =
       Pgsql_io.Typed_sql.(sql /^ read "update_run_type.sql" /% Var.uuid "id" /% Var.text "run_type")
+
+    let select_work_manifest_by_run_id () =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* id *)
+        Ret.uuid
+        /^ "select id from work_manifests where run_id = $run_id"
+        /% Var.text "run_id")
   end
 
   let make_run_telemetry config step repo =
@@ -5048,6 +5057,23 @@ module Work_manifest = struct
     | Error `Error -> Abb.Future.return (Error `Error)
 
   let query = Db.query_work_manifest
+
+  let query_by_run_id ~request_id db run_id =
+    let run =
+      let open Abbs_future_combinators.Infix_result_monad in
+      Pgsql_io.Prepared_stmt.fetch db (Sql.select_work_manifest_by_run_id ()) ~f:CCFun.id run_id
+      >>= function
+      | [] -> Abb.Future.return (Ok None)
+      | id :: _ -> query ~request_id db id
+    in
+    let open Abb.Future.Infix_monad in
+    run
+    >>= function
+    | Ok _ as r -> Abb.Future.return r
+    | Error (#Pgsql_io.err as err) ->
+        Logs.err (fun m -> m "%s : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+    | Error `Error -> Abb.Future.return (Error `Error)
 
   let update_state ~request_id db work_manifest_id state =
     let module Wm = Terrat_work_manifest3 in
@@ -5394,6 +5420,22 @@ module Job_context = struct
         /^ read "select_or_insert_pull_request_context.sql"
         /% Var.bigint "repo_id"
         /% Var.bigint "pull_number")
+
+    let select_or_insert_branch_context =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* id *)
+        Ret.uuid
+        //
+        (* created_at *)
+        Ret.text
+        //
+        (* updated_at *)
+        Ret.text
+        /^ read "select_or_insert_branch_context.sql"
+        /% Var.bigint "repo_id"
+        /% Var.text "branch")
 
     let scope_of_json =
       let module P = struct
@@ -5790,6 +5832,30 @@ module Job_context = struct
               err);
         Abb.Future.return (Error `Error)
 
+  let create_or_get_for_branch ~request_id db _account repo branch =
+    let run =
+      let open Abbs_future_combinators.Infix_result_monad in
+      Pgsql_io.Prepared_stmt.fetch
+        db
+        Sql.select_or_insert_branch_context
+        ~f:(fun id created_at updated_at -> (id, created_at, updated_at))
+        (CCInt64.of_int @@ Api.Repo.id repo)
+        (Api.Ref.to_string branch)
+      >>= function
+      | [] -> assert false
+      | (id, created_at, updated_at) :: _ ->
+          Abb.Future.return
+            (Ok { Tjc.Context.created_at; id; scope = Tjc.Context.Scope.Branch branch; updated_at })
+    in
+    let open Abb.Future.Infix_monad in
+    run
+    >>= function
+    | Ok _ as ret -> Abb.Future.return ret
+    | Error (#Pgsql_io.err as err) ->
+        Logs.err (fun m ->
+            m "%s : JOB_CONTEXT : CREATE_OR_GET_FOR_BRANCH : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
   let update_for_pull_request ~request_id db ~context_id repo pull_request_id =
     let open Abb.Future.Infix_monad in
     Pgsql_io.Prepared_stmt.execute
@@ -5804,8 +5870,6 @@ module Job_context = struct
         Logs.err (fun m ->
             m "%s : CONTEXT : UPDATE_FOR_PULL_REQUEST : %a" request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
-
-  let create ~request_id db account repo scope = raise (Failure "nyi")
 
   let query ~request_id db id =
     let open Abb.Future.Infix_monad in

@@ -9,6 +9,8 @@ create table job_contexts (
 
 create unique index job_contexts_pull_request_idx on job_contexts (id, pull_request);
 
+create unique index job_contexts_branch_idx on job_contexts (id, branch);
+
 create table jobs (
     completed_at timestamp with time zone,
     context_id uuid not null,
