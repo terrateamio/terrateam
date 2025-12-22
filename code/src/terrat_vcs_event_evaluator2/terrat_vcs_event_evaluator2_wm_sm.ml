@@ -144,7 +144,24 @@ struct
               pull_request
               (Terrat_vcs_provider2.Msg.Run_work_manifest_err err)
         | false -> Abb.Future.return (Ok ()))
-    | `Error -> Abb.Future.return (Ok ())
+    | `Error -> (
+        let open Irm in
+        fetch Keys.client
+        >>= fun client ->
+        fetch Keys.user
+        >>= fun user ->
+        fetch Keys.pull_request
+        >>= fun pull_request ->
+        fetch Keys.is_interactive
+        >>= function
+        | true ->
+            S.Comment.publish_comment
+              ~request_id:(Builder.log_id s)
+              client
+              (CCOption.map_or ~default:"" S.Api.User.to_string user)
+              pull_request
+              Terrat_vcs_provider2.Msg.Unexpected_temporary_err
+        | false -> Abb.Future.return (Ok ()))
 
   let run
       ~name

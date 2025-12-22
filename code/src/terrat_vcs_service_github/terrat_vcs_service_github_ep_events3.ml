@@ -104,15 +104,6 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         Ret.bigint
         /^ "select id from github_installations where id = $id"
         /% Var.bigint "id")
-
-    let select_work_manifest_by_run_id =
-      Pgsql_io.Typed_sql.(
-        sql
-        //
-        (* id *)
-        Ret.uuid
-        /^ "select id from work_manifests where run_id = $run_id"
-        /% Var.text "run_id")
   end
 
   module Tmpl = struct
@@ -590,31 +581,30 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
           repository;
           workflow_job = Gw.Workflow_job.{ run_id; conclusion = Some "failure"; _ };
           _;
-        } -> (
-        let open Abbs_future_combinators.Infix_result_monad in
-        Pgsql_pool.with_conn storage ~f:(fun db ->
-            Pgsql_io.Prepared_stmt.fetch
-              db
-              Sql.select_work_manifest_by_run_id
-              ~f:CCFun.id
-              (CCInt.to_string run_id)
-            >>= function
-            | work_manifest_id :: _ -> Abb.Future.return (Ok (Some work_manifest_id))
-            | [] -> Abb.Future.return (Ok None))
-        >>= function
-        | Some work_manifest_id ->
-            raise (Failure "nyi")
-            (* Evaluator.run_work_manifest_failure *)
-            (*   ~ctx:(Evaluator.Ctx.make ~request_id ~config ~storage ()) *)
-            (*   work_manifest_id *)
-        | None ->
-            Logs.info (fun m ->
-                m
-                  "%s : WORK_MANIFEST_FAILURE : NOT_FOUND : account=%d : run_id=%d"
-                  request_id
-                  installation_id
-                  run_id);
-            Abb.Future.return (Ok ()))
+        } ->
+        Logs.info (fun m ->
+            m
+              "%s : WORKFLOW_JOB_EVENT : FAILURE : owner=%s : repo=%s"
+              request_id
+              repository.Gw.Repository.owner.Gw.User.login
+              repository.Gw.Repository.name);
+        let account = P.Api.Account.make installation_id in
+        let repo =
+          P.Api.Repo.make
+            ~id:repository.Gw.Repository.id
+            ~name:repository.Gw.Repository.name
+            ~owner:repository.Gw.Repository.owner.Gw.User.login
+            ()
+        in
+        Abbs_future_combinators.to_result
+        @@ Evaluator2.work_manifest_job_failed
+             ~request_id
+             ~config
+             ~storage
+             ~account
+             ~repo
+             ~run_id:(CCInt.to_string run_id)
+             ()
     | _ -> Abb.Future.return (Ok ())
 
   let process_push_event request_id config storage event =

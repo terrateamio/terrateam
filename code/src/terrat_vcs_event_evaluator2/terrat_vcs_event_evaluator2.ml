@@ -282,6 +282,25 @@ module Make (S : Terrat_vcs_provider2.S) = struct
          ~store
          ()
 
+  let work_manifest_job_failed ~request_id ~config ~storage ~account ~repo ~run_id () =
+    let open Abb.Future.Infix_monad in
+    let run =
+      let target = Keys.eval_work_manifest_failure in
+      let store =
+        Hmap.empty
+        |> Keys.Key.add Keys.account account
+        |> Keys.Key.add Keys.repo repo
+        |> Keys.Key.add Keys.run_id run_id
+      in
+      Pgsql_pool.with_conn storage ~f:(fun db ->
+          Pgsql_io.tx db ~f:(fun () ->
+              Builder.State.make ~log_id:request_id ~config ~store ~db ~tasks ()
+              >>= fun s ->
+              Logs.info (fun m -> m "%s : target=%s" (Builder.log_id s) (Hmap.Key.info target));
+              tx_safe ~request_id @@ Builder.eval s target))
+    in
+    Abbs_future_combinators.ignore @@ log_err ~request_id run
+
   let compute_node_poll ~request_id ~config ~storage ~compute_node_id offering =
     let open Abb.Future.Infix_monad in
     let run =
@@ -418,6 +437,22 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         @@ run_next_pending_compute ~request_id ~config ~storage ())
 
   let push ~request_id ~config ~storage ~account ~repo ~branch ~user () =
-    (* TODO: Implement *)
-    Abb.Future.return ()
+    let open Abb.Future.Infix_monad in
+    let run =
+      let target = Keys.eval_push_event in
+      let store =
+        Hmap.empty
+        |> Keys.Key.add Keys.account account
+        |> Keys.Key.add Keys.repo repo
+        |> Keys.Key.add Keys.user (Some user)
+        |> Keys.Key.add Keys.pushed_branch branch
+      in
+      Pgsql_pool.with_conn storage ~f:(fun db ->
+          Pgsql_io.tx db ~f:(fun () ->
+              Builder.State.make ~log_id:request_id ~config ~store ~db ~tasks ()
+              >>= fun s ->
+              Logs.info (fun m -> m "%s : target=%s" (Builder.log_id s) (Hmap.Key.info target));
+              tx_safe ~request_id @@ Builder.eval s target))
+    in
+    Abbs_future_combinators.ignore @@ log_err ~request_id run
 end

@@ -122,6 +122,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     Hmap.Key.create "work_manifest_event_job"
 
   let pull_request_event : Pull_request_event.t Key.t = Hmap.Key.create "pull_request_event"
+  let run_id : string Key.t = Hmap.Key.create "run_id"
 
   (* Different ways to access the branch we're working with  *)
   let default_branch_sha : S.Api.Ref.t Key.t = Hmap.Key.create "default_branch_sha"
@@ -135,6 +136,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   let is_interactive : bool Key.t = Hmap.Key.create "is_interactive"
   let pull_request_id : S.Api.Pull_request.Id.t Key.t = Hmap.Key.create "pull_request_id"
   let repo : S.Api.Repo.t Key.t = Hmap.Key.create "repo"
+  let pushed_branch : S.Api.Ref.t Key.t = Hmap.Key.create "pushed_branch"
 
   let target : ((unit, unit) S.Api.Pull_request.t, S.Api.Repo.t) Terrat_vcs_provider2.Target.t Key.t
       =
@@ -431,4 +433,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     Hmap.Key.create "eval_pull_request_event"
 
   let iter_job : unit Key.t = Hmap.Key.create "iter_job"
+  let eval_work_manifest_failure : unit Key.t = Hmap.Key.create "eval_work_manifest_failure"
+  let eval_push_event : unit Key.t = Hmap.Key.create "eval_push_event"
+  let run_missing_drift_schedules : unit Key.t = Hmap.Key.create "run_missing_drift_schedules"
 end

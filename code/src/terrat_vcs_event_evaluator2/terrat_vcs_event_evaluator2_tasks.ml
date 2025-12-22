@@ -3326,6 +3326,149 @@ struct
           | Tjc.Job.Type_.Index -> H.complete_job s job @@ fetch Keys.publish_index_complete
           | Tjc.Job.Type_.Gate_approval _ -> assert false)
 
+    let eval_work_manifest_failure =
+      run ~name:"eval_work_manifest_failure" (fun s { Bs.Fetcher.fetch } ->
+          let open Irm in
+          fetch Keys.run_id
+          >>= fun run_id ->
+          Builder.run_db s ~f:(fun db ->
+              S.Work_manifest.query_by_run_id ~request_id:(Builder.log_id s) db run_id)
+          >>= function
+          | None ->
+              Logs.info (fun m ->
+                  m "%s : WORK_MANIFEST_NOT_FOUND : run_id= %s" (Builder.log_id s) run_id);
+              Abb.Future.return (Error `Noop)
+          | Some work_manifest ->
+              let s' =
+                s
+                |> Builder.State.orig_store
+                |> Keys.Key.add
+                     Keys.work_manifest_event
+                     (Some (Keys.Work_manifest_event.Fail { work_manifest; error = `Error }))
+                |> CCFun.flip Builder.State.set_orig_store s
+              in
+              Builder.eval s' Keys.eval_work_manifest_event)
+
+    let eval_push_event =
+      run ~name:"eval_push_event" (fun s { Bs.Fetcher.fetch } ->
+          let module V1 = Terrat_base_repo_config_v1 in
+          let module D = Terrat_base_repo_config_v1.Drift in
+          let open Irm in
+          fetch Keys.client
+          >>= fun client ->
+          fetch Keys.repo
+          >>= fun repo ->
+          S.Api.fetch_remote_repo ~request_id:(Builder.log_id s) client repo
+          >>= fun remote_repo ->
+          let default_branch = S.Api.Remote_repo.default_branch remote_repo in
+          fetch Keys.pushed_branch
+          >>= fun pushed_branch ->
+          (if
+             CCString.equal (S.Api.Ref.to_string pushed_branch) (S.Api.Ref.to_string default_branch)
+           then (
+             fetch Keys.repo_config
+             >>= fun repo_config ->
+             let ({ D.enabled; schedules } as drift) = V1.drift repo_config in
+             CCList.iter
+               (fun (name, { D.Schedule.tag_query; reconcile; schedule; window }) ->
+                 Logs.info (fun m ->
+                     m
+                       "%s : DRIFT : UPDATE_SCHEDULE : name=%s : enabled=%B : repo=%s : \
+                        schedule=%s : reconcile=%s : tag_query=%s : window=%s"
+                       (Builder.log_id s)
+                       name
+                       enabled
+                       (S.Api.Repo.to_string repo)
+                       (D.Schedule.Sched.to_string schedule)
+                       (Bool.to_string reconcile)
+                       (Terrat_tag_query.to_string tag_query)
+                       (CCOption.map_or
+                          ~default:""
+                          (fun { D.Window.start; end_ } -> start ^ "-" ^ end_)
+                          window)))
+               (V1.String_map.to_list schedules);
+             Builder.run_db s ~f:(fun db ->
+                 S.Db.store_drift_schedule ~request_id:(Builder.log_id s) db repo drift))
+           else Abb.Future.return (Ok ()))
+          >>= fun () -> fetch Keys.run_missing_drift_schedules)
+
+    let run_missing_drift_schedules =
+      run ~name:"run_missing_drift_schedules" (fun s { Bs.Fetcher.fetch } ->
+          let open Irm in
+          Builder.run_db s ~f:(fun db ->
+              S.Db.query_missing_drift_scheduled_runs ~request_id:(Builder.log_id s) db)
+          >>= fun schedules ->
+          let open Abb.Future.Infix_monad in
+          Abbs_future_combinators.List.iter_par
+            ~f:(fun chunk ->
+              Abbs_future_combinators.ignore
+              @@ Abbs_future_combinators.List_result.iter
+                   ~f:(fun (name, account, repo, reconcile, tag_query, window) ->
+                     let open Irm in
+                     Logs.info (fun m ->
+                         m
+                           "%s : DRIFT : RUN : name=%s : account=%s : repo=%s : reconcile=%s : \
+                            tag_query=%s : window=%s"
+                           (Builder.log_id s)
+                           name
+                           (S.Api.Account.to_string account)
+                           (S.Api.Repo.to_string repo)
+                           (Bool.to_string reconcile)
+                           (Terrat_tag_query.to_string tag_query)
+                           (CCOption.map_or
+                              ~default:""
+                              (fun (window_start, window_end) ->
+                                Printf.sprintf "%s-%s" window_start window_end)
+                              window));
+                     Builder.run_db s ~f:(fun db ->
+                         S.Api.create_client
+                           ~request_id:(Builder.log_id s)
+                           (Builder.State.config s)
+                           account
+                           db)
+                     >>= fun client ->
+                     S.Api.fetch_remote_repo ~request_id:(Builder.log_id s) client repo
+                     >>= fun remote_repo ->
+                     let default_branch = S.Api.Remote_repo.default_branch remote_repo in
+                     Builder.run_db s ~f:(fun db ->
+                         S.Job_context.create_or_get_for_branch
+                           ~request_id:(Builder.log_id s)
+                           db
+                           account
+                           repo
+                           default_branch)
+                     >>= fun context ->
+                     Builder.run_db s ~f:(fun db ->
+                         S.Job_context.Job.create
+                           ~request_id:(Builder.log_id s)
+                           db
+                           (Tjc.Job.Type_.Plan { tag_query })
+                           context
+                           None)
+                     >>= fun job ->
+                     let log_id = Builder.mk_log_id ~request_id:(Builder.log_id s) job.Tjc.Job.id in
+                     Logs.info (fun m ->
+                         m
+                           "%s : target=%s : context_id=%a : log_id= %s : job_type=%a"
+                           (Builder.log_id s)
+                           (Hmap.Key.info Keys.iter_job)
+                           Uuidm.pp
+                           context.Tjc.Context.id
+                           log_id
+                           Tjc.Job.Type_.pp
+                           job.Tjc.Job.type_);
+                     let s' =
+                       s
+                       |> Builder.State.orig_store
+                       |> Keys.Key.add Keys.job job
+                       |> CCFun.flip Builder.State.set_orig_store s
+                       |> Builder.State.set_log_id log_id
+                     in
+                     Builder.eval s' Keys.iter_job)
+                   chunk)
+            (CCList.chunks 5 schedules)
+          >>= fun () -> raise (Failure "nyi"))
+
     let maybe_create_completed_apply_check =
       run ~name:"maybe_create_completed_apply_check" (fun s { Bs.Fetcher.fetch } ->
           let module R = Terrat_base_repo_config_v1 in
@@ -3702,11 +3845,13 @@ struct
     |> Hmap.add (coerce Keys.dest_branch_name) Tasks.dest_branch_name
     |> Hmap.add (coerce Keys.dest_branch_ref) Tasks.dest_branch_ref
     |> Hmap.add (coerce Keys.eval_compute_node_poll) Tasks.eval_compute_node_poll
-    |> Hmap.add (coerce Keys.iter_job) Tasks.iter_job
     |> Hmap.add (coerce Keys.eval_pull_request_event) Tasks.eval_pull_request_event
+    |> Hmap.add (coerce Keys.eval_push_event) Tasks.eval_push_event
     |> Hmap.add (coerce Keys.eval_work_manifest_event) Tasks.eval_work_manifest_event
+    |> Hmap.add (coerce Keys.eval_work_manifest_failure) Tasks.eval_work_manifest_failure
     |> Hmap.add (coerce Keys.initiator) Tasks.initiator
     |> Hmap.add (coerce Keys.is_interactive) Tasks.is_interactive
+    |> Hmap.add (coerce Keys.iter_job) Tasks.iter_job
     |> Hmap.add (coerce Keys.matches) Tasks.matches
     |> Hmap.add (coerce Keys.maybe_complete_job) Tasks.maybe_complete_job
     |> Hmap.add
@@ -3747,6 +3892,7 @@ struct
          (coerce Keys.repo_tree_dest_branch_wm_completed)
          Tasks.repo_tree_dest_branch_wm_completed
     |> Hmap.add (coerce Keys.run_apply) Tasks.run_apply
+    |> Hmap.add (coerce Keys.run_missing_drift_schedules) Tasks.run_missing_drift_schedules
     |> Hmap.add (coerce Keys.run_next_layer) Tasks.run_next_layer
     |> Hmap.add (coerce Keys.run_plan) Tasks.run_plan
     |> Hmap.add (coerce Keys.store_gate_approval) Tasks.store_gate_approval

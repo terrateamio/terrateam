@@ -546,6 +546,18 @@ module type S = sig
       result
       Abb.Future.t
 
+    val query_by_run_id :
+      request_id:string ->
+      Db.t ->
+      string ->
+      ( ( Api.Account.t,
+          ((unit, unit) Api.Pull_request.t, Api.Repo.t) Target.t )
+        Terrat_work_manifest3.Existing.t
+        option,
+        [> `Error ] )
+      result
+      Abb.Future.t
+
     val update_state :
       request_id:string ->
       Db.t ->
@@ -598,6 +610,15 @@ module type S = sig
       ((Api.Pull_request.Id.t, Api.Ref.t) Terrat_job_context.Context.t, [> `Error ]) result
       Abb.Future.t
 
+    val create_or_get_for_branch :
+      request_id:string ->
+      Db.t ->
+      Api.Account.t ->
+      Api.Repo.t ->
+      Api.Ref.t ->
+      ((Api.Pull_request.Id.t, Api.Ref.t) Terrat_job_context.Context.t, [> `Error ]) result
+      Abb.Future.t
+
     val update_for_pull_request :
       request_id:string ->
       Db.t ->
@@ -605,15 +626,6 @@ module type S = sig
       Api.Repo.t ->
       Api.Pull_request.Id.t ->
       (unit, [> `Error ]) result Abb.Future.t
-
-    val create :
-      request_id:string ->
-      Db.t ->
-      Api.Account.t ->
-      Api.Repo.t ->
-      (Api.Pull_request.Id.t, Api.Ref.t) Terrat_job_context.Context.Scope.t ->
-      ((Api.Pull_request.Id.t, Api.Ref.t) Terrat_job_context.Context.t, [> `Error ]) result
-      Abb.Future.t
 
     val query :
       request_id:string ->
