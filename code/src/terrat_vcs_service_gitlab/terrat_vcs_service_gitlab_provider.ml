@@ -3856,6 +3856,15 @@ module Comment = struct
           "RUN_WORK_MANIFEST_ERR_FAILED_TO_START_IDENTITY_VERIFICATION"
           Tmpl.failed_to_start_identity_verification_workflow
           kv
+    | Msg.Run_work_manifest_err (`Failed_to_start_with_msg_err "GITLAB_INPUTS_MISSING_DEFAULTS") ->
+        let kv = Snabela.Kv.(Map.of_list []) in
+        Gcm_api.apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "RUN_WORK_MANIFEST_ERR_FAILED_TO_START_MISSING_INPUTS"
+          Tmpl.failed_to_start_missing_inputs
+          kv
     | Msg.Run_work_manifest_err (`Failed_to_start | `Failed_to_start_with_msg_err _) ->
         let kv = Snabela.Kv.(Map.of_list []) in
         Gcm_api.apply_template_and_publish

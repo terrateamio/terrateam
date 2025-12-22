@@ -101,6 +101,7 @@ module Tmpl = struct
   let failed_to_start_identity_verification_workflow =
     read "failed_to_start_identify_verification_workflow.tmpl"
 
+  let failed_to_start_missing_inputs = read "failed_to_start_missing_inputs.tmpl"
   let failed_to_find_workflow = read "failed_to_find_workflow.tmpl"
   let comment_too_large = read "comment_too_large.tmpl"
   let index_complete = read "index_complete.tmpl"
