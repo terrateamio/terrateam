@@ -13071,6 +13071,12 @@
         "additionalProperties": false,
         "description": "Create a new pipeline",
         "properties": {
+          "inputs": {
+            "additionalProperties": true,
+            "description": "Key value pairs matching the expected input",
+            "nullable": true,
+            "type": "object"
+          },
           "ref": {
             "description": "Reference",
             "example": "develop",
