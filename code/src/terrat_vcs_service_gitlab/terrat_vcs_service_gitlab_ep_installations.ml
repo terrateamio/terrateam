@@ -173,7 +173,7 @@ module Make (S : S with type Account_id.t = int) = struct
       let module M = Gitlabc_components.API_Entities_Member in
       match Openapi.Response.value resp with
       | `OK { M.access_level; _ } ->
-          if access_level >= 50 then Abb.Future.return (Ok ())
+          if access_level >= 40 then Abb.Future.return (Ok ())
           else Abb.Future.return (Error (`Access_level_err access_level))
       | `Not_found -> Abb.Future.return (Error `User_not_found_in_group_err)
 
