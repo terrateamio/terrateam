@@ -115,13 +115,13 @@
         <!-- Tab Navigation -->
         <div class="mb-8">
           <div class="flex justify-center">
-            <div class="bg-white dark:bg-gray-800 rounded-lg p-1 md:p-2 shadow-lg border w-full max-w-2xl">
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-1 md:p-2 shadow-lg border w-full md:w-auto">
               <div class="grid grid-cols-2 md:flex md:space-x-1">
                 <button
                   on:click={() => activeTab = 'support'}
-                  class="px-3 py-2 md:px-6 md:py-3 rounded-lg text-xs md:text-sm font-semibold transition-colors flex items-center justify-center
-                    {activeTab === 'support' 
-                      ? 'bg-blue-600 text-white shadow-md' 
+                  class="px-3 py-2 md:px-6 md:py-3 rounded-lg text-xs md:text-sm font-semibold transition-colors flex items-center justify-center whitespace-nowrap
+                    {activeTab === 'support'
+                      ? 'bg-blue-600 text-white shadow-md'
                       : 'text-brand-secondary hover:text-brand-primary hover:bg-gray-50 dark:hover:bg-gray-700'}"
                 >
                   <svg class="w-4 h-4 mr-1 md:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -131,9 +131,9 @@
                 </button>
                 <button
                   on:click={() => activeTab = 'community'}
-                  class="px-3 py-2 md:px-6 md:py-3 rounded-lg text-xs md:text-sm font-semibold transition-colors flex items-center justify-center
-                    {activeTab === 'community' 
-                      ? 'bg-blue-600 text-white shadow-md' 
+                  class="px-3 py-2 md:px-6 md:py-3 rounded-lg text-xs md:text-sm font-semibold transition-colors flex items-center justify-center whitespace-nowrap
+                    {activeTab === 'community'
+                      ? 'bg-blue-600 text-white shadow-md'
                       : 'text-brand-secondary hover:text-brand-primary hover:bg-gray-50 dark:hover:bg-gray-700'}"
                 >
                   <svg class="w-4 h-4 mr-1 md:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -143,9 +143,9 @@
                 </button>
                 <button
                   on:click={() => activeTab = 'resources'}
-                  class="px-3 py-2 md:px-6 md:py-3 rounded-lg text-xs md:text-sm font-semibold transition-colors flex items-center justify-center
-                    {activeTab === 'resources' 
-                      ? 'bg-blue-600 text-white shadow-md' 
+                  class="px-3 py-2 md:px-6 md:py-3 rounded-lg text-xs md:text-sm font-semibold transition-colors flex items-center justify-center whitespace-nowrap
+                    {activeTab === 'resources'
+                      ? 'bg-blue-600 text-white shadow-md'
                       : 'text-brand-secondary hover:text-brand-primary hover:bg-gray-50 dark:hover:bg-gray-700'}"
                 >
                   <svg class="w-4 h-4 mr-1 md:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -155,9 +155,9 @@
                 </button>
                 <button
                   on:click={() => activeTab = 'status'}
-                  class="px-3 py-2 md:px-6 md:py-3 rounded-lg text-xs md:text-sm font-semibold transition-colors flex items-center justify-center
-                    {activeTab === 'status' 
-                      ? 'bg-blue-600 text-white shadow-md' 
+                  class="px-3 py-2 md:px-6 md:py-3 rounded-lg text-xs md:text-sm font-semibold transition-colors flex items-center justify-center whitespace-nowrap
+                    {activeTab === 'status'
+                      ? 'bg-blue-600 text-white shadow-md'
                       : 'text-brand-secondary hover:text-brand-primary hover:bg-gray-50 dark:hover:bg-gray-700'}"
                 >
                   <svg class="w-4 h-4 mr-1 md:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
