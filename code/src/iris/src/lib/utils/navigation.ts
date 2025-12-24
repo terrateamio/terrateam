@@ -114,3 +114,35 @@ export function navigateToPullRequests(installationId?: string): void {
 export function navigateToPullRequest(prNumber: string | number, installationId?: string): void {
   navigateToInstallationPath(`/pull-requests/${prNumber}`, installationId);
 }
+
+/**
+ * Navigate to PR detail page (runs view with stacks)
+ * @param prNumber - The pull request number
+ * @param installationId - Optional specific installation ID
+ */
+export function navigateToPRDetail(prNumber: string | number, installationId?: string): void {
+  navigateToInstallationPath(`/runs/pr/${prNumber}`, installationId);
+}
+
+/**
+ * Navigate to stacks list page
+ * @param installationId - Optional specific installation ID
+ */
+export function navigateToStacks(installationId?: string): void {
+  navigateToInstallationPath('/stacks', installationId);
+}
+
+/**
+ * Navigate to stack detail page
+ * @param prNumber - The pull request number containing the stack
+ * @param stackName - The stack name
+ * @param installationId - Optional specific installation ID
+ */
+export function navigateToStackDetail(
+  prNumber: number,
+  stackName: string,
+  installationId?: string
+): void {
+  const path = `/stacks/${prNumber}/${encodeURIComponent(stackName)}`;
+  navigateToInstallationPath(path, installationId);
+}
