@@ -13,15 +13,33 @@ create table branch_commit_hashes (
 create table job_contexts (
     id uuid default (gen_random_uuid()) primary key,
     repo uuid not null,
-    branch text,
-    pull_request uuid,
+    params jsonb not null,
     created_at timestamp with time zone default (now()) not null,
     updated_at timestamp with time zone default (now()) not null
 );
 
-create unique index job_contexts_pull_request_idx on job_contexts (id, pull_request);
+create index job_contexts_param_idx on job_contexts using gin (params);
 
-create unique index job_contexts_branch_idx on job_contexts (id, branch);
+-- We want various unique constraints.  We make one for each type of uniqueness
+-- we want to ensure.
+--
+-- This first one is we only one job context per pull request.
+create unique index job_contexts_params_unique_pr_idx on job_contexts (
+  repo,
+  (params->>'pull_request'));
+
+-- Secondly, if we are just running against a branch.
+create unique index job_contexts_params_unique_branch_idx on job_contexts (
+  repo,
+  (params->>'branch'))
+  where (params->>'dest_branch') is null;
+
+-- Finally, if we want to run against a branch but only difference relative to a
+-- destination branch.
+create unique index job_contexts_params_unique_branch_dest_branch_idx on job_contexts (
+  repo,
+  (params->>'branch'),
+  (params->>'dest_branch'));
 
 create table jobs (
     completed_at timestamp with time zone,
@@ -29,7 +47,7 @@ create table jobs (
     created_at timestamp with time zone default (now()) not null,
     id uuid default (gen_random_uuid()) primary key,
     initiator text,
-    parameters jsonb not null,
+    params jsonb not null,
     state text not null,
     updated_at timestamp with time zone default (now()) not null,
     foreign key (context_id) references job_contexts(id)
@@ -37,7 +55,7 @@ create table jobs (
 
 create index jobs_context_id_idx on jobs (context_id);
 
-create index jobs_type_idx on jobs ((parameters->>'type'));
+create index jobs_type_idx on jobs ((params->>'type'));
 
 create table job_work_manifests (
     job_id uuid,

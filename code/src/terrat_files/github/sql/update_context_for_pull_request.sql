@@ -1,7 +1,7 @@
 update job_contexts as jc
 set
     repo = grm.core_id,
-    pull_request = gprm.core_id,
+    params = jsonb_build_object('pull_request', gprm.core_id),
     updated_at = now()
 from github_repositories_map as grm
 inner join github_pull_requests_map as gprm

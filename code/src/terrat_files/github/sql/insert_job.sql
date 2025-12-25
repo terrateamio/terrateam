@@ -1,6 +1,6 @@
 insert into jobs (
   context_id,
-  parameters,
+  params,
   state,
   initiator
 ) values (

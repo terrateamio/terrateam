@@ -5438,25 +5438,20 @@ module Job_context = struct
         /% Var.text "branch")
 
     let scope_of_json =
-      let module P = struct
-        type t = {
-          type_ : string; [@key "type"]
-          pull_request_id : int option; [@default None]
-          branch : string option; [@default None]
-        }
-        [@@deriving yojson]
-      end in
+      let module C = Terrat_job_context_param_context in
+      let module P = Terrat_job_context_param_pull_request in
+      let module B = Terrat_job_context_param_branch in
+      let module Bb = Terrat_job_context_param_branch_dest_branch in
       let module S = Terrat_job_context.Context.Scope in
       CCFun.(
         CCOption.wrap Yojson.Safe.from_string
-        %> CCOption.flat_map (P.of_yojson %> CCResult.to_opt)
-        %> CCOption.flat_map (function
-             | { P.type_ = "setup"; _ } -> Some S.Setup
-             | { P.type_ = "pull_request"; pull_request_id = Some id; _ } ->
-                 Some (S.Pull_request id)
-             | { P.type_ = "branch"; branch = Some branch; _ } ->
-                 Some (S.Branch (Api.Ref.of_string branch))
-             | _ -> None))
+        %> CCOption.flat_map (C.of_yojson %> CCResult.to_opt)
+        %> CCOption.map (function
+             | C.Pull_request { P.pull_request } -> S.Pull_request pull_request
+             | C.Branch { B.branch } -> S.Branch (Api.Ref.of_string branch, None)
+             | C.Branch_dest_branch { Bb.branch; dest_branch } ->
+                 S.Branch (Api.Ref.of_string branch, Some (Api.Ref.of_string dest_branch))
+             | C.Setup _ -> S.Setup))
 
     let select_context_by_id =
       Pgsql_io.Typed_sql.(
@@ -5845,7 +5840,13 @@ module Job_context = struct
       | [] -> assert false
       | (id, created_at, updated_at) :: _ ->
           Abb.Future.return
-            (Ok { Tjc.Context.created_at; id; scope = Tjc.Context.Scope.Branch branch; updated_at })
+            (Ok
+               {
+                 Tjc.Context.created_at;
+                 id;
+                 scope = Tjc.Context.Scope.Branch (branch, None);
+                 updated_at;
+               })
     in
     let open Abb.Future.Infix_monad in
     run

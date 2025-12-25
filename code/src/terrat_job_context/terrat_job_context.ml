@@ -2,7 +2,7 @@ module Context = struct
   module Scope = struct
     type ('pr, 'branch) t =
       | Pull_request of 'pr
-      | Branch of 'branch
+      | Branch of ('branch * 'branch option)
       | Setup
     [@@deriving show, eq]
   end

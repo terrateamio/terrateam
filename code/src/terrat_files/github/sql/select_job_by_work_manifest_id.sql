@@ -1,7 +1,7 @@
 select
     id,
     context_id,
-    parameters,
+    params,
     state,
     initiator,
     to_char(created_at, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'),
