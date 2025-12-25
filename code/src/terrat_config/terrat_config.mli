@@ -20,6 +20,7 @@ module Gitlab : sig
   val api_base_url : t -> Uri.t
   val app_id : t -> string
   val app_secret : t -> string
+  val pipeline_inputs : t -> [ `Inputs | `Variables ]
   val web_base_url : t -> Uri.t
 end
 
