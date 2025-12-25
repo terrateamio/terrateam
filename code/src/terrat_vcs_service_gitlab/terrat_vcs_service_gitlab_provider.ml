@@ -4317,7 +4317,21 @@ module Work_manifest = struct
           variables = None;
         }
       in
+      let log_call = function
+        | `Req req ->
+            Logs.debug (fun m ->
+                m "req = %a" (Openapi.Request.pp (fun fmt _ -> Format.fprintf fmt "<opaque>")) req)
+        | `Resp resp ->
+            Logs.debug (fun m ->
+                m
+                  "resp = %a"
+                  (Openapi.Response.pp (fun fmt _ -> Format.fprintf fmt "<opaque>"))
+                  resp)
+        | `Err (#Openapic_abb.call_err as err) ->
+            Logs.debug (fun m -> m "err = %a" Openapic_abb.pp_call_err err)
+      in
       Openapic_abb.call
+        ~log:log_call
         (Api.Client.to_native client)
         Pipeline_api.(make ~body (Parameters.make ~id:(CCInt.to_string @@ Api.Repo.id repo)))
       >>= fun resp ->
