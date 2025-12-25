@@ -40,6 +40,7 @@ module Gitlab = struct
     api_base_url : Uri.t;
     app_id : string;
     app_secret : (string[@opaque]);
+    pipeline_inputs : [ `Inputs | `Variables ];
     web_base_url : Uri.t;
   }
   [@@deriving show]
@@ -49,6 +50,7 @@ module Gitlab = struct
   let api_base_url t = t.api_base_url
   let app_id t = t.app_id
   let app_secret t = t.app_secret
+  let pipeline_inputs t = t.pipeline_inputs
   let web_base_url t = t.web_base_url
 end
 
@@ -190,8 +192,17 @@ let load_gitlab () =
       in
       env_str "GITLAB_ACCESS_TOKEN"
       >>= fun access_token ->
+      let pipeline_inputs =
+        CCOption.map_or ~default:`Inputs (function
+          | "inputs" -> `Inputs
+          | "variables" -> `Variables
+          | s -> raise (Failure (Printf.sprintf "Unknown config: %s" s)))
+        @@ Sys.getenv_opt "GITLAB_PIPELINE_INPUTS"
+      in
       (* #899 TODO Access Token will be removed once migration is over *)
-      Ok (Some { Gitlab.access_token; api_base_url; app_id; app_secret; web_base_url })
+      Ok
+        (Some
+           { Gitlab.access_token; api_base_url; app_id; app_secret; pipeline_inputs; web_base_url })
 
 let load_gc () =
   let dynamic_gc' () =

@@ -4271,6 +4271,7 @@ module Work_manifest = struct
 
   let run ~request_id config client work_manifest =
     let module Pipeline_api = Gitlabc_projects_pipeline.PostApiV4ProjectsIdPipeline in
+    let module Pipeline = Gitlabc_components.PostApiV4ProjectsIdPipeline in
     let module Wm = Terrat_work_manifest3 in
     let get_repo = function
       | { Wm.target = Terrat_vcs_provider2.Target.Pr pr; _ } -> Api.Pull_request.repo pr
@@ -4285,38 +4286,67 @@ module Work_manifest = struct
               Api.Ref.to_string @@ Terrat_pull_request.base_branch_name pr)
       | { Wm.target = Terrat_vcs_provider2.Target.Drift { branch; _ }; _ } -> branch
     in
-    let build_pipeline_inputs ~work_manifest ~config () =
-      let base_inputs =
-        [
-          ("TERRATEAM_TRIGGER", `String "true");
-          ("WORK_TOKEN", `String (Ouuid.to_string work_manifest.Wm.id));
-          ("API_BASE_URL", `String (Terrat_config.api_base (Api.Config.config config) ^ "/gitlab"));
-        ]
-      in
-      let runs_on_inputs =
-        match work_manifest.Wm.runs_on with
-        | Some runs_on -> [ ("RUNS_ON", runs_on) ]
-        | None -> []
-      in
-      Json_schema.String_map.of_list (base_inputs @ runs_on_inputs)
+    let inputs =
+      match Terrat_config.Gitlab.pipeline_inputs @@ Api.Config.vcs_config config with
+      | `Inputs ->
+          let base_inputs =
+            [
+              ("TERRATEAM_TRIGGER", `String "true");
+              ("WORK_TOKEN", `String (Ouuid.to_string work_manifest.Wm.id));
+              ( "API_BASE_URL",
+                `String (Terrat_config.api_base (Api.Config.config config) ^ "/gitlab") );
+            ]
+          in
+          let runs_on_inputs =
+            match work_manifest.Wm.runs_on with
+            | Some runs_on -> [ ("RUNS_ON", runs_on) ]
+            | None -> []
+          in
+          Some
+            Pipeline.Inputs.
+              {
+                primary = Json_schema.Empty_obj.t;
+                additional = Json_schema.String_map.of_list (base_inputs @ runs_on_inputs);
+              }
+      | `Variables -> None
+    in
+    let variables =
+      match Terrat_config.Gitlab.pipeline_inputs @@ Api.Config.vcs_config config with
+      | `Inputs -> None
+      | `Variables ->
+          Some
+            Pipeline.Variables.Items.(
+              CCList.flatten
+                [
+                  [
+                    { key = "TERRATEAM_TRIGGER"; value = "true"; variable_type = "env_var" };
+                    {
+                      key = "WORK_TOKEN";
+                      value = Ouuid.to_string work_manifest.Wm.id;
+                      variable_type = "env_var";
+                    };
+                    {
+                      key = "API_BASE_URL";
+                      value = Terrat_config.api_base (Api.Config.config config) ^ "/gitlab";
+                      variable_type = "env_var";
+                    };
+                  ];
+                  (match work_manifest.Wm.runs_on with
+                  | Some runs_on ->
+                      [
+                        {
+                          key = "RUNS_ON";
+                          value = Yojson.Safe.to_string runs_on;
+                          variable_type = "env_var";
+                        };
+                      ]
+                  | None -> []);
+                ])
     in
     let run =
       let open Abbs_future_combinators.Infix_result_monad in
-      let module Pipeline = Gitlabc_components.PostApiV4ProjectsIdPipeline in
       let repo = get_repo work_manifest in
-      let body =
-        {
-          Pipeline.ref_ = get_branch work_manifest;
-          inputs =
-            Some
-              Pipeline.Inputs.
-                {
-                  primary = Json_schema.Empty_obj.t;
-                  additional = build_pipeline_inputs ~work_manifest ~config ();
-                };
-          variables = None;
-        }
-      in
+      let body = { Pipeline.ref_ = get_branch work_manifest; inputs; variables } in
       let log_call = function
         | `Req req ->
             Logs.debug (fun m ->
