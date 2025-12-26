@@ -133,7 +133,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   let working_branch_ref : S.Api.Ref.t Key.t = Hmap.Key.create "working_branch_ref"
   let working_branch_name : S.Api.Ref.t Key.t = Hmap.Key.create "working_branch_name"
   let initiator : Terrat_work_manifest3.Initiator.t Key.t = Hmap.Key.create "initiator"
-  let is_interactive : bool Key.t = Hmap.Key.create "is_interactive"
   let pull_request_id : S.Api.Pull_request.Id.t Key.t = Hmap.Key.create "pull_request_id"
   let repo : S.Api.Repo.t Key.t = Hmap.Key.create "repo"
   let pushed_branch : S.Api.Ref.t Key.t = Hmap.Key.create "pushed_branch"
@@ -413,7 +412,26 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   let maybe_complete_job_from_work_manifest_event : unit Key.t =
     Hmap.Key.create "maybe_complete_job_from_work_manifest_event"
 
+  (* Actions *)
+
+  let publish_comment :
+      (( S.Api.Account.t,
+         S.Db.t,
+         (unit, unit) S.Api.Pull_request.t,
+         ((unit, unit) S.Api.Pull_request.t, S.Api.Repo.t) P2.Target.t,
+         S.Apply_requirements.Result.t,
+         S.Api.Config.t )
+       P2.Msg.t ->
+      (unit, [ `Error ]) result Abb.Future.t)
+      Key.t =
+    Hmap.Key.create "publish_comment"
+
+  let create_commit_checks :
+      (S.Api.Ref.t -> Terrat_commit_check.t list -> (unit, [ `Error ]) result Abb.Future.t) Key.t =
+    Hmap.Key.create "create_commit_checks"
+
   (* Context management *)
+
   let store_repository : unit Key.t = Hmap.Key.create "store_repository"
   let store_pull_request : unit Key.t = Hmap.Key.create "store_pull_request"
   let tag_query : Terrat_tag_query.t Key.t = Hmap.Key.create "tag_query"

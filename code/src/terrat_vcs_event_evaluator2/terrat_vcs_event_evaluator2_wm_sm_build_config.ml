@@ -16,6 +16,21 @@ struct
   module Bc = Terrat_api_components.Work_manifest_build_config_result
   module Bf = Terrat_api_components.Work_manifest_build_result_failure
 
+  (* Wrapper so that when we call [publish_comment] the error type lines up *)
+  let publish_comment' f msg =
+    let open Abb.Future.Infix_monad in
+    f msg
+    >>= function
+    | Ok () -> Abb.Future.return (Ok ())
+    | Error `Error -> Abb.Future.return (Error `Error)
+
+  let create_commit_checks' f branch_ref checks =
+    let open Abb.Future.Infix_monad in
+    f branch_ref checks
+    >>= function
+    | Ok () -> Abb.Future.return (Ok ())
+    | Error `Error -> Abb.Future.return (Error `Error)
+
   let eq base_ref' branch_ref' { Wm.base_ref; branch_ref; steps; _ } =
     base_ref = S.Api.Ref.to_string base_ref'
     && branch_ref = S.Api.Ref.to_string branch_ref'
@@ -60,58 +75,50 @@ struct
     Builder.run_db s ~f:(fun db ->
         S.Work_manifest.create ~request_id:(Builder.log_id s) db work_manifest)
     >>= fun work_manifest ->
-    fetch Keys.is_interactive
-    >>= function
-    | true ->
-        fetch Keys.branch_ref
-        >>= fun branch_ref ->
-        fetch Keys.branch_name
-        >>= fun branch_name ->
-        let module Status = Terrat_commit_check.Status in
-        let check =
-          S.Commit_check.make_str
-            ~config:(Builder.State.config s)
-            ~description:"Queued"
-            ~status:Status.Queued
-            ~work_manifest
-            ~repo
-            ~account
-            (status_name ~branch ~branch_name)
-        in
-        fetch Keys.client
-        >>= fun client ->
-        S.Api.create_commit_checks ~request_id:(Builder.log_id s) client repo branch_ref [ check ]
-        >>= fun () -> Abb.Future.return (Ok [ work_manifest ])
-    | false -> Abb.Future.return (Ok [ work_manifest ])
+    fetch Keys.branch_ref
+    >>= fun branch_ref ->
+    fetch Keys.branch_name
+    >>= fun branch_name ->
+    let module Status = Terrat_commit_check.Status in
+    let check =
+      S.Commit_check.make_str
+        ~config:(Builder.State.config s)
+        ~description:"Queued"
+        ~status:Status.Queued
+        ~work_manifest
+        ~repo
+        ~account
+        (status_name ~branch ~branch_name)
+    in
+    fetch Keys.create_commit_checks
+    >>= fun create_commit_checks ->
+    create_commit_checks' create_commit_checks branch_ref [ check ]
+    >>= fun () -> Abb.Future.return (Ok [ work_manifest ])
 
   let initiate ~branch ({ Wm.id; _ } as work_manifest) s { Bs.Fetcher.fetch } =
     let open Irm in
     fetch Keys.account
     >>= fun account ->
-    fetch Keys.is_interactive
-    >>= (function
-    | true ->
-        fetch Keys.repo
-        >>= fun repo ->
-        fetch Keys.client
-        >>= fun client ->
-        fetch Keys.branch_ref
-        >>= fun branch_ref ->
-        fetch Keys.branch_name
-        >>= fun branch_name ->
-        let module Status = Terrat_commit_check.Status in
-        let check =
-          S.Commit_check.make_str
-            ~config:(Builder.State.config s)
-            ~description:"Running"
-            ~status:Status.Running
-            ~work_manifest
-            ~repo
-            ~account
-            (status_name ~branch ~branch_name)
-        in
-        S.Api.create_commit_checks ~request_id:(Builder.log_id s) client repo branch_ref [ check ]
-    | false -> Abb.Future.return (Ok ()))
+    fetch Keys.repo
+    >>= fun repo ->
+    fetch Keys.branch_ref
+    >>= fun branch_ref ->
+    fetch Keys.branch_name
+    >>= fun branch_name ->
+    let module Status = Terrat_commit_check.Status in
+    let check =
+      S.Commit_check.make_str
+        ~config:(Builder.State.config s)
+        ~description:"Running"
+        ~status:Status.Running
+        ~work_manifest
+        ~repo
+        ~account
+        (status_name ~branch ~branch_name)
+    in
+    fetch Keys.create_commit_checks
+    >>= fun create_commit_checks ->
+    create_commit_checks' create_commit_checks branch_ref [ check ]
     >>= fun () ->
     fetch Keys.dest_branch_name
     >>= fun dest_branch_name ->
@@ -162,84 +169,59 @@ struct
 
   let fail ~branch work_manifest s { Bs.Fetcher.fetch } =
     let open Irm in
-    fetch Keys.is_interactive
-    >>= function
-    | true ->
-        fetch Keys.account
-        >>= fun account ->
-        fetch Keys.repo
-        >>= fun repo ->
-        fetch Keys.client
-        >>= fun client ->
-        fetch Keys.branch_ref
-        >>= fun branch_ref ->
-        fetch Keys.user
-        >>= fun user ->
-        fetch Keys.pull_request
-        >>= fun pull_request ->
-        fetch Keys.branch_name
-        >>= fun branch_name ->
-        let module Status = Terrat_commit_check.Status in
-        let check =
-          S.Commit_check.make_str
-            ~config:(Builder.State.config s)
-            ~description:"Failed"
-            ~status:Status.Failed
-            ~work_manifest
-            ~repo
-            ~account
-            (status_name ~branch ~branch_name)
-        in
-        S.Api.create_commit_checks ~request_id:(Builder.log_id s) client repo branch_ref [ check ]
-        >>= fun () ->
-        S.Comment.publish_comment
-          ~request_id:(Builder.log_id s)
-          client
-          (CCOption.map_or ~default:"" S.Api.User.to_string user)
-          pull_request
-          Msg.Unexpected_temporary_err
-    | false -> Abb.Future.return (Ok ())
+    fetch Keys.account
+    >>= fun account ->
+    fetch Keys.repo
+    >>= fun repo ->
+    fetch Keys.branch_ref
+    >>= fun branch_ref ->
+    fetch Keys.branch_name
+    >>= fun branch_name ->
+    let module Status = Terrat_commit_check.Status in
+    let check =
+      S.Commit_check.make_str
+        ~config:(Builder.State.config s)
+        ~description:"Failed"
+        ~status:Status.Failed
+        ~work_manifest
+        ~repo
+        ~account
+        (status_name ~branch ~branch_name)
+    in
+    fetch Keys.create_commit_checks
+    >>= fun create_commit_checks ->
+    create_commit_checks' create_commit_checks branch_ref [ check ]
+    >>= fun () ->
+    fetch Keys.publish_comment
+    >>= fun publish_comment -> publish_comment' publish_comment Msg.Unexpected_temporary_err
 
   let result ~branch_ref ~branch work_manifest result s { Bs.Fetcher.fetch } =
     let open Irm in
     let fail msg =
-      fetch Keys.is_interactive
-      >>= function
-      | true ->
-          fetch Keys.account
-          >>= fun account ->
-          fetch Keys.repo
-          >>= fun repo ->
-          fetch Keys.client
-          >>= fun client ->
-          fetch Keys.pull_request
-          >>= fun pull_request ->
-          fetch Keys.user
-          >>= fun user ->
-          fetch Keys.branch_ref
-          >>= fun branch_ref ->
-          fetch Keys.branch_name
-          >>= fun branch_name ->
-          let module Status = Terrat_commit_check.Status in
-          let check =
-            S.Commit_check.make_str
-              ~config:(Builder.State.config s)
-              ~description:"Failed"
-              ~status:Status.Failed
-              ~work_manifest
-              ~repo
-              ~account
-              (status_name ~branch ~branch_name)
-          in
-          S.Api.create_commit_checks ~request_id:(Builder.log_id s) client repo branch_ref [ check ]
-          >>= fun () ->
-          S.Comment.publish_comment
-            ~request_id:(Builder.log_id s)
-            client
-            (CCOption.map_or ~default:"" S.Api.User.to_string user)
-            pull_request
-            msg
-      | false -> Abb.Future.return (Ok ())
+      fetch Keys.account
+      >>= fun account ->
+      fetch Keys.repo
+      >>= fun repo ->
+      fetch Keys.branch_ref
+      >>= fun branch_ref ->
+      fetch Keys.branch_name
+      >>= fun branch_name ->
+      let module Status = Terrat_commit_check.Status in
+      let check =
+        S.Commit_check.make_str
+          ~config:(Builder.State.config s)
+          ~description:"Failed"
+          ~status:Status.Failed
+          ~work_manifest
+          ~repo
+          ~account
+          (status_name ~branch ~branch_name)
+      in
+      fetch Keys.create_commit_checks
+      >>= fun create_commit_checks ->
+      create_commit_checks' create_commit_checks branch_ref [ check ]
+      >>= fun () ->
+      fetch Keys.publish_comment >>= fun publish_comment -> publish_comment' publish_comment msg
     in
     match result with
     | Wmr.Work_manifest_build_config_result { Bc.config } -> (
@@ -247,7 +229,7 @@ struct
         let open Abb.Future.Infix_monad in
         Abb.Future.return (V1.of_version_1_json config)
         >>= function
-        | Ok _ -> (
+        | Ok _ ->
             let open Irm in
             fetch Keys.account
             >>= fun account ->
@@ -259,35 +241,26 @@ struct
                   branch_ref
                   config)
             >>= fun () ->
-            fetch Keys.is_interactive
-            >>= function
-            | true ->
-                fetch Keys.repo
-                >>= fun repo ->
-                fetch Keys.branch_ref
-                >>= fun branch_ref ->
-                fetch Keys.client
-                >>= fun client ->
-                fetch Keys.branch_name
-                >>= fun branch_name ->
-                let module Status = Terrat_commit_check.Status in
-                let check =
-                  S.Commit_check.make_str
-                    ~config:(Builder.State.config s)
-                    ~description:"Completed"
-                    ~status:Status.Completed
-                    ~work_manifest
-                    ~repo
-                    ~account
-                    (status_name ~branch ~branch_name)
-                in
-                S.Api.create_commit_checks
-                  ~request_id:(Builder.log_id s)
-                  client
-                  repo
-                  branch_ref
-                  [ check ]
-            | false -> Abb.Future.return (Ok ()))
+            fetch Keys.repo
+            >>= fun repo ->
+            fetch Keys.branch_ref
+            >>= fun branch_ref ->
+            fetch Keys.branch_name
+            >>= fun branch_name ->
+            let module Status = Terrat_commit_check.Status in
+            let check =
+              S.Commit_check.make_str
+                ~config:(Builder.State.config s)
+                ~description:"Completed"
+                ~status:Status.Completed
+                ~work_manifest
+                ~repo
+                ~account
+                (status_name ~branch ~branch_name)
+            in
+            fetch Keys.create_commit_checks
+            >>= fun create_commit_checks ->
+            create_commit_checks' create_commit_checks branch_ref [ check ]
         | Error (#Terrat_base_repo_config_v1.of_version_1_err as err) ->
             let open Abbs_future_combinators.Infix_result_monad in
             fail (Msg.Build_config_err err) >>= fun () -> Abb.Future.return (Ok ())

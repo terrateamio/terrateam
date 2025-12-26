@@ -166,14 +166,58 @@ struct
           Builder.run_db s ~f:(fun db ->
               S.Db.query_account_status ~request_id:(Builder.log_id s) db account))
 
-    let is_interactive =
-      run ~name:"is_interactive" (fun s { Bs.Fetcher.fetch } ->
+    (* Wrapper so that when we call [publish_comment] the error type lines up *)
+    let publish_comment' f msg =
+      let open Abb.Future.Infix_monad in
+      f msg
+      >>= function
+      | Ok () -> Abb.Future.return (Ok ())
+      | Error `Error -> Abb.Future.return (Error `Error)
+
+    let publish_comment =
+      run ~name:"publish_comment" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
-          fetch Keys.context
-          >>= function
-          | { Tjc.Context.scope = Tjc.Context.Scope.Pull_request _; _ } ->
-              Abb.Future.return (Ok true)
-          | _ -> Abb.Future.return (Ok false))
+          fetch Keys.client
+          >>= fun client ->
+          fetch Keys.pull_request
+          >>= fun pull_request ->
+          fetch Keys.user
+          >>= fun user ->
+          Abb.Future.return
+            (Ok
+               (fun msg ->
+                 S.Comment.publish_comment
+                   ~request_id:(Builder.log_id s)
+                   client
+                   (CCOption.map_or ~default:"" S.Api.User.to_string user)
+                   pull_request
+                   msg)))
+
+    let create_commit_checks' f branch_ref checks =
+      let open Abb.Future.Infix_monad in
+      f branch_ref checks
+      >>= function
+      | Ok () -> Abb.Future.return (Ok ())
+      | Error `Error -> Abb.Future.return (Error `Error)
+
+    let create_commit_checks =
+      run ~name:"create_commit_checks" (fun s { Bs.Fetcher.fetch } ->
+          let open Irm in
+          fetch Keys.client
+          >>= fun client ->
+          fetch Keys.pull_request
+          >>= fun pull_request ->
+          fetch Keys.repo
+          >>= fun repo ->
+          Abb.Future.return
+            (Ok
+               (fun branch_ref checks ->
+                 S.Api.create_commit_checks
+                   ~request_id:(Builder.log_id s)
+                   client
+                   repo
+                   branch_ref
+                   checks)))
 
     let branch_name =
       run ~name:"branch_name" (fun s { Bs.Fetcher.fetch } ->
@@ -217,7 +261,7 @@ struct
                       (Terrat_pull_request.set_diff ()
                       @@ Terrat_pull_request.set_checks ()
                       @@ pull_request)))
-          | { C.scope = C.Scope.Branch branch; _ } ->
+          | { C.scope = C.Scope.Branch (branch, _); _ } ->
               fetch Keys.repo
               >>= fun repo ->
               Abb.Future.return
@@ -1511,24 +1555,21 @@ struct
           Builder.run_db s ~f:(fun db ->
               S.Db.query_index ~request_id:(Builder.log_id s) db account branch_ref)
           >>= function
-          | Some { I.success; failures; _ } ->
+          | Some { I.success; failures; _ } -> (
               (* TODO: Construct include base branch index information as well, if it was generated *)
-              fetch Keys.user
-              >>= fun user ->
-              fetch Keys.pull_request
-              >>= fun pull_request ->
-              fetch Keys.client
-              >>= fun client ->
-              S.Comment.publish_comment
-                ~request_id:(Builder.log_id s)
-                client
-                (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                pull_request
+              fetch Keys.publish_comment
+              >>= fun publish_comment ->
+              let open Abb.Future.Infix_monad in
+              publish_comment'
+                publish_comment
                 (Msg.Index_complete
                    ( success,
                      CCList.map
                        (fun { I.Failure.file; line_num; error } -> (file, line_num, error))
                        failures ))
+              >>= function
+              | Ok () -> Abb.Future.return (Ok ())
+              | Error `Error -> Abb.Future.return (Error `Error))
           | None ->
               Logs.info (fun m -> m "%s : INDEX_NOT_FOUND" (Builder.log_id s));
               Abb.Future.return (Ok ()))
@@ -1569,8 +1610,8 @@ struct
             >>= fun repo ->
             fetch Keys.access_control
             >>= fun access_control ->
-            fetch Keys.user
-            >>= fun user ->
+            fetch Keys.publish_comment
+            >>= fun publish_comment ->
             eval_access_control ()
             >>= function
             | None ->
@@ -1579,66 +1620,42 @@ struct
                     Abbs_future_combinators.List_result.iter
                       ~f:(S.Db.unlock ~request_id:(Builder.log_id s) db repo)
                       unlock_ids)
-                >>= fun () ->
-                S.Comment.publish_comment
-                  ~request_id:(Builder.log_id s)
-                  client
-                  (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                  pull_request
-                  Msg.Unlock_success
-                >>= fun () -> Abb.Future.return (Ok ())
+                >>= fun () -> publish_comment' publish_comment Msg.Unlock_success
             | Some match_list ->
-                let open Irm in
-                S.Comment.publish_comment
-                  ~request_id:(Builder.log_id s)
-                  client
-                  (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                  pull_request
+                publish_comment'
+                  publish_comment
                   (Msg.Access_control_denied
                      ( S.Api.Ref.to_string access_control.Keys.Access_control_engine.policy_branch,
                        `Unlock match_list ))
-                >>= fun () -> Abb.Future.return (Ok ())
           in
           let open Irm in
           fetch Keys.client
           >>= fun client ->
-          fetch Keys.pull_request
-          >>= fun pull_request ->
-          fetch Keys.user
-          >>= fun user ->
           fetch Keys.job
           >>= fun job ->
           match job.Tjc.Job.type_ with
           | Tjc.Job.Type_.Unlock unlock_ids -> (
+              fetch Keys.pull_request
+              >>= fun pull_request ->
               let open Abb.Future.Infix_monad in
               Abb.Future.return @@ parse_unlock_ids (S.Api.Pull_request.id pull_request) unlock_ids
               >>= function
               | Ok unlock_ids -> run client pull_request unlock_ids
               | Error (`Invalid_unlock_id id) ->
-                  S.Comment.publish_comment
-                    ~request_id:(Builder.log_id s)
-                    client
-                    (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                    pull_request
-                    (Msg.Invalid_unlock_id id))
+                  let open Irm in
+                  fetch Keys.publish_comment
+                  >>= fun publish_comment ->
+                  publish_comment' publish_comment (Msg.Invalid_unlock_id id))
           | _ -> assert false)
 
     let publish_repo_config =
       run ~name:"publish_repo_config" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
-          Fc.Result.all5
-            (fetch Keys.client)
-            (fetch Keys.pull_request)
-            (fetch Keys.repo_config_with_provenance)
-            (fetch Keys.user)
-            (fetch Keys.store_stacks)
-          >>= fun (client, pull_request, repo_config_with_provenance, user, ()) ->
-          S.Comment.publish_comment
-            ~request_id:(Builder.log_id s)
-            client
-            (CCOption.map_or ~default:"" S.Api.User.to_string user)
-            pull_request
-            (Msg.Repo_config repo_config_with_provenance))
+          Fc.Result.all2 (fetch Keys.repo_config_with_provenance) (fetch Keys.store_stacks)
+          >>= fun (repo_config_with_provenance, ()) ->
+          fetch Keys.publish_comment
+          >>= fun publish_comment ->
+          publish_comment' publish_comment (Msg.Repo_config repo_config_with_provenance))
 
     let comment_id =
       run ~name:"comment_id" (fun s { Bs.Fetcher.fetch } ->
@@ -1789,12 +1806,9 @@ struct
                         Some { c with Ch.status = Ch.Status.Canceled })
                   commit_checks
               in
-              S.Api.create_commit_checks
-                ~request_id:(Builder.log_id s)
-                client
-                repo
-                branch_ref
-                unfinished_checks
+              fetch Keys.create_commit_checks
+              >>= fun create_commit_checks ->
+              create_commit_checks' create_commit_checks branch_ref unfinished_checks
               >>= fun () -> Abb.Future.return (Error `Noop)
           | Pr.State.(Open _ | Merged _) -> Abb.Future.return (Ok ()))
 
@@ -1835,8 +1849,6 @@ struct
       run ~name:"check_conflicting_plan_work_manifests" (fun s { Bs.Fetcher.fetch } ->
           let module R = Terrat_access_control2.R in
           let open Irm in
-          fetch Keys.pull_request
-          >>= fun pull_request ->
           fetch Keys.access_control_eval_plan
           >>= fun access_control_eval ->
           Abb.Future.return
@@ -1849,6 +1861,9 @@ struct
               (fun { Terrat_change_match3.Dirspace_config.dirspace; _ } -> dirspace)
               passed_dirspaces
           in
+          (* TODO: Do not depend on pull request *)
+          fetch Keys.pull_request
+          >>= fun pull_request ->
           Builder.run_db s ~f:(fun db ->
               S.Db.query_conflicting_work_manifests_in_repo
                 ~request_id:(Builder.log_id s)
@@ -1859,28 +1874,14 @@ struct
           >>= function
           | None -> Abb.Future.return (Ok ())
           | Some (P2.Conflicting_work_manifests.Conflicting wms) ->
-              fetch Keys.client
-              >>= fun client ->
-              fetch Keys.user
-              >>= fun user ->
-              S.Comment.publish_comment
-                ~request_id:(Builder.log_id s)
-                client
-                (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                pull_request
-                (Msg.Conflicting_work_manifests wms)
+              fetch Keys.publish_comment
+              >>= fun publish_comment ->
+              publish_comment' publish_comment (Msg.Conflicting_work_manifests wms)
               >>= fun () -> Abb.Future.return (Error `Noop)
           | Some (P2.Conflicting_work_manifests.Maybe_stale wms) ->
-              fetch Keys.client
-              >>= fun client ->
-              fetch Keys.user
-              >>= fun user ->
-              S.Comment.publish_comment
-                ~request_id:(Builder.log_id s)
-                client
-                (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                pull_request
-                (Msg.Maybe_stale_work_manifests wms)
+              fetch Keys.publish_comment
+              >>= fun publish_comment ->
+              publish_comment' publish_comment (Msg.Maybe_stale_work_manifests wms)
               >>= fun () -> Abb.Future.return (Error `Noop))
 
     let check_merge_conflict =
@@ -1895,16 +1896,9 @@ struct
               | [] -> Abb.Future.return (Error `Noop)
               | _ :: _ ->
                   Logs.info (fun m -> m "%s : MERGE_CONFLICT" (Builder.log_id s));
-                  fetch Keys.client
-                  >>= fun client ->
-                  fetch Keys.user
-                  >>= fun user ->
-                  S.Comment.publish_comment
-                    ~request_id:(Builder.log_id s)
-                    client
-                    (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                    pull_request
-                    Msg.Pull_request_not_mergeable
+                  fetch Keys.publish_comment
+                  >>= fun publish_comment ->
+                  publish_comment' publish_comment Msg.Pull_request_not_mergeable
                   >>= fun () -> Abb.Future.return (Error `Noop))
           | Terrat_pull_request.State.Open _
           | Terrat_pull_request.State.Closed
@@ -1913,41 +1907,30 @@ struct
     let check_account_tier =
       run ~name:"check_account_tier" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
-          fetch Keys.is_interactive
+          fetch Keys.user
           >>= function
-          | true -> (
-              fetch Keys.user
-              >>= function
-              | Some user -> (
-                  fetch Keys.account
-                  >>= fun account ->
-                  Abbs_time_it.run
-                    (fun time ->
-                      Logs.info (fun m ->
-                          m
-                            "%s : TIER_CHECK : account=%s : user=%s : time=%f"
-                            (Builder.log_id s)
-                            (S.Api.Account.Id.to_string @@ S.Api.Account.id account)
-                            (S.Api.User.to_string user)
-                            time))
-                    (fun () ->
-                      Builder.run_db s ~f:(S.Tier.check ~request_id:(Builder.log_id s) user account))
-                  >>= function
-                  | None -> Abb.Future.return (Ok ())
-                  | Some checks ->
-                      fetch Keys.client
-                      >>= fun client ->
-                      fetch Keys.pull_request
-                      >>= fun pull_request ->
-                      S.Comment.publish_comment
-                        ~request_id:(Builder.log_id s)
-                        client
+          | Some user -> (
+              fetch Keys.account
+              >>= fun account ->
+              Abbs_time_it.run
+                (fun time ->
+                  Logs.info (fun m ->
+                      m
+                        "%s : TIER_CHECK : account=%s : user=%s : time=%f"
+                        (Builder.log_id s)
+                        (S.Api.Account.Id.to_string @@ S.Api.Account.id account)
                         (S.Api.User.to_string user)
-                        pull_request
-                        (Msg.Tier_check checks)
-                      >>= fun () -> Abb.Future.return (Error `Noop))
-              | None -> Abb.Future.return (Ok ()))
-          | false -> Abb.Future.return (Ok ()))
+                        time))
+                (fun () ->
+                  Builder.run_db s ~f:(S.Tier.check ~request_id:(Builder.log_id s) user account))
+              >>= function
+              | None -> Abb.Future.return (Ok ())
+              | Some checks ->
+                  fetch Keys.publish_comment
+                  >>= fun publish_comment ->
+                  publish_comment' publish_comment (Msg.Tier_check checks)
+                  >>= fun () -> Abb.Future.return (Error `Noop))
+          | None -> Abb.Future.return (Ok ()))
 
     let check_account_status_expired =
       run ~name:"check_account_status_expired" (fun s { Bs.Fetcher.fetch } ->
@@ -2003,28 +1986,24 @@ struct
           >>= fun client ->
           fetch Keys.repo
           >>= fun repo ->
-          fetch Keys.is_interactive
-          >>= function
-          | true ->
-              fetch Keys.pull_request
-              >>= fun pull_request ->
-              S.Api.fetch_pull_request_reviews
-                ~request_id:(Builder.log_id s)
-                repo
-                (S.Api.Pull_request.id pull_request)
-                client
-              >>= fun reviews ->
-              let reviews =
-                CCList.filter_map
-                  (function
-                    | { Rr.user; status = Rr.Status.Approved; _ } -> user
-                    | _ -> None)
-                  reviews
-              in
-              let open Abb.Future.Infix_monad in
-              Access_control.eval_tf_operation access_control working_set_matches (`Apply reviews)
-              >>= fun ret -> Abb.Future.return (Ok ret)
-          | false -> Abb.Future.return (Error `Error))
+          fetch Keys.pull_request
+          >>= fun pull_request ->
+          S.Api.fetch_pull_request_reviews
+            ~request_id:(Builder.log_id s)
+            repo
+            (S.Api.Pull_request.id pull_request)
+            client
+          >>= fun reviews ->
+          let reviews =
+            CCList.filter_map
+              (function
+                | { Rr.user; status = Rr.Status.Approved; _ } -> user
+                | _ -> None)
+              reviews
+          in
+          let open Abb.Future.Infix_monad in
+          Access_control.eval_tf_operation access_control working_set_matches (`Apply reviews)
+          >>= fun ret -> Abb.Future.return (Ok ret))
 
     let check_access_control_plan =
       run ~name:"check_access_control_plan" (fun s { Bs.Fetcher.fetch } ->
@@ -2035,73 +2014,36 @@ struct
           fetch Keys.access_control_eval_plan
           >>= function
           | Ok { R.pass = []; deny = _ :: _ as deny }
-            when not (Access_control.plan_require_all_dirspace_access access_control) -> (
-              let open Irm in
-              fetch Keys.is_interactive
-              >>= function
-              | true ->
-                  fetch Keys.client
-                  >>= fun client ->
-                  fetch Keys.pull_request
-                  >>= fun pull_request ->
-                  fetch Keys.user
-                  >>= fun user ->
-                  S.Comment.publish_comment
-                    ~request_id:(Builder.log_id s)
-                    client
-                    (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                    pull_request
-                    (Msg.Access_control_denied
-                       ( S.Api.Ref.to_string access_control.Keys.Access_control_engine.policy_branch,
-                         `All_dirspaces deny ))
-                  >>= fun () -> Abb.Future.return (Error `Noop)
-              | false -> Abb.Future.return (Error `Noop))
+            when not (Access_control.plan_require_all_dirspace_access access_control) ->
+              fetch Keys.publish_comment
+              >>= fun publish_comment ->
+              publish_comment'
+                publish_comment
+                (Msg.Access_control_denied
+                   ( S.Api.Ref.to_string access_control.Keys.Access_control_engine.policy_branch,
+                     `All_dirspaces deny ))
           | Ok { R.pass; deny }
             when CCList.is_empty deny
                  || not (Access_control.plan_require_all_dirspace_access access_control) ->
               Abb.Future.return (Ok ())
-          | Ok { R.deny; _ } -> (
-              let open Irm in
-              fetch Keys.is_interactive
-              >>= function
-              | true ->
-                  fetch Keys.client
-                  >>= fun client ->
-                  fetch Keys.pull_request
-                  >>= fun pull_request ->
-                  fetch Keys.user
-                  >>= fun user ->
-                  S.Comment.publish_comment
-                    ~request_id:(Builder.log_id s)
-                    client
-                    (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                    pull_request
-                    (Msg.Access_control_denied
-                       ( S.Api.Ref.to_string access_control.Keys.Access_control_engine.policy_branch,
-                         `Dirspaces deny ))
-                  >>= fun () -> Abb.Future.return (Error `Noop)
-              | false -> Abb.Future.return (Error `Noop))
-          | Error `Error -> (
-              let open Irm in
-              fetch Keys.is_interactive
-              >>= function
-              | true ->
-                  fetch Keys.client
-                  >>= fun client ->
-                  fetch Keys.pull_request
-                  >>= fun pull_request ->
-                  fetch Keys.user
-                  >>= fun user ->
-                  S.Comment.publish_comment
-                    ~request_id:(Builder.log_id s)
-                    client
-                    (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                    pull_request
-                    (Msg.Access_control_denied
-                       ( S.Api.Ref.to_string access_control.Keys.Access_control_engine.policy_branch,
-                         `Lookup_err ))
-                  >>= fun () -> Abb.Future.return (Error `Noop)
-              | false -> Abb.Future.return (Error `Noop)))
+          | Ok { R.deny; _ } ->
+              fetch Keys.publish_comment
+              >>= fun publish_comment ->
+              publish_comment'
+                publish_comment
+                (Msg.Access_control_denied
+                   ( S.Api.Ref.to_string access_control.Keys.Access_control_engine.policy_branch,
+                     `Dirspaces deny ))
+              >>= fun () -> Abb.Future.return (Error `Noop)
+          | Error `Error ->
+              fetch Keys.publish_comment
+              >>= fun publish_comment ->
+              publish_comment'
+                publish_comment
+                (Msg.Access_control_denied
+                   ( S.Api.Ref.to_string access_control.Keys.Access_control_engine.policy_branch,
+                     `Lookup_err ))
+              >>= fun () -> Abb.Future.return (Error `Noop))
 
     let check_access_control_apply =
       run ~name:"check_access_control_apply" (fun s { Bs.Fetcher.fetch } ->
@@ -2156,20 +2098,20 @@ struct
                  "apply-force" because then access control result is important
                  because we are bypassing the apply requirements. *)
               Logs.info (fun m -> m "%s : PR_NOT_APPLIABLE" (Builder.log_id s));
-              S.Comment.publish_comment
-                ~request_id:(Builder.log_id s)
-                client
-                (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                pull_request
-                (Msg.Pull_request_not_appliable (pull_request, apply_requirements))
+              fetch Keys.publish_comment
+              >>= fun publish_comment ->
+              publish_comment'
+                publish_comment
+                (Msg.Pull_request_not_appliable
+                   ( S.Api.Pull_request.set_checks () @@ S.Api.Pull_request.set_diff () pull_request,
+                     apply_requirements ))
               >>= fun () -> Abb.Future.return (Error `Noop)
           | { Terrat_access_control2.R.pass = []; deny = _ :: _ as deny }
             when not (Access_control.apply_require_all_dirspace_access access_control) ->
-              S.Comment.publish_comment
-                ~request_id:(Builder.log_id s)
-                client
-                (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                pull_request
+              fetch Keys.publish_comment
+              >>= fun publish_comment ->
+              publish_comment'
+                publish_comment
                 (Msg.Access_control_denied
                    ( S.Api.Ref.to_string access_control.Keys.Access_control_engine.policy_branch,
                      `All_dirspaces deny ))
@@ -2180,11 +2122,10 @@ struct
               (* This is the success path *)
               Abb.Future.return (Ok ())
           | { Terrat_access_control2.R.deny; _ } ->
-              S.Comment.publish_comment
-                ~request_id:(Builder.log_id s)
-                client
-                (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                pull_request
+              fetch Keys.publish_comment
+              >>= fun publish_comment ->
+              publish_comment'
+                publish_comment
                 (Msg.Access_control_denied
                    ( S.Api.Ref.to_string access_control.Keys.Access_control_engine.policy_branch,
                      `Dirspaces deny ))
@@ -2218,28 +2159,14 @@ struct
           >>= function
           | None -> Abb.Future.return (Ok ())
           | Some (P2.Conflicting_work_manifests.Conflicting wms) ->
-              fetch Keys.client
-              >>= fun client ->
-              fetch Keys.user
-              >>= fun user ->
-              S.Comment.publish_comment
-                ~request_id:(Builder.log_id s)
-                client
-                (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                pull_request
-                (Msg.Conflicting_work_manifests wms)
+              fetch Keys.publish_comment
+              >>= fun publish_comment ->
+              publish_comment' publish_comment (Msg.Conflicting_work_manifests wms)
               >>= fun () -> Abb.Future.return (Error `Noop)
           | Some (P2.Conflicting_work_manifests.Maybe_stale wms) ->
-              fetch Keys.client
-              >>= fun client ->
-              fetch Keys.user
-              >>= fun user ->
-              S.Comment.publish_comment
-                ~request_id:(Builder.log_id s)
-                client
-                (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                pull_request
-                (Msg.Maybe_stale_work_manifests wms)
+              fetch Keys.publish_comment
+              >>= fun publish_comment ->
+              publish_comment' publish_comment (Msg.Maybe_stale_work_manifests wms)
               >>= fun () -> Abb.Future.return (Error `Noop))
 
     let check_dirspaces_missing_plans =
@@ -2272,16 +2199,9 @@ struct
                   (* If it's an autoplan, don't publish *)
                   Abb.Future.return (Error `Noop)
               | _ ->
-                  fetch Keys.client
-                  >>= fun client ->
-                  fetch Keys.user
-                  >>= fun user ->
-                  S.Comment.publish_comment
-                    ~request_id:(Builder.log_id s)
-                    client
-                    (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                    pull_request
-                    (Msg.Missing_plans dirspaces)
+                  fetch Keys.publish_comment
+                  >>= fun publish_comment ->
+                  publish_comment' publish_comment (Msg.Missing_plans dirspaces)
                   >>= fun () -> Abb.Future.return (Error `Noop)))
 
     let check_dirspaces_to_plan =
@@ -2292,26 +2212,13 @@ struct
           | { Tjc.Job.type_ = Tjc.Job.Type_.Plan _; _ } -> (
               fetch Keys.all_matches
               >>= function
-              | [] -> (
-                  fetch Keys.is_interactive
-                  >>= function
-                  | true ->
-                      fetch Keys.client
-                      >>= fun client ->
-                      fetch Keys.user
-                      >>= fun user ->
-                      fetch Keys.pull_request
-                      >>= fun pull_request ->
-                      Fc.Result.all2
-                        (fetch Keys.maybe_create_completed_apply_check)
-                        (S.Comment.publish_comment
-                           ~request_id:(Builder.log_id s)
-                           client
-                           (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                           pull_request
-                           Msg.Plan_no_matching_dirspaces)
-                      >>= fun ((), ()) -> Abb.Future.return (Error `Noop)
-                  | false -> Abb.Future.return (Error `Noop))
+              | [] ->
+                  fetch Keys.publish_comment
+                  >>= fun publish_comment ->
+                  Fc.Result.all2
+                    (fetch Keys.maybe_create_completed_apply_check)
+                    (publish_comment' publish_comment Msg.Plan_no_matching_dirspaces)
+                  >>= fun ((), ()) -> Abb.Future.return (Error `Noop)
               | _ :: _ ->
                   fetch Keys.repo
                   >>= fun repo ->
@@ -2332,12 +2239,9 @@ struct
                         "terrateam apply";
                     ]
                   in
-                  S.Api.create_commit_checks
-                    ~request_id:(Builder.log_id s)
-                    client
-                    repo
-                    working_branch_ref
-                    checks)
+                  fetch Keys.create_commit_checks
+                  >>= fun create_commit_checks ->
+                  create_commit_checks' create_commit_checks working_branch_ref checks)
           | _ -> Abb.Future.return (Ok ()))
 
     let check_dirspaces_to_apply =
@@ -2353,24 +2257,11 @@ struct
           | { Tjc.Job.type_ = Tjc.Job.Type_.Apply _; _ } -> (
               fetch Keys.working_set_matches
               >>= function
-              | [] -> (
-                  fetch Keys.is_interactive
-                  >>= function
-                  | true ->
-                      fetch Keys.client
-                      >>= fun client ->
-                      fetch Keys.user
-                      >>= fun user ->
-                      fetch Keys.pull_request
-                      >>= fun pull_request ->
-                      S.Comment.publish_comment
-                        ~request_id:(Builder.log_id s)
-                        client
-                        (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                        pull_request
-                        Msg.Apply_no_matching_dirspaces
-                      >>= fun () -> Abb.Future.return (Error `Noop)
-                  | false -> Abb.Future.return (Error `Noop))
+              | [] ->
+                  fetch Keys.publish_comment
+                  >>= fun publish_comment ->
+                  publish_comment' publish_comment Msg.Apply_no_matching_dirspaces
+                  >>= fun () -> Abb.Future.return (Error `Noop)
               | _ :: _ -> Abb.Future.return (Ok ()))
           | _ -> Abb.Future.return (Ok ()))
 
@@ -2389,14 +2280,9 @@ struct
           >>= function
           | [] -> Abb.Future.return (Ok ())
           | denied ->
-              fetch Keys.user
-              >>= fun user ->
-              S.Comment.publish_comment
-                ~request_id:(Builder.log_id s)
-                client
-                (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                pull_request
-                (Msg.Gate_check_failure denied)
+              fetch Keys.publish_comment
+              >>= fun publish_comment ->
+              publish_comment' publish_comment (Msg.Gate_check_failure denied)
               >>= fun () -> Abb.Future.return (Error `Noop))
 
     let store_gate_approval =
@@ -2443,15 +2329,10 @@ struct
           >>= function
           | [] -> Abb.Future.return (Ok ())
           | owned_dirspaces ->
-              fetch Keys.client
-              >>= fun client ->
-              fetch Keys.user
-              >>= fun user ->
-              S.Comment.publish_comment
-                ~request_id:(Builder.log_id s)
-                client
-                (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                pull_request
+              fetch Keys.publish_comment
+              >>= fun publish_comment ->
+              publish_comment'
+                publish_comment
                 (Msg.Dirspaces_owned_by_other_pull_request owned_dirspaces)
               >>= fun () -> Abb.Future.return (Error `Noop))
 
@@ -2563,19 +2444,18 @@ struct
                   Abb.Future.return (Error `Noop)
               | T.Plan _ | T.Apply _ ->
                   let open Irm in
-                  fetch Keys.user
-                  >>= fun user ->
                   Logs.info (fun m ->
                       m
                         "%s : DEST_BRANCH_NOT_VALID_BRANCH_EXPLICIT : branch=%s"
                         (Builder.log_id s)
                         (S.Api.Ref.to_string base_branch_name));
-                  S.Comment.publish_comment
-                    ~request_id:(Builder.log_id s)
-                    client
-                    (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                    pull_request
-                    (Msg.Dest_branch_no_match pull_request)
+                  fetch Keys.publish_comment
+                  >>= fun publish_comment ->
+                  publish_comment'
+                    publish_comment
+                    (Msg.Dest_branch_no_match
+                       (S.Api.Pull_request.set_checks ()
+                       @@ S.Api.Pull_request.set_diff () pull_request))
                   >>= fun () -> Abb.Future.return (Error `Error)
               | T.Gate_approval _ | T.Index | T.Repo_config | T.Unlock _ -> assert false)
           | Error `No_matching_source_branch -> (
@@ -2591,20 +2471,18 @@ struct
                         (S.Api.Ref.to_string branch_name));
                   Abb.Future.return (Error `Noop)
               | T.Plan _ | T.Apply _ ->
-                  let open Irm in
-                  fetch Keys.user
-                  >>= fun user ->
                   Logs.info (fun m ->
                       m
                         "%s : SOURCE_BRANCH_NOT_VALID_BRANCH_EXPLICIT : branch=%s"
                         (Builder.log_id s)
                         (S.Api.Ref.to_string branch_name));
-                  S.Comment.publish_comment
-                    ~request_id:(Builder.log_id s)
-                    client
-                    (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                    pull_request
-                    (Msg.Dest_branch_no_match pull_request)
+                  fetch Keys.publish_comment
+                  >>= fun publish_comment ->
+                  publish_comment'
+                    publish_comment
+                    (Msg.Dest_branch_no_match
+                       (S.Api.Pull_request.set_checks ()
+                       @@ S.Api.Pull_request.set_diff () pull_request))
                   >>= fun () -> Abb.Future.return (Error `Noop)
               | T.Gate_approval _ | T.Index | T.Repo_config | T.Unlock _ -> assert false))
 
@@ -2617,56 +2495,26 @@ struct
           Access_control.eval_repo_config access_control diff
           >>= function
           | Ok None -> Abb.Future.return (Ok ())
-          | Ok (Some match_list) -> (
+          | Ok (Some match_list) ->
               let open Irm in
-              fetch Keys.is_interactive
-              >>= function
-              | true ->
-                  fetch Keys.client
-                  >>= fun client ->
-                  fetch Keys.account
-                  >>= fun account ->
-                  fetch Keys.repo
-                  >>= fun repo ->
-                  fetch Keys.user
-                  >>= fun user ->
-                  fetch Keys.pull_request
-                  >>= fun pull_request ->
-                  S.Comment.publish_comment
-                    ~request_id:(Builder.log_id s)
-                    client
-                    (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                    pull_request
-                    (Msg.Access_control_denied
-                       ( S.Api.Ref.to_string access_control.Keys.Access_control_engine.policy_branch,
-                         `Terrateam_config_update match_list ))
-                  >>= fun () -> Abb.Future.return (Error `Noop)
-              | false -> Abb.Future.return (Error `Noop))
-          | Error `Error -> (
+              fetch Keys.publish_comment
+              >>= fun publish_comment ->
+              publish_comment'
+                publish_comment
+                (Msg.Access_control_denied
+                   ( S.Api.Ref.to_string access_control.Keys.Access_control_engine.policy_branch,
+                     `Terrateam_config_update match_list ))
+              >>= fun () -> Abb.Future.return (Error `Noop)
+          | Error `Error ->
               let open Irm in
-              fetch Keys.is_interactive
-              >>= function
-              | true ->
-                  fetch Keys.client
-                  >>= fun client ->
-                  fetch Keys.account
-                  >>= fun account ->
-                  fetch Keys.repo
-                  >>= fun repo ->
-                  fetch Keys.user
-                  >>= fun user ->
-                  fetch Keys.pull_request
-                  >>= fun pull_request ->
-                  S.Comment.publish_comment
-                    ~request_id:(Builder.log_id s)
-                    client
-                    (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                    pull_request
-                    (Msg.Access_control_denied
-                       ( S.Api.Ref.to_string access_control.Keys.Access_control_engine.policy_branch,
-                         `Lookup_err ))
-                  >>= fun () -> Abb.Future.return (Error `Noop)
-              | false -> Abb.Future.return (Error `Noop)))
+              fetch Keys.publish_comment
+              >>= fun publish_comment ->
+              publish_comment'
+                publish_comment
+                (Msg.Access_control_denied
+                   ( S.Api.Ref.to_string access_control.Keys.Access_control_engine.policy_branch,
+                     `Lookup_err ))
+              >>= fun () -> Abb.Future.return (Error `Noop))
 
     let check_access_control_files =
       run ~name:"check_access_control_files" (fun s { Bs.Fetcher.fetch } ->
@@ -2677,56 +2525,26 @@ struct
           Access_control.eval_files access_control diff
           >>= function
           | Ok None -> Abb.Future.return (Ok ())
-          | Ok (Some (fname, match_list)) -> (
+          | Ok (Some (fname, match_list)) ->
               let open Irm in
-              fetch Keys.is_interactive
-              >>= function
-              | true ->
-                  fetch Keys.client
-                  >>= fun client ->
-                  fetch Keys.account
-                  >>= fun account ->
-                  fetch Keys.repo
-                  >>= fun repo ->
-                  fetch Keys.user
-                  >>= fun user ->
-                  fetch Keys.pull_request
-                  >>= fun pull_request ->
-                  S.Comment.publish_comment
-                    ~request_id:(Builder.log_id s)
-                    client
-                    (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                    pull_request
-                    (Msg.Access_control_denied
-                       ( S.Api.Ref.to_string access_control.Keys.Access_control_engine.policy_branch,
-                         `Files (fname, match_list) ))
-                  >>= fun () -> Abb.Future.return (Error `Noop)
-              | false -> Abb.Future.return (Error `Noop))
-          | Error `Error -> (
+              fetch Keys.publish_comment
+              >>= fun publish_comment ->
+              publish_comment'
+                publish_comment
+                (Msg.Access_control_denied
+                   ( S.Api.Ref.to_string access_control.Keys.Access_control_engine.policy_branch,
+                     `Files (fname, match_list) ))
+              >>= fun () -> Abb.Future.return (Error `Noop)
+          | Error `Error ->
               let open Irm in
-              fetch Keys.is_interactive
-              >>= function
-              | true ->
-                  fetch Keys.client
-                  >>= fun client ->
-                  fetch Keys.account
-                  >>= fun account ->
-                  fetch Keys.repo
-                  >>= fun repo ->
-                  fetch Keys.user
-                  >>= fun user ->
-                  fetch Keys.pull_request
-                  >>= fun pull_request ->
-                  S.Comment.publish_comment
-                    ~request_id:(Builder.log_id s)
-                    client
-                    (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                    pull_request
-                    (Msg.Access_control_denied
-                       ( S.Api.Ref.to_string access_control.Keys.Access_control_engine.policy_branch,
-                         `Lookup_err ))
-                  >>= fun () -> Abb.Future.return (Error `Noop)
-              | false -> Abb.Future.return (Error `Noop)))
+              fetch Keys.publish_comment
+              >>= fun publish_comment ->
+              publish_comment'
+                publish_comment
+                (Msg.Access_control_denied
+                   ( S.Api.Ref.to_string access_control.Keys.Access_control_engine.policy_branch,
+                     `Lookup_err ))
+              >>= fun () -> Abb.Future.return (Error `Noop))
 
     let check_access_control_ci_change =
       run ~name:"check_access_control_ci_change" (fun s { Bs.Fetcher.fetch } ->
@@ -2737,56 +2555,26 @@ struct
           Access_control.eval_ci_change access_control diff
           >>= function
           | Ok None -> Abb.Future.return (Ok ())
-          | Ok (Some match_list) -> (
+          | Ok (Some match_list) ->
               let open Irm in
-              fetch Keys.is_interactive
-              >>= function
-              | true ->
-                  fetch Keys.client
-                  >>= fun client ->
-                  fetch Keys.account
-                  >>= fun account ->
-                  fetch Keys.repo
-                  >>= fun repo ->
-                  fetch Keys.user
-                  >>= fun user ->
-                  fetch Keys.pull_request
-                  >>= fun pull_request ->
-                  S.Comment.publish_comment
-                    ~request_id:(Builder.log_id s)
-                    client
-                    (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                    pull_request
-                    (Msg.Access_control_denied
-                       ( S.Api.Ref.to_string access_control.Keys.Access_control_engine.policy_branch,
-                         `Ci_config_update match_list ))
-                  >>= fun () -> Abb.Future.return (Error `Noop)
-              | false -> Abb.Future.return (Error `Noop))
-          | Error `Error -> (
+              fetch Keys.publish_comment
+              >>= fun publish_comment ->
+              publish_comment'
+                publish_comment
+                (Msg.Access_control_denied
+                   ( S.Api.Ref.to_string access_control.Keys.Access_control_engine.policy_branch,
+                     `Ci_config_update match_list ))
+              >>= fun () -> Abb.Future.return (Error `Noop)
+          | Error `Error ->
               let open Irm in
-              fetch Keys.is_interactive
-              >>= function
-              | true ->
-                  fetch Keys.client
-                  >>= fun client ->
-                  fetch Keys.account
-                  >>= fun account ->
-                  fetch Keys.repo
-                  >>= fun repo ->
-                  fetch Keys.user
-                  >>= fun user ->
-                  fetch Keys.pull_request
-                  >>= fun pull_request ->
-                  S.Comment.publish_comment
-                    ~request_id:(Builder.log_id s)
-                    client
-                    (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                    pull_request
-                    (Msg.Access_control_denied
-                       ( S.Api.Ref.to_string access_control.Keys.Access_control_engine.policy_branch,
-                         `Lookup_err ))
-                  >>= fun () -> Abb.Future.return (Error `Noop)
-              | false -> Abb.Future.return (Error `Noop)))
+              fetch Keys.publish_comment
+              >>= fun publish_comment ->
+              publish_comment'
+                publish_comment
+                (Msg.Access_control_denied
+                   ( S.Api.Ref.to_string access_control.Keys.Access_control_engine.policy_branch,
+                     `Lookup_err ))
+              >>= fun () -> Abb.Future.return (Error `Noop))
 
     let store_stacks =
       run ~name:"store_stacks" (fun s { Bs.Fetcher.fetch } ->
@@ -2812,22 +2600,8 @@ struct
       run ~name:"can_run_plan" (fun s { Bs.Fetcher.fetch } ->
           let maybe_publish_msg msg =
             let open Irm in
-            fetch Keys.is_interactive
-            >>= function
-            | true ->
-                fetch Keys.client
-                >>= fun client ->
-                fetch Keys.pull_request
-                >>= fun pull_request ->
-                fetch Keys.user
-                >>= fun user ->
-                S.Comment.publish_comment
-                  ~request_id:(Builder.log_id s)
-                  client
-                  (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                  pull_request
-                  msg
-            | false -> Abb.Future.return (Ok ())
+            fetch Keys.publish_comment
+            >>= fun publish_comment -> publish_comment' publish_comment msg
           in
           let run =
             let open Irm in
@@ -2892,46 +2666,18 @@ struct
           | Ok wms ->
               (* Do something useful here? *)
               Abb.Future.return (Ok ())
-          | Error (#Str_template.err as err) -> (
+          | Error (#Str_template.err as err) ->
               let open Irm in
-              fetch Keys.is_interactive
-              >>= function
-              | true ->
-                  fetch Keys.client
-                  >>= fun client ->
-                  fetch Keys.user
-                  >>= fun user ->
-                  fetch Keys.pull_request
-                  >>= fun pull_request ->
-                  S.Comment.publish_comment
-                    ~request_id:(Builder.log_id s)
-                    client
-                    (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                    pull_request
-                    (Msg.Str_template_err err)
-              | false -> Abb.Future.return (Error err))
+              fetch Keys.publish_comment
+              >>= fun publish_comment -> publish_comment' publish_comment (Msg.Str_template_err err)
           | Error err -> Abb.Future.return (Error err))
 
     let can_run_apply =
       run ~name:"can_run_apply" (fun s { Bs.Fetcher.fetch } ->
           let maybe_publish_msg msg =
             let open Irm in
-            fetch Keys.is_interactive
-            >>= function
-            | true ->
-                fetch Keys.client
-                >>= fun client ->
-                fetch Keys.pull_request
-                >>= fun pull_request ->
-                fetch Keys.user
-                >>= fun user ->
-                S.Comment.publish_comment
-                  ~request_id:(Builder.log_id s)
-                  client
-                  (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                  pull_request
-                  msg
-            | false -> Abb.Future.return (Ok ())
+            fetch Keys.publish_comment
+            >>= fun publish_comment -> publish_comment' publish_comment msg
           in
           let run =
             let open Irm in
@@ -3485,12 +3231,8 @@ struct
           >>= fun all_unapplied_matches ->
           match (all_unapplied_matches, all_matches, create_completed_apply_check_on_noop) with
           | [], [], true | [], _, _ ->
-              fetch Keys.client
-              >>= fun client ->
               fetch Keys.account
               >>= fun account ->
-              fetch Keys.pull_request
-              >>= fun pull_request ->
               fetch Keys.repo
               >>= fun repo ->
               let checks =
@@ -3504,12 +3246,11 @@ struct
                     "terrateam apply";
                 ]
               in
-              S.Api.create_commit_checks
-                ~request_id:(Builder.log_id s)
-                client
-                repo
-                (S.Api.Pull_request.branch_ref pull_request)
-                checks
+              fetch Keys.branch_ref
+              >>= fun branch_ref ->
+              fetch Keys.create_commit_checks
+              >>= fun create_commit_checks ->
+              create_commit_checks' create_commit_checks branch_ref checks
           | _ -> Abb.Future.return (Ok ()))
 
     let run_next_layer =
@@ -3576,12 +3317,16 @@ struct
                     >>= fun _ -> Abb.Future.return (Ok ()))
                   else Abb.Future.return (Ok ())
               | Error (`Merge_err reason) ->
-                  S.Comment.publish_comment
-                    ~request_id:(Builder.log_id s)
-                    client
-                    (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                    pull_request
-                    (Msg.Automerge_failure (pull_request, reason))
+                  let open Irm in
+                  fetch Keys.publish_comment
+                  >>= fun publish_comment ->
+                  publish_comment'
+                    publish_comment
+                    (Msg.Automerge_failure
+                       ( Terrat_pull_request.set_diff ()
+                         @@ Terrat_pull_request.set_checks ()
+                         @@ pull_request,
+                         reason ))
               | Error `Error as err -> Abb.Future.return err)
             else Abb.Future.return (Ok ())
       in
@@ -3721,61 +3466,51 @@ struct
           let module Dsf = Terrat_change.Dirspaceflow in
           let module Dc = Terrat_change_match3.Dirspace_config in
           let open Irm in
-          fetch Keys.is_interactive
-          >>= function
-          | true ->
-              fetch Keys.work_manifests_for_job
-              >>= fun work_manifests ->
-              let changes =
-                CCList.flat_map
-                  (fun ({ Wm.changes; _ } as wm) ->
-                    CCList.map (fun c -> (wm, Terrat_change.Dirspaceflow.to_dirspace c)) changes)
-                  work_manifests
-              in
-              fetch Keys.all_unapplied_matches
-              >>= fun all_unapplied_matches ->
-              let unapplied_dirspaces =
-                Terrat_data.Dirspace_set.of_list
-                  (CCList.map
-                     (fun { Dc.dirspace; _ } -> dirspace)
-                     (CCList.flatten all_unapplied_matches))
-              in
-              let applied_changes =
-                CCList.filter
-                  (fun (_, dirspace) ->
-                    not (Terrat_data.Dirspace_set.mem dirspace unapplied_dirspaces))
-                  changes
-              in
-              fetch Keys.account
-              >>= fun account ->
-              fetch Keys.repo
-              >>= fun repo ->
-              let checks =
-                CCList.map
-                  (fun (work_manifest, dirspace) ->
-                    S.Commit_check.make_dirspace
-                      ~config:(Builder.State.config s)
-                      ~description:"Completed"
-                      ~run_type:(Wm.Step.to_string Wm.Step.Apply)
-                      ~dirspace
-                      ~status:Terrat_commit_check.Status.Completed
-                      ~work_manifest
-                      ~repo
-                      ~account
-                      ())
-                  applied_changes
-              in
-              fetch Keys.client
-              >>= fun client ->
-              fetch Keys.branch_ref
-              >>= fun branch_ref ->
-              S.Api.create_commit_checks
-                ~request_id:(Builder.log_id s)
-                client
-                repo
-                branch_ref
-                checks
-          | false -> Abb.Future.return (Ok ()))
+          fetch Keys.work_manifests_for_job
+          >>= fun work_manifests ->
+          let changes =
+            CCList.flat_map
+              (fun ({ Wm.changes; _ } as wm) ->
+                CCList.map (fun c -> (wm, Terrat_change.Dirspaceflow.to_dirspace c)) changes)
+              work_manifests
+          in
+          fetch Keys.all_unapplied_matches
+          >>= fun all_unapplied_matches ->
+          let unapplied_dirspaces =
+            Terrat_data.Dirspace_set.of_list
+              (CCList.map
+                 (fun { Dc.dirspace; _ } -> dirspace)
+                 (CCList.flatten all_unapplied_matches))
+          in
+          let applied_changes =
+            CCList.filter
+              (fun (_, dirspace) -> not (Terrat_data.Dirspace_set.mem dirspace unapplied_dirspaces))
+              changes
+          in
+          fetch Keys.account
+          >>= fun account ->
+          fetch Keys.repo
+          >>= fun repo ->
+          let checks =
+            CCList.map
+              (fun (work_manifest, dirspace) ->
+                S.Commit_check.make_dirspace
+                  ~config:(Builder.State.config s)
+                  ~description:"Completed"
+                  ~run_type:(Wm.Step.to_string Wm.Step.Apply)
+                  ~dirspace
+                  ~status:Terrat_commit_check.Status.Completed
+                  ~work_manifest
+                  ~repo
+                  ~account
+                  ())
+              applied_changes
+          in
+          fetch Keys.branch_ref
+          >>= fun branch_ref ->
+          fetch Keys.create_commit_checks
+          >>= fun create_commit_checks ->
+          create_commit_checks' create_commit_checks branch_ref checks)
   end
 
   let default_tasks () =
@@ -3834,6 +3569,7 @@ struct
     |> Hmap.add (coerce Keys.compute_node) Tasks.compute_node
     |> Hmap.add (coerce Keys.context) Tasks.context
     |> Hmap.add (coerce Keys.context_id) Tasks.context_id
+    |> Hmap.add (coerce Keys.create_commit_checks) Tasks.create_commit_checks
     |> Hmap.add (coerce Keys.default_branch_sha) Tasks.default_branch_sha
     |> Hmap.add (coerce Keys.derived_repo_config) Tasks.derived_repo_config
     |> Hmap.add (coerce Keys.derived_repo_config_dest_branch) Tasks.derived_repo_config_dest_branch
@@ -3850,7 +3586,6 @@ struct
     |> Hmap.add (coerce Keys.eval_work_manifest_event) Tasks.eval_work_manifest_event
     |> Hmap.add (coerce Keys.eval_work_manifest_failure) Tasks.eval_work_manifest_failure
     |> Hmap.add (coerce Keys.initiator) Tasks.initiator
-    |> Hmap.add (coerce Keys.is_interactive) Tasks.is_interactive
     |> Hmap.add (coerce Keys.iter_job) Tasks.iter_job
     |> Hmap.add (coerce Keys.matches) Tasks.matches
     |> Hmap.add (coerce Keys.maybe_complete_job) Tasks.maybe_complete_job
@@ -3862,9 +3597,10 @@ struct
          Tasks.maybe_create_completed_apply_check
     |> Hmap.add (coerce Keys.can_run_apply) Tasks.can_run_apply
     |> Hmap.add (coerce Keys.can_run_plan) Tasks.can_run_plan
+    |> Hmap.add (coerce Keys.publish_comment) Tasks.publish_comment
+    |> Hmap.add (coerce Keys.publish_index_complete) Tasks.publish_index_complete
     |> Hmap.add (coerce Keys.publish_repo_config) Tasks.publish_repo_config
     |> Hmap.add (coerce Keys.publish_unlock) Tasks.publish_unlock
-    |> Hmap.add (coerce Keys.publish_index_complete) Tasks.publish_index_complete
     |> Hmap.add (coerce Keys.pull_request) Tasks.pull_request
     |> Hmap.add (coerce Keys.pull_request_diff) Tasks.pull_request_diff
     |> Hmap.add (coerce Keys.react_to_comment) Tasks.react_to_comment

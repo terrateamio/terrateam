@@ -17,6 +17,14 @@ struct
     Terrat_work_manifest3.Existing.t
   [@@deriving show]
 
+  (* Wrapper so that when we call [publish_comment] the error type lines up *)
+  let publish_comment' f msg =
+    let open Abb.Future.Infix_monad in
+    f msg
+    >>= function
+    | Ok () -> Abb.Future.return (Ok ())
+    | Error `Error -> Abb.Future.return (Error `Error)
+
   let create_token installation_id work_manifest_id db =
     let open Abbs_future_combinators.Infix_result_monad in
     Terrat_user.create_system_user
@@ -126,42 +134,16 @@ struct
       | _ -> false)
 
   let publish_fail s { Builder.Bs.Fetcher.fetch } = function
-    | (`Failed_to_start_with_msg_err _ | `Failed_to_start | `Missing_workflow) as err -> (
+    | (`Failed_to_start_with_msg_err _ | `Failed_to_start | `Missing_workflow) as err ->
         let open Irm in
-        fetch Keys.client
-        >>= fun client ->
-        fetch Keys.user
-        >>= fun user ->
-        fetch Keys.pull_request
-        >>= fun pull_request ->
-        fetch Keys.is_interactive
-        >>= function
-        | true ->
-            S.Comment.publish_comment
-              ~request_id:(Builder.log_id s)
-              client
-              (CCOption.map_or ~default:"" S.Api.User.to_string user)
-              pull_request
-              (Terrat_vcs_provider2.Msg.Run_work_manifest_err err)
-        | false -> Abb.Future.return (Ok ()))
-    | `Error -> (
+        fetch Keys.publish_comment
+        >>= fun publish_comment ->
+        publish_comment' publish_comment (Terrat_vcs_provider2.Msg.Run_work_manifest_err err)
+    | `Error ->
         let open Irm in
-        fetch Keys.client
-        >>= fun client ->
-        fetch Keys.user
-        >>= fun user ->
-        fetch Keys.pull_request
-        >>= fun pull_request ->
-        fetch Keys.is_interactive
-        >>= function
-        | true ->
-            S.Comment.publish_comment
-              ~request_id:(Builder.log_id s)
-              client
-              (CCOption.map_or ~default:"" S.Api.User.to_string user)
-              pull_request
-              Terrat_vcs_provider2.Msg.Unexpected_temporary_err
-        | false -> Abb.Future.return (Ok ()))
+        fetch Keys.publish_comment
+        >>= fun publish_comment ->
+        publish_comment' publish_comment Terrat_vcs_provider2.Msg.Unexpected_temporary_err
 
   let run
       ~name

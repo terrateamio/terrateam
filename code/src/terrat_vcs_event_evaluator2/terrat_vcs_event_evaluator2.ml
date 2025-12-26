@@ -151,12 +151,13 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             Pgsql_io.tx db ~f:(fun () ->
                 (* Do any setup for context or repo in its own transaction so we
                     don't block anything else *)
-                S.Job_context.create_or_get_for_pull_request
-                  ~request_id
-                  db
-                  account
-                  repo
-                  pull_request_id
+                log_err ~request_id
+                @@ S.Job_context.create_or_get_for_pull_request
+                     ~request_id
+                     db
+                     account
+                     repo
+                     pull_request_id
                 >>= fun context ->
                 let open Abb.Future.Infix_monad in
                 let store =
@@ -175,7 +176,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                           (Builder.log_id s)
                           Uuidm.pp
                           context.Tjc.Context.id);
-                    Builder.eval s Keys.update_context_for_pull_request
+                    log_err ~request_id @@ Builder.eval s Keys.update_context_for_pull_request
                     >>= fun () -> Abb.Future.return (Ok s)
                 | _ -> Abb.Future.return (Ok s))
             >>= fun s ->
