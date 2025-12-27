@@ -14,6 +14,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   module B = Builder.B
   module Bs = Builder.Bs
   module Tasks = Terrat_vcs_event_evaluator2_tasks.Make (S) (Keys)
+  module Tasks_pr = Terrat_vcs_event_evaluator2_tasks_pr.Make (S) (Keys)
 
   type err = Builder.err
 
@@ -165,7 +166,13 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                   |> Keys.Key.add Keys.context_id context.Tjc.Context.id
                   |> Keys.Key.add Keys.pull_request_event event
                 in
-                Builder.State.make ~log_id:request_id ~config ~store ~db ~tasks ()
+                Builder.State.make
+                  ~log_id:request_id
+                  ~config
+                  ~store
+                  ~db
+                  ~tasks:(Tasks_pr.tasks tasks)
+                  ()
                 >>= fun s ->
                 match context.Tjc.Context.scope with
                 | Tjc.Context.Scope.Setup ->

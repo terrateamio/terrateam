@@ -161,6 +161,16 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   let working_layer : Terrat_change_match3.Dirspace_config.t list Key.t =
     Hmap.Key.create "working_layer"
 
+  let out_of_change_applies : Terrat_dirspace.t list Key.t = Hmap.Key.create "out_of_change_applies"
+  let applied_dirspaces : Terrat_dirspace.t list Key.t = Hmap.Key.create "applied_dirspaces"
+  let changes : Terrat_change.Diff.t list Key.t = Hmap.Key.create "changes"
+
+  let missing_autoplan_matches :
+      (Terrat_change_match3.Dirspace_config.t list ->
+      (Terrat_change_match3.Dirspace_config.t list, err) result Abb.Future.t)
+      Key.t =
+    Hmap.Key.create "missing_autoplan_matches"
+
   (* Work manifest state machine *)
   let work_manifest_event : Work_manifest_event.t option Key.t =
     Hmap.Key.create "work_manifest_event"
@@ -181,10 +191,16 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   let compute_node : Terrat_job_context.Compute_node.t Key.t = Hmap.Key.create "compute_node"
 
   (* Pull request *)
+
   let pull_request : (Terrat_change.Diff.t list, bool) S.Api.Pull_request.t Key.t =
     Hmap.Key.create "pull_request"
 
+  let pull_request_reviews : Terrat_pull_request_review.t list Key.t =
+    Hmap.Key.create "pull_request_reviews"
+
   let pull_request_diff : Terrat_change.Diff.t list Key.t = Hmap.Key.create "pull_request_diff"
+  let is_draft_pr : bool Key.t = Hmap.Key.create "is_draft_pr"
+  let maybe_automerge : unit Key.t = Hmap.Key.create "maybe_automerge"
 
   (* Indexer branch *)
   let repo_index_branch_wm_completed :
@@ -429,6 +445,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   let create_commit_checks :
       (S.Api.Ref.t -> Terrat_commit_check.t list -> (unit, [ `Error ]) result Abb.Future.t) Key.t =
     Hmap.Key.create "create_commit_checks"
+
+  let publish_dest_branch_no_match : unit Key.t = Hmap.Key.create "publish_dest_branch_no_match"
 
   (* Context management *)
 

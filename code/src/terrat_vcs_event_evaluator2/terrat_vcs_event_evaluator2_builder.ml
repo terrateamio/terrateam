@@ -117,6 +117,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     let mark_dirty t k = t.B.State.dirty <- B.key_repr_of_key k :: t.B.State.dirty
     let orig_store t = t.B.State.orig_store
     let set_orig_store store t = { t with B.State.store; orig_store = store }
+    let tasks t = t.B.State.tasks
+    let set_tasks tasks t = { t with B.State.tasks }
 
     let forward_store_value k t m =
       match Hmap.find k t.B.State.store with

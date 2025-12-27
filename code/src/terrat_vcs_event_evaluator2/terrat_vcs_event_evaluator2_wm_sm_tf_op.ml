@@ -804,15 +804,19 @@ struct
     let maybe_comment_autoapply_running s { Bs.Fetcher.fetch } =
       let module Tjc = Terrat_job_context in
       let open Irm in
-      fetch Keys.job
+      fetch Keys.context
       >>= function
-      | { Tjc.Job.type_ = Tjc.Job.Type_.Autoapply; _ } -> (
-          fetch Keys.pull_request
-          >>= fun pull_request ->
-          match S.Api.Pull_request.state pull_request with
-          | Terrat_pull_request.State.Merged _ ->
-              fetch Keys.publish_comment
-              >>= fun publish_comment -> publish_comment' publish_comment Msg.Autoapply_running
+      | { Tjc.Context.scope = Tjc.Context.Scope.Pull_request _; _ } -> (
+          fetch Keys.job
+          >>= function
+          | { Tjc.Job.type_ = Tjc.Job.Type_.Autoapply; _ } -> (
+              fetch Keys.pull_request
+              >>= fun pull_request ->
+              match S.Api.Pull_request.state pull_request with
+              | Terrat_pull_request.State.Merged _ ->
+                  fetch Keys.publish_comment
+                  >>= fun publish_comment -> publish_comment' publish_comment Msg.Autoapply_running
+              | _ -> Abb.Future.return (Ok ()))
           | _ -> Abb.Future.return (Ok ()))
       | _ -> Abb.Future.return (Ok ())
 

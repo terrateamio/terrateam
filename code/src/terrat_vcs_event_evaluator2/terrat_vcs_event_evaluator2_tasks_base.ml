@@ -8,7 +8,7 @@ module Make
     (S : Terrat_vcs_provider2.S)
     (Keys : module type of Terrat_vcs_event_evaluator2_targets.Make (S)) =
 struct
-  let src = Logs.Src.create ("vcs_event_evaluator2_tasks." ^ S.name)
+  let src = Logs.Src.create ("vcs_event_evaluator2_tasks_base." ^ S.name)
 
   module Logs = (val Logs.src_log src : Logs.LOG)
   module Wm_sm = Terrat_vcs_event_evaluator2_wm_sm.Make (S) (Keys)
@@ -22,6 +22,31 @@ struct
   module B = Builder.B
   module Bs = Builder.Bs
   module Tasks = struct end
+
+  let run ~name f path s fetcher =
+    Abbs_time_it.run
+      (fun t ->
+        Logs.info (fun m -> m "%s : TASK : END : name=%s : time=%f" (Builder.log_id s) name t))
+      (fun () ->
+        let open Abb.Future.Infix_monad in
+        Logs.info (fun m ->
+            m
+              "%s : TASK : START : name=%s : path=[%s]"
+              (Builder.log_id s)
+              name
+              (CCString.concat ", " path));
+        f s fetcher
+        >>= function
+        | Ok _ as r -> Abb.Future.return r
+        | Error (`Suspend_eval _) as err ->
+            Logs.info (fun m -> m "%s : TASK : SUSPEND : name=%s" (Builder.log_id s) name);
+            Abb.Future.return err
+        | Error (`Noop as err) ->
+            Logs.info (fun m -> m "%s : TASK : NOOP : name=%s" (Builder.log_id s) name);
+            Abb.Future.return (Error err)
+        | Error (#Builder.err as err) ->
+            Logs.info (fun m -> m "%s : TASK : FAIL : name=%s" (Builder.log_id s) name);
+            Abb.Future.return (Error err))
 
   let default_tasks () =
     let coerce = Builder.coerce_to_task in

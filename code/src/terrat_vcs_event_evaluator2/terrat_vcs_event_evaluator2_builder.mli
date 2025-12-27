@@ -42,6 +42,8 @@ module Make (S : Terrat_vcs_provider2.S) : sig
     val mark_dirty : t -> 'v Bs.k -> unit
     val orig_store : t -> Hmap.t
     val set_orig_store : Hmap.t -> t -> t
+    val tasks : t -> Hmap.t
+    val set_tasks : Hmap.t -> t -> t
 
     (** If a store value exists in [s] add it to this store. Useful for constructing new stores when
         doing a nested eval call. *)
