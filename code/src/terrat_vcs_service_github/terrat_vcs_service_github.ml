@@ -18,6 +18,7 @@ module Make
     (Routes : ROUTES with type config = Provider.Api.Config.t) =
 struct
   module Evaluator = Terrat_vcs_event_evaluator.Make (Provider)
+  module Evaluator2 = Terrat_vcs_event_evaluator2.Make (Provider)
   module Events = Terrat_vcs_service_github_ep_events3.Make (Provider)
   module Work_manifest = Terrat_vcs_service_github_ep_work_manifest.Make (Provider)
 
@@ -329,9 +330,7 @@ struct
 
     let rec drift config storage =
       let open Abb.Future.Infix_monad in
-      Abbs_future_combinators.ignore
-        (Evaluator.run_scheduled_drift
-           (Evaluator.Ctx.make ~config ~storage ~request_id:(Ouuid.to_string (Ouuid.v4 ())) ()))
+      Abbs_future_combinators.ignore (Evaluator2.run_missing_drift_schedules ~config ~storage ())
       >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> drift config storage
 
     let rec flow_state_cleanup config storage =

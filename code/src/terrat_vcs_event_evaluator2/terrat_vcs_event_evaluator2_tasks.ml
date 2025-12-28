@@ -34,7 +34,8 @@ struct
         |> Keys.Key.add Keys.account account
         |> Keys.Key.add Keys.pull_request_id (S.Api.Pull_request.id pr)
         |> Keys.Key.add Keys.repo (S.Api.Pull_request.repo pr)
-    | Terrat_vcs_provider2.Target.Drift _ -> raise (Failure "nyi")
+    | Terrat_vcs_provider2.Target.Drift { repo; _ } ->
+        store |> Keys.Key.add Keys.account account |> Keys.Key.add Keys.repo repo
 
   module H = struct
     let complete_job s job fut =
@@ -119,8 +120,7 @@ struct
               >>= fun repo ->
               Abb.Future.return
                 (Ok
-                   (Terrat_vcs_provider2.Target.Drift { repo; branch = S.Api.Ref.to_string branch }))
-          | { C.scope = C.Scope.Setup; _ } -> assert false)
+                   (Terrat_vcs_provider2.Target.Drift { repo; branch = S.Api.Ref.to_string branch })))
 
     let initiator =
       run ~name:"initiator" (fun s { Bs.Fetcher.fetch } ->
@@ -295,7 +295,8 @@ struct
                   | Tjc.Job.Type_.Gate_approval _
                   | Tjc.Job.Type_.Index
                   | Tjc.Job.Type_.Repo_config
-                  | Tjc.Job.Type_.Unlock _ ->
+                  | Tjc.Job.Type_.Unlock _
+                  | Tjc.Job.Type_.Push ->
                       CCList.filter (Terrat_change_match3.match_tag_query ~tag_query) layer)
               | [] -> []
             in
@@ -348,9 +349,14 @@ struct
           let tag_query =
             let module T = Tjc.Job.Type_ in
             match job.Tjc.Job.type_ with
-            | T.Apply { tag_query } | T.Plan { tag_query } -> tag_query
-            | T.Autoapply | T.Autoplan | T.Gate_approval _ | T.Index | T.Repo_config | T.Unlock _ ->
-                Terrat_tag_query.any
+            | T.Apply { tag_query; kind = _ } | T.Plan { tag_query; kind = _ } -> tag_query
+            | T.Autoapply
+            | T.Autoplan
+            | T.Gate_approval _
+            | T.Index
+            | T.Repo_config
+            | T.Unlock _
+            | T.Push -> Terrat_tag_query.any
           in
           fetch Keys.repo_index_branch
           >>= fun index ->
@@ -444,7 +450,7 @@ struct
                      all_unapplied_matches;
                      working_layer;
                    })
-          | T.Gate_approval _ | T.Index | T.Repo_config | T.Unlock _ -> assert false)
+          | T.Gate_approval _ | T.Index | T.Repo_config | T.Unlock _ | T.Push -> assert false)
 
     let working_set_matches =
       run ~name:"working_set_matches" (fun s { Bs.Fetcher.fetch } ->
@@ -1408,17 +1414,6 @@ struct
               publish_comment' publish_comment Msg.Account_expired
               >>= fun () -> Abb.Future.return (Error `Noop))
 
-    let access_control_eval_plan =
-      run ~name:"access_control_eval_plan" (fun s { Bs.Fetcher.fetch } ->
-          let open Irm in
-          fetch Keys.access_control
-          >>= fun access_control ->
-          fetch Keys.working_set_matches
-          >>= fun working_set_matches ->
-          let open Abb.Future.Infix_monad in
-          Access_control.eval_tf_operation access_control working_set_matches `Plan
-          >>= fun ret -> Abb.Future.return (Ok ret))
-
     let publish_dest_branch_no_match =
       run ~name:"publish_dest_branch_no_match" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
@@ -1547,7 +1542,7 @@ struct
                         (S.Api.Ref.to_string base_branch_name));
                   fetch Keys.publish_dest_branch_no_match
                   >>= fun () -> Abb.Future.return (Error `Error)
-              | T.Gate_approval _ | T.Index | T.Repo_config | T.Unlock _ -> assert false)
+              | T.Gate_approval _ | T.Index | T.Repo_config | T.Unlock _ | T.Push -> assert false)
           | Error `No_matching_source_branch -> (
               fetch Keys.job
               >>= fun job ->
@@ -1568,13 +1563,11 @@ struct
                         (S.Api.Ref.to_string branch_name));
                   fetch Keys.publish_dest_branch_no_match
                   >>= fun () -> Abb.Future.return (Error `Noop)
-              | T.Gate_approval _ | T.Index | T.Repo_config | T.Unlock _ -> assert false))
+              | T.Gate_approval _ | T.Index | T.Repo_config | T.Unlock _ | T.Push -> assert false))
 
     let run_plan =
       run ~name:"run_plan" (fun s ({ Bs.Fetcher.fetch } as fetcher) ->
           let open Irm in
-          fetch Keys.check_pull_request_state
-          >>= fun () ->
           fetch Keys.dest_branch_ref
           >>= fun dest_branch_ref ->
           fetch Keys.working_branch_ref
@@ -1596,8 +1589,6 @@ struct
     let run_apply =
       run ~name:"run_apply" (fun s ({ Bs.Fetcher.fetch } as fetcher) ->
           let open Irm in
-          fetch Keys.check_pull_request_state
-          >>= fun () ->
           fetch Keys.dest_branch_ref
           >>= fun dest_branch_ref ->
           fetch Keys.working_branch_ref
@@ -1645,7 +1636,7 @@ struct
               | Tjc.Job.Type_.Repo_config -> H.complete_job s job @@ fetch Keys.publish_repo_config
               | Tjc.Job.Type_.Index -> H.complete_job s job @@ fetch Keys.publish_index_complete
               | Tjc.Job.Type_.Unlock _ -> H.complete_job s job @@ fetch Keys.publish_unlock
-              | Tjc.Job.Type_.Gate_approval _ -> assert false)
+              | Tjc.Job.Type_.Gate_approval _ | Tjc.Job.Type_.Push -> assert false)
           | None -> assert false)
 
     let maybe_complete_job_from_work_manifest_event =
@@ -1761,7 +1752,15 @@ struct
                             | None -> raise (Failure "nyi"))
                         | Error #Builder.err as err -> Abb.Future.return err)
                     | None -> raise (Failure "nyi"))
-              else raise (Failure "nyi"))
+              else (
+                Logs.info (fun m ->
+                    m
+                      "%s : COMPUTE_NODE_OFFERING_MISMATCH : compute_node_sha= %s : offering_sha= \
+                       %s"
+                      (Builder.log_id s)
+                      compute_node.C.capabilities.C.Capabilities.sha
+                      offering.Offering.sha);
+                raise (Failure "nyi")))
 
     let work_manifest_event_job =
       run ~name:"work_manifest_event_job" (fun s { Bs.Fetcher.fetch } ->
@@ -1831,8 +1830,7 @@ struct
                          (match context.Tjc.Context.scope with
                          | Tjc.Context.Scope.Pull_request _ ->
                              Tasks_pr.tasks @@ Builder.State.tasks s
-                         | Tjc.Context.Scope.Branch _ -> Tasks_branch.tasks @@ Builder.State.tasks s
-                         | Tjc.Context.Scope.Setup -> assert false)
+                         | Tjc.Context.Scope.Branch _ -> Tasks_branch.tasks @@ Builder.State.tasks s)
                   in
                   Builder.eval s' Keys.iter_job)
           | None -> assert false)
@@ -1859,7 +1857,8 @@ struct
           | Tjc.Job.Type_.Repo_config -> H.complete_job s job @@ fetch Keys.publish_repo_config
           | Tjc.Job.Type_.Unlock _ -> H.complete_job s job @@ fetch Keys.publish_unlock
           | Tjc.Job.Type_.Index -> H.complete_job s job @@ fetch Keys.publish_index_complete
-          | Tjc.Job.Type_.Gate_approval _ -> assert false)
+          | Tjc.Job.Type_.Push -> H.complete_job s job @@ fetch Keys.eval_push_event
+          | Tjc.Job.Type_.Gate_approval _ -> H.complete_job s job @@ fetch Keys.store_gate_approval)
 
     let eval_work_manifest_failure =
       run ~name:"eval_work_manifest_failure" (fun s { Bs.Fetcher.fetch } ->
@@ -1889,43 +1888,46 @@ struct
           let module V1 = Terrat_base_repo_config_v1 in
           let module D = Terrat_base_repo_config_v1.Drift in
           let open Irm in
-          fetch Keys.client
-          >>= fun client ->
-          fetch Keys.repo
-          >>= fun repo ->
-          S.Api.fetch_remote_repo ~request_id:(Builder.log_id s) client repo
-          >>= fun remote_repo ->
-          let default_branch = S.Api.Remote_repo.default_branch remote_repo in
-          fetch Keys.pushed_branch
-          >>= fun pushed_branch ->
-          (if
-             CCString.equal (S.Api.Ref.to_string pushed_branch) (S.Api.Ref.to_string default_branch)
-           then (
-             fetch Keys.repo_config
-             >>= fun repo_config ->
-             let ({ D.enabled; schedules } as drift) = V1.drift repo_config in
-             CCList.iter
-               (fun (name, { D.Schedule.tag_query; reconcile; schedule; window }) ->
-                 Logs.info (fun m ->
-                     m
-                       "%s : DRIFT : UPDATE_SCHEDULE : name=%s : enabled=%B : repo=%s : \
-                        schedule=%s : reconcile=%s : tag_query=%s : window=%s"
-                       (Builder.log_id s)
-                       name
-                       enabled
-                       (S.Api.Repo.to_string repo)
-                       (D.Schedule.Sched.to_string schedule)
-                       (Bool.to_string reconcile)
-                       (Terrat_tag_query.to_string tag_query)
-                       (CCOption.map_or
-                          ~default:""
-                          (fun { D.Window.start; end_ } -> start ^ "-" ^ end_)
-                          window)))
-               (V1.String_map.to_list schedules);
-             Builder.run_db s ~f:(fun db ->
-                 S.Db.store_drift_schedule ~request_id:(Builder.log_id s) db repo drift))
-           else Abb.Future.return (Ok ()))
-          >>= fun () -> fetch Keys.run_missing_drift_schedules)
+          let run =
+            fetch Keys.client
+            >>= fun client ->
+            fetch Keys.repo
+            >>= fun repo ->
+            S.Api.fetch_remote_repo ~request_id:(Builder.log_id s) client repo
+            >>= fun remote_repo ->
+            let default_branch = S.Api.Remote_repo.default_branch remote_repo in
+            fetch Keys.branch_name
+            >>= fun branch_name ->
+            if CCString.equal (S.Api.Ref.to_string branch_name) (S.Api.Ref.to_string default_branch)
+            then (
+              fetch Keys.repo_config
+              >>= fun repo_config ->
+              let ({ D.enabled; schedules } as drift) = V1.drift repo_config in
+              CCList.iter
+                (fun (name, { D.Schedule.tag_query; reconcile; schedule; window }) ->
+                  Logs.info (fun m ->
+                      m
+                        "%s : DRIFT : UPDATE_SCHEDULE : name=%s : enabled=%B : repo=%s : \
+                         schedule=%s : reconcile=%s : tag_query=%s : window=%s"
+                        (Builder.log_id s)
+                        name
+                        enabled
+                        (S.Api.Repo.to_string repo)
+                        (D.Schedule.Sched.to_string schedule)
+                        (Bool.to_string reconcile)
+                        (Terrat_tag_query.to_string tag_query)
+                        (CCOption.map_or
+                           ~default:""
+                           (fun { D.Window.start; end_ } -> start ^ "-" ^ end_)
+                           window)))
+                (V1.String_map.to_list schedules);
+              Builder.run_db s ~f:(fun db ->
+                  S.Db.store_drift_schedule ~request_id:(Builder.log_id s) db repo drift))
+            else Abb.Future.return (Ok ())
+          in
+          fetch Keys.job
+          >>= fun job ->
+          H.complete_job s job @@ run >>= fun () -> fetch Keys.run_missing_drift_schedules)
 
     let run_missing_drift_schedules =
       run ~name:"run_missing_drift_schedules" (fun s { Bs.Fetcher.fetch } ->
@@ -1977,7 +1979,8 @@ struct
                          S.Job_context.Job.create
                            ~request_id:(Builder.log_id s)
                            db
-                           (Tjc.Job.Type_.Plan { tag_query })
+                           (Tjc.Job.Type_.Plan
+                              { tag_query; kind = Some Tjc.Job.Type_.Kind.(Drift { reconcile }) })
                            context
                            None)
                      >>= fun job ->
@@ -2003,7 +2006,7 @@ struct
                      Builder.eval s' Keys.iter_job)
                    chunk)
             (CCList.chunks 5 schedules)
-          >>= fun () -> raise (Failure "nyi"))
+          >>= fun () -> Abb.Future.return (Ok ()))
 
     let maybe_create_completed_apply_check =
       run ~name:"maybe_create_completed_apply_check" (fun s { Bs.Fetcher.fetch } ->
@@ -2137,10 +2140,10 @@ struct
           let open Irm in
           fetch Keys.job
           >>= function
-          | { Tjc.Job.type_ = Tjc.Job.Type_.Apply _; _ }
-          | { Tjc.Job.type_ = Tjc.Job.Type_.Autoapply; _ }
-          | { Tjc.Job.type_ = Tjc.Job.Type_.Autoplan; _ }
-          | { Tjc.Job.type_ = Tjc.Job.Type_.Plan _; _ } -> (
+          | ( { Tjc.Job.type_ = Tjc.Job.Type_.Apply _; _ }
+            | { Tjc.Job.type_ = Tjc.Job.Type_.Autoapply; _ }
+            | { Tjc.Job.type_ = Tjc.Job.Type_.Autoplan; _ }
+            | { Tjc.Job.type_ = Tjc.Job.Type_.Plan _; _ } ) as job -> (
               fetch Keys.all_unapplied_matches
               >>= function
               | [] ->
@@ -2157,8 +2160,6 @@ struct
                   in
                   fetch Keys.work_manifests_for_job
                   >>= fun work_manifests ->
-                  fetch Keys.job
-                  >>= fun job ->
                   let changes =
                     Terrat_data.Dirspace_set.of_list
                     @@ CCList.flat_map
@@ -2167,22 +2168,23 @@ struct
                          work_manifests
                   in
                   if Terrat_data.Dirspace_set.disjoint changes working_layer_dirspaces then (
-                    (* If there is no overlap between the dirspaces that were just
-                   ran as part of the work manifest and the remaining unapplied
-                   dirspaces, that means we can safely try to run the remaining
-                   layers.  If there is overlap then it means we should not try
-                   to run another iteration because we'll just operate on the
-                   same dirspaces we just did.  This doesn't necessarily mean
-                   something went wrong.  For example, planning a change means
-                   we'd come to this test and if the plans had changes, they
-                   would be unapplied but we would have just planned them so we
-                   would not want to try to do another iteration of planning.
-                   But we could also get in to this situation through some
-                   unforseen series of operations where we are not correctly
-                   determining which changes have been applied (for example
-                   things being merged in an order we did not anticipate) in
-                   which case this also prevents us from getting into an
-                   infinite loop. *)
+                    (* If there is no overlap between the dirspaces that were
+                       just ran as part of the work manifest and the remaining
+                       unapplied dirspaces, that means we can safely try to run
+                       the remaining layers.  If there is overlap then it means
+                       we should not try to run another iteration because we'll
+                       just operate on the same dirspaces we just did.  This
+                       doesn't necessarily mean something went wrong.  For
+                       example, planning a change means we'd come to this test
+                       and if the plans had changes, they would be unapplied but
+                       we would have just planned them so we would not want to
+                       try to do another iteration of planning.  But we could
+                       also get in to this situation through some unforseen
+                       series of operations where we are not correctly
+                       determining which changes have been applied (for example
+                       things being merged in an order we did not anticipate) in
+                       which case this also prevents us from getting into an
+                       infinite loop. *)
                     let { Tjc.Job.context; initiator; _ } = job in
                     Builder.run_db s ~f:(fun db ->
                         S.Job_context.Job.create
@@ -2209,6 +2211,45 @@ struct
                   else
                     match job with
                     | { Tjc.Job.type_ = Tjc.Job.Type_.Apply _; _ } -> Abb.Future.return (Ok ())
+                    | {
+                     Tjc.Job.type_ =
+                       Tjc.Job.Type_.(
+                         Plan
+                           {
+                             tag_query;
+                             kind = Some Tjc.Job.Type_.Kind.(Drift { reconcile = true }) as kind;
+                           });
+                     _;
+                    } ->
+                        (* If we've just finished a drift plan with
+                           reconciliation on, then time to run the apply *)
+                        let { Tjc.Job.context; initiator; _ } = job in
+                        Builder.run_db s ~f:(fun db ->
+                            S.Job_context.Job.create
+                              ~request_id:(Builder.log_id s)
+                              db
+                              (Tjc.Job.Type_.Apply { tag_query; kind })
+                              context
+                              initiator)
+                        >>= fun job ->
+                        Logs.info (fun m ->
+                            m
+                              "%s : CREATE_JOB : new_job= %a"
+                              (Builder.log_id s)
+                              Uuidm.pp
+                              job.Tjc.Job.id);
+                        let s' =
+                          s
+                          |> Builder.State.orig_store
+                          |> Keys.Key.add Keys.job job
+                          |> Keys.Key.add Keys.work_manifest_event None
+                          |> Builder.State.forward_store_value Keys.context s
+                          |> Builder.State.forward_store_value Keys.repo_config_with_provenance s
+                          |> Builder.State.forward_store_value Keys.repo_config_raw s
+                          |> CCFun.flip Builder.State.set_orig_store s
+                          |> Builder.State.set_log_id (Uuidm.to_string job.Tjc.Job.id)
+                        in
+                        Builder.eval s' Keys.run_apply
                     | { Tjc.Job.type_ = Tjc.Job.Type_.(Plan _ | Autoplan); _ }
                       when can_stack_auto_apply working_layer ->
                         let { Tjc.Job.context; initiator; _ } = job in
@@ -2242,13 +2283,15 @@ struct
                         Abb.Future.return (Ok ())
                     | {
                      Tjc.Job.type_ =
-                       Tjc.Job.Type_.(Autoapply | Gate_approval _ | Index | Repo_config | Unlock _);
+                       Tjc.Job.Type_.(
+                         Autoapply | Gate_approval _ | Index | Repo_config | Unlock _ | Push);
                      _;
                     } -> Abb.Future.return (Ok ())))
           | { Tjc.Job.type_ = Tjc.Job.Type_.Gate_approval _; _ }
           | { Tjc.Job.type_ = Tjc.Job.Type_.Index; _ }
           | { Tjc.Job.type_ = Tjc.Job.Type_.Repo_config; _ }
-          | { Tjc.Job.type_ = Tjc.Job.Type_.Unlock _; _ } -> Abb.Future.return (Ok ()))
+          | { Tjc.Job.type_ = Tjc.Job.Type_.Unlock _; _ }
+          | { Tjc.Job.type_ = Tjc.Job.Type_.Push; _ } -> Abb.Future.return (Ok ()))
 
     let complete_no_change_dirspaces =
       run ~name:"complete_no_change_dirspaces" (fun s { Bs.Fetcher.fetch } ->
@@ -2308,7 +2351,6 @@ struct
     let coerce = Builder.coerce_to_task in
     Hmap.empty
     |> Hmap.add (coerce Keys.access_control) Tasks.access_control
-    |> Hmap.add (coerce Keys.access_control_eval_plan) Tasks.access_control_eval_plan
     |> Hmap.add (coerce Keys.account_status) Tasks.account_status
     |> Hmap.add (coerce Keys.all_matches) Tasks.all_matches
     |> Hmap.add (coerce Keys.all_tag_query_matches) Tasks.all_tag_query_matches

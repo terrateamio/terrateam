@@ -5414,9 +5414,6 @@ module Job_context = struct
         //
         (* updated_at *)
         Ret.text
-        //
-        (* is_setup *)
-        Ret.boolean
         /^ read "select_or_insert_pull_request_context.sql"
         /% Var.bigint "repo_id"
         /% Var.bigint "pull_number")
@@ -5450,8 +5447,7 @@ module Job_context = struct
              | C.Pull_request { P.pull_request } -> S.Pull_request pull_request
              | C.Branch { B.branch } -> S.Branch (Api.Ref.of_string branch, None)
              | C.Branch_dest_branch { Bb.branch; dest_branch } ->
-                 S.Branch (Api.Ref.of_string branch, Some (Api.Ref.of_string dest_branch))
-             | C.Setup _ -> S.Setup))
+                 S.Branch (Api.Ref.of_string branch, Some (Api.Ref.of_string dest_branch))))
 
     let select_context_by_id =
       Pgsql_io.Typed_sql.(
@@ -5480,70 +5476,79 @@ module Job_context = struct
       | _ -> None
 
     module Type_ = struct
-      module P = struct
-        type t = {
-          type_ : string; [@key "type"]
-          tag_query : string option; [@default None]
-          unlocks : string list option; [@default None]
-          tokens : string list option; [@default None]
-        }
-        [@@deriving yojson]
-      end
+      let kind_to_json =
+        let module K = Terrat_job_context.Job.Type_.Kind in
+        let module O = Terrat_job_type_kind in
+        let module Kd = Terrat_job_type_kind_drift in
+        CCOption.map (function K.Drift { reconcile } ->
+            O.Kind_drift { Kd.reconcile; type_ = "drift" })
+
+      let json_to_kind =
+        let module K = Terrat_job_context.Job.Type_.Kind in
+        let module O = Terrat_job_type_kind in
+        let module Kd = Terrat_job_type_kind_drift in
+        CCOption.map (function O.Kind_drift { Kd.reconcile; type_ = _ } -> K.Drift { reconcile })
 
       let to_json =
         let module T = Terrat_job_context.Job.Type_ in
+        let module Jt = Terrat_job_type in
         CCFun.(
           (function
-          | T.Apply { tag_query } ->
-              {
-                P.type_ = "apply";
-                tag_query = Some (Terrat_tag_query.to_string tag_query);
-                unlocks = None;
-                tokens = None;
-              }
-          | T.Autoapply ->
-              { P.type_ = "autoapply"; tag_query = None; unlocks = None; tokens = None }
-          | T.Autoplan -> { P.type_ = "autoplan"; tag_query = None; unlocks = None; tokens = None }
-          | T.Plan { tag_query } ->
-              {
-                P.type_ = "plan";
-                tag_query = Some (Terrat_tag_query.to_string tag_query);
-                unlocks = None;
-                tokens = None;
-              }
+          | T.Apply { tag_query; kind } ->
+              Jt.Type.Apply
+                {
+                  Jt.Apply.type_ = "apply";
+                  tag_query = Some (Terrat_tag_query.to_string tag_query);
+                  kind = kind_to_json kind;
+                }
+          | T.Autoapply -> Jt.Type.Apply { Jt.Apply.type_ = "apply"; tag_query = None; kind = None }
+          | T.Autoplan -> Jt.Type.Plan { Jt.Plan.type_ = "plan"; tag_query = None; kind = None }
+          | T.Plan { tag_query; kind } ->
+              Jt.Type.Plan
+                {
+                  Jt.Plan.type_ = "plan";
+                  tag_query = Some (Terrat_tag_query.to_string tag_query);
+                  kind = kind_to_json kind;
+                }
           | T.Gate_approval { tokens } ->
-              { P.type_ = "gate_approval"; tag_query = None; unlocks = None; tokens = Some tokens }
-          | T.Index -> { P.type_ = "index"; tag_query = None; unlocks = None; tokens = None }
-          | T.Repo_config ->
-              { P.type_ = "repo_config"; tag_query = None; unlocks = None; tokens = None }
-          | T.Unlock unlocks ->
-              { P.type_ = "unlock"; tag_query = None; unlocks = Some unlocks; tokens = None })
-          %> P.to_yojson
+              Jt.Type.Gate_approval { Jt.Gate_approval.type_ = "gate-approval"; tokens }
+          | T.Index -> Jt.Type.Index { Jt.Index.type_ = "index" }
+          | T.Repo_config -> Jt.Type.Repo_config { Jt.Repo_config.type_ = "repo-config" }
+          | T.Unlock unlocks -> Jt.Type.Unlock { Jt.Unlock.type_ = "unlock"; ids = unlocks }
+          | T.Push -> Jt.Type.Push { Jt.Push.type_ = "push" })
+          %> Jt.Type.to_yojson
           %> Yojson.Safe.to_string)
 
       let of_json =
         let module T = Terrat_job_context.Job.Type_ in
+        let module Jt = Terrat_job_type in
         CCFun.(
           CCOption.wrap Yojson.Safe.from_string
-          %> CCOption.flat_map (P.of_yojson %> CCResult.to_opt)
+          %> CCOption.flat_map (Jt.Type.of_yojson %> CCResult.to_opt)
           %> CCOption.flat_map (function
-               | { P.type_ = "apply"; tag_query = Some tag_query; _ } ->
+               | Jt.Type.Apply { Jt.Apply.type_ = _; tag_query = Some tag_query; kind } ->
                    Some
                      (T.Apply
-                        { tag_query = CCResult.get_exn @@ Terrat_tag_query.of_string tag_query })
-               | { P.type_ = "autoapply"; _ } -> Some T.Autoapply
-               | { P.type_ = "autoplan"; _ } -> Some T.Autoplan
-               | { P.type_ = "plan"; tag_query = Some tag_query; _ } ->
+                        {
+                          tag_query = CCResult.get_exn @@ Terrat_tag_query.of_string tag_query;
+                          kind = json_to_kind kind;
+                        })
+               | Jt.Type.Apply { Jt.Apply.type_ = _; tag_query = None; kind = _ } ->
+                   Some T.Autoapply
+               | Jt.Type.Plan { Jt.Plan.type_ = _; tag_query = Some tag_query; kind } ->
                    Some
                      (T.Plan
-                        { tag_query = CCResult.get_exn @@ Terrat_tag_query.of_string tag_query })
-               | { P.type_ = "repo_config"; _ } -> Some T.Repo_config
-               | { P.type_ = "unlock"; unlocks; _ } ->
-                   Some (T.Unlock (CCOption.get_or ~default:[] unlocks))
-               | { P.type_ = "gate_approval"; tokens = Some tokens; _ } ->
+                        {
+                          tag_query = CCResult.get_exn @@ Terrat_tag_query.of_string tag_query;
+                          kind = json_to_kind kind;
+                        })
+               | Jt.Type.Plan { Jt.Plan.type_ = _; tag_query = None; kind = _ } -> Some T.Autoplan
+               | Jt.Type.Repo_config { Jt.Repo_config.type_ = _ } -> Some T.Repo_config
+               | Jt.Type.Unlock { Jt.Unlock.type_ = _; ids } -> Some (T.Unlock ids)
+               | Jt.Type.Gate_approval { Jt.Gate_approval.type_ = _; tokens } ->
                    Some (T.Gate_approval { tokens })
-               | { P.type_ = "index"; _ } -> Some T.Index
-               | _ -> None))
+               | Jt.Type.Index { Jt.Index.type_ = _ } -> Some T.Index
+               | Jt.Type.Push { Jt.Push.type_ = _ } -> Some T.Push))
     end
 
     let string_of_initiator = Api.User.to_string
@@ -5677,14 +5682,6 @@ module Job_context = struct
         /^ read "select_job_work_manifests.sql"
         /% Var.uuid "job")
 
-    let update_context_for_pull_request =
-      Pgsql_io.Typed_sql.(
-        sql
-        /^ read "update_context_for_pull_request.sql"
-        /% Var.uuid "context_id"
-        /% Var.bigint "repo_id"
-        /% Var.bigint "pull_number")
-
     let to_compute_node_state =
       Tjc.Compute_node.State.(
         function
@@ -5797,20 +5794,18 @@ module Job_context = struct
       Pgsql_io.Prepared_stmt.fetch
         db
         Sql.select_or_insert_pull_request_context
-        ~f:(fun id created_at updated_at is_setup -> (id, created_at, updated_at, is_setup))
+        ~f:(fun id created_at updated_at -> (id, created_at, updated_at))
         (CCInt64.of_int @@ Api.Repo.id repo)
         (CCInt64.of_int @@ pull_request_id)
       >>= function
       | [] -> assert false
-      | (id, created_at, updated_at, is_setup) :: _ ->
+      | (id, created_at, updated_at) :: _ ->
           Abb.Future.return
             (Ok
                {
                  Tjc.Context.created_at;
                  id;
-                 scope =
-                   (if is_setup then Tjc.Context.Scope.Setup
-                    else Tjc.Context.Scope.Pull_request pull_request_id);
+                 scope = Tjc.Context.Scope.Pull_request pull_request_id;
                  updated_at;
                })
     in
@@ -5855,21 +5850,6 @@ module Job_context = struct
     | Error (#Pgsql_io.err as err) ->
         Logs.err (fun m ->
             m "%s : JOB_CONTEXT : CREATE_OR_GET_FOR_BRANCH : %a" request_id Pgsql_io.pp_err err);
-        Abb.Future.return (Error `Error)
-
-  let update_for_pull_request ~request_id db ~context_id repo pull_request_id =
-    let open Abb.Future.Infix_monad in
-    Pgsql_io.Prepared_stmt.execute
-      db
-      Sql.update_context_for_pull_request
-      context_id
-      (CCInt64.of_int @@ Api.Repo.id repo)
-      (CCInt64.of_int pull_request_id)
-    >>= function
-    | Ok () -> Abb.Future.return (Ok ())
-    | Error (#Pgsql_io.err as err) ->
-        Logs.err (fun m ->
-            m "%s : CONTEXT : UPDATE_FOR_PULL_REQUEST : %a" request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
 
   let query ~request_id db id =

@@ -18,7 +18,7 @@ create table job_contexts (
     updated_at timestamp with time zone default (now()) not null
 );
 
-create index job_contexts_param_idx on job_contexts using gin (params);
+create index job_contexts_repo_params_idx on job_contexts using gin (repo, params jsonb_path_ops);
 
 -- We want various unique constraints.  We make one for each type of uniqueness
 -- we want to ensure.
@@ -53,9 +53,9 @@ create table jobs (
     foreign key (context_id) references job_contexts(id)
 );
 
-create index jobs_context_id_idx on jobs (context_id);
+create index jobs_context_id_created_at_idx on jobs (context_id, created_at);
 
-create index jobs_type_idx on jobs ((params->>'type'));
+create index jobs_context_id_type_idx on jobs (context_id, (params->>'type'));
 
 create table job_work_manifests (
     job_id uuid,

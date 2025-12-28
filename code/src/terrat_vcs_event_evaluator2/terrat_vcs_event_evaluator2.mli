@@ -60,4 +60,7 @@ module Make (S : Terrat_vcs_provider2.S) : sig
     user:S.Api.User.t ->
     unit ->
     unit Abb.Future.t
+
+  val run_missing_drift_schedules :
+    config:S.Api.Config.t -> storage:Terrat_storage.t -> unit -> unit Abb.Future.t
 end

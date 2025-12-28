@@ -619,14 +619,6 @@ module type S = sig
       ((Api.Pull_request.Id.t, Api.Ref.t) Terrat_job_context.Context.t, [> `Error ]) result
       Abb.Future.t
 
-    val update_for_pull_request :
-      request_id:string ->
-      Db.t ->
-      context_id:Uuidm.t ->
-      Api.Repo.t ->
-      Api.Pull_request.Id.t ->
-      (unit, [> `Error ]) result Abb.Future.t
-
     val query :
       request_id:string ->
       Db.t ->

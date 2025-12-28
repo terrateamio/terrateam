@@ -21,6 +21,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     | Pgsql_io.err
     | Pgsql_pool.err
     | Str_template.err
+    | P2.gate_add_approval_err
     ]
   [@@deriving show]
 
@@ -456,8 +457,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
 
   (* API facing targets *)
 
-  let update_context_for_pull_request : unit Key.t =
-    Hmap.Key.create "update_context_for_pull_request"
+  let get_context_for_pull_request :
+      (S.Api.Pull_request.Id.t, S.Api.Ref.t) Terrat_job_context.Context.t Key.t =
+    Hmap.Key.create "get_context_for_pull_request"
 
   let eval_compute_node_poll : Terrat_api_components.Work_manifest.t Key.t =
     Hmap.Key.create "eval_compute_node_poll"

@@ -40,9 +40,6 @@
         },
         {
           "$ref": "#/definitions/branch-dest-branch"
-        },
-        {
-          "$ref": "#/definitions/setup"
         }
       ]
     },
@@ -55,19 +52,6 @@
       },
       "required": [
         "pull_request"
-      ],
-      "type": "object"
-    },
-    "setup": {
-      "additionalProperties": false,
-      "properties": {
-        "type": {
-          "const": "setup",
-          "type": "string"
-        }
-      },
-      "required": [
-        "type"
       ],
       "type": "object"
     }

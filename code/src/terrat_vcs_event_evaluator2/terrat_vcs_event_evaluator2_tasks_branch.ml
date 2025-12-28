@@ -38,19 +38,23 @@ struct
     let branch_ref =
       run ~name:"branch_ref" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
-          fetch Keys.context
+          fetch Keys.branch_name
+          >>= fun branch_name ->
+          fetch Keys.client
+          >>= fun client ->
+          fetch Keys.repo
+          >>= fun repo ->
+          S.Api.fetch_branch_sha ~request_id:(Builder.log_id s) client repo branch_name
           >>= function
-          | { Tjc.Context.scope = Tjc.Context.Scope.Branch (branch_name, _); _ } -> (
-              fetch Keys.client
-              >>= fun client ->
-              fetch Keys.repo
-              >>= fun repo ->
-              S.Api.fetch_branch_sha ~request_id:(Builder.log_id s) client repo branch_name
-              >>= function
-              | Some ref_ -> Abb.Future.return (Ok ref_)
-              | None -> Abb.Future.return (Error `Error))
-          | _ -> assert false)
+          | Some ref_ -> Abb.Future.return (Ok ref_)
+          | None -> Abb.Future.return (Error `Error))
 
+    (* Is this the right choice?  Returning the branch anme if the dest branch
+       name doesn't exist?  For now, yes.  We eventually want to have better
+       support for this, but right now to be compatible with a lot of the code
+       base, always return a dest branch and then in places in the code where we
+       care if the dest branch adn the branch name are the same, it just checks
+       there and does the right thing. *)
     let dest_branch_name =
       run ~name:"dest_branch_name" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
@@ -58,25 +62,23 @@ struct
           >>= function
           | { Tjc.Context.scope = Tjc.Context.Scope.Branch (_, Some dest_branch_name); _ } ->
               Abb.Future.return (Ok dest_branch_name)
-          | { Tjc.Context.scope = Tjc.Context.Scope.Branch (_, None); _ } -> assert false
+          | { Tjc.Context.scope = Tjc.Context.Scope.Branch (branch_name, None); _ } ->
+              Abb.Future.return (Ok branch_name)
           | _ -> assert false)
 
     let dest_branch_ref =
       run ~name:"dest_branch_ref" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
-          fetch Keys.context
+          fetch Keys.dest_branch_name
+          >>= fun dest_branch_name ->
+          fetch Keys.client
+          >>= fun client ->
+          fetch Keys.repo
+          >>= fun repo ->
+          S.Api.fetch_branch_sha ~request_id:(Builder.log_id s) client repo dest_branch_name
           >>= function
-          | { Tjc.Context.scope = Tjc.Context.Scope.Branch (_, Some dest_branch_name); _ } -> (
-              fetch Keys.client
-              >>= fun client ->
-              fetch Keys.repo
-              >>= fun repo ->
-              S.Api.fetch_branch_sha ~request_id:(Builder.log_id s) client repo dest_branch_name
-              >>= function
-              | Some ref_ -> Abb.Future.return (Ok ref_)
-              | None -> Abb.Future.return (Error `Error))
-          | { Tjc.Context.scope = Tjc.Context.Scope.Branch (_, None); _ } -> assert false
-          | _ -> assert false)
+          | Some ref_ -> Abb.Future.return (Ok ref_)
+          | None -> Abb.Future.return (Error `Error))
 
     let working_branch_ref =
       run ~name:"working_branch_ref" (fun _s { Bs.Fetcher.fetch } -> fetch Keys.branch_ref)
@@ -123,18 +125,28 @@ struct
     let create_commit_checks =
       run ~name:"create_commit_checks" (fun _ _ ->
           Abb.Future.return (Ok (fun _ _ -> Abb.Future.return (Ok ()))))
+
+    let access_control_eval_apply =
+      run ~name:"access_control_eval_apply" (fun _ { Bs.Fetcher.fetch } ->
+          let open Irm in
+          fetch Keys.working_set_matches
+          >>= fun working_set_matches ->
+          let r = Terrat_access_control2.{ R.deny = []; pass = working_set_matches } in
+          Abb.Future.return (Ok (Ok r)))
+
+    let access_control_eval_plan =
+      run ~name:"access_control_eval_plan" (fun _ { Bs.Fetcher.fetch } ->
+          let open Irm in
+          fetch Keys.working_set_matches
+          >>= fun working_set_matches ->
+          let r = Terrat_access_control2.{ R.deny = []; pass = working_set_matches } in
+          Abb.Future.return (Ok (Ok r)))
   end
 
   let tasks tasks =
     let coerce = Builder.coerce_to_task in
     tasks
     (* |> Hmap.add (coerce Keys.access_control_eval_apply) Tasks.access_control_eval_apply *)
-    |> Hmap.add (coerce Keys.applied_dirspaces) Tasks.applied_dirspaces
-    |> Hmap.add (coerce Keys.branch_name) Tasks.branch_name
-    |> Hmap.add (coerce Keys.branch_ref) Tasks.branch_ref
-    |> Hmap.add (coerce Keys.can_run_apply) Tasks.can_run_apply
-    |> Hmap.add (coerce Keys.can_run_plan) Tasks.can_run_plan
-    |> Hmap.add (coerce Keys.changes) Tasks.changes
     (* |> Hmap.add (coerce Keys.check_access_control_apply) Tasks.check_access_control_apply *)
     (* |> Hmap.add (coerce Keys.check_access_control_ci_change) Tasks.check_access_control_ci_change *)
     (* |> Hmap.add (coerce Keys.check_access_control_files) Tasks.check_access_control_files *)
@@ -151,16 +163,26 @@ struct
     (* |> Hmap.add (coerce Keys.check_dirspaces_missing_plans) Tasks.check_dirspaces_missing_plans *)
     (* |> Hmap.add *)
     (*      (coerce Keys.check_dirspaces_owned_by_other_pull_requests) *)
-    (* (\*      Tasks.check_dirspaces_owned_by_other_pull_requests *\) *)
+    (*      Tasks.check_dirspaces_owned_by_other_pull_requests *)
     (* |> Hmap.add (coerce Keys.check_dirspaces_to_apply) Tasks.check_dirspaces_to_apply *)
     (* |> Hmap.add (coerce Keys.check_dirspaces_to_plan) Tasks.check_dirspaces_to_plan *)
     (* |> Hmap.add (coerce Keys.check_merge_conflict) Tasks.check_merge_conflict *)
+    |> Hmap.add (coerce Keys.access_control_eval_apply) Tasks.access_control_eval_apply
+    |> Hmap.add (coerce Keys.access_control_eval_plan) Tasks.access_control_eval_plan
+    |> Hmap.add (coerce Keys.applied_dirspaces) Tasks.applied_dirspaces
+    |> Hmap.add (coerce Keys.branch_name) Tasks.branch_name
+    |> Hmap.add (coerce Keys.branch_ref) Tasks.branch_ref
+    |> Hmap.add (coerce Keys.can_run_apply) Tasks.can_run_apply
+    |> Hmap.add (coerce Keys.can_run_plan) Tasks.can_run_plan
+    |> Hmap.add (coerce Keys.changes) Tasks.changes
+    |> Hmap.add (coerce Keys.create_commit_checks) Tasks.create_commit_checks
     |> Hmap.add (coerce Keys.create_commit_checks) Tasks.create_commit_checks
     |> Hmap.add (coerce Keys.dest_branch_name) Tasks.dest_branch_name
     |> Hmap.add (coerce Keys.dest_branch_ref) Tasks.dest_branch_ref
     |> Hmap.add (coerce Keys.is_draft_pr) Tasks.is_draft_pr
     |> Hmap.add (coerce Keys.missing_autoplan_matches) Tasks.missing_autoplan_matches
     |> Hmap.add (coerce Keys.out_of_change_applies) Tasks.out_of_change_applies
+    |> Hmap.add (coerce Keys.publish_comment) Tasks.publish_comment
     |> Hmap.add (coerce Keys.working_branch_name) Tasks.working_branch_name
     |> Hmap.add (coerce Keys.working_branch_ref) Tasks.working_branch_ref
 end

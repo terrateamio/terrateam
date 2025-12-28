@@ -573,6 +573,17 @@ struct
             (S.Api.Pull_request.id pull_request)
             client)
 
+    let access_control_eval_plan =
+      run ~name:"access_control_eval_plan" (fun s { Bs.Fetcher.fetch } ->
+          let open Irm in
+          fetch Keys.access_control
+          >>= fun access_control ->
+          fetch Keys.working_set_matches
+          >>= fun working_set_matches ->
+          let open Abb.Future.Infix_monad in
+          Access_control.eval_tf_operation access_control working_set_matches `Plan
+          >>= fun ret -> Abb.Future.return (Ok ret))
+
     let access_control_eval_apply =
       run ~name:"access_control_eval_apply" (fun s { Bs.Fetcher.fetch } ->
           let module Rr = Terrat_pull_request_review in
@@ -1146,25 +1157,24 @@ struct
               CCOption.map_or ~default:(Abb.Future.return (Ok ())) maybe_publish_msg msg
               >>= fun () -> Abb.Future.return (Error err))
 
-    let update_context_for_pull_request =
-      run ~name:"update_context_for_pull_request" (fun s { Bs.Fetcher.fetch } ->
+    let get_context_for_pull_request =
+      run ~name:"get_context_for_pull_request" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
-          Abbs_future_combinators.Infix_result_app.(
-            (fun () () -> ()) <$> fetch Keys.store_repository <*> fetch Keys.store_pull_request)
-          >>= fun () ->
+          fetch Keys.account
+          >>= fun account ->
           fetch Keys.repo
           >>= fun repo ->
-          fetch Keys.pull_request
-          >>= fun pull_request ->
-          fetch Keys.context
-          >>= fun context ->
+          fetch Keys.pull_request_id
+          >>= fun pull_request_id ->
+          fetch Keys.store_pull_request
+          >>= fun () ->
           Builder.run_db s ~f:(fun db ->
-              S.Job_context.update_for_pull_request
+              S.Job_context.create_or_get_for_pull_request
                 ~request_id:(Builder.log_id s)
-                ~context_id:context.Tjc.Context.id
                 db
+                account
                 repo
-                (S.Api.Pull_request.id pull_request)))
+                pull_request_id))
 
     let eval_pull_request_event =
       run ~name:"eval_pull_request_event" (fun s { Bs.Fetcher.fetch } ->
@@ -1184,10 +1194,12 @@ struct
             | E.Close -> Some Tjc.Job.Type_.Autoapply
             | E.Comment { comment_id; comment } -> (
                 match comment with
-                | Terrat_comment.Apply { tag_query } -> Some (Tjc.Job.Type_.Apply { tag_query })
+                | Terrat_comment.Apply { tag_query } ->
+                    Some (Tjc.Job.Type_.Apply { tag_query; kind = None })
                 | Terrat_comment.Gate_approval { tokens } ->
                     Some (Tjc.Job.Type_.Gate_approval { tokens })
-                | Terrat_comment.Plan { tag_query } -> Some (Tjc.Job.Type_.Plan { tag_query })
+                | Terrat_comment.Plan { tag_query } ->
+                    Some (Tjc.Job.Type_.Plan { tag_query; kind = None })
                 | Terrat_comment.Repo_config -> Some Tjc.Job.Type_.Repo_config
                 | Terrat_comment.Unlock unlocks -> Some (Tjc.Job.Type_.Unlock unlocks)
                 | Terrat_comment.Index -> Some Tjc.Job.Type_.Index
@@ -1227,12 +1239,37 @@ struct
               in
               Builder.eval s' Keys.react_to_comment >>= fun () -> Abb.Future.return (Ok job)
           | None -> Abb.Future.return (Error `Noop))
+
+    let store_gate_approval =
+      run ~name:"store_gate_approval" (fun s { Bs.Fetcher.fetch } ->
+          let open Irm in
+          fetch Keys.pull_request
+          >>= fun pull_request ->
+          fetch Keys.job
+          >>= function
+          | { Tjc.Job.type_ = Tjc.Job.Type_.Gate_approval { tokens }; _ } -> (
+              fetch Keys.user
+              >>= function
+              | Some user ->
+                  Builder.run_db s ~f:(fun db ->
+                      Abbs_future_combinators.List_result.iter
+                        ~f:(fun token ->
+                          S.Gate.add_approval
+                            ~request_id:(Builder.log_id s)
+                            ~token
+                            ~approver:(S.Api.User.to_string user)
+                            pull_request
+                            db)
+                        tokens)
+              | None -> assert false)
+          | _ -> assert false)
   end
 
   let tasks tasks =
     let coerce = Builder.coerce_to_task in
     tasks
     |> Hmap.add (coerce Keys.access_control_eval_apply) Tasks.access_control_eval_apply
+    |> Hmap.add (coerce Keys.access_control_eval_plan) Tasks.access_control_eval_plan
     |> Hmap.add (coerce Keys.applied_dirspaces) Tasks.applied_dirspaces
     |> Hmap.add (coerce Keys.branch_name) Tasks.branch_name
     |> Hmap.add (coerce Keys.branch_ref) Tasks.branch_ref
@@ -1266,6 +1303,7 @@ struct
     |> Hmap.add (coerce Keys.dest_branch_name) Tasks.dest_branch_name
     |> Hmap.add (coerce Keys.dest_branch_ref) Tasks.dest_branch_ref
     |> Hmap.add (coerce Keys.eval_pull_request_event) Tasks.eval_pull_request_event
+    |> Hmap.add (coerce Keys.get_context_for_pull_request) Tasks.get_context_for_pull_request
     |> Hmap.add (coerce Keys.is_draft_pr) Tasks.is_draft_pr
     |> Hmap.add (coerce Keys.missing_autoplan_matches) Tasks.missing_autoplan_matches
     |> Hmap.add (coerce Keys.out_of_change_applies) Tasks.out_of_change_applies
@@ -1280,7 +1318,6 @@ struct
     |> Hmap.add (coerce Keys.store_gate_approval) Tasks.store_gate_approval
     |> Hmap.add (coerce Keys.store_pull_request) Tasks.store_pull_request
     |> Hmap.add (coerce Keys.store_stacks) Tasks.store_stacks
-    |> Hmap.add (coerce Keys.update_context_for_pull_request) Tasks.update_context_for_pull_request
     |> Hmap.add (coerce Keys.working_branch_name) Tasks.working_branch_name
     |> Hmap.add (coerce Keys.working_branch_ref) Tasks.working_branch_ref
 end

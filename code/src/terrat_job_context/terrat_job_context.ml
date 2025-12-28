@@ -3,7 +3,6 @@ module Context = struct
     type ('pr, 'branch) t =
       | Pull_request of 'pr
       | Branch of ('branch * 'branch option)
-      | Setup
     [@@deriving show, eq]
   end
 
@@ -18,13 +17,24 @@ end
 
 module Job = struct
   module Type_ = struct
+    module Kind = struct
+      type t = Drift of { reconcile : bool } [@@deriving show, eq]
+    end
+
     type t =
-      | Apply of { tag_query : Terrat_tag_query.t }
+      | Apply of {
+          tag_query : Terrat_tag_query.t;
+          kind : Kind.t option;
+        }
       | Autoapply
       | Autoplan
       | Gate_approval of { tokens : string list }
       | Index
-      | Plan of { tag_query : Terrat_tag_query.t }
+      | Plan of {
+          tag_query : Terrat_tag_query.t;
+          kind : Kind.t option;
+        }
+      | Push
       | Repo_config
       | Unlock of string list
     [@@deriving show, eq]

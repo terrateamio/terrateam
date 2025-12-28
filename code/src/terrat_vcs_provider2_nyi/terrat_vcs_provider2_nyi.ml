@@ -160,10 +160,6 @@ module Job_context = struct
     raise (Failure "nyi")
 
   let create_or_get_for_branch ~request_id db account repo branch = raise (Failure "nyi")
-
-  let update_for_pull_request ~request_id db ~context_id repo pull_request_id =
-    raise (Failure "nyi")
-
   let query ~request_id db id = raise (Failure "nyi")
 
   module Job = struct

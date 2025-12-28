@@ -8,9 +8,9 @@ inserted as (
       grm.core_id as repo,
       jsonb_build_object('pull_request', gprm.core_id)
   from ins
-  left join github_repositories_map as grm
+  inner join github_repositories_map as grm
       on grm.repository_id = ins.repo_id
-  left join github_pull_requests_map as gprm
+  inner join github_pull_requests_map as gprm
       on gprm.repository_id = grm.repository_id
          and gprm.pull_number = ins.pull_number
   on conflict (repo, (params->>'pull_request')) do nothing
@@ -35,6 +35,5 @@ row as (
 select
     id,
     to_char(created_at, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'),
-    to_char(updated_at, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'),
-    ((params->>'pull_request') is null)
+    to_char(updated_at, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"')
 from row

@@ -2,7 +2,6 @@ module Branch = Terrat_job_context_param_branch
 module Branch_dest_branch = Terrat_job_context_param_branch_dest_branch
 module Context = Terrat_job_context_param_context
 module Pull_request = Terrat_job_context_param_pull_request
-module Setup = Terrat_job_context_param_setup
 
 module Event = struct
   type t = Context of Terrat_job_context_param_context.t [@@deriving show, eq]
