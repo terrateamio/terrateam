@@ -659,34 +659,58 @@ struct
                      `Lookup_err ))
               >>= fun () -> Abb.Future.return (Error `Noop))
 
+    let check_apply_requirements =
+      run ~name:"check_apply_requirements" (fun s { Bs.Fetcher.fetch } ->
+          let open Irm in
+          Fc.Result.all5
+            (fetch Keys.client)
+            (fetch Keys.repo_config)
+            (fetch Keys.pull_request)
+            (fetch Keys.working_set_matches)
+            (fetch Keys.user)
+          >>= fun (client, repo_config, pull_request, working_set_matches, user) ->
+          match user with
+          | Some user -> (
+              S.Apply_requirements.eval
+                ~request_id:(Builder.log_id s)
+                (Builder.State.config s)
+                user
+                client
+                repo_config
+                pull_request
+                working_set_matches
+              >>= fun apply_requirements ->
+              let passed_apply_requirements =
+                S.Apply_requirements.Result.passed apply_requirements
+              in
+              fetch Keys.job
+              >>= function
+              | {
+                  Tjc.Job.type_ = Tjc.Job.Type_.Apply { force = false; tag_query = _; kind = _ };
+                  _;
+                }
+                when not passed_apply_requirements ->
+                  Logs.info (fun m -> m "%s : PR_NOT_APPLIABLE" (Builder.log_id s));
+                  fetch Keys.publish_comment
+                  >>= fun publish_comment ->
+                  publish_comment'
+                    publish_comment
+                    (Msg.Pull_request_not_appliable
+                       ( S.Api.Pull_request.set_checks ()
+                         @@ S.Api.Pull_request.set_diff () pull_request,
+                         apply_requirements ))
+                  >>= fun () -> Abb.Future.return (Error `Noop)
+              | _ -> Abb.Future.return (Ok apply_requirements))
+          | None -> assert false)
+
     let check_access_control_apply =
       run ~name:"check_access_control_apply" (fun s { Bs.Fetcher.fetch } ->
           let module R = Terrat_access_control2.R in
           let open Irm in
-          let apply_requirements () =
-            Fc.Result.all5
-              (fetch Keys.client)
-              (fetch Keys.repo_config)
-              (fetch Keys.pull_request)
-              (fetch Keys.working_set_matches)
-              (fetch Keys.user)
-            >>= fun (client, repo_config, pull_request, working_set_matches, user) ->
-            match user with
-            | Some user ->
-                S.Apply_requirements.eval
-                  ~request_id:(Builder.log_id s)
-                  (Builder.State.config s)
-                  user
-                  client
-                  repo_config
-                  pull_request
-                  working_set_matches
-            | None -> raise (Failure "nyi")
-          in
-          apply_requirements ()
-          >>= fun apply_requirements ->
           fetch Keys.job
           >>= fun job ->
+          fetch Keys.check_apply_requirements
+          >>= fun apply_requirements ->
           let op =
             match job with
             | { Tjc.Job.type_ = Tjc.Job.Type_.Apply { tag_query = _; kind = _; force = false }; _ }
@@ -712,22 +736,7 @@ struct
               : (R.t, Terrat_access_control2.err) result
               :> (R.t, [> Terrat_access_control2.err ]) result)
           >>= fun access_control_result ->
-          let passed_apply_requirements = S.Apply_requirements.Result.passed apply_requirements in
           match access_control_result with
-          | _ when (not passed_apply_requirements) && not (op = `Apply_force) ->
-              (* Regardless of access control, if apply requirements were NOT
-                 passed, then we cannot apply this change UNLESS we are in an
-                 "apply-force" because then access control result is important
-                 because we are bypassing the apply requirements. *)
-              Logs.info (fun m -> m "%s : PR_NOT_APPLIABLE" (Builder.log_id s));
-              fetch Keys.publish_comment
-              >>= fun publish_comment ->
-              publish_comment'
-                publish_comment
-                (Msg.Pull_request_not_appliable
-                   ( S.Api.Pull_request.set_checks () @@ S.Api.Pull_request.set_diff () pull_request,
-                     apply_requirements ))
-              >>= fun () -> Abb.Future.return (Error `Noop)
           | { Terrat_access_control2.R.pass = []; deny = _ :: _ as deny }
             when not (Access_control.apply_require_all_dirspace_access access_control) ->
               fetch Keys.publish_comment
@@ -1133,7 +1142,7 @@ struct
             fetch Keys.check_pull_request_state
             >>= fun () ->
             Abbs_future_combinators.Infix_result_app.(
-              (fun () () () () () () () () () () () () () _ _ -> ())
+              (fun () () () () () () () () () () () () _ _ _ -> ())
               <$> fetch Keys.check_access_control_ci_change
               <*> fetch Keys.check_access_control_apply
               <*> fetch Keys.check_access_control_files
@@ -1146,6 +1155,7 @@ struct
               <*> fetch Keys.check_dirspaces_to_apply
               <*> fetch Keys.check_gates
               <*> fetch Keys.check_merge_conflict
+              <*> fetch Keys.check_apply_requirements
               (* Ensure that various information is built before trying to run the plan *)
               <*> fetch Keys.branch_dirspaces
               <*> fetch Keys.dest_branch_dirspaces)
@@ -1302,6 +1312,7 @@ struct
     |> Hmap.add
          (coerce Keys.check_access_control_repo_config)
          Tasks.check_access_control_repo_config
+    |> Hmap.add (coerce Keys.check_apply_requirements) Tasks.check_apply_requirements
     |> Hmap.add
          (coerce Keys.check_conflicting_apply_work_manifests)
          Tasks.check_conflicting_apply_work_manifests
