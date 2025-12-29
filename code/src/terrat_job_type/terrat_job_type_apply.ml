@@ -8,6 +8,7 @@ module Type_ = struct
 end
 
 type t = {
+  force : bool; [@default false]
   kind : Terrat_job_type_kind.t option; [@default None]
   tag_query : string option; [@default None]
   type_ : Type_.t; [@key "type"]

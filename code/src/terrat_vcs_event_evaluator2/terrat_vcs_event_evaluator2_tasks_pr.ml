@@ -605,8 +605,18 @@ struct
                 | _ -> None)
               reviews
           in
+          fetch Keys.job
+          >>= fun job ->
+          let op =
+            match job with
+            | { Tjc.Job.type_ = Tjc.Job.Type_.Apply { tag_query = _; kind = _; force = false }; _ }
+              -> `Apply reviews
+            | { Tjc.Job.type_ = Tjc.Job.Type_.Apply { tag_query = _; kind = _; force = true }; _ }
+              -> `Apply_force
+            | _ -> assert false
+          in
           let open Abb.Future.Infix_monad in
-          Access_control.eval_tf_operation access_control working_set_matches (`Apply reviews)
+          Access_control.eval_tf_operation access_control working_set_matches op
           >>= fun ret -> Abb.Future.return (Ok ret))
 
     let check_access_control_plan =
@@ -675,11 +685,19 @@ struct
           in
           apply_requirements ()
           >>= fun apply_requirements ->
+          fetch Keys.job
+          >>= fun job ->
           let op =
-            `Apply
-              (CCList.filter_map
-                 (fun { Terrat_pull_request_review.user; _ } -> user)
-                 (S.Apply_requirements.Result.approved_reviews apply_requirements))
+            match job with
+            | { Tjc.Job.type_ = Tjc.Job.Type_.Apply { tag_query = _; kind = _; force = false }; _ }
+              ->
+                `Apply
+                  (CCList.filter_map
+                     (fun { Terrat_pull_request_review.user; _ } -> user)
+                     (S.Apply_requirements.Result.approved_reviews apply_requirements))
+            | { Tjc.Job.type_ = Tjc.Job.Type_.Apply { tag_query = _; kind = _; force = true }; _ }
+              -> `Apply_force
+            | _ -> assert false
           in
           Fc.Result.all6
             (fetch Keys.access_control)
@@ -1195,17 +1213,18 @@ struct
             | E.Comment { comment_id; comment } -> (
                 match comment with
                 | Terrat_comment.Apply { tag_query } ->
-                    Some (Tjc.Job.Type_.Apply { tag_query; kind = None })
+                    Some (Tjc.Job.Type_.Apply { tag_query; kind = None; force = false })
                 | Terrat_comment.Gate_approval { tokens } ->
                     Some (Tjc.Job.Type_.Gate_approval { tokens })
                 | Terrat_comment.Plan { tag_query } ->
                     Some (Tjc.Job.Type_.Plan { tag_query; kind = None })
+                | Terrat_comment.Apply_force { tag_query } ->
+                    Some (Tjc.Job.Type_.Apply { tag_query; kind = None; force = true })
                 | Terrat_comment.Repo_config -> Some Tjc.Job.Type_.Repo_config
                 | Terrat_comment.Unlock unlocks -> Some (Tjc.Job.Type_.Unlock unlocks)
                 | Terrat_comment.Index -> Some Tjc.Job.Type_.Index
                 | Terrat_comment.Help
                 | Terrat_comment.Apply_autoapprove _
-                | Terrat_comment.Apply_force _
                 | Terrat_comment.Feedback _ -> raise (Failure "nyi"))
           in
           match job_type with

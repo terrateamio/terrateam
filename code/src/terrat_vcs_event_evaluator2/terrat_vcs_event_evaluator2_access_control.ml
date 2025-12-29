@@ -164,6 +164,7 @@ struct
             in
             Abb.Future.return (Ok { Terrat_access_control2.R.pass; deny })
         | r -> Abb.Future.return (Ok r))
+    | `Apply_force -> eval' access_control matches (fun { P.apply_force; _ } -> apply_force)
 
   let plan_require_all_dirspace_access access_control =
     access_control.Ace.config.Ac.plan_require_all_dirspace_access

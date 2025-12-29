@@ -5494,14 +5494,17 @@ module Job_context = struct
         let module Jt = Terrat_job_type in
         CCFun.(
           (function
-          | T.Apply { tag_query; kind } ->
+          | T.Apply { tag_query; kind; force } ->
               Jt.Type.Apply
                 {
                   Jt.Apply.type_ = "apply";
                   tag_query = Some (Terrat_tag_query.to_string tag_query);
                   kind = kind_to_json kind;
+                  force;
                 }
-          | T.Autoapply -> Jt.Type.Apply { Jt.Apply.type_ = "apply"; tag_query = None; kind = None }
+          | T.Autoapply ->
+              Jt.Type.Apply
+                { Jt.Apply.type_ = "apply"; tag_query = None; kind = None; force = false }
           | T.Autoplan -> Jt.Type.Plan { Jt.Plan.type_ = "plan"; tag_query = None; kind = None }
           | T.Plan { tag_query; kind } ->
               Jt.Type.Plan
@@ -5526,14 +5529,15 @@ module Job_context = struct
           CCOption.wrap Yojson.Safe.from_string
           %> CCOption.flat_map (Jt.Type.of_yojson %> CCResult.to_opt)
           %> CCOption.flat_map (function
-               | Jt.Type.Apply { Jt.Apply.type_ = _; tag_query = Some tag_query; kind } ->
+               | Jt.Type.Apply { Jt.Apply.type_ = _; tag_query = Some tag_query; kind; force } ->
                    Some
                      (T.Apply
                         {
                           tag_query = CCResult.get_exn @@ Terrat_tag_query.of_string tag_query;
                           kind = json_to_kind kind;
+                          force;
                         })
-               | Jt.Type.Apply { Jt.Apply.type_ = _; tag_query = None; kind = _ } ->
+               | Jt.Type.Apply { Jt.Apply.type_ = _; tag_query = None; kind = _; force = _ } ->
                    Some T.Autoapply
                | Jt.Type.Plan { Jt.Plan.type_ = _; tag_query = Some tag_query; kind } ->
                    Some

@@ -5,6 +5,10 @@
     "apply": {
       "additionalProperties": false,
       "properties": {
+        "force": {
+          "default": false,
+          "type": "boolean"
+        },
         "kind": {
           "$ref": "#/definitions/kind"
         },

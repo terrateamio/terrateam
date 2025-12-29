@@ -349,7 +349,8 @@ struct
           let tag_query =
             let module T = Tjc.Job.Type_ in
             match job.Tjc.Job.type_ with
-            | T.Apply { tag_query; kind = _ } | T.Plan { tag_query; kind = _ } -> tag_query
+            | T.Apply { tag_query; kind = _; force = _ } | T.Plan { tag_query; kind = _ } ->
+                tag_query
             | T.Autoapply
             | T.Autoplan
             | T.Gate_approval _
@@ -2228,7 +2229,7 @@ struct
                             S.Job_context.Job.create
                               ~request_id:(Builder.log_id s)
                               db
-                              (Tjc.Job.Type_.Apply { tag_query; kind })
+                              (Tjc.Job.Type_.Apply { tag_query; kind; force = false })
                               context
                               initiator)
                         >>= fun job ->

@@ -28,7 +28,7 @@ module Make
   val eval_tf_operation :
     Keys.Access_control_engine.t ->
     Terrat_change_match3.Dirspace_config.t list ->
-    [ `Apply of string list | `Plan ] ->
+    [ `Apply of string list | `Apply_force | `Plan ] ->
     (Terrat_access_control2.R.t, [> Terrat_access_control2.err ]) result Abb.Future.t
 
   val plan_require_all_dirspace_access : Keys.Access_control_engine.t -> bool

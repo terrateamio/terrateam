@@ -459,7 +459,7 @@ struct
       let module Tjc = Terrat_job_context in
       let module T = Tjc.Job.Type_ in
       match job.Tjc.Job.type_ with
-      | T.Plan { tag_query; kind = _ } | T.Apply { tag_query; kind = _ } -> tag_query
+      | T.Plan { tag_query; kind = _ } | T.Apply { tag_query; kind = _; force = _ } -> tag_query
       | T.Autoapply | T.Autoplan -> Terrat_tag_query.any
       | T.Gate_approval _ | T.Index | T.Repo_config | T.Unlock _ | T.Push -> assert false
     in

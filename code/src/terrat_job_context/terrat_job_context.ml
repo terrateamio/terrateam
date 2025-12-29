@@ -25,6 +25,7 @@ module Job = struct
       | Apply of {
           tag_query : Terrat_tag_query.t;
           kind : Kind.t option;
+          force : bool;
         }
       | Autoapply
       | Autoplan

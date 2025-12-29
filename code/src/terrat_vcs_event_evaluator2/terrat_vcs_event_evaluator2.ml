@@ -171,7 +171,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                 let open Irm in
                 log_err ~request_id @@ Builder.eval s Keys.get_context_for_pull_request
                 >>= fun context ->
-                let open Abb.Future.Infix_monad in
                 let s =
                   s
                   |> Builder.State.orig_store
