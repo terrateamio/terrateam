@@ -52,6 +52,13 @@ type fetch_pull_request_err =
   ]
 [@@deriving show]
 
+type fetch_diff_files_err =
+  [ Githubc2_abb.call_err
+  | `Not_found of Githubc2_components.Basic_error.t
+  | `Internal_server_error of Githubc2_components.Basic_error.t
+  ]
+[@@deriving show]
+
 type fetch_repo_err =
   [ Githubc2_abb.call_err
   | `Moved_permanently of Githubc2_repos.Get.Responses.Moved_permanently.t
@@ -226,6 +233,14 @@ val fetch_pull_request :
   pull_number:int ->
   Githubc2_abb.t ->
   (Githubc2_components.Pull_request.t, [> fetch_pull_request_err ]) result Abb.Future.t
+
+val fetch_diff_files :
+  owner:string ->
+  repo:string ->
+  base_ref:string ->
+  branch_ref:string ->
+  Githubc2_abb.t ->
+  (Githubc2_components.Diff_entry.t list, [> fetch_diff_files_err | `Error ]) result Abb.Future.t
 
 val get_user_installations :
   Githubc2_abb.t ->

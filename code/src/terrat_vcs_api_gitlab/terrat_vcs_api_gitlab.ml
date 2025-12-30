@@ -341,6 +341,8 @@ let fetch_centralized_repo ~request_id client owner =
             err);
       Abb.Future.return (Error `Error)
 
+let fetch_diff_files ~request_id ~base_ref ~branch_ref repo client = raise (Failure "nyi")
+
 let create_client ~request_id config account db =
   let open Abb.Future.Infix_monad in
   let vcs_config = Config.vcs_config config in

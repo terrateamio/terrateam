@@ -92,12 +92,26 @@ struct
     let applied_dirspaces = run ~name:"applied_dirspaces" (fun _ _ -> Abb.Future.return (Ok []))
 
     let changes =
-      run ~name:"changes" (fun _s { Bs.Fetcher.fetch } ->
+      run ~name:"changes" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
-          fetch Keys.repo_tree_branch
-          >>= fun tree ->
-          Abb.Future.return
-            (Ok (CCList.map (fun filename -> Terrat_change.Diff.Change { filename }) tree)))
+          Fc.Result.all2 (fetch Keys.dest_branch_name) (fetch Keys.branch_name)
+          >>= function
+          | dest_branch_name, branch_name when S.Api.Ref.equal dest_branch_name branch_name ->
+              fetch Keys.repo_tree_branch
+              >>= fun tree ->
+              Abb.Future.return
+                (Ok (CCList.map (fun filename -> Terrat_change.Diff.Change { filename }) tree))
+          | dest_branch_name, branch_name ->
+              fetch Keys.client
+              >>= fun client ->
+              fetch Keys.repo
+              >>= fun repo ->
+              S.Api.fetch_diff_files
+                ~request_id:(Builder.log_id s)
+                ~base_ref:dest_branch_name
+                ~branch_ref:branch_name
+                repo
+                client)
 
     let missing_autoplan_matches =
       run ~name:"missing_autoplan_matches" (fun _ _ ->
