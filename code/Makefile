@@ -23,9 +23,9 @@ terrat: release-terrat debug-terrat release-ttm debug-ttm
 
 test-terrat: test-release-terrat test-debug-terrat
 
-test-terrat: release_terrat_vcs_api_nyi release_terrat_vcs_provider2_nyi release_terrat_vcs_service_nyi
+release-terrat: release_terrat_vcs_api_nyi release_terrat_vcs_provider2_nyi release_terrat_vcs_service_nyi
 
-test-terrat: debug_terrat_vcs_api_nyi debug_terrat_vcs_provider2_nyi debug_terrat_vcs_service_nyi
+debug-terrat: debug_terrat_vcs_api_nyi debug_terrat_vcs_provider2_nyi debug_terrat_vcs_service_nyi
 
 release-terrat: release_terrat_oss release_terrat_ee release_iris
 

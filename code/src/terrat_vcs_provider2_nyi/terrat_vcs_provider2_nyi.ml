@@ -116,6 +116,7 @@ module Work_manifest = struct
   let run ~request_id config client = raise (Failure "nyi")
   let create ~request_id db work_manifest = raise (Failure "nyi")
   let query ~request_id db work_manifest_id = raise (Failure "nyi")
+  let query_by_run_id ~request_id db run_id = raise (Failure "nyi")
   let update_state ~request_id db work_manifest_id state = raise (Failure "nyi")
   let update_run_id ~request_id db work_manifest_id run_id = raise (Failure "nyi")
   let update_changes ~request_id db work_manifest_id dirspaceflows = raise (Failure "nyi")
