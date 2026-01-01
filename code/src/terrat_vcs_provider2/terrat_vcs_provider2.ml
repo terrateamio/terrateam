@@ -323,6 +323,12 @@ module type S = sig
       ('diff, 'checks) Api.Pull_request.t ->
       (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
 
+    val query_applied_dirspaces_for_context :
+      request_id:string ->
+      t ->
+      (Api.Pull_request.Id.t, Api.Ref.t) Terrat_job_context.Context.t ->
+      (Terrat_change.Dirspace.t list, [> `Error ]) result Abb.Future.t
+
     val query_applied_dirspaces :
       request_id:string ->
       t ->

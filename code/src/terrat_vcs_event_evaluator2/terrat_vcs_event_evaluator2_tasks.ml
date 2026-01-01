@@ -1364,6 +1364,14 @@ struct
                    })
           | None -> assert false)
 
+    let applied_dirspaces =
+      run ~name:"applied_dirspaces" (fun s { Bs.Fetcher.fetch } ->
+          let open Irm in
+          fetch Keys.context
+          >>= fun context ->
+          Builder.run_db s ~f:(fun db ->
+              S.Db.query_applied_dirspaces_for_context ~request_id:(Builder.log_id s) db context))
+
     let check_account_tier =
       run ~name:"check_account_tier" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
@@ -2380,6 +2388,7 @@ struct
     |> Hmap.add (coerce Keys.all_matches) Tasks.all_matches
     |> Hmap.add (coerce Keys.all_tag_query_matches) Tasks.all_tag_query_matches
     |> Hmap.add (coerce Keys.all_unapplied_matches) Tasks.all_unapplied_matches
+    |> Hmap.add (coerce Keys.applied_dirspaces) Tasks.applied_dirspaces
     |> Hmap.add (coerce Keys.branch_dirspaces) Tasks.branch_dirspaces
     |> Hmap.add (coerce Keys.built_repo_config_branch) Tasks.built_repo_config_branch
     |> Hmap.add

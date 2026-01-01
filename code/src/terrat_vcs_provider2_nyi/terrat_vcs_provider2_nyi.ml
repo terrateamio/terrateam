@@ -36,7 +36,13 @@ module Db = struct
   let query_flow_state ~request_id db work_manifest_id = raise (Failure "nyi")
   let delete_flow_state ~request_id db work_manifest_id = raise (Failure "nyi")
   let query_pull_request_out_of_change_applies ~request_id db pull_request = raise (Failure "nyi")
-  let query_applied_dirspaces ~request_id db pull_request = raise (Failure "nyi")
+  let query_applied_dirspaces_for_context ~request_id db context = raise (Failure "nyi")
+
+  let[@deprecated "Move to select_dirspace_applies_for_context"] query_applied_dirspaces
+      ~request_id
+      db
+      pull_request =
+    raise (Failure "nyi")
 
   let query_dirspaces_without_valid_plans ~request_id db pull_request dirspaces =
     raise (Failure "nyi")

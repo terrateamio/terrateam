@@ -89,8 +89,6 @@ struct
     let out_of_change_applies =
       run ~name:"out_of_change_applies" (fun _ _ -> Abb.Future.return (Ok []))
 
-    let applied_dirspaces = run ~name:"applied_dirspaces" (fun _ _ -> Abb.Future.return (Ok []))
-
     let changes =
       run ~name:"changes" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
@@ -183,7 +181,6 @@ struct
     (* |> Hmap.add (coerce Keys.check_merge_conflict) Tasks.check_merge_conflict *)
     |> Hmap.add (coerce Keys.access_control_eval_apply) Tasks.access_control_eval_apply
     |> Hmap.add (coerce Keys.access_control_eval_plan) Tasks.access_control_eval_plan
-    |> Hmap.add (coerce Keys.applied_dirspaces) Tasks.applied_dirspaces
     |> Hmap.add (coerce Keys.branch_name) Tasks.branch_name
     |> Hmap.add (coerce Keys.branch_ref) Tasks.branch_ref
     |> Hmap.add (coerce Keys.can_run_apply) Tasks.can_run_apply

@@ -1461,6 +1461,8 @@ module Db = struct
         Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
 
+  let query_applied_dirspaces_for_context ~request_id db context = raise (Failure "nyi")
+
   let query_dirspaces_without_valid_plans ~request_id db pull_request dirspaces =
     let open Abb.Future.Infix_monad in
     Metrics.Psql_query_time.time

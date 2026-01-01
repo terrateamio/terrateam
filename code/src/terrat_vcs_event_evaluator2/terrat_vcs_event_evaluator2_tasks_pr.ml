@@ -209,14 +209,6 @@ struct
                 db
                 pull_request))
 
-    let applied_dirspaces =
-      run ~name:"applied_dirspaces" (fun s { Bs.Fetcher.fetch } ->
-          let open Irm in
-          fetch Keys.pull_request
-          >>= fun pull_request ->
-          Builder.run_db s ~f:(fun db ->
-              S.Db.query_applied_dirspaces ~request_id:(Builder.log_id s) db pull_request))
-
     let changes = run ~name:"changes" (fun _s { Bs.Fetcher.fetch } -> fetch Keys.pull_request_diff)
 
     let missing_autoplan_matches =
@@ -1299,7 +1291,6 @@ struct
     tasks
     |> Hmap.add (coerce Keys.access_control_eval_apply) Tasks.access_control_eval_apply
     |> Hmap.add (coerce Keys.access_control_eval_plan) Tasks.access_control_eval_plan
-    |> Hmap.add (coerce Keys.applied_dirspaces) Tasks.applied_dirspaces
     |> Hmap.add (coerce Keys.branch_name) Tasks.branch_name
     |> Hmap.add (coerce Keys.branch_ref) Tasks.branch_ref
     |> Hmap.add (coerce Keys.can_run_apply) Tasks.can_run_apply

@@ -480,6 +480,18 @@ module Db = struct
         /% Var.bigint "repo_id"
         /% Var.bigint "pull_number")
 
+    let select_dirspace_applies_for_context =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* path *)
+        Ret.text
+        //
+        (* workspace *)
+        Ret.text
+        /^ read "select_dirspace_applies_for_context.sql"
+        /% Var.(ud (uuid "context_id") (fun c -> c.Terrat_job_context.Context.id)))
+
     let select_dirspaces_without_valid_plans =
       Pgsql_io.Typed_sql.(
         sql
@@ -1516,7 +1528,24 @@ module Db = struct
     | Ok dirspaces -> Abb.Future.return (Ok dirspaces)
     | Error (#Pgsql_io.err as err) ->
         Prmths.Counter.inc_one Metrics.pgsql_errors_total;
-        Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
+        Logs.err (fun m -> m "%s : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
+  let query_applied_dirspaces_for_context ~request_id db context =
+    let open Abb.Future.Infix_monad in
+    Metrics.Psql_query_time.time
+      (Metrics.psql_query_time "select_dirspace_applies_for_context")
+      (fun () ->
+        Pgsql_io.Prepared_stmt.fetch
+          db
+          Sql.select_dirspace_applies_for_context
+          ~f:(fun dir workspace -> { Terrat_dirspace.dir; workspace })
+          context)
+    >>= function
+    | Ok dirspaces -> Abb.Future.return (Ok dirspaces)
+    | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+        Logs.err (fun m -> m "%s : %a" request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
 
   let query_dirspaces_without_valid_plans ~request_id db pull_request dirspaces =
