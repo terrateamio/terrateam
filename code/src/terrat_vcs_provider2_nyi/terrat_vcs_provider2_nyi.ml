@@ -54,6 +54,7 @@ module Db = struct
   let unlock ~request_id db repo unlock_id = raise (Failure "nyi")
   let query_plan ~request_id db work_manifest_id dirspace = raise (Failure "nyi")
   let store_plan ~request_id db work_manifest_id dirspace data has_changes = raise (Failure "nyi")
+  let store_branch_hash ~request_id ~branch_name ~branch_ref repo db = raise (Failure "nyi")
 end
 
 module Apply_requirements = struct

@@ -385,6 +385,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (Terrat_access_control2.R.t, Terrat_access_control2.err) result Key.t =
     Hmap.Key.create "access_control_eval_apply"
 
+  let update_context_branch_hashes : unit Key.t = Hmap.Key.create "update_context_branch_hashes"
+
   let check_apply_requirements : S.Apply_requirements.Result.t Key.t =
     Hmap.Key.create "check_apply_requirements"
 

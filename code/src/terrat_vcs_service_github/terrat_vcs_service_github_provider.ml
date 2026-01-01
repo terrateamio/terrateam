@@ -676,6 +676,14 @@ module Db = struct
         /% Var.text "sha"
         /% Var.text "dir"
         /% Var.text "workspace")
+
+    let upsert_branch_hash =
+      Pgsql_io.Typed_sql.(
+        sql
+        /^ read "upsert_branch_hash.sql"
+        /% Var.(ud (bigint "repo_id") CCFun.(Api.Repo.id %> CCInt64.of_int))
+        /% Var.(ud (text "branch") Api.Ref.to_string)
+        /% Var.(ud (text "hash") Api.Ref.to_string))
   end
 
   type t = Pgsql_io.t
@@ -1812,6 +1820,17 @@ module Db = struct
     | Error (#Pgsql_io.err as err) ->
         Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
+  let store_branch_hash ~request_id ~branch_name ~branch_ref repo db =
+    let open Abb.Future.Infix_monad in
+    Metrics.Psql_query_time.time (Metrics.psql_query_time "store_branch_hash") (fun () ->
+        Pgsql_io.Prepared_stmt.execute db Sql.upsert_branch_hash repo branch_name branch_ref)
+    >>= function
+    | Ok () -> Abb.Future.return (Ok ())
+    | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+        Logs.err (fun m -> m "%s : %a" request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
 end
 

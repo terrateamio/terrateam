@@ -1566,6 +1566,26 @@ struct
                   >>= fun () -> Abb.Future.return (Error `Noop)
               | T.Gate_approval _ | T.Index | T.Repo_config | T.Unlock _ | T.Push -> assert false))
 
+    let update_context_branch_hashes =
+      run ~name:"update_context_branch_hashes" (fun s { Bs.Fetcher.fetch } ->
+          let open Irm in
+          Fc.Result.all5
+            (fetch Keys.repo)
+            (fetch Keys.branch_name)
+            (fetch Keys.branch_ref)
+            (fetch Keys.dest_branch_name)
+            (fetch Keys.dest_branch_ref)
+          >>= fun (repo, branch_name, branch_ref, dest_branch_name, dest_branch_ref) ->
+          Builder.run_db s ~f:(fun db ->
+              S.Db.store_branch_hash ~request_id:(Builder.log_id s) ~branch_name ~branch_ref repo db
+              >>= fun () ->
+              S.Db.store_branch_hash
+                ~request_id:(Builder.log_id s)
+                ~branch_name:dest_branch_name
+                ~branch_ref:dest_branch_ref
+                repo
+                db))
+
     let run_plan =
       run ~name:"run_plan" (fun s ({ Bs.Fetcher.fetch } as fetcher) ->
           let open Irm in
@@ -1575,6 +1595,8 @@ struct
           >>= fun branch_ref ->
           fetch Keys.working_branch_name
           >>= fun branch ->
+          fetch Keys.update_context_branch_hashes
+          >>= fun () ->
           let open Abb.Future.Infix_monad in
           Tf_op_wm.Plan.run ~dest_branch_ref ~branch_ref ~branch ~name:"plan_wm" s fetcher
           >>= function
@@ -1596,6 +1618,8 @@ struct
           >>= fun branch_ref ->
           fetch Keys.working_branch_name
           >>= fun branch ->
+          fetch Keys.update_context_branch_hashes
+          >>= fun () ->
           Tf_op_wm.Apply.run ~dest_branch_ref ~branch_ref ~branch ~name:"apply_wm" s fetcher
           >>= fun wms ->
           (* Do something useful here? *)
@@ -2436,6 +2460,7 @@ struct
          Tasks.synthesized_config_dest_branch_empty_index
     |> Hmap.add (coerce Keys.synthesized_config_empty_index) Tasks.synthesized_config_empty_index
     |> Hmap.add (coerce Keys.target) Tasks.target
+    |> Hmap.add (coerce Keys.update_context_branch_hashes) Tasks.update_context_branch_hashes
     |> Hmap.add (coerce Keys.user) Tasks.user
     |> Hmap.add (coerce Keys.work_manifest_event) Tasks.work_manifest_event
     |> Hmap.add (coerce Keys.work_manifest_event_job) Tasks.work_manifest_event_job

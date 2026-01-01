@@ -390,6 +390,14 @@ module type S = sig
       string ->
       bool ->
       (unit, [> `Error ]) result Abb.Future.t
+
+    val store_branch_hash :
+      request_id:string ->
+      branch_name:Api.Ref.t ->
+      branch_ref:Api.Ref.t ->
+      Api.Repo.t ->
+      t ->
+      (unit, [> `Error ]) result Abb.Future.t
   end
 
   module Apply_requirements : sig

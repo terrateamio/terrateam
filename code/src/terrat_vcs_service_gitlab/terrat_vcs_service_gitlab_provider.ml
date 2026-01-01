@@ -1763,6 +1763,8 @@ module Db = struct
         Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
+
+  let store_branch_hash ~request_id ~branch_name ~branch_ref repo db = raise (Failure "nyi")
 end
 
 module Apply_requirements = struct
