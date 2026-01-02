@@ -522,6 +522,21 @@ module Db = struct
         /% Var.(str_array (text "dirs"))
         /% Var.(str_array (text "workspaces")))
 
+    let update_abort_duplicate_work_manifests_for_context_query =
+      read "abort_duplicate_work_manifests_for_context.sql"
+
+    let update_abort_duplicate_work_manifests_for_context () =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* work manifest id *)
+        Ret.uuid
+        /^ update_abort_duplicate_work_manifests_for_context_query
+        /% Var.(ud (uuid "context_id") (fun c -> c.Terrat_job_context.Context.id))
+        /% Var.(ud (text "run_type") Terrat_work_manifest3.Step.to_string)
+        /% Var.(str_array (text "dirs"))
+        /% Var.(str_array (text "workspaces")))
+
     let select_conflicting_work_manifests_in_repo_query =
       read "select_conflicting_work_manifests_in_repo2.sql"
 
@@ -537,6 +552,24 @@ module Db = struct
         /^ select_conflicting_work_manifests_in_repo_query
         /% Var.bigint "repository"
         /% Var.bigint "pull_number"
+        /% Var.(ud (text "run_type") Terrat_work_manifest3.Step.to_string)
+        /% Var.(str_array (text "dirs"))
+        /% Var.(str_array (text "workspaces")))
+
+    let select_conflicting_work_manifests_in_repo_for_context_query =
+      read "select_conflicting_work_manifests_in_repo_for_context.sql"
+
+    let select_conflicting_work_manifests_in_repo_for_context () =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* id *)
+        Ret.uuid
+        //
+        (* maybe_stale *)
+        Ret.boolean
+        /^ select_conflicting_work_manifests_in_repo_for_context_query
+        /% Var.(ud (uuid "context_id") (fun c -> c.Terrat_job_context.Context.id))
         /% Var.(ud (text "run_type") Terrat_work_manifest3.Step.to_string)
         /% Var.(str_array (text "dirs"))
         /% Var.(str_array (text "workspaces")))
@@ -1605,6 +1638,84 @@ module Db = struct
             ~f:(fun id maybe_stale -> (id, maybe_stale))
             (CCInt64.of_int @@ Api.Repo.id @@ Api.Pull_request.repo pull_request)
             (CCInt64.of_int @@ Api.Pull_request.id pull_request)
+            run_type
+            dirs
+            workspaces)
+      >>= fun ids ->
+      match
+        CCList.partition_filter_map
+          (function
+            | id, true -> `Right id
+            | id, false -> `Left id)
+          ids
+      with
+      | (_ :: _ as conflicting), _ ->
+          Abbs_future_combinators.List_result.map
+            ~f:(query_work_manifest ~request_id db)
+            conflicting
+          >>= fun wms ->
+          Abb.Future.return
+            (Ok
+               (Some
+                  (Terrat_vcs_provider2.Conflicting_work_manifests.Conflicting
+                     (CCList.filter_map CCFun.id wms))))
+      | _, (_ :: _ as maybe_stale) ->
+          Abbs_future_combinators.List_result.map
+            ~f:(query_work_manifest ~request_id db)
+            maybe_stale
+          >>= fun wms ->
+          Abb.Future.return
+            (Ok
+               (Some
+                  (Terrat_vcs_provider2.Conflicting_work_manifests.Maybe_stale
+                     (CCList.filter_map CCFun.id wms))))
+      | _, _ -> Abb.Future.return (Ok None)
+    in
+    let open Abb.Future.Infix_monad in
+    run
+    >>= function
+    | Ok wms -> Abb.Future.return (Ok wms)
+    | Error `Error -> Abb.Future.return (Error `Error)
+    | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+        Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
+  let query_conflicting_work_manifests_in_repo_for_context ~request_id db context dirspaces op =
+    let run_type =
+      match op with
+      | `Plan -> Terrat_work_manifest3.Step.Plan
+      | `Apply -> Terrat_work_manifest3.Step.Apply
+    in
+    let dirs = CCList.map (fun Terrat_change.Dirspace.{ dir; _ } -> dir) dirspaces in
+    let workspaces =
+      CCList.map (fun Terrat_change.Dirspace.{ workspace; _ } -> workspace) dirspaces
+    in
+    let run =
+      let open Abbs_future_combinators.Infix_result_monad in
+      Metrics.Psql_query_time.time
+        (Metrics.psql_query_time "update_abort_duplicate_work_manifests_for_context")
+        (fun () ->
+          Pgsql_io.Prepared_stmt.fetch
+            db
+            (Sql.update_abort_duplicate_work_manifests_for_context ())
+            ~f:CCFun.id
+            context
+            run_type
+            dirs
+            workspaces)
+      >>= fun ids ->
+      CCList.iter
+        (fun id -> Logs.info (fun m -> m "%s : ABORTED_WORK_MANIFEST : %a" request_id Uuidm.pp id))
+        ids;
+      Metrics.Psql_query_time.time
+        (Metrics.psql_query_time "select_conflicting_work_manifests_in_repo_for_context")
+        (fun () ->
+          Pgsql_io.Prepared_stmt.fetch
+            db
+            (Sql.select_conflicting_work_manifests_in_repo_for_context ())
+            ~f:(fun id maybe_stale -> (id, maybe_stale))
+            context
             run_type
             dirs
             workspaces)

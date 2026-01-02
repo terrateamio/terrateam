@@ -1563,6 +1563,9 @@ module Db = struct
         Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
 
+  let query_conflicting_work_manifests_in_repo_for_context ~request_id db context dirspaces op =
+    raise (Failure "nyi")
+
   let query_dirspaces_owned_by_other_pull_requests ~request_id db pull_request dirspaces =
     let open Abb.Future.Infix_monad in
     Metrics.Psql_query_time.time

@@ -118,6 +118,30 @@ struct
     let is_draft_pr =
       run ~name:"is_draft_pr" (fun s { Bs.Fetcher.fetch } -> Abb.Future.return (Ok false))
 
+    let check_conflicting_apply_work_manifests =
+      run ~name:"check_conflicting_apply_work_manifests" (fun s { Bs.Fetcher.fetch } ->
+          let open Irm in
+          fetch Keys.working_set_matches
+          >>= fun working_set_matches ->
+          fetch Keys.context
+          >>= fun context ->
+          let dirspaces =
+            CCList.map
+              (fun { Terrat_change_match3.Dirspace_config.dirspace; _ } -> dirspace)
+              working_set_matches
+          in
+          Builder.run_db s ~f:(fun db ->
+              S.Db.query_conflicting_work_manifests_in_repo_for_context
+                ~request_id:(Builder.log_id s)
+                db
+                context
+                dirspaces
+                `Apply)
+          >>= function
+          | None -> Abb.Future.return (Ok ())
+          | Some (P2.Conflicting_work_manifests.Conflicting _) -> Abb.Future.return (Error `Noop)
+          | Some (P2.Conflicting_work_manifests.Maybe_stale _) -> Abb.Future.return (Error `Noop))
+
     let can_run_plan =
       run ~name:"can_run_plan" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
@@ -127,8 +151,12 @@ struct
     let can_run_apply =
       run ~name:"can_run_apply" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
-          Fc.Result.all2 (fetch Keys.branch_dirspaces) (fetch Keys.dest_branch_dirspaces)
-          >>= fun (_, _) -> Abb.Future.return (Ok ()))
+          Fc.Result.ignore
+          @@ Fc.Result.all3
+               (fetch Keys.check_conflicting_apply_work_manifests)
+               (fetch Keys.branch_dirspaces)
+               (fetch Keys.dest_branch_dirspaces)
+          >>= fun () -> Abb.Future.return (Ok ()))
 
     let publish_comment =
       run ~name:"publish_comment" (fun _ _ ->
@@ -186,6 +214,9 @@ struct
     |> Hmap.add (coerce Keys.can_run_apply) Tasks.can_run_apply
     |> Hmap.add (coerce Keys.can_run_plan) Tasks.can_run_plan
     |> Hmap.add (coerce Keys.changes) Tasks.changes
+    |> Hmap.add
+         (coerce Keys.check_conflicting_apply_work_manifests)
+         Tasks.check_conflicting_apply_work_manifests
     |> Hmap.add (coerce Keys.create_commit_checks) Tasks.create_commit_checks
     |> Hmap.add (coerce Keys.create_commit_checks) Tasks.create_commit_checks
     |> Hmap.add (coerce Keys.dest_branch_name) Tasks.dest_branch_name

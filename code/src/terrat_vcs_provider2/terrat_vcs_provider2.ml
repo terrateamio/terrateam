@@ -357,6 +357,21 @@ module type S = sig
       result
       Abb.Future.t
 
+    val query_conflicting_work_manifests_in_repo_for_context :
+      request_id:string ->
+      t ->
+      (Api.Pull_request.Id.t, Api.Ref.t) Terrat_job_context.Context.t ->
+      Terrat_change.Dirspace.t list ->
+      [< `Plan | `Apply ] ->
+      ( ( Api.Account.t,
+          ((unit, unit) Api.Pull_request.t, Api.Repo.t) Target.t )
+        Terrat_work_manifest3.Existing.t
+        Conflicting_work_manifests.t
+        option,
+        [> `Error ] )
+      result
+      Abb.Future.t
+
     val query_dirspaces_owned_by_other_pull_requests :
       request_id:string ->
       t ->

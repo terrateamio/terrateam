@@ -772,11 +772,13 @@ struct
               (fun { Terrat_change_match3.Dirspace_config.dirspace; _ } -> dirspace)
               passed_dirspaces
           in
+          fetch Keys.context
+          >>= fun context ->
           Builder.run_db s ~f:(fun db ->
-              S.Db.query_conflicting_work_manifests_in_repo
+              S.Db.query_conflicting_work_manifests_in_repo_for_context
                 ~request_id:(Builder.log_id s)
                 db
-                pull_request
+                context
                 dirspaces
                 `Apply)
           >>= function

@@ -50,6 +50,9 @@ module Db = struct
   let query_conflicting_work_manifests_in_repo ~request_id db pull_request dirspaces op =
     raise (Failure "nyi")
 
+  let query_conflicting_work_manifests_in_repo_for_context ~request_id db context dirspaces op =
+    raise (Failure "nyi")
+
   let query_dirspaces_owned_by_other_pull_requests ~request_id db pull_request dirspaces =
     raise (Failure "nyi")
 
