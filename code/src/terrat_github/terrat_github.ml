@@ -96,6 +96,13 @@ type fetch_pull_request_err =
   ]
 [@@deriving show]
 
+type fetch_diff_files_err =
+  [ Githubc2_abb.call_err
+  | `Not_found of Githubc2_components.Basic_error.t
+  | `Internal_server_error of Githubc2_components.Basic_error.t
+  ]
+[@@deriving show]
+
 type fetch_repo_err =
   [ Githubc2_abb.call_err
   | `Moved_permanently of Githubc2_repos.Get.Responses.Moved_permanently.t
@@ -326,6 +333,21 @@ let fetch_pull_request_files ~owner ~repo ~pull_number client =
   Githubc2_abb.collect_all
     client
     Githubc2_pulls.List_files.(make (Parameters.make ~per_page:100 ~owner ~pull_number ~repo ()))
+
+let fetch_diff_files ~owner ~repo ~base_ref ~branch_ref client =
+  let module R = Githubc2_repos.Compare_commits.Responses in
+  Prmths.Counter.inc_one (Metrics.fn_call_total "fetch_diff_files");
+  Githubc2_abb.fold
+    client
+    ~init:[]
+    ~f:(fun acc resp ->
+      let module C = Githubc2_components.Commit_comparison in
+      match Openapi.Response.value resp with
+      | `OK { C.primary = { C.Primary.files; _ }; _ } ->
+          Abb.Future.return (Ok (CCOption.get_or ~default:[] files @ acc))
+      | (`Not_found _ | `Internal_server_error _) as err -> Abb.Future.return (Error err))
+    Githubc2_repos.Compare_commits.(
+      make Parameters.(make ~owner ~repo ~base:base_ref ~head:branch_ref ~per_page:250 ()))
 
 let fetch_pull_request ~owner ~repo ~pull_number client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "fetch_pull_request");

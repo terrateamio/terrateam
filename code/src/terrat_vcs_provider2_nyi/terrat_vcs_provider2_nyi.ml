@@ -36,12 +36,21 @@ module Db = struct
   let query_flow_state ~request_id db work_manifest_id = raise (Failure "nyi")
   let delete_flow_state ~request_id db work_manifest_id = raise (Failure "nyi")
   let query_pull_request_out_of_change_applies ~request_id db pull_request = raise (Failure "nyi")
-  let query_applied_dirspaces ~request_id db pull_request = raise (Failure "nyi")
+  let query_applied_dirspaces_for_context ~request_id db context = raise (Failure "nyi")
+
+  let[@deprecated "Move to select_dirspace_applies_for_context"] query_applied_dirspaces
+      ~request_id
+      db
+      pull_request =
+    raise (Failure "nyi")
 
   let query_dirspaces_without_valid_plans ~request_id db pull_request dirspaces =
     raise (Failure "nyi")
 
   let query_conflicting_work_manifests_in_repo ~request_id db pull_request dirspaces op =
+    raise (Failure "nyi")
+
+  let query_conflicting_work_manifests_in_repo_for_context ~request_id db context dirspaces op =
     raise (Failure "nyi")
 
   let query_dirspaces_owned_by_other_pull_requests ~request_id db pull_request dirspaces =
@@ -54,6 +63,7 @@ module Db = struct
   let unlock ~request_id db repo unlock_id = raise (Failure "nyi")
   let query_plan ~request_id db work_manifest_id dirspace = raise (Failure "nyi")
   let store_plan ~request_id db work_manifest_id dirspace data has_changes = raise (Failure "nyi")
+  let store_branch_hash ~request_id ~branch_name ~branch_ref repo db = raise (Failure "nyi")
 end
 
 module Apply_requirements = struct
@@ -116,6 +126,7 @@ module Work_manifest = struct
   let run ~request_id config client = raise (Failure "nyi")
   let create ~request_id db work_manifest = raise (Failure "nyi")
   let query ~request_id db work_manifest_id = raise (Failure "nyi")
+  let query_by_run_id ~request_id db run_id = raise (Failure "nyi")
   let update_state ~request_id db work_manifest_id state = raise (Failure "nyi")
   let update_run_id ~request_id db work_manifest_id run_id = raise (Failure "nyi")
   let update_changes ~request_id db work_manifest_id dirspaceflows = raise (Failure "nyi")
@@ -152,4 +163,31 @@ module Stacks = struct
 
     let enforce_installation_access ~request_id user installation_id db = raise (Failure "nyi")
   end)
+end
+
+module Job_context = struct
+  let create_or_get_for_pull_request ~request_id db account repo pull_request_id =
+    raise (Failure "nyi")
+
+  let create_or_get_for_branch ~request_id db account repo branch = raise (Failure "nyi")
+  let query ~request_id db id = raise (Failure "nyi")
+
+  module Job = struct
+    let create ~request_id db type_ context initiator = raise (Failure "nyi")
+    let query ~request_id db ~job_id = raise (Failure "nyi")
+    let query_all_by_context_id ~request_id db ~context_id () = raise (Failure "nyi")
+    let query_pending_by_context_id ~request_id db ~context_id () = raise (Failure "nyi")
+    let query_by_work_manifest_id ?lock ~request_id db ~work_manifest_id () = raise (Failure "nyi")
+    let update_state ~request_id db ~job_id state = raise (Failure "nyi")
+    let add_work_manifest ~request_id db ~job_id ~work_manifest_id () = raise (Failure "nyi")
+    let query_work_manifests ~request_id db ~job_id () = raise (Failure "nyi")
+  end
+
+  module Compute_node = struct
+    let create ~request_id ~id ~capabilities db = raise (Failure "nyi")
+    let query ~request_id ~compute_node_id db = raise (Failure "nyi")
+    let query_work ~request_id ~compute_node_id db = raise (Failure "nyi")
+    let update_state ~request_id ~compute_node_id db state = raise (Failure "nyi")
+    let set_work ~request_id ~compute_node_id ~work_manifest db work = raise (Failure "nyi")
+  end
 end
