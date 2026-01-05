@@ -334,7 +334,6 @@ module Provider : module type of Terrat_vcs_service_gitlab_provider = struct
   module Comment = Terrat_vcs_service_gitlab_provider.Comment
   module Commit_check = Terrat_vcs_service_gitlab_provider.Commit_check
   module Ui = Terrat_vcs_service_gitlab_provider.Ui
-  module Job_context = Terrat_vcs_service_gitlab_provider.Job_context
   module Stacks = Terrat_vcs_service_gitlab_provider.Stacks
 end
 

@@ -69,7 +69,6 @@ end
 type ('account, 'id, 'created_at, 'run_id, 'state, 'changes, 'denied_dirspaces, 'target) t = {
   account : 'account;
   base_ref : string;
-  branch : string option;
   branch_ref : string;
   changes : 'changes;
   completed_at : string option;

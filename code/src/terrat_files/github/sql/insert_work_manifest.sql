@@ -9,8 +9,7 @@ insert into work_manifests (
        environment,
        runs_on,
        pull_request,
-       repo,
-       branch
+       repo
 )
 select
        $base_sha,
@@ -23,8 +22,7 @@ select
        $environment,
        $runs_on,
        gprm.core_id,
-       grm.core_id,
-       $branch
+       grm.core_id
 from github_repositories_map as grm
 left join github_pull_requests_map as gprm
      on gprm.repository_id = grm.repository_id

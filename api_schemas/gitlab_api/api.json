@@ -73356,14 +73356,10 @@
         ],
         "responses": {
           "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/API_Entities_Compare"
-                }
-              }
-            },
-            "description": "Compare two branches, tags, or commits"
+            "description": "Compare two branches, tags, or commits",
+            "schema": {
+              "$ref": "#/components/schemas/API_Entities_Compare"
+            }
           }
         },
         "tags": [
