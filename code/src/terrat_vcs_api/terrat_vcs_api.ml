@@ -30,7 +30,7 @@ module type S = sig
   module Account : sig
     module Id : ID
 
-    type t [@@deriving eq, yojson]
+    type t [@@deriving show, eq, yojson]
 
     val make : Id.t -> t
     val id : t -> Id.t
@@ -58,7 +58,7 @@ module type S = sig
   end
 
   module Ref : sig
-    type t [@@deriving eq, yojson]
+    type t [@@deriving show, eq, yojson]
 
     val to_string : t -> string
     val of_string : string -> t
@@ -67,7 +67,7 @@ module type S = sig
   module Repo : sig
     module Id : ID
 
-    type t [@@deriving eq, yojson]
+    type t [@@deriving show, eq, yojson]
 
     val make : id:Id.t -> name:string -> owner:string -> unit -> t
     val id : t -> Id.t
@@ -95,7 +95,7 @@ module type S = sig
          and type State.t = Terrat_pull_request.State.t
 
     type ('diff, 'checks) t = (Id.t, 'diff, 'checks, Repo.t, Ref.t) Terrat_pull_request.t
-    [@@deriving to_yojson]
+    [@@deriving show, to_yojson]
   end
 
   val create_client :
@@ -178,6 +178,14 @@ module type S = sig
     Pull_request.Id.t ->
     Client.t ->
     (Terrat_base_repo_config_v1.Access_control.Match.t list, [> `Error ]) result Abb.Future.t
+
+  val fetch_diff_files :
+    request_id:string ->
+    base_ref:Ref.t ->
+    branch_ref:Ref.t ->
+    Repo.t ->
+    Client.t ->
+    (Terrat_change.Diff.t list, [> `Error ]) result Abb.Future.t
 
   val react_to_comment :
     request_id:string ->

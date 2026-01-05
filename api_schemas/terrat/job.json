@@ -1,0 +1,176 @@
+{
+  "$ref": "#/definitions/type",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "apply": {
+      "additionalProperties": false,
+      "properties": {
+        "force": {
+          "default": false,
+          "type": "boolean"
+        },
+        "kind": {
+          "$ref": "#/definitions/kind"
+        },
+        "tag_query": {
+          "type": "string"
+        },
+        "type": {
+          "const": "apply",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "gate-approval": {
+      "additionalProperties": false,
+      "properties": {
+        "tokens": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "gate-approval",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "tokens"
+      ],
+      "type": "object"
+    },
+    "index": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "index",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "kind": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/kind-drift"
+        }
+      ]
+    },
+    "kind-drift": {
+      "additionalProperties": false,
+      "properties": {
+        "reconcile": {
+          "default": false,
+          "type": "boolean"
+        },
+        "type": {
+          "const": "drift",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "plan": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "$ref": "#/definitions/kind"
+        },
+        "tag_query": {
+          "type": "string"
+        },
+        "type": {
+          "const": "plan",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "push": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "push",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "repo-config": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "const": "repo-config",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "type": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/apply"
+        },
+        {
+          "$ref": "#/definitions/gate-approval"
+        },
+        {
+          "$ref": "#/definitions/index"
+        },
+        {
+          "$ref": "#/definitions/plan"
+        },
+        {
+          "$ref": "#/definitions/push"
+        },
+        {
+          "$ref": "#/definitions/repo-config"
+        },
+        {
+          "$ref": "#/definitions/unlock"
+        }
+      ]
+    },
+    "unlock": {
+      "additionalProperties": false,
+      "properties": {
+        "ids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "unlock",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "ids"
+      ],
+      "type": "object"
+    }
+  }
+}

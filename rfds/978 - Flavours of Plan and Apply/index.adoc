@@ -1,0 +1,224 @@
+= Flavours of Plan & Apply
+:authors: Malcolm Matalka <malcolm@terrateam.io>
+:state: committed
+:labels: buildsys, workflows
+:source-highlighter: highlight.js
+:toc:
+
+
+== Background
+
+Ticket https://github.com/terrateamio/terrateam/issues/978[#978] implements a
+new method to execute plan and apply operations.  The new method is an
+implementation of the
+https://www.microsoft.com/en-us/research/wp-content/uploads/2018/03/build-systems.pdf[Build
+Systems a la Carte] paper.  This was done for the following reasons:
+
+. Ergonomics - The interface of Build Systems a la Carte provides a programming
+experience that is more similar to how one naturally programs.  This is in
+contrast to the `Abb_flow` solution, which is awkward.
+. Performance - The new solution allows executing many operations concurrently.
+This includes API calls as well as concurrent execution of work manifests.
+. Expanding functionality - The current system makes it hard to add new, more
+complex, functionality, to the system.
+
+The refactoring also provided useful opportunity to improve some Terrateam data
+representation issues that make it difficult to extend the model. This ticket
+refactors how work is represented from just work manifests to the following
+concepts:
+
+* Job context - This is the context in-which jobs will run.  This is a pull
+  request or a branch or a branch targeting a specific base branch.
+* Job - This is a specific job to perform.  There can be multiple jobs per job
+  context.  A job is, for example, a `plan` or `apply` operation.  But could
+  also be performing an `unlock` or `gate approval`.
+* Work manifest - A specific piece of work that must run on remote compute.
+  There can be multiple work manifests per job.  There can also be multiple
+  series of work manifests per job.  For example, if config builder is enabled,
+  when a job to perform a `plan` is created, the config builder work manifest
+  must run prior to the plan work manifest.
+* Compute node - Rather than spawning a compute node per work that needs to be
+  done, a compute node is created and it advertises its availability at which
+  point a job is matched with it.  This for more efficient use of compute.  This
+  is not actually implemented but the underlying representations have been
+  setup.
+
+This document describes the different types of plan and apply operations and
+specifics around their operation.
+
+== The Terrateam Workflow
+
+Terrateam is a workflow engine that operates in two modes: `plan` and `apply`
+and defines a relationship between those two operations.
+
+* A `plan` must always come before an `apply`.
+* A `plan` can state whether or not an `apply` operation is required.
+
+All Terrateam operations (called a `job`) run in a context (called a `job
+context`).  Each `plan` and `apply` job operate on an individual layer.  Layers
+are ordered and once all layers are applied, there is no more work to perform in
+the context.
+
+The flowchart of the progression through is shown below.  Each `plan` and
+`apply` operation in the flow chart are an individual `job`:
+
+[comment]
+--
+digraph G {
+    start -> plan -> apply;
+    apply -> plan [label="next layer"];
+    apply -> complete [label="all layers applied"];
+}
+--
+
+....
+┌─────────────────────┐
+│        start        │
+└─────────────────────┘
+  │
+  │
+  ▼
+┌─────────────────────┐
+│        plan         │ ◀┐
+└─────────────────────┘  │
+  │                      │
+  │                      │ next layer
+  ▼                      │
+┌─────────────────────┐  │
+│        apply        │ ─┘
+└─────────────────────┘
+  │
+  │ all layers applied
+  ▼
+┌─────────────────────┐
+│      complete       │
+└─────────────────────┘
+....
+
+There is more nuance than this flowchart shows, but the high-level view is
+accurate.  In particular, the flowchart assumes that the underlying commit
+hashes have not changed between runs.  If the commit hashes change, then the
+flowchart resets and starts from the beginning.
+
+== Job Context
+
+A job context defines metadata around the change in which a job will run and the
+current state of progress within that context.  Where jobs in a particular job
+context run in is called the `scope`.  The `scope` can be:
+
+. A pull request.  This is a branch that is being merged into another branch,
+generally the default branch of a repository.  In this case, the intention is
+that the difference between the source branch and the destination branch are
+operated on.
+. A branch.  This is a single branch that jobs are run against.  In this case,
+the intention is that all code in the branch is operated on.
+. A source branch and a destination branch.  This is similar to a pull request
+job context, except no pull request is required.  In this case, the intention is
+that only the differences between the source branch and the destination branch
+are operated on.
+
+== Job
+
+A job context can have multiple jobs.  There are multiple types of jobs.  Every
+job that is executed attempts to make progress, if possible, in the job context.
+
+Types of jobs:
+
+* `plan` - Plan whatever can be planned given the state of the job context.
+Plans are parameterized around what kind if plan (drift vs not).
+* `apply` - Apply whatever can be applied given the state of the job context.
+Applies are parameterized around what kind of apply (drift or not) as well as,
+for example, being a force apply.
+* `gate-approval` - Approve a set of gates.
+* `index` - Force an index to be generated.
+* `push` - Executed when a user pushes a change to a branch.
+* `repo-config` - Compute the repository config and output it.
+* `unlock` - Perform an unlock.
+
+
+== Plan & Apply
+
+=== Pull Request
+
+A pull request job context is one which corresponds to a pull request in the VCS
+of origin (GitHub or GitLab).  This is special compared to other ones in that
+messages can be displayed to the user via the pull request interface.
+
+[cols="1,1,1"]
+|===
+|Operation |Trigger |Run Criteria
+
+|Autoplan
+a|* Opening a PR
+* Re-opening a PR
+* Updating PR commits
+* Marking "Ready to Review"
+a|* User has access control
+* Auto plan enabled
+
+|Plan
+a|* User comments `terrateam plan` (with optional tag query)
+a|* User has access control
+
+|Autoapply
+a|* User merges the PR
+* Plan operation has finished and stack "auto apply" can run
+a|* User has access control
+* Apply requirements have passed
+* Plans exist for any dirspace
+
+|Apply
+a|* User comments `terrateam apply` (with optional tag query)
+a|* User has access control
+* Apply requirements have passed
+* Plans exist for any dirspaces
+
+|Force Apply
+a|* User comments `terrateam apply-force` (with optional tag query)
+a|* User has access control
+* Plans exist for any dirspaces
+|===
+
+=== Drift
+
+Drift is run to test, and optionally reconcile, if all of the infrastructure
+represented in a root module in a branch matches the state of the code and
+values in the branch.  It is generally not performed against arbitrary branches
+but is configured against a specific one.
+
+Terrateam represents drift as a parameter to the `plan` and `apply` jobs.  The
+drift parameter specifies whether or not reconciliation should be performed,
+which automatically runs an `apply` when a `plan` has changes.
+
+Drift is configured through a schedule in the configuration file.  The schedule
+is updated on push to the default branch in the repository.
+
+[cols="1,1,1"]
+|===
+|Operation |Trigger |Run Criteria
+
+|Plan
+a|* Push to default branch that updates the schedule (via merge as well)
+* When a new scheduled window is open
+|
+
+|Apply
+a|* A drift plan shows changes
+a|* Plans exist
+* The dirspaces are not owned by another change job context
+
+|===
+
+== Future Work
+
+This refactoring sets up the ability to implement more functionality.  The
+following items are desirable in the future:
+
+. Initiate a plan/apply operation via the API.  This could be for a pull
+request, drift, or branch combination.
+. Store more around why an evaluation did not progress in the database.
+Currently if a job fails, the only place information is stored is in the pull
+request interface in the VCS or the logs.  We would like to put this information
+in the database so it can be viewed via the UI.
+. Provide more APIs that can make use of the various targets in the tasks.
+

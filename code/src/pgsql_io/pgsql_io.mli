@@ -229,6 +229,9 @@ val destroy : t -> unit Abb.Future.t
     connection is still alive. *)
 val connected : t -> bool
 
+(** Each connection is given a unique ID *)
+val id : t -> Uuidm.t
+
 (** Perform a network operation to test if the connection is alive. Return [true] if it succeeds and
     [false] if it not. This also sets [connected] to [false] if the connection is not alive. *)
 val ping : t -> bool Abb.Future.t
