@@ -1,3 +1,4 @@
+module Fc = Abbs_future_combinators
 module Ira = Abbs_future_combinators.Infix_result_app
 module Irm = Abbs_future_combinators.Infix_result_monad
 module Tjc = Terrat_job_context
@@ -23,6 +24,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
 
   (* The default set of tasks *)
   let tasks = Tasks.default_tasks ()
+
+  let with_conn storage ~f =
+    (* If executing fails for any reason, then destroy the connection.  This is
+       kind of a belts-and-suspends situation but there could still be work
+       executing in the build system because one part threw an exception but
+       another hasn't finished it's work and we return early because of the
+       exception.  So for now, on failure, we just kill the connection. *)
+    Pgsql_pool.with_conn storage ~f:(fun db ->
+        Fc.on_failure (fun () -> f db) ~failure:(fun () -> Pgsql_io.destroy db))
 
   (* Because it's just simpler to work with, we have builds return a [result],
      that way we already have a monad that can short circuit when we do not want
@@ -90,7 +100,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     Abbs_time_it.run
       (fun t -> Logs.info (fun m -> m "%s : RUN_WORK_MANIFEST : time=%f" request_id t))
       (fun () ->
-        Pgsql_pool.with_conn storage ~f:(fun db ->
+        with_conn storage ~f:(fun db ->
             Pgsql_io.tx db ~f:(fun () ->
                 S.Db.query_next_pending_work_manifest ~request_id db
                 >>= function
@@ -149,7 +159,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     Abbs_future_combinators.with_finally
       (fun () ->
         let open Irm in
-        Pgsql_pool.with_conn storage ~f:(fun db ->
+        with_conn storage ~f:(fun db ->
             let store =
               store
               |> Keys.Key.add Keys.account account
@@ -306,7 +316,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         |> Keys.Key.add Keys.repo repo
         |> Keys.Key.add Keys.run_id run_id
       in
-      Pgsql_pool.with_conn storage ~f:(fun db ->
+      with_conn storage ~f:(fun db ->
           Pgsql_io.tx db ~f:(fun () ->
               Builder.State.make ~log_id:request_id ~config ~store ~db ~tasks ()
               >>= fun s ->
@@ -324,7 +334,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         |> Keys.Key.add Keys.compute_node_id compute_node_id
         |> Keys.Key.add Keys.compute_node_offering offering
       in
-      Pgsql_pool.with_conn storage ~f:(fun db ->
+      with_conn storage ~f:(fun db ->
           Pgsql_io.tx db ~f:(fun () ->
               Builder.State.make ~log_id:request_id ~config ~store ~db ~tasks ()
               >>= fun s ->
@@ -375,7 +385,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       let open Abb.Future.Infix_monad in
       Logs.info (fun m ->
           m "%s : WORK_MANIFEST_RESULT : work_manifest_id= %a" request_id Uuidm.pp work_manifest_id);
-      Pgsql_pool.with_conn storage ~f:(fun db ->
+      with_conn storage ~f:(fun db ->
           Pgsql_io.tx db ~f:(fun () ->
               let open Irm in
               query_work_manifest db
@@ -479,7 +489,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     let run =
       let open Irm in
       let target = Keys.eval_push_event in
-      Pgsql_pool.with_conn storage ~f:(fun db ->
+      with_conn storage ~f:(fun db ->
           Pgsql_io.tx db ~f:(fun () ->
               S.Job_context.create_or_get_for_branch ~request_id db account repo branch
               >>= fun context ->
@@ -519,7 +529,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     let run =
       let target = Keys.run_missing_drift_schedules in
       let store = Hmap.empty in
-      Pgsql_pool.with_conn storage ~f:(fun db ->
+      with_conn storage ~f:(fun db ->
           Pgsql_io.tx db ~f:(fun () ->
               Builder.State.make
                 ~log_id:request_id
