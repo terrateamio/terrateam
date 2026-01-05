@@ -34,7 +34,7 @@ module Account = struct
     let to_string t = raise (Failure "nyi")
   end
 
-  type t = unit [@@deriving yojson, eq]
+  type t = unit [@@deriving show, yojson, eq]
 
   let make id = raise (Failure "nyi")
   let id t = raise (Failure "nyi")
@@ -64,7 +64,7 @@ module Repo = struct
     let to_string t = raise (Failure "nyi")
   end
 
-  type t = unit [@@deriving eq, yojson]
+  type t = unit [@@deriving show, eq, yojson]
 
   let make ~id ~name ~owner () = raise (Failure "nyi")
   let name t = raise (Failure "nyi")
@@ -81,7 +81,7 @@ module Remote_repo = struct
 end
 
 module Ref = struct
-  type t = unit [@@deriving eq, yojson]
+  type t = unit [@@deriving show, eq, yojson]
 
   let to_string t = raise (Failure "nyi")
   let of_string s = raise (Failure "nyi")
@@ -98,7 +98,7 @@ module Pull_request = struct
   include Terrat_pull_request
 
   type ('diff, 'checks) t = (Id.t, 'diff, 'checks, Repo.t, Ref.t) Terrat_pull_request.t
-  [@@deriving to_yojson]
+  [@@deriving show, to_yojson]
 end
 
 module Client = struct
