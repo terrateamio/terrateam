@@ -17,7 +17,6 @@ module Make
         with type Api.Config.t = Terrat_vcs_service_github_provider.Api.Config.t)
     (Routes : ROUTES with type config = Provider.Api.Config.t) =
 struct
-  module Evaluator = Terrat_vcs_event_evaluator.Make (Provider)
   module Evaluator2 = Terrat_vcs_event_evaluator2.Make (Provider)
   module Events = Terrat_vcs_service_github_ep_events3.Make (Provider)
   module Work_manifest = Terrat_vcs_service_github_ep_work_manifest.Make (Provider)
@@ -323,7 +322,6 @@ struct
       config : Provider.Api.Config.t;
       storage : Terrat_storage.t;
       drift : unit Abb.Future.t;
-      flow_state_cleanup : unit Abb.Future.t;
       plan_cleanup : unit Abb.Future.t;
       repo_config_cleanup : unit Abb.Future.t;
     }
@@ -333,25 +331,18 @@ struct
       Abbs_future_combinators.ignore (Evaluator2.run_missing_drift_schedules ~config ~storage ())
       >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> drift config storage
 
-    let rec flow_state_cleanup config storage =
-      let open Abb.Future.Infix_monad in
-      Abbs_future_combinators.ignore
-        (Evaluator.run_flow_state_cleanup
-           (Evaluator.Ctx.make ~config ~storage ~request_id:(Ouuid.to_string (Ouuid.v4 ())) ()))
-      >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> flow_state_cleanup config storage
-
     let rec plan_cleanup config storage =
       let open Abb.Future.Infix_monad in
       Abbs_future_combinators.ignore
-        (Evaluator.run_plan_cleanup
-           (Evaluator.Ctx.make ~config ~storage ~request_id:(Ouuid.to_string (Ouuid.v4 ())) ()))
+        (Pgsql_pool.with_conn storage ~f:(Provider.Db.cleanup_plans ~request_id:"PLAN_CLEANUP"))
       >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> plan_cleanup config storage
 
     let rec repo_config_cleanup config storage =
       let open Abb.Future.Infix_monad in
       Abbs_future_combinators.ignore
-        (Evaluator.run_repo_config_cleanup
-           (Evaluator.Ctx.make ~config ~storage ~request_id:(Ouuid.to_string (Ouuid.v4 ())) ()))
+        (Pgsql_pool.with_conn
+           storage
+           ~f:(Provider.Db.cleanup_repo_configs ~request_id:"REPO_CONFIG_CLEANUP"))
       >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> repo_config_cleanup config storage
 
     let name _ = "github"
@@ -359,22 +350,16 @@ struct
     let start config vcs_config storage =
       let open Abb.Future.Infix_monad in
       let config = Provider.Api.Config.make ~config ~vcs_config () in
-      Abb.Future.Infix_app.(
-        (fun drift flow_state_cleanup plan_cleanup repo_config_cleanup ->
-          (drift, flow_state_cleanup, plan_cleanup, repo_config_cleanup))
-        <$> Abb.Future.fork (drift config storage)
-        <*> Abb.Future.fork (flow_state_cleanup config storage)
-        <*> Abb.Future.fork (plan_cleanup config storage)
-        <*> Abb.Future.fork (repo_config_cleanup config storage))
-      >>= fun (drift, flow_state_cleanup, plan_cleanup, repo_config_cleanup) ->
-      Abb.Future.return
-        (Ok { config; storage; drift; flow_state_cleanup; plan_cleanup; repo_config_cleanup })
+      Abbs_future_combinators.all3
+        (Abb.Future.fork (drift config storage))
+        (Abb.Future.fork (plan_cleanup config storage))
+        (Abb.Future.fork (repo_config_cleanup config storage))
+      >>= fun (drift, plan_cleanup, repo_config_cleanup) ->
+      Abb.Future.return (Ok { config; storage; drift; plan_cleanup; repo_config_cleanup })
 
     let stop t =
       let open Abb.Future.Infix_monad in
       Abb.Future.abort t.drift
-      >>= fun () ->
-      Abb.Future.abort t.flow_state_cleanup
       >>= fun () ->
       Abb.Future.abort t.plan_cleanup
       >>= fun () -> Abb.Future.abort t.repo_config_cleanup >>= fun () -> Abb.Future.return ()
