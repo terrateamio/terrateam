@@ -15,7 +15,6 @@ select
     gwm.repo_owner,
     gwm.repo_name,
     gwm.environment,
-    gwm.runs_on,
-    gwm.branch
+    gwm.runs_on
 from github_work_manifests as gwm
 where gwm.id = $id

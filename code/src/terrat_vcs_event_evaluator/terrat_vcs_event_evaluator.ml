@@ -3453,7 +3453,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       {
         Wm.account = Event.account state.State.event;
         base_ref = S.Api.Ref.to_string base_ref;
-        branch = None;
         branch_ref = S.Api.Ref.to_string branch_ref;
         changes;
         completed_at = None;
@@ -4694,7 +4693,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             {
               Wm.account;
               base_ref = S.Api.Ref.to_string base_ref';
-              branch = None;
               branch_ref = S.Api.Ref.to_string working_branch_ref';
               changes = [];
               completed_at = None;
@@ -6239,7 +6237,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             {
               Wm.account;
               base_ref = S.Api.Ref.to_string base_ref';
-              branch = None;
               branch_ref = S.Api.Ref.to_string working_branch_ref';
               changes = [];
               completed_at = None;
@@ -6531,7 +6528,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             {
               Wm.account;
               base_ref = S.Api.Ref.to_string base_ref';
-              branch = None;
               branch_ref = S.Api.Ref.to_string working_branch_ref';
               changes = [];
               completed_at = None;
