@@ -1,0 +1,133 @@
+#!/usr/bin/env bash
+
+set -euf -o pipefail
+
+# This script is run by Terrateam after apply completes on main branch
+# It finalizes the CHANGELOG.md and commits it with the version tag
+
+# Check if we're on the main branch (Terrateam runs this post-merge)
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+if [ "$CURRENT_BRANCH" != "main" ]; then
+  echo "Not on main branch, skipping changelog commit"
+  exit 0
+fi
+
+# Wait for the release tag to be created by release.yml
+# release.yml runs on merge and creates the tag, we need to wait for it
+CURRENT_SHA=$(git rev-parse HEAD)
+echo "Waiting for release tag to be created for commit ${CURRENT_SHA}..."
+
+VERSION_TAG=""
+for i in {1..60}; do  # 60 attempts = ~2 minutes max wait
+  # Fetch latest tags from remote
+  git fetch --tags 2>/dev/null || true
+
+  # Find tag that points to current commit
+  VERSION_TAG=$(git tag --points-at HEAD | head -n 1)
+
+  if [ -n "$VERSION_TAG" ]; then
+    echo "Found release tag: ${VERSION_TAG}"
+    break
+  fi
+
+  if [ $i -eq 60 ]; then
+    echo "Error: Timeout waiting for release tag after 2 minutes"
+    echo "The release.yml workflow should have created a tag for this commit"
+    exit 1
+  fi
+
+  echo "Waiting for tag... (attempt $i/60)"
+  sleep 2
+done
+
+echo "Finalizing CHANGELOG.md for release ${VERSION_TAG}..."
+
+CHANGELOG_FILE="CHANGELOG.md"
+
+# Check if CHANGELOG.md exists
+if [ ! -f "$CHANGELOG_FILE" ]; then
+  echo "CHANGELOG.md not found. Skipping changelog finalization."
+  exit 0
+fi
+
+# Check if there's an Unreleased section
+if ! grep -q "^## Unreleased" "$CHANGELOG_FILE"; then
+  echo "No '## Unreleased' section found in CHANGELOG.md. Skipping."
+  exit 0
+fi
+
+# Check if Unreleased section has any entries
+# Extract content between "## Unreleased" and next "## " heading
+UNRELEASED_CONTENT=$(sed -n '/^## Unreleased$/,/^## /p' "$CHANGELOG_FILE" | sed '$d' | tail -n +2)
+
+# Remove empty lines and check if there's actual content
+if [ -z "$(echo "$UNRELEASED_CONTENT" | grep -v '^[[:space:]]*$')" ]; then
+  echo "No entries under '## Unreleased'. Skipping changelog finalization."
+  exit 0
+fi
+
+# Get current date
+RELEASE_DATE=$(date +%Y-%m-%d)
+
+# Create a temporary file
+TEMP_FILE=$(mktemp)
+
+# Now insert the versioned section
+{
+  # Print header
+  sed -n '/^# Changelog/,/^$/p' "$CHANGELOG_FILE"
+
+  echo ""
+
+  # Add the new version section with the unreleased content
+  echo "## [${VERSION_TAG}] - ${RELEASE_DATE}"
+  echo ""
+  echo "$UNRELEASED_CONTENT"
+  echo ""
+
+  # Add new empty Unreleased section
+  echo "## Unreleased"
+  echo ""
+
+  # Print all existing version sections (skip header and old Unreleased)
+  sed -n '/^## \[/,$p' "$CHANGELOG_FILE"
+} > "${CHANGELOG_FILE}.new"
+
+mv "${CHANGELOG_FILE}.new" "$CHANGELOG_FILE"
+rm -f "$TEMP_FILE"
+
+echo "✓ Moved 'Unreleased' entries to version ${VERSION_TAG}"
+echo "✓ Created new empty 'Unreleased' section"
+
+# Check if CHANGELOG.md was modified
+if git diff --quiet CHANGELOG.md; then
+  echo "No changes to CHANGELOG.md, skipping commit"
+  exit 0
+fi
+
+# Configure git if not already configured
+if [ -z "$(git config user.name || true)" ]; then
+  git config user.name "terrateam-action[bot]"
+fi
+
+if [ -z "$(git config user.email || true)" ]; then
+  git config user.email "terrateam-action[bot]@users.noreply.github.com"
+fi
+
+# Extract issue number from the most recent merge commit
+LAST_COMMIT_MSG=$(git log -1 --format=%s)
+ISSUE_NUM=$(echo "$LAST_COMMIT_MSG" | grep -oP '(?<=from terrateamio/)\d+' | head -1 || true)
+
+if [ -z "$ISSUE_NUM" ]; then
+  # Fallback if we can't extract issue number
+  COMMIT_MSG="REFACTOR Finalize CHANGELOG for ${VERSION_TAG}"
+else
+  COMMIT_MSG="#${ISSUE_NUM} REFACTOR Finalize CHANGELOG for ${VERSION_TAG}"
+fi
+
+# Commit and push
+git add CHANGELOG.md
+git commit -m "$COMMIT_MSG"
+git push origin main
+
+echo "✓ CHANGELOG.md finalized and committed for ${VERSION_TAG}"
