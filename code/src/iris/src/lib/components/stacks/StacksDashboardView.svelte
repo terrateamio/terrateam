@@ -1,12 +1,84 @@
 <script lang="ts">
-  import type { DashboardMetrics } from '../../types';
-  import { navigateToPRDetail } from '../../utils/navigation';
+  import type { DashboardMetrics, PRWithStacks } from '../../types';
+  import { navigateToPRDetail, navigateToStackDetail } from '../../utils/navigation';
+  import { onMount } from 'svelte';
 
   // Props
   export let metrics: DashboardMetrics;
+  export let prsWithStacks: PRWithStacks[] = [];
   export let isLoading: boolean;
   export let error: string | null;
   export let onNavigateToPRs: () => void;
+
+  // Expand state for PRs (using object for better Svelte reactivity)
+  let expandedPRs: Record<number, boolean> = {};
+  let autoExpandMostRecent: boolean = true;
+  let preferenceLoaded: boolean = false;
+
+  // localStorage key for preference
+  const EXPAND_PREF_KEY = 'terrateam:stacks:autoExpandMostRecent';
+
+  // Load preference from localStorage
+  function loadExpandPreference(): void {
+    try {
+      const saved = localStorage.getItem(EXPAND_PREF_KEY);
+      if (saved !== null) {
+        autoExpandMostRecent = saved === 'true';
+      }
+      preferenceLoaded = true;
+    } catch {
+      preferenceLoaded = true;
+      // Ignore localStorage errors
+    }
+  }
+
+  // Save preference to localStorage
+  function saveExpandPreference(value: boolean): void {
+    try {
+      localStorage.setItem(EXPAND_PREF_KEY, String(value));
+    } catch {
+      // Ignore localStorage errors
+    }
+  }
+
+  // Toggle auto-expand preference
+  function toggleAutoExpand(): void {
+    autoExpandMostRecent = !autoExpandMostRecent;
+    saveExpandPreference(autoExpandMostRecent);
+
+    // Apply immediately - expand or collapse based on new value
+    if (mostRecentPR) {
+      expandedPRs = { ...expandedPRs, [mostRecentPR.prNumber]: autoExpandMostRecent };
+    }
+  }
+
+  // Toggle individual PR expansion
+  function togglePRExpand(prNumber: number): void {
+    expandedPRs = { ...expandedPRs, [prNumber]: !expandedPRs[prNumber] };
+  }
+
+  // Get full PR data for a given PR number
+  function getFullPRData(prNumber: number): PRWithStacks | undefined {
+    return prsWithStacks.find(pr => pr.prNumber === prNumber);
+  }
+
+  // Computed: Most recent PR by lastActivity
+  $: mostRecentPR = prsWithStacks.length > 0
+    ? prsWithStacks.reduce((latest, current) => {
+        const latestDate = new Date(latest.lastActivity).getTime();
+        const currentDate = new Date(current.lastActivity).getTime();
+        return currentDate > latestDate ? current : latest;
+      })
+    : null;
+
+  // Auto-expand most recent PR when data changes (only if preference loaded and not already set by user)
+  $: if (preferenceLoaded && autoExpandMostRecent && mostRecentPR && !(mostRecentPR.prNumber in expandedPRs)) {
+    expandedPRs = { ...expandedPRs, [mostRecentPR.prNumber]: true };
+  }
+
+  onMount(() => {
+    loadExpandPreference();
+  });
 
   /**
    * Formats percentage
@@ -94,6 +166,70 @@
    */
   function getStatePercentage(count: number, total: number): number {
     return total > 0 ? (count / total) * 100 : 0;
+  }
+
+  /**
+   * Gets badge classes for stack state
+   */
+  function getStackStateBadgeClasses(state: string): string {
+    switch (state) {
+      case 'apply_success':
+        return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400';
+      case 'apply_failed':
+      case 'plan_failed':
+        return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400';
+      case 'apply_pending':
+      case 'plan_pending':
+        return 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400';
+      case 'apply_ready':
+        return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400';
+      case 'no_changes':
+        return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
+      default:
+        return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
+    }
+  }
+
+  /**
+   * Gets icon for stack state
+   */
+  function getStackStateIcon(state: string): string {
+    switch (state) {
+      case 'apply_success':
+        return '✅';
+      case 'apply_failed':
+      case 'plan_failed':
+        return '❌';
+      case 'apply_pending':
+      case 'plan_pending':
+        return '⏳';
+      case 'apply_ready':
+        return '✓';
+      case 'no_changes':
+        return '○';
+      default:
+        return '▪️';
+    }
+  }
+
+  /**
+   * Gets border color for aggregate state
+   */
+  function getStateBorderColor(state: string): string {
+    switch (state) {
+      case 'success':
+        return 'border-l-green-500';
+      case 'failed':
+        return 'border-l-red-500';
+      case 'pending':
+        return 'border-l-purple-500';
+      case 'ready':
+        return 'border-l-blue-500';
+      case 'no_changes':
+        return 'border-l-gray-400';
+      default:
+        return 'border-l-gray-300';
+    }
   }
 </script>
 
@@ -324,43 +460,175 @@
     <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Open Pull Requests</h3>
-        <button
-          on:click={onNavigateToPRs}
-          class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium transition-colors"
-        >
-          View All →
-        </button>
+        <div class="flex items-center gap-4">
+          <!-- Auto-expand toggle -->
+          <div class="inline-flex items-center gap-2">
+            <span class="text-sm text-gray-600 dark:text-gray-400">Auto-expand latest</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={autoExpandMostRecent}
+              on:click={toggleAutoExpand}
+              class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {autoExpandMostRecent ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'}"
+            >
+              <span
+                aria-hidden="true"
+                class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {autoExpandMostRecent ? 'translate-x-4' : 'translate-x-0'}"
+              ></span>
+            </button>
+          </div>
+          <button
+            on:click={onNavigateToPRs}
+            class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium transition-colors"
+          >
+            View All →
+          </button>
+        </div>
       </div>
       {#if metrics.openPRs.length > 0}
-        <div class="space-y-2">
-          {#each metrics.openPRs as pr}
-            <button
-              on:click={() => navigateToPRDetail(pr.prNumber)}
-              class="w-full p-3 rounded-md bg-gray-50 dark:bg-gray-900/20 hover:bg-gray-100 dark:hover:bg-gray-900/40 transition-colors text-left border border-gray-200 dark:border-gray-700"
-            >
-              <div class="flex items-start justify-between gap-3">
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2 mb-1">
-                    <span class="font-medium text-gray-900 dark:text-gray-100">
-                      #{pr.prNumber}
-                    </span>
-                    <span class="text-sm text-gray-600 dark:text-gray-400 truncate">
-                      {pr.prTitle}
-                    </span>
+        <div class="space-y-3">
+          {#each metrics.openPRs as pr (pr.prNumber)}
+            {@const fullPRData = getFullPRData(pr.prNumber)}
+            {@const isMostRecent = mostRecentPR?.prNumber === pr.prNumber}
+            <div class="rounded-lg border border-gray-200 dark:border-gray-700 border-l-4 {getStateBorderColor(pr.state)} overflow-hidden">
+              <!-- PR Header Row -->
+              <button
+                on:click={() => togglePRExpand(pr.prNumber)}
+                class="w-full p-3 bg-gray-50 dark:bg-gray-900/20 hover:bg-gray-100 dark:hover:bg-gray-900/40 transition-colors text-left"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <div class="flex items-center gap-2">
+                    <!-- Expand/Collapse chevron -->
+                    <svg
+                      class="w-4 h-4 text-gray-500 transition-transform {expandedPRs[pr.prNumber] ? 'rotate-90' : ''}"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2 mb-1">
+                        {#if isMostRecent}
+                          <span class="text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-1.5 py-0.5 rounded">Latest</span>
+                        {/if}
+                        <span class="font-medium text-gray-900 dark:text-gray-100">
+                          #{pr.prNumber}
+                        </span>
+                        <span class="text-sm text-gray-600 dark:text-gray-400 truncate">
+                          {pr.prTitle}
+                        </span>
+                      </div>
+                      <div class="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-500">
+                        <span class="font-mono">{pr.repo}</span>
+                        <span>•</span>
+                        <span>{pr.stackCount} {pr.stackCount === 1 ? 'stack' : 'stacks'}</span>
+                        <span>•</span>
+                        <span>{formatRelativeTime(pr.lastActivity)}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div class="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-500">
-                    <span class="font-mono">{pr.repo}</span>
-                    <span>•</span>
-                    <span>{pr.stackCount} {pr.stackCount === 1 ? 'stack' : 'stacks'}</span>
-                    <span>•</span>
-                    <span>{formatRelativeTime(pr.lastActivity)}</span>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {getStateBadgeClasses(pr.state)} flex-shrink-0">
+                    {formatStateName(pr.state)}
+                  </span>
+                </div>
+              </button>
+
+              <!-- Expanded Content -->
+              {#if expandedPRs[pr.prNumber] && fullPRData}
+                <div class="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+                  <!-- Stack summary counts -->
+                  <div class="mb-4 bg-gray-50 dark:bg-gray-900/50 rounded-md p-3">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                      <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {fullPRData.stacks.length} {fullPRData.stacks.length === 1 ? 'Stack' : 'Stacks'}
+                      </div>
+                      <div class="flex items-center gap-3 text-xs flex-wrap">
+                        {#if fullPRData.stackStateCounts.apply_failed > 0}
+                          <div class="flex items-center gap-1 text-red-600 dark:text-red-400">
+                            <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                            <span>{fullPRData.stackStateCounts.apply_failed} apply failed</span>
+                          </div>
+                        {/if}
+                        {#if fullPRData.stackStateCounts.plan_failed > 0}
+                          <div class="flex items-center gap-1 text-orange-600 dark:text-orange-400">
+                            <span class="w-2 h-2 rounded-full bg-orange-500"></span>
+                            <span>{fullPRData.stackStateCounts.plan_failed} plan failed</span>
+                          </div>
+                        {/if}
+                        {#if fullPRData.stackStateCounts.apply_pending > 0}
+                          <div class="flex items-center gap-1 text-purple-600 dark:text-purple-400">
+                            <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                            <span>{fullPRData.stackStateCounts.apply_pending} apply pending</span>
+                          </div>
+                        {/if}
+                        {#if fullPRData.stackStateCounts.apply_ready > 0}
+                          <div class="flex items-center gap-1 text-blue-600 dark:text-blue-400">
+                            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                            <span>{fullPRData.stackStateCounts.apply_ready} ready</span>
+                          </div>
+                        {/if}
+                        {#if fullPRData.stackStateCounts.apply_success > 0}
+                          <div class="flex items-center gap-1 text-green-600 dark:text-green-400">
+                            <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                            <span>{fullPRData.stackStateCounts.apply_success} success</span>
+                          </div>
+                        {/if}
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Stacks list -->
+                  <div class="space-y-2 mb-4">
+                    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">Stacks</h4>
+                    {#each fullPRData.stacks as stack}
+                      <button
+                        on:click={() => navigateToStackDetail(pr.prNumber, `${stack.stackOuter.name}/${stack.stackInner.name}`)}
+                        class="w-full flex items-center justify-between p-2 rounded-md bg-gray-50 dark:bg-gray-900/50 hover:bg-gray-100 dark:hover:bg-gray-900/70 transition-colors text-left"
+                      >
+                        <div class="flex items-center gap-2 min-w-0 flex-1">
+                          <span class="flex-shrink-0 text-base" aria-hidden="true">
+                            {getStackStateIcon(stack.state)}
+                          </span>
+                          <span class="font-medium text-gray-900 dark:text-gray-100 truncate">
+                            {stack.stackOuter.name}
+                            {#if stack.stackOuter.name !== stack.stackInner.name}
+                              <span class="text-gray-500 dark:text-gray-400">/</span>
+                              {stack.stackInner.name}
+                            {/if}
+                          </span>
+                        </div>
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                          {#if stack.recentRunsCount > 0}
+                            <span class="text-xs text-gray-600 dark:text-gray-400">
+                              {stack.recentRunsCount} {stack.recentRunsCount === 1 ? 'run' : 'runs'}
+                            </span>
+                          {/if}
+                          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {getStackStateBadgeClasses(stack.state)}">
+                            {formatStateName(stack.state)}
+                          </span>
+                        </div>
+                      </button>
+                    {/each}
+                  </div>
+
+                  <!-- Footer actions -->
+                  <div class="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
+                    <div class="text-xs text-gray-500 dark:text-gray-400">
+                      {#if fullPRData.lastUser}
+                        Last activity by @{fullPRData.lastUser}
+                      {/if}
+                    </div>
+                    <button
+                      on:click={() => navigateToPRDetail(pr.prNumber)}
+                      class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium transition-colors"
+                    >
+                      View Full PR →
+                    </button>
                   </div>
                 </div>
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {getStateBadgeClasses(pr.state)} flex-shrink-0">
-                  {formatStateName(pr.state)}
-                </span>
-              </div>
-            </button>
+              {/if}
+            </div>
           {/each}
         </div>
       {:else}

@@ -276,6 +276,7 @@
           {#if dashboardMetrics}
             <StacksDashboardView
               metrics={dashboardMetrics}
+              {prsWithStacks}
               {isLoading}
               {error}
               onNavigateToPRs={() => setActiveTab('prs')}
