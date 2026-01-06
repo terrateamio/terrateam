@@ -10,6 +10,4 @@ module Make
     Builder.Bs.state ->
     Builder.Bs.Fetcher.t ->
     ('v, Builder.err) result Abb.Future.t
-
-  val default_tasks : unit -> Terrat_vcs_event_evaluator2_targets.Make(S).Hmap.t
 end

@@ -33,6 +33,14 @@ module type S = sig
     val protect : (unit -> 'a t) -> 'a t t
   end
 
+  module Queue : sig
+    type t
+
+    val run : name:Key_repr.t -> t -> (unit -> 'a C.t) -> 'a C.t
+    val suspend : name:Key_repr.t -> t -> unit C.t
+    val unsuspend : name:Key_repr.t -> t -> unit C.t
+  end
+
   module Notify : sig
     type t
 
@@ -55,6 +63,7 @@ module type T = sig
   type key_repr
   type 'a c
   type state
+  type queue
 
   module Fetcher : sig
     type t = { fetch : 'r. 'r k -> 'r c }
@@ -79,7 +88,7 @@ module type T = sig
     val get_state : t -> state
   end
 
-  val build : Rebuilder.t -> Tasks.t -> 'v k -> St.t -> 'v c
+  val build : queue -> Rebuilder.t -> Tasks.t -> 'v k -> St.t -> 'v c
 end
 
 module Make (M : S) :
@@ -87,11 +96,13 @@ module Make (M : S) :
     with type 'a k = 'a M.k
      and type key_repr = M.Key_repr.t
      and type 'a c = 'a M.C.t
-     and type state = M.State.t = struct
+     and type state = M.State.t
+     and type queue = M.Queue.t = struct
   type 'a k = 'a M.k
   type key_repr = M.Key_repr.t
   type 'a c = 'a M.C.t
   type state = M.State.t
+  type queue = M.Queue.t
 
   module Fetcher = struct
     type t = { fetch : 'r. 'r M.k -> 'r M.C.t }
@@ -150,7 +161,7 @@ module Make (M : S) :
                      running;
                })
 
-    let rec block_k path t k f =
+    let rec block_k queue path t k f =
       let repr = M.key_repr_of_key k in
       if CCList.mem ~eq:(fun (k1, _) (k2, _) -> M.Key_repr.equal k1 k2) (repr, path) t.running then (
         let open M.C in
@@ -163,11 +174,11 @@ module Make (M : S) :
             ~eq:(fun (k1, _) (k2, _) -> M.Key_repr.equal k1 k2)
             ~key:(repr, path)
             t.blocking;
-        block_k path t k f)
+        block_k queue path t k f)
       else
         let open M.C in
         t.running <- (repr, path) :: t.running;
-        protect f
+        protect (fun () -> M.Queue.run queue ~name:repr f)
         >>= fun ret ->
         t.running <-
           CCList.remove
@@ -177,28 +188,37 @@ module Make (M : S) :
         M.Notify.notify t.notify >>= fun () -> ret
   end
 
-  let build rebuilder tasks k st =
+  let build queue rebuilder tasks k st =
     let rec fetch : 'r. M.Key_repr.t list -> 'r M.k -> 'r M.C.t =
      fun path k ->
       let open M.C in
+      let suspend, unsuspend =
+        match CCList.rev path with
+        | [] -> ((fun _ -> M.C.return ()), fun _ -> M.C.return ())
+        | k :: _ -> (M.Queue.suspend ~name:k, M.Queue.unsuspend ~name:k)
+      in
       let path = path @ [ M.key_repr_of_key k ] in
       tasks.Tasks.get (St.get_state st) k
       >>= function
       | None -> M.State.get_k (St.get_state st) k
       | Some task ->
-          St.block_k path st k (fun () ->
-              M.State.get_k_opt (St.get_state st) k
-              >>= function
-              | Some v -> (
-                  rebuilder.Rebuilder.run (St.get_state st) k v
+          suspend queue
+          >>= fun () ->
+          M.C.protect (fun () ->
+              St.block_k queue path st k (fun () ->
+                  M.State.get_k_opt (St.get_state st) k
                   >>= function
-                  | true ->
+                  | Some v -> (
+                      rebuilder.Rebuilder.run (St.get_state st) k v
+                      >>= function
+                      | true ->
+                          task path (St.get_state st) { Fetcher.fetch = (fun k -> fetch path k) }
+                          >>= fun v -> M.State.set_k (St.get_state st) k v >>= fun () -> return v
+                      | false -> return v)
+                  | None ->
                       task path (St.get_state st) { Fetcher.fetch = (fun k -> fetch path k) }
-                      >>= fun v -> M.State.set_k (St.get_state st) k v >>= fun () -> return v
-                  | false -> return v)
-              | None ->
-                  task path (St.get_state st) { Fetcher.fetch = (fun k -> fetch path k) }
-                  >>= fun v -> M.State.set_k (St.get_state st) k v >>= fun () -> return v)
+                      >>= fun v -> M.State.set_k (St.get_state st) k v >>= fun () -> return v))
+          >>= fun ret -> unsuspend queue >>= fun () -> ret
     in
     fetch [] k
 end

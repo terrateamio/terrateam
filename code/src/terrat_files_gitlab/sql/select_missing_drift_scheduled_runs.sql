@@ -79,4 +79,5 @@ where (ldm.state is null or ldm.state not in ('queued', 'running'))
            and (dsw.window_start is null
                 or (dsw.window_start <= current_timestamp and current_timestamp < dsw.window_end)))
       and gi.state = 'installed'
+limit 1
 for update skip locked

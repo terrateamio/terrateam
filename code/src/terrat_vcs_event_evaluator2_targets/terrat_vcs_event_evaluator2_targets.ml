@@ -462,7 +462,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
 
   (* Context management *)
 
-  let store_repository : unit Key.t = Hmap.Key.create "store_repository"
   let store_pull_request : unit Key.t = Hmap.Key.create "store_pull_request"
   let tag_query : Terrat_tag_query.t Key.t = Hmap.Key.create "tag_query"
 
@@ -484,5 +483,5 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   let iter_job : unit Key.t = Hmap.Key.create "iter_job"
   let eval_work_manifest_failure : unit Key.t = Hmap.Key.create "eval_work_manifest_failure"
   let eval_push_event : unit Key.t = Hmap.Key.create "eval_push_event"
-  let run_missing_drift_schedules : unit Key.t = Hmap.Key.create "run_missing_drift_schedules"
+  let run_missing_drift_schedules : int Key.t = Hmap.Key.create "run_missing_drift_schedules"
 end

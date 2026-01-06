@@ -1,5 +1,7 @@
+module Fc = Abbs_future_combinators
 module Irm = Abbs_future_combinators.Infix_result_monad
 module Serializer = Abb_service_serializer.Make (Abb.Future)
+module Exec = Abb_bounded_suspendable_executor.Make (Abb.Future) (CCString)
 
 module Make (S : Terrat_vcs_provider2.S) = struct
   module Logs' = Logs
@@ -43,6 +45,17 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         f () >>= fun ret -> Abb.Future.return (Abb.Future.return ret)
     end
 
+    module Queue = struct
+      type t = {
+        exec : Exec.t;
+        root : Key_repr.t list;
+      }
+
+      let run ~name t f = Exec.run ~name:(t.root @ [ name ]) t.exec f
+      let suspend ~name t = Exec.suspend ~name:(t.root @ [ name ]) t.exec
+      let unsuspend ~name t = Exec.unsuspend ~name:(t.root @ [ name ]) t.exec
+    end
+
     module Notify = struct
       type t = (unit Abb.Future.t * unit Abb.Future.Promise.t) ref
 
@@ -68,24 +81,28 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     module State = struct
       type t = {
         log_id : string;
+        root_path : Key_repr.t list;
+        path : Key_repr.t list;
         config : S.Api.Config.t;
         db : Pgsql_io.t Serializer.Mutex.t;
         orig_store : Hmap.t;
         tasks : Hmap.t;
-        mutable store : Hmap.t;
-        mutable dirty : Key_repr.t list;
+        exec : Exec.t;
+        store : Hmap.t ref;
+            (*  A ref because we want to share the store across multiple instances of state*)
+        dirty : Key_repr.t list ref (* A ref for same reasons as store. *);
       }
 
       let set_k t k v =
-        t.store <- Hmap.add k v t.store;
+        t.store := Hmap.add k v !(t.store);
         Abb.Future.return ()
 
       let get_k t k =
-        match Hmap.find k t.store with
+        match Hmap.find k !(t.store) with
         | Some v -> Abb.Future.return v
         | None -> raise (Failure ("Missing_dep_err " ^ Hmap.Key.info k))
 
-      let get_k_opt t k = Abb.Future.return (Hmap.find k t.store)
+      let get_k_opt t k = Abb.Future.return (Hmap.find k !(t.store))
     end
   end
 
@@ -95,33 +112,48 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     {
       Bs.Rebuilder.run =
         (fun s k _v ->
-          let is_dirty = CCList.mem ~eq:B.Key_repr.equal (B.key_repr_of_key k) s.B.State.dirty in
+          let is_dirty = CCList.mem ~eq:B.Key_repr.equal (B.key_repr_of_key k) !(s.B.State.dirty) in
           if is_dirty then
-            s.B.State.dirty <-
-              CCList.filter CCFun.(B.Key_repr.equal (B.key_repr_of_key k) %> not) s.B.State.dirty;
+            s.B.State.dirty :=
+              CCList.filter CCFun.(B.Key_repr.equal (B.key_repr_of_key k) %> not) !(s.B.State.dirty);
           Abb.Future.return is_dirty);
     }
 
   module State = struct
     type t = B.State.t
 
-    let make ~log_id ~store ~config ~db ~tasks () =
+    let make ~log_id ~store ~config ~exec ~db ~tasks () =
       let open Abb.Future.Infix_monad in
       Serializer.create ()
       >>= fun serializer ->
       let db = Serializer.Mutex.create serializer db in
-      Abb.Future.return { B.State.log_id; config; orig_store = store; tasks; store; dirty = []; db }
+      Abb.Future.return
+        {
+          B.State.log_id;
+          root_path = [];
+          path = [];
+          config;
+          exec;
+          orig_store = store;
+          tasks;
+          store = ref store;
+          dirty = ref [];
+          db;
+        }
 
     let set_log_id log_id t = { t with B.State.log_id }
     let config t = t.B.State.config
-    let mark_dirty t k = t.B.State.dirty <- B.key_repr_of_key k :: t.B.State.dirty
+    let exec t = t.B.State.exec
+    let mark_dirty t k = t.B.State.dirty := B.key_repr_of_key k :: !(t.B.State.dirty)
     let orig_store t = t.B.State.orig_store
-    let set_orig_store store t = { t with B.State.store; orig_store = store }
+    let set_orig_store store t = { t with B.State.store = ref store; orig_store = store }
     let tasks t = t.B.State.tasks
     let set_tasks tasks t = { t with B.State.tasks }
+    let set_path path t = { t with B.State.path }
+    let root_path t = t.B.State.root_path
 
     let forward_store_value k t m =
-      match Hmap.find k t.B.State.store with
+      match Hmap.find k !(t.B.State.store) with
       | Some v -> Hmap.add k v m
       | None -> m
   end
@@ -160,16 +192,41 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     { Bs.Tasks.get = (fun s k -> Abb.Future.return (Hmap.find (coerce_to_task k) tasks_map)) }
 
   let eval s k =
-    Abbs_time_it.run
-      (fun t ->
-        Logs.info (fun m ->
-            m "%s : BUILDER : EVAL : END : target=%s : time=%f" (log_id s) (Hmap.Key.info k) t))
+    let path =
+      match CCList.rev s.B.State.path with
+      | [] -> []
+      | name :: _ -> [ name ]
+    in
+    let suspend_root, unsuspend_root =
+      match path with
+      | [] -> (Abb.Future.return, Abb.Future.return)
+      | name :: _ ->
+          ( (fun () -> Exec.suspend ~name:(s.B.State.root_path @ [ name ]) s.B.State.exec),
+            fun () -> Exec.unsuspend ~name:(s.B.State.root_path @ [ name ]) s.B.State.exec )
+    in
+    let open Abb.Future.Infix_monad in
+    suspend_root ()
+    >>= fun () ->
+    Fc.with_finally
       (fun () ->
-        Logs.info (fun m ->
-            m "%s : BUILDER : EVAL : START : target=%s" (log_id s) (Hmap.Key.info k));
-        Bs.build
-          rebuilder
-          (make_tasks s.B.State.tasks)
-          k
-          (Bs.St.create { s with B.State.store = s.B.State.orig_store }))
+        Abbs_time_it.run
+          (fun t ->
+            Logs.info (fun m ->
+                m "%s : BUILDER : EVAL : END : target=%s : time=%f" (log_id s) (Hmap.Key.info k) t))
+          (fun () ->
+            Logs.info (fun m ->
+                m "%s : BUILDER : EVAL : START : target=%s" (log_id s) (Hmap.Key.info k));
+            Bs.build
+              { B.Queue.exec = s.B.State.exec; root = s.B.State.root_path @ path @ [ log_id s ] }
+              rebuilder
+              (make_tasks s.B.State.tasks)
+              k
+              (Bs.St.create
+                 {
+                   s with
+                   B.State.store = ref s.B.State.orig_store;
+                   root_path = s.B.State.root_path @ s.B.State.path @ [ log_id s ];
+                   path = [];
+                 })))
+      ~finally:unsuspend_root
 end

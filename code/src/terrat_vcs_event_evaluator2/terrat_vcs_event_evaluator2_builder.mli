@@ -1,3 +1,5 @@
+module Exec : module type of Abb_bounded_suspendable_executor.Make (Abb.Future) (CCString)
+
 (** Builder defines all of the state, error messages, keys, and functionality to build. The usage
     is:
 
@@ -22,6 +24,7 @@ module Make (S : Terrat_vcs_provider2.S) : sig
        and type key_repr = string
        and type 'a c = 'a Abb.Future.t
        and type state = B.State.t
+       and type queue = B.Queue.t
 
   val rebuilder : Bs.Rebuilder.t
 
@@ -32,6 +35,7 @@ module Make (S : Terrat_vcs_provider2.S) : sig
       log_id:string ->
       store:Hmap.t ->
       config:S.Api.Config.t ->
+      exec:Exec.t ->
       db:Pgsql_io.t ->
       tasks:Hmap.t ->
       unit ->
@@ -39,11 +43,14 @@ module Make (S : Terrat_vcs_provider2.S) : sig
 
     val set_log_id : string -> t -> t
     val config : t -> S.Api.Config.t
+    val exec : t -> Exec.t
     val mark_dirty : t -> 'v Bs.k -> unit
     val orig_store : t -> Hmap.t
     val set_orig_store : Hmap.t -> t -> t
     val tasks : t -> Hmap.t
     val set_tasks : Hmap.t -> t -> t
+    val set_path : Bs.key_repr list -> t -> t
+    val root_path : t -> Bs.key_repr list
 
     (** If a store value exists in [s] add it to this store. Useful for constructing new stores when
         doing a nested eval call. *)

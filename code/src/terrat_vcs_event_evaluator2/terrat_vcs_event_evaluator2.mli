@@ -1,3 +1,7 @@
+module Exec : module type of Abb_bounded_suspendable_executor.Make (Abb.Future) (CCString)
+
+val create_exec : slots:int -> unit -> Exec.t Abb.Future.t
+
 module Make (S : Terrat_vcs_provider2.S) : sig
   type err = Terrat_vcs_event_evaluator2_builder.Make(S).err
 
@@ -17,6 +21,7 @@ module Make (S : Terrat_vcs_provider2.S) : sig
     request_id:string ->
     config:S.Api.Config.t ->
     storage:Terrat_storage.t ->
+    exec:Exec.t ->
     account:S.Api.Account.t ->
     repo:S.Api.Repo.t ->
     pull_request_id:S.Api.Pull_request.Id.t ->
@@ -28,6 +33,7 @@ module Make (S : Terrat_vcs_provider2.S) : sig
     request_id:string ->
     config:S.Api.Config.t ->
     storage:Terrat_storage.t ->
+    exec:Exec.t ->
     account:S.Api.Account.t ->
     repo:S.Api.Repo.t ->
     run_id:string ->
@@ -38,6 +44,7 @@ module Make (S : Terrat_vcs_provider2.S) : sig
     request_id:string ->
     config:S.Api.Config.t ->
     storage:Terrat_storage.t ->
+    exec:Exec.t ->
     compute_node_id:Uuidm.t ->
     Terrat_api_components.Work_manifest_initiate.t ->
     (Terrat_api_components.Work_manifest.t, [> `Error ]) result Abb.Future.t
@@ -46,6 +53,7 @@ module Make (S : Terrat_vcs_provider2.S) : sig
     request_id:string ->
     config:S.Api.Config.t ->
     storage:Terrat_storage.t ->
+    exec:Exec.t ->
     work_manifest_id:Uuidm.t ->
     Terrat_api_components.Work_manifest_result.t ->
     (unit, [> `Error ]) result Abb.Future.t
@@ -54,6 +62,7 @@ module Make (S : Terrat_vcs_provider2.S) : sig
     request_id:string ->
     config:S.Api.Config.t ->
     storage:Terrat_storage.t ->
+    exec:Exec.t ->
     account:S.Api.Account.t ->
     repo:S.Api.Repo.t ->
     branch:S.Api.Ref.t ->
@@ -62,5 +71,5 @@ module Make (S : Terrat_vcs_provider2.S) : sig
     unit Abb.Future.t
 
   val run_missing_drift_schedules :
-    config:S.Api.Config.t -> storage:Terrat_storage.t -> unit -> unit Abb.Future.t
+    config:S.Api.Config.t -> storage:Terrat_storage.t -> exec:Exec.t -> unit -> unit Abb.Future.t
 end

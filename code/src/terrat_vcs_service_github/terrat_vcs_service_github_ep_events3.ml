@@ -219,7 +219,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
               (Int64.of_int installation.I.T.primary.I.T.Primary.id)
               unsuspend.Gw.Installation_unsuspend.sender.Gw.User.login)
 
-  let process_pull_request_event request_id config storage = function
+  let process_pull_request_event request_id config storage exec = function
     | Gw.Pull_request_event.Pull_request_opened
         {
           Gw.Pull_request_opened.installation =
@@ -254,6 +254,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
              ~request_id
              ~config
              ~storage
+             ~exec
              ~account
              ~repo
              ~pull_request_id
@@ -291,6 +292,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
              ~request_id
              ~config
              ~storage
+             ~exec
              ~account
              ~repo
              ~pull_request_id
@@ -330,6 +332,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
              ~request_id
              ~config
              ~storage
+             ~exec
              ~account
              ~repo
              ~pull_request_id
@@ -370,6 +373,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
              ~request_id
              ~config
              ~storage
+             ~exec
              ~account
              ~repo
              ~pull_request_id
@@ -416,6 +420,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
              ~request_id
              ~config
              ~storage
+             ~exec
              ~account
              ~repo
              ~pull_request_id
@@ -468,7 +473,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         Logs.debug (fun m -> m "%s : NOOP : PULL_REQUEST_REVIEW_SUBMITTED" request_id);
         Abb.Future.return (Ok ())
 
-  let process_issue_comment request_id config storage = function
+  let process_issue_comment request_id config storage exec = function
     | Gw.Issue_comment_event.Issue_comment_created
         {
           Gw.Issue_comment_created.installation =
@@ -507,6 +512,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
                  ~request_id
                  ~config
                  ~storage
+                 ~exec
                  ~account
                  ~repo
                  ~pull_request_id
@@ -573,7 +579,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         Prmths.Counter.inc_one (Metrics.comment_events_total "noop");
         Abb.Future.return (Ok ())
 
-  let process_workflow_job request_id config storage event =
+  let process_workflow_job request_id config storage exec event =
     match event with
     | Gw.Workflow_job_event.
         {
@@ -602,19 +608,27 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
              ~request_id
              ~config
              ~storage
+             ~exec
              ~account
              ~repo
              ~run_id:(CCInt.to_string run_id)
              ()
     | _ -> Abb.Future.return (Ok ())
 
-  let process_push_event request_id config storage event =
+  let process_push_event request_id config storage exec event =
     let repository = event.Gw.Push_event.repository in
     let default_branch = repository.Gw.Repository.default_branch in
     let ref_ = event.Gw.Push_event.ref_ in
     let default_ref = "refs/heads/" ^ default_branch in
     match event.Gw.Push_event.installation with
     | Some installation_lite when CCString.equal ref_ default_ref ->
+        Logs.info (fun m ->
+            m
+              "%s : PUSH_EVENT : owner=%s : repo=%s : sender=%s"
+              request_id
+              repository.Gw.Repository.owner.Gw.User.login
+              repository.Gw.Repository.name
+              event.Gw.Push_event.sender.Gw.User.login);
         let installation_id = installation_lite.Gw.Installation_lite.id in
         let account = P.Api.Account.make installation_id in
         let repo =
@@ -630,6 +644,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
              ~request_id
              ~config
              ~storage
+             ~exec
              ~account
              ~repo
              ~branch:(P.Api.Ref.of_string default_branch)
@@ -682,7 +697,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
     | Ok () -> Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)
     | Error err -> handle_error ctx err
 
-  let post config storage =
+  let post config storage exec =
     Brtl_ep.run_json ~f:(fun ctx ->
         let request = Brtl_ctx.request ctx in
         let headers = Brtl_ctx.Request.headers request in
@@ -704,16 +719,17 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
                           (Brtl_ctx.token ctx)
                           config
                           storage
+                          exec
                           pull_request_event)
                 | Ok (Gw.Event.Issue_comment_event event) ->
                     process_event_handler config storage ctx (fun () ->
-                        process_issue_comment (Brtl_ctx.token ctx) config storage event)
+                        process_issue_comment (Brtl_ctx.token ctx) config storage exec event)
                 | Ok (Gw.Event.Workflow_job_event event) ->
                     process_event_handler config storage ctx (fun () ->
-                        process_workflow_job (Brtl_ctx.token ctx) config storage event)
+                        process_workflow_job (Brtl_ctx.token ctx) config storage exec event)
                 | Ok (Gw.Event.Push_event event) ->
                     process_event_handler config storage ctx (fun () ->
-                        process_push_event (Brtl_ctx.token ctx) config storage event)
+                        process_push_event (Brtl_ctx.token ctx) config storage exec event)
                 | Ok (Gw.Event.Workflow_run_event _) ->
                     Logs.debug (fun m -> m "%s : NOOP : WORKFLOW_RUN_EVENT" (Brtl_ctx.token ctx));
                     Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`OK "") ctx)

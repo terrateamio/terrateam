@@ -23,6 +23,9 @@ struct
   module Bs = Builder.Bs
   module Tasks_base = Terrat_vcs_event_evaluator2_tasks_base.Make (S) (Keys)
 
+  let time_it s l f =
+    Abbs_time_it.run (fun time -> Logs.info (fun m -> l m (Builder.log_id s) time)) f
+
   module Tasks = struct
     let run = Tasks_base.run
 
@@ -44,7 +47,17 @@ struct
           >>= fun client ->
           fetch Keys.repo
           >>= fun repo ->
-          S.Api.fetch_branch_sha ~request_id:(Builder.log_id s) client repo branch_name
+          time_it
+            s
+            (fun m log_id time ->
+              m
+                "%s : FETCH_BRANCH_SHA : repo = %s : branch = %s : time=%f"
+                log_id
+                (S.Api.Repo.to_string repo)
+                (S.Api.Ref.to_string branch_name)
+                time)
+            (fun () ->
+              S.Api.fetch_branch_sha ~request_id:(Builder.log_id s) client repo branch_name)
           >>= function
           | Some ref_ -> Abb.Future.return (Ok ref_)
           | None -> Abb.Future.return (Error `Error))
@@ -75,7 +88,17 @@ struct
           >>= fun client ->
           fetch Keys.repo
           >>= fun repo ->
-          S.Api.fetch_branch_sha ~request_id:(Builder.log_id s) client repo dest_branch_name
+          time_it
+            s
+            (fun m log_id time ->
+              m
+                "%s : FETCH_BRANCH_SHA : repo = %s : branch = %s : time=%f"
+                log_id
+                (S.Api.Repo.to_string repo)
+                (S.Api.Ref.to_string dest_branch_name)
+                time)
+            (fun () ->
+              S.Api.fetch_branch_sha ~request_id:(Builder.log_id s) client repo dest_branch_name)
           >>= function
           | Some ref_ -> Abb.Future.return (Ok ref_)
           | None -> Abb.Future.return (Error `Error))
@@ -104,12 +127,23 @@ struct
               >>= fun client ->
               fetch Keys.repo
               >>= fun repo ->
-              S.Api.fetch_diff_files
-                ~request_id:(Builder.log_id s)
-                ~base_ref:dest_branch_name
-                ~branch_ref:branch_name
-                repo
-                client)
+              time_it
+                s
+                (fun m log_id time ->
+                  m
+                    "%s : FETCH_DIFF_FILES : repo = %s : base_branch = %s : branch = %s : time=%f"
+                    log_id
+                    (S.Api.Repo.to_string repo)
+                    (S.Api.Ref.to_string dest_branch_name)
+                    (S.Api.Ref.to_string branch_name)
+                    time)
+                (fun () ->
+                  S.Api.fetch_diff_files
+                    ~request_id:(Builder.log_id s)
+                    ~base_ref:dest_branch_name
+                    ~branch_ref:branch_name
+                    repo
+                    client))
 
     let missing_autoplan_matches =
       run ~name:"missing_autoplan_matches" (fun _ _ ->
@@ -131,12 +165,22 @@ struct
               working_set_matches
           in
           Builder.run_db s ~f:(fun db ->
-              S.Db.query_conflicting_work_manifests_in_repo_for_context
-                ~request_id:(Builder.log_id s)
-                db
-                context
-                dirspaces
-                `Apply)
+              time_it
+                s
+                (fun m log_id time ->
+                  m
+                    "%s : QUERY_CONFLICTING_WORK_MANIFESTS : context_id = %a : time=%f"
+                    log_id
+                    Uuidm.pp
+                    context.Tjc.Context.id
+                    time)
+                (fun () ->
+                  S.Db.query_conflicting_work_manifests_in_repo_for_context
+                    ~request_id:(Builder.log_id s)
+                    db
+                    context
+                    dirspaces
+                    `Apply))
           >>= function
           | None -> Abb.Future.return (Ok ())
           | Some (P2.Conflicting_work_manifests.Conflicting _) -> Abb.Future.return (Error `Noop)

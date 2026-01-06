@@ -25,6 +25,9 @@ struct
   module Tasks_pr = Terrat_vcs_event_evaluator2_tasks_pr.Make (S) (Keys)
   module Tasks_branch = Terrat_vcs_event_evaluator2_tasks_branch.Make (S) (Keys)
 
+  let time_it s l f =
+    Abbs_time_it.run (fun time -> Logs.info (fun m -> l m (Builder.log_id s) time)) f
+
   let add_work_manifest_keys work_manifest store =
     let module Wm = Terrat_work_manifest3 in
     let { Wm.id; account; target; _ } = work_manifest in
@@ -44,26 +47,42 @@ struct
       >>= function
       | (Ok () | Error `Noop) as ret ->
           let open Irm in
-          Logs.info (fun m ->
-              m "%s : JOB : UPDATE : COMPLETED : job= %a" (Builder.log_id s) Uuidm.pp job.Tjc.Job.id);
           Builder.run_db s ~f:(fun db ->
-              S.Job_context.Job.update_state
-                ~request_id:(Builder.log_id s)
-                db
-                ~job_id:job.Tjc.Job.id
-                Tjc.Job.State.Completed)
+              time_it
+                s
+                (fun m log_id time ->
+                  m
+                    "%s : JOB : UPDATE_STATE : COMPLETED : job_id = %a : time=%f"
+                    log_id
+                    Uuidm.pp
+                    job.Tjc.Job.id
+                    time)
+                (fun () ->
+                  S.Job_context.Job.update_state
+                    ~request_id:(Builder.log_id s)
+                    db
+                    ~job_id:job.Tjc.Job.id
+                    Tjc.Job.State.Completed))
           >>= fun () -> Abb.Future.return ret
       | Error (`Suspend_eval _) as err -> Abb.Future.return err
       | Error (#Builder.err as err) ->
           let open Irm in
-          Logs.info (fun m ->
-              m "%s : JOB : UPDATE : FAILED : job= %a" (Builder.log_id s) Uuidm.pp job.Tjc.Job.id);
           Builder.run_db s ~f:(fun db ->
-              S.Job_context.Job.update_state
-                ~request_id:(Builder.log_id s)
-                db
-                ~job_id:job.Tjc.Job.id
-                Tjc.Job.State.Failed)
+              time_it
+                s
+                (fun m log_id time ->
+                  m
+                    "%s : JOB : UPDATE_STATE : FAILED : job_id = %a : time=%f"
+                    log_id
+                    Uuidm.pp
+                    job.Tjc.Job.id
+                    time)
+                (fun () ->
+                  S.Job_context.Job.update_state
+                    ~request_id:(Builder.log_id s)
+                    db
+                    ~job_id:job.Tjc.Job.id
+                    Tjc.Job.State.Failed))
           >>= fun () -> Abb.Future.return (Error err)
   end
 
@@ -76,7 +95,15 @@ struct
           fetch Keys.account
           >>= fun account ->
           Builder.run_db s ~f:(fun db ->
-              S.Db.query_account_status ~request_id:(Builder.log_id s) db account))
+              time_it
+                s
+                (fun m log_id time ->
+                  m
+                    "%s : QUERY_ACCOUNT_STATUS : account = %s : time=%f"
+                    log_id
+                    (S.Api.Account.to_string account)
+                    time)
+                (fun () -> S.Db.query_account_status ~request_id:(Builder.log_id s) db account)))
 
     (* Wrapper so that when we call [publish_comment] the error type lines up *)
     let publish_comment' f msg =
@@ -157,7 +184,11 @@ struct
           fetch Keys.context_id
           >>= fun context_id ->
           Builder.run_db s ~f:(fun db ->
-              S.Job_context.query ~request_id:(Builder.log_id s) db context_id)
+              time_it
+                s
+                (fun m log_id time ->
+                  m "%s : QUERY_CONTEXT : context_id = %a : time=%f" log_id Uuidm.pp context_id time)
+                (fun () -> S.Job_context.query ~request_id:(Builder.log_id s) db context_id))
           >>= function
           | Some context -> Abb.Future.return (Ok context)
           | None -> assert false)
@@ -174,11 +205,21 @@ struct
           fetch Keys.job
           >>= fun job ->
           Builder.run_db s ~f:(fun db ->
-              S.Job_context.Job.query_work_manifests
-                ~request_id:(Builder.log_id s)
-                db
-                ~job_id:job.Tjc.Job.id
-                ()))
+              time_it
+                s
+                (fun m log_id time ->
+                  m
+                    "%s : QUERY_WORK_MANIFESTS : job_id = %a : time=%f"
+                    log_id
+                    Uuidm.pp
+                    job.Tjc.Job.id
+                    time)
+                (fun () ->
+                  S.Job_context.Job.query_work_manifests
+                    ~request_id:(Builder.log_id s)
+                    db
+                    ~job_id:job.Tjc.Job.id
+                    ())))
 
     let default_branch_sha =
       run ~name:"default_branch_sha" (fun s { Bs.Fetcher.fetch } ->
@@ -187,10 +228,28 @@ struct
           >>= fun client ->
           fetch Keys.repo
           >>= fun repo ->
-          S.Api.fetch_remote_repo ~request_id:(Builder.log_id s) client repo
+          time_it
+            s
+            (fun m log_id time ->
+              m
+                "%s : FETCH_REMOTE_REPO : repo = %s : time=%f"
+                log_id
+                (S.Api.Repo.to_string repo)
+                time)
+            (fun () -> S.Api.fetch_remote_repo ~request_id:(Builder.log_id s) client repo)
           >>= fun remote_repo ->
           let default_branch = S.Api.Remote_repo.default_branch remote_repo in
-          S.Api.fetch_branch_sha ~request_id:(Builder.log_id s) client repo default_branch
+          time_it
+            s
+            (fun m log_id time ->
+              m
+                "%s : FETCH_REMOTE_SHA : repo = %s : branch = %s : time=%f"
+                log_id
+                (S.Api.Repo.to_string repo)
+                (S.Api.Ref.to_string default_branch)
+                time)
+            (fun () ->
+              S.Api.fetch_branch_sha ~request_id:(Builder.log_id s) client repo default_branch)
           >>= function
           | Some branch_sha -> Abb.Future.return (Ok branch_sha)
           | None -> assert false)
@@ -517,12 +576,22 @@ struct
           fetch Keys.repo_tree_branch_wm_completed
           >>= fun _ ->
           Builder.run_db s ~f:(fun db ->
-              S.Db.query_repo_tree
-                ~request_id:(Builder.log_id s)
-                ~base_ref:dest_branch_ref
-                db
-                account
-                branch_ref)
+              time_it
+                s
+                (fun m log_id time ->
+                  m
+                    "%s : QUERY_REPO_TREE : account = %s : branch_ref = %s : time=%f"
+                    log_id
+                    (S.Api.Account.to_string account)
+                    (S.Api.Ref.to_string branch_ref)
+                    time)
+                (fun () ->
+                  S.Db.query_repo_tree
+                    ~request_id:(Builder.log_id s)
+                    ~base_ref:dest_branch_ref
+                    db
+                    account
+                    branch_ref))
           >>= function
           | Some tree -> Abb.Future.return (Ok (CCList.map (fun { I.path; _ } -> path) tree))
           | None -> assert false)
@@ -559,7 +628,16 @@ struct
           else
             Fc.Result.all3 (fetch Keys.client) (fetch Keys.repo) (fetch Keys.branch_ref)
             >>= fun (client, repo, branch_ref) ->
-            S.Api.fetch_tree ~request_id:(Builder.log_id s) client repo branch_ref)
+            time_it
+              s
+              (fun m log_id time ->
+                m
+                  "%s : FETCH_TREE : repo = %s : branch = %s : time=%f"
+                  log_id
+                  (S.Api.Repo.to_string repo)
+                  (S.Api.Ref.to_string branch_ref)
+                  time)
+              (fun () -> S.Api.fetch_tree ~request_id:(Builder.log_id s) client repo branch_ref))
 
     let repo_tree_dest_branch_wm_completed =
       run ~name:"repo_tree_dest_branch_wm_completed" (fun s ({ Bs.Fetcher.fetch } as fetcher) ->
@@ -588,7 +666,17 @@ struct
           fetch Keys.repo_tree_dest_branch_wm_completed
           >>= fun _ ->
           Builder.run_db s ~f:(fun db ->
-              S.Db.query_repo_tree ~request_id:(Builder.log_id s) db account dest_branch_ref)
+              time_it
+                s
+                (fun m log_id time ->
+                  m
+                    "%s : QUERY_REPO_TREE : account = %s : branch = %s : time=%f"
+                    log_id
+                    (S.Api.Account.to_string account)
+                    (S.Api.Ref.to_string dest_branch_ref)
+                    time)
+                (fun () ->
+                  S.Db.query_repo_tree ~request_id:(Builder.log_id s) db account dest_branch_ref))
           >>= function
           | Some tree -> Abb.Future.return (Ok (CCList.map (fun { I.path; _ } -> path) tree))
           | None -> assert false)
@@ -629,11 +717,21 @@ struct
             fetch Keys.built_repo_config_dest_branch_wm_completed
             >>= fun _ ->
             Builder.run_db s ~f:(fun db ->
-                S.Db.query_repo_config_json
-                  ~request_id:(Builder.log_id s)
-                  db
-                  account
-                  dest_branch_ref)
+                time_it
+                  s
+                  (fun m log_id time ->
+                    m
+                      "%s : QUERY_REPO_CONFIG : account = %s : branch = %s : time=%f"
+                      log_id
+                      (S.Api.Account.to_string account)
+                      (S.Api.Ref.to_string dest_branch_ref)
+                      time)
+                  (fun () ->
+                    S.Db.query_repo_config_json
+                      ~request_id:(Builder.log_id s)
+                      db
+                      account
+                      dest_branch_ref))
           else Abb.Future.return (Ok None))
 
     let repo_tree_dest_branch =
@@ -647,7 +745,17 @@ struct
           else
             Fc.Result.all3 (fetch Keys.client) (fetch Keys.repo) (fetch Keys.dest_branch_ref)
             >>= fun (client, repo, dest_branch_ref) ->
-            S.Api.fetch_tree ~request_id:(Builder.log_id s) client repo dest_branch_ref)
+            time_it
+              s
+              (fun m log_id time ->
+                m
+                  "%s : FETCH_TREE : repo = %s : branch = %s : time=%f"
+                  log_id
+                  (S.Api.Repo.to_string repo)
+                  (S.Api.Ref.to_string dest_branch_ref)
+                  time)
+              (fun () ->
+                S.Api.fetch_tree ~request_id:(Builder.log_id s) client repo dest_branch_ref))
 
     let built_repo_config_branch =
       run ~name:"built_repo_config_branch" (fun s { Bs.Fetcher.fetch } ->
@@ -664,7 +772,17 @@ struct
             fetch Keys.built_repo_config_branch_wm_completed
             >>= fun _ ->
             Builder.run_db s ~f:(fun db ->
-                S.Db.query_repo_config_json ~request_id:(Builder.log_id s) db account branch_ref)
+                time_it
+                  s
+                  (fun m log_id time ->
+                    m
+                      "%s : QUERY_REPO_CONFIG : account = %s : branch = %s : time=%f"
+                      log_id
+                      (S.Api.Account.to_string account)
+                      (S.Api.Ref.to_string branch_ref)
+                      time)
+                  (fun () ->
+                    S.Db.query_repo_config_json ~request_id:(Builder.log_id s) db account branch_ref))
           else Abb.Future.return (Ok None))
 
     let repo_config_system_defaults =
@@ -690,12 +808,22 @@ struct
             (fetch Keys.repo_config_system_defaults)
             (fetch Keys.repo)
           >>= fun (client, branch_ref, system_defaults, repo) ->
-          S.Repo_config.fetch_with_provenance
-            ~system_defaults
-            (Builder.log_id s)
-            client
-            repo
-            branch_ref)
+          time_it
+            s
+            (fun m log_id time ->
+              m
+                "%s : REPO_CONFIG : FETCH_WITH_PROVENANCE : repo = %s : branch = %s : time=%f"
+                log_id
+                (S.Api.Repo.to_string repo)
+                (S.Api.Ref.to_string branch_ref)
+                time)
+            (fun () ->
+              S.Repo_config.fetch_with_provenance
+                ~system_defaults
+                (Builder.log_id s)
+                client
+                repo
+                branch_ref))
 
     let repo_config_raw =
       run ~name:"repo_config_raw" (fun s { Bs.Fetcher.fetch } ->
@@ -707,13 +835,23 @@ struct
             (fetch Keys.repo)
             (fetch Keys.built_repo_config_branch)
           >>= fun (client, branch_ref, system_defaults, repo, built_config) ->
-          S.Repo_config.fetch_with_provenance
-            ?built_config
-            ~system_defaults
-            (Builder.log_id s)
-            client
-            repo
-            branch_ref)
+          time_it
+            s
+            (fun m log_id time ->
+              m
+                "%s : REPO_CONFIG : FETCH_WITH_PROVENANCE : repo = %s : branch = %s : time=%f"
+                log_id
+                (S.Api.Repo.to_string repo)
+                (S.Api.Ref.to_string branch_ref)
+                time)
+            (fun () ->
+              S.Repo_config.fetch_with_provenance
+                ?built_config
+                ~system_defaults
+                (Builder.log_id s)
+                client
+                repo
+                branch_ref))
 
     let derived_repo_config_empty_index =
       run ~name:"derived_repo_config_empty_index" (fun s { Bs.Fetcher.fetch } ->
@@ -824,12 +962,22 @@ struct
             (fetch Keys.repo_config_system_defaults)
             (fetch Keys.repo)
           >>= fun (client, dest_branch_ref, system_defaults, repo) ->
-          S.Repo_config.fetch_with_provenance
-            ~system_defaults
-            (Builder.log_id s)
-            client
-            repo
-            dest_branch_ref)
+          time_it
+            s
+            (fun m log_id time ->
+              m
+                "%s : REPO_CONFIG : FETCH_WITH_PROVENANCE : repo = %s : branch = %s : time=%f"
+                log_id
+                (S.Api.Repo.to_string repo)
+                (S.Api.Ref.to_string dest_branch_ref)
+                time)
+            (fun () ->
+              S.Repo_config.fetch_with_provenance
+                ~system_defaults
+                (Builder.log_id s)
+                client
+                repo
+                dest_branch_ref))
 
     let repo_config_dest_branch_raw =
       run ~name:"repo_config_dest_branch_raw" (fun s { Bs.Fetcher.fetch } ->
@@ -841,13 +989,23 @@ struct
             (fetch Keys.repo)
             (fetch Keys.built_repo_config_dest_branch)
           >>= fun (client, dest_branch_ref, system_defaults, repo, built_config) ->
-          S.Repo_config.fetch_with_provenance
-            ?built_config
-            ~system_defaults
-            (Builder.log_id s)
-            client
-            repo
-            dest_branch_ref)
+          time_it
+            s
+            (fun m log_id time ->
+              m
+                "%s : REPO_CONFIG : FETCH_WITH_PROVENANCE : repo = %s : branch = %s : time=%f"
+                log_id
+                (S.Api.Repo.to_string repo)
+                (S.Api.Ref.to_string dest_branch_ref)
+                time)
+            (fun () ->
+              S.Repo_config.fetch_with_provenance
+                ?built_config
+                ~system_defaults
+                (Builder.log_id s)
+                client
+                repo
+                dest_branch_ref))
 
     let derived_repo_config_dest_branch_empty_index =
       run ~name:"derived_repo_config_dest_branch_empty_index" (fun s { Bs.Fetcher.fetch } ->
@@ -996,7 +1154,17 @@ struct
               fetch Keys.repo_index_branch_wm_completed
               >>= fun _ ->
               Builder.run_db s ~f:(fun db ->
-                  S.Db.query_index ~request_id:(Builder.log_id s) db account working_branch_ref)
+                  time_it
+                    s
+                    (fun m log_id time ->
+                      m
+                        "%s : QUERY_INDEX : account = %s ; branch = %s : time=%f"
+                        log_id
+                        (S.Api.Account.to_string account)
+                        (S.Api.Ref.to_string working_branch_ref)
+                        time)
+                    (fun () ->
+                      S.Db.query_index ~request_id:(Builder.log_id s) db account working_branch_ref))
               >>= function
               | Some { I.index; _ } -> Abb.Future.return (Ok index)
               | None ->
@@ -1071,7 +1239,17 @@ struct
               fetch Keys.repo_index_dest_branch_wm_completed
               >>= fun _ ->
               Builder.run_db s ~f:(fun db ->
-                  S.Db.query_index ~request_id:(Builder.log_id s) db account dest_branch_ref)
+                  time_it
+                    s
+                    (fun m log_id time ->
+                      m
+                        "%s : QUERY_INDEX : account = %s ; branch = %s : time=%f"
+                        log_id
+                        (S.Api.Account.to_string account)
+                        (S.Api.Ref.to_string dest_branch_ref)
+                        time)
+                    (fun () ->
+                      S.Db.query_index ~request_id:(Builder.log_id s) db account dest_branch_ref))
               >>= function
               | Some { I.index; _ } -> Abb.Future.return (Ok index)
               | None -> assert false))
@@ -1239,23 +1417,26 @@ struct
                     })
                   dirspaceflows)))
 
-    let store_repository =
-      run ~name:"store_repository" (fun s { Bs.Fetcher.fetch } ->
-          let open Irm in
-          fetch Keys.account
-          >>= fun account ->
-          fetch Keys.repo
-          >>= fun repo ->
-          Builder.run_db s ~f:(fun db ->
-              S.Db.store_account_repository ~request_id:(Builder.log_id s) db account repo))
-
     let compute_node =
       run ~name:"compute_node" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
           fetch Keys.compute_node_id
           >>= fun compute_node_id ->
           Builder.run_db s ~f:(fun db ->
-              S.Job_context.Compute_node.query ~request_id:(Builder.log_id s) ~compute_node_id db)
+              time_it
+                s
+                (fun m log_id time ->
+                  m
+                    "%s : COMPUTE_NODE : QUERY : id = %a : time=%f"
+                    log_id
+                    Uuidm.pp
+                    compute_node_id
+                    time)
+                (fun () ->
+                  S.Job_context.Compute_node.query
+                    ~request_id:(Builder.log_id s)
+                    ~compute_node_id
+                    db))
           >>= function
           | Some compute_node -> Abb.Future.return (Ok compute_node)
           | None -> Abb.Future.return (Error (`Missing_dep_err "compute_node")))
@@ -1272,7 +1453,15 @@ struct
               >>= fun client ->
               fetch Keys.repo
               >>= fun repo ->
-              S.Api.fetch_remote_repo ~request_id:(Builder.log_id s) client repo
+              time_it
+                s
+                (fun m log_id time ->
+                  m
+                    "%s : FETCH_REMOTE_REPO : repo = %s : time=%f"
+                    log_id
+                    (S.Api.Repo.to_string repo)
+                    time)
+                (fun () -> S.Api.fetch_remote_repo ~request_id:(Builder.log_id s) client repo)
               >>= fun remote_repo ->
               let access_control = Terrat_base_repo_config_v1.access_control repo_config in
               Abb.Future.return
@@ -1299,7 +1488,17 @@ struct
           fetch Keys.context
           >>= fun context ->
           Builder.run_db s ~f:(fun db ->
-              S.Db.query_applied_dirspaces_for_context ~request_id:(Builder.log_id s) db context))
+              time_it
+                s
+                (fun m log_id time ->
+                  m
+                    "%s : QUERY_APPLIED_DIRSPACES_FOR_CONTEXT : context = %a : time=%f"
+                    log_id
+                    Uuidm.pp
+                    context.Tjc.Context.id
+                    time)
+                (fun () ->
+                  S.Db.query_applied_dirspaces_for_context ~request_id:(Builder.log_id s) db context)))
 
     let check_account_tier =
       run ~name:"check_account_tier" (fun s { Bs.Fetcher.fetch } ->
@@ -1319,7 +1518,16 @@ struct
                         (S.Api.User.to_string user)
                         time))
                 (fun () ->
-                  Builder.run_db s ~f:(S.Tier.check ~request_id:(Builder.log_id s) user account))
+                  Builder.run_db s ~f:(fun db ->
+                      time_it
+                        s
+                        (fun m log_id time ->
+                          m
+                            "%s : TIER : CHECK : account = %s : time=%f"
+                            log_id
+                            (S.Api.Account.to_string account)
+                            time)
+                        (fun () -> S.Tier.check ~request_id:(Builder.log_id s) user account db)))
               >>= function
               | None -> Abb.Future.return (Ok ())
               | Some checks ->
@@ -1514,14 +1722,39 @@ struct
             (fetch Keys.dest_branch_ref)
           >>= fun (repo, branch_name, branch_ref, dest_branch_name, dest_branch_ref) ->
           Builder.run_db s ~f:(fun db ->
-              S.Db.store_branch_hash ~request_id:(Builder.log_id s) ~branch_name ~branch_ref repo db
+              time_it
+                s
+                (fun m log_id time ->
+                  m
+                    "%s : STORE_BRANCH_HASH : branch_name = %s : branch_ref = %s : time=%f"
+                    log_id
+                    (S.Api.Ref.to_string branch_name)
+                    (S.Api.Ref.to_string branch_ref)
+                    time)
+                (fun () ->
+                  S.Db.store_branch_hash
+                    ~request_id:(Builder.log_id s)
+                    ~branch_name
+                    ~branch_ref
+                    repo
+                    db)
               >>= fun () ->
-              S.Db.store_branch_hash
-                ~request_id:(Builder.log_id s)
-                ~branch_name:dest_branch_name
-                ~branch_ref:dest_branch_ref
-                repo
-                db))
+              time_it
+                s
+                (fun m log_id time ->
+                  m
+                    "%s : STORE_BRANCH_HASH : branch_name = %s : branch_ref = %s : time=%f"
+                    log_id
+                    (S.Api.Ref.to_string dest_branch_name)
+                    (S.Api.Ref.to_string dest_branch_ref)
+                    time)
+                (fun () ->
+                  S.Db.store_branch_hash
+                    ~request_id:(Builder.log_id s)
+                    ~branch_name:dest_branch_name
+                    ~branch_ref:dest_branch_ref
+                    repo
+                    db)))
 
     let run_plan =
       run ~name:"run_plan" (fun s ({ Bs.Fetcher.fetch } as fetcher) ->
@@ -1565,7 +1798,12 @@ struct
           >>= fun job ->
           (* Query from the database so we get the latest value and lock it *)
           Builder.run_db s ~f:(fun db ->
-              S.Job_context.Job.query ~request_id:(Builder.log_id s) ~job_id:job.Tjc.Job.id db)
+              time_it
+                s
+                (fun m log_id time ->
+                  m "%s : JOB : QUERY : job_id = %a : time=%f" log_id Uuidm.pp job.Tjc.Job.id time)
+                (fun () ->
+                  S.Job_context.Job.query ~request_id:(Builder.log_id s) ~job_id:job.Tjc.Job.id db))
           >>= function
           | Some { Tjc.Job.state = Tjc.Job.State.(Completed | Failed); _ } ->
               Logs.info (fun m ->
@@ -1662,25 +1900,56 @@ struct
                 (* If a work manifest response already exists for the compute node,
                    then deliver it. *)
                 Builder.run_db s ~f:(fun db ->
-                    S.Job_context.Compute_node.query_work
-                      ~request_id:(Builder.log_id s)
-                      ~compute_node_id:compute_node.C.id
-                      db)
+                    time_it
+                      s
+                      (fun m log_id time ->
+                        m
+                          "%s : COMPUTE_NODE : QUERY_WORK : compute_node_id = %a : time=%f"
+                          log_id
+                          Uuidm.pp
+                          compute_node.C.id
+                          time)
+                      (fun () ->
+                        S.Job_context.Compute_node.query_work
+                          ~request_id:(Builder.log_id s)
+                          ~compute_node_id:compute_node.C.id
+                          db))
                 >>= function
                 | Some { Cw.work = wm_response; state = Cw.State.Created; _ } ->
                     Abb.Future.return (Ok wm_response)
                 | Some _ ->
                     Builder.run_db s ~f:(fun db ->
-                        S.Job_context.Compute_node.update_state
-                          ~request_id:(Builder.log_id s)
-                          ~compute_node_id:compute_node.C.id
-                          db
-                          C.State.Terminated)
+                        time_it
+                          s
+                          (fun m log_id time ->
+                            m
+                              "%s : COMPUTE_NODE : UPDATE_STATE : compute_node_id = %a : state = \
+                               terminated : time=%f"
+                              log_id
+                              Uuidm.pp
+                              compute_node.C.id
+                              time)
+                          (fun () ->
+                            S.Job_context.Compute_node.update_state
+                              ~request_id:(Builder.log_id s)
+                              ~compute_node_id:compute_node.C.id
+                              db
+                              C.State.Terminated))
                     >>= fun () ->
                     Abb.Future.return (Ok (Wmc.Work_manifest_done { Wmd.type_ = "done" }))
                 | None -> (
                     Builder.run_db s ~f:(fun db ->
-                        S.Work_manifest.query ~request_id:(Builder.log_id s) db work_manifest_id)
+                        time_it
+                          s
+                          (fun m log_id time ->
+                            m
+                              "%s : WORK_MANIFEST : QUERY : id = %a : time=%f"
+                              log_id
+                              Uuidm.pp
+                              work_manifest_id
+                              time)
+                          (fun () ->
+                            S.Work_manifest.query ~request_id:(Builder.log_id s) db work_manifest_id))
                     >>= function
                     | Some { Wm.state = Wm.State.(Completed | Aborted); _ } ->
                         Abb.Future.return (Ok (Wmc.Work_manifest_done { Wmd.type_ = "done" }))
@@ -1701,10 +1970,21 @@ struct
                         | Ok () | Error (`Suspend_eval _) -> (
                             let open Irm in
                             Builder.run_db s ~f:(fun db ->
-                                S.Job_context.Compute_node.query_work
-                                  ~request_id:(Builder.log_id s)
-                                  ~compute_node_id:compute_node.C.id
-                                  db)
+                                time_it
+                                  s
+                                  (fun m log_id time ->
+                                    m
+                                      "%s : COMPUTE_NODE : QUERY_WORK : compute_node_id = %a : \
+                                       time=%f"
+                                      log_id
+                                      Uuidm.pp
+                                      compute_node.C.id
+                                      time)
+                                  (fun () ->
+                                    S.Job_context.Compute_node.query_work
+                                      ~request_id:(Builder.log_id s)
+                                      ~compute_node_id:compute_node.C.id
+                                      db))
                             >>= function
                             | Some { Cw.work = wm_response; _ } ->
                                 Abb.Future.return (Ok wm_response)
@@ -1738,11 +2018,21 @@ struct
                     | Result { work_manifest; _ } )) -> work_manifest
               in
               Builder.run_db s ~f:(fun db ->
-                  S.Job_context.Job.query_by_work_manifest_id
-                    ~request_id:(Builder.log_id s)
-                    db
-                    ~work_manifest_id:work_manifest.Wm.id
-                    ())
+                  time_it
+                    s
+                    (fun m log_id time ->
+                      m
+                        "%s : JOB : QUERY_BY_WORK_MANIFEST : work_manifest_id = %a : time=%f"
+                        log_id
+                        Uuidm.pp
+                        work_manifest.Wm.id
+                        time)
+                    (fun () ->
+                      S.Job_context.Job.query_by_work_manifest_id
+                        ~request_id:(Builder.log_id s)
+                        db
+                        ~work_manifest_id:work_manifest.Wm.id
+                        ()))
           | None -> Abb.Future.return (Ok None))
 
     let eval_work_manifest_event =
@@ -1827,7 +2117,15 @@ struct
           fetch Keys.run_id
           >>= fun run_id ->
           Builder.run_db s ~f:(fun db ->
-              S.Work_manifest.query_by_run_id ~request_id:(Builder.log_id s) db run_id)
+              time_it
+                s
+                (fun m log_id time ->
+                  m
+                    "%s : WORK_MANIFEST : QUERY_BY_RUN_ID : run_id = %s : time=%f"
+                    log_id
+                    run_id
+                    time)
+                (fun () -> S.Work_manifest.query_by_run_id ~request_id:(Builder.log_id s) db run_id))
           >>= function
           | None ->
               Logs.info (fun m ->
@@ -1860,7 +2158,15 @@ struct
             >>= fun client ->
             fetch Keys.repo
             >>= fun repo ->
-            S.Api.fetch_remote_repo ~request_id:(Builder.log_id s) client repo
+            time_it
+              s
+              (fun m log_id time ->
+                m
+                  "%s : FETCH_REMOTE_REPO : repo = %s : time=%f"
+                  log_id
+                  (S.Api.Repo.to_string repo)
+                  time)
+              (fun () -> S.Api.fetch_remote_repo ~request_id:(Builder.log_id s) client repo)
             >>= fun remote_repo ->
             let default_branch = S.Api.Remote_repo.default_branch remote_repo in
             fetch Keys.branch_name
@@ -1889,91 +2195,133 @@ struct
                            window)))
                 (V1.String_map.to_list schedules);
               Builder.run_db s ~f:(fun db ->
-                  S.Db.store_drift_schedule ~request_id:(Builder.log_id s) db repo drift))
+                  time_it
+                    s
+                    (fun m log_id time ->
+                      m
+                        "%s : STORE_DRIFT_SCHEDULE : repo = %s : time=%f"
+                        log_id
+                        (S.Api.Repo.to_string repo)
+                        time)
+                    (fun () ->
+                      S.Db.store_drift_schedule ~request_id:(Builder.log_id s) db repo drift)))
             else Abb.Future.return (Ok ())
           in
-          fetch Keys.job
-          >>= fun job ->
-          H.complete_job s job @@ run >>= fun () -> fetch Keys.run_missing_drift_schedules)
+          fetch Keys.job >>= fun job -> H.complete_job s job @@ run)
 
     let run_missing_drift_schedules =
       run ~name:"run_missing_drift_schedules" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
           Builder.run_db s ~f:(fun db ->
-              S.Db.query_missing_drift_scheduled_runs ~request_id:(Builder.log_id s) db)
+              time_it
+                s
+                (fun m log_id time ->
+                  m "%s : QUERY_MISSING_DRIFT_SCHEDULED_RUNS : time=%f" log_id time)
+                (fun () ->
+                  S.Db.query_missing_drift_scheduled_runs ~request_id:(Builder.log_id s) db))
           >>= fun schedules ->
           let open Abb.Future.Infix_monad in
-          Abbs_future_combinators.List.iter_par
-            ~f:(fun chunk ->
-              Abbs_future_combinators.ignore
-              @@ Abbs_future_combinators.List_result.iter
-                   ~f:(fun (name, account, repo, reconcile, tag_query, window) ->
-                     let open Irm in
-                     Logs.info (fun m ->
-                         m
-                           "%s : DRIFT : RUN : name=%s : account=%s : repo=%s : reconcile=%s : \
-                            tag_query=%s : window=%s"
-                           (Builder.log_id s)
-                           name
-                           (S.Api.Account.to_string account)
-                           (S.Api.Repo.to_string repo)
-                           (Bool.to_string reconcile)
-                           (Terrat_tag_query.to_string tag_query)
-                           (CCOption.map_or
-                              ~default:""
-                              (fun (window_start, window_end) ->
-                                Printf.sprintf "%s-%s" window_start window_end)
-                              window));
-                     Builder.run_db s ~f:(fun db ->
-                         S.Api.create_client
-                           ~request_id:(Builder.log_id s)
-                           (Builder.State.config s)
-                           account
-                           db)
-                     >>= fun client ->
-                     S.Api.fetch_remote_repo ~request_id:(Builder.log_id s) client repo
-                     >>= fun remote_repo ->
-                     let default_branch = S.Api.Remote_repo.default_branch remote_repo in
-                     Builder.run_db s ~f:(fun db ->
-                         S.Job_context.create_or_get_for_branch
-                           ~request_id:(Builder.log_id s)
-                           db
-                           account
-                           repo
-                           default_branch)
-                     >>= fun context ->
-                     Builder.run_db s ~f:(fun db ->
-                         S.Job_context.Job.create
-                           ~request_id:(Builder.log_id s)
-                           db
-                           (Tjc.Job.Type_.Plan
-                              { tag_query; kind = Some Tjc.Job.Type_.Kind.(Drift { reconcile }) })
-                           context
-                           None)
-                     >>= fun job ->
-                     let log_id = Builder.mk_log_id ~request_id:(Builder.log_id s) job.Tjc.Job.id in
-                     Logs.info (fun m ->
-                         m
-                           "%s : target=%s : context_id=%a : log_id= %s : job_type=%a"
-                           (Builder.log_id s)
-                           (Hmap.Key.info Keys.iter_job)
-                           Uuidm.pp
-                           context.Tjc.Context.id
-                           log_id
-                           Tjc.Job.Type_.pp
-                           job.Tjc.Job.type_);
-                     let s' =
-                       s
-                       |> Builder.State.orig_store
-                       |> Keys.Key.add Keys.job job
-                       |> CCFun.flip Builder.State.set_orig_store s
-                       |> Builder.State.set_log_id log_id
-                       |> Builder.State.set_tasks (Tasks_branch.tasks (Builder.State.tasks s))
-                     in
-                     Builder.eval s' Keys.iter_job)
-                   chunk)
-            (CCList.chunks 5 schedules)
-          >>= fun () -> Abb.Future.return (Ok ()))
+          Logs.info (fun m ->
+              m
+                "%s : MISSING_DRIFT_SCHEDULE_RUNS : count = %d"
+                (Builder.log_id s)
+                (CCList.length schedules));
+          Abbs_future_combinators.List.iter
+            ~f:(fun (name, account, repo, reconcile, tag_query, window) ->
+              let run =
+                let open Irm in
+                Logs.info (fun m ->
+                    m
+                      "%s : DRIFT : RUN : name=%s : account=%s : repo=%s : reconcile=%s : \
+                       tag_query=%s : window=%s"
+                      (Builder.log_id s)
+                      name
+                      (S.Api.Account.to_string account)
+                      (S.Api.Repo.to_string repo)
+                      (Bool.to_string reconcile)
+                      (Terrat_tag_query.to_string tag_query)
+                      (CCOption.map_or
+                         ~default:""
+                         (fun (window_start, window_end) ->
+                           Printf.sprintf "%s-%s" window_start window_end)
+                         window));
+                Builder.run_db s ~f:(fun db ->
+                    S.Api.create_client
+                      ~request_id:(Builder.log_id s)
+                      (Builder.State.config s)
+                      account
+                      db)
+                >>= fun client ->
+                time_it
+                  s
+                  (fun m log_id time ->
+                    m
+                      "%s : FETCH_REMOTE_REPO : repo = %s : time=%f"
+                      log_id
+                      (S.Api.Repo.to_string repo)
+                      time)
+                  (fun () -> S.Api.fetch_remote_repo ~request_id:(Builder.log_id s) client repo)
+                >>= fun remote_repo ->
+                let default_branch = S.Api.Remote_repo.default_branch remote_repo in
+                Builder.run_db s ~f:(fun db ->
+                    S.Job_context.create_or_get_for_branch
+                      ~request_id:(Builder.log_id s)
+                      db
+                      account
+                      repo
+                      default_branch)
+                >>= fun context ->
+                Builder.run_db s ~f:(fun db ->
+                    time_it
+                      s
+                      (fun m log_id time ->
+                        m
+                          "%s : JOB : CREATE : context_id = %a : time=%f"
+                          log_id
+                          Uuidm.pp
+                          context.Tjc.Context.id
+                          time)
+                      (fun () ->
+                        S.Job_context.Job.create
+                          ~request_id:(Builder.log_id s)
+                          db
+                          (Tjc.Job.Type_.Plan
+                             { tag_query; kind = Some Tjc.Job.Type_.Kind.(Drift { reconcile }) })
+                          context
+                          None))
+                >>= fun job ->
+                let log_id = Builder.mk_log_id ~request_id:(Builder.log_id s) job.Tjc.Job.id in
+                Logs.info (fun m ->
+                    m
+                      "%s : target=%s : context_id=%a : log_id= %s : job_type=%a"
+                      (Builder.log_id s)
+                      (Hmap.Key.info Keys.iter_job)
+                      Uuidm.pp
+                      context.Tjc.Context.id
+                      log_id
+                      Tjc.Job.Type_.pp
+                      job.Tjc.Job.type_);
+                let s' =
+                  s
+                  |> Builder.State.orig_store
+                  |> Keys.Key.add Keys.account account
+                  |> Keys.Key.add Keys.repo repo
+                  |> Keys.Key.add Keys.job job
+                  |> CCFun.flip Builder.State.set_orig_store s
+                  |> Builder.State.set_log_id log_id
+                  |> Builder.State.set_tasks (Tasks_branch.tasks (Builder.State.tasks s))
+                in
+                Builder.eval s' Keys.iter_job
+              in
+              let open Abb.Future.Infix_monad in
+              run
+              >>= function
+              | Ok () | Error `Noop | Error (`Suspend_eval _) -> Abb.Future.return ()
+              | Error (#Builder.err as err) ->
+                  Logs.info (fun m -> m "%s : %a" (Builder.log_id s) Builder.pp_err err);
+                  Abb.Future.return ())
+            schedules
+          >>= fun () -> Abb.Future.return (Ok (CCList.length schedules)))
 
     let maybe_create_completed_apply_check =
       run ~name:"maybe_create_completed_apply_check" (fun s { Bs.Fetcher.fetch } ->
@@ -2395,7 +2743,6 @@ struct
     |> Hmap.add (coerce Keys.run_missing_drift_schedules) Tasks.run_missing_drift_schedules
     |> Hmap.add (coerce Keys.run_next_layer) Tasks.run_next_layer
     |> Hmap.add (coerce Keys.run_plan) Tasks.run_plan
-    |> Hmap.add (coerce Keys.store_repository) Tasks.store_repository
     |> Hmap.add (coerce Keys.synthesized_config) Tasks.synthesized_config
     |> Hmap.add (coerce Keys.synthesized_config_dest_branch) Tasks.synthesized_config_dest_branch
     |> Hmap.add

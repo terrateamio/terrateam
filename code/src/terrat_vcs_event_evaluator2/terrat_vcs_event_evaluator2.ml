@@ -4,6 +4,65 @@ module Irm = Abbs_future_combinators.Infix_result_monad
 module Tjc = Terrat_job_context
 module Msg = Terrat_vcs_provider2.Msg
 module P2 = Terrat_vcs_provider2
+module Exec = Abb_bounded_suspendable_executor.Make (Abb.Future) (CCString)
+
+module Metrics = struct
+  let namespace = "terrat"
+  let subsystem = "vcs_event_evaluator2"
+
+  let tasks_concurrent =
+    let help = "Number of tasks running right now" in
+    Prmths.Gauge.v ~help ~namespace ~subsystem "tasks_concurrent"
+
+  let tasks_concurrent_max =
+    let help = "Maximum number of concurrent tasks running" in
+    Prmths.Gauge.v ~help ~namespace ~subsystem "tasks_concurrent_max"
+end
+
+module Exec_logger = struct
+  let src = Logs.Src.create "vcs_event_evaluator2.exec"
+
+  module Logs = (val Logs.src_log src : Logs.LOG)
+
+  let tasks_concurrent_max = ref 0
+
+  (* let logger = *)
+  (*   { *)
+  (*     Exec.Logger.exec_task = *)
+  (*       (fun path -> Logs.info (fun m -> m "EXEC : [%s]" (CCString.concat ", " path))); *)
+  (*     complete_task = *)
+  (*       (fun path -> Logs.info (fun m -> m "COMPLETE : [%s]" (CCString.concat ", " path))); *)
+  (*     work_done = *)
+  (*       (fun path -> Logs.info (fun m -> m "WORK_DONE : [%s]" (CCString.concat ", " path))); *)
+  (*     running_tasks = *)
+  (*       (fun count -> *)
+  (*         Prmths.Gauge.set Metrics.tasks_concurrent (CCFloat.of_int count); *)
+  (*         Logs.info (fun m -> m "RUNNING : %d" count)); *)
+  (*     suspend_task = *)
+  (*       (fun name -> Logs.info (fun m -> m "SUSPEND : [%s]" (CCString.concat ", " name))); *)
+  (*     unsuspend_task = *)
+  (*       (fun name -> Logs.info (fun m -> m "UNSUSPEND : [%s]" (CCString.concat ", " name))); *)
+  (*     enqueue = (fun path -> Logs.info (fun m -> m "ENQUEUE : [%s]" (CCString.concat ", " path))); *)
+  (*   } *)
+
+  let metrics =
+    {
+      Exec.Logger.exec_task = CCFun.const ();
+      complete_task = CCFun.const ();
+      work_done = (fun _ -> Prmths.Gauge.dec_one Metrics.tasks_concurrent);
+      running_tasks =
+        (fun count ->
+          if !tasks_concurrent_max < count then (
+            tasks_concurrent_max := count;
+            Prmths.Gauge.set Metrics.tasks_concurrent_max (CCFloat.of_int count));
+          Prmths.Gauge.set Metrics.tasks_concurrent (CCFloat.of_int count));
+      suspend_task = CCFun.const ();
+      unsuspend_task = CCFun.const ();
+      enqueue = CCFun.const ();
+    }
+end
+
+let create_exec ~slots () = Exec.create ~logger:Exec_logger.metrics ~slots ()
 
 module Make (S : Terrat_vcs_provider2.S) = struct
   let src = Logs.Src.create ("vcs_event_evaluator2." ^ S.name)
@@ -82,19 +141,19 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             Abb.Future.return (Error `Error))
       fut
 
-  let run_work_manifest_event ~request_id ~config ~db event =
+  let run_work_manifest_event ~request_id ~config ~exec ~db event =
     let run =
       let open Abb.Future.Infix_monad in
       let target = Keys.eval_work_manifest_event in
       let store = Hmap.empty |> Keys.Key.add Keys.work_manifest_event (Some event) in
-      Builder.State.make ~log_id:request_id ~config ~store ~db ~tasks ()
+      Builder.State.make ~log_id:request_id ~config ~store ~exec ~db ~tasks ()
       >>= fun s ->
       Logs.info (fun m -> m "%s : target=%s" (Builder.log_id s) (Hmap.Key.info target));
       Builder.eval s target
     in
     log_err ~request_id run
 
-  let rec run_next_pending_compute ~request_id ~config ~storage () =
+  let rec run_next_pending_compute ~request_id ~config ~storage ~exec () =
     let module Wm = Terrat_work_manifest3 in
     let open Abbs_future_combinators.Infix_result_monad in
     Abbs_time_it.run
@@ -138,17 +197,19 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                           ~request_id
                           ~config
                           ~db
+                          ~exec
                           (Keys.Work_manifest_event.Fail { work_manifest = wm; error = err })
                         >>= fun _ -> Abb.Future.return (Ok `Cont))
                 | None -> Abb.Future.return (Ok `Done))))
     >>= function
-    | `Cont -> run_next_pending_compute ~request_id ~config ~storage ()
+    | `Cont -> run_next_pending_compute ~request_id ~config ~storage ~exec ()
     | `Done -> Abb.Future.return (Ok ())
 
   let run_pull_request_event
       ~request_id
       ~config
       ~storage
+      ~exec
       ~account
       ~repo
       ~pull_request_id
@@ -158,8 +219,11 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       () =
     Abbs_future_combinators.with_finally
       (fun () ->
-        let open Irm in
         with_conn storage ~f:(fun db ->
+            let open Irm in
+            Pgsql_io.tx db ~f:(fun () -> S.Db.store_account_repository ~request_id db account repo)
+            >>= fun () ->
+            let open Abb.Future.Infix_monad in
             let store =
               store
               |> Keys.Key.add Keys.account account
@@ -168,12 +232,12 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               |> Keys.Key.add Keys.pull_request_id pull_request_id
               |> Keys.Key.add Keys.pull_request_event event
             in
-            let open Abb.Future.Infix_monad in
             Builder.State.make
               ~log_id:request_id
               ~config
               ~store
               ~db
+              ~exec
               ~tasks:(Tasks_pr.tasks tasks)
               ()
             >>= fun s ->
@@ -187,6 +251,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                   ~config
                   ~store
                   ~db
+                  ~exec
                   ~tasks:(Tasks_pr.tasks tasks)
                   ()
                 >>= fun s ->
@@ -281,9 +346,18 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       ~finally:(fun () ->
         Abbs_future_combinators.ignore
         @@ Abb.Future.fork
-        @@ run_next_pending_compute ~request_id ~config ~storage ())
+        @@ run_next_pending_compute ~request_id ~config ~storage ~exec ())
 
-  let pull_request_event ~request_id ~config ~storage ~account ~repo ~pull_request_id ~user event =
+  let pull_request_event
+      ~request_id
+      ~config
+      ~storage
+      ~exec
+      ~account
+      ~repo
+      ~pull_request_id
+      ~user
+      event =
     let store =
       Hmap.empty
       |> Keys.Key.add Keys.account account
@@ -298,6 +372,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
          ~request_id
          ~config
          ~storage
+         ~exec
          ~account
          ~repo
          ~pull_request_id
@@ -306,7 +381,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
          ~store
          ()
 
-  let work_manifest_job_failed ~request_id ~config ~storage ~account ~repo ~run_id () =
+  let work_manifest_job_failed ~request_id ~config ~storage ~exec ~account ~repo ~run_id () =
     let open Abb.Future.Infix_monad in
     let run =
       let target = Keys.eval_work_manifest_failure in
@@ -318,14 +393,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       in
       with_conn storage ~f:(fun db ->
           Pgsql_io.tx db ~f:(fun () ->
-              Builder.State.make ~log_id:request_id ~config ~store ~db ~tasks ()
+              Builder.State.make ~log_id:request_id ~config ~store ~db ~exec ~tasks ()
               >>= fun s ->
               Logs.info (fun m -> m "%s : target=%s" (Builder.log_id s) (Hmap.Key.info target));
               tx_safe ~request_id @@ Builder.eval s target))
     in
     Abbs_future_combinators.ignore @@ log_err ~request_id run
 
-  let compute_node_poll ~request_id ~config ~storage ~compute_node_id offering =
+  let compute_node_poll ~request_id ~config ~storage ~exec ~compute_node_id offering =
     let open Abb.Future.Infix_monad in
     let run =
       let target = Keys.eval_compute_node_poll in
@@ -336,7 +411,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       in
       with_conn storage ~f:(fun db ->
           Pgsql_io.tx db ~f:(fun () ->
-              Builder.State.make ~log_id:request_id ~config ~store ~db ~tasks ()
+              Builder.State.make ~log_id:request_id ~config ~store ~db ~exec ~tasks ()
               >>= fun s ->
               Logs.info (fun m ->
                   m
@@ -351,7 +426,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     | Ok (`Ok r) -> Abb.Future.return (Ok r)
     | Ok (`Suspend_eval _) | Ok `Noop | Error _ -> Abb.Future.return (Error `Error)
 
-  let work_manifest_result ~request_id ~config ~storage ~work_manifest_id result =
+  let work_manifest_result ~request_id ~config ~storage ~exec ~work_manifest_id result =
     let query_work_manifest db =
       let open Irm in
       S.Work_manifest.query ~request_id db work_manifest_id
@@ -404,7 +479,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                     |> Keys.Key.add Keys.work_manifest_event (Some work_manifest_event)
                   in
                   let open Abb.Future.Infix_monad in
-                  Builder.State.make ~log_id:request_id ~config ~store ~db ~tasks ()
+                  Builder.State.make ~log_id:request_id ~config ~store ~db ~exec ~tasks ()
                   >>= fun s ->
                   let open Irm in
                   let target = Keys.eval_work_manifest_event in
@@ -436,7 +511,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                          | Tjc.Context.Scope.Branch _ -> Tasks_branch.tasks @@ Builder.State.tasks s)
                   in
                   tx_safe ~request_id @@ Builder.eval s' Keys.run_next_layer)
-          | Ok (s, _work_manifest, job, `Suspend_eval _) -> (
+          | Ok (s, work_manifest, job, `Suspend_eval _) -> (
               let { Tjc.Job.context = { Tjc.Context.scope; _ }; _ } = job in
               let s' =
                 s
@@ -455,6 +530,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                     s
                     |> Builder.State.orig_store
                     |> Keys.Key.add Keys.job job
+                    |> add_work_manifest_keys work_manifest
                     |> Builder.State.forward_store_value Keys.repo_config_with_provenance s
                     |> Builder.State.forward_store_value Keys.repo_config_raw s
                     |> Builder.State.forward_store_value Keys.repo_config_raw' s
@@ -483,13 +559,48 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       ~finally:(fun () ->
         Abbs_future_combinators.ignore
         @@ Abb.Future.fork
-        @@ run_next_pending_compute ~request_id ~config ~storage ())
+        @@ run_next_pending_compute ~request_id ~config ~storage ~exec ())
 
-  let push ~request_id ~config ~storage ~account ~repo ~branch ~user () =
+  let run_missing_drift_schedules ~config ~storage ~exec () =
+    let open Abb.Future.Infix_monad in
+    let request_id = "RUN_MISSING_DRIFT_SCHEDULES" in
+    let run =
+      let target = Keys.run_missing_drift_schedules in
+      let store = Hmap.empty in
+      with_conn storage ~f:(fun db ->
+          Fc.retry
+            ~f:(fun () ->
+              Pgsql_io.tx db ~f:(fun () ->
+                  Builder.State.make
+                    ~log_id:request_id
+                    ~config
+                    ~store
+                    ~exec
+                    ~db
+                    ~tasks:(Tasks_branch.tasks tasks)
+                    ()
+                  >>= fun s ->
+                  Logs.info (fun m -> m "%s : target=%s" (Builder.log_id s) (Hmap.Key.info target));
+                  tx_safe ~request_id @@ Builder.eval s target))
+            ~while_:
+              (Fc.finite_tries 50 (function
+                | Ok (`Ok n) -> n > 0
+                | Ok (`Noop | `Suspend_eval _) | Error _ -> true))
+            ~betwixt:(fun _ -> Fc.unit))
+    in
+    Abbs_future_combinators.with_finally
+      (fun () -> Abbs_future_combinators.ignore @@ log_err ~request_id run)
+      ~finally:(fun () ->
+        Abbs_future_combinators.ignore
+        @@ Abb.Future.fork
+        @@ run_next_pending_compute ~request_id ~config ~storage ~exec ())
+
+  let push ~request_id ~config ~storage ~exec ~account ~repo ~branch ~user () =
     let run =
       let open Irm in
-      let target = Keys.eval_push_event in
       with_conn storage ~f:(fun db ->
+          Pgsql_io.tx db ~f:(fun () -> S.Db.store_account_repository ~request_id db account repo)
+          >>= fun () ->
           Pgsql_io.tx db ~f:(fun () ->
               S.Job_context.create_or_get_for_branch ~request_id db account repo branch
               >>= fun context ->
@@ -508,44 +619,23 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             ~config
             ~store
             ~db
+            ~exec
             ~tasks:(Tasks_branch.tasks tasks)
             ()
           >>= fun s ->
           let open Irm in
+          let target = Keys.eval_push_event in
           Logs.info (fun m -> m "%s : target=%s" (Builder.log_id s) (Hmap.Key.info target));
           log_err ~request_id @@ Builder.eval s Keys.update_context_branch_hashes
-          >>= fun () -> Pgsql_io.tx db ~f:(fun () -> tx_safe ~request_id @@ Builder.eval s target))
+          >>= fun () ->
+          Pgsql_io.tx db ~f:(fun () -> tx_safe ~request_id @@ Builder.eval s target)
+          >>= fun _ ->
+          Fc.to_result @@ Fc.ignore @@ run_missing_drift_schedules ~config ~storage ~exec ())
     in
     Abbs_future_combinators.with_finally
       (fun () -> Abbs_future_combinators.ignore @@ log_err ~request_id run)
       ~finally:(fun () ->
         Abbs_future_combinators.ignore
         @@ Abb.Future.fork
-        @@ run_next_pending_compute ~request_id ~config ~storage ())
-
-  let run_missing_drift_schedules ~config ~storage () =
-    let open Abb.Future.Infix_monad in
-    let request_id = "RUN_MISSING_DRIFT_SCHEDULES" in
-    let run =
-      let target = Keys.run_missing_drift_schedules in
-      let store = Hmap.empty in
-      with_conn storage ~f:(fun db ->
-          Pgsql_io.tx db ~f:(fun () ->
-              Builder.State.make
-                ~log_id:request_id
-                ~config
-                ~store
-                ~db
-                ~tasks:(Tasks_branch.tasks tasks)
-                ()
-              >>= fun s ->
-              Logs.info (fun m -> m "%s : target=%s" (Builder.log_id s) (Hmap.Key.info target));
-              tx_safe ~request_id @@ Builder.eval s target))
-    in
-    Abbs_future_combinators.with_finally
-      (fun () -> Abbs_future_combinators.ignore @@ log_err ~request_id run)
-      ~finally:(fun () ->
-        Abbs_future_combinators.ignore
-        @@ Abb.Future.fork
-        @@ run_next_pending_compute ~request_id ~config ~storage ())
+        @@ run_next_pending_compute ~request_id ~config ~storage ~exec ())
 end

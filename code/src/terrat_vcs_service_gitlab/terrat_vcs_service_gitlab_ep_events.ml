@@ -118,7 +118,7 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
               owner
               name)
 
-  let dispatch_event request_id config storage installation_id =
+  let dispatch_event request_id config storage exec installation_id =
     let module E = Gitlab_webhooks.Event in
     let module Pr = Gitlab_webhooks_project in
     let module Pe = Gitlab_webhooks_push_event in
@@ -145,7 +145,7 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
         let user = P.Api.User.make user_username in
         let branch = P.Api.Ref.of_string default_branch in
         Abbs_future_combinators.to_result
-        @@ Evaluator2.push ~request_id ~config ~storage ~account ~repo ~branch ~user ()
+        @@ Evaluator2.push ~request_id ~config ~storage ~exec ~account ~repo ~branch ~user ()
     | E.Push_event _ -> Abb.Future.return (Ok ())
     | E.Merge_request_comment_event
         {
@@ -177,6 +177,7 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
                  ~request_id
                  ~config
                  ~storage
+                 ~exec
                  ~account
                  ~repo
                  ~pull_request_id
@@ -210,6 +211,7 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
                  ~request_id
                  ~config
                  ~storage
+                 ~exec
                  ~account
                  ~repo
                  ~pull_request_id
@@ -229,6 +231,7 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
                  ~request_id
                  ~config
                  ~storage
+                 ~exec
                  ~account
                  ~repo
                  ~pull_request_id
@@ -249,6 +252,7 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
                  ~request_id
                  ~config
                  ~storage
+                 ~exec
                  ~account
                  ~repo
                  ~pull_request_id
@@ -271,13 +275,14 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
              ~request_id
              ~config
              ~storage
+             ~exec
              ~account
              ~repo
              ~run_id:(CCInt.to_string run_id)
              ()
     | E.Job_event _ -> Abb.Future.return (Ok ())
 
-  let post' config storage webhook_secret ctx =
+  let post' config storage exec webhook_secret ctx =
     let open Abbs_future_combinators.Infix_result_monad in
     Pgsql_pool.with_conn storage ~f:(fun db ->
         Pgsql_io.Prepared_stmt.fetch
@@ -304,9 +309,15 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
     | (installation_id, _) :: _ ->
         Abb.Future.return @@ decode ctx
         >>= fun event ->
-        dispatch_event (Brtl_ctx.token ctx) config storage (CCInt64.to_int installation_id) event
+        dispatch_event
+          (Brtl_ctx.token ctx)
+          config
+          storage
+          exec
+          (CCInt64.to_int installation_id)
+          event
 
-  let post config storage =
+  let post config storage exec =
     Brtl_ep.run_json ~f:(fun ctx ->
         let headers = Brtl_ctx.Request.headers @@ Brtl_ctx.request ctx in
         Metrics.DefaultHistogram.time Metrics.events_duration_seconds (fun () ->
@@ -314,7 +325,7 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
                 match Cohttp.Header.get headers "x-gitlab-token" with
                 | Some webhook_secret -> (
                     let open Abb.Future.Infix_monad in
-                    post' config storage webhook_secret ctx
+                    post' config storage exec webhook_secret ctx
                     >>= function
                     | Ok () ->
                         Abb.Future.return

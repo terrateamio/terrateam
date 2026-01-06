@@ -90,6 +90,7 @@ type t = {
   db_password : (string[@opaque]);
   db_user : string;
   default_tier : string;
+  event_evaluator_slots : int;
   gc : Gc.t;
   github : Github.t option;
   gitlab : Gitlab.t option;
@@ -262,6 +263,11 @@ let create () =
   >>= fun api_base ->
   env_str "TERRAT_PYTHON_EXEC"
   >>= fun python_exec ->
+  of_opt
+    (`Key_error "TERRAT_EVENT_EVALUATOR_SLOTS")
+    (CCInt.of_string
+       (CCOption.get_or ~default:"50" (Sys.getenv_opt "TERRAT_EVENT_EVALUATOR_SLOTS")))
+  >>= fun event_evaluator_slots ->
   let infracost = infracost () in
   let nginx_status_uri = CCOption.map Uri.of_string (Sys.getenv_opt "NGINX_STATUS_URI") in
   let admin_token = Sys.getenv_opt "TERRAT_ADMIN_TOKEN" in
@@ -306,6 +312,7 @@ let create () =
       db_password;
       db_user;
       default_tier;
+      event_evaluator_slots;
       gc;
       github;
       gitlab;
@@ -328,6 +335,7 @@ let db_max_pool_size t = t.db_max_pool_size
 let db_password t = t.db_password
 let db_user t = t.db_user
 let default_tier t = t.default_tier
+let event_evaluator_slots t = t.event_evaluator_slots
 let gc t = t.gc
 let github t = t.github
 let gitlab t = t.gitlab

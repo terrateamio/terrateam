@@ -37,19 +37,20 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
   module Initiate = struct
     module I = Terrat_api_components_work_manifest_initiate
 
-    let post' config storage work_manifest_id initiate ctx =
+    let post' config storage exec work_manifest_id initiate ctx =
       let request_id = Brtl_ctx.token ctx in
       Evaluator2.compute_node_poll
         ~request_id
         ~config
         ~storage
+        ~exec
         ~compute_node_id:work_manifest_id
         initiate
 
-    let post config storage work_manifest_id initiate =
+    let post config storage exec work_manifest_id initiate =
       Brtl_ep.run_result_json ~f:(fun ctx ->
           let open Abb.Future.Infix_monad in
-          post' config storage work_manifest_id initiate ctx
+          post' config storage exec work_manifest_id initiate ctx
           >>= function
           | Ok response ->
               let body =
@@ -155,7 +156,7 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
   end
 
   module Results = struct
-    let put config storage work_manifest_id result =
+    let put config storage exec work_manifest_id result =
       Brtl_ep.run_result_json ~f:(fun ctx ->
           let open Abbs_future_combinators.Infix_result_monad in
           (* TODO: Uncomment once all runs are on new work manifest access tokens *)
@@ -177,7 +178,13 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
           enforce_work_manifest_access (Some work_manifest_id) work_manifest_id storage ctx
           >>= fun () ->
           let open Abb.Future.Infix_monad in
-          Evaluator2.work_manifest_result ~request_id ~config ~storage ~work_manifest_id result
+          Evaluator2.work_manifest_result
+            ~request_id
+            ~config
+            ~storage
+            ~exec
+            ~work_manifest_id
+            result
           >>= fun r ->
           match r with
           | Ok () ->

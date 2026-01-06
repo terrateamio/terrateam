@@ -232,8 +232,13 @@ struct
               ())
         >>= function
         | wms when all_wms_completed @@ CCList.filter eq wms ->
+            Logs.info (fun m ->
+                m "%s : WM : RESULT : name=%s : all_wms_completed" (Builder.log_id s) name);
             Abb.Future.return (Ok (CCList.filter eq wms))
-        | _ -> Abb.Future.return (Error (`Suspend_eval name)))
+        | _ ->
+            Logs.info (fun m ->
+                m "%s : WM : RESULT : name=%s : not_all_wms_completed" (Builder.log_id s) name);
+            Abb.Future.return (Error (`Suspend_eval name)))
     | Some _ | None -> (
         fetch Keys.job
         >>= fun job ->

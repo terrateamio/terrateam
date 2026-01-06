@@ -36,6 +36,7 @@ struct
     plan_cleanup : unit Abb.Future.t;
     repo_config_cleanup : unit Abb.Future.t;
     storage : Terrat_storage.t;
+    exec : Terrat_vcs_event_evaluator2.Exec.t;
   }
 
   module Kv_store =
@@ -170,6 +171,7 @@ struct
     let routes t =
       let config = t.config in
       let storage = t.storage in
+      let exec = t.exec in
       Routes.routes config storage
       @ Provider.Stacks.routes config storage
       @ Kv_store.routes config storage
@@ -188,13 +190,16 @@ struct
             (* Work manifests *)
             (`POST, Rt.gitlab_work_manifest_plan () --> Work_manifest.Plans.post config storage);
             (`GET, Rt.gitlab_get_work_manifest_plan () --> Work_manifest.Plans.get config storage);
-            (`PUT, Rt.gitlab_work_manifest_results () --> Work_manifest.Results.put config storage);
+            ( `PUT,
+              Rt.gitlab_work_manifest_results () --> Work_manifest.Results.put config storage exec
+            );
             ( `POST,
-              Rt.gitlab_work_manifest_initiate () --> Work_manifest.Initiate.post config storage );
+              Rt.gitlab_work_manifest_initiate ()
+              --> Work_manifest.Initiate.post config storage exec );
             ( `GET,
               Rt.gitlab_work_manifest_workspaces () --> Work_manifest.Workspaces.get config storage
             );
-            (`POST, Rt.gitlab_events () --> Ep_events.post config storage);
+            (`POST, Rt.gitlab_events () --> Ep_events.post config storage exec);
             (`GET, Rt.gitlab_installations () --> Ep_inst.List.get config storage);
             (`GET, Rt.gitlab_installations_webhook () --> Ep_inst.Webhook.get config storage);
             ( `GET,
@@ -229,10 +234,11 @@ struct
 
     let one_hour = Duration.to_f (Duration.of_hour 1)
 
-    let rec drift config storage =
+    let rec drift config storage exec =
       let open Abb.Future.Infix_monad in
-      Abbs_future_combinators.ignore (Evaluator2.run_missing_drift_schedules ~config ~storage ())
-      >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> drift config storage
+      Abbs_future_combinators.ignore
+        (Evaluator2.run_missing_drift_schedules ~config ~storage ~exec ())
+      >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> drift config storage exec
 
     let rec flow_state_cleanup config storage =
       let open Abb.Future.Infix_monad in
@@ -257,19 +263,19 @@ struct
 
     let name _ = "gitlab"
 
-    let start config vcs_config storage =
+    let start config vcs_config storage exec =
       let open Abb.Future.Infix_monad in
       let config = Provider.Api.Config.make ~config ~vcs_config () in
       Abb.Future.Infix_app.(
         (fun drift flow_state_cleanup plan_cleanup repo_config_cleanup ->
           (drift, flow_state_cleanup, plan_cleanup, repo_config_cleanup))
-        <$> Abb.Future.fork (drift config storage)
+        <$> Abb.Future.fork (drift config storage exec)
         <*> Abb.Future.fork (flow_state_cleanup config storage)
         <*> Abb.Future.fork (plan_cleanup config storage)
         <*> Abb.Future.fork (repo_config_cleanup config storage))
       >>= fun (drift, flow_state_cleanup, plan_cleanup, repo_config_cleanup) ->
       Abb.Future.return
-        (Ok { config; drift; flow_state_cleanup; plan_cleanup; repo_config_cleanup; storage })
+        (Ok { config; drift; flow_state_cleanup; plan_cleanup; repo_config_cleanup; storage; exec })
 
     let stop t = raise (Failure "nyi")
     let routes t = Routes.routes t

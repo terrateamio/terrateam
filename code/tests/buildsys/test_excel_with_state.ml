@@ -18,6 +18,14 @@ module Excel = struct
     let protect f = Some (f ())
   end
 
+  module Queue = struct
+    type t = unit
+
+    let run ~name:_ () f = f ()
+    let suspend ~name:_ () = Some ()
+    let unsuspend ~name:_ () = Some ()
+  end
+
   module Notify = struct
     type t = unit
 
@@ -53,7 +61,7 @@ let test_const =
       let tasks =
         { Bs.Tasks.get = (fun _ k -> Excel.C.return @@ Hmap.find (coerce k) tasks_map) }
       in
-      let ret = Bs.build rebuilder tasks a1 st in
+      let ret = Bs.build () rebuilder tasks a1 st in
       assert (ret = Some 10))
 
 let test_dynamic =
@@ -71,7 +79,7 @@ let test_dynamic =
       let tasks =
         { Bs.Tasks.get = (fun _ k -> Excel.C.return @@ Hmap.find (coerce k) tasks_map) }
       in
-      let ret = Bs.build rebuilder tasks b1 st in
+      let ret = Bs.build () rebuilder tasks b1 st in
       assert (ret = Some 11))
 
 let test_dynamic2 =
@@ -93,7 +101,7 @@ let test_dynamic2 =
       let tasks =
         { Bs.Tasks.get = (fun _ k -> Excel.C.return @@ Hmap.find (coerce k) tasks_map) }
       in
-      let ret = Bs.build rebuilder tasks b2 st in
+      let ret = Bs.build () rebuilder tasks b2 st in
       assert (ret = Some 21))
 
 let test_key_does_not_exist =
@@ -105,7 +113,7 @@ let test_key_does_not_exist =
       let tasks =
         { Bs.Tasks.get = (fun _ k -> Excel.C.return @@ Hmap.find (coerce k) tasks_map) }
       in
-      let ret = Bs.build rebuilder tasks a1 st in
+      let ret = Bs.build () rebuilder tasks a1 st in
       assert (ret = None))
 
 let test = Oth.parallel [ test_const; test_dynamic; test_dynamic2; test_key_does_not_exist ]

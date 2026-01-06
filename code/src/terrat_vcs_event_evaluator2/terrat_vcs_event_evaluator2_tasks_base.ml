@@ -4,6 +4,19 @@ module Tjc = Terrat_job_context
 module Msg = Terrat_vcs_provider2.Msg
 module P2 = Terrat_vcs_provider2
 
+module Metrics = struct
+  module Task_exec_duration = Prmths.Histogram (struct
+    let spec = Prmths.Histogram_spec.of_list [ 0.0; 1.0; 2.0; 5.0; 10.0; 20.0; 50.0; 100.0 ]
+  end)
+
+  let namespace = "terrat"
+  let subsystem = "vcs_event_evaluator2_task_base"
+
+  let exec_duration =
+    let help = "Time scheduler spends processing a task." in
+    Task_exec_duration.v_label ~label_name:"task" ~help ~namespace ~subsystem "exec_duration"
+end
+
 module Make
     (S : Terrat_vcs_provider2.S)
     (Keys : module type of Terrat_vcs_event_evaluator2_targets.Make (S)) =
@@ -26,30 +39,26 @@ struct
   let run ~name f path s fetcher =
     Abbs_time_it.run'
       (fun ret t ->
+        Metrics.Task_exec_duration.observe (Metrics.exec_duration name) t;
         match ret with
-        | Ok _ as r ->
+        | Ok _ ->
             Logs.info (fun m ->
                 m "%s : TASK : END : SUCCESS : name=%s : time=%f" (Builder.log_id s) name t)
-        | Error (`Suspend_eval _) as err ->
+        | Error (`Suspend_eval _) ->
             Logs.info (fun m ->
                 m "%s : TASK : END: SUSPEND : name=%s : time=%f" (Builder.log_id s) name t)
-        | Error (`Noop as err) ->
+        | Error `Noop ->
             Logs.info (fun m ->
                 m "%s : TASK : END: NOOP : name=%s : time=%f" (Builder.log_id s) name t)
-        | Error (#Builder.err as err) ->
+        | Error #Builder.err ->
             Logs.info (fun m ->
                 m "%s : TASK : END: FAIL : name=%s : time=%f" (Builder.log_id s) name t))
       (fun () ->
-        let open Abb.Future.Infix_monad in
         Logs.info (fun m ->
             m
               "%s : TASK : START : name=%s : path=[%s]"
               (Builder.log_id s)
               name
               (CCString.concat ", " path));
-        f s fetcher)
-
-  let default_tasks () =
-    let coerce = Builder.coerce_to_task in
-    Hmap.empty
+        f (Builder.State.set_path path s) fetcher)
 end
