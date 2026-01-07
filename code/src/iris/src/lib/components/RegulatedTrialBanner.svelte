@@ -3,11 +3,6 @@
   import { selectedInstallation } from '../stores';
   import { areTrialBannersEnabled, getTrialDaysRemaining } from '../utils/environment';
 
-  // DEBUG MODE: Set localStorage.setItem('debug_trial_banner', 'true') in console to preview
-  // Remove with: localStorage.removeItem('debug_trial_banner')
-  const isDebugMode = typeof window !== 'undefined' && localStorage.getItem('debug_trial_banner') === 'true';
-  const debugDaysRemaining = 14; // Mock days for debug mode
-
   // Playful messages that rotate - personality-driven copy
   const messages = [
     {
@@ -69,22 +64,19 @@
   const allFeatures = [...growthFeatures, ...regulatedFeatures];
 
   // Calculate days remaining reactively
-  $: daysRemaining = isDebugMode
-    ? debugDaysRemaining
-    : ($selectedInstallation?.trial_ends_at
-        ? getTrialDaysRemaining($selectedInstallation.trial_ends_at)
-        : null);
+  $: daysRemaining = $selectedInstallation?.trial_ends_at
+    ? getTrialDaysRemaining($selectedInstallation.trial_ends_at)
+    : null;
 
   // Determine if we should show the banner
   // Tier name may include a date suffix like "regulated-2026-01-07"
-  $: isRegulatedTier = isDebugMode || ($selectedInstallation?.tier?.name?.toLowerCase().startsWith('regulated') ?? false);
+  $: isRegulatedTier = $selectedInstallation?.tier?.name?.toLowerCase().startsWith('regulated') ?? false;
 
   $: shouldShowBanner =
-    isDebugMode ||
-    (areTrialBannersEnabled() &&
+    areTrialBannersEnabled() &&
     isRegulatedTier &&
     daysRemaining !== null &&
-    daysRemaining > 0);
+    daysRemaining > 0;
 
   // Format days remaining text
   $: daysText = daysRemaining === 1 ? '1 day' : `${daysRemaining} days`;

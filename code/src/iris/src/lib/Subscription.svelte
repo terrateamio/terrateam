@@ -22,6 +22,25 @@
   // Make subscription mode reactive
   $: isInSaasMode = isSaasBillingMode();
 
+  // Billing toggle state
+  let isAnnual = true;
+
+  // Pricing calculations
+  $: growthPrice = isAnnual ? 134 : 149;
+  const regulatedPrice = 625;
+  const corporatePrice = 1208.33;
+
+  // Determine current tier from installation
+  // Tier names may include suffixes like "regulated-2026-01-07" or be things like "unlimited"
+  // Note: "basic" is equivalent to "growth" (renamed)
+  $: currentTierName = $selectedInstallation?.tier?.name?.toLowerCase() ?? '';
+  $: isStartupTier = currentTierName === 'startup' || currentTierName.startsWith('startup ') || currentTierName === 'free' || currentTierName.startsWith('free ') || currentTierName === '';
+  $: isGrowthTier = currentTierName === 'growth' || currentTierName.startsWith('growth-') || currentTierName === 'basic' || currentTierName.startsWith('basic-');
+  $: isRegulatedTier = currentTierName === 'regulated' || currentTierName.startsWith('regulated-');
+  $: isCorporateTier = currentTierName === 'corporate' || currentTierName.startsWith('corporate-') || currentTierName.startsWith('corporate ') || currentTierName === 'enterprise' || currentTierName.startsWith('enterprise-') || currentTierName.startsWith('enterprise ');
+  // "unlimited" or other special tiers should show as highest tier
+  $: isUnlimitedTier = currentTierName === 'unlimited' || currentTierName.startsWith('unlimited-');
+
   function handleManageBilling(): void {
     analytics.trackBillingAction('manage_billing_clicked');
     window.open('https://billing.stripe.com/p/login/00geXngL2cQR0YofYY', '_blank');
@@ -174,7 +193,7 @@ This request was submitted via the Terrateam Iris trial extension form.
       "Manage your subscription and billing") :
     "Enterprise options for self-hosted users"}
 >
-  <div class="max-w-6xl mx-auto">
+  <div class="max-w-[1664px] mx-auto">
     
     <!-- Self-hosted Environment Message -->
     {#if !isInSaasMode}
@@ -472,135 +491,307 @@ This request was submitted via the Terrateam Iris trial extension form.
           </p>
         </div>
         
-        <!-- Upgrade Section -->
-        <Card padding="lg" class="mb-8 border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
-          <div class="text-center">
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-              Start Your Terrateam Journey
-            </h2>
-            <p class="text-gray-600 dark:text-gray-400 mb-8">
-              Choose the plan that fits your team's needs. All plans include a free trial to get you started.
-            </p>
-            
-            <!-- Pricing Options -->
-            <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-8">
-              <!-- Monthly Plan -->
-              <Card padding="lg" class="border-2 border-blue-300">
-                <div class="text-center">
-                  <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Basic Plan</h3>
-                  <div class="mb-4">
-                    <span class="text-3xl font-bold text-blue-600">$149</span>
-                    <span class="text-gray-600 dark:text-gray-400">/month</span>
-                  </div>
-                  <ul class="text-left space-y-2 mb-6">
-                    <li class="flex items-center">
-                      <svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span class="text-gray-700 dark:text-gray-300">Unlimited repositories</span>
-                    </li>
-                    <li class="flex items-center">
-                      <svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span class="text-gray-700 dark:text-gray-300">Advanced workflow automation</span>
-                    </li>
-                    <li class="flex items-center">
-                      <svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span class="text-gray-700 dark:text-gray-300">Team collaboration features</span>
-                    </li>
-                    <li class="flex items-center">
-                      <svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span class="text-gray-700 dark:text-gray-300">Slack Connect support</span>
-                    </li>
-                  </ul>
-                  <Button 
-                    variant="primary" 
-                    size="lg"
-                    on:click={() => window.open('https://buy.stripe.com/6oE15h4Yp1BU4V2fZ8', '_blank')}
-                    class="w-full"
-                  >
-                    Start Monthly Plan
-                  </Button>
-                </div>
-              </Card>
-              
-              <!-- Yearly Plan -->
-              <Card padding="lg" class="border-2 border-green-300 relative">
-                <!-- Best Value Badge -->
-                <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <span class="bg-green-600 text-white px-4 py-1 rounded-full text-xs font-semibold uppercase tracking-wide">
-                    Best Value
-                  </span>
-                </div>
-                <div class="text-center pt-2">
-                  <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Basic Plan</h3>
-                  <div class="mb-2">
-                    <span class="text-3xl font-bold text-green-600">$134</span>
-                    <span class="text-gray-600 dark:text-gray-400">/month</span>
-                  </div>
-                  <p class="text-sm text-green-600 font-medium mb-4">Billed annually • Save 10%</p>
-                  <ul class="text-left space-y-2 mb-6">
-                    <li class="flex items-center">
-                      <svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span class="text-gray-700 dark:text-gray-300">Everything in monthly plan</span>
-                    </li>
-                    <li class="flex items-center">
-                      <svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span class="text-gray-700 dark:text-gray-300"><strong>10% discount</strong> ($1,608/year)</span>
-                    </li>
-                    <li class="flex items-center">
-                      <svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span class="text-gray-700 dark:text-gray-300">Priority email support</span>
-                    </li>
-                    <li class="flex items-center">
-                      <svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span class="text-gray-700 dark:text-gray-300">Annual planning session</span>
-                    </li>
-                  </ul>
-                  <Button 
-                    variant="accent" 
-                    size="lg"
-                    on:click={() => window.open('https://buy.stripe.com/aEU9BN3Ul0xQ87e3cn', '_blank')}
-                    class="w-full"
-                  >
-                    Start Yearly Plan
-                  </Button>
-                </div>
-              </Card>
+        <!-- Pricing Grid -->
+        <div class="grid md:grid-cols-2 2xl:grid-cols-4 gap-6 mb-8">
+          <!-- Tier 1: Startup -->
+          <Card padding="lg" class="relative mt-4 flex flex-col">
+            <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
+              <span class="bg-gray-500 text-white px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap">
+                Our sales team is crying
+              </span>
             </div>
-            
-            <!-- Enterprise Option -->
-            <div class="text-center">
-              <p class="text-gray-600 dark:text-gray-400 mb-4">
-                Need enterprise features, custom integrations, dedicated support, or self-hosted options?
-              </p>
-              <Button 
-                variant="outline" 
-                size="lg"
-                on:click={() => window.open('https://terrateam.io/contact', '_blank')}
-                class="hover:text-current"
-              >
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            <div class="mb-5 pt-2">
+              <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">Startup</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Core workflows, no limits.</p>
+              <div class="mt-4">
+                <span class="text-3xl font-bold text-gray-900 dark:text-gray-100">$0</span>
+                <span class="text-gray-500 dark:text-gray-400">/mo</span>
+              </div>
+            </div>
+            <ul class="space-y-2 text-sm flex-grow mb-6">
+              <li class="flex items-start">
+                <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                 </svg>
-                Contact Sales for Enterprise
-              </Button>
+                <span class="text-gray-700 dark:text-gray-300">Pull request automation for Terraform</span>
+              </li>
+              <li class="flex items-start">
+                <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="text-gray-700 dark:text-gray-300">Monorepo and workspace execution</span>
+              </li>
+              <li class="flex items-start">
+                <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="text-gray-700 dark:text-gray-300">Concurrent plans across PRs</span>
+              </li>
+              <li class="flex items-start">
+                <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="text-gray-700 dark:text-gray-300">Custom workflows and hooks</span>
+              </li>
+              <li class="flex items-start">
+                <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="text-gray-700 dark:text-gray-300">Unlimited users, runs, and runners</span>
+              </li>
+              <li class="flex items-start">
+                <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="text-gray-700 dark:text-gray-300">Community support</span>
+              </li>
+            </ul>
+            <Button
+              variant="primary"
+              size="lg"
+              on:click={() => window.open('https://app.terrateam.io', '_blank')}
+              class="w-full"
+            >
+              Start on Cloud
+            </Button>
+          </Card>
+
+          <!-- Tier 2: Growth -->
+          <Card padding="lg" class="relative mt-4 flex flex-col border-2 border-blue-600 shadow-lg">
+            <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
+              <span class="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap shadow-md">
+                Most teams pick this
+              </span>
             </div>
-          </div>
-        </Card>
+            <div class="mb-5 pt-2">
+              <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">Growth</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Drift detection. We answer emails.</p>
+              <div class="mt-4">
+                <span class="text-3xl font-bold text-gray-900 dark:text-gray-100">${growthPrice}</span>
+                <span class="text-gray-500 dark:text-gray-400">/mo</span>
+                {#if isAnnual}
+                  <span class="text-xs text-green-600 ml-2">Save 10%</span>
+                {/if}
+              </div>
+              <div class="mt-3">
+                <div class="bg-gray-100 dark:bg-gray-700 p-0.5 rounded-md inline-flex items-center text-xs">
+                  <button
+                    class="px-2 py-1 rounded transition-colors {!isAnnual ? 'bg-white dark:bg-gray-600 shadow-sm text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}"
+                    on:click={() => isAnnual = false}
+                  >
+                    Monthly
+                  </button>
+                  <button
+                    class="px-2 py-1 rounded transition-colors {isAnnual ? 'bg-white dark:bg-gray-600 shadow-sm text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}"
+                    on:click={() => isAnnual = true}
+                  >
+                    Annual
+                  </button>
+                </div>
+              </div>
+              <p class="text-xs text-green-600 mt-2">30-day free trial</p>
+            </div>
+            <ul class="space-y-2 text-sm flex-grow mb-6">
+              <li class="flex items-start">
+                <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="text-gray-700 dark:text-gray-300">Everything in Startup</span>
+              </li>
+              <li class="flex items-start">
+                <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="text-gray-700 dark:text-gray-300">Scheduled drift detection and alerts</span>
+              </li>
+              <li class="flex items-start">
+                <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="text-gray-700 dark:text-gray-300">Programmatic config generation</span>
+              </li>
+              <li class="flex items-start">
+                <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="text-gray-700 dark:text-gray-300">Customer-owned plan storage</span>
+              </li>
+              <li class="flex items-start">
+                <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="text-gray-700 dark:text-gray-300">Apply requirements</span>
+              </li>
+              <li class="flex items-start">
+                <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="text-gray-700 dark:text-gray-300">Email support</span>
+              </li>
+              <li class="flex items-start">
+                <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="text-gray-700 dark:text-gray-300">90-day audit retention</span>
+              </li>
+            </ul>
+            <Button
+              variant="accent"
+              size="lg"
+              on:click={() => window.open('#STRIPE_GROWTH_PLACEHOLDER', '_blank')}
+              class="w-full"
+            >
+              Start
+            </Button>
+          </Card>
+
+          <!-- Tier 3: Regulated -->
+          <Card padding="lg" class="relative mt-4 flex flex-col">
+            <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
+              <span class="bg-amber-600 text-white px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap">
+                Regulators... mount up
+              </span>
+            </div>
+            <div class="mb-5 pt-2">
+              <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">Regulated</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400">For when compliance gets involved.</p>
+              <div class="mt-4">
+                <span class="text-3xl font-bold text-gray-900 dark:text-gray-100">${regulatedPrice}</span>
+                <span class="text-gray-500 dark:text-gray-400">/mo</span>
+              </div>
+              <p class="text-xs text-green-600 mt-1">30-day free trial</p>
+            </div>
+            <ul class="space-y-2 text-sm flex-grow mb-6">
+              <li class="flex items-start">
+                <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="text-gray-700 dark:text-gray-300">Everything in Growth</span>
+              </li>
+              <li class="flex items-start">
+                <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="text-gray-700 dark:text-gray-300">API access</span>
+              </li>
+              <li class="flex items-start">
+                <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="text-gray-700 dark:text-gray-300">CODEOWNERS integration</span>
+              </li>
+              <li class="flex items-start">
+                <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="text-gray-700 dark:text-gray-300">Role-based access control</span>
+              </li>
+              <li class="flex items-start">
+                <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="text-gray-700 dark:text-gray-300">Gatekeeper approvals and overrides</span>
+              </li>
+              <li class="flex items-start">
+                <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="text-gray-700 dark:text-gray-300">Centralized config (org-wide)</span>
+              </li>
+              <li class="flex items-start">
+                <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="text-gray-700 dark:text-gray-300">365-day audit retention</span>
+              </li>
+            </ul>
+            <Button
+              variant="primary"
+              size="lg"
+              on:click={() => window.open('https://buy.stripe.com/14A8wObxU3vT97U33u9fW0e', '_blank')}
+              class="w-full"
+            >
+              Start
+            </Button>
+          </Card>
+
+          <!-- Tier 4: Corporate -->
+          <Card padding="lg" class="relative mt-4 flex flex-col">
+            <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
+              <span class="bg-gray-700 text-white px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap">
+                We just didn't want to call it Enterprise
+              </span>
+            </div>
+            <div class="mb-5 pt-2">
+              <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">Corporate</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400">We'll fill out your spreadsheet.</p>
+              <div class="mt-4">
+                <span class="text-3xl font-bold text-gray-900 dark:text-gray-100">${corporatePrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                <span class="text-gray-500 dark:text-gray-400">/mo</span>
+              </div>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">$14,499.96/yr max</p>
+            </div>
+            <ul class="space-y-2 text-sm flex-grow mb-6">
+              <li class="flex items-start">
+                <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="text-gray-700 dark:text-gray-300">Everything in Regulated</span>
+              </li>
+              <li class="flex items-start">
+                <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="text-gray-700 dark:text-gray-300">MSA support</span>
+              </li>
+              <li class="flex items-start">
+                <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="text-gray-700 dark:text-gray-300">Security questionnaires</span>
+              </li>
+              <li class="flex items-start">
+                <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="text-gray-700 dark:text-gray-300">Dedicated Slack channel</span>
+              </li>
+              <li class="flex items-start">
+                <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="text-gray-700 dark:text-gray-300">Architecture reviews</span>
+              </li>
+              <li class="flex items-start">
+                <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="text-gray-700 dark:text-gray-300">Procurement-friendly invoicing</span>
+              </li>
+            </ul>
+            <Button
+              variant="outline"
+              size="lg"
+              on:click={() => window.open('https://terrateam.io/contact', '_blank')}
+              class="w-full"
+            >
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              Request terms
+            </Button>
+          </Card>
+        </div>
+
+        <!-- Global truth line -->
+        <p class="text-center text-sm text-gray-600 dark:text-gray-400 mb-2">
+          All tiers: unlimited users, unlimited runs, unlimited concurrency, unlimited private runners.
+        </p>
+
+        <!-- Honesty line -->
+        <p class="text-center text-sm text-gray-500 dark:text-gray-400 mb-8">
+          We don't hobble the free tier to force upgrades. If you never need governance or procurement process, you never need to pay us.
+        </p>
         
         <!-- Getting Started Steps -->
         <Card padding="lg" class="bg-gray-50 dark:bg-gray-800">
@@ -731,21 +922,6 @@ This request was submitted via the Terrateam Iris trial extension form.
                 {/if}
               </div>
               
-              {#if $selectedInstallation.tier.features && Object.keys($selectedInstallation.tier.features).length > 0}
-                <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                  <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Plan Features</h3>
-                  <div class="grid md:grid-cols-2 gap-4">
-                    {#each Object.entries($selectedInstallation.tier.features) as [featureKey, featureValue]}
-                      <div class="space-y-1">
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">{featureKey}</p>
-                        <p class="text-base font-mono text-gray-900 dark:text-gray-100">
-                          {featureValue === null ? 'null' : (typeof featureValue === 'string' && featureValue === '') ? '""' : featureValue}
-                        </p>
-                      </div>
-                    {/each}
-                  </div>
-                </div>
-              {/if}
             </div>
           </div>
         </div>
@@ -780,134 +956,290 @@ This request was submitted via the Terrateam Iris trial extension form.
         
         <!-- Payment Upgrade Section for Non-Paid Accounts -->
         {#if $selectedInstallation.account_status}
-          <Card padding="lg" class="mb-8 border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
-            <div class="text-center">
-              <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-                Upgrade Your Plan
-              </h2>
-              <p class="text-gray-600 dark:text-gray-400 mb-8">
-                Get unlimited access to all Terrateam features with our Basic plan.
-              </p>
-              
-              <!-- Pricing Options -->
-              <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-8">
-                <!-- Monthly Plan -->
-                <Card padding="lg" class="border-2 border-blue-300">
-                  <div class="text-center">
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Basic Plan</h3>
-                    <div class="mb-4">
-                      <span class="text-3xl font-bold text-blue-600">$149</span>
-                      <span class="text-gray-600 dark:text-gray-400">/month</span>
+          <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4 text-center">
+              Upgrade Your Plan
+            </h2>
+            <p class="text-gray-600 dark:text-gray-400 mb-8 text-center">
+              Choose the plan that fits your team's needs.
+            </p>
+
+            <!-- Pricing Grid -->
+            <div class="grid md:grid-cols-2 2xl:grid-cols-4 gap-6 mb-6">
+              <!-- Tier 1: Startup -->
+              <Card padding="lg" class="relative mt-4 flex flex-col">
+                <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                  <span class="bg-gray-500 text-white px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap">
+                    Our sales team is crying
+                  </span>
+                </div>
+                <div class="mb-5 pt-2">
+                  <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">Startup</h3>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Core workflows, no limits.</p>
+                  <div class="mt-4">
+                    <span class="text-3xl font-bold text-gray-900 dark:text-gray-100">$0</span>
+                    <span class="text-gray-500 dark:text-gray-400">/mo</span>
+                  </div>
+                </div>
+                <ul class="space-y-2 text-sm flex-grow mb-6">
+                  <li class="flex items-start">
+                    <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-gray-700 dark:text-gray-300">Pull request automation</span>
+                  </li>
+                  <li class="flex items-start">
+                    <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-gray-700 dark:text-gray-300">Monorepo & workspace execution</span>
+                  </li>
+                  <li class="flex items-start">
+                    <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-gray-700 dark:text-gray-300">Custom workflows and hooks</span>
+                  </li>
+                  <li class="flex items-start">
+                    <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-gray-700 dark:text-gray-300">Unlimited users, runs, runners</span>
+                  </li>
+                  <li class="flex items-start">
+                    <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-gray-700 dark:text-gray-300">Community support</span>
+                  </li>
+                </ul>
+                {#if isStartupTier}
+                  <Button variant="outline" size="lg" disabled class="w-full">
+                    Current Plan
+                  </Button>
+                {:else}
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    on:click={handleManageBilling}
+                    class="w-full"
+                  >
+                    Downgrade
+                  </Button>
+                {/if}
+              </Card>
+
+              <!-- Tier 2: Growth -->
+              <Card padding="lg" class="relative mt-4 flex flex-col border-2 border-blue-600 shadow-lg">
+                <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
+                  <span class="bg-blue-600 text-white px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap shadow-md">
+                    Most teams pick this
+                  </span>
+                </div>
+                <div class="mb-5 pt-2">
+                  <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">Growth</h3>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Drift detection. We answer emails.</p>
+                  <div class="mt-4">
+                    <span class="text-3xl font-bold text-gray-900 dark:text-gray-100">${growthPrice}</span>
+                    <span class="text-gray-500 dark:text-gray-400">/mo</span>
+                    {#if isAnnual}
+                      <span class="text-xs text-green-600 ml-2">Save 10%</span>
+                    {/if}
+                  </div>
+                  <div class="mt-3">
+                    <div class="bg-gray-100 dark:bg-gray-700 p-0.5 rounded-md inline-flex items-center text-xs">
+                      <button
+                        class="px-2 py-1 rounded transition-colors {!isAnnual ? 'bg-white dark:bg-gray-600 shadow-sm text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}"
+                        on:click={() => isAnnual = false}
+                      >
+                        Monthly
+                      </button>
+                      <button
+                        class="px-2 py-1 rounded transition-colors {isAnnual ? 'bg-white dark:bg-gray-600 shadow-sm text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}"
+                        on:click={() => isAnnual = true}
+                      >
+                        Annual
+                      </button>
                     </div>
-                    <ul class="text-left space-y-2 mb-6">
-                      <li class="flex items-center">
-                        <svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span class="text-gray-700 dark:text-gray-300">Unlimited repositories</span>
-                      </li>
-                      <li class="flex items-center">
-                        <svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span class="text-gray-700 dark:text-gray-300">Advanced workflow automation</span>
-                      </li>
-                      <li class="flex items-center">
-                        <svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span class="text-gray-700 dark:text-gray-300">Team collaboration features</span>
-                      </li>
-                      <li class="flex items-center">
-                        <svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span class="text-gray-700 dark:text-gray-300">Slack Connect support</span>
-                      </li>
-                    </ul>
-                    <Button 
-                      variant="primary" 
-                      size="lg"
-                      on:click={() => window.open('https://buy.stripe.com/6oE15h4Yp1BU4V2fZ8', '_blank')}
-                      class="w-full hover:text-black"
-                    >
-                      Upgrade to Monthly
-                    </Button>
                   </div>
-                </Card>
-                
-                <!-- Yearly Plan -->
-                <Card padding="lg" class="border-2 border-green-300 relative">
-                  <!-- Best Value Badge -->
-                  <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <span class="bg-green-600 text-white px-4 py-1 rounded-full text-xs font-semibold uppercase tracking-wide">
-                      Best Value
-                    </span>
+                  <p class="text-xs text-green-600 mt-2">30-day free trial</p>
+                </div>
+                <ul class="space-y-2 text-sm flex-grow mb-6">
+                  <li class="flex items-start">
+                    <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-gray-700 dark:text-gray-300">Everything in Startup</span>
+                  </li>
+                  <li class="flex items-start">
+                    <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-gray-700 dark:text-gray-300">Scheduled drift detection</span>
+                  </li>
+                  <li class="flex items-start">
+                    <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-gray-700 dark:text-gray-300">Programmatic config generation</span>
+                  </li>
+                  <li class="flex items-start">
+                    <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-gray-700 dark:text-gray-300">Email support, 90-day audit</span>
+                  </li>
+                </ul>
+                {#if isGrowthTier}
+                  <Button variant="outline" size="lg" disabled class="w-full">
+                    Current Plan
+                  </Button>
+                {:else if isRegulatedTier || isCorporateTier || isUnlimitedTier}
+                  <Button variant="outline" size="lg" disabled class="w-full opacity-50">
+                    Included
+                  </Button>
+                {:else}
+                  <Button
+                    variant="accent"
+                    size="lg"
+                    on:click={() => window.open(isAnnual ? 'https://buy.stripe.com/aEU9BN3Ul0xQ87e3cn' : 'https://buy.stripe.com/6oE15h4Yp1BU4V2fZ8', '_blank')}
+                    class="w-full"
+                  >
+                    Upgrade
+                  </Button>
+                {/if}
+              </Card>
+
+              <!-- Tier 3: Regulated -->
+              <Card padding="lg" class="relative mt-4 flex flex-col">
+                <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                  <span class="bg-amber-600 text-white px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap">
+                    Regulators... mount up
+                  </span>
+                </div>
+                <div class="mb-5 pt-2">
+                  <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">Regulated</h3>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">For when compliance gets involved.</p>
+                  <div class="mt-4">
+                    <span class="text-3xl font-bold text-gray-900 dark:text-gray-100">${regulatedPrice}</span>
+                    <span class="text-gray-500 dark:text-gray-400">/mo</span>
                   </div>
-                  <div class="text-center pt-2">
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Basic Plan</h3>
-                    <div class="mb-2">
-                      <span class="text-3xl font-bold text-green-600">$134</span>
-                      <span class="text-gray-600 dark:text-gray-400">/month</span>
-                    </div>
-                    <p class="text-sm text-green-600 font-medium mb-4">Billed annually • Save 10%</p>
-                    <ul class="text-left space-y-2 mb-6">
-                      <li class="flex items-center">
-                        <svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span class="text-gray-700 dark:text-gray-300">Everything in monthly plan</span>
-                      </li>
-                      <li class="flex items-center">
-                        <svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span class="text-gray-700 dark:text-gray-300"><strong>10% discount</strong> ($1,608/year)</span>
-                      </li>
-                      <li class="flex items-center">
-                        <svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span class="text-gray-700 dark:text-gray-300">Priority Slack Connect support</span>
-                      </li>
-                      <li class="flex items-center">
-                        <svg class="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span class="text-gray-700 dark:text-gray-300">Annual planning session</span>
-                      </li>
-                    </ul>
-                    <Button 
-                      variant="accent" 
-                      size="lg"
-                      on:click={() => window.open('https://buy.stripe.com/aEU9BN3Ul0xQ87e3cn', '_blank')}
-                      class="w-full"
-                    >
-                      Upgrade to Yearly
-                    </Button>
+                  <p class="text-xs text-green-600 mt-1">30-day free trial</p>
+                </div>
+                <ul class="space-y-2 text-sm flex-grow mb-6">
+                  <li class="flex items-start">
+                    <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-gray-700 dark:text-gray-300">Everything in Growth</span>
+                  </li>
+                  <li class="flex items-start">
+                    <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-gray-700 dark:text-gray-300">API access, CODEOWNERS</span>
+                  </li>
+                  <li class="flex items-start">
+                    <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-gray-700 dark:text-gray-300">RBAC, Gatekeeper approvals</span>
+                  </li>
+                  <li class="flex items-start">
+                    <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-gray-700 dark:text-gray-300">Centralized config, 365-day audit</span>
+                  </li>
+                </ul>
+                {#if isRegulatedTier}
+                  <Button variant="outline" size="lg" disabled class="w-full">
+                    Current Plan
+                  </Button>
+                {:else if isCorporateTier || isUnlimitedTier}
+                  <Button variant="outline" size="lg" disabled class="w-full opacity-50">
+                    Included
+                  </Button>
+                {:else}
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    on:click={() => window.open('https://buy.stripe.com/14A8wObxU3vT97U33u9fW0e', '_blank')}
+                    class="w-full"
+                  >
+                    Upgrade
+                  </Button>
+                {/if}
+              </Card>
+
+              <!-- Tier 4: Corporate -->
+              <Card padding="lg" class="relative mt-4 flex flex-col">
+                <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                  <span class="bg-gray-700 text-white px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap">
+                    Not Enterprise
+                  </span>
+                </div>
+                <div class="mb-5 pt-2">
+                  <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">Corporate</h3>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">We'll fill out your spreadsheet.</p>
+                  <div class="mt-4">
+                    <span class="text-3xl font-bold text-gray-900 dark:text-gray-100">${corporatePrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                    <span class="text-gray-500 dark:text-gray-400">/mo</span>
                   </div>
-                </Card>
-              </div>
-              
-              <!-- Enterprise Option -->
-              <div class="text-center">
-                <p class="text-gray-600 dark:text-gray-400 mb-4">
-                  Need enterprise features, custom integrations, dedicated support, or self-hosted options?
-                </p>
-                <Button 
-                  variant="outline" 
-                  size="lg"
-                  on:click={() => window.open('https://terrateam.io/contact', '_blank')}
-                  class="hover:text-black"
-                >
-                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                  </svg>
-                  Contact Sales for Enterprise
-                </Button>
-              </div>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">$14,499.96/yr max</p>
+                </div>
+                <ul class="space-y-2 text-sm flex-grow mb-6">
+                  <li class="flex items-start">
+                    <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-gray-700 dark:text-gray-300">Everything in Regulated</span>
+                  </li>
+                  <li class="flex items-start">
+                    <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-gray-700 dark:text-gray-300">MSA, security questionnaires</span>
+                  </li>
+                  <li class="flex items-start">
+                    <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-gray-700 dark:text-gray-300">Dedicated Slack, architecture reviews</span>
+                  </li>
+                  <li class="flex items-start">
+                    <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-gray-700 dark:text-gray-300">Procurement-friendly invoicing</span>
+                  </li>
+                </ul>
+                {#if isCorporateTier}
+                  <Button variant="outline" size="lg" disabled class="w-full">
+                    Current Plan
+                  </Button>
+                {:else if isUnlimitedTier}
+                  <Button variant="outline" size="lg" disabled class="w-full opacity-50">
+                    Included
+                  </Button>
+                {:else}
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    on:click={() => window.open('https://terrateam.io/contact', '_blank')}
+                    class="w-full"
+                  >
+                    Request terms
+                  </Button>
+                {/if}
+              </Card>
             </div>
-          </Card>
+
+            <!-- Global truth line -->
+            <p class="text-center text-sm text-gray-600 dark:text-gray-400">
+              All tiers: unlimited users, unlimited runs, unlimited concurrency, unlimited private runners.
+            </p>
+          </div>
         {/if}
       {:else}
         <!-- Fallback case -->
@@ -916,42 +1248,6 @@ This request was submitted via the Terrateam Iris trial extension form.
           <p class="text-gray-600 dark:text-gray-400 mt-4">Loading subscription information...</p>
         </div>
       {/if}
-
-      <!-- Quick Actions Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
-        <!-- View Invoices -->
-        <Card padding="lg" class="text-center hover:shadow-lg transition-shadow">
-          <div class="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 mb-4">
-            <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </div>
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">View Invoices</h3>
-          <p class="text-gray-600 dark:text-gray-400 text-sm">Access and download billing invoices and receipts</p>
-        </Card>
-
-        <!-- Update Payment -->
-        <Card padding="lg" class="text-center hover:shadow-lg transition-shadow">
-          <div class="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-green-100 dark:bg-green-900/30 mb-4">
-            <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-            </svg>
-          </div>
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Payment Methods</h3>
-          <p class="text-gray-600 dark:text-gray-400 text-sm">Update credit card and payment preferences</p>
-        </Card>
-
-        <!-- Plan Details -->
-        <Card padding="lg" class="text-center hover:shadow-lg transition-shadow">
-          <div class="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-purple-100 dark:bg-purple-900/30 mb-4">
-            <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-            </svg>
-          </div>
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Plan Details</h3>
-          <p class="text-gray-600 dark:text-gray-400 text-sm">View usage limits and renewal information</p>
-        </Card>
-      </div>
 
       <!-- Support Section -->
       <Card padding="lg" class="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
