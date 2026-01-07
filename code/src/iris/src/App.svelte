@@ -34,6 +34,8 @@
   import AuthCallback from './lib/AuthCallback.svelte';
   import Analytics from './lib/Analytics.svelte';
   import AuditTrail from './lib/AuditTrail.svelte';
+  import Stacks from './lib/Stacks.svelte';
+  import StackDetail from './lib/StackDetail.svelte';
   import RootHandler from './lib/components/layout/RootHandler.svelte';
   import UpgradeNudgeBar from './lib/components/UpgradeNudgeBar.svelte';
   import QueuedJobsNudge from './lib/components/QueuedJobsNudge.svelte';
@@ -60,6 +62,8 @@
     '/runs': Runs,
     '/runs/:id': RunDetail,
     '/runs/pr/:prNumber': RunsPRDetail,
+    '/stacks': Stacks,
+    '/stacks/:prNumber/:stackName': StackDetail,
     '/configuration': Configuration,
     '/subscription': Subscription,
     '/analytics': Analytics,
@@ -74,6 +78,8 @@
     '/i/:installationId/runs': Runs,
     '/i/:installationId/runs/:id': RunDetail,
     '/i/:installationId/runs/pr/:prNumber': RunsPRDetail,
+    '/i/:installationId/stacks': Stacks,
+    '/i/:installationId/stacks/:prNumber/:stackName': StackDetail,
     '/i/:installationId/configuration': Configuration,
     '/i/:installationId/subscription': Subscription,
     '/i/:installationId/analytics': Analytics,
