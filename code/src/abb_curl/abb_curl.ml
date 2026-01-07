@@ -559,6 +559,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
         let body = CCOption.get_or ~default:"" body in
         let pos = ref 0 in
         let length = CCString.length body in
+        Curl.set_postfieldsize handle length;
         Curl.set_readfunction handle (fun n ->
             if !pos < length then (
               let len = length - !pos in
@@ -596,17 +597,9 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
         Curl.set_writefunction handle (fun s ->
             Buffer.add_string response_body s;
             CCString.length s);
-        let content_length =
-          match meth_ with
-          | `GET -> 0
-          | `PUT body | `POST body | `DELETE body | `PATCH body | `Custom (_, body) ->
-              CCOption.map_or ~default:0 CCString.length body
-        in
         Curl.set_httpheader
           handle
-          (CCList.map
-             (fun (k, v) -> k ^ ": " ^ v)
-             (("content-length", CCInt.to_string content_length) :: Headers.to_list headers))
+          (CCList.map (fun (k, v) -> k ^ ": " ^ v) (Headers.to_list headers))
 
       let setup_response t handle id =
         Curl.set_headerfunction handle (fun s ->
