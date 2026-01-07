@@ -16,6 +16,5 @@ export { default as AuthenticationLoader } from './layout/AuthenticationLoader.s
 export { default as PageLayout } from './layout/PageLayout.svelte';
 export { default as RootHandler } from './layout/RootHandler.svelte';
 
-// Nudge Components
-export { default as UpgradeNudgeBar } from './UpgradeNudgeBar.svelte';
-export { default as QueuedJobsNudge } from './QueuedJobsNudge.svelte';
+// Trial Banner Components
+export { default as RegulatedTrialBanner } from './RegulatedTrialBanner.svelte';
