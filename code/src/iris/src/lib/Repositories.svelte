@@ -12,6 +12,7 @@
   import { navigateToRepository } from './utils/navigation';
   import { VCS_PROVIDERS } from './vcs/providers';
   import { onMount } from 'svelte';
+  import { EXTERNAL_URLS } from './constants';
   
   // Router props (external reference only)
   export const params = {};
@@ -498,6 +499,9 @@
           >
             Setup Guide
           </button>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-4">
+            Need help? <a href={EXTERNAL_URLS.SLACK} target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:underline">Join our Slack community</a>
+          </p>
         </div>
       {:else}
         <div class="divide-y divide-gray-200 dark:divide-gray-600">
