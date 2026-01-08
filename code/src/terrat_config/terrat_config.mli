@@ -67,6 +67,7 @@ val db_max_pool_size : t -> int
 val db_password : t -> string
 val db_user : t -> string
 val default_tier : t -> string
+val event_evaluator_slots : t -> int
 val gc : t -> Gc.t
 val github : t -> Github.t option
 val gitlab : t -> Gitlab.t option

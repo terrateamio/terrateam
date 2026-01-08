@@ -18,6 +18,14 @@ module Excel = struct
     let protect f = f ()
   end
 
+  module Queue = struct
+    type t = unit
+
+    let run ~name:_ () f = f ()
+    let suspend ~name:_ () = ()
+    let unsuspend ~name:_ () = ()
+  end
+
   module Notify = struct
     type t = unit
 
@@ -47,7 +55,7 @@ let test_const =
       let st = Bs.St.create () in
       let tasks_map = Hmap.empty |> Hmap.add (coerce a1) (fun _ _ _ -> 10) in
       let tasks = { Bs.Tasks.get = (fun _ k -> Hmap.find (coerce k) tasks_map) } in
-      let ret = Bs.build rebuilder tasks a1 st in
+      let ret = Bs.build () rebuilder tasks a1 st in
       assert (ret = 10))
 
 let test_dynamic =
@@ -61,7 +69,7 @@ let test_dynamic =
         |> Hmap.add (coerce b1) (fun _ _ { Bs.Fetcher.fetch } -> fetch a1 + 1)
       in
       let tasks = { Bs.Tasks.get = (fun _ k -> Hmap.find (coerce k) tasks_map) } in
-      let ret = Bs.build rebuilder tasks b1 st in
+      let ret = Bs.build () rebuilder tasks b1 st in
       assert (ret = 11))
 
 let test_dynamic2 =
@@ -77,7 +85,7 @@ let test_dynamic2 =
         |> Hmap.add (coerce b2) (fun _ _ { Bs.Fetcher.fetch } -> fetch a1 + fetch b1)
       in
       let tasks = { Bs.Tasks.get = (fun _ k -> Hmap.find (coerce k) tasks_map) } in
-      let ret = Bs.build rebuilder tasks b2 st in
+      let ret = Bs.build () rebuilder tasks b2 st in
       assert (ret = 21))
 
 let test = Oth.parallel [ test_const; test_dynamic; test_dynamic2 ]

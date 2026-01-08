@@ -120,6 +120,7 @@ let delete_pull_request_comment ~request_id client pull_request comment_id = rai
 let minimize_pull_request_comment ~request_id client pull_request comment_id = raise (Failure "nyi")
 let fetch_diff ~client ~owner ~repo pull_number = raise (Failure "nyi")
 let fetch_pull_request ~request_id account client repo pull_request_id = raise (Failure "nyi")
+let fetch_diff_files ~request_id ~base_ref ~branch_ref repo client = raise (Failure "nyi")
 let react_to_comment ~request_id client pull_request comment_id = raise (Failure "nyi")
 let create_commit_checks ~request_id client repo ref_ checks = raise (Failure "nyi")
 let fetch_commit_checks ~request_id client repo ref_ = raise (Failure "nyi")

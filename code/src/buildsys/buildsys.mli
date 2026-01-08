@@ -36,6 +36,22 @@ module type S = sig
     val protect : (unit -> 'a t) -> 'a t t
   end
 
+  module Queue : sig
+    type t
+
+    (** Run a task in the queue, given name *)
+    val run : name:Key_repr.t -> t -> (unit -> 'a C.t) -> 'a C.t
+
+    (** Suspend a named task. This means it should no longer occupy a queue slot. This can be called
+        multiple times, and can only be unsuspended if [unsuspend] is called the same number of
+        times. *)
+    val suspend : name:Key_repr.t -> t -> unit C.t
+
+    (** Unsuspend a named task. This reduces the count of suspends of the task and it is only
+        unsuspended if it is called an equal number of times to [suspend]. *)
+    val unsuspend : name:Key_repr.t -> t -> unit C.t
+  end
+
   module Notify : sig
     type t
 
@@ -58,6 +74,7 @@ module type T = sig
   type key_repr
   type 'a c
   type state
+  type queue
 
   module Fetcher : sig
     type t = { fetch : 'r. 'r k -> 'r c }
@@ -82,7 +99,7 @@ module type T = sig
     val get_state : t -> state
   end
 
-  val build : Rebuilder.t -> Tasks.t -> 'v k -> St.t -> 'v c
+  val build : queue -> Rebuilder.t -> Tasks.t -> 'v k -> St.t -> 'v c
 end
 
 module Make (M : S) :
@@ -91,3 +108,4 @@ module Make (M : S) :
      and type key_repr = M.Key_repr.t
      and type 'a c = 'a M.C.t
      and type state = M.State.t
+     and type queue = M.Queue.t

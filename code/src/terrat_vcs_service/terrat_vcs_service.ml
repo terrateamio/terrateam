@@ -9,7 +9,11 @@ module type S = sig
     val name : t -> string
 
     val start :
-      Terrat_config.t -> vcs_config -> Terrat_storage.t -> (t, [> start_err ]) result Abb.Future.t
+      Terrat_config.t ->
+      vcs_config ->
+      Terrat_storage.t ->
+      Terrat_vcs_event_evaluator2.Exec.t ->
+      (t, [> start_err ]) result Abb.Future.t
 
     val stop : t -> unit Abb.Future.t
     val routes : t -> (Brtl_rtng.Method.t * Brtl_rtng.Handler.t Brtl_rtng.Route.Route.t) list
