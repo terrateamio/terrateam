@@ -41,6 +41,14 @@
   // "unlimited" or other special tiers should show as highest tier
   $: isUnlimitedTier = currentTierName === 'unlimited' || currentTierName.startsWith('unlimited-');
 
+  // Check if user is on an active trial (trial_ends_at is set and not expired)
+  $: isOnTrial = (() => {
+    const trialEndsAt = $selectedInstallation?.trial_ends_at;
+    if (!trialEndsAt) return false;
+    const endDate = new Date(trialEndsAt);
+    return endDate.getTime() > Date.now();
+  })();
+
   function handleManageBilling(): void {
     analytics.trackBillingAction('manage_billing_clicked');
     window.open('https://billing.stripe.com/p/login/00geXngL2cQR0YofYY', '_blank');
@@ -1090,22 +1098,22 @@ This request was submitted via the Terrateam Iris trial extension form.
                     <span class="text-gray-700 dark:text-gray-300">Email support, 90-day audit</span>
                   </li>
                 </ul>
-                {#if isGrowthTier}
+                {#if isGrowthTier && !isOnTrial}
                   <Button variant="outline" size="lg" disabled class="w-full">
                     Current Plan
                   </Button>
-                {:else if isRegulatedTier || isCorporateTier || isUnlimitedTier}
+                {:else if (isRegulatedTier || isCorporateTier || isUnlimitedTier) && !isOnTrial}
                   <Button variant="outline" size="lg" disabled class="w-full opacity-50">
                     Included
                   </Button>
                 {:else}
                   <Button
-                    variant="accent"
+                    variant={isGrowthTier && isOnTrial ? 'accent' : (isOnTrial ? 'outline' : 'accent')}
                     size="lg"
                     on:click={() => window.open(isAnnual ? 'https://buy.stripe.com/aEU9BN3Ul0xQ87e3cn' : 'https://buy.stripe.com/6oE15h4Yp1BU4V2fZ8', '_blank')}
                     class="w-full"
                   >
-                    Upgrade
+                    {isGrowthTier && isOnTrial ? 'Purchase Now' : 'Upgrade'}
                   </Button>
                 {/if}
               </Card>
@@ -1152,22 +1160,22 @@ This request was submitted via the Terrateam Iris trial extension form.
                     <span class="text-gray-700 dark:text-gray-300">Centralized config, 365-day audit</span>
                   </li>
                 </ul>
-                {#if isRegulatedTier}
+                {#if isRegulatedTier && !isOnTrial}
                   <Button variant="outline" size="lg" disabled class="w-full">
                     Current Plan
                   </Button>
-                {:else if isCorporateTier || isUnlimitedTier}
+                {:else if (isCorporateTier || isUnlimitedTier) && !isOnTrial}
                   <Button variant="outline" size="lg" disabled class="w-full opacity-50">
                     Included
                   </Button>
                 {:else}
                   <Button
-                    variant="primary"
+                    variant={isRegulatedTier && isOnTrial ? 'accent' : (isOnTrial ? 'outline' : 'primary')}
                     size="lg"
                     on:click={() => window.open('https://buy.stripe.com/14A8wObxU3vT97U33u9fW0e', '_blank')}
                     class="w-full"
                   >
-                    Upgrade
+                    {isRegulatedTier && isOnTrial ? 'Purchase Now' : 'Upgrade'}
                   </Button>
                 {/if}
               </Card>
