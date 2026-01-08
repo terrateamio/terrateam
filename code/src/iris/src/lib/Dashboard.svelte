@@ -12,7 +12,8 @@
   import LoadingSpinner from './components/ui/LoadingSpinner.svelte';
   import type { Dirspace } from './types';
   import { VCS_PROVIDERS } from './vcs/providers';
-  
+  import { EXTERNAL_URLS } from './constants';
+
   // Get current VCS provider terminology
   $: currentProvider = $currentVCSProvider || 'github';
   $: terminology = VCS_PROVIDERS[currentProvider]?.terminology || VCS_PROVIDERS.github.terminology;
@@ -282,20 +283,36 @@
           <p class="text-sm md:text-base text-gray-700 dark:text-gray-300 mb-4">
             New to Terrateam? Check out our getting started guide to learn the basics and set up your first workspace.
           </p>
-          <ClickableCard 
-            padding="sm"
-            hover={true}
-            on:click={() => window.location.hash = '#/getting-started'}
-            aria-label="Open getting started guide"
-            class="inline-block bg-white dark:bg-blue-800/30 border-blue-300 dark:border-blue-600 hover:border-blue-400 dark:hover:border-blue-500"
-          >
-            <div class="flex items-center space-x-2 text-blue-700 dark:text-blue-300">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
-              <span class="font-medium">Getting Started Guide</span>
-            </div>
-          </ClickableCard>
+          <div class="flex flex-wrap gap-3">
+            <ClickableCard
+              padding="sm"
+              hover={true}
+              on:click={() => window.location.hash = '#/getting-started'}
+              aria-label="Open getting started guide"
+              class="inline-block bg-white dark:bg-blue-800/30 border-blue-300 dark:border-blue-600 hover:border-blue-400 dark:hover:border-blue-500"
+            >
+              <div class="flex items-center space-x-2 text-blue-700 dark:text-blue-300">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                <span class="font-medium">Getting Started Guide</span>
+              </div>
+            </ClickableCard>
+            <ClickableCard
+              padding="sm"
+              hover={true}
+              on:click={() => window.open(EXTERNAL_URLS.SLACK, '_blank')}
+              aria-label="Join Slack community"
+              class="inline-block bg-white dark:bg-blue-800/30 border-blue-300 dark:border-blue-600 hover:border-blue-400 dark:hover:border-blue-500"
+            >
+              <div class="flex items-center space-x-2 text-blue-700 dark:text-blue-300">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523c-1.393 0-2.522-1.13-2.522-2.523s1.13-2.523 2.522-2.523h2.52v2.523zm1.268 0c0-1.393 1.13-2.523 2.522-2.523s2.522 1.13 2.522 2.523v6.313c0 1.393-1.13 2.522-2.522 2.522s-2.522-1.13-2.522-2.522v-6.313zM8.832 5.042a2.528 2.528 0 0 1-2.522-2.52C6.31 1.13 7.44 0 8.832 0s2.522 1.13 2.522 2.522v2.52H8.832zm0 1.268c1.393 0 2.522 1.13 2.522 2.522s-1.13 2.522-2.522 2.522H2.522C1.13 11.354 0 10.224 0 8.832s1.13-2.522 2.522-2.522h6.31zM18.956 8.832c0-1.393 1.13-2.522 2.522-2.522S24 7.44 24 8.832s-1.13 2.522-2.522 2.522h-2.522V8.832zm-1.268 0c0 1.393-1.13 2.522-2.522 2.522s-2.522-1.13-2.522-2.522V2.522C12.644 1.13 13.774 0 15.166 0s2.522 1.13 2.522 2.522v6.31zM15.166 18.956c1.393 0 2.522 1.13 2.522 2.522S16.56 24 15.166 24s-2.522-1.13-2.522-2.522v-2.522h2.522zm0-1.268c-1.393 0-2.522-1.13-2.522-2.522s1.13-2.522 2.522-2.522h6.312c1.393 0 2.522 1.13 2.522 2.522s-1.13 2.522-2.522 2.522h-6.312z"/>
+                </svg>
+                <span class="font-medium">Join our Slack</span>
+              </div>
+            </ClickableCard>
+          </div>
         </div>
         <img src="/assets/images/logo-symbol.svg" alt="Infrastructure Orchestration" class="hidden md:block w-56 h-56 opacity-30" />
       </div>
@@ -537,6 +554,9 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <p class="text-sm">No recent activity to display</p>
+            <p class="text-sm mt-2">
+              Need help? <a href={EXTERNAL_URLS.SLACK} target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:underline">Join our Slack community</a>
+            </p>
           </div>
         {:else}
           <div class="space-y-3">

@@ -7,6 +7,7 @@
   import { shouldShowSubscriptionMenu } from './utils/environment';
   import { createEventDispatcher } from 'svelte';
   import { VCS_PROVIDERS } from './vcs/providers';
+  import { EXTERNAL_URLS } from './constants';
 
   export let activeItem: string = 'getting-started';
   export let mobile: boolean = false;
@@ -148,7 +149,20 @@
       </button>
     {/if}
   </div>
-  
+
+  <!-- Slack CTA -->
+  <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+    <button
+      on:click={() => window.open(EXTERNAL_URLS.SLACK, '_blank')}
+      class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-white bg-[#4A154B] hover:bg-[#611f64] rounded-lg transition-colors"
+    >
+      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523c-1.393 0-2.522-1.13-2.522-2.523s1.13-2.523 2.522-2.523h2.52v2.523zm1.268 0c0-1.393 1.13-2.523 2.522-2.523s2.522 1.13 2.522 2.523v6.313c0 1.393-1.13 2.522-2.522 2.522s-2.522-1.13-2.522-2.522v-6.313zM8.832 5.042a2.528 2.528 0 0 1-2.522-2.52C6.31 1.13 7.44 0 8.832 0s2.522 1.13 2.522 2.522v2.52H8.832zm0 1.268c1.393 0 2.522 1.13 2.522 2.522s-1.13 2.522-2.522 2.522H2.522C1.13 11.354 0 10.224 0 8.832s1.13-2.522 2.522-2.522h6.31zM18.956 8.832c0-1.393 1.13-2.522 2.522-2.522S24 7.44 24 8.832s-1.13 2.522-2.522 2.522h-2.522V8.832zm-1.268 0c0 1.393-1.13 2.522-2.522 2.522s-2.522-1.13-2.522-2.522V2.522C12.644 1.13 13.774 0 15.166 0s2.522 1.13 2.522 2.522v6.31zM15.166 18.956c1.393 0 2.522 1.13 2.522 2.522S16.56 24 15.166 24s-2.522-1.13-2.522-2.522v-2.522h2.522zm0-1.268c-1.393 0-2.522-1.13-2.522-2.522s1.13-2.522 2.522-2.522h6.312c1.393 0 2.522 1.13 2.522 2.522s-1.13 2.522-2.522 2.522h-6.312z"/>
+      </svg>
+      Join our Slack
+    </button>
+  </div>
+
   <!-- Organization Selector -->
   {#if !$installationsLoading && $installations.length > 0}
     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
@@ -374,7 +388,7 @@
         Subscription
       </button>
     {/if}
-    <button 
+    <button
       on:click={() => clearURLParamsAndNavigate('#/support')}
       class="flex items-center px-3 py-2 text-sm font-medium rounded-md w-full text-left {activeItem === 'support' ? 'sidebar-active-item' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700'}"
     >
@@ -383,7 +397,7 @@
       </svg>
       Support
     </button>
-    <button 
+    <button
       on:click={() => clearURLParamsAndNavigate('#/settings')}
       class="flex items-center px-3 py-2 text-sm font-medium rounded-md w-full text-left {activeItem === 'settings' ? 'sidebar-active-item' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700'}"
     >
@@ -394,7 +408,7 @@
       Settings
     </button>
   </nav>
-  
+
   <!-- User section -->
   <div class="border-t border-gray-200 dark:border-gray-700 p-4">
     {#if $user}
