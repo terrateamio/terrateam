@@ -46,7 +46,7 @@ struct
     fetch Keys.account
     >>= fun account ->
     Builder.run_db s ~f:(fun db ->
-        S.Db.query_repo_config_json ~request_id:(Builder.log_id s) db account dest_branch_ref)
+        S.Db.query_repo_config_json ~request_id:(Builder.log_id s) db account branch_ref)
     >>= function
     | None ->
         fetch Keys.repo
