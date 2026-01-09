@@ -12,7 +12,7 @@ latest_merged_pull_request as (
       on jc.repo = grm.core_id
     inner join github_pull_requests as gpr
       on gpr.repository = grm.repository_id
-    where gpr.state = 'merged'
+    where jc.id = $context_id and gpr.state = 'merged'
     order by gpr.merged_at desc
     limit 1
 ),
