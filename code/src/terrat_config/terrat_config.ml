@@ -266,7 +266,7 @@ let create () =
   of_opt
     (`Key_error "TERRAT_EVENT_EVALUATOR_SLOTS")
     (CCInt.of_string
-       (CCOption.get_or ~default:"50" (Sys.getenv_opt "TERRAT_EVENT_EVALUATOR_SLOTS")))
+       (CCOption.get_or ~default:"20" (Sys.getenv_opt "TERRAT_EVENT_EVALUATOR_SLOTS")))
   >>= fun event_evaluator_slots ->
   let infracost = infracost () in
   let nginx_status_uri = CCOption.map Uri.of_string (Sys.getenv_opt "NGINX_STATUS_URI") in
