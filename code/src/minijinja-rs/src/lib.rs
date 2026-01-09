@@ -76,7 +76,7 @@ pub extern "C" fn minijinja_render_template(
     match env.get_template("template") {
         Ok(tmpl) => match tmpl.render(&context) {
             Ok(result) => {
-                let data = CString::new(result).unwrap();
+                let data = CString::new(result.replace('\0', "\0")).unwrap();
                 return RenderResult {
                     success: true,
                     data: data.into_raw(),

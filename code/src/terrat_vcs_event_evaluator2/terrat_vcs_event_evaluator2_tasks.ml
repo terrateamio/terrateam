@@ -1994,6 +1994,11 @@ struct
                         | Error #Builder.err as err -> Abb.Future.return err)
                     | None -> raise (Failure "nyi"))
               else (
+                (* We have received a poll from a compute node that has an
+                   offering that no longer matches antyhing we are looking for.
+                   We will kindly tell this compute node to exit, abort the work
+                   manifest, and then run another one to get the results we're
+                   actually interested in. *)
                 Logs.info (fun m ->
                     m
                       "%s : COMPUTE_NODE_OFFERING_MISMATCH : compute_node_sha= %s : offering_sha= \
@@ -2001,7 +2006,93 @@ struct
                       (Builder.log_id s)
                       compute_node.C.capabilities.C.Capabilities.sha
                       offering.Offering.sha);
-                raise (Failure "nyi")))
+                Builder.run_db s ~f:(fun db ->
+                    time_it
+                      s
+                      (fun m log_id time ->
+                        m
+                          "%s : Wm : UPDATE_STATE : work_manifest_id = %a : run_id = %s : state = \
+                           aborted"
+                          log_id
+                          Uuidm.pp
+                          work_manifest_id
+                          offering.Offering.run_id)
+                      (fun () ->
+                        S.Work_manifest.update_run_id
+                          ~request_id:(Builder.log_id s)
+                          db
+                          work_manifest_id
+                          offering.Offering.run_id
+                        >>= fun () ->
+                        S.Work_manifest.update_state
+                          ~request_id:(Builder.log_id s)
+                          db
+                          work_manifest_id
+                          Terrat_work_manifest3.State.Aborted))
+                >>= fun () ->
+                Builder.run_db s ~f:(fun db ->
+                    time_it
+                      s
+                      (fun m log_id time ->
+                        m
+                          "%s : JOB : QUERY_BY_WORK_MANIFEST : work_manifest_id = %a : time=%f"
+                          log_id
+                          Uuidm.pp
+                          work_manifest_id
+                          time)
+                      (fun () ->
+                        S.Job_context.Job.query_by_work_manifest_id
+                          ~request_id:(Builder.log_id s)
+                          db
+                          ~work_manifest_id
+                          ()))
+                >>= function
+                | Some job ->
+                    Builder.run_db s ~f:(fun db ->
+                        time_it
+                          s
+                          (fun m log_id time ->
+                            m
+                              "%s : WORK_MANIFEST : QUERY : id = %a : time=%f"
+                              log_id
+                              Uuidm.pp
+                              work_manifest_id
+                              time)
+                          (fun () ->
+                            S.Work_manifest.query ~request_id:(Builder.log_id s) db work_manifest_id))
+                    >>= fun work_manifest ->
+                    let work_manifest = CCOption.get_exn_or "work_manifest" work_manifest in
+                    let context = job.Tjc.Job.context in
+                    let log_id = Builder.mk_log_id ~request_id:(Builder.log_id s) job.Tjc.Job.id in
+                    let s' =
+                      s
+                      |> Builder.State.orig_store
+                      |> Keys.Key.add Keys.job job
+                      |> Keys.Key.add Keys.context context
+                      |> Keys.Key.add Keys.user job.Tjc.Job.initiator
+                      |> add_work_manifest_keys work_manifest
+                      |> CCFun.flip Builder.State.set_orig_store s
+                      |> Builder.State.set_log_id log_id
+                      |> Builder.State.set_tasks
+                           (match context.Tjc.Context.scope with
+                           | Tjc.Context.Scope.Pull_request _ ->
+                               Tasks_pr.tasks @@ Builder.State.tasks s
+                           | Tjc.Context.Scope.Branch _ ->
+                               Tasks_branch.tasks @@ Builder.State.tasks s)
+                    in
+                    Logs.info (fun m ->
+                        m
+                          "%s : context_id=%a : log_id= %s"
+                          (Builder.log_id s)
+                          Uuidm.pp
+                          context.Tjc.Context.id
+                          log_id);
+                    Fc.to_result @@ Fc.ignore @@ Builder.eval s' Keys.iter_job
+                    >>= fun () ->
+                    Abb.Future.return (Ok (Wmc.Work_manifest_done { Wmd.type_ = "done" }))
+                | None ->
+                    Logs.err (fun m -> m "%s : JOB_NOT_FOUND" (Builder.log_id s));
+                    assert false))
 
     let work_manifest_event_job =
       run ~name:"work_manifest_event_job" (fun s { Bs.Fetcher.fetch } ->
