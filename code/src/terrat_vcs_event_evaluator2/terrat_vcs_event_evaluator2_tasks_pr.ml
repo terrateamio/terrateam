@@ -127,12 +127,16 @@ struct
           Abb.Future.return
             (Ok
                (fun msg ->
-                 S.Comment.publish_comment
-                   ~request_id:(Builder.log_id s)
-                   client
-                   (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                   pull_request
-                   msg)))
+                 time_it
+                   s
+                   (fun m log_id time -> m "%s : PUBLISH_COMMENT : time=%f" log_id time)
+                   (fun () ->
+                     S.Comment.publish_comment
+                       ~request_id:(Builder.log_id s)
+                       client
+                       (CCOption.map_or ~default:"" S.Api.User.to_string user)
+                       pull_request
+                       msg))))
 
     let create_commit_checks =
       run ~name:"create_commit_checks" (fun s { Bs.Fetcher.fetch } ->

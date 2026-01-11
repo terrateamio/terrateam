@@ -65,8 +65,7 @@ struct
                     Tjc.Job.State.Completed))
           >>= fun () -> Abb.Future.return ret
       | Error (`Suspend_eval _) as err -> Abb.Future.return err
-      | Error (#Builder.err as err) ->
-          let open Irm in
+      | Error (#Builder.err as err) -> (
           Builder.run_db s ~f:(fun db ->
               time_it
                 s
@@ -83,7 +82,113 @@ struct
                     db
                     ~job_id:job.Tjc.Job.id
                     Tjc.Job.State.Failed))
-          >>= fun () -> Abb.Future.return (Error err)
+          >>= function
+          | Ok () -> Abb.Future.return (Error err)
+          | Error (#Builder.err as err2) ->
+              Logs.err (fun m -> m "%s : %a" (Builder.log_id s) Builder.pp_err err2);
+              Abb.Future.return (Error err))
+  end
+
+  module Cache = struct
+    let load ~cache_key db =
+      let open Abb.Future.Infix_monad in
+      let kv = { Terrat_kv_store.db; user_caps = [] } in
+      Terrat_kv_store.get ~key:cache_key kv
+      >>= function
+      | Ok _ as r -> Abb.Future.return r
+      | Error (#Terrat_kv_store.err as err) -> Abb.Future.return (Error err)
+
+    let store ~cache_key v db =
+      let open Abb.Future.Infix_monad in
+      let kv = { Terrat_kv_store.db; user_caps = [] } in
+      Terrat_kv_store.set ~key:cache_key v kv
+      >>= function
+      | Ok _ as r -> Abb.Future.return r
+      | Error (#Terrat_kv_store.err as err) -> Abb.Future.return (Error err)
+
+    let derive
+        ~cache_key
+        ~dest_branch_name
+        ~branch_name
+        ~branch_ref
+        ~index
+        ~repo_tree
+        ~repo_config_raw
+        s =
+      let open Irm in
+      Abbs_time_it.run
+        (fun t ->
+          Logs.info (fun m ->
+              m
+                "%s : derived_repo_config : derive : ref = %s : time=%f"
+                (Builder.log_id s)
+                (S.Api.Ref.to_string branch_ref)
+                t))
+        (fun () ->
+          Abbs_future_combinators.to_result
+          @@ Abb.Thread.run (fun () ->
+                 Terrat_base_repo_config_v1.derive
+                   ~ctx:
+                     (Terrat_base_repo_config_v1.Ctx.make
+                        ~dest_branch:(S.Api.Ref.to_string dest_branch_name)
+                        ~branch:(S.Api.Ref.to_string branch_name)
+                        ())
+                   ~index
+                   ~file_list:repo_tree
+                   repo_config_raw))
+      >>= fun repo_config ->
+      Builder.run_db
+        s
+        ~f:
+          (store
+             ~cache_key
+             (Terrat_repo_config.Version_1.to_yojson
+             @@ Terrat_base_repo_config_v1.to_version_1 repo_config))
+      >>= fun _ -> Abb.Future.return (Ok repo_config)
+
+    let derived_repo_config
+        ~cache_key
+        ~dest_branch_name
+        ~branch_name
+        ~branch_ref
+        ~index
+        ~repo_tree
+        ~repo_config_raw
+        s
+        { Bs.Fetcher.fetch } =
+      let open Irm in
+      Builder.run_db s ~f:(load ~cache_key)
+      >>= function
+      | Some repo_config_json -> (
+          let module V1 = Terrat_base_repo_config_v1 in
+          match V1.of_version_1_json_derived (Terrat_kv_store.Record.data repo_config_json) with
+          | Ok repo_config -> Abb.Future.return (Ok repo_config)
+          | Error (#V1.of_version_1_json_err as err) ->
+              Logs.err (fun m ->
+                  m
+                    "%s : OF_VERSION_1_DERIVED : %a"
+                    (Builder.log_id s)
+                    V1.pp_of_version_1_json_err
+                    err);
+              derive
+                ~cache_key
+                ~dest_branch_name
+                ~branch_name
+                ~branch_ref
+                ~index
+                ~repo_tree
+                ~repo_config_raw
+                s)
+      | None ->
+          derive
+            ~cache_key
+            ~dest_branch_name
+            ~branch_name
+            ~branch_ref
+            ~index
+            ~repo_tree
+            ~repo_config_raw
+            s
   end
 
   module Tasks = struct
@@ -618,6 +723,39 @@ struct
             fetcher)
 
     let repo_tree_branch =
+      let store_cache_repo_tree cache_key s tree =
+        Builder.run_db s ~f:(fun db ->
+            let open Abb.Future.Infix_monad in
+            let to_yojson = [%to_yojson: string list] in
+            let kv = { Terrat_kv_store.db; user_caps = [] } in
+            Fc.List_result.iter
+              ~f:(fun files ->
+                let json = to_yojson files in
+                Fc.Result.ignore @@ Terrat_kv_store.set ~key:cache_key json kv
+                >>= function
+                | Ok _ as r -> Abb.Future.return r
+                | Error (#Terrat_kv_store.err as err) -> Abb.Future.return (Error err))
+              (CCList.chunks 5000 tree))
+      in
+      let load_cache_repo_tree cache_key s =
+        Builder.run_db s ~f:(fun db ->
+            let open Abb.Future.Infix_monad in
+            let kv = { Terrat_kv_store.db; user_caps = [] } in
+            Terrat_kv_store.iter ~prefix:true ~limit:100000 ~key:cache_key kv
+            >>= function
+            | Ok [] -> Abb.Future.return (Ok None)
+            | Ok records ->
+                Abb.Future.return
+                  (Ok
+                     (Some
+                        (CCList.flat_map
+                           (fun r ->
+                             CCResult.get_or_failwith
+                             @@ [%of_yojson: string list]
+                             @@ Terrat_kv_store.Record.data r)
+                           records)))
+            | Error (#Terrat_kv_store.err as err) -> Abb.Future.return (Error err))
+      in
       run ~name:"repo_tree_branch" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
           let module V1 = Terrat_base_repo_config_v1 in
@@ -626,18 +764,46 @@ struct
           let tree_builder = V1.tree_builder repo_config_raw in
           if tree_builder.V1.Tree_builder.enabled then fetch Keys.built_repo_tree_branch
           else
-            Fc.Result.all3 (fetch Keys.client) (fetch Keys.repo) (fetch Keys.branch_ref)
-            >>= fun (client, repo, branch_ref) ->
-            time_it
-              s
-              (fun m log_id time ->
-                m
-                  "%s : FETCH_TREE : repo = %s : branch = %s : time=%f"
-                  log_id
-                  (S.Api.Repo.to_string repo)
-                  (S.Api.Ref.to_string branch_ref)
-                  time)
-              (fun () -> S.Api.fetch_tree ~request_id:(Builder.log_id s) client repo branch_ref))
+            Fc.Result.all4
+              (fetch Keys.client)
+              (fetch Keys.account)
+              (fetch Keys.repo)
+              (fetch Keys.branch_ref)
+            >>= fun (client, account, repo, branch_ref) ->
+            let cache_key =
+              ( "cache.repo_tree",
+                S.Api.Account.to_string account
+                ^ "."
+                ^ S.Api.Repo.to_string repo
+                ^ "."
+                ^ S.Api.Ref.to_string branch_ref )
+            in
+            load_cache_repo_tree cache_key s
+            >>= function
+            | Some repo_tree -> Abb.Future.return (Ok repo_tree)
+            | None ->
+                time_it
+                  s
+                  (fun m log_id time ->
+                    m
+                      "%s : FETCH_TREE : repo = %s : branch = %s : time=%f"
+                      log_id
+                      (S.Api.Repo.to_string repo)
+                      (S.Api.Ref.to_string branch_ref)
+                      time)
+                  (fun () -> S.Api.fetch_tree ~request_id:(Builder.log_id s) client repo branch_ref)
+                >>= fun repo_tree ->
+                time_it
+                  s
+                  (fun m log_id time ->
+                    m
+                      "%s : STORE_REPO_TREE : repo = %s : branch = %s : time=%f"
+                      log_id
+                      (S.Api.Repo.to_string repo)
+                      (S.Api.Ref.to_string branch_ref)
+                      time)
+                  (fun () -> store_cache_repo_tree cache_key s repo_tree)
+                >>= fun () -> Abb.Future.return (Ok repo_tree))
 
     let repo_tree_dest_branch_wm_completed =
       run ~name:"repo_tree_dest_branch_wm_completed" (fun s ({ Bs.Fetcher.fetch } as fetcher) ->
@@ -735,6 +901,39 @@ struct
           else Abb.Future.return (Ok None))
 
     let repo_tree_dest_branch =
+      let store_cache_repo_tree cache_key s tree =
+        Builder.run_db s ~f:(fun db ->
+            let open Abb.Future.Infix_monad in
+            let to_yojson = [%to_yojson: string list] in
+            let kv = { Terrat_kv_store.db; user_caps = [] } in
+            Fc.List_result.iter
+              ~f:(fun files ->
+                let json = to_yojson files in
+                Fc.Result.ignore @@ Terrat_kv_store.set ~key:cache_key json kv
+                >>= function
+                | Ok _ as r -> Abb.Future.return r
+                | Error (#Terrat_kv_store.err as err) -> Abb.Future.return (Error err))
+              (CCList.chunks 5000 tree))
+      in
+      let load_cache_repo_tree cache_key s =
+        Builder.run_db s ~f:(fun db ->
+            let open Abb.Future.Infix_monad in
+            let kv = { Terrat_kv_store.db; user_caps = [] } in
+            Terrat_kv_store.iter ~prefix:true ~limit:100000 ~key:cache_key kv
+            >>= function
+            | Ok [] -> Abb.Future.return (Ok None)
+            | Ok records ->
+                Abb.Future.return
+                  (Ok
+                     (Some
+                        (CCList.flat_map
+                           (fun r ->
+                             CCResult.get_or_failwith
+                             @@ [%of_yojson: string list]
+                             @@ Terrat_kv_store.Record.data r)
+                           records)))
+            | Error (#Terrat_kv_store.err as err) -> Abb.Future.return (Error err))
+      in
       run ~name:"repo_tree_dest_branch" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
           let module V1 = Terrat_base_repo_config_v1 in
@@ -743,19 +942,47 @@ struct
           let tree_builder = V1.tree_builder repo_config_raw in
           if tree_builder.V1.Tree_builder.enabled then fetch Keys.built_repo_tree_dest_branch
           else
-            Fc.Result.all3 (fetch Keys.client) (fetch Keys.repo) (fetch Keys.dest_branch_ref)
-            >>= fun (client, repo, dest_branch_ref) ->
-            time_it
-              s
-              (fun m log_id time ->
-                m
-                  "%s : FETCH_TREE : repo = %s : branch = %s : time=%f"
-                  log_id
-                  (S.Api.Repo.to_string repo)
-                  (S.Api.Ref.to_string dest_branch_ref)
-                  time)
-              (fun () ->
-                S.Api.fetch_tree ~request_id:(Builder.log_id s) client repo dest_branch_ref))
+            Fc.Result.all4
+              (fetch Keys.client)
+              (fetch Keys.account)
+              (fetch Keys.repo)
+              (fetch Keys.dest_branch_ref)
+            >>= fun (client, account, repo, dest_branch_ref) ->
+            let cache_key =
+              ( "cache.repo_tree",
+                S.Api.Account.to_string account
+                ^ "."
+                ^ S.Api.Repo.to_string repo
+                ^ "."
+                ^ S.Api.Ref.to_string dest_branch_ref )
+            in
+            load_cache_repo_tree cache_key s
+            >>= function
+            | Some repo_tree -> Abb.Future.return (Ok repo_tree)
+            | None ->
+                time_it
+                  s
+                  (fun m log_id time ->
+                    m
+                      "%s : FETCH_TREE : repo = %s : branch = %s : time=%f"
+                      log_id
+                      (S.Api.Repo.to_string repo)
+                      (S.Api.Ref.to_string dest_branch_ref)
+                      time)
+                  (fun () ->
+                    S.Api.fetch_tree ~request_id:(Builder.log_id s) client repo dest_branch_ref)
+                >>= fun repo_tree ->
+                time_it
+                  s
+                  (fun m log_id time ->
+                    m
+                      "%s : STORE_REPO_TREE : repo = %s : branch = %s : time=%f"
+                      log_id
+                      (S.Api.Repo.to_string repo)
+                      (S.Api.Ref.to_string dest_branch_ref)
+                      time)
+                  (fun () -> store_cache_repo_tree cache_key s repo_tree)
+                >>= fun () -> Abb.Future.return (Ok repo_tree))
 
     let built_repo_config_branch =
       run ~name:"built_repo_config_branch" (fun s { Bs.Fetcher.fetch } ->
@@ -854,7 +1081,7 @@ struct
                 branch_ref))
 
     let derived_repo_config_empty_index =
-      run ~name:"derived_repo_config_empty_index" (fun s { Bs.Fetcher.fetch } ->
+      run ~name:"derived_repo_config_empty_index" (fun s ({ Bs.Fetcher.fetch } as fetcher) ->
           let open Irm in
           Fc.Result.all2 (fetch Keys.repo_config_raw) (fetch Keys.repo_tree_branch)
           >>= fun ((provenance, repo_config_raw), repo_tree) ->
@@ -862,26 +1089,34 @@ struct
           >>= fun dest_branch_name ->
           fetch Keys.branch_name
           >>= fun branch_name ->
-          Abbs_time_it.run
-            (fun t ->
-              Logs.info (fun m ->
-                  m "%s : derived_repo_config_empty_index : derive : time=%f" (Builder.log_id s) t))
-            (fun () ->
-              Abbs_future_combinators.to_result
-              @@ Abb.Thread.run (fun () ->
-                     Terrat_base_repo_config_v1.derive
-                       ~ctx:
-                         (Terrat_base_repo_config_v1.Ctx.make
-                            ~dest_branch:(S.Api.Ref.to_string dest_branch_name)
-                            ~branch:(S.Api.Ref.to_string branch_name)
-                            ())
-                       ~index:Terrat_base_repo_config_v1.Index.empty
-                       ~file_list:repo_tree
-                       repo_config_raw))
+          fetch Keys.account
+          >>= fun account ->
+          fetch Keys.repo
+          >>= fun repo ->
+          fetch Keys.branch_ref
+          >>= fun branch_ref ->
+          let cache_key =
+            ( "cache.derived_repo_config_empty_index",
+              S.Api.Account.to_string account
+              ^ "."
+              ^ S.Api.Repo.to_string repo
+              ^ "."
+              ^ S.Api.Ref.to_string branch_ref )
+          in
+          Cache.derived_repo_config
+            ~cache_key
+            ~dest_branch_name
+            ~branch_name
+            ~branch_ref
+            ~index:Terrat_base_repo_config_v1.Index.empty
+            ~repo_tree
+            ~repo_config_raw
+            s
+            fetcher
           >>= fun repo_config -> Abb.Future.return (Ok (provenance, repo_config)))
 
     let derived_repo_config =
-      run ~name:"derived_repo_config" (fun s { Bs.Fetcher.fetch } ->
+      run ~name:"derived_repo_config" (fun s ({ Bs.Fetcher.fetch } as fetcher) ->
           let open Irm in
           Fc.Result.all2 (fetch Keys.repo_config_raw) (fetch Keys.repo_tree_branch)
           >>= fun ((provenance, repo_config_raw), repo_tree) ->
@@ -891,22 +1126,30 @@ struct
           >>= fun branch_name ->
           fetch Keys.repo_index_branch
           >>= fun index ->
-          Abbs_time_it.run
-            (fun t ->
-              Logs.info (fun m ->
-                  m "%s : derived_repo_config : derive : time=%f" (Builder.log_id s) t))
-            (fun () ->
-              Abbs_future_combinators.to_result
-              @@ Abb.Thread.run (fun () ->
-                     Terrat_base_repo_config_v1.derive
-                       ~ctx:
-                         (Terrat_base_repo_config_v1.Ctx.make
-                            ~dest_branch:(S.Api.Ref.to_string dest_branch_name)
-                            ~branch:(S.Api.Ref.to_string branch_name)
-                            ())
-                       ~index
-                       ~file_list:repo_tree
-                       repo_config_raw))
+          fetch Keys.account
+          >>= fun account ->
+          fetch Keys.repo
+          >>= fun repo ->
+          fetch Keys.branch_ref
+          >>= fun branch_ref ->
+          let cache_key =
+            ( "cache.derived_repo_config",
+              S.Api.Account.to_string account
+              ^ "."
+              ^ S.Api.Repo.to_string repo
+              ^ "."
+              ^ S.Api.Ref.to_string branch_ref )
+          in
+          Cache.derived_repo_config
+            ~cache_key
+            ~dest_branch_name
+            ~branch_name
+            ~branch_ref
+            ~index
+            ~repo_tree
+            ~repo_config_raw
+            s
+            fetcher
           >>= fun repo_config -> Abb.Future.return (Ok (provenance, repo_config)))
 
     let repo_config_with_provenance =
@@ -1008,7 +1251,9 @@ struct
                 dest_branch_ref))
 
     let derived_repo_config_dest_branch_empty_index =
-      run ~name:"derived_repo_config_dest_branch_empty_index" (fun s { Bs.Fetcher.fetch } ->
+      run
+        ~name:"derived_repo_config_dest_branch_empty_index"
+        (fun s ({ Bs.Fetcher.fetch } as fetcher) ->
           let open Irm in
           Fc.Result.all2 (fetch Keys.repo_config_dest_branch_raw) (fetch Keys.repo_tree_dest_branch)
           >>= fun ((provenance, repo_config_raw), repo_tree) ->
@@ -1016,26 +1261,34 @@ struct
           >>= fun dest_branch_name ->
           fetch Keys.branch_name
           >>= fun branch_name ->
-          Abbs_time_it.run
-            (fun t ->
-              Logs.info (fun m ->
-                  m "%s : derived_repo_config_empty_index : derive : time=%f" (Builder.log_id s) t))
-            (fun () ->
-              Abbs_future_combinators.to_result
-              @@ Abb.Thread.run (fun () ->
-                     Terrat_base_repo_config_v1.derive
-                       ~ctx:
-                         (Terrat_base_repo_config_v1.Ctx.make
-                            ~dest_branch:(S.Api.Ref.to_string dest_branch_name)
-                            ~branch:(S.Api.Ref.to_string branch_name)
-                            ())
-                       ~index:Terrat_base_repo_config_v1.Index.empty
-                       ~file_list:repo_tree
-                       repo_config_raw))
+          fetch Keys.account
+          >>= fun account ->
+          fetch Keys.repo
+          >>= fun repo ->
+          fetch Keys.dest_branch_ref
+          >>= fun dest_branch_ref ->
+          let cache_key =
+            ( "cache.repo_tree_empty_index",
+              S.Api.Account.to_string account
+              ^ "."
+              ^ S.Api.Repo.to_string repo
+              ^ "."
+              ^ S.Api.Ref.to_string dest_branch_ref )
+          in
+          Cache.derived_repo_config
+            ~cache_key
+            ~dest_branch_name
+            ~branch_name
+            ~branch_ref:dest_branch_ref
+            ~index:Terrat_base_repo_config_v1.Index.empty
+            ~repo_tree
+            ~repo_config_raw
+            s
+            fetcher
           >>= fun repo_config -> Abb.Future.return (Ok (provenance, repo_config)))
 
     let derived_repo_config_dest_branch =
-      run ~name:"derived_repo_config_dest_branch" (fun s { Bs.Fetcher.fetch } ->
+      run ~name:"derived_repo_config_dest_branch" (fun s ({ Bs.Fetcher.fetch } as fetcher) ->
           let open Irm in
           Fc.Result.all2 (fetch Keys.repo_config_dest_branch_raw) (fetch Keys.repo_tree_dest_branch)
           >>= fun ((provenance, repo_config_raw), repo_tree) ->
@@ -1045,22 +1298,30 @@ struct
           >>= fun branch_name ->
           fetch Keys.repo_index_dest_branch
           >>= fun index ->
-          Abbs_time_it.run
-            (fun t ->
-              Logs.info (fun m ->
-                  m "%s : derived_repo_config : derive : time=%f" (Builder.log_id s) t))
-            (fun () ->
-              Abbs_future_combinators.to_result
-              @@ Abb.Thread.run (fun () ->
-                     Terrat_base_repo_config_v1.derive
-                       ~ctx:
-                         (Terrat_base_repo_config_v1.Ctx.make
-                            ~dest_branch:(S.Api.Ref.to_string dest_branch_name)
-                            ~branch:(S.Api.Ref.to_string branch_name)
-                            ())
-                       ~index
-                       ~file_list:repo_tree
-                       repo_config_raw))
+          fetch Keys.account
+          >>= fun account ->
+          fetch Keys.repo
+          >>= fun repo ->
+          fetch Keys.dest_branch_ref
+          >>= fun dest_branch_ref ->
+          let cache_key =
+            ( "cache.repo_tree_empty_index",
+              S.Api.Account.to_string account
+              ^ "."
+              ^ S.Api.Repo.to_string repo
+              ^ "."
+              ^ S.Api.Ref.to_string dest_branch_ref )
+          in
+          Cache.derived_repo_config
+            ~cache_key
+            ~dest_branch_name
+            ~branch_name
+            ~branch_ref:dest_branch_ref
+            ~index
+            ~repo_tree
+            ~repo_config_raw
+            s
+            fetcher
           >>= fun repo_config -> Abb.Future.return (Ok (provenance, repo_config)))
 
     let repo_config_dest_branch_with_provenance =
@@ -1822,10 +2083,7 @@ struct
                   let s' =
                     s
                     |> Builder.State.orig_store
-                    |> Builder.State.forward_store_value Keys.repo_config_with_provenance s
-                    |> Builder.State.forward_store_value Keys.repo_config_raw s
-                    |> Builder.State.forward_store_value Keys.repo_config_raw' s
-                    |> Builder.State.forward_store_value Keys.pull_request s
+                    |> Tasks_base.forward_std_keys s
                     |> CCFun.flip Builder.State.set_orig_store s
                   in
                   Builder.eval s' Keys.complete_no_change_dirspaces
@@ -1871,6 +2129,7 @@ struct
                     |> Keys.Key.add Keys.context context
                     |> Keys.Key.add Keys.work_manifest_event None
                     |> Keys.Key.add Keys.user job.Tjc.Job.initiator
+                    |> Tasks_base.forward_std_keys s
                     |> add_work_manifest_keys work_manifest
                     |> CCFun.flip Builder.State.set_orig_store s
                     |> Builder.State.set_log_id log_id
@@ -1963,6 +2222,7 @@ struct
                           s
                           |> Builder.State.orig_store
                           |> Keys.Key.add Keys.work_manifest_event (Some work_manifest_event)
+                          |> Tasks_base.forward_std_keys s
                           |> CCFun.flip Builder.State.set_orig_store s
                         in
                         Builder.eval s' Keys.eval_work_manifest_event
@@ -2070,6 +2330,7 @@ struct
                       |> Keys.Key.add Keys.job job
                       |> Keys.Key.add Keys.context context
                       |> Keys.Key.add Keys.user job.Tjc.Job.initiator
+                      |> Tasks_base.forward_std_keys s
                       |> add_work_manifest_keys work_manifest
                       |> CCFun.flip Builder.State.set_orig_store s
                       |> Builder.State.set_log_id log_id
@@ -2165,6 +2426,7 @@ struct
                     |> Keys.Key.add Keys.context context
                     |> Keys.Key.add Keys.work_manifest_event (Some event)
                     |> Keys.Key.add Keys.user job.Tjc.Job.initiator
+                    |> Tasks_base.forward_std_keys s
                     |> add_work_manifest_keys work_manifest
                     |> CCFun.flip Builder.State.set_orig_store s
                     |> Builder.State.set_log_id log_id
@@ -2191,8 +2453,7 @@ struct
               let s' =
                 s
                 |> Builder.State.orig_store
-                |> Builder.State.forward_store_value Keys.repo_config_with_provenance s
-                |> Builder.State.forward_store_value Keys.repo_config_raw s
+                |> Tasks_base.forward_std_keys s
                 |> CCFun.flip Builder.State.set_orig_store s
               in
               Builder.eval s' Keys.complete_no_change_dirspaces
@@ -2232,6 +2493,7 @@ struct
               let s' =
                 s
                 |> Builder.State.orig_store
+                |> Tasks_base.forward_std_keys s
                 |> Keys.Key.add
                      Keys.work_manifest_event
                      (Some (Keys.Work_manifest_event.Fail { work_manifest; error = `Error }))
@@ -2608,8 +2870,7 @@ struct
                       |> Keys.Key.add Keys.job job
                       |> Keys.Key.add Keys.work_manifest_event None
                       |> Builder.State.forward_store_value Keys.context s
-                      |> Builder.State.forward_store_value Keys.repo_config_with_provenance s
-                      |> Builder.State.forward_store_value Keys.repo_config_raw s
+                      |> Tasks_base.forward_std_keys s
                       |> CCFun.flip Builder.State.set_orig_store s
                       |> Builder.State.set_log_id (Uuidm.to_string job.Tjc.Job.id)
                     in
@@ -2650,8 +2911,7 @@ struct
                           |> Keys.Key.add Keys.job job
                           |> Keys.Key.add Keys.work_manifest_event None
                           |> Builder.State.forward_store_value Keys.context s
-                          |> Builder.State.forward_store_value Keys.repo_config_with_provenance s
-                          |> Builder.State.forward_store_value Keys.repo_config_raw s
+                          |> Tasks_base.forward_std_keys s
                           |> CCFun.flip Builder.State.set_orig_store s
                           |> Builder.State.set_log_id (Uuidm.to_string job.Tjc.Job.id)
                         in
@@ -2679,8 +2939,7 @@ struct
                           |> Keys.Key.add Keys.job job
                           |> Keys.Key.add Keys.work_manifest_event None
                           |> Builder.State.forward_store_value Keys.context s
-                          |> Builder.State.forward_store_value Keys.repo_config_with_provenance s
-                          |> Builder.State.forward_store_value Keys.repo_config_raw s
+                          |> Tasks_base.forward_std_keys s
                           |> CCFun.flip Builder.State.set_orig_store s
                           |> Builder.State.set_log_id (Uuidm.to_string job.Tjc.Job.id)
                         in

@@ -61,4 +61,6 @@ struct
               name
               (CCString.concat ", " path));
         f (Builder.State.set_path path s) fetcher)
+
+  let forward_std_keys s store = store |> Builder.State.forward_store_value Keys.pull_request s
 end

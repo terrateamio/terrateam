@@ -45,7 +45,7 @@ struct
       (struct
         module Installation_id = Provider.Api.Account.Id
 
-        let namespace_prefix = "gitlab"
+        let namespace_prefix = Provider.name
         let route_root () = Brtl_rtng.Route.(rel / "api" / "v1" / "gitlab")
         let enforce_installation_access = Provider.enforce_installation_access
       end)

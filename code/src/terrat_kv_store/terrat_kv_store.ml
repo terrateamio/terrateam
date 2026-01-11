@@ -338,7 +338,7 @@ module Sql = struct
       /% Var.(option (smallint "idx"))
       /% Var.boolean "committed"
       /% Var.boolean "prefix"
-      /% Var.smallint "limit"
+      /% Var.(ud (integer "limit") CCInt32.of_int)
       /% Var.(str_array (text "obj_keys"))
       /% Var.(str_array (jsonpath "jsonpaths"))
       /% Var.(ud (json "user_caps") json_of_caps))
