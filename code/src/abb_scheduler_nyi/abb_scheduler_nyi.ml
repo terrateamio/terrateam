@@ -12,10 +12,10 @@ end)
 module Scheduler = struct
   type t = unit
 
-  let create ?exec_duration () = failwith "nyi"
+  let create ?thread_pool_size ?exec_duration () = failwith "nyi"
   let destroy t = failwith "nyi"
   let run t f = failwith "nyi"
-  let run_with_state ?exec_duration f = failwith "nyi"
+  let run_with_state ?thread_pool_size ?exec_duration f = failwith "nyi"
 end
 
 module Sys = struct

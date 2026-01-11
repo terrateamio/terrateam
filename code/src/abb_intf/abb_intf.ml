@@ -643,10 +643,15 @@ module type S = sig
   module Scheduler : sig
     type t
 
-    val create : ?exec_duration:(float -> unit) -> unit -> t
+    val create : ?thread_pool_size:int -> ?exec_duration:(float -> unit) -> unit -> t
     val destroy : t -> unit
     val run : t -> (unit -> 'a Future.t) -> t * 'a Future_set.t
-    val run_with_state : ?exec_duration:(float -> unit) -> (unit -> 'a Future.t) -> 'a Future_set.t
+
+    val run_with_state :
+      ?thread_pool_size:int ->
+      ?exec_duration:(float -> unit) ->
+      (unit -> 'a Future.t) ->
+      'a Future_set.t
   end
 
   (** {2 System operations} *)
