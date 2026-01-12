@@ -53,7 +53,7 @@ module El = struct
     type t = t_
   end)
 
-  let create ?(exec_duration = fun _ -> ()) () =
+  let create ?thread_pool_size ?(exec_duration = fun _ -> ()) () =
     let t =
       {
         kq = Kqueue.create ();
@@ -69,7 +69,10 @@ module El = struct
         exec_duration;
         thread_pool =
           Abb_domain_pool.create
-            ~capacity:(CCInt.max 2 (Domain.recommended_domain_count ()))
+            ~capacity:
+              (CCInt.max
+                 2
+                 (CCOption.get_or ~default:(Domain.recommended_domain_count ()) thread_pool_size))
             ~wait:Unix.pipe;
       }
     in
@@ -290,7 +293,9 @@ module Future = El.Future
 module Scheduler = struct
   type t = El.t Abb_fut.State.t
 
-  let create ?exec_duration () = Abb_fut.State.create (El.create ?exec_duration ())
+  let create ?thread_pool_size ?exec_duration () =
+    Abb_fut.State.create (El.create ?thread_pool_size ?exec_duration ())
+
   let destroy t = El.destroy (Abb_fut.State.state t)
 
   let run t f =
@@ -302,8 +307,8 @@ module Scheduler = struct
     | (`Det _ | `Aborted | `Exn _) as r -> (t, r)
     | `Undet -> assert false
 
-  let run_with_state ?exec_duration f =
-    let t = create ?exec_duration () in
+  let run_with_state ?thread_pool_size ?exec_duration f =
+    let t = create ?thread_pool_size ?exec_duration () in
     let t, r = run t f in
     destroy t;
     r

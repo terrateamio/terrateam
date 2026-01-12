@@ -138,12 +138,12 @@ struct
 
   module Logs = (val Logs.src_log src : Logs.LOG)
 
-  let maybe_start_github config storage =
+  let maybe_start_github config storage exec =
     let open Abb.Future.Infix_monad in
     match Terrat_config.github config with
     | Some github -> (
         Logs.info (fun m -> m "Starting GitHub Service");
-        Github.Service.start config github storage
+        Github.Service.start config github storage exec
         >>= function
         | Ok service ->
             Abb.Future.return (Some (Terrat_vcs_service.Service ((module Github), service)))
@@ -152,12 +152,12 @@ struct
             exit 1)
     | None -> Abb.Future.return None
 
-  let maybe_start_gitlab config storage =
+  let maybe_start_gitlab config storage exec =
     let open Abb.Future.Infix_monad in
     match Terrat_config.gitlab config with
     | Some gitlab -> (
         Logs.info (fun m -> m "Starting GitLab Service");
-        Gitlab.Service.start config gitlab storage
+        Gitlab.Service.start config gitlab storage exec
         >>= function
         | Ok service ->
             Abb.Future.return (Some (Terrat_vcs_service.Service ((module Gitlab), service)))
@@ -178,9 +178,13 @@ struct
           @@ (Terrat_config.gc config).Terrat_config.Gc.dynamic_gc;
           Terrat_storage.create config
           >>= fun storage ->
-          maybe_start_github config storage
+          Terrat_vcs_event_evaluator2.create_exec
+            ~slots:(Terrat_config.event_evaluator_slots config)
+            ()
+          >>= fun exec ->
+          maybe_start_github config storage exec
           >>= fun github_service ->
-          maybe_start_gitlab config storage
+          maybe_start_gitlab config storage exec
           >>= fun gitlab_service ->
           let services = CCOption.to_list github_service @ CCOption.to_list gitlab_service in
           Terrat_server.run config storage services
@@ -188,7 +192,13 @@ struct
           Logs.err (fun m -> m "CONFIG : ERROR : %s" (Terrat_config.show_err err));
           exit 1
     in
-    match Abb.Scheduler.run_with_state ~exec_duration run with
+    match
+      Abb.Scheduler.run_with_state
+        ?thread_pool_size:
+          (CCOption.flat_map CCInt.of_string @@ Sys.getenv_opt "TERRAT_SCHEDULER_THREAD_POOL_SIZE")
+        ~exec_duration
+        run
+    with
     | `Det () -> ()
     | `Aborted -> assert false
     | `Exn (exn, bt_opt) ->
@@ -206,7 +216,13 @@ struct
           Terrat_storage.create config >>= fun storage -> Terrat_migrations.run config storage
         in
         print_endline (Terrat_config.show config);
-        match Abb.Scheduler.run_with_state run with
+        match
+          Abb.Scheduler.run_with_state
+            ?thread_pool_size:
+              (CCOption.flat_map CCInt.of_string
+              @@ Sys.getenv_opt "TERRAT_SCHEDULER_THREAD_POOL_SIZE")
+            run
+        with
         | `Det (Ok ()) -> Logs.info (fun m -> m "Migration complete")
         | `Det (Error (`Migration_err (#Pgsql_io.err as err))) ->
             Logs.err (fun m -> m "Migration failed");

@@ -10,4 +10,8 @@ module Make
     Builder.Bs.state ->
     Builder.Bs.Fetcher.t ->
     ('v, Builder.err) result Abb.Future.t
+
+  (** Forward a standard keys that we want to pass between evals, because in an eval the store gets
+      reset *)
+  val forward_std_keys : Builder.State.t -> Builder.Hmap.t -> Builder.Hmap.t
 end

@@ -1203,13 +1203,14 @@ end
 
 module Index = struct
   module Dep = struct
-    type t = Module of string
+    type t = Module of string [@@deriving eq]
   end
 
   type t = {
     deps : Dep.t list String_map.t;
     symlinks : (string * string) list;
   }
+  [@@deriving eq]
 
   let empty = { symlinks = []; deps = String_map.empty }
   let make ~symlinks deps = { symlinks; deps = String_map.of_list deps }
@@ -2633,6 +2634,8 @@ let of_version_1_json json =
       with
       | Ok () -> assert false
       | Error errors -> Error (`Repo_config_schema_err errors))
+
+let of_version_1_json_derived = of_version_1_json
 
 let to_version_1_match_list =
   CCList.map (function

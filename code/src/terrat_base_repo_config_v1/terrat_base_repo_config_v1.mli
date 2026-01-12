@@ -812,13 +812,14 @@ end
 
 module Index : sig
   module Dep : sig
-    type t = Module of string
+    type t = Module of string [@@deriving eq]
   end
 
   type t = {
     deps : Dep.t list String_map.t;
     symlinks : (string * string) list;
   }
+  [@@deriving eq]
 
   val empty : t
   val make : symlinks:(string * string) list -> (string * Dep.t list) list -> t
@@ -875,6 +876,12 @@ val to_view : 'a t -> View.t
 val default : raw t
 val of_version_1 : Terrat_repo_config.Version_1.t -> (raw t, [> of_version_1_err ]) result
 val of_version_1_json : Yojson.Safe.t -> (raw t, [> of_version_1_json_err ]) result
+
+(** In some cases it may be useful to store the derived version of the configuration as JSON, this
+    allows for reifying that directly to a derived type. This bypasses any checks or operations that
+    [derived] does, of course, so use with care. *)
+val of_version_1_json_derived : Yojson.Safe.t -> (derived t, [> of_version_1_json_err ]) result
+
 val to_version_1 : 'a t -> Terrat_repo_config.Version_1.t
 val merge_with_default_branch_config : default:'a t -> 'a t -> 'a t
 

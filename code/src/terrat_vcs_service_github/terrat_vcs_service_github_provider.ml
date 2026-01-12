@@ -62,6 +62,7 @@ module Sql = struct
       /% Var.bigint "installation_id")
 end
 
+(* Do not change this willy-nilly, values in the database probablye depend on it. *)
 let name = "github"
 
 let enforce_installation_access ~request_id user account_id db =
