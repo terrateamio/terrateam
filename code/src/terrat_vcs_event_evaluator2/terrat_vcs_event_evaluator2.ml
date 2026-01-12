@@ -695,10 +695,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           let target = Keys.eval_push_event in
           Logs.info (fun m -> m "%s : target=%s" (Builder.log_id s) (Hmap.Key.info target));
           log_err ~request_id @@ Builder.eval s Keys.update_context_branch_hashes
-          >>= fun () ->
-          Pgsql_io.tx db ~f:(fun () -> tx_safe ~request_id @@ Builder.eval s target)
-          >>= fun _ ->
-          Fc.to_result @@ Fc.ignore @@ run_missing_drift_schedules ~config ~storage ~exec ())
+          >>= fun () -> Pgsql_io.tx db ~f:(fun () -> tx_safe ~request_id @@ Builder.eval s target))
+      >>= fun _ ->
+      Fc.to_result @@ Fc.ignore @@ run_missing_drift_schedules ~config ~storage ~exec ()
     in
     Fc.with_finally
       (fun () -> Fc.ignore @@ log_err ~request_id run)
