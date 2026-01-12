@@ -18,6 +18,7 @@ module Make
     (Routes : ROUTES with type config = Provider.Api.Config.t) =
 struct
   module Evaluator = Terrat_vcs_event_evaluator.Make (Provider)
+  module Evaluator2 = Terrat_vcs_event_evaluator2.Make (Provider)
   module Events = Terrat_vcs_service_github_ep_events3.Make (Provider)
   module Work_manifest = Terrat_vcs_service_github_ep_work_manifest.Make (Provider)
 
@@ -35,7 +36,7 @@ struct
       (struct
         module Installation_id = Provider.Api.Account.Id
 
-        let namespace_prefix = "github"
+        let namespace_prefix = Provider.name
         let route_root () = Brtl_rtng.Route.(rel / "api" / "v1" / "github")
         let enforce_installation_access = Provider.enforce_installation_access
       end)
@@ -238,7 +239,7 @@ struct
       let user_installations_rt () = Brtl_rtng.Route.(user_api_rt () / "github" / "installations")
     end
 
-    let routes config storage =
+    let routes config storage exec =
       Routes.routes config storage
       @ Provider.Stacks.routes config storage
       @ Kv_store.routes config storage
@@ -247,9 +248,12 @@ struct
             (* Work manifests *)
             (`POST, Rt.github_work_manifest_plan () --> Work_manifest.Plans.post config storage);
             (`GET, Rt.github_get_work_manifest_plan () --> Work_manifest.Plans.get config storage);
-            (`PUT, Rt.github_work_manifest_results () --> Work_manifest.Results.put config storage);
+            ( `PUT,
+              Rt.github_work_manifest_results () --> Work_manifest.Results.put config storage exec
+            );
             ( `POST,
-              Rt.github_work_manifest_initiate () --> Work_manifest.Initiate.post config storage );
+              Rt.github_work_manifest_initiate ()
+              --> Work_manifest.Initiate.post config storage exec );
             ( `POST,
               Rt.github_work_manifest_access_token ()
               --> Work_manifest.Access_token.post config storage );
@@ -257,7 +261,7 @@ struct
               Rt.github_work_manifest_workspaces () --> Work_manifest.Workspaces.get config storage
             );
             (* Github *)
-            (`POST, Rt.github_events () --> Events.post config storage);
+            (`POST, Rt.github_events () --> Events.post config storage exec);
             ( `GET,
               Rt.github_callback () --> Terrat_vcs_service_github_ep_callback.get config storage );
             ( `GET,
@@ -325,14 +329,14 @@ struct
       flow_state_cleanup : unit Abb.Future.t;
       plan_cleanup : unit Abb.Future.t;
       repo_config_cleanup : unit Abb.Future.t;
+      exec : Terrat_vcs_event_evaluator2.Exec.t;
     }
 
-    let rec drift config storage =
+    let rec drift config storage exec =
       let open Abb.Future.Infix_monad in
       Abbs_future_combinators.ignore
-        (Evaluator.run_scheduled_drift
-           (Evaluator.Ctx.make ~config ~storage ~request_id:(Ouuid.to_string (Ouuid.v4 ())) ()))
-      >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> drift config storage
+        (Evaluator2.run_missing_drift_schedules ~config ~storage ~exec ())
+      >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> drift config storage exec
 
     let rec flow_state_cleanup config storage =
       let open Abb.Future.Infix_monad in
@@ -357,19 +361,19 @@ struct
 
     let name _ = "github"
 
-    let start config vcs_config storage =
+    let start config vcs_config storage exec =
       let open Abb.Future.Infix_monad in
       let config = Provider.Api.Config.make ~config ~vcs_config () in
       Abb.Future.Infix_app.(
         (fun drift flow_state_cleanup plan_cleanup repo_config_cleanup ->
           (drift, flow_state_cleanup, plan_cleanup, repo_config_cleanup))
-        <$> Abb.Future.fork (drift config storage)
+        <$> Abb.Future.fork (drift config storage exec)
         <*> Abb.Future.fork (flow_state_cleanup config storage)
         <*> Abb.Future.fork (plan_cleanup config storage)
         <*> Abb.Future.fork (repo_config_cleanup config storage))
       >>= fun (drift, flow_state_cleanup, plan_cleanup, repo_config_cleanup) ->
       Abb.Future.return
-        (Ok { config; storage; drift; flow_state_cleanup; plan_cleanup; repo_config_cleanup })
+        (Ok { config; storage; drift; flow_state_cleanup; plan_cleanup; repo_config_cleanup; exec })
 
     let stop t =
       let open Abb.Future.Infix_monad in
@@ -380,7 +384,7 @@ struct
       Abb.Future.abort t.plan_cleanup
       >>= fun () -> Abb.Future.abort t.repo_config_cleanup >>= fun () -> Abb.Future.return ()
 
-    let routes t = Routes.routes t.config t.storage
+    let routes t = Routes.routes t.config t.storage t.exec
 
     let get_user t user_id =
       let run =
