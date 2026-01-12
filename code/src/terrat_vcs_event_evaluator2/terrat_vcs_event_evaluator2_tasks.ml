@@ -2605,6 +2605,7 @@ struct
                       account
                       db)
                 >>= fun client ->
+                let open Abb.Future.Infix_monad in
                 time_it
                   s
                   (fun m log_id time ->
@@ -2614,57 +2615,93 @@ struct
                       (S.Api.Repo.to_string repo)
                       time)
                   (fun () -> S.Api.fetch_remote_repo ~request_id:(Builder.log_id s) client repo)
-                >>= fun remote_repo ->
-                let default_branch = S.Api.Remote_repo.default_branch remote_repo in
-                Builder.run_db s ~f:(fun db ->
-                    S.Job_context.create_or_get_for_branch
-                      ~request_id:(Builder.log_id s)
-                      db
-                      account
-                      repo
-                      default_branch)
-                >>= fun context ->
-                Builder.run_db s ~f:(fun db ->
-                    time_it
-                      s
-                      (fun m log_id time ->
-                        m
-                          "%s : JOB : CREATE : context_id = %a : time=%f"
-                          log_id
-                          Uuidm.pp
-                          context.Tjc.Context.id
-                          time)
-                      (fun () ->
-                        S.Job_context.Job.create
+                >>= function
+                | Ok remote_repo -> (
+                    let open Irm in
+                    let default_branch = S.Api.Remote_repo.default_branch remote_repo in
+                    Builder.run_db s ~f:(fun db ->
+                        S.Job_context.create_or_get_for_branch
                           ~request_id:(Builder.log_id s)
                           db
-                          (Tjc.Job.Type_.Plan
-                             { tag_query; kind = Some Tjc.Job.Type_.Kind.(Drift { reconcile }) })
-                          context
-                          None))
-                >>= fun job ->
-                let log_id = Builder.mk_log_id ~request_id:(Builder.log_id s) job.Tjc.Job.id in
-                Logs.info (fun m ->
-                    m
-                      "%s : target=%s : context_id=%a : log_id= %s : job_type=%a"
-                      (Builder.log_id s)
-                      (Hmap.Key.info Keys.iter_job)
-                      Uuidm.pp
-                      context.Tjc.Context.id
-                      log_id
-                      Tjc.Job.Type_.pp
-                      job.Tjc.Job.type_);
-                let s' =
-                  s
-                  |> Builder.State.orig_store
-                  |> Keys.Key.add Keys.account account
-                  |> Keys.Key.add Keys.repo repo
-                  |> Keys.Key.add Keys.job job
-                  |> CCFun.flip Builder.State.set_orig_store s
-                  |> Builder.State.set_log_id log_id
-                  |> Builder.State.set_tasks (Tasks_branch.tasks (Builder.State.tasks s))
-                in
-                Builder.eval s' Keys.iter_job
+                          account
+                          repo
+                          default_branch)
+                    >>= fun context ->
+                    Builder.run_db s ~f:(fun db ->
+                        time_it
+                          s
+                          (fun m log_id time ->
+                            m
+                              "%s : JOB : CREATE : context_id = %a : time=%f"
+                              log_id
+                              Uuidm.pp
+                              context.Tjc.Context.id
+                              time)
+                          (fun () ->
+                            S.Job_context.Job.create
+                              ~request_id:(Builder.log_id s)
+                              db
+                              (Tjc.Job.Type_.Plan
+                                 { tag_query; kind = Some Tjc.Job.Type_.Kind.(Drift { reconcile }) })
+                              context
+                              None))
+                    >>= fun job ->
+                    let log_id = Builder.mk_log_id ~request_id:(Builder.log_id s) job.Tjc.Job.id in
+                    Logs.info (fun m ->
+                        m
+                          "%s : target=%s : context_id=%a : log_id= %s : job_type=%a"
+                          (Builder.log_id s)
+                          (Hmap.Key.info Keys.iter_job)
+                          Uuidm.pp
+                          context.Tjc.Context.id
+                          log_id
+                          Tjc.Job.Type_.pp
+                          job.Tjc.Job.type_);
+                    let s' =
+                      s
+                      |> Builder.State.orig_store
+                      |> Keys.Key.add Keys.account account
+                      |> Keys.Key.add Keys.repo repo
+                      |> Keys.Key.add Keys.job job
+                      |> CCFun.flip Builder.State.set_orig_store s
+                      |> Builder.State.set_log_id log_id
+                      |> Builder.State.set_tasks (Tasks_branch.tasks (Builder.State.tasks s))
+                    in
+                    let open Abb.Future.Infix_monad in
+                    Builder.eval s' Keys.iter_job
+                    >>= function
+                    | (Ok _ | Error (`Noop | `Suspend_eval _)) as r -> Abb.Future.return r
+                    | Error (#Builder.err as err) ->
+                        Logs.err (fun m ->
+                            m
+                              "%s : RUN : DRIFT : account = %s : repo = %s : %a"
+                              (Builder.log_id s)
+                              (S.Api.Account.to_string account)
+                              (S.Api.Repo.to_string repo)
+                              Builder.pp_err
+                              err);
+                        Builder.run_db s ~f:(fun db ->
+                            S.Db.store_drift_schedule
+                              ~request_id:(Builder.log_id s)
+                              db
+                              repo
+                              Terrat_base_repo_config_v1.
+                                { Drift.enabled = false; schedules = String_map.empty })
+                        >>= fun _ -> Abb.Future.return (Error err))
+                | Error `Error ->
+                    Logs.err (fun m ->
+                        m
+                          "%s : DRIFT : LOAD_REMOTE_REPO : account = %s : repo = %s"
+                          (Builder.log_id s)
+                          (S.Api.Account.to_string account)
+                          (S.Api.Repo.to_string repo));
+                    Builder.run_db s ~f:(fun db ->
+                        S.Db.store_drift_schedule
+                          ~request_id:(Builder.log_id s)
+                          db
+                          repo
+                          Terrat_base_repo_config_v1.
+                            { Drift.enabled = false; schedules = String_map.empty })
               in
               let open Abb.Future.Infix_monad in
               run
