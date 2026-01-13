@@ -83,8 +83,7 @@ module Sql = struct
 end
 
 module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
-  (* module Evaluator = Terrat_vcs_event_evaluator.Make (P) *)
-  module Evaluator2 = Terrat_vcs_event_evaluator2.Make (P)
+  module Evaluator = Terrat_vcs_event_evaluator.Make (P)
 
   let decode ctx = Gitlab_webhooks_decoder.run @@ Brtl_ctx.body ctx
 
@@ -118,7 +117,7 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
               owner
               name)
 
-  let dispatch_event request_id config storage exec installation_id =
+  let dispatch_event config storage installation_id ctx =
     let module E = Gitlab_webhooks.Event in
     let module Pr = Gitlab_webhooks_project in
     let module Pe = Gitlab_webhooks_push_event in
@@ -144,8 +143,7 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
         let repo = P.Api.Repo.make ~id:repo_id ~name ~owner () in
         let user = P.Api.User.make user_username in
         let branch = P.Api.Ref.of_string default_branch in
-        Abbs_future_combinators.to_result
-        @@ Evaluator2.push ~request_id ~config ~storage ~exec ~account ~repo ~branch ~user ()
+        Evaluator.run_push ~ctx ~account ~user ~repo ~branch ()
     | E.Push_event _ -> Abb.Future.return (Ok ())
     | E.Merge_request_comment_event
         {
@@ -162,27 +160,15 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
         let user = P.Api.User.make username in
         match Terrat_comment.parse comment_body with
         | Ok comment ->
-            Logs.info (fun m ->
-                m
-                  "%s : COMMENT_CREATED_EVENT : owner=%s : repo=%s : pull_number=%d : sender=%s : \
-                   body=%s"
-                  request_id
-                  owner
-                  name
-                  pull_request_id
-                  username
-                  comment_body);
-            Abbs_future_combinators.to_result
-            @@ Evaluator2.pull_request_event
-                 ~request_id
-                 ~config
-                 ~storage
-                 ~exec
-                 ~account
-                 ~repo
-                 ~pull_request_id
-                 ~user
-                 (Evaluator2.Pull_request_event.Comment { comment_id; comment })
+            Evaluator.run_pull_request_comment
+              ~ctx
+              ~account
+              ~user
+              ~comment
+              ~repo
+              ~pull_request_id
+              ~comment_id
+              ()
         | Error _ -> Abb.Future.return (Ok ()))
     | E.Merge_request_comment_event _ -> Abb.Future.return (Ok ())
     | E.Merge_request_event
@@ -198,91 +184,42 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
         let user = P.Api.User.make username in
         match action with
         | "open" | "reopen" ->
-            Logs.info (fun m ->
-                m
-                  "%s : PULL_REQUEST_EVENT : OPEN : owner=%s : repo=%s : pull_number=%d : sender=%s"
-                  request_id
-                  owner
-                  name
-                  pull_request_id
-                  username);
-            Abbs_future_combinators.to_result
-            @@ Evaluator2.pull_request_event
-                 ~request_id
-                 ~config
-                 ~storage
-                 ~exec
-                 ~account
-                 ~repo
-                 ~pull_request_id
-                 ~user
-                 Evaluator2.Pull_request_event.Open
-        | "update" ->
-            Logs.info (fun m ->
-                m
-                  "%s : PULL_REQUEST_EVENT : SYNC : owner=%s : repo=%s : pull_number=%d : sender=%s"
-                  request_id
-                  owner
-                  name
-                  pull_request_id
-                  username);
-            Abbs_future_combinators.to_result
-            @@ Evaluator2.pull_request_event
-                 ~request_id
-                 ~config
-                 ~storage
-                 ~exec
-                 ~account
-                 ~repo
-                 ~pull_request_id
-                 ~user
-                 Evaluator2.Pull_request_event.Sync
+            Evaluator.run_pull_request_open ~ctx ~account ~user ~repo ~pull_request_id ()
+        | "update" -> Evaluator.run_pull_request_sync ~ctx ~account ~user ~repo ~pull_request_id ()
         | "merge" | "close" ->
-            Logs.info (fun m ->
-                m
-                  "%s : PULL_REQUEST_EVENT : CLOSE : owner=%s : repo=%s : pull_number=%d : \
-                   sender=%s"
-                  request_id
-                  owner
-                  name
-                  pull_request_id
-                  username);
-            Abbs_future_combinators.to_result
-            @@ Evaluator2.pull_request_event
-                 ~request_id
-                 ~config
-                 ~storage
-                 ~exec
-                 ~account
-                 ~repo
-                 ~pull_request_id
-                 ~user
-                 Evaluator2.Pull_request_event.Close
+            Evaluator.run_pull_request_close ~ctx ~account ~user ~repo ~pull_request_id ()
         | any -> raise (Failure "nyi"))
     | E.Pipeline_event _ -> Abb.Future.return (Ok ())
     | E.Job_event
         {
           Je.build_id = run_id;
           build_status = "failed";
-          project = { Pr.id = repo_id; path_with_namespace; _ };
+          project = { Pr.id = repp_id; path_with_namespace; _ };
           _;
-        } ->
-        let owner, name = parse_path_with_namespace path_with_namespace in
-        let account = P.Api.Account.make installation_id in
-        let repo = P.Api.Repo.make ~id:repo_id ~name ~owner () in
-        Abbs_future_combinators.to_result
-        @@ Evaluator2.work_manifest_job_failed
-             ~request_id
-             ~config
-             ~storage
-             ~exec
-             ~account
-             ~repo
-             ~run_id:(CCInt.to_string run_id)
-             ()
+        } -> (
+        let open Abbs_future_combinators.Infix_result_monad in
+        Pgsql_pool.with_conn storage ~f:(fun db ->
+            Pgsql_io.Prepared_stmt.fetch
+              db
+              Sql.select_work_manifest_by_run_id
+              ~f:CCFun.id
+              (CCInt.to_string run_id)
+            >>= function
+            | work_manifest_id :: _ -> Abb.Future.return (Ok (Some work_manifest_id))
+            | [] -> Abb.Future.return (Ok None))
+        >>= function
+        | Some work_manifest_id -> Evaluator.run_work_manifest_failure ~ctx work_manifest_id
+        | None ->
+            Logs.info (fun m ->
+                m
+                  "%s : WORK_MANIFEST_FAILURE : NOT_FOUND : account=%d : run_id=%d"
+                  (Evaluator.Ctx.request_id ctx)
+                  installation_id
+                  run_id);
+            Abb.Future.return (Ok ()))
     | E.Job_event _ -> Abb.Future.return (Ok ())
 
-  let post' config storage exec webhook_secret ctx =
+  let post' config storage webhook_secret ctx =
     let open Abbs_future_combinators.Infix_result_monad in
     Pgsql_pool.with_conn storage ~f:(fun db ->
         Pgsql_io.Prepared_stmt.fetch
@@ -310,14 +247,13 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
         Abb.Future.return @@ decode ctx
         >>= fun event ->
         dispatch_event
-          (Brtl_ctx.token ctx)
           config
           storage
-          exec
           (CCInt64.to_int installation_id)
+          (Evaluator.Ctx.make ~request_id:(Brtl_ctx.token ctx) ~config ~storage ())
           event
 
-  let post config storage exec =
+  let post config storage =
     Brtl_ep.run_json ~f:(fun ctx ->
         let headers = Brtl_ctx.Request.headers @@ Brtl_ctx.request ctx in
         Metrics.DefaultHistogram.time Metrics.events_duration_seconds (fun () ->
@@ -325,7 +261,7 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
                 match Cohttp.Header.get headers "x-gitlab-token" with
                 | Some webhook_secret -> (
                     let open Abb.Future.Infix_monad in
-                    post' config storage exec webhook_secret ctx
+                    post' config storage webhook_secret ctx
                     >>= function
                     | Ok () ->
                         Abb.Future.return
