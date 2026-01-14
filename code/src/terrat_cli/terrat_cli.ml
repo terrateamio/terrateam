@@ -60,6 +60,7 @@ module Cmdline = struct
         "abb.dns";
         "abb_curl";
         "abb_curl_easy";
+        "brtl_mw_log.pre";
         "cohttp_abb";
         "cohttp_abb.io";
         "dns_cache";
