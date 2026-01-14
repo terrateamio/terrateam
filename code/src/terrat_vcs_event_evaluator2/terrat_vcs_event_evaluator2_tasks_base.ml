@@ -37,30 +37,51 @@ struct
   module Tasks = struct end
 
   let run ~name f path s fetcher =
-    Abbs_time_it.run'
-      (fun ret t ->
-        Metrics.Task_exec_duration.observe (Metrics.exec_duration name) t;
-        match ret with
-        | Ok _ ->
-            Logs.info (fun m ->
-                m "%s : TASK : END : SUCCESS : name=%s : time=%f" (Builder.log_id s) name t)
-        | Error (`Suspend_eval _) ->
-            Logs.info (fun m ->
-                m "%s : TASK : END: SUSPEND : name=%s : time=%f" (Builder.log_id s) name t)
-        | Error `Noop ->
-            Logs.info (fun m ->
-                m "%s : TASK : END: NOOP : name=%s : time=%f" (Builder.log_id s) name t)
-        | Error #Builder.err ->
-            Logs.info (fun m ->
-                m "%s : TASK : END: FAIL : name=%s : time=%f" (Builder.log_id s) name t))
-      (fun () ->
-        Logs.info (fun m ->
-            m
-              "%s : TASK : START : name=%s : path=[%s]"
-              (Builder.log_id s)
-              name
-              (CCString.concat ", " path));
-        f (Builder.State.set_path path s) fetcher)
+    Abb.Future.await_bind (function
+      | `Det r -> Abb.Future.return r
+      | `Exn (Buildsys.Error.Fetch_cycle_exn exn, bt_opt) ->
+          Logs.err (fun m -> m "%s : %a" (Builder.log_id s) Buildsys.Error.pp exn);
+          CCOption.iter
+            (fun bt ->
+              Logs.err (fun m ->
+                  m "%s : BACKTRACE: %s" (Builder.log_id s) (Printexc.raw_backtrace_to_string bt)))
+            bt_opt;
+          Abb.Future.return (Error `Error)
+      | `Exn (exn, bt_opt) ->
+          Logs.err (fun m -> m "%s : %s" (Builder.log_id s) (Printexc.to_string exn));
+          CCOption.iter
+            (fun bt ->
+              Logs.err (fun m ->
+                  m "%s : BACKTRACE: %s" (Builder.log_id s) (Printexc.raw_backtrace_to_string bt)))
+            bt_opt;
+          Abb.Future.return (Error `Error)
+      | `Aborted ->
+          Logs.err (fun m -> m "%s : ABORTED" (Builder.log_id s));
+          Abb.Future.return (Error `Error))
+    @@ Abbs_time_it.run'
+         (fun ret t ->
+           Metrics.Task_exec_duration.observe (Metrics.exec_duration name) t;
+           match ret with
+           | Ok _ ->
+               Logs.info (fun m ->
+                   m "%s : TASK : END : SUCCESS : name=%s : time=%f" (Builder.log_id s) name t)
+           | Error (`Suspend_eval _) ->
+               Logs.info (fun m ->
+                   m "%s : TASK : END: SUSPEND : name=%s : time=%f" (Builder.log_id s) name t)
+           | Error `Noop ->
+               Logs.info (fun m ->
+                   m "%s : TASK : END: NOOP : name=%s : time=%f" (Builder.log_id s) name t)
+           | Error #Builder.err ->
+               Logs.info (fun m ->
+                   m "%s : TASK : END: FAIL : name=%s : time=%f" (Builder.log_id s) name t))
+         (fun () ->
+           Logs.info (fun m ->
+               m
+                 "%s : TASK : START : name=%s : path=[%s]"
+                 (Builder.log_id s)
+                 name
+                 (CCString.concat ", " path));
+           f (Builder.State.set_path path s) fetcher)
 
   let forward_std_keys s store = store |> Builder.State.forward_store_value Keys.pull_request s
 end

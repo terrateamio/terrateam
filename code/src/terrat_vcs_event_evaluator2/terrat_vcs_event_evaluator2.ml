@@ -35,6 +35,9 @@ module Exec_logger = struct
   (*       (fun path -> Logs.info (fun m -> m "WORK_DONE : [%s]" (CCString.concat ", " path))); *)
   (*     running_tasks = *)
   (*       (fun count -> *)
+  (*         if !tasks_concurrent_max < count then ( *)
+  (*           tasks_concurrent_max := count; *)
+  (*           Prmths.Gauge.set Metrics.tasks_concurrent_max (CCFloat.of_int count)); *)
   (*         Prmths.Gauge.set Metrics.tasks_concurrent (CCFloat.of_int count); *)
   (*         Logs.info (fun m -> m "RUNNING : %d" count)); *)
   (*     suspend_task = *)
@@ -394,7 +397,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         Fc.ignore @@ Abb.Future.fork run
 
   let work_manifest_job_failed ~request_id ~config ~storage ~exec ~account ~repo ~run_id () =
-    let open Abb.Future.Infix_monad in
     let run =
       let open Irm in
       let target = Keys.eval_work_manifest_failure in
@@ -482,7 +484,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               | Ok None -> Abb.Future.return (Error `Error)
               | Error err -> Abb.Future.return (Error err)))
     in
-    Fc.protect (fun () -> log_err ~request_id run)
+    log_err ~request_id run
     >>= function
     | Ok (`Ok r) -> Abb.Future.return (Ok r)
     | Ok (`Suspend_eval _) | Ok `Noop | Error _ -> Abb.Future.return (Error `Error)
