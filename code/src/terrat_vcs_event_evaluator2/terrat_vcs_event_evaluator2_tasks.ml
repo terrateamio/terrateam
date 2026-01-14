@@ -357,7 +357,7 @@ struct
               S.Api.fetch_branch_sha ~request_id:(Builder.log_id s) client repo default_branch)
           >>= function
           | Some branch_sha -> Abb.Future.return (Ok branch_sha)
-          | None -> assert false)
+          | None -> Abb.Future.return (Error `Error))
 
     let matches =
       run ~name:"matches" (fun s { Bs.Fetcher.fetch } ->
@@ -699,7 +699,9 @@ struct
                     branch_ref))
           >>= function
           | Some tree -> Abb.Future.return (Ok (CCList.map (fun { I.path; _ } -> path) tree))
-          | None -> assert false)
+          | None ->
+              Logs.err (fun m -> m "%s : EXPECTED_BUILT_REPO_TREE" (Builder.log_id s));
+              Abb.Future.return (Error `Error))
 
     let built_repo_config_branch_wm_completed =
       run ~name:"built_repo_config_branch_wm_completed" (fun s ({ Bs.Fetcher.fetch } as fetcher) ->
@@ -845,7 +847,9 @@ struct
                   S.Db.query_repo_tree ~request_id:(Builder.log_id s) db account dest_branch_ref))
           >>= function
           | Some tree -> Abb.Future.return (Ok (CCList.map (fun { I.path; _ } -> path) tree))
-          | None -> assert false)
+          | None ->
+              Logs.err (fun m -> m "%s : EXPECTED_BUILT_REPO_TREE_DEST_BRANCH" (Builder.log_id s));
+              Abb.Future.return (Error `Error))
 
     let built_repo_config_dest_branch_wm_completed =
       run
@@ -1513,7 +1517,9 @@ struct
                       S.Db.query_index ~request_id:(Builder.log_id s) db account dest_branch_ref))
               >>= function
               | Some { I.index; _ } -> Abb.Future.return (Ok index)
-              | None -> assert false))
+              | None ->
+                  Logs.err (fun m -> m "%s : EXPECTED_BUILT_INDEX_DEST_BRANCH" (Builder.log_id s));
+                  Abb.Future.return (Error `Error)))
 
     let repo_index_dest_branch =
       run ~name:"repo_index_dest_branch" (fun s { Bs.Fetcher.fetch } ->
@@ -2251,8 +2257,14 @@ struct
                             | None ->
                                 Abb.Future.return
                                   (Ok (Wmc.Work_manifest_done { Wmd.type_ = "done" })))
-                        | Error #Builder.err as err -> Abb.Future.return err)
-                    | None -> raise (Failure "nyi"))
+                        | Error (#Builder.err as err) ->
+                            (* If anything failed, be sure to return to the querying node to give up. *)
+                            Logs.info (fun m -> m "%s : %a" (Builder.log_id s) Builder.pp_err err);
+                            Abb.Future.return (Ok (Wmc.Work_manifest_done { Wmd.type_ = "done" })))
+                    | None ->
+                        (* If anything failed, be sure to return to the querying node to give up. *)
+                        Logs.info (fun m -> m "%s : UNKNOWN_WORK_MANIFEST" (Builder.log_id s));
+                        Abb.Future.return (Ok (Wmc.Work_manifest_done { Wmd.type_ = "done" })))
               else (
                 (* We have received a poll from a compute node that has an
                    offering that no longer matches antyhing we are looking for.

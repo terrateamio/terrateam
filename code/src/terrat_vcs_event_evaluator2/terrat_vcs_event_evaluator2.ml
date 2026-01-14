@@ -708,7 +708,25 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                      @@ run_next_pending_compute ~request_id ~config ~storage ~exec ()))
               >>= fun _ -> Abb.Future.return (Ok (`Ok ()))
           | Ok (_, _, _, `Noop) -> Abb.Future.return (Ok `Noop)
-          | Error #err as err -> Abb.Future.return err)
+          | Error #err as err ->
+              let open Abb.Future.Infix_monad in
+              with_conn storage ~f:(fun db ->
+                  let open Irm in
+                  query_work_manifest db
+                  >>= fun work_manifest ->
+                  S.Work_manifest.update_state
+                    ~request_id
+                    db
+                    work_manifest_id
+                    Terrat_work_manifest3.State.Aborted
+                  >>= fun () ->
+                  run_work_manifest_event
+                    ~request_id
+                    ~config
+                    ~db
+                    ~exec
+                    (Keys.Work_manifest_event.Fail { work_manifest; error = `Error }))
+              >>= fun _ -> Abb.Future.return err)
       | `Legacy ->
           let open Abb.Future.Infix_monad in
           let ctx = Legacy.Ctx.make ~config ~storage ~request_id () in
