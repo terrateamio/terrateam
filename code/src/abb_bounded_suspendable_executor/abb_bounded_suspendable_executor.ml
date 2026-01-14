@@ -11,6 +11,7 @@ module Make (Fut : Abb_intf.Future.S) (Key : Map.OrderedType) = struct
       complete_task : Key.t list -> unit;
       work_done : Key.t list -> unit;
       running_tasks : int -> unit;
+      suspended_tasks : int -> Key.t list Iter.t -> unit;
       suspend_task : Key.t list -> unit;
       unsuspend_task : Key.t list -> unit;
       enqueue : Key.t list -> unit;
@@ -69,11 +70,13 @@ module Make (Fut : Abb_intf.Future.S) (Key : Map.OrderedType) = struct
              let bt = Printexc.get_raw_backtrace () in
              Fut.Promise.set_exn p (exn, Some bt)
          in
-         Fut.add_dep ~dep:run (Fut.Promise.future p);
-         run
-         >>= fun () ->
-         CCOption.iter (fun { Logger.complete_task = log; _ } -> log name) logger;
-         Channel.send w (Msg.Work_done name) >>= fun _ -> Fut.return ())
+         Fc.with_finally
+           (fun () ->
+             Fut.add_dep ~dep:run (Fut.Promise.future p);
+             run)
+           ~finally:(fun () ->
+             CCOption.iter (fun { Logger.complete_task = log; _ } -> log name) logger;
+             Channel.send w (Msg.Work_done name) >>= fun _ -> Fut.return ()))
       >>= fun _ -> Fut.return ()
 
     let rec exec_next_n_tasks remaining_slots w t =
@@ -140,6 +143,10 @@ module Make (Fut : Abb_intf.Future.S) (Key : Map.OrderedType) = struct
           CCOption.iter
             (fun { Logger.running_tasks = log; _ } -> log (Name_map.cardinal t.running_tasks))
             t.logger;
+          CCOption.iter
+            (fun { Logger.suspended_tasks = log; _ } ->
+              log (Name_map.cardinal t.suspended_tasks) (Name_map.keys t.suspended_tasks))
+            t.logger;
           loop t w r
       | `Ok (Msg.Suspend name) ->
           CCOption.iter (fun { Logger.suspend_task = log; _ } -> log name) t.logger;
@@ -148,6 +155,10 @@ module Make (Fut : Abb_intf.Future.S) (Key : Map.OrderedType) = struct
           CCOption.iter
             (fun { Logger.running_tasks = log; _ } -> log (Name_map.cardinal t.running_tasks))
             t.logger;
+          CCOption.iter
+            (fun { Logger.suspended_tasks = log; _ } ->
+              log (Name_map.cardinal t.suspended_tasks) (Name_map.keys t.suspended_tasks))
+            t.logger;
           loop t w r
       | `Ok (Msg.Unsuspend name) ->
           CCOption.iter (fun { Logger.unsuspend_task = log; _ } -> log name) t.logger;
@@ -155,6 +166,10 @@ module Make (Fut : Abb_intf.Future.S) (Key : Map.OrderedType) = struct
           >>= fun t ->
           CCOption.iter
             (fun { Logger.running_tasks = log; _ } -> log (Name_map.cardinal t.running_tasks))
+            t.logger;
+          CCOption.iter
+            (fun { Logger.suspended_tasks = log; _ } ->
+              log (Name_map.cardinal t.suspended_tasks) (Name_map.keys t.suspended_tasks))
             t.logger;
           loop t w r
       | `Ok (Msg.Work_done name) ->
@@ -165,6 +180,10 @@ module Make (Fut : Abb_intf.Future.S) (Key : Map.OrderedType) = struct
           CCOption.iter
             (fun { Logger.running_tasks = log; exec_task; _ } ->
               log (Name_map.cardinal t.running_tasks))
+            t.logger;
+          CCOption.iter
+            (fun { Logger.suspended_tasks = log; _ } ->
+              log (Name_map.cardinal t.suspended_tasks) (Name_map.keys t.suspended_tasks))
             t.logger;
           loop t w r
       | `Closed -> Fut.return ()
