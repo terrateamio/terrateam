@@ -468,7 +468,7 @@ struct
           >>= fun pull_request ->
           let diff = S.Api.Pull_request.diff pull_request in
           let tree_builder = V1.tree_builder repo_config in
-          if tree_builder.V1.Tree_builder.enabled then
+          if tree_builder.V1.Tree_builder.enabled then (
             let changed_files =
               Terrat_data.String_set.of_list
               @@ CCList.flat_map
@@ -520,7 +520,9 @@ struct
                               Some (Terrat_change.Diff.Change { filename })
                           | _ -> None)
                         repo_tree))
-            | None -> assert false
+            | None ->
+                Logs.err (fun m -> m "%s : EXPECTED_REPO_TREE" (Builder.log_id s));
+                Abb.Future.return (Error `Error))
           else Abb.Future.return (Ok diff))
 
     let store_pull_request =

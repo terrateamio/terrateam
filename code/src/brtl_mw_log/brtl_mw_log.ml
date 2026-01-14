@@ -1,6 +1,12 @@
-let src = Logs.Src.create "brtl_mw_log"
+module Logs' = Logs
 
-module Logs = (val Logs.src_log src : Logs.LOG)
+let src = Logs'.Src.create "brtl_mw_log"
+
+module Logs = (val Logs'.src_log src : Logs'.LOG)
+
+let src = Logs'.Src.create "brtl_mw_log.pre"
+
+module Logs_pre = (val Logs'.src_log src : Logs'.LOG)
 
 module Config = struct
   type t = {
@@ -11,8 +17,19 @@ end
 
 let req_start_time = Hmap.Key.create ()
 
-let pre_handler ctx =
+let pre_handler config ctx =
   let open Abb.Future.Infix_monad in
+  let request = Brtl_ctx.request ctx in
+  let uri = Brtl_ctx.Request.uri request in
+  let meth = Cohttp.Code.string_of_method (Brtl_ctx.Request.meth request) in
+  let token = Brtl_ctx.token ctx in
+  let headers = Brtl_ctx.Request.headers request in
+  let remote_addr =
+    CCOption.get_or
+      ~default:(Brtl_ctx.remote_addr ctx)
+      (CCOption.flat_map (Cohttp.Header.get headers) config.Config.remote_ip_header)
+  in
+  Logs_pre.info (fun m -> m "%s : %s : %s : %s" remote_addr token meth (Uri.to_string uri));
   Abb.Sys.monotonic ()
   >>= fun start_time ->
   let ctx = Brtl_ctx.md_add req_start_time start_time ctx in
@@ -57,4 +74,4 @@ let post_handler config ctx =
   Abb.Future.return ctx
 
 let early_exit_handler = Brtl_mw.early_exit_handler_noop
-let create config = Brtl_mw.Mw.create pre_handler (post_handler config) early_exit_handler
+let create config = Brtl_mw.Mw.create (pre_handler config) (post_handler config) early_exit_handler

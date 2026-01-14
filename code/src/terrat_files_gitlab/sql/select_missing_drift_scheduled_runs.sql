@@ -1,22 +1,24 @@
 with
 ds as (
     select
-        name,
-        repository,
-        (case schedule
+        ds.name,
+        grm.repository_id as repository,
+        (case ds.schedule
          when 'hourly' then interval '1 hour'
          when 'daily' then interval '1 day'
          when 'weekly' then interval '1 week'
          when 'monthly' then interval '1 month'
          end) as schedule,
-         reconcile,
-         tag_query,
-         updated_at,
-         (current_date + window_start at time zone current_setting('timezone')) as window_start,
-         (current_date + window_end at time zone current_setting('timezone')) as window_end
-    from gitlab_drift_schedules
+         ds.reconcile,
+         ds.tag_query,
+         ds.updated_at,
+         (current_date + ds.window_start at time zone current_setting('timezone')) as window_start,
+         (current_date + ds.window_end at time zone current_setting('timezone')) as window_end,
+         ds.repo as repo_core_id
+    from drift_schedules as ds
+    inner join gitlab_repositories_map as grm
+        on grm.core_id = ds.repo
     where schedule in ('hourly', 'daily', 'weekly', 'monthly')
-    for update skip locked
 ),
 latest_drift_unlocks as (
     select
@@ -64,6 +66,8 @@ select
     dsw.window_start,
     dsw.window_end
 from ds
+inner join drift_schedules
+    on drift_schedules.repo = ds.repo_core_id and drift_schedules.name = ds.name
 inner join gitlab_installation_repositories as gir
     on gir.id = ds.repository
 inner join gitlab_installations as gi
@@ -80,4 +84,4 @@ where (ldm.state is null or ldm.state not in ('queued', 'running'))
                 or (dsw.window_start <= current_timestamp and current_timestamp < dsw.window_end)))
       and gi.state = 'installed'
 limit 1
-for update skip locked
+for update of drift_schedules skip locked
