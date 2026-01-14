@@ -38,11 +38,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
 
       let return v = Abb.Future.return v
       let ( >>= ) = Abb.Future.Infix_monad.( >>= )
-
-      let protect f =
-        let open Abb.Future.Infix_monad in
-        (* Wrap ret in another deferred so that it can be unwrapped with (>>=) *)
-        f () >>= fun ret -> Abb.Future.return (Abb.Future.return ret)
+      let with_finally = Fc.with_finally
     end
 
     module Queue = struct

@@ -15,7 +15,11 @@ module Excel = struct
 
     let return = CCOption.return
     let ( >>= ) = CCOption.( >>= )
-    let protect f = Some (f ())
+
+    let with_finally f ~finally =
+      let ret = f () in
+      finally ();
+      ret
   end
 
   module Queue = struct

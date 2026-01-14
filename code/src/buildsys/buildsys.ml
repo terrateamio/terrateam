@@ -30,7 +30,7 @@ module type S = sig
 
     val return : 'a -> 'a t
     val ( >>= ) : 'a t -> ('a -> 'b t) -> 'b t
-    val protect : (unit -> 'a t) -> 'a t t
+    val with_finally : (unit -> 'a t) -> finally:(unit -> unit t) -> 'a t
   end
 
   module Queue : sig
@@ -178,14 +178,17 @@ module Make (M : S) :
       else
         let open M.C in
         t.running <- (repr, path) :: t.running;
-        protect (fun () -> M.Queue.run queue ~name:repr f)
-        >>= fun ret ->
-        t.running <-
-          CCList.remove
-            ~eq:(fun (k1, _) (k2, _) -> M.Key_repr.equal k1 k2)
-            ~key:(repr, path)
-            t.running;
-        M.Notify.notify t.notify >>= fun () -> ret
+        M.C.with_finally
+          (fun () ->
+            M.Queue.run queue ~name:repr f
+            >>= fun ret ->
+            t.running <-
+              CCList.remove
+                ~eq:(fun (k1, _) (k2, _) -> M.Key_repr.equal k1 k2)
+                ~key:(repr, path)
+                t.running;
+            M.C.return ret)
+          ~finally:(fun () -> M.Notify.notify t.notify)
   end
 
   let build queue rebuilder tasks k st =
@@ -202,9 +205,10 @@ module Make (M : S) :
       >>= function
       | None -> M.State.get_k (St.get_state st) k
       | Some task ->
-          suspend queue
-          >>= fun () ->
-          M.C.protect (fun () ->
+          M.C.with_finally
+            (fun () ->
+              suspend queue
+              >>= fun () ->
               St.block_k queue path st k (fun () ->
                   M.State.get_k_opt (St.get_state st) k
                   >>= function
@@ -218,7 +222,7 @@ module Make (M : S) :
                   | None ->
                       task path (St.get_state st) { Fetcher.fetch = (fun k -> fetch path k) }
                       >>= fun v -> M.State.set_k (St.get_state st) k v >>= fun () -> return v))
-          >>= fun ret -> unsuspend queue >>= fun () -> ret
+            ~finally:(fun () -> unsuspend queue)
     in
     fetch [] k
 end

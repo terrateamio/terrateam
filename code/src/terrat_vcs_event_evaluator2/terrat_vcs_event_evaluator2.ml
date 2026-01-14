@@ -13,6 +13,10 @@ module Metrics = struct
     let help = "Number of tasks running right now" in
     Prmths.Gauge.v ~help ~namespace ~subsystem "tasks_concurrent"
 
+  let tasks_suspended =
+    let help = "Number of tasks suspended right now" in
+    Prmths.Gauge.v ~help ~namespace ~subsystem "tasks_suspended"
+
   let tasks_concurrent_max =
     let help = "Maximum number of concurrent tasks running" in
     Prmths.Gauge.v ~help ~namespace ~subsystem "tasks_concurrent_max"
@@ -40,6 +44,13 @@ module Exec_logger = struct
   (*           Prmths.Gauge.set Metrics.tasks_concurrent_max (CCFloat.of_int count)); *)
   (*         Prmths.Gauge.set Metrics.tasks_concurrent (CCFloat.of_int count); *)
   (*         Logs.info (fun m -> m "RUNNING : %d" count)); *)
+  (*     suspended_tasks = *)
+  (*       (fun count tasks -> *)
+  (*         Prmths.Gauge.set Metrics.tasks_suspended (CCFloat.of_int count); *)
+  (*         Logs.info (fun m -> m "SUSPENDED : %d" count); *)
+  (*         Iter.iter *)
+  (*           (fun task -> Logs.info (fun m -> m "SUSPENDED : %s" (CCString.concat ", " task))) *)
+  (*           tasks); *)
   (*     suspend_task = *)
   (*       (fun name -> Logs.info (fun m -> m "SUSPEND : [%s]" (CCString.concat ", " name))); *)
   (*     unsuspend_task = *)
@@ -58,6 +69,8 @@ module Exec_logger = struct
             tasks_concurrent_max := count;
             Prmths.Gauge.set Metrics.tasks_concurrent_max (CCFloat.of_int count));
           Prmths.Gauge.set Metrics.tasks_concurrent (CCFloat.of_int count));
+      suspended_tasks =
+        (fun count _ -> Prmths.Gauge.set Metrics.tasks_suspended (CCFloat.of_int count));
       suspend_task = CCFun.const ();
       unsuspend_task = CCFun.const ();
       enqueue = CCFun.const ();
