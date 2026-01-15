@@ -412,9 +412,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   let work_manifest_job_failed ~request_id ~config ~storage ~exec ~account ~repo ~run_id () =
     let run =
       let open Irm in
-      let mode =
-        CCOption.get_or ~default:"legacy" @@ Sys.getenv_opt "TERRAT_EVENT_EVALUATOR_MODE"
-      in
       let target = Keys.eval_work_manifest_failure in
       let store =
         Hmap.empty
@@ -429,7 +426,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               S.Db.query_flow_state ~request_id db work_manifest.Terrat_work_manifest3.id
               >>= function
               | Some _ -> Abb.Future.return (Ok (`Legacy work_manifest))
-              | None when mode <> "new-age" -> Abb.Future.return (Ok (`Legacy work_manifest))
               | None -> Abb.Future.return (Ok `New_age))
           | None -> Abb.Future.return (Ok `New_age))
       >>= function
@@ -452,14 +448,10 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     let open Abb.Future.Infix_monad in
     let run =
       let open Irm in
-      let mode =
-        CCOption.get_or ~default:"legacy" @@ Sys.getenv_opt "TERRAT_EVENT_EVALUATOR_MODE"
-      in
       with_conn storage ~f:(fun db ->
           S.Db.query_flow_state ~request_id db compute_node_id
           >>= function
           | Some _ -> Abb.Future.return (Ok `Legacy)
-          | None when mode <> "new-age" -> Abb.Future.return (Ok `Legacy)
           | None -> Abb.Future.return (Ok `New_age))
       >>= function
       | `New_age ->
