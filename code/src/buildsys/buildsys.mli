@@ -30,10 +30,7 @@ module type S = sig
 
     val return : 'a -> 'a t
     val ( >>= ) : 'a t -> ('a -> 'b t) -> 'b t
-
-    (** In case the compute model has failure, protect guarantees an un-failed compute result that
-        wraps a (possibly) failed result. The inner [t] must be completely executed to continue. *)
-    val protect : (unit -> 'a t) -> 'a t t
+    val with_finally : (unit -> 'a t) -> finally:(unit -> unit t) -> 'a t
   end
 
   module Queue : sig

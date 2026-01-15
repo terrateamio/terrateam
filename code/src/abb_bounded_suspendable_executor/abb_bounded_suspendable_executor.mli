@@ -7,6 +7,7 @@ module Make (Fut : Abb_intf.Future.S) (Key : Map.OrderedType) : sig
       complete_task : Key.t list -> unit;
       work_done : Key.t list -> unit;
       running_tasks : int -> unit;
+      suspended_tasks : int -> Key.t list Iter.t -> unit;
       suspend_task : Key.t list -> unit;
       unsuspend_task : Key.t list -> unit;
       enqueue : Key.t list -> unit;

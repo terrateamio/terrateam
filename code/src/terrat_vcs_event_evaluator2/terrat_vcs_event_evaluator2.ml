@@ -13,6 +13,10 @@ module Metrics = struct
     let help = "Number of tasks running right now" in
     Prmths.Gauge.v ~help ~namespace ~subsystem "tasks_concurrent"
 
+  let tasks_suspended =
+    let help = "Number of tasks suspended right now" in
+    Prmths.Gauge.v ~help ~namespace ~subsystem "tasks_suspended"
+
   let tasks_concurrent_max =
     let help = "Maximum number of concurrent tasks running" in
     Prmths.Gauge.v ~help ~namespace ~subsystem "tasks_concurrent_max"
@@ -40,6 +44,13 @@ module Exec_logger = struct
   (*           Prmths.Gauge.set Metrics.tasks_concurrent_max (CCFloat.of_int count)); *)
   (*         Prmths.Gauge.set Metrics.tasks_concurrent (CCFloat.of_int count); *)
   (*         Logs.info (fun m -> m "RUNNING : %d" count)); *)
+  (*     suspended_tasks = *)
+  (*       (fun count tasks -> *)
+  (*         Prmths.Gauge.set Metrics.tasks_suspended (CCFloat.of_int count); *)
+  (*         Logs.info (fun m -> m "SUSPENDED : %d" count); *)
+  (*         Iter.iter *)
+  (*           (fun task -> Logs.info (fun m -> m "SUSPENDED : %s" (CCString.concat ", " task))) *)
+  (*           tasks); *)
   (*     suspend_task = *)
   (*       (fun name -> Logs.info (fun m -> m "SUSPEND : [%s]" (CCString.concat ", " name))); *)
   (*     unsuspend_task = *)
@@ -58,6 +69,8 @@ module Exec_logger = struct
             tasks_concurrent_max := count;
             Prmths.Gauge.set Metrics.tasks_concurrent_max (CCFloat.of_int count));
           Prmths.Gauge.set Metrics.tasks_concurrent (CCFloat.of_int count));
+      suspended_tasks =
+        (fun count _ -> Prmths.Gauge.set Metrics.tasks_suspended (CCFloat.of_int count));
       suspend_task = CCFun.const ();
       unsuspend_task = CCFun.const ();
       enqueue = CCFun.const ();
@@ -399,6 +412,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   let work_manifest_job_failed ~request_id ~config ~storage ~exec ~account ~repo ~run_id () =
     let run =
       let open Irm in
+      let mode =
+        CCOption.get_or ~default:"legacy" @@ Sys.getenv_opt "TERRAT_EVENT_EVALUATOR_MODE"
+      in
       let target = Keys.eval_work_manifest_failure in
       let store =
         Hmap.empty
@@ -413,6 +429,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               S.Db.query_flow_state ~request_id db work_manifest.Terrat_work_manifest3.id
               >>= function
               | Some _ -> Abb.Future.return (Ok (`Legacy work_manifest))
+              | None when mode <> "new-age" -> Abb.Future.return (Ok (`Legacy work_manifest))
               | None -> Abb.Future.return (Ok `New_age))
           | None -> Abb.Future.return (Ok `New_age))
       >>= function
@@ -435,13 +452,18 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     let open Abb.Future.Infix_monad in
     let run =
       let open Irm in
+      let mode =
+        CCOption.get_or ~default:"legacy" @@ Sys.getenv_opt "TERRAT_EVENT_EVALUATOR_MODE"
+      in
       with_conn storage ~f:(fun db ->
           S.Db.query_flow_state ~request_id db compute_node_id
           >>= function
           | Some _ -> Abb.Future.return (Ok `Legacy)
+          | None when mode <> "new-age" -> Abb.Future.return (Ok `Legacy)
           | None -> Abb.Future.return (Ok `New_age))
       >>= function
       | `New_age ->
+          let module Offering = Terrat_api_components.Work_manifest_initiate in
           let target = Keys.eval_compute_node_poll in
           let store =
             Hmap.empty
@@ -455,10 +477,11 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                   >>= fun s ->
                   Logs.info (fun m ->
                       m
-                        "%s : COMPUTE_NODE_POLL : compute_node_id = %a"
+                        "%s : COMPUTE_NODE_POLL : compute_node_id = %a : run_id = %s"
                         (Builder.log_id s)
                         Uuidm.pp
-                        compute_node_id);
+                        compute_node_id
+                        offering.Offering.run_id);
                   tx_safe ~request_id @@ Builder.eval s target))
       | `Legacy -> (
           let select_encryption_key () =
