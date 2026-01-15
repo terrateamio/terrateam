@@ -301,6 +301,7 @@ module type S = sig
       Abb.Future.t
 
     val query_next_pending_work_manifest :
+      ?new_age:bool ->
       request_id:string ->
       t ->
       ( ( Api.Account.t,
