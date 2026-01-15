@@ -463,6 +463,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           | None -> Abb.Future.return (Ok `New_age))
       >>= function
       | `New_age ->
+          let module Offering = Terrat_api_components.Work_manifest_initiate in
           let target = Keys.eval_compute_node_poll in
           let store =
             Hmap.empty
@@ -476,10 +477,11 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                   >>= fun s ->
                   Logs.info (fun m ->
                       m
-                        "%s : COMPUTE_NODE_POLL : compute_node_id = %a"
+                        "%s : COMPUTE_NODE_POLL : compute_node_id = %a : run_id = %s"
                         (Builder.log_id s)
                         Uuidm.pp
-                        compute_node_id);
+                        compute_node_id
+                        offering.Offering.run_id);
                   tx_safe ~request_id @@ Builder.eval s target))
       | `Legacy -> (
           let select_encryption_key () =
