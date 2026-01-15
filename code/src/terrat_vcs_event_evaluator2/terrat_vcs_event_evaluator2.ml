@@ -179,7 +179,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (fun () ->
         with_conn storage ~f:(fun db ->
             Pgsql_io.tx db ~f:(fun () ->
-                S.Db.query_next_pending_work_manifest ~request_id db
+                S.Db.query_next_pending_work_manifest ~new_age:true ~request_id db
                 >>= function
                 | Some wm -> (
                     Logs.info (fun m ->

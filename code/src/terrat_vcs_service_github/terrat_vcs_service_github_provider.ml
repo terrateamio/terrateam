@@ -439,7 +439,8 @@ module Db = struct
         //
         (* id *)
         Ret.uuid
-        /^ read "select_next_work_manifest.sql")
+        /^ read "select_next_work_manifest.sql"
+        /% Var.boolean "new_age")
 
     let select_flow_state_query = read "select_flow_data.sql"
 
@@ -1473,11 +1474,11 @@ module Db = struct
         Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
 
-  let query_next_pending_work_manifest ~request_id db =
+  let query_next_pending_work_manifest ?(new_age = false) ~request_id db =
     let run =
       let open Abbs_future_combinators.Infix_result_monad in
       Metrics.Psql_query_time.time (Metrics.psql_query_time "select_next_work_manifest") (fun () ->
-          Pgsql_io.Prepared_stmt.fetch db ~f:CCFun.id Sql.select_next_work_manifest)
+          Pgsql_io.Prepared_stmt.fetch db ~f:CCFun.id Sql.select_next_work_manifest new_age)
       >>= function
       | [] -> Abb.Future.return (Ok None)
       | [ id ] ->
