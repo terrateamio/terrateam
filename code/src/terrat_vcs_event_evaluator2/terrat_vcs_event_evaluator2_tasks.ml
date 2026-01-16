@@ -90,6 +90,10 @@ struct
   end
 
   module Cache = struct
+    module Key = struct
+      type t = string * string [@@deriving show]
+    end
+
     let load ~cache_key db =
       let open Abb.Future.Infix_monad in
       let kv = { Terrat_kv_store.db; user_caps = [] } in
@@ -728,18 +732,27 @@ struct
       let store_cache_repo_tree cache_key s tree =
         Builder.run_db s ~f:(fun db ->
             let open Abb.Future.Infix_monad in
+            Logs.info (fun m ->
+                m
+                  "%s : CACHE_REPO_TREE : STORE : cache_key = %a : num_files=%d"
+                  (Builder.log_id s)
+                  Cache.Key.pp
+                  cache_key
+                  (CCList.length tree));
             let to_yojson = [%to_yojson: string list] in
             let kv = { Terrat_kv_store.db; user_caps = [] } in
+            let chunks = CCList.chunks 5000 tree in
             Fc.List_result.iter
-              ~f:(fun files ->
+              ~f:(fun (idx, files) ->
                 let json = to_yojson files in
-                Fc.Result.ignore @@ Terrat_kv_store.set ~key:cache_key json kv
+                Fc.Result.ignore @@ Terrat_kv_store.set ~key:cache_key ~idx json kv
                 >>= function
                 | Ok _ as r -> Abb.Future.return r
                 | Error (#Terrat_kv_store.err as err) -> Abb.Future.return (Error err))
-              (CCList.chunks 5000 tree))
+              (CCList.combine (CCList.range' 0 (CCList.length chunks)) chunks))
       in
       let load_cache_repo_tree cache_key s =
+        let open Irm in
         Builder.run_db s ~f:(fun db ->
             let open Abb.Future.Infix_monad in
             let kv = { Terrat_kv_store.db; user_caps = [] } in
@@ -757,6 +770,15 @@ struct
                              @@ Terrat_kv_store.Record.data r)
                            records)))
             | Error (#Terrat_kv_store.err as err) -> Abb.Future.return (Error err))
+        >>= fun files ->
+        Logs.info (fun m ->
+            m
+              "%s : CACHE_REPO_TREE : LOAD : cache_key = %a : num_files=%d"
+              (Builder.log_id s)
+              Cache.Key.pp
+              cache_key
+              (CCOption.map_or ~default:0 CCList.length files));
+        Abb.Future.return (Ok files)
       in
       run ~name:"repo_tree_branch" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
@@ -908,18 +930,27 @@ struct
       let store_cache_repo_tree cache_key s tree =
         Builder.run_db s ~f:(fun db ->
             let open Abb.Future.Infix_monad in
+            Logs.info (fun m ->
+                m
+                  "%s : CACHE_REPO_TREE_DEST_BRANCH : STORE : cache_key = %a : num_files=%d"
+                  (Builder.log_id s)
+                  Cache.Key.pp
+                  cache_key
+                  (CCList.length tree));
             let to_yojson = [%to_yojson: string list] in
             let kv = { Terrat_kv_store.db; user_caps = [] } in
+            let chunks = CCList.chunks 5000 tree in
             Fc.List_result.iter
-              ~f:(fun files ->
+              ~f:(fun (idx, files) ->
                 let json = to_yojson files in
-                Fc.Result.ignore @@ Terrat_kv_store.set ~key:cache_key json kv
+                Fc.Result.ignore @@ Terrat_kv_store.set ~key:cache_key ~idx json kv
                 >>= function
                 | Ok _ as r -> Abb.Future.return r
                 | Error (#Terrat_kv_store.err as err) -> Abb.Future.return (Error err))
-              (CCList.chunks 5000 tree))
+              (CCList.combine (CCList.range' 0 (CCList.length chunks)) chunks))
       in
       let load_cache_repo_tree cache_key s =
+        let open Irm in
         Builder.run_db s ~f:(fun db ->
             let open Abb.Future.Infix_monad in
             let kv = { Terrat_kv_store.db; user_caps = [] } in
@@ -937,6 +968,15 @@ struct
                              @@ Terrat_kv_store.Record.data r)
                            records)))
             | Error (#Terrat_kv_store.err as err) -> Abb.Future.return (Error err))
+        >>= fun files ->
+        Logs.info (fun m ->
+            m
+              "%s : CACHE_REPO_TREE_DEST_BRANCH : LOAD : cache_key = %a : num_files=%d"
+              (Builder.log_id s)
+              Cache.Key.pp
+              cache_key
+              (CCOption.map_or ~default:0 CCList.length files));
+        Abb.Future.return (Ok files)
       in
       run ~name:"repo_tree_dest_branch" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
@@ -1272,7 +1312,7 @@ struct
           fetch Keys.dest_branch_ref
           >>= fun dest_branch_ref ->
           let cache_key =
-            ( "cache.repo_tree_empty_index",
+            ( "cache.repo_config_empty_index",
               S.Api.Account.to_string account
               ^ "."
               ^ S.Api.Repo.to_string repo
@@ -1309,7 +1349,7 @@ struct
           fetch Keys.dest_branch_ref
           >>= fun dest_branch_ref ->
           let cache_key =
-            ( "cache.repo_tree_empty_index",
+            ( "cache.repo_config_empty_index",
               S.Api.Account.to_string account
               ^ "."
               ^ S.Api.Repo.to_string repo

@@ -1199,8 +1199,15 @@ struct
             let open Irm in
             fetch Keys.check_pull_request_state
             >>= fun () ->
+            (* Building these two happens to build all sorts of useful
+               dependencies for us, so build those first so the rest can
+               efficiently be done concurrently. *)
+            Fc.Result.all2 (fetch Keys.branch_dirspaces) (fetch Keys.dest_branch_dirspaces)
+            >>= fun _ ->
+            fetch Keys.store_stacks
+            >>= fun () ->
             Abbs_future_combinators.Infix_result_app.(
-              (fun () () () () () () () () () () () _ _ -> ())
+              (fun () () () () () () () () () () -> ())
               <$> fetch Keys.check_access_control_ci_change
               <*> fetch Keys.check_access_control_files
               <*> fetch Keys.check_access_control_repo_config
@@ -1210,11 +1217,7 @@ struct
               <*> fetch Keys.check_account_tier
               <*> fetch Keys.check_merge_conflict
               <*> fetch Keys.check_conflicting_plan_work_manifests
-              <*> fetch Keys.check_dirspaces_to_plan
-              <*> fetch Keys.store_stacks
-              (* Ensure that various information is built before trying to run the plan *)
-              <*> fetch Keys.branch_dirspaces
-              <*> fetch Keys.dest_branch_dirspaces)
+              <*> fetch Keys.check_dirspaces_to_plan)
           in
           let open Abb.Future.Infix_monad in
           run
