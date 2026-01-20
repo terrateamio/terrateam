@@ -861,7 +861,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           else Abb.Future.return (Ok ())
     in
     Fc.with_finally
-      (fun () -> Fc.ignore @@ log_err ~request_id run)
+      (fun () -> Fc.ignore @@ Abb.Future.fork @@ log_err ~request_id run)
       ~finally:(fun () ->
         Fc.ignore
         @@ Abb.Future.fork
