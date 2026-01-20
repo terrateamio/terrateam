@@ -2497,10 +2497,9 @@ struct
           fetch Keys.job
           >>= fun job ->
           match job.Tjc.Job.type_ with
-          | Tjc.Job.Type_.Apply _ | Tjc.Job.Type_.Autoapply ->
-              H.complete_job s job @@ fetch Keys.run_apply
+          | Tjc.Job.Type_.Apply _ | Tjc.Job.Type_.Autoapply -> fetch Keys.run_apply
           | Tjc.Job.Type_.Autoplan | Tjc.Job.Type_.Plan _ ->
-              H.complete_job s job @@ fetch Keys.run_plan
+              fetch Keys.run_plan
               >>= fun () ->
               let s' =
                 s
@@ -2509,11 +2508,11 @@ struct
                 |> CCFun.flip Builder.State.set_orig_store s
               in
               Builder.eval s' Keys.complete_no_change_dirspaces
-          | Tjc.Job.Type_.Repo_config -> H.complete_job s job @@ fetch Keys.publish_repo_config
-          | Tjc.Job.Type_.Unlock _ -> H.complete_job s job @@ fetch Keys.publish_unlock
-          | Tjc.Job.Type_.Index -> H.complete_job s job @@ fetch Keys.publish_index_complete
-          | Tjc.Job.Type_.Push -> H.complete_job s job @@ fetch Keys.eval_push_event
-          | Tjc.Job.Type_.Gate_approval _ -> H.complete_job s job @@ fetch Keys.store_gate_approval)
+          | Tjc.Job.Type_.Repo_config -> fetch Keys.publish_repo_config
+          | Tjc.Job.Type_.Unlock _ -> fetch Keys.publish_unlock
+          | Tjc.Job.Type_.Index -> fetch Keys.publish_index_complete
+          | Tjc.Job.Type_.Push -> fetch Keys.eval_push_event
+          | Tjc.Job.Type_.Gate_approval _ -> fetch Keys.store_gate_approval)
 
     let eval_work_manifest_failure =
       run ~name:"eval_work_manifest_failure" (fun s { Bs.Fetcher.fetch } ->
