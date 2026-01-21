@@ -15,6 +15,7 @@ module Make (Fut : Abb_intf.Future.S) (Key : Map.OrderedType) = struct
       suspend_task : Key.t list -> unit;
       unsuspend_task : Key.t list -> unit;
       enqueue : Key.t list -> unit;
+      queue_time : float -> unit;
     }
   end
 
@@ -34,7 +35,7 @@ module Make (Fut : Abb_intf.Future.S) (Key : Map.OrderedType) = struct
   let is_key_prefix = is_prefix ~eq:(fun a b -> 0 = Key.compare a b)
 
   module Task = struct
-    type t = Task : (Name.t * (unit -> 'a Fut.t) * 'a Fut.Promise.t) -> t
+    type t = Task : (Name.t * (unit -> 'a Fut.t) * 'a Fut.Promise.t * float) -> t
   end
 
   module Msg = struct
@@ -54,9 +55,12 @@ module Make (Fut : Abb_intf.Future.S) (Key : Map.OrderedType) = struct
       logger : Logger.t option;
     }
 
-    let exec logger w (Task.Task (name, f, p)) =
+    let exec logger w (Task.Task (name, f, p, enqueued_at)) =
       let open Fut.Infix_monad in
+      let now = Unix.gettimeofday () in
+      let queue_time = now -. enqueued_at in
       CCOption.iter (fun { Logger.exec_task = log; _ } -> log name) logger;
+      CCOption.iter (fun { Logger.queue_time = log; _ } -> log queue_time) logger;
       Fut.fork
         (let run =
            try
@@ -83,7 +87,7 @@ module Make (Fut : Abb_intf.Future.S) (Key : Map.OrderedType) = struct
       if 0 < remaining_slots then
         let open Fut.Infix_monad in
         match Queue.take_front t.queue with
-        | Some ((Task.Task (n, _, _) as task), queue) ->
+        | Some ((Task.Task (n, _, _, _) as task), queue) ->
             let t = { t with queue; running_tasks = Name_map.add n task t.running_tasks } in
             exec t.logger w task >>= fun () -> exec_next_n_tasks (remaining_slots - 1) w t
         | None -> Fut.return t
@@ -135,7 +139,7 @@ module Make (Fut : Abb_intf.Future.S) (Key : Map.OrderedType) = struct
       Channel.recv r
       >>= function
       | `Ok (Msg.Enqueue task) ->
-          let (Task.Task (n, _, _)) = task in
+          let (Task.Task (n, _, _, _)) = task in
           CCOption.iter (fun { Logger.enqueue = log; _ } -> log n) t.logger;
           let t = { t with queue = Queue.snoc t.queue task } in
           maybe_exec_task w t
@@ -207,7 +211,8 @@ module Make (Fut : Abb_intf.Future.S) (Key : Map.OrderedType) = struct
   let run ~name t f =
     let open Fut.Infix_monad in
     let p = Fut.Promise.create () in
-    Channel.send t.w (Msg.Enqueue (Task.Task (name, f, p)))
+    let enqueued_at = Unix.gettimeofday () in
+    Channel.send t.w (Msg.Enqueue (Task.Task (name, f, p, enqueued_at)))
     >>= function
     | `Ok () -> Fut.Promise.future p
     | `Closed -> assert false

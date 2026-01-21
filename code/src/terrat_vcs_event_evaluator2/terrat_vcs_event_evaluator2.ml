@@ -5,6 +5,10 @@ module Msg = Terrat_vcs_provider2.Msg
 module P2 = Terrat_vcs_provider2
 module Exec = Abb_bounded_suspendable_executor.Make (Abb.Future) (CCString)
 
+module Queue_time_histogram = Prmths.Histogram (struct
+  let spec = Prmths.Histogram_spec.of_list [ 0.01; 0.1; 0.25; 0.5; 1.0; 2.5; 5.0; 7.5; 10.0; 15.0 ]
+end)
+
 module Metrics = struct
   let namespace = "terrat"
   let subsystem = "vcs_event_evaluator2"
@@ -20,6 +24,10 @@ module Metrics = struct
   let tasks_concurrent_max =
     let help = "Maximum number of concurrent tasks running" in
     Prmths.Gauge.v ~help ~namespace ~subsystem "tasks_concurrent_max"
+
+  let queue_time =
+    let help = "Time spent waiting in the task queue" in
+    Queue_time_histogram.v ~help ~namespace ~subsystem "queue_time"
 end
 
 module Exec_logger = struct
@@ -74,6 +82,7 @@ module Exec_logger = struct
       suspend_task = CCFun.const ();
       unsuspend_task = CCFun.const ();
       enqueue = CCFun.const ();
+      queue_time = Queue_time_histogram.observe Metrics.queue_time;
     }
 end
 

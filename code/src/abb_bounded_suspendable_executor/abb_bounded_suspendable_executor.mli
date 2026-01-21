@@ -11,6 +11,7 @@ module Make (Fut : Abb_intf.Future.S) (Key : Map.OrderedType) : sig
       suspend_task : Key.t list -> unit;
       unsuspend_task : Key.t list -> unit;
       enqueue : Key.t list -> unit;
+      queue_time : float -> unit;
     }
   end
 
