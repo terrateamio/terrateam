@@ -1,6 +1,7 @@
 module Queue = CCFQueue
 
-module Make (Fut : Abb_intf.Future.S) (Key : Map.OrderedType) = struct
+module Make (Fut : Abb_intf.Future.S) (Key : Map.OrderedType) (Time : Abb_time.Time_make(Fut).S) =
+struct
   module Channel = Abb_channel.Make (Fut)
   module Service = Abb_service_local.Make (Fut)
   module Fc = Abb_future_combinators.Make (Fut)
@@ -57,7 +58,8 @@ module Make (Fut : Abb_intf.Future.S) (Key : Map.OrderedType) = struct
 
     let exec logger w (Task.Task (name, f, p, enqueued_at)) =
       let open Fut.Infix_monad in
-      let now = Unix.gettimeofday () in
+      Time.monotonic ()
+      >>= fun now ->
       let queue_time = now -. enqueued_at in
       CCOption.iter (fun { Logger.exec_task = log; _ } -> log name) logger;
       CCOption.iter (fun { Logger.queue_time = log; _ } -> log queue_time) logger;
@@ -211,7 +213,8 @@ module Make (Fut : Abb_intf.Future.S) (Key : Map.OrderedType) = struct
   let run ~name t f =
     let open Fut.Infix_monad in
     let p = Fut.Promise.create () in
-    let enqueued_at = Unix.gettimeofday () in
+    Time.monotonic ()
+    >>= fun enqueued_at ->
     Channel.send t.w (Msg.Enqueue (Task.Task (name, f, p, enqueued_at)))
     >>= function
     | `Ok () -> Fut.Promise.future p

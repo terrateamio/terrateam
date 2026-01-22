@@ -1,7 +1,7 @@
 module Fc = Abbs_future_combinators
 module Irm = Abbs_future_combinators.Infix_result_monad
 module Serializer = Abb_service_serializer.Make (Abb.Future)
-module Exec = Abb_bounded_suspendable_executor.Make (Abb.Future) (CCString)
+module Exec = Abb_bounded_suspendable_executor.Make (Abb.Future) (CCString) (Abb.Sys)
 
 module Make (S : Terrat_vcs_provider2.S) = struct
   module Logs' = Logs

@@ -1,4 +1,7 @@
-module Make (Fut : Abb_intf.Future.S) (Key : Map.OrderedType) : sig
+module Make
+    (Fut : Abb_intf.Future.S)
+    (Key : Map.OrderedType)
+    (Time : Abb_time.Time_make(Fut).S) : sig
   type t
 
   module Logger : sig

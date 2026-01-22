@@ -3,7 +3,7 @@ module Irm = Fc.Infix_result_monad
 module Tjc = Terrat_job_context
 module Msg = Terrat_vcs_provider2.Msg
 module P2 = Terrat_vcs_provider2
-module Exec = Abb_bounded_suspendable_executor.Make (Abb.Future) (CCString)
+module Exec = Abb_bounded_suspendable_executor.Make (Abb.Future) (CCString) (Abb.Sys)
 
 module Queue_time_histogram = Prmths.Histogram (struct
   let spec = Prmths.Histogram_spec.of_list [ 0.01; 0.1; 0.25; 0.5; 1.0; 2.5; 5.0; 7.5; 10.0; 15.0 ]
