@@ -4,6 +4,7 @@ module Metrics : sig
   type t = {
     num_conns : int;
     idle_conns : int;
+    queue_time : float option;
   }
 end
 

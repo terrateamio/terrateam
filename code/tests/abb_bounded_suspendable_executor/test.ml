@@ -3,7 +3,13 @@ module Fut = Abb_fut.Make (struct
 end)
 
 module Fc = Abb_future_combinators.Make (Fut)
-module Exec = Abb_bounded_suspendable_executor.Make (Fut) (CCString)
+
+module Time = struct
+  let time () = Fut.return (Unix.gettimeofday ())
+  let monotonic () = Fut.return (Unix.gettimeofday ())
+end
+
+module Exec = Abb_bounded_suspendable_executor.Make (Fut) (CCString) (Time)
 
 let dummy_state = Abb_fut.State.create ()
 

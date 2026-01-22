@@ -258,6 +258,7 @@ let migrations =
     ("add-kv-store-caps", run_file_sql "2025-11-05-add-kv-store-caps.sql");
     ("refactor-work-manifests", run_file_sql "2025-07-24-refactor-work-manifests.sql");
     ("add-builder-tables", run_file_sql "2025-07-24-add-builder-tables.sql");
+    ("add-drift-branch", run_file_sql "2026-01-08-add-drift-branch.sql");
   ]
 
 let run config storage = Mig.run { Migrate.config; storage; tx = () } migrations

@@ -1,4 +1,4 @@
-module Exec : module type of Abb_bounded_suspendable_executor.Make (Abb.Future) (CCString)
+module Exec : module type of Abb_bounded_suspendable_executor.Make (Abb.Future) (CCString) (Abb.Sys)
 
 (** Builder defines all of the state, error messages, keys, and functionality to build. The usage
     is:

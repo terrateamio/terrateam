@@ -2,6 +2,10 @@ let src = Logs.Src.create "storage"
 
 module Logs = (val Logs.src_log src : Logs.LOG)
 
+module Queue_time_histogram = Prmths.Histogram (struct
+  let spec = Prmths.Histogram_spec.of_list [ 0.01; 0.1; 0.25; 0.5; 1.0; 2.5; 5.0; 7.5; 10.0; 15.0 ]
+end)
+
 module Metrics = struct
   let namespace = "terrat"
   let subsystem = "storage"
@@ -13,13 +17,18 @@ module Metrics = struct
   let num_idle_conns =
     let help = "Number of idle connections" in
     Prmths.Gauge.v ~help ~namespace ~subsystem "num_idle_conns"
+
+  let queue_time =
+    let help = "Time spent waiting for a connection from the pool" in
+    Queue_time_histogram.v ~help ~namespace ~subsystem "queue_time"
 end
 
 type t = Pgsql_pool.t
 
-let metrics Pgsql_pool.Metrics.{ num_conns; idle_conns } =
+let metrics Pgsql_pool.Metrics.{ num_conns; idle_conns; queue_time } =
   Prmths.Gauge.set Metrics.num_conns (CCFloat.of_int num_conns);
   Prmths.Gauge.set Metrics.num_idle_conns (CCFloat.of_int idle_conns);
+  CCOption.iter (Queue_time_histogram.observe Metrics.queue_time) queue_time;
   Abbs_future_combinators.unit
 
 let on_connect idle_tx_timeout conn =

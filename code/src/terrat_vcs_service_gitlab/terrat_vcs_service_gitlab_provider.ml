@@ -5217,36 +5217,6 @@ module Job_context = struct
         /^ read "select_job_by_work_manifest_id.sql"
         /% Var.uuid "work_manifest")
 
-    let select_job_by_work_manifest_id_lock =
-      Pgsql_io.Typed_sql.(
-        sql
-        //
-        (* id *)
-        Ret.uuid
-        //
-        (* context_id *)
-        Ret.uuid
-        //
-        (* type *)
-        Ret.(ud' Type_.of_json)
-        //
-        (* state *)
-        Ret.(ud' state_of_string)
-        //
-        (* initiator *)
-        Ret.(option (ud' initiator_of_string))
-        //
-        (* created_at *)
-        Ret.text
-        //
-        (* updated_at *)
-        Ret.text
-        //
-        (* completed_at *)
-        Ret.(option text)
-        /^ read "select_job_by_work_manifest_id_lock.sql"
-        /% Var.uuid "work_manifest")
-
     let update_job_state =
       Pgsql_io.Typed_sql.(
         sql
@@ -5532,13 +5502,9 @@ module Job_context = struct
     let query_all_by_context_id ~request_id db ~context_id () = raise (Failure "nyi")
     let query_pending_by_context_id ~request_id db ~context_id () = raise (Failure "nyi")
 
-    let query_by_work_manifest_id ?(lock = false) ~request_id db ~work_manifest_id () =
+    let query_by_work_manifest_id ~request_id db ~work_manifest_id () =
       let run =
         let open Abbs_future_combinators.Infix_result_monad in
-        let sql =
-          if lock then Sql.select_job_by_work_manifest_id_lock
-          else Sql.select_job_by_work_manifest_id
-        in
         Pgsql_io.Prepared_stmt.fetch
           db
           Sql.select_job_by_work_manifest_id

@@ -3,7 +3,11 @@ module Irm = Fc.Infix_result_monad
 module Tjc = Terrat_job_context
 module Msg = Terrat_vcs_provider2.Msg
 module P2 = Terrat_vcs_provider2
-module Exec = Abb_bounded_suspendable_executor.Make (Abb.Future) (CCString)
+module Exec = Abb_bounded_suspendable_executor.Make (Abb.Future) (CCString) (Abb.Sys)
+
+module Queue_time_histogram = Prmths.Histogram (struct
+  let spec = Prmths.Histogram_spec.of_list [ 0.01; 0.1; 0.25; 0.5; 1.0; 2.5; 5.0; 7.5; 10.0; 15.0 ]
+end)
 
 module Metrics = struct
   let namespace = "terrat"
@@ -20,6 +24,10 @@ module Metrics = struct
   let tasks_concurrent_max =
     let help = "Maximum number of concurrent tasks running" in
     Prmths.Gauge.v ~help ~namespace ~subsystem "tasks_concurrent_max"
+
+  let queue_time =
+    let help = "Time spent waiting in the task queue" in
+    Queue_time_histogram.v ~help ~namespace ~subsystem "queue_time"
 end
 
 module Exec_logger = struct
@@ -74,6 +82,7 @@ module Exec_logger = struct
       suspend_task = CCFun.const ();
       unsuspend_task = CCFun.const ();
       enqueue = CCFun.const ();
+      queue_time = Queue_time_histogram.observe Metrics.queue_time;
     }
 end
 
@@ -310,7 +319,31 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                 let open Irm in
                 log_err ~request_id @@ tx_safe ~request_id @@ Builder.eval s Keys.iter_job
                 >>= fun r -> Abb.Future.return (Ok (s, r))))
-        >>= function
+        >>= fun iter_result ->
+        (* Call maybe_complete_job in a separate transaction *)
+        with_conn storage ~f:(fun db ->
+            Pgsql_io.tx db ~f:(fun () ->
+                match iter_result with
+                | Ok (s, _) ->
+                    let store = store |> Keys.Key.add Keys.job job in
+                    let open Abb.Future.Infix_monad in
+                    let store = store |> Tasks_base.forward_std_keys s in
+                    Builder.State.make
+                      ~log_id:(Builder.mk_log_id ~request_id job.Tjc.Job.id)
+                      ~config
+                      ~store
+                      ~db
+                      ~exec
+                      ~tasks:(Tasks_pr.tasks tasks)
+                      ()
+                    >>= fun s' ->
+                    let open Irm in
+                    log_err ~request_id
+                    @@ tx_safe ~request_id
+                    @@ Builder.eval s' Keys.maybe_complete_job
+                | Error _ -> Abb.Future.return (Ok `Noop)))
+        >>= fun _ ->
+        match iter_result with
         | Ok (s, `Ok _) ->
             with_conn storage ~f:(fun db ->
                 Pgsql_io.tx db ~f:(fun () ->
@@ -329,7 +362,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                     log_err ~request_id @@ tx_safe ~request_id @@ Builder.eval s Keys.run_next_layer))
         | Ok (_, ((`Suspend_eval _ | `Noop) as r)) -> Abb.Future.return (Ok r)
         | Error err ->
-            let open Irm in
             Logs.info (fun m ->
                 m
                   "%s : JOB : FAILED : job_id= %a : %a"
@@ -338,13 +370,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                   job.Tjc.Job.id
                   Builder.pp_err
                   err);
-            with_conn storage ~f:(fun db ->
-                S.Job_context.Job.update_state
-                  ~request_id
-                  ~job_id:job.Tjc.Job.id
-                  db
-                  Tjc.Job.State.Failed)
-            >>= fun () -> Abb.Future.return (Ok `Noop))
+            Abb.Future.return (Ok `Noop))
       ~finally:(fun () ->
         Fc.ignore
         @@ Abb.Future.fork
@@ -578,13 +604,13 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           with_conn storage ~f:(fun db ->
               Pgsql_io.tx db ~f:(fun () ->
                   let open Irm in
-                  query_work_manifest db
-                  >>= fun work_manifest ->
-                  query_compute_node db
-                  >>= fun compute_node ->
                   query_job db
                   >>= function
                   | Some job ->
+                      query_work_manifest db
+                      >>= fun work_manifest ->
+                      query_compute_node db
+                      >>= fun compute_node ->
                       let work_manifest_event =
                         Keys.Work_manifest_event.Result { work_manifest; result }
                       in
@@ -861,7 +887,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           else Abb.Future.return (Ok ())
     in
     Fc.with_finally
-      (fun () -> Fc.ignore @@ log_err ~request_id run)
+      (fun () -> Fc.ignore @@ Abb.Future.fork @@ log_err ~request_id run)
       ~finally:(fun () ->
         Fc.ignore
         @@ Abb.Future.fork

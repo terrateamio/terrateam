@@ -1,4 +1,7 @@
-module Make (Fut : Abb_intf.Future.S) (Key : Map.OrderedType) : sig
+module Make
+    (Fut : Abb_intf.Future.S)
+    (Key : Map.OrderedType)
+    (Time : Abb_time.Time_make(Fut).S) : sig
   type t
 
   module Logger : sig
@@ -11,6 +14,7 @@ module Make (Fut : Abb_intf.Future.S) (Key : Map.OrderedType) : sig
       suspend_task : Key.t list -> unit;
       unsuspend_task : Key.t list -> unit;
       enqueue : Key.t list -> unit;
+      queue_time : float -> unit;
     }
   end
 
