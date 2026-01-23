@@ -150,12 +150,31 @@ struct
           Abb.Future.return
             (Ok
                (fun branch_ref checks ->
+                 (* When updating commit checks, mark the existing key as dirty. *)
+                 Builder.State.mark_dirty s Keys.commit_checks;
                  S.Api.create_commit_checks
                    ~request_id:(Builder.log_id s)
                    client
                    repo
                    branch_ref
                    checks)))
+
+    let commit_checks =
+      run ~name:"commit_checks" (fun s { Bs.Fetcher.fetch } ->
+          let open Irm in
+          fetch Keys.client
+          >>= fun client ->
+          fetch Keys.repo
+          >>= fun repo ->
+          fetch Keys.branch_ref
+          >>= fun branch_ref ->
+          Logs.info (fun m ->
+              m
+                "%s : FETCH_COMMIT_CHECKS : repo = %s : branch = %s"
+                (Builder.log_id s)
+                (S.Api.Repo.to_string repo)
+                (S.Api.Ref.to_string branch_ref));
+          S.Api.fetch_commit_checks ~request_id:(Builder.log_id s) client repo branch_ref)
 
     let branch_name =
       run ~name:"branch_name" (fun s { Bs.Fetcher.fetch } ->
@@ -555,24 +574,10 @@ struct
           match S.Api.Pull_request.state pull_request with
           | Pr.State.Closed ->
               Logs.info (fun m -> m "%s : NOOP : PR_CLOSED" (Builder.log_id s));
-              fetch Keys.client
-              >>= fun client ->
-              fetch Keys.repo
-              >>= fun repo ->
+              fetch Keys.commit_checks
+              >>= fun commit_checks ->
               fetch Keys.branch_ref
               >>= fun branch_ref ->
-              time_it
-                s
-                (fun m log_id time ->
-                  m
-                    "%s : FETCH_COMMIT_CHECKS : repo = %s : branch = %s : time=%f"
-                    log_id
-                    (S.Api.Repo.to_string repo)
-                    (S.Api.Ref.to_string branch_ref)
-                    time)
-                (fun () ->
-                  S.Api.fetch_commit_checks ~request_id:(Builder.log_id s) client repo branch_ref)
-              >>= fun commit_checks ->
               let module Ch = Terrat_commit_check in
               let unfinished_checks =
                 CCList.filter_map
@@ -1206,8 +1211,10 @@ struct
             >>= fun _ ->
             fetch Keys.store_stacks
             >>= fun () ->
-            Abbs_future_combinators.Infix_result_app.(
-              (fun () () () () () () () () () () -> ())
+            fetch Keys.check_dirspaces_to_plan
+            >>= fun () ->
+            Fc.Infix_result_app.(
+              (fun () () () () () () () () () -> ())
               <$> fetch Keys.check_access_control_ci_change
               <*> fetch Keys.check_access_control_files
               <*> fetch Keys.check_access_control_repo_config
@@ -1216,8 +1223,7 @@ struct
               <*> fetch Keys.check_account_status_expired
               <*> fetch Keys.check_account_tier
               <*> fetch Keys.check_merge_conflict
-              <*> fetch Keys.check_conflicting_plan_work_manifests
-              <*> fetch Keys.check_dirspaces_to_plan)
+              <*> fetch Keys.check_conflicting_plan_work_manifests)
           in
           let open Abb.Future.Infix_monad in
           run
@@ -1255,8 +1261,15 @@ struct
             let open Irm in
             fetch Keys.check_pull_request_state
             >>= fun () ->
-            Abbs_future_combinators.Infix_result_app.(
-              (fun () () () () () () () () () () () () _ _ _ -> ())
+            (* Building these two happens to build all sorts of useful
+               dependencies for us, so build those first so the rest can
+               efficiently be done concurrently. *)
+            Fc.Result.all2 (fetch Keys.branch_dirspaces) (fetch Keys.dest_branch_dirspaces)
+            >>= fun _ ->
+            fetch Keys.check_dirspaces_to_apply
+            >>= fun () ->
+            Fc.Infix_result_app.(
+              (fun () () () () () () () () () () () _ -> ())
               <$> fetch Keys.check_access_control_ci_change
               <*> fetch Keys.check_access_control_apply
               <*> fetch Keys.check_access_control_files
@@ -1266,13 +1279,9 @@ struct
               <*> fetch Keys.check_conflicting_apply_work_manifests
               <*> fetch Keys.check_dirspaces_missing_plans
               <*> fetch Keys.check_dirspaces_owned_by_other_pull_requests
-              <*> fetch Keys.check_dirspaces_to_apply
               <*> fetch Keys.check_gates
               <*> fetch Keys.check_merge_conflict
-              <*> fetch Keys.check_apply_requirements
-              (* Ensure that various information is built before trying to run the plan *)
-              <*> fetch Keys.branch_dirspaces
-              <*> fetch Keys.dest_branch_dirspaces)
+              <*> fetch Keys.check_apply_requirements)
           in
           let open Abb.Future.Infix_monad in
           run
@@ -1364,7 +1373,8 @@ struct
               let log_id = Builder.mk_log_id ~request_id:(Builder.log_id s) job.Tjc.Job.id in
               Logs.info (fun m ->
                   m
-                    "%s : target=%s : context_id=%a : log_id= %s : job_type=%a"
+                    "%s : EVENT : PULL_REQUEST : target=%s : context_id=%a : log_id= %s : \
+                     job_type=%a"
                     (Builder.log_id s)
                     (Hmap.Key.info Keys.iter_job)
                     Uuidm.pp
@@ -1442,6 +1452,7 @@ struct
     |> Hmap.add (coerce Keys.check_merge_conflict) Tasks.check_merge_conflict
     |> Hmap.add (coerce Keys.check_pull_request_state) Tasks.check_pull_request_state
     |> Hmap.add (coerce Keys.comment_id) Tasks.comment_id
+    |> Hmap.add (coerce Keys.commit_checks) Tasks.commit_checks
     |> Hmap.add (coerce Keys.create_commit_checks) Tasks.create_commit_checks
     |> Hmap.add (coerce Keys.dest_branch_name) Tasks.dest_branch_name
     |> Hmap.add (coerce Keys.dest_branch_ref) Tasks.dest_branch_ref

@@ -9,6 +9,10 @@ struct
 
   module Logs = (val Logs.src_log src : Logs.LOG)
   module Builder = Terrat_vcs_event_evaluator2_builder.Make (S)
+
+  let time_it s l f =
+    Abbs_time_it.run (fun time -> Logs.info (fun m -> l m (Builder.log_id s) time)) f
+
   module Bs = Builder.Bs
   module Wm_sm = Terrat_vcs_event_evaluator2_wm_sm.Make (S) (Keys)
   module Wm = Terrat_work_manifest3
@@ -46,7 +50,11 @@ struct
     fetch Keys.account
     >>= fun account ->
     Builder.run_db s ~f:(fun db ->
-        S.Db.query_repo_config_json ~request_id:(Builder.log_id s) db account branch_ref)
+        time_it
+          s
+          (fun m log_id time -> m "%s : QUERY_REPO_CONFIG_JSON : time=%f" log_id time)
+          (fun () ->
+            S.Db.query_repo_config_json ~request_id:(Builder.log_id s) db account branch_ref))
     >>= function
     | None ->
         fetch Keys.repo
@@ -77,7 +85,10 @@ struct
           }
         in
         Builder.run_db s ~f:(fun db ->
-            S.Work_manifest.create ~request_id:(Builder.log_id s) db work_manifest)
+            time_it
+              s
+              (fun m log_id time -> m "%s : WORK_MANIFEST : CREATE : time=%f" log_id time)
+              (fun () -> S.Work_manifest.create ~request_id:(Builder.log_id s) db work_manifest))
         >>= fun work_manifest ->
         fetch Keys.branch_ref
         >>= fun branch_ref ->
@@ -98,7 +109,28 @@ struct
         >>= fun create_commit_checks ->
         create_commit_checks' create_commit_checks branch_ref [ check ]
         >>= fun () -> Abb.Future.return (Ok [ work_manifest ])
-    | Some _ -> Abb.Future.return (Ok [])
+    | Some _ ->
+        fetch Keys.commit_checks
+        >>= fun commit_checks ->
+        fetch Keys.branch_ref
+        >>= fun branch_ref ->
+        fetch Keys.branch_name
+        >>= fun branch_name ->
+        let module Ch = Terrat_commit_check in
+        let check_title = status_name ~branch ~branch_name in
+        let unfinished_checks =
+          CCList.filter_map
+            (function
+              | { Ch.status = Ch.Status.(Completed | Failed | Canceled); _ } -> None
+              | { Ch.status = Ch.Status.(Queued | Running); title; _ } as c when title = check_title
+                -> Some { c with Ch.status = Ch.Status.Completed; description = "Completed" }
+              | _ -> None)
+            commit_checks
+        in
+        fetch Keys.create_commit_checks
+        >>= fun create_commit_checks ->
+        create_commit_checks' create_commit_checks branch_ref unfinished_checks
+        >>= fun () -> Abb.Future.return (Ok [])
 
   let initiate ~branch ({ Wm.id; _ } as work_manifest) s { Bs.Fetcher.fetch } =
     let open Irm in
@@ -140,7 +172,11 @@ struct
     fetch repo_config_raw'
     >>= fun (_, repo_config_raw) ->
     Builder.run_db s ~f:(fun db ->
-        Wm_sm.create_token' ~log_id:(Builder.log_id s) (S.Api.Account.id account) id db)
+        time_it
+          s
+          (fun m log_id time -> m "%s : CREATE_TOKEN : wm=%a : time=%f" log_id Uuidm.pp id time)
+          (fun () ->
+            Wm_sm.create_token' ~log_id:(Builder.log_id s) (S.Api.Account.id account) id db))
     >>= fun token ->
     (* FIX: Index *)
     let index = None in
@@ -239,12 +275,16 @@ struct
             fetch Keys.account
             >>= fun account ->
             Builder.run_db s ~f:(fun db ->
-                S.Db.store_repo_config_json
-                  ~request_id:(Builder.log_id s)
-                  db
-                  account
-                  branch_ref
-                  config)
+                time_it
+                  s
+                  (fun m log_id time -> m "%s : STORE_REPO_CONFIG_JSON : time=%f" log_id time)
+                  (fun () ->
+                    S.Db.store_repo_config_json
+                      ~request_id:(Builder.log_id s)
+                      db
+                      account
+                      branch_ref
+                      config))
             >>= fun () ->
             fetch Keys.repo
             >>= fun repo ->

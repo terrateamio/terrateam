@@ -458,6 +458,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       (S.Api.Ref.t -> Terrat_commit_check.t list -> (unit, [ `Error ]) result Abb.Future.t) Key.t =
     Hmap.Key.create "create_commit_checks"
 
+  let commit_checks : Terrat_commit_check.t list Key.t = Hmap.Key.create "commit_checks"
   let publish_dest_branch_no_match : unit Key.t = Hmap.Key.create "publish_dest_branch_no_match"
 
   (* Context management *)

@@ -282,6 +282,8 @@ struct
           Builder.run_db s ~f:(fun db ->
               S.Api.create_client ~request_id:(Builder.log_id s) (Builder.State.config s) account db))
 
+    let commit_checks = run ~name:"commit_checks" (fun _s _ -> Abb.Future.return (Ok []))
+
     let context_id =
       run ~name:"context_id" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
@@ -2446,12 +2448,12 @@ struct
           fetch Keys.work_manifest_event
           >>= function
           | Some event -> (
-              let work_manifest =
+              let work_manifest, event_type =
+                let module E = Keys.Work_manifest_event in
                 match event with
-                | Keys.Work_manifest_event.(
-                    ( Initiate { work_manifest; _ }
-                    | Fail { work_manifest; _ }
-                    | Result { work_manifest; _ } )) -> work_manifest
+                | E.Initiate { work_manifest; _ } -> (work_manifest, "INITIATE")
+                | E.Fail { work_manifest; _ } -> (work_manifest, "FAIL")
+                | E.Result { work_manifest; _ } -> (work_manifest, "RESULT")
               in
               fetch Keys.work_manifest_event_job
               >>= function
@@ -2465,8 +2467,10 @@ struct
                   let context = job.Tjc.Job.context in
                   Logs.info (fun m ->
                       m
-                        "%s : context_id=%a : log_id= %s : initiator=%s"
+                        "%s : EVENT : WORK_MANIFEST : %s : context_id=%a : log_id= %s : \
+                         initiator=%s"
                         (Builder.log_id s)
+                        event_type
                         Uuidm.pp
                         context.Tjc.Context.id
                         log_id
@@ -2494,25 +2498,33 @@ struct
     let iter_job =
       run ~name:"iter_job" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
-          fetch Keys.job
-          >>= fun job ->
-          match job.Tjc.Job.type_ with
-          | Tjc.Job.Type_.Apply _ | Tjc.Job.Type_.Autoapply -> fetch Keys.run_apply
-          | Tjc.Job.Type_.Autoplan | Tjc.Job.Type_.Plan _ ->
-              fetch Keys.run_plan
-              >>= fun () ->
-              let s' =
-                s
-                |> Builder.State.orig_store
-                |> Tasks_base.forward_std_keys s
-                |> CCFun.flip Builder.State.set_orig_store s
-              in
-              Builder.eval s' Keys.complete_no_change_dirspaces
-          | Tjc.Job.Type_.Repo_config -> fetch Keys.publish_repo_config
-          | Tjc.Job.Type_.Unlock _ -> fetch Keys.publish_unlock
-          | Tjc.Job.Type_.Index -> fetch Keys.publish_index_complete
-          | Tjc.Job.Type_.Push -> fetch Keys.eval_push_event
-          | Tjc.Job.Type_.Gate_approval _ -> fetch Keys.store_gate_approval)
+          fetch Keys.repo_config_raw'
+          >>= fun (_, repo_config) ->
+          let module V1 = Terrat_base_repo_config_v1 in
+          match V1.enabled repo_config with
+          | true -> (
+              fetch Keys.job
+              >>= fun job ->
+              match job.Tjc.Job.type_ with
+              | Tjc.Job.Type_.Apply _ | Tjc.Job.Type_.Autoapply -> fetch Keys.run_apply
+              | Tjc.Job.Type_.Autoplan | Tjc.Job.Type_.Plan _ ->
+                  fetch Keys.run_plan
+                  >>= fun () ->
+                  let s' =
+                    s
+                    |> Builder.State.orig_store
+                    |> Tasks_base.forward_std_keys s
+                    |> CCFun.flip Builder.State.set_orig_store s
+                  in
+                  Builder.eval s' Keys.complete_no_change_dirspaces
+              | Tjc.Job.Type_.Repo_config -> fetch Keys.publish_repo_config
+              | Tjc.Job.Type_.Unlock _ -> fetch Keys.publish_unlock
+              | Tjc.Job.Type_.Index -> fetch Keys.publish_index_complete
+              | Tjc.Job.Type_.Push -> fetch Keys.eval_push_event
+              | Tjc.Job.Type_.Gate_approval _ -> fetch Keys.store_gate_approval)
+          | false ->
+              Logs.info (fun m -> m "%s : DISABLED" (Builder.log_id s));
+              Abb.Future.return (Error `Noop))
 
     let eval_work_manifest_failure =
       run ~name:"eval_work_manifest_failure" (fun s { Bs.Fetcher.fetch } ->
@@ -3126,6 +3138,7 @@ struct
     |> Hmap.add (coerce Keys.check_account_tier) Tasks.check_account_tier
     |> Hmap.add (coerce Keys.check_valid_destination_branch) Tasks.check_valid_destination_branch
     |> Hmap.add (coerce Keys.client) Tasks.client
+    |> Hmap.add (coerce Keys.commit_checks) Tasks.commit_checks
     |> Hmap.add (coerce Keys.complete_no_change_dirspaces) Tasks.complete_no_change_dirspaces
     |> Hmap.add (coerce Keys.compute_node) Tasks.compute_node
     |> Hmap.add (coerce Keys.context) Tasks.context
