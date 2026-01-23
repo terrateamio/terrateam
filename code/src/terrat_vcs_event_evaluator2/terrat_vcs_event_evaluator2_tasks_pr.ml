@@ -97,6 +97,202 @@ struct
   let time_it s l f =
     Abbs_time_it.run (fun time -> Logs.info (fun m -> l m (Builder.log_id s) time)) f
 
+  let publish_comment s client user pull_request msg =
+    time_it
+      s
+      (fun m log_id time -> m "%s : PUBLISH_COMMENT : time=%f" log_id time)
+      (fun () ->
+        S.Comment.publish_comment
+          ~request_id:(Builder.log_id s)
+          client
+          (CCOption.map_or ~default:"" S.Api.User.to_string user)
+          pull_request
+          msg)
+
+  let query_pull_request_out_of_change_applies s db pull_request =
+    time_it
+      s
+      (fun m log_id time ->
+        m
+          "%s : QUERY_PULL_REQUEST_OUT_OF_CHANGE_APPLIES : pull_request_id = %s : time=%f"
+          log_id
+          (S.Api.Pull_request.Id.to_string @@ S.Api.Pull_request.id pull_request)
+          time)
+      (fun () ->
+        S.Db.query_pull_request_out_of_change_applies ~request_id:(Builder.log_id s) db pull_request)
+
+  let query_dirspaces_without_valid_plans s db pull_request dirspaces =
+    time_it
+      s
+      (fun m log_id time ->
+        m
+          "%s : QUERY_DIRSPACES_WITHOUT_VALID_PLANS : pull_request_id = %s : time=%f"
+          log_id
+          (S.Api.Pull_request.Id.to_string @@ S.Api.Pull_request.id pull_request)
+          time)
+      (fun () ->
+        S.Db.query_dirspaces_without_valid_plans
+          ~request_id:(Builder.log_id s)
+          db
+          pull_request
+          dirspaces)
+
+  let query_index s db account branch_ref =
+    time_it
+      s
+      (fun m log_id time ->
+        m
+          "%s : QUERY_INDEX : account = %s : branch = %s : time=%f"
+          log_id
+          (S.Api.Account.to_string account)
+          (S.Api.Ref.to_string branch_ref)
+          time)
+      (fun () -> S.Db.query_index ~request_id:(Builder.log_id s) db account branch_ref)
+
+  let unlock s db repo unlock_ids =
+    time_it
+      s
+      (fun m log_id time ->
+        m "%s : UNLOCk : repo = %s : time=%f" log_id (S.Api.Repo.to_string repo) time)
+      (fun () ->
+        Abbs_future_combinators.List_result.iter
+          ~f:(S.Db.unlock ~request_id:(Builder.log_id s) db repo)
+          unlock_ids)
+
+  let react_to_comment s client pull_request comment_id =
+    time_it
+      s
+      (fun m log_id time ->
+        m
+          "%s : REACT_TO_COMMENT : pull_request_id = %s : time=%f"
+          log_id
+          (S.Api.Pull_request.Id.to_string @@ S.Api.Pull_request.id pull_request)
+          time)
+      (fun () ->
+        S.Api.react_to_comment ~request_id:(Builder.log_id s) client pull_request comment_id)
+
+  let fetch_pull_request s account client repo pull_request_id =
+    time_it
+      s
+      (fun m log_id time ->
+        m
+          "%s : FETCH_PULL_REQUEST : repo = %s : pull_request_id = %s : time=%f"
+          log_id
+          (S.Api.Repo.to_string repo)
+          (S.Api.Pull_request.Id.to_string pull_request_id)
+          time)
+      (fun () ->
+        S.Api.fetch_pull_request ~request_id:(Builder.log_id s) account client repo pull_request_id)
+
+  let query_repo_tree s db account branch_ref dest_branch_ref =
+    time_it
+      s
+      (fun m log_id time ->
+        m
+          "%s : QUERY_REPO_TREE : account = %s : branch = %s : time=%f"
+          log_id
+          (S.Api.Account.to_string account)
+          (S.Api.Ref.to_string branch_ref)
+          time)
+      (fun () ->
+        S.Db.query_repo_tree
+          ~request_id:(Builder.log_id s)
+          ~base_ref:dest_branch_ref
+          db
+          account
+          branch_ref)
+
+  let store_pull_request s db pull_request =
+    time_it
+      s
+      (fun m log_id time ->
+        m
+          "%s : STORE_PULL_REQUEST : pull_request_id = %s : time=%f"
+          log_id
+          (S.Api.Pull_request.Id.to_string @@ S.Api.Pull_request.id pull_request)
+          time)
+      (fun () -> S.Db.store_pull_request ~request_id:(Builder.log_id s) db pull_request)
+
+  let query_conflicting_work_manifests s db context dirspaces op =
+    time_it
+      s
+      (fun m log_id time ->
+        m
+          "%s : QUERY_CONFLICTING_WORK_MANIFESTS : context_id = %a : time=%f"
+          log_id
+          Uuidm.pp
+          context.Tjc.Context.id
+          time)
+      (fun () ->
+        S.Db.query_conflicting_work_manifests_in_repo_for_context
+          ~request_id:(Builder.log_id s)
+          db
+          context
+          dirspaces
+          op)
+
+  let fetch_pull_request_reviews s client repo pull_request =
+    time_it
+      s
+      (fun m log_id time ->
+        m
+          "%s : FETCH_PULL_REQUEST_REVIEWS : repo = %s : pull_request_id = %s : time=%f"
+          log_id
+          (S.Api.Repo.to_string repo)
+          (S.Api.Pull_request.Id.to_string @@ S.Api.Pull_request.id pull_request)
+          time)
+      (fun () ->
+        S.Api.fetch_pull_request_reviews
+          ~request_id:(Builder.log_id s)
+          repo
+          (S.Api.Pull_request.id pull_request)
+          client)
+
+  let gate_eval s db client pull_request dirspaces =
+    time_it
+      s
+      (fun m log_id time ->
+        m
+          "%s : GATE : EVAL : pull_request_id = %s : time=%f"
+          log_id
+          (S.Api.Pull_request.Id.to_string @@ S.Api.Pull_request.id pull_request)
+          time)
+      (fun () -> S.Gate.eval ~request_id:(Builder.log_id s) client dirspaces pull_request db)
+
+  let query_dirspaces_owned_by_other_pull_requests s db pull_request dirspaces =
+    time_it
+      s
+      (fun m log_id time ->
+        m
+          "%s : QUERY_DIRSPACES_OWNED_BY_OTHER_PULL_REQUESTS : pull_request_id = %s : time=%f"
+          log_id
+          (S.Api.Pull_request.Id.to_string @@ S.Api.Pull_request.id pull_request)
+          time)
+      (fun () ->
+        S.Db.query_dirspaces_owned_by_other_pull_requests
+          ~request_id:(Builder.log_id s)
+          db
+          pull_request
+          dirspaces)
+
+  let store_stacks s db account repo pull_request config =
+    time_it
+      s
+      (fun m log_id time ->
+        m
+          "%s : STACKS : STORE : pull_request_id = %s : time=%f"
+          log_id
+          (S.Api.Pull_request.Id.to_string @@ S.Api.Pull_request.id pull_request)
+          time)
+      (fun () ->
+        S.Stacks.store
+          ~request_id:(Builder.log_id s)
+          ~installation_id:(S.Api.Account.id account)
+          ~repo_id:(S.Api.Repo.id repo)
+          ~pull_request_id:(S.Api.Pull_request.id pull_request)
+          config
+          db)
+
   module Tasks = struct
     let run = Tasks_base.run
 
@@ -124,19 +320,7 @@ struct
           >>= fun pull_request ->
           fetch Keys.user
           >>= fun user ->
-          Abb.Future.return
-            (Ok
-               (fun msg ->
-                 time_it
-                   s
-                   (fun m log_id time -> m "%s : PUBLISH_COMMENT : time=%f" log_id time)
-                   (fun () ->
-                     S.Comment.publish_comment
-                       ~request_id:(Builder.log_id s)
-                       client
-                       (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                       pull_request
-                       msg))))
+          Abb.Future.return (Ok (fun msg -> publish_comment s client user pull_request msg)))
 
     let create_commit_checks =
       run ~name:"create_commit_checks" (fun s { Bs.Fetcher.fetch } ->
@@ -229,20 +413,7 @@ struct
           let open Irm in
           fetch Keys.pull_request
           >>= fun pull_request ->
-          Builder.run_db s ~f:(fun db ->
-              time_it
-                s
-                (fun m log_id time ->
-                  m
-                    "%s : QUERY_PULL_REQUEST_OUT_OF_CHANGE_APPLIES : pull_request_id = %s : time=%f"
-                    log_id
-                    (S.Api.Pull_request.Id.to_string @@ S.Api.Pull_request.id pull_request)
-                    time)
-                (fun () ->
-                  S.Db.query_pull_request_out_of_change_applies
-                    ~request_id:(Builder.log_id s)
-                    db
-                    pull_request)))
+          Builder.run_db s ~f:(fun db -> query_pull_request_out_of_change_applies s db pull_request))
 
     let changes = run ~name:"changes" (fun _s { Bs.Fetcher.fetch } -> fetch Keys.pull_request_diff)
 
@@ -256,21 +427,11 @@ struct
             (Ok
                (fun matches ->
                  Builder.run_db s ~f:(fun db ->
-                     time_it
+                     query_dirspaces_without_valid_plans
                        s
-                       (fun m log_id time ->
-                         m
-                           "%s : QUERY_DIRSPACES_WITHOUT_VALID_PLANS : pull_request_id = %s : \
-                            time=%f"
-                           log_id
-                           (S.Api.Pull_request.Id.to_string @@ S.Api.Pull_request.id pull_request)
-                           time)
-                       (fun () ->
-                         S.Db.query_dirspaces_without_valid_plans
-                           ~request_id:(Builder.log_id s)
-                           db
-                           pull_request
-                           (CCList.map (fun { Dc.dirspace; _ } -> dirspace) matches)))
+                       db
+                       pull_request
+                       (CCList.map (fun { Dc.dirspace; _ } -> dirspace) matches))
                  >>= fun dirspaces ->
                  let dirspaces = Terrat_data.Dirspace_set.of_list dirspaces in
                  Abb.Future.return
@@ -297,17 +458,7 @@ struct
           fetch Keys.branch_ref
           >>= fun branch_ref ->
           Logs.info (fun m -> m "%s : FETCHING_INDEX" (Builder.log_id s));
-          Builder.run_db s ~f:(fun db ->
-              time_it
-                s
-                (fun m log_id time ->
-                  m
-                    "%s : QUERY_INDEX : account = %s : branch = %s : time=%f"
-                    log_id
-                    (S.Api.Account.to_string account)
-                    (S.Api.Ref.to_string branch_ref)
-                    time)
-                (fun () -> S.Db.query_index ~request_id:(Builder.log_id s) db account branch_ref))
+          Builder.run_db s ~f:(fun db -> query_index s db account branch_ref)
           >>= function
           | Some { I.success; failures; _ } -> (
               (* TODO: Construct include base branch index information as well, if it was generated *)
@@ -370,19 +521,7 @@ struct
             >>= function
             | None ->
                 let open Irm in
-                Builder.run_db s ~f:(fun db ->
-                    time_it
-                      s
-                      (fun m log_id time ->
-                        m
-                          "%s : UNLOCk : repo = %s : time=%f"
-                          log_id
-                          (S.Api.Repo.to_string repo)
-                          time)
-                      (fun () ->
-                        Abbs_future_combinators.List_result.iter
-                          ~f:(S.Db.unlock ~request_id:(Builder.log_id s) db repo)
-                          unlock_ids))
+                Builder.run_db s ~f:(fun db -> unlock s db repo unlock_ids)
                 >>= fun () -> publish_comment' publish_comment Msg.Unlock_success
             | Some match_list ->
                 publish_comment'
@@ -433,21 +572,7 @@ struct
           >>= function
           | Some comment_id ->
               Fc.Result.all2 (fetch Keys.pull_request) (fetch Keys.client)
-              >>= fun (pull_request, client) ->
-              time_it
-                s
-                (fun m log_id time ->
-                  m
-                    "%s : REACT_TO_COMMENT : pull_request_id = %s : time=%f"
-                    log_id
-                    (S.Api.Pull_request.Id.to_string @@ S.Api.Pull_request.id pull_request)
-                    time)
-                (fun () ->
-                  S.Api.react_to_comment
-                    ~request_id:(Builder.log_id s)
-                    client
-                    pull_request
-                    comment_id)
+              >>= fun (pull_request, client) -> react_to_comment s client pull_request comment_id
           | None -> Abb.Future.return (Ok ()))
 
     let pull_request =
@@ -459,22 +584,7 @@ struct
             (fetch Keys.client)
             (fetch Keys.pull_request_id)
           >>= fun (account, repo, client, pull_request_id) ->
-          time_it
-            s
-            (fun m log_id time ->
-              m
-                "%s : FETCH_PULL_REQUEST : repo = %s : pull_request_id = %s : time=%f"
-                log_id
-                (S.Api.Repo.to_string repo)
-                (S.Api.Pull_request.Id.to_string pull_request_id)
-                time)
-            (fun () ->
-              S.Api.fetch_pull_request
-                ~request_id:(Builder.log_id s)
-                account
-                client
-                repo
-                pull_request_id))
+          fetch_pull_request s account client repo pull_request_id)
 
     let pull_request_diff =
       run ~name:"pull_request_diff" (fun s { Bs.Fetcher.fetch } ->
@@ -509,23 +619,7 @@ struct
             >>= fun dest_branch_ref ->
             Fc.Result.all2 (fetch Keys.repo_tree_branch) (fetch Keys.repo_tree_dest_branch)
             >>= fun (_, _) ->
-            Builder.run_db s ~f:(fun db ->
-                time_it
-                  s
-                  (fun m log_id time ->
-                    m
-                      "%s : QUERY_REPO_TREE : account = %s : branch = %s : time=%f"
-                      log_id
-                      (S.Api.Account.to_string account)
-                      (S.Api.Ref.to_string branch_ref)
-                      time)
-                  (fun () ->
-                    S.Db.query_repo_tree
-                      ~request_id:(Builder.log_id s)
-                      ~base_ref:dest_branch_ref
-                      db
-                      account
-                      branch_ref))
+            Builder.run_db s ~f:(fun db -> query_repo_tree s db account branch_ref dest_branch_ref)
             >>= function
             | Some repo_tree ->
                 Abb.Future.return
@@ -554,16 +648,7 @@ struct
                 "%s : STORE_PULL_REQUEST : pull_number=%s"
                 (Builder.log_id s)
                 (S.Api.Pull_request.Id.to_string @@ S.Api.Pull_request.id pull_request));
-          Builder.run_db s ~f:(fun db ->
-              time_it
-                s
-                (fun m log_id time ->
-                  m
-                    "%s : STORE_PULL_REQUEST : pull_request_id = %s : time=%f"
-                    log_id
-                    (S.Api.Pull_request.Id.to_string @@ S.Api.Pull_request.id pull_request)
-                    time)
-                (fun () -> S.Db.store_pull_request ~request_id:(Builder.log_id s) db pull_request)))
+          Builder.run_db s ~f:(fun db -> store_pull_request s db pull_request))
 
     let check_pull_request_state =
       run ~name:"check_pull_request_state" (fun s { Bs.Fetcher.fetch } ->
@@ -613,22 +698,7 @@ struct
           fetch Keys.context
           >>= fun context ->
           Builder.run_db s ~f:(fun db ->
-              time_it
-                s
-                (fun m log_id time ->
-                  m
-                    "%s : QUERY_CONFLICTING_WORK_MANIFESTS : context_id = %a : time=%f"
-                    log_id
-                    Uuidm.pp
-                    context.Tjc.Context.id
-                    time)
-                (fun () ->
-                  S.Db.query_conflicting_work_manifests_in_repo_for_context
-                    ~request_id:(Builder.log_id s)
-                    db
-                    context
-                    dirspaces
-                    `Plan))
+              query_conflicting_work_manifests s db context dirspaces `Plan)
           >>= function
           | None -> Abb.Future.return (Ok ())
           | Some (P2.Conflicting_work_manifests.Conflicting wms) ->
@@ -670,22 +740,7 @@ struct
           fetch Keys.repo
           >>= fun repo ->
           fetch Keys.pull_request
-          >>= fun pull_request ->
-          time_it
-            s
-            (fun m log_id time ->
-              m
-                "%s : FETCH_PULL_REQUEST_REVIEWS : repo = %s : pull_request_id = %s : time=%f"
-                log_id
-                (S.Api.Repo.to_string repo)
-                (S.Api.Pull_request.Id.to_string @@ S.Api.Pull_request.id pull_request)
-                time)
-            (fun () ->
-              S.Api.fetch_pull_request_reviews
-                ~request_id:(Builder.log_id s)
-                repo
-                (S.Api.Pull_request.id pull_request)
-                client))
+          >>= fun pull_request -> fetch_pull_request_reviews s client repo pull_request)
 
     let access_control_eval_plan =
       run ~name:"access_control_eval_plan" (fun s { Bs.Fetcher.fetch } ->
@@ -921,22 +976,13 @@ struct
               :> (R.t, [> Terrat_access_control2.err ]) result)
           >>= fun { Terrat_access_control2.R.pass = working_set_matches; _ } ->
           Builder.run_db s ~f:(fun db ->
-              time_it
+              query_dirspaces_without_valid_plans
                 s
-                (fun m log_id time ->
-                  m
-                    "%s : QUERY_DIRSPACES_WITHOUT_VALID_PLANS : pull_request_id = %s : time=%f"
-                    log_id
-                    (S.Api.Pull_request.Id.to_string @@ S.Api.Pull_request.id pull_request)
-                    time)
-                (fun () ->
-                  S.Db.query_dirspaces_without_valid_plans
-                    ~request_id:(Builder.log_id s)
-                    db
-                    pull_request
-                    (CCList.map
-                       (fun { Terrat_change_match3.Dirspace_config.dirspace; _ } -> dirspace)
-                       working_set_matches)))
+                db
+                pull_request
+                (CCList.map
+                   (fun { Terrat_change_match3.Dirspace_config.dirspace; _ } -> dirspace)
+                   working_set_matches))
           >>= function
           | [] -> Abb.Future.return (Ok ())
           | dirspaces -> (
@@ -1022,17 +1068,7 @@ struct
           >>= fun (client, pull_request, working_set_matches) ->
           let module Dc = Terrat_change_match3.Dirspace_config in
           let dirspaces = CCList.map (fun { Dc.dirspace; _ } -> dirspace) working_set_matches in
-          Builder.run_db s ~f:(fun db ->
-              time_it
-                s
-                (fun m log_id time ->
-                  m
-                    "%s : GATE : EVAL : pull_request_id = %s : time=%f"
-                    log_id
-                    (S.Api.Pull_request.Id.to_string @@ S.Api.Pull_request.id pull_request)
-                    time)
-                (fun () ->
-                  S.Gate.eval ~request_id:(Builder.log_id s) client dirspaces pull_request db))
+          Builder.run_db s ~f:(fun db -> gate_eval s db client pull_request dirspaces)
           >>= function
           | [] -> Abb.Future.return (Ok ())
           | denied ->
@@ -1049,21 +1085,11 @@ struct
           Abb.Future.return (H.dirspaceflows_of_changes repo_config (CCList.flatten all_matches))
           >>= fun all_match_dirspaceflows ->
           Builder.run_db s ~f:(fun db ->
-              time_it
+              query_dirspaces_owned_by_other_pull_requests
                 s
-                (fun m log_id time ->
-                  m
-                    "%s : QUERY_DIRSPACES_OWNED_BY_OTHER_PULL_REQUESTS : pull_request_id = %s : \
-                     time=%f"
-                    log_id
-                    (S.Api.Pull_request.Id.to_string @@ S.Api.Pull_request.id pull_request)
-                    time)
-                (fun () ->
-                  S.Db.query_dirspaces_owned_by_other_pull_requests
-                    ~request_id:(Builder.log_id s)
-                    db
-                    pull_request
-                    (CCList.map Terrat_change.Dirspaceflow.to_dirspace all_match_dirspaceflows)))
+                db
+                pull_request
+                (CCList.map Terrat_change.Dirspaceflow.to_dirspace all_match_dirspaceflows))
           >>= function
           | [] -> Abb.Future.return (Ok ())
           | owned_dirspaces ->
@@ -1175,23 +1201,7 @@ struct
           >>= fun repo ->
           fetch Keys.pull_request
           >>= fun pull_request ->
-          Builder.run_db s ~f:(fun db ->
-              time_it
-                s
-                (fun m log_id time ->
-                  m
-                    "%s : STACKS : STORE : pull_request_id = %s : time=%f"
-                    log_id
-                    (S.Api.Pull_request.Id.to_string @@ S.Api.Pull_request.id pull_request)
-                    time)
-                (fun () ->
-                  S.Stacks.store
-                    ~request_id:(Builder.log_id s)
-                    ~installation_id:(S.Api.Account.id account)
-                    ~repo_id:(S.Api.Repo.id repo)
-                    ~pull_request_id:(S.Api.Pull_request.id pull_request)
-                    config
-                    db)))
+          Builder.run_db s ~f:(fun db -> store_stacks s db account repo pull_request config))
 
     let can_run_plan =
       run ~name:"can_run_plan" (fun s { Bs.Fetcher.fetch } ->

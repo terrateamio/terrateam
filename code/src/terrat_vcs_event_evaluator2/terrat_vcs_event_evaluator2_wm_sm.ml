@@ -133,6 +133,73 @@ struct
           (Terrat_work_manifest3.State.to_string state));
     S.Work_manifest.update_state ~request_id db work_manifest_id state
 
+  let update_run_id s name id run_id db =
+    time_it
+      s
+      (fun m log_id time ->
+        m
+          "%s : WM : UPDATE_RUN_ID : name=%s : wm=%a : run_id=%s : time=%f"
+          log_id
+          name
+          Uuidm.pp
+          id
+          run_id
+          time)
+      (fun () ->
+        let open Irm in
+        S.Work_manifest.update_run_id ~request_id:(Builder.log_id s) db id run_id
+        >>= fun () -> update_wm_state ~request_id:(Builder.log_id s) ~name id Wm.State.Running db)
+
+  let set_work s compute_node_id id response db =
+    time_it
+      s
+      (fun m log_id time ->
+        m "%s : WM : SET_WORK : compute_node_id=%a : time=%f" log_id Uuidm.pp compute_node_id time)
+      (fun () ->
+        S.Job_context.Compute_node.set_work
+          ~request_id:(Builder.log_id s)
+          ~compute_node_id
+          ~work_manifest:id
+          db
+          response)
+
+  let update_state_completed s name work_manifest_id db =
+    time_it
+      s
+      (fun m log_id time ->
+        m
+          "%s : WM : UPDATE_STATE : COMPLETED : wm=%a : time=%f"
+          log_id
+          Uuidm.pp
+          work_manifest_id
+          time)
+      (fun () ->
+        update_wm_state ~request_id:(Builder.log_id s) ~name work_manifest_id Wm.State.Completed db)
+
+  let query_work_manifests s job_id db =
+    time_it
+      s
+      (fun m log_id time ->
+        m "%s : JOB : QUERY_WORK_MANIFESTS : job_id=%a : time=%f" log_id Uuidm.pp job_id time)
+      (fun () ->
+        S.Job_context.Job.query_work_manifests ~request_id:(Builder.log_id s) db ~job_id ())
+
+  let add_work_manifests s job_id wms db =
+    time_it
+      s
+      (fun m log_id time ->
+        m "%s : JOB : ADD_WORK_MANIFESTS : job_id=%a : time=%f" log_id Uuidm.pp job_id time)
+      (fun () ->
+        Abbs_future_combinators.List_result.iter
+          ~f:(fun { Wm.id = work_manifest_id; _ } ->
+            S.Job_context.Job.add_work_manifest
+              ~request_id:(Builder.log_id s)
+              db
+              ~job_id
+              ~work_manifest_id
+              ())
+          wms)
+
   let too_many_aborts wms =
     unreasonable_number_of_aborts
     < CCList.length
@@ -182,44 +249,13 @@ struct
            })
       when eq work_manifest ->
         Logs.info (fun m -> m "%s : WM : INITIATE : name=%s" (Builder.log_id s) name);
-        Builder.run_db s ~f:(fun db ->
-            time_it
-              s
-              (fun m log_id time ->
-                m
-                  "%s : WM : UPDATE_RUN_ID : name=%s : wm=%a : run_id=%s : time=%f"
-                  log_id
-                  name
-                  Uuidm.pp
-                  id
-                  run_id
-                  time)
-              (fun () ->
-                S.Work_manifest.update_run_id ~request_id:(Builder.log_id s) db id run_id
-                >>= fun () ->
-                update_wm_state ~request_id:(Builder.log_id s) ~name id Wm.State.Running db))
+        Builder.run_db s ~f:(fun db -> update_run_id s name id run_id db)
         >>= fun () ->
         initiate work_manifest s fetcher
         >>= fun response ->
         fetch Keys.compute_node_id
         >>= fun compute_node_id ->
-        Builder.run_db s ~f:(fun db ->
-            time_it
-              s
-              (fun m log_id time ->
-                m
-                  "%s : WM : SET_WORK : compute_node_id=%a : time=%f"
-                  log_id
-                  Uuidm.pp
-                  compute_node_id
-                  time)
-              (fun () ->
-                S.Job_context.Compute_node.set_work
-                  ~request_id:(Builder.log_id s)
-                  ~compute_node_id
-                  ~work_manifest:id
-                  db
-                  response))
+        Builder.run_db s ~f:(fun db -> set_work s compute_node_id id response db)
         >>= fun () -> Abb.Future.return (Error (`Suspend_eval name))
     | Some (E.Fail { work_manifest; error }) when eq work_manifest -> (
         Logs.info (fun m -> m "%s : WM : FAIL : name=%s" (Builder.log_id s) name);
@@ -236,45 +272,14 @@ struct
         Logs.info (fun m -> m "%s : WM : RESULT : name=%s" (Builder.log_id s) name);
         result work_manifest wm_result s fetcher
         >>= fun () ->
-        Builder.run_db s ~f:(fun db ->
-            time_it
-              s
-              (fun m log_id time ->
-                m
-                  "%s : WM : UPDATE_STATE : COMPLETED : wm=%a : time=%f"
-                  log_id
-                  Uuidm.pp
-                  work_manifest.Wm.id
-                  time)
-              (fun () ->
-                update_wm_state
-                  ~request_id:(Builder.log_id s)
-                  ~name
-                  work_manifest.Wm.id
-                  Wm.State.Completed
-                  db))
+        Builder.run_db s ~f:(fun db -> update_state_completed s name work_manifest.Wm.id db)
         >>= fun () ->
         fetch Keys.job
         >>= fun job ->
         (* Explicitly query the work manifests for this job because we might
            have already created work manifests in parallel operations so we
            don't need to do it again. *)
-        Builder.run_db s ~f:(fun db ->
-            time_it
-              s
-              (fun m log_id time ->
-                m
-                  "%s : JOB : QUERY_WORK_MANIFESTS : job_id=%a : time=%f"
-                  log_id
-                  Uuidm.pp
-                  job.Tjc.Job.id
-                  time)
-              (fun () ->
-                S.Job_context.Job.query_work_manifests
-                  ~request_id:(Builder.log_id s)
-                  db
-                  ~job_id:job.Tjc.Job.id
-                  ()))
+        Builder.run_db s ~f:(fun db -> query_work_manifests s job.Tjc.Job.id db)
         >>= function
         | wms when all_wms_completed @@ CCList.filter eq wms ->
             Logs.info (fun m ->
@@ -290,22 +295,7 @@ struct
         (* Explicitly query the work manifests for this job because we might
            have already created work manifests in parallel operations so we
            don't need to do it again. *)
-        Builder.run_db s ~f:(fun db ->
-            time_it
-              s
-              (fun m log_id time ->
-                m
-                  "%s : JOB : QUERY_WORK_MANIFESTS : job_id=%a : time=%f"
-                  log_id
-                  Uuidm.pp
-                  job.Tjc.Job.id
-                  time)
-              (fun () ->
-                S.Job_context.Job.query_work_manifests
-                  ~request_id:(Builder.log_id s)
-                  db
-                  ~job_id:job.Tjc.Job.id
-                  ()))
+        Builder.run_db s ~f:(fun db -> query_work_manifests s job.Tjc.Job.id db)
         >>= function
         | wms when too_many_aborts wms ->
             Logs.info (fun m -> m "%s : WM : TOO_MANY_ABORTS" (Builder.log_id s));
@@ -348,26 +338,7 @@ struct
                       wms;
                     fetch Keys.job
                     >>= fun job ->
-                    Builder.run_db s ~f:(fun db ->
-                        time_it
-                          s
-                          (fun m log_id time ->
-                            m
-                              "%s : JOB : ADD_WORK_MANIFESTS : job_id=%a : time=%f"
-                              log_id
-                              Uuidm.pp
-                              job.Tjc.Job.id
-                              time)
-                          (fun () ->
-                            Abbs_future_combinators.List_result.iter
-                              ~f:(fun { Wm.id = work_manifest_id; _ } ->
-                                S.Job_context.Job.add_work_manifest
-                                  ~request_id:(Builder.log_id s)
-                                  db
-                                  ~job_id:job.Tjc.Job.id
-                                  ~work_manifest_id
-                                  ())
-                              wms))
+                    Builder.run_db s ~f:(fun db -> add_work_manifests s job.Tjc.Job.id wms db)
                     >>= fun () -> Abb.Future.return (Error (`Suspend_eval name)))
             | wms when all_wms_completed wms ->
                 Logs.info (fun m ->

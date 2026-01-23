@@ -16,6 +16,37 @@ struct
   module Bs = Builder.Bs
   module Wm_sm = Terrat_vcs_event_evaluator2_wm_sm.Make (S) (Keys)
   module Wm = Terrat_work_manifest3
+
+  let query_repo_tree s db account branch_ref dest_branch_ref =
+    time_it
+      s
+      (fun m log_id time -> m "%s : QUERY_REPO_TREE : time=%f" log_id time)
+      (fun () ->
+        S.Db.query_repo_tree
+          ~request_id:(Builder.log_id s)
+          ~base_ref:dest_branch_ref
+          db
+          account
+          branch_ref)
+
+  let create_work_manifest s db work_manifest =
+    time_it
+      s
+      (fun m log_id time -> m "%s : WORK_MANIFEST : CREATE : time=%f" log_id time)
+      (fun () -> S.Work_manifest.create ~request_id:(Builder.log_id s) db work_manifest)
+
+  let create_token s db account id =
+    time_it
+      s
+      (fun m log_id time -> m "%s : CREATE_TOKEN : wm=%a : time=%f" log_id Uuidm.pp id time)
+      (fun () -> Wm_sm.create_token' ~log_id:(Builder.log_id s) (S.Api.Account.id account) id db)
+
+  let store_repo_tree s db account branch_ref files =
+    time_it
+      s
+      (fun m log_id time -> m "%s : STORE_REPO_TREE : time=%f" log_id time)
+      (fun () -> S.Db.store_repo_tree ~request_id:(Builder.log_id s) db account branch_ref files)
+
   module Wmr = Terrat_api_components.Work_manifest_result
   module Bt = Terrat_api_components.Work_manifest_build_tree_result
   module Bf = Terrat_api_components.Work_manifest_build_result_failure
@@ -50,17 +81,7 @@ struct
     fetch Keys.account
     >>= fun account ->
     (* Check to see if the tree already exists, if so we don't have to do anything. *)
-    Builder.run_db s ~f:(fun db ->
-        time_it
-          s
-          (fun m log_id time -> m "%s : QUERY_REPO_TREE : time=%f" log_id time)
-          (fun () ->
-            S.Db.query_repo_tree
-              ~request_id:(Builder.log_id s)
-              ~base_ref:dest_branch_ref
-              db
-              account
-              branch_ref))
+    Builder.run_db s ~f:(fun db -> query_repo_tree s db account branch_ref dest_branch_ref)
     >>= function
     | None ->
         fetch Keys.repo
@@ -90,11 +111,7 @@ struct
             target;
           }
         in
-        Builder.run_db s ~f:(fun db ->
-            time_it
-              s
-              (fun m log_id time -> m "%s : WORK_MANIFEST : CREATE : time=%f" log_id time)
-              (fun () -> S.Work_manifest.create ~request_id:(Builder.log_id s) db work_manifest))
+        Builder.run_db s ~f:(fun db -> create_work_manifest s db work_manifest)
         >>= fun work_manifest ->
         fetch Keys.branch_ref
         >>= fun branch_ref ->
@@ -172,12 +189,7 @@ struct
     in
     fetch repo_config_raw'
     >>= fun (_, repo_config_raw) ->
-    Builder.run_db s ~f:(fun db ->
-        time_it
-          s
-          (fun m log_id time -> m "%s : CREATE_TOKEN : wm=%a : time=%f" log_id Uuidm.pp id time)
-          (fun () ->
-            Wm_sm.create_token' ~log_id:(Builder.log_id s) (S.Api.Account.id account) id db))
+    Builder.run_db s ~f:(fun db -> create_token s db account id)
     >>= fun token ->
     let module B = Terrat_api_components.Work_manifest_build_tree in
     let config =
@@ -232,12 +244,7 @@ struct
               "%s : REPO_TREE : STORE : branch_ref=%s"
               (Builder.log_id s)
               (S.Api.Ref.to_string branch_ref));
-        Builder.run_db s ~f:(fun db ->
-            time_it
-              s
-              (fun m log_id time -> m "%s : STORE_REPO_TREE : time=%f" log_id time)
-              (fun () ->
-                S.Db.store_repo_tree ~request_id:(Builder.log_id s) db account branch_ref files))
+        Builder.run_db s ~f:(fun db -> store_repo_tree s db account branch_ref files)
         >>= fun () ->
         fetch Keys.repo
         >>= fun repo ->

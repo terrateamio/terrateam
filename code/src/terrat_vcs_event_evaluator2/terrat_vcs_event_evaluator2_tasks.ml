@@ -28,6 +28,30 @@ struct
   let time_it s l f =
     Abbs_time_it.run (fun time -> Logs.info (fun m -> l m (Builder.log_id s) time)) f
 
+  let update_job_state_completed s job_id db =
+    time_it
+      s
+      (fun m log_id time ->
+        m "%s : JOB : UPDATE_STATE : COMPLETED : job_id = %a : time=%f" log_id Uuidm.pp job_id time)
+      (fun () ->
+        S.Job_context.Job.update_state
+          ~request_id:(Builder.log_id s)
+          db
+          ~job_id
+          Tjc.Job.State.Completed)
+
+  let update_job_state_failed s job_id db =
+    time_it
+      s
+      (fun m log_id time ->
+        m "%s : JOB : UPDATE_STATE : FAILED : job_id = %a : time=%f" log_id Uuidm.pp job_id time)
+      (fun () ->
+        S.Job_context.Job.update_state
+          ~request_id:(Builder.log_id s)
+          db
+          ~job_id
+          Tjc.Job.State.Failed)
+
   let add_work_manifest_keys work_manifest store =
     let module Wm = Terrat_work_manifest3 in
     let { Wm.id; account; target; _ } = work_manifest in
@@ -47,41 +71,11 @@ struct
       >>= function
       | (Ok () | Error `Noop) as ret ->
           let open Irm in
-          Builder.run_db s ~f:(fun db ->
-              time_it
-                s
-                (fun m log_id time ->
-                  m
-                    "%s : JOB : UPDATE_STATE : COMPLETED : job_id = %a : time=%f"
-                    log_id
-                    Uuidm.pp
-                    job.Tjc.Job.id
-                    time)
-                (fun () ->
-                  S.Job_context.Job.update_state
-                    ~request_id:(Builder.log_id s)
-                    db
-                    ~job_id:job.Tjc.Job.id
-                    Tjc.Job.State.Completed))
+          Builder.run_db s ~f:(fun db -> update_job_state_completed s job.Tjc.Job.id db)
           >>= fun () -> Abb.Future.return ret
       | Error (`Suspend_eval _) as err -> Abb.Future.return err
       | Error (#Builder.err as err) -> (
-          Builder.run_db s ~f:(fun db ->
-              time_it
-                s
-                (fun m log_id time ->
-                  m
-                    "%s : JOB : UPDATE_STATE : FAILED : job_id = %a : time=%f"
-                    log_id
-                    Uuidm.pp
-                    job.Tjc.Job.id
-                    time)
-                (fun () ->
-                  S.Job_context.Job.update_state
-                    ~request_id:(Builder.log_id s)
-                    db
-                    ~job_id:job.Tjc.Job.id
-                    Tjc.Job.State.Failed))
+          Builder.run_db s ~f:(fun db -> update_job_state_failed s job.Tjc.Job.id db)
           >>= function
           | Ok () -> Abb.Future.return (Error err)
           | Error (#Builder.err as err2) ->

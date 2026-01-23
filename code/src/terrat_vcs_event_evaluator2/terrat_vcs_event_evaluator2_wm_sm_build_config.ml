@@ -16,6 +16,32 @@ struct
   module Bs = Builder.Bs
   module Wm_sm = Terrat_vcs_event_evaluator2_wm_sm.Make (S) (Keys)
   module Wm = Terrat_work_manifest3
+
+  let query_repo_config_json s db account branch_ref =
+    time_it
+      s
+      (fun m log_id time -> m "%s : QUERY_REPO_CONFIG_JSON : time=%f" log_id time)
+      (fun () -> S.Db.query_repo_config_json ~request_id:(Builder.log_id s) db account branch_ref)
+
+  let create_work_manifest s db work_manifest =
+    time_it
+      s
+      (fun m log_id time -> m "%s : WORK_MANIFEST : CREATE : time=%f" log_id time)
+      (fun () -> S.Work_manifest.create ~request_id:(Builder.log_id s) db work_manifest)
+
+  let create_token s db account id =
+    time_it
+      s
+      (fun m log_id time -> m "%s : CREATE_TOKEN : wm=%a : time=%f" log_id Uuidm.pp id time)
+      (fun () -> Wm_sm.create_token' ~log_id:(Builder.log_id s) (S.Api.Account.id account) id db)
+
+  let store_repo_config_json s db account branch_ref config =
+    time_it
+      s
+      (fun m log_id time -> m "%s : STORE_REPO_CONFIG_JSON : time=%f" log_id time)
+      (fun () ->
+        S.Db.store_repo_config_json ~request_id:(Builder.log_id s) db account branch_ref config)
+
   module Wmr = Terrat_api_components.Work_manifest_result
   module Bc = Terrat_api_components.Work_manifest_build_config_result
   module Bf = Terrat_api_components.Work_manifest_build_result_failure
@@ -49,12 +75,7 @@ struct
     let open Irm in
     fetch Keys.account
     >>= fun account ->
-    Builder.run_db s ~f:(fun db ->
-        time_it
-          s
-          (fun m log_id time -> m "%s : QUERY_REPO_CONFIG_JSON : time=%f" log_id time)
-          (fun () ->
-            S.Db.query_repo_config_json ~request_id:(Builder.log_id s) db account branch_ref))
+    Builder.run_db s ~f:(fun db -> query_repo_config_json s db account branch_ref)
     >>= function
     | None ->
         fetch Keys.repo
@@ -84,11 +105,7 @@ struct
             target;
           }
         in
-        Builder.run_db s ~f:(fun db ->
-            time_it
-              s
-              (fun m log_id time -> m "%s : WORK_MANIFEST : CREATE : time=%f" log_id time)
-              (fun () -> S.Work_manifest.create ~request_id:(Builder.log_id s) db work_manifest))
+        Builder.run_db s ~f:(fun db -> create_work_manifest s db work_manifest)
         >>= fun work_manifest ->
         fetch Keys.branch_ref
         >>= fun branch_ref ->
@@ -171,12 +188,7 @@ struct
     >>= fun repo_tree ->
     fetch repo_config_raw'
     >>= fun (_, repo_config_raw) ->
-    Builder.run_db s ~f:(fun db ->
-        time_it
-          s
-          (fun m log_id time -> m "%s : CREATE_TOKEN : wm=%a : time=%f" log_id Uuidm.pp id time)
-          (fun () ->
-            Wm_sm.create_token' ~log_id:(Builder.log_id s) (S.Api.Account.id account) id db))
+    Builder.run_db s ~f:(fun db -> create_token s db account id)
     >>= fun token ->
     (* FIX: Index *)
     let index = None in
@@ -274,17 +286,7 @@ struct
             let open Irm in
             fetch Keys.account
             >>= fun account ->
-            Builder.run_db s ~f:(fun db ->
-                time_it
-                  s
-                  (fun m log_id time -> m "%s : STORE_REPO_CONFIG_JSON : time=%f" log_id time)
-                  (fun () ->
-                    S.Db.store_repo_config_json
-                      ~request_id:(Builder.log_id s)
-                      db
-                      account
-                      branch_ref
-                      config))
+            Builder.run_db s ~f:(fun db -> store_repo_config_json s db account branch_ref config)
             >>= fun () ->
             fetch Keys.repo
             >>= fun repo ->
