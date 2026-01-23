@@ -2496,25 +2496,33 @@ struct
     let iter_job =
       run ~name:"iter_job" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
-          fetch Keys.job
-          >>= fun job ->
-          match job.Tjc.Job.type_ with
-          | Tjc.Job.Type_.Apply _ | Tjc.Job.Type_.Autoapply -> fetch Keys.run_apply
-          | Tjc.Job.Type_.Autoplan | Tjc.Job.Type_.Plan _ ->
-              fetch Keys.run_plan
-              >>= fun () ->
-              let s' =
-                s
-                |> Builder.State.orig_store
-                |> Tasks_base.forward_std_keys s
-                |> CCFun.flip Builder.State.set_orig_store s
-              in
-              Builder.eval s' Keys.complete_no_change_dirspaces
-          | Tjc.Job.Type_.Repo_config -> fetch Keys.publish_repo_config
-          | Tjc.Job.Type_.Unlock _ -> fetch Keys.publish_unlock
-          | Tjc.Job.Type_.Index -> fetch Keys.publish_index_complete
-          | Tjc.Job.Type_.Push -> fetch Keys.eval_push_event
-          | Tjc.Job.Type_.Gate_approval _ -> fetch Keys.store_gate_approval)
+          fetch Keys.repo_config_raw'
+          >>= fun (_, repo_config) ->
+          let module V1 = Terrat_base_repo_config_v1 in
+          match V1.enabled repo_config with
+          | true -> (
+              fetch Keys.job
+              >>= fun job ->
+              match job.Tjc.Job.type_ with
+              | Tjc.Job.Type_.Apply _ | Tjc.Job.Type_.Autoapply -> fetch Keys.run_apply
+              | Tjc.Job.Type_.Autoplan | Tjc.Job.Type_.Plan _ ->
+                  fetch Keys.run_plan
+                  >>= fun () ->
+                  let s' =
+                    s
+                    |> Builder.State.orig_store
+                    |> Tasks_base.forward_std_keys s
+                    |> CCFun.flip Builder.State.set_orig_store s
+                  in
+                  Builder.eval s' Keys.complete_no_change_dirspaces
+              | Tjc.Job.Type_.Repo_config -> fetch Keys.publish_repo_config
+              | Tjc.Job.Type_.Unlock _ -> fetch Keys.publish_unlock
+              | Tjc.Job.Type_.Index -> fetch Keys.publish_index_complete
+              | Tjc.Job.Type_.Push -> fetch Keys.eval_push_event
+              | Tjc.Job.Type_.Gate_approval _ -> fetch Keys.store_gate_approval)
+          | false ->
+              Logs.info (fun m -> m "%s : DISABLED" (Builder.log_id s));
+              Abb.Future.return (Error `Noop))
 
     let eval_work_manifest_failure =
       run ~name:"eval_work_manifest_failure" (fun s { Bs.Fetcher.fetch } ->
