@@ -1373,7 +1373,8 @@ struct
               let log_id = Builder.mk_log_id ~request_id:(Builder.log_id s) job.Tjc.Job.id in
               Logs.info (fun m ->
                   m
-                    "%s : target=%s : context_id=%a : log_id= %s : job_type=%a"
+                    "%s : EVENT : PULL_REQUEST : target=%s : context_id=%a : log_id= %s : \
+                     job_type=%a"
                     (Builder.log_id s)
                     (Hmap.Key.info Keys.iter_job)
                     Uuidm.pp

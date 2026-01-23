@@ -702,7 +702,6 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         let request = Brtl_ctx.request ctx in
         let headers = Brtl_ctx.Request.headers request in
         let body = Brtl_ctx.body ctx in
-        Logs.debug (fun m -> m "Received event");
         Metrics.DefaultHistogram.time Metrics.events_duration_seconds (fun () ->
             Prmths.Gauge.track_inprogress Metrics.events_concurrent (fun () ->
                 match

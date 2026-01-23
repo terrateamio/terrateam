@@ -12,6 +12,10 @@ struct
 
   module Logs = (val Logs.src_log src : Logs.LOG)
   module Builder = Terrat_vcs_event_evaluator2_builder.Make (S)
+
+  let time_it s l f =
+    Abbs_time_it.run (fun time -> Logs.info (fun m -> l m (Builder.log_id s) time)) f
+
   module Bs = Builder.Bs
   module Wm_sm = Terrat_vcs_event_evaluator2_wm_sm.Make (S) (Keys)
   module Wm = Terrat_work_manifest3
@@ -412,19 +416,36 @@ struct
     let { Terrat_access_control2.R.pass = passed_dirspaces; deny = denied_dirspaces } =
       access_control_results
     in
+    Logs.info (fun m ->
+        m
+          "%s : MATCHES : all_matches=%d : working_set=%d : working_layer=%d : passed_dirspaces=%d \
+           : denied_dirspaces=%d"
+          (Builder.log_id s)
+          (CCListLabels.fold_left
+             ~init:0
+             ~f:(fun acc v -> acc + CCList.length v)
+             matches.Keys.Matches.all_matches)
+          (CCList.length matches.Keys.Matches.working_set_matches)
+          (CCList.length matches.Keys.Matches.working_layer)
+          (CCList.length passed_dirspaces)
+          (CCList.length denied_dirspaces));
     Abb.Future.return
       (dirspaceflows_of_changes_with_branch_target
          repo_config
          (CCList.flatten matches.Keys.Matches.all_matches))
     >>= fun all_dirspaceflows ->
     Builder.run_db s ~f:(fun db ->
-        S.Db.store_dirspaceflows
-          ~request_id:(Builder.log_id s)
-          ~base_ref:dest_branch_ref
-          ~branch_ref
-          db
-          repo
-          all_dirspaceflows)
+        time_it
+          s
+          (fun m log_id time -> m "%s : STORE_DIRSPACEFLOWS : time=%f" log_id time)
+          (fun () ->
+            S.Db.store_dirspaceflows
+              ~request_id:(Builder.log_id s)
+              ~base_ref:dest_branch_ref
+              ~branch_ref
+              db
+              repo
+              all_dirspaceflows))
     >>= fun () ->
     Abb.Future.return (dirspaceflows_of_changes repo_config passed_dirspaces)
     >>= fun dirspaceflows ->
@@ -495,7 +516,10 @@ struct
           }
         in
         Builder.run_db s ~f:(fun db ->
-            S.Work_manifest.create ~request_id:(Builder.log_id s) db work_manifest)
+            time_it
+              s
+              (fun m log_id time -> m "%s : WORK_MANIFEST : CREATE : time=%f" log_id time)
+              (fun () -> S.Work_manifest.create ~request_id:(Builder.log_id s) db work_manifest))
         >>= fun work_manifest ->
         fetch Keys.branch_ref
         >>= fun branch_ref ->
@@ -594,7 +618,11 @@ struct
         <*> fetch Keys.dest_branch_dirspaces)
       >>= fun (dirspaces, base_dirspaces) ->
       Builder.run_db s ~f:(fun db ->
-          Wm_sm.create_token' ~log_id:(Builder.log_id s) (S.Api.Account.id account) id db)
+          time_it
+            s
+            (fun m log_id time -> m "%s : CREATE_TOKEN : wm=%a : time=%f" log_id Uuidm.pp id time)
+            (fun () ->
+              Wm_sm.create_token' ~log_id:(Builder.log_id s) (S.Api.Account.id account) id db))
       >>= fun token ->
       let response =
         Terrat_api_components.(
@@ -654,11 +682,21 @@ struct
           >>= fun matches ->
           let work_manifest_result = S.Work_manifest.result2 result in
           Builder.run_db s ~f:(fun db ->
-              S.Db.store_tf_operation_result2
-                ~request_id:(Builder.log_id s)
-                db
-                work_manifest.Wm.id
-                result)
+              time_it
+                s
+                (fun m log_id time ->
+                  m
+                    "%s : STORE_TF_OPERATION_RESULT2 : wm=%a : time=%f"
+                    log_id
+                    Uuidm.pp
+                    work_manifest.Wm.id
+                    time)
+                (fun () ->
+                  S.Db.store_tf_operation_result2
+                    ~request_id:(Builder.log_id s)
+                    db
+                    work_manifest.Wm.id
+                    result))
           >>= fun () ->
           if work_manifest.Wm.state <> Wm.State.Aborted then
             (* In the case of an abort, we do not report back to the user, we
@@ -715,20 +753,30 @@ struct
             fetch Keys.publish_comment
             >>= fun publish_comment ->
             Builder.run_db s ~f:(fun db ->
-                publish_comment'
-                  publish_comment
-                  (Msg.Tf_op_result2
-                     {
-                       account_status;
-                       config = Builder.State.config s;
-                       db;
-                       is_layered_run = CCList.length matches.Keys.Matches.all_matches > 1;
-                       remaining_layers = matches.Keys.Matches.all_unapplied_matches;
-                       result;
-                       repo_config;
-                       synthesized_config;
-                       work_manifest;
-                     }))
+                time_it
+                  s
+                  (fun m log_id time ->
+                    m
+                      "%s : PUBLISH_COMMENT : TF_OP_RESULT2 : wm=%a : time=%f"
+                      log_id
+                      Uuidm.pp
+                      work_manifest.Wm.id
+                      time)
+                  (fun () ->
+                    publish_comment'
+                      publish_comment
+                      (Msg.Tf_op_result2
+                         {
+                           account_status;
+                           config = Builder.State.config s;
+                           db;
+                           is_layered_run = CCList.length matches.Keys.Matches.all_matches > 1;
+                           remaining_layers = matches.Keys.Matches.all_unapplied_matches;
+                           result;
+                           repo_config;
+                           synthesized_config;
+                           work_manifest;
+                         })))
             >>= fun () -> Abb.Future.return (Ok ())
           else Abb.Future.return (Ok ())
       | Wmr.Work_manifest_tf_operation_result result ->
@@ -737,11 +785,21 @@ struct
           >>= fun matches ->
           let work_manifest_result = S.Work_manifest.result result in
           Builder.run_db s ~f:(fun db ->
-              S.Db.store_tf_operation_result
-                ~request_id:(Builder.log_id s)
-                db
-                work_manifest.Wm.id
-                result)
+              time_it
+                s
+                (fun m log_id time ->
+                  m
+                    "%s : STORE_TF_OPERATION_RESULT : wm=%a : time=%f"
+                    log_id
+                    Uuidm.pp
+                    work_manifest.Wm.id
+                    time)
+                (fun () ->
+                  S.Db.store_tf_operation_result
+                    ~request_id:(Builder.log_id s)
+                    db
+                    work_manifest.Wm.id
+                    result))
           >>= fun () ->
           if work_manifest.Wm.state <> Wm.State.Aborted then
             fetch Keys.repo
@@ -873,7 +931,11 @@ struct
       fetch Keys.dest_branch_name
       >>= fun dest_branch_name ->
       Builder.run_db s ~f:(fun db ->
-          Wm_sm.create_token' ~log_id:(Builder.log_id s) (S.Api.Account.id account) id db)
+          time_it
+            s
+            (fun m log_id time -> m "%s : CREATE_TOKEN : wm=%a : time=%f" log_id Uuidm.pp id time)
+            (fun () ->
+              Wm_sm.create_token' ~log_id:(Builder.log_id s) (S.Api.Account.id account) id db))
       >>= fun token ->
       let response =
         Terrat_api_components.(

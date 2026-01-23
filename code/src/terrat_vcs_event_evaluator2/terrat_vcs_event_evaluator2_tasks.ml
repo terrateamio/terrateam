@@ -2448,12 +2448,12 @@ struct
           fetch Keys.work_manifest_event
           >>= function
           | Some event -> (
-              let work_manifest =
+              let work_manifest, event_type =
+                let module E = Keys.Work_manifest_event in
                 match event with
-                | Keys.Work_manifest_event.(
-                    ( Initiate { work_manifest; _ }
-                    | Fail { work_manifest; _ }
-                    | Result { work_manifest; _ } )) -> work_manifest
+                | E.Initiate { work_manifest; _ } -> (work_manifest, "INITIATE")
+                | E.Fail { work_manifest; _ } -> (work_manifest, "FAIL")
+                | E.Result { work_manifest; _ } -> (work_manifest, "RESULT")
               in
               fetch Keys.work_manifest_event_job
               >>= function
@@ -2467,8 +2467,10 @@ struct
                   let context = job.Tjc.Job.context in
                   Logs.info (fun m ->
                       m
-                        "%s : context_id=%a : log_id= %s : initiator=%s"
+                        "%s : EVENT : WORK_MANIFEST : %s : context_id=%a : log_id= %s : \
+                         initiator=%s"
                         (Builder.log_id s)
+                        event_type
                         Uuidm.pp
                         context.Tjc.Context.id
                         log_id

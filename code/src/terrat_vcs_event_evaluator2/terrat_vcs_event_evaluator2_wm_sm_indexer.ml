@@ -9,6 +9,10 @@ struct
 
   module Logs = (val Logs.src_log src : Logs.LOG)
   module Builder = Terrat_vcs_event_evaluator2_builder.Make (S)
+
+  let time_it s l f =
+    Abbs_time_it.run (fun time -> Logs.info (fun m -> l m (Builder.log_id s) time)) f
+
   module Bs = Builder.Bs
   module Wm_sm = Terrat_vcs_event_evaluator2_wm_sm.Make (S) (Keys)
   module Wm = Terrat_work_manifest3
@@ -44,7 +48,10 @@ struct
     fetch Keys.account
     >>= fun account ->
     Builder.run_db s ~f:(fun db ->
-        S.Db.query_index ~request_id:(Builder.log_id s) db account branch_ref)
+        time_it
+          s
+          (fun m log_id time -> m "%s : QUERY_INDEX : time=%f" log_id time)
+          (fun () -> S.Db.query_index ~request_id:(Builder.log_id s) db account branch_ref))
     >>= function
     | None ->
         fetch Keys.repo
@@ -75,7 +82,10 @@ struct
           }
         in
         Builder.run_db s ~f:(fun db ->
-            S.Work_manifest.create ~request_id:(Builder.log_id s) db work_manifest)
+            time_it
+              s
+              (fun m log_id time -> m "%s : WORK_MANIFEST : CREATE : time=%f" log_id time)
+              (fun () -> S.Work_manifest.create ~request_id:(Builder.log_id s) db work_manifest))
         >>= fun work_manifest ->
         fetch Keys.branch_ref
         >>= fun branch_ref ->
@@ -178,7 +188,11 @@ struct
     Abb.Future.return (Wm_sm.dirspaceflows_of_changes repo_config_raw matches)
     >>= fun dirspaceflows ->
     Builder.run_db s ~f:(fun db ->
-        Wm_sm.create_token' ~log_id:(Builder.log_id s) (S.Api.Account.id account) id db)
+        time_it
+          s
+          (fun m log_id time -> m "%s : CREATE_TOKEN : wm=%a : time=%f" log_id Uuidm.pp id time)
+          (fun () ->
+            Wm_sm.create_token' ~log_id:(Builder.log_id s) (S.Api.Account.id account) id db))
     >>= fun token ->
     let module Dsf = Terrat_change.Dirspaceflow in
     let dirs =
@@ -234,9 +248,14 @@ struct
     match result with
     | Wmr.Work_manifest_index_result index ->
         Builder.run_db s ~f:(fun db ->
-            S.Db.store_index_result ~request_id:(Builder.log_id s) db work_manifest.Wm.id index
-            >>= fun () ->
-            S.Db.store_index ~request_id:(Builder.log_id s) db work_manifest.Wm.id index)
+            time_it
+              s
+              (fun m log_id time ->
+                m "%s : STORE_INDEX : wm=%a : time=%f" log_id Uuidm.pp work_manifest.Wm.id time)
+              (fun () ->
+                S.Db.store_index_result ~request_id:(Builder.log_id s) db work_manifest.Wm.id index
+                >>= fun () ->
+                S.Db.store_index ~request_id:(Builder.log_id s) db work_manifest.Wm.id index))
         >>= fun _ ->
         fetch Keys.account
         >>= fun account ->
