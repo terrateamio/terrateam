@@ -307,20 +307,16 @@ struct
 
   let maybe_create_pending_apply_commit_checks
       create_commit_checks
-      request_id
       config
-      client
       account
       repo
       ref_
       all_matches
-      apply_requirements =
+      apply_requirements
+      commit_checks =
     let module Ar = Terrat_base_repo_config_v1.Apply_requirements in
     let module String_set = CCSet.Make (CCString) in
     if apply_requirements.Ar.create_pending_apply_check then
-      let open Abbs_future_combinators.Infix_result_monad in
-      S.Api.fetch_commit_checks ~request_id client repo ref_
-      >>= fun commit_checks ->
       let commit_check_titles =
         commit_checks
         |> CCList.map (fun Terrat_commit_check.{ title; _ } -> title)
@@ -501,12 +497,12 @@ struct
         Builder.run_db s ~f:(fun db ->
             S.Work_manifest.create ~request_id:(Builder.log_id s) db work_manifest)
         >>= fun work_manifest ->
-        fetch Keys.client
-        >>= fun client ->
         fetch Keys.branch_ref
         >>= fun branch_ref ->
         fetch Keys.create_commit_checks
         >>= fun create_commit_checks ->
+        fetch Keys.commit_checks
+        >>= fun commit_checks ->
         create_op_commit_checks
           create_commit_checks
           (Builder.State.config s)
@@ -519,14 +515,13 @@ struct
         >>= fun () ->
         maybe_create_pending_apply_commit_checks
           create_commit_checks
-          (Builder.log_id s)
           (Builder.State.config s)
-          client
           account
           repo
           branch_ref
           (CCList.flatten matches.Keys.Matches.all_matches)
           (Terrat_base_repo_config_v1.apply_requirements repo_config)
+          commit_checks
         >>= fun () -> Abb.Future.return (Ok work_manifest))
       dirspaceflows_by_run_params
 

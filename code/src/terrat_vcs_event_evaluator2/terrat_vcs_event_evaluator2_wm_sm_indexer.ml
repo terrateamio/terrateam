@@ -96,7 +96,28 @@ struct
         >>= fun create_commit_checks ->
         create_commit_checks' create_commit_checks branch_ref [ check ]
         >>= fun () -> Abb.Future.return (Ok [ work_manifest ])
-    | Some _ -> Abb.Future.return (Ok [])
+    | Some _ ->
+        fetch Keys.commit_checks
+        >>= fun commit_checks ->
+        fetch Keys.branch_ref
+        >>= fun branch_ref ->
+        fetch Keys.branch_name
+        >>= fun branch_name ->
+        let module Ch = Terrat_commit_check in
+        let check_title = status_name ~branch ~branch_name in
+        let unfinished_checks =
+          CCList.filter_map
+            (function
+              | { Ch.status = Ch.Status.(Completed | Failed | Canceled); _ } -> None
+              | { Ch.status = Ch.Status.(Queued | Running); title; _ } as c when title = check_title
+                -> Some { c with Ch.status = Ch.Status.Completed; description = "Completed" }
+              | _ -> None)
+            commit_checks
+        in
+        fetch Keys.create_commit_checks
+        >>= fun create_commit_checks ->
+        create_commit_checks' create_commit_checks branch_ref unfinished_checks
+        >>= fun () -> Abb.Future.return (Ok [])
 
   let initiate ~branch ({ Wm.id; _ } as work_manifest) s { Bs.Fetcher.fetch } =
     let open Irm in

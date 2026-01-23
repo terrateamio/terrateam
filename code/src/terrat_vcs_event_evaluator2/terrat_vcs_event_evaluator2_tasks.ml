@@ -282,6 +282,8 @@ struct
           Builder.run_db s ~f:(fun db ->
               S.Api.create_client ~request_id:(Builder.log_id s) (Builder.State.config s) account db))
 
+    let commit_checks = run ~name:"commit_checks" (fun _s _ -> Abb.Future.return (Ok []))
+
     let context_id =
       run ~name:"context_id" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
@@ -3126,6 +3128,7 @@ struct
     |> Hmap.add (coerce Keys.check_account_tier) Tasks.check_account_tier
     |> Hmap.add (coerce Keys.check_valid_destination_branch) Tasks.check_valid_destination_branch
     |> Hmap.add (coerce Keys.client) Tasks.client
+    |> Hmap.add (coerce Keys.commit_checks) Tasks.commit_checks
     |> Hmap.add (coerce Keys.complete_no_change_dirspaces) Tasks.complete_no_change_dirspaces
     |> Hmap.add (coerce Keys.compute_node) Tasks.compute_node
     |> Hmap.add (coerce Keys.context) Tasks.context

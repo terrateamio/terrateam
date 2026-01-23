@@ -150,12 +150,31 @@ struct
           Abb.Future.return
             (Ok
                (fun branch_ref checks ->
+                 (* When updating commit checks, mark the existing key as dirty. *)
+                 Builder.State.mark_dirty s Keys.commit_checks;
                  S.Api.create_commit_checks
                    ~request_id:(Builder.log_id s)
                    client
                    repo
                    branch_ref
                    checks)))
+
+    let commit_checks =
+      run ~name:"commit_checks" (fun s { Bs.Fetcher.fetch } ->
+          let open Irm in
+          fetch Keys.client
+          >>= fun client ->
+          fetch Keys.repo
+          >>= fun repo ->
+          fetch Keys.branch_ref
+          >>= fun branch_ref ->
+          Logs.info (fun m ->
+              m
+                "%s : FETCH_COMMIT_CHECKS : repo = %s : branch = %s"
+                (Builder.log_id s)
+                (S.Api.Repo.to_string repo)
+                (S.Api.Ref.to_string branch_ref));
+          S.Api.fetch_commit_checks ~request_id:(Builder.log_id s) client repo branch_ref)
 
     let branch_name =
       run ~name:"branch_name" (fun s { Bs.Fetcher.fetch } ->
@@ -555,24 +574,10 @@ struct
           match S.Api.Pull_request.state pull_request with
           | Pr.State.Closed ->
               Logs.info (fun m -> m "%s : NOOP : PR_CLOSED" (Builder.log_id s));
-              fetch Keys.client
-              >>= fun client ->
-              fetch Keys.repo
-              >>= fun repo ->
+              fetch Keys.commit_checks
+              >>= fun commit_checks ->
               fetch Keys.branch_ref
               >>= fun branch_ref ->
-              time_it
-                s
-                (fun m log_id time ->
-                  m
-                    "%s : FETCH_COMMIT_CHECKS : repo = %s : branch = %s : time=%f"
-                    log_id
-                    (S.Api.Repo.to_string repo)
-                    (S.Api.Ref.to_string branch_ref)
-                    time)
-                (fun () ->
-                  S.Api.fetch_commit_checks ~request_id:(Builder.log_id s) client repo branch_ref)
-              >>= fun commit_checks ->
               let module Ch = Terrat_commit_check in
               let unfinished_checks =
                 CCList.filter_map
@@ -1442,6 +1447,7 @@ struct
     |> Hmap.add (coerce Keys.check_merge_conflict) Tasks.check_merge_conflict
     |> Hmap.add (coerce Keys.check_pull_request_state) Tasks.check_pull_request_state
     |> Hmap.add (coerce Keys.comment_id) Tasks.comment_id
+    |> Hmap.add (coerce Keys.commit_checks) Tasks.commit_checks
     |> Hmap.add (coerce Keys.create_commit_checks) Tasks.create_commit_checks
     |> Hmap.add (coerce Keys.dest_branch_name) Tasks.dest_branch_name
     |> Hmap.add (coerce Keys.dest_branch_ref) Tasks.dest_branch_ref
