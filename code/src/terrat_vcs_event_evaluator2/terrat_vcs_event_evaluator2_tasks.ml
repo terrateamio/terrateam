@@ -2517,11 +2517,12 @@ struct
                     |> CCFun.flip Builder.State.set_orig_store s
                   in
                   Builder.eval s' Keys.complete_no_change_dirspaces
-              | Tjc.Job.Type_.Repo_config -> fetch Keys.publish_repo_config
-              | Tjc.Job.Type_.Unlock _ -> fetch Keys.publish_unlock
-              | Tjc.Job.Type_.Index -> fetch Keys.publish_index_complete
+              | Tjc.Job.Type_.Repo_config -> H.complete_job s job @@ fetch Keys.publish_repo_config
+              | Tjc.Job.Type_.Unlock _ -> H.complete_job s job @@ fetch Keys.publish_unlock
+              | Tjc.Job.Type_.Index -> H.complete_job s job @@ fetch Keys.publish_index_complete
               | Tjc.Job.Type_.Push -> fetch Keys.eval_push_event
-              | Tjc.Job.Type_.Gate_approval _ -> fetch Keys.store_gate_approval)
+              | Tjc.Job.Type_.Gate_approval _ ->
+                  H.complete_job s job @@ fetch Keys.store_gate_approval)
           | false ->
               Logs.info (fun m -> m "%s : DISABLED" (Builder.log_id s));
               Abb.Future.return (Error `Noop))

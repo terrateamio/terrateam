@@ -254,123 +254,129 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     in
     Fc.with_finally
       (fun () ->
-        let open Irm in
-        with_conn storage ~f:(fun db ->
-            let open Irm in
-            Pgsql_io.tx db ~f:(fun () -> S.Db.store_account_repository ~request_id db account repo)
-            >>= fun () ->
-            let open Abb.Future.Infix_monad in
-            Builder.State.make
-              ~log_id:request_id
-              ~config
-              ~store
-              ~db
-              ~exec
-              ~tasks:(Tasks_pr.tasks tasks)
-              ()
-            >>= fun s ->
-            let open Irm in
-            log_err ~request_id @@ Builder.eval s Keys.update_context_branch_hashes
-            >>= fun () ->
-            Pgsql_io.tx db ~f:(fun () ->
-                let open Abb.Future.Infix_monad in
-                Builder.State.make
-                  ~log_id:request_id
-                  ~config
-                  ~store
-                  ~db
-                  ~exec
-                  ~tasks:(Tasks_pr.tasks tasks)
-                  ()
-                >>= fun s ->
-                let open Irm in
-                log_err ~request_id @@ Builder.eval s Keys.get_context_for_pull_request
-                >>= fun context ->
-                let s =
-                  s
-                  |> Builder.State.orig_store
-                  |> Keys.Key.add Keys.context context
-                  |> CCFun.flip Builder.State.set_orig_store s
-                in
-                Abb.Future.return (Ok s))
-            >>= fun s ->
-            Pgsql_io.tx db ~f:(fun () ->
-                Logs.info (fun m ->
-                    m
-                      "%s : target=%s"
-                      (Builder.log_id s)
-                      (Hmap.Key.info Keys.eval_pull_request_event));
-                log_err ~request_id @@ Builder.eval s Keys.eval_pull_request_event))
-        >>= fun job ->
-        let open Abb.Future.Infix_monad in
-        with_conn storage ~f:(fun db ->
-            Pgsql_io.tx db ~f:(fun () ->
-                let open Abb.Future.Infix_monad in
-                let store = store |> Keys.Key.add Keys.job job in
-                Builder.State.make
-                  ~log_id:(Builder.mk_log_id ~request_id job.Tjc.Job.id)
-                  ~config
-                  ~store
-                  ~db
-                  ~exec
-                  ~tasks:(Tasks_pr.tasks tasks)
-                  ()
-                >>= fun s ->
-                let open Irm in
-                log_err ~request_id @@ tx_safe ~request_id @@ Builder.eval s Keys.iter_job
-                >>= fun r -> Abb.Future.return (Ok (s, r))))
-        >>= fun iter_result ->
-        (* Call maybe_complete_job in a separate transaction *)
-        with_conn storage ~f:(fun db ->
-            Pgsql_io.tx db ~f:(fun () ->
-                match iter_result with
-                | Ok (s, _) ->
-                    let store = store |> Keys.Key.add Keys.job job in
-                    let open Abb.Future.Infix_monad in
-                    let store = store |> Tasks_base.forward_std_keys s in
-                    Builder.State.make
-                      ~log_id:(Builder.mk_log_id ~request_id job.Tjc.Job.id)
-                      ~config
-                      ~store
-                      ~db
-                      ~exec
-                      ~tasks:(Tasks_pr.tasks tasks)
-                      ()
-                    >>= fun s' ->
-                    let open Irm in
-                    log_err ~request_id
-                    @@ tx_safe ~request_id
-                    @@ Builder.eval s' Keys.maybe_complete_job
-                | Error _ -> Abb.Future.return (Ok `Noop)))
-        >>= fun _ ->
-        match iter_result with
-        | Ok (s, `Ok _) ->
-            with_conn storage ~f:(fun db ->
-                Pgsql_io.tx db ~f:(fun () ->
-                    let store = store |> Keys.Key.add Keys.job job in
-                    let open Abb.Future.Infix_monad in
-                    let store = store |> Tasks_base.forward_std_keys s in
-                    Builder.State.make
-                      ~log_id:(Builder.mk_log_id ~request_id job.Tjc.Job.id)
-                      ~config
-                      ~store
-                      ~db
-                      ~exec
-                      ~tasks:(Tasks_pr.tasks tasks)
-                      ()
-                    >>= fun s ->
-                    log_err ~request_id @@ tx_safe ~request_id @@ Builder.eval s Keys.run_next_layer))
-        | Ok (_, ((`Suspend_eval _ | `Noop) as r)) -> Abb.Future.return (Ok r)
-        | Error err ->
-            Logs.info (fun m ->
-                m
-                  "%s : JOB : FAILED : job_id= %a : %a"
-                  request_id
-                  Uuidm.pp
-                  job.Tjc.Job.id
-                  Builder.pp_err
-                  err);
-            Abb.Future.return (Ok `Noop))
+        let run =
+          let open Irm in
+          with_conn storage ~f:(fun db ->
+              let open Irm in
+              Pgsql_io.tx db ~f:(fun () ->
+                  S.Db.store_account_repository ~request_id db account repo)
+              >>= fun () ->
+              let open Abb.Future.Infix_monad in
+              Builder.State.make
+                ~log_id:request_id
+                ~config
+                ~store
+                ~db
+                ~exec
+                ~tasks:(Tasks_pr.tasks tasks)
+                ()
+              >>= fun s ->
+              let open Irm in
+              Builder.eval s Keys.update_context_branch_hashes
+              >>= fun () ->
+              Pgsql_io.tx db ~f:(fun () ->
+                  let open Abb.Future.Infix_monad in
+                  Builder.State.make
+                    ~log_id:request_id
+                    ~config
+                    ~store
+                    ~db
+                    ~exec
+                    ~tasks:(Tasks_pr.tasks tasks)
+                    ()
+                  >>= fun s ->
+                  let open Irm in
+                  Builder.eval s Keys.get_context_for_pull_request
+                  >>= fun context ->
+                  let s =
+                    s
+                    |> Builder.State.orig_store
+                    |> Keys.Key.add Keys.context context
+                    |> CCFun.flip Builder.State.set_orig_store s
+                  in
+                  Abb.Future.return (Ok s))
+              >>= fun s ->
+              Pgsql_io.tx db ~f:(fun () ->
+                  Logs.info (fun m ->
+                      m
+                        "%s : target=%s"
+                        (Builder.log_id s)
+                        (Hmap.Key.info Keys.eval_pull_request_event));
+                  Builder.eval s Keys.eval_pull_request_event))
+          >>= fun job ->
+          let open Abb.Future.Infix_monad in
+          with_conn storage ~f:(fun db ->
+              Pgsql_io.tx db ~f:(fun () ->
+                  let open Abb.Future.Infix_monad in
+                  let store = store |> Keys.Key.add Keys.job job in
+                  Builder.State.make
+                    ~log_id:(Builder.mk_log_id ~request_id job.Tjc.Job.id)
+                    ~config
+                    ~store
+                    ~db
+                    ~exec
+                    ~tasks:(Tasks_pr.tasks tasks)
+                    ()
+                  >>= fun s ->
+                  let open Irm in
+                  tx_safe ~request_id @@ Builder.eval s Keys.iter_job
+                  >>= fun r -> Abb.Future.return (Ok (s, r))))
+          >>= function
+          | Ok (s, (`Ok _ | `Noop)) -> (
+              let open Irm in
+              (* Call maybe_complete_job in a separate transaction *)
+              with_conn storage ~f:(fun db ->
+                  Pgsql_io.tx db ~f:(fun () ->
+                      let open Abb.Future.Infix_monad in
+                      let store =
+                        store |> Keys.Key.add Keys.job job |> Tasks_base.forward_std_keys s
+                      in
+                      Builder.State.make
+                        ~log_id:(Builder.mk_log_id ~request_id job.Tjc.Job.id)
+                        ~config
+                        ~store
+                        ~db
+                        ~exec
+                        ~tasks:(Tasks_pr.tasks tasks)
+                        ()
+                      >>= fun s' -> tx_safe ~request_id @@ Builder.eval s' Keys.maybe_complete_job))
+              >>= function
+              | `Ok () ->
+                  with_conn storage ~f:(fun db ->
+                      Pgsql_io.tx db ~f:(fun () ->
+                          let store = store |> Keys.Key.add Keys.job job in
+                          let open Abb.Future.Infix_monad in
+                          let store = store |> Tasks_base.forward_std_keys s in
+                          Builder.State.make
+                            ~log_id:(Builder.mk_log_id ~request_id job.Tjc.Job.id)
+                            ~config
+                            ~store
+                            ~db
+                            ~exec
+                            ~tasks:(Tasks_pr.tasks tasks)
+                            ()
+                          >>= fun s -> tx_safe ~request_id @@ Builder.eval s Keys.run_next_layer))
+              | (`Suspend_eval _ | `Noop) as r -> Abb.Future.return (Ok r))
+          | Ok (_, (`Suspend_eval _ as r)) -> Abb.Future.return (Ok r)
+          | Error err ->
+              let open Irm in
+              Logs.info (fun m ->
+                  m
+                    "%s : JOB : FAILED : job_id= %a : %a"
+                    request_id
+                    Uuidm.pp
+                    job.Tjc.Job.id
+                    Builder.pp_err
+                    err);
+              with_conn storage ~f:(fun db ->
+                  S.Job_context.Job.update_state
+                    ~request_id
+                    db
+                    ~job_id:job.Tjc.Job.id
+                    Tjc.Job.State.Failed)
+              >>= fun () -> Abb.Future.return (Ok `Noop)
+        in
+        log_err ~request_id run)
       ~finally:(fun () ->
         Fc.ignore
         @@ Abb.Future.fork
