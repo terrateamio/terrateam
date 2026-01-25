@@ -28,6 +28,30 @@ struct
   let time_it s l f =
     Abbs_time_it.run (fun time -> Logs.info (fun m -> l m (Builder.log_id s) time)) f
 
+  let update_job_state_completed s job_id db =
+    time_it
+      s
+      (fun m log_id time ->
+        m "%s : JOB : UPDATE_STATE : COMPLETED : job_id = %a : time=%f" log_id Uuidm.pp job_id time)
+      (fun () ->
+        S.Job_context.Job.update_state
+          ~request_id:(Builder.log_id s)
+          db
+          ~job_id
+          Tjc.Job.State.Completed)
+
+  let update_job_state_failed s job_id db =
+    time_it
+      s
+      (fun m log_id time ->
+        m "%s : JOB : UPDATE_STATE : FAILED : job_id = %a : time=%f" log_id Uuidm.pp job_id time)
+      (fun () ->
+        S.Job_context.Job.update_state
+          ~request_id:(Builder.log_id s)
+          db
+          ~job_id
+          Tjc.Job.State.Failed)
+
   let add_work_manifest_keys work_manifest store =
     let module Wm = Terrat_work_manifest3 in
     let { Wm.id; account; target; _ } = work_manifest in
@@ -47,41 +71,11 @@ struct
       >>= function
       | (Ok () | Error `Noop) as ret ->
           let open Irm in
-          Builder.run_db s ~f:(fun db ->
-              time_it
-                s
-                (fun m log_id time ->
-                  m
-                    "%s : JOB : UPDATE_STATE : COMPLETED : job_id = %a : time=%f"
-                    log_id
-                    Uuidm.pp
-                    job.Tjc.Job.id
-                    time)
-                (fun () ->
-                  S.Job_context.Job.update_state
-                    ~request_id:(Builder.log_id s)
-                    db
-                    ~job_id:job.Tjc.Job.id
-                    Tjc.Job.State.Completed))
+          Builder.run_db s ~f:(fun db -> update_job_state_completed s job.Tjc.Job.id db)
           >>= fun () -> Abb.Future.return ret
       | Error (`Suspend_eval _) as err -> Abb.Future.return err
       | Error (#Builder.err as err) -> (
-          Builder.run_db s ~f:(fun db ->
-              time_it
-                s
-                (fun m log_id time ->
-                  m
-                    "%s : JOB : UPDATE_STATE : FAILED : job_id = %a : time=%f"
-                    log_id
-                    Uuidm.pp
-                    job.Tjc.Job.id
-                    time)
-                (fun () ->
-                  S.Job_context.Job.update_state
-                    ~request_id:(Builder.log_id s)
-                    db
-                    ~job_id:job.Tjc.Job.id
-                    Tjc.Job.State.Failed))
+          Builder.run_db s ~f:(fun db -> update_job_state_failed s job.Tjc.Job.id db)
           >>= function
           | Ok () -> Abb.Future.return (Error err)
           | Error (#Builder.err as err2) ->
@@ -2517,11 +2511,12 @@ struct
                     |> CCFun.flip Builder.State.set_orig_store s
                   in
                   Builder.eval s' Keys.complete_no_change_dirspaces
-              | Tjc.Job.Type_.Repo_config -> fetch Keys.publish_repo_config
-              | Tjc.Job.Type_.Unlock _ -> fetch Keys.publish_unlock
-              | Tjc.Job.Type_.Index -> fetch Keys.publish_index_complete
+              | Tjc.Job.Type_.Repo_config -> H.complete_job s job @@ fetch Keys.publish_repo_config
+              | Tjc.Job.Type_.Unlock _ -> H.complete_job s job @@ fetch Keys.publish_unlock
+              | Tjc.Job.Type_.Index -> H.complete_job s job @@ fetch Keys.publish_index_complete
               | Tjc.Job.Type_.Push -> fetch Keys.eval_push_event
-              | Tjc.Job.Type_.Gate_approval _ -> fetch Keys.store_gate_approval)
+              | Tjc.Job.Type_.Gate_approval _ ->
+                  H.complete_job s job @@ fetch Keys.store_gate_approval)
           | false ->
               Logs.info (fun m -> m "%s : DISABLED" (Builder.log_id s));
               Abb.Future.return (Error `Noop))
