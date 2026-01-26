@@ -73,10 +73,7 @@ module Builder = struct
 
     let return = Fut.return
     let ( >>= ) = Fut.Infix_monad.( >>= )
-
-    let with_finally f ~finally =
-      let open Fut.Infix_monad in
-      f () >>= fun ret -> finally () >>= fun () -> Fut.return ret
+    let with_finally f ~finally = Fc.with_finally f ~finally
   end
 
   module Queue = struct
@@ -157,7 +154,9 @@ let tests =
         ignore (Fut.run_with_state run dummy_state);
         Oth.Assert.eq ~eq:Pp_int.equal ~pp:Pp_int.pp (Fut.state run) (`Det 10);
         Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !running_tasks_count 0;
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 0);
+        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 0;
+        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int (Bs.St.running_count st) 0;
+        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int (Bs.St.blocking_count st) 0);
     Oth.test ~name:"Task throws an exception" (fun _ ->
         let logger, running_tasks_count, suspended_tasks_count = make_logger () in
         let a1 : int Hmap.key = Hmap.Key.create "a1" in
@@ -177,7 +176,9 @@ let tests =
         | `Exn _ -> ()
         | _ -> Oth.Assert.false_ "Expected `Exn");
         Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !running_tasks_count 0;
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 0);
+        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 0;
+        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int (Bs.St.running_count st) 0;
+        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int (Bs.St.blocking_count st) 0);
     Oth.test ~name:"Build aborted" (fun _ ->
         let logger, running_tasks_count, suspended_tasks_count = make_logger () in
         let a1 : int Hmap.key = Hmap.Key.create "a1" in
@@ -213,7 +214,9 @@ let tests =
           (Fut.state (Fut.Promise.future trigger))
           `Aborted;
         Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !running_tasks_count 0;
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 0);
+        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 0;
+        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int (Bs.St.running_count st) 0;
+        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int (Bs.St.blocking_count st) 0);
     Oth.test ~name:"Suspended tasks cleaned up on exn" (fun _ ->
         let logger, running_tasks_count, suspended_tasks_count = make_logger () in
         let a1 : int Hmap.key = Hmap.Key.create "a1" in
@@ -238,7 +241,9 @@ let tests =
         | `Exn _ -> ()
         | _ -> Oth.Assert.false_ "Expected `Exn");
         Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !running_tasks_count 0;
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 0);
+        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 0;
+        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int (Bs.St.running_count st) 0;
+        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int (Bs.St.blocking_count st) 0);
     Oth.test ~name:"Suspended tasks cleaned up on exn on concurrent fetch" (fun _ ->
         (* 4 layers deep: root -> 2 -> 4 -> 8 leaf tasks
            Leaves wait on triggers, one throws exception *)
@@ -327,7 +332,125 @@ let tests =
         | `Exn _ -> ()
         | _ -> Oth.Assert.false_ "Expected `Exn");
         Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !running_tasks_count 0;
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 0);
+        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 0;
+        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int (Bs.St.running_count st) 0;
+        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int (Bs.St.blocking_count st) 0);
+    Oth.test ~name:"Diamond dependency with shared child and exception" (fun _ ->
+        (* Task graph:
+                   parent
+                  /      \_______
+              child_a          child_b
+               /   \            /   \
+           child_c child_d child_c child_e
+                       ^
+                   (throws)
+
+            child_c is called from both children
+         *)
+        let logger, running_tasks_count, suspended_tasks_count = make_logger () in
+        let st = Bs.St.create (ref Hmap.empty) in
+        let parent : int Hmap.key = Hmap.Key.create "parent" in
+        let child_a : int Hmap.key = Hmap.Key.create "child_a" in
+        let child_b : int Hmap.key = Hmap.Key.create "child_b" in
+        let child_c : int Hmap.key = Hmap.Key.create "child_c" in
+        let child_d : int Hmap.key = Hmap.Key.create "child_d" in
+        let child_e : int Hmap.key = Hmap.Key.create "child_e" in
+        (* Triggers and started promises for leaf tasks *)
+        let child_c_started = Fut.Promise.create () in
+        let child_c_trigger = Fut.Promise.create () in
+        let child_d_started = Fut.Promise.create () in
+        let child_d_trigger = Fut.Promise.create () in
+        let child_e_started = Fut.Promise.create () in
+        let child_e_trigger = Fut.Promise.create () in
+        let parent_task =
+         fun _ _ { Bs.Fetcher.fetch } ->
+          let open Fut.Infix_monad in
+          Fc.all2 (fetch child_a) (fetch child_b) >>= fun (a, b) -> Fut.return (a + b)
+        in
+        let child_a_task =
+         fun _ _ { Bs.Fetcher.fetch } ->
+          let open Fut.Infix_monad in
+          Fc.all2 (fetch child_c) (fetch child_d) >>= fun (c, d) -> Fut.return (c + d)
+        in
+        let child_b_task =
+         fun _ _ { Bs.Fetcher.fetch } ->
+          let open Fut.Infix_monad in
+          Fc.all2 (fetch child_c) (fetch child_e) >>= fun (c, e) -> Fut.return (c + e)
+        in
+        let child_c_task =
+         fun _ _ _ ->
+          let open Fut.Infix_monad in
+          Fut.Promise.set child_c_started ()
+          >>= fun () -> Fut.Promise.future child_c_trigger >>= fun () -> Fut.return 1
+        in
+        let child_d_task =
+         fun _ _ _ ->
+          let open Fut.Infix_monad in
+          Fut.Promise.set child_d_started ()
+          >>= fun () ->
+          Fut.Promise.future child_d_trigger >>= fun () -> raise (Failure "child_d exception")
+        in
+        let child_e_task =
+         fun _ _ _ ->
+          let open Fut.Infix_monad in
+          Fut.Promise.set child_e_started ()
+          >>= fun () -> Fut.Promise.future child_e_trigger >>= fun () -> Fut.return 3
+        in
+        let tasks_map =
+          Hmap.empty
+          |> Hmap.add (coerce parent) parent_task
+          |> Hmap.add (coerce child_a) child_a_task
+          |> Hmap.add (coerce child_b) child_b_task
+          |> Hmap.add (coerce child_c) child_c_task
+          |> Hmap.add (coerce child_d) child_d_task
+          |> Hmap.add (coerce child_e) child_e_task
+        in
+        let tasks =
+          { Bs.Tasks.get = (fun _ k -> Builder.C.return (Hmap.find (coerce k) tasks_map)) }
+        in
+        let run =
+          let open Fut.Infix_monad in
+          Exec.create ~logger ~slots:10 () >>= fun queue -> Bs.build queue rebuilder tasks parent st
+        in
+        ignore (Fut.run_with_state run dummy_state);
+        (* Verify all leaf tasks have started *)
+        Oth.Assert.eq
+          ~eq:Pp_unit.equal
+          ~pp:Pp_unit.pp
+          (Fut.state (Fut.Promise.future child_c_started))
+          (`Det ());
+        Oth.Assert.eq
+          ~eq:Pp_unit.equal
+          ~pp:Pp_unit.pp
+          (Fut.state (Fut.Promise.future child_d_started))
+          (`Det ());
+        Oth.Assert.eq
+          ~eq:Pp_unit.equal
+          ~pp:Pp_unit.pp
+          (Fut.state (Fut.Promise.future child_e_started))
+          (`Det ());
+        (* Trigger child_d to throw exception *)
+        ignore (Fut.run_with_state (Fut.Promise.set child_d_trigger ()) dummy_state);
+        (* a. Verify build fails with Exn *)
+        (match Fut.state run with
+        | `Exn _ -> ()
+        | `Undet -> Oth.Assert.false_ "Build should not be undetermined"
+        | _ -> Oth.Assert.false_ "Expected `Exn");
+        (* b. Verify running tasks and suspended tasks are 0 *)
+        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !running_tasks_count 0;
+        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 0;
+        (* c. Verify buildsys running and blocking counts are 0 *)
+        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int (Bs.St.running_count st) 0;
+        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int (Bs.St.blocking_count st) 0;
+        (* d. Verify all children triggers are failed with aborted or Exn *)
+        (match Fut.state (Fut.Promise.future child_c_trigger) with
+        | `Aborted | `Exn _ -> ()
+        | `Undet -> Oth.Assert.false_ "child_c_trigger should not be undetermined"
+        | `Det _ -> Oth.Assert.false_ "child_c_trigger should not be determined");
+        match Fut.state (Fut.Promise.future child_e_trigger) with
+        | `Aborted | `Exn _ -> ()
+        | `Undet -> Oth.Assert.false_ "child_e_trigger should not be undetermined"
+        | `Det _ -> Oth.Assert.false_ "child_e_trigger should not be determined");
   ]
 
 let () =

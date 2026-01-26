@@ -94,6 +94,8 @@ module type T = sig
 
     val create : state -> t
     val get_state : t -> state
+    val running_count : t -> int
+    val blocking_count : t -> int
   end
 
   val build : queue -> Rebuilder.t -> Tasks.t -> 'v k -> St.t -> 'v c
