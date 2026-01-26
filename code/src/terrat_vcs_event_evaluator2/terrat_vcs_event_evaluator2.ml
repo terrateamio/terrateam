@@ -393,7 +393,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       ~user
       event =
     match Sys.getenv_opt "TERRAT_EVENT_EVALUATOR_MODE" with
-    | Some ("new-age" | "legacy-drift") ->
+    | None | Some ("" | "new-age" | "legacy-drift") ->
         let store =
           Hmap.empty
           |> Keys.Key.add Keys.account account
@@ -416,7 +416,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
              ~event
              ~store
              ()
-    | None | Some _ ->
+    | Some _ ->
         let run =
           let ctx = Legacy.Ctx.make ~config ~storage ~request_id () in
           match event with
@@ -797,7 +797,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     let request_id = "RUN_MISSING_DRIFT_SCHEDULES" in
     let run =
       match Sys.getenv_opt "TERRAT_EVENT_EVALUATOR_MODE" with
-      | Some "new-age" ->
+      | None | Some ("" | "new-age") ->
           let target = Keys.run_missing_drift_schedules in
           let store = Hmap.empty in
           with_conn storage ~f:(fun db ->
@@ -821,7 +821,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                     | Ok (`Ok n) -> n > 0
                     | Ok (`Noop | `Suspend_eval _) | Error _ -> true))
                 ~betwixt:(fun _ -> Fc.unit))
-      | None | Some _ ->
+      | Some _ ->
           let ctx = Legacy.Ctx.make ~config ~storage ~request_id () in
           Legacy.run_scheduled_drift ctx >>= fun _ -> Abb.Future.return (Ok (`Ok 0))
     in
@@ -836,7 +836,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     let run =
       let open Irm in
       match Sys.getenv_opt "TERRAT_EVENT_EVALUATOR_MODE" with
-      | Some "new-age" ->
+      | None | Some ("" | "new-age") ->
           with_conn storage ~f:(fun db ->
               Pgsql_io.tx db ~f:(fun () ->
                   S.Db.store_account_repository ~request_id db account repo)
@@ -881,7 +881,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               Pgsql_io.tx db ~f:(fun () -> tx_safe ~request_id @@ Builder.eval s target))
           >>= fun _ ->
           Fc.to_result @@ Fc.ignore @@ run_missing_drift_schedules ~config ~storage ~exec ()
-      | None | Some _ ->
+      | Some _ ->
           with_conn storage ~f:(fun db -> S.Api.create_client ~request_id config account db)
           >>= fun client ->
           S.Api.fetch_remote_repo ~request_id client repo
