@@ -126,7 +126,7 @@ struct
             suspended_tasks = Name_map.remove name t.suspended_tasks;
           }
       | Some (count, task) ->
-          { t with suspended_tasks = Name_map.add name (count + 1, task) t.suspended_tasks }
+          { t with suspended_tasks = Name_map.add name (count - 1, task) t.suspended_tasks }
       | None -> t
 
     let complete_task name t =

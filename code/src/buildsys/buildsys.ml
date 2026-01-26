@@ -86,6 +86,8 @@ module type T = sig
 
     val create : state -> t
     val get_state : t -> state
+    val running_count : t -> int
+    val blocking_count : t -> int
   end
 
   val build : queue -> Rebuilder.t -> Tasks.t -> 'v k -> St.t -> 'v c
@@ -130,6 +132,8 @@ module Make (M : S) :
 
     let create state = { state; running = []; blocking = []; notify = M.Notify.create () }
     let get_state t = t.state
+    let running_count t = CCList.length t.running
+    let blocking_count t = CCList.length t.blocking
 
     let assert_no_cycle k path t =
       let running = t.running in
@@ -175,20 +179,17 @@ module Make (M : S) :
             ~key:(repr, path)
             t.blocking;
         block_k queue path t k f)
-      else
-        let open M.C in
+      else (
         t.running <- (repr, path) :: t.running;
         M.C.with_finally
-          (fun () ->
-            M.Queue.run queue ~name:repr f
-            >>= fun ret ->
+          (fun () -> M.Queue.run queue ~name:repr f)
+          ~finally:(fun () ->
             t.running <-
               CCList.remove
                 ~eq:(fun (k1, _) (k2, _) -> M.Key_repr.equal k1 k2)
                 ~key:(repr, path)
                 t.running;
-            M.C.return ret)
-          ~finally:(fun () -> M.Notify.notify t.notify)
+            M.Notify.notify t.notify))
   end
 
   let build queue rebuilder tasks k st =
