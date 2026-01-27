@@ -171,14 +171,16 @@ module Make (M : S) :
         let open M.C in
         t.blocking <- (repr, path) :: t.blocking;
         assert_no_cycle repr path t;
-        M.Notify.wait t.notify
-        >>= fun () ->
-        t.blocking <-
-          CCList.remove
-            ~eq:(fun (k1, _) (k2, _) -> M.Key_repr.equal k1 k2)
-            ~key:(repr, path)
-            t.blocking;
-        block_k queue path t k f)
+        M.C.with_finally
+          (fun () -> M.Notify.wait t.notify)
+          ~finally:(fun () ->
+            t.blocking <-
+              CCList.remove
+                ~eq:(fun (k1, _) (k2, _) -> M.Key_repr.equal k1 k2)
+                ~key:(repr, path)
+                t.blocking;
+            M.C.return ())
+        >>= fun () -> block_k queue path t k f)
       else (
         t.running <- (repr, path) :: t.running;
         M.C.with_finally
