@@ -63,6 +63,7 @@ chosen_drift_schedule as (
                or drift_schedules.last_tried_at < now() - ds.schedule
                or drift_schedules.last_tried_at < drift_schedules.updated_at)
     limit 1
+    for update of drift_schedules skip locked
 ),
 updated_last_tried as (
     update drift_schedules as ds
