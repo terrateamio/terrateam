@@ -4939,28 +4939,66 @@ module Work_manifest = struct
                             ref_ = branch;
                             inputs =
                               Some
-                                Inputs.
-                                  {
-                                    primary = Json_schema.Empty_obj.t;
-                                    additional =
-                                      Json_schema.String_map.of_list
-                                        ([
-                                           ( "work-token",
-                                             `String (Ouuid.to_string work_manifest.Wm.id) );
-                                           ( "api-base-url",
-                                             `String
-                                               (Terrat_config.api_base (Api.Config.config config)
-                                               ^ "/github") );
-                                         ]
-                                        @ (match work_manifest.Wm.environment with
-                                          | Some env -> [ ("environment", `String env) ]
-                                          | None -> [])
-                                        @
-                                        match work_manifest.Wm.runs_on with
-                                        | Some runs_on ->
-                                            [ ("runs_on", `String (Yojson.Safe.to_string runs_on)) ]
-                                        | None -> []);
-                                  };
+                                (let dynamic_title_items =
+                                   Terrat_config.Github.action_dynamic_title github_config
+                                 in
+                                 let dynamic_inputs =
+                                   CCList.filter_map
+                                     (function
+                                       | `Run_kind ->
+                                           let kind =
+                                             match work_manifest.Wm.target with
+                                             | Terrat_vcs_provider2.Target.Pr _ -> "pr"
+                                             | Terrat_vcs_provider2.Target.Drift _ -> "drift"
+                                           in
+                                           Some ("run-kind", `String kind)
+                                       | `Run_type -> (
+                                           match CCList.last_opt work_manifest.Wm.steps with
+                                           | Some step ->
+                                               Some ("run-type", `String (Wm.Step.to_string step))
+                                           | None -> assert false)
+                                       | `Pr_title -> (
+                                           match work_manifest.Wm.target with
+                                           | Terrat_vcs_provider2.Target.Pr pr -> (
+                                               match Api.Pull_request.title pr with
+                                               | Some title -> Some ("pr-title", `String title)
+                                               | None -> None)
+                                           | Terrat_vcs_provider2.Target.Drift _ -> None)
+                                       | `Pr_number -> (
+                                           match work_manifest.Wm.target with
+                                           | Terrat_vcs_provider2.Target.Pr pr ->
+                                               Some
+                                                 ( "pr-number",
+                                                   `String (Int.to_string (Api.Pull_request.id pr))
+                                                 )
+                                           | Terrat_vcs_provider2.Target.Drift _ -> None))
+                                     dynamic_title_items
+                                 in
+                                 Inputs.
+                                   {
+                                     primary = Json_schema.Empty_obj.t;
+                                     additional =
+                                       Json_schema.String_map.of_list
+                                         ([
+                                            ( "work-token",
+                                              `String (Ouuid.to_string work_manifest.Wm.id) );
+                                            ( "api-base-url",
+                                              `String
+                                                (Terrat_config.api_base (Api.Config.config config)
+                                                ^ "/github") );
+                                          ]
+                                         @ dynamic_inputs
+                                         @ (match work_manifest.Wm.environment with
+                                           | Some env -> [ ("environment", `String env) ]
+                                           | None -> [])
+                                         @
+                                         match work_manifest.Wm.runs_on with
+                                         | Some runs_on ->
+                                             [
+                                               ("runs_on", `String (Yojson.Safe.to_string runs_on));
+                                             ]
+                                         | None -> []);
+                                   });
                           };
                       additional = Json_schema.String_map.empty;
                     }
