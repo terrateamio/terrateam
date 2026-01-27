@@ -451,6 +451,127 @@ let tests =
         | `Aborted | `Exn _ -> ()
         | `Undet -> Oth.Assert.false_ "child_e_trigger should not be undetermined"
         | `Det _ -> Oth.Assert.false_ "child_e_trigger should not be determined");
+    Oth.test ~name:"Blocking task not cleaned up when its own sibling throws" (fun _ ->
+        (* Task graph:
+                         root
+                        /    \
+                      a        b
+                      |       / \
+                   shared   c   shared
+                     ^      |      |
+                     |   (throws)  v
+                  (runs)        (blocks)
+
+           - root fetches a and b concurrently
+           - a fetches shared (starts it running)
+           - b fetches c and shared concurrently using Fc.all2
+           - b's fetch of shared blocks (since a already started shared)
+           - c throws an exception
+           - b's Fc.all2 receives the exception from c
+           - b's Fc.all2 aborts b's fetch of shared
+           - b's blocking wait is aborted
+           - IMPORTANTLY: shared itself is NOT aborted here - it was started by a!
+           - The blocking entry for b's fetch of shared is NOT cleaned up
+             because its blocking wait was aborted without notify being called
+           - Later, b fails, root's Fc.all2 aborts a
+           - a's fetch aborts shared, shared's with_finally notifies
+           - But b's blocking wait was already aborted, so it can't be woken up
+
+           The bug: blocking entries are not protected by with_finally,
+           so when a blocking wait is aborted, the entry stays in t.blocking.
+        *)
+        let logger, running_tasks_count, suspended_tasks_count = make_logger () in
+        let st = Bs.St.create (ref Hmap.empty) in
+        let root : int Hmap.key = Hmap.Key.create "root" in
+        let a : int Hmap.key = Hmap.Key.create "a" in
+        let b : int Hmap.key = Hmap.Key.create "b" in
+        let c : int Hmap.key = Hmap.Key.create "c" in
+        let shared : int Hmap.key = Hmap.Key.create "shared" in
+        let shared_trigger = Fut.Promise.create () in
+        let shared_started = Fut.Promise.create () in
+        let c_trigger = Fut.Promise.create () in
+        let c_started = Fut.Promise.create () in
+        let root_task =
+         fun _ _ { Bs.Fetcher.fetch } ->
+          let open Fut.Infix_monad in
+          Fc.all2 (fetch a) (fetch b) >>= fun (v1, v2) -> Fut.return (v1 + v2)
+        in
+        let a_task =
+         fun _ _ { Bs.Fetcher.fetch } ->
+          let open Fut.Infix_monad in
+          (* a fetches shared, starting it *)
+          fetch shared >>= fun v -> Fut.return v
+        in
+        let b_task =
+         fun _ _ { Bs.Fetcher.fetch } ->
+          let open Fut.Infix_monad in
+          (* b fetches c and shared concurrently
+             - shared is already running (started by a), so b will block
+             - c will eventually throw, aborting b's fetch of shared
+             - But shared is NOT aborted because it's owned by a's fetch *)
+          Fc.all2 (fetch c) (fetch shared) >>= fun (cv, sv) -> Fut.return (cv + sv)
+        in
+        let c_task =
+         fun _ _ _ ->
+          let open Fut.Infix_monad in
+          Fut.Promise.set c_started ()
+          >>= fun () -> Fut.Promise.future c_trigger >>= fun () -> raise (Failure "c exception")
+        in
+        let shared_task =
+         fun _ _ _ ->
+          let open Fut.Infix_monad in
+          Fut.Promise.set shared_started ()
+          >>= fun () -> Fut.Promise.future shared_trigger >>= fun () -> Fut.return 10
+        in
+        let tasks_map =
+          Hmap.empty
+          |> Hmap.add (coerce root) root_task
+          |> Hmap.add (coerce a) a_task
+          |> Hmap.add (coerce b) b_task
+          |> Hmap.add (coerce c) c_task
+          |> Hmap.add (coerce shared) shared_task
+        in
+        let tasks =
+          { Bs.Tasks.get = (fun _ k -> Builder.C.return (Hmap.find (coerce k) tasks_map)) }
+        in
+        let run =
+          let open Fut.Infix_monad in
+          Exec.create ~logger ~slots:10 () >>= fun queue -> Bs.build queue rebuilder tasks root st
+        in
+        ignore (Fut.run_with_state run dummy_state);
+        (* Verify shared and c have started *)
+        Oth.Assert.eq
+          ~eq:Pp_unit.equal
+          ~pp:Pp_unit.pp
+          (Fut.state (Fut.Promise.future shared_started))
+          (`Det ());
+        Oth.Assert.eq
+          ~eq:Pp_unit.equal
+          ~pp:Pp_unit.pp
+          (Fut.state (Fut.Promise.future c_started))
+          (`Det ());
+        (* Build should be undetermined *)
+        Oth.Assert.eq ~eq:Pp_int.equal ~pp:Pp_int.pp (Fut.state run) `Undet;
+        (* At this point:
+           - shared is running (started by a)
+           - c is running (started by b)
+           - b is blocked waiting for shared (via Fc.all2 with c)
+           Now trigger c to throw *)
+        ignore (Fut.run_with_state (Fut.Promise.set c_trigger ()) dummy_state);
+        (* Build should have failed with Exn *)
+        (match Fut.state run with
+        | `Exn _ -> ()
+        | `Undet -> Oth.Assert.false_ "Build should not be undetermined"
+        | `Aborted -> Oth.Assert.false_ "Build should not be aborted"
+        | `Det _ -> Oth.Assert.false_ "Build should not be determined");
+        (* Verify counters - this is where the bug would manifest:
+           b's blocking entry might not be cleaned up because its blocking wait
+           was aborted (by c's exception in b's Fc.all2) before shared's notify *)
+        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !running_tasks_count 0;
+        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 0;
+        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int (Bs.St.running_count st) 0;
+        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int (Bs.St.blocking_count st) 0;
+        ());
   ]
 
 let () =
