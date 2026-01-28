@@ -10,6 +10,7 @@
   import { onMount } from 'svelte';
 
   // Route params (provided by router, may be unused)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   export let params: { installationId?: string } = {};
 
   // Tab management
@@ -221,7 +222,7 @@
 
     <!-- Tab Navigation -->
     <div class="border-b border-gray-200 dark:border-gray-700">
-      <nav class="-mb-px flex space-x-8" aria-label="Tabs" role="tablist">
+      <div class="-mb-px flex space-x-8" role="tablist" aria-label="Tabs">
         <button
           on:click={() => setActiveTab('dashboard')}
           class="py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200 {activeTab === 'dashboard'
@@ -266,7 +267,7 @@
         >
           Timeline
         </button>
-      </nav>
+      </div>
     </div>
 
     <!-- Tab Panels -->
