@@ -209,8 +209,13 @@ struct
 
   let all_wms_completed =
     CCList.for_all (function
-      | { Wm.state = Wm.State.(Completed | Aborted); _ } -> true
+      | { Wm.state = Wm.State.Completed; _ } -> true
       | _ -> false)
+
+  let rem_aborted =
+    CCList.filter (function
+      | { Wm.state = Wm.State.Aborted; _ } -> false
+      | _ -> true)
 
   let publish_fail s { Builder.Bs.Fetcher.fetch } = function
     | (`Failed_to_start_with_msg_err _ | `Failed_to_start | `Missing_workflow) as err ->
@@ -301,7 +306,7 @@ struct
             Logs.info (fun m -> m "%s : WM : TOO_MANY_ABORTS" (Builder.log_id s));
             Abb.Future.return (Error `Error)
         | wms -> (
-            match CCList.filter eq wms with
+            match rem_aborted @@ CCList.filter eq wms with
             | [] -> (
                 Logs.info (fun m -> m "%s : WM : CREATE : name=%s" (Builder.log_id s) name);
                 create ~dest_branch_ref ~branch_ref ~branch s fetcher
