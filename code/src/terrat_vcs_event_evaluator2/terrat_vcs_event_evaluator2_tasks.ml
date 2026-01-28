@@ -2112,28 +2112,8 @@ struct
               Logs.info (fun m ->
                   m "%s : JOB_COMPLETE : job_id= %a" (Builder.log_id s) Uuidm.pp job.Tjc.Job.id);
               Abb.Future.return (Error `Noop)
-          | Some ({ Tjc.Job.state = Tjc.Job.State.Running; _ } as job) -> (
-              match job.Tjc.Job.type_ with
-              | Tjc.Job.Type_.Apply _ | Tjc.Job.Type_.Autoapply ->
-                  H.complete_job s job @@ fetch Keys.run_apply
-              | Tjc.Job.Type_.Autoplan | Tjc.Job.Type_.Plan _ ->
-                  H.complete_job s job @@ fetch Keys.run_plan
-                  >>= fun () ->
-                  (* This is a little performance tweak.  We know querying the
-                     repo config can take a bit but we know it can't have
-                     changed, so let's just forward it on. *)
-                  let s' =
-                    s
-                    |> Builder.State.orig_store
-                    |> Tasks_base.forward_std_keys s
-                    |> CCFun.flip Builder.State.set_orig_store s
-                  in
-                  Builder.eval s' Keys.complete_no_change_dirspaces
-              | Tjc.Job.Type_.Repo_config -> H.complete_job s job @@ fetch Keys.publish_repo_config
-              | Tjc.Job.Type_.Index -> H.complete_job s job @@ fetch Keys.publish_index_complete
-              | Tjc.Job.Type_.Unlock _ -> H.complete_job s job @@ fetch Keys.publish_unlock
-              | Tjc.Job.Type_.Push -> H.complete_job s job @@ fetch Keys.eval_push_event
-              | Tjc.Job.Type_.Gate_approval _ -> assert false)
+          | Some ({ Tjc.Job.state = Tjc.Job.State.Running; _ } as job) ->
+              H.complete_job s job @@ fetch Keys.iter_job
           | None -> assert false)
 
     let maybe_complete_job_from_work_manifest_event =
