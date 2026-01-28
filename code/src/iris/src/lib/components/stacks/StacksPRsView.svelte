@@ -9,6 +9,7 @@
   export let loadErrors: Array<{ prNumber: number; error: string }>;
   export let searchQuery: string;
   export let repoFilter: string;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   export let uniqueRepos: string[];
   export let timeRange: number;
   export let onRefresh: () => void;
