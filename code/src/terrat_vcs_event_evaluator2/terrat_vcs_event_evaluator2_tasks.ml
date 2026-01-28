@@ -2112,28 +2112,8 @@ struct
               Logs.info (fun m ->
                   m "%s : JOB_COMPLETE : job_id= %a" (Builder.log_id s) Uuidm.pp job.Tjc.Job.id);
               Abb.Future.return (Error `Noop)
-          | Some ({ Tjc.Job.state = Tjc.Job.State.Running; _ } as job) -> (
-              match job.Tjc.Job.type_ with
-              | Tjc.Job.Type_.Apply _ | Tjc.Job.Type_.Autoapply ->
-                  H.complete_job s job @@ fetch Keys.run_apply
-              | Tjc.Job.Type_.Autoplan | Tjc.Job.Type_.Plan _ ->
-                  H.complete_job s job @@ fetch Keys.run_plan
-                  >>= fun () ->
-                  (* This is a little performance tweak.  We know querying the
-                     repo config can take a bit but we know it can't have
-                     changed, so let's just forward it on. *)
-                  let s' =
-                    s
-                    |> Builder.State.orig_store
-                    |> Tasks_base.forward_std_keys s
-                    |> CCFun.flip Builder.State.set_orig_store s
-                  in
-                  Builder.eval s' Keys.complete_no_change_dirspaces
-              | Tjc.Job.Type_.Repo_config -> H.complete_job s job @@ fetch Keys.publish_repo_config
-              | Tjc.Job.Type_.Index -> H.complete_job s job @@ fetch Keys.publish_index_complete
-              | Tjc.Job.Type_.Unlock _ -> H.complete_job s job @@ fetch Keys.publish_unlock
-              | Tjc.Job.Type_.Push -> H.complete_job s job @@ fetch Keys.eval_push_event
-              | Tjc.Job.Type_.Gate_approval _ -> assert false)
+          | Some ({ Tjc.Job.state = Tjc.Job.State.Running; _ } as job) ->
+              H.complete_job s job @@ fetch Keys.iter_job
           | None -> assert false)
 
     let maybe_complete_job_from_work_manifest_event =
@@ -2491,35 +2471,67 @@ struct
 
     let iter_job =
       run ~name:"iter_job" (fun s { Bs.Fetcher.fetch } ->
-          let open Irm in
-          fetch Keys.repo_config_raw'
-          >>= fun (_, repo_config) ->
-          let module V1 = Terrat_base_repo_config_v1 in
-          match V1.enabled repo_config with
-          | true -> (
-              fetch Keys.job
-              >>= fun job ->
-              match job.Tjc.Job.type_ with
-              | Tjc.Job.Type_.Apply _ | Tjc.Job.Type_.Autoapply -> fetch Keys.run_apply
-              | Tjc.Job.Type_.Autoplan | Tjc.Job.Type_.Plan _ ->
-                  fetch Keys.run_plan
-                  >>= fun () ->
-                  let s' =
-                    s
-                    |> Builder.State.orig_store
-                    |> Tasks_base.forward_std_keys s
-                    |> CCFun.flip Builder.State.set_orig_store s
-                  in
-                  Builder.eval s' Keys.complete_no_change_dirspaces
-              | Tjc.Job.Type_.Repo_config -> H.complete_job s job @@ fetch Keys.publish_repo_config
-              | Tjc.Job.Type_.Unlock _ -> H.complete_job s job @@ fetch Keys.publish_unlock
-              | Tjc.Job.Type_.Index -> H.complete_job s job @@ fetch Keys.publish_index_complete
-              | Tjc.Job.Type_.Push -> fetch Keys.eval_push_event
-              | Tjc.Job.Type_.Gate_approval _ ->
-                  H.complete_job s job @@ fetch Keys.store_gate_approval)
-          | false ->
-              Logs.info (fun m -> m "%s : DISABLED" (Builder.log_id s));
-              Abb.Future.return (Error `Noop))
+          let maybe_publish_msg msg =
+            let open Irm in
+            fetch Keys.publish_comment
+            >>= fun publish_comment -> publish_comment' publish_comment msg
+          in
+          let run =
+            let open Irm in
+            fetch Keys.repo_config_raw'
+            >>= fun (_, repo_config) ->
+            let module V1 = Terrat_base_repo_config_v1 in
+            match V1.enabled repo_config with
+            | true -> (
+                fetch Keys.job
+                >>= fun job ->
+                match job.Tjc.Job.type_ with
+                | Tjc.Job.Type_.Apply _ | Tjc.Job.Type_.Autoapply -> fetch Keys.run_apply
+                | Tjc.Job.Type_.Autoplan | Tjc.Job.Type_.Plan _ ->
+                    fetch Keys.run_plan
+                    >>= fun () ->
+                    let s' =
+                      s
+                      |> Builder.State.orig_store
+                      |> Tasks_base.forward_std_keys s
+                      |> CCFun.flip Builder.State.set_orig_store s
+                    in
+                    Builder.eval s' Keys.complete_no_change_dirspaces
+                | Tjc.Job.Type_.Repo_config ->
+                    H.complete_job s job @@ fetch Keys.publish_repo_config
+                | Tjc.Job.Type_.Unlock _ -> H.complete_job s job @@ fetch Keys.publish_unlock
+                | Tjc.Job.Type_.Index -> H.complete_job s job @@ fetch Keys.publish_index_complete
+                | Tjc.Job.Type_.Push -> fetch Keys.eval_push_event
+                | Tjc.Job.Type_.Gate_approval _ ->
+                    H.complete_job s job @@ fetch Keys.store_gate_approval)
+            | false ->
+                Logs.info (fun m -> m "%s : DISABLED" (Builder.log_id s));
+                Abb.Future.return (Error `Noop)
+          in
+          let open Abb.Future.Infix_monad in
+          run
+          >>= function
+          | Ok _ as r -> Abb.Future.return r
+          | Error err ->
+              let msg =
+                match err with
+                | #Terrat_base_repo_config_v1.of_version_1_err as err ->
+                    Some (Msg.Repo_config_err err)
+                | #Terrat_change_match3.synthesize_config_err as err ->
+                    Some (Msg.Synthesize_config_err err)
+                | `Json_decode_err (fname, err) | `Yaml_decode_err (fname, err) ->
+                    Some (Msg.Repo_config_parse_failure (fname, err))
+                | `Repo_config_schema_err (fname, err) ->
+                    Some (Msg.Repo_config_schema_err (fname, err))
+                | `Premium_feature_err feature -> Some (Msg.Premium_feature_err feature)
+                | `Config_merge_err details -> Some (Msg.Repo_config_merge_err details)
+                | #Terrat_vcs_provider2.fetch_repo_config_with_provenance_err ->
+                    Some Msg.Unexpected_temporary_err
+                | #Builder.err -> None
+              in
+              let open Irm in
+              CCOption.map_or ~default:(Abb.Future.return (Ok ())) maybe_publish_msg msg
+              >>= fun () -> Abb.Future.return (Error err))
 
     let eval_work_manifest_failure =
       run ~name:"eval_work_manifest_failure" (fun s { Bs.Fetcher.fetch } ->
