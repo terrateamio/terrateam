@@ -1,4 +1,3 @@
-module String_map = CCMap.Make (CCString)
 module Properties = Json_schema_conv.Properties
 module Value = Json_schema_conv.Value
 module Additional_properties = Json_schema_conv.Additional_properties
@@ -36,7 +35,7 @@ module Request_body = struct
 end
 
 module Response = struct
-  type t_ = { content : Media_type.t Properties.t [@default String_map.empty] }
+  type t_ = { content : Media_type.t Properties.t [@default Sln_map.String.empty] }
   [@@deriving yojson { strict = false }]
 
   type t = t_ Value.t [@@deriving yojson]
@@ -70,10 +69,11 @@ end
 
 module Components = struct
   type t = {
-    schemas : Schema.t Properties.t; [@default String_map.empty]
-    responses : Response.t Properties.t; [@default String_map.empty]
-    parameters : Parameter.t Properties.t; [@default String_map.empty]
-    request_bodies : Request_body.t Properties.t; [@default String_map.empty] [@key "requestBodies"]
+    schemas : Schema.t Properties.t; [@default Sln_map.String.empty]
+    responses : Response.t Properties.t; [@default Sln_map.String.empty]
+    parameters : Parameter.t Properties.t; [@default Sln_map.String.empty]
+    request_bodies : Request_body.t Properties.t;
+        [@default Sln_map.String.empty] [@key "requestBodies"]
   }
   [@@deriving yojson { strict = false }]
 end
@@ -109,7 +109,8 @@ let module_name_of_string s =
   |> CCString.capitalize_ascii
 
 let module_name_of_field_name { Components.schemas; _ } s =
-  if String_map.mem (CCString.replace ~sub:"_" ~by:"-" s) schemas then module_name_of_string s ^ "_"
+  if Sln_map.String.mem (CCString.replace ~sub:"_" ~by:"-" s) schemas then
+    module_name_of_string s ^ "_"
   else module_name_of_string s
 
 let rec resolve_ref typ lookup ref_ =
@@ -125,13 +126,13 @@ let rec resolve_ref typ lookup ref_ =
   | Value.V v -> v
 
 let resolve_schema_ref { Components.schemas; _ } =
-  resolve_ref "schemas" (CCFun.flip String_map.get schemas)
+  resolve_ref "schemas" (CCFun.flip Sln_map.String.get schemas)
 
 let resolve_response_ref { Components.responses; _ } =
-  resolve_ref "responses" (CCFun.flip String_map.get responses)
+  resolve_ref "responses" (CCFun.flip Sln_map.String.get responses)
 
 let resolve_parameter_ref { Components.parameters; _ } =
-  resolve_ref "parameters" (CCFun.flip String_map.get parameters)
+  resolve_ref "parameters" (CCFun.flip Sln_map.String.get parameters)
 
 (* TODO: Fix this because we are actually only converting Schemas into
    Components and not into Components.Schemas.  This might change if we start
@@ -221,8 +222,8 @@ let http_status_to_name = function
   | code -> "Http_" ^ code
 
 let get_json_media_type m =
-  match String_map.get "application/json" m with
-  | None -> String_map.get "*/*" m
+  match Sln_map.String.get "application/json" m with
+  | None -> Sln_map.String.get "*/*" m
   | r -> r
 
 let module_name_of_operation_id s = s |> CCString.replace ~sub:"/" ~by:"_" |> module_name_of_string
@@ -430,7 +431,7 @@ let convert_str_operation strict_records base_module_name components uritmpl op_
           typ = Some "object";
           additional_properties = Additional_properties.Bool false;
           properties =
-            String_map.of_list
+            Sln_map.String.of_list
               (CCList.map
                  (fun p ->
                    let { Parameter.name; schema; _ } = resolve_parameter_ref components p in
@@ -542,7 +543,7 @@ let convert_str_operation strict_records base_module_name components uritmpl op_
     in
     let resolved_responses =
       op.Operation.responses
-      |> String_map.to_list
+      |> Sln_map.String.to_list
       |> CCList.sort (fun (a, _) (b, _) -> CCString.compare a b)
       |> CCList.map (fun (c, r) -> (c, resolve_response_ref components r))
     in
@@ -840,7 +841,7 @@ let convert_str_components
                (CCString.lowercase_ascii
                   (base_module_name ^ "_components_" ^ module_name_of_string name ^ ".ml")))
             (fun oc -> CCIO.write_line oc (Pprintast.string_of_structure m)))
-    (String_map.to_list schemas);
+    (Sln_map.String.to_list schemas);
   let sts =
     CCList.map
       (fun name ->
@@ -852,7 +853,7 @@ let convert_str_components
             (Mb.mk
                (Location.mknoloc (Some (module_name_of_string name)))
                (Mod.ident (Location.mknoloc (Json_schema_conv.Gen.ident [ module_name ]))))))
-      (schemas |> String_map.to_list |> CCList.map fst |> CCList.sort CCString.compare)
+      (schemas |> Sln_map.String.to_list |> CCList.map fst |> CCList.sort CCString.compare)
   in
   CCIO.with_out
     (Filename.concat output_dir (CCString.lowercase_ascii (base_module_name ^ "_components.ml")))
@@ -874,10 +875,10 @@ let convert_str_paths strict_records output_base base_module_name components pat
                (`Delete, path.Path.delete);
                (`Patch, path.Path.patch);
              ]))
-      (String_map.to_list paths)
+      (Sln_map.String.to_list paths)
     |> CCList.flatten
     |> CCList.map (fun ((op, _) as v) -> (fst @@ CCString.Split.left_exn ~by:"/" op, [ v ]))
-    |> String_map.of_list_with ~f:(fun _ -> CCList.append)
+    |> Sln_map.String.of_list_with ~f:(fun _ -> CCList.append)
   in
   CCList.iter
     (fun (name, operations) ->
@@ -895,7 +896,7 @@ let convert_str_paths strict_records output_base base_module_name components pat
       CCIO.with_out
         (output_base ^ "_" ^ CCString.lowercase_ascii (module_name_of_string name) ^ ".ml")
         (fun oc -> CCIO.write_line oc (Pprintast.string_of_structure modules)))
-    (String_map.to_list modules)
+    (Sln_map.String.to_list modules)
 
 let convert_str_document strict_records output_dir base_module_name { Document.paths; components } =
   let output_base = Filename.concat output_dir (CCString.lowercase_ascii base_module_name) in

@@ -1,5 +1,3 @@
-module String_map = CCMap.Make (CCString)
-
 module Additional_properties = struct
   module type Primary = sig
     type t [@@deriving yojson, show, eq]
@@ -19,9 +17,10 @@ module Additional_properties = struct
 
     type t = {
       primary : P.t;
-      additional : A.t String_map.t;
-          [@printer fun fmt v -> pp_additional_show fmt (String_map.to_list v)]
-          [@equal fun a b -> equal_additional_show (String_map.to_list a) (String_map.to_list b)]
+      additional : A.t Sln_map.String.t;
+          [@printer fun fmt v -> pp_additional_show fmt (Sln_map.String.to_list v)]
+          [@equal
+            fun a b -> equal_additional_show (Sln_map.String.to_list a) (Sln_map.String.to_list b)]
     }
     [@@deriving show, eq]
 
@@ -31,22 +30,22 @@ module Additional_properties = struct
           additional_of_yojson acc keys vs
       | (name, v) :: vs ->
           let open CCResult.Infix in
-          A.of_yojson v >>= fun v -> additional_of_yojson (String_map.add name v acc) keys vs
+          A.of_yojson v >>= fun v -> additional_of_yojson (Sln_map.String.add name v acc) keys vs
 
     let of_yojson json =
       let open CCResult.Infix in
       P.of_yojson json
       >>= fun primary ->
-      additional_of_yojson String_map.empty P.Yojson_meta.keys (Yojson.Safe.Util.to_assoc json)
+      additional_of_yojson Sln_map.String.empty P.Yojson_meta.keys (Yojson.Safe.Util.to_assoc json)
       >>= fun additional -> Ok { primary; additional }
 
     let to_yojson { primary; additional } =
       Yojson.Safe.Util.combine
         (P.to_yojson primary)
         (`Assoc
-          (CCList.map (fun (name, v) -> (name, A.to_yojson v)) (String_map.to_list additional)))
+           (CCList.map (fun (name, v) -> (name, A.to_yojson v)) (Sln_map.String.to_list additional)))
 
-    let make ?(additional = String_map.empty) primary = { primary; additional }
+    let make ?(additional = Sln_map.String.empty) primary = { primary; additional }
     let value { primary; _ } = primary
     let additional { additional; _ } = additional
   end

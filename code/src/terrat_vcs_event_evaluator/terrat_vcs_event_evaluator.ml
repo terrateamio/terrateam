@@ -1845,7 +1845,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           repo_config ctx state
           >>= fun repo_config ->
           let { D.schedules; _ } = V1.drift repo_config in
-          match V1.String_map.to_list schedules with
+          match Sln_map.String.to_list schedules with
           | (_, { D.Schedule.tag_query; _ }) :: _ -> Abb.Future.return (Ok tag_query)
           | [] -> Abb.Future.return (Ok Terrat_tag_query.any))
       | Event.Pull_request_comment _ | Event.Push _ | Event.Run_scheduled_drift -> assert false
@@ -2994,8 +2994,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | (`Failed_to_start_with_msg_err _ | `Missing_workflow | `Failed_to_start) as err ->
           publish_msg request_id client user pull_request (Msg.Run_work_manifest_err err)
 
-    let replace_stack_vars vars s =
-      Str_template.apply (CCFun.flip Terrat_data.String_map.find_opt vars) s
+    let replace_stack_vars vars s = Str_template.apply (CCFun.flip Sln_map.String.find_opt vars) s
 
     let apply_stack_vars_to_workflow stack workflow =
       let module R = Terrat_base_repo_config_v1 in
@@ -6099,7 +6098,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                    ~default:""
                    (fun { D.Window.start; end_ } -> start ^ "-" ^ end_)
                    window)))
-        (V1.String_map.to_list schedules);
+        (Sln_map.String.to_list schedules);
       store_drift_schedule
         state.State.request_id
         (Ctx.storage ctx)

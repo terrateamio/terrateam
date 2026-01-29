@@ -1,5 +1,4 @@
 module V1 = Terrat_repo_config.Version_1
-module String_map = Terrat_data.String_map
 
 let config_schema = [%blob "../../../../api_schemas/terrat/config-schema.json"]
 
@@ -387,7 +386,7 @@ module Workflow_step = struct
     type t = {
       capture_output : bool; [@default false]
       cmd : Cmd.t;
-      env : string String_map.t option;
+      env : string Sln_map.String.t option;
       ignore_errors : bool; [@default false]
       on_error : Yojson.Safe.t list; [@default []]
       run_on : Run_on.t; [@default Run_on.Success]
@@ -398,7 +397,7 @@ module Workflow_step = struct
 
   module Init = struct
     type t = {
-      env : string String_map.t option;
+      env : string Sln_map.String.t option;
       extra_args : string list; [@default []]
     }
     [@@deriving make, show, yojson, eq]
@@ -417,7 +416,7 @@ module Workflow_step = struct
     end
 
     type t = {
-      env : string String_map.t option;
+      env : string Sln_map.String.t option;
       extra_args : string list; [@default []]
       mode : Mode.t; [@default Mode.Strict]
     }
@@ -426,7 +425,7 @@ module Workflow_step = struct
 
   module Apply = struct
     type t = {
-      env : string String_map.t option;
+      env : string Sln_map.String.t option;
       extra_args : string list; [@default []]
       retry : Retry.t option;
     }
@@ -435,7 +434,7 @@ module Workflow_step = struct
 
   module Conftest = struct
     type t = {
-      env : string String_map.t option;
+      env : string Sln_map.String.t option;
       extra_args : string list; [@default []]
       gate : Gate.t option; [@default None]
       ignore_errors : bool; [@default false]
@@ -447,7 +446,7 @@ module Workflow_step = struct
 
   module Checkov = struct
     type t = {
-      env : string String_map.t option;
+      env : string Sln_map.String.t option;
       extra_args : string list; [@default []]
       gate : Gate.t option; [@default None]
       ignore_errors : bool; [@default false]
@@ -466,7 +465,7 @@ module Workflow_step = struct
     end
 
     type t = {
-      env : string String_map.t option;
+      env : string Sln_map.String.t option;
       extra_args : string list; [@default []]
       fail_on : Fail_on.t; [@default Fail_on.Undefined]
       gate : Gate.t option; [@default None]
@@ -479,7 +478,7 @@ module Workflow_step = struct
 
   module Gates = struct
     type t = {
-      env : string String_map.t option;
+      env : string Sln_map.String.t option;
       cmd : Cmd.t;
       run_on : Run_on.t; [@default Run_on.Success]
     }
@@ -552,7 +551,7 @@ module Access_control = struct
     apply_require_all_dirspace_access : bool; [@default true]
     ci_config_update : Match_list.t; [@default [ Match.Any ]]
     enabled : bool; [@default true]
-    files : Match_list.t String_map.t; [@default String_map.empty]
+    files : Match_list.t Sln_map.String.t; [@default Sln_map.String.empty]
     plan_require_all_dirspace_access : bool; [@default false]
     policies : Policy_list.t; [@default [ Policy.make ~tag_query:Terrat_tag_query.any () ]]
     terrateam_config_update : Match_list.t; [@default [ Match.Any ]]
@@ -810,15 +809,15 @@ module Dirs = struct
       create_and_select_workspace : bool; [@default true]
       create_if_missing : bool; [@default false]
       lock_branch_target : Branch_target.t; [@default Branch_target.All]
-      stacks : Workspace.t String_map.t; [@default String_map.empty]
+      stacks : Workspace.t Sln_map.String.t; [@default Sln_map.String.empty]
       tags : string list; [@default []]
-      workspaces : Workspace.t String_map.t;
-          [@default String_map.of_list [ ("default", Workspace.make ()) ]]
+      workspaces : Workspace.t Sln_map.String.t;
+          [@default Sln_map.String.of_list [ ("default", Workspace.make ()) ]]
     }
     [@@deriving make, show, yojson, eq]
   end
 
-  type t = Dir.t String_map.t [@@deriving show, yojson, eq]
+  type t = Dir.t Sln_map.String.t [@@deriving show, yojson, eq]
 end
 
 module Drift = struct
@@ -866,7 +865,7 @@ module Drift = struct
 
   type t = {
     enabled : bool; [@default false]
-    schedules : Schedule.t String_map.t; [@default String_map.empty]
+    schedules : Schedule.t Sln_map.String.t; [@default Sln_map.String.empty]
   }
   [@@deriving make, show, yojson, eq]
 end
@@ -1038,14 +1037,15 @@ module Stacks = struct
     type t = {
       type_ : Type_.t;
       rules : Rules.t; [@default Rules.make ()]
-      variables : string String_map.t; [@default String_map.empty]
+      variables : string Sln_map.String.t; [@default Sln_map.String.empty]
     }
     [@@deriving make, show, yojson, eq]
   end
 
   type t = {
-    names : Stack.t String_map.t;
-        [@default String_map.singleton "default" (Stack.make ~type_:(Type_.Stack Tag_query.any) ())]
+    names : Stack.t Sln_map.String.t;
+        [@default
+          Sln_map.String.singleton "default" (Stack.make ~type_:(Type_.Stack Tag_query.any) ())]
   }
   [@@deriving make, show, yojson, eq]
 end
@@ -1088,12 +1088,12 @@ end
 
 module Tags = struct
   module Branch = struct
-    type t = Pattern.t String_map.t [@@deriving show, yojson, eq]
+    type t = Pattern.t Sln_map.String.t [@@deriving show, yojson, eq]
   end
 
   type t = {
-    branch : Branch.t; [@default String_map.empty]
-    dest_branch : Branch.t; [@default String_map.empty]
+    branch : Branch.t; [@default Sln_map.String.empty]
+    dest_branch : Branch.t; [@default Sln_map.String.empty]
   }
   [@@deriving make, show, yojson, eq]
 end
@@ -1172,7 +1172,7 @@ module View = struct
     create_and_select_workspace : bool; [@default true]
     default_branch_overrides : Default_branch_overrides.t option; [@default None]
     destination_branches : Destination_branches.t; [@default []]
-    dirs : Dirs.t; [@default String_map.empty]
+    dirs : Dirs.t; [@default Sln_map.String.empty]
     drift : Drift.t; [@default Drift.make ()]
     enabled : bool; [@default true]
     engine : Engine.t; [@default Engine.(Terraform (Terraform.make ()))]
@@ -1206,13 +1206,13 @@ module Index = struct
   end
 
   type t = {
-    deps : Dep.t list String_map.t;
+    deps : Dep.t list Sln_map.String.t;
     symlinks : (string * string) list;
   }
   [@@deriving eq]
 
-  let empty = { symlinks = []; deps = String_map.empty }
-  let make ~symlinks deps = { symlinks; deps = String_map.of_list deps }
+  let empty = { symlinks = []; deps = Sln_map.String.empty }
+  let make ~symlinks deps = { symlinks; deps = Sln_map.String.of_list deps }
 end
 
 type raw
@@ -1274,7 +1274,7 @@ let of_version_1_access_control_files files =
   let files = Ac.Files.additional files in
   let ret =
     files
-    |> String_map.to_list
+    |> Sln_map.String.to_list
     |> CCResult.map_l (fun (path, match_list) ->
            match of_version_1_match_list match_list with
            | Ok match_list -> Ok (path, match_list)
@@ -1282,7 +1282,7 @@ let of_version_1_access_control_files files =
                Error (`Access_control_file_match_parse_err (path, err)))
   in
   let open CCResult.Infix in
-  ret >>= fun r -> Ok (String_map.of_list r)
+  ret >>= fun r -> Ok (Sln_map.String.of_list r)
 
 let of_version_1_access_control_policies policies =
   let module Acp = Terrat_repo_config_access_control_policy in
@@ -2131,9 +2131,9 @@ let of_version_1_dirs default_when_modified { V1.Dirs.additional; _ } =
       (fun acc (key, value) ->
         let open CCResult.Infix in
         of_version_1_workspace default_when_modified value
-        >>= fun workspace -> Ok (String_map.add key workspace acc))
-      String_map.empty
-      (Json_schema.String_map.to_list additional)
+        >>= fun workspace -> Ok (Sln_map.String.add key workspace acc))
+      Sln_map.String.empty
+      (Sln_map.String.to_list additional)
   in
   CCResult.map_l
     (fun ( dir,
@@ -2155,7 +2155,7 @@ let of_version_1_dirs default_when_modified { V1.Dirs.additional; _ } =
           ( stacks,
             Some
               (Ws.make
-                 ~additional:(Json_schema.String_map.of_list [ ("default", Ws.Additional.make ()) ])
+                 ~additional:(Sln_map.String.of_list [ ("default", Ws.Additional.make ()) ])
                  Json_schema.Empty_obj.t) )
         else (stacks, workspaces)
       in
@@ -2181,8 +2181,8 @@ let of_version_1_dirs default_when_modified { V1.Dirs.additional; _ } =
             ?tags
             ?workspaces
             () ))
-    (Json_schema.String_map.to_list additional)
-  >>= fun dirs -> Ok (String_map.of_list dirs)
+    (Sln_map.String.to_list additional)
+  >>= fun dirs -> Ok (Sln_map.String.of_list dirs)
 
 let of_version_1_drift_1 drift =
   let open CCResult.Infix in
@@ -2200,7 +2200,7 @@ let of_version_1_drift_1 drift =
     (Drift.make
        ~enabled
        ~schedules:
-         (String_map.of_list
+         (Sln_map.String.of_list
             [ ("default", Drift.Schedule.make ~tag_query ~schedule ~reconcile ()) ])
        ())
 
@@ -2220,8 +2220,8 @@ let of_version_1_drift_2 drift =
       >>= fun tag_query ->
       map_opt (fun { Schedule.Window.start; end_ } -> Drift.Window.make ~start ~end_ ()) window
       >>= fun window -> Ok (name, Drift.Schedule.make ~tag_query ~reconcile ~schedule ?window ()))
-    (Json_schema.String_map.to_list @@ Dr.Schedules.additional schedules)
-  >>= fun schedules -> Ok (Drift.make ~enabled ~schedules:(String_map.of_list schedules) ())
+    (Sln_map.String.to_list @@ Dr.Schedules.additional schedules)
+  >>= fun schedules -> Ok (Drift.make ~enabled ~schedules:(Sln_map.String.of_list schedules) ())
 
 let of_version_1_drift =
   let module V1 = Terrat_repo_config_version_1 in
@@ -2362,8 +2362,8 @@ let of_version_1_stack_config names =
       in
       let variables = CCOption.map (fun { V.additional = variables; _ } -> variables) variables in
       Ok (k, Stacks.Stack.make ~type_ ~rules ?variables ()))
-  @@ String_map.to_list configs
-  >>= fun configs -> Ok (String_map.of_list configs)
+  @@ Sln_map.String.to_list configs
+  >>= fun configs -> Ok (Sln_map.String.of_list configs)
 
 let of_version_1_stacks stacks =
   let open CCResult.Infix in
@@ -2446,8 +2446,8 @@ let of_version_1_tags_branches branches =
   let open CCResult.Infix in
   CCResult.map_l
     (fun (k, s) -> Pattern.make s >>= fun p -> Ok (k, p))
-    (Json_schema.String_map.to_list branches)
-  >>= fun branches -> Ok (String_map.of_list branches)
+    (Sln_map.String.to_list branches)
+  >>= fun branches -> Ok (Sln_map.String.of_list branches)
 
 let of_version_1_tags tags =
   let open CCResult.Infix in
@@ -2645,7 +2645,9 @@ let to_version_1_match_list =
 
 let to_version_1_access_control_files files =
   let module Ac = Terrat_repo_config_access_control in
-  Ac.Files.make ~additional:(String_map.map to_version_1_match_list files) Json_schema.Empty_obj.t
+  Ac.Files.make
+    ~additional:(Sln_map.String.map to_version_1_match_list files)
+    Json_schema.Empty_obj.t
 
 let to_version_1_policy_list =
   CCList.map
@@ -2811,10 +2813,10 @@ let to_version_1_dirs_dir_workspaces workspaces =
   let module Ws = Terrat_repo_config.Workspaces in
   Ws.make
     ~additional:
-      (String_map.fold
+      (Sln_map.String.fold
          (fun k v acc ->
            let { Dirs.Workspace.tags; when_modified } = v in
-           Json_schema.String_map.add
+           Sln_map.String.add
              k
              {
                Ws.Additional.tags = Some tags;
@@ -2822,12 +2824,12 @@ let to_version_1_dirs_dir_workspaces workspaces =
              }
              acc)
          workspaces
-         Json_schema.String_map.empty)
+         Sln_map.String.empty)
     Json_schema.Empty_obj.t
 
 let to_version_1_dirs_dir dirs =
   let module D = Terrat_repo_config.Dir in
-  String_map.fold
+  Sln_map.String.fold
     (fun k v acc ->
       let {
         Dirs.Dir.create_and_select_workspace;
@@ -2839,7 +2841,7 @@ let to_version_1_dirs_dir dirs =
       } =
         v
       in
-      Json_schema.String_map.add
+      Sln_map.String.add
         k
         {
           D.create_and_select_workspace;
@@ -2849,17 +2851,17 @@ let to_version_1_dirs_dir dirs =
             | Dirs.Dir.Branch_target.All -> Some "all"
             | Dirs.Dir.Branch_target.Dest_branch -> Some "dest_branch");
           stacks =
-            (if String_map.is_empty stacks then None
+            (if Sln_map.String.is_empty stacks then None
              else Some (to_version_1_dirs_dir_workspaces stacks));
           tags = Some tags;
           when_modified = None;
           workspaces =
-            (if String_map.is_empty workspaces then None
+            (if Sln_map.String.is_empty workspaces then None
              else Some (to_version_1_dirs_dir_workspaces workspaces));
         }
         acc)
     dirs
-    Json_schema.String_map.empty
+    Sln_map.String.empty
 
 let to_version_1_dirs dirs =
   let module Ds = Terrat_repo_config.Version_1.Dirs in
@@ -2882,15 +2884,13 @@ let to_version_1_drift drift =
             tag_query = Terrat_tag_query.to_string tag_query;
             window;
           } ))
-      (String_map.to_list schedules)
+      (Sln_map.String.to_list schedules)
   in
   Terrat_repo_config_version_1.Drift.Drift_2
     {
       D.enabled;
       schedules =
-        D.Schedules.make
-          ~additional:(Json_schema.String_map.of_list schedules)
-          Json_schema.Empty_obj.t;
+        D.Schedules.make ~additional:(Sln_map.String.of_list schedules) Json_schema.Empty_obj.t;
     }
 
 let to_version_1_engine_tf_outputs outputs =
@@ -3096,7 +3096,7 @@ let to_version_1_stacks stacks =
   let names =
     S.Names.make
       ~additional:
-        (String_map.map
+        (Sln_map.String.map
            (fun v ->
              let module S = Terrat_repo_config_stacks.Names.Additional in
              let module Sc = Terrat_repo_config_stack_config in
@@ -3194,10 +3194,10 @@ let to_version_1_storage storage =
 let to_version_1_tags_branch branch =
   Terrat_repo_config.Custom_tags_branch.make
     ~additional:
-      (String_map.fold
-         (fun k v acc -> Json_schema.String_map.add k (Pattern.to_string v) acc)
+      (Sln_map.String.fold
+         (fun k v acc -> Sln_map.String.add k (Pattern.to_string v) acc)
          branch
-         Json_schema.String_map.empty)
+         Sln_map.String.empty)
     Json_schema.Empty_obj.t
 
 let to_version_1_tags tags =
@@ -3423,7 +3423,7 @@ let to_version_1 t =
     definitions = None;
     destination_branches =
       map_opt_if_true (( <> ) []) to_version_1_destination_branches destination_branches;
-    dirs = map_opt_if_true CCFun.(String_map.is_empty %> not) to_version_1_dirs dirs;
+    dirs = map_opt_if_true CCFun.(Sln_map.String.is_empty %> not) to_version_1_dirs dirs;
     drift = map_opt_if_true CCFun.(Drift.equal (Drift.make ()) %> not) to_version_1_drift drift;
     enabled;
     engine =
@@ -3537,7 +3537,7 @@ let map_symlink_file_path symlinks fpath =
 
 let match_branch_tag branch_name accessor repo_config =
   let tags = repo_config.View.tags in
-  let branch_tags = String_map.to_list (accessor tags) in
+  let branch_tags = Sln_map.String.to_list (accessor tags) in
   CCList.find_map
     (function
       | bt, pat when Pattern.is_match pat branch_name -> Some bt
@@ -3578,7 +3578,7 @@ let update_file_patterns index module_paths dirname workspacename file_patterns 
   if Sln_set.String.mem dirname module_paths then []
   else
     let file_patterns =
-      match String_map.find_opt dirname index.Index.deps with
+      match Sln_map.String.find_opt dirname index.Index.deps with
       | Some mods ->
           CCList.filter_map
             (function
@@ -3625,13 +3625,13 @@ let derive ~ctx ~index ~file_list repo_config =
     in
     let tags = Terrat_tag_set.(to_list (of_list (global_tags @ config.Dirs.Dir.tags))) in
     let workspaces =
-      String_map.mapi
+      Sln_map.String.mapi
         (fun workspace workspace_config ->
           update_workspace "workspace" workspace tags workspace_config)
         config.Dirs.Dir.workspaces
     in
     let stacks =
-      String_map.mapi
+      Sln_map.String.mapi
         (fun stack stack_config -> update_workspace "stack" stack tags stack_config)
         config.Dirs.Dir.stacks
     in
@@ -3655,7 +3655,7 @@ let derive ~ctx ~index ~file_list repo_config =
   (* A glob dir is defined by its key in the [dirs] section having an asterisk in it. *)
   let glob_dirs =
     dirs
-    |> String_map.to_list
+    |> Sln_map.String.to_list
     (* We sort the dirs section by longest-first (in terms of number of
        characters).  The heuristic is that a longer directory specification is a
        more specific and thus, to be preferred in the search. *)
@@ -3666,7 +3666,7 @@ let derive ~ctx ~index ~file_list repo_config =
   in
   (* And conversely, non glob dirs are those without an asterisk. *)
   let non_glob_dirs =
-    dirs |> String_map.to_list |> CCList.filter (fun (d, _) -> not (CCString.contains d '*'))
+    dirs |> Sln_map.String.to_list |> CCList.filter (fun (d, _) -> not (CCString.contains d '*'))
   in
   (* [glob_dir_matches] are those that will be filled out from a dir glob.  A
      glob dir match must match a dir glob and not have an explicit match in
@@ -3687,7 +3687,7 @@ let derive ~ctx ~index ~file_list repo_config =
                (Filename.dirname fname, CCString.length (File_pattern.to_string d), config))
              (CCList.find_opt
                 (fun (d, _) ->
-                  (not (String_map.mem (Filename.dirname fname) dirs))
+                  (not (Sln_map.String.mem (Filename.dirname fname) dirs))
                   && File_pattern.is_match d fname)
                 glob_dirs))
     |> CCList.sort (fun (d1, l1, _) (d2, l2, _) ->
@@ -3702,14 +3702,14 @@ let derive ~ctx ~index ~file_list repo_config =
   (* [specified_dirs] is all of those dirs that have been specified in the
      [dirs] section of the config.  But we also need to create dir entries for
      all of those files that match the global [when_modified] configuration. *)
-  let specified_dirs = String_map.of_list (non_glob_dirs @ glob_dir_matches) in
+  let specified_dirs = Sln_map.String.of_list (non_glob_dirs @ glob_dir_matches) in
   let remaining_dirs =
     let make_dir_map file_list =
       CCList.fold_left
         (fun acc fname ->
           let dirname = Filename.dirname fname in
-          String_map.add_to_list dirname fname acc)
-        String_map.empty
+          Sln_map.String.add_to_list dirname fname acc)
+        Sln_map.String.empty
         file_list
     in
     let test =
@@ -3738,9 +3738,9 @@ let derive ~ctx ~index ~file_list repo_config =
     file_list
     |> CCList.filter (fun fname ->
            let dirname = Filename.dirname fname in
-           not (String_map.mem dirname specified_dirs))
+           not (Sln_map.String.mem dirname specified_dirs))
     |> make_dir_map
-    |> String_map.to_list
+    |> Sln_map.String.to_list
     |> CCList.filter test
     |> CCList.map (fun (dirname, _) ->
            let dir = Dirs.Dir.make () in
@@ -3748,21 +3748,21 @@ let derive ~ctx ~index ~file_list repo_config =
              {
                dir with
                Dirs.Dir.workspaces =
-                 String_map.map
+                 Sln_map.String.map
                    (fun config ->
                      { config with Dirs.Workspace.when_modified = default_when_modified })
                    dir.Dirs.Dir.workspaces;
              }
            in
            (dirname, dir))
-    |> String_map.of_list
+    |> Sln_map.String.of_list
   in
-  let dirs = String_map.union (fun _ _ _ -> assert false) specified_dirs remaining_dirs in
+  let dirs = Sln_map.String.union (fun _ _ _ -> assert false) specified_dirs remaining_dirs in
   (* Now that we have all of our dirs expanded, we also want to fill out the
      other information, such as module paths and any tags. *)
   let module_paths =
     Sln_set.String.of_list
-      (String_map.fold
+      (Sln_map.String.fold
          (fun path values acc ->
            CCList.filter_map
              (function
@@ -3775,7 +3775,7 @@ let derive ~ctx ~index ~file_list repo_config =
   in
   let existing_dirs = Sln_set.String.of_list @@ CCList.map Filename.dirname file_list in
   let dirs =
-    String_map.filter_map
+    Sln_map.String.filter_map
       (fun dirname config ->
         (* It's possible that someone configured a directory that doesn't actually
            exist, but its file patterns matched something that does exist.  Filter

@@ -100,9 +100,7 @@ module Make (S : S) = struct
         diff
     in
     let matching_files =
-      Terrat_data.String_map.filter
-        (fun key _ -> CCList.mem ~eq:CCString.equal key files)
-        files_policy
+      Sln_map.String.filter (fun key _ -> CCList.mem ~eq:CCString.equal key files) files_policy
     in
     let open Abb.Future.Infix_monad in
     Abbs_future_combinators.List_result.iter
@@ -112,7 +110,7 @@ module Make (S : S) = struct
         >>= function
         | Some _ -> Abb.Future.return (Ok ())
         | None -> Abb.Future.return (Error (`Denied (fname, policy))))
-      (Terrat_data.String_map.to_list matching_files)
+      (Sln_map.String.to_list matching_files)
     >>= function
     | Ok () -> Abb.Future.return (Ok `Ok)
     | Error (`Denied _ as ret) -> Abb.Future.return (Ok ret)

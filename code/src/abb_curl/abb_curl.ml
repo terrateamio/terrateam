@@ -315,7 +315,7 @@ module Status = struct
 end
 
 module Headers = struct
-  module M = CCMap.Make (CCString)
+  module M = Sln_map.String
 
   type t = string M.t
 

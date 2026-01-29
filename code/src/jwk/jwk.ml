@@ -1,14 +1,12 @@
-module String_map = CCMap.Make (CCString)
-
 module Key = struct
-  type t = string String_map.t
+  type t = string Sln_map.String.t
 
-  let get = String_map.get
+  let get = Sln_map.String.get
 end
 
-type t = Key.t String_map.t
+type t = Key.t Sln_map.String.t
 
-let get_kid = String_map.get
+let get_kid = Sln_map.String.get
 
 let of_string =
   CCOption.wrap (fun s ->
@@ -18,14 +16,14 @@ let of_string =
         ~f:(fun acc k ->
           let kid = Yojson.Basic.Util.(to_string (member "kid" k)) in
           let assoc = Yojson.Basic.Util.to_assoc k in
-          String_map.add
+          Sln_map.String.add
             kid
-            (String_map.of_list
+            (Sln_map.String.of_list
                (CCList.map
                   (fun (k, v) ->
                     let v = Yojson.Basic.Util.to_string v in
                     (k, v))
                   assoc))
             acc)
-        ~init:String_map.empty
+        ~init:Sln_map.String.empty
         keys)

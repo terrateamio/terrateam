@@ -52,8 +52,7 @@ struct
             queries ))
       changes
 
-  let replace_stack_vars vars s =
-    Str_template.apply (CCFun.flip Terrat_data.String_map.find_opt vars) s
+  let replace_stack_vars vars s = Str_template.apply (CCFun.flip Sln_map.String.find_opt vars) s
 
   let apply_stack_vars_to_workflow stack workflow =
     let module R = Terrat_base_repo_config_v1 in
@@ -141,16 +140,16 @@ struct
           (fun groups ({ Dsf.dirspace = { Terrat_dirspace.dir; _ }; _ } as dsf) ->
             match
               update_first_match
-                ~test:CCFun.(Terrat_data.String_map.mem dir %> not)
-                ~update:(Terrat_data.String_map.add dir dsf)
+                ~test:CCFun.(Sln_map.String.mem dir %> not)
+                ~update:(Sln_map.String.add dir dsf)
                 groups
             with
             | Some groups -> groups
-            | None -> Terrat_data.String_map.singleton dir dsf :: groups)
+            | None -> Sln_map.String.singleton dir dsf :: groups)
           []
           dirspaceflows
       in
-      CCList.map CCFun.(Terrat_data.String_map.to_list %> CCList.map snd) partitions
+      CCList.map CCFun.(Sln_map.String.to_list %> CCList.map snd) partitions
     in
     let partitions =
       CCList.flat_map

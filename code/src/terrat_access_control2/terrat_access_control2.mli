@@ -74,7 +74,7 @@ module Make (S : S) : sig
       that failed the check. *)
   val eval_files :
     Ctx.t ->
-    Terrat_base_repo_config_v1.Access_control.Match_list.t Terrat_data.String_map.t ->
+    Terrat_base_repo_config_v1.Access_control.Match_list.t Sln_map.String.t ->
     Terrat_change.Diff.t list ->
     ( [ `Ok | `Denied of string * Terrat_base_repo_config_v1.Access_control.Match_list.t ],
       [> err ] )
