@@ -1,5 +1,4 @@
 module String_map = CCMap.Make (CCString)
-module String_set = CCSet.Make (CCString)
 module Properties = Json_schema_conv.Properties
 module Value = Json_schema_conv.Value
 module Additional_properties = Json_schema_conv.Additional_properties
@@ -286,7 +285,7 @@ let record_field_attrs schema name required =
             ~default:[]
             (fun default -> Gen.field_default default)
             (field_default_of_value schema.Schema.typ default)
-      | None when (not (String_set.mem name required)) || schema.Schema.nullable ->
+      | None when (not (Sln_set.String.mem name required)) || schema.Schema.nullable ->
           Gen.field_default_none
       | None -> []);
       (if CCString.equal (field_name_of_schema name) name then [] else Gen.yojson_key_name name);
@@ -438,7 +437,7 @@ let convert_str_operation strict_records base_module_name components uritmpl op_
                    (name, schema))
                  op.Operation.parameters);
           required =
-            String_set.of_list
+            Sln_set.String.of_list
               (CCList.filter_map
                  (fun p ->
                    let p = resolve_parameter_ref components p in

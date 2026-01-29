@@ -1,6 +1,5 @@
 module R = Terrat_base_repo_config_v1
 module String_map = Terrat_data.String_map
-module String_set = Terrat_data.String_set
 module Dirspace_map = Terrat_data.Dirspace_map
 module Dirspace_set = Terrat_data.Dirspace_set
 
@@ -509,22 +508,19 @@ let expand_stack_config name config nested_to_stack_lookup stack_to_nested_looku
   let rules =
     {
       R.modified_by =
-        String_set.to_list
-        @@ String_set.of_list
+        Sln_set.String.dedup_list
         @@ collect_deps ~accessor:(fun { R.modified_by; _ } -> modified_by) stacks
         @@ CCList.flat_map
              (fun s -> String_map.get_or ~default:[ s ] s nested_to_stack_lookup)
              modified_by;
       plan_after =
-        String_set.to_list
-        @@ String_set.of_list
+        Sln_set.String.dedup_list
         @@ collect_deps ~accessor:(fun { R.plan_after; _ } -> plan_after) stacks
         @@ CCList.flat_map
              (fun s -> String_map.get_or ~default:[ s ] s nested_to_stack_lookup)
              plan_after;
       apply_after =
-        String_set.to_list
-        @@ String_set.of_list
+        Sln_set.String.dedup_list
         @@ collect_deps ~accessor:(fun { R.apply_after; _ } -> apply_after) stacks
         @@ CCList.flat_map
              (fun s -> String_map.get_or ~default:[ s ] s nested_to_stack_lookup)

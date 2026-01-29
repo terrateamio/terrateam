@@ -2047,7 +2047,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             built_repo_tree
         in
         let changed_files =
-          Terrat_data.String_set.of_list
+          Sln_set.String.of_list
           @@ CCList.flat_map
                (function
                  | Terrat_change.Diff.Add { filename }
@@ -2065,8 +2065,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                 (function
                   | { I.path; changed = Some true; _ } ->
                       Some (Terrat_change.Diff.Change { filename = path })
-                  | { I.path; changed = None; _ } when Terrat_data.String_set.mem path changed_files
-                    -> Some (Terrat_change.Diff.Change { filename = path })
+                  | { I.path; changed = None; _ } when Sln_set.String.mem path changed_files ->
+                      Some (Terrat_change.Diff.Change { filename = path })
                   | _ -> None)
                 built_tree)
             built_repo_tree
@@ -3486,7 +3486,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         all_matches
         apply_requirements =
       let module Ar = Terrat_base_repo_config_v1.Apply_requirements in
-      let module String_set = CCSet.Make (CCString) in
       if apply_requirements.Ar.create_pending_apply_check then
         let open Abbs_future_combinators.Infix_result_monad in
         fetch_commit_checks request_id client repo ref_
@@ -3494,7 +3493,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         let commit_check_titles =
           commit_checks
           |> CCList.map (fun Terrat_commit_check.{ title; _ } -> title)
-          |> String_set.of_list
+          |> Sln_set.String.of_list
         in
         let missing_commit_checks =
           let checks =
@@ -3508,7 +3507,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                    }
                  ->
                    let name = S.Commit_check.make_dirspace_title ~run_type:"apply" dirspace in
-                   if (not autoapply) && not (String_set.mem name commit_check_titles) then
+                   if (not autoapply) && not (Sln_set.String.mem name commit_check_titles) then
                      Some
                        (S.Commit_check.make_dirspace
                           ~config
@@ -3524,7 +3523,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           if CCList.length checks <= dirspace_check_threshold then checks else []
         in
         let missing_apply_check =
-          if not (String_set.mem "terrateam apply" commit_check_titles) then
+          if not (Sln_set.String.mem "terrateam apply" commit_check_titles) then
             [
               S.Commit_check.make_str
                 ~config
