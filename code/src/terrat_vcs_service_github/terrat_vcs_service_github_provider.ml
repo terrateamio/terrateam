@@ -2403,12 +2403,11 @@ module Tier = struct
           | users -> (
               let user = Api.User.to_string user in
               let all_users =
-                Terrat_data.String_set.to_list
-                @@ Terrat_data.String_set.of_list (user :: CCList.map fst users)
+                Sln_set.String.dedup_list (user :: CCList.map fst users)
               in
               (* Allow users that have used the product with-in the existing tier to use it. *)
               let allowed_users =
-                Terrat_data.String_set.of_list
+                Sln_set.String.of_list
                 @@ CCList.take num_users_per_month
                 @@ CCList.map fst users
               in
@@ -2421,7 +2420,7 @@ module Tier = struct
                     num_users_per_month);
               match CCList.length all_users with
               | n
-                when n > num_users_per_month && not (Terrat_data.String_set.mem user allowed_users)
+                when n > num_users_per_month && not (Sln_set.String.mem user allowed_users)
                 ->
                   CCList.iter
                     (fun (user, first_run) ->

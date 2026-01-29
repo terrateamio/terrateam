@@ -1,11 +1,10 @@
 module V1 = Terrat_repo_config.Version_1
 module String_map = Terrat_data.String_map
-module String_set = Terrat_data.String_set
 
 let config_schema = [%blob "../../../../api_schemas/terrat/config-schema.json"]
 
 let timezone_abbreviations =
-  String_set.of_list
+  Sln_set.String.of_list
     [
       "ACDT";
       "ACST";
@@ -832,9 +831,9 @@ module Drift = struct
 
     let make ~start ~end_ () =
       match (CCString.Split.right ~by:" " start, CCString.Split.right ~by:" " end_) with
-      | Some (_, tz), _ when not (String_set.mem tz timezone_abbreviations) ->
+      | Some (_, tz), _ when not (Sln_set.String.mem tz timezone_abbreviations) ->
           Error (`Window_parse_timezone_err tz)
-      | _, Some (_, tz) when not (String_set.mem tz timezone_abbreviations) ->
+      | _, Some (_, tz) when not (Sln_set.String.mem tz timezone_abbreviations) ->
           Error (`Window_parse_timezone_err tz)
       | None, _ | _, None -> Error (`Window_parse_timezone_err "")
       | _, _ -> Ok { start; end_ }
@@ -3576,7 +3575,7 @@ let update_file_patterns index module_paths dirname workspacename file_patterns 
         ("${DIR}/", "")
     | dirname -> ("${DIR}", escape_glob dirname)
   in
-  if String_set.mem dirname module_paths then []
+  if Sln_set.String.mem dirname module_paths then []
   else
     let file_patterns =
       match String_map.find_opt dirname index.Index.deps with
@@ -3762,7 +3761,7 @@ let derive ~ctx ~index ~file_list repo_config =
   (* Now that we have all of our dirs expanded, we also want to fill out the
      other information, such as module paths and any tags. *)
   let module_paths =
-    String_set.of_list
+    Sln_set.String.of_list
       (String_map.fold
          (fun path values acc ->
            CCList.filter_map
@@ -3774,14 +3773,14 @@ let derive ~ctx ~index ~file_list repo_config =
          index.Index.deps
          [])
   in
-  let existing_dirs = String_set.of_list @@ CCList.map Filename.dirname file_list in
+  let existing_dirs = Sln_set.String.of_list @@ CCList.map Filename.dirname file_list in
   let dirs =
     String_map.filter_map
       (fun dirname config ->
         (* It's possible that someone configured a directory that doesn't actually
            exist, but its file patterns matched something that does exist.  Filter
            those directories out *)
-        if String_set.mem dirname existing_dirs then
+        if Sln_set.String.mem dirname existing_dirs then
           Some (update_dir_config ~global_tags ~module_paths ~index dirname config)
         else None)
       dirs

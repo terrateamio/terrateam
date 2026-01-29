@@ -319,12 +319,11 @@ struct
       apply_requirements
       commit_checks =
     let module Ar = Terrat_base_repo_config_v1.Apply_requirements in
-    let module String_set = CCSet.Make (CCString) in
     if apply_requirements.Ar.create_pending_apply_check then
       let commit_check_titles =
         commit_checks
         |> CCList.map (fun Terrat_commit_check.{ title; _ } -> title)
-        |> String_set.of_list
+        |> Sln_set.String.of_list
       in
       let missing_commit_checks =
         all_matches
@@ -337,7 +336,7 @@ struct
                }
              ->
                let name = S.Commit_check.make_dirspace_title ~run_type:"apply" dirspace in
-               if (not autoapply) && not (String_set.mem name commit_check_titles) then
+               if (not autoapply) && not (Sln_set.String.mem name commit_check_titles) then
                  Some
                    (S.Commit_check.make_dirspace
                       ~config
@@ -351,7 +350,7 @@ struct
                else None)
       in
       let missing_apply_check =
-        if not (String_set.mem "terrateam apply" commit_check_titles) then
+        if not (Sln_set.String.mem "terrateam apply" commit_check_titles) then
           [
             S.Commit_check.make_str
               ~config

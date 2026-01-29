@@ -2341,15 +2341,10 @@ module Tier = struct
           | [] -> Abb.Future.return (Ok None)
           | users -> (
               let user = Api.User.to_string user in
-              let all_users =
-                Terrat_data.String_set.to_list
-                @@ Terrat_data.String_set.of_list (user :: CCList.map fst users)
-              in
+              let all_users = Sln_set.String.dedup_list (user :: CCList.map fst users) in
               (* Allow users that have used the product with-in the existing tier to use it. *)
               let allowed_users =
-                Terrat_data.String_set.of_list
-                @@ CCList.take num_users_per_month
-                @@ CCList.map fst users
+                Sln_set.String.of_list @@ CCList.take num_users_per_month @@ CCList.map fst users
               in
               Logs.info (fun m -> m "%s : TIER : id=%s : name=%s" request_id tier_id tier_name);
               Logs.info (fun m ->
@@ -2359,9 +2354,7 @@ module Tier = struct
                     (CCList.length all_users)
                     num_users_per_month);
               match CCList.length all_users with
-              | n
-                when n > num_users_per_month && not (Terrat_data.String_set.mem user allowed_users)
-                ->
+              | n when n > num_users_per_month && not (Sln_set.String.mem user allowed_users) ->
                   CCList.iter
                     (fun (user, first_run) ->
                       Logs.info (fun m ->

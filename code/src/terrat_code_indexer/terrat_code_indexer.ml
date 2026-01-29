@@ -35,16 +35,6 @@ module String_map = struct
     | _ -> Error "Expected object"
 end
 
-module String_set = struct
-  include CCSet.Make (CCString)
-
-  let to_yojson t = to_list t |> [%to_yojson: string list]
-
-  let of_yojson ls =
-    let open CCResult.Infix in
-    [%of_yojson: string list] ls >|= of_list
-end
-
 module Output = struct
   module Failure = struct
     type t = {
@@ -56,7 +46,7 @@ module Output = struct
 
   module Dep = struct
     type t = {
-      modules : String_set.t;
+      modules : Sln_set.String.t;
       failures : Failure.t String_map.t;
     }
     [@@deriving yojson]
@@ -133,7 +123,7 @@ let index paths =
                ( path,
                  CCListLabels.fold_left
                    ~f:(fun acc -> function
-                     | `Module m -> Output.Dep.{ acc with modules = String_set.add m acc.modules }
+                     | `Module m -> Output.Dep.{ acc with modules = Sln_set.String.add m acc.modules }
                      | `Error (fname, pos, msg) ->
                          Output.Dep.
                            {
@@ -148,7 +138,7 @@ let index paths =
                                  }
                                  acc.failures;
                            })
-                   ~init:Output.Dep.{ modules = String_set.empty; failures = String_map.empty }
+                   ~init:Output.Dep.{ modules = Sln_set.String.empty; failures = String_map.empty }
                    (process_path None path) ))
              paths);
       symlinks =

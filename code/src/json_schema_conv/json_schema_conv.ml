@@ -1,5 +1,4 @@
 module String_map = CCMap.Make (CCString)
-module String_set = CCSet.Make (CCString)
 
 module Properties = struct
   type 'a properties = (string * 'a) list [@@deriving show]
@@ -59,8 +58,10 @@ module Schema = struct
   type string_list = string list [@@deriving show]
   type 'a value = 'a Value.t [@@deriving yojson, show, eq]
 
-  let string_set_of_yojson json = CCResult.([%of_yojson: string list] json >|= String_set.of_list)
-  let string_set_to_yojson s = s |> String_set.to_list |> [%to_yojson: string list]
+  let string_set_of_yojson json =
+    CCResult.([%of_yojson: string list] json >|= Sln_set.String.of_list)
+
+  let string_set_to_yojson s = s |> Sln_set.String.to_list |> [%to_yojson: string list]
 
   (* [typ] can be nothing, a string, or a list of strings.  This specific
      implementation just recognizes when it's an array and one of the elements
@@ -115,11 +116,11 @@ module Schema = struct
     max_items : int option; [@default None] [@key "maxItems"]
     min_items : int option; [@default None] [@key "minItems"]
     unique_items : bool option; [@default None] [@key "uniqueItems"]
-    required : String_set.t;
-        [@printer fun fmt v -> pp_string_list fmt (String_set.to_list v)]
+    required : Sln_set.String.t;
+        [@printer fun fmt v -> pp_string_list fmt (Sln_set.String.to_list v)]
         [@to_yojson string_set_to_yojson]
         [@of_yojson string_set_of_yojson]
-        [@default String_set.empty]
+        [@default Sln_set.String.empty]
     all_of : t list option; [@default None] [@key "allOf"]
     one_of : t list option; [@default None] [@key "oneOf"]
     any_of : t list option; [@default None] [@key "anyOf"]
@@ -149,7 +150,7 @@ module Schema = struct
       max_items = None;
       min_items = None;
       unique_items = None;
-      required = String_set.empty;
+      required = Sln_set.String.empty;
       all_of = None;
       one_of = None;
       any_of = None;
@@ -192,7 +193,7 @@ module Schema = struct
       max_items = take_left_option l.max_items r.max_items;
       min_items = take_left_option l.min_items r.min_items;
       unique_items = take_left_option l.unique_items r.unique_items;
-      required = String_set.union l.required r.required;
+      required = Sln_set.String.union l.required r.required;
       all_of = take_left_option l.all_of r.all_of;
       one_of = take_left_option l.one_of r.one_of;
       any_of = take_left_option l.any_of r.any_of;
@@ -457,7 +458,7 @@ module Config = struct
     module_name_of_field_name : string -> string;
     module_name_of_ref : string -> string list;
     prim_type_attrs : Parsetree.attributes;
-    record_field_attrs : Schema.t_ -> string -> String_set.t -> Parsetree.attributes;
+    record_field_attrs : Schema.t_ -> string -> Sln_set.String.t -> Parsetree.attributes;
     record_type_attrs : bool -> Parsetree.attributes;
     resolve_ref : Schema.t -> Schema.t_;
     strict_record : bool;
@@ -1059,7 +1060,7 @@ and convert_str_schema_obj config properties_config required properties =
             in
             let field_type =
               if
-                (String_set.mem name required || CCOption.is_some schema.Schema.default)
+                (Sln_set.String.mem name required || CCOption.is_some schema.Schema.default)
                 && not schema.Schema.nullable
               then field_type
               else Gen.option [ field_type ]
@@ -1083,7 +1084,7 @@ and convert_str_schema_obj config properties_config required properties =
                  type should handle if it's option entirely, but for reasons we
                  only do that for primitive types. *)
               if
-                (String_set.mem name required || CCOption.is_some schema.Schema.default)
+                (Sln_set.String.mem name required || CCOption.is_some schema.Schema.default)
                 && (is_prim_type schema || not schema.Schema.nullable)
               then field_type
               else Gen.option [ field_type ]
