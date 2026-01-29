@@ -1,5 +1,4 @@
 module R = Terrat_base_repo_config_v1
-module String_map = Terrat_data.String_map
 module Dirspace_map = Terrat_data.Dirspace_map
 module Dirspace_set = Terrat_data.Dirspace_set
 
@@ -140,7 +139,7 @@ let rec collect_modified_by_dependents ~path modifies_lookup dirspaces matches =
              ~path:(stack_name :: path)
              modifies_lookup
              dirspaces
-             (String_map.get_or ~default:[] stack_name modifies_lookup)
+             (Sln_map.String.get_or ~default:[] stack_name modifies_lookup)
       else [])
     matches
 
@@ -204,8 +203,8 @@ module Config = struct
     symlinks : string list CCTrie.String.t; [@opaque]
     dirspaces : Dirspace_config.t Dirspace_map.t;
     topology : Terrat_dirspace.t list Dirspace_map.t;
-    stack_topology : string list String_map.t;
-    stacks : Stack_config.t String_map.t;
+    stack_topology : string list Sln_map.String.t;
+    stacks : Stack_config.t Sln_map.String.t;
   }
   [@@deriving show]
 
@@ -299,29 +298,29 @@ let build_stack_paths_lookup stacks =
   let module V1 = Terrat_base_repo_config_v1 in
   let module S = V1.Stacks in
   let deps =
-    String_map.fold
+    Sln_map.String.fold
       (fun k { S.Stack.type_; _ } acc ->
         let stacks =
           match type_ with
           | S.Type_.Nested stacks -> stacks
           | S.Type_.Stack _ -> []
         in
-        CCListLabels.fold_left ~f:(fun acc s -> String_map.add_to_list s k acc) ~init:acc stacks)
+        CCListLabels.fold_left ~f:(fun acc s -> Sln_map.String.add_to_list s k acc) ~init:acc stacks)
       stacks
-      String_map.empty
+      Sln_map.String.empty
   in
   let rec go ~path name =
-    match String_map.find_opt name deps with
+    match Sln_map.String.find_opt name deps with
     | Some parents -> CCList.flat_map (fun p -> go ~path:(p :: path) p) parents
     | None -> [ path ]
   in
-  String_map.fold
+  Sln_map.String.fold
     (fun k { S.Stack.type_; _ } acc ->
       match type_ with
       | S.Type_.Nested _ -> acc
-      | S.Type_.Stack _ -> String_map.add k (go ~path:[ k ] k) acc)
+      | S.Type_.Stack _ -> Sln_map.String.add k (go ~path:[ k ] k) acc)
     stacks
-    String_map.empty
+    Sln_map.String.empty
 
 (* We want to support two operations around nested stacks.
 
@@ -382,7 +381,7 @@ let build_stack_paths_lookup stacks =
    [database2]. *)
 
 let stack_lookup name stacks =
-  match String_map.find_opt name stacks with
+  match Sln_map.String.find_opt name stacks with
   | Some stack -> stack
   | None -> raise (Synthesize_config_err (`Stack_not_found_err name))
 
@@ -395,7 +394,7 @@ let build_stack_lookup kv stacks =
         CCList.flatten @@ CCList.map (fun s -> collect_stacks (k :: path) s) ss
     | { S.Stack.type_ = S.Type_.Stack _; _ } -> [ k ]
   in
-  String_map.fold
+  Sln_map.String.fold
     (fun k { S.Stack.type_; _ } acc ->
       match type_ with
       | S.Type_.Stack _ -> acc
@@ -403,11 +402,11 @@ let build_stack_lookup kv stacks =
           CCListLabels.fold_left
             ~f:(fun acc s ->
               let k, v = kv k s in
-              String_map.add_to_list k v acc)
+              Sln_map.String.add_to_list k v acc)
             ~init:acc
             (CCList.flatten (CCList.map (fun s -> collect_stacks [ k ] s) stack_refs)))
     stacks
-    String_map.empty
+    Sln_map.String.empty
 
 (* Lookup nested stack name -> stack names *)
 let build_nested_to_stack_lookup stacks = build_stack_lookup (fun k v -> (k, v)) stacks
@@ -428,8 +427,11 @@ let build_modifies_lookup dirspace_configs =
            _;
          } as dc)
       ->
-      CCListLabels.fold_left ~f:(fun acc s -> String_map.add_to_list s dc acc) ~init:acc modified_by)
-    ~init:String_map.empty
+      CCListLabels.fold_left
+        ~f:(fun acc s -> Sln_map.String.add_to_list s dc acc)
+        ~init:acc
+        modified_by)
+    ~init:Sln_map.String.empty
     dirspace_configs
 
 let rec combine_rule accessor nested_lookup stacks vs =
@@ -437,11 +439,11 @@ let rec combine_rule accessor nested_lookup stacks vs =
   let module S = V1.Stacks in
   CCListLabels.fold_left
     ~f:(fun acc v ->
-      match String_map.find_opt v nested_lookup with
+      match Sln_map.String.find_opt v nested_lookup with
       | Some ss ->
           CCListLabels.fold_left
             ~f:(fun acc s ->
-              match String_map.find_opt s stacks with
+              match Sln_map.String.find_opt s stacks with
               | Some config ->
                   let vs = accessor config in
                   combine_rule accessor nested_lookup stacks vs @ acc
@@ -463,7 +465,7 @@ let rec collect_deps ?(acc = []) ~accessor stacks names =
         else acc)
       ~init:acc
   @@ CCList.flat_map (fun { S.Stack.rules; _ } -> accessor rules)
-  @@ CCList.map (CCFun.flip String_map.find stacks) names
+  @@ CCList.map (CCFun.flip Sln_map.String.find stacks) names
 
 (* Expand a config by any nested stacks its related to.  This expands it in two ways:
 
@@ -488,9 +490,9 @@ let expand_stack_config name config nested_to_stack_lookup stack_to_nested_looku
         let { S.Stack.variables; _ } = stack_lookup s stacks in
         (* Merge variables but for any overlapping variables take the ones that
            already exist instead of overwriting them *)
-        String_map.union (fun _ v _ -> Some v) acc variables)
+        Sln_map.String.union (fun _ v _ -> Some v) acc variables)
       ~init:variables
-      (String_map.get_or ~default:[] name stack_to_nested_lookup)
+      (Sln_map.String.get_or ~default:[] name stack_to_nested_lookup)
   in
   let { R.modified_by; plan_after; apply_after; auto_apply } =
     CCListLabels.fold_left
@@ -503,7 +505,7 @@ let expand_stack_config name config nested_to_stack_lookup stack_to_nested_looku
           auto_apply = CCOption.or_ ~else_:auto_apply rules.R.auto_apply;
         })
       ~init:rules
-      (String_map.get_or ~default:[] name stack_to_nested_lookup)
+      (Sln_map.String.get_or ~default:[] name stack_to_nested_lookup)
   in
   let rules =
     {
@@ -511,19 +513,19 @@ let expand_stack_config name config nested_to_stack_lookup stack_to_nested_looku
         Sln_set.String.dedup_list
         @@ collect_deps ~accessor:(fun { R.modified_by; _ } -> modified_by) stacks
         @@ CCList.flat_map
-             (fun s -> String_map.get_or ~default:[ s ] s nested_to_stack_lookup)
+             (fun s -> Sln_map.String.get_or ~default:[ s ] s nested_to_stack_lookup)
              modified_by;
       plan_after =
         Sln_set.String.dedup_list
         @@ collect_deps ~accessor:(fun { R.plan_after; _ } -> plan_after) stacks
         @@ CCList.flat_map
-             (fun s -> String_map.get_or ~default:[ s ] s nested_to_stack_lookup)
+             (fun s -> Sln_map.String.get_or ~default:[ s ] s nested_to_stack_lookup)
              plan_after;
       apply_after =
         Sln_set.String.dedup_list
         @@ collect_deps ~accessor:(fun { R.apply_after; _ } -> apply_after) stacks
         @@ CCList.flat_map
-             (fun s -> String_map.get_or ~default:[ s ] s nested_to_stack_lookup)
+             (fun s -> Sln_map.String.get_or ~default:[ s ] s nested_to_stack_lookup)
              apply_after;
       auto_apply;
     }
@@ -533,7 +535,7 @@ let expand_stack_config name config nested_to_stack_lookup stack_to_nested_looku
 let assert_all_stacks_exist stacks =
   let module V1 = Terrat_base_repo_config_v1 in
   let module S = V1.Stacks in
-  String_map.iter
+  Sln_map.String.iter
     (fun _ { S.Stack.type_; rules; variables = _ } ->
       let nested_stacks =
         match type_ with
@@ -549,7 +551,7 @@ let assert_no_stack_cycle stacks =
   let module V1 = Terrat_base_repo_config_v1 in
   let module S = V1.Stacks in
   let deps =
-    String_map.fold
+    Sln_map.String.fold
       (fun k { S.Stack.type_; rules; _ } acc ->
         let stacks =
           match type_ with
@@ -557,11 +559,11 @@ let assert_no_stack_cycle stacks =
           | S.Type_.Stack _ -> []
         in
         let { S.Rules.plan_after; apply_after; _ } = rules in
-        String_map.add k (stacks @ plan_after @ apply_after) acc)
+        Sln_map.String.add k (stacks @ plan_after @ apply_after) acc)
       stacks
-      String_map.empty
+      Sln_map.String.empty
   in
-  let topo = String_map.to_list deps in
+  let topo = Sln_map.String.to_list deps in
   match Tsort.sort topo with
   | Tsort.Sorted _ -> ()
   | Tsort.ErrorCycle cycle -> raise (Synthesize_config_err (`Stack_cycle_err cycle))
@@ -580,7 +582,7 @@ let synthesize_config ~index repo_config =
     (* Lookup of a stack to any stacks that nest it. *)
     let stack_to_nested_lookup = build_stack_to_nested_lookup stacks.R.Stacks.names in
     let stacks =
-      String_map.mapi
+      Sln_map.String.mapi
         (fun name config ->
           match config with
           | { S.Stack.type_ = S.Type_.Stack _; _ } ->
@@ -594,14 +596,14 @@ let synthesize_config ~index repo_config =
         stacks.R.Stacks.names
     in
     let stack_topology =
-      String_map.map (fun { S.Stack.rules = { S.Rules.plan_after; _ }; _ } -> plan_after) stacks
+      Sln_map.String.map (fun { S.Stack.rules = { S.Rules.plan_after; _ }; _ } -> plan_after) stacks
     in
-    let no_default_stack = not (String_map.mem "default" stacks) in
-    let stack_configs = Terrat_data.String_map.to_list stacks in
+    let no_default_stack = not (Sln_map.String.mem "default" stacks) in
+    let stack_configs = Sln_map.String.to_list stacks in
     let dirspaces =
       repo_config
       |> R.dirs
-      |> String_map.to_list
+      |> Sln_map.String.to_list
       |> CCList.flat_map (fun (dirname, config) ->
              let module D = R.Dirs.Dir in
              let module Ws = R.Dirs.Workspace in
@@ -633,7 +635,7 @@ let synthesize_config ~index repo_config =
                      (CCList.map
                         (fun n -> "stack_name:" ^ n)
                         (stack_name
-                        :: String_map.get_or ~default:[] stack_name stack_to_nested_lookup)
+                        :: Sln_map.String.get_or ~default:[] stack_name stack_to_nested_lookup)
                      @ workspace_config.Ws.tags)
                  in
                  (* If the dirspace is explicitly ignored via an empty
@@ -653,7 +655,7 @@ let synthesize_config ~index repo_config =
                            stack_config;
                            stack_name;
                            stack_paths =
-                             (match String_map.find_opt stack_name stack_paths_lookup with
+                             (match Sln_map.String.find_opt stack_name stack_paths_lookup with
                              | Some paths -> paths
                              | None when CCString.equal stack_name "default" -> [ [ "default" ] ]
                              | None -> assert false);
@@ -661,7 +663,7 @@ let synthesize_config ~index repo_config =
                            when_modified = workspace_config.Ws.when_modified;
                          } );
                      ])
-               (String_map.to_list config.D.workspaces @ String_map.to_list config.D.stacks))
+               (Sln_map.String.to_list config.D.workspaces @ Sln_map.String.to_list config.D.stacks))
     in
     let default_stack =
       CCList.find_opt
@@ -673,21 +675,22 @@ let synthesize_config ~index repo_config =
        all the dirspaces, then we need to add it to our stacks. *)
     let stacks, stack_topology =
       let stacks =
-        String_map.filter_map
+        Sln_map.String.filter_map
           (fun name config ->
             match config with
             | { S.Stack.type_ = S.Type_.Nested _; _ } -> None
             | config ->
-                Some { Stack_config.name; config; paths = String_map.find name stack_paths_lookup })
+                Some
+                  { Stack_config.name; config; paths = Sln_map.String.find name stack_paths_lookup })
           stacks
       in
       match default_stack with
       | Some
           (_, { Dirspace_config.stack_name = name; stack_paths = paths; stack_config = config; _ })
-        when not (String_map.mem "default" stacks) ->
+        when not (Sln_map.String.mem "default" stacks) ->
           (* Add the default stack information *)
-          let stacks = String_map.add "default" { Stack_config.name; config; paths } stacks in
-          let stack_topology = String_map.add "default" [] stack_topology in
+          let stacks = Sln_map.String.add "default" { Stack_config.name; config; paths } stacks in
+          let stack_topology = Sln_map.String.add "default" [] stack_topology in
           (stacks, stack_topology)
       | Some _ | None -> (stacks, stack_topology)
     in
@@ -701,8 +704,8 @@ let make_dir_map file_list =
   CCList.fold_left
     (fun acc fname ->
       let dirname = Filename.dirname fname in
-      String_map.add_to_list dirname fname acc)
-    String_map.empty
+      Sln_map.String.add_to_list dirname fname acc)
+    Sln_map.String.empty
     file_list
 
 let files_of_diff = function
@@ -713,7 +716,7 @@ let files_of_diff = function
 
 let match_dir_map dirspaces dir_map =
   snd
-    (String_map.fold
+    (Sln_map.String.fold
        (fun _ files ((dirspaces, matches) as acc) ->
          Dirspace_map.fold
            (fun dirspace

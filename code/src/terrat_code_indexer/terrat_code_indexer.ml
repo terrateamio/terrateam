@@ -15,26 +15,6 @@ end
 
 let default_tf_matcher = Path_glob.Glob.parse "<**/*.tf>"
 
-module String_map = struct
-  include CCMap.Make (CCString)
-
-  let to_yojson f t = `Assoc (CCList.map (fun (k, v) -> (k, f v)) (to_list t))
-
-  let of_yojson f = function
-    | `Assoc obj -> (
-        try
-          Ok
-            (CCListLabels.fold_left
-               ~f:(fun acc (k, v) ->
-                 match f v with
-                 | Ok v -> add k v acc
-                 | Error err -> failwith err)
-               ~init:empty
-               obj)
-        with Failure err -> Error err)
-    | _ -> Error "Expected object"
-end
-
 module Output = struct
   module Failure = struct
     type t = {
@@ -47,15 +27,15 @@ module Output = struct
   module Dep = struct
     type t = {
       modules : Sln_set.String.t;
-      failures : Failure.t String_map.t;
+      failures : Failure.t Sln_map.String.t;
     }
     [@@deriving yojson]
   end
 
   type t = {
     version : int;
-    paths : Dep.t String_map.t;
-    symlinks : string String_map.t;
+    paths : Dep.t Sln_map.String.t;
+    symlinks : string Sln_map.String.t;
   }
   [@@deriving yojson]
 end
@@ -79,10 +59,10 @@ let rec process_symlinks path =
       match stat.Unix.st_kind with
       | Unix.S_LNK ->
           let dst = Unix.readlink file in
-          String_map.add file (concat_path (dirname file) dst) acc
-      | Unix.S_DIR -> String_map.union (fun _ _ v -> Some v) acc (process_symlinks file)
+          Sln_map.String.add file (concat_path (dirname file) dst) acc
+      | Unix.S_DIR -> Sln_map.String.union (fun _ _ v -> Some v) acc (process_symlinks file)
       | Unix.S_REG | Unix.S_CHR | Unix.S_BLK | Unix.S_FIFO | Unix.S_SOCK -> acc)
-    ~init:String_map.empty
+    ~init:Sln_map.String.empty
     files
 
 let rec process_path base path =
@@ -117,19 +97,20 @@ let index paths =
     {
       Output.version;
       paths =
-        String_map.of_list
+        Sln_map.String.of_list
           (CCList.map
              (fun path ->
                ( path,
                  CCListLabels.fold_left
                    ~f:(fun acc -> function
-                     | `Module m -> Output.Dep.{ acc with modules = Sln_set.String.add m acc.modules }
+                     | `Module m ->
+                         Output.Dep.{ acc with modules = Sln_set.String.add m acc.modules }
                      | `Error (fname, pos, msg) ->
                          Output.Dep.
                            {
                              acc with
                              failures =
-                               String_map.add
+                               Sln_map.String.add
                                  fname
                                  {
                                    Output.Failure.lnum =
@@ -138,13 +119,15 @@ let index paths =
                                  }
                                  acc.failures;
                            })
-                   ~init:Output.Dep.{ modules = Sln_set.String.empty; failures = String_map.empty }
+                   ~init:
+                     Output.Dep.{ modules = Sln_set.String.empty; failures = Sln_map.String.empty }
                    (process_path None path) ))
              paths);
       symlinks =
         CCListLabels.fold_left
-          ~f:(fun acc path -> String_map.union (fun _ _ v -> Some v) acc (process_symlinks path))
-          ~init:String_map.empty
+          ~f:(fun acc path ->
+            Sln_map.String.union (fun _ _ v -> Some v) acc (process_symlinks path))
+          ~init:Sln_map.String.empty
           paths;
     }
   in

@@ -1,5 +1,3 @@
-module String_map = CCMap.Make (CCString)
-
 let test_no_subst =
   Oth.test ~name:"no_subst" (fun _ ->
       let vars = CCFun.const None in
@@ -7,19 +5,19 @@ let test_no_subst =
 
 let test_one_subst =
   Oth.test ~name:"one_subst" (fun _ ->
-      let vars = CCFun.flip String_map.find_opt @@ String_map.of_list [ ("foo", "bar") ] in
+      let vars = CCFun.flip Sln_map.String.find_opt @@ Sln_map.String.of_list [ ("foo", "bar") ] in
       assert (Str_template.apply vars "${foo}" = Ok "bar"))
 
 let test_two_subst =
   Oth.test ~name:"two_subst" (fun _ ->
-      let vars = CCFun.flip String_map.find_opt @@ String_map.of_list [ ("foo", "bar") ] in
+      let vars = CCFun.flip Sln_map.String.find_opt @@ Sln_map.String.of_list [ ("foo", "bar") ] in
       assert (Str_template.apply vars "${foo}${foo}" = Ok "barbar"))
 
 let test_complicated_subst =
   Oth.test ~name:"complicated_subst" (fun _ ->
       let vars =
-        CCFun.flip String_map.find_opt
-        @@ String_map.of_list [ ("name", "person"); ("job", "manual laborer") ]
+        CCFun.flip Sln_map.String.find_opt
+        @@ Sln_map.String.of_list [ ("name", "person"); ("job", "manual laborer") ]
       in
       assert (
         Str_template.apply vars "Hello ${name}, welcome to your first day as a ${job}."
@@ -33,8 +31,8 @@ let test_escape =
 let test_complicated_escape =
   Oth.test ~name:"complicated_escape" (fun _ ->
       let vars =
-        CCFun.flip String_map.find_opt
-        @@ String_map.of_list [ ("name", "person"); ("job", "manual laborer") ]
+        CCFun.flip Sln_map.String.find_opt
+        @@ Sln_map.String.of_list [ ("name", "person"); ("job", "manual laborer") ]
       in
       assert (
         Str_template.apply

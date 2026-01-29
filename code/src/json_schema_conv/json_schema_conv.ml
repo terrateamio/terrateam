@@ -1,8 +1,6 @@
-module String_map = CCMap.Make (CCString)
-
 module Properties = struct
   type 'a properties = (string * 'a) list [@@deriving show]
-  type 'a t = 'a String_map.t
+  type 'a t = 'a Sln_map.String.t
 
   let of_yojson of_yojson m =
     m
@@ -11,13 +9,13 @@ module Properties = struct
            let open CCResult.Infix in
            of_yojson v >>= fun v -> Ok (k, v))
     |> CCResult.flatten_l
-    |> CCResult.map String_map.of_list
+    |> CCResult.map Sln_map.String.of_list
 
   let to_yojson to_yojson m =
-    `Assoc (CCList.map (fun (k, v) -> (k, to_yojson v)) (String_map.to_list m))
+    `Assoc (CCList.map (fun (k, v) -> (k, to_yojson v)) (Sln_map.String.to_list m))
 
-  let pp pp format v = pp_properties pp format (String_map.to_list v)
-  let equal = String_map.equal
+  let pp pp format v = pp_properties pp format (Sln_map.String.to_list v)
+  let equal = Sln_map.String.equal
 end
 
 module Value = struct
@@ -125,7 +123,7 @@ module Schema = struct
     one_of : t list option; [@default None] [@key "oneOf"]
     any_of : t list option; [@default None] [@key "anyOf"]
     items : t option; [@default None]
-    properties : t Properties.t; [@default String_map.empty]
+    properties : t Properties.t; [@default Sln_map.String.empty]
     additional_properties : t Additional_properties.t;
         [@default Additional_properties.Bool true] [@key "additionalProperties"]
     format : string option; [@default None]
@@ -155,7 +153,7 @@ module Schema = struct
       one_of = None;
       any_of = None;
       items = None;
-      properties = String_map.empty;
+      properties = Sln_map.String.empty;
       additional_properties = Additional_properties.Bool true;
       format = None;
       enum = None;
@@ -199,7 +197,7 @@ module Schema = struct
       any_of = take_left_option l.any_of r.any_of;
       items = take_left_option l.items r.items;
       properties =
-        String_map.union
+        Sln_map.String.union
           (fun _ l r ->
             match (l, r) with
             | Value.V l, Value.V r -> Some (Value.V (merge l r))
@@ -872,7 +870,7 @@ let rec convert_str_schema (config : Config.t) =
         Gen.(make_all_of_of_yojson_func (Config.tidx_to_string config));
       ]
   (* @ convert_str_schema config schema *)
-  | { S.typ = None; properties; _ } as schema when not (String_map.is_empty properties) ->
+  | { S.typ = None; properties; _ } as schema when not (Sln_map.String.is_empty properties) ->
       convert_str_schema config { schema with Schema.typ = Some "object" }
   | {
       S.typ = Some "object";
@@ -880,7 +878,7 @@ let rec convert_str_schema (config : Config.t) =
       additional_properties = Additional_properties.Bool true;
       _;
     } as schema ->
-      let is_empty = String_map.is_empty properties in
+      let is_empty = Sln_map.String.is_empty properties in
       let schema =
         { schema with Schema.additional_properties = Additional_properties.Bool false }
       in
@@ -919,7 +917,7 @@ let rec convert_str_schema (config : Config.t) =
       additional_properties = Additional_properties.V additional_schema;
       _;
     } as schema ->
-      let is_empty = String_map.is_empty properties in
+      let is_empty = Sln_map.String.is_empty properties in
       let schema =
         { schema with Schema.additional_properties = Additional_properties.Bool false }
       in
@@ -968,7 +966,7 @@ let rec convert_str_schema (config : Config.t) =
                                | Value.Ref ref_ -> Config.module_name_of_ref config ref_)))))));
           ];
         ]
-  | { S.typ = Some "object"; properties; _ } when String_map.is_empty properties ->
+  | { S.typ = Some "object"; properties; _ } when Sln_map.String.is_empty properties ->
       [
         Gen.(
           make_str_type
@@ -1031,7 +1029,7 @@ and convert_str_schema_properties config properties =
             (config, acc)
         | Value.V _ -> (config, acc)
         | Value.Ref _ -> (config, acc))
-      (CCList.sort (fun (l, _) (r, _) -> CCString.compare l r) (String_map.to_list properties))
+      (CCList.sort (fun (l, _) (r, _) -> CCString.compare l r) (Sln_map.String.to_list properties))
   in
   acc
 
@@ -1093,7 +1091,7 @@ and convert_str_schema_obj config properties_config required properties =
               acc @ [ Ast_helper.Type.field ~attrs (Location.mknoloc field_name) field_type ]
             in
             (config, acc))
-      (CCList.sort (fun (l, _) (r, _) -> CCString.compare l r) (String_map.to_list properties))
+      (CCList.sort (fun (l, _) (r, _) -> CCString.compare l r) (Sln_map.String.to_list properties))
   in
   [
     Gen.make_str_record

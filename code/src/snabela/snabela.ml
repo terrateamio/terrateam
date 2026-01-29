@@ -99,8 +99,6 @@ module Template = struct
     with exn -> Error (`Exn exn)
 end
 
-module TMap = CCMap.Make (String)
-
 type line_number = int [@@deriving show]
 
 type err =
@@ -120,12 +118,12 @@ type trans_func = Kv.scalar -> Kv.scalar
 
 type t = {
   template : Template.t;
-  transformers : trans_func TMap.t;
+  transformers : trans_func Sln_map.String.t;
   append_transformers : trans_func list;
 }
 
 let of_template ?(append_transformers = []) t tr =
-  let transformers = TMap.of_list tr in
+  let transformers = Sln_map.String.of_list tr in
   { template = t; transformers; append_transformers }
 
 let string_of_scalar = function
@@ -173,7 +171,7 @@ let rec eval_template buf t kv template section =
       in
       let t_map = function
         | Snabela_lexer.Token.Transformer name -> (
-            match TMap.get name t.transformers with
+            match Sln_map.String.get name t.transformers with
             | Some f -> f
             | None -> raise (Apply_error (`Missing_transformer (name, ln))))
         | _ -> assert false

@@ -62,8 +62,7 @@ struct
             queries ))
       changes
 
-  let replace_stack_vars vars s =
-    Str_template.apply (CCFun.flip Terrat_data.String_map.find_opt vars) s
+  let replace_stack_vars vars s = Str_template.apply (CCFun.flip Sln_map.String.find_opt vars) s
 
   let apply_stack_vars_to_workflow stack workflow =
     let module R = Terrat_base_repo_config_v1 in

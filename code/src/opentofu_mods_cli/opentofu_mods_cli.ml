@@ -30,36 +30,16 @@ end
 
 let default_tf_matcher = Path_glob.Glob.parse "<*.tf>"
 
-module String_map = struct
-  include CCMap.Make (CCString)
-
-  let to_yojson f t = `Assoc (CCList.map (fun (k, v) -> (k, f v)) (to_list t))
-
-  let of_yojson f = function
-    | `Assoc obj -> (
-        try
-          Ok
-            (CCListLabels.fold_left
-               ~f:(fun acc (k, v) ->
-                 match f v with
-                 | Ok v -> add k v acc
-                 | Error err -> failwith err)
-               ~init:empty
-               obj)
-        with Failure err -> Error err)
-    | _ -> Error "Expected object"
-end
-
 module Output = struct
   module Dep = struct
     type t = {
       paths : string list;
-      failures : string String_map.t;
+      failures : string Sln_map.String.t;
     }
     [@@deriving yojson]
   end
 
-  type t = Dep.t String_map.t [@@deriving yojson]
+  type t = Dep.t Sln_map.String.t [@@deriving yojson]
 end
 
 let rec concat_path f1 f2 =
@@ -104,7 +84,7 @@ let collect follow_local_sources only_local_sources file_patterns paths =
       (CCString.concat " or " (CCList.map (fun s -> "<" ^ s ^ ">") file_patterns))
   in
   let output =
-    String_map.of_list
+    Sln_map.String.of_list
       (CCList.map
          (fun path ->
            ( path,
@@ -112,8 +92,8 @@ let collect follow_local_sources only_local_sources file_patterns paths =
                ~f:(fun acc -> function
                  | Ok m -> Output.Dep.{ acc with paths = m :: acc.paths }
                  | Error (fname, err) ->
-                     Output.Dep.{ acc with failures = String_map.add fname err acc.failures })
-               ~init:Output.Dep.{ paths = []; failures = String_map.empty }
+                     Output.Dep.{ acc with failures = Sln_map.String.add fname err acc.failures })
+               ~init:Output.Dep.{ paths = []; failures = Sln_map.String.empty }
                (process_path follow_local_sources only_local_sources file_patterns_matcher path) ))
          paths)
   in

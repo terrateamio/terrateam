@@ -9,7 +9,7 @@ module Key = struct
 end
 
 module Config = CCMap.Make (Key)
-module Value = CCMap.Make (CCString)
+module Value = Sln_map.String
 
 type t = string list Value.t Config.t
 

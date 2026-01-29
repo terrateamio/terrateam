@@ -1,5 +1,3 @@
-module String_map = CCMap.Make (CCString)
-
 let src = Logs.Src.create "vcs_service_github_oss"
 
 module Logs = (val Logs.src_log src : Logs.LOG)
@@ -164,8 +162,8 @@ module Provider :
           approvers;
         let approvers_map =
           CCList.fold_left
-            (fun acc (token, approver) -> String_map.add_to_list token approver acc)
-            String_map.empty
+            (fun acc (token, approver) -> Sln_map.String.add_to_list token approver acc)
+            Sln_map.String.empty
             approvers
         in
         Api.fetch_pull_request_reviews
@@ -282,7 +280,7 @@ module Provider :
                         | Some token ->
                             Sln_set.String.of_list
                             @@ CCOption.get_or ~default:[]
-                            @@ String_map.find_opt token approvers_map
+                            @@ Sln_map.String.find_opt token approvers_map
                         | None -> approved_reviewers
                       in
                       (* A map of query to users who have approved that token.

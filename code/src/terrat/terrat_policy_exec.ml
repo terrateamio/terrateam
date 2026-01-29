@@ -161,14 +161,14 @@
  *                                       {
  *                                         primary = Json_schema.Empty_obj.t;
  *                                         additional =
- *                                           Json_schema.String_map.of_list
+ *                                           Sln_map.String.of_list
  *                                             [
  *                                               ("work-token", Uuidm.to_string run_id);
  *                                               ("api-base-url", Terrat_config.api_base config);
  *                                             ];
  *                                       };
  *                               };
- *                           additional = Json_schema.String_map.empty;
+ *                           additional = Sln_map.String.empty;
  *                         }
  *                     Parameters.(
  *                       make

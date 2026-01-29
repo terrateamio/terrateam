@@ -1,5 +1,3 @@
-module SMap = CCMap.Make (String)
-
 module Cmdline = struct
   module C = Cmdliner
 
@@ -66,9 +64,9 @@ let load_transformers ds =
   ListLabels.fold_left
     ~f:(fun acc d ->
       let ts = transformer_of_dir d in
-      let m = SMap.of_list ts in
-      SMap.union (fun _ l _ -> Some l) acc m)
-    ~init:SMap.empty
+      let m = Sln_map.String.of_list ts in
+      Sln_map.String.union (fun _ l _ -> Some l) acc m)
+    ~init:Sln_map.String.empty
     ds
 
 let snabela_apply kv_file transformers append_transformers =
@@ -84,12 +82,12 @@ let snabela_apply kv_file transformers append_transformers =
   let at =
     ListLabels.map
       ~f:(fun tname ->
-        match SMap.get tname transformers with
+        match Sln_map.String.get tname transformers with
         | Some tr -> tr
         | None -> failwith "nyi")
       append_transformers
   in
-  let cache = Snabela.of_template ~append_transformers:at template (SMap.to_list transformers) in
+  let cache = Snabela.of_template ~append_transformers:at template (Sln_map.String.to_list transformers) in
   Snabela.apply cache kv
   >>= fun applied ->
   output_string stdout applied;
