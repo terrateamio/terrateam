@@ -2299,7 +2299,7 @@ struct
                       s
                       (fun m log_id time ->
                         m
-                          "%s : Wm : UPDATE_STATE : work_manifest_id = %a : run_id = %s : state = \
+                          "%s : WM : UPDATE_STATE : work_manifest_id = %a : run_id = %s : state = \
                            aborted"
                           log_id
                           Uuidm.pp

@@ -384,8 +384,35 @@ struct
     let dest_branch_ref =
       run ~name:"dest_branch_ref" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
+          fetch Keys.client
+          >>= fun client ->
+          fetch Keys.repo
+          >>= fun repo ->
           fetch Keys.pull_request
-          >>= fun pull_request -> Abb.Future.return (Ok (S.Api.Pull_request.base_ref pull_request)))
+          >>= fun pull_request ->
+          (* Fetch actual dest branch ref, in case it has changed.  For GitHub,
+             we can only run actions against the branch and not an actual ref.
+             That means if the dest branch is main, and another PR has been
+             merged into main, we need to operate on main with the updated ref,
+             not the one the PR API reports. *)
+          time_it
+            s
+            (fun m log_id time ->
+              m
+                "%s : FETCH_BRANCH_SHA : repo = %s : branch = %s : time=%f"
+                log_id
+                (S.Api.Repo.to_string repo)
+                (S.Api.Ref.to_string (S.Api.Pull_request.base_branch_name pull_request))
+                time)
+            (fun () ->
+              S.Api.fetch_branch_sha
+                ~request_id:(Builder.log_id s)
+                client
+                repo
+                (S.Api.Pull_request.base_branch_name pull_request))
+          >>= function
+          | Some ref_ -> Abb.Future.return (Ok ref_)
+          | None -> Abb.Future.return (Error `Error))
 
     let working_branch_ref =
       run ~name:"working_branch_ref" (fun s { Bs.Fetcher.fetch } ->
