@@ -103,6 +103,9 @@ struct
           | Some ref_ -> Abb.Future.return (Ok ref_)
           | None -> Abb.Future.return (Error `Error))
 
+    let working_dest_branch_ref =
+      run ~name:"working_dest_branch_ref" (fun _ { Bs.Fetcher.fetch } -> fetch Keys.dest_branch_ref)
+
     let working_branch_ref =
       run ~name:"working_branch_ref" (fun _s { Bs.Fetcher.fetch } -> fetch Keys.branch_ref)
 
@@ -271,4 +274,5 @@ struct
     |> Hmap.add (coerce Keys.publish_comment) Tasks.publish_comment
     |> Hmap.add (coerce Keys.working_branch_name) Tasks.working_branch_name
     |> Hmap.add (coerce Keys.working_branch_ref) Tasks.working_branch_ref
+    |> Hmap.add (coerce Keys.working_dest_branch_ref) Tasks.working_dest_branch_ref
 end

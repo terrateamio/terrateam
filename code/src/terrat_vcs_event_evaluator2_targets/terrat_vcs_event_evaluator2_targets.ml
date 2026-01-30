@@ -131,6 +131,11 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   let branch_ref : S.Api.Ref.t Key.t = Hmap.Key.create "branch_ref"
   let dest_branch_name : S.Api.Ref.t Key.t = Hmap.Key.create "dest_branch_name"
   let dest_branch_ref : S.Api.Ref.t Key.t = Hmap.Key.create "dest_branch_ref"
+
+  (* In the case of pull requests, in some VCSs, the destination branch
+     reference will always be the same even if changes are merged into it.  We
+     might need to work with the actual destination branch's reference in some cases. *)
+  let working_dest_branch_ref : S.Api.Ref.t Key.t = Hmap.Key.create "working_dest_branch_ref"
   let working_branch_ref : S.Api.Ref.t Key.t = Hmap.Key.create "working_branch_ref"
   let working_branch_name : S.Api.Ref.t Key.t = Hmap.Key.create "working_branch_name"
   let initiator : Terrat_work_manifest3.Initiator.t Key.t = Hmap.Key.create "initiator"

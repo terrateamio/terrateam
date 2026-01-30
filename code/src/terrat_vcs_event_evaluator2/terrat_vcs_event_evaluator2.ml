@@ -329,7 +329,11 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                   Pgsql_io.tx db ~f:(fun () ->
                       let open Abb.Future.Infix_monad in
                       let store =
-                        store |> Keys.Key.add Keys.job job |> Tasks_base.forward_std_keys s
+                        store
+                        |> Keys.Key.add Keys.job job
+                           (* Make publishing comments a noop so we don't give double messages to the user *)
+                        |> Keys.Key.add Keys.publish_comment (fun _ -> Abb.Future.return (Ok ()))
+                        |> Tasks_base.forward_std_keys s
                       in
                       Builder.State.make
                         ~log_id:(Builder.mk_log_id ~request_id job.Tjc.Job.id)
