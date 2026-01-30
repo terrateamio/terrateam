@@ -138,13 +138,13 @@ module Make (M : M with type db = Pgsql_io.t) = struct
     let topology =
       config
       |> Tcm.Config.stack_topology
-      |> Terrat_data.String_map.to_list
+      |> Sln_map.String.to_list
       |> Tsort.sort
       |> (function
       | Tsort.Sorted topo -> topo
       | Tsort.ErrorCycle _ -> assert false)
       |> CCList.uniq_succ ~eq:CCString.equal
-      |> CCList.filter_map (fun s -> Terrat_data.String_map.find_opt s stacks)
+      |> CCList.filter_map (fun s -> Sln_map.String.find_opt s stacks)
     in
     (* Group all stack entries together if their paths start with the same first
        element.  There can be multiple paths but we're just going to ignore that

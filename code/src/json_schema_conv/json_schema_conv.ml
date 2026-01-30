@@ -1,9 +1,6 @@
-module String_map = CCMap.Make (CCString)
-module String_set = CCSet.Make (CCString)
-
 module Properties = struct
   type 'a properties = (string * 'a) list [@@deriving show]
-  type 'a t = 'a String_map.t
+  type 'a t = 'a Sln_map.String.t
 
   let of_yojson of_yojson m =
     m
@@ -12,13 +9,13 @@ module Properties = struct
            let open CCResult.Infix in
            of_yojson v >>= fun v -> Ok (k, v))
     |> CCResult.flatten_l
-    |> CCResult.map String_map.of_list
+    |> CCResult.map Sln_map.String.of_list
 
   let to_yojson to_yojson m =
-    `Assoc (CCList.map (fun (k, v) -> (k, to_yojson v)) (String_map.to_list m))
+    `Assoc (CCList.map (fun (k, v) -> (k, to_yojson v)) (Sln_map.String.to_list m))
 
-  let pp pp format v = pp_properties pp format (String_map.to_list v)
-  let equal = String_map.equal
+  let pp pp format v = pp_properties pp format (Sln_map.String.to_list v)
+  let equal = Sln_map.String.equal
 end
 
 module Value = struct
@@ -59,8 +56,10 @@ module Schema = struct
   type string_list = string list [@@deriving show]
   type 'a value = 'a Value.t [@@deriving yojson, show, eq]
 
-  let string_set_of_yojson json = CCResult.([%of_yojson: string list] json >|= String_set.of_list)
-  let string_set_to_yojson s = s |> String_set.to_list |> [%to_yojson: string list]
+  let string_set_of_yojson json =
+    CCResult.([%of_yojson: string list] json >|= Sln_set.String.of_list)
+
+  let string_set_to_yojson s = s |> Sln_set.String.to_list |> [%to_yojson: string list]
 
   (* [typ] can be nothing, a string, or a list of strings.  This specific
      implementation just recognizes when it's an array and one of the elements
@@ -115,16 +114,16 @@ module Schema = struct
     max_items : int option; [@default None] [@key "maxItems"]
     min_items : int option; [@default None] [@key "minItems"]
     unique_items : bool option; [@default None] [@key "uniqueItems"]
-    required : String_set.t;
-        [@printer fun fmt v -> pp_string_list fmt (String_set.to_list v)]
+    required : Sln_set.String.t;
+        [@printer fun fmt v -> pp_string_list fmt (Sln_set.String.to_list v)]
         [@to_yojson string_set_to_yojson]
         [@of_yojson string_set_of_yojson]
-        [@default String_set.empty]
+        [@default Sln_set.String.empty]
     all_of : t list option; [@default None] [@key "allOf"]
     one_of : t list option; [@default None] [@key "oneOf"]
     any_of : t list option; [@default None] [@key "anyOf"]
     items : t option; [@default None]
-    properties : t Properties.t; [@default String_map.empty]
+    properties : t Properties.t; [@default Sln_map.String.empty]
     additional_properties : t Additional_properties.t;
         [@default Additional_properties.Bool true] [@key "additionalProperties"]
     format : string option; [@default None]
@@ -149,12 +148,12 @@ module Schema = struct
       max_items = None;
       min_items = None;
       unique_items = None;
-      required = String_set.empty;
+      required = Sln_set.String.empty;
       all_of = None;
       one_of = None;
       any_of = None;
       items = None;
-      properties = String_map.empty;
+      properties = Sln_map.String.empty;
       additional_properties = Additional_properties.Bool true;
       format = None;
       enum = None;
@@ -192,13 +191,13 @@ module Schema = struct
       max_items = take_left_option l.max_items r.max_items;
       min_items = take_left_option l.min_items r.min_items;
       unique_items = take_left_option l.unique_items r.unique_items;
-      required = String_set.union l.required r.required;
+      required = Sln_set.String.union l.required r.required;
       all_of = take_left_option l.all_of r.all_of;
       one_of = take_left_option l.one_of r.one_of;
       any_of = take_left_option l.any_of r.any_of;
       items = take_left_option l.items r.items;
       properties =
-        String_map.union
+        Sln_map.String.union
           (fun _ l r ->
             match (l, r) with
             | Value.V l, Value.V r -> Some (Value.V (merge l r))
@@ -457,7 +456,7 @@ module Config = struct
     module_name_of_field_name : string -> string;
     module_name_of_ref : string -> string list;
     prim_type_attrs : Parsetree.attributes;
-    record_field_attrs : Schema.t_ -> string -> String_set.t -> Parsetree.attributes;
+    record_field_attrs : Schema.t_ -> string -> Sln_set.String.t -> Parsetree.attributes;
     record_type_attrs : bool -> Parsetree.attributes;
     resolve_ref : Schema.t -> Schema.t_;
     strict_record : bool;
@@ -871,7 +870,7 @@ let rec convert_str_schema (config : Config.t) =
         Gen.(make_all_of_of_yojson_func (Config.tidx_to_string config));
       ]
   (* @ convert_str_schema config schema *)
-  | { S.typ = None; properties; _ } as schema when not (String_map.is_empty properties) ->
+  | { S.typ = None; properties; _ } as schema when not (Sln_map.String.is_empty properties) ->
       convert_str_schema config { schema with Schema.typ = Some "object" }
   | {
       S.typ = Some "object";
@@ -879,7 +878,7 @@ let rec convert_str_schema (config : Config.t) =
       additional_properties = Additional_properties.Bool true;
       _;
     } as schema ->
-      let is_empty = String_map.is_empty properties in
+      let is_empty = Sln_map.String.is_empty properties in
       let schema =
         { schema with Schema.additional_properties = Additional_properties.Bool false }
       in
@@ -918,7 +917,7 @@ let rec convert_str_schema (config : Config.t) =
       additional_properties = Additional_properties.V additional_schema;
       _;
     } as schema ->
-      let is_empty = String_map.is_empty properties in
+      let is_empty = Sln_map.String.is_empty properties in
       let schema =
         { schema with Schema.additional_properties = Additional_properties.Bool false }
       in
@@ -967,7 +966,7 @@ let rec convert_str_schema (config : Config.t) =
                                | Value.Ref ref_ -> Config.module_name_of_ref config ref_)))))));
           ];
         ]
-  | { S.typ = Some "object"; properties; _ } when String_map.is_empty properties ->
+  | { S.typ = Some "object"; properties; _ } when Sln_map.String.is_empty properties ->
       [
         Gen.(
           make_str_type
@@ -1030,7 +1029,7 @@ and convert_str_schema_properties config properties =
             (config, acc)
         | Value.V _ -> (config, acc)
         | Value.Ref _ -> (config, acc))
-      (CCList.sort (fun (l, _) (r, _) -> CCString.compare l r) (String_map.to_list properties))
+      (CCList.sort (fun (l, _) (r, _) -> CCString.compare l r) (Sln_map.String.to_list properties))
   in
   acc
 
@@ -1059,7 +1058,7 @@ and convert_str_schema_obj config properties_config required properties =
             in
             let field_type =
               if
-                (String_set.mem name required || CCOption.is_some schema.Schema.default)
+                (Sln_set.String.mem name required || CCOption.is_some schema.Schema.default)
                 && not schema.Schema.nullable
               then field_type
               else Gen.option [ field_type ]
@@ -1083,7 +1082,7 @@ and convert_str_schema_obj config properties_config required properties =
                  type should handle if it's option entirely, but for reasons we
                  only do that for primitive types. *)
               if
-                (String_set.mem name required || CCOption.is_some schema.Schema.default)
+                (Sln_set.String.mem name required || CCOption.is_some schema.Schema.default)
                 && (is_prim_type schema || not schema.Schema.nullable)
               then field_type
               else Gen.option [ field_type ]
@@ -1092,7 +1091,7 @@ and convert_str_schema_obj config properties_config required properties =
               acc @ [ Ast_helper.Type.field ~attrs (Location.mknoloc field_name) field_type ]
             in
             (config, acc))
-      (CCList.sort (fun (l, _) (r, _) -> CCString.compare l r) (String_map.to_list properties))
+      (CCList.sort (fun (l, _) (r, _) -> CCString.compare l r) (Sln_map.String.to_list properties))
   in
   [
     Gen.make_str_record

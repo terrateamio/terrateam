@@ -134,7 +134,7 @@ module Claim = struct
 end
 
 module Payload = struct
-  module Claim_map = CCMap.Make (CCString)
+  module Claim_map = Sln_map.String
 
   type typs = Yojson.Safe.t
   type t = typs Claim_map.t

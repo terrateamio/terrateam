@@ -45,7 +45,7 @@ let module_name_of_string s =
   |> CCString.capitalize_ascii
 
 let module_name_of_field_name defs s =
-  if Json_schema_conv.String_map.mem (CCString.replace ~sub:"_" ~by:"-" s) defs then
+  if Sln_map.String.mem (CCString.replace ~sub:"_" ~by:"-" s) defs then
     module_name_of_string s ^ "_"
   else module_name_of_string s
 
@@ -115,7 +115,7 @@ let rec resolve_ref definitions ref_ =
   | Value.Ref ref_ -> (
       match CCString.split_on_char '/' ref_ with
       | [ "#"; "definitions"; name ] -> (
-          match Json_schema_conv.String_map.get name definitions with
+          match Sln_map.String.get name definitions with
           | Some (Value.Ref _ as ref_) -> resolve_ref definitions ref_
           | Some (Value.V v) -> v
           | None -> failwith (Printf.sprintf "Could not resolve ref: %s" ref_))
@@ -139,7 +139,7 @@ let rec collect_schema_refs
              match schema with
              | Value.Ref ref_ -> [ ref_ ]
              | Value.V schema -> collect_schema_refs schema)
-           (String_map.to_list properties));
+           (Sln_map.String.to_list properties));
       (match additional_properties with
       | Additional_properties.Bool _ -> []
       | Additional_properties.V (Value.V schema) -> collect_schema_refs schema
@@ -219,7 +219,7 @@ let convert_document strict_records output_dir output_name { Document.definition
         Json_schema_conv.{ (Schema.make_t_ ()) with Schema.one_of = Some [ Value.Ref ref_ ] }
     | None, None -> assert false
   in
-  Json_schema_conv.String_map.iter
+  Sln_map.String.iter
     (fun name def ->
       match def with
       | Json_schema_conv.Value.Ref _ -> ()
@@ -243,10 +243,7 @@ let convert_document strict_records output_dir output_name { Document.definition
             (Mb.mk
                (Location.mknoloc (Some (module_name_of_string name)))
                (Mod.ident (Location.mknoloc (Json_schema_conv.Gen.ident [ module_name ])))))
-        (definitions
-        |> Json_schema_conv.String_map.to_list
-        |> CCList.map fst
-        |> CCList.sort CCString.compare)
+        (definitions |> Sln_map.String.to_list |> CCList.map fst |> CCList.sort CCString.compare)
       @ [
           Str.module_
             (Mb.mk

@@ -2669,7 +2669,7 @@ struct
                            ~default:""
                            (fun { D.Window.start; end_ } -> start ^ "-" ^ end_)
                            window)))
-                (V1.String_map.to_list schedules);
+                (Sln_map.String.to_list schedules);
               Builder.run_db s ~f:(fun db ->
                   time_it
                     s
@@ -2809,7 +2809,7 @@ struct
                               db
                               repo
                               Terrat_base_repo_config_v1.
-                                { Drift.enabled = false; schedules = String_map.empty })
+                                { Drift.enabled = false; schedules = Sln_map.String.empty })
                         >>= fun _ -> Abb.Future.return (Error err))
                 | Error `Error ->
                     Logs.err (fun m ->
@@ -2824,7 +2824,7 @@ struct
                           db
                           repo
                           Terrat_base_repo_config_v1.
-                            { Drift.enabled = false; schedules = String_map.empty })
+                            { Drift.enabled = false; schedules = Sln_map.String.empty })
               in
               let open Abb.Future.Infix_monad in
               run
