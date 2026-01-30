@@ -384,12 +384,18 @@ struct
     let dest_branch_ref =
       run ~name:"dest_branch_ref" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
+          fetch Keys.pull_request
+          >>= fun pull_request -> Abb.Future.return (Ok (S.Api.Pull_request.base_ref pull_request)))
+
+    let working_dest_branch_ref =
+      run ~name:"working_dest_branch_ref" (fun s { Bs.Fetcher.fetch } ->
+          let open Irm in
           fetch Keys.client
           >>= fun client ->
           fetch Keys.repo
           >>= fun repo ->
-          fetch Keys.pull_request
-          >>= fun pull_request ->
+          fetch Keys.dest_branch_name
+          >>= fun dest_branch_name ->
           (* Fetch actual dest branch ref, in case it has changed.  For GitHub,
              we can only run actions against the branch and not an actual ref.
              That means if the dest branch is main, and another PR has been
@@ -402,14 +408,10 @@ struct
                 "%s : FETCH_BRANCH_SHA : repo = %s : branch = %s : time=%f"
                 log_id
                 (S.Api.Repo.to_string repo)
-                (S.Api.Ref.to_string (S.Api.Pull_request.base_branch_name pull_request))
+                (S.Api.Ref.to_string dest_branch_name)
                 time)
             (fun () ->
-              S.Api.fetch_branch_sha
-                ~request_id:(Builder.log_id s)
-                client
-                repo
-                (S.Api.Pull_request.base_branch_name pull_request))
+              S.Api.fetch_branch_sha ~request_id:(Builder.log_id s) client repo dest_branch_name)
           >>= function
           | Some ref_ -> Abb.Future.return (Ok ref_)
           | None -> Abb.Future.return (Error `Error))
@@ -1511,4 +1513,5 @@ struct
     |> Hmap.add (coerce Keys.store_stacks) Tasks.store_stacks
     |> Hmap.add (coerce Keys.working_branch_name) Tasks.working_branch_name
     |> Hmap.add (coerce Keys.working_branch_ref) Tasks.working_branch_ref
+    |> Hmap.add (coerce Keys.working_dest_branch_ref) Tasks.working_dest_branch_ref
 end

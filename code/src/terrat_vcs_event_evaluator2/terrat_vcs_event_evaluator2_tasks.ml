@@ -2172,216 +2172,272 @@ struct
           >>= function
           | { C.state = C.State.Terminated; _ } ->
               Abb.Future.return (Ok (Wmc.Work_manifest_done { Wmd.type_ = "done" }))
-          | compute_node ->
+          | compute_node -> (
               (* TODO: Decouple compute node id and work manifest id *)
               let work_manifest_id = compute_node.C.id in
-              fetch Keys.compute_node_offering
-              >>= fun offering ->
-              if compute_node.C.capabilities.C.Capabilities.sha = offering.Offering.sha then
-                (* If a work manifest response already exists for the compute node,
+              Builder.run_db s ~f:(fun db ->
+                  time_it
+                    s
+                    (fun m log_id time ->
+                      m
+                        "%s : WORK_MANIFEST : QUERY : id = %a : time=%f"
+                        log_id
+                        Uuidm.pp
+                        work_manifest_id
+                        time)
+                    (fun () ->
+                      S.Work_manifest.query ~request_id:(Builder.log_id s) db work_manifest_id))
+              >>= function
+              | Some work_manifest ->
+                  fetch Keys.compute_node_offering
+                  >>= fun offering ->
+                  (* Compare the sha that the runner is offering vs the sha that
+                     the compute node is capable of operating against.
+
+                     These should match, however it is possible they don't because:
+
+                     1. There has been an update to this branch between evaluating
+                        the job and running it.
+
+                     2. This is a pull request and the destination branch has
+                        been updated and this PR has not been rebased yet.  The
+                        GitHub API always describes pull requests in terms of
+                        the original commit they were created against and not
+                        the latest commit of the base.  In this case, we will
+                        ALWAYS make work manifests that reference the pull
+                        requests base and not the actual base so we can't just
+                        retry.
+
+                     In case (1), we just want to fail this work manifest and
+                     run another one, that will pick up the new references and
+                     move on.
+
+                     In case (2), however, we have to use this same work manifest.
+
+                     We have two options of what we could do:
+
+                     1. We could tell the runner to switch to the commit we
+                        actually want to run against.
+
+                     2. Determine if this is an operation against the
+                        destination branch and validate it against the actual
+                        destination branch ref and use it.
+
+                     Despite (1) being the more correct answer, we cannot do it
+                     it right now because it would require modifying the
+                     protocol between the server and the runner and we aren't in
+                     a position to change that right now, so we will do (2).
+
+                     How do we determine if we can even apply situation (2)?
+                     Again, to minimize changes to the code, and database right
+                     now, we are going to use a heuristic.  In the work
+                     manifest, if the base_ref and branch_ref are the same, we
+                     will assume we are in (2) and run.
+                   *)
+                  if
+                    compute_node.C.capabilities.C.Capabilities.sha = offering.Offering.sha
+                    || CCString.equal work_manifest.Wm.base_ref work_manifest.Wm.branch_ref
+                  then
+                    (* If a work manifest response already exists for the compute node,
                    then deliver it. *)
-                Builder.run_db s ~f:(fun db ->
-                    time_it
-                      s
-                      (fun m log_id time ->
-                        m
-                          "%s : COMPUTE_NODE : QUERY_WORK : compute_node_id = %a : time=%f"
-                          log_id
-                          Uuidm.pp
-                          compute_node.C.id
-                          time)
-                      (fun () ->
-                        S.Job_context.Compute_node.query_work
-                          ~request_id:(Builder.log_id s)
-                          ~compute_node_id:compute_node.C.id
-                          db))
-                >>= function
-                | Some { Cw.work = wm_response; state = Cw.State.Created; _ } ->
-                    Abb.Future.return (Ok wm_response)
-                | Some _ ->
                     Builder.run_db s ~f:(fun db ->
                         time_it
                           s
                           (fun m log_id time ->
                             m
-                              "%s : COMPUTE_NODE : UPDATE_STATE : compute_node_id = %a : state = \
-                               terminated : time=%f"
+                              "%s : COMPUTE_NODE : QUERY_WORK : compute_node_id = %a : time=%f"
                               log_id
                               Uuidm.pp
                               compute_node.C.id
                               time)
                           (fun () ->
-                            S.Job_context.Compute_node.update_state
+                            S.Job_context.Compute_node.query_work
                               ~request_id:(Builder.log_id s)
                               ~compute_node_id:compute_node.C.id
-                              db
-                              C.State.Terminated))
-                    >>= fun () ->
-                    Abb.Future.return (Ok (Wmc.Work_manifest_done { Wmd.type_ = "done" }))
-                | None -> (
+                              db))
+                    >>= function
+                    | Some { Cw.work = wm_response; state = Cw.State.Created; _ } ->
+                        Abb.Future.return (Ok wm_response)
+                    | Some _ ->
+                        Builder.run_db s ~f:(fun db ->
+                            time_it
+                              s
+                              (fun m log_id time ->
+                                m
+                                  "%s : COMPUTE_NODE : UPDATE_STATE : compute_node_id = %a : state \
+                                   = terminated : time=%f"
+                                  log_id
+                                  Uuidm.pp
+                                  compute_node.C.id
+                                  time)
+                              (fun () ->
+                                S.Job_context.Compute_node.update_state
+                                  ~request_id:(Builder.log_id s)
+                                  ~compute_node_id:compute_node.C.id
+                                  db
+                                  C.State.Terminated))
+                        >>= fun () ->
+                        Abb.Future.return (Ok (Wmc.Work_manifest_done { Wmd.type_ = "done" }))
+                    | None -> (
+                        match work_manifest with
+                        | { Wm.state = Wm.State.(Completed | Aborted); _ } ->
+                            Abb.Future.return (Ok (Wmc.Work_manifest_done { Wmd.type_ = "done" }))
+                        | work_manifest -> (
+                            let open Abb.Future.Infix_monad in
+                            let work_manifest_event =
+                              Keys.Work_manifest_event.Initiate
+                                { work_manifest; run_id = offering.Offering.run_id }
+                            in
+                            let s' =
+                              s
+                              |> Builder.State.orig_store
+                              |> Keys.Key.add Keys.work_manifest_event (Some work_manifest_event)
+                              |> Tasks_base.forward_std_keys s
+                              |> CCFun.flip Builder.State.set_orig_store s
+                            in
+                            Builder.eval s' Keys.eval_work_manifest_event
+                            >>= function
+                            | Ok () | Error (`Suspend_eval _) -> (
+                                let open Irm in
+                                Builder.run_db s ~f:(fun db ->
+                                    time_it
+                                      s
+                                      (fun m log_id time ->
+                                        m
+                                          "%s : COMPUTE_NODE : QUERY_WORK : compute_node_id = %a : \
+                                           time=%f"
+                                          log_id
+                                          Uuidm.pp
+                                          compute_node.C.id
+                                          time)
+                                      (fun () ->
+                                        S.Job_context.Compute_node.query_work
+                                          ~request_id:(Builder.log_id s)
+                                          ~compute_node_id:compute_node.C.id
+                                          db))
+                                >>= function
+                                | Some { Cw.work = wm_response; _ } ->
+                                    Abb.Future.return (Ok wm_response)
+                                | None ->
+                                    Abb.Future.return
+                                      (Ok (Wmc.Work_manifest_done { Wmd.type_ = "done" })))
+                            | Error (#Builder.err as err) ->
+                                (* If anything failed, be sure to return to the querying node to give up. *)
+                                Logs.info (fun m ->
+                                    m "%s : %a" (Builder.log_id s) Builder.pp_err err);
+                                Abb.Future.return
+                                  (Ok (Wmc.Work_manifest_done { Wmd.type_ = "done" }))))
+                  else (
+                    (* We have received a poll from a compute node that has an
+                       offering that no longer matches antyhing we are looking for.
+
+                       We will kindly tell this compute node to exit, abort the
+                       work manifest, and then run another one to get the
+                       results we're actually interested in. *)
+                    Logs.info (fun m ->
+                        m
+                          "%s : COMPUTE_NODE_OFFERING_MISMATCH : compute_node_sha= %s : \
+                           offering_sha= %s"
+                          (Builder.log_id s)
+                          compute_node.C.capabilities.C.Capabilities.sha
+                          offering.Offering.sha);
                     Builder.run_db s ~f:(fun db ->
                         time_it
                           s
                           (fun m log_id time ->
                             m
-                              "%s : WORK_MANIFEST : QUERY : id = %a : time=%f"
+                              "%s : WM : UPDATE_STATE : work_manifest_id = %a : run_id = %s : \
+                               state = aborted"
+                              log_id
+                              Uuidm.pp
+                              work_manifest_id
+                              offering.Offering.run_id)
+                          (fun () ->
+                            S.Work_manifest.update_run_id
+                              ~request_id:(Builder.log_id s)
+                              db
+                              work_manifest_id
+                              offering.Offering.run_id
+                            >>= fun () ->
+                            S.Work_manifest.update_state
+                              ~request_id:(Builder.log_id s)
+                              db
+                              work_manifest_id
+                              Terrat_work_manifest3.State.Aborted))
+                    >>= fun () ->
+                    Builder.run_db s ~f:(fun db ->
+                        time_it
+                          s
+                          (fun m log_id time ->
+                            m
+                              "%s : JOB : QUERY_BY_WORK_MANIFEST : work_manifest_id = %a : time=%f"
                               log_id
                               Uuidm.pp
                               work_manifest_id
                               time)
                           (fun () ->
-                            S.Work_manifest.query ~request_id:(Builder.log_id s) db work_manifest_id))
+                            S.Job_context.Job.query_by_work_manifest_id
+                              ~request_id:(Builder.log_id s)
+                              db
+                              ~work_manifest_id
+                              ()))
                     >>= function
-                    | Some { Wm.state = Wm.State.(Completed | Aborted); _ } ->
-                        Abb.Future.return (Ok (Wmc.Work_manifest_done { Wmd.type_ = "done" }))
-                    | Some work_manifest -> (
-                        let open Abb.Future.Infix_monad in
-                        let work_manifest_event =
-                          Keys.Work_manifest_event.Initiate
-                            { work_manifest; run_id = offering.Offering.run_id }
+                    | Some job ->
+                        Builder.run_db s ~f:(fun db ->
+                            time_it
+                              s
+                              (fun m log_id time ->
+                                m
+                                  "%s : WORK_MANIFEST : QUERY : id = %a : time=%f"
+                                  log_id
+                                  Uuidm.pp
+                                  work_manifest_id
+                                  time)
+                              (fun () ->
+                                S.Work_manifest.query
+                                  ~request_id:(Builder.log_id s)
+                                  db
+                                  work_manifest_id))
+                        >>= fun work_manifest ->
+                        let work_manifest = CCOption.get_exn_or "work_manifest" work_manifest in
+                        let context = job.Tjc.Job.context in
+                        let log_id =
+                          Builder.mk_log_id ~request_id:(Builder.log_id s) job.Tjc.Job.id
                         in
                         let s' =
                           s
                           |> Builder.State.orig_store
-                          |> Keys.Key.add Keys.work_manifest_event (Some work_manifest_event)
+                          |> Keys.Key.add Keys.job job
+                          |> Keys.Key.add Keys.context context
+                          |> Keys.Key.add Keys.user job.Tjc.Job.initiator
                           |> Tasks_base.forward_std_keys s
+                          |> add_work_manifest_keys work_manifest
                           |> CCFun.flip Builder.State.set_orig_store s
+                          |> Builder.State.set_log_id log_id
+                          |> Builder.State.set_tasks
+                               (match context.Tjc.Context.scope with
+                               | Tjc.Context.Scope.Pull_request _ ->
+                                   Tasks_pr.tasks @@ Builder.State.tasks s
+                               | Tjc.Context.Scope.Branch _ ->
+                                   Tasks_branch.tasks @@ Builder.State.tasks s)
                         in
-                        Builder.eval s' Keys.eval_work_manifest_event
-                        >>= function
-                        | Ok () | Error (`Suspend_eval _) -> (
-                            let open Irm in
-                            Builder.run_db s ~f:(fun db ->
-                                time_it
-                                  s
-                                  (fun m log_id time ->
-                                    m
-                                      "%s : COMPUTE_NODE : QUERY_WORK : compute_node_id = %a : \
-                                       time=%f"
-                                      log_id
-                                      Uuidm.pp
-                                      compute_node.C.id
-                                      time)
-                                  (fun () ->
-                                    S.Job_context.Compute_node.query_work
-                                      ~request_id:(Builder.log_id s)
-                                      ~compute_node_id:compute_node.C.id
-                                      db))
-                            >>= function
-                            | Some { Cw.work = wm_response; _ } ->
-                                Abb.Future.return (Ok wm_response)
-                            | None ->
-                                Abb.Future.return
-                                  (Ok (Wmc.Work_manifest_done { Wmd.type_ = "done" })))
-                        | Error (#Builder.err as err) ->
-                            (* If anything failed, be sure to return to the querying node to give up. *)
-                            Logs.info (fun m -> m "%s : %a" (Builder.log_id s) Builder.pp_err err);
-                            Abb.Future.return (Ok (Wmc.Work_manifest_done { Wmd.type_ = "done" })))
-                    | None ->
-                        (* If anything failed, be sure to return to the querying node to give up. *)
-                        Logs.info (fun m -> m "%s : UNKNOWN_WORK_MANIFEST" (Builder.log_id s));
-                        Abb.Future.return (Ok (Wmc.Work_manifest_done { Wmd.type_ = "done" })))
-              else (
-                (* We have received a poll from a compute node that has an
-                   offering that no longer matches antyhing we are looking for.
-                   We will kindly tell this compute node to exit, abort the work
-                   manifest, and then run another one to get the results we're
-                   actually interested in. *)
-                Logs.info (fun m ->
-                    m
-                      "%s : COMPUTE_NODE_OFFERING_MISMATCH : compute_node_sha= %s : offering_sha= \
-                       %s"
-                      (Builder.log_id s)
-                      compute_node.C.capabilities.C.Capabilities.sha
-                      offering.Offering.sha);
-                Builder.run_db s ~f:(fun db ->
-                    time_it
-                      s
-                      (fun m log_id time ->
-                        m
-                          "%s : WM : UPDATE_STATE : work_manifest_id = %a : run_id = %s : state = \
-                           aborted"
-                          log_id
-                          Uuidm.pp
-                          work_manifest_id
-                          offering.Offering.run_id)
-                      (fun () ->
-                        S.Work_manifest.update_run_id
-                          ~request_id:(Builder.log_id s)
-                          db
-                          work_manifest_id
-                          offering.Offering.run_id
-                        >>= fun () ->
-                        S.Work_manifest.update_state
-                          ~request_id:(Builder.log_id s)
-                          db
-                          work_manifest_id
-                          Terrat_work_manifest3.State.Aborted))
-                >>= fun () ->
-                Builder.run_db s ~f:(fun db ->
-                    time_it
-                      s
-                      (fun m log_id time ->
-                        m
-                          "%s : JOB : QUERY_BY_WORK_MANIFEST : work_manifest_id = %a : time=%f"
-                          log_id
-                          Uuidm.pp
-                          work_manifest_id
-                          time)
-                      (fun () ->
-                        S.Job_context.Job.query_by_work_manifest_id
-                          ~request_id:(Builder.log_id s)
-                          db
-                          ~work_manifest_id
-                          ()))
-                >>= function
-                | Some job ->
-                    Builder.run_db s ~f:(fun db ->
-                        time_it
-                          s
-                          (fun m log_id time ->
+                        Logs.info (fun m ->
                             m
-                              "%s : WORK_MANIFEST : QUERY : id = %a : time=%f"
-                              log_id
+                              "%s : context_id=%a : log_id= %s"
+                              (Builder.log_id s)
                               Uuidm.pp
-                              work_manifest_id
-                              time)
-                          (fun () ->
-                            S.Work_manifest.query ~request_id:(Builder.log_id s) db work_manifest_id))
-                    >>= fun work_manifest ->
-                    let work_manifest = CCOption.get_exn_or "work_manifest" work_manifest in
-                    let context = job.Tjc.Job.context in
-                    let log_id = Builder.mk_log_id ~request_id:(Builder.log_id s) job.Tjc.Job.id in
-                    let s' =
-                      s
-                      |> Builder.State.orig_store
-                      |> Keys.Key.add Keys.job job
-                      |> Keys.Key.add Keys.context context
-                      |> Keys.Key.add Keys.user job.Tjc.Job.initiator
-                      |> Tasks_base.forward_std_keys s
-                      |> add_work_manifest_keys work_manifest
-                      |> CCFun.flip Builder.State.set_orig_store s
-                      |> Builder.State.set_log_id log_id
-                      |> Builder.State.set_tasks
-                           (match context.Tjc.Context.scope with
-                           | Tjc.Context.Scope.Pull_request _ ->
-                               Tasks_pr.tasks @@ Builder.State.tasks s
-                           | Tjc.Context.Scope.Branch _ ->
-                               Tasks_branch.tasks @@ Builder.State.tasks s)
-                    in
-                    Logs.info (fun m ->
-                        m
-                          "%s : context_id=%a : log_id= %s"
-                          (Builder.log_id s)
-                          Uuidm.pp
-                          context.Tjc.Context.id
-                          log_id);
-                    Fc.to_result @@ Fc.ignore @@ Builder.eval s' Keys.iter_job
-                    >>= fun () ->
-                    Abb.Future.return (Ok (Wmc.Work_manifest_done { Wmd.type_ = "done" }))
-                | None ->
-                    Logs.err (fun m -> m "%s : JOB_NOT_FOUND" (Builder.log_id s));
-                    assert false))
+                              context.Tjc.Context.id
+                              log_id);
+                        Fc.to_result @@ Fc.ignore @@ Builder.eval s' Keys.iter_job
+                        >>= fun () ->
+                        Abb.Future.return (Ok (Wmc.Work_manifest_done { Wmd.type_ = "done" }))
+                    | None ->
+                        Logs.err (fun m -> m "%s : JOB_NOT_FOUND" (Builder.log_id s));
+                        assert false)
+              | None ->
+                  (* If anything failed, be sure to return to the querying node to give up. *)
+                  Logs.info (fun m -> m "%s : UNKNOWN_WORK_MANIFEST" (Builder.log_id s));
+                  Abb.Future.return (Ok (Wmc.Work_manifest_done { Wmd.type_ = "done" }))))
 
     let work_manifest_event_job =
       run ~name:"work_manifest_event_job" (fun s { Bs.Fetcher.fetch } ->
