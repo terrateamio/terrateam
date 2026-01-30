@@ -3,5 +3,7 @@ module String : sig
 
   val to_yojson : t -> Yojson.Safe.t
   val of_yojson : Yojson.Safe.t -> (t, string) result
+  val pp : Format.formatter -> t -> unit
+  val show : t -> string
   val dedup_list : string list -> string list
 end
