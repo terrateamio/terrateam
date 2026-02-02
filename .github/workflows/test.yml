@@ -5,11 +5,11 @@ on:
     branches:
       - "main"
     paths-ignore:
-      - 'docs/**'
+      - "docs/**"
   workflow_dispatch:
     inputs:
       build_base_image:
-        description: 'Build base image'
+        description: "Build base image"
         required: false
         default: false
         type: boolean
@@ -33,7 +33,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Log in to Container Registry
         uses: docker/login-action@v3
@@ -103,7 +103,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Log in to Container Registry
         uses: docker/login-action@v3

@@ -4,24 +4,24 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Select the deployment environment'
+        description: "Select the deployment environment"
         required: true
         type: choice
         options:
           - production
           - staging
       VERSION_TAG:
-        description: 'Specify the version tag for deployment'
+        description: "Specify the version tag for deployment"
         required: true
         type: string
   workflow_call:
     inputs:
       environment:
-        description: 'Select the deployment environment'
+        description: "Select the deployment environment"
         required: true
         type: string
       VERSION_TAG:
-        description: 'Specify the version tag for deployment'
+        description: "Specify the version tag for deployment"
         required: true
         type: string
 
@@ -42,7 +42,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Flyctl
         if: ${{ inputs.environment == 'production' }}
