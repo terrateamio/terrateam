@@ -313,17 +313,14 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
         let module P = struct
           type t = Terrat_api_components.Work_manifest_workspaces.t [@@deriving yojson]
         end in
-        CCFun.(
-          CCOption.wrap Yojson.Safe.from_string
-          %> CCOption.map P.of_yojson
-          %> CCOption.flat_map CCResult.to_opt)
+        CCFun.(P.of_yojson %> CCResult.to_opt)
 
       let select_workspaces =
         Pgsql_io.Typed_sql.(
           sql
           //
           (* dirspaces *)
-          Ret.(ud' dirspaces)
+          Ret.(u json dirspaces)
           /^ "select dirspaces from work_manifests where id = $id and state in ('queued', \
               'running')"
           /% Var.uuid "id")

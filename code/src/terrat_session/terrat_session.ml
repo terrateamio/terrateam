@@ -151,7 +151,7 @@ module Sql = struct
       sql
       //
       (* data *)
-      Ret.ud' CCFun.(Cstruct.of_hex %> Cstruct.to_string %> CCOption.return)
+      Ret.u Ret.text CCFun.(Cstruct.of_hex %> Cstruct.to_string %> CCOption.return)
       /^ "select encode(data, 'hex') from encryption_keys order by rank")
 end
 

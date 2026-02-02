@@ -110,10 +110,7 @@ module Db = struct
       let module P = struct
         type t = Terrat_base_repo_config_v1.Access_control.Match_list.t [@@deriving yojson]
       end in
-      CCFun.(
-        CCOption.wrap Yojson.Safe.from_string
-        %> CCOption.map P.of_yojson
-        %> CCOption.flat_map CCResult.to_opt)
+      CCFun.(P.of_yojson %> CCResult.to_opt)
 
     let lock_policy =
       let open Terrat_base_repo_config_v1.Workflows.Entry.Lock_policy in
@@ -155,7 +152,7 @@ module Db = struct
         Ret.text
         //
         (* policy *)
-        Ret.(option (ud' policy))
+        Ret.(option (u json policy))
         /^ read "select_work_manifest_access_control_denied_dirspaces.sql"
         /% Var.uuid "work_manifest")
 
@@ -184,16 +181,16 @@ module Db = struct
         Ret.(option text)
         //
         (* run_type *)
-        Ret.(ud' Terrat_work_manifest3.Step.of_string)
+        Ret.(u text Terrat_work_manifest3.Step.of_string)
         //
         (* sha *)
         Ret.text
         //
         (* state *)
-        Ret.(ud' Terrat_work_manifest3.State.of_string)
+        Ret.(u text Terrat_work_manifest3.State.of_string)
         //
         (* tag_query *)
-        Ret.(ud' CCFun.(Terrat_tag_query.of_string %> CCResult.to_opt))
+        Ret.(u text CCFun.(Terrat_tag_query.of_string %> CCResult.to_opt))
         //
         (* username *)
         Ret.(option text)
@@ -214,7 +211,7 @@ module Db = struct
         Ret.(option text)
         //
         (* runs_on *)
-        Ret.(option (ud' (CCOption.wrap Yojson.Safe.from_string)))
+        Ret.(option json)
         //
         (* branch *)
         Ret.(option text)
@@ -394,17 +391,12 @@ module Db = struct
         /% Var.bigint "installation_id")
 
     let select_index =
-      let index =
-        CCFun.(
-          CCOption.wrap Yojson.Safe.from_string
-          %> CCOption.map Terrat_code_idx.of_yojson
-          %> CCOption.flat_map CCResult.to_opt)
-      in
+      let index = CCFun.(Terrat_code_idx.of_yojson %> CCResult.to_opt) in
       Pgsql_io.Typed_sql.(
         sql
         //
         (* Index *)
-        Ret.(ud' index)
+        Ret.(u json index)
         /^ read "select_index.sql"
         /% Var.bigint "installation_id"
         /% Var.text "sha")
@@ -414,7 +406,7 @@ module Db = struct
         sql
         //
         (* repo_config *)
-        Ret.ud' (CCOption.wrap Yojson.Safe.from_string)
+        Ret.json
         /^ read "select_repo_config.sql"
         /% Var.bigint "installation_id"
         /% Var.text "sha")
@@ -648,7 +640,7 @@ module Db = struct
         Ret.boolean
         //
         (* tag_query *)
-        Ret.(option (ud' CCFun.(Terrat_tag_query.of_string %> CCResult.to_opt)))
+        Ret.(option (u text CCFun.(Terrat_tag_query.of_string %> CCResult.to_opt)))
         //
         (* window_start *)
         Ret.(option text)
@@ -977,11 +969,7 @@ module Db = struct
     let module R = Terrat_api_components.Work_manifest_index_result in
     let open Abb.Future.Infix_monad in
     Metrics.Psql_query_time.time (Metrics.psql_query_time "insert_index") (fun () ->
-        Pgsql_io.Prepared_stmt.execute
-          db
-          (Sql.insert_index ())
-          work_manifest_id
-          (Yojson.Safe.to_string (R.to_yojson index)))
+        Pgsql_io.Prepared_stmt.execute db (Sql.insert_index ()) work_manifest_id (R.to_yojson index))
     >>= function
     | Ok () -> Abb.Future.return (Ok (index_of_index index))
     | Error (#Pgsql_io.err as err) ->
@@ -1048,7 +1036,7 @@ module Db = struct
           Sql.insert_repo_config
           (CCInt64.of_int @@ Api.Account.id account)
           (Api.Ref.to_string ref_)
-          (Yojson.Safe.to_string json))
+          json)
     >>= function
     | Ok () -> Abb.Future.return (Ok ())
     | Error (#Pgsql_io.err as err) ->
@@ -1165,7 +1153,7 @@ module Db = struct
                   Sql.insert_gate
                   name
                   token
-                  (Yojson.Safe.to_string @@ Terrat_gate.to_yojson gate)
+                  (Terrat_gate.to_yojson gate)
                   repo
                   pull_number
                   sha
@@ -1213,14 +1201,12 @@ module Db = struct
               in
               let payload =
                 CCList.map
-                  (fun (_, { O.payload; _ }) ->
-                    Yojson.Safe.to_string (replace_nul_byte_json (O.Payload.to_yojson payload)))
+                  (fun (_, { O.payload; _ }) -> replace_nul_byte_json (O.Payload.to_yojson payload))
                   chunk
               in
               let scope =
                 CCList.map
-                  (fun (_, { O.scope; _ }) ->
-                    Yojson.Safe.to_string (replace_nul_byte_json (Scope.to_yojson scope)))
+                  (fun (_, { O.scope; _ }) -> replace_nul_byte_json (Scope.to_yojson scope))
                   chunk
               in
               let step = CCList.map (fun (_, { O.step; _ }) -> replace_nul_byte step) chunk in
@@ -2286,11 +2272,7 @@ module Tier = struct
              |> CCString.concat "\n")
            (Terrat_files_gitlab_sql.read fname))
 
-    let tier =
-      CCFun.(
-        CCOption.wrap Yojson.Safe.from_string
-        %> CCOption.map Terrat_tier.of_yojson
-        %> CCOption.flat_map CCResult.to_opt)
+    let tier = CCFun.(Terrat_tier.of_yojson %> CCResult.to_opt)
 
     let select_tier =
       Pgsql_io.Typed_sql.(
@@ -2303,7 +2285,7 @@ module Tier = struct
         Ret.text
         //
         (* tier *)
-        Ret.(ud' tier)
+        Ret.(u json tier)
         /^ read "select_tier.sql"
         /% Var.bigint "installation_id")
 
@@ -4350,7 +4332,7 @@ module Work_manifest = struct
         Ret.uuid
         //
         (* state *)
-        Ret.ud' Terrat_work_manifest3.State.of_string
+        Ret.u Ret.text Terrat_work_manifest3.State.of_string
         //
         (* created_at *)
         Ret.text
@@ -4580,9 +4562,7 @@ module Work_manifest = struct
                     in an array of strings, and it needs to be in a format
                     postgresql can turn back into an array.  So we use JSON
                     as the intermediate representation. *)
-                   CCOption.map
-                     (fun policy -> Yojson.Safe.to_string (Policy.to_yojson policy))
-                     policy)
+                   CCOption.map (fun policy -> Policy.to_yojson policy) policy)
                  denied_dirspaces)
               (CCList.replicate (CCList.length denied_dirspaces) work_manifest_id)))
       (CCList.chunks not_a_bad_chunk_size denied_dirspaces)
@@ -4608,7 +4588,7 @@ module Work_manifest = struct
                `Assoc [ ("dir", `String ds.Ds.dir); ("workspace", `String ds.Ds.workspace) ])
              work_manifest.Wm.changes)
       in
-      let dirspaces = Yojson.Safe.to_string dirspaces_json in
+      let dirspaces = dirspaces_json in
       let pull_number_opt =
         match work_manifest.Wm.target with
         | Terrat_vcs_provider2.Target.Pr pr -> Some (Api.Pull_request.id pr)
@@ -4650,7 +4630,7 @@ module Work_manifest = struct
             dirspaces
             run_kind
             work_manifest.Wm.environment
-            (CCOption.map Yojson.Safe.to_string work_manifest.Wm.runs_on))
+            work_manifest.Wm.runs_on)
       >>= function
       | [] -> assert false
       | (id, state, created_at) :: _ -> (
@@ -4793,9 +4773,7 @@ module Work_manifest = struct
                     in an array of strings, and it needs to be in a format
                     postgresql can turn back into an array.  So we use JSON
                     as the intermediate representation. *)
-                   CCOption.map
-                     (fun policy -> Yojson.Safe.to_string (Policy.to_yojson policy))
-                     policy)
+                   CCOption.map (fun policy -> Policy.to_yojson policy) policy)
                  denied_dirspaces)
               (CCList.replicate (CCList.length denied_dirspaces) work_manifest_id)))
       (CCList.chunks not_a_bad_chunk_size denied_dirspaces)
@@ -4882,10 +4860,7 @@ module Stacks = struct
           sql
           //
           (* stacks *)
-          Ret.ud'
-            CCFun.(
-              CCOption.wrap Yojson.Safe.from_string
-              %> CCOption.flat_map (Terrat_api_components.Stacks.of_yojson %> CCOption.of_result))
+          Ret.u Ret.json CCFun.(Terrat_api_components.Stacks.of_yojson %> CCOption.of_result)
           /^ read "select_stacks.sql"
           /% Var.bigint "repo_id"
           /% Var.bigint "pull_number")
@@ -4922,7 +4897,7 @@ module Stacks = struct
         (Sql.upsert_stacks ())
         (CCInt64.of_int repo_id)
         (CCInt64.of_int pull_request_id)
-        (Yojson.Safe.to_string @@ Terrat_api_components.Stacks.to_yojson stacks)
+        (Terrat_api_components.Stacks.to_yojson stacks)
       >>= function
       | Ok _ as r -> Abb.Future.return r
       | Error (#Pgsql_io.err as err) ->
@@ -5022,8 +4997,8 @@ module Job_context = struct
       let module Bb = Terrat_job_context_param_branch_dest_branch in
       let module S = Terrat_job_context.Context.Scope in
       CCFun.(
-        CCOption.wrap Yojson.Safe.from_string
-        %> CCOption.flat_map (C.of_yojson %> CCResult.to_opt)
+        C.of_yojson
+        %> CCResult.to_opt
         %> CCOption.map (function
              | C.Pull_request { P.pull_request } -> S.Pull_request pull_request
              | C.Branch { B.branch } -> S.Branch (Api.Ref.of_string branch, None)
@@ -5038,7 +5013,7 @@ module Job_context = struct
         Ret.text
         //
         (* scope *)
-        Ret.(ud' scope_of_json)
+        Ret.(u json scope_of_json)
         //
         (* updated_at *)
         Ret.text
@@ -5100,15 +5075,14 @@ module Job_context = struct
           | T.Repo_config -> Jt.Type.Repo_config { Jt.Repo_config.type_ = "repo-config" }
           | T.Unlock unlocks -> Jt.Type.Unlock { Jt.Unlock.type_ = "unlock"; ids = unlocks }
           | T.Push -> Jt.Type.Push { Jt.Push.type_ = "push" })
-          %> Jt.Type.to_yojson
-          %> Yojson.Safe.to_string)
+          %> Jt.Type.to_yojson)
 
       let of_json =
         let module T = Terrat_job_context.Job.Type_ in
         let module Jt = Terrat_job_type in
         CCFun.(
-          CCOption.wrap Yojson.Safe.from_string
-          %> CCOption.flat_map (Jt.Type.of_yojson %> CCResult.to_opt)
+          Jt.Type.of_yojson
+          %> CCResult.to_opt
           %> CCOption.flat_map (function
                | Jt.Type.Apply { Jt.Apply.type_ = _; tag_query = Some tag_query; kind; force } ->
                    Some
@@ -5168,13 +5142,13 @@ module Job_context = struct
         Ret.uuid
         //
         (* type *)
-        Ret.(ud' Type_.of_json)
+        Ret.(u json Type_.of_json)
         //
         (* state *)
-        Ret.(ud' state_of_string)
+        Ret.(u text state_of_string)
         //
         (* initiator *)
-        Ret.(option (ud' initiator_of_string))
+        Ret.(option (u text initiator_of_string))
         //
         (* created_at *)
         Ret.text
@@ -5198,13 +5172,13 @@ module Job_context = struct
         Ret.uuid
         //
         (* type *)
-        Ret.(ud' Type_.of_json)
+        Ret.(u json Type_.of_json)
         //
         (* state *)
-        Ret.(ud' state_of_string)
+        Ret.(u text state_of_string)
         //
         (* initiator *)
-        Ret.(option (ud' initiator_of_string))
+        Ret.(option (u text initiator_of_string))
         //
         (* created_at *)
         Ret.text
@@ -5245,26 +5219,20 @@ module Job_context = struct
         | "terminated" -> Some Terminated
         | _ -> None)
 
-    let to_capabilities =
-      CCFun.(
-        CCOption.wrap Yojson.Safe.from_string
-        %> CCOption.flat_map (Tjc.Compute_node.Capabilities.of_yojson %> CCOption.of_result))
+    let to_capabilities = CCFun.(Tjc.Compute_node.Capabilities.of_yojson %> CCOption.of_result)
 
     let insert_compute_node () =
       Pgsql_io.Typed_sql.(
         sql
         (* state *)
-        // Ret.ud' to_compute_node_state
+        // Ret.u Ret.text to_compute_node_state
         (* created_at *)
         // Ret.text
         (* updated_at *)
         // Ret.text
         /^ read "insert_compute_node.sql"
         /% Var.uuid "id"
-        /% Var.(
-             ud
-               (json "capabilities")
-               CCFun.(Tjc.Compute_node.Capabilities.to_yojson %> Yojson.Safe.to_string)))
+        /% Var.(ud (json "capabilities") Tjc.Compute_node.Capabilities.to_yojson))
 
     let select_compute_node () =
       Pgsql_io.Typed_sql.(
@@ -5274,10 +5242,10 @@ module Job_context = struct
         Ret.uuid
         //
         (* state *)
-        Ret.ud' to_compute_node_state
+        Ret.u Ret.text to_compute_node_state
         //
         (* capabilities *)
-        Ret.ud' to_capabilities
+        Ret.u Ret.json to_capabilities
         //
         (* created_at *)
         Ret.text
@@ -5295,10 +5263,7 @@ module Job_context = struct
       | "aborted" -> Some S.Aborted
       | _ -> None
 
-    let work_of_json =
-      CCFun.(
-        CCOption.wrap Yojson.Safe.from_string
-        %> CCOption.flat_map (Terrat_api_components.Work_manifest.of_yojson %> CCResult.to_opt))
+    let work_of_json = CCFun.(Terrat_api_components.Work_manifest.of_yojson %> CCResult.to_opt)
 
     let select_compute_node_work =
       Pgsql_io.Typed_sql.(
@@ -5308,10 +5273,10 @@ module Job_context = struct
         Ret.text
         //
         (* state *)
-        Ret.(ud' state_of_string)
+        Ret.(u text state_of_string)
         //
         (* work *)
-        Ret.(ud' work_of_json)
+        Ret.(u json work_of_json)
         //
         (* work_manifest *)
         Ret.uuid
@@ -5338,9 +5303,7 @@ module Job_context = struct
         /^ read "upsert_compute_node_work.sql"
         /% Var.uuid "compute_node_id"
         /% Var.uuid "work_manifest"
-        /% Var.ud
-             (Var.json "work")
-             CCFun.(Terrat_api_components.Work_manifest.to_yojson %> Yojson.Safe.to_string))
+        /% Var.ud (Var.json "work") Terrat_api_components.Work_manifest.to_yojson)
   end
 
   let create_or_get_for_pull_request ~request_id db _account repo pull_request_id =

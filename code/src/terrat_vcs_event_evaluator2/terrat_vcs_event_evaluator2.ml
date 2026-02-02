@@ -519,7 +519,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               sql
               //
               (* data *)
-              Ret.ud' CCFun.(Cstruct.of_hex %> CCOption.return)
+              Ret.u Ret.text CCFun.(Cstruct.of_hex %> CCOption.return)
               /^ "select encode(data, 'hex') from encryption_keys order by rank limit 1")
           in
           with_conn storage ~f:(fun db ->
