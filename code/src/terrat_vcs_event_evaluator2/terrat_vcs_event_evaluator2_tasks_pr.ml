@@ -33,8 +33,7 @@ struct
               queries ))
         changes
 
-    let replace_stack_vars vars s =
-      Str_template.apply (CCFun.flip Terrat_data.String_map.find_opt vars) s
+    let replace_stack_vars vars s = Str_template.apply (CCFun.flip Sln_map.String.find_opt vars) s
 
     let apply_stack_vars_to_workflow stack workflow =
       let module R = Terrat_base_repo_config_v1 in
@@ -628,7 +627,7 @@ struct
           let tree_builder = V1.tree_builder repo_config in
           if tree_builder.V1.Tree_builder.enabled then (
             let changed_files =
-              Terrat_data.String_set.of_list
+              Sln_set.String.of_list
               @@ CCList.flat_map
                    (function
                      | Terrat_change.Diff.Add { filename }
@@ -658,7 +657,7 @@ struct
                           | { I.path = filename; changed = Some true; _ } ->
                               Some (Terrat_change.Diff.Change { filename })
                           | { I.path = filename; changed = None; _ }
-                            when Terrat_data.String_set.mem filename changed_files ->
+                            when Sln_set.String.mem filename changed_files ->
                               Some (Terrat_change.Diff.Change { filename })
                           | _ -> None)
                         repo_tree))

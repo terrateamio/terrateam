@@ -944,19 +944,17 @@ module Db = struct
     let module Paths = Terrat_api_components.Work_manifest_index_paths in
     let module Symlinks = Terrat_api_components.Work_manifest_index_symlinks in
     let success = idx.Idx.success in
-    let paths = Json_schema.String_map.to_list (Paths.additional idx.Idx.paths) in
+    let paths = Sln_map.String.to_list (Paths.additional idx.Idx.paths) in
     let symlinks =
       CCOption.map_or
         ~default:[]
-        (fun idx -> Json_schema.String_map.to_list (Symlinks.additional idx))
+        (fun idx -> Sln_map.String.to_list (Symlinks.additional idx))
         idx.Idx.symlinks
     in
     let failures =
       CCList.flat_map
         (fun (_path, { Paths.Additional.failures; _ }) ->
-          let failures =
-            Json_schema.String_map.to_list (Paths.Additional.Failures.additional failures)
-          in
+          let failures = Sln_map.String.to_list (Paths.Additional.Failures.additional failures) in
           CCList.map
             (fun (path, { Paths.Additional.Failures.Additional.lnum; msg }) ->
               { Terrat_vcs_provider2.Index.Failure.file = path; line_num = lnum; error = msg })
@@ -1302,7 +1300,7 @@ module Db = struct
     (if enabled then
        Metrics.Psql_query_time.time (Metrics.psql_query_time "upsert_drift_schedule") (fun () ->
            let open Abbs_future_combinators.Infix_result_monad in
-           let names = Iter.to_list @@ V1.String_map.keys schedules in
+           let names = Iter.to_list @@ Sln_map.String.keys schedules in
            Pgsql_io.Prepared_stmt.execute
              db
              Sql.delete_drift_schedules
@@ -1327,7 +1325,7 @@ module Db = struct
                  name
                  window_start
                  window_end)
-             (V1.String_map.to_list schedules))
+             (Sln_map.String.to_list schedules))
      else
        Pgsql_io.Prepared_stmt.execute
          db
@@ -2341,15 +2339,10 @@ module Tier = struct
           | [] -> Abb.Future.return (Ok None)
           | users -> (
               let user = Api.User.to_string user in
-              let all_users =
-                Terrat_data.String_set.to_list
-                @@ Terrat_data.String_set.of_list (user :: CCList.map fst users)
-              in
+              let all_users = Sln_set.String.dedup_list (user :: CCList.map fst users) in
               (* Allow users that have used the product with-in the existing tier to use it. *)
               let allowed_users =
-                Terrat_data.String_set.of_list
-                @@ CCList.take num_users_per_month
-                @@ CCList.map fst users
+                Sln_set.String.of_list @@ CCList.take num_users_per_month @@ CCList.map fst users
               in
               Logs.info (fun m -> m "%s : TIER : id=%s : name=%s" request_id tier_id tier_name);
               Logs.info (fun m ->
@@ -2359,9 +2352,7 @@ module Tier = struct
                     (CCList.length all_users)
                     num_users_per_month);
               match CCList.length all_users with
-              | n
-                when n > num_users_per_month && not (Terrat_data.String_set.mem user allowed_users)
-                ->
+              | n when n > num_users_per_month && not (Sln_set.String.mem user allowed_users) ->
                   CCList.iter
                     (fun (user, first_run) ->
                       Logs.info (fun m ->
@@ -4266,7 +4257,7 @@ module Repo_config = struct
     | { V1.View.access_control = { V1.Access_control.enabled = true; _ }; _ } ->
         Abb.Future.return (Error (`Premium_feature_err `Access_control))
     | { V1.View.drift = { V1.Drift.enabled = true; schedules }; _ }
-      when V1.String_map.cardinal schedules > 1 ->
+      when Sln_map.String.cardinal schedules > 1 ->
         Abb.Future.return (Error (`Premium_feature_err `Multiple_drift_schedules))
     | { V1.View.apply_requirements = { V1.Apply_requirements.checks; _ }; _ }
       when CCList.exists
@@ -4467,7 +4458,7 @@ module Work_manifest = struct
         | Some runs_on -> [ ("RUNS_ON", runs_on) ]
         | None -> []
       in
-      Json_schema.String_map.of_list (base_inputs @ runs_on_inputs)
+      Sln_map.String.of_list (base_inputs @ runs_on_inputs)
     in
     let run =
       let open Abbs_future_combinators.Infix_result_monad in

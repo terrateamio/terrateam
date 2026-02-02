@@ -17,12 +17,12 @@ let dirs_config =
     (R.View.make
        ~when_modified
        ~dirs:
-         (R.String_map.of_list
+         (Sln_map.String.of_list
             [
               ( "iam",
                 R.Dirs.Dir.make
                   ~workspaces:
-                    (R.String_map.of_list
+                    (Sln_map.String.of_list
                        [
                          ( "default",
                            R.Dirs.Workspace.make
@@ -39,7 +39,7 @@ let dirs_config =
               ( "ebl",
                 R.Dirs.Dir.make
                   ~workspaces:
-                    (R.String_map.of_list
+                    (Sln_map.String.of_list
                        [
                          ( "default",
                            R.Dirs.Workspace.make
@@ -59,7 +59,7 @@ let dirs_config =
               ( "ec2",
                 R.Dirs.Dir.make
                   ~workspaces:
-                    (R.String_map.of_list
+                    (Sln_map.String.of_list
                        [
                          ( "default",
                            R.Dirs.Workspace.make
@@ -79,12 +79,13 @@ let dirs_config =
                 R.Dirs.Dir.make
                   ~tags:[ "s3" ]
                   ~workspaces:
-                    (R.String_map.of_list [ ("default", R.Dirs.Workspace.make ~when_modified ()) ])
+                    (Sln_map.String.of_list
+                       [ ("default", R.Dirs.Workspace.make ~when_modified ()) ])
                   () );
               ( "lambda",
                 R.Dirs.Dir.make
                   ~workspaces:
-                    (R.String_map.of_list
+                    (Sln_map.String.of_list
                        [
                          ( "default",
                            R.Dirs.Workspace.make
@@ -95,7 +96,7 @@ let dirs_config =
               ( "module",
                 R.Dirs.Dir.make
                   ~workspaces:
-                    (R.String_map.of_list
+                    (Sln_map.String.of_list
                        [
                          ( "default",
                            R.Dirs.Workspace.make
@@ -113,12 +114,12 @@ let bad_dirs_config =
   R.of_view
     (R.View.make
        ~dirs:
-         (R.String_map.of_list
+         (Sln_map.String.of_list
             [
               ( "iam",
                 R.Dirs.Dir.make
                   ~workspaces:
-                    (R.String_map.of_list
+                    (Sln_map.String.of_list
                        [
                          ( "default",
                            R.Dirs.Workspace.make
@@ -133,7 +134,7 @@ let bad_dirs_config =
               ( "ebl",
                 R.Dirs.Dir.make
                   ~workspaces:
-                    (R.String_map.of_list
+                    (Sln_map.String.of_list
                        [
                          ( "default",
                            R.Dirs.Workspace.make
@@ -151,7 +152,7 @@ let bad_dirs_config =
               ( "ec2",
                 R.Dirs.Dir.make
                   ~workspaces:
-                    (R.String_map.of_list
+                    (Sln_map.String.of_list
                        [
                          ( "default",
                            R.Dirs.Workspace.make
@@ -167,7 +168,7 @@ let bad_dirs_config =
               ( "s3",
                 R.Dirs.Dir.make
                   ~workspaces:
-                    (R.String_map.of_list
+                    (Sln_map.String.of_list
                        [
                          ( "default",
                            R.Dirs.Workspace.make
@@ -269,7 +270,7 @@ let test_workflow_idx_tag_in_dir =
                         ]
                       ();
                   ]
-                ~dirs:(R.String_map.of_list [ ("ec2", R.Dirs.Dir.make ~tags:[ "ec2" ] ()) ])
+                ~dirs:(Sln_map.String.of_list [ ("ec2", R.Dirs.Dir.make ~tags:[ "ec2" ] ()) ])
                 ()))
       in
       let diff = Terrat_change.Diff.[ Add { filename = "ec2/ec2.tf" } ] in
@@ -318,7 +319,7 @@ let test_workflow_idx_multiple_dirs =
                       ();
                   ]
                 ~dirs:
-                  (R.String_map.of_list
+                  (Sln_map.String.of_list
                      [
                        ("ec2", R.Dirs.Dir.make ~tags:[ "ec2" ] ());
                        ("s3", R.Dirs.Dir.make ~tags:[ "s3" ] ());
@@ -470,12 +471,12 @@ let test_dir_file_pattern =
           (R.of_view
              (R.View.make
                 ~dirs:
-                  (R.String_map.of_list
+                  (Sln_map.String.of_list
                      [
                        ( "iam",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -808,12 +809,12 @@ let test_recursive_dirs_template_dir =
           (R.of_view
              (R.View.make
                 ~dirs:
-                  (R.String_map.of_list
+                  (Sln_map.String.of_list
                      [
                        ( "_template/*",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -824,7 +825,7 @@ let test_recursive_dirs_template_dir =
                        ( "aws/**/terragrunt.hcl",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -873,12 +874,12 @@ let test_recursive_dirs_aws_prod =
           (R.of_view
              (R.View.make
                 ~dirs:
-                  (R.String_map.of_list
+                  (Sln_map.String.of_list
                      [
                        ( "_template/*",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -889,7 +890,7 @@ let test_recursive_dirs_aws_prod =
                        ( "aws/**/terragrunt.hcl",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -938,12 +939,12 @@ let test_recursive_dirs_tags =
           (R.of_view
              (R.View.make
                 ~dirs:
-                  (R.String_map.of_list
+                  (Sln_map.String.of_list
                      [
                        ( "_template/*",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -955,7 +956,7 @@ let test_recursive_dirs_tags =
                          R.Dirs.Dir.make
                            ~tags:[ "secrets" ]
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -972,7 +973,7 @@ let test_recursive_dirs_tags =
                        ( "aws/**/terragrunt.hcl",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -1045,12 +1046,12 @@ let test_recursive_dirs_without_tags =
           (R.of_view
              (R.View.make
                 ~dirs:
-                  (R.String_map.of_list
+                  (Sln_map.String.of_list
                      [
                        ( "_template/*",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -1061,7 +1062,7 @@ let test_recursive_dirs_without_tags =
                        ( "aws/**/secrets-manager/**/terragrunt.hcl",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -1078,7 +1079,7 @@ let test_recursive_dirs_without_tags =
                        ( "aws/**/terragrunt.hcl",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -1226,12 +1227,12 @@ let test_module_dir_with_root_dir =
                        ]
                      ())
                 ~dirs:
-                  (R.String_map.of_list
+                  (Sln_map.String.of_list
                      [
                        ( "module",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -1242,7 +1243,7 @@ let test_module_dir_with_root_dir =
                        ( ".",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -1351,7 +1352,7 @@ let test_large_file_count_with_low_match_count =
         @@ R.of_view
         @@ R.View.make
              ~when_modified:(R.When_modified.make ~file_patterns:[] ())
-             ~dirs:(R.String_map.of_list [ ("**/terraform/**", R.Dirs.Dir.make ()) ])
+             ~dirs:(Sln_map.String.of_list [ ("**/terraform/**", R.Dirs.Dir.make ()) ])
              ()
       in
       let diff = CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) file_list in
@@ -1393,7 +1394,7 @@ let test_large_file_count_with_low_match_count_lesser_dir_depth =
         @@ R.of_view
         @@ R.View.make
              ~when_modified:(R.When_modified.make ~file_patterns:[] ())
-             ~dirs:(R.String_map.of_list [ ("**/terraform/**", R.Dirs.Dir.make ()) ])
+             ~dirs:(Sln_map.String.of_list [ ("**/terraform/**", R.Dirs.Dir.make ()) ])
              ()
       in
       let diff = CCList.map (fun filename -> Terrat_change.Diff.(Change { filename })) file_list in
@@ -1521,12 +1522,12 @@ let test_relative_path_file_pattern =
           (R.of_view
              (R.View.make
                 ~dirs:
-                  (R.String_map.of_list
+                  (Sln_map.String.of_list
                      [
                        ( "d/bar/foo",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -1537,7 +1538,7 @@ let test_relative_path_file_pattern =
                        ( "d/**/*.tf",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -1577,12 +1578,12 @@ let test_relative_path_file_pattern_multiple_dots =
           (R.of_view
              (R.View.make
                 ~dirs:
-                  (R.String_map.of_list
+                  (Sln_map.String.of_list
                      [
                        ( "d/bar/foo",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -1593,7 +1594,7 @@ let test_relative_path_file_pattern_multiple_dots =
                        ( "d/**/*.tf",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -1654,7 +1655,7 @@ let test_index_with_dirs_section =
           ~file_list
           (R.of_view
              (R.View.make
-                ~dirs:(R.String_map.of_list [ ("tf", R.Dirs.Dir.make ~tags:[ "tf" ] ()) ])
+                ~dirs:(Sln_map.String.of_list [ ("tf", R.Dirs.Dir.make ~tags:[ "tf" ] ()) ])
                 ()))
       in
       let dirs = CCResult.get_exn (Terrat_change_match3.synthesize_config ~index repo_config) in
@@ -1727,12 +1728,12 @@ let test_index_symlinks_dir_config =
           (R.of_view
              (R.View.make
                 ~dirs:
-                  (R.String_map.of_list
+                  (Sln_map.String.of_list
                      [
                        ( "null",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -1765,12 +1766,12 @@ let test_depends_on =
           (R.of_view
              (R.View.make
                 ~dirs:
-                  (R.String_map.of_list
+                  (Sln_map.String.of_list
                      [
                        ( "database",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -1808,12 +1809,12 @@ let test_depends_on_multiple_depends =
           (R.of_view
              (R.View.make
                 ~dirs:
-                  (R.String_map.of_list
+                  (Sln_map.String.of_list
                      [
                        ( "database1",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -1829,7 +1830,7 @@ let test_depends_on_multiple_depends =
                        ( "database2",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -1874,12 +1875,12 @@ let test_depends_on_multiple_depends_2 =
           (R.of_view
              (R.View.make
                 ~dirs:
-                  (R.String_map.of_list
+                  (Sln_map.String.of_list
                      [
                        ( "database1",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -1895,7 +1896,7 @@ let test_depends_on_multiple_depends_2 =
                        ( "database2",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -1911,7 +1912,7 @@ let test_depends_on_multiple_depends_2 =
                        ( "webservice",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -1964,12 +1965,12 @@ let test_depends_on_multiple_depends_disjoint =
           (R.of_view
              (R.View.make
                 ~dirs:
-                  (R.String_map.of_list
+                  (Sln_map.String.of_list
                      [
                        ( "database1",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -1985,7 +1986,7 @@ let test_depends_on_multiple_depends_disjoint =
                        ( "database2",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -2001,7 +2002,7 @@ let test_depends_on_multiple_depends_disjoint =
                        ( "webservice1",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -2017,7 +2018,7 @@ let test_depends_on_multiple_depends_disjoint =
                        ( "webservice2",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -2061,12 +2062,12 @@ let test_depends_on_cycle =
           (R.of_view
              (R.View.make
                 ~dirs:
-                  (R.String_map.of_list
+                  (Sln_map.String.of_list
                      [
                        ( "base",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -2082,7 +2083,7 @@ let test_depends_on_cycle =
                        ( "database",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -2126,12 +2127,12 @@ let test_depends_on_relative_dir =
           (R.of_view
              (R.View.make
                 ~dirs:
-                  (R.String_map.of_list
+                  (Sln_map.String.of_list
                      [
                        ( "projects/**/database/*.tf",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -2184,12 +2185,12 @@ let test_files_in_same_dir_match_multiple_dirs =
           (R.of_view
              (R.View.make
                 ~dirs:
-                  (R.String_map.of_list
+                  (Sln_map.String.of_list
                      [
                        ( "projects/**",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -2201,7 +2202,7 @@ let test_files_in_same_dir_match_multiple_dirs =
                          R.Dirs.Dir.make
                            ~tags:[ "dir1" ]
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -2263,12 +2264,12 @@ let test_large_directory_timing =
           (R.of_view
              (R.View.make
                 ~dirs:
-                  (R.String_map.of_list
+                  (Sln_map.String.of_list
                      [
                        ( "this_is_not_terraform_code_*/*",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make
@@ -2279,7 +2280,7 @@ let test_large_directory_timing =
                        ( "this_is_terraform_code_*/*.tf",
                          R.Dirs.Dir.make
                            ~workspaces:
-                             (R.String_map.of_list
+                             (Sln_map.String.of_list
                                 [
                                   ( "default",
                                     R.Dirs.Workspace.make

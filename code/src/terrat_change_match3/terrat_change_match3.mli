@@ -36,8 +36,8 @@ module Config : sig
   type t [@@deriving show, to_yojson]
 
   val dirspace_configs : t -> Dirspace_config.t Terrat_data.Dirspace_map.t
-  val stack_topology : t -> string list Terrat_data.String_map.t
-  val stacks : t -> Stack_config.t Terrat_data.String_map.t
+  val stack_topology : t -> string list Sln_map.String.t
+  val stacks : t -> Stack_config.t Sln_map.String.t
 end
 
 val synthesize_config :

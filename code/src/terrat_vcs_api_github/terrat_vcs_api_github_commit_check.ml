@@ -1,7 +1,6 @@
 let src = Logs.Src.create "vcs_api_github_commit_check"
 
 module Logs = (val Logs.src_log src : Logs.LOG)
-module String_map = CCMap.Make (CCString)
 
 type err = Githubc2_abb.call_err [@@deriving show]
 
@@ -136,15 +135,15 @@ let list ~log_id ~owner ~repo ~ref_ client =
       let all_unique_checks =
         statuses @ checks
         |> CCListLabels.fold_left
-             ~init:String_map.empty
+             ~init:Sln_map.String.empty
              ~f:(fun acc (Terrat_commit_check.{ title; _ } as cc) ->
                (* Both API calls return duplicate statuses, but it's the most
                   recent one (by timestamp) that we want.  We have sorted them
                   by timestamp earlier and now we just take the first status
                   check found by name.  The assumption here is that the most
                   recent run by name is the true status of the run. *)
-               if not (String_map.mem title acc) then String_map.add title cc acc else acc)
-        |> String_map.values
+               if not (Sln_map.String.mem title acc) then Sln_map.String.add title cc acc else acc)
+        |> Sln_map.String.values
         |> Iter.to_list
       in
       Abb.Future.return (Ok all_unique_checks)
