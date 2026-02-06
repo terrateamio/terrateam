@@ -17,6 +17,16 @@ declare global {
       reset: () => void;
     };
   }
+
+  // Stripe Pricing Table custom element
+  namespace svelteHTML {
+    interface IntrinsicElements {
+      'stripe-pricing-table': {
+        'pricing-table-id': string;
+        'publishable-key': string;
+      };
+    }
+  }
 }
 
 export {};
