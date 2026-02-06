@@ -1,0 +1,402 @@
+#!/usr/bin/env bash
+set -euf -o pipefail
+
+# Script to generate changelog entries using Claude
+# Usage:
+#   ./scripts/changelog ISSUE_NUMBER           - Generate entry for current branch
+#   ./scripts/changelog --backfill [N]         - Backfill last N releases (default 20)
+
+# Check if we're in a git repository
+if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+  echo "Error: Not in a git repository"
+  exit 1
+fi
+
+# Check if claude is installed
+if ! command -v claude &> /dev/null; then
+  echo "Error: claude is not installed"
+  echo ""
+  echo "Install it with: npm install -g @anthropic-ai/claude-code"
+  echo "Or follow instructions at: https://github.com/anthropics/claude-code"
+  exit 1
+fi
+
+# Parse arguments
+MODE="generate"
+ISSUE_NUM=""
+NUM_RELEASES=20
+
+if [ $# -eq 0 ]; then
+  # No args - try to auto-detect issue number from branch name
+  BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+  ISSUE_NUM=$(echo "$BRANCH_NAME" | grep -oP '^\d+' || true)
+
+  if [ -z "$ISSUE_NUM" ]; then
+    echo "Usage: ./scripts/changelog [ISSUE_NUMBER]"
+    echo "   or: ./scripts/changelog --backfill [N]"
+    echo ""
+    echo "Examples:"
+    echo "  ./scripts/changelog              - Auto-detect issue from branch name"
+    echo "  ./scripts/changelog 123          - Generate entry for issue #123"
+    echo "  ./scripts/changelog --backfill   - Backfill last 20 releases"
+    echo "  ./scripts/changelog --backfill 50 - Backfill last 50 releases"
+    echo ""
+    echo "Error: Could not auto-detect issue number from branch '$BRANCH_NAME'"
+    echo "       Branch name should start with issue number (e.g., '123-my-feature')"
+    exit 1
+  fi
+
+  echo "Auto-detected issue number: #${ISSUE_NUM} from branch '${BRANCH_NAME}'"
+  echo ""
+elif [ "$1" = "--backfill" ]; then
+  MODE="backfill"
+  NUM_RELEASES="${2:-20}"
+else
+  ISSUE_NUM="$1"
+fi
+
+# Function to create prompt for Claude
+create_prompt() {
+  local issue_num="$1"
+  local context="$2"
+  local diff="$3"
+
+  cat <<EOF
+You are analyzing changes for Terrateam, an open-source GitOps tool for Terraform/OpenTofu.
+
+Issue Number: #${issue_num}
+${context}
+
+Code Changes:
+${diff}
+
+Task: Write a customer-facing changelog entry in plain English. This will be read by teams using Terrateam.
+
+Guidelines:
+- Start with a clear title or summary of the change
+- If the change has multiple related parts, use nested bullet points (indent with 2 spaces)
+- You can use markdown formatting like **bold** or *italics* for emphasis
+- Do NOT use markdown headers (# ## ###) - these break the changelog document hierarchy
+- However, bold text like "**Section:**" is acceptable and commonly used
+- Focus on WHAT changed and WHY it matters to users
+- Be specific and technical where appropriate, but avoid implementation details
+- Do NOT include issue numbers, PR numbers, or developer names
+- Do NOT use phrases like "this PR" or "this change"
+- If this is purely internal refactoring with no user impact, write a brief technical note
+
+Format examples:
+
+Single change:
+Fixed repository pagination to correctly load all repositories when installations have more than 20 repositories.
+
+Multiple related changes:
+Key-Value Store and Access Token Support
+  - Added infrastructure for key-value storage with namespacing and versioning
+  - Introduced API access token management for programmatic access
+  - Enhanced user type system to distinguish between regular users and API clients
+
+Write ONLY the changelog entry content, nothing else:
+EOF
+}
+
+# Function to generate changelog content using Claude
+generate_changelog_content() {
+  local prompt="$1"
+
+  echo "Calling Claude..." >&2
+  local content
+  content=$(echo "$prompt" | claude --print 2>/dev/null)
+
+  if [ -z "$content" ]; then
+    echo "Error: Failed to generate changelog entry from Claude" >&2
+    return 1
+  fi
+
+  echo "$content"
+}
+
+# Function to add entry to CHANGELOG.md under Unreleased
+add_to_unreleased() {
+  local issue_num="$1"
+  local content="$2"
+
+  # Create CHANGELOG.md if it doesn't exist
+  if [ ! -f "CHANGELOG.md" ]; then
+    cat > CHANGELOG.md <<'EOF'
+# Changelog
+
+All notable changes to Terrateam will be documented in this file.
+
+## Unreleased
+
+EOF
+    echo "Created CHANGELOG.md"
+  fi
+
+  # Remove any existing entry for this issue
+  sed -i "/<!-- issue-${issue_num} -->/d" CHANGELOG.md
+
+  # Create temporary file
+  local temp_file=$(mktemp)
+
+  # Process the file
+  local found_unreleased=false
+  while IFS= read -r line; do
+    echo "$line" >> "$temp_file"
+
+    # If we found the "## Unreleased" line, insert our entry after it
+    if [[ "$line" == "## Unreleased" ]] && [ "$found_unreleased" = false ]; then
+      found_unreleased=true
+      echo "" >> "$temp_file"
+      echo "- ${content} <!-- issue-${issue_num} -->" >> "$temp_file"
+    fi
+  done < CHANGELOG.md
+
+  # If we never found an Unreleased section, add it
+  if [ "$found_unreleased" = false ]; then
+    {
+      echo ""
+      echo "## Unreleased"
+      echo ""
+      echo "- ${content} <!-- issue-${issue_num} -->"
+    } >> "$temp_file"
+  fi
+
+  # Replace original file
+  mv "$temp_file" CHANGELOG.md
+
+  echo "✓ Added entry to CHANGELOG.md"
+}
+
+# Function to add release section to CHANGELOG.md (inserts after Unreleased, keeping newest first)
+add_release_section() {
+  local tag_name="$1"
+  local release_date="$2"
+  local content="$3"
+
+  # Create CHANGELOG.md if it doesn't exist
+  if [ ! -f "CHANGELOG.md" ]; then
+    cat > CHANGELOG.md <<'EOF'
+# Changelog
+
+All notable changes to Terrateam will be documented in this file.
+
+## Unreleased
+
+EOF
+  fi
+
+  # Create temporary file
+  local temp_file=$(mktemp)
+
+  local found_unreleased=false
+  local passed_unreleased_content=false
+  local inserted=false
+
+  while IFS= read -r line; do
+    # If we found Unreleased section and we're about to write the first version section,
+    # insert our new version before it
+    if [ "$found_unreleased" = true ] && [ "$inserted" = false ] && [[ "$line" =~ ^##\ \[ ]]; then
+      # Insert new version before this existing version
+      echo "## [${tag_name}] - ${release_date}" >> "$temp_file"
+      echo "" >> "$temp_file"
+      echo "- ${content}" >> "$temp_file"
+      echo "" >> "$temp_file"
+      inserted=true
+    fi
+
+    # Output the current line
+    echo "$line" >> "$temp_file"
+
+    # Track if we've found Unreleased section
+    if [[ "$line" == "## Unreleased" ]]; then
+      found_unreleased=true
+    fi
+  done < CHANGELOG.md
+
+  # If we never inserted (no existing version sections), append at end
+  if [ "$inserted" = false ]; then
+    {
+      echo ""
+      echo "## [${tag_name}] - ${release_date}"
+      echo ""
+      echo "- ${content}"
+    } >> "$temp_file"
+  fi
+
+  # Replace original file
+  mv "$temp_file" CHANGELOG.md
+}
+
+#
+# GENERATE MODE - Generate entry for current branch
+#
+if [ "$MODE" = "generate" ]; then
+  echo "Generating changelog entry for issue #${ISSUE_NUM}..."
+  echo ""
+
+  # Get the diff for uncommitted changes or compare to main
+  if git diff --quiet && git diff --cached --quiet; then
+    # No uncommitted changes, compare current branch to main
+    BASE_BRANCH="main"
+    if ! git rev-parse --verify "$BASE_BRANCH" > /dev/null 2>&1; then
+      BASE_BRANCH="master"
+    fi
+
+    echo "Analyzing changes between ${BASE_BRANCH} and current branch..."
+    DIFF=$(git diff "${BASE_BRANCH}"...HEAD)
+  else
+    # Has uncommitted changes, use those
+    echo "Analyzing uncommitted changes..."
+    DIFF=$(git diff HEAD)
+  fi
+
+  # Truncate if too large
+  if [ ${#DIFF} -gt 50000 ]; then
+    echo "Warning: Diff is large, truncating to 50000 characters..."
+    DIFF="${DIFF:0:50000}"
+  fi
+
+  # Get current branch name for context
+  BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+
+  # Create context string
+  CONTEXT="Branch: ${BRANCH_NAME}"
+
+  # Generate changelog content
+  PROMPT=$(create_prompt "$ISSUE_NUM" "$CONTEXT" "$DIFF")
+  CHANGELOG_CONTENT=$(generate_changelog_content "$PROMPT")
+
+  echo ""
+  echo "Generated changelog entry:"
+  echo "----------------------------------------"
+  echo "$CHANGELOG_CONTENT"
+  echo "----------------------------------------"
+  echo ""
+
+  # Ask user if they want to add it to CHANGELOG.md
+  read -p "Add this entry to CHANGELOG.md? [y/N] " -n 1 -r
+  echo ""
+
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    add_to_unreleased "$ISSUE_NUM" "$CHANGELOG_CONTENT"
+    echo ""
+    echo "You can now edit CHANGELOG.md if needed, then commit the changes."
+  else
+    echo "Entry not added to CHANGELOG.md"
+  fi
+
+#
+# BACKFILL MODE - Backfill releases from GitHub
+#
+elif [ "$MODE" = "backfill" ]; then
+  echo "Backfilling CHANGELOG.md with last ${NUM_RELEASES} releases..."
+  echo ""
+
+  # Get releases from GitHub
+  echo "Fetching releases from GitHub..."
+  mapfile -t RELEASES < <(gh release list --limit "$NUM_RELEASES")
+
+  echo "Found ${#RELEASES[@]} releases"
+  echo ""
+
+  # Reverse the array so we process oldest first
+  # This way, when we insert at the top, newest ends up first
+  REVERSED_RELEASES=()
+  for ((i=${#RELEASES[@]}-1; i>=0; i--)); do
+    REVERSED_RELEASES+=("${RELEASES[$i]}")
+  done
+
+  # Process each release (oldest first)
+  for release_line in "${REVERSED_RELEASES[@]}"; do
+    # Parse tab-separated values using awk (handles empty fields correctly)
+    # Columns: TITLE\tTYPE\tTAG\tDATE
+    tag_name=$(echo "$release_line" | awk -F'\t' '{print $3}')
+    published_at=$(echo "$release_line" | awk -F'\t' '{print $4}')
+
+    # Extract short commit SHA from tag (format: YYYYMMDD-HHMM-shortsha)
+    SHORT_SHA=$(echo "$tag_name" | grep -oP '[a-f0-9]{7,8}$' || true)
+
+    if [ -z "$SHORT_SHA" ]; then
+      echo "⊘ Skipping release $tag_name - cannot extract commit SHA"
+      continue
+    fi
+
+    # Get the full commit SHA
+    COMMIT_SHA=$(git rev-parse "${SHORT_SHA}" 2>/dev/null || echo "")
+
+    if [ -z "$COMMIT_SHA" ]; then
+      echo "⊘ Skipping release $tag_name - commit $SHORT_SHA not found"
+      continue
+    fi
+
+    # Get the commit message
+    COMMIT_MSG=$(git log -1 --format="%s" "$COMMIT_SHA" 2>/dev/null || echo "")
+
+    if [ -z "$COMMIT_MSG" ]; then
+      echo "⊘ Skipping release $tag_name - no commit message"
+      continue
+    fi
+
+    # Extract issue number from merge commit message
+    # Format: "Merge pull request #XXX from org/123-branch-name"
+    ISSUE_NUM=$(echo "$COMMIT_MSG" | grep -oP '(?<=from terrateamio/)\d+' | head -1 || true)
+
+    if [ -z "$ISSUE_NUM" ]; then
+      echo "⊘ Skipping release $tag_name - no issue number found: $COMMIT_MSG"
+      continue
+    fi
+
+    # Check if this version section already exists in CHANGELOG
+    if grep -q "^## \[${tag_name}\]" CHANGELOG.md 2>/dev/null; then
+      echo "⊘ Skipping release $tag_name - already in CHANGELOG.md"
+      continue
+    fi
+
+    echo "→ Processing release $tag_name (issue #${ISSUE_NUM})"
+
+    # Get the diff for this merge (all changes in the PR)
+    # First parent is the base branch, second parent is the feature branch
+    DIFF=$(git diff "${COMMIT_SHA}^1" "${COMMIT_SHA}^2" 2>/dev/null || echo "")
+
+    if [ -z "$DIFF" ]; then
+      echo "  ⚠ Warning: No diff found for commit $COMMIT_SHA, skipping"
+      continue
+    fi
+
+    # Truncate if too large
+    if [ ${#DIFF} -gt 50000 ]; then
+      DIFF="${DIFF:0:50000}"
+    fi
+
+    # Create context string
+    CONTEXT="Merge Message: ${COMMIT_MSG}"
+
+    # Generate changelog content
+    PROMPT=$(create_prompt "$ISSUE_NUM" "$CONTEXT" "$DIFF")
+    CHANGELOG_CONTENT=$(generate_changelog_content "$PROMPT" || echo "")
+
+    if [ -z "$CHANGELOG_CONTENT" ]; then
+      echo "  ✗ Failed to generate changelog entry for issue #${ISSUE_NUM}"
+      continue
+    fi
+
+    # Extract date from published_at (format: 2025-10-15T09:29:38Z)
+    RELEASE_DATE=$(echo "$published_at" | cut -d'T' -f1)
+
+    # Add release section
+    add_release_section "$tag_name" "$RELEASE_DATE" "$CHANGELOG_CONTENT"
+
+    echo "  ✓ Added release $tag_name"
+    echo ""
+
+    # Small delay to avoid rate limiting
+    sleep 1
+  done
+
+  echo ""
+  echo "✓ Backfill complete!"
+  echo ""
+  echo "CHANGELOG.md has been updated. Please review the entries and make any necessary edits."
+  echo "Then commit with: git add CHANGELOG.md && git commit -m 'Backfill CHANGELOG.md'"
+fi
