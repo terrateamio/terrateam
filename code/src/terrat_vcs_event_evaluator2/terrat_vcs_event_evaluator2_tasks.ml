@@ -454,6 +454,11 @@ struct
                                   (fun { Dc.stack_name; _ } ->
                                     CCList.mem ~eq:CCString.equal stack_name apply_after)
                                   flat_all_unapplied_matches))
+                  | Tjc.Job.Type_.(Plan { tag_query = _; kind = Some (Tjc.Job.Type_.Kind.Drift _) })
+                    ->
+                      (* In the case that it is a plan for drift, then plan all layers in one go. *)
+                      CCList.filter (Terrat_change_match3.match_tag_query ~tag_query)
+                      @@ CCList.flatten all_unapplied_matches
                   | Tjc.Job.Type_.Autoplan
                   | Tjc.Job.Type_.Plan _
                   | Tjc.Job.Type_.Gate_approval _
