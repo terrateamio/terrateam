@@ -59,6 +59,7 @@ let create config =
     ~host:(Terrat_config.db_host config)
     ~user:(Terrat_config.db_user config)
     ~passwd:(Terrat_config.db_password config)
+    ?port:(Some (Terrat_config.db_port config))
     ~max_conns:(Terrat_config.db_max_pool_size config)
     ~connect_timeout:(Terrat_config.db_connect_timeout config)
     ~on_connect:(on_connect (Terrat_config.db_idle_tx_timeout config))
