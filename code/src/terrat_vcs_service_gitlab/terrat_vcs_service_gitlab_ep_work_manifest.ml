@@ -14,7 +14,7 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
         sql
         //
         (* data *)
-        Ret.ud' CCFun.(Cstruct.of_hex %> CCOption.return)
+        Ret.u Ret.text CCFun.(Cstruct.of_hex %> CCOption.return)
         /^ "select encode(data, 'hex') from encryption_keys order by rank limit 1")
 
     let select_running_work_manifest () =
@@ -218,17 +218,14 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
         let module P = struct
           type t = Terrat_api_components.Work_manifest_workspaces.t [@@deriving yojson]
         end in
-        CCFun.(
-          CCOption.wrap Yojson.Safe.from_string
-          %> CCOption.map P.of_yojson
-          %> CCOption.flat_map CCResult.to_opt)
+        CCFun.(P.of_yojson %> CCResult.to_opt)
 
       let select_workspaces =
         Pgsql_io.Typed_sql.(
           sql
           //
           (* dirspaces *)
-          Ret.(ud' dirspaces)
+          Ret.(u json dirspaces)
           /^ "select dirspaces from work_manifests where id = $id and state in ('queued', \
               'running')"
           /% Var.uuid "id")

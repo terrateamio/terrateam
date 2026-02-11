@@ -2,12 +2,8 @@ let src = Logs.Src.create "kv_store"
 
 module Logs = (val Logs.src_log src : Logs.LOG)
 
-let json_of_caps = CCFun.([%to_yojson: Terrat_user.Capability.t list] %> Yojson.Safe.to_string)
-
-let caps_of_json =
-  CCFun.(
-    CCOption.wrap Yojson.Safe.from_string
-    %> CCOption.flat_map ([%of_yojson: Terrat_user.Capability.t list] %> CCResult.to_opt))
+let json_of_caps = [%to_yojson: Terrat_user.Capability.t list]
+let caps_of_json = CCFun.([%of_yojson: Terrat_user.Capability.t list] %> CCResult.to_opt)
 
 module Sql = struct
   let select_key data =
@@ -21,7 +17,7 @@ module Sql = struct
       Ret.text
       //
       (* data *)
-      Ret.ud' (CCOption.wrap Yojson.Safe.from_string)
+      Ret.json
       //
       (* version *)
       Ret.smallint
@@ -30,10 +26,10 @@ module Sql = struct
       Ret.integer
       //
       (* read_caps *)
-      Ret.(option @@ ud' caps_of_json)
+      Ret.(option @@ u json caps_of_json)
       //
       (* write_caps *)
-      Ret.(option @@ ud' caps_of_json)
+      Ret.(option @@ u json caps_of_json)
       /^ CCString.replace
            ~sub:"{{ data }}"
            ~by:data
@@ -111,7 +107,7 @@ module Sql = struct
       /% Var.text "namespace"
       /% Var.text "key"
       /% Var.smallint "idx"
-      /% Var.ud (Var.json "data") Yojson.Safe.to_string
+      /% Var.json "data"
       /% Var.boolean "committed"
       /% Var.(option @@ ud (json "read_caps") json_of_caps)
       /% Var.(option @@ ud (json "write_caps") json_of_caps)
@@ -157,7 +153,7 @@ module Sql = struct
       /% Var.text "namespace"
       /% Var.text "key"
       /% Var.smallint "idx"
-      /% Var.ud (Var.json "data") Yojson.Safe.to_string
+      /% Var.json "data"
       /% Var.boolean "committed"
       /% Var.(option (smallint "version"))
       /% Var.(option @@ ud (json "read_caps") json_of_caps)
@@ -198,7 +194,7 @@ module Sql = struct
       /% Var.text "namespace"
       /% Var.text "key"
       /% Var.smallint "idx"
-      /% Var.ud (Var.json "data") Yojson.Safe.to_string
+      /% Var.json "data"
       /% Var.boolean "committed"
       /% Var.(option (smallint "version"))
       /% Var.(option @@ ud (json "read_caps") json_of_caps)
@@ -291,7 +287,7 @@ module Sql = struct
       Ret.text
       //
       (* data *)
-      Ret.(ud' (CCOption.wrap Yojson.Safe.from_string))
+      Ret.json
       //
       (* idx *)
       Ret.smallint
@@ -303,10 +299,10 @@ module Sql = struct
       Ret.integer
       //
       (* read_caps *)
-      Ret.(option @@ ud' caps_of_json)
+      Ret.(option @@ u json caps_of_json)
       //
       (* write_caps *)
-      Ret.(option @@ ud' caps_of_json)
+      Ret.(option @@ u json caps_of_json)
       /^ (CCString.replace ~sub:"{{ data }}" ~by:data
          @@ CCString.replace
               ~sub:"{{ cmp }}"

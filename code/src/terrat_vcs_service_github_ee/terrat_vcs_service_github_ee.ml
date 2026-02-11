@@ -67,11 +67,7 @@ module Provider :
                |> CCString.concat "\n")
              (Terrat_files_github_sql.read fname))
 
-      let gate =
-        CCFun.(
-          CCOption.wrap Yojson.Safe.from_string
-          %> CCOption.map Terrat_gate.of_yojson
-          %> CCOption.flat_map CCResult.to_opt)
+      let gate = CCFun.(Terrat_gate.of_yojson %> CCResult.to_opt)
 
       let insert_gate_approval =
         Pgsql_io.Typed_sql.(
@@ -107,7 +103,7 @@ module Provider :
           Ret.(option text)
           //
           (* gate *)
-          Ret.ud' gate
+          Ret.u Ret.json gate
           //
           (* dir *)
           Ret.text

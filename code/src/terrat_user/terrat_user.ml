@@ -45,7 +45,7 @@ module Token = struct
         sql
         //
         (* data *)
-        Ret.ud' CCFun.(Cstruct.of_hex %> CCOption.return)
+        Ret.u Ret.text CCFun.(Cstruct.of_hex %> CCOption.return)
         /^ "select encode(data, 'hex') from encryption_keys order by rank")
   end
 

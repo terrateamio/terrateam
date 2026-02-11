@@ -81,10 +81,7 @@ module Installations = struct
       let module P = struct
         type t = Terrat_tier.t [@@deriving yojson]
       end in
-      CCFun.(
-        CCOption.wrap Yojson.Safe.from_string
-        %> CCOption.map P.of_yojson
-        %> CCOption.flat_map CCResult.to_opt)
+      CCFun.(P.of_yojson %> CCResult.to_opt)
 
     let select_installations () =
       Pgsql_io.Typed_sql.(
@@ -109,7 +106,7 @@ module Installations = struct
         Ret.text
         //
         (* tier features *)
-        Ret.ud' tier_features
+        Ret.u Ret.json tier_features
         /^ read "select_user_installations.sql"
         /% Var.(array (bigint "installation_ids")))
 

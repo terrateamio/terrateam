@@ -65,17 +65,11 @@ module Make (S : S with type Account_id.t = int) = struct
 
         let scope =
           let module T = Terrat_api_components.Workflow_step_output_scope in
-          CCFun.(
-            CCOption.wrap Yojson.Safe.from_string
-            %> CCOption.map T.of_yojson
-            %> CCOption.flat_map CCResult.to_opt)
+          CCFun.(T.of_yojson %> CCResult.to_opt)
 
         let payload =
           let module T = T.Payload in
-          CCFun.(
-            CCOption.wrap Yojson.Safe.from_string
-            %> CCOption.map T.of_yojson
-            %> CCOption.flat_map CCResult.to_opt)
+          CCFun.(T.of_yojson %> CCResult.to_opt)
 
         let select_outputs where =
           Pgsql_io.Typed_sql.(
@@ -91,10 +85,10 @@ module Make (S : S with type Account_id.t = int) = struct
             Ret.boolean
             //
             (* payload *)
-            Ret.(option (ud' payload))
+            Ret.(option (u json payload))
             //
             (* scope *)
-            Ret.ud' scope
+            Ret.u Ret.json scope
             //
             (* step *)
             Ret.text
@@ -324,10 +318,7 @@ module Make (S : S with type Account_id.t = int) = struct
         let module T = struct
           type t = Terrat_api_components.Work_manifest_dirspace.t list [@@deriving yojson]
         end in
-        CCFun.(
-          CCOption.wrap Yojson.Safe.from_string
-          %> CCOption.map T.of_yojson
-          %> CCOption.flat_map CCResult.to_opt)
+        CCFun.(T.of_yojson %> CCResult.to_opt)
 
       let select_work_manifests where =
         Pgsql_io.Typed_sql.(
@@ -349,13 +340,13 @@ module Make (S : S with type Account_id.t = int) = struct
           Ret.text
           //
           (* run_type *)
-          Ret.ud' Terrat_work_manifest3.Step.of_string
+          Ret.u Ret.text Terrat_work_manifest3.Step.of_string
           //
           (* state *)
-          Ret.ud' Terrat_work_manifest3.State.of_string
+          Ret.u Ret.text Terrat_work_manifest3.State.of_string
           //
           (* tag_query *)
-          Ret.ud' CCFun.(Terrat_tag_query.of_string %> CCOption.of_result)
+          Ret.u Ret.text CCFun.(Terrat_tag_query.of_string %> CCOption.of_result)
           //
           (* pull_number *)
           Ret.(option bigint)
@@ -376,7 +367,7 @@ module Make (S : S with type Account_id.t = int) = struct
           Ret.text
           //
           (* dirspaces *)
-          Ret.(option (ud' dirspaces))
+          Ret.(option (u json dirspaces))
           //
           (* pull_request_title *)
           Ret.(option text)
@@ -691,13 +682,13 @@ module Make (S : S with type Account_id.t = int) = struct
           Ret.text
           //
           (* run_type *)
-          Ret.ud' Terrat_work_manifest3.Step.of_string
+          Ret.u Ret.text Terrat_work_manifest3.Step.of_string
           //
           (* state *)
           Ret.text
           //
           (* tag_query *)
-          Ret.ud' CCFun.(Terrat_tag_query.of_string %> CCOption.of_result)
+          Ret.u Ret.text CCFun.(Terrat_tag_query.of_string %> CCOption.of_result)
           //
           (* pull_number *)
           Ret.(option bigint)

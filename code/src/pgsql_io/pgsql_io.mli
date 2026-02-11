@@ -66,9 +66,10 @@ module Typed_sql : sig
 
     val varchar : string v
     val char : string v
+    val bytea : string v
     val tsquery : string v
     val uuid : Uuidm.t v
-    val json : string v
+    val json : Yojson.Safe.t v
     val jsonpath : string v
 
     (** Boolean types *)
@@ -107,13 +108,37 @@ module Typed_sql : sig
     val text : string t
     val varchar : string t
     val char : string t
-    val json : string t
+    val bytea : string t
+    val json : Yojson.Safe.t t
+    val jsonb : Yojson.Safe.t t
     val uuid : Uuidm.t t
     val boolean : bool t
-    val ud : (string option list -> ('a * string option list) option) -> 'a t
 
-    (** Simpler interface to user defined conversion. *)
+    (** Binary-format variants. These use PostgreSQL binary wire format for
+        decoding. They are more efficient but less forgiving: using the wrong
+        type (e.g. [smallint_b] on an INTEGER column) will cause a runtime
+        parse failure. Prefer the text-format versions above unless you need
+        binary format for performance and can guarantee type correctness. *)
+    val smallint_b : int t
+    val integer_b : int32 t
+    val bigint_b : int64 t
+    val real_b : float t
+    val double_b : float t
+    val smallserial_b : int t
+    val serial_b : int32 t
+    val bigserial_b : int64 t
+    val money_b : int64 t
+    val boolean_b : bool t
+    val varchar_b : string t
+    val char_b : string t
+
+    val u : 'a t -> ('a -> 'b option) -> 'b t
+
+    val ud : (string option list -> ('a * string option list) option) -> 'a t
+    [@@ocaml.deprecated "Use u with B.t instead"]
+
     val ud' : (string -> 'a option) -> 'a t
+    [@@ocaml.deprecated "Use u with B.t instead"]
 
     val option : 'a t -> 'a option t
     val debug : (string option list -> unit) -> 'a t -> 'a t
@@ -246,3 +271,30 @@ val tx : t -> f:(unit -> ('a, ([> err ] as 'e)) result Abb.Future.t) -> ('a, 'e)
 (** Help function that takes a string representing SQL and removes any comments (lines that start
     with --). This DOES NOT remove comments if they are not the very first entry on a line. *)
 val clean_string : string -> string
+
+module Copy_to : sig
+  type t
+
+  val null : t
+  val smallint : int -> t
+  val integer : int32 -> t
+  val bigint : int64 -> t
+  val real : float -> t
+  val double : float -> t
+  val money : int64 -> t
+  val boolean : bool -> t
+  val text : string -> t
+  val varchar : string -> t
+  val char : string -> t
+  val json : Yojson.Safe.t -> t
+  val jsonb : Yojson.Safe.t -> t
+  val bytea : string -> t
+  val uuid : Uuidm.t -> t
+end
+
+val copy_to :
+  table:string ->
+  cols:string list ->
+  t ->
+  Copy_to.t list list ->
+  (int, [> err ]) result Abb.Future.t

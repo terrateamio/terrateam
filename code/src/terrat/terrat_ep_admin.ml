@@ -28,7 +28,7 @@ module Drift = struct
           Ret.text
           //
           (* run_type *)
-          Ret.ud' Terrat_work_manifest3.Step.of_string
+          Ret.u Ret.text Terrat_work_manifest3.Step.of_string
           //
           (* created_at *)
           Ret.text

@@ -38,7 +38,7 @@ val of_ast :
 val sql : t -> string
 val bigints : t -> CCInt64.t list
 val ints : t -> CCInt32.t list
-val json : t -> string list
+val json : t -> Yojson.Safe.t list
 val smallints : t -> int list
 val strings : t -> string list
 val timezone : t -> string

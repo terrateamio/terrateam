@@ -16,6 +16,7 @@ module Reader : sig
   val bytes : int -> string t
   val string : string t
   val string_list : unit -> string list t
+  val int8 : int t
   val int16 : int t
   val repeat : int -> 'a t -> 'a list t
   val consume : int -> 'a t -> 'a list t
@@ -78,6 +79,12 @@ end = struct
     >>= function
     | "" -> return []
     | auth_mechanism -> string_list () >>= fun rest -> return (auth_mechanism :: rest)
+
+  let int8 st =
+    if st.State.pos + 1 <= st.State.stop then
+      let n = Bytes.get_uint8 st.State.buf st.State.pos in
+      (Ok n, { st with State.pos = st.State.pos + 1 })
+    else (Error `Length, st)
 
   let int16 st =
     if st.State.pos + 2 <= st.State.stop then
@@ -191,13 +198,22 @@ module Frame = struct
       | CommandComplete of { tag : string }
       | CopyData of { data : string }
       | CopyDone
-      | CopyInResponse (* TODO *)
-      | CopyOutResponse (* TODO *)
-      | CopyBothResponse (* TODO *)
+      | CopyInResponse of {
+          format : int;
+          column_formats : int list;
+        }
+      | CopyOutResponse of {
+          format : int;
+          column_formats : int list;
+        }
+      | CopyBothResponse of {
+          format : int;
+          column_formats : int list;
+        }
       | DataRow of { data : string option list }
       | EmptyQueryResponse
       | ErrorResponse of { msgs : (char * string) list }
-      | FunctionCallResponse (* TODO *)
+      | FunctionCallResponse of { result : string option }
       | NegotiateProtocolVersion of {
           minor_version : int32;
           unrecognized_options : string list;
@@ -238,9 +254,9 @@ module Frame = struct
           typ : char;
           name : string;
         }
-      | CopyData (* TODO *)
-      | CopyDone (* TODO *)
-      | CopyFail (* TODO *)
+      | CopyData of { data : string }
+      | CopyDone
+      | CopyFail of { message : string }
       | Describe of {
           typ : char;
           name : string;
@@ -313,9 +329,29 @@ module Decode = struct
     | '2' -> return BindComplete
     | '3' -> return CloseComplete
     | 'C' -> string >>= fun tag -> return (CommandComplete { tag })
-    | 'G' -> failwith "nyi"
-    | 'H' -> failwith "nyi"
-    | 'W' -> failwith "nyi"
+    | 'G' ->
+        int8
+        >>= fun format ->
+        int16
+        >>= fun num_columns ->
+        repeat num_columns int16
+        >>= fun column_formats -> return (CopyInResponse { format; column_formats })
+    | 'H' ->
+        int8
+        >>= fun format ->
+        int16
+        >>= fun num_columns ->
+        repeat num_columns int16
+        >>= fun column_formats -> return (CopyOutResponse { format; column_formats })
+    | 'W' ->
+        int8
+        >>= fun format ->
+        int16
+        >>= fun num_columns ->
+        repeat num_columns int16
+        >>= fun column_formats -> return (CopyBothResponse { format; column_formats })
+    | 'd' -> bytes len >>= fun data -> return (CopyData { data })
+    | 'c' -> return CopyDone
     | 'D' ->
         int16
         >>= fun columns ->
@@ -336,7 +372,13 @@ module Decode = struct
         >>= fun s ->
         assert (s.[0] = '\000');
         return (ErrorResponse { msgs })
-    | 'V' -> failwith "nyi"
+    | 'V' ->
+        int32
+        >>= fun n ->
+        (match Int32.to_int n with
+         | -1 -> return None
+         | n -> bytes n >>= fun s -> return (Some s))
+        >>= fun result -> return (FunctionCallResponse { result })
     | 'v' ->
         int32
         >>= fun minor_version ->
@@ -483,7 +525,9 @@ module Encode = struct
     | CancelRequest { pid; secret_key } ->
         int32 (Int32.of_string "80877102") >>= fun () -> int32 pid >>= fun () -> int32 secret_key
     | Close { typ; name } -> msg_code 'C' >>= fun () -> chr typ >>= fun () -> string name
-    | CopyData | CopyDone | CopyFail -> failwith "nyi"
+    | CopyData { data } -> msg_code 'd' >>= fun () -> bytes data
+    | CopyDone -> msg_code 'c'
+    | CopyFail { message } -> msg_code 'f' >>= fun () -> string message
     | Describe { typ; name } -> msg_code 'D' >>= fun () -> chr typ >>= fun () -> string name
     | Execute { portal; max_rows } ->
         msg_code 'E' >>= fun () -> string portal >>= fun () -> int32 max_rows
@@ -516,4 +560,47 @@ module Encode = struct
   let frontend_msg buf frame =
     let writer = frontend_msg' frame in
     Writer.run buf writer
+end
+
+module Binary_value = struct
+  module Encode = struct
+    let int2 n =
+      let buf = Bytes.create 2 in
+      EndianBytes.BigEndian.set_int16 buf 0 n;
+      Bytes.to_string buf
+
+    let int4 n =
+      let buf = Bytes.create 4 in
+      EndianBytes.BigEndian.set_int32 buf 0 n;
+      Bytes.to_string buf
+
+    let int8 n =
+      let buf = Bytes.create 8 in
+      EndianBytes.BigEndian.set_int64 buf 0 n;
+      Bytes.to_string buf
+
+    let float4 f = int4 (Int32.bits_of_float f)
+    let float8 f = int8 (Int64.bits_of_float f)
+
+    let bool b =
+      if b then "\001" else "\000"
+  end
+
+  module Decode = struct
+    let int2 s =
+      if String.length s = 2 then Some (EndianString.BigEndian.get_int16 s 0) else None
+
+    let int4 s =
+      if String.length s = 4 then Some (EndianString.BigEndian.get_int32 s 0) else None
+
+    let int8 s =
+      if String.length s = 8 then Some (EndianString.BigEndian.get_int64 s 0) else None
+
+    let float4 s = Option.map Int32.float_of_bits (int4 s)
+    let float8 s = Option.map Int64.float_of_bits (int8 s)
+
+    let bool s =
+      if String.length s = 1 then Some (Char.code s.[0] <> 0) else None
+
+  end
 end

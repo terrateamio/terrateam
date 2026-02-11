@@ -27,18 +27,18 @@ type t = {
   smallints : int CCVector.vector;
   ints : int32 CCVector.vector;
   bigints : int64 CCVector.vector;
-  json : string CCVector.vector;
+  json : Yojson.Safe.t CCVector.vector;
   timezone : string;
   mutable sort_dir : [ `Asc | `Desc ];
 }
 
 let eq_json_array t n k v =
-  CCVector.push t.json (Yojson.Safe.to_string (`List [ `Assoc [ (k, `String v) ] ]));
+  CCVector.push t.json (`List [ `Assoc [ (k, `String v) ] ]);
   Buffer.add_string t.q (Printf.sprintf "(%s @> (($json)[%d]::jsonb))" n (CCVector.size t.json));
   Ok ()
 
 let eq_json_obj t n k v =
-  CCVector.push t.json (Yojson.Safe.to_string (`Assoc [ (k, `String v) ]));
+  CCVector.push t.json (`Assoc [ (k, `String v) ]);
   Buffer.add_string t.q (Printf.sprintf "(%s @> (($json)[%d]::jsonb))" n (CCVector.size t.json));
   Ok ()
 
