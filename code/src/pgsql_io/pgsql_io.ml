@@ -45,8 +45,21 @@ let gen_unique_id t prefix =
   ret
 
 type integrity_err = {
+  code : string;
   message : string;
   detail : string option;
+  constraint_name : string option;
+  table_name : string option;
+  schema_name : string option;
+  column_name : string option;
+}
+[@@deriving show]
+
+type pgsql_err = {
+  code : string;
+  message : string;
+  detail : string option;
+  hint : string option;
 }
 [@@deriving show]
 
@@ -173,26 +186,40 @@ module Io = struct
     let c = CCList.Assoc.get_exn ~eq:Char.equal 'C' msgs in
     let m = CCList.Assoc.get_exn ~eq:Char.equal 'M' msgs in
     let d = CCList.Assoc.get ~eq:Char.equal 'D' msgs in
+    let h = CCList.Assoc.get ~eq:Char.equal 'H' msgs in
+    let n = CCList.Assoc.get ~eq:Char.equal 'n' msgs in
+    let t = CCList.Assoc.get ~eq:Char.equal 't' msgs in
+    let s = CCList.Assoc.get ~eq:Char.equal 's' msgs in
+    let col = CCList.Assoc.get ~eq:Char.equal 'c' msgs in
+    let pgsql_err = { code = c; message = m; detail = d; hint = h } in
+    let integrity_err =
+      {
+        code = c;
+        message = m;
+        detail = d;
+        constraint_name = n;
+        table_name = t;
+        schema_name = s;
+        column_name = col;
+      }
+    in
     match c with
-    | "23000"
-    (* integrity_constraint_violation *)
-    | "23001"
-    (* restrict_violation *)
-    | "23502"
-    (* not_null_violation *)
-    | "23503"
-    (* foreign_key_violation *)
-    | "23505"
-    (* unique_violation *)
-    | "23514"
-    (* check_violation *)
-    | "23P01"
-    (* exclusion_violation *)
-    | "40002"
-    (* transaction_integrity_constraint_violation *)
-    | "40001" (* serialization_failure *) -> `Integrity_err { message = m; detail = d }
+    (* Unique/exclusion violations *)
+    | "23505" | "23P01" -> `Unique_violation_err integrity_err
+    (* Foreign key / restrict *)
+    | "23503" | "23001" -> `Foreign_key_err integrity_err
+    (* Other integrity constraints *)
+    | "23000" | "23502" | "23514" | "40002" -> `Integrity_err integrity_err
+    (* Deadlock / serialization failure *)
+    | "40001" | "40P01" -> `Deadlock_detected pgsql_err
+    (* Lock timeout *)
+    | "55P03" -> `Lock_timeout pgsql_err
+    (* Statement timeout *)
     | "57014" -> `Statement_timeout
-    | _ -> `Unmatching_frame fs
+    (* Syntax / access errors *)
+    | c when String.length c >= 2 && String.sub c 0 2 = "42" -> `Syntax_err pgsql_err
+    (* All other SQLSTATE codes *)
+    | _ -> `Pgsql_err pgsql_err
 
   let rec consume_matching ?(skip_leading_unmatched = false) conn fs =
     let open Abbs_future_combinators.Infix_result_monad in
@@ -250,12 +277,17 @@ type sql_parse_err =
 [@@deriving show]
 
 type err =
-  [ `Msgs of (char * string) list
+  [ `Pgsql_err of pgsql_err
   | frame_err
   | `Disconnected
   | `Bad_result of string option list
   | `Integrity_err of integrity_err
+  | `Unique_violation_err of integrity_err
+  | `Foreign_key_err of integrity_err
+  | `Deadlock_detected of pgsql_err
+  | `Lock_timeout of pgsql_err
   | `Statement_timeout
+  | `Syntax_err of pgsql_err
   | sql_parse_err
   ]
 [@@deriving show]
@@ -475,7 +507,6 @@ module Typed_sql = struct
     let boolean_b = bin_ret B.bool
     let varchar_b = bin_ret B.text
     let char_b = bin_ret B.text
-
     let ud f = { binary = false; f = (fun xs -> f xs) }
 
     let ud' f =

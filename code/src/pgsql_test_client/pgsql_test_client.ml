@@ -450,7 +450,10 @@ let test_integrity_fail =
       in
       let check_err r1 r2 =
         match (r1, r2) with
-        | _, Error (`Integrity_err _) | Error (`Integrity_err _), _ -> Ok ()
+        | _, Error (`Unique_violation_err _)
+        | Error (`Unique_violation_err _), _
+        | _, Error (`Deadlock_detected _)
+        | Error (`Deadlock_detected _), _ -> Ok ()
         | _ -> Error ()
       in
       let in_tx_left = Abb.Future.Promise.create () in
@@ -498,7 +501,7 @@ let test_integrity_recover =
             Pgsql_io.Prepared_stmt.execute conn insert_sql "Testy McTestface" (Int32.of_int 36))
         >>= function
         | Ok () -> Abb.Future.return (Ok `Ok)
-        | Error (`Integrity_err _) ->
+        | Error (`Unique_violation_err _) | Error (`Deadlock_detected _) ->
             let open Abbs_future_combinators.Infix_result_monad in
             Pgsql_io.Prepared_stmt.execute conn insert_sql "Testy RecoverFace" (Int32.of_int 36)
             >>= fun () -> Abb.Future.return (Ok `Integrity)
@@ -680,7 +683,7 @@ let test_copy_to_conflict =
       with_conn f
       >>= function
       | Ok _ -> Oth.Assert.false_ "expected integrity error but got ok"
-      | Error (`Integrity_err _) -> Abb.Future.return ()
+      | Error (`Unique_violation_err _) -> Abb.Future.return ()
       | Error (#Pgsql_io.create_err as err) ->
           print_endline (Pgsql_io.show_create_err err);
           Oth.Assert.false_ "unexpected create error"
