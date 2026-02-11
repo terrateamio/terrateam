@@ -15,8 +15,21 @@ type frame_err =
 [@@deriving show]
 
 type integrity_err = {
+  code : string;
   message : string;
   detail : string option;
+  constraint_name : string option;
+  table_name : string option;
+  schema_name : string option;
+  column_name : string option;
+}
+[@@deriving show]
+
+type pgsql_err = {
+  code : string;
+  message : string;
+  detail : string option;
+  hint : string option;
 }
 [@@deriving show]
 
@@ -28,12 +41,17 @@ type sql_parse_err =
 [@@deriving show]
 
 type err =
-  [ `Msgs of (char * string) list
+  [ `Pgsql_err of pgsql_err
   | frame_err
   | `Disconnected
   | `Bad_result of string option list
   | `Integrity_err of integrity_err
+  | `Unique_violation_err of integrity_err
+  | `Foreign_key_err of integrity_err
+  | `Deadlock_detected of pgsql_err
+  | `Lock_timeout of pgsql_err
   | `Statement_timeout
+  | `Syntax_err of pgsql_err
   | sql_parse_err
   ]
 [@@deriving show]
@@ -114,12 +132,12 @@ module Typed_sql : sig
     val uuid : Uuidm.t t
     val boolean : bool t
 
-    (** Binary-format variants. These use PostgreSQL binary wire format for
-        decoding. They are more efficient but less forgiving: using the wrong
-        type (e.g. [smallint_b] on an INTEGER column) will cause a runtime
-        parse failure. Prefer the text-format versions above unless you need
+    (** Binary-format variants. These use PostgreSQL binary wire format for decoding. They are more
+        efficient but less forgiving: using the wrong type (e.g. [smallint_b] on an INTEGER column)
+        will cause a runtime parse failure. Prefer the text-format versions above unless you need
         binary format for performance and can guarantee type correctness. *)
     val smallint_b : int t
+
     val integer_b : int32 t
     val bigint_b : int64 t
     val real_b : float t
@@ -131,15 +149,12 @@ module Typed_sql : sig
     val boolean_b : bool t
     val varchar_b : string t
     val char_b : string t
-
     val u : 'a t -> ('a -> 'b option) -> 'b t
 
     val ud : (string option list -> ('a * string option list) option) -> 'a t
     [@@ocaml.deprecated "Use u with B.t instead"]
 
-    val ud' : (string -> 'a option) -> 'a t
-    [@@ocaml.deprecated "Use u with B.t instead"]
-
+    val ud' : (string -> 'a option) -> 'a t [@@ocaml.deprecated "Use u with B.t instead"]
     val option : 'a t -> 'a option t
     val debug : (string option list -> unit) -> 'a t -> 'a t
   end

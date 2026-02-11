@@ -564,6 +564,18 @@ module type S = sig
       result
       Abb.Future.t
 
+    val query' :
+      request_id:string ->
+      Db.t ->
+      Uuidm.t list ->
+      ( ( Api.Account.t,
+          ((unit, unit) Api.Pull_request.t, Api.Repo.t) Target.t )
+        Terrat_work_manifest3.Existing.t
+        list,
+        [> `Error ] )
+      result
+      Abb.Future.t
+
     val query :
       request_id:string ->
       Db.t ->

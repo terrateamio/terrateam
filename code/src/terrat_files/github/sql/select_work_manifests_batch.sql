@@ -1,4 +1,5 @@
 select
+    gwm.id,
     gwm.base_sha,
     to_char(gwm.completed_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as completed_at,
     to_char(gwm.created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
@@ -18,4 +19,4 @@ select
     gwm.runs_on,
     gwm.branch
 from github_work_manifests as gwm
-where gwm.id = $id
+where gwm.id = ANY($ids)

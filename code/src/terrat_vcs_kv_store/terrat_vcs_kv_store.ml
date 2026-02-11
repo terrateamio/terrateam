@@ -49,14 +49,6 @@ struct
       write_caps = CCOption.map yojson_of_caps @@ Terrat_kv_store.Record.write_caps r;
     }
 
-  let rec is_syntax_err = function
-    | [] -> false
-    | Pgsql_codec.Frame.Backend.ErrorResponse { msgs } :: fs ->
-        if CCList.exists (fun (_, msg) -> CCString.find ~sub:"syntax error" msg <> -1) msgs then
-          true
-        else is_syntax_err fs
-    | _ :: fs -> is_syntax_err fs
-
   let kv_run ctx storage user r f =
     let open Abb.Future.Infix_monad in
     Pgsql_pool.with_conn storage ~f:(fun db ->
@@ -69,7 +61,7 @@ struct
     | Error (#Pgsql_pool.err as err) ->
         Logs.info (fun m -> m "%s : %a" (Brtl_ctx.token ctx) Pgsql_pool.pp_err err);
         Abb.Future.return (Error (Brtl_ctx.set_response `Internal_server_error ctx))
-    | Error (`Unmatching_frame fs) when is_syntax_err fs ->
+    | Error (`Syntax_err _) ->
         Logs.info (fun m -> m "%s : PARSE FAILURE" (Brtl_ctx.token ctx));
         Abb.Future.return
           (Ok (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Bad_request "") ctx))
