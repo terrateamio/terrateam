@@ -85,21 +85,21 @@ end
 type t = {
   links_ : Links_.t; [@key "_links"]
   active_lock_reason : string option; [@default None]
-  additions : int;
+  additions : int option; [@default None]
   assignee : Terrat_github_webhooks_user.t option; [@default None]
   assignees : Assignees.t;
   author_association : string;
   auto_merge : Terrat_github_webhooks_auto_merge.t option; [@default None]
   base : Base.t;
   body : string option; [@default None]
-  changed_files : int;
+  changed_files : int option; [@default None]
   closed_at : string option; [@default None]
-  comments : int;
+  comments : int option; [@default None]
   comments_url : string;
-  commits : int;
+  commits : int option; [@default None]
   commits_url : string;
   created_at : string;
-  deletions : int;
+  deletions : int option; [@default None]
   diff_url : string;
   draft : bool;
   head : Head.t;
@@ -108,10 +108,10 @@ type t = {
   issue_url : string;
   labels : Labels.t;
   locked : bool;
-  maintainer_can_modify : bool;
+  maintainer_can_modify : bool option; [@default None]
   merge_commit_sha : string option; [@default None]
   mergeable : bool option; [@default None]
-  mergeable_state : string;
+  mergeable_state : string option; [@default None]
   merged : bool option; [@default None]
   merged_at : string option; [@default None]
   merged_by : Terrat_github_webhooks_user.t option; [@default None]
@@ -123,7 +123,7 @@ type t = {
   requested_reviewers : Requested_reviewers.t;
   requested_teams : Requested_teams.t;
   review_comment_url : string;
-  review_comments : int;
+  review_comments : int option; [@default None]
   review_comments_url : string;
   state : State.t;
   statuses_url : string;

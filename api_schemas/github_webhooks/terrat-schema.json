@@ -1837,7 +1837,7 @@
           ]
         },
         "additions": {
-          "type": "integer"
+          "type": ["integer", "null"]
         },
         "assignee": {
           "$ref": "#/definitions/user"
@@ -1889,7 +1889,7 @@
           ]
         },
         "changed_files": {
-          "type": "integer"
+          "type": ["integer", "null"]
         },
         "closed_at": {
           "format": "date-time",
@@ -1899,14 +1899,14 @@
           ]
         },
         "comments": {
-          "type": "integer"
+          "type": ["integer", "null"]
         },
         "comments_url": {
           "format": "uri",
           "type": "string"
         },
         "commits": {
-          "type": "integer"
+          "type": ["integer", "null"]
         },
         "commits_url": {
           "format": "uri",
@@ -1917,7 +1917,7 @@
           "type": "string"
         },
         "deletions": {
-          "type": "integer"
+          "type": ["integer", "null"]
         },
         "diff_url": {
           "format": "uri",
@@ -1977,7 +1977,7 @@
         },
         "maintainer_can_modify": {
           "description": "Indicates whether maintainers can modify the pull request.",
-          "type": "boolean"
+          "type": ["boolean", "null"]
         },
         "merge_commit_sha": {
           "type": [
@@ -1992,7 +1992,7 @@
           ]
         },
         "mergeable_state": {
-          "type": "string"
+          "type": ["string", "null"]
         },
         "merged": {
           "type": [
@@ -2054,7 +2054,7 @@
           "type": "string"
         },
         "review_comments": {
-          "type": "integer"
+          "type": ["integer", "null"]
         },
         "review_comments_url": {
           "format": "uri",
@@ -2124,15 +2124,7 @@
         "draft",
         "merged",
         "mergeable",
-        "rebaseable",
-        "mergeable_state",
-        "comments",
-        "review_comments",
-        "maintainer_can_modify",
-        "commits",
-        "additions",
-        "deletions",
-        "changed_files"
+        "rebaseable"
       ],
       "title": "Pull Request",
       "type": "object"
