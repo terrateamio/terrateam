@@ -3,7 +3,11 @@ title: tree_builder
 description: The tree_builder configuration reference
 ---
 
+import MermaidDiagram from '../../../../components/MermaidDiagram.astro';
+
 The `tree_builder` configuration allows you to customize how Terrateam discovers and tracks files in your repository. Instead of relying solely on Git's file tree and change detection, you can use a custom script to define which files should be considered and whether they have changed.
+
+It's useful for dynamic infrastructure, complex monorepo dependencies, or any case where Git's standard diff doesn't capture what "changed" means for your workflow.
 
 ## Default Configuration
 
@@ -49,3 +53,80 @@ The script must output valid JSON to stdout with the following structure
 | files | Array | Yes | Array of file objects |
 | files[].path | String | Yes | Relative path from repository root |
 | files[].id | String | Yes | Unique identifier for the file (typically a hash). Terrateam compares IDs between branches to detect changes |
+
+## How It Works
+
+Tree builder runs as dedicated GitHub Actions work manifests — not inline with the plan/apply. When Terrateam needs to evaluate a PR, it checks whether a file inventory already exists for each commit. If not, it queues the build sequence for that branch.
+
+<MermaidDiagram chart={`
+sequenceDiagram
+    participant Terrateam
+    participant DB as Database
+    participant Runner as GitHub Actions
+
+    Terrateam->>DB: Tree exists for this commit?
+
+    alt Tree already stored
+        DB-->>Terrateam: Yes - return stored tree
+        Note over Terrateam,DB: No new runs needed
+    else No tree yet
+        DB-->>Terrateam: No tree found
+        Terrateam->>Runner: Queue build-tree run
+        Runner-->>Terrateam: File list with content IDs
+        Terrateam->>Runner: Queue build-config run
+        Runner-->>Terrateam: terrateam.yml loaded<br/>(tree_builder script path)
+        Terrateam->>DB: Store tree (commit_sha → path + id)
+    end
+`} />
+
+The build-tree run happens first to generate the file inventory. Then build-config loads your `terrateam.yml`. Once the inventory is stored, all future events against that commit SHA skip both runs entirely.
+
+**Change detection** works by comparing the `id` values for each file path between the feature branch tree and the destination branch tree. If the IDs differ, the file is considered changed.
+
+### The PR Run Sequence
+
+Both branches of a PR need their own file inventories. With tree builder and build config enabled, for a new PR where neither branch has been seen before, you'll see up to 5 GitHub Actions runs (up to 7 if you also have indexer enabled):
+
+<MermaidDiagram chart={`
+sequenceDiagram
+    participant Dest as Destination Branch
+    participant Feature as Feature Branch
+
+    Note over Dest,Feature: Both branches can process in parallel
+
+    rect rgb(240, 240, 255)
+        Note over Dest: Destination branch
+        Dest->>Dest: 1. build-tree<br/>(run custom script)
+        Dest->>Dest: 2. build-config<br/>(load terrateam.yml)
+    end
+
+    rect rgb(240, 255, 240)
+        Note over Feature: Feature branch
+        Feature->>Feature: 3. build-tree<br/>(run custom script)
+        Feature->>Feature: 4. build-config<br/>(load terrateam.yml)
+        Feature->>Feature: 5. plan/apply<br/>(waits for both trees)
+    end
+`} />
+
+- **Destination and feature branches process in parallel** — you'll see runs for both simultaneously
+- **Within each branch, runs are sequential** — build-tree must finish before build-config
+- **The plan run waits** until both branch trees are available, then compares them to find changed files
+- **Subsequent events on the same commit reuse stored trees** — once built, no re-run is needed
+
+The destination branch is only built once. After the first PR targets it, subsequent PRs from other feature branches reuse the stored inventory as long as the destination commit hasn't changed.
+
+### What You'll See on Your PR
+
+When tree builder is enabled, GitHub will show additional check runs on your PR beyond the normal `terrateam plan`. For a PR targeting `main` where neither branch has been processed before, you'll see all of these:
+
+| Check name | Branch | What it does |
+|---|---|---|
+| `terrateam build-tree main` | destination | Runs your script against `main`, stores inventory |
+| `terrateam build-config main` | destination | Loads `terrateam.yml` from `main` |
+| `terrateam build-tree` | feature | Runs your script against your branch, stores inventory |
+| `terrateam build-config` | feature | Loads `terrateam.yml` from your branch |
+| `terrateam plan` | feature | Compares inventories, runs plan |
+
+**These are normal and expected.** The destination branch checks (`... main`) appear because Terrateam needs both sides of the diff. They will not appear again for subsequent PRs targeting the same `main` commit — that inventory is already stored.
+
+Each check run consumes one GitHub Actions runner for its duration. If you're planning runner capacity, assume up to 4 concurrent runners for the build phase on a new PR (destination and feature branch checks can overlap), plus your normal plan/apply runners.
