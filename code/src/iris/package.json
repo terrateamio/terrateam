@@ -22,7 +22,7 @@
     "download-icons": "python3 scripts/download-icons.py"
   },
   "devDependencies": {
-    "@sveltejs/vite-plugin-svelte": "^3.0.0",
+    "@sveltejs/vite-plugin-svelte": "^6.2.4",
     "@tsconfig/svelte": "^5.0.4",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^24.0.7",
@@ -30,7 +30,7 @@
     "knip": "^5.61.3",
     "openapi-typescript": "^7.8.0",
     "postcss": "^8.4.32",
-    "svelte": "^4.0.5",
+    "svelte": "^5.53.0",
     "svelte-check": "^4.2.2",
     "svelte-preprocess": "^6.0.3",
     "tailwindcss": "^3.3.6",
