@@ -181,9 +181,7 @@ let convert_def strict_records definitions module_base def =
            [
              (if CCString.equal field_name name then []
               else Json_schema_conv.Gen.yojson_key_name name);
-             (if
-                Json_schema_conv.String_set.mem name required
-                && not schema.Json_schema_conv.Schema.nullable
+             (if Sln_set.String.mem name required && not schema.Json_schema_conv.Schema.nullable
               then []
               else
                 match schema.Json_schema_conv.Schema.default with
