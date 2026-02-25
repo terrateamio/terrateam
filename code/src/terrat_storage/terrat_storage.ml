@@ -1,6 +1,7 @@
 let src = Logs.Src.create "storage"
 
 module Logs = (val Logs.src_log src : Logs.LOG)
+module Fc = Abbs_future_combinators
 
 module Queue_time_histogram = Prmths.Histogram (struct
   let spec = Prmths.Histogram_spec.of_list [ 0.01; 0.1; 0.25; 0.5; 1.0; 2.5; 5.0; 7.5; 10.0; 15.0 ]
@@ -33,11 +34,21 @@ let metrics Pgsql_pool.Metrics.{ num_conns; idle_conns; queue_time } =
 
 let on_connect idle_tx_timeout conn =
   Abbs_future_combinators.ignore
-    (let open Abb.Future.Infix_monad in
-     Pgsql_io.Prepared_stmt.execute
-       conn
-       Pgsql_io.Typed_sql.(
-         sql /^ Printf.sprintf "set idle_in_transaction_session_timeout='%s'" idle_tx_timeout)
+    (let go () =
+       let open Fc.Infix_result_monad in
+       Pgsql_io.Prepared_stmt.execute
+         conn
+         Pgsql_io.Typed_sql.(
+           sql /^ Printf.sprintf "set idle_in_transaction_session_timeout='%s'" idle_tx_timeout)
+       >>= fun () ->
+       Pgsql_io.Prepared_stmt.execute conn Pgsql_io.Typed_sql.(sql /^ "set lock_timeout='60s'")
+       >>= fun () ->
+       Pgsql_io.Prepared_stmt.execute
+         conn
+         Pgsql_io.Typed_sql.(sql /^ "set statement_timeout='300s'")
+     in
+     let open Abb.Future.Infix_monad in
+     go ()
      >>= function
      | Ok () -> Abb.Future.return ()
      | Error (#Pgsql_io.err as err) ->
