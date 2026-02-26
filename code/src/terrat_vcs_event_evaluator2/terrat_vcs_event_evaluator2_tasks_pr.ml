@@ -432,7 +432,7 @@ struct
           match S.Api.Pull_request.state pull_request with
           | Terrat_pull_request.State.Open _ | Terrat_pull_request.State.Closed ->
               Abb.Future.return (Ok (S.Api.Pull_request.branch_ref pull_request))
-          | Terrat_pull_request.State.Merged _ -> fetch Keys.default_branch_sha)
+          | Terrat_pull_request.State.Merged _ -> fetch Keys.working_dest_branch_ref)
 
     let working_branch_name =
       run ~name:"working_branch_name" (fun s { Bs.Fetcher.fetch } ->
