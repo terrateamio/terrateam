@@ -44,7 +44,13 @@ module Db = struct
       pull_request =
     raise (Failure "nyi")
 
-  let query_dirspaces_without_valid_plans ~request_id db pull_request dirspaces =
+  let query_dirspaces_without_valid_plans
+      ~request_id
+      ~base_ref
+      ~branch_ref
+      db
+      pull_request
+      dirspaces =
     raise (Failure "nyi")
 
   let query_conflicting_work_manifests_in_repo ~request_id db pull_request dirspaces op =

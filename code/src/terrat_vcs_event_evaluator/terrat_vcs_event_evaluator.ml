@@ -450,7 +450,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               time))
       (fun () -> S.Db.query_applied_dirspaces ~request_id db pull_request)
 
-  let query_dirspaces_without_valid_plans request_id db pull_request dirspaces =
+  let query_dirspaces_without_valid_plans ~base_ref ~branch_ref request_id db pull_request dirspaces
+      =
     Abbs_time_it.run
       (fun time ->
         Logs.info (fun m ->
@@ -459,7 +460,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               request_id
               (S.Api.Pull_request.Id.to_string @@ S.Api.Pull_request.id pull_request)
               time))
-      (fun () -> S.Db.query_dirspaces_without_valid_plans ~request_id db pull_request dirspaces)
+      (fun () ->
+        S.Db.query_dirspaces_without_valid_plans
+          ~request_id
+          ~base_ref
+          ~branch_ref
+          db
+          pull_request
+          dirspaces)
 
   let store_dirspaceflows ~base_ref ~branch_ref request_id db repo dirspaceflows =
     Abbs_time_it.run
@@ -1965,10 +1973,16 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             all_unapplied_matches,
             working_layer )
       in
-      let missing_autoplan_matches db pull_request matches =
+      let missing_autoplan_matches ctx state db pull_request matches =
         let module Dc = Terrat_change_match3.Dirspace_config in
         let open Abbs_future_combinators.Infix_result_monad in
+        branch_ref ctx state
+        >>= fun branch_ref ->
+        base_ref ctx state
+        >>= fun base_ref ->
         query_dirspaces_without_valid_plans
+          ~base_ref
+          ~branch_ref
           state.State.request_id
           db
           pull_request
@@ -2135,7 +2149,12 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                       && ((not (S.Api.Pull_request.is_draft_pr pull_request)) || autoplan_draft_pr))
                     working_set_matches
                 in
-                missing_autoplan_matches (Ctx.storage ctx) pull_request working_set_matches
+                missing_autoplan_matches
+                  ctx
+                  state
+                  (Ctx.storage ctx)
+                  pull_request
+                  working_set_matches
                 >>= fun working_set_matches ->
                 Abb.Future.return
                   (Ok
@@ -5946,9 +5965,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       let open Abbs_future_combinators.Infix_result_monad in
       Dv.pull_request ctx state
       >>= fun pull_request ->
+      Dv.branch_ref ctx state
+      >>= fun branch_ref ->
+      Dv.base_ref ctx state
+      >>= fun base_ref ->
       Dv.access_control_results ctx state op
       >>= fun { Terrat_access_control2.R.pass = working_set_matches; _ } ->
       query_dirspaces_without_valid_plans
+        ~base_ref
+        ~branch_ref
         state.State.request_id
         (Ctx.storage ctx)
         pull_request

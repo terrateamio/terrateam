@@ -338,6 +338,8 @@ module type S = sig
 
     val query_dirspaces_without_valid_plans :
       request_id:string ->
+      base_ref:Api.Ref.t ->
+      branch_ref:Api.Ref.t ->
       t ->
       ('diff, 'checks) Api.Pull_request.t ->
       Terrat_change.Dirspace.t list ->

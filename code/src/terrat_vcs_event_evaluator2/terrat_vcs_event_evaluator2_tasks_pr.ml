@@ -120,7 +120,7 @@ struct
       (fun () ->
         S.Db.query_pull_request_out_of_change_applies ~request_id:(Builder.log_id s) db pull_request)
 
-  let query_dirspaces_without_valid_plans s db pull_request dirspaces =
+  let query_dirspaces_without_valid_plans ~base_ref ~branch_ref s db pull_request dirspaces =
     time_it
       s
       (fun m log_id time ->
@@ -132,6 +132,8 @@ struct
       (fun () ->
         S.Db.query_dirspaces_without_valid_plans
           ~request_id:(Builder.log_id s)
+          ~base_ref
+          ~branch_ref
           db
           pull_request
           dirspaces)
@@ -451,11 +453,17 @@ struct
           let open Irm in
           fetch Keys.pull_request
           >>= fun pull_request ->
+          fetch Keys.dest_branch_ref
+          >>= fun base_ref ->
+          fetch Keys.branch_ref
+          >>= fun branch_ref ->
           Abb.Future.return
             (Ok
                (fun matches ->
                  Builder.run_db s ~f:(fun db ->
                      query_dirspaces_without_valid_plans
+                       ~base_ref
+                       ~branch_ref
                        s
                        db
                        pull_request
@@ -996,6 +1004,10 @@ struct
           let open Irm in
           fetch Keys.pull_request
           >>= fun pull_request ->
+          fetch Keys.dest_branch_ref
+          >>= fun base_ref ->
+          fetch Keys.branch_ref
+          >>= fun branch_ref ->
           fetch Keys.access_control_eval_apply
           >>= fun access_control_result ->
           Abb.Future.return
@@ -1005,6 +1017,8 @@ struct
           >>= fun { Terrat_access_control2.R.pass = working_set_matches; _ } ->
           Builder.run_db s ~f:(fun db ->
               query_dirspaces_without_valid_plans
+                ~base_ref
+                ~branch_ref
                 s
                 db
                 pull_request
