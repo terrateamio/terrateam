@@ -15,6 +15,7 @@ module Db = struct
   type t = Pgsql_io.t
 
   let store_account_repository ~request_id db account repo = raise (Failure "nyi")
+  let lock_repository ~request_id db account repo = raise (Failure "nyi")
   let store_pull_request ~request_id db pull_request = raise (Failure "nyi")
   let store_index ~request_id db work_manifest_id index = raise (Failure "nyi")
   let store_index_result ~request_id db work_manifest_id index_result = raise (Failure "nyi")

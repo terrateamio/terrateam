@@ -202,6 +202,13 @@ module type S = sig
       Api.Repo.t ->
       (unit, [> `Error ]) result Abb.Future.t
 
+    val lock_repository :
+      request_id:string ->
+      t ->
+      Api.Account.t ->
+      Api.Repo.t ->
+      (unit, [> `Error ]) result Abb.Future.t
+
     val store_pull_request :
       request_id:string ->
       t ->

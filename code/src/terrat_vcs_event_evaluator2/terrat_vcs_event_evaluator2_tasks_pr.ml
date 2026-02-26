@@ -120,6 +120,13 @@ struct
       (fun () ->
         S.Db.query_pull_request_out_of_change_applies ~request_id:(Builder.log_id s) db pull_request)
 
+  let lock_repository s account repo db =
+    time_it
+      s
+      (fun m log_id time ->
+        m "%s : LOCK_REPOSITORY : repo=%s : time=%f" log_id (S.Api.Repo.to_string repo) time)
+      (fun () -> S.Db.lock_repository ~request_id:(Builder.log_id s) db account repo)
+
   let query_dirspaces_without_valid_plans ~base_ref ~branch_ref s db pull_request dirspaces =
     time_it
       s
@@ -1312,6 +1319,14 @@ struct
           let run =
             let open Irm in
             fetch Keys.check_pull_request_state
+            >>= fun () ->
+            (* Lock the repository to serialize apply checks and prevent
+               concurrent applies on the same repository. *)
+            fetch Keys.account
+            >>= fun account ->
+            fetch Keys.repo
+            >>= fun repo ->
+            Builder.run_db s ~f:(lock_repository s account repo)
             >>= fun () ->
             (* Building these two happens to build all sorts of useful
                dependencies for us, so build those first so the rest can
