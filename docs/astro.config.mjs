@@ -196,6 +196,7 @@ export default defineConfig({
             { label: "Getting Started", link: "/quickstart/self-hosted/" },
             { label: "Docker Compose", link: "/quickstart/self-hosted/docker-compose" },
             { label: "Kubernetes", link: "/quickstart/self-hosted/kubernetes" },
+            { label: "AWS ECS", link: "/quickstart/self-hosted/aws" },
             { label: "Environment Variables", link: "/self-hosted/environment-variables" },
             { label: "Observability and Metrics", link: "/self-hosted/observability-metrics" },
             { label: "Editions", link: "/self-hosted/editions" },

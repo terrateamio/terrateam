@@ -16,15 +16,20 @@ The self-hosted Docker and Kubernetes deployments use the Open Source edition by
 Choose the deployment method that best fits your infrastructure and requirements:
 
 <CardGrid>
-  <LinkCard 
-    title="Docker Compose" 
+  <LinkCard
+    title="Docker Compose"
     description="Quick setup for development, testing, and smaller production deployments. Perfect for getting started with minimal infrastructure."
     href="/self-hosted/docker-compose/"
   />
-  <LinkCard 
-    title="Kubernetes with Helm" 
+  <LinkCard
+    title="Kubernetes with Helm"
     description="Production-ready deployment with auto-scaling and high availability. Ideal for enterprise environments and large teams."
     href="/self-hosted/kubernetes/"
+  />
+  <LinkCard
+    title="AWS ECS"
+    description="Deploy on AWS using ECS/Fargate, ALB, and RDS PostgreSQL. Infrastructure as code with a single Terraform module."
+    href="/self-hosted/aws/"
   />
 </CardGrid>
 

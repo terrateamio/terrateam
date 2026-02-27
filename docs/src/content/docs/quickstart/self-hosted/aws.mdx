@@ -1,0 +1,316 @@
+---
+title: AWS ECS
+description: Deploy Terrateam Self-Hosted on AWS using ECS/Fargate, ALB, and RDS PostgreSQL with a single Terraform module.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Deploy Terrateam on AWS using the [`terraform-aws-terrateam`](https://github.com/terrateamio/terraform-aws-terrateam) Terraform module. This creates an ECS/Fargate service behind an Application Load Balancer with an RDS PostgreSQL database — all managed as infrastructure as code.
+
+:::caution[Required First Step]
+You must run the Terrateam Setup application first to create your GitHub App. This generates the credentials needed for the deployment.
+
+```sh
+git clone https://github.com/terrateamio/terrateam.git
+cd terrateam/docker/terrat
+docker-compose up setup
+# Open http://localhost:3000 and complete the wizard
+```
+
+Save the generated credentials — you will need them in the post-apply steps below.
+:::
+
+## Prerequisites
+
+- **Completed the Setup Wizard** (see above) to generate GitHub App credentials
+- **AWS account** with permissions for ECS, RDS, ALB, IAM, Secrets Manager, and CloudWatch
+- **Terraform** >= 1.3 installed
+- **VPC** with subnets:
+  - Public subnets for the ALB (at least two, in different availability zones)
+  - Private subnets with NAT gateway for ECS tasks and RDS, **or** public subnets with `assign_public_ip = true`
+- (Optional) An **ACM certificate** for HTTPS
+
+## Architecture
+
+The module creates:
+
+- **ECS Cluster + Fargate Service** running the Terrateam container
+- **Application Load Balancer** with health checks on `/health`
+- **RDS PostgreSQL** instance with encrypted storage
+- **Secrets Manager** secrets for GitHub App credentials and the database password
+- **CloudWatch Log Group** for container logs
+- **Security Groups** restricting traffic between ALB, ECS, and RDS
+- **IAM Roles** for task execution (pulling images, reading secrets) and the task itself
+
+## Deployment
+
+<Steps>
+
+1. **Create your Terraform configuration**
+
+   Create a new directory and `main.tf`:
+
+   ```hcl
+   provider "aws" {
+     region = "us-east-1"  # Choose your region
+   }
+
+   module "terrateam" {
+     source = "github.com/terrateamio/terraform-aws-terrateam"
+
+     vpc_id             = "vpc-0123456789abcdef0"
+     public_subnet_ids  = ["subnet-aaa", "subnet-bbb"]
+     private_subnet_ids = ["subnet-ccc", "subnet-ddd"]
+     domain             = "terrateam.example.com"
+
+     # Optional: enable HTTPS
+     # acm_certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/xxxxxxxx"
+
+     tags = {
+       Environment = "production"
+     }
+   }
+
+   output "alb_dns_name" {
+     value = module.terrateam.alb_dns_name
+   }
+
+   output "ecs_cluster_name" {
+     value = module.terrateam.ecs_cluster_name
+   }
+
+   output "ecs_service_name" {
+     value = module.terrateam.ecs_service_name
+   }
+
+   output "secret_arns" {
+     value = module.terrateam.secret_arns
+   }
+
+   output "terrateam_url" {
+     value = module.terrateam.terrateam_url
+   }
+   ```
+
+   :::note[VPC without NAT Gateway]
+   If your ECS tasks run in public subnets (no NAT gateway), add `assign_public_ip = true` to the module block. This allows tasks to pull container images and reach the GitHub API.
+   :::
+
+2. **Deploy the infrastructure**
+
+   ```sh
+   terraform init
+   terraform apply
+   ```
+
+   This creates all resources including the ECS cluster, ALB, RDS instance, and empty Secrets Manager secrets. The RDS instance takes several minutes to provision.
+
+   :::note[First startup]
+   On the initial deploy, the ECS task will fail health checks while the database migrations run (2-5 minutes). The service will automatically retry until the migrations complete and the application starts. This is expected.
+   :::
+
+3. **Set up DNS and HTTPS**
+
+   You need a domain name that points to the ALB. This is the URL you will use for GitHub webhooks, OAuth callbacks, and the Terrateam UI.
+
+   Create a DNS record pointing your domain to the ALB:
+
+   ```
+   terrateam.example.com  CNAME  <alb_dns_name>
+   ```
+
+   If using Route 53, create an alias record using the `alb_dns_name` and `alb_zone_id` outputs.
+
+   **For HTTPS** (recommended for production), request an [ACM certificate](https://docs.aws.amazon.com/acm/latest/userguide/gs-acm-request-public.html) for your domain, then set `acm_certificate_arn` in your module configuration and run `terraform apply` again. The module will create an HTTPS listener and redirect HTTP to HTTPS.
+
+   :::caution[HTTPS and GitHub OAuth]
+   GitHub requires HTTPS callback URLs for OAuth in production. Without HTTPS, you can still receive webhooks over HTTP, but the OAuth login flow for the Terrateam UI may not work depending on your GitHub App configuration.
+   :::
+
+4. **Populate GitHub App secrets**
+
+   The module creates empty Secrets Manager secrets. Populate them with the credentials from the Setup Wizard:
+
+   ```sh
+   # Get the secret ARNs from Terraform output
+   terraform output secret_arns
+
+   # Populate each secret
+   aws secretsmanager put-secret-value \
+     --secret-id <github_app_id ARN> \
+     --secret-string '<YOUR_APP_ID>'
+
+   aws secretsmanager put-secret-value \
+     --secret-id <github_app_client_id ARN> \
+     --secret-string '<YOUR_CLIENT_ID>'
+
+   aws secretsmanager put-secret-value \
+     --secret-id <github_app_client_secret ARN> \
+     --secret-string '<YOUR_CLIENT_SECRET>'
+
+   aws secretsmanager put-secret-value \
+     --secret-id <github_webhook_secret ARN> \
+     --secret-string '<YOUR_WEBHOOK_SECRET>'
+   ```
+
+   For the PEM private key, if you have a `.pem` file:
+
+   ```sh
+   aws secretsmanager put-secret-value \
+     --secret-id <github_app_pem ARN> \
+     --secret-string file://private-key.pem
+   ```
+
+   If you are using the `.env` file from the Setup Wizard, the PEM value contains literal `\n` escape sequences. Extract and convert it to real newlines:
+
+   ```sh
+   PEM_RAW=$(grep '^GITHUB_APP_PEM=' .env | sed 's/^GITHUB_APP_PEM=//')
+   printf '%b' "$PEM_RAW" | aws secretsmanager put-secret-value \
+     --secret-id <github_app_pem ARN> \
+     --secret-string file:///dev/stdin
+   ```
+
+   :::caution[Do not use `source .env`]
+   The PEM value in the `.env` file cannot be loaded with `source` because the `\n` sequences and multi-line format cause shell parsing errors.
+   :::
+
+   :::danger[Security]
+   Never commit secrets to version control. Use environment variables or a secrets manager for CI/CD pipelines.
+   :::
+
+5. **Redeploy ECS to pick up secrets**
+
+   Force a new deployment so the ECS tasks load the populated secrets:
+
+   ```sh
+   aws ecs update-service \
+     --cluster $(terraform output -raw ecs_cluster_name) \
+     --service $(terraform output -raw ecs_service_name) \
+     --force-new-deployment
+   ```
+
+   Wait for the new task to pass health checks (1-2 minutes). You can monitor progress in the [CloudWatch Logs console](https://console.aws.amazon.com/cloudwatch/home#logsV2:log-groups) under the `/ecs/<name>` log group, or check readiness with:
+
+   ```sh
+   curl $(terraform output -raw terrateam_url)/health
+   ```
+
+6. **Configure GitHub App**
+
+   Navigate to your GitHub App settings and configure the following:
+
+   **Webhook URL:**
+   1. In the **General** tab, find the **Webhook** section
+   2. Set the webhook URL to:
+      ```
+      <your-terrateam-url>/api/github/v1/events
+      ```
+      Replace `<your-terrateam-url>` with the `terrateam_url` Terraform output (e.g. `https://terrateam.example.com`).
+   3. Save your changes
+
+   **Enable UI access (OAuth):**
+   1. Check the box **"Request user authorization (OAuth) during installation"**
+   2. Set the **Callback URL** to:
+      ```
+      <your-terrateam-url>/api/github/v1/callback
+      ```
+   3. Save your changes
+
+   :::note[Webhook and Callback Paths]
+   - Webhook: `/api/github/v1/events`
+   - OAuth callback: `/api/github/v1/callback`
+   :::
+
+7. **Verify the deployment**
+
+   Check the health endpoint using the `terrateam_url` output:
+
+   ```sh
+   curl $(terraform output -raw terrateam_url)/health
+   ```
+
+   A `200` response means both the application and database are healthy.
+
+   Access the Terrateam UI at your `terrateam_url` and log in with your GitHub account.
+
+8. **Install the GitHub App**
+
+   Install your GitHub App on the organization or repositories you want Terrateam to manage:
+
+   1. Navigate to your GitHub App's public page (e.g. `https://github.com/apps/<your-app-name>`)
+   2. Click **Install**
+   3. Select the organization and repositories to enable
+   4. Create a pull request with a Terraform change to verify Terrateam responds
+
+</Steps>
+
+## Troubleshooting
+
+If the ECS task is failing or the health check is not passing, check the container logs:
+
+```sh
+aws logs tail /ecs/<name> --region <region> --follow
+```
+
+Common issues:
+- **Task fails immediately**: Check that all Secrets Manager secrets have been populated (step 4). Empty secrets cause the task to crash on startup.
+- **502 or 503 from ALB**: The ECS task is still starting or running database migrations. Wait 2-5 minutes on first deploy.
+- **OAuth login redirects to wrong URL**: Run `terraform apply` and then force a new ECS deployment (step 5) to pick up the updated `domain` configuration.
+
+## Inputs
+
+| Name | Description | Type | Default |
+|------|-------------|------|---------|
+| `vpc_id` | VPC ID | `string` | — |
+| `public_subnet_ids` | Public subnet IDs for ALB | `list(string)` | — |
+| `private_subnet_ids` | Private subnet IDs for ECS + RDS | `list(string)` | — |
+| `domain` | Public FQDN for the instance | `string` | — |
+| `name` | Name prefix for all resources | `string` | `"terrateam"` |
+| `acm_certificate_arn` | ACM certificate ARN for HTTPS | `string` | `null` |
+| `container_image` | Docker image | `string` | `"ghcr.io/terrateamio/terrat-oss:latest"` |
+| `container_cpu` | Fargate CPU units | `number` | `512` |
+| `container_memory` | Fargate memory (MiB) | `number` | `1024` |
+| `desired_count` | ECS task count | `number` | `1` |
+| `db_instance_class` | RDS instance class | `string` | `"db.t4g.micro"` |
+| `db_engine_version` | PostgreSQL version | `string` | `"14.18"` |
+| `db_multi_az` | Enable RDS Multi-AZ | `bool` | `false` |
+| `db_deletion_protection` | Enable RDS deletion protection | `bool` | `true` |
+| `db_backup_retention_period` | RDS backup retention days | `number` | `7` |
+| `alb_ingress_cidr_blocks` | CIDRs allowed to reach the ALB | `list(string)` | `["0.0.0.0/0"]` |
+| `assign_public_ip` | Assign public IP to ECS tasks | `bool` | `false` |
+| `extra_environment` | Additional container env vars | `list(object)` | `[]` |
+| `db_skip_final_snapshot` | Skip final snapshot on RDS destroy | `bool` | `false` |
+| `tags` | Tags for all resources | `map(string)` | `{}` |
+
+## Outputs
+
+| Name | Description |
+|------|-------------|
+| `alb_dns_name` | ALB DNS name |
+| `alb_zone_id` | ALB Route 53 zone ID (for alias records) |
+| `ecs_cluster_name` | ECS cluster name |
+| `ecs_service_name` | ECS service name |
+| `task_role_arn` | ECS task role ARN (attach additional policies here) |
+| `db_endpoint` | RDS endpoint |
+| `secret_arns` | Map of all Secrets Manager ARNs |
+| `terrateam_url` | Constructed URL for the instance |
+| `alb_security_group_id` | ALB security group ID |
+| `ecs_security_group_id` | ECS security group ID |
+| `rds_security_group_id` | RDS security group ID |
+
+## Updating
+
+To update the Terrateam container image or change configuration:
+
+```sh
+terraform apply
+```
+
+To force a redeployment of the ECS service (e.g., after updating secret values):
+
+```sh
+aws ecs update-service \
+  --cluster <ecs_cluster_name> \
+  --service <ecs_service_name> \
+  --force-new-deployment
+```
