@@ -168,6 +168,7 @@ export default defineConfig({
                 { label: "Best Practices", link: "/security/best-practices" },
                 { label: "Audit Trail", link: "/security/audit-trail" },
                 { label: "Cloud Credentials", link: "/security/cloud-credentials" },
+                { label: "Hardening AWS OIDC", link: "/security/hardening-aws-oidc" },
                 { label: "Plan File Storage", link: "/security/plan-file-storage" },
                 { label: "GitHub Environments", link: "/integrations/external-tools/github-environments" },
                 { label: "Private Runners", link: "/security/private-runners" },
