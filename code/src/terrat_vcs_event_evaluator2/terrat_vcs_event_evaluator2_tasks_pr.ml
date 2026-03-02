@@ -1421,7 +1421,8 @@ struct
                 | Terrat_comment.Apply_force { tag_query } ->
                     Some (Tjc.Job.Type_.Apply { tag_query; kind = None; force = true })
                 | Terrat_comment.Repo_config -> Some Tjc.Job.Type_.Repo_config
-                | Terrat_comment.Unlock unlocks -> Some (Tjc.Job.Type_.Unlock unlocks)
+                | Terrat_comment.Unlock unlocks ->
+                    Some (Tjc.Job.Type_.Unlock (CCList.sort_uniq ~cmp:CCString.compare unlocks))
                 | Terrat_comment.Index -> Some Tjc.Job.Type_.Index
                 | Terrat_comment.Help
                 | Terrat_comment.Apply_autoapprove _
