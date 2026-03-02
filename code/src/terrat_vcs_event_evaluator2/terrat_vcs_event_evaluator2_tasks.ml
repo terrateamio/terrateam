@@ -454,6 +454,11 @@ struct
                                   (fun { Dc.stack_name; _ } ->
                                     CCList.mem ~eq:CCString.equal stack_name apply_after)
                                   flat_all_unapplied_matches))
+                  | Tjc.Job.Type_.(Plan { tag_query = _; kind = Some (Tjc.Job.Type_.Kind.Drift _) })
+                    ->
+                      (* In the case that it is a plan for drift, then plan all layers in one go. *)
+                      CCList.filter (Terrat_change_match3.match_tag_query ~tag_query)
+                      @@ CCList.flatten all_unapplied_matches
                   | Tjc.Job.Type_.Autoplan
                   | Tjc.Job.Type_.Plan _
                   | Tjc.Job.Type_.Gate_approval _
@@ -3013,12 +3018,28 @@ struct
                        things being merged in an order we did not anticipate) in
                        which case this also prevents us from getting into an
                        infinite loop. *)
-                    let { Tjc.Job.context; initiator; _ } = job in
+                    let { Tjc.Job.context; initiator; type_; _ } = job in
+                    let job_type =
+                      match type_ with
+                      | Tjc.Job.Type_.(
+                          ( Plan { tag_query; kind = Some _ as kind }
+                          | Apply { tag_query; kind = Some _ as kind; force = _ } )) ->
+                          Tjc.Job.Type_.(Plan { tag_query; kind })
+                      | Tjc.Job.Type_.Apply _
+                      | Tjc.Job.Type_.Autoapply
+                      | Tjc.Job.Type_.Autoplan
+                      | Tjc.Job.Type_.Gate_approval _
+                      | Tjc.Job.Type_.Index
+                      | Tjc.Job.Type_.Plan _
+                      | Tjc.Job.Type_.Push
+                      | Tjc.Job.Type_.Repo_config
+                      | Tjc.Job.Type_.Unlock _ -> Tjc.Job.Type_.Autoplan
+                    in
                     Builder.run_db s ~f:(fun db ->
                         S.Job_context.Job.create
                           ~request_id:(Builder.log_id s)
                           db
-                          Tjc.Job.Type_.Autoplan
+                          job_type
                           context
                           initiator)
                     >>= fun job ->
