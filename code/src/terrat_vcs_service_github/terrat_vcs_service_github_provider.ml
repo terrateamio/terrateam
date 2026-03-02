@@ -3979,6 +3979,23 @@ module Comment = struct
              kv
     | Msg.Conflicting_work_manifests wms ->
         let module Wm = Terrat_work_manifest3 in
+        let wms =
+          let module Key = struct
+            type t = string * bool [@@deriving ord]
+          end in
+          CCList.map
+            (fun ({ Wm.target; _ } as wm) ->
+              let id, is_pr =
+                match target with
+                | Terrat_vcs_provider2.Target.Pr pr ->
+                    (CCInt.to_string (Api.Pull_request.id pr), true)
+                | Terrat_vcs_provider2.Target.Drift _ -> ("drift", false)
+              in
+              ((id, is_pr), wm))
+            wms
+          |> CCList.sort_uniq ~cmp:(fun (a, _) (b, _) -> Key.compare a b)
+          |> CCList.map snd
+        in
         let kv =
           Snabela.Kv.(
             Map.of_list
