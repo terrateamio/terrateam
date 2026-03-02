@@ -120,7 +120,14 @@ struct
       (fun () ->
         S.Db.query_pull_request_out_of_change_applies ~request_id:(Builder.log_id s) db pull_request)
 
-  let query_dirspaces_without_valid_plans s db pull_request dirspaces =
+  let lock_repository s account repo db =
+    time_it
+      s
+      (fun m log_id time ->
+        m "%s : LOCK_REPOSITORY : repo=%s : time=%f" log_id (S.Api.Repo.to_string repo) time)
+      (fun () -> S.Db.lock_repository ~request_id:(Builder.log_id s) db account repo)
+
+  let query_dirspaces_without_valid_plans ~base_ref ~branch_ref s db pull_request dirspaces =
     time_it
       s
       (fun m log_id time ->
@@ -132,6 +139,8 @@ struct
       (fun () ->
         S.Db.query_dirspaces_without_valid_plans
           ~request_id:(Builder.log_id s)
+          ~base_ref
+          ~branch_ref
           db
           pull_request
           dirspaces)
@@ -423,7 +432,7 @@ struct
           match S.Api.Pull_request.state pull_request with
           | Terrat_pull_request.State.Open _ | Terrat_pull_request.State.Closed ->
               Abb.Future.return (Ok (S.Api.Pull_request.branch_ref pull_request))
-          | Terrat_pull_request.State.Merged _ -> fetch Keys.default_branch_sha)
+          | Terrat_pull_request.State.Merged _ -> fetch Keys.working_dest_branch_ref)
 
     let working_branch_name =
       run ~name:"working_branch_name" (fun s { Bs.Fetcher.fetch } ->
@@ -451,11 +460,17 @@ struct
           let open Irm in
           fetch Keys.pull_request
           >>= fun pull_request ->
+          fetch Keys.dest_branch_ref
+          >>= fun base_ref ->
+          fetch Keys.branch_ref
+          >>= fun branch_ref ->
           Abb.Future.return
             (Ok
                (fun matches ->
                  Builder.run_db s ~f:(fun db ->
                      query_dirspaces_without_valid_plans
+                       ~base_ref
+                       ~branch_ref
                        s
                        db
                        pull_request
@@ -996,6 +1011,10 @@ struct
           let open Irm in
           fetch Keys.pull_request
           >>= fun pull_request ->
+          fetch Keys.dest_branch_ref
+          >>= fun base_ref ->
+          fetch Keys.branch_ref
+          >>= fun branch_ref ->
           fetch Keys.access_control_eval_apply
           >>= fun access_control_result ->
           Abb.Future.return
@@ -1005,6 +1024,8 @@ struct
           >>= fun { Terrat_access_control2.R.pass = working_set_matches; _ } ->
           Builder.run_db s ~f:(fun db ->
               query_dirspaces_without_valid_plans
+                ~base_ref
+                ~branch_ref
                 s
                 db
                 pull_request
@@ -1298,6 +1319,14 @@ struct
           let run =
             let open Irm in
             fetch Keys.check_pull_request_state
+            >>= fun () ->
+            (* Lock the repository to serialize apply checks and prevent
+               concurrent applies on the same repository. *)
+            fetch Keys.account
+            >>= fun account ->
+            fetch Keys.repo
+            >>= fun repo ->
+            Builder.run_db s ~f:(lock_repository s account repo)
             >>= fun () ->
             (* Building these two happens to build all sorts of useful
                dependencies for us, so build those first so the rest can

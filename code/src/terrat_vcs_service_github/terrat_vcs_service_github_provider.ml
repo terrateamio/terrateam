@@ -295,6 +295,15 @@ module Db = struct
         /% Var.text "owner"
         /% Var.text "name")
 
+    let select_repository_for_update =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* id *)
+        Ret.bigint
+        /^ read "select_repository_for_update.sql"
+        /% Var.bigint "id")
+
     let insert_pull_request =
       Pgsql_io.Typed_sql.(
         sql
@@ -515,7 +524,9 @@ module Db = struct
         /% Var.bigint "repository"
         /% Var.bigint "pull_number"
         /% Var.(str_array (text "dirs"))
-        /% Var.(str_array (text "workspaces")))
+        /% Var.(str_array (text "workspaces"))
+        /% Var.(ud (text "base_ref") Api.Ref.to_string)
+        /% Var.(ud (text "branch_ref") Api.Ref.to_string))
 
     let update_abort_duplicate_work_manifests_query = read "abort_duplicate_work_manifests.sql"
 
@@ -1032,6 +1043,21 @@ module Db = struct
           (Api.Repo.name repo))
     >>= function
     | Ok () -> Abb.Future.return (Ok ())
+    | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+        Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
+  let lock_repository ~request_id db account repo =
+    let open Abb.Future.Infix_monad in
+    Metrics.Psql_query_time.time (Metrics.psql_query_time "select_repository_for_update") (fun () ->
+        Pgsql_io.Prepared_stmt.fetch
+          db
+          Sql.select_repository_for_update
+          ~f:CCFun.id
+          (CCInt64.of_int (Api.Repo.id repo)))
+    >>= function
+    | Ok _ -> Abb.Future.return (Ok ())
     | Error (#Pgsql_io.err as err) ->
         Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
@@ -1698,7 +1724,13 @@ module Db = struct
         Logs.err (fun m -> m "%s : %a" request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
 
-  let query_dirspaces_without_valid_plans ~request_id db pull_request dirspaces =
+  let query_dirspaces_without_valid_plans
+      ~request_id
+      ~base_ref
+      ~branch_ref
+      db
+      pull_request
+      dirspaces =
     let open Abb.Future.Infix_monad in
     Metrics.Psql_query_time.time
       (Metrics.psql_query_time "select_dirspaces_without_valid_plans")
@@ -1710,7 +1742,9 @@ module Db = struct
           (CCInt64.of_int @@ Api.Repo.id @@ Api.Pull_request.repo pull_request)
           (CCInt64.of_int @@ Api.Pull_request.id pull_request)
           (CCList.map (fun { Terrat_change.Dirspace.dir; _ } -> dir) dirspaces)
-          (CCList.map (fun { Terrat_change.Dirspace.workspace; _ } -> workspace) dirspaces))
+          (CCList.map (fun { Terrat_change.Dirspace.workspace; _ } -> workspace) dirspaces)
+          base_ref
+          branch_ref)
     >>= function
     | Ok _ as ret -> Abb.Future.return ret
     | Error (#Pgsql_io.err as err) ->

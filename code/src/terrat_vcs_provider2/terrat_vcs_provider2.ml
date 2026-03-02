@@ -202,6 +202,13 @@ module type S = sig
       Api.Repo.t ->
       (unit, [> `Error ]) result Abb.Future.t
 
+    val lock_repository :
+      request_id:string ->
+      t ->
+      Api.Account.t ->
+      Api.Repo.t ->
+      (unit, [> `Error ]) result Abb.Future.t
+
     val store_pull_request :
       request_id:string ->
       t ->
@@ -338,6 +345,8 @@ module type S = sig
 
     val query_dirspaces_without_valid_plans :
       request_id:string ->
+      base_ref:Api.Ref.t ->
+      branch_ref:Api.Ref.t ->
       t ->
       ('diff, 'checks) Api.Pull_request.t ->
       Terrat_change.Dirspace.t list ->
