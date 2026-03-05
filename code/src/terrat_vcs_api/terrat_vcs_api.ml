@@ -81,6 +81,7 @@ module type S = sig
 
     val to_repo : t -> Repo.t
     val default_branch : t -> Ref.t
+    val is_archived : t -> bool
   end
 
   module Pull_request : sig

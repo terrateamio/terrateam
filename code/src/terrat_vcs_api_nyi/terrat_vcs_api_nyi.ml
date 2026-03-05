@@ -78,6 +78,7 @@ module Remote_repo = struct
 
   let to_repo t = raise (Failure "nyi")
   let default_branch t = raise (Failure "nyi")
+  let is_archived _ = raise (Failure "nyi")
 end
 
 module Ref = struct
