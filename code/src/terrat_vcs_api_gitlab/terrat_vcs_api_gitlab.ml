@@ -216,6 +216,7 @@ module Remote_repo = struct
     | None -> assert false
 
   let default_branch t = t.P.default_branch
+  let is_archived t = CCOption.get_or ~default:false t.P.archived
 end
 
 module Ref = struct

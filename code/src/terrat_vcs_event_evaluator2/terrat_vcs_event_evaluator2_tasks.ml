@@ -2744,6 +2744,13 @@ struct
                       time)
                   (fun () -> S.Api.fetch_remote_repo ~request_id:(Builder.log_id s) client repo)
                 >>= function
+                | Ok remote_repo when S.Api.Remote_repo.is_archived remote_repo ->
+                    Logs.info (fun m ->
+                        m
+                          "%s : DRIFT : SKIP_ARCHIVED : repo = %s"
+                          (Builder.log_id s)
+                          (S.Api.Repo.to_string repo));
+                    Abb.Future.return (Ok ())
                 | Ok remote_repo -> (
                     let open Irm in
                     let default_branch = S.Api.Remote_repo.default_branch remote_repo in

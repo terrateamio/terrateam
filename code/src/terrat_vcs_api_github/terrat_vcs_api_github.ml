@@ -138,6 +138,7 @@ module Remote_repo = struct
     Repo.make ~id:(CCInt64.to_int id) ~owner ~name ()
 
   let default_branch t = t.R.primary.R.Primary.default_branch
+  let is_archived t = t.R.primary.R.Primary.archived
 end
 
 module Ref = struct
