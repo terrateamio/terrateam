@@ -364,6 +364,16 @@ module Workflow_step = struct
       [@@deriving make, show, yojson, eq]
     end
 
+    module Azure = struct
+      type t = {
+        audience : string option;
+        client_id : string;
+        subscription_id : string option;
+        tenant_id : string;
+      }
+      [@@deriving make, show, yojson, eq]
+    end
+
     module Gcp = struct
       type t = {
         access_token_lifetime : int; [@default 3600]
@@ -378,6 +388,7 @@ module Workflow_step = struct
 
     type t =
       | Aws of Aws.t
+      | Azure of Azure.t
       | Gcp of Gcp.t
     [@@deriving show, yojson, eq]
   end
@@ -1519,6 +1530,7 @@ let of_version_1_hook_op =
   | Op.Hook_op_oidc op -> (
       let module Op = Terrat_repo_config_hook_op_oidc in
       let module Aws = Terrat_repo_config_hook_op_oidc_aws in
+      let module Azure = Terrat_repo_config_hook_op_oidc_azure in
       let module Gcp = Terrat_repo_config_hook_op_oidc_gcp in
       match op with
       | Op.Hook_op_oidc_aws
@@ -1546,6 +1558,12 @@ let of_version_1_hook_op =
                       ~role_arn
                       ~session_name
                       ())))
+      | Op.Hook_op_oidc_azure
+          { Azure.audience; client_id; provider = _; subscription_id; tenant_id; type_ = _ } ->
+          Ok
+            (Hooks.Hook_op.Oidc
+               Workflow_step.Oidc.(
+                 Azure (Azure.make ?audience ?subscription_id ~client_id ~tenant_id ())))
       | Op.Hook_op_oidc_gcp
           {
             Gcp.access_token_lifetime;
@@ -1718,6 +1736,7 @@ let of_version_1_workflow_op_list ops =
       | Op.Hook_op_oidc op -> (
           let module Op = Terrat_repo_config_hook_op_oidc in
           let module Aws = Terrat_repo_config_hook_op_oidc_aws in
+          let module Azure = Terrat_repo_config_hook_op_oidc_azure in
           let module Gcp = Terrat_repo_config_hook_op_oidc_gcp in
           match op with
           | Op.Hook_op_oidc_aws
@@ -1745,6 +1764,12 @@ let of_version_1_workflow_op_list ops =
                           ~role_arn
                           ~session_name
                           ())))
+          | Op.Hook_op_oidc_azure
+              { Azure.audience; client_id; provider = _; subscription_id; tenant_id; type_ = _ } ->
+              Ok
+                (O.Oidc
+                   Workflow_step.Oidc.(
+                     Azure (Azure.make ?audience ?subscription_id ~client_id ~tenant_id ())))
           | Op.Hook_op_oidc_gcp
               {
                 Gcp.access_token_lifetime;
@@ -3020,6 +3045,19 @@ let to_version_1_hooks_op_oidc = function
           service_account;
           type_ = "oidc";
           workload_identity_provider;
+        }
+  | Workflow_step.Oidc.Azure oidc ->
+      let module Oidc = Terrat_repo_config.Hook_op_oidc in
+      let module Azure = Terrat_repo_config.Hook_op_oidc_azure in
+      let { Workflow_step.Oidc.Azure.audience; client_id; subscription_id; tenant_id } = oidc in
+      Oidc.Hook_op_oidc_azure
+        {
+          Azure.audience;
+          client_id;
+          provider = "azure";
+          subscription_id;
+          tenant_id;
+          type_ = "oidc";
         }
 
 let to_version_1_hooks_op_run r =

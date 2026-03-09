@@ -98,6 +98,16 @@ module Workflow_step : sig
       [@@deriving make, show, yojson, eq]
     end
 
+    module Azure : sig
+      type t = {
+        audience : string option;
+        client_id : string;
+        subscription_id : string option;
+        tenant_id : string;
+      }
+      [@@deriving make, show, yojson, eq]
+    end
+
     module Gcp : sig
       type t = {
         access_token_lifetime : int; [@default 3600]
@@ -112,6 +122,7 @@ module Workflow_step : sig
 
     type t =
       | Aws of Aws.t
+      | Azure of Azure.t
       | Gcp of Gcp.t
     [@@deriving show, yojson, eq]
   end

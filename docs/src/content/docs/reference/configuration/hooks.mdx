@@ -61,7 +61,7 @@ The `oidc` hook type can be used to initiate an OIDC connection to a cloud provi
 | Key | Type | Provider | Description |
 |-----|------|----------|-------------|
 | oidc | List | | Initiate an OIDC connection to a cloud provider. |
-| provider | String | | Name of provider: aws or gcp. |
+| provider | String | | Name of provider: aws, azure, or gcp. |
 | role_arn | String | aws | Specifies the ARN of an IAM role that you want to use. Value can be specified using a GitHub Secret / environment variable. |
 | assume_role_arn | String | aws | Specifies the ARN of an IAM role that you want to assume into. Default is the value of `role_arn`. Value can be specified using a GitHub Secret / environment variable. |
 | assume_role_enabled | Boolean | aws | Retrieve a set of temporary security credentials from AWS and set the AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and AWS_SESSION_TOKEN environment variables. Default is true. |
@@ -74,6 +74,10 @@ The `oidc` hook type can be used to initiate an OIDC connection to a cloud provi
 | access_token_lifetime | Integer | gcp | Desired lifetime duration of the access token, in seconds. Default is 3600. |
 | audience | String | gcp | Specifies the GCP audience name to use. Default is ht<span>tps://iam.googleapis.com/</span> + workload_identity_provider. |
 | access_token_subject | String | gcp | Email address of a user to impersonate for [Domain-Wide Delegation](https://developers.google.com/workspace/guides/create-credentials). Value can be specified using a GitHub Secret / environment variable. |
+| client_id | String | azure | App Registration client ID. Value can be specified using a GitHub Secret / environment variable. |
+| tenant_id | String | azure | Azure AD (Entra ID) tenant ID. Value can be specified using a GitHub Secret / environment variable. |
+| subscription_id | String | azure | Default Azure subscription ID. Value can be specified using a GitHub Secret / environment variable. |
+| audience | String | azure | Specifies the Azure audience name to use. Default is api://AzureADTokenExchange. |
 
 ## Examples
 ### Setting Environment Variables
@@ -122,6 +126,19 @@ hooks:
         workload_identity_provider: ${GCP_WORKLOAD_IDENTITY_PROVIDER}
 ```
 This pre-hook for all operations initiates an OIDC connection to GCP using the service account and workload identity provider specified in the `GCP_SERVICE_ACCOUNT` and `GCP_WORKLOAD_IDENTITY_PROVIDER` environment variables.
+
+### Azure OIDC Authentication
+```yaml
+hooks:
+  all:
+    pre:
+      - type: oidc
+        provider: azure
+        client_id: ${ARM_CLIENT_ID}
+        tenant_id: ${ARM_TENANT_ID}
+        subscription_id: ${ARM_SUBSCRIPTION_ID}
+```
+This pre-hook for all operations initiates an OIDC connection to Azure using the client ID, tenant ID, and subscription ID specified in the corresponding environment variables.
 
 ## Considerations
 When using hooks in your Terrateam configuration, keep the following considerations in mind:

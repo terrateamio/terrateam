@@ -55,6 +55,7 @@ module Hook_op_env_source = Terrat_repo_config_hook_op_env_source
 module Hook_op_gates = Terrat_repo_config_hook_op_gates
 module Hook_op_oidc = Terrat_repo_config_hook_op_oidc
 module Hook_op_oidc_aws = Terrat_repo_config_hook_op_oidc_aws
+module Hook_op_oidc_azure = Terrat_repo_config_hook_op_oidc_azure
 module Hook_op_oidc_gcp = Terrat_repo_config_hook_op_oidc_gcp
 module Hook_op_run = Terrat_repo_config_hook_op_run
 module Hook_op_slack = Terrat_repo_config_hook_op_slack

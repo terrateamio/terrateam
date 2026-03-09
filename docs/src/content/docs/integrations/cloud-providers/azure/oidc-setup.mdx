@@ -1,0 +1,233 @@
+---
+title: OIDC Setup
+description: Set up Azure OpenID Connect authentication for Terrateam - recommended for production
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import { Card } from '@astrojs/starlight/components';
+
+<Card title="What is OIDC?" icon="information">
+OpenID Connect (OIDC) allows your GitHub Actions workflows to access Azure resources without storing any credentials as long-lived GitHub secrets. Azure natively supports OIDC through Entra ID federated credentials. This is the most secure authentication method for production environments.
+</Card>
+
+## Prerequisites
+
+Before you begin, ensure you have the following:
+- [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/)
+- An Azure subscription with permissions to create App Registrations and assign RBAC roles
+
+## Setup
+
+<Steps>
+
+1. ### Login to Azure CLI
+
+   ```sh
+   az login
+   ```
+
+2. ### Get your Subscription ID and Tenant ID
+
+   ```sh
+   az account show --query '{subscriptionId:id, tenantId:tenantId}' -o json
+   ```
+
+   Example output:
+   ```json
+   {
+     "subscriptionId": "00000000-0000-0000-0000-000000000000",
+     "tenantId": "00000000-0000-0000-0000-000000000000"
+   }
+   ```
+
+3. ### Export environment variables
+
+   ```sh
+   export SUBSCRIPTION_ID="<subscription-id>"
+   export TENANT_ID="<tenant-id>"
+   export GITHUB_ORG="<github-org-or-username>"
+   ```
+
+4. ### Create an App Registration
+
+   ```sh
+   az ad app create --display-name "terrateam"
+   ```
+
+   Note the `appId` from the output:
+   ```json
+   {
+     "appId": "00000000-0000-0000-0000-000000000000",
+     ...
+   }
+   ```
+
+   ```sh
+   export CLIENT_ID="<appId>"
+   ```
+
+5. ### Create a Service Principal
+
+   ```sh
+   az ad sp create --id "$CLIENT_ID"
+   ```
+
+6. ### Add a Federated Credential
+
+   Create the federated credential configuration:
+
+   :::note
+   Replace `GITHUB_ORG` with your GitHub organization name or username. This is case-sensitive.
+   :::
+
+   ```sh
+   cat > federated-credential.json << EOF
+   {
+     "name": "terrateam-github",
+     "issuer": "https://token.actions.githubusercontent.com",
+     "subject": "repo:${GITHUB_ORG}/*",
+     "audiences": ["api://AzureADTokenExchange"],
+     "description": "Terrateam GitHub Actions OIDC"
+   }
+   EOF
+
+   az ad app federated-credential create \
+     --id "$CLIENT_ID" \
+     --parameters federated-credential.json
+   ```
+
+   :::tip[Subject Matching]
+   The `subject` field controls which repositories can authenticate. Examples:
+   - `repo:org/repo:ref:refs/heads/main` - specific branch
+   - `repo:org/repo:*` - any branch in a specific repo
+   - `repo:org/*` - any repo in the organization
+
+   Azure also supports wildcard matching in federated credential subjects via the Microsoft Graph beta API. See the [Azure documentation](https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-considerations) for details.
+   :::
+
+7. ### Assign RBAC Role
+
+   Grant the service principal permissions on your subscription:
+
+   ```sh
+   az role assignment create \
+     --assignee "$CLIENT_ID" \
+     --role "Contributor" \
+     --scope "/subscriptions/$SUBSCRIPTION_ID"
+   ```
+
+   :::note
+   `Contributor` is an Azure built-in role. This role grants full access to manage all resources, but does not allow you to assign roles in Azure RBAC. Choose whichever role makes the most sense for your organization.
+   :::
+
+</Steps>
+
+## Configure Terrateam for OIDC
+
+After setting up Azure resources, configure Terrateam to use OIDC authentication:
+
+<Steps>
+
+1. ### Create Configuration File
+
+   Create the `.terrateam/config.yml` configuration file at the root of your Terraform repository.
+
+2. ### Add OIDC Hook
+
+   :::note
+   Replace `CLIENT_ID`, `TENANT_ID`, and `SUBSCRIPTION_ID` with your actual values.
+   :::
+
+   ```yml
+   hooks:
+     all:
+       pre:
+         - type: oidc
+           provider: azure
+           client_id: "CLIENT_ID"
+           tenant_id: "TENANT_ID"
+           subscription_id: "SUBSCRIPTION_ID"
+   ```
+
+</Steps>
+
+## Testing Your Setup
+
+Test that OIDC authentication is working:
+
+1. Create a simple Terraform configuration in your repository
+2. Open a pull request with the changes
+3. Comment `terrateam plan` on the pull request
+4. Terrateam should successfully authenticate using OIDC and show the plan output
+
+## How It Works
+
+Azure OIDC with Terrateam works by:
+
+1. Terrateam requests a GitHub OIDC token with audience `api://AzureADTokenExchange`
+2. The token is passed directly to the Terraform AzureRM/AzAPI providers via environment variables
+3. The providers exchange the token with Entra ID for Azure credentials
+
+The following environment variables are automatically set:
+
+| Variable | Value |
+|----------|-------|
+| `ARM_USE_OIDC` | `true` |
+| `ARM_CLIENT_ID` | Your App Registration client ID |
+| `ARM_TENANT_ID` | Your Entra ID tenant ID |
+| `ARM_OIDC_TOKEN` | The GitHub OIDC token |
+| `ARM_SUBSCRIPTION_ID` | Your Azure subscription ID (if configured) |
+
+## Advanced Configuration
+
+:::tip[Multiple Environments]
+You can use different App Registrations for different environments and operations. For example:
+
+```yml
+workflows:
+  - tag_query: "dir:terraform/production/**"
+    plan:
+      - type: oidc
+        provider: azure
+        client_id: "PROD_CLIENT_ID"
+        tenant_id: "TENANT_ID"
+        subscription_id: "PROD_SUBSCRIPTION_ID"
+      - type: init
+      - type: plan
+    apply:
+      - type: oidc
+        provider: azure
+        client_id: "PROD_CLIENT_ID"
+        tenant_id: "TENANT_ID"
+        subscription_id: "PROD_SUBSCRIPTION_ID"
+      - type: init
+      - type: apply
+  - tag_query: "dir:terraform/staging/**"
+    plan:
+      - type: oidc
+        provider: azure
+        client_id: "STAGING_CLIENT_ID"
+        tenant_id: "TENANT_ID"
+        subscription_id: "STAGING_SUBSCRIPTION_ID"
+      - type: init
+      - type: plan
+    apply:
+      - type: oidc
+        provider: azure
+        client_id: "STAGING_CLIENT_ID"
+        tenant_id: "TENANT_ID"
+        subscription_id: "STAGING_SUBSCRIPTION_ID"
+      - type: init
+      - type: apply
+```
+
+For more details, read the [Cloud Credentials documentation](/advanced-workflows/cloud-credentials).
+:::
+
+## Next Steps
+
+Now that you have Azure authentication configured, you are now able to use Terrateam for plan and apply operations against Azure resources.
+
+- Learn about [advanced workflows](/advanced-workflows/) for complex setups
+- Configure [multiple environments](/advanced-workflows/multiple-environments)
+- Set up [apply requirements](/security-and-compliance/apply-requirements-and-overrides) for additional security
