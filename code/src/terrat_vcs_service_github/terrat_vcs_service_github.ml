@@ -28,6 +28,13 @@ struct
     let enforce_installation_access = Provider.enforce_installation_access
   end)
 
+  module Ep_repo_delete =
+    Terrat_vcs_service_github_ep_repo_delete.Make
+      (Provider)
+      (struct
+        let enforce_installation_access = Provider.enforce_installation_access
+      end)
+
   module Ep_user = Terrat_vcs_service_github_ep_user
 
   module Kv_store =
@@ -234,6 +241,12 @@ struct
       let installation_repos_refresh_rt () =
         Brtl_rtng.Route.(installation_api_rt () /% Path.int / "repos" / "refresh")
 
+      let installation_repo_delete_rt () =
+        Brtl_rtng.Route.(installation_api_rt () /% Path.int / "repos" /% Path.string)
+
+      let legacy_installation_repo_delete_rt () =
+        Brtl_rtng.Route.(legacy_installation_api_rt () /% Path.int / "repos" /% Path.string)
+
       (* User API *)
       let user_api_rt () = Brtl_rtng.Route.(api_v1 () / "user")
       let user_installations_rt () = Brtl_rtng.Route.(user_api_rt () / "github" / "installations")
@@ -282,6 +295,7 @@ struct
             (`GET, Rt.installation_repos_rt () --> Ep_inst.Repos.get config storage);
             ( `POST,
               Rt.installation_repos_refresh_rt () --> Ep_inst.Repos.Refresh.post config storage );
+            (`DELETE, Rt.installation_repo_delete_rt () --> Ep_repo_delete.delete config storage);
             (`GET, Rt.user_installations_rt () --> Ep_user.Installations.get config storage);
             (* Legacy Installations *)
             (`GET, Rt.legacy_installation_dirspaces_rt () --> Ep_inst.Dirspaces.get config storage);
@@ -298,6 +312,8 @@ struct
             ( `POST,
               Rt.legacy_installation_repos_refresh_rt ()
               --> Ep_inst.Repos.Refresh.post config storage );
+            ( `DELETE,
+              Rt.legacy_installation_repo_delete_rt () --> Ep_repo_delete.delete config storage );
           ]
   end
 

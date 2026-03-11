@@ -124,6 +124,21 @@
         ],
         "type": "object"
       },
+      "error-response": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
       "gate": {
         "additionalProperties": false,
         "properties": {
@@ -2839,6 +2854,61 @@
         }
       }
     },
+    "/api/v1/github/installations/{installation_id}/repos/{repo_id}": {
+      "delete": {
+        "operationId": "installations/delete-repo",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "installation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "repo_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error-response"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error-response"
+                }
+              }
+            }
+          },
+          "403": {
+            "content": {}
+          }
+        }
+      }
+    },
     "/api/v1/github/installations/{installation_id}/work-manifests": {
       "get": {
         "operationId": "installations/list-work-manifests",
@@ -3386,6 +3456,61 @@
                     "repositories"
                   ],
                   "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "content": {}
+          }
+        }
+      }
+    },
+    "/api/v1/gitlab/installations/{installation_id}/repos/{repo_id}": {
+      "delete": {
+        "operationId": "gitlab-installations/delete-repo",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "installation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "repo_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error-response"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error-response"
                 }
               }
             }

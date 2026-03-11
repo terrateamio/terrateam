@@ -987,6 +987,17 @@ let get_repo_role ~request_id repo user client =
             err);
       Abb.Future.return (Error `Error)
 
+let get_org_role ~request_id ~org user client =
+  let open Abb.Future.Infix_monad in
+  Terrat_github.get_org_membership ~org ~user:(User.to_string user) client.Client.client
+  >>= function
+  | Ok _ as res -> Abb.Future.return res
+  | Error (#Terrat_github.get_org_membership_err as err) ->
+      Prmths.Counter.inc_one Metrics.github_errors_total;
+      Logs.info (fun m ->
+          m "%s : GET_ORG_ROLE : %a" request_id Terrat_github.pp_get_org_membership_err err);
+      Abb.Future.return (Error `Error)
+
 let find_workflow_file ~request_id repo client =
   let open Abb.Future.Infix_monad in
   Terrat_github.find_workflow_file

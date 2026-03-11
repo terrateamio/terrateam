@@ -151,6 +151,7 @@ type get_tree_err =
 
 type get_team_membership_in_org_err = Githubc2_abb.call_err [@@deriving show]
 type get_repo_collaborator_permission_err = Githubc2_abb.call_err [@@deriving show]
+type get_org_membership_err = Githubc2_abb.call_err [@@deriving show]
 
 let max_get_tree_chunks = 20
 
@@ -662,6 +663,20 @@ let get_repo_collaborator_permission ~org ~repo ~user client =
   | `Not_found _ -> Abb.Future.return (Ok None)
   | `OK Permission.{ primary = Primary.{ role_name; _ }; _ } ->
       Abb.Future.return (Ok (Some role_name))
+
+let get_org_membership ~org ~user client =
+  Prmths.Counter.inc_one (Metrics.fn_call_total "get_org_membership");
+  let open Abbs_future_combinators.Infix_result_monad in
+  let module Membership = Githubc2_components.Org_membership in
+  call client Githubc2_orgs.Get_membership_for_user.(make Parameters.(make ~org ~username:user))
+  >>= fun resp ->
+  match Openapi.Response.value resp with
+  | `Not_found _ -> Abb.Future.return (Ok None)
+  | `Forbidden _ -> Abb.Future.return (Ok None)
+  | `OK Membership.{ primary = Primary.{ role; state; _ }; _ } ->
+      if state = "active" then
+        Abb.Future.return (Ok (Some (if role = "admin" then `Admin else `User)))
+      else Abb.Future.return (Ok None)
 
 module Commit_status = struct
   type create_err = Githubc2_abb.call_err [@@deriving show]

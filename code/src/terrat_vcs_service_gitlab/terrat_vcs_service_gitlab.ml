@@ -27,6 +27,13 @@ struct
     let enforce_installation_access = Provider.enforce_installation_access
   end)
 
+  module Ep_repo_delete =
+    Terrat_vcs_service_gitlab_ep_repo_delete.Make
+      (Provider)
+      (struct
+        let enforce_installation_access = Provider.enforce_installation_access
+      end)
+
   module Work_manifest = Terrat_vcs_service_gitlab_ep_work_manifest.Make (Provider)
 
   type t = {
@@ -116,6 +123,9 @@ struct
           /? Query.(option (ud_array "page" Brtl_ep_paginate.Param.(of_param Typ.string)))
           /? Query.(option_default 20 (int "limit")))
 
+      let gitlab_installations_repo_delete () =
+        Brtl_rtng.Route.(gitlab_installations () /% Path.int / "repos" /% Path.string)
+
       let gitlab_installation_dirspaces () =
         Brtl_rtng.Route.(
           gitlab_installations ()
@@ -180,6 +190,8 @@ struct
             (* Installations *)
             (`GET, Rt.gitlab_installation_dirspaces () --> Ep_inst.List_dirspaces.get config storage);
             (`GET, Rt.gitlab_installations_repos () --> Ep_inst.List_repos.get config storage);
+            ( `DELETE,
+              Rt.gitlab_installations_repo_delete () --> Ep_repo_delete.delete config storage );
             ( `GET,
               Rt.gitlab_installation_work_manifests ()
               --> Ep_inst.List_work_manifests.get config storage );

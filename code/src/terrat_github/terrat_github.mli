@@ -107,6 +107,7 @@ type get_tree_err =
 
 type get_team_membership_in_org_err = Githubc2_abb.call_err [@@deriving show]
 type get_repo_collaborator_permission_err = Githubc2_abb.call_err [@@deriving show]
+type get_org_membership_err = Githubc2_abb.call_err [@@deriving show]
 
 module Commit_status : sig
   type create_err = Githubc2_abb.call_err [@@deriving show]
@@ -319,6 +320,12 @@ val get_repo_collaborator_permission :
   user:string ->
   Githubc2_abb.t ->
   (string option, [> get_repo_collaborator_permission_err ]) result Abb.Future.t
+
+val get_org_membership :
+  org:string ->
+  user:string ->
+  Githubc2_abb.t ->
+  ([ `Admin | `User ] option, [> get_org_membership_err ]) result Abb.Future.t
 
 (** GitHub does not include Oauth operations in their JSON schema, so implementing here. *)
 module Oauth : sig
