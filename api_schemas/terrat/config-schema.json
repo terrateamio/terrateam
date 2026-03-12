@@ -874,6 +874,9 @@
           "$ref": "#/definitions/hook-op-oidc-aws"
         },
         {
+          "$ref": "#/definitions/hook-op-oidc-azure"
+        },
+        {
           "$ref": "#/definitions/hook-op-oidc-gcp"
         }
       ]
@@ -917,6 +920,38 @@
       },
       "required": [
         "role_arn",
+        "type"
+      ],
+      "type": "object"
+    },
+    "hook-op-oidc-azure": {
+      "additionalProperties": false,
+      "properties": {
+        "audience": {
+          "type": "string"
+        },
+        "client_id": {
+          "type": "string"
+        },
+        "provider": {
+          "const": "azure",
+          "type": "string"
+        },
+        "subscription_id": {
+          "type": "string"
+        },
+        "tenant_id": {
+          "type": "string"
+        },
+        "type": {
+          "const": "oidc",
+          "type": "string"
+        }
+      },
+      "required": [
+        "client_id",
+        "provider",
+        "tenant_id",
         "type"
       ],
       "type": "object"
