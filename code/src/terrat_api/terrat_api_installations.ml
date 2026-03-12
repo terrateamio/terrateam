@@ -233,6 +233,67 @@ module Repo_refresh = struct
       `Post
 end
 
+module Delete_repo = struct
+  module Parameters = struct
+    type t = {
+      installation_id : string;
+      repo_id : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      include Json_schema.Additional_properties.Make (Json_schema.Empty_obj) (Json_schema.Obj)
+    end
+
+    module Bad_request = struct
+      type t = Terrat_api_components.Error_response.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Unauthorized = struct
+      type t = Terrat_api_components.Error_response.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Forbidden = struct end
+
+    type t =
+      [ `OK of OK.t
+      | `Bad_request of Bad_request.t
+      | `Unauthorized of Unauthorized.t
+      | `Forbidden
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("400", Openapi.of_json_body (fun v -> `Bad_request v) Bad_request.of_yojson);
+        ("401", Openapi.of_json_body (fun v -> `Unauthorized v) Unauthorized.of_yojson);
+        ("403", fun _ -> Ok `Forbidden);
+      ]
+  end
+
+  let url = "/api/v1/github/installations/{installation_id}/repos/{repo_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("installation_id", Var (params.installation_id, String));
+           ("repo_id", Var (params.repo_id, String));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
 module List_work_manifests = struct
   module Parameters = struct
     module D = struct

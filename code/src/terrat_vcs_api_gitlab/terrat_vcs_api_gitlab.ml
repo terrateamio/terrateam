@@ -1091,4 +1091,41 @@ let get_repo_role ~request_id repo user client =
       Logs.err (fun m -> m "%s : GET_REPO_ROLE : %a" request_id Openapic_abb.pp_call_err err);
       Abb.Future.return (Error `Error)
 
+let get_org_role ~request_id ~org user client =
+  let module Glu = Gitlabc_users.GetApiV4Users in
+  let module Glg = Gitlabc_groups_members.GetApiV4GroupsIdMembersUserId in
+  let run =
+    let open Abbs_future_combinators.Infix_result_monad in
+    call client.Client.client Glu.(make (Parameters.make ~username:(Some (User.to_string user)) ()))
+    >>= fun resp ->
+    let module U = Gitlabc_components_api_entities_userbasic in
+    match Openapi.Response.value resp with
+    | `OK ({ U.id = user_id; _ } :: _) -> (
+        let group_id = Uri.pct_encode org in
+        call client.Client.client Glg.(make (Parameters.make ~id:group_id ~user_id))
+        >>= fun resp ->
+        let module M = Gitlabc_components_api_entities_member in
+        match Openapi.Response.value resp with
+        | `OK { M.access_level; _ } ->
+            let role =
+              match access_level with
+              | 40 | 50 -> Some `Admin
+              | n when n > 0 -> Some `User
+              | _ -> None
+            in
+            Abb.Future.return (Ok role)
+        | `Not_found -> Abb.Future.return (Ok None))
+    | `OK [] -> Abb.Future.return (Ok None)
+  in
+  let open Abb.Future.Infix_monad in
+  run
+  >>= function
+  | Ok _ as r -> Abb.Future.return r
+  | Error (#Glg.Responses.t as err) ->
+      Logs.err (fun m -> m "%s : GET_ORG_ROLE : %a" request_id Glg.Responses.pp err);
+      Abb.Future.return (Error `Error)
+  | Error (#Openapic_abb.call_err as err) ->
+      Logs.err (fun m -> m "%s : GET_ORG_ROLE : %a" request_id Openapic_abb.pp_call_err err);
+      Abb.Future.return (Error `Error)
+
 let find_workflow_file ~request_id _repo _client = Abb.Future.return (Ok (Some ".gitlab-ci.yml"))

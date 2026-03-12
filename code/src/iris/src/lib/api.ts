@@ -412,6 +412,11 @@ export class ValidatedApiClient {
     return validateRepository(response);
   }
 
+  async deleteRepo(installationId: string, repoId: string, provider?: VCSProvider): Promise<void> {
+    const providerPath = this.getProviderPath(provider);
+    await this.delete(`${providerPath}/installations/${installationId}/repos/${repoId}`);
+  }
+
   async refreshInstallationRepos(installationId: string, provider?: VCSProvider): Promise<{ id: string }> {
     const providerPath = this.getProviderPath(provider);
     const response = await this.post(`${providerPath}/installations/${installationId}/repos/refresh`);

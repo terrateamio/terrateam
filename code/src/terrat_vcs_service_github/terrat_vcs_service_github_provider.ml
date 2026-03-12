@@ -750,6 +750,23 @@ module Db = struct
         /% Var.(ud (bigint "repo_id") CCFun.(Api.Repo.id %> CCInt64.of_int))
         /% Var.(ud (text "branch") Api.Ref.to_string)
         /% Var.(ud (text "hash") Api.Ref.to_string))
+
+    let select_repo_by_id () =
+      Pgsql_io.Typed_sql.(
+        sql
+        // Ret.bigint
+        // Ret.text
+        // Ret.text
+        /^ read "select_repo_by_id.sql"
+        /% Var.bigint "repo_id"
+        /% Var.bigint "installation_id")
+
+    let delete_repo () =
+      Pgsql_io.Typed_sql.(
+        sql
+        /^ read "delete_repo.sql"
+        /% Var.(ud (bigint "repo_id") CCInt64.of_int)
+        /% Var.(ud (bigint "installation_id") CCInt64.of_int))
   end
 
   type t = Pgsql_io.t
@@ -2122,6 +2139,34 @@ module Db = struct
     | Error (#Pgsql_io.err as err) ->
         Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m -> m "%s : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
+  let query_repo_by_id ~request_id db installation_id repo_id =
+    let open Abb.Future.Infix_monad in
+    Metrics.Psql_query_time.time (Metrics.psql_query_time "select_repo_by_id") (fun () ->
+        Pgsql_io.Prepared_stmt.fetch
+          db
+          (Sql.select_repo_by_id ())
+          ~f:(fun id owner name -> Api.Repo.make ~id:(Int64.to_int id) ~owner ~name ())
+          (CCInt64.of_int repo_id)
+          (CCInt64.of_int installation_id))
+    >>= function
+    | Ok (repo :: _) -> Abb.Future.return (Ok (Some repo))
+    | Ok [] -> Abb.Future.return (Ok None)
+    | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+        Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
+  let delete_repo ~request_id db installation_id repo_id =
+    let open Abb.Future.Infix_monad in
+    Metrics.Psql_query_time.time (Metrics.psql_query_time "delete_repo") (fun () ->
+        Pgsql_io.Prepared_stmt.execute db (Sql.delete_repo ()) repo_id installation_id)
+    >>= function
+    | Ok () -> Abb.Future.return (Ok ())
+    | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+        Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
 end
 

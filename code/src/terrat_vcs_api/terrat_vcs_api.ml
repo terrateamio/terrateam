@@ -235,6 +235,13 @@ module type S = sig
     Client.t ->
     (string option, [> `Error ]) result Abb.Future.t
 
+  val get_org_role :
+    request_id:string ->
+    org:string ->
+    User.t ->
+    Client.t ->
+    ([ `Admin | `User ] option, [> `Error ]) result Abb.Future.t
+
   val find_workflow_file :
     request_id:string -> Repo.t -> Client.t -> (string option, [> `Error ]) result Abb.Future.t
 end

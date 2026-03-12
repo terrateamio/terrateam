@@ -131,4 +131,5 @@ let merge_pull_request ~request_id client pull_request merge_strategy = raise (F
 let delete_branch ~request_id client repo branch = raise (Failure "nyi")
 let is_member_of_team ~request_id ~team ~user repo client = raise (Failure "nyi")
 let get_repo_role ~request_id repo user client = raise (Failure "nyi")
+let get_org_role ~request_id ~org user client = raise (Failure "nyi")
 let find_workflow_file ~request_id repo client = raise (Failure "nyi")

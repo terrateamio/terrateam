@@ -3,10 +3,11 @@
   // Auth handled by PageLayout
   import { installations, selectedInstallation, installationsLoading, installationsError, currentVCSProvider } from './stores';
   import { repositoryService, type RepositoryWithStats } from './services/repository-service';
-  import { api } from './api';
+  import { api, isApiError } from './api';
   import PageLayout from './components/layout/PageLayout.svelte';
   import Card from './components/ui/Card.svelte';
   import ClickableCard from './components/ui/ClickableCard.svelte';
+  import Button from './components/ui/Button.svelte';
   import LoadingSpinner from './components/ui/LoadingSpinner.svelte';
   import ErrorMessage from './components/ui/ErrorMessage.svelte';
   import { navigateToRepository } from './utils/navigation';
@@ -28,6 +29,11 @@
   let isRefreshing: boolean = false;
   let lastRefreshedAt: Date | null = null;
   let loadProgress: { current: number; total?: number } = { current: 0 };
+
+  // Delete repo state
+  let repoToDelete: RepositoryWithStats | null = null;
+  let isDeleting: boolean = false;
+  let deleteError: string | null = null;
   
   // Filter/search state
   let filteredRepositories: RepositoryWithStats[] = [];
@@ -187,6 +193,49 @@
     } else {
       return date.toLocaleDateString();
     }
+  }
+
+  function handleDeleteClick(repo: RepositoryWithStats): void {
+    repoToDelete = repo;
+  }
+
+  function handleCancelDelete(): void {
+    repoToDelete = null;
+  }
+
+  async function confirmDelete(): Promise<void> {
+    if (!repoToDelete || !$selectedInstallation) return;
+
+    isDeleting = true;
+    try {
+      await api.deleteRepo($selectedInstallation.id, repoToDelete.id.toString(), $currentVCSProvider || undefined);
+      allRepositories = allRepositories.filter(r => r.id !== repoToDelete!.id);
+      repoToDelete = null;
+    } catch (err: unknown) {
+      repoToDelete = null;
+      if (isApiError(err)) {
+        const errorData = err.data as { id?: string } | undefined;
+        if (err.status === 400 && errorData?.id === 'REPO_NOT_ARCHIVED') {
+          deleteError = 'This repository cannot be deleted because it is not archived. Please archive it first in your VCS provider.';
+        } else if (err.status === 400 && errorData?.id === 'REPO_NOT_FOUND') {
+          deleteError = 'This repository was not found. It may have already been deleted.';
+        } else if (err.status === 400 && errorData?.id === 'INVALID_REPO_ID') {
+          deleteError = 'Invalid repository ID.';
+        } else if (err.status === 403) {
+          deleteError = 'You do not have permission to delete this repository. Only organization admins can delete repositories.';
+        } else {
+          deleteError = 'An unexpected error occurred while deleting the repository. Please try again.';
+        }
+      } else {
+        deleteError = 'An unexpected error occurred while deleting the repository. Please try again.';
+      }
+    } finally {
+      isDeleting = false;
+    }
+  }
+
+  function handleDismissError(): void {
+    deleteError = null;
   }
 
   async function refreshRepositories(): Promise<void> {
@@ -544,7 +593,7 @@
                   </div>
                 </div>
                 <div class="flex items-center space-x-3">
-                  <ClickableCard 
+                  <ClickableCard
                     padding="sm"
                     hover={true}
                     on:click={() => handleRepoClick(repo)}
@@ -558,6 +607,15 @@
                       </svg>
                     </div>
                   </ClickableCard>
+                  <button
+                    on:click={() => handleDeleteClick(repo)}
+                    aria-label="Delete repository {repo.name}"
+                    class="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors rounded-md hover:bg-red-50 dark:hover:bg-red-900/20"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
                 </div>
               </div>
             </div>
@@ -653,3 +711,63 @@
     </Card>
   {/if}
 </PageLayout>
+
+<!-- Delete Confirmation Modal -->
+{#if repoToDelete}
+  <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+      <div class="flex items-start mb-4">
+        <div class="flex-shrink-0">
+          <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <div class="ml-3 flex-1">
+          <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Delete Repository</h3>
+          <div class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            <p>Are you sure you want to delete <span class="font-semibold">{repoToDelete.name}</span>?</p>
+            <p class="mt-2">This will remove the repository from Terrateam. This action cannot be undone.</p>
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end gap-3">
+        <Button variant="secondary" size="md" on:click={handleCancelDelete} disabled={isDeleting}>
+          Cancel
+        </Button>
+        <Button variant="accent" size="md" on:click={confirmDelete} loading={isDeleting}>
+          {#if isDeleting}
+            Deleting...
+          {:else}
+            Delete Repository
+          {/if}
+        </Button>
+      </div>
+    </div>
+  </div>
+{/if}
+
+<!-- Delete Error Modal -->
+{#if deleteError}
+  <div class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+      <div class="flex items-start mb-4">
+        <div class="flex-shrink-0">
+          <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div class="ml-3 flex-1">
+          <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Delete Failed</h3>
+          <div class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            <p>{deleteError}</p>
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end">
+        <Button variant="secondary" size="md" on:click={handleDismissError}>
+          Close
+        </Button>
+      </div>
+    </div>
+  </div>
+{/if}

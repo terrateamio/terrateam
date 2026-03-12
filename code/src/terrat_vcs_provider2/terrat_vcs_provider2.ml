@@ -429,6 +429,20 @@ module type S = sig
       Api.Repo.t ->
       t ->
       (unit, [> `Error ]) result Abb.Future.t
+
+    val query_repo_by_id :
+      request_id:string ->
+      t ->
+      Api.Account.Id.t ->
+      Api.Repo.Id.t ->
+      (Api.Repo.t option, [> `Error ]) result Abb.Future.t
+
+    val delete_repo :
+      request_id:string ->
+      t ->
+      Api.Account.Id.t ->
+      Api.Repo.Id.t ->
+      (unit, [> `Error ]) result Abb.Future.t
   end
 
   module Apply_requirements : sig
