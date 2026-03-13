@@ -1,0 +1,193 @@
+---
+title: AI Integrations
+description: Get AI-powered feedback on Terraform plan and apply results directly in your pull requests
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Terrateam's [hooks](/reference/configuration/hooks) and [workflow](/reference/configuration/workflows) steps give you access to full plan and apply results via `$TERRATEAM_RESULTS_FILE`. Pair this with any LLM API to get AI-powered feedback directly in your pull requests — summarizing changes, flagging risks, diagnosing errors, and more.
+
+## How It Works
+
+1. Terrateam writes operation results to `$TERRATEAM_RESULTS_FILE` (JSON) after plan or apply operations complete
+2. A hook or workflow step script reads that file, extracts relevant data, and sends it to an LLM provider
+3. The script prints the LLM response to stdout
+4. Setting `capture_output: true` and `visible_on: always` makes the response appear in the PR comment
+
+## Use Cases
+
+### Plan Summary
+
+After a successful plan, ask the LLM to summarize what will change, flag potential risks, and estimate blast radius. This gives reviewers a quick, plain-English overview without reading raw Terraform output.
+
+### Plan Error Analysis
+
+When a plan fails, send the error output to the LLM for an explanation of the root cause and suggested fixes. This is especially useful for teams where not every reviewer is a Terraform expert.
+
+### Apply Summary
+
+After a successful apply, confirm what was deployed, highlight any warnings in the output, and note any resources that may need post-deployment verification.
+
+### Apply Error Analysis
+
+When an apply fails, have the LLM diagnose the root cause — partial state issues, provider errors, permission problems — and suggest remediation steps.
+
+### Security & Compliance Review
+
+Ask the LLM to review plan output for security concerns: open security groups, public S3 buckets, missing encryption, overly permissive IAM policies, and similar issues.
+
+
+## Configuration
+
+There are two approaches to running AI feedback: **hooks** and **workflow steps**. Choose based on your needs.
+
+### Hooks Approach
+
+Hooks run **once** after all dirspaces complete. The `$TERRATEAM_RESULTS_FILE` contains aggregated results across all dirspaces, making this ideal for a single summary comment.
+
+```yaml
+# .terrateam/config.yml
+hooks:
+  plan:
+    post:
+      - type: run
+        cmd: ['bash', '${TERRATEAM_ROOT}/scripts/ai-feedback.sh']
+        capture_output: true
+        run_on: always
+        visible_on: always
+        ignore_errors: true
+```
+
+For apply feedback, add the same under `hooks.apply.post`:
+
+```yaml
+hooks:
+  apply:
+    post:
+      - type: run
+        cmd: ['bash', '${TERRATEAM_ROOT}/scripts/ai-feedback.sh']
+        capture_output: true
+        run_on: always
+        visible_on: always
+        ignore_errors: true
+```
+
+### Workflow Approach
+
+Workflow steps run **per dirspace**. Use this when you want individual AI feedback for each directory/workspace combination.
+
+```yaml
+# .terrateam/config.yml
+workflows:
+  - tag_query: ""
+    plan:
+      - type: init
+      - type: plan
+      - type: run
+        cmd: ['bash', '${TERRATEAM_ROOT}/scripts/ai-feedback.sh']
+        capture_output: true
+        run_on: always
+        visible_on: always
+        ignore_errors: true
+```
+
+### Which to Choose?
+
+| | Hooks | Workflow Steps |
+|---|---|---|
+| **Scope** | Once after all dirspaces | Per dirspace |
+| **Results** | Aggregated across all dirspaces | Single dirspace |
+| **Best for** | Overall summary | Per-directory feedback |
+| **API calls** | One per operation | One per dirspace |
+
+## Example Scripts
+
+The following examples show how to send `$TERRATEAM_RESULTS_FILE` to an LLM provider. The results file contains everything — plan/apply output, success/failure status, cost estimation data — so you can pass it directly and let the LLM interpret it. Store your script at `scripts/ai-feedback.sh` in your repository.
+
+### Anthropic (Claude)
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Requires ANTHROPIC_API_KEY as a GitHub Secret
+RESULTS=$(cat "$TERRATEAM_RESULTS_FILE")
+
+RESPONSE=$(curl -s https://api.anthropic.com/v1/messages \
+  -H "content-type: application/json" \
+  -H "x-api-key: $ANTHROPIC_API_KEY" \
+  -H "anthropic-version: 2023-06-01" \
+  -d "$(jq -n --arg results "$RESULTS" '{
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 1024,
+    system: "You are a Terraform expert. Analyze the following Terrateam results JSON. Summarize the changes, flag any risks or errors, and highlight anything that deserves reviewer attention. Be concise.",
+    messages: [{role: "user", content: $results}]
+  }')")
+
+echo "$RESPONSE" | jq -r '.content[0].text'
+```
+
+### OpenAI (ChatGPT)
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Requires OPENAI_API_KEY as a GitHub Secret
+RESULTS=$(cat "$TERRATEAM_RESULTS_FILE")
+
+RESPONSE=$(curl -s https://api.openai.com/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -d "$(jq -n --arg results "$RESULTS" '{
+    model: "gpt-4o",
+    max_tokens: 1024,
+    messages: [
+      {role: "system", content: "You are a Terraform expert. Analyze the following Terrateam results JSON. Summarize the changes, flag any risks or errors, and highlight anything that deserves reviewer attention. Be concise."},
+      {role: "user", content: $results}
+    ]
+  }')")
+
+echo "$RESPONSE" | jq -r '.choices[0].message.content'
+```
+
+### Google (Gemini)
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Requires GOOGLE_API_KEY as a GitHub Secret
+RESULTS=$(cat "$TERRATEAM_RESULTS_FILE")
+
+RESPONSE=$(curl -s "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$GOOGLE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d "$(jq -n --arg results "$RESULTS" '{
+    system_instruction: {parts: [{text: "You are a Terraform expert. Analyze the following Terrateam results JSON. Summarize the changes, flag any risks or errors, and highlight anything that deserves reviewer attention. Be concise."}]},
+    contents: [{parts: [{text: $results}]}]
+  }')")
+
+echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text'
+```
+
+## Storing API Keys
+
+Store your LLM provider API key as a [GitHub Secret](https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions) in your repository:
+
+<Steps>
+1. Go to your repository **Settings** → **Secrets and variables** → **Actions**
+2. Click **New repository secret**
+3. Add your key (e.g., `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, or `GOOGLE_API_KEY`)
+4. Set the `AI_PROVIDER` environment variable to match your provider
+</Steps>
+
+You can reference secrets directly in your Terrateam configuration — they are available as environment variables during workflow execution. For environment-specific keys, use [GitHub Environments](/integrations/external-tools/github-environments) to scope secrets to specific environments like `production` or `staging`.
+
+## Tips & Best Practices
+
+- **Use `run_on: always`** to get AI feedback on both success and failure. This is especially valuable for error analysis.
+- **Use `visible_on: always`** so the AI response always appears in the PR comment, regardless of operation outcome.
+- **Use `ignore_errors: true`** so LLM API failures don't block your Terraform workflow. AI feedback is helpful but should never prevent a plan or apply from completing.
+- **Truncate large plans** before sending to the LLM. The example script limits output to 30,000 characters by default. Adjust `MAX_CHARS` based on your provider's token limits.
+- **Customize prompts per environment** — use stricter security-focused prompts for production directories and lighter summaries for development.
+- **Use `jq` for safe JSON construction** — the example script uses `jq -n` to build request payloads, which properly escapes special characters in Terraform output.

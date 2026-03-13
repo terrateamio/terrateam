@@ -151,6 +151,7 @@ export default defineConfig({
                 { label: "OPA Policies", link: "/integrations/external-tools/opa" },
                 { label: "Checkov Scanning", link: "/integrations/external-tools/checkov" },
                 { label: "Webhooks", link: "/integrations/external-tools/webhooks" },
+                { label: "AI Integrations", link: "/integrations/external-tools/ai-integrations" },
                 { label: "Resourcely", link: "/integrations/external-tools/resourcely" },
                 { label: "Installing Packages", link: "/integrations/external-tools/installing-packages" },
               ],
