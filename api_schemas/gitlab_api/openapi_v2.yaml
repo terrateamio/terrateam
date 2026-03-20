@@ -25295,7 +25295,7 @@ paths:
   "/api/v4/projects/{id}/packages/npm/{package_name}":
     put:
       summary: Create or deprecate NPM package
-      description: Create was introduced in GitLab 11.8 & deprecate suppport was added
+      description: Create was introduced in GitLab 11.8 & deprecate support was added
         in 16.0
       produces:
       - application/json

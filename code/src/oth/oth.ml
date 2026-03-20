@@ -21,7 +21,7 @@ module Assert = struct
 end
 
 (*
- * This isn't here actually but will be used to propogate
+ * This isn't here actually but will be used to propagate
  * options at some point
  *)
 module State = struct

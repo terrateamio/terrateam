@@ -147,7 +147,7 @@ main: FALSE EQUAL RPAREN
 ## identifier EQUAL
 ##
 
-Expected expression in attribute defintion, found symbol.
+Expected expression in attribute definition, found symbol.
 
 main: FALSE EQUAL NOT RPAREN
 ##
@@ -530,7 +530,7 @@ main: FALSE EQUAL FALSE RPAREN
 ## expr_term
 ##
 
-Unexpected closing paranthesis found.
+Unexpected closing parenthesis found.
 
 main: FALSE EQUAL FALSE LBRACKET RPAREN
 ##

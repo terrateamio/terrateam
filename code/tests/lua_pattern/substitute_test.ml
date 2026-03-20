@@ -18,6 +18,6 @@ let test_subs str pat subs res _ =
   assert (compare_res ret res)
 
 let create_test (str, pat, subs, res) =
-  Oth.test ~name:(Printf.sprintf "substitue %s %s" str pat) (test_subs str pat subs res)
+  Oth.test ~name:(Printf.sprintf "substitute %s %s" str pat) (test_subs str pat subs res)
 
 let () = Oth.(run (serial (List.map ~f:create_test tests)))

@@ -355,7 +355,7 @@ module Comp = struct
                        [
                          txt'
                            "Add the user as a \"Developer\" role.  Click the Check button to \
-                            verify the uesr has been added";
+                            verify the user has been added";
                        ];
                      div [ txt' ("Add the the user " ^ username ^ " to the group") ];
                      div

@@ -8,7 +8,7 @@ gitlab_sql_files := $(wildcard $(SRC_DIR)/sql/*.sql)
 gitlab_tmpl_files := $(wildcard $(SRC_DIR)/tmpl/*.tmpl)
 
 
-# Since we are generating this .ml file, there is no source to in the predfined
+# Since we are generating this .ml file, there is no source to in the predefined
 # SRC_DIR, so we set it to someplace else since the source dir cannot be
 # modified by the build system.
 SRC_DIR = src

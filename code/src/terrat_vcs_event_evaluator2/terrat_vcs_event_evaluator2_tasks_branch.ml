@@ -62,7 +62,7 @@ struct
           | Some ref_ -> Abb.Future.return (Ok ref_)
           | None -> Abb.Future.return (Error `Error))
 
-    (* Is this the right choice?  Returning the branch anme if the dest branch
+    (* Is this the right choice?  Returning the branch name if the dest branch
        name doesn't exist?  For now, yes.  We eventually want to have better
        support for this, but right now to be compatible with a lot of the code
        base, always return a dest branch and then in places in the code where we

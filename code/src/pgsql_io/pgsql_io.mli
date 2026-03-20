@@ -278,7 +278,7 @@ val ping : t -> bool Abb.Future.t
 
 (** Execute the function inside a transaction. If the function fails, either by returning [Error _]
     or throwing an exception or being aborted, the exception will be rolled back. Otherwise it will
-    be commited.
+    be committed.
 
     Nested transactions are not supported. *)
 val tx : t -> f:(unit -> ('a, ([> err ] as 'e)) result Abb.Future.t) -> ('a, 'e) result Abb.Future.t

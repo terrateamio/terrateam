@@ -583,7 +583,7 @@ let rec get_tree ~owner ~repo ~sha client =
       match Openapi.Response.value resp with
       | `OK tree -> (
           let open Abb.Future.Infix_monad in
-          (* In the case that the response is truncated, we need to preform
+          (* In the case that the response is truncated, we need to perform
              the recursive calls ourselves.  We will do that in parallel, with
              maximum number of concurrent lookups per level being
              [max_get_tree_chunks]. *)

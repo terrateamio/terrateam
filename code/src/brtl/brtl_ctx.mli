@@ -18,7 +18,7 @@ val create : string -> Request.t -> (unit, unit) t
 (** {1 Metadata}
 
    A context has metadata associated with it that can be used by any component
-   with the key.  The metadata is implemented as a hetergeneous map [Hmap] so it
+   with the key.  The metadata is implemented as a heterogeneous map [Hmap] so it
    can store a value of any type given the same key.
 
    Note that the key is a value and must be the same key value used to insert

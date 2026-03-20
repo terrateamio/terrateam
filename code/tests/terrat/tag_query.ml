@@ -3,13 +3,13 @@ module Parse_errors = struct
 
   let rparen =
     "This query could not be parsed.  This could be for a few reasons:\n\
-     - There are too many closing right parantheses.\n\
+     - There are too many closing right parentheses.\n\
      - There is an `and` or `or` that is missing both sides to its expression.  If you have a tag \
      named `or`, `and`, or `not`, then wrap it in quotes to treat it like a tag name rather than \
      an operator, for example `\"and\"`."
 
   let not_rparen =
-    "Have read a `not` but expected a tag or an opening parantheses.  To treat `not` as a tag, \
+    "Have read a `not` but expected a tag or an opening parentheses.  To treat `not` as a tag, \
      wrap it in quotes: `\"not\"`."
 
   let lparen_rparen = "Parentheses must contain an expression, `()` is not allowed."

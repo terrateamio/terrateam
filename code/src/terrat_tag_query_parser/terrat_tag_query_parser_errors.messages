@@ -9,7 +9,7 @@ start: RPAREN
 ##
 
 This query could not be parsed.  This could be for a few reasons:
-- There are too many closing right parantheses.
+- There are too many closing right parentheses.
 - There is an `and` or `or` that is missing both sides to its expression.  If you have a tag named `or`, `and`, or `not`, then wrap it in quotes to treat it like a tag name rather than an operator, for example `"and"`.
 
 start: NOT RPAREN
@@ -23,7 +23,7 @@ start: NOT RPAREN
 ## NOT
 ##
 
-Have read a `not` but expected a tag or an opening parantheses.  To treat `not` as a tag, wrap it in quotes: `"not"`.
+Have read a `not` but expected a tag or an opening parentheses.  To treat `not` as a tag, wrap it in quotes: `"not"`.
 
 start: NOT LPAREN RPAREN
 ##

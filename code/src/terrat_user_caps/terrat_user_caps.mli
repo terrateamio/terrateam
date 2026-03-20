@@ -2,7 +2,7 @@ type t =
   | Access_token_create  (** Can create a new access token *)
   | Access_token_refresh
       (** Can only refresh an access token, this is used to turn a created access token into a
-          usable acess token. *)
+          usable access token. *)
   | Installation_id of string  (** Limit the access token to the installation *)
   | Kv_store_read  (** Can read from the KV store *)
   | Kv_store_system_read

@@ -2988,7 +2988,7 @@ struct
                        and if the plans had changes, they would be unapplied but
                        we would have just planned them so we would not want to
                        try to do another iteration of planning.  But we could
-                       also get in to this situation through some unforseen
+                       also get in to this situation through some unforeseen
                        series of operations where we are not correctly
                        determining which changes have been applied (for example
                        things being merged in an order we did not anticipate) in

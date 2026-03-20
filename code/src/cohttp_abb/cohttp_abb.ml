@@ -548,7 +548,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
           assert false
       | Error `E_file_table_full ->
           (* TODO: Find a better way to handle this.  It would be nice to be able
-             to propogate this error up. *)
+             to propagate this error up. *)
           failwith "file table full"
       | Error `E_invalid ->
           (* This should never happen. *)

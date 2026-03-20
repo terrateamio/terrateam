@@ -9,7 +9,7 @@ functor
   ->
   struct
     module Kevent = struct
-      (** The complete, public, defintion of a [struct kqueue] *)
+      (** The complete, public, definition of a [struct kqueue] *)
       type kevent
 
       type t = kevent C.structure

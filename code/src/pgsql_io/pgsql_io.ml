@@ -1206,7 +1206,7 @@ module Auth_scram = struct
         if signature_from_client = signature_from_server then Ok ()
         else Error "Invalid server signature"
     | _, Some error_reason -> Error error_reason
-    | _ -> Error "Unsuported final server message format for AuthenticationSASLFinal"
+    | _ -> Error "Unsupported final server message format for AuthenticationSASLFinal"
 end
 
 type create_err =

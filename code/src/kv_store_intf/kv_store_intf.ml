@@ -89,7 +89,7 @@ module type S = sig
       delete is unconditional.
 
       If [delete] returns [true] then a delete was performed, [false] if the delete was
-      unsuccessful. Deleting a record taht does not exist is considered unsuccessful. *)
+      unsuccessful. Deleting a record that does not exist is considered unsuccessful. *)
   val delete : ?idx:int -> ?version:int -> key:key -> t -> bool C.t
 
   (** Retrieve the number of entries at a key as the maximum index. [count] will always be greater

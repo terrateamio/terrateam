@@ -192,7 +192,7 @@ module Make (Fut : Abb_intf.Future.S) : sig
     val map_err : f:('b -> 'c) -> ('a, 'b) result Fut.t -> ('a, 'c) result Fut.t
 
     (** Take a future result value, wait for it to be determined and throw the Ok value away, while
-        maintaing the Error. *)
+        maintaining the Error. *)
     val ignore : ('a, 'b) result Fut.t -> (unit, 'b) result Fut.t
 
     val all2 : ('a, 'e) result Fut.t -> ('b, 'e) result Fut.t -> ('a * 'b, 'e) result Fut.t

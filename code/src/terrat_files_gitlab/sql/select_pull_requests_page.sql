@@ -25,7 +25,7 @@ select
     gpr.sha as sha,
     gpr.state as state,
     gpr.title as title,
-    gpr.username as uesrname
+    gpr.username as username
 from gitlab_pull_requests as gpr
 inner join gitlab_installation_repositories as gir
     on gpr.repository = gir.id

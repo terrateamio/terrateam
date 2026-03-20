@@ -117,7 +117,7 @@ as $$
 -- All dirspace that have been applied for that pull request.  This will only
 -- capture applies before the pull request has been merged, because of the inner
 -- join with github_change_dirspaces.  A pull request gets a different sha (that
--- of the destination branch HEAD) on post-merge apply.  But that OK beacuse we
+-- of the destination branch HEAD) on post-merge apply.  But that OK because we
 -- only need this for finding any applies that were done for commits of the pull
 -- request prior to the current commit.  That is, if you have PR1, you did an
 -- apply to DS1, then pushed a new commit which reverted DS1, we want to track

@@ -123,7 +123,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   (* Because it's just simpler to work with, we have builds return a [result],
      that way we already have a monad that can short circuit when we do not want
      to continue.  But not all [Error] branches are actually errors. But if we
-     return [Error] in a [tx], it gets rolledback.  So this function turns those
+     return [Error] in a [tx], it gets rolled back.  So this function turns those
      [Error] branches tat are not actually errors into [Ok] branches. *)
   let tx_safe ~request_id build =
     let open Abb.Future.Infix_monad in
@@ -134,7 +134,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         Logs.info (fun m -> m "%s : %a" request_id Builder.pp_err err);
         Abb.Future.return (Ok err)
     | Error (`Noop as err) ->
-        (* A Noop isn't an error, it just means tehre is nothing to do *)
+        (* A Noop isn't an error, it just means there is nothing to do *)
         Logs.info (fun m -> m "%s : %a" request_id Builder.pp_err err);
         Abb.Future.return (Ok `Noop)
     | Error #err as err -> Abb.Future.return err

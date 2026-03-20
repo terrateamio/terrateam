@@ -64738,7 +64738,7 @@
         "consumes": [
           "application/json"
         ],
-        "description": "Create was introduced in GitLab 11.8 & deprecate suppport was added in 16.0",
+        "description": "Create was introduced in GitLab 11.8 & deprecate support was added in 16.0",
         "operationId": "projects_packages/putApiV4ProjectsIdPackagesNpmPackageName",
         "parameters": [
           {

@@ -15,7 +15,7 @@ asset_files := \
 	$(wildcard ../terrat_ui_site/*.json) \
 	$(wildcard ../terrat_ui_site/*.svg)
 
-# Since we are generating this .ml file, there is no source to in the predfined
+# Since we are generating this .ml file, there is no source to in the predefined
 # SRC_DIR, so we set it to someplace else since the source dir cannot be
 # modified by the build system.
 SRC_DIR = src

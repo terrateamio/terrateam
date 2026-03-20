@@ -31,7 +31,7 @@ authors: [
 ]
 
 description: """
-A simple command line tool for storing, retreiving,
+A simple command line tool for storing, retrieving,
 and generating password and secret notes, using PGP for encryption.
 """
 

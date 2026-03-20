@@ -166,7 +166,7 @@ Delete :: Remove previous comments entirely once new ones are posted.
 TODO: Discouse about what to do about deleted `apply` comments
 
 Update (Re-use Comments) :: Link comments to a specific directory (dirspace) via metadata in the work_manifest, and update them in-place.
-* Pros: Clean UI, less noisy. Once inplemented, summaries are just a corollary of updates.
+* Pros: Clean UI, less noisy. Once implemented, summaries are just a corollary of updates.
 * Cons: Requires properly tracking comment IDs to `work_manifests`. Hardest one to implement.
 
 NOTE: The update strategy was initially considered, but due the its complexity, its only being partially described in this RFD.
@@ -179,7 +179,7 @@ image::00_comment_plan.png[Plan Comment]
 
 * We always keep the latest `plan`/`apply` of a particular _dispace_.
 * An addendum of the previous property, the output of a `plan`/`apply` from a dirspace `A` should not change the output of a `plan`/`apply` from a dirspace `B`.
-* Also, we keep the latest `plan`/`apply` until all of its contents have been re-generated. Other comments are handled accordinly by the selected strategy.
+* Also, we keep the latest `plan`/`apply` until all of its contents have been re-generated. Other comments are handled accordingly by the selected strategy.
 * We always reserve a little bit of space to update older comments (to provide admonitions).
 * Keep the error message around until it's no longer needed (TODO: properly describe conditions later).
 
@@ -190,7 +190,7 @@ The following is a proposal of how that would look like as a top level key:
 [source,yaml]
 ----
 # Default configuration that solves 80% of customer pain
-# TODO: `notifications` is a temporary name, still looking for somethig better.
+# TODO: `notifications` is a temporary name, still looking for something better.
 notifications:
   policies:
     # Default configuration
@@ -503,15 +503,15 @@ Scenario 11 :: User plans layer 1 through n, then proceeds to commit changes tha
 Scenario 12 :: User has a plan that requires gatekeeper approvals, then performs an apply without a gatekeeper's approval and receives a gatekeeper error message, then gets an approval and later performs a successful apply.
 
 * Append
-** Terrateam publishes comment with the plan output of A, then a `gatekeeper` error comment, followed by a succesfull apply comment.
+** Terrateam publishes comment with the plan output of A, then a `gatekeeper` error comment, followed by a successful apply comment.
 ** Old comments stay untouched in the Pull Request.
 
 * Delete
-** Terrateam publishes comment with the plan output of A, then a `gatekeeper` error comment, followed by a succesfull apply comment.
+** Terrateam publishes comment with the plan output of A, then a `gatekeeper` error comment, followed by a successful apply comment.
 ** Old comments get deleted by Terrateam.
 
 * Minimize
-** Terrateam publishes comment with the plan output of A, then a `gatekeeper` error comment, followed by a succesfull apply comment.
+** Terrateam publishes comment with the plan output of A, then a `gatekeeper` error comment, followed by a successful apply comment.
 ** Old comments get marked as outdated.
 
 === Storage
@@ -519,9 +519,9 @@ Scenario 12 :: User has a plan that requires gatekeeper approvals, then performs
 First, we must have a way to:
 
 . Store and link comments to repos and pull requests.
-. Store output metadata, like configuration errors or dirspace infomation.
+. Store output metadata, like configuration errors or dirspace information.
 . Differentiate between a comment that comes from `work_manifests`, `apply_requirements` and `gatekeeper` errors or generic errors in general.
-. Support all prevously described primitives and properly hold their required ids.
+. Support all previously described primitives and properly hold their required ids.
 
 ==== Tables
 

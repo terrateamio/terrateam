@@ -38,7 +38,7 @@ module Make (Fut : Abb_intf.Future.S) : sig
   val closed : (writer, 'msg) t -> unit Fut.t
 
   module Combinators : sig
-    (** Allow the common pattern of looping over the incomming messages with a
+    (** Allow the common pattern of looping over the incoming messages with a
         state.  This like folding over the channel.  If the function, [f],
         throws an exception future will be evaluated to [`Exn exn]. *)
     val fold : init:'a -> f:('a -> 'b -> 'a Fut.t) -> (reader, 'b) t -> 'a Fut.t

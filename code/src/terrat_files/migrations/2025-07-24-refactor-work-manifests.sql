@@ -32,7 +32,7 @@ create or replace view github_work_manifests as
        left join github_pull_requests_map as gprm
             on wm.pull_request = gprm.core_id;
 
--- Recreate the gitlab view with the brach column
+-- Recreate the gitlab view with the branch column
 create or replace view gitlab_work_manifests as
        select
          wm.base_sha as base_sha,

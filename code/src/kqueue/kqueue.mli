@@ -32,7 +32,7 @@ module Eventlist : sig
   val set_size : t -> int -> unit
 
   (** Copy the elements of a list into the [Eventlist].  The size is set to the
-      legnth of the list.
+      length of the list.
 
       @raise Assertion_failure when the size being set is greater than the
       capacity.  *)

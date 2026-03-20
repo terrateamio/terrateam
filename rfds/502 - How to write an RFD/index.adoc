@@ -75,7 +75,7 @@ other RFDs.
 abandoned and it is merged.
 
 NOTE: Abandoned RFDs are STILL VALUABLE.  Ensure that they are merged as well so
-that we can understand why a decision wasn't taken.  The `abandonded` state was
+that we can understand why a decision wasn't taken.  The `abandoned` state was
 chosen to signify that an RFD can always be returned to and considered again.
 
 [[required-attributes]]
@@ -107,9 +107,9 @@ The following states are available for an RFD:
 . `ideation`
 . `discussion`
 . `committed`
-. `abandonded`
+. `abandoned`
 
-Either a `committed` or `abandonded` states is necessary for merging.
+Either a `committed` or `abandoned` states is necessary for merging.
 
 == How to read an RFD
 
