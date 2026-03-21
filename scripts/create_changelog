@@ -1,0 +1,397 @@
+#!/usr/bin/env bash
+set -euf -o pipefail
+
+# Generate CHANGELOG.md from structured commit messages and release tags.
+#
+# Parses the project's #ISSUE ACTION Description commit format into
+# categorized changelog sections grouped by release date.
+#
+# Usage:
+#   scripts/create_changelog                 # Full changelog from all release tags
+#   scripts/create_changelog --branch        # Entries for current branch (main..HEAD)
+#   scripts/create_changelog --since TAG     # From a specific tag forward
+#   scripts/create_changelog --last N        # Last N releases only (default: 20)
+#   scripts/create_changelog --output FILE   # Write to FILE (default: stdout)
+#
+# Environment:
+#   GITHUB_REPOSITORY  - owner/repo for issue links (default: auto-detected from remote)
+
+# ---------------------------------------------------------------------------
+# Config
+# ---------------------------------------------------------------------------
+
+REPO_URL=""
+MODE="full"
+SINCE_TAG=""
+LAST_N=0
+OUTPUT="/dev/stdout"
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+usage() {
+  sed -n '3,13p' "$0" | sed 's/^# \?//'
+  exit 0
+}
+
+die() {
+  echo "Error: $*" >&2
+  exit 1
+}
+
+detect_repo_url() {
+  local remote_url
+  remote_url=$(git remote get-url upstream 2>/dev/null || git remote get-url origin 2>/dev/null || echo "")
+  if [[ -z "$remote_url" ]]; then
+    die "Cannot detect repository URL from git remotes"
+  fi
+  # Normalise SSH / HTTPS URLs to https://github.com/owner/repo
+  echo "$remote_url" \
+    | sed -E 's|git@github\.com:|https://github.com/|' \
+    | sed -E 's|\.git$||'
+}
+
+# Map ACTION prefix to changelog section
+action_to_section() {
+  case "${1^^}" in
+    ADD)      echo "added" ;;
+    FIX)      echo "fixed" ;;
+    REFACTOR) echo "changed" ;;
+    UPDATE)   echo "updated" ;;
+    *)        echo "other" ;;
+  esac
+}
+
+section_header() {
+  case "$1" in
+    added)   echo "🚀 Added" ;;
+    fixed)   echo "🐛 Fixed" ;;
+    changed) echo "🔧 Changed" ;;
+    updated) echo "📦 Updated" ;;
+    other)   echo "📝 Other" ;;
+  esac
+}
+
+# Section sort order (controls output ordering)
+section_order() {
+  case "$1" in
+    added)   echo 1 ;;
+    fixed)   echo 2 ;;
+    changed) echo 3 ;;
+    updated) echo 4 ;;
+    other)   echo 5 ;;
+  esac
+}
+
+# ---------------------------------------------------------------------------
+# Core: parse a single non-merge commit line into structured fields
+# Input:  "#1180 FIX Make lock timeout configurable"
+# Output: section|issue_num|description
+# ---------------------------------------------------------------------------
+
+parse_commit_message() {
+  local msg="$1"
+
+  # Strip leading merge noise if present
+  msg="${msg#Merge pull request *}"
+
+  # Normalise action keywords to uppercase for matching.
+  # We work on a copy so descriptions keep their original casing.
+  local upper_msg="${msg^^}"
+
+  # Pattern: #ISSUE #ISSUE2 ACTION Description (dual-issue, use first)
+  if [[ "$upper_msg" =~ ^#([0-9]+)[[:space:]]+#[0-9]+[[:space:]]+(ADD|FIX|REFACTOR|UPDATE)[[:space:]] ]]; then
+    local issue="${BASH_REMATCH[1]}"
+    local action="${BASH_REMATCH[2]}"
+    # Extract description from original (preserves casing)
+    local desc="${msg#*"${BASH_REMATCH[2]}" }"
+    desc="${desc#*"${action}" }"
+    # Fallback: strip prefix manually
+    desc=$(echo "$msg" | sed -E "s/^#[0-9]+ #[0-9]+ [A-Za-z]+ //")
+    local section
+    section=$(action_to_section "$action")
+    echo "${section}|${issue}|${desc}"
+    return 0
+  fi
+
+  # Pattern: #ISSUE_NUM ACTION Description
+  if [[ "$upper_msg" =~ ^#([0-9]+)[[:space:]]+(ADD|FIX|REFACTOR|UPDATE)[[:space:]] ]]; then
+    local issue="${BASH_REMATCH[1]}"
+    local action="${BASH_REMATCH[2]}"
+    local desc
+    desc=$(echo "$msg" | sed -E "s/^#[0-9]+ [A-Za-z]+ //")
+    local section
+    section=$(action_to_section "$action")
+    echo "${section}|${issue}|${desc}"
+    return 0
+  fi
+
+  # Pattern: ISSUE_NUM ACTION Description (no # prefix — seen in PR merge titles)
+  if [[ "$upper_msg" =~ ^([0-9]+)[[:space:]]+(ADD|FIX|REFACTOR|UPDATE)[[:space:]] ]]; then
+    local issue="${BASH_REMATCH[1]}"
+    local action="${BASH_REMATCH[2]}"
+    local desc
+    desc=$(echo "$msg" | sed -E "s/^[0-9]+ [A-Za-z]+ //")
+    local section
+    section=$(action_to_section "$action")
+    echo "${section}|${issue}|${desc}"
+    return 0
+  fi
+
+  # Revert commits
+  if [[ "$msg" =~ ^Revert ]]; then
+    echo "changed||${msg}"
+    return 0
+  fi
+
+  # Unstructured commit with issue number
+  if [[ "$msg" =~ ^#([0-9]+)[[:space:]]+(.+)$ ]]; then
+    echo "other|${BASH_REMATCH[1]}|${BASH_REMATCH[2]}"
+    return 0
+  fi
+
+  # Completely unstructured
+  echo "other||${msg}"
+}
+
+# ---------------------------------------------------------------------------
+# Core: collect non-merge commits between two refs
+# Returns: one parsed line per unique (section, issue, description) triple
+# ---------------------------------------------------------------------------
+
+collect_entries() {
+  local from_ref="$1"
+  local to_ref="$2"
+
+  # Deduplicate: key = section|issue_num, keep first description seen
+  declare -A seen=()
+
+  while IFS= read -r msg; do
+    # Skip merge commits
+    [[ "$msg" =~ ^Merge\ pull\ request ]] && continue
+    [[ "$msg" =~ ^Merge\ remote-tracking ]] && continue
+    [[ "$msg" =~ ^Merge\ branch ]] && continue
+    # Skip GPG signature noise
+    [[ "$msg" =~ ^gpg: ]] && continue
+    # Skip blank lines
+    [[ -z "$msg" ]] && continue
+
+    local parsed
+    parsed=$(parse_commit_message "$msg")
+    local section issue desc
+    section="${parsed%%|*}"
+    local rest="${parsed#*|}"
+    issue="${rest%%|*}"
+    desc="${rest#*|}"
+
+    # Dedup key: section + issue (if present) or section + description
+    local key="${section}|${issue:-$desc}"
+    if [[ -z "${seen[$key]+_}" ]]; then
+      seen[$key]=1
+      echo "${section}|${issue}|${desc}"
+    fi
+  done < <(git log --format="%s" --no-merges --no-show-signature "${from_ref}..${to_ref}" 2>/dev/null)
+}
+
+# ---------------------------------------------------------------------------
+# Core: render a set of parsed entries as Markdown
+# Input: lines of "section|issue|desc" on stdin
+# ---------------------------------------------------------------------------
+
+render_entries() {
+  # Accumulate entries by section
+  declare -A section_entries=()
+
+  while IFS='|' read -r section issue desc; do
+    local line
+    if [[ -n "$issue" ]]; then
+      line="- ${desc} ([#${issue}](${REPO_URL}/issues/${issue}))"
+    else
+      line="- ${desc}"
+    fi
+    section_entries[$section]+="${line}"$'\n'
+  done
+
+  # Emit sections in defined order
+  local any_output=false
+  for section in added fixed changed updated other; do
+    if [[ -n "${section_entries[$section]+_}" ]]; then
+      local header
+      header=$(section_header "$section")
+      echo ""
+      echo "**${header}**"
+      echo ""
+      printf "%s" "${section_entries[$section]}"
+      any_output=true
+    fi
+  done
+
+  if [[ "$any_output" = false ]]; then
+    echo ""
+    echo "_No categorized changes._"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# Mode: full changelog from all release tags
+# ---------------------------------------------------------------------------
+
+generate_full() {
+  local -a tags=()
+  local tag_filter=""
+
+  # Get all release tags sorted chronologically (newest first)
+  mapfile -t tags < <(git tag --sort=-version:refname | grep -E '^[0-9]{8}-[0-9]{4}-[a-f0-9]+$')
+
+  if [[ ${#tags[@]} -eq 0 ]]; then
+    die "No release tags found matching pattern YYYYMMDD-HHMM-sha"
+  fi
+
+  # Apply --since filter
+  if [[ -n "$SINCE_TAG" ]]; then
+    local found=false
+    local filtered=()
+    for t in "${tags[@]}"; do
+      filtered+=("$t")
+      if [[ "$t" == "$SINCE_TAG" ]]; then
+        found=true
+        break
+      fi
+    done
+    if [[ "$found" = false ]]; then
+      die "Tag '${SINCE_TAG}' not found"
+    fi
+    tags=("${filtered[@]}")
+  fi
+
+  # Apply --last filter
+  if [[ "$LAST_N" -gt 0 ]] && [[ ${#tags[@]} -gt $LAST_N ]]; then
+    tags=("${tags[@]:0:$LAST_N}")
+  fi
+
+  # Header
+  echo "# Changelog"
+  echo ""
+  echo "All notable changes to [Terrateam](${REPO_URL}) will be documented in this file."
+  echo ""
+  echo "This changelog is generated from structured commit messages. Each release"
+  echo "is tagged with format \`YYYYMMDD-HHMM-shortsha\`."
+
+  # Group by date for readability
+  local current_date=""
+  local i=0
+
+  for tag in "${tags[@]}"; do
+    local next_tag=""
+    if [[ $((i + 1)) -lt ${#tags[@]} ]]; then
+      next_tag="${tags[$((i + 1))]}"
+    fi
+
+    # Extract date from tag: YYYYMMDD -> YYYY-MM-DD
+    local raw_date="${tag%%-*}"
+    local formatted_date="${raw_date:0:4}-${raw_date:4:2}-${raw_date:6:2}"
+
+    # New date heading
+    if [[ "$formatted_date" != "$current_date" ]]; then
+      current_date="$formatted_date"
+      echo ""
+      echo "---"
+      echo ""
+      echo "## ${current_date}"
+    fi
+
+    echo ""
+    echo "### ${tag}"
+
+    # Collect entries between this tag and the previous one
+    if [[ -n "$next_tag" ]]; then
+      collect_entries "$next_tag" "$tag" | render_entries
+    else
+      # Oldest tag — show all commits up to this tag from its parent
+      # Use the tag's first parent commit as the boundary
+      local tag_commit
+      tag_commit=$(git rev-list -1 "$tag" 2>/dev/null || echo "")
+      if [[ -n "$tag_commit" ]]; then
+        local parent
+        parent=$(git rev-parse "${tag_commit}~1" 2>/dev/null || echo "")
+        if [[ -n "$parent" ]]; then
+          collect_entries "$parent" "$tag" | render_entries
+        else
+          echo ""
+          echo "_Initial release._"
+        fi
+      fi
+    fi
+
+    i=$((i + 1))
+  done
+}
+
+# ---------------------------------------------------------------------------
+# Mode: branch changelog (main..HEAD)
+# ---------------------------------------------------------------------------
+
+generate_branch() {
+  local base="main"
+  if ! git rev-parse --verify "$base" &>/dev/null; then
+    base="master"
+  fi
+  if ! git rev-parse --verify "$base" &>/dev/null; then
+    die "Cannot find main or master branch"
+  fi
+
+  local branch_name
+  branch_name=$(git rev-parse --abbrev-ref HEAD)
+
+  local commit_count
+  commit_count=$(git rev-list --count "${base}..HEAD")
+
+  if [[ "$commit_count" -eq 0 ]]; then
+    die "No commits on '${branch_name}' ahead of '${base}'"
+  fi
+
+  echo "# Changelog — ${branch_name}"
+  echo ""
+  echo "_${commit_count} commits ahead of ${base}_"
+  echo ""
+  echo "## Unreleased"
+
+  collect_entries "$base" "HEAD" | render_entries
+}
+
+# ---------------------------------------------------------------------------
+# Argument parsing
+# ---------------------------------------------------------------------------
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)    usage ;;
+    --branch)     MODE="branch"; shift ;;
+    --since)      MODE="full"; SINCE_TAG="${2:?--since requires a tag}"; shift 2 ;;
+    --last)       MODE="full"; LAST_N="${2:?--last requires a number}"; shift 2 ;;
+    --output|-o)  OUTPUT="${2:?--output requires a path}"; shift 2 ;;
+    *)            die "Unknown option: $1" ;;
+  esac
+done
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
+if ! git rev-parse --is-inside-work-tree &>/dev/null; then
+  die "Not in a git repository"
+fi
+
+REPO_URL=$(detect_repo_url)
+
+{
+  case "$MODE" in
+    full)   generate_full ;;
+    branch) generate_branch ;;
+  esac
+} > "$OUTPUT"
+
+if [[ "$OUTPUT" != "/dev/stdout" ]]; then
+  echo "Wrote changelog to ${OUTPUT}" >&2
+fi
