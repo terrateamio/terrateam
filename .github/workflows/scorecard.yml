@@ -1,0 +1,49 @@
+name: scorecard
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    # Run weekly on Saturdays at 01:30 UTC
+    - cron: "30 1 * * 6"
+
+# Scorecard requires read-all at the workflow level when publishing results.
+# Job-level permissions below grant the additional writes needed.
+permissions: read-all
+
+jobs:
+  analysis:
+    name: Scorecard analysis
+    runs-on: ubuntu-22.04
+
+    permissions:
+      # Upload SARIF results to Code Scanning dashboard
+      security-events: write
+      # Publish results to OpenSSF API (requires OIDC token)
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Run Scorecard analysis
+        uses: ossf/scorecard-action@4eaacf0543bb3f2c246792bd56e8cdeffafb205a # v2.4.3
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: SARIF file
+          path: results.sarif
+          retention-days: 5
+
+      - name: Upload to code-scanning
+        uses: github/codeql-action/upload-sarif@b20883b0cd1f46c72ae0ba6d1090936928f9fa30 # v4.32.0
+        with:
+          sarif_file: results.sarif
