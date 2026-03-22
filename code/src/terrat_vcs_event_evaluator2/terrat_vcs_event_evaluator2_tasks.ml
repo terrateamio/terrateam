@@ -2739,13 +2739,33 @@ struct
     let run_missing_drift_schedules =
       run ~name:"run_missing_drift_schedules" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
+          let drift_name =
+            match Hmap.find Keys.drift_schedule_name (Builder.State.orig_store s) with
+            | Some (Ok name) -> name
+            | Some (Error _) | None -> None
+          in
+          let drift_force =
+            match Hmap.find Keys.drift_force (Builder.State.orig_store s) with
+            | Some (Ok force) -> force
+            | Some (Error _) | None -> false
+          in
+          let drift_repo =
+            match Hmap.find Keys.drift_repo (Builder.State.orig_store s) with
+            | Some (Ok repo) -> repo
+            | Some (Error _) | None -> None
+          in
           Builder.run_db s ~f:(fun db ->
               time_it
                 s
                 (fun m log_id time ->
                   m "%s : QUERY_MISSING_DRIFT_SCHEDULED_RUNS : time=%f" log_id time)
                 (fun () ->
-                  S.Db.query_missing_drift_scheduled_runs ~request_id:(Builder.log_id s) db))
+                  S.Db.query_missing_drift_scheduled_runs
+                    ?name:drift_name
+                    ?repo:drift_repo
+                    ~force:drift_force
+                    ~request_id:(Builder.log_id s)
+                    db))
           >>= fun schedules ->
           let open Abb.Future.Infix_monad in
           Logs.info (fun m ->

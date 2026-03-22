@@ -36,6 +36,13 @@ struct
 
   module Work_manifest = Terrat_vcs_service_gitlab_ep_work_manifest.Make (Provider)
 
+  module Ep_drift_initiate =
+    Terrat_vcs_drift_initiate.Make
+      (Provider)
+      (struct
+        let vcs = "gitlab"
+      end)
+
   type t = {
     config : Provider.Api.Config.t;
     drift : unit Abb.Future.t;
@@ -185,6 +192,7 @@ struct
       Routes.routes config storage
       @ Provider.Stacks.routes config storage
       @ Kv_store.routes config storage
+      @ Ep_drift_initiate.routes config storage exec
       @ Brtl_rtng.Route.
           [
             (* Installations *)

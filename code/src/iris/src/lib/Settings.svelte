@@ -4,21 +4,32 @@
   import PageLayout from './components/layout/PageLayout.svelte';
   import { installations, defaultInstallationId, theme, selectedInstallation, currentVCSProvider } from './stores';
   import type { ThemeMode, ServerConfig } from './types';
+  import { onMount } from 'svelte';
   import { api } from './api';
   import Card from './components/ui/Card.svelte';
   import LoadingSpinner from './components/ui/LoadingSpinner.svelte';
   import { VCS_PROVIDERS } from './vcs/providers';
   import AccessTokenSection from './components/settings/AccessTokenSection.svelte';
+  import ApiUserSection from './components/settings/ApiUserSection.svelte';
 
   // Tab management
-  type SettingsTab = 'organization' | 'api-keys' | 'diagnostics';
+  type SettingsTab = 'organization' | 'api-keys' | 'api-users' | 'diagnostics';
   let activeTab: SettingsTab = 'organization';
+  let isOrgAdmin: boolean | null = null;
 
   // Parse URL hash for initial tab
   const urlParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
   const tabParam = urlParams.get('tab');
-  if (tabParam === 'api-keys' || tabParam === 'diagnostics' || tabParam === 'organization') {
+  if (tabParam === 'api-keys' || tabParam === 'diagnostics' || tabParam === 'organization' || tabParam === 'api-users') {
     activeTab = tabParam;
+  }
+
+  function handleAdminStatus(event: CustomEvent<{ isAdmin: boolean }>): void {
+    isOrgAdmin = event.detail.isAdmin;
+    // If user navigated directly to api-users tab but is not admin, fall back
+    if (!isOrgAdmin && activeTab === 'api-users') {
+      setActiveTab('organization');
+    }
   }
 
   // Update URL when tab changes
@@ -81,8 +92,6 @@
     }
   }
 
-  // Auto-run diagnostics on component mount
-  import { onMount } from 'svelte';
   onMount(() => {
     runDiagnostics();
   });
@@ -133,6 +142,22 @@
               </svg>
               API Keys
             </button>
+            {#if isOrgAdmin !== false}
+            <button
+              on:click={() => setActiveTab('api-users')}
+              class="whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors
+                {activeTab === 'api-users'
+                  ? 'border-brand-primary text-brand-primary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                }"
+              aria-current={activeTab === 'api-users' ? 'page' : undefined}
+            >
+              <svg class="w-5 h-5 inline-block mr-2 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+              API Users
+            </button>
+            {/if}
             <button
               on:click={() => setActiveTab('diagnostics')}
               class="whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors
@@ -268,6 +293,10 @@
         {:else if activeTab === 'api-keys'}
         <!-- API Keys Tab -->
         <AccessTokenSection />
+
+        {:else if activeTab === 'api-users'}
+        <!-- API Users Tab -->
+        <ApiUserSection on:adminStatus={handleAdminStatus} />
 
         {:else if activeTab === 'diagnostics'}
         <!-- Connection Diagnostics Card -->

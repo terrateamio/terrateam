@@ -688,7 +688,16 @@ module Routes = struct
         let vcs = "github"
       end)
 
-  let routes config storage = Ep_access_token.routes config storage
+  module Ep_api_user =
+    Terrat_vcs_api_user.Make
+      (Provider)
+      (struct
+        let vcs = "github"
+        let read_sql = Terrat_files_github_sql.read
+      end)
+
+  let routes config storage =
+    Ep_access_token.routes config storage @ Ep_api_user.routes config storage
 end
 
 include Terrat_vcs_service_github.Make (Provider) (Routes)

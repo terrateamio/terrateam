@@ -490,4 +490,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   let eval_work_manifest_failure : unit Key.t = Hmap.Key.create "eval_work_manifest_failure"
   let eval_push_event : unit Key.t = Hmap.Key.create "eval_push_event"
   let run_missing_drift_schedules : int Key.t = Hmap.Key.create "run_missing_drift_schedules"
+  let drift_schedule_name : string option Key.t = Hmap.Key.create "drift_schedule_name"
+  let drift_force : bool Key.t = Hmap.Key.create "drift_force"
+  let drift_repo : string option Key.t = Hmap.Key.create "drift_repo"
 end

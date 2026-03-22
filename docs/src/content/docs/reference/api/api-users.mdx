@@ -1,0 +1,245 @@
+---
+title: API Users
+description: API endpoints for managing System API Users
+---
+
+System API Users enable organizations to programmatically interact with Terrateam via authenticated service accounts. API users can retrieve reporting data (work manifests, pull requests, dirspaces) and initiate drift operations on demand.
+
+## Permissions
+
+- **Organization admins** can create, list, and delete API users.
+- **Personal account owners** (GitHub target type `User`) can manage API users for their installations.
+- Non-admin organization members will receive `403 Forbidden`.
+
+## Create API User
+
+Create a new System API User for an installation. Returns a refresh token that is shown **only once**.
+
+**Endpoint:** `POST /api/v1/{vcs}/installations/{installation_id}/api-users`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `vcs` | string | Yes | VCS provider: `github` or `gitlab` |
+| `installation_id` | integer | Yes | The installation ID |
+
+**Request Body:**
+
+Content-Type: `application/json`
+
+```json
+{
+  "name": "string"
+}
+```
+
+**Responses:**
+
+- **200**: Success - Returns the API user ID and refresh token
+- **403**: Forbidden - Not an organization admin
+- **404**: Not Found - Installation not found
+
+**Response Schema (200):**
+
+```json
+{
+  "id": "c7230ae5-9d16-4baf-b944-ba6843f3c792",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIs..."
+}
+```
+
+**Example Request:**
+
+```bash
+curl -X POST \
+  https://app.terrateam.io/api/v1/github/installations/12345/api-users \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "CI/CD Pipeline"}'
+```
+
+:::caution[Save the Token]
+The `refresh_token` is shown only once. Store it securely immediately. If lost, you must delete the API user and create a new one.
+:::
+
+---
+
+## List API Users
+
+Retrieve all API users for an installation.
+
+**Endpoint:** `GET /api/v1/{vcs}/installations/{installation_id}/api-users`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `vcs` | string | Yes | VCS provider: `github` or `gitlab` |
+| `installation_id` | integer | Yes | The installation ID |
+
+**Query Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `limit` | integer | No | Maximum number of results (default: 100) |
+
+**Responses:**
+
+- **200**: Success - Returns list of API users
+- **403**: Forbidden - Not an organization admin
+
+**Response Schema (200):**
+
+```json
+{
+  "results": [
+    {
+      "id": "c7230ae5-9d16-4baf-b944-ba6843f3c792",
+      "name": "CI/CD Pipeline",
+      "created_at": "2026-03-22 13:40:14.123456+00"
+    }
+  ]
+}
+```
+
+**Example Request:**
+
+```bash
+curl -X GET \
+  "https://app.terrateam.io/api/v1/github/installations/12345/api-users" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+---
+
+## Delete API User
+
+Delete an API user. Any applications using this user's token will immediately lose access.
+
+**Endpoint:** `DELETE /api/v1/{vcs}/installations/{installation_id}/api-users`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `vcs` | string | Yes | VCS provider: `github` or `gitlab` |
+| `installation_id` | integer | Yes | The installation ID |
+
+**Query Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `id` | string | Yes | The API user ID to delete |
+
+**Responses:**
+
+- **200**: Success
+- **403**: Forbidden - Not an organization admin
+
+**Example Request:**
+
+```bash
+curl -X DELETE \
+  "https://app.terrateam.io/api/v1/github/installations/12345/api-users?id=USER_ID" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+---
+
+## Using an API User
+
+API users authenticate using the same refresh token flow as personal access tokens.
+
+### Step 1: Refresh the Token
+
+Exchange the API user's refresh token for a short-lived access token:
+
+```bash
+curl -X POST https://app.terrateam.io/api/v1/access-token/refresh \
+  -H "Authorization: Bearer YOUR_REFRESH_TOKEN" \
+  -H "Content-Length: 0"
+```
+
+Response:
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIs..."
+}
+```
+
+### Step 2: Make API Requests
+
+Use the access token to call the API. The token expires after **60 seconds**.
+
+```bash
+# Fetch work manifests (reporting data)
+curl -X GET \
+  "https://app.terrateam.io/api/v1/github/installations/12345/work-manifests" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+
+# Fetch pull requests
+curl -X GET \
+  "https://app.terrateam.io/api/v1/github/installations/12345/pull-requests" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+
+# Trigger drift detection
+curl -X POST \
+  "https://app.terrateam.io/api/v1/github/installations/12345/drift" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Length: 0"
+```
+
+### Example: Automation Script
+
+```bash
+#!/bin/bash
+REFRESH_TOKEN="your_refresh_token_here"
+INSTALLATION_ID="12345"
+BASE_URL="https://app.terrateam.io"
+
+# Get access token
+ACCESS_TOKEN=$(curl -s -X POST "$BASE_URL/api/v1/access-token/refresh" \
+  -H "Authorization: Bearer $REFRESH_TOKEN" \
+  -H "Content-Length: 0" | jq -r '.token')
+
+# Fetch work manifests
+curl -s "$BASE_URL/api/v1/github/installations/$INSTALLATION_ID/work-manifests" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" | jq '.work_manifests | length'
+
+# Trigger drift
+curl -s -X POST "$BASE_URL/api/v1/github/installations/$INSTALLATION_ID/drift" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Length: 0"
+```
+
+---
+
+## API User Capabilities
+
+API users are automatically granted the following capabilities:
+
+| Capability | Description |
+|------------|-------------|
+| `installation_id` | Scoped to the installation where the user was created |
+| `vcs` | Scoped to the VCS provider (github or gitlab) |
+| `kv_store_read` | Read access to the key-value store |
+| `drift_initiate` | Ability to trigger drift detection on demand |
+
+These capabilities are set server-side when the API user is created. Unlike personal access tokens, you do not select capabilities manually.
+
+---
+
+## UI Management
+
+API users can also be managed through the Terrateam dashboard:
+
+1. Navigate to **Settings**
+2. Click the **API Users** tab (visible to organization admins only)
+3. Use **Create API User** to generate a new API user with a refresh token
+4. View existing API users in the list
+5. Delete API users that are no longer needed
+
+:::tip
+The API Users tab is only visible to organization admins. For personal GitHub accounts, the tab is always visible since you are the owner of your installation.
+:::

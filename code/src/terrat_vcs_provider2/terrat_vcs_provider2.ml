@@ -391,6 +391,9 @@ module type S = sig
       Abb.Future.t
 
     val query_missing_drift_scheduled_runs :
+      ?name:string ->
+      ?force:bool ->
+      ?repo:string ->
       request_id:string ->
       t ->
       ( (string * Api.Account.t * Api.Repo.t * bool * Terrat_tag_query.t * (string * string) option)

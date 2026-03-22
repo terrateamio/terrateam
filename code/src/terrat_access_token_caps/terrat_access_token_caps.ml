@@ -1,5 +1,6 @@
 module Access_token_create = Terrat_access_token_caps_access_token_create
 module Access_token_refresh = Terrat_access_token_caps_access_token_refresh
+module Drift_initiate = Terrat_access_token_caps_drift_initiate
 module Installation_id = Terrat_access_token_caps_installation_id
 module Kv_store_read = Terrat_access_token_caps_kv_store_read
 module Kv_store_system_read = Terrat_access_token_caps_kv_store_system_read
@@ -11,6 +12,7 @@ module Event = struct
   type t =
     | Access_token_refresh of Terrat_access_token_caps_access_token_refresh.t
     | Access_token_create of Terrat_access_token_caps_access_token_create.t
+    | Drift_initiate of Terrat_access_token_caps_drift_initiate.t
     | Kv_store_read of Terrat_access_token_caps_kv_store_read.t
     | Kv_store_write of Terrat_access_token_caps_kv_store_write.t
     | Kv_store_system_read of Terrat_access_token_caps_kv_store_system_read.t
@@ -32,6 +34,8 @@ module Event = struct
              (fun v -> Access_token_create v)
              (Terrat_access_token_caps_access_token_create.of_yojson v));
          (fun v ->
+           map (fun v -> Drift_initiate v) (Terrat_access_token_caps_drift_initiate.of_yojson v));
+         (fun v ->
            map (fun v -> Kv_store_read v) (Terrat_access_token_caps_kv_store_read.of_yojson v));
          (fun v ->
            map (fun v -> Kv_store_write v) (Terrat_access_token_caps_kv_store_write.of_yojson v));
@@ -51,6 +55,7 @@ module Event = struct
   let to_yojson = function
     | Access_token_refresh v -> Terrat_access_token_caps_access_token_refresh.to_yojson v
     | Access_token_create v -> Terrat_access_token_caps_access_token_create.to_yojson v
+    | Drift_initiate v -> Terrat_access_token_caps_drift_initiate.to_yojson v
     | Kv_store_read v -> Terrat_access_token_caps_kv_store_read.to_yojson v
     | Kv_store_write v -> Terrat_access_token_caps_kv_store_write.to_yojson v
     | Kv_store_system_read v -> Terrat_access_token_caps_kv_store_system_read.to_yojson v

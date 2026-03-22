@@ -58,10 +58,13 @@ chosen_drift_schedule as (
     where (dsw.window_start is null
            or (dsw.window_start <= current_timestamp and current_timestamp < dsw.window_end))
           and gi.state = 'installed'
-          -- Running a schedule might fail immediately, so force at least 1 minute between tries
+          and ($drift_schedule_name is null or ds.name = $drift_schedule_name)
+          and ($repo is null or (gir.owner || '/' || gir.name) = $repo)
           and (drift_schedules.last_tried_at is null
-               or drift_schedules.last_tried_at < now() - ds.schedule
-               or drift_schedules.last_tried_at < drift_schedules.updated_at)
+               or ($force and drift_schedules.last_tried_at < now() - interval '5 seconds')
+               or (not $force and (
+                   drift_schedules.last_tried_at < now() - ds.schedule
+                   or drift_schedules.last_tried_at < drift_schedules.updated_at)))
     limit 1
     for update of drift_schedules skip locked
 ),

@@ -675,7 +675,10 @@ module Db = struct
         //
         (* window_end *)
         Ret.(option text)
-        /^ select_missing_drift_scheduled_runs_query)
+        /^ select_missing_drift_scheduled_runs_query
+        /% Var.(option (text "drift_schedule_name"))
+        /% Var.boolean "force"
+        /% Var.(option (text "repo")))
 
     let cleanup_repo_configs = Pgsql_io.Typed_sql.(sql /^ read "cleanup_repo_configs.sql")
     let delete_stale_flow_states_query = read "delete_stale_flow_states.sql"
@@ -1983,7 +1986,7 @@ module Db = struct
         Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
 
-  let query_missing_drift_scheduled_runs ~request_id db =
+  let query_missing_drift_scheduled_runs ?name ?(force = false) ?repo ~request_id db =
     let open Abb.Future.Infix_monad in
     Metrics.Psql_query_time.time
       (Metrics.psql_query_time "select_missing_drift_scheduled_runs")
@@ -1996,7 +1999,7 @@ module Db = struct
               installation_id
               repository_id
               owner
-              name
+              repo_name
               reconcile
               tag_query
               window_start
@@ -2004,13 +2007,16 @@ module Db = struct
             ->
             ( drift_name,
               Api.Account.make @@ CCInt64.to_int installation_id,
-              Api.Repo.make ~id:(CCInt64.to_int repository_id) ~owner ~name (),
+              Api.Repo.make ~id:(CCInt64.to_int repository_id) ~owner ~name:repo_name (),
               reconcile,
               CCOption.get_or ~default:Terrat_tag_query.any tag_query,
               CCOption.map2
                 (fun window_start window_end -> (window_start, window_end))
                 window_start
-                window_end )))
+                window_end ))
+          name
+          force
+          repo)
     >>= function
     | Ok _ as ret -> Abb.Future.return ret
     | Error (#Pgsql_io.err as err) ->

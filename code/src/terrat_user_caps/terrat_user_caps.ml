@@ -4,6 +4,7 @@ module E = Cs.Event
 type t =
   | Access_token_create
   | Access_token_refresh
+  | Drift_initiate
   | Installation_id of string
   | Kv_store_read
   | Kv_store_system_read
@@ -25,6 +26,7 @@ let mask ~mask t =
 let to_yojson' = function
   | Access_token_create -> E.Access_token_create "access_token_create"
   | Access_token_refresh -> E.Access_token_refresh "access_token_refresh"
+  | Drift_initiate -> E.Drift_initiate "drift_initiate"
   | Installation_id id -> E.Installation_id { Cs.Installation_id.name = "installation_id"; id }
   | Kv_store_read -> E.Kv_store_read "kv_store_read"
   | Kv_store_system_read -> E.Kv_store_system_read "kv_store_system_read"
@@ -40,6 +42,7 @@ let of_yojson json =
   >>= function
   | E.Access_token_create _ -> Ok Access_token_create
   | E.Access_token_refresh _ -> Ok Access_token_refresh
+  | E.Drift_initiate _ -> Ok Drift_initiate
   | E.Installation_id { Cs.Installation_id.name = _; id } -> Ok (Installation_id id)
   | E.Kv_store_read _ -> Ok Kv_store_read
   | E.Kv_store_system_read _ -> Ok Kv_store_system_read

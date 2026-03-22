@@ -70,6 +70,69 @@
         ],
         "type": "object"
       },
+      "api-user": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "refresh_token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "refresh_token"
+        ],
+        "type": "object"
+      },
+      "api-user-create": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "api-user-item": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "created_at"
+        ],
+        "type": "object"
+      },
+      "api-user-page": {
+        "additionalProperties": false,
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/api-user-item"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object"
+      },
       "bad-request-err": {
         "additionalProperties": false,
         "properties": {
@@ -4016,6 +4079,172 @@
             }
           },
           "400": {},
+          "403": {}
+        }
+      }
+    },
+    "/api/v1/{vcs}/installations/{installation_id}/api-users": {
+      "delete": {
+        "operationId": "api-user/delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vcs",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "installation_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {},
+          "403": {}
+        }
+      },
+      "get": {
+        "operationId": "api-user/list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vcs",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "installation_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/api-user-page"
+                }
+              }
+            }
+          },
+          "403": {},
+          "404": {}
+        }
+      },
+      "post": {
+        "operationId": "api-user/create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vcs",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "installation_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/api-user-create"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/api-user"
+                }
+              }
+            }
+          },
+          "403": {},
+          "404": {}
+        }
+      }
+    },
+    "/api/v1/{vcs}/installations/{installation_id}/drift": {
+      "post": {
+        "operationId": "drift/initiate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vcs",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "installation_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Name of a specific drift schedule to trigger. If omitted, all due schedules are triggered.",
+            "in": "query",
+            "name": "name",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Repository to run drift on (owner/name format). If omitted, all repos with drift schedules are included.",
+            "in": "query",
+            "name": "repo",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {},
           "403": {}
         }
       }

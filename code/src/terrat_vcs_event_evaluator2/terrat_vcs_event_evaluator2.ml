@@ -796,7 +796,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         @@ Abb.Future.fork
         @@ run_next_pending_compute ~request_id ~config ~storage ~exec ())
 
-  let run_missing_drift_schedules ~config ~storage ~exec () =
+  let run_missing_drift_schedules ?name ?(force = false) ?repo ~config ~storage ~exec () =
     let open Abb.Future.Infix_monad in
     let request_id = Uuidm.to_string (Ouuid.v4 ()) in
     Logs.info (fun m -> m "RUN_MISSING_DRIFT_SCHEDULES : %s" request_id);
@@ -804,7 +804,12 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       match Sys.getenv_opt "TERRAT_EVENT_EVALUATOR_MODE" with
       | None | Some ("" | "new-age") ->
           let target = Keys.run_missing_drift_schedules in
-          let store = Hmap.empty in
+          let store =
+            Hmap.empty
+            |> Keys.Key.add Keys.drift_schedule_name name
+            |> Keys.Key.add Keys.drift_force force
+            |> Keys.Key.add Keys.drift_repo repo
+          in
           with_conn storage ~f:(fun db ->
               Fc.retry
                 ~f:(fun () ->
