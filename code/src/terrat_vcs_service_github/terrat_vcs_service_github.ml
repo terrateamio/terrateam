@@ -35,6 +35,13 @@ struct
         let enforce_installation_access = Provider.enforce_installation_access
       end)
 
+  module Ep_drift_initiate =
+    Terrat_vcs_drift_initiate.Make
+      (Provider)
+      (struct
+        let vcs = "github"
+      end)
+
   module Ep_user = Terrat_vcs_service_github_ep_user
 
   module Kv_store =
@@ -256,6 +263,7 @@ struct
       Routes.routes config storage
       @ Provider.Stacks.routes config storage
       @ Kv_store.routes config storage
+      @ Ep_drift_initiate.routes config storage exec
       @ Brtl_rtng.Route.
           [
             (* Work manifests *)

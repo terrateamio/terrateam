@@ -550,6 +550,31 @@ export type AccessTokenItem = z.infer<typeof AccessTokenItemSchema>;
 export type AccessTokenPage = z.infer<typeof AccessTokenPageSchema>;
 export type AccessTokenCreate = z.infer<typeof AccessTokenCreateSchema>;
 
+// API User schemas
+export const ApiUserItemSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  created_at: z.string(),
+});
+
+export const ApiUserPageSchema = z.object({
+  results: z.array(ApiUserItemSchema),
+});
+
+export const ApiUserCreateSchema = z.object({
+  name: z.string(),
+});
+
+export const ApiUserSchema = z.object({
+  id: z.string(),
+  refresh_token: z.string(),
+});
+
+export type ApiUserItem = z.infer<typeof ApiUserItemSchema>;
+export type ApiUserPage = z.infer<typeof ApiUserPageSchema>;
+export type ApiUserCreate = z.infer<typeof ApiUserCreateSchema>;
+export type ApiUser = z.infer<typeof ApiUserSchema>;
+
 // API Response wrapper schemas
 export const ApiResponseSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
   z.object({
@@ -675,6 +700,15 @@ export function validateAccessTokenCreate(data: unknown): AccessTokenCreate {
 
 export function validateCapability(data: unknown): Capability {
   return CapabilitySchema.parse(data);
+}
+
+// API User validation functions
+export function validateApiUser(data: unknown): ApiUser {
+  return ApiUserSchema.parse(data);
+}
+
+export function validateApiUserPage(data: unknown): ApiUserPage {
+  return ApiUserPageSchema.parse(data);
 }
 
 // Legacy/Additional types for compatibility

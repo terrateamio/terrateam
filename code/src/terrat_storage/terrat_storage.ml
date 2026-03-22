@@ -60,15 +60,26 @@ let on_connect idle_tx_timeout lock_timeout conn =
 let create config =
   let open Abb.Future.Infix_monad in
   let tls_config =
-    let cfg = Otls.Tls_config.create () in
-    Otls.Tls_config.insecure_noverifycert cfg;
-    Otls.Tls_config.insecure_noverifyname cfg;
-    cfg
+    match Sys.getenv_opt "TERRAT_DB_DISABLE_TLS" with
+    | Some _ -> None
+    | None ->
+        let cfg = Otls.Tls_config.create () in
+        Otls.Tls_config.insecure_noverifycert cfg;
+        Otls.Tls_config.insecure_noverifyname cfg;
+        Some (`Prefer cfg)
   in
   Pgsql_pool.create
     ~metrics
-    ~idle_check:(Duration.of_sec 0)
-    ~tls_config:(`Prefer tls_config)
+    ~idle_check:
+      (Duration.of_sec
+         (CCOption.get_or
+            ~default:0
+            (CCOption.flat_map CCInt.of_string (Sys.getenv_opt "TERRAT_DB_IDLE_CHECK_SEC"))))
+    ~max_uses:
+      (CCOption.get_or
+         ~default:10
+         (CCOption.flat_map CCInt.of_string (Sys.getenv_opt "TERRAT_DB_MAX_USES")))
+    ?tls_config
     ~host:(Terrat_config.db_host config)
     ~user:(Terrat_config.db_user config)
     ~passwd:(Terrat_config.db_password config)

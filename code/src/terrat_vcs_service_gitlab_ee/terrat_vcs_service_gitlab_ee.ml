@@ -348,7 +348,16 @@ module Routes = struct
         let vcs = "gitlab"
       end)
 
-  let routes config storage = Ep_access_token.routes config storage
+  module Ep_api_user =
+    Terrat_vcs_api_user.Make
+      (Provider)
+      (struct
+        let vcs = "gitlab"
+        let read_sql = Terrat_files_gitlab_sql.read
+      end)
+
+  let routes config storage =
+    Ep_access_token.routes config storage @ Ep_api_user.routes config storage
 end
 
 include Terrat_vcs_service_gitlab.Make (Provider) (Routes)

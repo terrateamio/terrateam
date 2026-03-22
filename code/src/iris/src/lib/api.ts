@@ -19,6 +19,9 @@ import {
   type AccessToken,
   type AccessTokenCreate,
   type AccessTokenPage,
+  type ApiUser,
+  type ApiUserCreate,
+  type ApiUserPage,
   validateRepository,
   validateUser,
   validateDirspace,
@@ -36,6 +39,8 @@ import {
   validateGitLabAccessToken,
   validateAccessToken,
   validateAccessTokenPage,
+  validateApiUser,
+  validateApiUserPage,
 } from './types';
 import { sentryService } from './sentry';
 import { get } from 'svelte/store';
@@ -826,6 +831,61 @@ export class ValidatedApiClient {
     await this.delete(endpoint);
   }
 
+  // API User Management
+
+  /**
+   * List all API users for an installation (org admin only)
+   * @param installationId - Installation ID
+   * @param provider - VCS provider (defaults to current provider)
+   * @returns ApiUserPage with list of API users
+   */
+  async getApiUsers(
+    installationId: string,
+    provider?: VCSProvider
+  ): Promise<ApiUserPage> {
+    const providerPath = this.getProviderPath(provider);
+    const endpoint = `${providerPath}/installations/${installationId}/api-users`;
+
+    const response = await this.get(endpoint);
+    return validateApiUserPage(response);
+  }
+
+  /**
+   * Create a new API user for an installation (org admin only)
+   * @param installationId - Installation ID
+   * @param data - API user creation data (name)
+   * @param provider - VCS provider (defaults to current provider)
+   * @returns ApiUser with id and refresh_token (shown only once)
+   */
+  async createApiUser(
+    installationId: string,
+    data: ApiUserCreate,
+    provider?: VCSProvider
+  ): Promise<ApiUser> {
+    const providerPath = this.getProviderPath(provider);
+    const endpoint = `${providerPath}/installations/${installationId}/api-users`;
+
+    const response = await this.post(endpoint, data);
+    return validateApiUser(response);
+  }
+
+  /**
+   * Delete an API user from an installation (org admin only)
+   * @param installationId - Installation ID
+   * @param apiUserId - API user ID to delete
+   * @param provider - VCS provider (defaults to current provider)
+   */
+  async deleteApiUser(
+    installationId: string,
+    apiUserId: string,
+    provider?: VCSProvider
+  ): Promise<void> {
+    const providerPath = this.getProviderPath(provider);
+    const endpoint = `${providerPath}/installations/${installationId}/api-users?id=${encodeURIComponent(apiUserId)}`;
+
+    await this.delete(endpoint);
+  }
+
   /**
    * Refresh an access token (token rotation)
    * @returns New AccessToken
@@ -866,6 +926,8 @@ export {
   validateAccessToken,
   validateAccessTokenPage,
   validateAccessTokenCreate,
+  validateApiUser,
+  validateApiUserPage,
 } from './types';
 
 // Type-safe error handling utility

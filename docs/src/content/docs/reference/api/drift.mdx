@@ -1,0 +1,174 @@
+---
+title: Drift Detection API
+description: API endpoint for initiating on-demand drift detection
+---
+
+The Drift Detection API allows you to programmatically trigger drift detection for an installation. This is useful for automation pipelines that need to verify infrastructure state on demand rather than waiting for scheduled drift checks.
+
+## Initiate Drift Detection
+
+Trigger drift detection for an installation. Optionally filter by schedule name and/or repository.
+
+**Endpoint:** `POST /api/v1/{vcs}/installations/{installation_id}/drift`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `vcs` | string | Yes | VCS provider: `github` or `gitlab` |
+| `installation_id` | integer | Yes | The installation ID |
+
+**Query Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `name` | string | No | Name of a specific drift schedule to trigger. If omitted, all schedules are triggered. |
+| `repo` | string | No | Repository to run drift on in `owner/name` format (e.g. `myorg/infra`). If omitted, all repos with drift schedules are included. |
+
+**Authentication:** Requires an access token with the `drift_initiate` capability. System API Users are automatically granted this capability.
+
+**Responses:**
+
+- **200**: Success - Drift detection initiated
+- **403**: Forbidden - Missing `drift_initiate` capability or invalid installation access
+
+**Response Schema (200):**
+
+```json
+{}
+```
+
+**Example Requests:**
+
+Trigger all drift schedules across all repos:
+
+```bash
+curl -X POST \
+  "https://app.terrateam.io/api/v1/github/installations/12345/drift" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Length: 0"
+```
+
+Trigger a specific named schedule:
+
+```bash
+curl -X POST \
+  "https://app.terrateam.io/api/v1/github/installations/12345/drift?name=production-drift" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Length: 0"
+```
+
+Trigger drift for a specific repository:
+
+```bash
+curl -X POST \
+  "https://app.terrateam.io/api/v1/github/installations/12345/drift?repo=myorg/infra" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Length: 0"
+```
+
+Combine both — trigger a specific schedule on a specific repo:
+
+```bash
+curl -X POST \
+  "https://app.terrateam.io/api/v1/github/installations/12345/drift?name=production-drift&repo=myorg/infra" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Length: 0"
+```
+
+The schedule names correspond to the keys defined under `schedules` in your `.terrateam/config.yml`:
+
+```yaml
+drift:
+  enabled: true
+  schedules:
+    production-drift:
+      schedule: hourly
+      tag_query: "dir:production"
+    staging-drift:
+      schedule: daily
+      tag_query: "dir:staging"
+```
+
+:::tip[Schedule Timing]
+API calls always run immediately regardless of the schedule's timing (hourly, daily, etc.). The schedule configuration only affects automatic background drift detection. When you call this endpoint, drift runs now.
+:::
+
+:::note
+Drift detection runs asynchronously. The endpoint returns immediately after initiating the process. The actual drift evaluation happens in the background and will create work manifests and trigger GitHub Actions.
+:::
+
+---
+
+## How It Works
+
+When you call this endpoint:
+
+1. The server verifies the access token has the `drift_initiate` capability
+2. The server verifies the token has access to the specified installation
+3. Schedule timing is bypassed — drift runs immediately regardless of when it last ran
+4. If `name` is specified, only that schedule is triggered; otherwise all schedules run
+5. If `repo` is specified, only that repository is included; otherwise all repos with drift schedules are included
+6. For each matching schedule and repo, drift detection work manifests are created and dispatched to GitHub Actions
+
+This uses the same drift evaluation mechanism as the automatic scheduled loop, but bypasses all timing constraints since the call is intentional.
+
+---
+
+## Example: Trigger Drift via Script
+
+```bash
+#!/bin/bash
+REFRESH_TOKEN="your_api_user_refresh_token"
+INSTALLATION_ID="12345"
+BASE_URL="https://app.terrateam.io"
+
+# Optional filters
+SCHEDULE_NAME="${1:-}"
+REPO="${2:-}"
+
+# Get access token
+ACCESS_TOKEN=$(curl -s -X POST "$BASE_URL/api/v1/access-token/refresh" \
+  -H "Authorization: Bearer $REFRESH_TOKEN" \
+  -H "Content-Length: 0" | jq -r '.token')
+
+if [ -z "$ACCESS_TOKEN" ] || [ "$ACCESS_TOKEN" = "null" ]; then
+  echo "Failed to get access token"
+  exit 1
+fi
+
+# Build endpoint URL with query params
+ENDPOINT="$BASE_URL/api/v1/github/installations/$INSTALLATION_ID/drift"
+PARAMS=""
+[ -n "$SCHEDULE_NAME" ] && PARAMS="${PARAMS}name=${SCHEDULE_NAME}&"
+[ -n "$REPO" ] && PARAMS="${PARAMS}repo=${REPO}&"
+[ -n "$PARAMS" ] && ENDPOINT="${ENDPOINT}?${PARAMS%&}"
+
+# Trigger drift detection
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$ENDPOINT" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Length: 0")
+
+if [ "$HTTP_CODE" = "200" ]; then
+  echo "Drift detection initiated successfully"
+else
+  echo "Failed to initiate drift detection: HTTP $HTTP_CODE"
+  exit 1
+fi
+```
+
+Usage:
+
+```bash
+# Run all drift schedules on all repos
+./drift-check.sh
+
+# Run only the production schedule
+./drift-check.sh production-drift
+
+# Run all schedules on a specific repo
+./drift-check.sh "" myorg/infra
+
+# Run a specific schedule on a specific repo
+./drift-check.sh production-drift myorg/infra
+```

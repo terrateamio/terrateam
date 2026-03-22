@@ -63,7 +63,9 @@ module Db = struct
   let query_dirspaces_owned_by_other_pull_requests ~request_id db pull_request dirspaces =
     raise (Failure "nyi")
 
-  let query_missing_drift_scheduled_runs ~request_id db = raise (Failure "nyi")
+  let query_missing_drift_scheduled_runs ?name:_ ?force:_ ?repo:_ ~request_id db =
+    raise (Failure "nyi")
+
   let cleanup_repo_configs ~request_id db = raise (Failure "nyi")
   let cleanup_flow_states ~request_id db = raise (Failure "nyi")
   let cleanup_plans ~request_id db = raise (Failure "nyi")
