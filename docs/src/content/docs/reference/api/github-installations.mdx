@@ -77,6 +77,86 @@ Get pull requests for an installation.
 
 ---
 
+## List Partial Applies
+
+Detect pull requests with partial applies — where some dirspaces have been successfully applied but others remain unapplied. This is useful for identifying PRs that were closed or abandoned before all terraform changes were applied, which can cause tracking issues and deployment inconsistencies.
+
+**Endpoint:** `GET /api/v1/github/installations/{installation_id}/partial-applies`
+
+**Path Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `installation_id` | string | Yes | The installation identifier |
+
+**Query Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `page` | array[string] | No | Pagination token |
+| `limit` | integer | No | Maximum number of results (default: 20) |
+
+**Responses:**
+
+- **200**: Success - Returns pull requests with partial applies
+- **403**: Forbidden
+
+**Response Schema (200):**
+
+```json
+{
+  "partial_applies": [
+    {
+      "base_branch": "main",
+      "base_sha": "abc123",
+      "branch": "feature-branch",
+      "name": "my-repo",
+      "owner": "my-org",
+      "pull_number": 42,
+      "repository": 12345,
+      "sha": "def456",
+      "state": "open",
+      "title": "Add new infrastructure",
+      "user": "developer",
+      "applied_dirspaces": [
+        {
+          "path": "dev",
+          "workspace": "default",
+          "state": "apply_success"
+        }
+      ],
+      "unapplied_dirspaces": [
+        {
+          "path": "staging",
+          "workspace": "default",
+          "state": "apply_pending"
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Dirspace States:**
+
+| State | Description |
+|-------|-------------|
+| `plan_pending` | Plan has not been run |
+| `plan_failed` | Plan run failed |
+| `apply_pending` | Plan succeeded, waiting for apply |
+| `apply_failed` | Apply was attempted but failed |
+| `apply_success` | Apply completed successfully |
+
+**Example Request:**
+
+```bash
+curl -X GET \
+  https://app.terrateam.io/api/v1/github/installations/{installation_id}/partial-applies?limit=10 \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+---
+
 ## List Repositories
 
 Retrieve repositories for an installation.

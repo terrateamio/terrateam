@@ -1,1 +1,2 @@
-type t = string list [@@deriving yojson { strict = false; meta = true }, show, eq]
+type t = string list[@@deriving
+                      ((yojson { strict = false; meta = true }), show, eq)]

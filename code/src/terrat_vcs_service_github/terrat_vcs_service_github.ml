@@ -163,6 +163,16 @@ struct
                  (ud_array "page" Brtl_ep_paginate.Param.(of_param Typ.(ud' CCInt64.of_string_opt))))
           /? Query.(option_default 20 (Query.int "limit")))
 
+      let legacy_installation_partial_applies_rt () =
+        Brtl_rtng.Route.(
+          legacy_installation_api_rt ()
+          /% Path.int
+          / "partial-applies"
+          /? Query.(
+               option
+                 (ud_array "page" Brtl_ep_paginate.Param.(of_param Typ.(ud' CCInt64.of_string_opt))))
+          /? Query.(option_default 20 (Query.int "limit")))
+
       let legacy_installation_repos_rt () =
         Brtl_rtng.Route.(
           legacy_installation_api_rt ()
@@ -230,6 +240,16 @@ struct
                  (ud_array "page" Brtl_ep_paginate.Param.(of_param Typ.(ud' CCInt64.of_string_opt))))
           /? Query.(option_default 20 (Query.int "limit")))
 
+      let installation_partial_applies_rt () =
+        Brtl_rtng.Route.(
+          installation_api_rt ()
+          /% Path.int
+          / "partial-applies"
+          /? Query.(
+               option
+                 (ud_array "page" Brtl_ep_paginate.Param.(of_param Typ.(ud' CCInt64.of_string_opt))))
+          /? Query.(option_default 20 (Query.int "limit")))
+
       let installation_repos_rt () =
         Brtl_rtng.Route.(
           installation_api_rt ()
@@ -292,6 +312,9 @@ struct
             ( `GET,
               Rt.installation_pull_requests_manifests_rt ()
               --> Ep_inst.Pull_requests.get config storage );
+            ( `GET,
+              Rt.installation_partial_applies_rt () --> Ep_inst.Partial_applies.get config storage
+            );
             (`GET, Rt.installation_repos_rt () --> Ep_inst.Repos.get config storage);
             ( `POST,
               Rt.installation_repos_refresh_rt () --> Ep_inst.Repos.Refresh.post config storage );
@@ -308,6 +331,9 @@ struct
             ( `GET,
               Rt.legacy_installation_pull_requests_manifests_rt ()
               --> Ep_inst.Pull_requests.get config storage );
+            ( `GET,
+              Rt.legacy_installation_partial_applies_rt ()
+              --> Ep_inst.Partial_applies.get config storage );
             (`GET, Rt.legacy_installation_repos_rt () --> Ep_inst.Repos.get config storage);
             ( `POST,
               Rt.legacy_installation_repos_refresh_rt ()
