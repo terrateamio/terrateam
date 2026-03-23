@@ -435,6 +435,75 @@
         ],
         "type": "object"
       },
+      "installation-partial-apply": {
+        "additionalProperties": false,
+        "properties": {
+          "applied_dirspaces": {
+            "items": {
+              "$ref": "#/components/schemas/partial-apply-dirspace"
+            },
+            "type": "array"
+          },
+          "base_branch": {
+            "type": "string"
+          },
+          "base_sha": {
+            "type": "string"
+          },
+          "branch": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "pull_number": {
+            "type": "integer"
+          },
+          "repository": {
+            "type": "integer"
+          },
+          "sha": {
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "open",
+              "closed",
+              "merged"
+            ],
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "unapplied_dirspaces": {
+            "items": {
+              "$ref": "#/components/schemas/partial-apply-dirspace"
+            },
+            "type": "array"
+          },
+          "user": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "applied_dirspaces",
+          "base_branch",
+          "base_sha",
+          "branch",
+          "name",
+          "owner",
+          "pull_number",
+          "repository",
+          "sha",
+          "state",
+          "unapplied_dirspaces"
+        ],
+        "type": "object"
+      },
       "installation-pull-request": {
         "additionalProperties": false,
         "properties": {
@@ -979,6 +1048,33 @@
         },
         "required": [
           "text"
+        ],
+        "type": "object"
+      },
+      "partial-apply-dirspace": {
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "plan_pending",
+              "plan_failed",
+              "apply_pending",
+              "apply_failed",
+              "apply_success"
+            ],
+            "type": "string"
+          },
+          "workspace": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "state",
+          "workspace"
         ],
         "type": "object"
       },
@@ -2694,6 +2790,66 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/bad-request-err"
+                }
+              }
+            }
+          },
+          "403": {
+            "content": {}
+          }
+        }
+      }
+    },
+    "/api/v1/github/installations/{installation_id}/partial-applies": {
+      "get": {
+        "operationId": "installations/list-partial-applies",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "installation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "partial_applies": {
+                      "items": {
+                        "$ref": "#/components/schemas/installation-partial-apply"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "partial_applies"
+                  ],
+                  "type": "object"
                 }
               }
             }

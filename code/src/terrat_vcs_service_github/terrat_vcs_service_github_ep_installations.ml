@@ -1181,6 +1181,269 @@ module Make (S : S with type Account_id.t = int) = struct
           Paginate.run ?page ~page_param:"page" query ctx >>= fun ctx -> Abb.Future.return (Ok ctx))
   end
 
+  module Partial_applies = struct
+    module Sql = struct
+      let read fname =
+        CCOption.get_exn_or
+          fname
+          (CCOption.map
+             (fun s ->
+               s
+               |> CCString.split_on_char '\n'
+               |> CCList.filter CCFun.(CCString.prefix ~pre:"--" %> not)
+               |> CCString.concat "\n")
+             (Terrat_files_github_sql.read fname))
+
+      let select_partial_applies () =
+        Pgsql_io.Typed_sql.(
+          sql
+          //
+          (* base_branch *)
+          Ret.text
+          //
+          (* base_sha *)
+          Ret.text
+          //
+          (* branch *)
+          Ret.text
+          //
+          (* name *)
+          Ret.text
+          //
+          (* owner *)
+          Ret.text
+          //
+          (* pull_number *)
+          Ret.bigint
+          //
+          (* repository *)
+          Ret.bigint
+          //
+          (* sha *)
+          Ret.text
+          //
+          (* state *)
+          Ret.text
+          //
+          (* title *)
+          Ret.(option text)
+          //
+          (* username *)
+          Ret.(option text)
+          /^ read "select_partial_applies_page.sql"
+          /% Var.uuid "user"
+          /% Var.bigint "installation_id"
+          /% Var.option (Var.bigint "prev_pull_number"))
+
+      let select_dirspace_states () =
+        Pgsql_io.Typed_sql.(
+          sql
+          //
+          (* dir *)
+          Ret.text
+          //
+          (* workspace *)
+          Ret.text
+          //
+          (* state *)
+          Ret.text
+          /^ read "select_dirspace_stack_states.sql"
+          /% Var.bigint "repo_id"
+          /% Var.bigint "pull_number")
+    end
+
+    let columns =
+      Pgsql_pagination.Search.Col.[ create ~vname:"prev_pull_number" ~cname:"pull_number" ]
+
+    let enrich_pr
+        db
+        repository
+        pull_number
+        base_branch
+        base_sha
+        branch
+        name
+        owner
+        sha
+        state
+        title
+        user =
+      let open Abb.Future.Infix_monad in
+      Pgsql_io.Prepared_stmt.fetch
+        db
+        (Sql.select_dirspace_states ())
+        ~f:(fun dir workspace ds_state -> (dir, workspace, ds_state))
+        repository
+        pull_number
+      >>= function
+      | Ok all_states ->
+          let module Pa = Terrat_api_components.Installation_partial_apply in
+          let module Ds = Terrat_api_components.Partial_apply_dirspace in
+          let applied, unapplied =
+            CCList.partition
+              (fun (_, _, ds_state) -> CCString.equal ds_state "apply_success")
+              all_states
+          in
+          let to_ds (path, workspace, ds_state) = { Ds.path; workspace; state = ds_state } in
+          Abb.Future.return
+            (Ok
+               {
+                 Pa.base_branch;
+                 base_sha;
+                 branch;
+                 name;
+                 owner;
+                 pull_number = CCInt64.to_int pull_number;
+                 repository = CCInt64.to_int repository;
+                 sha;
+                 state;
+                 title;
+                 user;
+                 applied_dirspaces = CCList.map to_ds applied;
+                 unapplied_dirspaces = CCList.map to_ds unapplied;
+               })
+      | Error (#Pgsql_io.err as err) -> Abb.Future.return (Error err)
+
+    module Page = struct
+      type cursor = int64
+
+      type query = {
+        user : Uuidm.t;
+        storage : Terrat_storage.t;
+        installation_id : int;
+        limit : int;
+      }
+
+      type t = Terrat_api_components.Installation_partial_apply.t list * bool
+
+      type err =
+        [ Pgsql_pool.err
+        | Pgsql_io.err
+        ]
+
+      let run_query ?cursor query f =
+        let search =
+          Pgsql_pagination.Search.(
+            create ~page_size:(CCInt.min max_page_size query.limit) ~dir:`Desc columns)
+        in
+        let pull_number = cursor in
+        Pgsql_pool.with_conn query.storage ~f:(fun db ->
+            let open Abb.Future.Infix_monad in
+            f
+              search
+              db
+              (Sql.select_partial_applies ())
+              ~f:(fun
+                  base_branch
+                  base_sha
+                  branch
+                  name
+                  owner
+                  pull_number
+                  repository
+                  sha
+                  state
+                  title
+                  user
+                ->
+                ( base_branch,
+                  base_sha,
+                  branch,
+                  name,
+                  owner,
+                  pull_number,
+                  repository,
+                  sha,
+                  state,
+                  title,
+                  user ))
+              query.user
+              (CCInt64.of_int query.installation_id)
+              pull_number
+            >>= function
+            | Ok page -> (
+                let basic_results = Pgsql_pagination.results page in
+                let has_next = Pgsql_pagination.has_next_page page in
+                Abbs_future_combinators.List_result.map
+                  ~f:(fun
+                      ( base_branch,
+                        base_sha,
+                        branch,
+                        name,
+                        owner,
+                        pull_number,
+                        repository,
+                        sha,
+                        state,
+                        title,
+                        user )
+                    ->
+                    enrich_pr
+                      db
+                      repository
+                      pull_number
+                      base_branch
+                      base_sha
+                      branch
+                      name
+                      owner
+                      sha
+                      state
+                      title
+                      user)
+                  basic_results
+                >>= function
+                | Ok enriched -> Abb.Future.return (Ok (enriched, has_next))
+                | Error (#Pgsql_io.err as err) -> Abb.Future.return (Error err))
+            | Error _ as err -> Abb.Future.return err)
+
+      let next ?cursor query = run_query ?cursor query Pgsql_pagination.next
+      let prev ?cursor query = run_query ?cursor query Pgsql_pagination.prev
+
+      let to_yojson (results, _has_next) =
+        let module R = Terrat_api_installations.List_partial_applies.Responses.OK in
+        R.to_yojson { R.partial_applies = results }
+
+      let cursor_of_el =
+        let module Pa = Terrat_api_components.Installation_partial_apply in
+        function
+        | { Pa.pull_number; _ } -> Some [ CCInt.to_string pull_number ]
+
+      let cursor_of_first (results, _) =
+        match results with
+        | [] -> None
+        | pa :: _ -> cursor_of_el pa
+
+      let cursor_of_last (results, _) =
+        match CCList.rev results with
+        | [] -> None
+        | pa :: _ -> cursor_of_el pa
+
+      let has_another_page (_, has_next) = has_next
+
+      let rspnc_of_err ~token = function
+        | #Pgsql_pool.err as err ->
+            Logs.err (fun m -> m "%s : ERROR : %a" token Pgsql_pool.pp_err err);
+            Brtl_rspnc.create ~status:`Internal_server_error ""
+        | #Pgsql_io.err as err ->
+            Logs.err (fun m -> m "%s : ERROR : %a" token Pgsql_io.pp_err err);
+            Brtl_rspnc.create ~status:`Internal_server_error ""
+    end
+
+    module Paginate = Brtl_ep_paginate.Make (Page)
+
+    let get _config storage installation_id page limit =
+      Brtl_ep.run_result_json ~f:(fun ctx ->
+          let open Abbs_future_combinators.Infix_result_monad in
+          Terrat_session.with_session ctx
+          >>= fun user ->
+          enforce_installation_access storage user installation_id ctx
+          >>= fun () ->
+          let open Abb.Future.Infix_monad in
+          let query = { Page.user = Terrat_user.id user; storage; installation_id; limit } in
+          Paginate.run ?page ~page_param:"page" query ctx >>= fun ctx -> Abb.Future.return (Ok ctx))
+  end
+
   module Repos = struct
     module Sql = struct
       let read fname =

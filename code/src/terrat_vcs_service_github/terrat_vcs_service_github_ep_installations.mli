@@ -59,6 +59,16 @@ module Make (S : S with type Account_id.t = int) : sig
       Brtl_rtng.Handler.t
   end
 
+  module Partial_applies : sig
+    val get :
+      Terrat_vcs_service_github_provider.Api.Config.t ->
+      Terrat_storage.t ->
+      int ->
+      int64 Brtl_ep_paginate.Param.t option ->
+      int ->
+      Brtl_rtng.Handler.t
+  end
+
   module Repos : sig
     val get :
       Terrat_vcs_service_github_provider.Api.Config.t ->

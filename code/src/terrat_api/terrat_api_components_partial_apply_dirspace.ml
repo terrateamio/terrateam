@@ -2,11 +2,11 @@ module State =
   struct
     let t_of_yojson =
       function
-      | `String "aborted" -> Ok "aborted"
-      | `String "pending" -> Ok "pending"
-      | `String "running" -> Ok "running"
-      | `String "completed" -> Ok "completed"
-      | `String "failed" -> Ok "failed"
+      | `String "plan_pending" -> Ok "plan_pending"
+      | `String "plan_failed" -> Ok "plan_failed"
+      | `String "apply_pending" -> Ok "apply_pending"
+      | `String "apply_failed" -> Ok "apply_failed"
+      | `String "apply_success" -> Ok "apply_success"
       | json ->
           Error ("Unknown value: " ^ (Yojson.Safe.pretty_to_string json))
     type t = ((string)[@of_yojson t_of_yojson])[@@deriving
@@ -17,8 +17,7 @@ module State =
                                                      }), show, eq)]
   end
 type t = {
-  id: string ;
-  name: string ;
+  path: string ;
   state: State.t ;
-  updated_at: string }[@@deriving
-                        ((yojson { strict = false; meta = true }), show, eq)]
+  workspace: string }[@@deriving
+                       ((yojson { strict = false; meta = true }), show, eq)]
