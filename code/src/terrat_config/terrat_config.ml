@@ -101,6 +101,15 @@ type t = {
   db_max_pool_size : int;
   db_password : (string[@opaque]);
   db_user : string;
+  db_ro_connect_timeout : float;
+  db_ro_host : string;
+  db_ro_port : int;
+  db_ro_idle_tx_timeout : string;
+  db_ro_lock_timeout : string;
+  db_ro_max_pool_size : int;
+  db_ro_password : (string[@opaque]);
+  db_ro_user : string;
+  db_ro : string;
   default_tier : string;
   event_evaluator_slots : int;
   gc : Gc.t;
@@ -293,6 +302,40 @@ let create () =
     (`Key_error "DB_MAX_POOL_SIZE")
     (CCInt.of_string (CCOption.get_or ~default:"100" (Sys.getenv_opt "DB_MAX_POOL_SIZE")))
   >>= fun db_max_pool_size ->
+  let db_ro_host = CCOption.get_or ~default:db_host (Sys.getenv_opt "DB_RO_HOST") in
+  let db_ro_port =
+    match Sys.getenv_opt "DB_RO_PORT" with
+    | Some s -> (
+        match CCInt.of_string s with
+        | Some v -> v
+        | None -> db_port)
+    | None -> db_port
+  in
+  let db_ro_idle_tx_timeout =
+    CCOption.get_or ~default:db_idle_tx_timeout (Sys.getenv_opt "DB_RO_IDLE_TX_TIMEOUT")
+  in
+  let db_ro_lock_timeout =
+    CCOption.get_or ~default:db_lock_timeout (Sys.getenv_opt "DB_RO_LOCK_TIMEOUT")
+  in
+  let db_ro_user = CCOption.get_or ~default:db_user (Sys.getenv_opt "DB_RO_USER") in
+  let db_ro_password = CCOption.get_or ~default:db_password (Sys.getenv_opt "DB_RO_PASS") in
+  let db_ro = CCOption.get_or ~default:db (Sys.getenv_opt "DB_RO_NAME") in
+  let db_ro_connect_timeout =
+    match Sys.getenv_opt "DB_RO_CONNECT_TIMEOUT" with
+    | Some s -> (
+        match CCFloat.of_string_opt s with
+        | Some v -> v
+        | None -> db_connect_timeout)
+    | None -> db_connect_timeout
+  in
+  let db_ro_max_pool_size =
+    match Sys.getenv_opt "DB_RO_MAX_POOL_SIZE" with
+    | Some s -> (
+        match CCInt.of_string s with
+        | Some v -> v
+        | None -> db_max_pool_size)
+    | None -> db_max_pool_size
+  in
   env_str "TERRAT_API_BASE"
   >>= fun api_base ->
   env_str "TERRAT_PYTHON_EXEC"
@@ -347,6 +390,15 @@ let create () =
       db_max_pool_size;
       db_password;
       db_user;
+      db_ro_connect_timeout;
+      db_ro_host;
+      db_ro_port;
+      db_ro_idle_tx_timeout;
+      db_ro_lock_timeout;
+      db_ro_max_pool_size;
+      db_ro_password;
+      db_ro_user;
+      db_ro;
       default_tier;
       event_evaluator_slots;
       gc;
@@ -372,6 +424,17 @@ let db_lock_timeout t = t.db_lock_timeout
 let db_max_pool_size t = t.db_max_pool_size
 let db_password t = t.db_password
 let db_user t = t.db_user
+
+(* Read-only database pool configuration *)
+let db_ro_connect_timeout t = t.db_ro_connect_timeout
+let db_ro_host t = t.db_ro_host
+let db_ro_port t = t.db_ro_port
+let db_ro_idle_tx_timeout t = t.db_ro_idle_tx_timeout
+let db_ro_lock_timeout t = t.db_ro_lock_timeout
+let db_ro_max_pool_size t = t.db_ro_max_pool_size
+let db_ro_password t = t.db_ro_password
+let db_ro_user t = t.db_ro_user
+let db_ro t = t.db_ro
 let default_tier t = t.default_tier
 let event_evaluator_slots t = t.event_evaluator_slots
 let gc t = t.gc
