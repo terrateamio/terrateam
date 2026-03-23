@@ -106,6 +106,10 @@ module Tmpl = struct
   let comment_too_large = read "comment_too_large.tmpl"
   let index_complete = read "index_complete.tmpl"
   let invalid_lock_id = read "unlock_failed_bad_id.tmpl"
+  let apply_scheduled = read "apply_scheduled.tmpl"
+  let invalid_schedule_time = read "invalid_schedule_time.tmpl"
+  let apply_schedule_cancelled = read "apply_schedule_cancelled.tmpl"
+  let apply_schedule_nothing_to_cancel = read "apply_schedule_nothing_to_cancel.tmpl"
 
   (* Repo config errors *)
   let repo_config_err_access_control_policy_apply_autoapprove_match_parse_err =

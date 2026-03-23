@@ -228,6 +228,8 @@ export default defineConfig({
                 { label: "apply", link: "/reference/commands/apply" },
                 { label: "apply-force", link: "/reference/commands/apply-force" },
                 { label: "apply-autoapprove", link: "/reference/commands/apply-autoapprove" },
+                { label: "apply scheduled", link: "/reference/commands/apply-scheduled" },
+                { label: "apply-cancel", link: "/reference/commands/apply-cancel" },
                 { label: "unlock", link: "/reference/commands/unlock" },
                 { label: "gate approve", link: "/reference/commands/gate-approve" },
                 { label: "repo-config", link: "/reference/commands/repo-config" },

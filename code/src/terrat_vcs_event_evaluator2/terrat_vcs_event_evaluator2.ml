@@ -296,6 +296,40 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                   in
                   Abb.Future.return (Ok s))
               >>= fun s ->
+              (match event with
+              | Keys.Pull_request_event.Comment
+                  {
+                    comment = Terrat_comment.Apply_scheduled { tag_query; scheduled_at };
+                    comment_id = _;
+                  } ->
+                  let open Irm in
+                  let tag_query_opt =
+                    if CCString.is_empty (Terrat_tag_query.to_string tag_query) then None
+                    else Some tag_query
+                  in
+                  let created_by = S.Api.User.to_string user in
+                  Pgsql_io.tx db ~f:(fun () ->
+                      S.Db.store_scheduled_apply
+                        ~request_id
+                        db
+                        repo
+                        pull_request_id
+                        created_by
+                        tag_query_opt
+                        scheduled_at)
+                  >>= fun _ -> Abb.Future.return (Ok ())
+              | Keys.Pull_request_event.Comment
+                  { comment = Terrat_comment.Apply_cancel; comment_id = _ } ->
+                  let open Irm in
+                  Pgsql_io.tx db ~f:(fun () ->
+                      S.Db.cancel_scheduled_applies_for_pull_request
+                        ~request_id
+                        db
+                        repo
+                        pull_request_id)
+                  >>= fun _ -> Abb.Future.return (Ok ())
+              | _ -> Abb.Future.return (Ok ()))
+              >>= fun () ->
               Pgsql_io.tx db ~f:(fun () ->
                   Logs.info (fun m ->
                       m
@@ -829,6 +863,61 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Some _ ->
           let ctx = Legacy.Ctx.make ~config ~storage ~request_id () in
           Legacy.run_scheduled_drift ctx >>= fun _ -> Abb.Future.return (Ok (`Ok 0))
+    in
+    Fc.with_finally
+      (fun () -> Fc.ignore @@ log_err ~request_id run)
+      ~finally:(fun () ->
+        Fc.ignore
+        @@ Abb.Future.fork
+        @@ run_next_pending_compute ~request_id ~config ~storage ~exec ())
+
+  let run_scheduled_applies ~config ~storage ~exec () =
+    let open Abb.Future.Infix_monad in
+    let request_id = Uuidm.to_string (Ouuid.v4 ()) in
+    Logs.info (fun m -> m "RUN_SCHEDULED_APPLIES : %s" request_id);
+    let run =
+      let open Irm in
+      with_conn storage ~f:(fun db ->
+          Pgsql_io.tx db ~f:(fun () -> S.Db.query_due_scheduled_applies ~request_id db))
+      >>= fun applies ->
+      Logs.info (fun m ->
+          m "RUN_SCHEDULED_APPLIES : %s : count=%d" request_id (CCList.length applies));
+      let open Abb.Future.Infix_monad in
+      Abbs_future_combinators.List.iter
+        ~f:(fun (id, account, repo, pull_number, tag_query, _scheduled_at) ->
+          let tag_query = CCOption.get_or ~default:Terrat_tag_query.any tag_query in
+          let comment = Terrat_comment.Apply { tag_query } in
+          let event = Keys.Pull_request_event.Comment { comment_id = 0; comment } in
+          Logs.info (fun m ->
+              m
+                "RUN_SCHEDULED_APPLIES : %s : RUNNING : id=%a : repo=%s : pull_number=%s"
+                request_id
+                Uuidm.pp
+                id
+                (S.Api.Repo.to_string repo)
+                (S.Api.Pull_request.Id.to_string pull_number));
+          let store = Hmap.empty |> Keys.Key.add Keys.comment_id None in
+          run_pull_request_event
+            ~request_id
+            ~config
+            ~storage
+            ~exec
+            ~account
+            ~repo
+            ~pull_request_id:pull_number
+            ~user:
+              (S.Api.User.make
+                 (CCOption.get_exn_or "scheduled-apply" (S.Api.User.Id.of_string "scheduled-apply")))
+            ~event
+            ~store
+            ()
+          >>= fun _ ->
+          with_conn storage ~f:(fun db ->
+              Pgsql_io.tx db ~f:(fun () ->
+                  S.Db.update_scheduled_apply_state ~request_id db id "completed"))
+          >>= fun _ -> Abb.Future.return ())
+        applies
+      >>= fun () -> Abb.Future.return (Ok ())
     in
     Fc.with_finally
       (fun () -> Fc.ignore @@ log_err ~request_id run)

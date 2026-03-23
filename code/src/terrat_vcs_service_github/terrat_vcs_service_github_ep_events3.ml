@@ -120,6 +120,8 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
     let terrateam_comment_unknown_action =
       let fname = "terrateam_comment_unknown_action.tmpl" in
       CCOption.get_exn_or fname (Terrat_files_github_tmpl.read fname)
+
+    let invalid_schedule_time = read "invalid_schedule_time.tmpl"
   end
 
   let process_installation request_id config storage = function
@@ -561,7 +563,35 @@ module Make (P : Terrat_vcs_provider2_github.S) = struct
                     ~owner:repository.Gw.Repository.owner.Gw.User.login
                     ~repo:repository.Gw.Repository.name
                     ~pull_number:pull_request_id
-                    ~body:Tmpl.terrateam_comment_unknown_action))
+                    ~body:Tmpl.terrateam_comment_unknown_action)
+        | Error (`Invalid_schedule_time_err err) -> (
+            Prmths.Counter.inc_one (Metrics.comment_events_total "invalid_schedule_time");
+            let kv = Snabela.Kv.(Map.of_list [ ("err", string err) ]) in
+            match Snabela.apply Tmpl.invalid_schedule_time kv with
+            | Ok body ->
+                let open Abbs_future_combinators.Infix_result_monad in
+                Logs.info (fun m ->
+                    m "%s : COMMENT_ERROR : INVALID_SCHEDULE_TIME : %s" request_id err);
+                Terrat_github.get_installation_access_token
+                  (P.Api.Config.vcs_config config)
+                  installation_id
+                >>= fun access_token ->
+                Abbs_future_combinators.Result.ignore
+                @@ Terrat_github.with_client
+                     (P.Api.Config.vcs_config config)
+                     (`Token access_token)
+                     (Terrat_github.publish_comment
+                        ~owner:repository.Gw.Repository.owner.Gw.User.login
+                        ~repo:repository.Gw.Repository.name
+                        ~pull_number:pull_request_id
+                        ~body)
+            | Error (#Snabela.err as err) ->
+                Logs.err (fun m ->
+                    m
+                      "%s : TMPL_ERROR : INVALID_SCHEDULE_TIME : %s"
+                      request_id
+                      (Snabela.show_err err));
+                Abb.Future.return (Ok ())))
     | Gw.Issue_comment_event.Issue_comment_created _ ->
         Logs.debug (fun m -> m "%s : NOOP : ISSUE_COMMENT_CREATED" request_id);
         Prmths.Counter.inc_one (Metrics.comment_events_total "noop");

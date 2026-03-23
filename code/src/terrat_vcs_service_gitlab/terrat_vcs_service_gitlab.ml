@@ -39,6 +39,7 @@ struct
   type t = {
     config : Provider.Api.Config.t;
     drift : unit Abb.Future.t;
+    scheduled_applies : unit Abb.Future.t;
     flow_state_cleanup : unit Abb.Future.t;
     plan_cleanup : unit Abb.Future.t;
     repo_config_cleanup : unit Abb.Future.t;
@@ -245,12 +246,18 @@ struct
     type vcs_config = Provider.Api.Config.vcs_config
 
     let one_hour = Duration.to_f (Duration.of_hour 1)
+    let one_minute = Duration.to_f (Duration.of_min 1)
 
     let rec drift config storage exec =
       let open Abb.Future.Infix_monad in
       Abbs_future_combinators.ignore
         (Evaluator2.run_missing_drift_schedules ~config ~storage ~exec ())
       >>= fun () -> Abb.Sys.sleep one_hour >>= fun () -> drift config storage exec
+
+    let rec scheduled_applies config storage exec =
+      let open Abb.Future.Infix_monad in
+      Abbs_future_combinators.ignore (Evaluator2.run_scheduled_applies ~config ~storage ~exec ())
+      >>= fun () -> Abb.Sys.sleep one_minute >>= fun () -> scheduled_applies config storage exec
 
     let rec flow_state_cleanup config storage =
       let open Abb.Future.Infix_monad in
@@ -279,15 +286,26 @@ struct
       let open Abb.Future.Infix_monad in
       let config = Provider.Api.Config.make ~config ~vcs_config () in
       Abb.Future.Infix_app.(
-        (fun drift flow_state_cleanup plan_cleanup repo_config_cleanup ->
-          (drift, flow_state_cleanup, plan_cleanup, repo_config_cleanup))
+        (fun drift scheduled_applies flow_state_cleanup plan_cleanup repo_config_cleanup ->
+          (drift, scheduled_applies, flow_state_cleanup, plan_cleanup, repo_config_cleanup))
         <$> Abb.Future.fork (drift config storage exec)
+        <*> Abb.Future.fork (scheduled_applies config storage exec)
         <*> Abb.Future.fork (flow_state_cleanup config storage)
         <*> Abb.Future.fork (plan_cleanup config storage)
         <*> Abb.Future.fork (repo_config_cleanup config storage))
-      >>= fun (drift, flow_state_cleanup, plan_cleanup, repo_config_cleanup) ->
+      >>= fun (drift, scheduled_applies, flow_state_cleanup, plan_cleanup, repo_config_cleanup) ->
       Abb.Future.return
-        (Ok { config; drift; flow_state_cleanup; plan_cleanup; repo_config_cleanup; storage; exec })
+        (Ok
+           {
+             config;
+             drift;
+             scheduled_applies;
+             flow_state_cleanup;
+             plan_cleanup;
+             repo_config_cleanup;
+             storage;
+             exec;
+           })
 
     let stop t = raise (Failure "nyi")
     let routes t = Routes.routes t
