@@ -8,6 +8,7 @@ module type ROUTES = sig
   val routes :
     config ->
     Terrat_storage.t ->
+    ro_storage:Terrat_storage.t ->
     (Brtl_rtng.Method.t * Brtl_rtng.Handler.t Brtl_rtng.Route.Route.t) list
 end
 
@@ -252,15 +253,15 @@ struct
       let user_installations_rt () = Brtl_rtng.Route.(user_api_rt () / "github" / "installations")
     end
 
-    let routes config storage exec =
-      Routes.routes config storage
-      @ Provider.Stacks.routes config storage
-      @ Kv_store.routes config storage
+    let routes config storage ~ro_storage exec =
+      Routes.routes config storage ~ro_storage
+      @ Provider.Stacks.routes config ro_storage
+      @ Kv_store.routes config storage ~ro_storage
       @ Brtl_rtng.Route.
           [
             (* Work manifests *)
             (`POST, Rt.github_work_manifest_plan () --> Work_manifest.Plans.post config storage);
-            (`GET, Rt.github_get_work_manifest_plan () --> Work_manifest.Plans.get config storage);
+            (`GET, Rt.github_get_work_manifest_plan () --> Work_manifest.Plans.get config ro_storage);
             ( `PUT,
               Rt.github_work_manifest_results () --> Work_manifest.Results.put config storage exec
             );
@@ -271,44 +272,47 @@ struct
               Rt.github_work_manifest_access_token ()
               --> Work_manifest.Access_token.post config storage );
             ( `GET,
-              Rt.github_work_manifest_workspaces () --> Work_manifest.Workspaces.get config storage
-            );
+              Rt.github_work_manifest_workspaces ()
+              --> Work_manifest.Workspaces.get config ro_storage );
             (* Github *)
             (`POST, Rt.github_events () --> Events.post config storage exec);
             ( `GET,
               Rt.github_callback () --> Terrat_vcs_service_github_ep_callback.get config storage );
             ( `GET,
-              Rt.github_client_id () --> Terrat_vcs_service_github_ep_client_id.get config storage
+              Rt.github_client_id ()
+              --> Terrat_vcs_service_github_ep_client_id.get config ro_storage );
+            ( `GET,
+              Rt.github_whoami () --> Terrat_vcs_service_github_ep_user.Whoami.get config ro_storage
+            );
+            (* Installations *)
+            (`GET, Rt.installation_dirspaces_rt () --> Ep_inst.Dirspaces.get config ro_storage);
+            ( `GET,
+              Rt.installation_work_manifests_rt () --> Ep_inst.Work_manifests.get config ro_storage
             );
             ( `GET,
-              Rt.github_whoami () --> Terrat_vcs_service_github_ep_user.Whoami.get config storage );
-            (* Installations *)
-            (`GET, Rt.installation_dirspaces_rt () --> Ep_inst.Dirspaces.get config storage);
-            ( `GET,
-              Rt.installation_work_manifests_rt () --> Ep_inst.Work_manifests.get config storage );
-            ( `GET,
               Rt.installation_work_manifest_outputs_rt ()
-              --> Ep_inst.Work_manifests.Outputs.get config storage );
+              --> Ep_inst.Work_manifests.Outputs.get config ro_storage );
             ( `GET,
               Rt.installation_pull_requests_manifests_rt ()
-              --> Ep_inst.Pull_requests.get config storage );
-            (`GET, Rt.installation_repos_rt () --> Ep_inst.Repos.get config storage);
+              --> Ep_inst.Pull_requests.get config ro_storage );
+            (`GET, Rt.installation_repos_rt () --> Ep_inst.Repos.get config ro_storage);
             ( `POST,
               Rt.installation_repos_refresh_rt () --> Ep_inst.Repos.Refresh.post config storage );
             (`DELETE, Rt.installation_repo_delete_rt () --> Ep_repo_delete.delete config storage);
             (`GET, Rt.user_installations_rt () --> Ep_user.Installations.get config storage);
             (* Legacy Installations *)
-            (`GET, Rt.legacy_installation_dirspaces_rt () --> Ep_inst.Dirspaces.get config storage);
+            ( `GET,
+              Rt.legacy_installation_dirspaces_rt () --> Ep_inst.Dirspaces.get config ro_storage );
             ( `GET,
               Rt.legacy_installation_work_manifests_rt ()
-              --> Ep_inst.Work_manifests.get config storage );
+              --> Ep_inst.Work_manifests.get config ro_storage );
             ( `GET,
               Rt.legacy_installation_work_manifest_outputs_rt ()
-              --> Ep_inst.Work_manifests.Outputs.get config storage );
+              --> Ep_inst.Work_manifests.Outputs.get config ro_storage );
             ( `GET,
               Rt.legacy_installation_pull_requests_manifests_rt ()
-              --> Ep_inst.Pull_requests.get config storage );
-            (`GET, Rt.legacy_installation_repos_rt () --> Ep_inst.Repos.get config storage);
+              --> Ep_inst.Pull_requests.get config ro_storage );
+            (`GET, Rt.legacy_installation_repos_rt () --> Ep_inst.Repos.get config ro_storage);
             ( `POST,
               Rt.legacy_installation_repos_refresh_rt ()
               --> Ep_inst.Repos.Refresh.post config storage );
@@ -341,6 +345,7 @@ struct
     type t = {
       config : Provider.Api.Config.t;
       storage : Terrat_storage.t;
+      ro_storage : Terrat_storage.t;
       drift : unit Abb.Future.t;
       flow_state_cleanup : unit Abb.Future.t;
       plan_cleanup : unit Abb.Future.t;
@@ -377,7 +382,7 @@ struct
 
     let name _ = "github"
 
-    let start config vcs_config storage exec =
+    let start config vcs_config storage ~ro_storage exec =
       let open Abb.Future.Infix_monad in
       let config = Provider.Api.Config.make ~config ~vcs_config () in
       Abb.Future.Infix_app.(
@@ -389,7 +394,17 @@ struct
         <*> Abb.Future.fork (repo_config_cleanup config storage))
       >>= fun (drift, flow_state_cleanup, plan_cleanup, repo_config_cleanup) ->
       Abb.Future.return
-        (Ok { config; storage; drift; flow_state_cleanup; plan_cleanup; repo_config_cleanup; exec })
+        (Ok
+           {
+             config;
+             storage;
+             ro_storage;
+             drift;
+             flow_state_cleanup;
+             plan_cleanup;
+             repo_config_cleanup;
+             exec;
+           })
 
     let stop t =
       let open Abb.Future.Infix_monad in
@@ -400,7 +415,7 @@ struct
       Abb.Future.abort t.plan_cleanup
       >>= fun () -> Abb.Future.abort t.repo_config_cleanup >>= fun () -> Abb.Future.return ()
 
-    let routes t = Routes.routes t.config t.storage t.exec
+    let routes t = Routes.routes t.config t.storage ~ro_storage:t.ro_storage t.exec
 
     let get_user t user_id =
       let run =

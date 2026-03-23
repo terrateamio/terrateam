@@ -51,18 +51,19 @@ let response_404 =
   Brtl_ep.run ~content_type:"text/html" ~f:(fun ctx ->
       Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Not_found "") ctx))
 
-let maybe_add_admin_routes config storage =
+let maybe_add_admin_routes config ro_storage =
   (* Very important, we only want to add these endpoints if the admin token is
        set.  The admin token is really only meant for debugging purposes. *)
   match Terrat_config.admin_token config with
   | Some token ->
       Brtl_rtng.Route.
         [
-          (`GET, Rt.admin_drift_list_rt () --> Terrat_ep_admin.Drift.List.get token config storage);
+          ( `GET,
+            Rt.admin_drift_list_rt () --> Terrat_ep_admin.Drift.List.get token config ro_storage );
         ]
   | None -> []
 
-let rtng config storage services =
+let rtng config storage ro_storage services =
   let routes =
     CCList.flat_map
       (function
@@ -73,25 +74,25 @@ let rtng config storage services =
     ~default:
       (Brtl_ep.run ~content_type:"text/html" ~f:(fun ctx ->
            Abb.Future.return (Brtl_ctx.set_response (Brtl_rspnc.create ~status:`Not_found "") ctx)))
-    (maybe_add_admin_routes config storage
+    (maybe_add_admin_routes config ro_storage
     @ Brtl_rtng.Route.(
         [
           (* Ops *)
-          (`GET, Rt.health_check () --> Terrat_ep_health_check.get storage);
+          (`GET, Rt.health_check () --> Terrat_ep_health_check.get storage ro_storage);
           (`GET, Rt.metrics () --> Terrat_ep_metrics.get);
           (* Tasks *)
-          (`GET, Rt.task_rt () --> Terrat_ep_tasks.get storage);
+          (`GET, Rt.task_rt () --> Terrat_ep_tasks.get ro_storage);
         ]
         @ routes
         @ [
             (* Tenv *)
-            (`GET, Rt.tenv_rt () --> Terrat_ep_tenv.get config storage);
+            (`GET, Rt.tenv_rt () --> Terrat_ep_tenv.get config ro_storage);
             (* Access token *)
             ( `POST,
               Rt.access_token_refresh_rt () --> Terrat_ep_access_token.Refresh.post config storage
             );
             (* User *)
-            (`GET, Rt.whoami () --> Terrat_ep_whoami.get config storage services);
+            (`GET, Rt.whoami () --> Terrat_ep_whoami.get config ro_storage services);
             (`POST, Rt.logout () --> Terrat_ep_logout.post storage);
             (* Infracost *)
             (`POST, Rt.infracost () --> fun _ -> Terrat_ep_infracost.post config storage);
@@ -123,7 +124,7 @@ let start_telemetry config =
       >>= fun () ->
       Abbs_future_combinators.ignore (Abb.Future.fork (Terrat_telemetry.start_ping_loop config))
 
-let run config storage services =
+let run config storage ro_storage services =
   let open Abb.Future.Infix_monad in
   let one_min = Duration.of_min 1 in
   let five_min = Duration.of_min 5 in
@@ -151,7 +152,7 @@ let run config storage services =
         Terrat_nginx_metrics.start uri
     | None -> Abb.Future.return ())
   >>= fun _ ->
-  Brtl.run cfg mw (rtng config storage services)
+  Brtl.run cfg mw (rtng config storage ro_storage services)
   >>| function
   | Ok () -> ()
   | Error (`Exn exn) ->

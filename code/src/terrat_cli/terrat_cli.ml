@@ -139,12 +139,12 @@ struct
 
   module Logs = (val Logs.src_log src : Logs.LOG)
 
-  let maybe_start_github config storage exec =
+  let maybe_start_github config storage ~ro_storage exec =
     let open Abb.Future.Infix_monad in
     match Terrat_config.github config with
     | Some github -> (
         Logs.info (fun m -> m "Starting GitHub Service");
-        Github.Service.start config github storage exec
+        Github.Service.start config github storage ~ro_storage exec
         >>= function
         | Ok service ->
             Abb.Future.return (Some (Terrat_vcs_service.Service ((module Github), service)))
@@ -153,12 +153,12 @@ struct
             exit 1)
     | None -> Abb.Future.return None
 
-  let maybe_start_gitlab config storage exec =
+  let maybe_start_gitlab config storage ~ro_storage exec =
     let open Abb.Future.Infix_monad in
     match Terrat_config.gitlab config with
     | Some gitlab -> (
         Logs.info (fun m -> m "Starting GitLab Service");
-        Gitlab.Service.start config gitlab storage exec
+        Gitlab.Service.start config gitlab storage ~ro_storage exec
         >>= function
         | Ok service ->
             Abb.Future.return (Some (Terrat_vcs_service.Service ((module Gitlab), service)))
@@ -179,16 +179,18 @@ struct
           @@ (Terrat_config.gc config).Terrat_config.Gc.dynamic_gc;
           Terrat_storage.create config
           >>= fun storage ->
+          Terrat_storage.create_read_only config
+          >>= fun ro_storage ->
           Terrat_vcs_event_evaluator2.create_exec
             ~slots:(Terrat_config.event_evaluator_slots config)
             ()
           >>= fun exec ->
-          maybe_start_github config storage exec
+          maybe_start_github config storage ~ro_storage exec
           >>= fun github_service ->
-          maybe_start_gitlab config storage exec
+          maybe_start_gitlab config storage ~ro_storage exec
           >>= fun gitlab_service ->
           let services = CCOption.to_list github_service @ CCOption.to_list gitlab_service in
-          Terrat_server.run config storage services
+          Terrat_server.run config storage ro_storage services
       | Error err ->
           Logs.err (fun m -> m "CONFIG : ERROR : %s" (Terrat_config.show_err err));
           exit 1
