@@ -72,4 +72,18 @@ module Make (S : Terrat_vcs_provider2.S) : sig
 
   val run_missing_drift_schedules :
     config:S.Api.Config.t -> storage:Terrat_storage.t -> exec:Exec.t -> unit -> unit Abb.Future.t
+
+  val adhoc_run :
+    request_id:string ->
+    config:S.Api.Config.t ->
+    storage:Terrat_storage.t ->
+    exec:Exec.t ->
+    account:S.Api.Account.t ->
+    user:S.Api.User.t ->
+    repo:S.Api.Repo.t ->
+    branch:S.Api.Ref.t ->
+    operation:[ `Plan | `Apply ] ->
+    tag_query:Terrat_tag_query.t ->
+    unit ->
+    unit Abb.Future.t
 end

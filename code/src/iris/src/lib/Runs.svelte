@@ -12,6 +12,7 @@
   import { navigateToRun as navigateToRunUtil, navigateToRuns } from './utils/navigation';
   import { VCS_PROVIDERS } from './vcs/providers';
   import { EXTERNAL_URLS } from './constants';
+  import NewRunModal from './components/NewRunModal.svelte';
 
   // Note: Terraform summary functionality removed due to memory safety concerns
   // Large terraform outputs could crash browsers during summary extraction
@@ -22,6 +23,12 @@
   let isLoadingWorkManifests: boolean = false;
   let isLoadingRepos: boolean = true; // Start as loading
   let error: string | null = null;
+
+  // New Run modal state
+  let showNewRunModal: boolean = false;
+
+  // Apply button loading state (tracks which run IDs are currently triggering apply)
+  let applyingRunIds: Set<string> = new Set();
 
   // View mode state (Overview vs Search)
   let viewMode: 'overview' | 'search' = 'overview';
@@ -918,7 +925,38 @@
     }
     return `#/runs/${runId}`;
   }
-  
+
+  async function triggerApply(run: Dirspace): Promise<void> {
+    if (!$selectedInstallation) return;
+
+    applyingRunIds = new Set([...applyingRunIds, run.id]);
+    try {
+      const params: { repo_name: string; branch?: string; operation: 'plan' | 'apply'; tag_query?: string } = {
+        repo_name: run.repo,
+        operation: 'apply',
+      };
+      if (run.branch) {
+        params.branch = run.branch;
+      }
+      if (run.tag_query) {
+        params.tag_query = run.tag_query;
+      }
+      await api.createAdhocRun($selectedInstallation.id, params);
+
+      // Refresh the appropriate data
+      if (viewMode === 'overview') {
+        loadRecentSuccesses();
+        loadActiveOperations();
+      } else {
+        loadRuns();
+      }
+    } catch (err) {
+      console.error('Failed to trigger apply:', err);
+    } finally {
+      applyingRunIds = new Set([...applyingRunIds].filter(id => id !== run.id));
+    }
+  }
+
 </script>
 
 <PageLayout 
@@ -948,7 +986,7 @@
 
   <!-- View Mode Selector (only show when not viewing a specific repository) -->
   {#if !basicFilters.repo}
-    <div class="mb-6">
+    <div class="mb-6 flex items-center justify-between flex-wrap gap-2">
       <div class="flex items-center space-x-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-full sm:w-fit">
         <button
           on:click={() => {
@@ -978,6 +1016,19 @@
           🔍 Search
         </button>
       </div>
+      <!-- New Run Button -->
+      {#if $selectedInstallation}
+        <button
+          on:click={() => showNewRunModal = true}
+          class="inline-flex items-center px-3 py-2 text-sm font-semibold rounded-lg bg-[#e7f67e] hover:bg-[#d4e668] text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+          aria-label="New Plan"
+        >
+          <svg class="w-4 h-4 sm:mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span class="hidden sm:inline">New Plan</span>
+        </button>
+      {/if}
     </div>
   {/if}
 
@@ -1252,6 +1303,11 @@
                                 🔍 Drift
                               </span>
                             {/if}
+                            {#if failure.kind === 'adhoc'}
+                              <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-700">
+                                Ad-hoc
+                              </span>
+                            {/if}
                           </div>
                           
                           <!-- Branch and Directory -->
@@ -1360,8 +1416,13 @@
                                 🔍 Drift
                               </span>
                             {/if}
+                            {#if success.kind === 'adhoc'}
+                              <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-700">
+                                Ad-hoc
+                              </span>
+                            {/if}
                           </div>
-                          
+
                           <!-- Branch and Directory -->
                           <div class="text-sm text-green-700 dark:text-green-300 mb-1">
                             {success.branch}
@@ -1388,8 +1449,23 @@
                           </div>
                         </div>
                         
-                        <!-- Status Badge and Arrow -->
+                        <!-- Status Badge, Apply Button, and Arrow -->
                         <div class="flex items-center space-x-2 self-start sm:self-center">
+                          {#if success.kind === 'adhoc' && success.run_type === 'plan'}
+                            <button
+                              on:click|preventDefault|stopPropagation={() => triggerApply(success)}
+                              disabled={applyingRunIds.has(success.id)}
+                              class="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border border-orange-300 dark:border-orange-700 hover:bg-orange-200 dark:hover:bg-orange-900/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              aria-label="Apply {success.repo} on {success.branch}"
+                            >
+                              {#if applyingRunIds.has(success.id)}
+                                <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-orange-700 dark:border-orange-300 mr-1"></div>
+                                Applying...
+                              {:else}
+                                Apply
+                              {/if}
+                            </button>
+                          {/if}
                           <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
                             Success
                           </span>
@@ -1848,6 +1924,9 @@
                   <button on:click={() => addQuickFilter('type:plan')} class="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs rounded hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors">
                     📋 Plans
                   </button>
+                  <button on:click={() => addQuickFilter('kind:adhoc')} class="px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-xs rounded hover:bg-orange-200 dark:hover:bg-orange-900/50 transition-colors">
+                    Ad-hoc
+                  </button>
                 </div>
 
                 <!-- Advanced Mode Actions -->
@@ -1893,7 +1972,7 @@
                           <div><code class="bg-white dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100">repo:infrastructure</code> - Operations in infrastructure repository</div>
                           <div><code class="bg-white dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100">user:josh</code> - Operations by user josh</div>
                           <div><code class="bg-white dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100">type:apply</code> - Apply operations (options: plan, apply)</div>
-                          <div><code class="bg-white dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100">kind:pr</code> - Pull request operations (options: pr, drift)</div>
+                          <div><code class="bg-white dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100">kind:pr</code> - Pull request operations (options: pr, drift, adhoc)</div>
                           <div><code class="bg-white dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100">branch:main</code> - Operations on main branch</div>
                           <div><code class="bg-white dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100">workspace:production</code> - Operations in production workspace</div>
                           <div><code class="bg-white dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100">dir:infra/s3</code> - Operations that processed the infra/s3 directory</div>
@@ -2039,7 +2118,14 @@
                                     🔍 Drift
                                   </span>
                                 {/if}
-                                
+
+                                <!-- Ad-hoc Run Indicator -->
+                                {#if run.kind === 'adhoc'}
+                                  <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-700 flex-shrink-0">
+                                    Ad-hoc
+                                  </span>
+                                {/if}
+
                                 <!-- Path and details on separate line if needed -->
                                 <div class="flex items-center gap-1 flex-wrap">
                                   <span class="text-sm text-gray-700 dark:text-gray-300">{run.branch}</span>
@@ -2067,6 +2153,21 @@
                             </div>
                           </div>
                           <div class="flex items-center gap-2 self-start">
+                            {#if run.kind === 'adhoc' && run.run_type === 'plan' && run.state === 'success'}
+                              <button
+                                on:click|preventDefault|stopPropagation={() => triggerApply(run)}
+                                disabled={applyingRunIds.has(run.id)}
+                                class="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border border-orange-300 dark:border-orange-700 hover:bg-orange-200 dark:hover:bg-orange-900/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                aria-label="Apply {run.repo} on {run.branch}"
+                              >
+                                {#if applyingRunIds.has(run.id)}
+                                  <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-orange-700 dark:border-orange-300 mr-1"></div>
+                                  Applying...
+                                {:else}
+                                  Apply
+                                {/if}
+                              </button>
+                            {/if}
                             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium {getStateColor(run.state)}">
                               {run.state}
                             </span>
@@ -2115,4 +2216,18 @@
         {/if}
       </div>
       {/if}
+
+  {#if showNewRunModal && $selectedInstallation}
+    <NewRunModal
+      installationId={$selectedInstallation.id}
+      on:close={() => showNewRunModal = false}
+      on:created={() => {
+        showNewRunModal = false;
+        // Switch to search view with adhoc filter to see the new run
+        viewMode = 'search';
+        searchQuery = 'kind:adhoc';
+        loadRuns();
+      }}
+    />
+  {/if}
   </PageLayout>

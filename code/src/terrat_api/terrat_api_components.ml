@@ -26,6 +26,7 @@ module Installation_work_manifest_target_pull_request =
   Terrat_api_components_installation_work_manifest_target_pull_request
 
 module Installation_workflow_step_output = Terrat_api_components_installation_workflow_step_output
+module Kind_adhoc = Terrat_api_components_kind_adhoc
 module Kind_drift = Terrat_api_components_kind_drift
 module Kind_index = Terrat_api_components_kind_index
 module Kind_pull_request = Terrat_api_components_kind_pull_request

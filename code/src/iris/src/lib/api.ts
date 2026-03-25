@@ -827,6 +827,25 @@ export class ValidatedApiClient {
   }
 
   /**
+   * Create an ad-hoc run (plan or apply without a pull request)
+   * @param installationId - Installation ID
+   * @param params - Ad-hoc run parameters
+   * @returns Object containing the work_manifest_id
+   */
+  async createAdhocRun(
+    installationId: string,
+    params: { repo_name: string; branch?: string; operation: 'plan' | 'apply'; tag_query?: string },
+    provider?: VCSProvider
+  ): Promise<{ work_manifest_id?: string }> {
+    const providerPath = this.getProviderPath(provider);
+    const response = await this.post(`${providerPath}/installations/${installationId}/adhoc-runs`, params);
+    if (response && typeof response === 'object' && 'work_manifest_id' in response) {
+      return response as { work_manifest_id: string };
+    }
+    return {};
+  }
+
+  /**
    * Refresh an access token (token rotation)
    * @returns New AccessToken
    */

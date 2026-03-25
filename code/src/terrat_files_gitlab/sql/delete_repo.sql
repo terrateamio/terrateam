@@ -95,6 +95,11 @@ delete_drift_work_manifests as (
     using work_manifests as wm, repo as r
     where drift_work_manifests.work_manifest = wm.id and wm.repo = r.core_id
 ),
+delete_adhoc_work_manifests as (
+    delete from adhoc_work_manifests
+    using work_manifests as wm, repo as r
+    where adhoc_work_manifests.work_manifest = wm.id and wm.repo = r.core_id
+),
 delete_index_work_manifests as (
     delete from index_work_manifests
     using work_manifests as wm, repo as r

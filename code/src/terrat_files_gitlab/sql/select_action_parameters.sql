@@ -3,6 +3,7 @@ select
     gwm.repo_owner,
     gwm.repo_name,
     (case
+     when gawm.work_manifest is not null then gawm.branch
      when gdwm.work_manifest is not null then gdwm.branch
      when giwm.work_manifest is not null then giwm.branch
      when gpr.state = 'merged' then gpr.base_branch
@@ -15,6 +16,8 @@ select
 from gitlab_work_manifests as gwm
 left join drift_work_manifests as gdwm
     on gwm.id = gdwm.work_manifest
+left join adhoc_work_manifests as gawm
+    on gawm.work_manifest = gwm.id
 left join gitlab_pull_requests as gpr
     on gwm.repository = gpr.repository and gwm.pull_number = gpr.pull_number
 left join index_work_manifests as giwm

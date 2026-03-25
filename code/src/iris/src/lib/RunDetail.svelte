@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import type { WorkManifest } from './types';
   import type { TerraformJsonPlan } from './types/terraform';
   // Auth handled by PageLayout
-  import { api } from './api';
+  import { api, isApiError } from './api';
   import { selectedInstallation, installations, currentVCSProvider, serverConfig } from './stores';
   import { analytics } from './analytics';
   import PageLayout from './components/layout/PageLayout.svelte';
@@ -11,13 +11,72 @@
   import ErrorMessage from './components/ui/ErrorMessage.svelte';
   import Card from './components/ui/Card.svelte';
   import SafeOutput from './components/ui/SafeOutput.svelte';
+  import Button from './components/ui/Button.svelte';
   import { getWebBaseUrl } from './server-config';
 
   export let params: { id: string; installationId?: string } = { id: '' };
 
+  // Ad-hoc apply state
+  let isApplying: boolean = false;
+  let applyError: string | null = null;
+
+  $: isAdhocPlanCompleted = run && run.kind === 'adhoc' && run.run_type === 'plan' && (run.state === 'completed');
+  $: isRunInProgress = run && (run.state === 'running' || run.state === 'queued');
+
+  async function triggerApply(): Promise<void> {
+    if (!run || !$selectedInstallation) return;
+    isApplying = true;
+    applyError = null;
+    try {
+      const result = await api.createAdhocRun($selectedInstallation.id, {
+        repo_name: run.repo,
+        operation: 'apply',
+        branch: run.branch || undefined,
+        tag_query: run.tag_query || undefined,
+      });
+
+      if (result.work_manifest_id) {
+        window.location.hash = `#/i/${$selectedInstallation.id}/runs/${result.work_manifest_id}`;
+      } else {
+        window.location.hash = `#/i/${$selectedInstallation.id}/runs`;
+      }
+    } catch (err) {
+      if (isApiError(err)) {
+        applyError = `Failed to start apply: ${err.message}`;
+      } else {
+        applyError = 'Failed to start apply. Please try again.';
+      }
+      isApplying = false;
+    }
+  }
+
   let run: WorkManifest | null = null;
   let isLoading: boolean = false;
   let error: string | null = null;
+
+  // Auto-refresh for in-progress runs
+  let refreshTimer: ReturnType<typeof setInterval> | null = null;
+
+  function startAutoRefresh(): void {
+    if (refreshTimer) return;
+    refreshTimer = setInterval(() => {
+      if (run && (run.state === 'running' || run.state === 'queued') && params.id && $selectedInstallation) {
+        loadRunData(params.id);
+      } else if (refreshTimer) {
+        clearInterval(refreshTimer);
+        refreshTimer = null;
+      }
+    }, 15000);
+  }
+
+  // Start auto-refresh when run is in progress
+  $: if (run && (run.state === 'running' || run.state === 'queued')) {
+    startAutoRefresh();
+  }
+
+  onDestroy(() => {
+    if (refreshTimer) clearInterval(refreshTimer);
+  });
 
   // Plan highlighting preference
   let enablePlanHighlighting = false;
@@ -239,8 +298,13 @@
       costEstimation = (costResponse.outputs || []).map(output => output as OutputItem);
 
     } catch (err) {
-      console.error('Error loading outputs:', err);
-      outputsError = err instanceof Error ? err.message : 'Failed to load outputs';
+      // For in-progress runs, output loading failures are expected (runner hasn't started)
+      if (run && (run.state === 'running' || run.state === 'queued')) {
+        outputsError = 'Waiting for outputs...';
+      } else {
+        console.error('Error loading outputs:', err);
+        outputsError = err instanceof Error ? err.message : 'Failed to load outputs';
+      }
       outputs = [];
       allOutputs = [];
       costEstimation = [];
@@ -768,6 +832,37 @@
       </a>
     </div>
 
+    <!-- In-progress banner -->
+    {#if isRunInProgress}
+      <div class="mb-6 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 p-4">
+        <div class="flex items-center">
+          <div class="flex-shrink-0 mr-4">
+            <div class="relative">
+              <div class="animate-spin rounded-full h-8 w-8 border-[3px] border-blue-200 dark:border-blue-800 border-t-blue-600 dark:border-t-blue-400"></div>
+            </div>
+          </div>
+          <div class="flex-1">
+            <h3 class="text-sm font-semibold text-blue-800 dark:text-blue-200">
+              {run?.run_type === 'apply' ? 'Apply' : 'Plan'} in progress
+            </h3>
+            <p class="text-sm text-blue-600 dark:text-blue-400 mt-0.5">
+              {#if run?.state === 'queued'}
+                Waiting for a runner to pick up this job...
+              {:else}
+                Terraform is running. Outputs will appear below as they complete.
+              {/if}
+            </p>
+          </div>
+          <div class="flex-shrink-0 ml-4">
+            <div class="flex items-center space-x-1.5 text-xs text-blue-500 dark:text-blue-400">
+              <div class="w-1.5 h-1.5 bg-blue-500 dark:bg-blue-400 rounded-full animate-pulse"></div>
+              <span>Auto-refreshing</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    {/if}
+
     <!-- Run Overview -->
     <Card padding="lg" class="mb-6">
       <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-6">
@@ -796,7 +891,7 @@
             {getRunTypeLabel(run.run_type)}
           </div>
           {#if run.run_id}
-            <a 
+            <a
               href={getGitHubActionsUrl(run.owner, run.repo, run.run_id)}
               target="_blank"
               rel="noopener noreferrer"
@@ -812,8 +907,33 @@
               </svg>
             </a>
           {/if}
+          {#if isAdhocPlanCompleted}
+            <Button
+              variant="accent"
+              size="md"
+              loading={isApplying}
+              on:click={triggerApply}
+            >
+              {#if isApplying}
+                Starting Apply...
+              {:else}
+                Apply Changes
+              {/if}
+            </Button>
+          {/if}
+          {#if isRunInProgress}
+            <div class="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+              <div class="w-2 h-2 bg-green-400 dark:bg-green-500 rounded-full animate-pulse"></div>
+              <span>In progress</span>
+            </div>
+          {/if}
         </div>
       </div>
+      {#if applyError}
+        <div class="mt-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <p class="text-sm text-red-700 dark:text-red-300">{applyError}</p>
+        </div>
+      {/if}
 
       <!-- Pull Request Information -->
       {#if getPullRequestInfo(run.kind).pullNumber}
@@ -1015,6 +1135,12 @@
         <div class="flex justify-center items-center py-8">
           <LoadingSpinner size="md" />
           <span class="ml-3 text-gray-600 dark:text-gray-400">Loading outputs...</span>
+        </div>
+      {:else if outputsError && isRunInProgress}
+        <div class="text-center py-12">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p class="text-gray-700 dark:text-gray-300 font-medium">Run is in progress</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Outputs will appear here once the runner starts. Auto-refreshing...</p>
         </div>
       {:else if outputsError}
         <ErrorMessage type="error" message={outputsError} />

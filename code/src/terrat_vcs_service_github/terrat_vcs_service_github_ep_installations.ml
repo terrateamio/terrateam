@@ -505,6 +505,7 @@ module Make (S : S with type Account_id.t = int) = struct
                             (match (run_kind, pull_number) with
                             | "drift", _ -> Wm.Kind.Kind_drift "drift"
                             | "index", _ -> Wm.Kind.Kind_index "index"
+                            | "adhoc", _ -> Wm.Kind.Kind_adhoc "adhoc"
                             | "pr", Some pull_number ->
                                 Wm.Kind.Kind_pull_request
                                   { P.pull_number = CCInt64.to_int pull_number; pull_request_title }
@@ -855,6 +856,7 @@ module Make (S : S with type Account_id.t = int) = struct
                             (match (run_kind, pull_number) with
                             | "drift", _ -> Ds.Kind.Kind_drift "drift"
                             | "index", _ -> Ds.Kind.Kind_index "index"
+                            | "adhoc", _ -> Ds.Kind.Kind_adhoc "adhoc"
                             | "pr", Some pull_number ->
                                 Ds.Kind.Kind_pull_request
                                   { P.pull_number = CCInt64.to_int pull_number; pull_request_title }

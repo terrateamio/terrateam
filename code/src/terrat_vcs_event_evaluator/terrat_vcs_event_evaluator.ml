@@ -1939,7 +1939,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                   |> CCList.filter (Terrat_change_match3.match_tag_query ~tag_query)
                   |> CCList.filter
                        (fun
-                         ({ Dc.stack_config = { S.rules = { Oc.apply_after; _ }; _ }; _ } as dc) ->
+                         ({ Dc.stack_config = { S.rules = { Oc.apply_after; _ }; _ }; _ } as _dc) ->
                          not
                            (CCList.exists
                               (fun { Dc.stack_name; _ } ->
@@ -3971,7 +3971,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         (Event.repo state.State.event)
         all_dirspaceflows
       >>= fun () ->
-      let all_dirspaceflows = strip_lock_branch_target all_dirspaceflows in
+      let _all_dirspaceflows = strip_lock_branch_target all_dirspaceflows in
       Abb.Future.return (dirspaceflows_of_changes repo_config passed_dirspaces)
       >>= fun dirspaceflows ->
       let denied_dirspaces =
@@ -4227,12 +4227,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             | Vcs.Target.Pr _, Wm.Step.Build_config -> `Build_config
             | Vcs.Target.Pr _, Wm.Step.Build_tree -> `Build_tree
             | Vcs.Target.Drift _, _ -> `Drift
+            | Vcs.Target.Adhoc _, _ -> `Adhoc
           in
           let run_kind_str =
             match run_kind with
             | `Pull_request _ -> "pr"
             | `Index -> "index"
             | `Drift -> "drift"
+            | `Adhoc -> "adhoc"
             | `Build_config -> "build-config"
             | `Build_tree -> "build-tree"
           in
@@ -4293,7 +4295,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                     Some
                       (Rkd.Run_kind_data_pull_request
                          { Rkdpr.id = S.Api.Pull_request.Id.to_string (S.Api.Pull_request.id pr) })
-                | `Index | `Drift | `Build_config | `Build_tree -> None
+                | `Index | `Drift | `Adhoc | `Build_config | `Build_tree -> None
               in
               Abb.Future.return
                 (Ok
@@ -4374,7 +4376,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                     Some
                       (Rkd.Run_kind_data_pull_request
                          { Rkdpr.id = S.Api.Pull_request.Id.to_string (S.Api.Pull_request.id pr) })
-                | `Index | `Drift | `Build_config | `Build_tree -> None
+                | `Index | `Drift | `Adhoc | `Build_config | `Build_tree -> None
               in
               Abb.Future.return
                 (Ok
@@ -5317,7 +5319,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             (Event.repo state.State.event)
             all_dirspaceflows
           >>= fun () ->
-          let all_dirspaceflows = H.strip_lock_branch_target all_dirspaceflows in
+          let _all_dirspaceflows = H.strip_lock_branch_target all_dirspaceflows in
           Dv.client ctx state
           >>= fun client ->
           (if CCList.is_empty matches.Dv.Matches.all_unapplied_matches then

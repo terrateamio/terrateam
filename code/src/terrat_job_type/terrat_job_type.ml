@@ -3,6 +3,7 @@ module Gate_approval = Terrat_job_type_gate_approval
 module Index = Terrat_job_type_index
 module Kind = Terrat_job_type_kind
 module Kind_drift = Terrat_job_type_kind_drift
+module Kind_adhoc = Terrat_job_type_kind_adhoc
 module Plan = Terrat_job_type_plan
 module Push = Terrat_job_type_push
 module Repo_config = Terrat_job_type_repo_config

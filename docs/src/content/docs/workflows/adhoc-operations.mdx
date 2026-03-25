@@ -1,0 +1,82 @@
+---
+title: Ad-hoc Operations
+description: Run Terraform plan and apply on any branch without opening a pull request
+---
+
+Ad-hoc operations let you trigger a Terraform plan or apply on any branch without opening a pull request. This is useful for reconciling drift, testing configuration changes, or running targeted applies on specific directories.
+
+## How It Works
+
+1. **Start a Plan** — Click "New Plan" in the Runs dashboard, select a repository, branch, and optional tag query, then click "Start Plan"
+2. **Review Results** — You're taken directly to the run detail page where you can see the plan output as it streams in
+3. **Apply Changes** — Once the plan completes, click "Apply Changes" on the run detail page to apply using the plan files from that plan
+
+The apply is gated on a successful plan — you cannot apply without first running a plan on the same branch with the same dirspaces.
+
+## API
+
+Ad-hoc operations can also be triggered via the API:
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"repo_name": "my-repo", "branch": "main", "operation": "plan", "tag_query": "dir:modules/vpc"}' \
+  https://app.terrateam.io/api/v1/github/installations/{installation_id}/adhoc-runs
+```
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `repo_name` | string | yes | Repository name within the installation |
+| `branch` | string | no | Branch to run on (defaults to `main`) |
+| `operation` | string | yes | `plan` or `apply` |
+| `tag_query` | string | no | Filter which directories to include (e.g. `dir:modules/vpc`) |
+
+### Response
+
+Returns `202 Accepted` with:
+
+```json
+{"work_manifest_id": "afe5dc99-d61f-4349-8a74-887cc213bedf"}
+```
+
+### Errors
+
+| Status | Description |
+|--------|-------------|
+| 400 | Invalid request body or tag query |
+| 401 | Not authenticated |
+| 403 | No access to this installation |
+| 404 | Repository not found |
+
+## Configuration and Workflows
+
+Ad-hoc operations use your existing `.terrateam/config.yml` configuration. The tag query only filters which dirspaces are included — once a dirspace is selected, it runs with the same workflow, hooks, extra args, environment variables, and all other settings defined for that dirspace in your configuration.
+
+If you have different workflows configured per directory (e.g., a `production` workflow for `prod/` and a `staging` workflow for `staging/`), ad-hoc runs will use the correct workflow for each directory automatically.
+
+## Tag Query
+
+Use the `tag_query` field to scope operations to specific directories or workspaces. For example:
+
+- `dir:staging` — only the `staging` directory
+- `dir:modules/vpc` — only the `modules/vpc` directory
+- No tag query — all Terraform directories in the repository
+
+## Access Control
+
+Ad-hoc plan operations use the same per-directory access control policies as pull request operations. If a user cannot plan a directory via PR, they cannot plan it via ad-hoc either.
+
+Ad-hoc apply operations are gated at the installation level — any user with installation access can apply. Per-directory apply policies that reference PR reviewers do not apply since there is no PR context.
+
+## Differences from Pull Request Operations
+
+| Aspect | PR Operations | Ad-hoc Operations |
+|--------|--------------|-------------------|
+| Trigger | PR comment or autoplan | UI button or API call |
+| Change detection | Diff between PR branch and base | All files on the branch |
+| Apply gate | PR approval + plan required | Plan required (no approval) |
+| Results | Posted as PR comments | Viewed in run detail page |
+| Locking | Same dirspace lock pool | Same dirspace lock pool |

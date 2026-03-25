@@ -784,7 +784,7 @@ export interface components {
             dir: string;
             environment?: string;
             id: string;
-            kind: components["schemas"]["kind-drift"] | components["schemas"]["kind-index"] | components["schemas"]["kind-pull-request"];
+            kind: components["schemas"]["kind-adhoc"] | components["schemas"]["kind-drift"] | components["schemas"]["kind-index"] | components["schemas"]["kind-pull-request"];
             owner: string;
             repo: string;
             run_id?: string;
@@ -828,7 +828,7 @@ export interface components {
             dirspaces: components["schemas"]["work-manifest-dirspace"][];
             environment?: string;
             id: string;
-            kind: components["schemas"]["kind-drift"] | components["schemas"]["kind-index"] | components["schemas"]["kind-pull-request"];
+            kind: components["schemas"]["kind-adhoc"] | components["schemas"]["kind-drift"] | components["schemas"]["kind-index"] | components["schemas"]["kind-pull-request"];
             owner: string;
             repo: string;
             repo_id: string;
@@ -853,6 +853,8 @@ export interface components {
             state: string;
             step: string;
         };
+        /** @constant */
+        "kind-adhoc": "adhoc";
         /** @constant */
         "kind-drift": "drift";
         /** @constant */

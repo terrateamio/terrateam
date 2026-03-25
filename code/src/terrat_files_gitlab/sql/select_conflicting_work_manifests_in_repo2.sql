@@ -40,8 +40,12 @@ left join gitlab_pull_request_latest_unlocks as latest_unlocks
     on latest_unlocks.repository = gwm.repository and latest_unlocks.pull_number = gwm.pull_number
 left join drift_work_manifests as gdwm
     on gdwm.work_manifest = gwm.id
+left join adhoc_work_manifests as gawm
+    on gawm.work_manifest = gwm.id
 left join gitlab_drift_latest_unlocks as latest_drift_unlocks
     on latest_drift_unlocks.repository = gwm.repository
+left join gitlab_adhoc_latest_unlocks as latest_adhoc_unlocks
+    on latest_adhoc_unlocks.repository = gwm.repository
 where gwm.repository = $repository
       and gwm.state in ('queued', 'running')
 -- Don't consider index runs conflicting, they don't change the underlying infra
@@ -49,7 +53,9 @@ where gwm.repository = $repository
       and ((gwm.pull_number is not null
             and (latest_unlocks.unlocked_at is null or latest_unlocks.unlocked_at < gwm.created_at))
            or (gdwm.work_manifest is not null
-               and (latest_drift_unlocks.unlocked_at is null or latest_drift_unlocks.unlocked_at < gwm.created_at)))
+               and (latest_drift_unlocks.unlocked_at is null or latest_drift_unlocks.unlocked_at < gwm.created_at))
+           or (gawm.work_manifest is not null
+               and (latest_adhoc_unlocks.unlocked_at is null or latest_adhoc_unlocks.unlocked_at < gwm.created_at)))
       and ((gwm.pull_number is not null and gwm.pull_number = $pull_number)
            or ($run_type in ('autoapply', 'apply', 'unsafe-apply'))
            or work_manifests_for_dirspace.maybe_stale)

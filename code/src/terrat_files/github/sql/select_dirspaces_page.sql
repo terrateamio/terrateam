@@ -43,6 +43,9 @@ q as (
          when (gdwm.work_manifest is not null
                and ldu.unlocked_at is not null
                and gwm.created_at <= ldu.unlocked_at) then ldu.unlocked_at
+         when (gawm.work_manifest is not null
+               and ldu.unlocked_at is not null
+               and gwm.created_at <= ldu.unlocked_at) then ldu.unlocked_at
         else null
         end) as completed_at,
         gwm.created_at,
@@ -53,12 +56,12 @@ q as (
         gwm.tag_query as tag_query,
         gwm.repository as repository,
         gwm.pull_number as pull_number,
-        coalesce(gpr.base_branch, gdwm.branch) as base_branch,
+        coalesce(gpr.base_branch, gawm.branch, gdwm.branch) as base_branch,
         gir.owner as owner,
         gir.name as name,
         gwm.run_kind as kind,
         gpr.title as title,
-        coalesce(gdwm.branch, gpr.branch) as branch,
+        coalesce(gawm.branch, gdwm.branch, gpr.branch) as branch,
         gwm.username as username,
         gwm.run_id as run_id,
         urt.run_type as unified_run_type,
@@ -78,6 +81,8 @@ q as (
         on gwm.repository = gpr.repository and gwm.pull_number = gpr.pull_number
     left join drift_work_manifests as gdwm
         on gwm.id = gdwm.work_manifest
+    left join adhoc_work_manifests as gawm
+        on gwm.id = gawm.work_manifest
     left join latest_unlocks as lu
         on lu.repository = gwm.repository and lu.pull_number = gwm.pull_number
     left join latest_drift_unlocks as ldu

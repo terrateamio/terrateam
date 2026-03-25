@@ -20,6 +20,28 @@ let rec replace_nul_byte_json = function
   | `String s -> `String (replace_nul_byte s)
   | (`Bool _ | `Intlit _ | `Null | `Float _ | `Int _) as t -> t
 
+let target_repo = function
+  | Terrat_vcs_provider2.Target.Pr pr -> Terrat_vcs_api_gitlab.Pull_request.repo pr
+  | Terrat_vcs_provider2.Target.Drift { repo; _ } | Terrat_vcs_provider2.Target.Adhoc { repo; _ } ->
+      repo
+
+let target_pull_number_opt = function
+  | Terrat_vcs_provider2.Target.Pr pr -> Some (Terrat_vcs_api_gitlab.Pull_request.id pr)
+  | Terrat_vcs_provider2.Target.Drift _ | Terrat_vcs_provider2.Target.Adhoc _ -> None
+
+let target_repo_id target = Terrat_vcs_api_gitlab.Repo.id (target_repo target)
+
+let target_run_kind = function
+  | Terrat_vcs_provider2.Target.Pr _ -> "pr"
+  | Terrat_vcs_provider2.Target.Drift _ -> "drift"
+  | Terrat_vcs_provider2.Target.Adhoc _ -> "adhoc"
+
+let target_id_and_is_pr = function
+  | Terrat_vcs_provider2.Target.Pr pr ->
+      (CCInt.to_string (Terrat_vcs_api_gitlab.Pull_request.id pr), true)
+  | Terrat_vcs_provider2.Target.Drift _ -> ("drift", false)
+  | Terrat_vcs_provider2.Target.Adhoc _ -> ("adhoc", false)
+
 module Metrics = struct
   module Psql_query_time = Prmths.Histogram (struct
     let spec = Prmths.Histogram_spec.of_linear ~start:0.0 ~interval:0.1 ~count:15
@@ -286,6 +308,20 @@ module Db = struct
         /^ select_drift_work_manifests_batch_query
         /% Var.(str_array (uuid "ids")))
 
+    let select_adhoc_work_manifests_batch_query = read "select_adhoc_work_manifests_batch.sql"
+
+    let select_adhoc_work_manifests_batch () =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* work_manifest *)
+        Ret.uuid
+        //
+        (* branch *)
+        Ret.text
+        /^ select_adhoc_work_manifests_batch_query
+        /% Var.(str_array (uuid "ids")))
+
     let insert_gitlab_installation_repository =
       Pgsql_io.Typed_sql.(
         sql
@@ -526,6 +562,22 @@ module Db = struct
         /% Var.(str_array (text "workspaces"))
         /% Var.(ud (text "base_ref") Api.Ref.to_string)
         /% Var.(ud (text "branch_ref") Api.Ref.to_string))
+
+    let select_dirspaces_without_valid_plans_for_branch =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* dir *)
+        Ret.text
+        //
+        (* workspace *)
+        Ret.text
+        /^ read "select_dirspaces_without_valid_plans_for_branch.sql"
+        /% Var.bigint "repository_id"
+        /% Var.(ud (text "base_ref") Api.Ref.to_string)
+        /% Var.(ud (text "branch_ref") Api.Ref.to_string)
+        /% Var.(str_array (text "dirs"))
+        /% Var.(str_array (text "workspaces")))
 
     let update_abort_duplicate_work_manifests_query = read "abort_duplicate_work_manifests.sql"
 
@@ -927,7 +979,22 @@ module Db = struct
                     drift_ids)
               >>= fun rows -> Abb.Future.return (Ok (index_rows_by_id rows))
         in
-        let resolve_targets pr_tbl drift_tbl wms =
+        let fetch_adhoc_details adhoc_ids =
+          match adhoc_ids with
+          | [] -> Abb.Future.return (Ok (Hashtbl.create 0))
+          | _ ->
+              let open Abbs_future_combinators.Infix_result_monad in
+              Metrics.Psql_query_time.time
+                (Metrics.psql_query_time "select_adhoc_work_manifests_batch")
+                (fun () ->
+                  Pgsql_io.Prepared_stmt.fetch
+                    db
+                    (Sql.select_adhoc_work_manifests_batch ())
+                    ~f:(fun id branch -> (id, branch))
+                    adhoc_ids)
+              >>= fun rows -> Abb.Future.return (Ok (index_rows_by_id rows))
+        in
+        let resolve_targets pr_tbl drift_tbl adhoc_tbl wms =
           CCList.filter_map
             (fun wm ->
               match wm.Wm.target with
@@ -975,7 +1042,15 @@ module Db = struct
                   | Some branch ->
                       Some
                         { wm with Wm.target = Terrat_vcs_provider2.Target.Drift { repo; branch } }
-                  | None -> None))
+                  | None -> (
+                      match Hashtbl.find_opt adhoc_tbl wm.Wm.id with
+                      | Some branch ->
+                          Some
+                            {
+                              wm with
+                              Wm.target = Terrat_vcs_provider2.Target.Adhoc { repo; branch };
+                            }
+                      | None -> None)))
             wms
         in
         let run =
@@ -988,7 +1063,7 @@ module Db = struct
           let denied_tbl = group_rows_by_id denied_rows in
           fetch_manifests dsf_tbl denied_tbl
           >>= fun wms ->
-          let pr_wms, drift_wms =
+          let pr_wms, non_pr_wms =
             CCList.partition
               (fun wm ->
                 match wm.Wm.target with
@@ -996,11 +1071,14 @@ module Db = struct
                 | None, _ -> false)
               wms
           in
+          let non_pr_ids = CCList.map (fun wm -> wm.Wm.id) non_pr_wms in
           fetch_pull_request_details (CCList.map (fun wm -> wm.Wm.id) pr_wms)
           >>= fun pr_tbl ->
-          fetch_drift_details (CCList.map (fun wm -> wm.Wm.id) drift_wms)
+          fetch_drift_details non_pr_ids
           >>= fun drift_tbl ->
-          let results = resolve_targets pr_tbl drift_tbl wms in
+          fetch_adhoc_details non_pr_ids
+          >>= fun adhoc_tbl ->
+          let results = resolve_targets pr_tbl drift_tbl adhoc_tbl wms in
           if CCList.length results <> CCList.length wms then (
             Logs.info (fun m ->
                 m
@@ -1718,6 +1796,33 @@ module Db = struct
           (CCList.map (fun { Terrat_change.Dirspace.workspace; _ } -> workspace) dirspaces)
           base_ref
           branch_ref)
+    >>= function
+    | Ok _ as ret -> Abb.Future.return ret
+    | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+        Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
+  let query_dirspaces_without_valid_plans_for_branch
+      ~request_id
+      ~base_ref
+      ~branch_ref
+      db
+      repo
+      dirspaces =
+    let open Abb.Future.Infix_monad in
+    Metrics.Psql_query_time.time
+      (Metrics.psql_query_time "select_dirspaces_without_valid_plans_for_branch")
+      (fun () ->
+        Pgsql_io.Prepared_stmt.fetch
+          db
+          ~f:(fun dir workspace -> Terrat_change.Dirspace.{ dir; workspace })
+          Sql.select_dirspaces_without_valid_plans_for_branch
+          (CCInt64.of_int @@ Api.Repo.id repo)
+          base_ref
+          branch_ref
+          (CCList.map (fun { Terrat_change.Dirspace.dir; _ } -> dir) dirspaces)
+          (CCList.map (fun { Terrat_change.Dirspace.workspace; _ } -> workspace) dirspaces))
     >>= function
     | Ok _ as ret -> Abb.Future.return ret
     | Error (#Pgsql_io.err as err) ->
@@ -3635,12 +3740,7 @@ module Comment = struct
           end in
           CCList.map
             (fun ({ Wm.target; _ } as wm) ->
-              let id, is_pr =
-                match target with
-                | Terrat_vcs_provider2.Target.Pr pr ->
-                    (CCInt.to_string (Api.Pull_request.id pr), true)
-                | Terrat_vcs_provider2.Target.Drift _ -> ("drift", false)
-              in
+              let id, is_pr = target_id_and_is_pr target in
               ((id, is_pr), wm))
             wms
           |> CCList.sort_uniq ~cmp:(fun (a, _) (b, _) -> Key.compare a b)
@@ -3654,12 +3754,7 @@ module Comment = struct
                   list
                     (CCList.map
                        (fun { Wm.created_at; steps; state; target; _ } ->
-                         let id, is_pr =
-                           match target with
-                           | Terrat_vcs_provider2.Target.Pr pr ->
-                               (CCInt.to_string (Api.Pull_request.id pr), true)
-                           | Terrat_vcs_provider2.Target.Drift _ -> ("drift", false)
-                         in
+                         let id, is_pr = target_id_and_is_pr target in
                          Map.of_list
                            [
                              ("id", string id);
@@ -3944,12 +4039,7 @@ module Comment = struct
                   list
                     (CCList.map
                        (fun Wm.{ created_at; steps; state; target; _ } ->
-                         let id, is_pr =
-                           match target with
-                           | Terrat_vcs_provider2.Target.Pr pr ->
-                               (CCInt.to_string (Api.Pull_request.id pr), true)
-                           | Terrat_vcs_provider2.Target.Drift _ -> ("drift", false)
-                         in
+                         let id, is_pr = target_id_and_is_pr target in
                          Map.of_list
                            [
                              ("id", string id);
@@ -4600,6 +4690,12 @@ module Work_manifest = struct
       Pgsql_io.Typed_sql.(
         sql /^ insert_drift_work_manifest_query /% Var.uuid "work_manifest" /% Var.text "branch")
 
+    let insert_adhoc_work_manifest_query = read "insert_adhoc_work_manifest.sql"
+
+    let insert_adhoc_work_manifest () =
+      Pgsql_io.Typed_sql.(
+        sql /^ insert_adhoc_work_manifest_query /% Var.uuid "work_manifest" /% Var.text "branch")
+
     let update_work_manifest_state_running_query = read "update_work_manifest_state_running.sql"
 
     let update_work_manifest_state_running () =
@@ -4648,10 +4744,7 @@ module Work_manifest = struct
   let run ~request_id config client work_manifest =
     let module Pipeline_api = Gitlabc_projects_pipeline.PostApiV4ProjectsIdPipeline in
     let module Wm = Terrat_work_manifest3 in
-    let get_repo = function
-      | { Wm.target = Terrat_vcs_provider2.Target.Pr pr; _ } -> Api.Pull_request.repo pr
-      | { Wm.target = Terrat_vcs_provider2.Target.Drift { repo; _ }; _ } -> repo
-    in
+    let get_repo wm = target_repo wm.Wm.target in
     let get_branch = function
       | { Wm.target = Terrat_vcs_provider2.Target.Pr pr; _ } -> (
           match Api.Pull_request.state pr with
@@ -4659,7 +4752,8 @@ module Work_manifest = struct
               Api.Ref.to_string @@ Terrat_pull_request.branch_name pr
           | Terrat_pull_request.State.Merged _ ->
               Api.Ref.to_string @@ Terrat_pull_request.base_branch_name pr)
-      | { Wm.target = Terrat_vcs_provider2.Target.Drift { branch; _ }; _ } -> branch
+      | { Wm.target = Terrat_vcs_provider2.Target.Drift { branch; _ }; _ }
+      | { Wm.target = Terrat_vcs_provider2.Target.Adhoc { branch; _ }; _ } -> branch
     in
     let build_pipeline_inputs ~work_manifest ~config () =
       let base_inputs =
@@ -4814,21 +4908,9 @@ module Work_manifest = struct
              work_manifest.Wm.changes)
       in
       let dirspaces = dirspaces_json in
-      let pull_number_opt =
-        match work_manifest.Wm.target with
-        | Terrat_vcs_provider2.Target.Pr pr -> Some (Api.Pull_request.id pr)
-        | Terrat_vcs_provider2.Target.Drift _ -> None
-      in
-      let repo_id =
-        match work_manifest.Wm.target with
-        | Terrat_vcs_provider2.Target.Pr pr -> Api.Repo.id @@ Api.Pull_request.repo pr
-        | Terrat_vcs_provider2.Target.Drift { repo; _ } -> Api.Repo.id repo
-      in
-      let run_kind =
-        match work_manifest.Wm.target with
-        | Terrat_vcs_provider2.Target.Pr _ -> "pr"
-        | Terrat_vcs_provider2.Target.Drift _ -> "drift"
-      in
+      let pull_number_opt = target_pull_number_opt work_manifest.Wm.target in
+      let repo_id = target_repo_id work_manifest.Wm.target in
+      let run_kind = target_run_kind work_manifest.Wm.target in
       let run_type =
         CCOption.map_or
           ~default:""
@@ -4876,6 +4958,9 @@ module Work_manifest = struct
                    })
           | Terrat_vcs_provider2.Target.Drift { repo; branch } ->
               Pgsql_io.Prepared_stmt.execute db (Sql.insert_drift_work_manifest ()) id branch
+              >>= fun () -> Abb.Future.return (Ok work_manifest)
+          | Terrat_vcs_provider2.Target.Adhoc { repo; branch } ->
+              Pgsql_io.Prepared_stmt.execute db (Sql.insert_adhoc_work_manifest ()) id branch
               >>= fun () -> Abb.Future.return (Ok work_manifest))
     in
     let open Abb.Future.Infix_monad in
@@ -5262,14 +5347,17 @@ module Job_context = struct
         let module K = Terrat_job_context.Job.Type_.Kind in
         let module O = Terrat_job_type_kind in
         let module Kd = Terrat_job_type_kind_drift in
-        CCOption.map (function K.Drift { reconcile } ->
-            O.Kind_drift { Kd.reconcile; type_ = "drift" })
+        CCOption.map (function
+          | K.Drift { reconcile } -> O.Kind_drift { Kd.reconcile; type_ = "drift" }
+          | K.Adhoc -> O.Kind_adhoc { Terrat_job_type_kind_adhoc.type_ = "adhoc" })
 
       let json_to_kind =
         let module K = Terrat_job_context.Job.Type_.Kind in
         let module O = Terrat_job_type_kind in
         let module Kd = Terrat_job_type_kind_drift in
-        CCOption.map (function O.Kind_drift { Kd.reconcile; type_ = _ } -> K.Drift { reconcile })
+        CCOption.map (function
+          | O.Kind_drift { Kd.reconcile; type_ = _ } -> K.Drift { reconcile }
+          | O.Kind_adhoc _ -> K.Adhoc)
 
       let to_json =
         let module T = Terrat_job_context.Job.Type_ in

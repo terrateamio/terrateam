@@ -81,6 +81,7 @@ export default defineConfig({
           collapsed: true,
           items: [
             { label: "PR Workflows", link: "/workflows/pull-request/" },
+            { label: "Ad-hoc Operations", link: "/workflows/adhoc-operations" },
             { label: "Apply After Merge", link: "/workflows/apply-after-merge" },
             { label: "Rollbacks", link: "/workflows/rollbacks" },
             {

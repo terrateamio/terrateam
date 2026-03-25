@@ -61,8 +61,8 @@ struct
         |> Keys.Key.add Keys.account account
         |> Keys.Key.add Keys.pull_request_id (S.Api.Pull_request.id pr)
         |> Keys.Key.add Keys.repo (S.Api.Pull_request.repo pr)
-    | Terrat_vcs_provider2.Target.Drift { repo; _ } ->
-        store |> Keys.Key.add Keys.account account |> Keys.Key.add Keys.repo repo
+    | Terrat_vcs_provider2.Target.Drift { repo; _ } | Terrat_vcs_provider2.Target.Adhoc { repo; _ }
+      -> store |> Keys.Key.add Keys.account account |> Keys.Key.add Keys.repo repo
 
   module H = struct
     let complete_job s job fut =
@@ -272,9 +272,17 @@ struct
           | { C.scope = C.Scope.Branch (branch, _); _ } ->
               fetch Keys.repo
               >>= fun repo ->
-              Abb.Future.return
-                (Ok
-                   (Terrat_vcs_provider2.Target.Drift { repo; branch = S.Api.Ref.to_string branch })))
+              fetch Keys.job
+              >>= fun job ->
+              let branch = S.Api.Ref.to_string branch in
+              let target =
+                match job.Tjc.Job.type_ with
+                | Tjc.Job.Type_.Plan { kind = Some Tjc.Job.Type_.Kind.Adhoc; _ }
+                | Tjc.Job.Type_.Apply { kind = Some Tjc.Job.Type_.Kind.Adhoc; _ } ->
+                    Terrat_vcs_provider2.Target.Adhoc { repo; branch }
+                | _ -> Terrat_vcs_provider2.Target.Drift { repo; branch }
+              in
+              Abb.Future.return (Ok target))
 
     let initiator =
       run ~name:"initiator" (fun s { Bs.Fetcher.fetch } ->
@@ -479,8 +487,8 @@ struct
                                     CCList.mem ~eq:CCString.equal stack_name apply_after)
                                   flat_all_unapplied_matches))
                   | Tjc.Job.Type_.(Plan { tag_query = _; kind = Some (Tjc.Job.Type_.Kind.Drift _) })
-                    ->
-                      (* In the case that it is a plan for drift, then plan all layers in one go. *)
+                  | Tjc.Job.Type_.(Plan { tag_query = _; kind = Some Tjc.Job.Type_.Kind.Adhoc }) ->
+                      (* In the case that it is a plan for drift or adhoc, then plan all layers in one go. *)
                       CCList.filter (Terrat_change_match3.match_tag_query ~tag_query)
                       @@ CCList.flatten all_unapplied_matches
                   | Tjc.Job.Type_.Autoplan

@@ -380,6 +380,9 @@
           "kind": {
             "oneOf": [
               {
+                "$ref": "#/components/schemas/kind-adhoc"
+              },
+              {
                 "$ref": "#/components/schemas/kind-drift"
               },
               {
@@ -563,6 +566,9 @@
           "kind": {
             "oneOf": [
               {
+                "$ref": "#/components/schemas/kind-adhoc"
+              },
+              {
                 "$ref": "#/components/schemas/kind-drift"
               },
               {
@@ -673,6 +679,10 @@
           "step"
         ],
         "type": "object"
+      },
+      "kind-adhoc": {
+        "const": "adhoc",
+        "type": "string"
       },
       "kind-drift": {
         "const": "drift",

@@ -396,6 +396,7 @@ export const DirspaceSchema = z.object({
   kind: z.union([
     z.literal('drift'),
     z.literal('index'),
+    z.literal('adhoc'),
     z.object({ pull_number: z.number(), pull_request_title: z.string().optional() }),
   ]),
   owner: z.string(),
@@ -429,6 +430,7 @@ export const WorkManifestSchema = z.object({
   kind: z.union([
     z.literal('drift'),
     z.literal('index'),
+    z.literal('adhoc'),
     z.object({ pull_number: z.number(), pull_request_title: z.string().optional() }),
   ]),
   owner: z.string(),

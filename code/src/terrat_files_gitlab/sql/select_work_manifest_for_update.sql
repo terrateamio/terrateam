@@ -8,7 +8,7 @@ select
     gwm.tag_query,
     gwm.repository,
     gwm.pull_number,
-    coalesce(gpr.base_branch, gdwm.branch, giwm.branch),
+    coalesce(gpr.base_branch, gawm.branch, gdwm.branch, giwm.branch),
     gwm.installation_id,
     gwm.repo_owner,
     gwm.repo_name,
@@ -20,6 +20,8 @@ left join gitlab_pull_requests as gpr
     on gwm.repository = gpr.repository and gwm.pull_number = gpr.pull_number
 left join drift_work_manifests as gdwm
     on gdwm.work_manifest = gwm.id
+left join adhoc_work_manifests as gawm
+    on gawm.work_manifest = gwm.id
 left join index_work_manifests as giwm
     on giwm.work_manifest = gwm.id
 where gwm.id = $id

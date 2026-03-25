@@ -260,6 +260,8 @@ let migrations =
     ("add-builder-tables", run_file_sql "2025-07-24-add-builder-tables.sql");
     ("add-drift-branch", run_file_sql "2026-01-08-add-drift-branch.sql");
     ("delete-existing-repo-tree-cache", run_file_sql "2026-03-19-delete-repo-tree-cache.sql");
+    ("add-adhoc-work-manifests", run_file_sql "2026-03-24-add-adhoc-work-manifests.sql");
+    ("add-adhoc-unlocks", run_file_sql "2026-03-24-add-adhoc-unlocks.sql");
   ]
 
 let run config storage = Mig.run { Migrate.config; storage; tx = () } migrations

@@ -103,6 +103,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   module Tasks_base = Terrat_vcs_event_evaluator2_tasks_base.Make (S) (Keys)
   module Tasks_pr = Terrat_vcs_event_evaluator2_tasks_pr.Make (S) (Keys)
   module Tasks_branch = Terrat_vcs_event_evaluator2_tasks_branch.Make (S) (Keys)
+  module Tasks_adhoc = Terrat_vcs_event_evaluator2_tasks_adhoc.Make (S) (Keys)
 
   type err = Builder.err
 
@@ -596,7 +597,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           |> Keys.Key.add Keys.account account
           |> Keys.Key.add Keys.pull_request_id (S.Api.Pull_request.id pr)
           |> Keys.Key.add Keys.repo (S.Api.Pull_request.repo pr)
-      | Terrat_vcs_provider2.Target.Drift { repo; _ } ->
+      | Terrat_vcs_provider2.Target.Drift { repo; _ }
+      | Terrat_vcs_provider2.Target.Adhoc { repo; _ } ->
           store |> Keys.Key.add Keys.account account |> Keys.Key.add Keys.repo repo
     in
     let run =
@@ -899,6 +901,68 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     in
     Fc.with_finally
       (fun () -> Fc.ignore @@ Abb.Future.fork @@ log_err ~request_id run)
+      ~finally:(fun () ->
+        Fc.ignore
+        @@ Abb.Future.fork
+        @@ run_next_pending_compute ~request_id ~config ~storage ~exec ())
+
+  let adhoc_run
+      ~request_id
+      ~config
+      ~storage
+      ~exec
+      ~account
+      ~user
+      ~repo
+      ~branch
+      ~operation
+      ~tag_query
+      () =
+    let open Abb.Future.Infix_monad in
+    Logs.info (fun m -> m "ADHOC_RUN : %s" request_id);
+    let run =
+      let open Irm in
+      with_conn storage ~f:(fun db ->
+          Pgsql_io.tx db ~f:(fun () -> S.Db.store_account_repository ~request_id db account repo)
+          >>= fun () ->
+          let job_type =
+            match operation with
+            | `Plan -> Tjc.Job.Type_.Plan { tag_query; kind = Some Tjc.Job.Type_.Kind.Adhoc }
+            | `Apply ->
+                Tjc.Job.Type_.Apply
+                  { tag_query; kind = Some Tjc.Job.Type_.Kind.Adhoc; force = false }
+          in
+          Pgsql_io.tx db ~f:(fun () ->
+              S.Job_context.create_or_get_for_branch ~request_id db account repo branch
+              >>= fun context ->
+              S.Job_context.Job.create ~request_id db job_type context (Some user))
+          >>= fun job ->
+          let store =
+            Hmap.empty
+            |> Keys.Key.add Keys.account account
+            |> Keys.Key.add Keys.repo repo
+            |> Keys.Key.add Keys.user (Some user)
+            |> Keys.Key.add Keys.job job
+          in
+          let open Abb.Future.Infix_monad in
+          Builder.State.make
+            ~log_id:request_id
+            ~config
+            ~store
+            ~db
+            ~exec
+            ~tasks:(Tasks_adhoc.tasks tasks)
+            ()
+          >>= fun s ->
+          let target = Keys.iter_job in
+          Logs.info (fun m ->
+              m "%s : ADHOC_RUN : target=%s" (Builder.log_id s) (Hmap.Key.info target));
+          let open Irm in
+          Pgsql_io.tx db ~f:(fun () -> tx_safe ~request_id @@ Builder.eval s target))
+      >>= fun _ -> Abb.Future.return (Ok ())
+    in
+    Fc.with_finally
+      (fun () -> Fc.ignore @@ log_err ~request_id run)
       ~finally:(fun () ->
         Fc.ignore
         @@ Abb.Future.fork

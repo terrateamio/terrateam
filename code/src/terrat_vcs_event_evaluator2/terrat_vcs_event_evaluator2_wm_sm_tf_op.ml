@@ -588,11 +588,13 @@ struct
         match target with
         | P2.Target.Pr pr -> `Pull_request pr
         | P2.Target.Drift _ -> `Drift
+        | P2.Target.Adhoc _ -> `Adhoc
       in
       let run_kind_str =
         match run_kind with
         | `Pull_request _ -> "pr"
         | `Drift -> "drift"
+        | `Adhoc -> "adhoc"
       in
       let run_kind_data =
         let module Rkd = Terrat_api_components.Work_manifest_plan.Run_kind_data in
@@ -602,7 +604,7 @@ struct
             Some
               (Rkd.Run_kind_data_pull_request
                  { Rkdpr.id = S.Api.Pull_request.Id.to_string (S.Api.Pull_request.id pr) })
-        | `Drift -> None
+        | `Drift | `Adhoc -> None
       in
       fetch Keys.derived_repo_config
       >>= fun (_, repo_config) ->
@@ -906,11 +908,13 @@ struct
         match target with
         | P2.Target.Pr pr -> `Pull_request pr
         | P2.Target.Drift _ -> `Drift
+        | P2.Target.Adhoc _ -> `Adhoc
       in
       let run_kind_str =
         match run_kind with
         | `Pull_request _ -> "pr"
         | `Drift -> "drift"
+        | `Adhoc -> "adhoc"
       in
       let run_kind_data =
         let module Rkd = Terrat_api_components.Work_manifest_apply.Run_kind_data in
@@ -920,7 +924,7 @@ struct
             Some
               (Rkd.Run_kind_data_pull_request
                  { Rkdpr.id = S.Api.Pull_request.Id.to_string (S.Api.Pull_request.id pr) })
-        | `Drift -> None
+        | `Drift | `Adhoc -> None
       in
       fetch Keys.derived_repo_config
       >>= fun (_, repo_config) ->

@@ -14,6 +14,13 @@ latest_drift_unlocks as (
     from gitlab_drift_unlocks
     group by repository
 ),
+latest_adhoc_unlocks as (
+    select
+        repository,
+        max(unlocked_at) as unlocked_at
+    from gitlab_adhoc_unlocks
+    group by repository
+),
 wms as (
     select
         gwm.id as id,
@@ -36,14 +43,20 @@ wms as (
     from gitlab_work_manifests as gwm
     left join drift_work_manifests as gdwm
         on gdwm.work_manifest = gwm.id
+    left join adhoc_work_manifests as gawm
+        on gawm.work_manifest = gwm.id
     left join latest_unlocks as unlocks
         on unlocks.repository = gwm.repository and unlocks.pull_number = gwm.pull_number
     left join latest_drift_unlocks as drift_unlocks
         on drift_unlocks.repository = gwm.repository
+    left join latest_adhoc_unlocks as adhoc_unlocks
+        on adhoc_unlocks.repository = gwm.repository
     where (gwm.run_kind = 'pr'
            and (unlocks.unlocked_at is null or unlocks.unlocked_at < gwm.created_at))
           or (gwm.run_kind = 'drift'
               and (drift_unlocks.unlocked_at is null or drift_unlocks.unlocked_at < gwm.created_at))
+          or (gwm.run_kind = 'adhoc'
+              and (adhoc_unlocks.unlocked_at is null or adhoc_unlocks.unlocked_at < gwm.created_at))
           or gwm.run_kind = 'index'
 ),
 dirspaces_for_work_manifests as (

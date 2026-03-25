@@ -1,5 +1,6 @@
 module Kind = struct
   type t =
+    | Kind_adhoc of Terrat_api_components_kind_adhoc.t
     | Kind_drift of Terrat_api_components_kind_drift.t
     | Kind_index of Terrat_api_components_kind_index.t
     | Kind_pull_request of Terrat_api_components_kind_pull_request.t
@@ -9,6 +10,7 @@ module Kind = struct
     Json_schema.one_of
       (let open CCResult in
        [
+         (fun v -> map (fun v -> Kind_adhoc v) (Terrat_api_components_kind_adhoc.of_yojson v));
          (fun v -> map (fun v -> Kind_drift v) (Terrat_api_components_kind_drift.of_yojson v));
          (fun v -> map (fun v -> Kind_index v) (Terrat_api_components_kind_index.of_yojson v));
          (fun v ->
@@ -16,6 +18,7 @@ module Kind = struct
        ])
 
   let to_yojson = function
+    | Kind_adhoc v -> Terrat_api_components_kind_adhoc.to_yojson v
     | Kind_drift v -> Terrat_api_components_kind_drift.to_yojson v
     | Kind_index v -> Terrat_api_components_kind_index.to_yojson v
     | Kind_pull_request v -> Terrat_api_components_kind_pull_request.to_yojson v
