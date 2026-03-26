@@ -12,27 +12,38 @@ end
 
 module Mode = struct
   let t_of_yojson = function
-    | `String "fast-and-loose" -> Ok "fast-and-loose"
-    | `String "strict" -> Ok "strict"
+    | `String "fast-and-loose" -> Ok `Fast_and_loose
+    | `String "strict" -> Ok `Strict
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Fast_and_loose -> `String "fast-and-loose"
+    | `Strict -> `String "strict"
+
+  type t =
+    ([ `Fast_and_loose
+     | `Strict
+     ]
+    [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Type = struct
   let t_of_yojson = function
-    | `String "plan" -> Ok "plan"
+    | `String "plan" -> Ok `Plan
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Plan -> `String "plan"
+
+  type t = ([ `Plan ][@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 type t = {
   env : Env.t option; [@default None]
   extra_args : Extra_args.t option; [@default None]
-  mode : Mode.t; [@default "strict"]
+  mode : Mode.t; [@default `Strict]
   type_ : Type.t; [@key "type"]
 }
 [@@deriving yojson { strict = true; meta = true }, make, show, eq]

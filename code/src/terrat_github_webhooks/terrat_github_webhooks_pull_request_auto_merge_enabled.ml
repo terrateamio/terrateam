@@ -1,9 +1,12 @@
 module Action = struct
   let t_of_yojson = function
-    | `String "auto_merge_enabled" -> Ok "auto_merge_enabled"
+    | `String "auto_merge_enabled" -> Ok `Auto_merge_enabled
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Auto_merge_enabled -> `String "auto_merge_enabled"
+
+  type t = ([ `Auto_merge_enabled ][@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 

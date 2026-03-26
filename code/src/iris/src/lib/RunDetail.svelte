@@ -143,14 +143,29 @@
     
     try {
       // Load full step data for filtering (All Steps tab needs visible_on metadata)
-      
-      // First, load all step metadata (with full payload) to check visible_on for filtering
-      const allStepsResponse = await api.getWorkManifestOutputs(
-        $selectedInstallation.id, 
+
+      // Fetch all pages of step metadata (with full payload) to check visible_on for filtering
+      let allStepOutputs: unknown[] = [];
+
+      // First page via normal API method
+      const firstResponse = await api.getWorkManifestOutputs(
+        $selectedInstallation.id,
         runId,
         { q: 'not step:tf/cost-estimation', limit: 100, lite: false }
       );
-      
+      allStepOutputs = firstResponse.outputs || [];
+
+      // Follow pagination for remaining pages using full Link header URLs
+      let linkHeaders = api.getLastLinkHeaders();
+      while (linkHeaders?.next) {
+        const nextUrl = linkHeaders.next.replace('//api/', '/api/');
+        const pageResponse = await api.getFromUrl<{ steps: unknown[] }>(nextUrl);
+        allStepOutputs = allStepOutputs.concat(pageResponse.steps || []);
+        linkHeaders = api.getLastLinkHeaders();
+      }
+
+      const allStepsResponse = { outputs: allStepOutputs };
+
       interface StepOutput {
         step?: string;
         state?: string;
@@ -167,7 +182,7 @@
       // Filter out steps that shouldn't be visible based on visible_on property
       const visibleSteps = (allStepsResponse.outputs || []).filter((output: unknown) => {
         const step = output as OutputItem;
-        
+
         // Apply visibility filtering
         const shouldShow = shouldShowStep(step);
 
@@ -239,13 +254,25 @@
     if (!$selectedInstallation || !run || !output.payload?._originalStep) return;
     
     try {
-      const fullResponse = await api.getWorkManifestOutputs(
+      // Fetch all pages for this step name to find the exact output by idx
+      let allFullOutputs: unknown[] = [];
+      const firstFullResponse = await api.getWorkManifestOutputs(
         $selectedInstallation.id,
         run.id,
-        { q: `step:${output.payload._originalStep}`, lite: false }
+        { q: `step:${output.payload._originalStep}`, limit: 100, lite: false }
       );
-      
-      if (fullResponse.outputs && fullResponse.outputs.length > 0) {
+      allFullOutputs = firstFullResponse.outputs || [];
+
+      // Follow pagination
+      let fullLinkHeaders = api.getLastLinkHeaders();
+      while (fullLinkHeaders?.next) {
+        const nextUrl = fullLinkHeaders.next.replace('//api/', '/api/');
+        const pageResponse = await api.getFromUrl<{ steps: unknown[] }>(nextUrl);
+        allFullOutputs = allFullOutputs.concat(pageResponse.steps || []);
+        fullLinkHeaders = api.getLastLinkHeaders();
+      }
+
+      if (allFullOutputs.length > 0) {
         // Find the specific output that matches the one we clicked on
         interface OutputMatch {
           idx?: number;
@@ -255,15 +282,15 @@
             workspace?: string;
           };
         }
-        
-        const matchingOutput = fullResponse.outputs.find((o: unknown) => {
+
+        const matchingOutput = allFullOutputs.find((o: unknown) => {
           const out = o as OutputMatch;
-          return out.idx === output.idx && 
+          return out.idx === output.idx &&
             out.step === output.step &&
             out.scope?.dir === output.scope?.dir &&
             out.scope?.workspace === output.scope?.workspace;
         });
-        
+
         if (!matchingOutput) {
           console.error('Could not find matching output for the selected step');
           return;
@@ -1204,7 +1231,7 @@
                       </div>
                     {:else}
                       <div class="p-4 space-y-3">
-                        {#each dirspaceOutputs as output ((output.step || 'unknown') + (output.payload?._loadTimestamp || ''))}
+                        {#each dirspaceOutputs as output (output.idx)}
                           {@const typedOutput = output}
                           {@const displayState = getDisplayState(typedOutput)}
                           <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded p-3">
@@ -1345,7 +1372,7 @@
                       </div>
                     {:else}
                       <div class="p-4 space-y-3">
-                        {#each dirspaceOutputs as output ((output.step || 'unknown') + (output.payload?._loadTimestamp || ''))}
+                        {#each dirspaceOutputs as output (output.idx)}
                           {@const typedOutput = output}
                           {@const displayState = getDisplayState(typedOutput)}
                           <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded p-3">

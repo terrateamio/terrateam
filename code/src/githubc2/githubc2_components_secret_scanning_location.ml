@@ -118,22 +118,52 @@ module Primary = struct
 
   module Type = struct
     let t_of_yojson = function
-      | `String "commit" -> Ok "commit"
-      | `String "wiki_commit" -> Ok "wiki_commit"
-      | `String "issue_title" -> Ok "issue_title"
-      | `String "issue_body" -> Ok "issue_body"
-      | `String "issue_comment" -> Ok "issue_comment"
-      | `String "discussion_title" -> Ok "discussion_title"
-      | `String "discussion_body" -> Ok "discussion_body"
-      | `String "discussion_comment" -> Ok "discussion_comment"
-      | `String "pull_request_title" -> Ok "pull_request_title"
-      | `String "pull_request_body" -> Ok "pull_request_body"
-      | `String "pull_request_comment" -> Ok "pull_request_comment"
-      | `String "pull_request_review" -> Ok "pull_request_review"
-      | `String "pull_request_review_comment" -> Ok "pull_request_review_comment"
+      | `String "commit" -> Ok `Commit
+      | `String "discussion_body" -> Ok `Discussion_body
+      | `String "discussion_comment" -> Ok `Discussion_comment
+      | `String "discussion_title" -> Ok `Discussion_title
+      | `String "issue_body" -> Ok `Issue_body
+      | `String "issue_comment" -> Ok `Issue_comment
+      | `String "issue_title" -> Ok `Issue_title
+      | `String "pull_request_body" -> Ok `Pull_request_body
+      | `String "pull_request_comment" -> Ok `Pull_request_comment
+      | `String "pull_request_review" -> Ok `Pull_request_review
+      | `String "pull_request_review_comment" -> Ok `Pull_request_review_comment
+      | `String "pull_request_title" -> Ok `Pull_request_title
+      | `String "wiki_commit" -> Ok `Wiki_commit
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Commit -> `String "commit"
+      | `Discussion_body -> `String "discussion_body"
+      | `Discussion_comment -> `String "discussion_comment"
+      | `Discussion_title -> `String "discussion_title"
+      | `Issue_body -> `String "issue_body"
+      | `Issue_comment -> `String "issue_comment"
+      | `Issue_title -> `String "issue_title"
+      | `Pull_request_body -> `String "pull_request_body"
+      | `Pull_request_comment -> `String "pull_request_comment"
+      | `Pull_request_review -> `String "pull_request_review"
+      | `Pull_request_review_comment -> `String "pull_request_review_comment"
+      | `Pull_request_title -> `String "pull_request_title"
+      | `Wiki_commit -> `String "wiki_commit"
+
+    type t =
+      ([ `Commit
+       | `Discussion_body
+       | `Discussion_comment
+       | `Discussion_title
+       | `Issue_body
+       | `Issue_comment
+       | `Issue_title
+       | `Pull_request_body
+       | `Pull_request_comment
+       | `Pull_request_review
+       | `Pull_request_review_comment
+       | `Pull_request_title
+       | `Wiki_commit
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 

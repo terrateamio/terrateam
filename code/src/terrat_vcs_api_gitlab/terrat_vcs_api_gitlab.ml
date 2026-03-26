@@ -27,16 +27,10 @@ module Metrics = struct
   let rate_limit_remaining_count =
     let help = "Number of calls remaining in the rate limit window." in
     Rate_limit_remaining_histograph.v ~help ~namespace ~subsystem "rate_limit_remaining_count"
-
-  let fn_call_total =
-    let help = "Number of calls of a function" in
-    Prmths.Counter.v_label ~label_name:"fn" ~help ~namespace ~subsystem "fn_call_total"
 end
 
 let fetch_pull_request_tries = 6
 let one_minute = Duration.(to_f (of_min 1))
-let call_timeout = Duration.(to_f (of_sec 10))
-
 (* let log_call = function *)
 (*   | `Req req -> *)
 (*       Logs.debug (fun m -> *)
@@ -119,13 +113,6 @@ let call ?(tries = 3) t req =
                retry_wait n resp >>= Abb.Sys.sleep
            | Error _ -> Abb.Sys.sleep n))
 
-let create config auth =
-  Openapic_abb.create
-    ~base_url:(Terrat_config.Gitlab.api_base_url config)
-    ~user_agent:"Terrateam"
-    ~call_timeout
-    auth
-
 module Config = struct
   type t = {
     config : Terrat_config.t;
@@ -162,7 +149,7 @@ module Account = struct
     let to_string = CCInt.to_string
   end
 
-  type t = { installation_id : int } [@@deriving make, yojson, eq]
+  type t = { installation_id : int } [@@deriving make, show, yojson, eq]
 
   let make installation_id = { installation_id }
   let id t = t.installation_id
@@ -196,7 +183,7 @@ module Repo = struct
     owner : string;
     name : string;
   }
-  [@@deriving eq, yojson]
+  [@@deriving show, eq, yojson]
 
   let make ~id ~name ~owner () = { id; owner; name }
   let name t = t.name
@@ -216,10 +203,11 @@ module Remote_repo = struct
     | None -> assert false
 
   let default_branch t = t.P.default_branch
+  let is_archived t = CCOption.get_or ~default:false t.P.archived
 end
 
 module Ref = struct
-  type t = string [@@deriving eq, yojson]
+  type t = string [@@deriving show, eq, yojson]
 
   let to_string = CCFun.id
   let of_string = CCFun.id
@@ -236,7 +224,7 @@ module Pull_request = struct
   include Terrat_pull_request
 
   type ('diff, 'checks) t = (Id.t, 'diff, 'checks, Repo.t, Ref.t) Terrat_pull_request.t
-  [@@deriving to_yojson]
+  [@@deriving show, to_yojson]
 end
 
 module Client = struct
@@ -283,7 +271,7 @@ let fetch_file ~request_id client repo ref_ path =
     >>= fun resp ->
     let module OK = Gl.Responses.OK in
     match Openapi.Response.value resp with
-    | `OK { OK.content; encoding = Some "base64"; _ } ->
+    | `OK { OK.content; encoding = Some `Base64; _ } ->
         Abb.Future.return
           (Ok (Some (Base64.decode_exn (CCString.replace ~sub:"\n" ~by:"" content))))
     | `OK { OK.content; _ } -> Abb.Future.return (Ok (Some content))
@@ -339,6 +327,41 @@ let fetch_centralized_repo ~request_id client owner =
             owner
             Openapic_abb.pp_call_err
             err);
+      Abb.Future.return (Error `Error)
+
+let fetch_diff_files ~request_id ~base_ref ~branch_ref repo client =
+  let module R = Gitlabc_projects_repository.GetApiV4ProjectsIdRepositoryCompare in
+  let run =
+    let open Abbs_future_combinators.Infix_result_monad in
+    let id = CCInt.to_string @@ Repo.id repo in
+    call client.Client.client R.(make (Parameters.make ~from:base_ref ~to_:branch_ref ~id ()))
+    >>= fun resp ->
+    let module C = Gitlabc_components.API_Entities_Compare in
+    let module Tcd = Terrat_change.Diff in
+    let module D = Gitlabc_components_api_entities_diff in
+    let (`OK compare) = Openapi.Response.value resp in
+    let diff = CCOption.get_or ~default:[] compare.C.diffs in
+    Abb.Future.return
+      (Ok
+         (CCList.map
+            (function
+              | { D.old_path = filename; deleted_file = true; _ } -> Tcd.Remove { filename }
+              | { D.old_path = previous_filename; new_path = filename; _ }
+                when not (CCString.equal previous_filename filename) ->
+                  Tcd.Move { previous_filename; filename }
+              | { D.new_path = filename; new_file = true; _ } -> Tcd.Add { filename }
+              | { D.new_path = filename; _ } -> Tcd.Change { filename })
+            diff))
+  in
+  let open Abb.Future.Infix_monad in
+  run
+  >>= function
+  | Ok _ as r -> Abb.Future.return r
+  | Error `Error ->
+      Logs.err (fun m -> m "%s : FETCH_DIFF_FILES" request_id);
+      Abb.Future.return (Error `Error)
+  | Error (#Openapic_abb.call_err as err) ->
+      Logs.err (fun m -> m "%s : FETCH_DIFF_FILES : %a" request_id Openapic_abb.pp_call_err err);
       Abb.Future.return (Error `Error)
 
 let create_client ~request_id config account db =
@@ -442,13 +465,8 @@ let comment_on_pull_request ~request_id client pull_request body =
           m "%s : COMMENT_ON_PULL_REQUEST : %a" request_id Openapic_abb.pp_call_err err);
       Abb.Future.return (Error `Error)
 
-let delete_pull_request_comment ~request_id client pull_request comment_id =
-  let open Abb.Future.Infix_monad in
-  raise (Failure "nyi")
-
-let minimize_pull_request_comment ~request_id client pull_request comment_id =
-  let open Abb.Future.Infix_monad in
-  raise (Failure "nyi")
+let delete_pull_request_comment ~request_id client pull_request comment_id = raise (Failure "nyi")
+let minimize_pull_request_comment ~request_id client pull_request comment_id = raise (Failure "nyi")
 
 let fetch_diff ~request_id ~client ~repo merge_request_iid =
   let module Gl =
@@ -678,11 +696,11 @@ let create_commit_checks ~request_id client repo ref_ checks =
             ref_ = None;
             state =
               (match status with
-              | C.Status.Queued -> "pending"
-              | C.Status.Running -> "running"
-              | C.Status.Completed -> "success"
-              | C.Status.Failed -> "failed"
-              | C.Status.Canceled -> "canceled");
+              | C.Status.Queued -> `Pending
+              | C.Status.Running -> `Running
+              | C.Status.Completed -> `Success
+              | C.Status.Failed -> `Failed
+              | C.Status.Canceled -> `Canceled);
             target_url = None;
           }
         in
@@ -1053,6 +1071,43 @@ let get_repo_role ~request_id repo user client =
       Abb.Future.return (Error `Error)
   | Error (#Openapic_abb.call_err as err) ->
       Logs.err (fun m -> m "%s : GET_REPO_ROLE : %a" request_id Openapic_abb.pp_call_err err);
+      Abb.Future.return (Error `Error)
+
+let get_org_role ~request_id ~org user client =
+  let module Glu = Gitlabc_users.GetApiV4Users in
+  let module Glg = Gitlabc_groups_members.GetApiV4GroupsIdMembersUserId in
+  let run =
+    let open Abbs_future_combinators.Infix_result_monad in
+    call client.Client.client Glu.(make (Parameters.make ~username:(Some (User.to_string user)) ()))
+    >>= fun resp ->
+    let module U = Gitlabc_components_api_entities_userbasic in
+    match Openapi.Response.value resp with
+    | `OK ({ U.id = user_id; _ } :: _) -> (
+        let group_id = Uri.pct_encode org in
+        call client.Client.client Glg.(make (Parameters.make ~id:group_id ~user_id))
+        >>= fun resp ->
+        let module M = Gitlabc_components_api_entities_member in
+        match Openapi.Response.value resp with
+        | `OK { M.access_level; _ } ->
+            let role =
+              match access_level with
+              | 40 | 50 -> Some `Admin
+              | n when n > 0 -> Some `User
+              | _ -> None
+            in
+            Abb.Future.return (Ok role)
+        | `Not_found -> Abb.Future.return (Ok None))
+    | `OK [] -> Abb.Future.return (Ok None)
+  in
+  let open Abb.Future.Infix_monad in
+  run
+  >>= function
+  | Ok _ as r -> Abb.Future.return r
+  | Error (#Glg.Responses.t as err) ->
+      Logs.err (fun m -> m "%s : GET_ORG_ROLE : %a" request_id Glg.Responses.pp err);
+      Abb.Future.return (Error `Error)
+  | Error (#Openapic_abb.call_err as err) ->
+      Logs.err (fun m -> m "%s : GET_ORG_ROLE : %a" request_id Openapic_abb.pp_call_err err);
       Abb.Future.return (Error `Error)
 
 let find_workflow_file ~request_id _repo _client = Abb.Future.return (Ok (Some ".gitlab-ci.yml"))

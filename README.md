@@ -113,6 +113,8 @@ Configure workflows via `.terrateam/config.yml`. See [Configuration Reference](h
 
 We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) or join our [Slack](https://terrateam.io/slack).
 
+Instructions for setting up the OCaml development sandbox are in [README.setup.md](./README.setup.md)
+
 ---
 
 ## License

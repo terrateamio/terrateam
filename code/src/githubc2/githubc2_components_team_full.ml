@@ -1,21 +1,37 @@
 module Primary = struct
   module Notification_setting = struct
     let t_of_yojson = function
-      | `String "notifications_enabled" -> Ok "notifications_enabled"
-      | `String "notifications_disabled" -> Ok "notifications_disabled"
+      | `String "notifications_disabled" -> Ok `Notifications_disabled
+      | `String "notifications_enabled" -> Ok `Notifications_enabled
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Notifications_disabled -> `String "notifications_disabled"
+      | `Notifications_enabled -> `String "notifications_enabled"
+
+    type t =
+      ([ `Notifications_disabled
+       | `Notifications_enabled
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Privacy = struct
     let t_of_yojson = function
-      | `String "closed" -> Ok "closed"
-      | `String "secret" -> Ok "secret"
+      | `String "closed" -> Ok `Closed
+      | `String "secret" -> Ok `Secret
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Closed -> `String "closed"
+      | `Secret -> `String "secret"
+
+    type t =
+      ([ `Closed
+       | `Secret
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 

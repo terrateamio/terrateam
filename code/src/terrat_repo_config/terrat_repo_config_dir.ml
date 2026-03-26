@@ -1,10 +1,18 @@
 module Lock_branch_target = struct
   let t_of_yojson = function
-    | `String "all" -> Ok "all"
-    | `String "dest_branch" -> Ok "dest_branch"
+    | `String "all" -> Ok `All
+    | `String "dest_branch" -> Ok `Dest_branch
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `All -> `String "all"
+    | `Dest_branch -> `String "dest_branch"
+
+  type t =
+    ([ `All
+     | `Dest_branch
+     ]
+    [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 

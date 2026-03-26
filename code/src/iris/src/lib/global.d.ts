@@ -7,7 +7,7 @@ declare global {
       ui_subscription?: 'disabled' | 'oss' | 'saas';
       maintenanceMode?: boolean | string;
       maintenanceMessage?: string;
-      upgrade_nudges?: string;
+      trial_banners?: string;
     };
     posthog: {
       init: (key: string, options?: Record<string, unknown>) => void;
@@ -16,6 +16,16 @@ declare global {
       setPersonProperties: (properties: Record<string, unknown>) => void;
       reset: () => void;
     };
+  }
+
+  // Stripe Pricing Table custom element
+  namespace svelteHTML {
+    interface IntrinsicElements {
+      'stripe-pricing-table': {
+        'pricing-table-id': string;
+        'publishable-key': string;
+      };
+    }
   }
 }
 

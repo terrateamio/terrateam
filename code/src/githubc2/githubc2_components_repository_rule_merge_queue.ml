@@ -3,22 +3,40 @@ module Primary = struct
     module Primary = struct
       module Grouping_strategy = struct
         let t_of_yojson = function
-          | `String "ALLGREEN" -> Ok "ALLGREEN"
-          | `String "HEADGREEN" -> Ok "HEADGREEN"
+          | `String "ALLGREEN" -> Ok `ALLGREEN
+          | `String "HEADGREEN" -> Ok `HEADGREEN
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-        type t = (string[@of_yojson t_of_yojson])
+        let t_to_yojson = function
+          | `ALLGREEN -> `String "ALLGREEN"
+          | `HEADGREEN -> `String "HEADGREEN"
+
+        type t =
+          ([ `ALLGREEN
+           | `HEADGREEN
+           ]
+          [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
         [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Merge_method = struct
         let t_of_yojson = function
-          | `String "MERGE" -> Ok "MERGE"
-          | `String "SQUASH" -> Ok "SQUASH"
-          | `String "REBASE" -> Ok "REBASE"
+          | `String "MERGE" -> Ok `MERGE
+          | `String "REBASE" -> Ok `REBASE
+          | `String "SQUASH" -> Ok `SQUASH
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-        type t = (string[@of_yojson t_of_yojson])
+        let t_to_yojson = function
+          | `MERGE -> `String "MERGE"
+          | `REBASE -> `String "REBASE"
+          | `SQUASH -> `String "SQUASH"
+
+        type t =
+          ([ `MERGE
+           | `REBASE
+           | `SQUASH
+           ]
+          [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
         [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
@@ -39,10 +57,13 @@ module Primary = struct
 
   module Type = struct
     let t_of_yojson = function
-      | `String "merge_queue" -> Ok "merge_queue"
+      | `String "merge_queue" -> Ok `Merge_queue
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Merge_queue -> `String "merge_queue"
+
+    type t = ([ `Merge_queue ][@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 

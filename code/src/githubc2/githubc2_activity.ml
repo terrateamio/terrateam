@@ -1058,27 +1058,45 @@ module List_repos_starred_by_authenticated_user = struct
   module Parameters = struct
     module Direction = struct
       let t_of_yojson = function
-        | `String "asc" -> Ok "asc"
-        | `String "desc" -> Ok "desc"
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Sort = struct
       let t_of_yojson = function
-        | `String "created" -> Ok "created"
-        | `String "updated" -> Ok "updated"
+        | `String "created" -> Ok `Created
+        | `String "updated" -> Ok `Updated
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Created -> `String "created"
+        | `Updated -> `String "updated"
+
+      type t =
+        ([ `Created
+         | `Updated
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
-      direction : Direction.t; [@default "desc"]
+      direction : Direction.t; [@default `Desc]
       page : int; [@default 1]
       per_page : int; [@default 30]
-      sort : Sort.t; [@default "created"]
+      sort : Sort.t; [@default `Created]
     }
     [@@deriving make, show, eq]
   end
@@ -1128,8 +1146,8 @@ module List_repos_starred_by_authenticated_user = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("sort", Var (params.sort, String));
-           ("direction", Var (params.direction, String));
+           ("sort", Var (params.sort, Enum Sort.t_to_yojson));
+           ("direction", Var (params.direction, Enum Direction.t_to_yojson));
            ("per_page", Var (params.per_page, Int));
            ("page", Var (params.page, Int));
          ])
@@ -1583,27 +1601,45 @@ module List_repos_starred_by_user = struct
   module Parameters = struct
     module Direction = struct
       let t_of_yojson = function
-        | `String "asc" -> Ok "asc"
-        | `String "desc" -> Ok "desc"
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Sort = struct
       let t_of_yojson = function
-        | `String "created" -> Ok "created"
-        | `String "updated" -> Ok "updated"
+        | `String "created" -> Ok `Created
+        | `String "updated" -> Ok `Updated
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Created -> `String "created"
+        | `Updated -> `String "updated"
+
+      type t =
+        ([ `Created
+         | `Updated
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
-      direction : Direction.t; [@default "desc"]
+      direction : Direction.t; [@default `Desc]
       page : int; [@default 1]
       per_page : int; [@default 30]
-      sort : Sort.t; [@default "created"]
+      sort : Sort.t; [@default `Created]
       username : string;
     }
     [@@deriving make, show, eq]
@@ -1657,8 +1693,8 @@ module List_repos_starred_by_user = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("sort", Var (params.sort, String));
-           ("direction", Var (params.direction, String));
+           ("sort", Var (params.sort, Enum Sort.t_to_yojson));
+           ("direction", Var (params.direction, Enum Direction.t_to_yojson));
            ("per_page", Var (params.per_page, Int));
            ("page", Var (params.page, Int));
          ])

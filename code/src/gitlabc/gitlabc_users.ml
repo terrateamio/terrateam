@@ -32,23 +32,47 @@ module GetApiV4Users = struct
   module Parameters = struct
     module Order_by = struct
       let t_of_yojson = function
-        | `String "id" -> Ok "id"
-        | `String "name" -> Ok "name"
-        | `String "username" -> Ok "username"
-        | `String "created_at" -> Ok "created_at"
-        | `String "updated_at" -> Ok "updated_at"
+        | `String "created_at" -> Ok `Created_at
+        | `String "id" -> Ok `Id
+        | `String "name" -> Ok `Name
+        | `String "updated_at" -> Ok `Updated_at
+        | `String "username" -> Ok `Username
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Created_at -> `String "created_at"
+        | `Id -> `String "id"
+        | `Name -> `String "name"
+        | `Updated_at -> `String "updated_at"
+        | `Username -> `String "username"
+
+      type t =
+        ([ `Created_at
+         | `Id
+         | `Name
+         | `Updated_at
+         | `Username
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Sort = struct
       let t_of_yojson = function
-        | `String "asc" -> Ok "asc"
-        | `String "desc" -> Ok "desc"
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -121,8 +145,8 @@ module GetApiV4Users = struct
            ("exclude_external", Var (params.exclude_external, Bool));
            ("exclude_humans", Var (params.exclude_humans, Bool));
            ("exclude_internal", Var (params.exclude_internal, Bool));
-           ("order_by", Var (params.order_by, Option String));
-           ("sort", Var (params.sort, Option String));
+           ("order_by", Var (params.order_by, Option (Enum Order_by.t_to_yojson)));
+           ("sort", Var (params.sort, Option (Enum Sort.t_to_yojson)));
            ("page", Var (params.page, Int));
            ("per_page", Var (params.per_page, Int));
            ("with_custom_attributes", Var (params.with_custom_attributes, Bool));

@@ -1,11 +1,21 @@
 module Link_type = struct
   let t_of_yojson = function
-    | `String "relates_to" -> Ok "relates_to"
-    | `String "blocks" -> Ok "blocks"
-    | `String "is_blocked_by" -> Ok "is_blocked_by"
+    | `String "blocks" -> Ok `Blocks
+    | `String "is_blocked_by" -> Ok `Is_blocked_by
+    | `String "relates_to" -> Ok `Relates_to
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Blocks -> `String "blocks"
+    | `Is_blocked_by -> `String "is_blocked_by"
+    | `Relates_to -> `String "relates_to"
+
+  type t =
+    ([ `Blocks
+     | `Is_blocked_by
+     | `Relates_to
+     ]
+    [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 

@@ -16,6 +16,8 @@ module Assert = struct
   let eq ~eq ~pp expected actual =
     if not (eq expected actual) then
       raise (Failure (Format.asprintf "Expected:\n%a\nGot:\n%a" pp expected pp actual))
+
+  let false_ msg = raise (Failure msg)
 end
 
 (*
@@ -186,6 +188,20 @@ let eval test = test (State.create ())
 let main outputter test =
   let rr = eval test in
   outputter rr;
+  let total_tests = CCList.length rr in
+  let passed_tests =
+    CCList.filter
+      (fun tr ->
+        match tr.Test_result.res with
+        | `Ok -> true
+        | _ -> false)
+      rr
+    |> CCList.length
+  in
+  let success_percentage =
+    if total_tests > 0 then float_of_int passed_tests /. float_of_int total_tests *. 100.0 else 0.0
+  in
+  Printf.printf "Tests passed: %d/%d (%.2f%%)\n" passed_tests total_tests success_percentage;
   List.iter
     ~f:(fun tr ->
       match tr.Test_result.res with

@@ -1,7 +1,6 @@
 let src = Logs.Src.create "vcs_api_github_commit_check"
 
 module Logs = (val Logs.src_log src : Logs.LOG)
-module String_map = CCMap.Make (CCString)
 
 type err = Githubc2_abb.call_err [@@deriving show]
 
@@ -26,10 +25,10 @@ let create ~owner ~repo ~ref_ ~checks client =
              ~state:
                Terrat_commit_check.Status.(
                  match status with
-                 | Queued | Running -> "pending"
-                 | Completed -> "success"
-                 | Failed -> "failure"
-                 | Canceled -> "failure")
+                 | Queued | Running -> `Pending
+                 | Completed -> `Success
+                 | Failed -> `Failure
+                 | Canceled -> `Failure)
              ())
          checks)
     client
@@ -123,28 +122,26 @@ let list ~log_id ~owner ~repo ~ref_ client =
                    ~title:name
                    ~status:
                      (match (status, conclusion) with
-                     | "queued", _ -> Status.Queued
-                     | "in_progress", _ -> Status.Running
-                     | "completed", Some ("success" | "skipped" | "neutral") -> Status.Completed
-                     | "completed", Some ("failure" | "cancelled" | "timed_out" | "action_required")
-                       -> Status.Failed
-                     | "completed", Some v ->
-                         raise (Failure ("Unknown status check conclusion value: " ^ v))
-                     | "completed", None -> raise (Failure "None conclusion")
+                     | `Queued, _ -> Status.Queued
+                     | `In_progress, _ -> Status.Running
+                     | `Completed, Some (`Success | `Skipped | `Neutral) -> Status.Completed
+                     | `Completed, Some (`Failure | `Cancelled | `Timed_out | `Action_required) ->
+                         Status.Failed
+                     | `Completed, None -> raise (Failure "None conclusion")
                      | _, _ -> assert false)))
       in
       let all_unique_checks =
         statuses @ checks
         |> CCListLabels.fold_left
-             ~init:String_map.empty
+             ~init:Sln_map.String.empty
              ~f:(fun acc (Terrat_commit_check.{ title; _ } as cc) ->
                (* Both API calls return duplicate statuses, but it's the most
                   recent one (by timestamp) that we want.  We have sorted them
                   by timestamp earlier and now we just take the first status
                   check found by name.  The assumption here is that the most
                   recent run by name is the true status of the run. *)
-               if not (String_map.mem title acc) then String_map.add title cc acc else acc)
-        |> String_map.values
+               if not (Sln_map.String.mem title acc) then Sln_map.String.add title cc acc else acc)
+        |> Sln_map.String.values
         |> Iter.to_list
       in
       Abb.Future.return (Ok all_unique_checks)

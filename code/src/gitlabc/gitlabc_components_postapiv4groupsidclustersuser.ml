@@ -2,18 +2,28 @@ module Platform_kubernetes_attributes = struct
   module Primary = struct
     module Authorization_type = struct
       let t_of_yojson = function
-        | `String "unknown_authorization" -> Ok "unknown_authorization"
-        | `String "rbac" -> Ok "rbac"
-        | `String "abac" -> Ok "abac"
+        | `String "abac" -> Ok `Abac
+        | `String "rbac" -> Ok `Rbac
+        | `String "unknown_authorization" -> Ok `Unknown_authorization
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson])
+      let t_to_yojson = function
+        | `Abac -> `String "abac"
+        | `Rbac -> `String "rbac"
+        | `Unknown_authorization -> `String "unknown_authorization"
+
+      type t =
+        ([ `Abac
+         | `Rbac
+         | `Unknown_authorization
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     type t = {
       api_url : string;
-      authorization_type : Authorization_type.t; [@default "rbac"]
+      authorization_type : Authorization_type.t; [@default `Rbac]
       ca_cert : string option; [@default None]
       namespace : string option; [@default None]
       token : string;

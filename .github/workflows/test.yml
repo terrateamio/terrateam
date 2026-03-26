@@ -18,8 +18,8 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
-  build-test-amd64:
-    runs-on: ubuntu-22.04
+  build-test:
+    runs-on: ${{ matrix.runs-on }}
     permissions:
       contents: read
       packages: write
@@ -30,6 +30,16 @@ jobs:
           - terrat-ee
           - terrat-oss
           - ttm
+        arch:
+          - amd64
+          - arm64
+        include:
+          - arch: amd64
+            runs-on: ubuntu-22.04
+            platform: linux/amd64
+          - arch: arm64
+            runs-on: ubuntu-22.04-arm64
+            platform: linux/arm64
 
     steps:
       - name: Checkout code
@@ -73,8 +83,8 @@ jobs:
             BASE_IMAGE=${{ env.BASE_IMAGE }}
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.target }}-dev:${{ steps.date.outputs.date }}-${{ steps.branch.outputs.branch }}-amd64
-          platforms: linux/amd64
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.target }}-dev:${{ steps.date.outputs.date }}-${{ steps.branch.outputs.branch }}-${{ matrix.arch }}
+          platforms: ${{ matrix.platform }}
 
       - name: Build and push ${{ matrix.target }} without BASE_IMAGE
         if: ${{ inputs.build_base_image }}

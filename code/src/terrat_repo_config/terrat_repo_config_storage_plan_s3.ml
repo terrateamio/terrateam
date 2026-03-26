@@ -8,10 +8,13 @@ end
 
 module Method = struct
   let t_of_yojson = function
-    | `String "s3" -> Ok "s3"
+    | `String "s3" -> Ok `S3
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `S3 -> `String "s3"
+
+  type t = ([ `S3 ][@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 

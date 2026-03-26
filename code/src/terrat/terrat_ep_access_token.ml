@@ -15,12 +15,7 @@ module Refresh = struct
         //
         (* capabilities *)
         Ret.(
-          option
-            (ud'
-               CCFun.(
-                 CCOption.wrap Yojson.Safe.from_string
-                 %> CCOption.flat_map
-                      ([%of_yojson: Terrat_user.Capability.t list] %> CCOption.of_result))))
+          option (u json CCFun.([%of_yojson: Terrat_user.Capability.t list] %> CCOption.of_result)))
         /^ "select capabilities from access_tokens where id = $access_token_id"
         /% Var.uuid "access_token_id")
   end

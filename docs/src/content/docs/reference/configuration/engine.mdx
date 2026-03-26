@@ -10,21 +10,65 @@ The `engine` configuration allows you to specify which tool should be used for e
 engine:
   name: terraform
   tf_version: latest
-  tf_cmd: terraform
 ```
 
 ## Keys
+
+There are different valid keys depending on the engine `name`.
+
 | Key | Type | Description |
 |-----|------|-------------|
 | name | String | The name of the tool to use for executing Terraform operations. Can be `terraform`, `tofu`, `terragrunt`, `cdktf`, or `custom`. Default is `terraform`. |
-| version | String | The version of the tool to use. Only applies to `terraform`, `tofu`, and `terragrunt`. This value is overridden by any version information specified in the Terraform or OpenTofu code. Default is `latest`. |
-| tf_version | String | The version of the Terraform or OpenTofu CLI to use when `engine.name` is set to `terragrunt` or `cdktf`. Default is `latest`. |
-| tf_cmd | String | The command to use for `terragrunt` or `cdktf` executions. Can be `terraform` or `tofu`. Default is `terraform`. |
-| init | Array | *(Custom engine only)* The command to run during the init step. Optional. |
-| plan | Array | *(Custom engine only)* The command to run during the plan step. The `TERRATEAM_PLAN_FILE` environment variable is available to write a plan file that will be accessible in the apply step. Optional. |
-| diff | Array | *(Custom engine only)* The command to produce a human-readable diff of the plan output. Optional. |
-| apply | Array | *(Custom engine only)* The command to run during the apply step. Optional. |
-| outputs | Array | *(Custom engine only)* The command to return output values as a JSON string. Optional. |
+
+### terraform and tofu
+
+| Key | Type | Description |
+|-----|------|-------------|
+| name | String | `terraform` or `tofu` depending on which specific implementation to use. |
+| override_tf_cmd | String | By default, either `terraform` or `tofu` is used to run operations.  This configuration overrides the program to call. |
+| version | String | Which version of the `terraform` or `tofu` to use. |
+| outputs | Object | See `outputs` below. |
+
+### terragrunt
+
+| Key | Type | Description |
+|-----|------|-------------|
+| name | String | `terragrunt` |
+| override_tf_cmd | String | Override the name of the Terragrunt program to run. |
+| tf_cmd | String | Which underlying Terraform-compatible program to use.  By default it is `terraform`. |
+| tf_version | String | The version of the underlying Terraform-compatible tool to use (either Terraform or Tofu). |
+| version | String | The version of Terragrunt to use. |
+| outputs | Object | See `outputs` below. |
+
+### cdktf
+
+| Key | Type | Description |
+|-----|------|-------------|
+| name | String | `cdktf` |
+| override_tf_cmd | String | Override the name of the CDKTF program to run. |
+| tf_cmd | String | Which underlying Terraform-compatible program to use.  By default it is `terraform`. |
+| tf_version | String | The version of the underlying Terraform-compatible tool to use (either Terraform or Tofu). |
+| outputs | Object | See `outputs` below. |
+
+## custom
+
+All custom engine steps are optionally and will simply be skipped if they are not specified.
+
+| Key | Type | Description |
+|-----|------|-------------|
+| init | Array | The command to run during the init step. |
+| plan | Array | The command to run during the plan step. The `TERRATEAM_PLAN_FILE` environment variable is available to write a plan file that will be accessible in the apply step.  This plan file is up to the engine to define and use as it needs. |
+| diff | Array | The command to produce a human-readable diff of the plan output. |
+| apply | Array | The command to run during the apply step. |
+| outputs | Array | The command to return output values as a JSON string. |
+
+## outputs
+
+By default, Terrateam collects the outputs of all apply runs an stores them.  The `outputs` configuration controls this behaviour.
+
+| Key | Type | Description |
+|-----|------|-------------|
+| collect | Boolean | `true` to collect outputs, `false` to disable.  Default is `true`.
 
 ## Examples
 ### Using Terraform

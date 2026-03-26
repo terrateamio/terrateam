@@ -16,10 +16,7 @@ module Make (P : Terrat_vcs_provider2.S) (S : S) = struct
         Ret.uuid
         /^ "insert into access_tokens (capabilities, name, user_id) values ($capabilities, $name, \
             $user_id) returning id"
-        /% Var.(
-             ud
-               (json "capabilities")
-               CCFun.([%to_yojson: Terrat_user.Capability.t list] %> Yojson.Safe.to_string))
+        /% Var.(ud (json "capabilities") [%to_yojson: Terrat_user.Capability.t list])
         /% Var.text "name"
         /% Var.uuid "user_id")
 
@@ -34,10 +31,7 @@ module Make (P : Terrat_vcs_provider2.S) (S : S) = struct
         Ret.text
         //
         (* capabilities *)
-        Ret.ud'
-          CCFun.(
-            CCOption.wrap Yojson.Safe.from_string
-            %> CCOption.flat_map ([%of_yojson: Terrat_user.Capability.t list] %> CCOption.of_result))
+        Ret.u Ret.json CCFun.([%of_yojson: Terrat_user.Capability.t list] %> CCOption.of_result)
         /^ "select id, name, capabilities from access_tokens where user_id = $user_id order by \
             name limit 100"
         /% Var.uuid "user_id")
@@ -58,7 +52,6 @@ module Make (P : Terrat_vcs_provider2.S) (S : S) = struct
           Terrat_session.with_session ~caps:[ Terrat_user.Capability.Access_token_create ] ctx
           >>= fun user ->
           let run =
-            let open Abbs_future_combinators.Infix_result_monad in
             Pgsql_pool.with_conn storage ~f:(fun db ->
                 Pgsql_io.Prepared_stmt.fetch
                   db
@@ -174,7 +167,6 @@ module Make (P : Terrat_vcs_provider2.S) (S : S) = struct
           Terrat_session.with_session ~caps:[ Terrat_user.Capability.Access_token_create ] ctx
           >>= fun user ->
           let run =
-            let open Abbs_future_combinators.Infix_result_monad in
             Pgsql_pool.with_conn storage ~f:(fun db ->
                 Pgsql_io.Prepared_stmt.execute
                   db

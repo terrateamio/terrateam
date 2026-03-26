@@ -1,13 +1,25 @@
 module Primary = struct
   module Type = struct
     let t_of_yojson = function
-      | `String "Bot" -> Ok "Bot"
-      | `String "User" -> Ok "User"
-      | `String "Organization" -> Ok "Organization"
-      | `String "Mannequin" -> Ok "Mannequin"
+      | `String "Bot" -> Ok `Bot
+      | `String "Mannequin" -> Ok `Mannequin
+      | `String "Organization" -> Ok `Organization
+      | `String "User" -> Ok `User
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Bot -> `String "Bot"
+      | `Mannequin -> `String "Mannequin"
+      | `Organization -> `String "Organization"
+      | `User -> `String "User"
+
+    type t =
+      ([ `Bot
+       | `Mannequin
+       | `Organization
+       | `User
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 

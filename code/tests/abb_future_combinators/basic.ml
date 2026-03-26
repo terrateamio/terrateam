@@ -726,8 +726,33 @@ let protect_finally_abort_in_body_test =
       assert (Fut.state (Fut.Promise.future protected) = `Undet);
       assert !hit_finally)
 
+let protect_finally_exn_in_body_test =
+  Oth.test ~name:"protect_finally exn in body" (fun _ ->
+      let hit_finally = ref false in
+      let trigger1 = Fut.Promise.create () in
+      let trigger2 = Fut.Promise.create () in
+      let fut =
+        let open Fut.Infix_monad in
+        Fut_comb.protect_finally
+          ~setup:(fun () -> Fut.Promise.future trigger1)
+          (fun () -> Fut.Promise.future trigger2 >>= fun () -> raise (Failure "foo"))
+          ~finally:(fun () ->
+            hit_finally := true;
+            Fut.return ())
+      in
+      ignore (Fut.run_with_state fut dummy_state);
+      ignore (Fut.run_with_state (Fut.Promise.set trigger1 ()) dummy_state);
+      ignore (Fut.run_with_state fut dummy_state);
+      ignore (Fut.run_with_state (Fut.Promise.set trigger2 ()) dummy_state);
+      (match Fut.state fut with
+      | `Exn _ -> ()
+      | `Undet -> assert false
+      | `Det _ -> assert false
+      | `Aborted -> assert false);
+      assert !hit_finally)
+
 let protect_finally_abort_in_finally_test =
-  Oth.test ~name:"protect_finally abort in body" (fun _ ->
+  Oth.test ~name:"protect_finally abort in finally" (fun _ ->
       let hit_finally = ref false in
       let protected = Fut.Promise.create () in
       let trigger1 = Fut.Promise.create () in
@@ -820,6 +845,7 @@ let () =
            protect_fork_finally_abort_in_on_failure_test;
            protect_finally_abort_in_protect_test;
            protect_finally_abort_in_body_test;
+           protect_finally_exn_in_body_test;
            protect_fork_finally_abort_in_finally_test;
            protect_finally_success_test;
          ]))

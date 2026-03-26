@@ -1,4 +1,5 @@
 .PHONY: terrat-api terrat-repo-config terrat-webhooks gitlab-webhooks
+.PHONY: terrat-job-context terrat-job
 .PHONY: gitlab-api github-api
 .PHONY: terrat release-terrat debug-terrat
 .PHONY: pins-file
@@ -14,15 +15,17 @@ pds.mk: pds.conf $(wildcard src/*/*) $(wildcard test/*/*)
 
 terrat-schemas: terrat-api terrat-repo-config terrat-webhooks terrat-capabilities
 
+terrat-schemas: terrat-job-context terrat-job
+
 terrat-schemas: gitlab-api gitlab-webhooks github-api
 
 terrat: release-terrat debug-terrat release-ttm debug-ttm
 
 test-terrat: test-release-terrat test-debug-terrat
 
-test-terrat: release_terrat_vcs_api_nyi release_terrat_vcs_provider2_nyi release_terrat_vcs_service_nyi
+release-terrat: release_terrat_vcs_api_nyi release_terrat_vcs_provider2_nyi release_terrat_vcs_service_nyi
 
-test-terrat: debug_terrat_vcs_api_nyi debug_terrat_vcs_provider2_nyi debug_terrat_vcs_service_nyi
+debug-terrat: debug_terrat_vcs_api_nyi debug_terrat_vcs_provider2_nyi debug_terrat_vcs_service_nyi
 
 release-terrat: release_terrat_oss release_terrat_ee release_iris
 
@@ -73,6 +76,19 @@ terrat-webhooks: debug_json_schema_hooks_cli release_json_schema_hooks_cli
 	rm -f ./src/terrat_github_webhooks/*.ml
 	env OCAMLRUNPARAM=b ./build/debug/json_schema_hooks_cli/json_schema_hooks_cli.native convert -i ../api_schemas/github_webhooks/terrat-schema.json -n terrat_github_webhooks --output-dir ./src/terrat_github_webhooks/ --non-strict-records
 	find src/terrat_github_webhooks/ -type f -exec ocamlformat -i '{}' \;
+
+terrat-job-context: debug_json_schema_hooks_cli release_json_schema_hooks_cli
+	jq -S . < ../api_schemas/terrat/job_context.json > /tmp/$$$$.json && mv /tmp/$$$$.json ../api_schemas/terrat/job_context.json
+	rm -f ./src/terrat_job_context_param/*.ml
+	env OCAMLRUNPARAM=b ./build/debug/json_schema_hooks_cli/json_schema_hooks_cli.native convert --input ../api_schemas/terrat/job_context.json --name terrat_job_context_param --output-dir=./src/terrat_job_context_param/
+	find src/terrat_job_context_param/ -type f -exec ocamlformat -i '{}' \;
+
+terrat-job: debug_json_schema_hooks_cli release_json_schema_hooks_cli
+	jq -S . < ../api_schemas/terrat/job.json > /tmp/$$$$.json && mv /tmp/$$$$.json ../api_schemas/terrat/job.json
+	rm -f ./src/terrat_job_type/*.ml
+	env OCAMLRUNPARAM=b ./build/debug/json_schema_hooks_cli/json_schema_hooks_cli.native convert --input ../api_schemas/terrat/job.json --name terrat_job_type --output-dir=./src/terrat_job_type/
+	find src/terrat_job_type/ -type f -exec ocamlformat -i '{}' \;
+
 
 github-api: debug_openapi_cli release_openapi_cli
 	jq -S . < ../api_schemas/github_api/api.github.com.json > /tmp/$$$$.json && mv /tmp/$$$$.json ../api_schemas/github_api/api.github.com.json

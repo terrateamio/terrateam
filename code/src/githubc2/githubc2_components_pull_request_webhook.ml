@@ -76,22 +76,40 @@ module All_of = struct
 
     module Merge_commit_message = struct
       let t_of_yojson = function
-        | `String "PR_BODY" -> Ok "PR_BODY"
-        | `String "PR_TITLE" -> Ok "PR_TITLE"
-        | `String "BLANK" -> Ok "BLANK"
+        | `String "BLANK" -> Ok `BLANK
+        | `String "PR_BODY" -> Ok `PR_BODY
+        | `String "PR_TITLE" -> Ok `PR_TITLE
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson])
+      let t_to_yojson = function
+        | `BLANK -> `String "BLANK"
+        | `PR_BODY -> `String "PR_BODY"
+        | `PR_TITLE -> `String "PR_TITLE"
+
+      type t =
+        ([ `BLANK
+         | `PR_BODY
+         | `PR_TITLE
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     module Merge_commit_title = struct
       let t_of_yojson = function
-        | `String "PR_TITLE" -> Ok "PR_TITLE"
-        | `String "MERGE_MESSAGE" -> Ok "MERGE_MESSAGE"
+        | `String "MERGE_MESSAGE" -> Ok `MERGE_MESSAGE
+        | `String "PR_TITLE" -> Ok `PR_TITLE
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson])
+      let t_to_yojson = function
+        | `MERGE_MESSAGE -> `String "MERGE_MESSAGE"
+        | `PR_TITLE -> `String "PR_TITLE"
+
+      type t =
+        ([ `MERGE_MESSAGE
+         | `PR_TITLE
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
@@ -107,32 +125,58 @@ module All_of = struct
 
     module Squash_merge_commit_message = struct
       let t_of_yojson = function
-        | `String "PR_BODY" -> Ok "PR_BODY"
-        | `String "COMMIT_MESSAGES" -> Ok "COMMIT_MESSAGES"
-        | `String "BLANK" -> Ok "BLANK"
+        | `String "BLANK" -> Ok `BLANK
+        | `String "COMMIT_MESSAGES" -> Ok `COMMIT_MESSAGES
+        | `String "PR_BODY" -> Ok `PR_BODY
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson])
+      let t_to_yojson = function
+        | `BLANK -> `String "BLANK"
+        | `COMMIT_MESSAGES -> `String "COMMIT_MESSAGES"
+        | `PR_BODY -> `String "PR_BODY"
+
+      type t =
+        ([ `BLANK
+         | `COMMIT_MESSAGES
+         | `PR_BODY
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     module Squash_merge_commit_title = struct
       let t_of_yojson = function
-        | `String "PR_TITLE" -> Ok "PR_TITLE"
-        | `String "COMMIT_OR_PR_TITLE" -> Ok "COMMIT_OR_PR_TITLE"
+        | `String "COMMIT_OR_PR_TITLE" -> Ok `COMMIT_OR_PR_TITLE
+        | `String "PR_TITLE" -> Ok `PR_TITLE
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson])
+      let t_to_yojson = function
+        | `COMMIT_OR_PR_TITLE -> `String "COMMIT_OR_PR_TITLE"
+        | `PR_TITLE -> `String "PR_TITLE"
+
+      type t =
+        ([ `COMMIT_OR_PR_TITLE
+         | `PR_TITLE
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     module State = struct
       let t_of_yojson = function
-        | `String "open" -> Ok "open"
-        | `String "closed" -> Ok "closed"
+        | `String "closed" -> Ok `Closed
+        | `String "open" -> Ok `Open
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson])
+      let t_to_yojson = function
+        | `Closed -> `String "closed"
+        | `Open -> `String "open"
+
+      type t =
+        ([ `Closed
+         | `Open
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
@@ -278,22 +322,40 @@ module T = struct
 
     module Merge_commit_message = struct
       let t_of_yojson = function
-        | `String "PR_BODY" -> Ok "PR_BODY"
-        | `String "PR_TITLE" -> Ok "PR_TITLE"
-        | `String "BLANK" -> Ok "BLANK"
+        | `String "BLANK" -> Ok `BLANK
+        | `String "PR_BODY" -> Ok `PR_BODY
+        | `String "PR_TITLE" -> Ok `PR_TITLE
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson])
+      let t_to_yojson = function
+        | `BLANK -> `String "BLANK"
+        | `PR_BODY -> `String "PR_BODY"
+        | `PR_TITLE -> `String "PR_TITLE"
+
+      type t =
+        ([ `BLANK
+         | `PR_BODY
+         | `PR_TITLE
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     module Merge_commit_title = struct
       let t_of_yojson = function
-        | `String "PR_TITLE" -> Ok "PR_TITLE"
-        | `String "MERGE_MESSAGE" -> Ok "MERGE_MESSAGE"
+        | `String "MERGE_MESSAGE" -> Ok `MERGE_MESSAGE
+        | `String "PR_TITLE" -> Ok `PR_TITLE
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson])
+      let t_to_yojson = function
+        | `MERGE_MESSAGE -> `String "MERGE_MESSAGE"
+        | `PR_TITLE -> `String "PR_TITLE"
+
+      type t =
+        ([ `MERGE_MESSAGE
+         | `PR_TITLE
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
@@ -309,32 +371,58 @@ module T = struct
 
     module Squash_merge_commit_message = struct
       let t_of_yojson = function
-        | `String "PR_BODY" -> Ok "PR_BODY"
-        | `String "COMMIT_MESSAGES" -> Ok "COMMIT_MESSAGES"
-        | `String "BLANK" -> Ok "BLANK"
+        | `String "BLANK" -> Ok `BLANK
+        | `String "COMMIT_MESSAGES" -> Ok `COMMIT_MESSAGES
+        | `String "PR_BODY" -> Ok `PR_BODY
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson])
+      let t_to_yojson = function
+        | `BLANK -> `String "BLANK"
+        | `COMMIT_MESSAGES -> `String "COMMIT_MESSAGES"
+        | `PR_BODY -> `String "PR_BODY"
+
+      type t =
+        ([ `BLANK
+         | `COMMIT_MESSAGES
+         | `PR_BODY
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     module Squash_merge_commit_title = struct
       let t_of_yojson = function
-        | `String "PR_TITLE" -> Ok "PR_TITLE"
-        | `String "COMMIT_OR_PR_TITLE" -> Ok "COMMIT_OR_PR_TITLE"
+        | `String "COMMIT_OR_PR_TITLE" -> Ok `COMMIT_OR_PR_TITLE
+        | `String "PR_TITLE" -> Ok `PR_TITLE
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson])
+      let t_to_yojson = function
+        | `COMMIT_OR_PR_TITLE -> `String "COMMIT_OR_PR_TITLE"
+        | `PR_TITLE -> `String "PR_TITLE"
+
+      type t =
+        ([ `COMMIT_OR_PR_TITLE
+         | `PR_TITLE
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     module State = struct
       let t_of_yojson = function
-        | `String "open" -> Ok "open"
-        | `String "closed" -> Ok "closed"
+        | `String "closed" -> Ok `Closed
+        | `String "open" -> Ok `Open
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson])
+      let t_to_yojson = function
+        | `Closed -> `String "closed"
+        | `Open -> `String "open"
+
+      type t =
+        ([ `Closed
+         | `Open
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 

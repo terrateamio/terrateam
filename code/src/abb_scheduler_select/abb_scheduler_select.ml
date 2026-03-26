@@ -48,7 +48,7 @@ module El = struct
     type t = t_
   end)
 
-  let create ?(exec_duration = fun _ -> ()) () =
+  let create ?(thread_pool_size = 100) ?(exec_duration = fun _ -> ()) () =
     let t =
       {
         reads = Fd_map.empty;
@@ -58,7 +58,7 @@ module El = struct
         curr_time = Unix.gettimeofday ();
         mono_time = Mtime_clock.elapsed ();
         exec_duration;
-        thread_pool = Abb_thread_pool.create ~capacity:100 ~wait:Unix.pipe;
+        thread_pool = Abb_thread_pool.create ~capacity:thread_pool_size ~wait:Unix.pipe;
         ignore_reads = [];
         ignore_writes = [];
       }
@@ -161,7 +161,9 @@ module Future = El.Future
 module Scheduler = struct
   type t = El.t Abb_fut.State.t
 
-  let create ?exec_duration () = Abb_fut.State.create (El.create ?exec_duration ())
+  let create ?thread_pool_size ?exec_duration () =
+    Abb_fut.State.create (El.create ?thread_pool_size ?exec_duration ())
+
   let destroy t = El.destroy (Abb_fut.State.state t)
 
   let run t f =
@@ -173,8 +175,8 @@ module Scheduler = struct
     | (`Det _ | `Aborted | `Exn _) as r -> (t, r)
     | `Undet -> assert false
 
-  let run_with_state ?exec_duration f =
-    let t = create ?exec_duration () in
+  let run_with_state ?thread_pool_size ?exec_duration f =
+    let t = create ?thread_pool_size ?exec_duration () in
     let t, r = run t f in
     destroy t;
     r

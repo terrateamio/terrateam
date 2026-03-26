@@ -65,17 +65,11 @@ module Make (S : S with type Account_id.t = int) = struct
 
         let scope =
           let module T = Terrat_api_components.Workflow_step_output_scope in
-          CCFun.(
-            CCOption.wrap Yojson.Safe.from_string
-            %> CCOption.map T.of_yojson
-            %> CCOption.flat_map CCResult.to_opt)
+          CCFun.(T.of_yojson %> CCResult.to_opt)
 
         let payload =
           let module T = T.Payload in
-          CCFun.(
-            CCOption.wrap Yojson.Safe.from_string
-            %> CCOption.map T.of_yojson
-            %> CCOption.flat_map CCResult.to_opt)
+          CCFun.(T.of_yojson %> CCResult.to_opt)
 
         let select_outputs where =
           Pgsql_io.Typed_sql.(
@@ -91,10 +85,10 @@ module Make (S : S with type Account_id.t = int) = struct
             Ret.boolean
             //
             (* payload *)
-            Ret.(option (ud' payload))
+            Ret.(option (u json payload))
             //
             (* scope *)
-            Ret.ud' scope
+            Ret.u Ret.json scope
             //
             (* step *)
             Ret.text
@@ -324,10 +318,7 @@ module Make (S : S with type Account_id.t = int) = struct
         let module T = struct
           type t = Terrat_api_components.Work_manifest_dirspace.t list [@@deriving yojson]
         end in
-        CCFun.(
-          CCOption.wrap Yojson.Safe.from_string
-          %> CCOption.map T.of_yojson
-          %> CCOption.flat_map CCResult.to_opt)
+        CCFun.(T.of_yojson %> CCResult.to_opt)
 
       let select_work_manifests where =
         Pgsql_io.Typed_sql.(
@@ -349,13 +340,13 @@ module Make (S : S with type Account_id.t = int) = struct
           Ret.text
           //
           (* run_type *)
-          Ret.ud' Terrat_work_manifest3.Step.of_string
+          Ret.u Ret.text Terrat_work_manifest3.Step.of_string
           //
           (* state *)
-          Ret.ud' Terrat_work_manifest3.State.of_string
+          Ret.u Ret.text Terrat_work_manifest3.State.of_string
           //
           (* tag_query *)
-          Ret.ud' CCFun.(Terrat_tag_query.of_string %> CCOption.of_result)
+          Ret.u Ret.text CCFun.(Terrat_tag_query.of_string %> CCOption.of_result)
           //
           (* pull_number *)
           Ret.(option bigint)
@@ -376,7 +367,7 @@ module Make (S : S with type Account_id.t = int) = struct
           Ret.text
           //
           (* dirspaces *)
-          Ret.(option (ud' dirspaces))
+          Ret.(option (u json dirspaces))
           //
           (* pull_request_title *)
           Ret.(option text)
@@ -512,8 +503,8 @@ module Make (S : S with type Account_id.t = int) = struct
                           id = Uuidm.to_string id;
                           kind =
                             (match (run_kind, pull_number) with
-                            | "drift", _ -> Wm.Kind.Kind_drift "drift"
-                            | "index", _ -> Wm.Kind.Kind_index "index"
+                            | "drift", _ -> Wm.Kind.Kind_drift `Drift
+                            | "index", _ -> Wm.Kind.Kind_index `Index
                             | "pr", Some pull_number ->
                                 Wm.Kind.Kind_pull_request
                                   { P.pull_number = CCInt64.to_int pull_number; pull_request_title }
@@ -522,8 +513,14 @@ module Make (S : S with type Account_id.t = int) = struct
                           repo;
                           repo_id = CCInt64.to_string repo_id;
                           run_id;
-                          run_type = Terrat_work_manifest3.Step.to_string run_type;
-                          state = Terrat_work_manifest3.State.to_string state;
+                          run_type =
+                            CCResult.get_or_failwith
+                            @@ Terrat_api_components_run_type.of_yojson
+                                 (`String (Terrat_work_manifest3.Step.to_string run_type));
+                          state =
+                            CCResult.get_or_failwith
+                            @@ Terrat_api_components_work_manifest_state.of_yojson
+                                 (`String (Terrat_work_manifest3.State.to_string state));
                           tag_query = Terrat_tag_query.to_string tag_query;
                           user;
                         })
@@ -691,13 +688,13 @@ module Make (S : S with type Account_id.t = int) = struct
           Ret.text
           //
           (* run_type *)
-          Ret.ud' Terrat_work_manifest3.Step.of_string
+          Ret.u Ret.text Terrat_work_manifest3.Step.of_string
           //
           (* state *)
           Ret.text
           //
           (* tag_query *)
-          Ret.ud' CCFun.(Terrat_tag_query.of_string %> CCOption.of_result)
+          Ret.u Ret.text CCFun.(Terrat_tag_query.of_string %> CCOption.of_result)
           //
           (* pull_number *)
           Ret.(option bigint)
@@ -862,8 +859,8 @@ module Make (S : S with type Account_id.t = int) = struct
                           id = Uuidm.to_string id;
                           kind =
                             (match (run_kind, pull_number) with
-                            | "drift", _ -> Ds.Kind.Kind_drift "drift"
-                            | "index", _ -> Ds.Kind.Kind_index "index"
+                            | "drift", _ -> Ds.Kind.Kind_drift `Drift
+                            | "index", _ -> Ds.Kind.Kind_index `Index
                             | "pr", Some pull_number ->
                                 Ds.Kind.Kind_pull_request
                                   { P.pull_number = CCInt64.to_int pull_number; pull_request_title }
@@ -871,8 +868,13 @@ module Make (S : S with type Account_id.t = int) = struct
                           owner;
                           repo;
                           run_id;
-                          run_type = Terrat_work_manifest3.Step.to_string run_type;
-                          state;
+                          run_type =
+                            CCResult.get_or_failwith
+                            @@ Terrat_api_components_run_type.of_yojson
+                                 (`String (Terrat_work_manifest3.Step.to_string run_type));
+                          state =
+                            CCResult.get_or_failwith
+                            @@ Terrat_api_components_dirspace_state.of_yojson (`String state);
                           tag_query = Terrat_tag_query.to_string tag_query;
                           user;
                           workspace;
@@ -1131,7 +1133,7 @@ module Make (S : S with type Account_id.t = int) = struct
                     pull_number = CCInt64.to_int pull_number;
                     repository = CCInt64.to_int repository;
                     sha;
-                    state;
+                    state = CCResult.get_or_failwith @@ Pr.State.of_yojson (`String state);
                     title;
                     user;
                   })

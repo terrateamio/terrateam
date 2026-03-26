@@ -23,11 +23,19 @@ module Create = struct
 
         module V1 = struct
           let t_of_yojson = function
-            | `String "true" -> Ok "true"
-            | `String "false" -> Ok "false"
+            | `String "false" -> Ok `False
+            | `String "true" -> Ok `True
             | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-          type t = (string[@of_yojson t_of_yojson])
+          let t_to_yojson = function
+            | `False -> `String "false"
+            | `True -> `String "true"
+
+          type t =
+            ([ `False
+             | `True
+             ]
+            [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
           [@@deriving yojson { strict = false; meta = true }, show, eq]
         end
 

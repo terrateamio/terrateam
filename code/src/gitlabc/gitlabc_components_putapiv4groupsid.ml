@@ -41,57 +41,109 @@ end
 
 module Duo_availability = struct
   let t_of_yojson = function
-    | `String "default_on" -> Ok "default_on"
-    | `String "default_off" -> Ok "default_off"
-    | `String "never_on" -> Ok "never_on"
+    | `String "default_off" -> Ok `Default_off
+    | `String "default_on" -> Ok `Default_on
+    | `String "never_on" -> Ok `Never_on
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Default_off -> `String "default_off"
+    | `Default_on -> `String "default_on"
+    | `Never_on -> `String "never_on"
+
+  type t =
+    ([ `Default_off
+     | `Default_on
+     | `Never_on
+     ]
+    [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Enabled_git_access_protocol = struct
   let t_of_yojson = function
-    | `String "ssh" -> Ok "ssh"
-    | `String "http" -> Ok "http"
-    | `String "all" -> Ok "all"
+    | `String "all" -> Ok `All
+    | `String "http" -> Ok `Http
+    | `String "ssh" -> Ok `Ssh
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `All -> `String "all"
+    | `Http -> `String "http"
+    | `Ssh -> `String "ssh"
+
+  type t =
+    ([ `All
+     | `Http
+     | `Ssh
+     ]
+    [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Project_creation_level = struct
   let t_of_yojson = function
-    | `String "noone" -> Ok "noone"
-    | `String "owner" -> Ok "owner"
-    | `String "maintainer" -> Ok "maintainer"
-    | `String "developer" -> Ok "developer"
-    | `String "administrator" -> Ok "administrator"
+    | `String "administrator" -> Ok `Administrator
+    | `String "developer" -> Ok `Developer
+    | `String "maintainer" -> Ok `Maintainer
+    | `String "noone" -> Ok `Noone
+    | `String "owner" -> Ok `Owner
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Administrator -> `String "administrator"
+    | `Developer -> `String "developer"
+    | `Maintainer -> `String "maintainer"
+    | `Noone -> `String "noone"
+    | `Owner -> `String "owner"
+
+  type t =
+    ([ `Administrator
+     | `Developer
+     | `Maintainer
+     | `Noone
+     | `Owner
+     ]
+    [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Shared_runners_setting = struct
   let t_of_yojson = function
-    | `String "disabled_and_unoverridable" -> Ok "disabled_and_unoverridable"
-    | `String "disabled_and_overridable" -> Ok "disabled_and_overridable"
-    | `String "enabled" -> Ok "enabled"
+    | `String "disabled_and_overridable" -> Ok `Disabled_and_overridable
+    | `String "disabled_and_unoverridable" -> Ok `Disabled_and_unoverridable
+    | `String "enabled" -> Ok `Enabled
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Disabled_and_overridable -> `String "disabled_and_overridable"
+    | `Disabled_and_unoverridable -> `String "disabled_and_unoverridable"
+    | `Enabled -> `String "enabled"
+
+  type t =
+    ([ `Disabled_and_overridable
+     | `Disabled_and_unoverridable
+     | `Enabled
+     ]
+    [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Subgroup_creation_level = struct
   let t_of_yojson = function
-    | `String "owner" -> Ok "owner"
-    | `String "maintainer" -> Ok "maintainer"
+    | `String "maintainer" -> Ok `Maintainer
+    | `String "owner" -> Ok `Owner
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Maintainer -> `String "maintainer"
+    | `Owner -> `String "owner"
+
+  type t =
+    ([ `Maintainer
+     | `Owner
+     ]
+    [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
@@ -105,23 +157,43 @@ end
 
 module Visibility = struct
   let t_of_yojson = function
-    | `String "private" -> Ok "private"
-    | `String "internal" -> Ok "internal"
-    | `String "public" -> Ok "public"
+    | `String "internal" -> Ok `Internal
+    | `String "private" -> Ok `Private
+    | `String "public" -> Ok `Public
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Internal -> `String "internal"
+    | `Private -> `String "private"
+    | `Public -> `String "public"
+
+  type t =
+    ([ `Internal
+     | `Private
+     | `Public
+     ]
+    [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Wiki_access_level = struct
   let t_of_yojson = function
-    | `String "disabled" -> Ok "disabled"
-    | `String "private" -> Ok "private"
-    | `String "enabled" -> Ok "enabled"
+    | `String "disabled" -> Ok `Disabled
+    | `String "enabled" -> Ok `Enabled
+    | `String "private" -> Ok `Private
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Disabled -> `String "disabled"
+    | `Enabled -> `String "enabled"
+    | `Private -> `String "private"
+
+  type t =
+    ([ `Disabled
+     | `Enabled
+     | `Private
+     ]
+    [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 

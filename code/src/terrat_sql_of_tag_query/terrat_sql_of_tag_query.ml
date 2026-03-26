@@ -15,6 +15,7 @@ module Tag_map = struct
     | Json_array of string
     | Json_obj of string
     | Raw of (int -> string -> (string, [ `Error of string ]) result)
+    | Really_raw of (string CCVector.vector -> string -> (string, [ `Error of string ]) result)
     | Smallint
     | String
     | Uuid
@@ -26,18 +27,18 @@ type t = {
   smallints : int CCVector.vector;
   ints : int32 CCVector.vector;
   bigints : int64 CCVector.vector;
-  json : string CCVector.vector;
+  json : Yojson.Safe.t CCVector.vector;
   timezone : string;
   mutable sort_dir : [ `Asc | `Desc ];
 }
 
 let eq_json_array t n k v =
-  CCVector.push t.json (Yojson.Safe.to_string (`List [ `Assoc [ (k, `String v) ] ]));
+  CCVector.push t.json (`List [ `Assoc [ (k, `String v) ] ]);
   Buffer.add_string t.q (Printf.sprintf "(%s @> (($json)[%d]::jsonb))" n (CCVector.size t.json));
   Ok ()
 
 let eq_json_obj t n k v =
-  CCVector.push t.json (Yojson.Safe.to_string (`Assoc [ (k, `String v) ]));
+  CCVector.push t.json (`Assoc [ (k, `String v) ]);
   Buffer.add_string t.q (Printf.sprintf "(%s @> (($json)[%d]::jsonb))" n (CCVector.size t.json));
   Ok ()
 
@@ -153,6 +154,13 @@ let eq_raw t f v =
   Buffer.add_string t.q ("(" ^ query ^ ")");
   Ok ()
 
+let eq_really_raw t f v =
+  let open CCResult.Infix in
+  f t.strings v
+  >>= fun query ->
+  Buffer.add_string t.q ("(" ^ query ^ ")");
+  Ok ()
+
 let date_only s = not (CCString.contains s ' ')
 
 let rec of_ast' ~tag_map t =
@@ -194,6 +202,10 @@ let rec of_ast' ~tag_map t =
           | Some (Tag_map.Json_obj k, n) -> eq_json_obj t n k value
           | Some (Tag_map.Raw f, _) -> (
               match eq_raw t f value with
+              | Ok () -> Ok ()
+              | Error (`Error err) -> Error (`Error err))
+          | Some (Tag_map.Really_raw f, _) -> (
+              match eq_really_raw t f value with
               | Ok () -> Ok ()
               | Error (`Error err) -> Error (`Error err))
           | Some (Tag_map.Bool, _) -> assert false))

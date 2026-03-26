@@ -2,17 +2,32 @@ module GetApiV4AdminBatchedBackgroundMigrations = struct
   module Parameters = struct
     module Database = struct
       let t_of_yojson = function
-        | `String "main" -> Ok "main"
-        | `String "ci" -> Ok "ci"
-        | `String "sec" -> Ok "sec"
-        | `String "embedding" -> Ok "embedding"
-        | `String "geo" -> Ok "geo"
+        | `String "ci" -> Ok `Ci
+        | `String "embedding" -> Ok `Embedding
+        | `String "geo" -> Ok `Geo
+        | `String "main" -> Ok `Main
+        | `String "sec" -> Ok `Sec
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Ci -> `String "ci"
+        | `Embedding -> `String "embedding"
+        | `Geo -> `String "geo"
+        | `Main -> `String "main"
+        | `Sec -> `String "sec"
+
+      type t =
+        ([ `Ci
+         | `Embedding
+         | `Geo
+         | `Main
+         | `Sec
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
-    type t = { database : Database.t [@default "main"] } [@@deriving make, show, eq]
+    type t = { database : Database.t [@default `Main] } [@@deriving make, show, eq]
   end
 
   module Responses = struct
@@ -42,7 +57,7 @@ module GetApiV4AdminBatchedBackgroundMigrations = struct
       ~query_params:
         (let open Openapi.Request.Var in
          let open Parameters in
-         [ ("database", Var (params.database, String)) ])
+         [ ("database", Var (params.database, Enum Database.t_to_yojson)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -52,18 +67,33 @@ module GetApiV4AdminBatchedBackgroundMigrationsId = struct
   module Parameters = struct
     module Database = struct
       let t_of_yojson = function
-        | `String "main" -> Ok "main"
-        | `String "ci" -> Ok "ci"
-        | `String "sec" -> Ok "sec"
-        | `String "embedding" -> Ok "embedding"
-        | `String "geo" -> Ok "geo"
+        | `String "ci" -> Ok `Ci
+        | `String "embedding" -> Ok `Embedding
+        | `String "geo" -> Ok `Geo
+        | `String "main" -> Ok `Main
+        | `String "sec" -> Ok `Sec
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Ci -> `String "ci"
+        | `Embedding -> `String "embedding"
+        | `Geo -> `String "geo"
+        | `Main -> `String "main"
+        | `Sec -> `String "sec"
+
+      type t =
+        ([ `Ci
+         | `Embedding
+         | `Geo
+         | `Main
+         | `Sec
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
-      database : Database.t; [@default "main"]
+      database : Database.t; [@default `Main]
       id : int;
     }
     [@@deriving make, show, eq]
@@ -104,7 +134,7 @@ module GetApiV4AdminBatchedBackgroundMigrationsId = struct
       ~query_params:
         (let open Openapi.Request.Var in
          let open Parameters in
-         [ ("database", Var (params.database, String)) ])
+         [ ("database", Var (params.database, Enum Database.t_to_yojson)) ])
       ~url
       ~responses:Responses.t
       `Get
@@ -587,11 +617,20 @@ module GetApiV4AdminDatabasesDatabaseNameDictionaryTablesTableName = struct
   module Parameters = struct
     module Database_name = struct
       let t_of_yojson = function
-        | `String "main" -> Ok "main"
-        | `String "ci" -> Ok "ci"
+        | `String "ci" -> Ok `Ci
+        | `String "main" -> Ok `Main
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Ci -> `String "ci"
+        | `Main -> `String "main"
+
+      type t =
+        ([ `Ci
+         | `Main
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -633,7 +672,7 @@ module GetApiV4AdminDatabasesDatabaseNameDictionaryTablesTableName = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("database_name", Var (params.database_name, String));
+           ("database_name", Var (params.database_name, Enum Database_name.t_to_yojson));
            ("table_name", Var (params.table_name, String));
          ])
       ~query_params:[]

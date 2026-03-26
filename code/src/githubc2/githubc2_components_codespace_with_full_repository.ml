@@ -16,13 +16,25 @@ module Primary = struct
 
   module Location = struct
     let t_of_yojson = function
-      | `String "EastUs" -> Ok "EastUs"
-      | `String "SouthEastAsia" -> Ok "SouthEastAsia"
-      | `String "WestEurope" -> Ok "WestEurope"
-      | `String "WestUs2" -> Ok "WestUs2"
+      | `String "EastUs" -> Ok `EastUs
+      | `String "SouthEastAsia" -> Ok `SouthEastAsia
+      | `String "WestEurope" -> Ok `WestEurope
+      | `String "WestUs2" -> Ok `WestUs2
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `EastUs -> `String "EastUs"
+      | `SouthEastAsia -> `String "SouthEastAsia"
+      | `WestEurope -> `String "WestEurope"
+      | `WestUs2 -> `String "WestUs2"
+
+    type t =
+      ([ `EastUs
+       | `SouthEastAsia
+       | `WestEurope
+       | `WestUs2
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
@@ -47,26 +59,64 @@ module Primary = struct
 
   module State = struct
     let t_of_yojson = function
-      | `String "Unknown" -> Ok "Unknown"
-      | `String "Created" -> Ok "Created"
-      | `String "Queued" -> Ok "Queued"
-      | `String "Provisioning" -> Ok "Provisioning"
-      | `String "Available" -> Ok "Available"
-      | `String "Awaiting" -> Ok "Awaiting"
-      | `String "Unavailable" -> Ok "Unavailable"
-      | `String "Deleted" -> Ok "Deleted"
-      | `String "Moved" -> Ok "Moved"
-      | `String "Shutdown" -> Ok "Shutdown"
-      | `String "Archived" -> Ok "Archived"
-      | `String "Starting" -> Ok "Starting"
-      | `String "ShuttingDown" -> Ok "ShuttingDown"
-      | `String "Failed" -> Ok "Failed"
-      | `String "Exporting" -> Ok "Exporting"
-      | `String "Updating" -> Ok "Updating"
-      | `String "Rebuilding" -> Ok "Rebuilding"
+      | `String "Archived" -> Ok `Archived
+      | `String "Available" -> Ok `Available
+      | `String "Awaiting" -> Ok `Awaiting
+      | `String "Created" -> Ok `Created
+      | `String "Deleted" -> Ok `Deleted
+      | `String "Exporting" -> Ok `Exporting
+      | `String "Failed" -> Ok `Failed
+      | `String "Moved" -> Ok `Moved
+      | `String "Provisioning" -> Ok `Provisioning
+      | `String "Queued" -> Ok `Queued
+      | `String "Rebuilding" -> Ok `Rebuilding
+      | `String "Shutdown" -> Ok `Shutdown
+      | `String "ShuttingDown" -> Ok `ShuttingDown
+      | `String "Starting" -> Ok `Starting
+      | `String "Unavailable" -> Ok `Unavailable
+      | `String "Unknown" -> Ok `Unknown
+      | `String "Updating" -> Ok `Updating
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Archived -> `String "Archived"
+      | `Available -> `String "Available"
+      | `Awaiting -> `String "Awaiting"
+      | `Created -> `String "Created"
+      | `Deleted -> `String "Deleted"
+      | `Exporting -> `String "Exporting"
+      | `Failed -> `String "Failed"
+      | `Moved -> `String "Moved"
+      | `Provisioning -> `String "Provisioning"
+      | `Queued -> `String "Queued"
+      | `Rebuilding -> `String "Rebuilding"
+      | `Shutdown -> `String "Shutdown"
+      | `ShuttingDown -> `String "ShuttingDown"
+      | `Starting -> `String "Starting"
+      | `Unavailable -> `String "Unavailable"
+      | `Unknown -> `String "Unknown"
+      | `Updating -> `String "Updating"
+
+    type t =
+      ([ `Archived
+       | `Available
+       | `Awaiting
+       | `Created
+       | `Deleted
+       | `Exporting
+       | `Failed
+       | `Moved
+       | `Provisioning
+       | `Queued
+       | `Rebuilding
+       | `Shutdown
+       | `ShuttingDown
+       | `Starting
+       | `Unavailable
+       | `Unknown
+       | `Updating
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 

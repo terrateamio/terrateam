@@ -23,10 +23,13 @@ end
 module Workflow_step = struct
   module Type = struct
     let t_of_yojson = function
-      | `String "cost-estimation" -> Ok "cost-estimation"
+      | `String "cost-estimation" -> Ok `Cost_estimation
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Cost_estimation -> `String "cost-estimation"
+
+    type t = ([ `Cost_estimation ][@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 

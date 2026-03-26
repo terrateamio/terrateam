@@ -2,37 +2,78 @@ module Get_route_stats_by_actor = struct
   module Parameters = struct
     module Actor_type = struct
       let t_of_yojson = function
-        | `String "installation" -> Ok "installation"
-        | `String "classic_pat" -> Ok "classic_pat"
-        | `String "fine_grained_pat" -> Ok "fine_grained_pat"
-        | `String "oauth_app" -> Ok "oauth_app"
-        | `String "github_app_user_to_server" -> Ok "github_app_user_to_server"
+        | `String "classic_pat" -> Ok `Classic_pat
+        | `String "fine_grained_pat" -> Ok `Fine_grained_pat
+        | `String "github_app_user_to_server" -> Ok `Github_app_user_to_server
+        | `String "installation" -> Ok `Installation
+        | `String "oauth_app" -> Ok `Oauth_app
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Classic_pat -> `String "classic_pat"
+        | `Fine_grained_pat -> `String "fine_grained_pat"
+        | `Github_app_user_to_server -> `String "github_app_user_to_server"
+        | `Installation -> `String "installation"
+        | `Oauth_app -> `String "oauth_app"
+
+      type t =
+        ([ `Classic_pat
+         | `Fine_grained_pat
+         | `Github_app_user_to_server
+         | `Installation
+         | `Oauth_app
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Direction = struct
       let t_of_yojson = function
-        | `String "asc" -> Ok "asc"
-        | `String "desc" -> Ok "desc"
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Sort = struct
       module Items = struct
         let t_of_yojson = function
-          | `String "last_rate_limited_timestamp" -> Ok "last_rate_limited_timestamp"
-          | `String "last_request_timestamp" -> Ok "last_request_timestamp"
-          | `String "rate_limited_request_count" -> Ok "rate_limited_request_count"
-          | `String "http_method" -> Ok "http_method"
-          | `String "api_route" -> Ok "api_route"
-          | `String "total_request_count" -> Ok "total_request_count"
+          | `String "api_route" -> Ok `Api_route
+          | `String "http_method" -> Ok `Http_method
+          | `String "last_rate_limited_timestamp" -> Ok `Last_rate_limited_timestamp
+          | `String "last_request_timestamp" -> Ok `Last_request_timestamp
+          | `String "rate_limited_request_count" -> Ok `Rate_limited_request_count
+          | `String "total_request_count" -> Ok `Total_request_count
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-        type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+        let t_to_yojson = function
+          | `Api_route -> `String "api_route"
+          | `Http_method -> `String "http_method"
+          | `Last_rate_limited_timestamp -> `String "last_rate_limited_timestamp"
+          | `Last_request_timestamp -> `String "last_request_timestamp"
+          | `Rate_limited_request_count -> `String "rate_limited_request_count"
+          | `Total_request_count -> `String "total_request_count"
+
+        type t =
+          ([ `Api_route
+           | `Http_method
+           | `Last_rate_limited_timestamp
+           | `Last_request_timestamp
+           | `Rate_limited_request_count
+           | `Total_request_count
+           ]
+          [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+        [@@deriving show, eq]
       end
 
       type t = Items.t list [@@deriving show, eq]
@@ -42,7 +83,7 @@ module Get_route_stats_by_actor = struct
       actor_id : int;
       actor_type : Actor_type.t;
       api_route_substring : string option; [@default None]
-      direction : Direction.t; [@default "desc"]
+      direction : Direction.t; [@default `Desc]
       max_timestamp : string option; [@default None]
       min_timestamp : string;
       org : string;
@@ -74,7 +115,7 @@ module Get_route_stats_by_actor = struct
          let open Parameters in
          [
            ("org", Var (params.org, String));
-           ("actor_type", Var (params.actor_type, String));
+           ("actor_type", Var (params.actor_type, Enum Actor_type.t_to_yojson));
            ("actor_id", Var (params.actor_id, Int));
          ])
       ~query_params:
@@ -85,8 +126,8 @@ module Get_route_stats_by_actor = struct
            ("max_timestamp", Var (params.max_timestamp, Option String));
            ("page", Var (params.page, Int));
            ("per_page", Var (params.per_page, Int));
-           ("direction", Var (params.direction, String));
-           ("sort", Var (params.sort, Option (Array String)));
+           ("direction", Var (params.direction, Enum Direction.t_to_yojson));
+           ("sort", Var (params.sort, Option (Array (Enum Sort.Items.t_to_yojson))));
            ("api_route_substring", Var (params.api_route_substring, Option String));
          ])
       ~url
@@ -98,31 +139,55 @@ module Get_subject_stats = struct
   module Parameters = struct
     module Direction = struct
       let t_of_yojson = function
-        | `String "asc" -> Ok "asc"
-        | `String "desc" -> Ok "desc"
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Sort = struct
       module Items = struct
         let t_of_yojson = function
-          | `String "last_rate_limited_timestamp" -> Ok "last_rate_limited_timestamp"
-          | `String "last_request_timestamp" -> Ok "last_request_timestamp"
-          | `String "rate_limited_request_count" -> Ok "rate_limited_request_count"
-          | `String "subject_name" -> Ok "subject_name"
-          | `String "total_request_count" -> Ok "total_request_count"
+          | `String "last_rate_limited_timestamp" -> Ok `Last_rate_limited_timestamp
+          | `String "last_request_timestamp" -> Ok `Last_request_timestamp
+          | `String "rate_limited_request_count" -> Ok `Rate_limited_request_count
+          | `String "subject_name" -> Ok `Subject_name
+          | `String "total_request_count" -> Ok `Total_request_count
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-        type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+        let t_to_yojson = function
+          | `Last_rate_limited_timestamp -> `String "last_rate_limited_timestamp"
+          | `Last_request_timestamp -> `String "last_request_timestamp"
+          | `Rate_limited_request_count -> `String "rate_limited_request_count"
+          | `Subject_name -> `String "subject_name"
+          | `Total_request_count -> `String "total_request_count"
+
+        type t =
+          ([ `Last_rate_limited_timestamp
+           | `Last_request_timestamp
+           | `Rate_limited_request_count
+           | `Subject_name
+           | `Total_request_count
+           ]
+          [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+        [@@deriving show, eq]
       end
 
       type t = Items.t list [@@deriving show, eq]
     end
 
     type t = {
-      direction : Direction.t; [@default "desc"]
+      direction : Direction.t; [@default `Desc]
       max_timestamp : string option; [@default None]
       min_timestamp : string;
       org : string;
@@ -162,8 +227,8 @@ module Get_subject_stats = struct
            ("max_timestamp", Var (params.max_timestamp, Option String));
            ("page", Var (params.page, Int));
            ("per_page", Var (params.per_page, Int));
-           ("direction", Var (params.direction, String));
-           ("sort", Var (params.sort, Option (Array String)));
+           ("direction", Var (params.direction, Enum Direction.t_to_yojson));
+           ("sort", Var (params.sort, Option (Array (Enum Sort.Items.t_to_yojson))));
            ("subject_name_substring", Var (params.subject_name_substring, Option String));
          ])
       ~url
@@ -260,14 +325,29 @@ module Get_summary_stats_by_actor = struct
   module Parameters = struct
     module Actor_type = struct
       let t_of_yojson = function
-        | `String "installation" -> Ok "installation"
-        | `String "classic_pat" -> Ok "classic_pat"
-        | `String "fine_grained_pat" -> Ok "fine_grained_pat"
-        | `String "oauth_app" -> Ok "oauth_app"
-        | `String "github_app_user_to_server" -> Ok "github_app_user_to_server"
+        | `String "classic_pat" -> Ok `Classic_pat
+        | `String "fine_grained_pat" -> Ok `Fine_grained_pat
+        | `String "github_app_user_to_server" -> Ok `Github_app_user_to_server
+        | `String "installation" -> Ok `Installation
+        | `String "oauth_app" -> Ok `Oauth_app
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Classic_pat -> `String "classic_pat"
+        | `Fine_grained_pat -> `String "fine_grained_pat"
+        | `Github_app_user_to_server -> `String "github_app_user_to_server"
+        | `Installation -> `String "installation"
+        | `Oauth_app -> `String "oauth_app"
+
+      type t =
+        ([ `Classic_pat
+         | `Fine_grained_pat
+         | `Github_app_user_to_server
+         | `Installation
+         | `Oauth_app
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -301,7 +381,7 @@ module Get_summary_stats_by_actor = struct
          let open Parameters in
          [
            ("org", Var (params.org, String));
-           ("actor_type", Var (params.actor_type, String));
+           ("actor_type", Var (params.actor_type, Enum Actor_type.t_to_yojson));
            ("actor_id", Var (params.actor_id, Int));
          ])
       ~query_params:
@@ -409,14 +489,29 @@ module Get_time_stats_by_actor = struct
   module Parameters = struct
     module Actor_type = struct
       let t_of_yojson = function
-        | `String "installation" -> Ok "installation"
-        | `String "classic_pat" -> Ok "classic_pat"
-        | `String "fine_grained_pat" -> Ok "fine_grained_pat"
-        | `String "oauth_app" -> Ok "oauth_app"
-        | `String "github_app_user_to_server" -> Ok "github_app_user_to_server"
+        | `String "classic_pat" -> Ok `Classic_pat
+        | `String "fine_grained_pat" -> Ok `Fine_grained_pat
+        | `String "github_app_user_to_server" -> Ok `Github_app_user_to_server
+        | `String "installation" -> Ok `Installation
+        | `String "oauth_app" -> Ok `Oauth_app
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Classic_pat -> `String "classic_pat"
+        | `Fine_grained_pat -> `String "fine_grained_pat"
+        | `Github_app_user_to_server -> `String "github_app_user_to_server"
+        | `Installation -> `String "installation"
+        | `Oauth_app -> `String "oauth_app"
+
+      type t =
+        ([ `Classic_pat
+         | `Fine_grained_pat
+         | `Github_app_user_to_server
+         | `Installation
+         | `Oauth_app
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -451,7 +546,7 @@ module Get_time_stats_by_actor = struct
          let open Parameters in
          [
            ("org", Var (params.org, String));
-           ("actor_type", Var (params.actor_type, String));
+           ("actor_type", Var (params.actor_type, Enum Actor_type.t_to_yojson));
            ("actor_id", Var (params.actor_id, Int));
          ])
       ~query_params:
@@ -471,24 +566,48 @@ module Get_user_stats = struct
   module Parameters = struct
     module Direction = struct
       let t_of_yojson = function
-        | `String "asc" -> Ok "asc"
-        | `String "desc" -> Ok "desc"
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Sort = struct
       module Items = struct
         let t_of_yojson = function
-          | `String "last_rate_limited_timestamp" -> Ok "last_rate_limited_timestamp"
-          | `String "last_request_timestamp" -> Ok "last_request_timestamp"
-          | `String "rate_limited_request_count" -> Ok "rate_limited_request_count"
-          | `String "subject_name" -> Ok "subject_name"
-          | `String "total_request_count" -> Ok "total_request_count"
+          | `String "last_rate_limited_timestamp" -> Ok `Last_rate_limited_timestamp
+          | `String "last_request_timestamp" -> Ok `Last_request_timestamp
+          | `String "rate_limited_request_count" -> Ok `Rate_limited_request_count
+          | `String "subject_name" -> Ok `Subject_name
+          | `String "total_request_count" -> Ok `Total_request_count
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-        type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+        let t_to_yojson = function
+          | `Last_rate_limited_timestamp -> `String "last_rate_limited_timestamp"
+          | `Last_request_timestamp -> `String "last_request_timestamp"
+          | `Rate_limited_request_count -> `String "rate_limited_request_count"
+          | `Subject_name -> `String "subject_name"
+          | `Total_request_count -> `String "total_request_count"
+
+        type t =
+          ([ `Last_rate_limited_timestamp
+           | `Last_request_timestamp
+           | `Rate_limited_request_count
+           | `Subject_name
+           | `Total_request_count
+           ]
+          [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+        [@@deriving show, eq]
       end
 
       type t = Items.t list [@@deriving show, eq]
@@ -496,7 +615,7 @@ module Get_user_stats = struct
 
     type t = {
       actor_name_substring : string option; [@default None]
-      direction : Direction.t; [@default "desc"]
+      direction : Direction.t; [@default `Desc]
       max_timestamp : string option; [@default None]
       min_timestamp : string;
       org : string;
@@ -536,8 +655,8 @@ module Get_user_stats = struct
            ("max_timestamp", Var (params.max_timestamp, Option String));
            ("page", Var (params.page, Int));
            ("per_page", Var (params.per_page, Int));
-           ("direction", Var (params.direction, String));
-           ("sort", Var (params.sort, Option (Array String)));
+           ("direction", Var (params.direction, Enum Direction.t_to_yojson));
+           ("sort", Var (params.sort, Option (Array (Enum Sort.Items.t_to_yojson))));
            ("actor_name_substring", Var (params.actor_name_substring, Option String));
          ])
       ~url

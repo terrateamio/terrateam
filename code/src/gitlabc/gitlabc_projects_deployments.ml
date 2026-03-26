@@ -52,37 +52,80 @@ module GetApiV4ProjectsIdDeployments = struct
   module Parameters = struct
     module Order_by = struct
       let t_of_yojson = function
-        | `String "id" -> Ok "id"
-        | `String "iid" -> Ok "iid"
-        | `String "created_at" -> Ok "created_at"
-        | `String "updated_at" -> Ok "updated_at"
-        | `String "finished_at" -> Ok "finished_at"
+        | `String "created_at" -> Ok `Created_at
+        | `String "finished_at" -> Ok `Finished_at
+        | `String "id" -> Ok `Id
+        | `String "iid" -> Ok `Iid
+        | `String "updated_at" -> Ok `Updated_at
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Created_at -> `String "created_at"
+        | `Finished_at -> `String "finished_at"
+        | `Id -> `String "id"
+        | `Iid -> `String "iid"
+        | `Updated_at -> `String "updated_at"
+
+      type t =
+        ([ `Created_at
+         | `Finished_at
+         | `Id
+         | `Iid
+         | `Updated_at
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Sort = struct
       let t_of_yojson = function
-        | `String "asc" -> Ok "asc"
-        | `String "desc" -> Ok "desc"
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Status = struct
       let t_of_yojson = function
-        | `String "created" -> Ok "created"
-        | `String "running" -> Ok "running"
-        | `String "success" -> Ok "success"
-        | `String "failed" -> Ok "failed"
-        | `String "canceled" -> Ok "canceled"
-        | `String "skipped" -> Ok "skipped"
-        | `String "blocked" -> Ok "blocked"
+        | `String "blocked" -> Ok `Blocked
+        | `String "canceled" -> Ok `Canceled
+        | `String "created" -> Ok `Created
+        | `String "failed" -> Ok `Failed
+        | `String "running" -> Ok `Running
+        | `String "skipped" -> Ok `Skipped
+        | `String "success" -> Ok `Success
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Blocked -> `String "blocked"
+        | `Canceled -> `String "canceled"
+        | `Created -> `String "created"
+        | `Failed -> `String "failed"
+        | `Running -> `String "running"
+        | `Skipped -> `String "skipped"
+        | `Success -> `String "success"
+
+      type t =
+        ([ `Blocked
+         | `Canceled
+         | `Created
+         | `Failed
+         | `Running
+         | `Skipped
+         | `Success
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -90,10 +133,10 @@ module GetApiV4ProjectsIdDeployments = struct
       finished_after : string option; [@default None]
       finished_before : string option; [@default None]
       id : string;
-      order_by : Order_by.t; [@default "id"]
+      order_by : Order_by.t; [@default `Id]
       page : int; [@default 1]
       per_page : int; [@default 20]
-      sort : Sort.t; [@default "asc"]
+      sort : Sort.t; [@default `Asc]
       status : Status.t option; [@default None]
       updated_after : string option; [@default None]
       updated_before : string option; [@default None]
@@ -139,14 +182,14 @@ module GetApiV4ProjectsIdDeployments = struct
          [
            ("page", Var (params.page, Int));
            ("per_page", Var (params.per_page, Int));
-           ("order_by", Var (params.order_by, String));
-           ("sort", Var (params.sort, String));
+           ("order_by", Var (params.order_by, Enum Order_by.t_to_yojson));
+           ("sort", Var (params.sort, Enum Sort.t_to_yojson));
            ("updated_after", Var (params.updated_after, Option String));
            ("updated_before", Var (params.updated_before, Option String));
            ("finished_after", Var (params.finished_after, Option String));
            ("finished_before", Var (params.finished_before, Option String));
            ("environment", Var (params.environment, Option String));
-           ("status", Var (params.status, Option String));
+           ("status", Var (params.status, Option (Enum Status.t_to_yojson)));
          ])
       ~url
       ~responses:Responses.t
@@ -339,11 +382,20 @@ module GetApiV4ProjectsIdDeploymentsDeploymentIdMergeRequests = struct
   module Parameters = struct
     module Approved = struct
       let t_of_yojson = function
-        | `String "yes" -> Ok "yes"
-        | `String "no" -> Ok "no"
+        | `String "no" -> Ok `No
+        | `String "yes" -> Ok `Yes
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `No -> `String "no"
+        | `Yes -> `String "yes"
+
+      type t =
+        ([ `No
+         | `Yes
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Assignee_username = struct
@@ -364,67 +416,139 @@ module GetApiV4ProjectsIdDeploymentsDeploymentIdMergeRequests = struct
 
     module Order_by = struct
       let t_of_yojson = function
-        | `String "created_at" -> Ok "created_at"
-        | `String "label_priority" -> Ok "label_priority"
-        | `String "milestone_due" -> Ok "milestone_due"
-        | `String "popularity" -> Ok "popularity"
-        | `String "priority" -> Ok "priority"
-        | `String "title" -> Ok "title"
-        | `String "updated_at" -> Ok "updated_at"
-        | `String "merged_at" -> Ok "merged_at"
+        | `String "created_at" -> Ok `Created_at
+        | `String "label_priority" -> Ok `Label_priority
+        | `String "merged_at" -> Ok `Merged_at
+        | `String "milestone_due" -> Ok `Milestone_due
+        | `String "popularity" -> Ok `Popularity
+        | `String "priority" -> Ok `Priority
+        | `String "title" -> Ok `Title
+        | `String "updated_at" -> Ok `Updated_at
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Created_at -> `String "created_at"
+        | `Label_priority -> `String "label_priority"
+        | `Merged_at -> `String "merged_at"
+        | `Milestone_due -> `String "milestone_due"
+        | `Popularity -> `String "popularity"
+        | `Priority -> `String "priority"
+        | `Title -> `String "title"
+        | `Updated_at -> `String "updated_at"
+
+      type t =
+        ([ `Created_at
+         | `Label_priority
+         | `Merged_at
+         | `Milestone_due
+         | `Popularity
+         | `Priority
+         | `Title
+         | `Updated_at
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Scope = struct
       let t_of_yojson = function
-        | `String "created-by-me" -> Ok "created-by-me"
-        | `String "assigned-to-me" -> Ok "assigned-to-me"
-        | `String "created_by_me" -> Ok "created_by_me"
-        | `String "assigned_to_me" -> Ok "assigned_to_me"
-        | `String "all" -> Ok "all"
+        | `String "all" -> Ok `All
+        | `String "assigned-to-me" -> Ok `Assigned_to_me
+        | `String "assigned_to_me" -> Ok `Assigned_to_me_2
+        | `String "created-by-me" -> Ok `Created_by_me
+        | `String "created_by_me" -> Ok `Created_by_me_2
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `All -> `String "all"
+        | `Assigned_to_me -> `String "assigned-to-me"
+        | `Assigned_to_me_2 -> `String "assigned_to_me"
+        | `Created_by_me -> `String "created-by-me"
+        | `Created_by_me_2 -> `String "created_by_me"
+
+      type t =
+        ([ `All
+         | `Assigned_to_me
+         | `Assigned_to_me_2
+         | `Created_by_me
+         | `Created_by_me_2
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Sort = struct
       let t_of_yojson = function
-        | `String "asc" -> Ok "asc"
-        | `String "desc" -> Ok "desc"
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module State = struct
       let t_of_yojson = function
-        | `String "opened" -> Ok "opened"
-        | `String "closed" -> Ok "closed"
-        | `String "locked" -> Ok "locked"
-        | `String "merged" -> Ok "merged"
-        | `String "all" -> Ok "all"
+        | `String "all" -> Ok `All
+        | `String "closed" -> Ok `Closed
+        | `String "locked" -> Ok `Locked
+        | `String "merged" -> Ok `Merged
+        | `String "opened" -> Ok `Opened
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `All -> `String "all"
+        | `Closed -> `String "closed"
+        | `Locked -> `String "locked"
+        | `Merged -> `String "merged"
+        | `Opened -> `String "opened"
+
+      type t =
+        ([ `All
+         | `Closed
+         | `Locked
+         | `Merged
+         | `Opened
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module View = struct
       let t_of_yojson = function
-        | `String "simple" -> Ok "simple"
+        | `String "simple" -> Ok `Simple
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Simple -> `String "simple"
+
+      type t = ([ `Simple ][@of_yojson t_of_yojson] [@to_yojson t_to_yojson]) [@@deriving show, eq]
     end
 
     module Wip = struct
       let t_of_yojson = function
-        | `String "yes" -> Ok "yes"
-        | `String "no" -> Ok "no"
+        | `String "no" -> Ok `No
+        | `String "yes" -> Ok `Yes
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `No -> `String "no"
+        | `Yes -> `String "yes"
+
+      type t =
+        ([ `No
+         | `Yes
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -456,17 +580,17 @@ module GetApiV4ProjectsIdDeploymentsDeploymentIdMergeRequests = struct
       not_my_reaction_emoji_ : string option; [@default None] [@key "not[my_reaction_emoji]"]
       not_reviewer_id_ : int option; [@default None] [@key "not[reviewer_id]"]
       not_reviewer_username_ : string option; [@default None] [@key "not[reviewer_username]"]
-      order_by : Order_by.t; [@default "created_at"]
+      order_by : Order_by.t; [@default `Created_at]
       page : int; [@default 1]
       per_page : int; [@default 20]
       reviewer_id : int option; [@default None]
       reviewer_username : string option; [@default None]
       scope : Scope.t option; [@default None]
       search : string option; [@default None]
-      sort : Sort.t; [@default "desc"]
+      sort : Sort.t; [@default `Desc]
       source_branch : string option; [@default None]
       source_project_id : int option; [@default None]
-      state : State.t; [@default "all"]
+      state : State.t; [@default `All]
       target_branch : string option; [@default None]
       updated_after : string option; [@default None]
       updated_before : string option; [@default None]
@@ -520,23 +644,23 @@ module GetApiV4ProjectsIdDeploymentsDeploymentIdMergeRequests = struct
            ("milestone", Var (params.milestone, Option String));
            ("my_reaction_emoji", Var (params.my_reaction_emoji, Option String));
            ("reviewer_id", Var (params.reviewer_id, Option Int));
-           ("state", Var (params.state, String));
-           ("order_by", Var (params.order_by, String));
-           ("sort", Var (params.sort, String));
+           ("state", Var (params.state, Enum State.t_to_yojson));
+           ("order_by", Var (params.order_by, Enum Order_by.t_to_yojson));
+           ("sort", Var (params.sort, Enum Sort.t_to_yojson));
            ("with_labels_details", Var (params.with_labels_details, Bool));
            ("with_merge_status_recheck", Var (params.with_merge_status_recheck, Bool));
            ("created_after", Var (params.created_after, Option String));
            ("created_before", Var (params.created_before, Option String));
            ("updated_after", Var (params.updated_after, Option String));
            ("updated_before", Var (params.updated_before, Option String));
-           ("view", Var (params.view, Option String));
-           ("scope", Var (params.scope, Option String));
+           ("view", Var (params.view, Option (Enum View.t_to_yojson)));
+           ("scope", Var (params.scope, Option (Enum Scope.t_to_yojson)));
            ("source_branch", Var (params.source_branch, Option String));
            ("source_project_id", Var (params.source_project_id, Option Int));
            ("target_branch", Var (params.target_branch, Option String));
            ("search", Var (params.search, Option String));
            ("in", Var (params.in_, Option String));
-           ("wip", Var (params.wip, Option String));
+           ("wip", Var (params.wip, Option (Enum Wip.t_to_yojson)));
            ("not[author_id]", Var (params.not_author_id_, Option Int));
            ("not[author_username]", Var (params.not_author_username_, Option String));
            ("not[assignee_id]", Var (params.not_assignee_id_, Option Int));
@@ -549,7 +673,7 @@ module GetApiV4ProjectsIdDeploymentsDeploymentIdMergeRequests = struct
            ("deployed_before", Var (params.deployed_before, Option String));
            ("deployed_after", Var (params.deployed_after, Option String));
            ("environment", Var (params.environment, Option String));
-           ("approved", Var (params.approved, Option String));
+           ("approved", Var (params.approved, Option (Enum Approved.t_to_yojson)));
            ("merge_user_id", Var (params.merge_user_id, Option Int));
            ("merge_user_username", Var (params.merge_user_username, Option String));
          ])

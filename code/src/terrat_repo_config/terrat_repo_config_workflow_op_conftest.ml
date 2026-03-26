@@ -12,21 +12,34 @@ end
 
 module Type = struct
   let t_of_yojson = function
-    | `String "conftest" -> Ok "conftest"
+    | `String "conftest" -> Ok `Conftest
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Conftest -> `String "conftest"
+
+  type t = ([ `Conftest ][@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Visible_on_ = struct
   let t_of_yojson = function
-    | `String "always" -> Ok "always"
-    | `String "failure" -> Ok "failure"
-    | `String "success" -> Ok "success"
+    | `String "always" -> Ok `Always
+    | `String "failure" -> Ok `Failure
+    | `String "success" -> Ok `Success
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Always -> `String "always"
+    | `Failure -> `String "failure"
+    | `Success -> `String "success"
+
+  type t =
+    ([ `Always
+     | `Failure
+     | `Success
+     ]
+    [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 

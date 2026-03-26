@@ -2,22 +2,40 @@ module Dependency_ = struct
   module Primary = struct
     module Relationship = struct
       let t_of_yojson = function
-        | `String "unknown" -> Ok "unknown"
-        | `String "direct" -> Ok "direct"
-        | `String "transitive" -> Ok "transitive"
+        | `String "direct" -> Ok `Direct
+        | `String "transitive" -> Ok `Transitive
+        | `String "unknown" -> Ok `Unknown
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson])
+      let t_to_yojson = function
+        | `Direct -> `String "direct"
+        | `Transitive -> `String "transitive"
+        | `Unknown -> `String "unknown"
+
+      type t =
+        ([ `Direct
+         | `Transitive
+         | `Unknown
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     module Scope = struct
       let t_of_yojson = function
-        | `String "development" -> Ok "development"
-        | `String "runtime" -> Ok "runtime"
+        | `String "development" -> Ok `Development
+        | `String "runtime" -> Ok `Runtime
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson])
+      let t_to_yojson = function
+        | `Development -> `String "development"
+        | `Runtime -> `String "runtime"
+
+      type t =
+        ([ `Development
+         | `Runtime
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
@@ -35,26 +53,52 @@ end
 
 module Dismissed_reason = struct
   let t_of_yojson = function
-    | `String "fix_started" -> Ok "fix_started"
-    | `String "inaccurate" -> Ok "inaccurate"
-    | `String "no_bandwidth" -> Ok "no_bandwidth"
-    | `String "not_used" -> Ok "not_used"
-    | `String "tolerable_risk" -> Ok "tolerable_risk"
+    | `String "fix_started" -> Ok `Fix_started
+    | `String "inaccurate" -> Ok `Inaccurate
+    | `String "no_bandwidth" -> Ok `No_bandwidth
+    | `String "not_used" -> Ok `Not_used
+    | `String "tolerable_risk" -> Ok `Tolerable_risk
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Fix_started -> `String "fix_started"
+    | `Inaccurate -> `String "inaccurate"
+    | `No_bandwidth -> `String "no_bandwidth"
+    | `Not_used -> `String "not_used"
+    | `Tolerable_risk -> `String "tolerable_risk"
+
+  type t =
+    ([ `Fix_started
+     | `Inaccurate
+     | `No_bandwidth
+     | `Not_used
+     | `Tolerable_risk
+     ]
+    [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module State = struct
   let t_of_yojson = function
-    | `String "auto_dismissed" -> Ok "auto_dismissed"
-    | `String "dismissed" -> Ok "dismissed"
-    | `String "fixed" -> Ok "fixed"
-    | `String "open" -> Ok "open"
+    | `String "auto_dismissed" -> Ok `Auto_dismissed
+    | `String "dismissed" -> Ok `Dismissed
+    | `String "fixed" -> Ok `Fixed
+    | `String "open" -> Ok `Open
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Auto_dismissed -> `String "auto_dismissed"
+    | `Dismissed -> `String "dismissed"
+    | `Fixed -> `String "fixed"
+    | `Open -> `String "open"
+
+  type t =
+    ([ `Auto_dismissed
+     | `Dismissed
+     | `Fixed
+     | `Open
+     ]
+    [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 

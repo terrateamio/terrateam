@@ -1,16 +1,34 @@
 module Primary = struct
   module Status_ = struct
     let t_of_yojson = function
-      | `String "added" -> Ok "added"
-      | `String "removed" -> Ok "removed"
-      | `String "modified" -> Ok "modified"
-      | `String "renamed" -> Ok "renamed"
-      | `String "copied" -> Ok "copied"
-      | `String "changed" -> Ok "changed"
-      | `String "unchanged" -> Ok "unchanged"
+      | `String "added" -> Ok `Added
+      | `String "changed" -> Ok `Changed
+      | `String "copied" -> Ok `Copied
+      | `String "modified" -> Ok `Modified
+      | `String "removed" -> Ok `Removed
+      | `String "renamed" -> Ok `Renamed
+      | `String "unchanged" -> Ok `Unchanged
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Added -> `String "added"
+      | `Changed -> `String "changed"
+      | `Copied -> `String "copied"
+      | `Modified -> `String "modified"
+      | `Removed -> `String "removed"
+      | `Renamed -> `String "renamed"
+      | `Unchanged -> `String "unchanged"
+
+    type t =
+      ([ `Added
+       | `Changed
+       | `Copied
+       | `Modified
+       | `Removed
+       | `Renamed
+       | `Unchanged
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 

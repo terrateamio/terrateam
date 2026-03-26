@@ -293,75 +293,212 @@ module GetApiV4ProjectsIdHooksHookIdEvents = struct
     module Status = struct
       module Items = struct
         let t_of_yojson = function
-          | `String "100" -> Ok "100"
-          | `String "101" -> Ok "101"
-          | `String "102" -> Ok "102"
-          | `String "103" -> Ok "103"
-          | `String "200" -> Ok "200"
-          | `String "201" -> Ok "201"
-          | `String "202" -> Ok "202"
-          | `String "203" -> Ok "203"
-          | `String "204" -> Ok "204"
-          | `String "205" -> Ok "205"
-          | `String "206" -> Ok "206"
-          | `String "207" -> Ok "207"
-          | `String "208" -> Ok "208"
-          | `String "226" -> Ok "226"
-          | `String "300" -> Ok "300"
-          | `String "301" -> Ok "301"
-          | `String "302" -> Ok "302"
-          | `String "303" -> Ok "303"
-          | `String "304" -> Ok "304"
-          | `String "305" -> Ok "305"
-          | `String "306" -> Ok "306"
-          | `String "307" -> Ok "307"
-          | `String "308" -> Ok "308"
-          | `String "400" -> Ok "400"
-          | `String "401" -> Ok "401"
-          | `String "402" -> Ok "402"
-          | `String "403" -> Ok "403"
-          | `String "404" -> Ok "404"
-          | `String "405" -> Ok "405"
-          | `String "406" -> Ok "406"
-          | `String "407" -> Ok "407"
-          | `String "408" -> Ok "408"
-          | `String "409" -> Ok "409"
-          | `String "410" -> Ok "410"
-          | `String "411" -> Ok "411"
-          | `String "412" -> Ok "412"
-          | `String "413" -> Ok "413"
-          | `String "414" -> Ok "414"
-          | `String "415" -> Ok "415"
-          | `String "416" -> Ok "416"
-          | `String "417" -> Ok "417"
-          | `String "421" -> Ok "421"
-          | `String "422" -> Ok "422"
-          | `String "423" -> Ok "423"
-          | `String "424" -> Ok "424"
-          | `String "425" -> Ok "425"
-          | `String "426" -> Ok "426"
-          | `String "428" -> Ok "428"
-          | `String "429" -> Ok "429"
-          | `String "431" -> Ok "431"
-          | `String "451" -> Ok "451"
-          | `String "500" -> Ok "500"
-          | `String "501" -> Ok "501"
-          | `String "502" -> Ok "502"
-          | `String "503" -> Ok "503"
-          | `String "504" -> Ok "504"
-          | `String "505" -> Ok "505"
-          | `String "506" -> Ok "506"
-          | `String "507" -> Ok "507"
-          | `String "508" -> Ok "508"
-          | `String "509" -> Ok "509"
-          | `String "510" -> Ok "510"
-          | `String "511" -> Ok "511"
-          | `String "successful" -> Ok "successful"
-          | `String "client_failure" -> Ok "client_failure"
-          | `String "server_failure" -> Ok "server_failure"
+          | `String "100" -> Ok `V_100
+          | `String "101" -> Ok `V_101
+          | `String "102" -> Ok `V_102
+          | `String "103" -> Ok `V_103
+          | `String "200" -> Ok `V_200
+          | `String "201" -> Ok `V_201
+          | `String "202" -> Ok `V_202
+          | `String "203" -> Ok `V_203
+          | `String "204" -> Ok `V_204
+          | `String "205" -> Ok `V_205
+          | `String "206" -> Ok `V_206
+          | `String "207" -> Ok `V_207
+          | `String "208" -> Ok `V_208
+          | `String "226" -> Ok `V_226
+          | `String "300" -> Ok `V_300
+          | `String "301" -> Ok `V_301
+          | `String "302" -> Ok `V_302
+          | `String "303" -> Ok `V_303
+          | `String "304" -> Ok `V_304
+          | `String "305" -> Ok `V_305
+          | `String "306" -> Ok `V_306
+          | `String "307" -> Ok `V_307
+          | `String "308" -> Ok `V_308
+          | `String "400" -> Ok `V_400
+          | `String "401" -> Ok `V_401
+          | `String "402" -> Ok `V_402
+          | `String "403" -> Ok `V_403
+          | `String "404" -> Ok `V_404
+          | `String "405" -> Ok `V_405
+          | `String "406" -> Ok `V_406
+          | `String "407" -> Ok `V_407
+          | `String "408" -> Ok `V_408
+          | `String "409" -> Ok `V_409
+          | `String "410" -> Ok `V_410
+          | `String "411" -> Ok `V_411
+          | `String "412" -> Ok `V_412
+          | `String "413" -> Ok `V_413
+          | `String "414" -> Ok `V_414
+          | `String "415" -> Ok `V_415
+          | `String "416" -> Ok `V_416
+          | `String "417" -> Ok `V_417
+          | `String "421" -> Ok `V_421
+          | `String "422" -> Ok `V_422
+          | `String "423" -> Ok `V_423
+          | `String "424" -> Ok `V_424
+          | `String "425" -> Ok `V_425
+          | `String "426" -> Ok `V_426
+          | `String "428" -> Ok `V_428
+          | `String "429" -> Ok `V_429
+          | `String "431" -> Ok `V_431
+          | `String "451" -> Ok `V_451
+          | `String "500" -> Ok `V_500
+          | `String "501" -> Ok `V_501
+          | `String "502" -> Ok `V_502
+          | `String "503" -> Ok `V_503
+          | `String "504" -> Ok `V_504
+          | `String "505" -> Ok `V_505
+          | `String "506" -> Ok `V_506
+          | `String "507" -> Ok `V_507
+          | `String "508" -> Ok `V_508
+          | `String "509" -> Ok `V_509
+          | `String "510" -> Ok `V_510
+          | `String "511" -> Ok `V_511
+          | `String "client_failure" -> Ok `Client_failure
+          | `String "server_failure" -> Ok `Server_failure
+          | `String "successful" -> Ok `Successful
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-        type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+        let t_to_yojson = function
+          | `V_100 -> `String "100"
+          | `V_101 -> `String "101"
+          | `V_102 -> `String "102"
+          | `V_103 -> `String "103"
+          | `V_200 -> `String "200"
+          | `V_201 -> `String "201"
+          | `V_202 -> `String "202"
+          | `V_203 -> `String "203"
+          | `V_204 -> `String "204"
+          | `V_205 -> `String "205"
+          | `V_206 -> `String "206"
+          | `V_207 -> `String "207"
+          | `V_208 -> `String "208"
+          | `V_226 -> `String "226"
+          | `V_300 -> `String "300"
+          | `V_301 -> `String "301"
+          | `V_302 -> `String "302"
+          | `V_303 -> `String "303"
+          | `V_304 -> `String "304"
+          | `V_305 -> `String "305"
+          | `V_306 -> `String "306"
+          | `V_307 -> `String "307"
+          | `V_308 -> `String "308"
+          | `V_400 -> `String "400"
+          | `V_401 -> `String "401"
+          | `V_402 -> `String "402"
+          | `V_403 -> `String "403"
+          | `V_404 -> `String "404"
+          | `V_405 -> `String "405"
+          | `V_406 -> `String "406"
+          | `V_407 -> `String "407"
+          | `V_408 -> `String "408"
+          | `V_409 -> `String "409"
+          | `V_410 -> `String "410"
+          | `V_411 -> `String "411"
+          | `V_412 -> `String "412"
+          | `V_413 -> `String "413"
+          | `V_414 -> `String "414"
+          | `V_415 -> `String "415"
+          | `V_416 -> `String "416"
+          | `V_417 -> `String "417"
+          | `V_421 -> `String "421"
+          | `V_422 -> `String "422"
+          | `V_423 -> `String "423"
+          | `V_424 -> `String "424"
+          | `V_425 -> `String "425"
+          | `V_426 -> `String "426"
+          | `V_428 -> `String "428"
+          | `V_429 -> `String "429"
+          | `V_431 -> `String "431"
+          | `V_451 -> `String "451"
+          | `V_500 -> `String "500"
+          | `V_501 -> `String "501"
+          | `V_502 -> `String "502"
+          | `V_503 -> `String "503"
+          | `V_504 -> `String "504"
+          | `V_505 -> `String "505"
+          | `V_506 -> `String "506"
+          | `V_507 -> `String "507"
+          | `V_508 -> `String "508"
+          | `V_509 -> `String "509"
+          | `V_510 -> `String "510"
+          | `V_511 -> `String "511"
+          | `Client_failure -> `String "client_failure"
+          | `Server_failure -> `String "server_failure"
+          | `Successful -> `String "successful"
+
+        type t =
+          ([ `V_100
+           | `V_101
+           | `V_102
+           | `V_103
+           | `V_200
+           | `V_201
+           | `V_202
+           | `V_203
+           | `V_204
+           | `V_205
+           | `V_206
+           | `V_207
+           | `V_208
+           | `V_226
+           | `V_300
+           | `V_301
+           | `V_302
+           | `V_303
+           | `V_304
+           | `V_305
+           | `V_306
+           | `V_307
+           | `V_308
+           | `V_400
+           | `V_401
+           | `V_402
+           | `V_403
+           | `V_404
+           | `V_405
+           | `V_406
+           | `V_407
+           | `V_408
+           | `V_409
+           | `V_410
+           | `V_411
+           | `V_412
+           | `V_413
+           | `V_414
+           | `V_415
+           | `V_416
+           | `V_417
+           | `V_421
+           | `V_422
+           | `V_423
+           | `V_424
+           | `V_425
+           | `V_426
+           | `V_428
+           | `V_429
+           | `V_431
+           | `V_451
+           | `V_500
+           | `V_501
+           | `V_502
+           | `V_503
+           | `V_504
+           | `V_505
+           | `V_506
+           | `V_507
+           | `V_508
+           | `V_509
+           | `V_510
+           | `V_511
+           | `Client_failure
+           | `Server_failure
+           | `Successful
+           ]
+          [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+        [@@deriving show, eq]
       end
 
       type t = Items.t list [@@deriving show, eq]
@@ -413,7 +550,7 @@ module GetApiV4ProjectsIdHooksHookIdEvents = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("status", Var (params.status, Option (Array String)));
+           ("status", Var (params.status, Option (Array (Enum Status.Items.t_to_yojson))));
            ("per_page", Var (params.per_page, Int));
            ("page", Var (params.page, Int));
          ])
@@ -478,25 +615,62 @@ module PostApiV4ProjectsIdHooksHookIdTestTrigger = struct
   module Parameters = struct
     module Trigger = struct
       let t_of_yojson = function
-        | `String "confidential_issues_events" -> Ok "confidential_issues_events"
-        | `String "confidential_note_events" -> Ok "confidential_note_events"
-        | `String "deployment_events" -> Ok "deployment_events"
-        | `String "emoji_events" -> Ok "emoji_events"
-        | `String "feature_flag_events" -> Ok "feature_flag_events"
-        | `String "issues_events" -> Ok "issues_events"
-        | `String "job_events" -> Ok "job_events"
-        | `String "merge_requests_events" -> Ok "merge_requests_events"
-        | `String "note_events" -> Ok "note_events"
-        | `String "pipeline_events" -> Ok "pipeline_events"
-        | `String "push_events" -> Ok "push_events"
-        | `String "releases_events" -> Ok "releases_events"
-        | `String "resource_access_token_events" -> Ok "resource_access_token_events"
-        | `String "tag_push_events" -> Ok "tag_push_events"
-        | `String "wiki_page_events" -> Ok "wiki_page_events"
-        | `String "vulnerability_events" -> Ok "vulnerability_events"
+        | `String "confidential_issues_events" -> Ok `Confidential_issues_events
+        | `String "confidential_note_events" -> Ok `Confidential_note_events
+        | `String "deployment_events" -> Ok `Deployment_events
+        | `String "emoji_events" -> Ok `Emoji_events
+        | `String "feature_flag_events" -> Ok `Feature_flag_events
+        | `String "issues_events" -> Ok `Issues_events
+        | `String "job_events" -> Ok `Job_events
+        | `String "merge_requests_events" -> Ok `Merge_requests_events
+        | `String "note_events" -> Ok `Note_events
+        | `String "pipeline_events" -> Ok `Pipeline_events
+        | `String "push_events" -> Ok `Push_events
+        | `String "releases_events" -> Ok `Releases_events
+        | `String "resource_access_token_events" -> Ok `Resource_access_token_events
+        | `String "tag_push_events" -> Ok `Tag_push_events
+        | `String "vulnerability_events" -> Ok `Vulnerability_events
+        | `String "wiki_page_events" -> Ok `Wiki_page_events
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Confidential_issues_events -> `String "confidential_issues_events"
+        | `Confidential_note_events -> `String "confidential_note_events"
+        | `Deployment_events -> `String "deployment_events"
+        | `Emoji_events -> `String "emoji_events"
+        | `Feature_flag_events -> `String "feature_flag_events"
+        | `Issues_events -> `String "issues_events"
+        | `Job_events -> `String "job_events"
+        | `Merge_requests_events -> `String "merge_requests_events"
+        | `Note_events -> `String "note_events"
+        | `Pipeline_events -> `String "pipeline_events"
+        | `Push_events -> `String "push_events"
+        | `Releases_events -> `String "releases_events"
+        | `Resource_access_token_events -> `String "resource_access_token_events"
+        | `Tag_push_events -> `String "tag_push_events"
+        | `Vulnerability_events -> `String "vulnerability_events"
+        | `Wiki_page_events -> `String "wiki_page_events"
+
+      type t =
+        ([ `Confidential_issues_events
+         | `Confidential_note_events
+         | `Deployment_events
+         | `Emoji_events
+         | `Feature_flag_events
+         | `Issues_events
+         | `Job_events
+         | `Merge_requests_events
+         | `Note_events
+         | `Pipeline_events
+         | `Push_events
+         | `Releases_events
+         | `Resource_access_token_events
+         | `Tag_push_events
+         | `Vulnerability_events
+         | `Wiki_page_events
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -543,7 +717,7 @@ module PostApiV4ProjectsIdHooksHookIdTestTrigger = struct
          let open Parameters in
          [
            ("hook_id", Var (params.hook_id, Int));
-           ("trigger", Var (params.trigger, String));
+           ("trigger", Var (params.trigger, Enum Trigger.t_to_yojson));
            ("id", Var (params.id, Int));
          ])
       ~query_params:[]

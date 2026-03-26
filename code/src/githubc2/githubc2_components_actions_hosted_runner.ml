@@ -6,14 +6,28 @@ module Primary = struct
 
   module Status_ = struct
     let t_of_yojson = function
-      | `String "Ready" -> Ok "Ready"
-      | `String "Provisioning" -> Ok "Provisioning"
-      | `String "Shutdown" -> Ok "Shutdown"
-      | `String "Deleting" -> Ok "Deleting"
-      | `String "Stuck" -> Ok "Stuck"
+      | `String "Deleting" -> Ok `Deleting
+      | `String "Provisioning" -> Ok `Provisioning
+      | `String "Ready" -> Ok `Ready
+      | `String "Shutdown" -> Ok `Shutdown
+      | `String "Stuck" -> Ok `Stuck
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Deleting -> `String "Deleting"
+      | `Provisioning -> `String "Provisioning"
+      | `Ready -> `String "Ready"
+      | `Shutdown -> `String "Shutdown"
+      | `Stuck -> `String "Stuck"
+
+    type t =
+      ([ `Deleting
+       | `Provisioning
+       | `Ready
+       | `Shutdown
+       | `Stuck
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 

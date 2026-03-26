@@ -11,7 +11,8 @@
   import { onMount, onDestroy } from 'svelte';
   import { navigateToRun as navigateToRunUtil, navigateToRuns } from './utils/navigation';
   import { VCS_PROVIDERS } from './vcs/providers';
-  
+  import { EXTERNAL_URLS } from './constants';
+
   // Note: Terraform summary functionality removed due to memory safety concerns
   // Large terraform outputs could crash browsers during summary extraction
   // TODO: Re-implement when server-side summary computation is available
@@ -1954,6 +1955,9 @@
               {:else}
                 Try adjusting your search criteria or time range.
               {/if}
+            </p>
+            <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">
+              Need help? <a href={EXTERNAL_URLS.SLACK} target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:underline">Join our Slack community</a>
             </p>
           </div>
         {:else}

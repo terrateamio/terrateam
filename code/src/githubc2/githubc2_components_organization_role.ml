@@ -1,14 +1,28 @@
 module Primary = struct
   module Base_role = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "triage" -> Ok "triage"
-      | `String "write" -> Ok "write"
-      | `String "maintain" -> Ok "maintain"
-      | `String "admin" -> Ok "admin"
+      | `String "admin" -> Ok `Admin
+      | `String "maintain" -> Ok `Maintain
+      | `String "read" -> Ok `Read
+      | `String "triage" -> Ok `Triage
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Admin -> `String "admin"
+      | `Maintain -> `String "maintain"
+      | `Read -> `String "read"
+      | `Triage -> `String "triage"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Admin
+       | `Maintain
+       | `Read
+       | `Triage
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
@@ -18,12 +32,22 @@ module Primary = struct
 
   module Source = struct
     let t_of_yojson = function
-      | `String "Organization" -> Ok "Organization"
-      | `String "Enterprise" -> Ok "Enterprise"
-      | `String "Predefined" -> Ok "Predefined"
+      | `String "Enterprise" -> Ok `Enterprise
+      | `String "Organization" -> Ok `Organization
+      | `String "Predefined" -> Ok `Predefined
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Enterprise -> `String "Enterprise"
+      | `Organization -> `String "Organization"
+      | `Predefined -> `String "Predefined"
+
+    type t =
+      ([ `Enterprise
+       | `Organization
+       | `Predefined
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 

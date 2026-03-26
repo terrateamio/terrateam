@@ -110,6 +110,12 @@ In some cases, it is desirable to offer a configuration file format that is spec
 
 Terrateam itself provides an example of this in the [terrateam-aux-repo-config](https://github.com/terrateamio/action/blob/main/bin/terrateam-aux-repo-config) script. This supports specifying layer dependencies as a standalone YAML file.
 
+### Automatic Terragrunt Discovery
+
+For large Terragrunt monorepos with hundreds of modules, manually configuring each module is impractical. The built-in [terragrunt-config-builder](/workflows/advanced/terragrunt-config-builder) automatically discovers all terragrunt modules and generates configuration with dependency tracking—similar to what [terragrunt-atlantis-config](https://github.com/transcend-io/terragrunt-atlantis-config) does for Atlantis.
+
+The config builder parses `dependency` blocks, `include` blocks, and local `terraform.source` references to generate proper `when_modified` patterns and `depends_on` relationships, eliminating the need to manually maintain configuration for each module.
+
 ### Experimentation
 
 Config builder scripts are a good place to experiment with new possible configuration options. Experimentation can happen within them, and eventually, if they prove useful, they can be incorporated as official Terrateam configuration features.

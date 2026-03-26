@@ -52,6 +52,13 @@ type fetch_pull_request_err =
   ]
 [@@deriving show]
 
+type fetch_diff_files_err =
+  [ Githubc2_abb.call_err
+  | `Not_found of Githubc2_components.Basic_error.t
+  | `Internal_server_error of Githubc2_components.Basic_error.t
+  ]
+[@@deriving show]
+
 type fetch_repo_err =
   [ Githubc2_abb.call_err
   | `Moved_permanently of Githubc2_repos.Get.Responses.Moved_permanently.t
@@ -100,6 +107,7 @@ type get_tree_err =
 
 type get_team_membership_in_org_err = Githubc2_abb.call_err [@@deriving show]
 type get_repo_collaborator_permission_err = Githubc2_abb.call_err [@@deriving show]
+type get_org_membership_err = Githubc2_abb.call_err [@@deriving show]
 
 module Commit_status : sig
   type create_err = Githubc2_abb.call_err [@@deriving show]
@@ -116,7 +124,12 @@ module Commit_status : sig
       type t [@@deriving show]
 
       val make :
-        ?target_url:string -> ?description:string -> ?context:string -> state:string -> unit -> t
+        ?target_url:string ->
+        ?description:string ->
+        ?context:string ->
+        state:Githubc2_repos.Create_commit_status.Request_body.Primary.State.t ->
+        unit ->
+        t
     end
 
     type t = T.t list
@@ -227,6 +240,14 @@ val fetch_pull_request :
   Githubc2_abb.t ->
   (Githubc2_components.Pull_request.t, [> fetch_pull_request_err ]) result Abb.Future.t
 
+val fetch_diff_files :
+  owner:string ->
+  repo:string ->
+  base_ref:string ->
+  branch_ref:string ->
+  Githubc2_abb.t ->
+  (Githubc2_components.Diff_entry.t list, [> fetch_diff_files_err | `Error ]) result Abb.Future.t
+
 val get_user_installations :
   Githubc2_abb.t ->
   (Githubc2_components.Installation.t list, [> get_user_installations_err ]) result Abb.Future.t
@@ -277,7 +298,7 @@ val minimize_comment :
   (unit, [> minimize_comment_err ]) result Abb.Future.t
 
 val react_to_comment :
-  ?content:string ->
+  ?content:Githubc2_reactions.Create_for_issue_comment.Request_body.Primary.Content.t ->
   owner:string ->
   repo:string ->
   comment_id:int ->
@@ -304,6 +325,12 @@ val get_repo_collaborator_permission :
   user:string ->
   Githubc2_abb.t ->
   (string option, [> get_repo_collaborator_permission_err ]) result Abb.Future.t
+
+val get_org_membership :
+  org:string ->
+  user:string ->
+  Githubc2_abb.t ->
+  ([ `Admin | `User ] option, [> get_org_membership_err ]) result Abb.Future.t
 
 (** GitHub does not include Oauth operations in their JSON schema, so implementing here. *)
 module Oauth : sig

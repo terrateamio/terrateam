@@ -1,11 +1,21 @@
 module Branch_filter_strategy = struct
   let t_of_yojson = function
-    | `String "wildcard" -> Ok "wildcard"
-    | `String "regex" -> Ok "regex"
-    | `String "all_branches" -> Ok "all_branches"
+    | `String "all_branches" -> Ok `All_branches
+    | `String "regex" -> Ok `Regex
+    | `String "wildcard" -> Ok `Wildcard
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `All_branches -> `String "all_branches"
+    | `Regex -> `String "regex"
+    | `Wildcard -> `String "wildcard"
+
+  type t =
+    ([ `All_branches
+     | `Regex
+     | `Wildcard
+     ]
+    [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 

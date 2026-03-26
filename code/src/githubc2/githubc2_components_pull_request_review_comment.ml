@@ -38,31 +38,55 @@ module Primary = struct
 
   module Side = struct
     let t_of_yojson = function
-      | `String "LEFT" -> Ok "LEFT"
-      | `String "RIGHT" -> Ok "RIGHT"
+      | `String "LEFT" -> Ok `LEFT
+      | `String "RIGHT" -> Ok `RIGHT
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `LEFT -> `String "LEFT"
+      | `RIGHT -> `String "RIGHT"
+
+    type t =
+      ([ `LEFT
+       | `RIGHT
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Start_side = struct
     let t_of_yojson = function
-      | `String "LEFT" -> Ok "LEFT"
-      | `String "RIGHT" -> Ok "RIGHT"
+      | `String "LEFT" -> Ok `LEFT
+      | `String "RIGHT" -> Ok `RIGHT
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `LEFT -> `String "LEFT"
+      | `RIGHT -> `String "RIGHT"
+
+    type t =
+      ([ `LEFT
+       | `RIGHT
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Subject_type = struct
     let t_of_yojson = function
-      | `String "line" -> Ok "line"
-      | `String "file" -> Ok "file"
+      | `String "file" -> Ok `File
+      | `String "line" -> Ok `Line
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `File -> `String "file"
+      | `Line -> `String "line"
+
+    type t =
+      ([ `File
+       | `Line
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
@@ -89,9 +113,9 @@ module Primary = struct
     pull_request_review_id : int64 option; [@default None]
     pull_request_url : string;
     reactions : Githubc2_components_reaction_rollup.t option; [@default None]
-    side : Side.t; [@default "RIGHT"]
+    side : Side.t; [@default `RIGHT]
     start_line : int option; [@default None]
-    start_side : Start_side.t option; [@default Some "RIGHT"]
+    start_side : Start_side.t option; [@default Some `RIGHT]
     subject_type : Subject_type.t option; [@default None]
     updated_at : string;
     url : string;

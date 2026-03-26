@@ -1,19 +1,30 @@
 module Select = struct
   let t_of_yojson = function
-    | `String "package_file" -> Ok "package_file"
+    | `String "package_file" -> Ok `Package_file
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Package_file -> `String "package_file"
+
+  type t = ([ `Package_file ][@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Status = struct
   let t_of_yojson = function
-    | `String "default" -> Ok "default"
-    | `String "hidden" -> Ok "hidden"
+    | `String "default" -> Ok `Default
+    | `String "hidden" -> Ok `Hidden
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Default -> `String "default"
+    | `Hidden -> `String "hidden"
+
+  type t =
+    ([ `Default
+     | `Hidden
+     ]
+    [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 

@@ -32,33 +32,61 @@ module Primary = struct
 
   module Source_type = struct
     let t_of_yojson = function
-      | `String "organization" -> Ok "organization"
-      | `String "enterprise" -> Ok "enterprise"
+      | `String "enterprise" -> Ok `Enterprise
+      | `String "organization" -> Ok `Organization
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Enterprise -> `String "enterprise"
+      | `Organization -> `String "organization"
+
+    type t =
+      ([ `Enterprise
+       | `Organization
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Value_type = struct
     let t_of_yojson = function
-      | `String "string" -> Ok "string"
-      | `String "single_select" -> Ok "single_select"
-      | `String "multi_select" -> Ok "multi_select"
-      | `String "true_false" -> Ok "true_false"
+      | `String "multi_select" -> Ok `Multi_select
+      | `String "single_select" -> Ok `Single_select
+      | `String "string" -> Ok `String
+      | `String "true_false" -> Ok `True_false
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Multi_select -> `String "multi_select"
+      | `Single_select -> `String "single_select"
+      | `String -> `String "string"
+      | `True_false -> `String "true_false"
+
+    type t =
+      ([ `Multi_select
+       | `Single_select
+       | `String
+       | `True_false
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Values_editable_by = struct
     let t_of_yojson = function
-      | `String "org_actors" -> Ok "org_actors"
-      | `String "org_and_repo_actors" -> Ok "org_and_repo_actors"
+      | `String "org_actors" -> Ok `Org_actors
+      | `String "org_and_repo_actors" -> Ok `Org_and_repo_actors
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Org_actors -> `String "org_actors"
+      | `Org_and_repo_actors -> `String "org_and_repo_actors"
+
+    type t =
+      ([ `Org_actors
+       | `Org_and_repo_actors
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 

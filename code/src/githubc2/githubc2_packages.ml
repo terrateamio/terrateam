@@ -53,25 +53,53 @@ module List_packages_for_organization = struct
   module Parameters = struct
     module Package_type = struct
       let t_of_yojson = function
-        | `String "npm" -> Ok "npm"
-        | `String "maven" -> Ok "maven"
-        | `String "rubygems" -> Ok "rubygems"
-        | `String "docker" -> Ok "docker"
-        | `String "nuget" -> Ok "nuget"
-        | `String "container" -> Ok "container"
+        | `String "container" -> Ok `Container
+        | `String "docker" -> Ok `Docker
+        | `String "maven" -> Ok `Maven
+        | `String "npm" -> Ok `Npm
+        | `String "nuget" -> Ok `Nuget
+        | `String "rubygems" -> Ok `Rubygems
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Container -> `String "container"
+        | `Docker -> `String "docker"
+        | `Maven -> `String "maven"
+        | `Npm -> `String "npm"
+        | `Nuget -> `String "nuget"
+        | `Rubygems -> `String "rubygems"
+
+      type t =
+        ([ `Container
+         | `Docker
+         | `Maven
+         | `Npm
+         | `Nuget
+         | `Rubygems
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Visibility = struct
       let t_of_yojson = function
-        | `String "public" -> Ok "public"
-        | `String "private" -> Ok "private"
-        | `String "internal" -> Ok "internal"
+        | `String "internal" -> Ok `Internal
+        | `String "private" -> Ok `Private
+        | `String "public" -> Ok `Public
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Internal -> `String "internal"
+        | `Private -> `String "private"
+        | `Public -> `String "public"
+
+      type t =
+        ([ `Internal
+         | `Private
+         | `Public
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -132,8 +160,8 @@ module List_packages_for_organization = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("package_type", Var (params.package_type, String));
-           ("visibility", Var (params.visibility, Option String));
+           ("package_type", Var (params.package_type, Enum Package_type.t_to_yojson));
+           ("visibility", Var (params.visibility, Option (Enum Visibility.t_to_yojson)));
            ("page", Var (params.page, Int));
            ("per_page", Var (params.per_page, Int));
          ])
@@ -146,15 +174,32 @@ module Delete_package_for_org = struct
   module Parameters = struct
     module Package_type = struct
       let t_of_yojson = function
-        | `String "npm" -> Ok "npm"
-        | `String "maven" -> Ok "maven"
-        | `String "rubygems" -> Ok "rubygems"
-        | `String "docker" -> Ok "docker"
-        | `String "nuget" -> Ok "nuget"
-        | `String "container" -> Ok "container"
+        | `String "container" -> Ok `Container
+        | `String "docker" -> Ok `Docker
+        | `String "maven" -> Ok `Maven
+        | `String "npm" -> Ok `Npm
+        | `String "nuget" -> Ok `Nuget
+        | `String "rubygems" -> Ok `Rubygems
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Container -> `String "container"
+        | `Docker -> `String "docker"
+        | `Maven -> `String "maven"
+        | `Npm -> `String "npm"
+        | `Nuget -> `String "nuget"
+        | `Rubygems -> `String "rubygems"
+
+      type t =
+        ([ `Container
+         | `Docker
+         | `Maven
+         | `Npm
+         | `Nuget
+         | `Rubygems
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -209,7 +254,7 @@ module Delete_package_for_org = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("package_type", Var (params.package_type, String));
+           ("package_type", Var (params.package_type, Enum Package_type.t_to_yojson));
            ("package_name", Var (params.package_name, String));
            ("org", Var (params.org, String));
          ])
@@ -223,15 +268,32 @@ module Get_package_for_organization = struct
   module Parameters = struct
     module Package_type = struct
       let t_of_yojson = function
-        | `String "npm" -> Ok "npm"
-        | `String "maven" -> Ok "maven"
-        | `String "rubygems" -> Ok "rubygems"
-        | `String "docker" -> Ok "docker"
-        | `String "nuget" -> Ok "nuget"
-        | `String "container" -> Ok "container"
+        | `String "container" -> Ok `Container
+        | `String "docker" -> Ok `Docker
+        | `String "maven" -> Ok `Maven
+        | `String "npm" -> Ok `Npm
+        | `String "nuget" -> Ok `Nuget
+        | `String "rubygems" -> Ok `Rubygems
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Container -> `String "container"
+        | `Docker -> `String "docker"
+        | `Maven -> `String "maven"
+        | `Npm -> `String "npm"
+        | `Nuget -> `String "nuget"
+        | `Rubygems -> `String "rubygems"
+
+      type t =
+        ([ `Container
+         | `Docker
+         | `Maven
+         | `Npm
+         | `Nuget
+         | `Rubygems
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -262,7 +324,7 @@ module Get_package_for_organization = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("package_type", Var (params.package_type, String));
+           ("package_type", Var (params.package_type, Enum Package_type.t_to_yojson));
            ("package_name", Var (params.package_name, String));
            ("org", Var (params.org, String));
          ])
@@ -276,15 +338,32 @@ module Restore_package_for_org = struct
   module Parameters = struct
     module Package_type = struct
       let t_of_yojson = function
-        | `String "npm" -> Ok "npm"
-        | `String "maven" -> Ok "maven"
-        | `String "rubygems" -> Ok "rubygems"
-        | `String "docker" -> Ok "docker"
-        | `String "nuget" -> Ok "nuget"
-        | `String "container" -> Ok "container"
+        | `String "container" -> Ok `Container
+        | `String "docker" -> Ok `Docker
+        | `String "maven" -> Ok `Maven
+        | `String "npm" -> Ok `Npm
+        | `String "nuget" -> Ok `Nuget
+        | `String "rubygems" -> Ok `Rubygems
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Container -> `String "container"
+        | `Docker -> `String "docker"
+        | `Maven -> `String "maven"
+        | `Npm -> `String "npm"
+        | `Nuget -> `String "nuget"
+        | `Rubygems -> `String "rubygems"
+
+      type t =
+        ([ `Container
+         | `Docker
+         | `Maven
+         | `Npm
+         | `Nuget
+         | `Rubygems
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -340,7 +419,7 @@ module Restore_package_for_org = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("package_type", Var (params.package_type, String));
+           ("package_type", Var (params.package_type, Enum Package_type.t_to_yojson));
            ("package_name", Var (params.package_name, String));
            ("org", Var (params.org, String));
          ])
@@ -357,24 +436,50 @@ module Get_all_package_versions_for_package_owned_by_org = struct
   module Parameters = struct
     module Package_type = struct
       let t_of_yojson = function
-        | `String "npm" -> Ok "npm"
-        | `String "maven" -> Ok "maven"
-        | `String "rubygems" -> Ok "rubygems"
-        | `String "docker" -> Ok "docker"
-        | `String "nuget" -> Ok "nuget"
-        | `String "container" -> Ok "container"
+        | `String "container" -> Ok `Container
+        | `String "docker" -> Ok `Docker
+        | `String "maven" -> Ok `Maven
+        | `String "npm" -> Ok `Npm
+        | `String "nuget" -> Ok `Nuget
+        | `String "rubygems" -> Ok `Rubygems
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Container -> `String "container"
+        | `Docker -> `String "docker"
+        | `Maven -> `String "maven"
+        | `Npm -> `String "npm"
+        | `Nuget -> `String "nuget"
+        | `Rubygems -> `String "rubygems"
+
+      type t =
+        ([ `Container
+         | `Docker
+         | `Maven
+         | `Npm
+         | `Nuget
+         | `Rubygems
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module State = struct
       let t_of_yojson = function
-        | `String "active" -> Ok "active"
-        | `String "deleted" -> Ok "deleted"
+        | `String "active" -> Ok `Active
+        | `String "deleted" -> Ok `Deleted
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Active -> `String "active"
+        | `Deleted -> `String "deleted"
+
+      type t =
+        ([ `Active
+         | `Deleted
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -383,7 +488,7 @@ module Get_all_package_versions_for_package_owned_by_org = struct
       package_type : Package_type.t;
       page : int; [@default 1]
       per_page : int; [@default 30]
-      state : State.t; [@default "active"]
+      state : State.t; [@default `Active]
     }
     [@@deriving make, show, eq]
   end
@@ -435,7 +540,7 @@ module Get_all_package_versions_for_package_owned_by_org = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("package_type", Var (params.package_type, String));
+           ("package_type", Var (params.package_type, Enum Package_type.t_to_yojson));
            ("package_name", Var (params.package_name, String));
            ("org", Var (params.org, String));
          ])
@@ -445,7 +550,7 @@ module Get_all_package_versions_for_package_owned_by_org = struct
          [
            ("page", Var (params.page, Int));
            ("per_page", Var (params.per_page, Int));
-           ("state", Var (params.state, String));
+           ("state", Var (params.state, Enum State.t_to_yojson));
          ])
       ~url
       ~responses:Responses.t
@@ -456,15 +561,32 @@ module Delete_package_version_for_org = struct
   module Parameters = struct
     module Package_type = struct
       let t_of_yojson = function
-        | `String "npm" -> Ok "npm"
-        | `String "maven" -> Ok "maven"
-        | `String "rubygems" -> Ok "rubygems"
-        | `String "docker" -> Ok "docker"
-        | `String "nuget" -> Ok "nuget"
-        | `String "container" -> Ok "container"
+        | `String "container" -> Ok `Container
+        | `String "docker" -> Ok `Docker
+        | `String "maven" -> Ok `Maven
+        | `String "npm" -> Ok `Npm
+        | `String "nuget" -> Ok `Nuget
+        | `String "rubygems" -> Ok `Rubygems
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Container -> `String "container"
+        | `Docker -> `String "docker"
+        | `Maven -> `String "maven"
+        | `Npm -> `String "npm"
+        | `Nuget -> `String "nuget"
+        | `Rubygems -> `String "rubygems"
+
+      type t =
+        ([ `Container
+         | `Docker
+         | `Maven
+         | `Npm
+         | `Nuget
+         | `Rubygems
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -520,7 +642,7 @@ module Delete_package_version_for_org = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("package_type", Var (params.package_type, String));
+           ("package_type", Var (params.package_type, Enum Package_type.t_to_yojson));
            ("package_name", Var (params.package_name, String));
            ("org", Var (params.org, String));
            ("package_version_id", Var (params.package_version_id, Int));
@@ -535,15 +657,32 @@ module Get_package_version_for_organization = struct
   module Parameters = struct
     module Package_type = struct
       let t_of_yojson = function
-        | `String "npm" -> Ok "npm"
-        | `String "maven" -> Ok "maven"
-        | `String "rubygems" -> Ok "rubygems"
-        | `String "docker" -> Ok "docker"
-        | `String "nuget" -> Ok "nuget"
-        | `String "container" -> Ok "container"
+        | `String "container" -> Ok `Container
+        | `String "docker" -> Ok `Docker
+        | `String "maven" -> Ok `Maven
+        | `String "npm" -> Ok `Npm
+        | `String "nuget" -> Ok `Nuget
+        | `String "rubygems" -> Ok `Rubygems
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Container -> `String "container"
+        | `Docker -> `String "docker"
+        | `Maven -> `String "maven"
+        | `Npm -> `String "npm"
+        | `Nuget -> `String "nuget"
+        | `Rubygems -> `String "rubygems"
+
+      type t =
+        ([ `Container
+         | `Docker
+         | `Maven
+         | `Npm
+         | `Nuget
+         | `Rubygems
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -575,7 +714,7 @@ module Get_package_version_for_organization = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("package_type", Var (params.package_type, String));
+           ("package_type", Var (params.package_type, Enum Package_type.t_to_yojson));
            ("package_name", Var (params.package_name, String));
            ("org", Var (params.org, String));
            ("package_version_id", Var (params.package_version_id, Int));
@@ -590,15 +729,32 @@ module Restore_package_version_for_org = struct
   module Parameters = struct
     module Package_type = struct
       let t_of_yojson = function
-        | `String "npm" -> Ok "npm"
-        | `String "maven" -> Ok "maven"
-        | `String "rubygems" -> Ok "rubygems"
-        | `String "docker" -> Ok "docker"
-        | `String "nuget" -> Ok "nuget"
-        | `String "container" -> Ok "container"
+        | `String "container" -> Ok `Container
+        | `String "docker" -> Ok `Docker
+        | `String "maven" -> Ok `Maven
+        | `String "npm" -> Ok `Npm
+        | `String "nuget" -> Ok `Nuget
+        | `String "rubygems" -> Ok `Rubygems
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Container -> `String "container"
+        | `Docker -> `String "docker"
+        | `Maven -> `String "maven"
+        | `Npm -> `String "npm"
+        | `Nuget -> `String "nuget"
+        | `Rubygems -> `String "rubygems"
+
+      type t =
+        ([ `Container
+         | `Docker
+         | `Maven
+         | `Npm
+         | `Nuget
+         | `Rubygems
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -655,7 +811,7 @@ module Restore_package_version_for_org = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("package_type", Var (params.package_type, String));
+           ("package_type", Var (params.package_type, Enum Package_type.t_to_yojson));
            ("package_name", Var (params.package_name, String));
            ("org", Var (params.org, String));
            ("package_version_id", Var (params.package_version_id, Int));
@@ -696,25 +852,53 @@ module List_packages_for_authenticated_user = struct
   module Parameters = struct
     module Package_type = struct
       let t_of_yojson = function
-        | `String "npm" -> Ok "npm"
-        | `String "maven" -> Ok "maven"
-        | `String "rubygems" -> Ok "rubygems"
-        | `String "docker" -> Ok "docker"
-        | `String "nuget" -> Ok "nuget"
-        | `String "container" -> Ok "container"
+        | `String "container" -> Ok `Container
+        | `String "docker" -> Ok `Docker
+        | `String "maven" -> Ok `Maven
+        | `String "npm" -> Ok `Npm
+        | `String "nuget" -> Ok `Nuget
+        | `String "rubygems" -> Ok `Rubygems
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Container -> `String "container"
+        | `Docker -> `String "docker"
+        | `Maven -> `String "maven"
+        | `Npm -> `String "npm"
+        | `Nuget -> `String "nuget"
+        | `Rubygems -> `String "rubygems"
+
+      type t =
+        ([ `Container
+         | `Docker
+         | `Maven
+         | `Npm
+         | `Nuget
+         | `Rubygems
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Visibility = struct
       let t_of_yojson = function
-        | `String "public" -> Ok "public"
-        | `String "private" -> Ok "private"
-        | `String "internal" -> Ok "internal"
+        | `String "internal" -> Ok `Internal
+        | `String "private" -> Ok `Private
+        | `String "public" -> Ok `Public
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Internal -> `String "internal"
+        | `Private -> `String "private"
+        | `Public -> `String "public"
+
+      type t =
+        ([ `Internal
+         | `Private
+         | `Public
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -757,8 +941,8 @@ module List_packages_for_authenticated_user = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("package_type", Var (params.package_type, String));
-           ("visibility", Var (params.visibility, Option String));
+           ("package_type", Var (params.package_type, Enum Package_type.t_to_yojson));
+           ("visibility", Var (params.visibility, Option (Enum Visibility.t_to_yojson)));
            ("page", Var (params.page, Int));
            ("per_page", Var (params.per_page, Int));
          ])
@@ -771,15 +955,32 @@ module Delete_package_for_authenticated_user = struct
   module Parameters = struct
     module Package_type = struct
       let t_of_yojson = function
-        | `String "npm" -> Ok "npm"
-        | `String "maven" -> Ok "maven"
-        | `String "rubygems" -> Ok "rubygems"
-        | `String "docker" -> Ok "docker"
-        | `String "nuget" -> Ok "nuget"
-        | `String "container" -> Ok "container"
+        | `String "container" -> Ok `Container
+        | `String "docker" -> Ok `Docker
+        | `String "maven" -> Ok `Maven
+        | `String "npm" -> Ok `Npm
+        | `String "nuget" -> Ok `Nuget
+        | `String "rubygems" -> Ok `Rubygems
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Container -> `String "container"
+        | `Docker -> `String "docker"
+        | `Maven -> `String "maven"
+        | `Npm -> `String "npm"
+        | `Nuget -> `String "nuget"
+        | `Rubygems -> `String "rubygems"
+
+      type t =
+        ([ `Container
+         | `Docker
+         | `Maven
+         | `Npm
+         | `Nuget
+         | `Rubygems
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -833,7 +1034,7 @@ module Delete_package_for_authenticated_user = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("package_type", Var (params.package_type, String));
+           ("package_type", Var (params.package_type, Enum Package_type.t_to_yojson));
            ("package_name", Var (params.package_name, String));
          ])
       ~query_params:[]
@@ -846,15 +1047,32 @@ module Get_package_for_authenticated_user = struct
   module Parameters = struct
     module Package_type = struct
       let t_of_yojson = function
-        | `String "npm" -> Ok "npm"
-        | `String "maven" -> Ok "maven"
-        | `String "rubygems" -> Ok "rubygems"
-        | `String "docker" -> Ok "docker"
-        | `String "nuget" -> Ok "nuget"
-        | `String "container" -> Ok "container"
+        | `String "container" -> Ok `Container
+        | `String "docker" -> Ok `Docker
+        | `String "maven" -> Ok `Maven
+        | `String "npm" -> Ok `Npm
+        | `String "nuget" -> Ok `Nuget
+        | `String "rubygems" -> Ok `Rubygems
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Container -> `String "container"
+        | `Docker -> `String "docker"
+        | `Maven -> `String "maven"
+        | `Npm -> `String "npm"
+        | `Nuget -> `String "nuget"
+        | `Rubygems -> `String "rubygems"
+
+      type t =
+        ([ `Container
+         | `Docker
+         | `Maven
+         | `Npm
+         | `Nuget
+         | `Rubygems
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -884,7 +1102,7 @@ module Get_package_for_authenticated_user = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("package_type", Var (params.package_type, String));
+           ("package_type", Var (params.package_type, Enum Package_type.t_to_yojson));
            ("package_name", Var (params.package_name, String));
          ])
       ~query_params:[]
@@ -897,15 +1115,32 @@ module Restore_package_for_authenticated_user = struct
   module Parameters = struct
     module Package_type = struct
       let t_of_yojson = function
-        | `String "npm" -> Ok "npm"
-        | `String "maven" -> Ok "maven"
-        | `String "rubygems" -> Ok "rubygems"
-        | `String "docker" -> Ok "docker"
-        | `String "nuget" -> Ok "nuget"
-        | `String "container" -> Ok "container"
+        | `String "container" -> Ok `Container
+        | `String "docker" -> Ok `Docker
+        | `String "maven" -> Ok `Maven
+        | `String "npm" -> Ok `Npm
+        | `String "nuget" -> Ok `Nuget
+        | `String "rubygems" -> Ok `Rubygems
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Container -> `String "container"
+        | `Docker -> `String "docker"
+        | `Maven -> `String "maven"
+        | `Npm -> `String "npm"
+        | `Nuget -> `String "nuget"
+        | `Rubygems -> `String "rubygems"
+
+      type t =
+        ([ `Container
+         | `Docker
+         | `Maven
+         | `Npm
+         | `Nuget
+         | `Rubygems
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -960,7 +1195,7 @@ module Restore_package_for_authenticated_user = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("package_type", Var (params.package_type, String));
+           ("package_type", Var (params.package_type, Enum Package_type.t_to_yojson));
            ("package_name", Var (params.package_name, String));
          ])
       ~query_params:
@@ -976,24 +1211,50 @@ module Get_all_package_versions_for_package_owned_by_authenticated_user = struct
   module Parameters = struct
     module Package_type = struct
       let t_of_yojson = function
-        | `String "npm" -> Ok "npm"
-        | `String "maven" -> Ok "maven"
-        | `String "rubygems" -> Ok "rubygems"
-        | `String "docker" -> Ok "docker"
-        | `String "nuget" -> Ok "nuget"
-        | `String "container" -> Ok "container"
+        | `String "container" -> Ok `Container
+        | `String "docker" -> Ok `Docker
+        | `String "maven" -> Ok `Maven
+        | `String "npm" -> Ok `Npm
+        | `String "nuget" -> Ok `Nuget
+        | `String "rubygems" -> Ok `Rubygems
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Container -> `String "container"
+        | `Docker -> `String "docker"
+        | `Maven -> `String "maven"
+        | `Npm -> `String "npm"
+        | `Nuget -> `String "nuget"
+        | `Rubygems -> `String "rubygems"
+
+      type t =
+        ([ `Container
+         | `Docker
+         | `Maven
+         | `Npm
+         | `Nuget
+         | `Rubygems
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module State = struct
       let t_of_yojson = function
-        | `String "active" -> Ok "active"
-        | `String "deleted" -> Ok "deleted"
+        | `String "active" -> Ok `Active
+        | `String "deleted" -> Ok `Deleted
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Active -> `String "active"
+        | `Deleted -> `String "deleted"
+
+      type t =
+        ([ `Active
+         | `Deleted
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -1001,7 +1262,7 @@ module Get_all_package_versions_for_package_owned_by_authenticated_user = struct
       package_type : Package_type.t;
       page : int; [@default 1]
       per_page : int; [@default 30]
-      state : State.t; [@default "active"]
+      state : State.t; [@default `Active]
     }
     [@@deriving make, show, eq]
   end
@@ -1053,7 +1314,7 @@ module Get_all_package_versions_for_package_owned_by_authenticated_user = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("package_type", Var (params.package_type, String));
+           ("package_type", Var (params.package_type, Enum Package_type.t_to_yojson));
            ("package_name", Var (params.package_name, String));
          ])
       ~query_params:
@@ -1062,7 +1323,7 @@ module Get_all_package_versions_for_package_owned_by_authenticated_user = struct
          [
            ("page", Var (params.page, Int));
            ("per_page", Var (params.per_page, Int));
-           ("state", Var (params.state, String));
+           ("state", Var (params.state, Enum State.t_to_yojson));
          ])
       ~url
       ~responses:Responses.t
@@ -1073,15 +1334,32 @@ module Delete_package_version_for_authenticated_user = struct
   module Parameters = struct
     module Package_type = struct
       let t_of_yojson = function
-        | `String "npm" -> Ok "npm"
-        | `String "maven" -> Ok "maven"
-        | `String "rubygems" -> Ok "rubygems"
-        | `String "docker" -> Ok "docker"
-        | `String "nuget" -> Ok "nuget"
-        | `String "container" -> Ok "container"
+        | `String "container" -> Ok `Container
+        | `String "docker" -> Ok `Docker
+        | `String "maven" -> Ok `Maven
+        | `String "npm" -> Ok `Npm
+        | `String "nuget" -> Ok `Nuget
+        | `String "rubygems" -> Ok `Rubygems
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Container -> `String "container"
+        | `Docker -> `String "docker"
+        | `Maven -> `String "maven"
+        | `Npm -> `String "npm"
+        | `Nuget -> `String "nuget"
+        | `Rubygems -> `String "rubygems"
+
+      type t =
+        ([ `Container
+         | `Docker
+         | `Maven
+         | `Npm
+         | `Nuget
+         | `Rubygems
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -1136,7 +1414,7 @@ module Delete_package_version_for_authenticated_user = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("package_type", Var (params.package_type, String));
+           ("package_type", Var (params.package_type, Enum Package_type.t_to_yojson));
            ("package_name", Var (params.package_name, String));
            ("package_version_id", Var (params.package_version_id, Int));
          ])
@@ -1150,15 +1428,32 @@ module Get_package_version_for_authenticated_user = struct
   module Parameters = struct
     module Package_type = struct
       let t_of_yojson = function
-        | `String "npm" -> Ok "npm"
-        | `String "maven" -> Ok "maven"
-        | `String "rubygems" -> Ok "rubygems"
-        | `String "docker" -> Ok "docker"
-        | `String "nuget" -> Ok "nuget"
-        | `String "container" -> Ok "container"
+        | `String "container" -> Ok `Container
+        | `String "docker" -> Ok `Docker
+        | `String "maven" -> Ok `Maven
+        | `String "npm" -> Ok `Npm
+        | `String "nuget" -> Ok `Nuget
+        | `String "rubygems" -> Ok `Rubygems
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Container -> `String "container"
+        | `Docker -> `String "docker"
+        | `Maven -> `String "maven"
+        | `Npm -> `String "npm"
+        | `Nuget -> `String "nuget"
+        | `Rubygems -> `String "rubygems"
+
+      type t =
+        ([ `Container
+         | `Docker
+         | `Maven
+         | `Npm
+         | `Nuget
+         | `Rubygems
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -1189,7 +1484,7 @@ module Get_package_version_for_authenticated_user = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("package_type", Var (params.package_type, String));
+           ("package_type", Var (params.package_type, Enum Package_type.t_to_yojson));
            ("package_name", Var (params.package_name, String));
            ("package_version_id", Var (params.package_version_id, Int));
          ])
@@ -1203,15 +1498,32 @@ module Restore_package_version_for_authenticated_user = struct
   module Parameters = struct
     module Package_type = struct
       let t_of_yojson = function
-        | `String "npm" -> Ok "npm"
-        | `String "maven" -> Ok "maven"
-        | `String "rubygems" -> Ok "rubygems"
-        | `String "docker" -> Ok "docker"
-        | `String "nuget" -> Ok "nuget"
-        | `String "container" -> Ok "container"
+        | `String "container" -> Ok `Container
+        | `String "docker" -> Ok `Docker
+        | `String "maven" -> Ok `Maven
+        | `String "npm" -> Ok `Npm
+        | `String "nuget" -> Ok `Nuget
+        | `String "rubygems" -> Ok `Rubygems
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Container -> `String "container"
+        | `Docker -> `String "docker"
+        | `Maven -> `String "maven"
+        | `Npm -> `String "npm"
+        | `Nuget -> `String "nuget"
+        | `Rubygems -> `String "rubygems"
+
+      type t =
+        ([ `Container
+         | `Docker
+         | `Maven
+         | `Npm
+         | `Nuget
+         | `Rubygems
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -1266,7 +1578,7 @@ module Restore_package_version_for_authenticated_user = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("package_type", Var (params.package_type, String));
+           ("package_type", Var (params.package_type, Enum Package_type.t_to_yojson));
            ("package_name", Var (params.package_name, String));
            ("package_version_id", Var (params.package_version_id, Int));
          ])
@@ -1331,25 +1643,53 @@ module List_packages_for_user = struct
   module Parameters = struct
     module Package_type = struct
       let t_of_yojson = function
-        | `String "npm" -> Ok "npm"
-        | `String "maven" -> Ok "maven"
-        | `String "rubygems" -> Ok "rubygems"
-        | `String "docker" -> Ok "docker"
-        | `String "nuget" -> Ok "nuget"
-        | `String "container" -> Ok "container"
+        | `String "container" -> Ok `Container
+        | `String "docker" -> Ok `Docker
+        | `String "maven" -> Ok `Maven
+        | `String "npm" -> Ok `Npm
+        | `String "nuget" -> Ok `Nuget
+        | `String "rubygems" -> Ok `Rubygems
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Container -> `String "container"
+        | `Docker -> `String "docker"
+        | `Maven -> `String "maven"
+        | `Npm -> `String "npm"
+        | `Nuget -> `String "nuget"
+        | `Rubygems -> `String "rubygems"
+
+      type t =
+        ([ `Container
+         | `Docker
+         | `Maven
+         | `Npm
+         | `Nuget
+         | `Rubygems
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Visibility = struct
       let t_of_yojson = function
-        | `String "public" -> Ok "public"
-        | `String "private" -> Ok "private"
-        | `String "internal" -> Ok "internal"
+        | `String "internal" -> Ok `Internal
+        | `String "private" -> Ok `Private
+        | `String "public" -> Ok `Public
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Internal -> `String "internal"
+        | `Private -> `String "private"
+        | `Public -> `String "public"
+
+      type t =
+        ([ `Internal
+         | `Private
+         | `Public
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -1410,8 +1750,8 @@ module List_packages_for_user = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("package_type", Var (params.package_type, String));
-           ("visibility", Var (params.visibility, Option String));
+           ("package_type", Var (params.package_type, Enum Package_type.t_to_yojson));
+           ("visibility", Var (params.visibility, Option (Enum Visibility.t_to_yojson)));
            ("page", Var (params.page, Int));
            ("per_page", Var (params.per_page, Int));
          ])
@@ -1424,15 +1764,32 @@ module Delete_package_for_user = struct
   module Parameters = struct
     module Package_type = struct
       let t_of_yojson = function
-        | `String "npm" -> Ok "npm"
-        | `String "maven" -> Ok "maven"
-        | `String "rubygems" -> Ok "rubygems"
-        | `String "docker" -> Ok "docker"
-        | `String "nuget" -> Ok "nuget"
-        | `String "container" -> Ok "container"
+        | `String "container" -> Ok `Container
+        | `String "docker" -> Ok `Docker
+        | `String "maven" -> Ok `Maven
+        | `String "npm" -> Ok `Npm
+        | `String "nuget" -> Ok `Nuget
+        | `String "rubygems" -> Ok `Rubygems
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Container -> `String "container"
+        | `Docker -> `String "docker"
+        | `Maven -> `String "maven"
+        | `Npm -> `String "npm"
+        | `Nuget -> `String "nuget"
+        | `Rubygems -> `String "rubygems"
+
+      type t =
+        ([ `Container
+         | `Docker
+         | `Maven
+         | `Npm
+         | `Nuget
+         | `Rubygems
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -1487,7 +1844,7 @@ module Delete_package_for_user = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("package_type", Var (params.package_type, String));
+           ("package_type", Var (params.package_type, Enum Package_type.t_to_yojson));
            ("package_name", Var (params.package_name, String));
            ("username", Var (params.username, String));
          ])
@@ -1501,15 +1858,32 @@ module Get_package_for_user = struct
   module Parameters = struct
     module Package_type = struct
       let t_of_yojson = function
-        | `String "npm" -> Ok "npm"
-        | `String "maven" -> Ok "maven"
-        | `String "rubygems" -> Ok "rubygems"
-        | `String "docker" -> Ok "docker"
-        | `String "nuget" -> Ok "nuget"
-        | `String "container" -> Ok "container"
+        | `String "container" -> Ok `Container
+        | `String "docker" -> Ok `Docker
+        | `String "maven" -> Ok `Maven
+        | `String "npm" -> Ok `Npm
+        | `String "nuget" -> Ok `Nuget
+        | `String "rubygems" -> Ok `Rubygems
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Container -> `String "container"
+        | `Docker -> `String "docker"
+        | `Maven -> `String "maven"
+        | `Npm -> `String "npm"
+        | `Nuget -> `String "nuget"
+        | `Rubygems -> `String "rubygems"
+
+      type t =
+        ([ `Container
+         | `Docker
+         | `Maven
+         | `Npm
+         | `Nuget
+         | `Rubygems
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -1540,7 +1914,7 @@ module Get_package_for_user = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("package_type", Var (params.package_type, String));
+           ("package_type", Var (params.package_type, Enum Package_type.t_to_yojson));
            ("package_name", Var (params.package_name, String));
            ("username", Var (params.username, String));
          ])
@@ -1554,15 +1928,32 @@ module Restore_package_for_user = struct
   module Parameters = struct
     module Package_type = struct
       let t_of_yojson = function
-        | `String "npm" -> Ok "npm"
-        | `String "maven" -> Ok "maven"
-        | `String "rubygems" -> Ok "rubygems"
-        | `String "docker" -> Ok "docker"
-        | `String "nuget" -> Ok "nuget"
-        | `String "container" -> Ok "container"
+        | `String "container" -> Ok `Container
+        | `String "docker" -> Ok `Docker
+        | `String "maven" -> Ok `Maven
+        | `String "npm" -> Ok `Npm
+        | `String "nuget" -> Ok `Nuget
+        | `String "rubygems" -> Ok `Rubygems
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Container -> `String "container"
+        | `Docker -> `String "docker"
+        | `Maven -> `String "maven"
+        | `Npm -> `String "npm"
+        | `Nuget -> `String "nuget"
+        | `Rubygems -> `String "rubygems"
+
+      type t =
+        ([ `Container
+         | `Docker
+         | `Maven
+         | `Npm
+         | `Nuget
+         | `Rubygems
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -1618,7 +2009,7 @@ module Restore_package_for_user = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("package_type", Var (params.package_type, String));
+           ("package_type", Var (params.package_type, Enum Package_type.t_to_yojson));
            ("package_name", Var (params.package_name, String));
            ("username", Var (params.username, String));
          ])
@@ -1635,15 +2026,32 @@ module Get_all_package_versions_for_package_owned_by_user = struct
   module Parameters = struct
     module Package_type = struct
       let t_of_yojson = function
-        | `String "npm" -> Ok "npm"
-        | `String "maven" -> Ok "maven"
-        | `String "rubygems" -> Ok "rubygems"
-        | `String "docker" -> Ok "docker"
-        | `String "nuget" -> Ok "nuget"
-        | `String "container" -> Ok "container"
+        | `String "container" -> Ok `Container
+        | `String "docker" -> Ok `Docker
+        | `String "maven" -> Ok `Maven
+        | `String "npm" -> Ok `Npm
+        | `String "nuget" -> Ok `Nuget
+        | `String "rubygems" -> Ok `Rubygems
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Container -> `String "container"
+        | `Docker -> `String "docker"
+        | `Maven -> `String "maven"
+        | `Npm -> `String "npm"
+        | `Nuget -> `String "nuget"
+        | `Rubygems -> `String "rubygems"
+
+      type t =
+        ([ `Container
+         | `Docker
+         | `Maven
+         | `Npm
+         | `Nuget
+         | `Rubygems
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -1701,7 +2109,7 @@ module Get_all_package_versions_for_package_owned_by_user = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("package_type", Var (params.package_type, String));
+           ("package_type", Var (params.package_type, Enum Package_type.t_to_yojson));
            ("package_name", Var (params.package_name, String));
            ("username", Var (params.username, String));
          ])
@@ -1715,15 +2123,32 @@ module Delete_package_version_for_user = struct
   module Parameters = struct
     module Package_type = struct
       let t_of_yojson = function
-        | `String "npm" -> Ok "npm"
-        | `String "maven" -> Ok "maven"
-        | `String "rubygems" -> Ok "rubygems"
-        | `String "docker" -> Ok "docker"
-        | `String "nuget" -> Ok "nuget"
-        | `String "container" -> Ok "container"
+        | `String "container" -> Ok `Container
+        | `String "docker" -> Ok `Docker
+        | `String "maven" -> Ok `Maven
+        | `String "npm" -> Ok `Npm
+        | `String "nuget" -> Ok `Nuget
+        | `String "rubygems" -> Ok `Rubygems
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Container -> `String "container"
+        | `Docker -> `String "docker"
+        | `Maven -> `String "maven"
+        | `Npm -> `String "npm"
+        | `Nuget -> `String "nuget"
+        | `Rubygems -> `String "rubygems"
+
+      type t =
+        ([ `Container
+         | `Docker
+         | `Maven
+         | `Npm
+         | `Nuget
+         | `Rubygems
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -1779,7 +2204,7 @@ module Delete_package_version_for_user = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("package_type", Var (params.package_type, String));
+           ("package_type", Var (params.package_type, Enum Package_type.t_to_yojson));
            ("package_name", Var (params.package_name, String));
            ("username", Var (params.username, String));
            ("package_version_id", Var (params.package_version_id, Int));
@@ -1794,15 +2219,32 @@ module Get_package_version_for_user = struct
   module Parameters = struct
     module Package_type = struct
       let t_of_yojson = function
-        | `String "npm" -> Ok "npm"
-        | `String "maven" -> Ok "maven"
-        | `String "rubygems" -> Ok "rubygems"
-        | `String "docker" -> Ok "docker"
-        | `String "nuget" -> Ok "nuget"
-        | `String "container" -> Ok "container"
+        | `String "container" -> Ok `Container
+        | `String "docker" -> Ok `Docker
+        | `String "maven" -> Ok `Maven
+        | `String "npm" -> Ok `Npm
+        | `String "nuget" -> Ok `Nuget
+        | `String "rubygems" -> Ok `Rubygems
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Container -> `String "container"
+        | `Docker -> `String "docker"
+        | `Maven -> `String "maven"
+        | `Npm -> `String "npm"
+        | `Nuget -> `String "nuget"
+        | `Rubygems -> `String "rubygems"
+
+      type t =
+        ([ `Container
+         | `Docker
+         | `Maven
+         | `Npm
+         | `Nuget
+         | `Rubygems
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -1834,7 +2276,7 @@ module Get_package_version_for_user = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("package_type", Var (params.package_type, String));
+           ("package_type", Var (params.package_type, Enum Package_type.t_to_yojson));
            ("package_name", Var (params.package_name, String));
            ("package_version_id", Var (params.package_version_id, Int));
            ("username", Var (params.username, String));
@@ -1849,15 +2291,32 @@ module Restore_package_version_for_user = struct
   module Parameters = struct
     module Package_type = struct
       let t_of_yojson = function
-        | `String "npm" -> Ok "npm"
-        | `String "maven" -> Ok "maven"
-        | `String "rubygems" -> Ok "rubygems"
-        | `String "docker" -> Ok "docker"
-        | `String "nuget" -> Ok "nuget"
-        | `String "container" -> Ok "container"
+        | `String "container" -> Ok `Container
+        | `String "docker" -> Ok `Docker
+        | `String "maven" -> Ok `Maven
+        | `String "npm" -> Ok `Npm
+        | `String "nuget" -> Ok `Nuget
+        | `String "rubygems" -> Ok `Rubygems
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Container -> `String "container"
+        | `Docker -> `String "docker"
+        | `Maven -> `String "maven"
+        | `Npm -> `String "npm"
+        | `Nuget -> `String "nuget"
+        | `Rubygems -> `String "rubygems"
+
+      type t =
+        ([ `Container
+         | `Docker
+         | `Maven
+         | `Npm
+         | `Nuget
+         | `Rubygems
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -1914,7 +2373,7 @@ module Restore_package_version_for_user = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("package_type", Var (params.package_type, String));
+           ("package_type", Var (params.package_type, Enum Package_type.t_to_yojson));
            ("package_name", Var (params.package_name, String));
            ("username", Var (params.username, String));
            ("package_version_id", Var (params.package_version_id, Int));

@@ -1,5 +1,3 @@
-module String_map = Terrat_data.String_map
-
 module Pattern : sig
   type t [@@deriving show, yojson, eq]
 
@@ -122,7 +120,7 @@ module Workflow_step : sig
     type t = {
       capture_output : bool; [@default false]
       cmd : Cmd.t;
-      env : string String_map.t option;
+      env : string Sln_map.String.t option;
       ignore_errors : bool; [@default false]
       on_error : Yojson.Safe.t list; [@default []]
       run_on : Run_on.t; [@default Run_on.Success]
@@ -133,7 +131,7 @@ module Workflow_step : sig
 
   module Init : sig
     type t = {
-      env : string String_map.t option;
+      env : string Sln_map.String.t option;
       extra_args : string list; [@default []]
     }
     [@@deriving make, show, yojson, eq]
@@ -148,7 +146,7 @@ module Workflow_step : sig
     end
 
     type t = {
-      env : string String_map.t option;
+      env : string Sln_map.String.t option;
       extra_args : string list; [@default []]
       mode : Mode.t; [@default Mode.Strict]
     }
@@ -157,7 +155,7 @@ module Workflow_step : sig
 
   module Apply : sig
     type t = {
-      env : string String_map.t option;
+      env : string Sln_map.String.t option;
       extra_args : string list; [@default []]
       retry : Retry.t option;
     }
@@ -166,7 +164,7 @@ module Workflow_step : sig
 
   module Conftest : sig
     type t = {
-      env : string String_map.t option;
+      env : string Sln_map.String.t option;
       extra_args : string list; [@default []]
       gate : Gate.t option; [@default None]
       ignore_errors : bool; [@default false]
@@ -178,7 +176,7 @@ module Workflow_step : sig
 
   module Checkov : sig
     type t = {
-      env : string String_map.t option;
+      env : string Sln_map.String.t option;
       extra_args : string list; [@default []]
       gate : Gate.t option; [@default None]
       ignore_errors : bool; [@default false]
@@ -197,7 +195,7 @@ module Workflow_step : sig
     end
 
     type t = {
-      env : string String_map.t option;
+      env : string Sln_map.String.t option;
       extra_args : string list; [@default []]
       fail_on : Fail_on.t; [@default Fail_on.Undefined]
       gate : Gate.t option; [@default None]
@@ -210,7 +208,7 @@ module Workflow_step : sig
 
   module Gates : sig
     type t = {
-      env : string String_map.t option;
+      env : string Sln_map.String.t option;
       cmd : Cmd.t;
       run_on : Run_on.t; [@default Run_on.Success]
     }
@@ -256,7 +254,7 @@ module Access_control : sig
     apply_require_all_dirspace_access : bool; [@default true]
     ci_config_update : Match_list.t; [@default [ Match.Any ]]
     enabled : bool; [@default true]
-    files : Match_list.t String_map.t; [@default String_map.empty]
+    files : Match_list.t Sln_map.String.t; [@default Sln_map.String.empty]
     plan_require_all_dirspace_access : bool; [@default false]
     policies : Policy_list.t; [@default [ Policy.make ~tag_query:Terrat_tag_query.any () ]]
     terrateam_config_update : Match_list.t; [@default [ Match.Any ]]
@@ -326,7 +324,7 @@ module Automerge : sig
       | Squash
     [@@deriving show, yojson, eq]
 
-    val make : string -> (t, [> `Merge_strategy_parse_err of string ]) result
+    val make : [< `Auto | `Merge | `Rebase | `Squash ] -> t
     val to_string : t -> string
   end
 
@@ -436,15 +434,15 @@ module Dirs : sig
       create_and_select_workspace : bool; [@default true]
       create_if_missing : bool; [@default false]
       lock_branch_target : Branch_target.t; [@default Branch_target.All]
-      stacks : Workspace.t String_map.t; [@default String_map.empty]
+      stacks : Workspace.t Sln_map.String.t; [@default Sln_map.String.empty]
       tags : string list; [@default []]
-      workspaces : Workspace.t String_map.t;
-          [@default String_map.of_list [ ("default", Workspace.make ()) ]]
+      workspaces : Workspace.t Sln_map.String.t;
+          [@default Sln_map.String.of_list [ ("default", Workspace.make ()) ]]
     }
     [@@deriving make, show, yojson, eq]
   end
 
-  type t = Dir.t String_map.t [@@deriving show, yojson, eq]
+  type t = Dir.t Sln_map.String.t [@@deriving show, yojson, eq]
 end
 
 module Drift : sig
@@ -482,14 +480,19 @@ module Drift : sig
 
   type t = {
     enabled : bool; [@default false]
-    schedules : Schedule.t String_map.t; [@default String_map.empty]
+    schedules : Schedule.t Sln_map.String.t; [@default Sln_map.String.empty]
   }
   [@@deriving make, show, yojson, eq]
 end
 
 module Engine : sig
+  module Tf_outputs : sig
+    type t = { collect : bool [@default true] } [@@deriving make, show, yojson, eq]
+  end
+
   module Cdktf : sig
     type t = {
+      outputs : Tf_outputs.t; [@default Tf_outputs.make ()]
       override_tf_cmd : string option;
       tf_cmd : string; [@default "terraform"]
       tf_version : string; [@default "latest"]
@@ -515,6 +518,7 @@ module Engine : sig
 
   module Opentofu : sig
     type t = {
+      outputs : Tf_outputs.t; [@default Tf_outputs.make ()]
       override_tf_cmd : string option;
       version : string option;
     }
@@ -523,6 +527,7 @@ module Engine : sig
 
   module Terraform : sig
     type t = {
+      outputs : Tf_outputs.t; [@default Tf_outputs.make ()]
       override_tf_cmd : string option;
       version : string option;
     }
@@ -531,6 +536,7 @@ module Engine : sig
 
   module Terragrunt : sig
     type t = {
+      outputs : Tf_outputs.t; [@default Tf_outputs.make ()]
       override_tf_cmd : string option;
       tf_cmd : string; [@default "terraform"]
       tf_version : string option;
@@ -646,14 +652,15 @@ module Stacks : sig
     type t = {
       type_ : Type_.t;
       rules : Rules.t; [@default Rules.make ()]
-      variables : string String_map.t; [@default String_map.empty]
+      variables : string Sln_map.String.t; [@default Sln_map.String.empty]
     }
     [@@deriving make, show, yojson, eq]
   end
 
   type t = {
-    names : Stack.t String_map.t;
-        [@default String_map.singleton "default" (Stack.make ~type_:(Type_.Stack Tag_query.any) ())]
+    names : Stack.t Sln_map.String.t;
+        [@default
+          Sln_map.String.singleton "default" (Stack.make ~type_:(Type_.Stack Tag_query.any) ())]
   }
   [@@deriving make, show, yojson, eq]
 end
@@ -696,12 +703,12 @@ end
 
 module Tags : sig
   module Branch : sig
-    type t = Pattern.t String_map.t [@@deriving show, yojson, eq]
+    type t = Pattern.t Sln_map.String.t [@@deriving show, yojson, eq]
   end
 
   type t = {
-    branch : Branch.t; [@default String_map.empty]
-    dest_branch : Branch.t; [@default String_map.empty]
+    branch : Branch.t; [@default Sln_map.String.empty]
+    dest_branch : Branch.t; [@default Sln_map.String.empty]
   }
   [@@deriving make, show, yojson, eq]
 end
@@ -774,7 +781,7 @@ module View : sig
     create_and_select_workspace : bool; [@default true]
     default_branch_overrides : Default_branch_overrides.t option; [@default None]
     destination_branches : Destination_branches.t; [@default []]
-    dirs : Dirs.t; [@default String_map.empty]
+    dirs : Dirs.t; [@default Sln_map.String.empty]
     drift : Drift.t; [@default Drift.make ()]
     enabled : bool; [@default true]
     engine : Engine.t; [@default Engine.(Terraform (Terraform.make ()))]
@@ -804,13 +811,14 @@ end
 
 module Index : sig
   module Dep : sig
-    type t = Module of string
+    type t = Module of string [@@deriving eq]
   end
 
   type t = {
-    deps : Dep.t list String_map.t;
+    deps : Dep.t list Sln_map.String.t;
     symlinks : (string * string) list;
   }
+  [@@deriving eq]
 
   val empty : t
   val make : symlinks:(string * string) list -> (string * Dep.t list) list -> t
@@ -836,22 +844,12 @@ type of_version_1_err =
   | `Apply_requirements_approved_any_of_match_parse_err of string
   | `Apply_requirements_check_tag_query_err of string * string
   | `Depends_on_err of string * string
-  | `Drift_schedule_err of string
   | `Drift_tag_query_err of string * string
   | `Glob_parse_err of string * string
-  | `Hooks_unknown_run_on_err of Terrat_repo_config_run_on.t
-  | `Hooks_unknown_visible_on_err of string
-  | `Merge_strategy_parse_err of string
   | `Notification_policy_tag_query_err of string * string
   | `Pattern_parse_err of string
   | `Stack_config_tag_query_err of string * string
-  | `Unknown_lock_policy_err of string
-  | `Unknown_plan_mode_err of string
   | `Window_parse_timezone_err of string
-  | `Workflows_apply_unknown_run_on_err of Terrat_repo_config_run_on.t
-  | `Workflows_apply_unknown_visible_on_err of string
-  | `Workflows_plan_unknown_run_on_err of Terrat_repo_config_run_on.t
-  | `Workflows_plan_unknown_visible_on_err of string
   | `Workflows_tag_query_parse_err of string * string
   ]
 [@@deriving show]
@@ -867,6 +865,12 @@ val to_view : 'a t -> View.t
 val default : raw t
 val of_version_1 : Terrat_repo_config.Version_1.t -> (raw t, [> of_version_1_err ]) result
 val of_version_1_json : Yojson.Safe.t -> (raw t, [> of_version_1_json_err ]) result
+
+(** In some cases it may be useful to store the derived version of the configuration as JSON, this
+    allows for reifying that directly to a derived type. This bypasses any checks or operations that
+    [derived] does, of course, so use with care. *)
+val of_version_1_json_derived : Yojson.Safe.t -> (derived t, [> of_version_1_json_err ]) result
+
 val to_version_1 : 'a t -> Terrat_repo_config.Version_1.t
 val merge_with_default_branch_config : default:'a t -> 'a t -> 'a t
 

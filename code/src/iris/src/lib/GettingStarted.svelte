@@ -43,7 +43,7 @@
   let hasInstallations = false;
   let hasConfiguredRepos = false;
   let recommendedPath: 'demo' | 'repo' = 'demo';
-  
+
   // Get current VCS provider terminology
   $: currentProvider = $currentVCSProvider || 'github';
   $: terminology = VCS_PROVIDERS[currentProvider]?.terminology || VCS_PROVIDERS.github.terminology;
@@ -168,7 +168,7 @@
 
       // Check user's current installations
       const provider = get(currentVCSProvider);
-      
+
       // For GitLab, check if we should show the setup wizard
       if (provider === 'gitlab') {
         try {
@@ -191,7 +191,7 @@
         installations = installationsResponse.installations;
         hasInstallations = installations.length > 0;
       }
-      
+
       // Initialize selected installation if we have installations
       if (hasInstallations && !selectedInstallation) {
         selectedInstallation = installations[0];
@@ -305,7 +305,7 @@
 
     window.open(url, '_blank');
   }
-  
+
 
   function openConfigurationWizard(): void {
     if (selectedInstallation) {
@@ -320,7 +320,7 @@
     if (step !== 'success') {
       demoStepCompleted[step] = true;
     }
-    
+
     // Track step completion
     analytics.track('getting_started_step_completed', {
       path: 'demo',
@@ -350,7 +350,7 @@
   function goToDemoStep(step: DemoStep): void {
     currentDemoStep = step;
   }
-  
+
   function goToGitLabDemoStep(step: GitLabDemoStep): void {
     currentGitLabDemoStep = step;
   }
@@ -388,7 +388,7 @@
     if (step !== 'success') {
       gitlabDemoStepCompleted[step] = true;
     }
-    
+
     // Track step completion
     analytics.track('getting_started_step_completed', {
       path: 'demo',
@@ -404,7 +404,7 @@
     if (currentIndex < steps.length - 1) {
       currentGitLabDemoStep = steps[currentIndex + 1];
     }
-    
+
     // Track completion of entire flow
     if (currentGitLabDemoStep === 'success') {
       const timeSpent = Math.round((Date.now() - startTime) / 1000);
@@ -436,14 +436,14 @@
       webhookSecret = 'Contact support for webhook secret';
     }
   }
-  
+
   async function checkWebhook(): Promise<void> {
     if (!selectedGitLabDemoGroup) return;
-    
+
     try {
       checkingWebhook = true;
       webhookVerificationError = null;
-      
+
       // Track webhook verification attempt
       analytics.track('getting_started_gitlab_webhook_check', {
         path: 'demo',
@@ -453,7 +453,7 @@
 
       const config = await api.getGitLabWebhookConfig(selectedGitLabDemoGroup.id.toString());
       const isActive = config.state === 'active';
-      
+
       if (isActive) {
         webhookVerificationError = null;
 
@@ -479,18 +479,18 @@
   async function checkAppInstallation(): Promise<void> {
     try {
       checkingAppInstallation = true;
-      
+
       // Track app installation check
       analytics.track('getting_started_check_installation', {
         path: 'demo',
         vcs_provider: currentProvider,
         had_installations_before: hasInstallations
       });
-      
+
       // Re-fetch installations to see if app was installed
       const installationsResponse = await api.getUserInstallations();
       const newInstallations = installationsResponse.installations;
-      
+
       // If we already had installations, just proceed
       if (hasInstallations && installations.length > 0) {
         markDemoStepComplete('install-app');
@@ -499,7 +499,7 @@
       else if (newInstallations.length > installations.length) {
         installations = newInstallations;
         hasInstallations = true;
-        
+
         // Track successful installation
         analytics.track('getting_started_app_installed', {
           path: 'demo',
@@ -524,7 +524,7 @@
     if (step !== 'success') {
       repoStepCompleted[step] = true;
     }
-    
+
     // Track step completion
     analytics.track('getting_started_step_completed', {
       path: 'repo',
@@ -533,14 +533,14 @@
       step_index: ['install-app', 'select-repo', 'add-workflow', 'configure', 'test'].indexOf(step) + 1,
       repository: selectedRepository?.name
     });
-    
+
     // Auto-advance to next step
     const steps: RepoStep[] = ['install-app', 'select-repo', 'add-workflow', 'configure', 'test', 'success'];
     const currentIndex = steps.indexOf(currentRepoStep);
     if (currentIndex < steps.length - 1) {
       currentRepoStep = steps[currentIndex + 1];
     }
-    
+
     // Track completion of entire flow
     if (currentRepoStep === 'success') {
       const timeSpent = Math.round((Date.now() - startTime) / 1000);
@@ -560,19 +560,19 @@
 
   async function loadRepositories(forceRefresh: boolean = false): Promise<void> {
     if (!selectedInstallation) return;
-    
+
     try {
       isLoadingRepos = true;
       repoLoadError = null;
-      
+
       // Load repositories from centralized service
       const result = await repositoryService.loadRepositories(selectedInstallation, forceRefresh);
       repositories = result.repositories;
-      
+
       if (result.error) {
         repoLoadError = result.error;
       }
-      
+
     } catch (error) {
       console.error('Failed to load repositories:', error);
       repoLoadError = 'Unable to load repositories. Please try again.';
@@ -583,24 +583,24 @@
 
   async function refreshRepositories(): Promise<void> {
     if (!selectedInstallation || isLoadingRepos) return;
-    
+
     try {
       isLoadingRepos = true;
       repoLoadError = null;
 
       // Call the refresh endpoint - this triggers a background job to sync with GitHub
       const refreshResponse = await api.refreshInstallationRepos(selectedInstallation.id);
-      
+
       // Poll the task status
       let attempts = 0;
       const maxAttempts = 30; // 30 seconds max
-      
+
       while (attempts < maxAttempts) {
         await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
-        
+
         try {
           const taskStatus = await api.getTask(refreshResponse.id);
-          
+
           if (taskStatus.state === 'completed') {
             // Refresh completed successfully, reload repositories with force refresh
             await loadRepositories(true);
@@ -612,10 +612,10 @@
           console.warn('Failed to check task status:', taskError);
           // Continue polling even if status check fails
         }
-        
+
         attempts++;
       }
-      
+
       if (attempts >= maxAttempts) {
         // Timeout - still reload repositories as they might have been updated
         await loadRepositories(true);
@@ -630,7 +630,7 @@
 
   function selectRepository(repo: Repository): void {
     selectedRepository = repo;
-    
+
     // Track repository selection
     analytics.track('getting_started_repository_selected', {
       path: 'repo',
@@ -639,7 +639,7 @@
       repository_setup_status: repo.setup ? 'complete' : 'pending',
       installation: selectedInstallation?.name
     });
-    
+
     markRepoStepComplete('select-repo');
   }
 
@@ -652,11 +652,11 @@
   async function checkRepoAppInstallation(): Promise<void> {
     try {
       checkingAppInstallation = true;
-      
+
       // Re-fetch installations to see if app was installed
       const installationsResponse = await api.getUserInstallations();
       const newInstallations = installationsResponse.installations;
-      
+
       // If we already had installations, just proceed
       if (hasInstallations && installations.length > 0) {
         markRepoStepComplete('install-app');
@@ -666,7 +666,7 @@
         installations = newInstallations;
         hasInstallations = true;
         markRepoStepComplete('install-app');
-        
+
         // Set the first installation as selected if none selected
         if (!selectedInstallation && newInstallations.length > 0) {
           selectedInstallation = newInstallations[0];
@@ -689,7 +689,7 @@
     if (step !== 'success') {
       gitlabStepCompleted[step] = true;
     }
-    
+
     // Track step completion
     analytics.track('getting_started_step_completed', {
       path: 'repo',
@@ -699,14 +699,14 @@
       group: selectedGitLabGroup?.name,
       repository: manualGitLabProject
     });
-    
+
     // Auto-advance to next step
     const steps: GitLabStep[] = ['select-group', 'select-repo', 'configure-webhook', 'push-test', 'submit-token', 'configure-variables', 'add-pipeline', 'success'];
     const currentIndex = steps.indexOf(currentGitLabStep);
     if (currentIndex < steps.length - 1) {
       currentGitLabStep = steps[currentIndex + 1];
     }
-    
+
     // Track completion of entire flow
     if (currentGitLabStep === 'success') {
       const timeSpent = Math.round((Date.now() - startTime) / 1000);
@@ -718,7 +718,7 @@
         repository: manualGitLabProject
       });
     }
-    
+
     // Load webhook config when entering configure-webhook step
     if (currentGitLabStep === 'configure-webhook' && selectedGitLabGroup) {
       loadGitLabWebhookConfig();
@@ -745,14 +745,14 @@
 
   function selectGitLabGroup(group: GitLabGroup): void {
     selectedGitLabGroup = group;
-    
+
     // Track group selection
     analytics.track('getting_started_gitlab_group_selected', {
       path: 'repo',
       vcs_provider: 'gitlab',
       group: group.name
     });
-    
+
     // Clear previously selected repo when group changes
     markGitLabStepComplete('select-group');
   }
@@ -760,14 +760,14 @@
 
   async function addGitLabProject(): Promise<void> {
     if (!manualGitLabProject.trim() || !selectedGitLabGroup) return;
-    
+
     try {
       isAddingGitLabProject = true;
-      
+
       // Construct the full repository path
       const repoName = manualGitLabProject.trim();
       const fullPath = `${selectedGitLabGroup.name}/${repoName}`;
-      
+
       // Track repository addition
       analytics.track('getting_started_gitlab_repo_added', {
         path: 'repo',
@@ -776,7 +776,7 @@
         repository: repoName,
         full_path: fullPath
       });
-      
+
       // Create a temporary repository object
       // In a real implementation, this would call an API to register the project
       const newRepo: Repository = {
@@ -786,7 +786,7 @@
         setup: false, // Will be set to true once webhook events are received
         updated_at: new Date().toISOString()
       };
-      
+
       // Add to the list if not already present
       const exists = gitlabRepos.some(r => r.name === newRepo.name);
       if (!exists) {
@@ -821,22 +821,22 @@
 
   async function checkPushTestStatus(): Promise<void> {
     if (!selectedGitLabGroup || !manualGitLabProject) return;
-    
+
     try {
       isCheckingPushTest = true;
       pushTestError = null;
 
       // First check if webhook is active
       const webhookConfig = await api.getGitLabWebhookConfig(selectedGitLabGroup.id.toString());
-      
+
       if (webhookConfig.state !== 'active') {
         pushTestError = 'Webhook configuration not active. Please ensure the webhook is properly configured.';
         return;
       }
-      
+
       // Clear repository cache and load fresh data
       repositoryService.clearCache(selectedGitLabGroup.id.toString());
-      
+
       // Create a fake installation object for the repository service
       const installation: Installation = {
         id: selectedGitLabGroup.id.toString(),
@@ -848,18 +848,18 @@
           features: {}
         }
       };
-      
+
       // Load repositories from API
       const result = await repositoryService.loadRepositories(installation, true);
-      
+
       // Use the manual project name for the regular GitLab flow
       const repoName = manualGitLabProject.trim();
-      
+
       // Check if the repository exists in the list
-      const repoExists = result.repositories.some(repo => 
+      const repoExists = result.repositories.some(repo =>
         repo.name.toLowerCase() === repoName.toLowerCase()
       );
-      
+
       if (repoExists) {
         pushTestSuccess = true;
         // Auto-advance after a short delay to show success message
@@ -879,22 +879,22 @@
 
   async function checkDemoPushTestStatus(): Promise<void> {
     if (!selectedGitLabDemoGroup || !forkedProjectPath) return;
-    
+
     try {
       isDemoCheckingPushTest = true;
       demoPushTestError = null;
 
       // First check if webhook is active
       const webhookConfig = await api.getGitLabWebhookConfig(selectedGitLabDemoGroup.id.toString());
-      
+
       if (webhookConfig.state !== 'active') {
         demoPushTestError = 'Webhook configuration not active. Please ensure the webhook is properly configured.';
         return;
       }
-      
+
       // Clear repository cache and load fresh data
       repositoryService.clearCache(selectedGitLabDemoGroup.id.toString());
-      
+
       // Create a fake installation object for the repository service
       const installation: Installation = {
         id: selectedGitLabDemoGroup.id.toString(),
@@ -906,18 +906,18 @@
           features: {}
         }
       };
-      
+
       // Load repositories from API
       const result = await repositoryService.loadRepositories(installation, true);
-      
+
       // Extract the repository name from the forked path (e.g., "groupname/kick-the-tires" -> "kick-the-tires")
       const repoName = forkedProjectPath.split('/').pop() || '';
-      
+
       // Check if the repository exists in the list
-      const repoExists = result.repositories.some(repo => 
+      const repoExists = result.repositories.some(repo =>
         repo.name.toLowerCase() === repoName.toLowerCase()
       );
-      
+
       if (repoExists) {
         demoPushTestSuccess = true;
         // Auto-advance after a short delay to show success message
@@ -939,7 +939,7 @@
   $: if (currentStep === 'gitlab-setup' && currentGitLabStep === 'select-group') {
     loadGitLabSetupGroups();
   }
-  
+
   async function submitGitLabAccessToken(): Promise<void> {
     if (!gitlabAccessToken.trim()) {
       gitlabTokenError = 'Please enter an access token';
@@ -1020,7 +1020,7 @@
 
 <PageLayout activeItem="getting-started" title="Getting Started">
   <div class="max-w-4xl mx-auto px-4 py-8">
-    
+
     <!-- Progress Bar -->
     <div class="mb-8">
       <div class="flex items-center justify-between mb-2">
@@ -1046,7 +1046,7 @@
         </span>
       </div>
       <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-        <div 
+        <div
           class="bg-blue-600 h-2 rounded-full transition-all duration-300 {
             currentStep === 'assessment' ? 'w-[10%]' :
             currentStep === 'path-selection' ? 'w-1/4' :
@@ -1067,7 +1067,7 @@
 
     <!-- Wizard Content -->
     <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
-      
+
       {#if currentStep === 'assessment'}
         <!-- Assessment Step -->
         <div class="text-center py-8 sm:py-12">
@@ -1076,7 +1076,7 @@
           </div>
           <h2 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Analyzing Your Setup</h2>
           <p class="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">We're checking your current Terrateam configuration...</p>
-          
+
           {#if isLoadingAssessment}
             <div class="flex items-center justify-center">
               <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -1092,30 +1092,30 @@
         <!-- Path Selection Step -->
         <div class="mb-6">
             <h2 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Choose Your Setup Path</h2>
-            
+
             <!-- Assessment Results -->
             {#if !assessmentError}
               <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
                 <h3 class="font-medium text-blue-900 dark:text-blue-100 mb-2">What we found:</h3>
                 <div class="space-y-1 text-sm text-blue-800 dark:text-blue-200">
                   <div class="flex items-center">
-                    <Icon icon={hasInstallations ? "mdi:check" : "mdi:close"} 
-                                  class={hasInstallations ? "text-green-600" : "text-gray-400"} 
+                    <Icon icon={hasInstallations ? "mdi:check" : "mdi:close"}
+                                  class={hasInstallations ? "text-green-600" : "text-gray-400"}
                                   width="16" />
                     <span class="ml-2">
                       {hasInstallations ? `Found ${installations.length} ${VCS_PROVIDERS[currentProvider].displayName} installation${installations.length > 1 ? 's' : ''}` : `No ${VCS_PROVIDERS[currentProvider].displayName} installations found`}
                     </span>
                   </div>
                   <div class="flex items-center">
-                    <Icon icon={hasConfiguredRepos ? "mdi:check" : "mdi:close"} 
-                                  class={hasConfiguredRepos ? "text-green-600" : "text-gray-400"} 
+                    <Icon icon={hasConfiguredRepos ? "mdi:check" : "mdi:close"}
+                                  class={hasConfiguredRepos ? "text-green-600" : "text-gray-400"}
                                   width="16" />
                     <span class="ml-2">
                       {hasConfiguredRepos ? 'Found configured repositories' : 'No configured repositories found'}
                     </span>
                   </div>
                 </div>
-                
+
                 {#if recommendedPath === 'demo'}
                   <p class="mt-3 text-sm font-medium text-blue-900 dark:text-blue-100 flex items-center">
                     <Icon icon="mdi:lightbulb" class="text-yellow-500 mr-2" width="16" />
@@ -1146,12 +1146,12 @@
                 <span class="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded-full font-medium">Recommended</span>
               {/if}
             </div>
-            
+
             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Try the Demo</h3>
             <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
               Learn Terrateam with a safe sandbox environment. No cloud credentials needed.
             </p>
-            
+
             <div class="space-y-2">
               <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
                 <Icon icon="mdi:check" class="text-green-500 mr-2" width="16" />
@@ -1181,12 +1181,12 @@
                 <span class="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded-full font-medium">Recommended</span>
               {/if}
             </div>
-            
+
             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Connect Your Repository</h3>
             <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">
               Set up Terrateam with your existing Terraform code and real infrastructure.
             </p>
-            
+
             <div class="space-y-2">
               <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
                 <Icon icon="mdi:check" class="text-green-500 mr-2" width="16" />
@@ -1235,12 +1235,12 @@
               ]) as stepInfo}
                 <div class="flex items-center {stepInfo.index < 4 ? 'flex-1' : ''}">
                   <div class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full text-xs sm:text-sm font-medium
-                              {currentDemoStep === stepInfo.step ? 'bg-blue-600 text-white' : 
+                              {currentDemoStep === stepInfo.step ? 'bg-blue-600 text-white' :
                                (stepInfo.step === 'fork' && demoStepCompleted.fork) ||
                                (stepInfo.step === 'enable-actions' && demoStepCompleted['enable-actions']) ||
                                (stepInfo.step === 'install-app' && demoStepCompleted['install-app']) ||
                                (stepInfo.step === 'make-changes' && demoStepCompleted['make-changes'])
-                               ? 'bg-green-600 text-white' : 
+                               ? 'bg-green-600 text-white' :
                                'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-400'}">
                     {#if (stepInfo.step === 'fork' && demoStepCompleted.fork) ||
                          (stepInfo.step === 'enable-actions' && demoStepCompleted['enable-actions']) ||
@@ -1281,7 +1281,7 @@
                   <p class="text-sm sm:text-base text-green-800 dark:text-green-200 mb-4 text-center sm:text-left">
                     Install the Terrateam GitHub App on your organization to enable Terraform automation.
                   </p>
-                  
+
                   {#if hasInstallations}
                     <div class="bg-green-100 dark:bg-green-900/30 rounded-lg p-3 sm:p-4 mb-4 border border-green-200 dark:border-green-700">
                       <div class="flex items-start sm:items-center">
@@ -1353,7 +1353,7 @@
                   <p class="text-sm sm:text-base text-blue-800 dark:text-blue-200 mb-4 text-center sm:text-left">
                     Fork our demo repository to your GitHub account. This gives you your own copy to experiment with.
                   </p>
-                  
+
                   <div class="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 mb-4 border border-blue-200 dark:border-blue-700">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                       <div class="flex-1 min-w-0">
@@ -1367,7 +1367,7 @@
                   <div class="flex flex-col sm:flex-row gap-3">
                     <button
                       on:click={() => {
-                        const repoUrl = currentProvider === 'gitlab' 
+                        const repoUrl = currentProvider === 'gitlab'
                           ? 'https://gitlab.com/terrateam-demo/kick-the-tires'
                           : 'https://github.com/terrateam-demo/kick-the-tires';
                         openExternalLink(repoUrl);
@@ -1407,7 +1407,7 @@
                   <p class="text-orange-800 dark:text-orange-200 mb-4">
                     Forked repositories disable workflows by default for security. Let's enable them.
                   </p>
-                  
+
                   <div class="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4 border border-orange-200 dark:border-orange-700">
                     <div class="space-y-2 text-sm">
                       <div class="flex items-center">
@@ -1456,7 +1456,7 @@
                   <p class="text-sm sm:text-base text-purple-800 dark:text-purple-200 mb-6 text-center sm:text-left">
                     Now let's make a change to see Terrateam in action! We'll edit a file and create a pull request.
                   </p>
-                  
+
                   <div class="bg-purple-50 dark:bg-purple-900/10 rounded-lg p-4 sm:p-5 mb-4 border border-purple-200 dark:border-purple-700">
                     <div class="space-y-6">
                       <div class="flex flex-col sm:flex-row sm:items-start gap-3">
@@ -1536,7 +1536,7 @@
               <p class="text-gray-600 dark:text-gray-400 mb-6">
                 You've successfully set up the Terrateam demo and seen how Terraform automation works with pull requests.
               </p>
-              
+
               <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-6 mb-6 max-w-md mx-auto">
                 <h4 class="font-semibold text-green-900 dark:text-green-100 mb-3">What you've learned:</h4>
                 <div class="space-y-2 text-sm text-green-800 dark:text-green-200">
@@ -1652,7 +1652,7 @@
                 <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
                   <p class="text-red-800 dark:text-red-200 text-sm">{gitlabGroupsError}</p>
                 </div>
-                <button 
+                <button
                   on:click={loadGitLabGroups}
                   class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
                 >
@@ -1679,8 +1679,8 @@
                     <button
                       on:click={() => selectGitLabDemoGroup(group)}
                       class="w-full text-left p-3 rounded-lg border transition-colors
-                             {selectedGitLabDemoGroup?.id === group.id 
-                               ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30' 
+                             {selectedGitLabDemoGroup?.id === group.id
+                               ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
                                : 'border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-gray-50 dark:hover:bg-gray-700'}"
                     >
                       <div class="flex items-center">
@@ -1719,7 +1719,7 @@
                         Fork Project
                       </button>
                     </div>
-                    
+
                     <div class="bg-blue-100 dark:bg-blue-900/30 rounded-lg p-4">
                       <label for="forked-project-path" class="block text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
                         After forking, enter your project path:
@@ -1732,7 +1732,7 @@
                         class="w-full px-3 py-2 border border-blue-300 dark:border-blue-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
-                    
+
                     <button
                       on:click={() => {
                         if (forkedProjectPath.trim()) {
@@ -1872,8 +1872,8 @@
                     <h4 class="font-semibold text-yellow-900 dark:text-yellow-100 mb-3 text-center sm:text-left">Instructions:</h4>
                     <ol class="list-decimal list-inside space-y-3 text-sm text-yellow-800 dark:text-yellow-200">
                       <li>
-                        <a 
-                          href="{serverConfig?.gitlab?.web_base_url || 'https://gitlab.com'}/{forkedProjectPath}/-/hooks" 
+                        <a
+                          href="{serverConfig?.gitlab?.web_base_url || 'https://gitlab.com'}/{forkedProjectPath}/-/hooks"
                           target="_blank"
                           rel="noopener noreferrer"
                           class="inline-flex items-center font-medium text-yellow-700 dark:text-yellow-300 underline hover:text-yellow-600 dark:hover:text-yellow-200 break-words"
@@ -1946,7 +1946,7 @@
                   <p class="text-sm sm:text-base text-indigo-800 dark:text-indigo-200 mb-6 text-center sm:text-left">
                     Let's verify the webhook is properly configured by triggering a test event.
                   </p>
-                  
+
                   <div class="bg-white dark:bg-gray-800 rounded-lg p-4 sm:p-5 mb-4 border border-indigo-200 dark:border-indigo-700">
                     <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-3 text-center sm:text-left">Instructions:</h4>
                     <ol class="list-decimal list-inside space-y-3 text-sm sm:text-base text-gray-700 dark:text-gray-300">
@@ -1954,8 +1954,8 @@
                         Navigate to your repository settings
                         {#if forkedProjectPath}
                           <div class="mt-1 ml-5">
-                            <a 
-                              href="https://gitlab.com/{forkedProjectPath}/-/hooks" 
+                            <a
+                              href="https://gitlab.com/{forkedProjectPath}/-/hooks"
                               target="_blank"
                               rel="noopener noreferrer"
                               class="inline-flex items-center text-indigo-600 dark:text-indigo-400 hover:underline text-xs"
@@ -2032,8 +2032,8 @@
                     <h4 class="font-semibold text-purple-900 dark:text-purple-100 mb-3 text-center sm:text-left">Instructions:</h4>
                     <ol class="list-decimal list-inside space-y-3 text-sm sm:text-base text-purple-800 dark:text-purple-200">
                       <li>
-                        <a 
-                          href="https://gitlab.com/{forkedProjectPath}/-/settings/ci_cd" 
+                        <a
+                          href="https://gitlab.com/{forkedProjectPath}/-/settings/ci_cd"
                           target="_blank"
                           rel="noopener noreferrer"
                           class="inline-flex items-center font-medium text-purple-700 dark:text-purple-300 underline hover:text-purple-600 dark:hover:text-purple-200 break-words"
@@ -2088,9 +2088,9 @@
                 <div class="flex-1">
                   <h3 class="text-lg sm:text-xl font-semibold text-purple-900 dark:text-purple-100 mb-3 text-center sm:text-left">Make Your First Change</h3>
                   <p class="text-sm sm:text-base text-purple-800 dark:text-purple-200 mb-6 text-center sm:text-left">
-                    Now let's make a change to see Terrateam in action! We'll edit a file and create a merge request in your 
-                    <a 
-                      href="https://gitlab.com/{forkedProjectPath}" 
+                    Now let's make a change to see Terrateam in action! We'll edit a file and create a merge request in your
+                    <a
+                      href="https://gitlab.com/{forkedProjectPath}"
                       target="_blank"
                       rel="noopener noreferrer"
                       class="font-medium text-purple-700 dark:text-purple-300 underline hover:text-purple-600 dark:hover:text-purple-200"
@@ -2098,16 +2098,16 @@
                       forked repository
                     </a>.
                   </p>
-                  
+
                   <div class="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4 border border-purple-200 dark:border-purple-700">
                     <div class="space-y-3 text-sm">
                       <div class="flex items-start">
                         <Icon icon="mdi:numeric-1-circle" class="text-purple-600 mr-2 mt-0.5" width="16" />
                         <div>
                           <div class="text-gray-700 dark:text-gray-300">
-                            Edit 
-                            <a 
-                              href="https://gitlab.com/{forkedProjectPath}/-/edit/main/dev/main.tf" 
+                            Edit
+                            <a
+                              href="https://gitlab.com/{forkedProjectPath}/-/edit/main/dev/main.tf"
                               target="_blank"
                               rel="noopener noreferrer"
                               class="inline-flex items-center font-mono bg-purple-100 dark:bg-purple-900/30 px-2 py-0.5 rounded text-purple-700 dark:text-purple-300 underline hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
@@ -2166,16 +2166,16 @@
               <div class="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full mb-6">
                 <Icon icon="mdi:check-circle" class="text-green-600 dark:text-green-400" width="32" />
               </div>
-              
+
               <h3 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center justify-center">
                 <Icon icon="mdi:party-popper" class="mr-2 text-green-600 dark:text-green-400" width="28" />
                 GitLab Demo Complete!
               </h3>
-              
+
               <p class="text-gray-600 dark:text-gray-400 mb-6">
                 You've successfully set up the Terrateam demo and seen how Terraform automation works with GitLab merge requests.
               </p>
-              
+
               <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-6 mb-6 max-w-md mx-auto">
                 <h4 class="font-semibold text-green-900 dark:text-green-100 mb-3">What you've learned:</h4>
                 <div class="space-y-2 text-sm text-green-800 dark:text-green-200">
@@ -2243,13 +2243,13 @@
               ] as stepInfo}
                 <div class="flex items-center {stepInfo.index < 5 ? 'flex-1' : ''}">
                   <div class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full text-xs sm:text-sm font-medium
-                              {currentRepoStep === stepInfo.step ? 'bg-blue-600 text-white' : 
+                              {currentRepoStep === stepInfo.step ? 'bg-blue-600 text-white' :
                                (stepInfo.step === 'install-app' && repoStepCompleted['install-app']) ||
                                (stepInfo.step === 'select-repo' && repoStepCompleted['select-repo']) ||
                                (stepInfo.step === 'add-workflow' && repoStepCompleted['add-workflow']) ||
                                (stepInfo.step === 'configure' && repoStepCompleted.configure) ||
                                (stepInfo.step === 'test' && repoStepCompleted.test)
-                               ? 'bg-green-600 text-white' : 
+                               ? 'bg-green-600 text-white' :
                                'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-400'}">
                     {#if (stepInfo.step === 'install-app' && repoStepCompleted['install-app']) ||
                          (stepInfo.step === 'select-repo' && repoStepCompleted['select-repo']) ||
@@ -2292,7 +2292,7 @@
                   <p class="text-sm sm:text-base text-green-800 dark:text-green-200 mb-4 text-center sm:text-left">
                     Install the Terrateam GitHub App on your organization to enable Terraform automation.
                   </p>
-                  
+
                   {#if hasInstallations}
                     <div class="bg-green-100 dark:bg-green-900/30 rounded-lg p-3 sm:p-4 mb-4 border border-green-200 dark:border-green-700">
                       <div class="flex items-start sm:items-center">
@@ -2364,11 +2364,11 @@
                   <p class="text-blue-800 dark:text-blue-200 mb-4">
                     Choose the repository where you want to enable Terrateam automation.
                   </p>
-                  
+
                   {#if installations.length > 1}
                     <div class="mb-4">
                       <label for="organization-select" class="block text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">{VCS_PROVIDERS[currentProvider].displayName} {terminology.organization}:</label>
-                      <select 
+                      <select
                         id="organization-select"
                         bind:value={selectedInstallationId}
                         on:change={() => {
@@ -2407,7 +2407,7 @@
                           {isLoadingRepos ? 'Refreshing...' : 'Refresh'}
                         </button>
                       </div>
-                      
+
                       <div class="bg-blue-100 dark:bg-blue-900/30 rounded-lg p-3 mb-3 border border-blue-200 dark:border-blue-700">
                         <div class="flex items-start">
                           <Icon icon="mdi:information" class="text-blue-600 dark:text-blue-400 mr-2 mt-0.5" width="16" />
@@ -2417,7 +2417,7 @@
                           </div>
                         </div>
                       </div>
-                      
+
                       {#if isLoadingRepos}
                         <div class="flex items-center justify-center p-8">
                           <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
@@ -2501,7 +2501,7 @@
                   <p class="text-sm sm:text-base text-orange-800 dark:text-orange-200 mb-6 text-center sm:text-left">
                     Add the Terrateam workflow file to your repository's default branch to enable automation.
                   </p>
-                  
+
                   <div class="bg-orange-50 dark:bg-orange-900/10 rounded-lg p-4 sm:p-5 mb-4 border border-orange-200 dark:border-orange-700">
                     <div class="space-y-6">
                       <div class="flex flex-col sm:flex-row sm:items-start gap-3">
@@ -2515,7 +2515,7 @@
                           </div>
                         </div>
                       </div>
-                      
+
                       <div class="flex flex-col sm:flex-row sm:items-start gap-3">
                         <div class="flex-shrink-0 flex justify-center sm:block">
                           <div class="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white text-sm font-bold">2</div>
@@ -2531,7 +2531,7 @@
                           </div>
                         </div>
                       </div>
-                      
+
                       <div class="flex flex-col sm:flex-row sm:items-start gap-3">
                         <div class="flex-shrink-0 flex justify-center sm:block">
                           <div class="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white text-sm font-bold">3</div>
@@ -2547,7 +2547,7 @@
                           </div>
                         </div>
                       </div>
-                      
+
                       <div class="flex flex-col sm:flex-row sm:items-start gap-3">
                         <div class="flex-shrink-0 flex justify-center sm:block">
                           <div class="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white text-sm font-bold">4</div>
@@ -2599,7 +2599,7 @@
                   <p class="text-sm sm:text-base text-purple-800 dark:text-purple-200 mb-4 text-center sm:text-left">
                     Set up cloud provider credentials so Terrateam can manage your infrastructure.
                   </p>
-                  
+
                   <div class="bg-purple-50 dark:bg-purple-900/10 rounded-lg p-3 sm:p-4 mb-4 border border-purple-200 dark:border-purple-700">
                     <div class="space-y-4">
                       <div class="flex items-start">
@@ -2609,7 +2609,7 @@
                           <div class="text-gray-600 dark:text-gray-400 text-xs">Settings → Secrets and variables → Actions</div>
                         </div>
                       </div>
-                      
+
                       <div class="flex items-start">
                         <div class="flex-shrink-0 w-7 h-7 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold mr-3 mt-0.5">2</div>
                         <div class="flex-1">
@@ -2632,7 +2632,7 @@
                           </div>
                         </div>
                       </div>
-                      
+
                       <div class="flex items-start">
                         <div class="flex-shrink-0 w-7 h-7 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold mr-3 mt-0.5">3</div>
                         <div class="flex-1">
@@ -2683,7 +2683,7 @@
                   <p class="text-sm sm:text-base text-teal-800 dark:text-teal-200 mb-4 text-center sm:text-left">
                     Let's test your Terrateam setup by making a change and creating a pull request.
                   </p>
-                  
+
                   <div class="bg-teal-50 dark:bg-teal-900/10 rounded-lg p-3 sm:p-4 mb-4 border border-teal-200 dark:border-teal-700">
                     <div class="space-y-4">
                       <div class="flex items-start">
@@ -2693,7 +2693,7 @@
                           <div class="text-gray-600 dark:text-gray-400 text-xs">Even a small comment change will work for testing</div>
                         </div>
                       </div>
-                      
+
                       <div class="flex items-start">
                         <div class="flex-shrink-0 w-7 h-7 bg-teal-600 rounded-full flex items-center justify-center text-white text-xs font-bold mr-3 mt-0.5">2</div>
                         <div class="flex-1 min-w-0">
@@ -2708,7 +2708,7 @@
                           </div>
                         </div>
                       </div>
-                      
+
                       <div class="flex items-start">
                         <div class="flex-shrink-0 w-7 h-7 bg-teal-600 rounded-full flex items-center justify-center text-white text-xs font-bold mr-3 mt-0.5">3</div>
                         <div class="flex-1">
@@ -2716,7 +2716,7 @@
                           <div class="text-gray-600 dark:text-gray-400 text-xs">Terrateam should automatically comment with the terraform plan!</div>
                         </div>
                       </div>
-                      
+
                       <div class="flex items-start">
                         <div class="flex-shrink-0 w-7 h-7 bg-teal-600 rounded-full flex items-center justify-center text-white text-xs font-bold mr-3 mt-0.5">4</div>
                         <div class="flex-1">
@@ -2767,7 +2767,7 @@
                 <strong class="text-blue-600 dark:text-blue-400 break-all">{selectedRepository?.name}</strong>.<br class="sm:hidden">
                 You're ready to automate your Terraform workflows!
               </p>
-              
+
               <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-6 mb-6 max-w-md mx-auto">
                 <h4 class="font-semibold text-green-900 dark:text-green-100 mb-3">What you've set up:</h4>
                 <div class="space-y-2 text-sm text-green-800 dark:text-green-200">
@@ -2796,7 +2796,7 @@
                   Ready for Advanced Configuration?
                 </h4>
                 <p class="text-sm text-blue-800 dark:text-blue-200 mb-4">
-                  Take your Terrateam setup to the next level with our Configuration Wizard. 
+                  Take your Terrateam setup to the next level with our Configuration Wizard.
                   Generate custom workflows, set up advanced features, and optimize for your specific use case.
                 </p>
                 <button
@@ -2899,7 +2899,7 @@
                   <p class="text-blue-800 dark:text-blue-200 mb-4">
                     Choose the GitLab group where you want to connect your repository.
                   </p>
-                  
+
                   {#if isLoadingGitLabSetupGroups}
                     <div class="flex items-center justify-center p-8">
                       <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
@@ -2940,7 +2940,7 @@
                         </button>
                       {/each}
                     </div>
-                    
+
                     {#if selectedGitLabGroup}
                       <div class="flex items-center space-x-3">
                         <button
@@ -2969,7 +2969,7 @@
                   <p class="text-green-800 dark:text-green-200 mb-4">
                     Choose the repository where you want to enable Terrateam automation.
                   </p>
-                  
+
                   {#if selectedGitLabGroup}
                     <div class="bg-green-100 dark:bg-green-900/30 rounded-lg p-3 mb-4 border border-green-200 dark:border-green-700">
                       <div class="flex items-center">
@@ -2977,7 +2977,7 @@
                         <span class="text-green-800 dark:text-green-200 font-medium">{selectedGitLabGroup.name}</span>
                       </div>
                     </div>
-                    
+
                     <div class="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4 border border-green-200 dark:border-green-700">
                       <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Add Repository</h4>
                       <div class="space-y-3">
@@ -3151,8 +3151,8 @@
                     <h4 class="font-medium text-yellow-900 dark:text-yellow-100 mb-2">Instructions:</h4>
                     <ol class="list-decimal list-inside space-y-2 text-sm text-yellow-800 dark:text-yellow-200">
                       <li>
-                        <a 
-                          href="{serverConfig?.gitlab?.web_base_url || 'https://gitlab.com'}/{selectedGitLabGroup?.name || ''}/{manualGitLabProject || ''}/-/hooks" 
+                        <a
+                          href="{serverConfig?.gitlab?.web_base_url || 'https://gitlab.com'}/{selectedGitLabGroup?.name || ''}/{manualGitLabProject || ''}/-/hooks"
                           target="_blank"
                           rel="noopener noreferrer"
                           class="inline-flex items-center font-medium text-yellow-700 dark:text-yellow-300 underline hover:text-yellow-600 dark:hover:text-yellow-200"
@@ -3225,7 +3225,7 @@
                   <p class="text-indigo-800 dark:text-indigo-200 mb-4">
                     Let's verify the webhook is properly configured by triggering a test event.
                   </p>
-                  
+
                   <div class="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4 border border-indigo-200 dark:border-indigo-700">
                     <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-3">Instructions:</h4>
                     <ol class="list-decimal list-inside space-y-2 text-sm text-gray-700 dark:text-gray-300">
@@ -3233,8 +3233,8 @@
                         Navigate to your repository settings
                         {#if selectedGitLabGroup && manualGitLabProject}
                           <div class="mt-1 ml-5">
-                            <a 
-                              href="https://gitlab.com/{selectedGitLabGroup.name}/{manualGitLabProject}/-/hooks" 
+                            <a
+                              href="https://gitlab.com/{selectedGitLabGroup.name}/{manualGitLabProject}/-/hooks"
                               target="_blank"
                               rel="noopener noreferrer"
                               class="inline-flex items-center text-indigo-600 dark:text-indigo-400 hover:underline text-xs"
@@ -3304,7 +3304,7 @@
                   <p class="text-purple-800 dark:text-purple-200 mb-4">
                     Configure project settings to allow Terrateam to pass credentials securely to your Terraform runs.
                   </p>
-                  
+
                   <div class="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4 border border-purple-200 dark:border-purple-700">
                     <div class="space-y-3 text-sm">
                       <div class="flex items-start">
@@ -3313,8 +3313,8 @@
                           <div class="text-gray-700 dark:text-gray-300">Go to your GitLab project CI/CD settings</div>
                           <div class="text-gray-500 dark:text-gray-400 text-xs">
                             {#if selectedGitLabGroup && manualGitLabProject}
-                              <a 
-                                href="https://gitlab.com/{selectedGitLabGroup.name}/{manualGitLabProject}/-/settings/ci_cd" 
+                              <a
+                                href="https://gitlab.com/{selectedGitLabGroup.name}/{manualGitLabProject}/-/settings/ci_cd"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 class="inline-flex items-center text-purple-600 dark:text-purple-400 hover:underline"
@@ -3328,21 +3328,21 @@
                           </div>
                         </div>
                       </div>
-                      
+
                       <div class="flex items-start">
                         <Icon icon="mdi:numeric-2-circle" class="text-purple-600 mr-2 mt-0.5" width="16" />
                         <div>
                           <div class="text-gray-700 dark:text-gray-300">Expand the <strong>Variables</strong> section</div>
                         </div>
                       </div>
-                      
+
                       <div class="flex items-start">
                         <Icon icon="mdi:numeric-3-circle" class="text-purple-600 mr-2 mt-0.5" width="16" />
                         <div>
                           <div class="text-gray-700 dark:text-gray-300">Find <strong>"Minimum role to use pipeline variables"</strong></div>
                         </div>
                       </div>
-                      
+
                       <div class="flex items-start">
                         <Icon icon="mdi:numeric-4-circle" class="text-purple-600 mr-2 mt-0.5" width="16" />
                         <div>
@@ -3350,7 +3350,7 @@
                           <div class="text-gray-500 dark:text-gray-400 text-xs">This allows Terrateam to use pipeline variables</div>
                         </div>
                       </div>
-                      
+
                       <div class="flex items-start">
                         <Icon icon="mdi:numeric-5-circle" class="text-purple-600 mr-2 mt-0.5" width="16" />
                         <div>
@@ -3400,17 +3400,17 @@
                   <p class="text-teal-800 dark:text-teal-200 mb-4">
                     Add the Terrateam CI/CD template to your repository to enable Terraform automation.
                   </p>
-                  
+
                   <div class="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4 border border-teal-200 dark:border-teal-700">
                     <div class="space-y-3 text-sm">
                       <div class="flex items-start">
                         <Icon icon="mdi:numeric-1-circle" class="text-teal-600 mr-2 mt-0.5" width="16" />
                         <div>
                           <div class="text-gray-700 dark:text-gray-300">
-                            Create or edit <code class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">.gitlab-ci.yml</code> in 
+                            Create or edit <code class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">.gitlab-ci.yml</code> in
                             {#if selectedGitLabGroup && manualGitLabProject}
-                              <a 
-                                href="https://gitlab.com/{selectedGitLabGroup.name}/{manualGitLabProject}" 
+                              <a
+                                href="https://gitlab.com/{selectedGitLabGroup.name}/{manualGitLabProject}"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 class="inline-flex items-center font-medium text-teal-700 dark:text-teal-300 underline hover:text-teal-600 dark:hover:text-teal-200"
@@ -3424,7 +3424,7 @@
                           </div>
                         </div>
                       </div>
-                      
+
                       <div class="flex items-start">
                         <Icon icon="mdi:numeric-2-circle" class="text-teal-600 mr-2 mt-0.5" width="16" />
                         <div>
@@ -3433,10 +3433,33 @@
                             <button
                               on:click={() => {
                                 const yamlContent = `# .gitlab-ci.yml - Using the terrateam template
-
+spec:
+  inputs:
+    TERRATEAM_TRIGGER:
+      description: "Is this being triggered by terrateam?"
+      type: string
+      default: "$TERRATEAM_TRIGGER"
+    WORK_TOKEN:
+      description: "The work token from terrateam"
+      type: string
+      default: "$WORK_TOKEN"
+    API_BASE_URL:
+      description: "The base url for the terrateam api"
+      type: string
+      default: "$API_BASE_URL"
+    RUNS_ON:
+      description: "The tags to use for the runner"
+      type: array
+      default: []
+---
 include:
   - project: 'terrateam-io/terrateam-template'
     file: 'terrateam-template.yml'
+    inputs:
+      TERRATEAM_TRIGGER: $[[ inputs.TERRATEAM_TRIGGER ]]
+      WORK_TOKEN: $[[ inputs.WORK_TOKEN ]]
+      API_BASE_URL: $[[ inputs.API_BASE_URL ]]
+      RUNS_ON: $[[ inputs.RUNS_ON ]]
 
 stages:
   - terrateam
@@ -3453,10 +3476,33 @@ terrateam_job:
                               {copiedYaml ? 'Copied!' : 'Copy'}
                             </button>
                             <pre class="text-xs text-gray-800 dark:text-gray-200 overflow-x-auto pr-16"><code># .gitlab-ci.yml - Using the terrateam template
-
+spec:
+  inputs:
+    TERRATEAM_TRIGGER:
+      description: "Is this being triggered by terrateam?"
+      type: string
+      default: "$TERRATEAM_TRIGGER"
+    WORK_TOKEN:
+      description: "The work token from terrateam"
+      type: string
+      default: "$WORK_TOKEN"
+    API_BASE_URL:
+      description: "The base url for the terrateam api"
+      type: string
+      default: "$API_BASE_URL"
+    RUNS_ON:
+      description: "The tags to use for the runner"
+      type: array
+      default: []
+---
 include:
   - project: 'terrateam-io/terrateam-template'
     file: 'terrateam-template.yml'
+    inputs:
+      TERRATEAM_TRIGGER: $[[ inputs.TERRATEAM_TRIGGER ]]
+      WORK_TOKEN: $[[ inputs.WORK_TOKEN ]]
+      API_BASE_URL: $[[ inputs.API_BASE_URL ]]
+      RUNS_ON: $[[ inputs.RUNS_ON ]]
 
 stages:
   - terrateam
@@ -3466,7 +3512,7 @@ terrateam_job:
                           </div>
                         </div>
                       </div>
-                      
+
                       <div class="flex items-start">
                         <Icon icon="mdi:numeric-3-circle" class="text-teal-600 mr-2 mt-0.5" width="16" />
                         <div>
@@ -3515,7 +3561,7 @@ terrateam_job:
               <p class="text-gray-600 dark:text-gray-400 mb-6">
                 Terrateam is now configured for <strong>{selectedGitLabGroup?.name || 'your GitLab group'}</strong>. You're ready to automate your Terraform workflows!
               </p>
-              
+
               <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-6 mb-6 max-w-md mx-auto">
                 <h4 class="font-semibold text-green-900 dark:text-green-100 mb-3">What you've set up:</h4>
                 <div class="space-y-2 text-sm text-green-800 dark:text-green-200">
@@ -3560,21 +3606,21 @@ terrateam_job:
           {/if}
         </div>
       {/if}
-      
+
     </div>
 
     <!-- Help Section -->
     <div class="text-center mt-8">
       <p class="text-sm text-gray-500 dark:text-gray-400">
-        Need help? Check the 
-        <button 
+        Need help? Check the
+        <button
           on:click={() => openExternalLink('https://docs.terrateam.io/')}
           class="text-blue-600 dark:text-blue-400 hover:underline"
         >
           documentation
-        </button> 
-        or get help on 
-        <button 
+        </button>
+        or get help on
+        <button
           on:click={() => openExternalLink('https://terrateam.io/slack')}
           class="text-blue-600 dark:text-blue-400 hover:underline"
         >
@@ -3582,6 +3628,6 @@ terrateam_job:
         </button>.
       </p>
     </div>
-    
+
   </div>
 </PageLayout>

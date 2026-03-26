@@ -1,12 +1,22 @@
 module Primary = struct
   module Validity = struct
     let t_of_yojson = function
-      | `String "active" -> Ok "active"
-      | `String "inactive" -> Ok "inactive"
-      | `String "unknown" -> Ok "unknown"
+      | `String "active" -> Ok `Active
+      | `String "inactive" -> Ok `Inactive
+      | `String "unknown" -> Ok `Unknown
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Active -> `String "active"
+      | `Inactive -> `String "inactive"
+      | `Unknown -> `String "unknown"
+
+    type t =
+      ([ `Active
+       | `Inactive
+       | `Unknown
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 

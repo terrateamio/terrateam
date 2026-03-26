@@ -3,6 +3,7 @@ module Make (P : Terrat_vcs_provider2_github.S) : sig
     val post :
       P.Api.Config.t ->
       Terrat_storage.t ->
+      Terrat_vcs_event_evaluator2.Exec.t ->
       Uuidm.t ->
       Terrat_api_work_manifest.Initiate.Request_body.t ->
       Brtl_rtng.Handler.t
@@ -24,6 +25,7 @@ module Make (P : Terrat_vcs_provider2_github.S) : sig
     val put :
       P.Api.Config.t ->
       Terrat_storage.t ->
+      Terrat_vcs_event_evaluator2.Exec.t ->
       Uuidm.t ->
       Terrat_api_work_manifest.Results.Request_body.t ->
       Brtl_rtng.Handler.t

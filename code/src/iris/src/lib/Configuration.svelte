@@ -9,6 +9,7 @@
   
   // Import our configuration engine
   import { generateConfig, getSecretsForProvider, CONFIG_PRESETS, type ConfigBuilderOptions } from './ConfigurationEngine';
+  import { EXTERNAL_URLS } from './constants';
   
   // Register YAML language
   hljs.registerLanguage('yaml', yamlLang);
@@ -235,20 +236,20 @@
         <div class="mb-6 sm:mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-5 sm:p-6 border border-blue-200 dark:border-blue-800">
           <div class="flex flex-col items-center text-center gap-4">
             <div class="w-14 h-14 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
-              <Icon icon="mdi:headset" width="28" height="28" class="text-blue-600 dark:text-blue-400" />
+              <Icon icon="mdi:slack" width="28" height="28" class="text-blue-600 dark:text-blue-400" />
             </div>
             <div class="max-w-lg">
               <h3 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Need help getting started?</h3>
               <p class="text-sm sm:text-base text-gray-600 dark:text-gray-400 leading-relaxed">
-                We offer <span class="font-semibold text-blue-600 dark:text-blue-400">free onboarding support calls</span> to help you configure Terrateam for your specific needs.
+                Join our <span class="font-semibold text-blue-600 dark:text-blue-400">Slack community</span> to get instant help from Terrateam engineers and connect with other users.
               </p>
             </div>
-            <button 
-              on:click={() => window.open('https://calendly.com/terrateam/30-minute-chat', '_blank')}
+            <button
+              on:click={() => window.open(EXTERNAL_URLS.SLACK, '_blank')}
               class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm sm:text-base rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
             >
-              <Icon icon="mdi:calendar-clock" width="20" height="20" class="mr-2" />
-              Schedule a Call
+              <Icon icon="mdi:slack" width="20" height="20" class="mr-2" />
+              Join Slack Community
             </button>
           </div>
         </div>
@@ -1215,18 +1216,11 @@
                 View documentation
               </button>
               <span class="hidden sm:inline mx-1 md:mx-2 text-blue-600 dark:text-blue-400">·</span>
-              <button 
-                on:click={() => openDocumentation('https://terrateam.io/slack')}
+              <button
+                on:click={() => window.open(EXTERNAL_URLS.SLACK, '_blank')}
                 class="text-xs md:text-sm text-blue-700 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100 underline"
               >
                 Get help on Slack
-              </button>
-              <span class="hidden sm:inline mx-1 md:mx-2 text-blue-600 dark:text-blue-400">·</span>
-              <button 
-                on:click={() => window.open('https://calendly.com/terrateam/30-minute-chat', '_blank')}
-                class="text-xs md:text-sm text-blue-700 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100 underline"
-              >
-                Schedule free onboarding call
               </button>
             </div>
           </div>

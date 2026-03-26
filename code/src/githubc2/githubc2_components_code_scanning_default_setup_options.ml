@@ -1,12 +1,22 @@
 module Primary = struct
   module Runner_type = struct
     let t_of_yojson = function
-      | `String "standard" -> Ok "standard"
-      | `String "labeled" -> Ok "labeled"
-      | `String "not_set" -> Ok "not_set"
+      | `String "labeled" -> Ok `Labeled
+      | `String "not_set" -> Ok `Not_set
+      | `String "standard" -> Ok `Standard
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Labeled -> `String "labeled"
+      | `Not_set -> `String "not_set"
+      | `Standard -> `String "standard"
+
+    type t =
+      ([ `Labeled
+       | `Not_set
+       | `Standard
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 

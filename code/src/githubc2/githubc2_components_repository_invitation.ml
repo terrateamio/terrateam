@@ -1,14 +1,28 @@
 module Primary = struct
   module Permissions = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
-      | `String "admin" -> Ok "admin"
-      | `String "triage" -> Ok "triage"
-      | `String "maintain" -> Ok "maintain"
+      | `String "admin" -> Ok `Admin
+      | `String "maintain" -> Ok `Maintain
+      | `String "read" -> Ok `Read
+      | `String "triage" -> Ok `Triage
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Admin -> `String "admin"
+      | `Maintain -> `String "maintain"
+      | `Read -> `String "read"
+      | `Triage -> `String "triage"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Admin
+       | `Maintain
+       | `Read
+       | `Triage
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 

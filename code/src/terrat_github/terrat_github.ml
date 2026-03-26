@@ -96,6 +96,13 @@ type fetch_pull_request_err =
   ]
 [@@deriving show]
 
+type fetch_diff_files_err =
+  [ Githubc2_abb.call_err
+  | `Not_found of Githubc2_components.Basic_error.t
+  | `Internal_server_error of Githubc2_components.Basic_error.t
+  ]
+[@@deriving show]
+
 type fetch_repo_err =
   [ Githubc2_abb.call_err
   | `Moved_permanently of Githubc2_repos.Get.Responses.Moved_permanently.t
@@ -144,6 +151,7 @@ type get_tree_err =
 
 type get_team_membership_in_org_err = Githubc2_abb.call_err [@@deriving show]
 type get_repo_collaborator_permission_err = Githubc2_abb.call_err [@@deriving show]
+type get_org_membership_err = Githubc2_abb.call_err [@@deriving show]
 
 let max_get_tree_chunks = 20
 
@@ -327,6 +335,21 @@ let fetch_pull_request_files ~owner ~repo ~pull_number client =
     client
     Githubc2_pulls.List_files.(make (Parameters.make ~per_page:100 ~owner ~pull_number ~repo ()))
 
+let fetch_diff_files ~owner ~repo ~base_ref ~branch_ref client =
+  let module R = Githubc2_repos.Compare_commits.Responses in
+  Prmths.Counter.inc_one (Metrics.fn_call_total "fetch_diff_files");
+  Githubc2_abb.fold
+    client
+    ~init:[]
+    ~f:(fun acc resp ->
+      let module C = Githubc2_components.Commit_comparison in
+      match Openapi.Response.value resp with
+      | `OK { C.primary = { C.Primary.files; _ }; _ } ->
+          Abb.Future.return (Ok (CCOption.get_or ~default:[] files @ acc))
+      | (`Not_found _ | `Internal_server_error _) as err -> Abb.Future.return (Error err))
+    Githubc2_repos.Compare_commits.(
+      make Parameters.(make ~owner ~repo ~base:base_ref ~head:branch_ref ~per_page:250 ()))
+
 let fetch_pull_request ~owner ~repo ~pull_number client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "fetch_pull_request");
   let open Abbs_future_combinators.Infix_result_monad in
@@ -369,7 +392,6 @@ let get_installation_repos client =
 
 let list_workflows ~owner ~repo client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "list_workflow");
-  let open Abbs_future_combinators.Infix_result_monad in
   Githubc2_abb.fold
     client
     ~init:[]
@@ -531,7 +553,7 @@ let minimize_comment ~owner ~repo ~comment_id client =
           | `Not_found -> Abb.Future.return (Error `Not_found)))
   | `Not_found _ -> Abb.Future.return (Error `Not_found)
 
-let react_to_comment ?(content = "rocket") ~owner ~repo ~comment_id client =
+let react_to_comment ?(content = `Rocket) ~owner ~repo ~comment_id client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "react_to_comment");
   let open Abbs_future_combinators.Infix_result_monad in
   call
@@ -625,7 +647,7 @@ let get_team_membership_in_org ~org ~team ~user client =
   >>= fun resp ->
   match Openapi.Response.value resp with
   | `Not_found -> Abb.Future.return (Ok false)
-  | `OK Team.{ primary = Primary.{ state; _ }; _ } -> Abb.Future.return (Ok (state = "active"))
+  | `OK Team.{ primary = Primary.{ state; _ }; _ } -> Abb.Future.return (Ok (state = `Active))
 
 let get_repo_collaborator_permission ~org ~repo ~user client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "get_repo_collaborator_permission");
@@ -640,6 +662,20 @@ let get_repo_collaborator_permission ~org ~repo ~user client =
   | `Not_found _ -> Abb.Future.return (Ok None)
   | `OK Permission.{ primary = Primary.{ role_name; _ }; _ } ->
       Abb.Future.return (Ok (Some role_name))
+
+let get_org_membership ~org ~user client =
+  Prmths.Counter.inc_one (Metrics.fn_call_total "get_org_membership");
+  let open Abbs_future_combinators.Infix_result_monad in
+  let module Membership = Githubc2_components.Org_membership in
+  call client Githubc2_orgs.Get_membership_for_user.(make Parameters.(make ~org ~username:user))
+  >>= fun resp ->
+  match Openapi.Response.value resp with
+  | `Not_found _ -> Abb.Future.return (Ok None)
+  | `Forbidden _ -> Abb.Future.return (Ok None)
+  | `OK Membership.{ primary = Primary.{ role; state; _ }; _ } ->
+      if state = `Active then
+        Abb.Future.return (Ok (Some (if role = `Admin then `Admin else `User)))
+      else Abb.Future.return (Ok None)
 
 module Commit_status = struct
   type create_err = Githubc2_abb.call_err [@@deriving show]
@@ -657,7 +693,7 @@ module Commit_status = struct
         target_url : string option;
         description : string option;
         context : string option;
-        state : string;
+        state : Githubc2_repos.Create_commit_status.Request_body.Primary.State.t;
       }
       [@@deriving show]
 

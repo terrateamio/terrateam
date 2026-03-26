@@ -402,11 +402,19 @@ module Set_primary_email_visibility_for_authenticated_user = struct
     module Primary = struct
       module Visibility = struct
         let t_of_yojson = function
-          | `String "public" -> Ok "public"
-          | `String "private" -> Ok "private"
+          | `String "private" -> Ok `Private
+          | `String "public" -> Ok `Public
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-        type t = (string[@of_yojson t_of_yojson])
+        let t_to_yojson = function
+          | `Private -> `String "private"
+          | `Public -> `String "public"
+
+        type t =
+          ([ `Private
+           | `Public
+           ]
+          [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
         [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
@@ -2563,13 +2571,26 @@ module Get_context_for_user = struct
   module Parameters = struct
     module Subject_type = struct
       let t_of_yojson = function
-        | `String "organization" -> Ok "organization"
-        | `String "repository" -> Ok "repository"
-        | `String "issue" -> Ok "issue"
-        | `String "pull_request" -> Ok "pull_request"
+        | `String "issue" -> Ok `Issue
+        | `String "organization" -> Ok `Organization
+        | `String "pull_request" -> Ok `Pull_request
+        | `String "repository" -> Ok `Repository
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Issue -> `String "issue"
+        | `Organization -> `String "organization"
+        | `Pull_request -> `String "pull_request"
+        | `Repository -> `String "repository"
+
+      type t =
+        ([ `Issue
+         | `Organization
+         | `Pull_request
+         | `Repository
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -2625,7 +2646,7 @@ module Get_context_for_user = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("subject_type", Var (params.subject_type, Option String));
+           ("subject_type", Var (params.subject_type, Option (Enum Subject_type.t_to_yojson)));
            ("subject_id", Var (params.subject_id, Option String));
          ])
       ~url

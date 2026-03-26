@@ -80,33 +80,77 @@ module GetApiV4Runners = struct
   module Parameters = struct
     module Scope = struct
       let t_of_yojson = function
-        | `String "specific" -> Ok "specific"
-        | `String "shared" -> Ok "shared"
-        | `String "instance_type" -> Ok "instance_type"
-        | `String "group_type" -> Ok "group_type"
-        | `String "project_type" -> Ok "project_type"
-        | `String "active" -> Ok "active"
-        | `String "paused" -> Ok "paused"
-        | `String "online" -> Ok "online"
-        | `String "offline" -> Ok "offline"
-        | `String "never_contacted" -> Ok "never_contacted"
-        | `String "stale" -> Ok "stale"
+        | `String "active" -> Ok `Active
+        | `String "group_type" -> Ok `Group_type
+        | `String "instance_type" -> Ok `Instance_type
+        | `String "never_contacted" -> Ok `Never_contacted
+        | `String "offline" -> Ok `Offline
+        | `String "online" -> Ok `Online
+        | `String "paused" -> Ok `Paused
+        | `String "project_type" -> Ok `Project_type
+        | `String "shared" -> Ok `Shared
+        | `String "specific" -> Ok `Specific
+        | `String "stale" -> Ok `Stale
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Active -> `String "active"
+        | `Group_type -> `String "group_type"
+        | `Instance_type -> `String "instance_type"
+        | `Never_contacted -> `String "never_contacted"
+        | `Offline -> `String "offline"
+        | `Online -> `String "online"
+        | `Paused -> `String "paused"
+        | `Project_type -> `String "project_type"
+        | `Shared -> `String "shared"
+        | `Specific -> `String "specific"
+        | `Stale -> `String "stale"
+
+      type t =
+        ([ `Active
+         | `Group_type
+         | `Instance_type
+         | `Never_contacted
+         | `Offline
+         | `Online
+         | `Paused
+         | `Project_type
+         | `Shared
+         | `Specific
+         | `Stale
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Status = struct
       let t_of_yojson = function
-        | `String "active" -> Ok "active"
-        | `String "paused" -> Ok "paused"
-        | `String "online" -> Ok "online"
-        | `String "offline" -> Ok "offline"
-        | `String "never_contacted" -> Ok "never_contacted"
-        | `String "stale" -> Ok "stale"
+        | `String "active" -> Ok `Active
+        | `String "never_contacted" -> Ok `Never_contacted
+        | `String "offline" -> Ok `Offline
+        | `String "online" -> Ok `Online
+        | `String "paused" -> Ok `Paused
+        | `String "stale" -> Ok `Stale
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Active -> `String "active"
+        | `Never_contacted -> `String "never_contacted"
+        | `Offline -> `String "offline"
+        | `Online -> `String "online"
+        | `Paused -> `String "paused"
+        | `Stale -> `String "stale"
+
+      type t =
+        ([ `Active
+         | `Never_contacted
+         | `Offline
+         | `Online
+         | `Paused
+         | `Stale
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Tag_list = struct
@@ -115,12 +159,23 @@ module GetApiV4Runners = struct
 
     module Type = struct
       let t_of_yojson = function
-        | `String "instance_type" -> Ok "instance_type"
-        | `String "group_type" -> Ok "group_type"
-        | `String "project_type" -> Ok "project_type"
+        | `String "group_type" -> Ok `Group_type
+        | `String "instance_type" -> Ok `Instance_type
+        | `String "project_type" -> Ok `Project_type
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Group_type -> `String "group_type"
+        | `Instance_type -> `String "instance_type"
+        | `Project_type -> `String "project_type"
+
+      type t =
+        ([ `Group_type
+         | `Instance_type
+         | `Project_type
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -166,10 +221,10 @@ module GetApiV4Runners = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("scope", Var (params.scope, Option String));
-           ("type", Var (params.type_, Option String));
+           ("scope", Var (params.scope, Option (Enum Scope.t_to_yojson)));
+           ("type", Var (params.type_, Option (Enum Type.t_to_yojson)));
            ("paused", Var (params.paused, Option Bool));
-           ("status", Var (params.status, Option String));
+           ("status", Var (params.status, Option (Enum Status.t_to_yojson)));
            ("tag_list", Var (params.tag_list, Option (Array String)));
            ("version_prefix", Var (params.version_prefix, Option String));
            ("page", Var (params.page, Int));
@@ -184,33 +239,77 @@ module GetApiV4RunnersAll = struct
   module Parameters = struct
     module Scope = struct
       let t_of_yojson = function
-        | `String "specific" -> Ok "specific"
-        | `String "shared" -> Ok "shared"
-        | `String "instance_type" -> Ok "instance_type"
-        | `String "group_type" -> Ok "group_type"
-        | `String "project_type" -> Ok "project_type"
-        | `String "active" -> Ok "active"
-        | `String "paused" -> Ok "paused"
-        | `String "online" -> Ok "online"
-        | `String "offline" -> Ok "offline"
-        | `String "never_contacted" -> Ok "never_contacted"
-        | `String "stale" -> Ok "stale"
+        | `String "active" -> Ok `Active
+        | `String "group_type" -> Ok `Group_type
+        | `String "instance_type" -> Ok `Instance_type
+        | `String "never_contacted" -> Ok `Never_contacted
+        | `String "offline" -> Ok `Offline
+        | `String "online" -> Ok `Online
+        | `String "paused" -> Ok `Paused
+        | `String "project_type" -> Ok `Project_type
+        | `String "shared" -> Ok `Shared
+        | `String "specific" -> Ok `Specific
+        | `String "stale" -> Ok `Stale
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Active -> `String "active"
+        | `Group_type -> `String "group_type"
+        | `Instance_type -> `String "instance_type"
+        | `Never_contacted -> `String "never_contacted"
+        | `Offline -> `String "offline"
+        | `Online -> `String "online"
+        | `Paused -> `String "paused"
+        | `Project_type -> `String "project_type"
+        | `Shared -> `String "shared"
+        | `Specific -> `String "specific"
+        | `Stale -> `String "stale"
+
+      type t =
+        ([ `Active
+         | `Group_type
+         | `Instance_type
+         | `Never_contacted
+         | `Offline
+         | `Online
+         | `Paused
+         | `Project_type
+         | `Shared
+         | `Specific
+         | `Stale
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Status = struct
       let t_of_yojson = function
-        | `String "active" -> Ok "active"
-        | `String "paused" -> Ok "paused"
-        | `String "online" -> Ok "online"
-        | `String "offline" -> Ok "offline"
-        | `String "never_contacted" -> Ok "never_contacted"
-        | `String "stale" -> Ok "stale"
+        | `String "active" -> Ok `Active
+        | `String "never_contacted" -> Ok `Never_contacted
+        | `String "offline" -> Ok `Offline
+        | `String "online" -> Ok `Online
+        | `String "paused" -> Ok `Paused
+        | `String "stale" -> Ok `Stale
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Active -> `String "active"
+        | `Never_contacted -> `String "never_contacted"
+        | `Offline -> `String "offline"
+        | `Online -> `String "online"
+        | `Paused -> `String "paused"
+        | `Stale -> `String "stale"
+
+      type t =
+        ([ `Active
+         | `Never_contacted
+         | `Offline
+         | `Online
+         | `Paused
+         | `Stale
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Tag_list = struct
@@ -219,12 +318,23 @@ module GetApiV4RunnersAll = struct
 
     module Type = struct
       let t_of_yojson = function
-        | `String "instance_type" -> Ok "instance_type"
-        | `String "group_type" -> Ok "group_type"
-        | `String "project_type" -> Ok "project_type"
+        | `String "group_type" -> Ok `Group_type
+        | `String "instance_type" -> Ok `Instance_type
+        | `String "project_type" -> Ok `Project_type
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Group_type -> `String "group_type"
+        | `Instance_type -> `String "instance_type"
+        | `Project_type -> `String "project_type"
+
+      type t =
+        ([ `Group_type
+         | `Instance_type
+         | `Project_type
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -270,10 +380,10 @@ module GetApiV4RunnersAll = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("scope", Var (params.scope, Option String));
-           ("type", Var (params.type_, Option String));
+           ("scope", Var (params.scope, Option (Enum Scope.t_to_yojson)));
+           ("type", Var (params.type_, Option (Enum Type.t_to_yojson)));
            ("paused", Var (params.paused, Option Bool));
-           ("status", Var (params.status, Option String));
+           ("status", Var (params.status, Option (Enum Status.t_to_yojson)));
            ("tag_list", Var (params.tag_list, Option (Array String)));
            ("version_prefix", Var (params.version_prefix, Option String));
            ("page", Var (params.page, Int));

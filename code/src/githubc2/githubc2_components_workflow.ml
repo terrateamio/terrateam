@@ -1,14 +1,28 @@
 module Primary = struct
   module State = struct
     let t_of_yojson = function
-      | `String "active" -> Ok "active"
-      | `String "deleted" -> Ok "deleted"
-      | `String "disabled_fork" -> Ok "disabled_fork"
-      | `String "disabled_inactivity" -> Ok "disabled_inactivity"
-      | `String "disabled_manually" -> Ok "disabled_manually"
+      | `String "active" -> Ok `Active
+      | `String "deleted" -> Ok `Deleted
+      | `String "disabled_fork" -> Ok `Disabled_fork
+      | `String "disabled_inactivity" -> Ok `Disabled_inactivity
+      | `String "disabled_manually" -> Ok `Disabled_manually
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Active -> `String "active"
+      | `Deleted -> `String "deleted"
+      | `Disabled_fork -> `String "disabled_fork"
+      | `Disabled_inactivity -> `String "disabled_inactivity"
+      | `Disabled_manually -> `String "disabled_manually"
+
+    type t =
+      ([ `Active
+       | `Deleted
+       | `Disabled_fork
+       | `Disabled_inactivity
+       | `Disabled_manually
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 

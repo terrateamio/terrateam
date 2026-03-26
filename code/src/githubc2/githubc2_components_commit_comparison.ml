@@ -11,13 +11,25 @@ module Primary = struct
 
   module Status_ = struct
     let t_of_yojson = function
-      | `String "diverged" -> Ok "diverged"
-      | `String "ahead" -> Ok "ahead"
-      | `String "behind" -> Ok "behind"
-      | `String "identical" -> Ok "identical"
+      | `String "ahead" -> Ok `Ahead
+      | `String "behind" -> Ok `Behind
+      | `String "diverged" -> Ok `Diverged
+      | `String "identical" -> Ok `Identical
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Ahead -> `String "ahead"
+      | `Behind -> `String "behind"
+      | `Diverged -> `String "diverged"
+      | `Identical -> `String "identical"
+
+    type t =
+      ([ `Ahead
+       | `Behind
+       | `Diverged
+       | `Identical
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 

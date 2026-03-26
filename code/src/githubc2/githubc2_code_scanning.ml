@@ -2,31 +2,49 @@ module List_alerts_for_org = struct
   module Parameters = struct
     module Direction = struct
       let t_of_yojson = function
-        | `String "asc" -> Ok "asc"
-        | `String "desc" -> Ok "desc"
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Sort = struct
       let t_of_yojson = function
-        | `String "created" -> Ok "created"
-        | `String "updated" -> Ok "updated"
+        | `String "created" -> Ok `Created
+        | `String "updated" -> Ok `Updated
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Created -> `String "created"
+        | `Updated -> `String "updated"
+
+      type t =
+        ([ `Created
+         | `Updated
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
       after : string option; [@default None]
       before : string option; [@default None]
-      direction : Direction.t; [@default "desc"]
+      direction : Direction.t; [@default `Desc]
       org : string;
       page : int; [@default 1]
       per_page : int; [@default 30]
       severity : Githubc2_components.Code_scanning_alert_severity.t option; [@default None]
-      sort : Sort.t; [@default "created"]
+      sort : Sort.t; [@default `Created]
       state : Githubc2_components.Code_scanning_alert_state_query.t option; [@default None]
       tool_guid : string option; [@default None]
       tool_name : string option; [@default None]
@@ -92,10 +110,16 @@ module List_alerts_for_org = struct
            ("after", Var (params.after, Option String));
            ("page", Var (params.page, Int));
            ("per_page", Var (params.per_page, Int));
-           ("direction", Var (params.direction, String));
-           ("state", Var (params.state, Option String));
-           ("sort", Var (params.sort, String));
-           ("severity", Var (params.severity, Option String));
+           ("direction", Var (params.direction, Enum Direction.t_to_yojson));
+           ( "state",
+             Var
+               ( params.state,
+                 Option (Enum Githubc2_components.Code_scanning_alert_state_query.t_to_yojson) ) );
+           ("sort", Var (params.sort, Enum Sort.t_to_yojson));
+           ( "severity",
+             Var
+               ( params.severity,
+                 Option (Enum Githubc2_components.Code_scanning_alert_severity.t_to_yojson) ) );
          ])
       ~url
       ~responses:Responses.t
@@ -106,31 +130,51 @@ module List_alerts_for_repo = struct
   module Parameters = struct
     module Direction = struct
       let t_of_yojson = function
-        | `String "asc" -> Ok "asc"
-        | `String "desc" -> Ok "desc"
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Sort = struct
       let t_of_yojson = function
-        | `String "created" -> Ok "created"
-        | `String "number" -> Ok "number"
-        | `String "updated" -> Ok "updated"
+        | `String "created" -> Ok `Created
+        | `String "number" -> Ok `Number
+        | `String "updated" -> Ok `Updated
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Created -> `String "created"
+        | `Number -> `String "number"
+        | `Updated -> `String "updated"
+
+      type t =
+        ([ `Created
+         | `Number
+         | `Updated
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
-      direction : Direction.t; [@default "desc"]
+      direction : Direction.t; [@default `Desc]
       owner : string;
       page : int; [@default 1]
       per_page : int; [@default 30]
       ref_ : string option; [@default None] [@key "ref"]
       repo : string;
-      sort : Sort.t; [@default "created"]
+      sort : Sort.t; [@default `Created]
       state : Githubc2_components.Code_scanning_alert_state.t; [@default None]
       tool_guid : string option; [@default None]
       tool_name : string option; [@default None]
@@ -206,9 +250,12 @@ module List_alerts_for_repo = struct
            ("page", Var (params.page, Int));
            ("per_page", Var (params.per_page, Int));
            ("ref", Var (params.ref_, Option String));
-           ("direction", Var (params.direction, String));
-           ("sort", Var (params.sort, String));
-           ("state", Var (params.state, Option String));
+           ("direction", Var (params.direction, Enum Direction.t_to_yojson));
+           ("sort", Var (params.sort, Enum Sort.t_to_yojson));
+           ( "state",
+             Var
+               ( params.state,
+                 Option (Enum Githubc2_components.Code_scanning_alert_state.t_to_yojson) ) );
          ])
       ~url
       ~responses:Responses.t
@@ -752,23 +799,35 @@ module List_recent_analyses = struct
   module Parameters = struct
     module Direction = struct
       let t_of_yojson = function
-        | `String "asc" -> Ok "asc"
-        | `String "desc" -> Ok "desc"
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Sort = struct
       let t_of_yojson = function
-        | `String "created" -> Ok "created"
+        | `String "created" -> Ok `Created
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Created -> `String "created"
+
+      type t = ([ `Created ][@of_yojson t_of_yojson] [@to_yojson t_to_yojson]) [@@deriving show, eq]
     end
 
     type t = {
-      direction : Direction.t; [@default "desc"]
+      direction : Direction.t; [@default `Desc]
       owner : string;
       page : int; [@default 1]
       per_page : int; [@default 30]
@@ -776,7 +835,7 @@ module List_recent_analyses = struct
       ref_ : string option; [@default None] [@key "ref"]
       repo : string;
       sarif_id : string option; [@default None]
-      sort : Sort.t; [@default "created"]
+      sort : Sort.t; [@default `Created]
       tool_guid : string option; [@default None]
       tool_name : string option; [@default None]
     }
@@ -849,8 +908,8 @@ module List_recent_analyses = struct
            ("pr", Var (params.pr, Option Int));
            ("ref", Var (params.ref_, Option String));
            ("sarif_id", Var (params.sarif_id, Option String));
-           ("direction", Var (params.direction, String));
-           ("sort", Var (params.sort, String));
+           ("direction", Var (params.direction, Enum Direction.t_to_yojson));
+           ("sort", Var (params.sort, Enum Sort.t_to_yojson));
          ])
       ~url
       ~responses:Responses.t

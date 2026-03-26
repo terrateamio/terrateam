@@ -1,20 +1,31 @@
 module Primary = struct
   module Action = struct
     let t_of_yojson = function
-      | `String "removed" -> Ok "removed"
+      | `String "removed" -> Ok `Removed
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Removed -> `String "removed"
+
+    type t = ([ `Removed ][@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Scope = struct
     let t_of_yojson = function
-      | `String "team" -> Ok "team"
-      | `String "organization" -> Ok "organization"
+      | `String "organization" -> Ok `Organization
+      | `String "team" -> Ok `Team
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Organization -> `String "organization"
+      | `Team -> `String "team"
+
+    type t =
+      ([ `Organization
+       | `Team
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
@@ -22,12 +33,22 @@ module Primary = struct
     module Primary = struct
       module Type = struct
         let t_of_yojson = function
-          | `String "Bot" -> Ok "Bot"
-          | `String "User" -> Ok "User"
-          | `String "Organization" -> Ok "Organization"
+          | `String "Bot" -> Ok `Bot
+          | `String "Organization" -> Ok `Organization
+          | `String "User" -> Ok `User
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-        type t = (string[@of_yojson t_of_yojson])
+        let t_to_yojson = function
+          | `Bot -> `String "Bot"
+          | `Organization -> `String "Organization"
+          | `User -> `String "User"
+
+        type t =
+          ([ `Bot
+           | `Organization
+           | `User
+           ]
+          [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
         [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 

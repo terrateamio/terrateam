@@ -28,6 +28,7 @@ type t = {
   mutable in_tx : bool;
   mutable busy : bool;
   buf_size_threshold : int;
+  id : Uuidm.t;
 }
 
 let add_expected_frame t frame = t.expected_frames <- frame :: t.expected_frames
@@ -44,8 +45,21 @@ let gen_unique_id t prefix =
   ret
 
 type integrity_err = {
+  code : string;
   message : string;
   detail : string option;
+  constraint_name : string option;
+  table_name : string option;
+  schema_name : string option;
+  column_name : string option;
+}
+[@@deriving show]
+
+type pgsql_err = {
+  code : string;
+  message : string;
+  detail : string option;
+  hint : string option;
 }
 [@@deriving show]
 
@@ -62,7 +76,8 @@ module Io = struct
   let send_frame conn frame =
     if conn.connected then (
       let send_frame' =
-        Logs.debug (fun m -> m "Tx %a" Pgsql_codec.Frame.Frontend.pp frame);
+        Logs.debug (fun m ->
+            m "%s Tx %a" (Uuidm.to_string conn.id) Pgsql_codec.Frame.Frontend.pp frame);
         let open Abbs_future_combinators.Infix_result_monad in
         let bytes = encode_frame conn.scratch frame in
         Abbs_io_buffered.write conn.w ~bufs:[ write_buf bytes ]
@@ -103,7 +118,9 @@ module Io = struct
     | Ok [] -> wait_for_frame_needed_bytes conn
     | Ok fs as r ->
         List.iter
-          (fun frame -> Logs.debug (fun m -> m "Rx %a" Pgsql_codec.Frame.Backend.pp frame))
+          (fun frame ->
+            Logs.debug (fun m ->
+                m "%s Rx %a" (Uuidm.to_string conn.id) Pgsql_codec.Frame.Backend.pp frame))
           fs;
         Abb.Future.return r
     | Error err -> Abb.Future.return (Error (`Parse_error err))
@@ -165,30 +182,44 @@ module Io = struct
     assert (res = []);
     Abb.Future.return (Ok ())
 
-  let handle_err_frame msgs fs =
+  let handle_err_frame msgs =
     let c = CCList.Assoc.get_exn ~eq:Char.equal 'C' msgs in
     let m = CCList.Assoc.get_exn ~eq:Char.equal 'M' msgs in
     let d = CCList.Assoc.get ~eq:Char.equal 'D' msgs in
+    let h = CCList.Assoc.get ~eq:Char.equal 'H' msgs in
+    let n = CCList.Assoc.get ~eq:Char.equal 'n' msgs in
+    let t = CCList.Assoc.get ~eq:Char.equal 't' msgs in
+    let s = CCList.Assoc.get ~eq:Char.equal 's' msgs in
+    let col = CCList.Assoc.get ~eq:Char.equal 'c' msgs in
+    let pgsql_err = { code = c; message = m; detail = d; hint = h } in
+    let integrity_err =
+      {
+        code = c;
+        message = m;
+        detail = d;
+        constraint_name = n;
+        table_name = t;
+        schema_name = s;
+        column_name = col;
+      }
+    in
     match c with
-    | "23000"
-    (* integrity_constraint_violation *)
-    | "23001"
-    (* restrict_violation *)
-    | "23502"
-    (* not_null_violation *)
-    | "23503"
-    (* foreign_key_violation *)
-    | "23505"
-    (* unique_violation *)
-    | "23514"
-    (* check_violation *)
-    | "23P01"
-    (* exclusion_violation *)
-    | "40002"
-    (* transaction_integrity_constraint_violation *)
-    | "40001" (* serialization_failure *) -> `Integrity_err { message = m; detail = d }
+    (* Unique/exclusion violations *)
+    | "23505" | "23P01" -> `Unique_violation_err integrity_err
+    (* Foreign key / restrict *)
+    | "23503" | "23001" -> `Foreign_key_err integrity_err
+    (* Other integrity constraints *)
+    | "23000" | "23502" | "23514" | "40002" -> `Integrity_err integrity_err
+    (* Deadlock / serialization failure *)
+    | "40001" | "40P01" -> `Deadlock_detected pgsql_err
+    (* Lock timeout *)
+    | "55P03" -> `Lock_timeout pgsql_err
+    (* Statement timeout *)
     | "57014" -> `Statement_timeout
-    | _ -> `Unmatching_frame fs
+    (* Syntax / access errors *)
+    | c when String.length c >= 2 && String.sub c 0 2 = "42" -> `Syntax_err pgsql_err
+    (* All other SQLSTATE codes *)
+    | _ -> `Pgsql_err pgsql_err
 
   let rec consume_matching ?(skip_leading_unmatched = false) conn fs =
     let open Abbs_future_combinators.Infix_result_monad in
@@ -205,7 +236,7 @@ module Io = struct
         match_frames ~skip_leading_unmatched conn fs rfs
     | _, (Pgsql_codec.Frame.Backend.ErrorResponse { msgs } :: _ as r_fs) ->
         let open Abb.Future.Infix_monad in
-        error_response conn r_fs >>= fun _ -> Abb.Future.return (Error (handle_err_frame msgs r_fs))
+        error_response conn r_fs >>= fun _ -> Abb.Future.return (Error (handle_err_frame msgs))
     | _, _ :: r_fs when skip_leading_unmatched -> match_frames ~skip_leading_unmatched conn fs r_fs
     | _, _ ->
         let open Abb.Future.Infix_monad in
@@ -246,15 +277,47 @@ type sql_parse_err =
 [@@deriving show]
 
 type err =
-  [ `Msgs of (char * string) list
+  [ `Pgsql_err of pgsql_err
   | frame_err
   | `Disconnected
   | `Bad_result of string option list
   | `Integrity_err of integrity_err
+  | `Unique_violation_err of integrity_err
+  | `Foreign_key_err of integrity_err
+  | `Deadlock_detected of pgsql_err
+  | `Lock_timeout of pgsql_err
   | `Statement_timeout
+  | `Syntax_err of pgsql_err
   | sql_parse_err
   ]
 [@@deriving show]
+
+let binary_of_numeric z =
+  let module Bv = Pgsql_codec.Binary_value.Encode in
+  if Z.equal z Z.zero then (
+    let buf = Bytes.create 8 in
+    Bytes.fill buf 0 8 '\000';
+    Bytes.to_string buf)
+  else
+    let sign = if Z.sign z < 0 then 0x4000 else 0x0000 in
+    let abs_z = Z.abs z in
+    let base = Z.of_int 10000 in
+    let rec collect_digits z acc =
+      if Z.equal z Z.zero then acc
+      else
+        let q, r = Z.div_rem z base in
+        collect_digits q (Z.to_int r :: acc)
+    in
+    let digits = collect_digits abs_z [] in
+    let ndigits = List.length digits in
+    let weight = ndigits - 1 in
+    let buf = Buffer.create (8 + (ndigits * 2)) in
+    Buffer.add_string buf (Bv.int2 ndigits);
+    Buffer.add_string buf (Bv.int2 weight);
+    Buffer.add_string buf (Bv.int2 sign);
+    Buffer.add_string buf (Bv.int2 0);
+    List.iter (fun d -> Buffer.add_string buf (Bv.int2 d)) digits;
+    Buffer.contents buf
 
 module Typed_sql = struct
   module Var = struct
@@ -264,38 +327,48 @@ module Typed_sql = struct
       name : string;
       oid : Pgsql_codec_type.Oid.t;
       oid_num : int;
+      binary : bool;
       f : 'a -> string option list -> string option list;
     }
 
     type 'a v = string -> 'a t
 
-    let make oid f name = { name; oid; f; oid_num = oid.Pgsql_codec_type.Oid.oid }
-    let make_array oid f name = { name; oid; f; oid_num = oid.Pgsql_codec_type.Oid.array_oid }
-    let smallint = make Oid.int2 (fun n vs -> Some (string_of_int n) :: vs)
-    let integer = make Oid.int4 (fun n vs -> Some (Int32.to_string n) :: vs)
-    let bigint = make Oid.int8 (fun n vs -> Some (Int64.to_string n) :: vs)
-    let decimal = make Oid.numeric (fun n vs -> Some (Z.to_string n) :: vs)
+    let make oid f name = { name; oid; f; oid_num = oid.Pgsql_codec_type.Oid.oid; binary = true }
+
+    let make_text oid f name =
+      { name; oid; f; oid_num = oid.Pgsql_codec_type.Oid.oid; binary = false }
+
+    let make_array oid f name =
+      { name; oid; f; oid_num = oid.Pgsql_codec_type.Oid.array_oid; binary = true }
+
+    module Bv = Pgsql_codec.Binary_value.Encode
+
+    let smallint = make Oid.int2 (fun n vs -> Some (Bv.int2 n) :: vs)
+    let integer = make Oid.int4 (fun n vs -> Some (Bv.int4 n) :: vs)
+    let bigint = make Oid.int8 (fun n vs -> Some (Bv.int8 n) :: vs)
+    let decimal = make Oid.numeric (fun n vs -> Some (binary_of_numeric n) :: vs)
     let numeric = decimal
-    let real = make Oid.float4 (fun n vs -> Some (string_of_float n) :: vs)
-    let double = make Oid.float8 (fun n vs -> Some (string_of_float n) :: vs)
+    let real = make Oid.float4 (fun n vs -> Some (Bv.float4 n) :: vs)
+    let double = make Oid.float8 (fun n vs -> Some (Bv.float8 n) :: vs)
     let smallserial = smallint
     let serial = integer
     let bigserial = bigint
-    let money = make Oid.money (fun n vs -> Some (Int64.to_string n) :: vs)
+    let money = make Oid.money (fun n vs -> Some (Bv.int8 n) :: vs)
     let text = make Oid.text (fun s vs -> Some s :: vs)
     let varchar = make Oid.varchar (fun s vs -> Some s :: vs)
     let char = make Oid.char (fun s vs -> Some s :: vs)
-    let json = make Oid.json (fun s vs -> Some s :: vs)
-    let jsonpath = make Oid.jsonpath (fun s vs -> Some s :: vs)
-    let tsquery = make Oid.tsquery (fun s vs -> Some s :: vs)
-    let uuid = make Oid.uuid (fun uuid vs -> Some (Uuidm.to_string uuid) :: vs)
-    let boolean = make Oid.bool (fun b vs -> (if b then Some "true" else Some "false") :: vs)
-    let date = make Oid.date (fun s vs -> Some s :: vs)
-    let time = make Oid.time (fun s vs -> Some s :: vs)
-    let timetz = make Oid.timetz (fun s vs -> Some s :: vs)
-    let timestamp = make Oid.timestamp (fun s vs -> Some s :: vs)
-    let timestamptz = make Oid.timestamptz (fun s vs -> Some s :: vs)
-    let ud t f = make t.oid (fun v vs -> t.f (f v) vs) t.name
+    let bytea = make Oid.bytea (fun s vs -> Some s :: vs)
+    let json = make Oid.json (fun v vs -> Some (Yojson.Safe.to_string v) :: vs)
+    let jsonpath = make_text Oid.jsonpath (fun s vs -> Some s :: vs)
+    let tsquery = make_text Oid.tsquery (fun s vs -> Some s :: vs)
+    let uuid = make Oid.uuid (fun uuid vs -> Some (Uuidm.to_binary_string uuid) :: vs)
+    let boolean = make Oid.bool (fun b vs -> Some (Bv.bool b) :: vs)
+    let date = make_text Oid.date (fun s vs -> Some s :: vs)
+    let time = make_text Oid.time (fun s vs -> Some s :: vs)
+    let timetz = make_text Oid.timetz (fun s vs -> Some s :: vs)
+    let timestamp = make_text Oid.timestamp (fun s vs -> Some s :: vs)
+    let timestamptz = make_text Oid.timestamptz (fun s vs -> Some s :: vs)
+    let ud t f = { t with f = (fun v vs -> t.f (f v) vs) }
 
     let option t =
       {
@@ -311,82 +384,160 @@ module Typed_sql = struct
       make_array
         t.oid
         (fun arr vs ->
-          arr
-          |> CCListLabels.map ~f:(fun v ->
-                 match t.f v [] with
-                 | [ Some v ] -> v
-                 | [ None ] -> "null"
-                 | _ -> assert false)
-          |> CCString.concat ","
-          |> fun s -> Some ("{" ^ s ^ "}") :: vs)
+          let module Bv = Pgsql_codec.Binary_value.Encode in
+          let buf = Buffer.create 64 in
+          Buffer.add_string buf (Bv.int4 1l);
+          Buffer.add_string buf (Bv.int4 0l);
+          Buffer.add_string buf (Bv.int4 (Int32.of_int t.oid_num));
+          Buffer.add_string buf (Bv.int4 (Int32.of_int (List.length arr)));
+          Buffer.add_string buf (Bv.int4 1l);
+          List.iter
+            (fun v ->
+              match t.f v [] with
+              | [ Some encoded ] ->
+                  Buffer.add_string buf (Bv.int4 (Int32.of_int (String.length encoded)));
+                  Buffer.add_string buf encoded
+              | [ None ] -> Buffer.add_string buf (Bv.int4 (-1l))
+              | _ -> assert false)
+            arr;
+          Some (Buffer.contents buf) :: vs)
         t.name
 
-    let str_array t =
-      make_array
-        t.oid
-        (fun arr vs ->
-          arr
-          |> CCListLabels.map ~f:(fun v ->
-                 match t.f v [] with
-                 | [ Some v ] ->
-                     "\""
-                     ^ (v
-                       |> CCString.replace ~which:`All ~sub:"\\" ~by:"\\\\"
-                       |> CCString.replace ~which:`All ~sub:"\"" ~by:"\\\"")
-                     ^ "\""
-                 | [ None ] -> "null"
-                 | _ -> assert false)
-          |> CCString.concat ","
-          |> fun s -> Some ("{" ^ s ^ "}") :: vs)
-        t.name
+    let str_array = array
   end
 
+  (* We use text format for most return types rather than binary. Because
+     pgsql_io does not control the SQL query, it is easy to specify the wrong
+     Ret type for a column. With binary format, integer types are not robust to
+     mismatches: a smallint and an integer have different binary encodings, so
+     using the wrong Ret type causes runtime failures. With text format, parsing
+     a text "42" works the same whether the column is smallint, integer, or
+     bigint. We use binary format only for types where text parsing would lose
+     information or be significantly less efficient (text, bytea, uuid). *)
   module Ret = struct
-    type 'a t = string option list -> ('a * string option list) option
+    module B = struct
+      let text s = Some s
+      let bytea s = Some s
+      let uuid s = Uuidm.of_binary_string s
+      let int s = Pgsql_codec.Binary_value.Decode.int2 s
+      let int32 s = Pgsql_codec.Binary_value.Decode.int4 s
+      let int64 s = Pgsql_codec.Binary_value.Decode.int8 s
+      let float s = Pgsql_codec.Binary_value.Decode.float4 s
+      let double s = Pgsql_codec.Binary_value.Decode.float8 s
+      let bool s = Pgsql_codec.Binary_value.Decode.bool s
+    end
 
-    let take_one f = function
-      | [] | None :: _ -> None
-      | Some x :: xs -> CCOption.map (fun v -> (v, xs)) (f x)
+    type 'a t = {
+      binary : bool;
+      f : string option list -> ('a * string option list) option;
+    }
 
-    let smallint = take_one (CCOption.wrap int_of_string)
-    let integer = take_one Int32.of_string_opt
-    let bigint = take_one Int64.of_string_opt
-    let decimal = take_one (CCOption.wrap Z.of_string)
-    let numeric = decimal
-    let real = take_one (CCOption.wrap float_of_string)
-    let double = real
-    let smallserial = take_one (CCOption.wrap int_of_string)
-    let serial = take_one Int32.of_string_opt
-    let bigserial = take_one Int64.of_string_opt
-    let money = take_one Int64.of_string_opt
-    let text = take_one CCOption.return
-    let varchar = text
-    let char = text
-    let json = text
-    let uuid = take_one Uuidm.of_string
+    let text_ret parse =
+      {
+        binary = false;
+        f =
+          (function
+          | Some s :: rest -> CCOption.map (fun v -> (v, rest)) (parse s)
+          | _ -> None);
+      }
 
-    let boolean =
-      take_one (function
-        | "true" | "t" -> Some true
-        | "false" | "f" -> Some false
-        | _ -> None)
+    let bin_ret parse =
+      {
+        binary = true;
+        f =
+          (function
+          | Some s :: rest -> CCOption.map (fun v -> (v, rest)) (parse s)
+          | _ -> None);
+      }
 
-    let ud f xs = f xs
+    let u t f =
+      {
+        binary = t.binary;
+        f =
+          (fun xs ->
+            match t.f xs with
+            | Some (v, rest) -> (
+                match f v with
+                | Some v' -> Some (v', rest)
+                | None -> None)
+            | None -> None);
+      }
 
-    let ud' f = function
-      | Some s :: rest -> CCOption.map (fun v -> (v, rest)) (f s)
-      | _ -> None
+    let smallint = text_ret (fun s -> CCOption.wrap int_of_string s)
+    let integer = text_ret (fun s -> Int32.of_string_opt s)
+    let bigint = text_ret (fun s -> Int64.of_string_opt s)
 
-    let option t = function
-      | None :: xs -> Some (None, xs)
-      | xs -> (
-          match t xs with
-          | Some (v, xs) -> Some (Some v, xs)
+    let decimal =
+      text_ret (fun s ->
+          match CCOption.wrap Z.of_string s with
+          | Some z -> Some z
           | None -> None)
 
-    let debug f t v =
-      f v;
-      t v
+    let numeric = decimal
+    let real = text_ret (fun s -> float_of_string_opt s)
+    let double = text_ret (fun s -> float_of_string_opt s)
+    let smallserial = smallint
+    let serial = integer
+    let bigserial = bigint
+    let money = text_ret (fun s -> Int64.of_string_opt s)
+    let text = bin_ret B.text
+    let varchar = text_ret (fun s -> Some s)
+    let char = text_ret (fun s -> Some s)
+    let bytea = bin_ret B.bytea
+    let json = text_ret (fun s -> CCOption.wrap Yojson.Safe.from_string s)
+    let jsonb = text_ret (fun s -> CCOption.wrap Yojson.Safe.from_string s)
+    let uuid = bin_ret B.uuid
+
+    let boolean =
+      text_ret (fun s ->
+          match s with
+          | "t" -> Some true
+          | "f" -> Some false
+          | _ -> None)
+
+    let smallint_b = bin_ret B.int
+    let integer_b = bin_ret B.int32
+    let bigint_b = bin_ret B.int64
+    let real_b = bin_ret B.float
+    let double_b = bin_ret B.double
+    let smallserial_b = smallint_b
+    let serial_b = integer_b
+    let bigserial_b = bigint_b
+    let money_b = bigint_b
+    let boolean_b = bin_ret B.bool
+    let varchar_b = bin_ret B.text
+    let char_b = bin_ret B.text
+    let ud f = { binary = false; f = (fun xs -> f xs) }
+
+    let ud' f =
+      {
+        binary = false;
+        f =
+          (function
+          | Some s :: rest -> CCOption.map (fun v -> (v, rest)) (f s)
+          | _ -> None);
+      }
+
+    let option t =
+      {
+        binary = t.binary;
+        f =
+          (function
+          | None :: xs -> Some (None, xs)
+          | xs -> (
+              match t.f xs with
+              | Some (v, xs) -> Some (Some v, xs)
+              | None -> None));
+      }
+
+    let debug f t =
+      {
+        binary = t.binary;
+        f =
+          (fun v ->
+            f v;
+            t.f v);
+      }
   end
 
   type ('q, 'qr, 'p, 'pr) t =
@@ -499,7 +650,12 @@ module Typed_sql = struct
     | None -> Error (`Unknown_variable name)
 
   let to_query t =
-    let query = to_query' t in
+    let query =
+      to_query' t
+      |> CCString.split_on_char '\n'
+      |> CCList.filter (fun line -> not (CCString.prefix ~pre:"--" (CCString.trim line)))
+      |> CCString.concat "\n"
+    in
     let variables = CCArray.of_list (CCList.rev (extract_variables t)) in
     replace_variables
       variables
@@ -515,6 +671,22 @@ module Typed_sql = struct
     | Const (t, s) -> to_data_type_list' t
 
   let to_data_type_list t = List.rev (to_data_type_list' t)
+
+  let rec to_format_codes' : type q qr p pr. (q, qr, p, pr) t -> bool list = function
+    | Sql -> []
+    | Ret (t, _) -> to_format_codes' t
+    | Variable (t, v) -> v.Var.binary :: to_format_codes' t
+    | Const (t, _) -> to_format_codes' t
+
+  let to_format_codes t = List.rev (to_format_codes' t)
+
+  let rec to_result_format_codes' : type q qr p pr. (q, qr, p, pr) t -> bool list = function
+    | Sql -> []
+    | Ret (t, r) -> r.Ret.binary :: to_result_format_codes' t
+    | Variable (t, _) -> to_result_format_codes' t
+    | Const (t, _) -> to_result_format_codes' t
+
+  let to_result_format_codes t = List.rev (to_result_format_codes' t)
 end
 
 module Row_func = struct
@@ -536,7 +708,7 @@ module Row_func = struct
       | Sql -> None
       | Ret (t', r) ->
           let open CCOption.Infix in
-          r vs >>= fun (v, vs') -> kbind' f vs' t' >>= fun f' -> Some (f' v)
+          r.Typed_sql.Ret.f vs >>= fun (v, vs') -> kbind' f vs' t' >>= fun f' -> Some (f' v)
 
     let kbind f data t = kbind' f (List.rev data) t
   end
@@ -576,11 +748,12 @@ module Cursor = struct
   and consume_exec_frames conn row_func st = function
     | [] -> consume_exec conn row_func st
     | Pgsql_codec.Frame.Backend.CommandComplete _ :: fs -> consume_exec_end conn row_func st fs
-    | Pgsql_codec.Frame.Backend.DataRow _ :: _ -> assert false
+    | Pgsql_codec.Frame.Backend.DataRow _ :: _ as fs ->
+        let open Abb.Future.Infix_monad in
+        Io.reset conn >>= fun _ -> Abb.Future.return (Error (`Unmatching_frame fs))
     | Pgsql_codec.Frame.Backend.ErrorResponse { msgs } :: _ as fs ->
         let open Abb.Future.Infix_monad in
-        Io.error_response conn fs
-        >>= fun _ -> Abb.Future.return (Error (Io.handle_err_frame msgs fs))
+        Io.error_response conn fs >>= fun _ -> Abb.Future.return (Error (Io.handle_err_frame msgs))
     | Pgsql_codec.Frame.Backend.NoticeResponse { msgs } :: fs ->
         conn.notice_response msgs;
         consume_exec_frames conn row_func st fs
@@ -596,9 +769,10 @@ module Cursor = struct
         Abb.Future.return (Ok (row_func.Row_func.fin st))
     | Pgsql_codec.Frame.Backend.ErrorResponse { msgs } :: _ as fs ->
         let open Abb.Future.Infix_monad in
-        Io.error_response conn fs
-        >>= fun _ -> Abb.Future.return (Error (Io.handle_err_frame msgs fs))
-    | _ -> assert false
+        Io.error_response conn fs >>= fun _ -> Abb.Future.return (Error (Io.handle_err_frame msgs))
+    | fs ->
+        let open Abb.Future.Infix_monad in
+        Io.reset conn >>= fun _ -> Abb.Future.return (Error (`Unmatching_frame fs))
 
   let execute t =
     let open Abbs_future_combinators.Infix_result_monad in
@@ -626,8 +800,7 @@ module Cursor = struct
         consume_fetch_process_frame conn row_func st fs data
     | Pgsql_codec.Frame.Backend.ErrorResponse { msgs } :: _ as fs ->
         let open Abb.Future.Infix_monad in
-        Io.error_response conn fs
-        >>= fun _ -> Abb.Future.return (Error (Io.handle_err_frame msgs fs))
+        Io.error_response conn fs >>= fun _ -> Abb.Future.return (Error (Io.handle_err_frame msgs))
     | Pgsql_codec.Frame.Backend.NoticeResponse { msgs } :: fs ->
         conn.notice_response msgs;
         consume_fetch_frames conn row_func st fs
@@ -648,9 +821,10 @@ module Cursor = struct
         Abb.Future.return (Ok (row_func.Row_func.fin st))
     | Pgsql_codec.Frame.Backend.ErrorResponse { msgs } :: _ as fs ->
         let open Abb.Future.Infix_monad in
-        Io.error_response conn fs
-        >>= fun _ -> Abb.Future.return (Error (Io.handle_err_frame msgs fs))
-    | _ -> assert false
+        Io.error_response conn fs >>= fun _ -> Abb.Future.return (Error (Io.handle_err_frame msgs))
+    | fs ->
+        let open Abb.Future.Infix_monad in
+        Io.reset conn >>= fun _ -> Abb.Future.return (Error (`Unmatching_frame fs))
 
   let fetch ?(n = 0) t =
     let open Abbs_future_combinators.Infix_result_monad in
@@ -723,7 +897,14 @@ module Prepared_stmt = struct
         let portal = gen_unique_id t.conn "p" in
         let bind_frame =
           Pgsql_codec.Frame.Frontend.(
-            Bind { portal; stmt = t.id; format_codes = []; values = vs; result_format_codes = [] })
+            Bind
+              {
+                portal;
+                stmt = t.id;
+                format_codes = Typed_sql.to_format_codes t.sql;
+                values = vs;
+                result_format_codes = Typed_sql.to_result_format_codes t.sql;
+              })
         in
         Io.send_frame t.conn bind_frame
         >>= fun () ->
@@ -767,9 +948,9 @@ module Prepared_stmt = struct
                     {
                       portal;
                       stmt = stmt.id;
-                      format_codes = [];
+                      format_codes = Typed_sql.to_format_codes sql;
                       values = vs;
-                      result_format_codes = [];
+                      result_format_codes = Typed_sql.to_result_format_codes sql;
                     })
               in
               Io.send_frame conn bind_frame
@@ -780,7 +961,7 @@ module Prepared_stmt = struct
             ~finally:(fun () ->
               conn.busy <- false;
               Abbs_future_combinators.ignore (destroy stmt)))
-        else raise (Failure "SQL connection busy"))
+        else raise (Failure ("SQL connection busy: " ^ CCResult.get_exn @@ Typed_sql.to_query sql)))
       sql
 
   let bind_execute t =
@@ -790,7 +971,14 @@ module Prepared_stmt = struct
         let portal = gen_unique_id t.conn "p" in
         let bind_frame =
           Pgsql_codec.Frame.Frontend.(
-            Bind { portal; stmt = t.id; format_codes = []; values = vs; result_format_codes = [] })
+            Bind
+              {
+                portal;
+                stmt = t.id;
+                format_codes = Typed_sql.to_format_codes t.sql;
+                values = vs;
+                result_format_codes = Typed_sql.to_result_format_codes t.sql;
+              })
         in
         Io.send_frame t.conn bind_frame
         >>= fun () ->
@@ -816,9 +1004,9 @@ module Prepared_stmt = struct
                     {
                       portal;
                       stmt = stmt.id;
-                      format_codes = [];
+                      format_codes = Typed_sql.to_format_codes sql;
                       values = vs;
-                      result_format_codes = [];
+                      result_format_codes = Typed_sql.to_result_format_codes sql;
                     })
               in
               Io.send_frame conn bind_frame
@@ -829,7 +1017,7 @@ module Prepared_stmt = struct
             ~finally:(fun () ->
               conn.busy <- false;
               Abbs_future_combinators.ignore (destroy stmt)))
-        else raise (Failure "SQL connection busy"))
+        else raise (Failure ("SQL connection busy: " ^ CCResult.get_exn @@ Typed_sql.to_query sql)))
       sql
 
   let kbind :
@@ -853,9 +1041,9 @@ module Prepared_stmt = struct
                   {
                     portal;
                     stmt = stmt.id;
-                    format_codes = [];
+                    format_codes = Typed_sql.to_format_codes sql;
                     values = vs;
-                    result_format_codes = [];
+                    result_format_codes = Typed_sql.to_result_format_codes sql;
                   })
             in
             Io.send_frame conn bind_frame
@@ -1140,6 +1328,7 @@ and create_sm_perform_login r w ?passwd ~notice_response ~buf_size_threshold ~us
       in_tx = false;
       busy = false;
       buf_size_threshold;
+      id = Ouuid.v4 ();
     }
   in
   let msgs = [ ("user", user); ("database", database) ] in
@@ -1278,6 +1467,7 @@ let destroy t =
   else Abb.Future.return ()
 
 let connected t = t.connected
+let id t = t.id
 
 let ping t =
   if t.connected then (
@@ -1318,7 +1508,7 @@ let tx_rollback t =
 
 let tx t ~f =
   if t.in_tx then (
-    Logs.info (fun m -> m "In tx already, failing");
+    Logs.info (fun m -> m "%s In tx already, failing" (Uuidm.to_string t.id));
     raise Nested_tx_not_supported);
   Abbs_future_combinators.on_failure
     (fun () ->
@@ -1334,7 +1524,7 @@ let tx t ~f =
           [ equal (CommandComplete { tag = "BEGIN" }); equal (ReadyForQuery { status = 'T' }) ]
       >>= function
       | Ok [] -> (
-          Logs.debug (fun m -> m "Tx code executing");
+          Logs.debug (fun m -> m "%s Tx code executing" (Uuidm.to_string t.id));
           f ()
           >>= function
           | Ok _ as r ->
@@ -1342,15 +1532,125 @@ let tx t ~f =
               tx_commit t >>= fun _ -> Abb.Future.return r
           | Error _ as r -> tx_rollback t >>= fun _ -> Abb.Future.return r)
       | Ok fs ->
-          Logs.debug (fun m -> m "Tx received unexpected frames, failing");
+          Logs.debug (fun m -> m "%s Tx received unexpected frames, failing" (Uuidm.to_string t.id));
           tx_rollback t >>= fun _ -> Abb.Future.return (Error (`Unmatching_frame fs))
       | Error _ as err -> tx_rollback t >>= fun _ -> Abb.Future.return err)
     ~failure:(fun () ->
-      Logs.info (fun m -> m "Tx failed, rolling back");
+      Logs.info (fun m -> m "%s Tx failed, rolling back" (Uuidm.to_string t.id));
       Abbs_future_combinators.ignore (tx_rollback t))
+
+module Copy_to = struct
+  type t = string option
+
+  let null = None
+  let smallint n = Some (Pgsql_codec.Binary_value.Encode.int2 n)
+  let integer n = Some (Pgsql_codec.Binary_value.Encode.int4 n)
+  let bigint n = Some (Pgsql_codec.Binary_value.Encode.int8 n)
+  let real f = Some (Pgsql_codec.Binary_value.Encode.float4 f)
+  let double f = Some (Pgsql_codec.Binary_value.Encode.float8 f)
+  let money n = Some (Pgsql_codec.Binary_value.Encode.int8 n)
+  let boolean b = Some (Pgsql_codec.Binary_value.Encode.bool b)
+  let text s = Some s
+  let varchar = text
+  let char = text
+  let json v = text (Yojson.Safe.to_string v)
+  let jsonb v = Some ("\x01" ^ Yojson.Safe.to_string v)
+  let bytea s = Some s
+  let uuid u = Some (Uuidm.to_binary_string u)
+end
+
+let binary_copy_header = "PGCOPY\n\xff\r\n\000" ^ "\000\000\000\000" ^ "\000\000\000\000"
+let binary_copy_trailer = "\xff\xff"
+
+let encode_binary_tuple buf fields =
+  Buffer.add_string buf (Pgsql_codec.Binary_value.Encode.int2 (List.length fields));
+  List.iter
+    (function
+      | None -> Buffer.add_string buf "\xff\xff\xff\xff"
+      | Some data ->
+          Buffer.add_string
+            buf
+            (Pgsql_codec.Binary_value.Encode.int4 (Int32.of_int (String.length data)));
+          Buffer.add_string buf data)
+    fields
+
+let copy_data_flush_size = 1024 * 1024
+
+let rec send_copy_rows conn iter =
+  let buf = Buffer.create copy_data_flush_size in
+  send_copy_rows' conn buf iter
+
+and send_copy_rows' conn buf = function
+  | [] ->
+      Buffer.add_string buf binary_copy_trailer;
+      let data = Buffer.contents buf in
+      Io.send_frame conn (Pgsql_codec.Frame.Frontend.CopyData { data })
+  | row :: rest ->
+      encode_binary_tuple buf row;
+      if Buffer.length buf >= copy_data_flush_size then (
+        let open Abbs_future_combinators.Infix_result_monad in
+        let data = Buffer.contents buf in
+        Buffer.clear buf;
+        Io.send_frame conn (Pgsql_codec.Frame.Frontend.CopyData { data })
+        >>= fun () -> send_copy_rows' conn buf rest)
+      else send_copy_rows' conn buf rest
+
+let rec consume_copy conn =
+  let open Abbs_future_combinators.Infix_result_monad in
+  Io.wait_for_frames conn >>= fun frames -> consume_copy_frames conn frames
+
+and consume_copy_frames conn = function
+  | [] -> consume_copy conn
+  | Pgsql_codec.Frame.Backend.CommandComplete { tag } :: fs -> consume_copy_end conn tag fs
+  | Pgsql_codec.Frame.Backend.ErrorResponse { msgs } :: _ as fs ->
+      let open Abb.Future.Infix_monad in
+      Io.error_response conn fs >>= fun _ -> Abb.Future.return (Error (Io.handle_err_frame msgs))
+  | Pgsql_codec.Frame.Backend.NoticeResponse { msgs } :: fs ->
+      conn.notice_response msgs;
+      consume_copy_frames conn fs
+  | fs ->
+      let open Abb.Future.Infix_monad in
+      Io.reset conn >>= fun _ -> Abb.Future.return (Error (`Unmatching_frame fs))
+
+and consume_copy_end conn tag = function
+  | [] ->
+      let open Abbs_future_combinators.Infix_result_monad in
+      Io.wait_for_frames conn >>= fun frames -> consume_copy_end conn tag frames
+  | Pgsql_codec.Frame.Backend.ReadyForQuery _ :: _ ->
+      let n = Scanf.sscanf tag "COPY %d" Fun.id in
+      Abb.Future.return (Ok n)
+  | Pgsql_codec.Frame.Backend.NoticeResponse { msgs } :: fs ->
+      conn.notice_response msgs;
+      consume_copy_end conn tag fs
+  | fs ->
+      let open Abb.Future.Infix_monad in
+      Io.reset conn >>= fun _ -> Abb.Future.return (Error (`Unmatching_frame fs))
+
+let copy_to ~table ~cols t iter =
+  let open Abbs_future_combinators.Infix_result_monad in
+  let cols_str = String.concat ", " cols in
+  let query = Printf.sprintf "COPY %s (%s) FROM STDIN WITH (FORMAT binary)" table cols_str in
+  Io.send_frame t (Pgsql_codec.Frame.Frontend.Query { query })
+  >>= fun () ->
+  Io.consume_matching
+    t
+    Pgsql_codec.Frame.Backend.
+      [
+        (function
+        | CopyInResponse _ -> true
+        | _ -> false);
+      ]
+  >>= fun _fs ->
+  Io.send_frame t (Pgsql_codec.Frame.Frontend.CopyData { data = binary_copy_header })
+  >>= fun () ->
+  send_copy_rows t iter
+  >>= fun () ->
+  Io.send_frame t Pgsql_codec.Frame.Frontend.CopyDone
+  >>= fun () ->
+  (consume_copy_frames t [] : (int, err) result Abb.Future.t :> (int, [> err ]) result Abb.Future.t)
 
 let clean_string s =
   s
   |> CCString.split_on_char '\n'
-  |> CCList.filter CCFun.(CCString.prefix ~pre:"--" %> not)
+  |> CCList.filter (fun line -> not (CCString.prefix ~pre:"--" (CCString.trim line)))
   |> CCString.concat "\n"

@@ -10,6 +10,10 @@
   import type { Dirspace, Repository } from './types';
   import { navigateToRun, navigateToRuns } from './utils/navigation';
 
+  // Router params (from svelte-spa-router, unused but required by router interface)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  export let params: Record<string, string> = {};
+
   // Tab state
   let activeTab: 'repository' | 'workflow' | 'drift' = 'repository';
 
@@ -129,9 +133,12 @@
   let expandedWorkflowStep: string | null = null;
   let expandedDriftItem: string | null = null;
 
-  // Drift Analytics state  
+  // Drift Analytics state
   let driftOperations: Dirspace[] = [];
   let isLoadingDrift = false;
+  let isLoadingMoreDrift = false;
+  let hasMoreDrift = false;
+  let nextDriftPageUrl: string | null = null;
   let driftError: string | null = null;
   let driftMetrics = {
     totalDrifts: 0,
@@ -266,84 +273,112 @@
     }
   }
 
-  async function loadDriftOperations(): Promise<void> {
+  async function loadDriftOperations(loadMore: boolean = false): Promise<void> {
     if (!$selectedInstallation) return;
 
-    isLoadingDrift = true;
+    if (loadMore) {
+      isLoadingMoreDrift = true;
+    } else {
+      isLoadingDrift = true;
+      hasMoreDrift = false;
+      nextDriftPageUrl = null;
+    }
     driftError = null;
-    
+
     try {
-      // Load a reasonable sample for analytics (up to 5 pages / 250 drift operations)
-      const allDriftOperations: Dirspace[] = [];
-      let hasMore = true;
-      let nextPageUrl: string | null = null;
-      let pagesLoaded = 0;
-      const maxPages = 5;  // Fewer pages for drift since it's less common
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      
-      while (hasMore && pagesLoaded < maxPages) {
-        let response;
-        
-        if (nextPageUrl) {
-          // Use the URL from Link header directly
-          const fetchResponse: Response = await fetch(nextPageUrl, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-          });
-          
-          const rawResponse: { dirspaces: Dirspace[] } = await fetchResponse.json();
-          
-          // Parse Link headers from the response
-          const linkHeader = fetchResponse.headers.get('Link');
-          let linkHeaders: Record<string, string> | null = null;
-          if (linkHeader) {
-            linkHeaders = {};
-            const parts = linkHeader.split(/,\s*(?=<)/);
-            for (const part of parts) {
-              const match = part.match(/<([^>]+)>;\s*rel="([^"]+)"/);
-              if (match) {
-                linkHeaders[match[2]] = match[1];
-              }
+      let response;
+
+      if (loadMore && nextDriftPageUrl) {
+        console.log(`📄 Loading more drift operations (page)...`);
+
+        // Use the URL from Link header directly
+        const fetchResponse: Response = await fetch(nextDriftPageUrl, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+        });
+
+        if (!fetchResponse.ok) {
+          throw new Error(`HTTP ${fetchResponse.status}: ${fetchResponse.statusText}`);
+        }
+
+        const rawResponse: { dirspaces: Dirspace[] } = await fetchResponse.json();
+
+        // Parse Link headers from the response
+        const linkHeader = fetchResponse.headers.get('Link');
+        let linkHeaders: Record<string, string> | null = null;
+        if (linkHeader) {
+          linkHeaders = {};
+          const parts = linkHeader.split(/,\s*(?=<)/);
+          for (const part of parts) {
+            const match = part.match(/<([^>]+)>;\s*rel="([^"]+)"/);
+            if (match) {
+              linkHeaders[match[2]] = match[1];
             }
           }
-          
-          response = {
-            dirspaces: rawResponse.dirspaces || [],
-            linkHeaders
-          };
+        }
+
+        response = {
+          dirspaces: rawResponse.dirspaces || [],
+          linkHeaders
+        };
+      } else {
+        console.log(`📊 Loading initial drift operations...`);
+
+        // Initial request - load first batch
+        response = await api.getInstallationDirspaces($selectedInstallation.id, {
+          q: 'kind:drift',
+          tz: timezone,
+          limit: 50
+        });
+      }
+
+      if (response && response.dirspaces) {
+        const newDrifts = response.dirspaces as Dirspace[];
+
+        if (loadMore) {
+          // Append to existing results
+          driftOperations = [...driftOperations, ...newDrifts];
+          console.log(`✅ Loaded ${newDrifts.length} more drift operations (total: ${driftOperations.length})`);
         } else {
-          // Initial request
-          response = await api.getInstallationDirspaces($selectedInstallation.id, {
-            q: 'kind:drift',
-            tz: timezone,
-            limit: 50
-          });
+          // Replace results for initial load
+          driftOperations = newDrifts;
+          console.log(`✅ Loaded ${newDrifts.length} drift operations initially`);
         }
-        
-        if (response && response.dirspaces) {
-          allDriftOperations.push(...response.dirspaces);
-        }
-        
-        pagesLoaded++;
-        
+
         // Check for next page
-        if (response.linkHeaders?.next && pagesLoaded < maxPages) {
-          nextPageUrl = response.linkHeaders.next.replace('//api/', '/api/');
-          hasMore = true;
+        if (response.linkHeaders?.next) {
+          nextDriftPageUrl = response.linkHeaders.next.replace('//api/', '/api/');
+          hasMoreDrift = true;
         } else {
-          hasMore = false;
+          nextDriftPageUrl = null;
+          hasMoreDrift = false;
+          console.log(`✅ All drift operations loaded (total: ${driftOperations.length})`);
+        }
+      } else {
+        if (!loadMore) {
+          driftOperations = [];
         }
       }
-      
-      driftOperations = allDriftOperations;
+
     } catch (err) {
       console.error('❌ Error loading drift operations:', err);
       driftError = err instanceof Error ? err.message : 'Failed to load drift operations';
-      driftOperations = [];
+      if (!loadMore) {
+        driftOperations = [];
+      }
     } finally {
-      isLoadingDrift = false;
+      if (loadMore) {
+        isLoadingMoreDrift = false;
+      } else {
+        isLoadingDrift = false;
+      }
     }
+  }
+
+  async function loadMoreDrift(): Promise<void> {
+    await loadDriftOperations(true);
   }
 
   function calculateDriftMetrics(): void {
@@ -1647,8 +1682,8 @@
             <p class="text-lg font-medium">Failed to Load Drift Data</p>
             <p class="text-sm mt-1">{driftError}</p>
           </div>
-          <button 
-            on:click={loadDriftOperations} 
+          <button
+            on:click={() => loadDriftOperations()}
             class="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
           >
             Retry Loading
@@ -1681,12 +1716,12 @@
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Based on recent drift operations</p>
           </div>
           <div class="text-xs text-gray-600 dark:text-gray-400 text-left sm:text-right">
-            Showing {Math.min(20, driftOperations.length)} of {driftOperations.length} drift operations
+            Showing {driftOperations.length} drift operation{driftOperations.length !== 1 ? 's' : ''}
           </div>
         </div>
-        
-        <div class="space-y-3 md:space-y-4 max-h-96 overflow-y-auto">
-          {#each driftOperations.slice(0, 20) as drift}
+
+        <div class="space-y-3 md:space-y-4 max-h-[calc(100vh-400px)] overflow-y-auto">
+          {#each driftOperations as drift}
             <div class="bg-gray-50 dark:bg-gray-700 rounded-md">
               <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 md:p-4 gap-3">
                 <div class="flex-1 min-w-0">
@@ -1895,6 +1930,27 @@
             </div>
           {/each}
         </div>
+
+        <!-- Load More Button -->
+        {#if hasMoreDrift}
+          <div class="mt-4 flex justify-center">
+            <button
+              on:click={loadMoreDrift}
+              disabled={isLoadingMoreDrift}
+              class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {#if isLoadingMoreDrift}
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-600 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Loading more...
+              {:else}
+                Load More Drift Operations
+              {/if}
+            </button>
+          </div>
+        {/if}
       </Card>
     {/if}
   {/if}

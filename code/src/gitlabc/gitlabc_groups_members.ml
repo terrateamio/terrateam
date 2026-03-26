@@ -94,11 +94,20 @@ module GetApiV4GroupsIdMembersAll = struct
   module Parameters = struct
     module State = struct
       let t_of_yojson = function
-        | `String "awaiting" -> Ok "awaiting"
-        | `String "active" -> Ok "active"
+        | `String "active" -> Ok `Active
+        | `String "awaiting" -> Ok `Awaiting
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Active -> `String "active"
+        | `Awaiting -> `String "awaiting"
+
+      type t =
+        ([ `Active
+         | `Awaiting
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module User_ids = struct
@@ -141,7 +150,7 @@ module GetApiV4GroupsIdMembersAll = struct
            ("query", Var (params.query, Option String));
            ("user_ids", Var (params.user_ids, Option (Array Int)));
            ("show_seat_info", Var (params.show_seat_info, Option Bool));
-           ("state", Var (params.state, Option String));
+           ("state", Var (params.state, Option (Enum State.t_to_yojson)));
            ("page", Var (params.page, Int));
            ("per_page", Var (params.per_page, Int));
          ])

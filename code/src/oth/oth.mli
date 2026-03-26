@@ -10,6 +10,9 @@ module Assert : sig
   (** Asserts that two values are equal based on a provided equality function [eq], otherwise prints
       both values and fails the test. *)
   val eq: eq:('a -> 'a -> bool) -> pp:(Format.formatter -> 'a -> unit) -> 'a -> 'a -> unit
+
+  (** Fails the test, displaying [msg] *)
+  val false_: string -> 'a
 end
 
 (** Internal state of the test, explicitly passed around with some

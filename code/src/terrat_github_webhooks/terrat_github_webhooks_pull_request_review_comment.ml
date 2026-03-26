@@ -9,11 +9,19 @@ end
 
 module Side = struct
   let t_of_yojson = function
-    | `String "LEFT" -> Ok "LEFT"
-    | `String "RIGHT" -> Ok "RIGHT"
+    | `String "LEFT" -> Ok `LEFT
+    | `String "RIGHT" -> Ok `RIGHT
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `LEFT -> `String "LEFT"
+    | `RIGHT -> `String "RIGHT"
+
+  type t =
+    ([ `LEFT
+     | `RIGHT
+     ]
+    [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 

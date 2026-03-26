@@ -7384,6 +7384,9 @@
         "additionalProperties": false,
         "description": "API_Entities_ProjectWithAccess model",
         "properties": {
+          "archived": {
+            "type": "boolean"
+          },
           "avatar_url": {
             "example": "http://example.com/uploads/project/avatar/3/uploads/avatar.png",
             "type": "string"
@@ -13071,6 +13074,12 @@
         "additionalProperties": false,
         "description": "Create a new pipeline",
         "properties": {
+          "inputs": {
+            "additionalProperties": true,
+            "description": "Key value pairs matching the expected input",
+            "nullable": true,
+            "type": "object"
+          },
           "ref": {
             "description": "Reference",
             "example": "develop",
@@ -73350,10 +73359,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Compare two branches, tags, or commits",
-            "schema": {
-              "$ref": "#/components/schemas/API_Entities_Compare"
-            }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/API_Entities_Compare"
+                }
+              }
+            },
+            "description": "Compare two branches, tags, or commits"
           }
         },
         "tags": [

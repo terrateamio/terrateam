@@ -4,6 +4,7 @@ module Metrics : sig
   type t = {
     num_conns : int;
     idle_conns : int;
+    queue_time : float option;
   }
 end
 
@@ -21,11 +22,17 @@ type t
 
     - [conn_timeout_check] specifies how long a connection can be idle for before timing out and
       being closed, shrinking the pool when it is not in active use. By default, this is 1 minute.
+
+    - [max_uses] specifies the maximum number of times a connection can be used before it is
+      recycled. After reaching this limit, the connection is destroyed on return and a new one will
+      be created on demand. This guards against long-lived connection issues such as memory leaks in
+      the PostgreSQL backend or stale prepared statements. By default, this is 10.
 *)
 val create :
   ?metrics:(Metrics.t -> unit Abb.Future.t) ->
   ?idle_check:Duration.t ->
   ?conn_timeout_check:Duration.t ->
+  ?max_uses:int ->
   ?tls_config:[ `Require of Otls.Tls_config.t | `Prefer of Otls.Tls_config.t ] ->
   ?passwd:string ->
   ?port:int ->

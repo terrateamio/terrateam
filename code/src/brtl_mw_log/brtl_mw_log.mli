@@ -1,8 +1,8 @@
 module Config : sig
-  type t = {
-    remote_ip_header : string option;
-    extra_key : (string, Brtl_rspnc.t) Brtl_ctx.t -> string option;
-  }
+  type t
+
+  val make :
+    ?remote_ip_header:string -> ?metrics:(Uri.t -> Cohttp.Code.meth -> float -> unit) -> unit -> t
 end
 
 val create : Config.t -> Brtl_mw.Mw.t

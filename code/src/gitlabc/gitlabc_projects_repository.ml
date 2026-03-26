@@ -155,12 +155,23 @@ module GetApiV4ProjectsIdRepositoryBranches = struct
   module Parameters = struct
     module Sort = struct
       let t_of_yojson = function
-        | `String "name_asc" -> Ok "name_asc"
-        | `String "updated_asc" -> Ok "updated_asc"
-        | `String "updated_desc" -> Ok "updated_desc"
+        | `String "name_asc" -> Ok `Name_asc
+        | `String "updated_asc" -> Ok `Updated_asc
+        | `String "updated_desc" -> Ok `Updated_desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Name_asc -> `String "name_asc"
+        | `Updated_asc -> `String "updated_asc"
+        | `Updated_desc -> `String "updated_desc"
+
+      type t =
+        ([ `Name_asc
+         | `Updated_asc
+         | `Updated_desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -205,7 +216,7 @@ module GetApiV4ProjectsIdRepositoryBranches = struct
            ("per_page", Var (params.per_page, Int));
            ("search", Var (params.search, Option String));
            ("regex", Var (params.regex, Option String));
-           ("sort", Var (params.sort, Option String));
+           ("sort", Var (params.sort, Option (Enum Sort.t_to_yojson)));
            ("page_token", Var (params.page_token, Option String));
          ])
       ~url
@@ -514,11 +525,20 @@ module GetApiV4ProjectsIdRepositoryCommits = struct
   module Parameters = struct
     module Order = struct
       let t_of_yojson = function
-        | `String "default" -> Ok "default"
-        | `String "topo" -> Ok "topo"
+        | `String "default" -> Ok `Default
+        | `String "topo" -> Ok `Topo
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Default -> `String "default"
+        | `Topo -> `String "topo"
+
+      type t =
+        ([ `Default
+         | `Topo
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -526,7 +546,7 @@ module GetApiV4ProjectsIdRepositoryCommits = struct
       author : string option; [@default None]
       first_parent : bool option; [@default None]
       id : string;
-      order : Order.t; [@default "default"]
+      order : Order.t; [@default `Default]
       page : int; [@default 1]
       path : string option; [@default None]
       per_page : int; [@default 20]
@@ -583,7 +603,7 @@ module GetApiV4ProjectsIdRepositoryCommits = struct
            ("all", Var (params.all, Option Bool));
            ("with_stats", Var (params.with_stats, Option Bool));
            ("first_parent", Var (params.first_parent, Option Bool));
-           ("order", Var (params.order, String));
+           ("order", Var (params.order, Enum Order.t_to_yojson));
            ("trailers", Var (params.trailers, Bool));
            ("page", Var (params.page, Int));
            ("per_page", Var (params.per_page, Int));
@@ -867,12 +887,23 @@ module GetApiV4ProjectsIdRepositoryCommitsShaRefs = struct
   module Parameters = struct
     module Type = struct
       let t_of_yojson = function
-        | `String "branch" -> Ok "branch"
-        | `String "tag" -> Ok "tag"
-        | `String "all" -> Ok "all"
+        | `String "all" -> Ok `All
+        | `String "branch" -> Ok `Branch
+        | `String "tag" -> Ok `Tag
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `All -> `String "all"
+        | `Branch -> `String "branch"
+        | `Tag -> `String "tag"
+
+      type t =
+        ([ `All
+         | `Branch
+         | `Tag
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -880,7 +911,7 @@ module GetApiV4ProjectsIdRepositoryCommitsShaRefs = struct
       page : int; [@default 1]
       per_page : int; [@default 20]
       sha : string;
-      type_ : Type.t; [@default "all"] [@key "type"]
+      type_ : Type.t; [@default `All] [@key "type"]
     }
     [@@deriving make, show, eq]
   end
@@ -911,7 +942,7 @@ module GetApiV4ProjectsIdRepositoryCommitsShaRefs = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("type", Var (params.type_, String));
+           ("type", Var (params.type_, Enum Type.t_to_yojson));
            ("page", Var (params.page, Int));
            ("per_page", Var (params.per_page, Int));
          ])
@@ -1051,33 +1082,51 @@ module GetApiV4ProjectsIdRepositoryCommitsShaStatuses = struct
   module Parameters = struct
     module Order_by = struct
       let t_of_yojson = function
-        | `String "id" -> Ok "id"
-        | `String "pipeline_id" -> Ok "pipeline_id"
+        | `String "id" -> Ok `Id
+        | `String "pipeline_id" -> Ok `Pipeline_id
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Id -> `String "id"
+        | `Pipeline_id -> `String "pipeline_id"
+
+      type t =
+        ([ `Id
+         | `Pipeline_id
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Sort = struct
       let t_of_yojson = function
-        | `String "asc" -> Ok "asc"
-        | `String "desc" -> Ok "desc"
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
       all : bool; [@default false]
       id : string;
       name : string option; [@default None]
-      order_by : Order_by.t; [@default "id"]
+      order_by : Order_by.t; [@default `Id]
       page : int; [@default 1]
       per_page : int; [@default 20]
       pipeline_id : int option; [@default None]
       ref_ : string option; [@default None] [@key "ref"]
       sha : string;
-      sort : Sort.t; [@default "asc"]
+      sort : Sort.t; [@default `Asc]
       stage : string option; [@default None]
     }
     [@@deriving make, show, eq]
@@ -1128,8 +1177,8 @@ module GetApiV4ProjectsIdRepositoryCommitsShaStatuses = struct
            ("name", Var (params.name, Option String));
            ("pipeline_id", Var (params.pipeline_id, Option Int));
            ("all", Var (params.all, Bool));
-           ("order_by", Var (params.order_by, String));
-           ("sort", Var (params.sort, String));
+           ("order_by", Var (params.order_by, Enum Order_by.t_to_yojson));
+           ("sort", Var (params.sort, Enum Sort.t_to_yojson));
            ("page", Var (params.page, Int));
            ("per_page", Var (params.per_page, Int));
          ])
@@ -1152,11 +1201,14 @@ module GetApiV4ProjectsIdRepositoryCompare = struct
   end
 
   module Responses = struct
-    module OK = struct end
+    module OK = struct
+      type t = Gitlabc_components.API_Entities_Compare.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
 
-    type t = [ `OK ] [@@deriving show, eq]
+    type t = [ `OK of OK.t ] [@@deriving show, eq]
 
-    let t = [ ("200", fun _ -> Ok `OK) ]
+    let t = [ ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson) ]
   end
 
   let url = "/api/v4/projects/{id}/repository/compare"
@@ -1187,30 +1239,50 @@ module GetApiV4ProjectsIdRepositoryContributors = struct
   module Parameters = struct
     module Order_by = struct
       let t_of_yojson = function
-        | `String "email" -> Ok "email"
-        | `String "name" -> Ok "name"
-        | `String "commits" -> Ok "commits"
+        | `String "commits" -> Ok `Commits
+        | `String "email" -> Ok `Email
+        | `String "name" -> Ok `Name
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Commits -> `String "commits"
+        | `Email -> `String "email"
+        | `Name -> `String "name"
+
+      type t =
+        ([ `Commits
+         | `Email
+         | `Name
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Sort = struct
       let t_of_yojson = function
-        | `String "asc" -> Ok "asc"
-        | `String "desc" -> Ok "desc"
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
       id : string;
-      order_by : Order_by.t; [@default "commits"]
+      order_by : Order_by.t; [@default `Commits]
       page : int; [@default 1]
       per_page : int; [@default 20]
       ref_ : string option; [@default None] [@key "ref"]
-      sort : Sort.t; [@default "asc"]
+      sort : Sort.t; [@default `Asc]
     }
     [@@deriving make, show, eq]
   end
@@ -1239,8 +1311,8 @@ module GetApiV4ProjectsIdRepositoryContributors = struct
            ("page", Var (params.page, Int));
            ("per_page", Var (params.per_page, Int));
            ("ref", Var (params.ref_, Option String));
-           ("order_by", Var (params.order_by, String));
-           ("sort", Var (params.sort, String));
+           ("order_by", Var (params.order_by, Enum Order_by.t_to_yojson));
+           ("sort", Var (params.sort, Enum Sort.t_to_yojson));
          ])
       ~url
       ~responses:Responses.t
@@ -1385,10 +1457,13 @@ module GetApiV4ProjectsIdRepositoryFilesFilePath = struct
     module OK = struct
       module Encoding = struct
         let t_of_yojson = function
-          | `String "base64" -> Ok "base64"
+          | `String "base64" -> Ok `Base64
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-        type t = (string[@of_yojson t_of_yojson])
+        let t_to_yojson = function
+          | `Base64 -> `String "base64"
+
+        type t = ([ `Base64 ][@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
         [@@deriving yojson { strict = false; meta = false }, show, eq]
       end
 
@@ -1699,31 +1774,51 @@ module GetApiV4ProjectsIdRepositoryTags = struct
   module Parameters = struct
     module Order_by = struct
       let t_of_yojson = function
-        | `String "name" -> Ok "name"
-        | `String "updated" -> Ok "updated"
-        | `String "version" -> Ok "version"
+        | `String "name" -> Ok `Name
+        | `String "updated" -> Ok `Updated
+        | `String "version" -> Ok `Version
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Name -> `String "name"
+        | `Updated -> `String "updated"
+        | `Version -> `String "version"
+
+      type t =
+        ([ `Name
+         | `Updated
+         | `Version
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Sort = struct
       let t_of_yojson = function
-        | `String "asc" -> Ok "asc"
-        | `String "desc" -> Ok "desc"
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
       id : string;
-      order_by : Order_by.t; [@default "updated"]
+      order_by : Order_by.t; [@default `Updated]
       page : int; [@default 1]
       page_token : string option; [@default None]
       per_page : int; [@default 20]
       search : string option; [@default None]
-      sort : Sort.t; [@default "desc"]
+      sort : Sort.t; [@default `Desc]
     }
     [@@deriving make, show, eq]
   end
@@ -1767,8 +1862,8 @@ module GetApiV4ProjectsIdRepositoryTags = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("sort", Var (params.sort, String));
-           ("order_by", Var (params.order_by, String));
+           ("sort", Var (params.sort, Enum Sort.t_to_yojson));
+           ("order_by", Var (params.order_by, Enum Order_by.t_to_yojson));
            ("search", Var (params.search, Option String));
            ("page_token", Var (params.page_token, Option String));
            ("page", Var (params.page, Int));
@@ -1910,19 +2005,30 @@ module GetApiV4ProjectsIdRepositoryTree = struct
   module Parameters = struct
     module Pagination = struct
       let t_of_yojson = function
-        | `String "legacy" -> Ok "legacy"
-        | `String "keyset" -> Ok "keyset"
-        | `String "none" -> Ok "none"
+        | `String "keyset" -> Ok `Keyset
+        | `String "legacy" -> Ok `Legacy
+        | `String "none" -> Ok `None
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Keyset -> `String "keyset"
+        | `Legacy -> `String "legacy"
+        | `None -> `String "none"
+
+      type t =
+        ([ `Keyset
+         | `Legacy
+         | `None
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
       id : string;
       page : int; [@default 1]
       page_token : string option; [@default None]
-      pagination : Pagination.t; [@default "legacy"]
+      pagination : Pagination.t; [@default `Legacy]
       path : string option; [@default None]
       per_page : int; [@default 20]
       recursive : bool; [@default false]
@@ -1969,7 +2075,7 @@ module GetApiV4ProjectsIdRepositoryTree = struct
            ("recursive", Var (params.recursive, Bool));
            ("page", Var (params.page, Int));
            ("per_page", Var (params.per_page, Int));
-           ("pagination", Var (params.pagination, String));
+           ("pagination", Var (params.pagination, Enum Pagination.t_to_yojson));
            ("page_token", Var (params.page_token, Option String));
          ])
       ~url

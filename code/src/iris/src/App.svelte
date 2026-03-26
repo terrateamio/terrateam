@@ -34,9 +34,10 @@
   import AuthCallback from './lib/AuthCallback.svelte';
   import Analytics from './lib/Analytics.svelte';
   import AuditTrail from './lib/AuditTrail.svelte';
+  import Stacks from './lib/Stacks.svelte';
+  import StackDetail from './lib/StackDetail.svelte';
   import RootHandler from './lib/components/layout/RootHandler.svelte';
-  import UpgradeNudgeBar from './lib/components/UpgradeNudgeBar.svelte';
-  import QueuedJobsNudge from './lib/components/QueuedJobsNudge.svelte';
+  import RegulatedTrialBanner from './lib/components/RegulatedTrialBanner.svelte';
   
   // Check for maintenance mode
   const maintenanceConfig = getMaintenanceConfig();
@@ -60,6 +61,8 @@
     '/runs': Runs,
     '/runs/:id': RunDetail,
     '/runs/pr/:prNumber': RunsPRDetail,
+    '/stacks': Stacks,
+    '/stacks/:prNumber/:stackName': StackDetail,
     '/configuration': Configuration,
     '/subscription': Subscription,
     '/analytics': Analytics,
@@ -74,6 +77,8 @@
     '/i/:installationId/runs': Runs,
     '/i/:installationId/runs/:id': RunDetail,
     '/i/:installationId/runs/pr/:prNumber': RunsPRDetail,
+    '/i/:installationId/stacks': Stacks,
+    '/i/:installationId/stacks/:prNumber/:stackName': StackDetail,
     '/i/:installationId/configuration': Configuration,
     '/i/:installationId/subscription': Subscription,
     '/i/:installationId/analytics': Analytics,
@@ -234,10 +239,9 @@
     <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400"></div>
   </div>
 {:else}
-  <!-- Global upgrade nudge notification bars -->
+  <!-- Global trial notification banner -->
   {#if $isAuthenticated}
-    <UpgradeNudgeBar />
-    <QueuedJobsNudge />
+    <RegulatedTrialBanner />
   {/if}
   
   <!-- Main app content -->

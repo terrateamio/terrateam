@@ -1,17 +1,37 @@
 module Primary = struct
   module Color = struct
     let t_of_yojson = function
-      | `String "gray" -> Ok "gray"
-      | `String "blue" -> Ok "blue"
-      | `String "green" -> Ok "green"
-      | `String "yellow" -> Ok "yellow"
-      | `String "orange" -> Ok "orange"
-      | `String "red" -> Ok "red"
-      | `String "pink" -> Ok "pink"
-      | `String "purple" -> Ok "purple"
+      | `String "blue" -> Ok `Blue
+      | `String "gray" -> Ok `Gray
+      | `String "green" -> Ok `Green
+      | `String "orange" -> Ok `Orange
+      | `String "pink" -> Ok `Pink
+      | `String "purple" -> Ok `Purple
+      | `String "red" -> Ok `Red
+      | `String "yellow" -> Ok `Yellow
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Blue -> `String "blue"
+      | `Gray -> `String "gray"
+      | `Green -> `String "green"
+      | `Orange -> `String "orange"
+      | `Pink -> `String "pink"
+      | `Purple -> `String "purple"
+      | `Red -> `String "red"
+      | `Yellow -> `String "yellow"
+
+    type t =
+      ([ `Blue
+       | `Gray
+       | `Green
+       | `Orange
+       | `Pink
+       | `Purple
+       | `Red
+       | `Yellow
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 

@@ -1,9 +1,12 @@
 module Action = struct
   let t_of_yojson = function
-    | `String "new_permissions_accepted" -> Ok "new_permissions_accepted"
+    | `String "new_permissions_accepted" -> Ok `New_permissions_accepted
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `New_permissions_accepted -> `String "new_permissions_accepted"
+
+  type t = ([ `New_permissions_accepted ][@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 

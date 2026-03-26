@@ -35,6 +35,32 @@ module Make (Fut : Abb_intf.Future.S) : sig
       fail due to an abort or exception. All futures are aborted on failure or abort. *)
   val all : 'a Fut.t list -> 'a list Fut.t
 
+  val all2 : 'a Fut.t -> 'b Fut.t -> ('a * 'b) Fut.t
+  val all3 : 'a Fut.t -> 'b Fut.t -> 'c Fut.t -> ('a * 'b * 'c) Fut.t
+  val all4 : 'a Fut.t -> 'b Fut.t -> 'c Fut.t -> 'd Fut.t -> ('a * 'b * 'c * 'd) Fut.t
+
+  val all5 :
+    'a Fut.t -> 'b Fut.t -> 'c Fut.t -> 'd Fut.t -> 'e Fut.t -> ('a * 'b * 'c * 'd * 'e) Fut.t
+
+  val all6 :
+    'a Fut.t ->
+    'b Fut.t ->
+    'c Fut.t ->
+    'd Fut.t ->
+    'e Fut.t ->
+    'f Fut.t ->
+    ('a * 'b * 'c * 'd * 'e * 'f) Fut.t
+
+  val all7 :
+    'a Fut.t ->
+    'b Fut.t ->
+    'c Fut.t ->
+    'd Fut.t ->
+    'e Fut.t ->
+    'f Fut.t ->
+    'g Fut.t ->
+    ('a * 'b * 'c * 'd * 'e * 'f * 'g) Fut.t
+
   (** Execute a function which returns a future. The [finally] function is executed:
 
       - If the function throws an exception.
@@ -168,5 +194,47 @@ module Make (Fut : Abb_intf.Future.S) : sig
     (** Take a future result value, wait for it to be determined and throw the Ok value away, while
         maintaing the Error. *)
     val ignore : ('a, 'b) result Fut.t -> (unit, 'b) result Fut.t
+
+    val all2 : ('a, 'e) result Fut.t -> ('b, 'e) result Fut.t -> ('a * 'b, 'e) result Fut.t
+
+    val all3 :
+      ('a, 'e) result Fut.t ->
+      ('b, 'e) result Fut.t ->
+      ('c, 'e) result Fut.t ->
+      ('a * 'b * 'c, 'e) result Fut.t
+
+    val all4 :
+      ('a, 'e) result Fut.t ->
+      ('b, 'e) result Fut.t ->
+      ('c, 'e) result Fut.t ->
+      ('d, 'e) result Fut.t ->
+      ('a * 'b * 'c * 'd, 'e) result Fut.t
+
+    val all5 :
+      ('a, 'err) result Fut.t ->
+      ('b, 'err) result Fut.t ->
+      ('c, 'err) result Fut.t ->
+      ('d, 'err) result Fut.t ->
+      ('e, 'err) result Fut.t ->
+      ('a * 'b * 'c * 'd * 'e, 'err) result Fut.t
+
+    val all6 :
+      ('a, 'err) result Fut.t ->
+      ('b, 'err) result Fut.t ->
+      ('c, 'err) result Fut.t ->
+      ('d, 'err) result Fut.t ->
+      ('e, 'err) result Fut.t ->
+      ('f, 'err) result Fut.t ->
+      ('a * 'b * 'c * 'd * 'e * 'f, 'err) result Fut.t
+
+    val all7 :
+      ('a, 'err) result Fut.t ->
+      ('b, 'err) result Fut.t ->
+      ('c, 'err) result Fut.t ->
+      ('d, 'err) result Fut.t ->
+      ('e, 'err) result Fut.t ->
+      ('f, 'err) result Fut.t ->
+      ('g, 'err) result Fut.t ->
+      ('a * 'b * 'c * 'd * 'e * 'f * 'g, 'err) result Fut.t
   end
 end

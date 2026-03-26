@@ -1,33 +1,61 @@
 module Primary = struct
   module Build_type = struct
     let t_of_yojson = function
-      | `String "legacy" -> Ok "legacy"
-      | `String "workflow" -> Ok "workflow"
+      | `String "legacy" -> Ok `Legacy
+      | `String "workflow" -> Ok `Workflow
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Legacy -> `String "legacy"
+      | `Workflow -> `String "workflow"
+
+    type t =
+      ([ `Legacy
+       | `Workflow
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Protected_domain_state = struct
     let t_of_yojson = function
-      | `String "pending" -> Ok "pending"
-      | `String "verified" -> Ok "verified"
-      | `String "unverified" -> Ok "unverified"
+      | `String "pending" -> Ok `Pending
+      | `String "unverified" -> Ok `Unverified
+      | `String "verified" -> Ok `Verified
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Pending -> `String "pending"
+      | `Unverified -> `String "unverified"
+      | `Verified -> `String "verified"
+
+    type t =
+      ([ `Pending
+       | `Unverified
+       | `Verified
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Status_ = struct
     let t_of_yojson = function
-      | `String "built" -> Ok "built"
-      | `String "building" -> Ok "building"
-      | `String "errored" -> Ok "errored"
+      | `String "building" -> Ok `Building
+      | `String "built" -> Ok `Built
+      | `String "errored" -> Ok `Errored
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Building -> `String "building"
+      | `Built -> `String "built"
+      | `Errored -> `String "errored"
+
+    type t =
+      ([ `Building
+       | `Built
+       | `Errored
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 

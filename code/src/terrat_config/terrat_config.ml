@@ -6,7 +6,16 @@ module Github = struct
   let default_github_app_url = Uri.of_string "https://github.com/apps/terrateam-action"
   let default_github_web_base_url = Uri.of_string "https://github.com"
 
+  type action_dynamic_title_item =
+    [ `Pr_title
+    | `Pr_number
+    | `Run_kind
+    | `Run_type
+    ]
+  [@@deriving show]
+
   type t = {
+    action_dynamic_title : action_dynamic_title_item list;
     api_base_url : Uri.t;
     app_client_id : string;
     app_client_secret : (string[@opaque]);
@@ -19,6 +28,7 @@ module Github = struct
   }
   [@@deriving show]
 
+  let action_dynamic_title t = t.action_dynamic_title
   let api_base_url t = t.api_base_url
   let app_client_id t = t.app_client_id
   let app_client_secret t = t.app_client_secret
@@ -85,11 +95,14 @@ type t = {
   db : string;
   db_connect_timeout : float;
   db_host : string;
+  db_port : int;
   db_idle_tx_timeout : string;
+  db_lock_timeout : string;
   db_max_pool_size : int;
   db_password : (string[@opaque]);
   db_user : string;
   default_tier : string;
+  event_evaluator_slots : int;
   gc : Gc.t;
   github : Github.t option;
   gitlab : Gitlab.t option;
@@ -159,10 +172,27 @@ let load_github () =
           (Sys.getenv_opt "GITHUB_APP_URL")
       in
       let workflow_path_override = Sys.getenv_opt "GITHUB_WORKFLOW_PATH_OVERRIDE" in
+      let action_dynamic_title =
+        CCOption.map_or
+          ~default:[]
+          (fun s ->
+            s
+            |> CCString.split_on_char ','
+            |> CCList.sort_uniq ~cmp:CCString.compare
+            |> CCList.filter_map (function
+                 | "pr_title" -> Some `Pr_title
+                 | "pr_number" -> Some `Pr_number
+                 | "run_kind" -> Some `Run_kind
+                 | "run_type" -> Some `Run_type
+                 | "" -> None
+                 | _ -> None))
+          (Sys.getenv_opt "GITHUB_ACTION_DYNAMIC_TITLE")
+      in
       Ok
         (Some
            {
-             Github.api_base_url;
+             Github.action_dynamic_title;
+             api_base_url;
              app_client_id;
              app_client_secret;
              app_id;
@@ -243,7 +273,12 @@ let create () =
   >>= fun port ->
   env_str "DB_HOST"
   >>= fun db_host ->
+  of_opt
+    (`Key_error "DB_PORT")
+    (CCInt.of_string (CCOption.get_or ~default:"5432" (Sys.getenv_opt "DB_PORT")))
+  >>= fun db_port ->
   let db_idle_tx_timeout = CCOption.get_or ~default:"180s" (Sys.getenv_opt "DB_IDLE_TX_TIMEOUT") in
+  let db_lock_timeout = CCOption.get_or ~default:"120s" (Sys.getenv_opt "DB_LOCK_TIMEOUT") in
   env_str "DB_USER"
   >>= fun db_user ->
   env_str "DB_PASS"
@@ -262,6 +297,11 @@ let create () =
   >>= fun api_base ->
   env_str "TERRAT_PYTHON_EXEC"
   >>= fun python_exec ->
+  of_opt
+    (`Key_error "TERRAT_EVENT_EVALUATOR_SLOTS")
+    (CCInt.of_string
+       (CCOption.get_or ~default:"20" (Sys.getenv_opt "TERRAT_EVENT_EVALUATOR_SLOTS")))
+  >>= fun event_evaluator_slots ->
   let infracost = infracost () in
   let nginx_status_uri = CCOption.map Uri.of_string (Sys.getenv_opt "NGINX_STATUS_URI") in
   let admin_token = Sys.getenv_opt "TERRAT_ADMIN_TOKEN" in
@@ -301,11 +341,14 @@ let create () =
       db;
       db_connect_timeout;
       db_host;
+      db_port;
       db_idle_tx_timeout;
+      db_lock_timeout;
       db_max_pool_size;
       db_password;
       db_user;
       default_tier;
+      event_evaluator_slots;
       gc;
       github;
       gitlab;
@@ -323,11 +366,14 @@ let api_base t = t.api_base
 let db t = t.db
 let db_connect_timeout t = t.db_connect_timeout
 let db_host t = t.db_host
+let db_port t = t.db_port
 let db_idle_tx_timeout t = t.db_idle_tx_timeout
+let db_lock_timeout t = t.db_lock_timeout
 let db_max_pool_size t = t.db_max_pool_size
 let db_password t = t.db_password
 let db_user t = t.db_user
 let default_tier t = t.default_tier
+let event_evaluator_slots t = t.event_evaluator_slots
 let gc t = t.gc
 let github t = t.github
 let gitlab t = t.gitlab

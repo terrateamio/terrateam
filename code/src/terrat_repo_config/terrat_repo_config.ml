@@ -44,6 +44,7 @@ module Engine_other = Terrat_repo_config_engine_other
 module Engine_pulumi = Terrat_repo_config_engine_pulumi
 module Engine_terraform = Terrat_repo_config_engine_terraform
 module Engine_terragrunt = Terrat_repo_config_engine_terragrunt
+module Engine_tf_outputs = Terrat_repo_config_engine_tf_outputs
 module Gate = Terrat_repo_config_gate
 module Hook = Terrat_repo_config_hook
 module Hook_list = Terrat_repo_config_hook_list

@@ -12,27 +12,38 @@ end
 
 module Fail_on = struct
   let t_of_yojson = function
-    | `String "defined" -> Ok "defined"
-    | `String "undefined" -> Ok "undefined"
+    | `String "defined" -> Ok `Defined
+    | `String "undefined" -> Ok `Undefined
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Defined -> `String "defined"
+    | `Undefined -> `String "undefined"
+
+  type t =
+    ([ `Defined
+     | `Undefined
+     ]
+    [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Type = struct
   let t_of_yojson = function
-    | `String "opa" -> Ok "opa"
+    | `String "opa" -> Ok `Opa
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Opa -> `String "opa"
+
+  type t = ([ `Opa ][@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 type t = {
   env : Env.t option; [@default None]
   extra_args : Extra_args.t option; [@default None]
-  fail_on : Fail_on.t; [@default "undefined"]
+  fail_on : Fail_on.t; [@default `Undefined]
   gate : Terrat_repo_config_gate.t option; [@default None]
   ignore_errors : bool; [@default false]
   run_on : Terrat_repo_config_run_on.t option; [@default None]

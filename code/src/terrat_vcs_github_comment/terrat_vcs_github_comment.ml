@@ -47,18 +47,14 @@ module Sql = struct
       Ret.boolean
       //
       (* steps.payload *)
-      Ret.ud'
-        CCFun.(
-          CCOption.wrap Yojson.Safe.from_string
-          %> CCOption.flat_map
-               (Terrat_api_components_workflow_step_output.Payload.of_yojson %> CCOption.of_result))
+      Ret.u
+        Ret.json
+        CCFun.(Terrat_api_components_workflow_step_output.Payload.of_yojson %> CCOption.of_result)
       //
       (* steps.scope *)
-      Ret.ud'
-        CCFun.(
-          CCOption.wrap Yojson.Safe.from_string
-          %> CCOption.flat_map
-               (Terrat_api_components_workflow_step_output_scope.of_yojson %> CCOption.of_result))
+      Ret.u
+        Ret.json
+        CCFun.(Terrat_api_components_workflow_step_output_scope.of_yojson %> CCOption.of_result)
       //
       (* steps.success *)
       Ret.boolean

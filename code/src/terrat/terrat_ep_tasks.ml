@@ -7,7 +7,8 @@ module Sql = struct
       Ret.text
       //
       (* state *)
-      Ret.text
+      Ret.u Ret.text (fun s ->
+          CCResult.to_opt (Terrat_api_components.Task.State.of_yojson (`String s)))
       //
       (* updated_at *)
       Ret.text
@@ -28,7 +29,7 @@ let get storage task_id =
             db
             (Sql.select_task ())
             ~f:(fun name state updated_at ->
-              Terrat_api_components.Task.{ id; name; state; updated_at })
+              { Terrat_api_components.Task.id; name; state; updated_at })
             task_id)
       >>= function
       | Ok (task :: _) ->

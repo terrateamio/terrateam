@@ -3,13 +3,25 @@ module Primary = struct
     module Primary = struct
       module Operator = struct
         let t_of_yojson = function
-          | `String "starts_with" -> Ok "starts_with"
-          | `String "ends_with" -> Ok "ends_with"
-          | `String "contains" -> Ok "contains"
-          | `String "regex" -> Ok "regex"
+          | `String "contains" -> Ok `Contains
+          | `String "ends_with" -> Ok `Ends_with
+          | `String "regex" -> Ok `Regex
+          | `String "starts_with" -> Ok `Starts_with
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-        type t = (string[@of_yojson t_of_yojson])
+        let t_to_yojson = function
+          | `Contains -> `String "contains"
+          | `Ends_with -> `String "ends_with"
+          | `Regex -> `String "regex"
+          | `Starts_with -> `String "starts_with"
+
+        type t =
+          ([ `Contains
+           | `Ends_with
+           | `Regex
+           | `Starts_with
+           ]
+          [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
         [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
@@ -27,10 +39,13 @@ module Primary = struct
 
   module Type = struct
     let t_of_yojson = function
-      | `String "commit_author_email_pattern" -> Ok "commit_author_email_pattern"
+      | `String "commit_author_email_pattern" -> Ok `Commit_author_email_pattern
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Commit_author_email_pattern -> `String "commit_author_email_pattern"
+
+    type t = ([ `Commit_author_email_pattern ][@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 

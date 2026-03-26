@@ -1,23 +1,43 @@
 module Primary = struct
   module Allow_deletions_enforcement_level = struct
     let t_of_yojson = function
-      | `String "off" -> Ok "off"
-      | `String "non_admins" -> Ok "non_admins"
-      | `String "everyone" -> Ok "everyone"
+      | `String "everyone" -> Ok `Everyone
+      | `String "non_admins" -> Ok `Non_admins
+      | `String "off" -> Ok `Off
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Everyone -> `String "everyone"
+      | `Non_admins -> `String "non_admins"
+      | `Off -> `String "off"
+
+    type t =
+      ([ `Everyone
+       | `Non_admins
+       | `Off
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Allow_force_pushes_enforcement_level = struct
     let t_of_yojson = function
-      | `String "off" -> Ok "off"
-      | `String "non_admins" -> Ok "non_admins"
-      | `String "everyone" -> Ok "everyone"
+      | `String "everyone" -> Ok `Everyone
+      | `String "non_admins" -> Ok `Non_admins
+      | `String "off" -> Ok `Off
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Everyone -> `String "everyone"
+      | `Non_admins -> `String "non_admins"
+      | `Off -> `String "off"
+
+    type t =
+      ([ `Everyone
+       | `Non_admins
+       | `Off
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
@@ -27,67 +47,127 @@ module Primary = struct
 
   module Linear_history_requirement_enforcement_level = struct
     let t_of_yojson = function
-      | `String "off" -> Ok "off"
-      | `String "non_admins" -> Ok "non_admins"
-      | `String "everyone" -> Ok "everyone"
+      | `String "everyone" -> Ok `Everyone
+      | `String "non_admins" -> Ok `Non_admins
+      | `String "off" -> Ok `Off
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Everyone -> `String "everyone"
+      | `Non_admins -> `String "non_admins"
+      | `Off -> `String "off"
+
+    type t =
+      ([ `Everyone
+       | `Non_admins
+       | `Off
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Lock_branch_enforcement_level = struct
     let t_of_yojson = function
-      | `String "off" -> Ok "off"
-      | `String "non_admins" -> Ok "non_admins"
-      | `String "everyone" -> Ok "everyone"
+      | `String "everyone" -> Ok `Everyone
+      | `String "non_admins" -> Ok `Non_admins
+      | `String "off" -> Ok `Off
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Everyone -> `String "everyone"
+      | `Non_admins -> `String "non_admins"
+      | `Off -> `String "off"
+
+    type t =
+      ([ `Everyone
+       | `Non_admins
+       | `Off
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Merge_queue_enforcement_level = struct
     let t_of_yojson = function
-      | `String "off" -> Ok "off"
-      | `String "non_admins" -> Ok "non_admins"
-      | `String "everyone" -> Ok "everyone"
+      | `String "everyone" -> Ok `Everyone
+      | `String "non_admins" -> Ok `Non_admins
+      | `String "off" -> Ok `Off
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Everyone -> `String "everyone"
+      | `Non_admins -> `String "non_admins"
+      | `Off -> `String "off"
+
+    type t =
+      ([ `Everyone
+       | `Non_admins
+       | `Off
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Pull_request_reviews_enforcement_level = struct
     let t_of_yojson = function
-      | `String "off" -> Ok "off"
-      | `String "non_admins" -> Ok "non_admins"
-      | `String "everyone" -> Ok "everyone"
+      | `String "everyone" -> Ok `Everyone
+      | `String "non_admins" -> Ok `Non_admins
+      | `String "off" -> Ok `Off
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Everyone -> `String "everyone"
+      | `Non_admins -> `String "non_admins"
+      | `Off -> `String "off"
+
+    type t =
+      ([ `Everyone
+       | `Non_admins
+       | `Off
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Required_conversation_resolution_level = struct
     let t_of_yojson = function
-      | `String "off" -> Ok "off"
-      | `String "non_admins" -> Ok "non_admins"
-      | `String "everyone" -> Ok "everyone"
+      | `String "everyone" -> Ok `Everyone
+      | `String "non_admins" -> Ok `Non_admins
+      | `String "off" -> Ok `Off
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Everyone -> `String "everyone"
+      | `Non_admins -> `String "non_admins"
+      | `Off -> `String "off"
+
+    type t =
+      ([ `Everyone
+       | `Non_admins
+       | `Off
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Required_deployments_enforcement_level = struct
     let t_of_yojson = function
-      | `String "off" -> Ok "off"
-      | `String "non_admins" -> Ok "non_admins"
-      | `String "everyone" -> Ok "everyone"
+      | `String "everyone" -> Ok `Everyone
+      | `String "non_admins" -> Ok `Non_admins
+      | `String "off" -> Ok `Off
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Everyone -> `String "everyone"
+      | `Non_admins -> `String "non_admins"
+      | `Off -> `String "off"
+
+    type t =
+      ([ `Everyone
+       | `Non_admins
+       | `Off
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
@@ -97,23 +177,43 @@ module Primary = struct
 
   module Required_status_checks_enforcement_level = struct
     let t_of_yojson = function
-      | `String "off" -> Ok "off"
-      | `String "non_admins" -> Ok "non_admins"
-      | `String "everyone" -> Ok "everyone"
+      | `String "everyone" -> Ok `Everyone
+      | `String "non_admins" -> Ok `Non_admins
+      | `String "off" -> Ok `Off
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Everyone -> `String "everyone"
+      | `Non_admins -> `String "non_admins"
+      | `Off -> `String "off"
+
+    type t =
+      ([ `Everyone
+       | `Non_admins
+       | `Off
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Signature_requirement_enforcement_level = struct
     let t_of_yojson = function
-      | `String "off" -> Ok "off"
-      | `String "non_admins" -> Ok "non_admins"
-      | `String "everyone" -> Ok "everyone"
+      | `String "everyone" -> Ok `Everyone
+      | `String "non_admins" -> Ok `Non_admins
+      | `String "off" -> Ok `Off
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Everyone -> `String "everyone"
+      | `Non_admins -> `String "non_admins"
+      | `Off -> `String "off"
+
+    type t =
+      ([ `Everyone
+       | `Non_admins
+       | `Off
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 

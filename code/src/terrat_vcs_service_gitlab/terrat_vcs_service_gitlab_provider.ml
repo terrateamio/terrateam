@@ -62,6 +62,7 @@ module Sql = struct
       /% Var.bigint "installation_id")
 end
 
+(* Do not change this willy-nilly, values in the database probablye depend on it. *)
 let name = "gitlab"
 
 let enforce_installation_access ~request_id user account_id db =
@@ -109,10 +110,7 @@ module Db = struct
       let module P = struct
         type t = Terrat_base_repo_config_v1.Access_control.Match_list.t [@@deriving yojson]
       end in
-      CCFun.(
-        CCOption.wrap Yojson.Safe.from_string
-        %> CCOption.map P.of_yojson
-        %> CCOption.flat_map CCResult.to_opt)
+      CCFun.(P.of_yojson %> CCResult.to_opt)
 
     let lock_policy =
       let open Terrat_base_repo_config_v1.Workflows.Entry.Lock_policy in
@@ -128,41 +126,14 @@ module Db = struct
       | All -> "all"
       | Dest_branch -> "dest_branch"
 
-    let select_work_manifest_dirspaceflows =
+    let select_work_manifests_batch_query = read "select_work_manifests_batch.sql"
+
+    let select_work_manifests_batch () =
       Pgsql_io.Typed_sql.(
         sql
         //
-        (* path *)
-        Ret.text
-        //
-        (* workflow_idx *)
-        Ret.(option smallint)
-        //
-        (* workspace *)
-        Ret.text
-        /^ read "select_work_manifest_dirspaceflows.sql"
-        /% Var.uuid "id")
-
-    let select_work_manifest_access_control_denied_dirspaces =
-      Pgsql_io.Typed_sql.(
-        sql
-        //
-        (* path *)
-        Ret.text
-        //
-        (* workspace *)
-        Ret.text
-        //
-        (* policy *)
-        Ret.(option (ud' policy))
-        /^ read "select_work_manifest_access_control_denied_dirspaces.sql"
-        /% Var.uuid "work_manifest")
-
-    let select_work_manifest_query = read "select_work_manifest2.sql"
-
-    let select_work_manifest () =
-      Pgsql_io.Typed_sql.(
-        sql
+        (* id *)
+        Ret.uuid
         //
         (* base_sha *)
         Ret.text
@@ -183,16 +154,16 @@ module Db = struct
         Ret.(option text)
         //
         (* run_type *)
-        Ret.(ud' Terrat_work_manifest3.Step.of_string)
+        Ret.(u text Terrat_work_manifest3.Step.of_string)
         //
         (* sha *)
         Ret.text
         //
         (* state *)
-        Ret.(ud' Terrat_work_manifest3.State.of_string)
+        Ret.(u text Terrat_work_manifest3.State.of_string)
         //
         (* tag_query *)
-        Ret.(ud' CCFun.(Terrat_tag_query.of_string %> CCResult.to_opt))
+        Ret.(u text CCFun.(Terrat_tag_query.of_string %> CCResult.to_opt))
         //
         (* username *)
         Ret.(option text)
@@ -213,15 +184,58 @@ module Db = struct
         Ret.(option text)
         //
         (* runs_on *)
-        Ret.(option (ud' (CCOption.wrap Yojson.Safe.from_string)))
-        /^ select_work_manifest_query
-        /% Var.uuid "id")
+        Ret.(option json)
+        //
+        (* branch *)
+        Ret.(option text)
+        /^ select_work_manifests_batch_query
+        /% Var.(str_array (uuid "ids")))
 
-    let select_work_manifest_pull_request_query = read "select_work_manifest_pull_request.sql"
-
-    let select_work_manifest_pull_request () =
+    let select_work_manifest_dirspaceflows_batch =
       Pgsql_io.Typed_sql.(
         sql
+        //
+        (* work_manifest *)
+        Ret.uuid
+        //
+        (* path *)
+        Ret.text
+        //
+        (* workflow_idx *)
+        Ret.(option smallint)
+        //
+        (* workspace *)
+        Ret.text
+        /^ read "select_work_manifest_dirspaceflows_batch.sql"
+        /% Var.(str_array (uuid "ids")))
+
+    let select_work_manifest_access_control_denied_dirspaces_batch =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* work_manifest *)
+        Ret.uuid
+        //
+        (* path *)
+        Ret.text
+        //
+        (* workspace *)
+        Ret.text
+        //
+        (* policy *)
+        Ret.(option (u json policy))
+        /^ read "select_work_manifest_access_control_denied_dirspaces_batch.sql"
+        /% Var.(str_array (uuid "ids")))
+
+    let select_work_manifest_pull_requests_batch_query =
+      read "select_work_manifest_pull_requests_batch.sql"
+
+    let select_work_manifest_pull_requests_batch () =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* id *)
+        Ret.uuid
         //
         (* base_branch_name *)
         Ret.text
@@ -252,22 +266,25 @@ module Db = struct
         //
         (* username *)
         Ret.(option text)
-        /^ select_work_manifest_pull_request_query
-        /% Var.uuid "id")
+        /^ select_work_manifest_pull_requests_batch_query
+        /% Var.(str_array (uuid "ids")))
 
-    let select_drift_work_manifest_query = read "select_drift_work_manifest.sql"
+    let select_drift_work_manifests_batch_query = read "select_drift_work_manifests_batch.sql"
 
-    let select_drift_work_manifest () =
+    let select_drift_work_manifests_batch () =
       Pgsql_io.Typed_sql.(
         sql
+        //
+        (* work_manifest *)
+        Ret.uuid
         //
         (* branch *)
         Ret.text
         //
         (* reconcile *)
         Ret.boolean
-        /^ select_drift_work_manifest_query
-        /% Var.uuid "work_manifest")
+        /^ select_drift_work_manifests_batch_query
+        /% Var.(str_array (uuid "ids")))
 
     let insert_gitlab_installation_repository =
       Pgsql_io.Typed_sql.(
@@ -277,6 +294,15 @@ module Db = struct
         /% Var.bigint "installation_id"
         /% Var.text "owner"
         /% Var.text "name")
+
+    let select_repository_for_update =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* id *)
+        Ret.bigint
+        /^ read "select_repository_for_update.sql"
+        /% Var.bigint "id")
 
     let insert_pull_request =
       Pgsql_io.Typed_sql.(
@@ -390,17 +416,12 @@ module Db = struct
         /% Var.bigint "installation_id")
 
     let select_index =
-      let index =
-        CCFun.(
-          CCOption.wrap Yojson.Safe.from_string
-          %> CCOption.map Terrat_code_idx.of_yojson
-          %> CCOption.flat_map CCResult.to_opt)
-      in
+      let index = CCFun.(Terrat_code_idx.of_yojson %> CCResult.to_opt) in
       Pgsql_io.Typed_sql.(
         sql
         //
         (* Index *)
-        Ret.(ud' index)
+        Ret.(u json index)
         /^ read "select_index.sql"
         /% Var.bigint "installation_id"
         /% Var.text "sha")
@@ -410,7 +431,7 @@ module Db = struct
         sql
         //
         (* repo_config *)
-        Ret.ud' (CCOption.wrap Yojson.Safe.from_string)
+        Ret.json
         /^ read "select_repo_config.sql"
         /% Var.bigint "installation_id"
         /% Var.text "sha")
@@ -477,6 +498,18 @@ module Db = struct
         /% Var.bigint "repo_id"
         /% Var.bigint "pull_number")
 
+    let select_dirspace_applies_for_context =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* path *)
+        Ret.text
+        //
+        (* workspace *)
+        Ret.text
+        /^ read "select_dirspace_applies_for_context.sql"
+        /% Var.(ud (uuid "context_id") (fun c -> c.Terrat_job_context.Context.id)))
+
     let select_dirspaces_without_valid_plans =
       Pgsql_io.Typed_sql.(
         sql
@@ -490,7 +523,9 @@ module Db = struct
         /% Var.bigint "repository"
         /% Var.bigint "pull_number"
         /% Var.(str_array (text "dirs"))
-        /% Var.(str_array (text "workspaces")))
+        /% Var.(str_array (text "workspaces"))
+        /% Var.(ud (text "base_ref") Api.Ref.to_string)
+        /% Var.(ud (text "branch_ref") Api.Ref.to_string))
 
     let update_abort_duplicate_work_manifests_query = read "abort_duplicate_work_manifests.sql"
 
@@ -503,6 +538,21 @@ module Db = struct
         /^ update_abort_duplicate_work_manifests_query
         /% Var.bigint "repository"
         /% Var.bigint "pull_number"
+        /% Var.(ud (text "run_type") Terrat_work_manifest3.Step.to_string)
+        /% Var.(str_array (text "dirs"))
+        /% Var.(str_array (text "workspaces")))
+
+    let update_abort_duplicate_work_manifests_for_context_query =
+      read "abort_duplicate_work_manifests_for_context.sql"
+
+    let update_abort_duplicate_work_manifests_for_context () =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* work manifest id *)
+        Ret.uuid
+        /^ update_abort_duplicate_work_manifests_for_context_query
+        /% Var.(ud (uuid "context_id") (fun c -> c.Terrat_job_context.Context.id))
         /% Var.(ud (text "run_type") Terrat_work_manifest3.Step.to_string)
         /% Var.(str_array (text "dirs"))
         /% Var.(str_array (text "workspaces")))
@@ -522,6 +572,24 @@ module Db = struct
         /^ select_conflicting_work_manifests_in_repo_query
         /% Var.bigint "repository"
         /% Var.bigint "pull_number"
+        /% Var.(ud (text "run_type") Terrat_work_manifest3.Step.to_string)
+        /% Var.(str_array (text "dirs"))
+        /% Var.(str_array (text "workspaces")))
+
+    let select_conflicting_work_manifests_in_repo_for_context_query =
+      read "select_conflicting_work_manifests_in_repo_for_context.sql"
+
+    let select_conflicting_work_manifests_in_repo_for_context () =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* id *)
+        Ret.uuid
+        //
+        (* maybe_stale *)
+        Ret.boolean
+        /^ select_conflicting_work_manifests_in_repo_for_context_query
+        /% Var.(ud (uuid "context_id") (fun c -> c.Terrat_job_context.Context.id))
         /% Var.(ud (text "run_type") Terrat_work_manifest3.Step.to_string)
         /% Var.(str_array (text "dirs"))
         /% Var.(str_array (text "workspaces")))
@@ -599,7 +667,7 @@ module Db = struct
         Ret.boolean
         //
         (* tag_query *)
-        Ret.(option (ud' CCFun.(Terrat_tag_query.of_string %> CCResult.to_opt)))
+        Ret.(option (u text CCFun.(Terrat_tag_query.of_string %> CCResult.to_opt)))
         //
         (* window_start *)
         Ret.(option text)
@@ -673,95 +741,152 @@ module Db = struct
         /% Var.text "sha"
         /% Var.text "dir"
         /% Var.text "workspace")
+
+    let upsert_branch_hash =
+      Pgsql_io.Typed_sql.(
+        sql
+        /^ read "upsert_branch_hash.sql"
+        /% Var.(ud (bigint "repo_id") CCFun.(Api.Repo.id %> CCInt64.of_int))
+        /% Var.(ud (text "branch") Api.Ref.to_string)
+        /% Var.(ud (text "hash") Api.Ref.to_string))
+
+    let select_repo_by_id () =
+      Pgsql_io.Typed_sql.(
+        sql
+        // Ret.bigint
+        // Ret.text
+        // Ret.text
+        /^ read "select_repo_by_id.sql"
+        /% Var.bigint "repo_id"
+        /% Var.bigint "installation_id")
+
+    let delete_repo () =
+      Pgsql_io.Typed_sql.(
+        sql
+        /^ read "delete_repo.sql"
+        /% Var.(ud (bigint "repo_id") CCInt64.of_int)
+        /% Var.(ud (bigint "installation_id") CCInt64.of_int))
   end
 
   type t = Pgsql_io.t
 
-  let query_work_manifest ~request_id db work_manifest_id =
+  let load_work_manifests ~request_id db ids =
     let module Wm = Terrat_work_manifest3 in
     let module Dsf = Terrat_change.Dirspaceflow in
     let module Ds = Terrat_change.Dirspace in
-    let run =
-      let open Abbs_future_combinators.Infix_result_monad in
-      Metrics.Psql_query_time.time
-        (Metrics.psql_query_time "select_work_manifest_dirspaceflows")
-        (fun () ->
-          Pgsql_io.Prepared_stmt.fetch
-            db
-            Sql.select_work_manifest_dirspaceflows
-            ~f:(fun dir idx workspace ->
-              { Dsf.dirspace = { Ds.dir; workspace }; workflow = idx; variables = None })
-            work_manifest_id)
-      >>= fun changes ->
-      Metrics.Psql_query_time.time
-        (Metrics.psql_query_time "select_work_manifest_access_control_denied_dirspaces")
-        (fun () ->
-          Pgsql_io.Prepared_stmt.fetch
-            db
-            Sql.select_work_manifest_access_control_denied_dirspaces
-            ~f:(fun dir workspace policy ->
-              { Wm.Deny.dirspace = { Terrat_change.Dirspace.dir; workspace }; policy })
-            work_manifest_id)
-      >>= fun denied_dirspaces ->
-      Metrics.Psql_query_time.time (Metrics.psql_query_time "select_work_manifest") (fun () ->
-          Pgsql_io.Prepared_stmt.fetch
-            db
-            (Sql.select_work_manifest ())
-            ~f:(fun
-                base_ref
-                completed_at
-                created_at
-                pull_request_id
-                repo_id
-                run_id
-                run_type
-                branch_ref
-                state
-                tag_query
-                user
-                run_kind
-                installation_id
-                owner
-                name
-                environment
-                runs_on
-              ->
-              {
-                Wm.account = Api.Account.make (CCInt64.to_int installation_id);
-                base_ref;
-                branch_ref;
-                changes;
-                completed_at;
-                created_at;
-                denied_dirspaces;
-                environment;
-                id = work_manifest_id;
-                initiator =
-                  (match user with
-                  | Some user -> Wm.Initiator.User user
-                  | None -> Wm.Initiator.System);
-                run_id;
-                runs_on;
-                steps = [ run_type ];
-                state;
-                tag_query;
-                target =
-                  ( CCOption.map CCInt64.to_int pull_request_id,
-                    Api.Repo.make ~id:(CCInt64.to_int repo_id) ~owner ~name () );
-              })
-            work_manifest_id)
-      >>= function
-      | [] -> Abb.Future.return (Ok None)
-      | wm :: _ -> (
-          match wm.Wm.target with
-          | Some pull_request_id, repo -> (
+    let ids = CCList.sort_uniq ~cmp:Uuidm.compare ids in
+    match ids with
+    | [] -> Abb.Future.return (Ok [])
+    | _ -> (
+        let group_rows_by_id rows =
+          let tbl = Hashtbl.create (CCList.length rows) in
+          CCList.iter
+            (fun (id, v) ->
+              let prev = CCOption.get_or ~default:[] (Hashtbl.find_opt tbl id) in
+              Hashtbl.replace tbl id (v :: prev))
+            rows;
+          tbl
+        in
+        let index_rows_by_id rows =
+          let tbl = Hashtbl.create (CCList.length rows) in
+          CCList.iter (fun (id, v) -> Hashtbl.replace tbl id v) rows;
+          tbl
+        in
+        let fetch_dirspaceflows () =
+          Metrics.Psql_query_time.time
+            (Metrics.psql_query_time "select_work_manifest_dirspaceflows_batch")
+            (fun () ->
+              Pgsql_io.Prepared_stmt.fetch
+                db
+                Sql.select_work_manifest_dirspaceflows_batch
+                ~f:(fun wm_id dir idx workspace ->
+                  (wm_id, { Dsf.dirspace = { Ds.dir; workspace }; workflow = idx; variables = None }))
+                ids)
+        in
+        let fetch_denied_dirspaces () =
+          Metrics.Psql_query_time.time
+            (Metrics.psql_query_time "select_work_manifest_access_control_denied_dirspaces_batch")
+            (fun () ->
+              Pgsql_io.Prepared_stmt.fetch
+                db
+                Sql.select_work_manifest_access_control_denied_dirspaces_batch
+                ~f:(fun wm_id dir workspace policy ->
+                  (wm_id, { Wm.Deny.dirspace = { Terrat_change.Dirspace.dir; workspace }; policy }))
+                ids)
+        in
+        let fetch_manifests dsf_tbl denied_tbl =
+          Metrics.Psql_query_time.time
+            (Metrics.psql_query_time "select_work_manifests_batch")
+            (fun () ->
+              Pgsql_io.Prepared_stmt.fetch
+                db
+                (Sql.select_work_manifests_batch ())
+                ~f:(fun
+                    id
+                    base_ref
+                    completed_at
+                    created_at
+                    pull_request_id
+                    repo_id
+                    run_id
+                    run_type
+                    branch_ref
+                    state
+                    tag_query
+                    user
+                    run_kind
+                    installation_id
+                    owner
+                    name
+                    environment
+                    runs_on
+                    branch
+                  ->
+                  let changes =
+                    CCOption.get_or ~default:[] (Hashtbl.find_opt dsf_tbl id) |> CCList.rev
+                  in
+                  let denied_dirspaces =
+                    CCOption.get_or ~default:[] (Hashtbl.find_opt denied_tbl id) |> CCList.rev
+                  in
+                  {
+                    Wm.account = Api.Account.make (CCInt64.to_int installation_id);
+                    base_ref;
+                    branch;
+                    branch_ref;
+                    changes;
+                    completed_at;
+                    created_at;
+                    denied_dirspaces;
+                    environment;
+                    id;
+                    initiator =
+                      (match user with
+                      | Some user -> Wm.Initiator.User user
+                      | None -> Wm.Initiator.System);
+                    run_id;
+                    runs_on;
+                    steps = [ run_type ];
+                    state;
+                    tag_query;
+                    target =
+                      ( CCOption.map CCInt64.to_int pull_request_id,
+                        Api.Repo.make ~id:(CCInt64.to_int repo_id) ~owner ~name () );
+                  })
+                ids)
+        in
+        let fetch_pull_request_details pr_ids =
+          match pr_ids with
+          | [] -> Abb.Future.return (Ok (Hashtbl.create 0))
+          | _ ->
+              let open Abbs_future_combinators.Infix_result_monad in
               Metrics.Psql_query_time.time
-                (Metrics.psql_query_time "select_work_manifest_pull_request")
+                (Metrics.psql_query_time "select_work_manifest_pull_requests_batch")
                 (fun () ->
                   Pgsql_io.Prepared_stmt.fetch
                     db
-                    (Sql.select_work_manifest_pull_request ())
+                    (Sql.select_work_manifest_pull_requests_batch ())
                     ~f:(fun
+                        id
                         base_branch_name
                         base_ref
                         branch_name
@@ -773,60 +898,152 @@ module Db = struct
                         title
                         user
                       ->
-                      Api.Pull_request.make
-                        ~base_branch_name:(Api.Ref.of_string base_branch_name)
-                        ~base_ref:(Api.Ref.of_string base_ref)
-                        ~branch_name:(Api.Ref.of_string branch_name)
-                        ~branch_ref:(Api.Ref.of_string branch_ref)
-                        ~checks:()
-                        ~diff:()
-                        ~draft:false
-                        ~id:(CCInt64.to_int pull_number)
-                        ~mergeable:None
-                        ~provisional_merge_ref:None
-                        ~repo
-                        ~state:
-                          (match (state, merged_sha, merged_at) with
-                          | "open", _, _ -> Terrat_pull_request.State.(Open Open_status.Mergeable)
-                          | "closed", _, _ -> Terrat_pull_request.State.Closed
-                          | "merged", Some merged_hash, Some merged_at ->
-                              Terrat_pull_request.State.(Merged Merged.{ merged_hash; merged_at })
-                          | _ -> assert false)
-                        ~title
-                        ~user
-                        ())
-                    work_manifest_id)
-              >>= function
-              | [] -> assert false
-              | pr :: _ ->
-                  Abb.Future.return
-                    (Ok (Some { wm with Wm.target = Terrat_vcs_provider2.Target.Pr pr })))
-          | None, repo -> (
+                      ( id,
+                        ( base_branch_name,
+                          base_ref,
+                          branch_name,
+                          branch_ref,
+                          pull_number,
+                          state,
+                          merged_sha,
+                          merged_at,
+                          title,
+                          user ) ))
+                    pr_ids)
+              >>= fun rows -> Abb.Future.return (Ok (index_rows_by_id rows))
+        in
+        let fetch_drift_details drift_ids =
+          match drift_ids with
+          | [] -> Abb.Future.return (Ok (Hashtbl.create 0))
+          | _ ->
+              let open Abbs_future_combinators.Infix_result_monad in
               Metrics.Psql_query_time.time
-                (Metrics.psql_query_time "select_drift_work_manifest")
+                (Metrics.psql_query_time "select_drift_work_manifests_batch")
                 (fun () ->
                   Pgsql_io.Prepared_stmt.fetch
                     db
-                    (Sql.select_drift_work_manifest ())
-                    ~f:(fun branch _ -> branch)
-                    work_manifest_id)
-              >>= function
-              | [] -> assert false
-              | branch :: _ ->
-                  Abb.Future.return
-                    (Ok
-                       (Some
-                          { wm with Wm.target = Terrat_vcs_provider2.Target.Drift { repo; branch } }))
-              ))
-    in
+                    (Sql.select_drift_work_manifests_batch ())
+                    ~f:(fun id branch _reconcile -> (id, branch))
+                    drift_ids)
+              >>= fun rows -> Abb.Future.return (Ok (index_rows_by_id rows))
+        in
+        let resolve_targets pr_tbl drift_tbl wms =
+          CCList.filter_map
+            (fun wm ->
+              match wm.Wm.target with
+              | Some _pull_request_id, repo -> (
+                  match Hashtbl.find_opt pr_tbl wm.Wm.id with
+                  | Some
+                      ( base_branch_name,
+                        base_ref,
+                        branch_name,
+                        branch_ref,
+                        pull_number,
+                        state,
+                        merged_sha,
+                        merged_at,
+                        title,
+                        user ) ->
+                      let pr =
+                        Api.Pull_request.make
+                          ~base_branch_name:(Api.Ref.of_string base_branch_name)
+                          ~base_ref:(Api.Ref.of_string base_ref)
+                          ~branch_name:(Api.Ref.of_string branch_name)
+                          ~branch_ref:(Api.Ref.of_string branch_ref)
+                          ~checks:()
+                          ~diff:()
+                          ~draft:false
+                          ~id:(CCInt64.to_int pull_number)
+                          ~mergeable:None
+                          ~provisional_merge_ref:None
+                          ~repo
+                          ~state:
+                            (match (state, merged_sha, merged_at) with
+                            | "open", _, _ -> Terrat_pull_request.State.(Open Open_status.Mergeable)
+                            | "closed", _, _ -> Terrat_pull_request.State.Closed
+                            | "merged", Some merged_hash, Some merged_at ->
+                                Terrat_pull_request.State.(Merged Merged.{ merged_hash; merged_at })
+                            | _ -> assert false)
+                          ~title
+                          ~user
+                          ()
+                      in
+                      Some { wm with Wm.target = Terrat_vcs_provider2.Target.Pr pr }
+                  | None -> None)
+              | None, repo -> (
+                  match Hashtbl.find_opt drift_tbl wm.Wm.id with
+                  | Some branch ->
+                      Some
+                        { wm with Wm.target = Terrat_vcs_provider2.Target.Drift { repo; branch } }
+                  | None -> None))
+            wms
+        in
+        let run =
+          let open Abbs_future_combinators.Infix_result_monad in
+          fetch_dirspaceflows ()
+          >>= fun dsf_rows ->
+          fetch_denied_dirspaces ()
+          >>= fun denied_rows ->
+          let dsf_tbl = group_rows_by_id dsf_rows in
+          let denied_tbl = group_rows_by_id denied_rows in
+          fetch_manifests dsf_tbl denied_tbl
+          >>= fun wms ->
+          let pr_wms, drift_wms =
+            CCList.partition
+              (fun wm ->
+                match wm.Wm.target with
+                | Some _, _ -> true
+                | None, _ -> false)
+              wms
+          in
+          fetch_pull_request_details (CCList.map (fun wm -> wm.Wm.id) pr_wms)
+          >>= fun pr_tbl ->
+          fetch_drift_details (CCList.map (fun wm -> wm.Wm.id) drift_wms)
+          >>= fun drift_tbl ->
+          let results = resolve_targets pr_tbl drift_tbl wms in
+          if CCList.length results <> CCList.length wms then (
+            Logs.info (fun m ->
+                m
+                  "%s : QUERY_WORK_MANIFESTS_BATCH : MISSING_TARGET_DETAILS : expected=%d got=%d"
+                  request_id
+                  (CCList.length wms)
+                  (CCList.length results));
+            Abb.Future.return (Error `Error))
+          else Abb.Future.return (Ok results)
+        in
+        let open Abb.Future.Infix_monad in
+        run
+        >>= function
+        | Ok _ as ret -> Abb.Future.return ret
+        | Error (#Pgsql_io.err as err) ->
+            Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+            Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
+            Abb.Future.return (Error `Error)
+        | Error `Error -> Abb.Future.return (Error `Error))
+
+  let query_work_manifests ~request_id db ids =
+    let ids = CCList.sort_uniq ~cmp:Uuidm.compare ids in
     let open Abb.Future.Infix_monad in
-    run
+    load_work_manifests ~request_id db ids
     >>= function
-    | Ok _ as ret -> Abb.Future.return ret
-    | Error (#Pgsql_io.err as err) ->
-        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
-        Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
+    | Ok results when CCList.length results <> CCList.length ids ->
+        Logs.info (fun m ->
+            m
+              "%s : QUERY_WORK_MANIFESTS : MISSING_MANIFESTS : expected=%d got=%d"
+              request_id
+              (CCList.length ids)
+              (CCList.length results));
         Abb.Future.return (Error `Error)
+    | Ok _ as ret -> Abb.Future.return ret
+    | Error `Error -> Abb.Future.return (Error `Error)
+
+  let query_work_manifest ~request_id db work_manifest_id =
+    let open Abb.Future.Infix_monad in
+    load_work_manifests ~request_id db [ work_manifest_id ]
+    >>= function
+    | Ok [] -> Abb.Future.return (Ok None)
+    | Ok (wm :: _) -> Abb.Future.return (Ok (Some wm))
+    | Error `Error -> Abb.Future.return (Error `Error)
 
   let store_account_repository ~request_id db account repo =
     let open Abb.Future.Infix_monad in
@@ -842,6 +1059,21 @@ module Db = struct
           (Api.Repo.name repo))
     >>= function
     | Ok () -> Abb.Future.return (Ok ())
+    | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+        Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
+  let lock_repository ~request_id db account repo =
+    let open Abb.Future.Infix_monad in
+    Metrics.Psql_query_time.time (Metrics.psql_query_time "select_repository_for_update") (fun () ->
+        Pgsql_io.Prepared_stmt.fetch
+          db
+          Sql.select_repository_for_update
+          ~f:CCFun.id
+          (CCInt64.of_int (Api.Repo.id repo)))
+    >>= function
+    | Ok _ -> Abb.Future.return (Ok ())
     | Error (#Pgsql_io.err as err) ->
         Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
@@ -885,19 +1117,17 @@ module Db = struct
     let module Paths = Terrat_api_components.Work_manifest_index_paths in
     let module Symlinks = Terrat_api_components.Work_manifest_index_symlinks in
     let success = idx.Idx.success in
-    let paths = Json_schema.String_map.to_list (Paths.additional idx.Idx.paths) in
+    let paths = Sln_map.String.to_list (Paths.additional idx.Idx.paths) in
     let symlinks =
       CCOption.map_or
         ~default:[]
-        (fun idx -> Json_schema.String_map.to_list (Symlinks.additional idx))
+        (fun idx -> Sln_map.String.to_list (Symlinks.additional idx))
         idx.Idx.symlinks
     in
     let failures =
       CCList.flat_map
         (fun (_path, { Paths.Additional.failures; _ }) ->
-          let failures =
-            Json_schema.String_map.to_list (Paths.Additional.Failures.additional failures)
-          in
+          let failures = Sln_map.String.to_list (Paths.Additional.Failures.additional failures) in
           CCList.map
             (fun (path, { Paths.Additional.Failures.Additional.lnum; msg }) ->
               { Terrat_vcs_provider2.Index.Failure.file = path; line_num = lnum; error = msg })
@@ -918,11 +1148,7 @@ module Db = struct
     let module R = Terrat_api_components.Work_manifest_index_result in
     let open Abb.Future.Infix_monad in
     Metrics.Psql_query_time.time (Metrics.psql_query_time "insert_index") (fun () ->
-        Pgsql_io.Prepared_stmt.execute
-          db
-          (Sql.insert_index ())
-          work_manifest_id
-          (Yojson.Safe.to_string (R.to_yojson index)))
+        Pgsql_io.Prepared_stmt.execute db (Sql.insert_index ()) work_manifest_id (R.to_yojson index))
     >>= function
     | Ok () -> Abb.Future.return (Ok (index_of_index index))
     | Error (#Pgsql_io.err as err) ->
@@ -989,7 +1215,7 @@ module Db = struct
           Sql.insert_repo_config
           (CCInt64.of_int @@ Api.Account.id account)
           (Api.Ref.to_string ref_)
-          (Yojson.Safe.to_string json))
+          json)
     >>= function
     | Ok () -> Abb.Future.return (Ok ())
     | Error (#Pgsql_io.err as err) ->
@@ -1106,7 +1332,7 @@ module Db = struct
                   Sql.insert_gate
                   name
                   token
-                  (Yojson.Safe.to_string @@ Terrat_gate.to_yojson gate)
+                  (Terrat_gate.to_yojson gate)
                   repo
                   pull_number
                   sha
@@ -1154,14 +1380,12 @@ module Db = struct
               in
               let payload =
                 CCList.map
-                  (fun (_, { O.payload; _ }) ->
-                    Yojson.Safe.to_string (replace_nul_byte_json (O.Payload.to_yojson payload)))
+                  (fun (_, { O.payload; _ }) -> replace_nul_byte_json (O.Payload.to_yojson payload))
                   chunk
               in
               let scope =
                 CCList.map
-                  (fun (_, { O.scope; _ }) ->
-                    Yojson.Safe.to_string (replace_nul_byte_json (Scope.to_yojson scope)))
+                  (fun (_, { O.scope; _ }) -> replace_nul_byte_json (Scope.to_yojson scope))
                   chunk
               in
               let step = CCList.map (fun (_, { O.step; _ }) -> replace_nul_byte step) chunk in
@@ -1243,7 +1467,7 @@ module Db = struct
     (if enabled then
        Metrics.Psql_query_time.time (Metrics.psql_query_time "upsert_drift_schedule") (fun () ->
            let open Abbs_future_combinators.Infix_result_monad in
-           let names = Iter.to_list @@ V1.String_map.keys schedules in
+           let names = Iter.to_list @@ Sln_map.String.keys schedules in
            Pgsql_io.Prepared_stmt.execute
              db
              Sql.delete_drift_schedules
@@ -1268,7 +1492,7 @@ module Db = struct
                  name
                  window_start
                  window_end)
-             (V1.String_map.to_list schedules))
+             (Sln_map.String.to_list schedules))
      else
        Pgsql_io.Prepared_stmt.execute
          db
@@ -1364,7 +1588,7 @@ module Db = struct
         Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
 
-  let query_next_pending_work_manifest ~request_id db =
+  let query_next_pending_work_manifest ?(new_age = false) ~request_id db =
     let run =
       let open Abbs_future_combinators.Infix_result_monad in
       Metrics.Psql_query_time.time (Metrics.psql_query_time "select_next_work_manifest") (fun () ->
@@ -1456,7 +1680,30 @@ module Db = struct
         Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
 
-  let query_dirspaces_without_valid_plans ~request_id db pull_request dirspaces =
+  let query_applied_dirspaces_for_context ~request_id db context =
+    let open Abb.Future.Infix_monad in
+    Metrics.Psql_query_time.time
+      (Metrics.psql_query_time "select_dirspace_applies_for_context")
+      (fun () ->
+        Pgsql_io.Prepared_stmt.fetch
+          db
+          Sql.select_dirspace_applies_for_context
+          ~f:(fun dir workspace -> { Terrat_dirspace.dir; workspace })
+          context)
+    >>= function
+    | Ok dirspaces -> Abb.Future.return (Ok dirspaces)
+    | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+        Logs.err (fun m -> m "%s : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
+  let query_dirspaces_without_valid_plans
+      ~request_id
+      ~base_ref
+      ~branch_ref
+      db
+      pull_request
+      dirspaces =
     let open Abb.Future.Infix_monad in
     Metrics.Psql_query_time.time
       (Metrics.psql_query_time "select_dirspaces_without_valid_plans")
@@ -1468,7 +1715,9 @@ module Db = struct
           (CCInt64.of_int @@ Api.Repo.id @@ Api.Pull_request.repo pull_request)
           (CCInt64.of_int @@ Api.Pull_request.id pull_request)
           (CCList.map (fun { Terrat_change.Dirspace.dir; _ } -> dir) dirspaces)
-          (CCList.map (fun { Terrat_change.Dirspace.workspace; _ } -> workspace) dirspaces))
+          (CCList.map (fun { Terrat_change.Dirspace.workspace; _ } -> workspace) dirspaces)
+          base_ref
+          branch_ref)
     >>= function
     | Ok _ as ret -> Abb.Future.return ret
     | Error (#Pgsql_io.err as err) ->
@@ -1513,6 +1762,84 @@ module Db = struct
             ~f:(fun id maybe_stale -> (id, maybe_stale))
             (CCInt64.of_int @@ Api.Repo.id @@ Api.Pull_request.repo pull_request)
             (CCInt64.of_int @@ Api.Pull_request.id pull_request)
+            run_type
+            dirs
+            workspaces)
+      >>= fun ids ->
+      match
+        CCList.partition_filter_map
+          (function
+            | id, true -> `Right id
+            | id, false -> `Left id)
+          ids
+      with
+      | (_ :: _ as conflicting), _ ->
+          Abbs_future_combinators.List_result.map
+            ~f:(query_work_manifest ~request_id db)
+            conflicting
+          >>= fun wms ->
+          Abb.Future.return
+            (Ok
+               (Some
+                  (Terrat_vcs_provider2.Conflicting_work_manifests.Conflicting
+                     (CCList.filter_map CCFun.id wms))))
+      | _, (_ :: _ as maybe_stale) ->
+          Abbs_future_combinators.List_result.map
+            ~f:(query_work_manifest ~request_id db)
+            maybe_stale
+          >>= fun wms ->
+          Abb.Future.return
+            (Ok
+               (Some
+                  (Terrat_vcs_provider2.Conflicting_work_manifests.Maybe_stale
+                     (CCList.filter_map CCFun.id wms))))
+      | _, _ -> Abb.Future.return (Ok None)
+    in
+    let open Abb.Future.Infix_monad in
+    run
+    >>= function
+    | Ok wms -> Abb.Future.return (Ok wms)
+    | Error `Error -> Abb.Future.return (Error `Error)
+    | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+        Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
+  let query_conflicting_work_manifests_in_repo_for_context ~request_id db context dirspaces op =
+    let run_type =
+      match op with
+      | `Plan -> Terrat_work_manifest3.Step.Plan
+      | `Apply -> Terrat_work_manifest3.Step.Apply
+    in
+    let dirs = CCList.map (fun Terrat_change.Dirspace.{ dir; _ } -> dir) dirspaces in
+    let workspaces =
+      CCList.map (fun Terrat_change.Dirspace.{ workspace; _ } -> workspace) dirspaces
+    in
+    let run =
+      let open Abbs_future_combinators.Infix_result_monad in
+      Metrics.Psql_query_time.time
+        (Metrics.psql_query_time "update_abort_duplicate_work_manifests_for_context")
+        (fun () ->
+          Pgsql_io.Prepared_stmt.fetch
+            db
+            (Sql.update_abort_duplicate_work_manifests_for_context ())
+            ~f:CCFun.id
+            context
+            run_type
+            dirs
+            workspaces)
+      >>= fun ids ->
+      CCList.iter
+        (fun id -> Logs.info (fun m -> m "%s : ABORTED_WORK_MANIFEST : %a" request_id Uuidm.pp id))
+        ids;
+      Metrics.Psql_query_time.time
+        (Metrics.psql_query_time "select_conflicting_work_manifests_in_repo_for_context")
+        (fun () ->
+          Pgsql_io.Prepared_stmt.fetch
+            db
+            (Sql.select_conflicting_work_manifests_in_repo_for_context ())
+            ~f:(fun id maybe_stale -> (id, maybe_stale))
+            context
             run_type
             dirs
             workspaces)
@@ -1758,6 +2085,45 @@ module Db = struct
         Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
+
+  let store_branch_hash ~request_id ~branch_name ~branch_ref repo db =
+    let open Abb.Future.Infix_monad in
+    Metrics.Psql_query_time.time (Metrics.psql_query_time "store_branch_hash") (fun () ->
+        Pgsql_io.Prepared_stmt.execute db Sql.upsert_branch_hash repo branch_name branch_ref)
+    >>= function
+    | Ok () -> Abb.Future.return (Ok ())
+    | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+        Logs.err (fun m -> m "%s : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
+  let query_repo_by_id ~request_id db installation_id repo_id =
+    let open Abb.Future.Infix_monad in
+    Metrics.Psql_query_time.time (Metrics.psql_query_time "select_repo_by_id") (fun () ->
+        Pgsql_io.Prepared_stmt.fetch
+          db
+          (Sql.select_repo_by_id ())
+          ~f:(fun id owner name -> Api.Repo.make ~id:(Int64.to_int id) ~owner ~name ())
+          (CCInt64.of_int repo_id)
+          (CCInt64.of_int installation_id))
+    >>= function
+    | Ok (repo :: _) -> Abb.Future.return (Ok (Some repo))
+    | Ok [] -> Abb.Future.return (Ok None)
+    | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+        Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
+  let delete_repo ~request_id db installation_id repo_id =
+    let open Abb.Future.Infix_monad in
+    Metrics.Psql_query_time.time (Metrics.psql_query_time "delete_repo") (fun () ->
+        Pgsql_io.Prepared_stmt.execute db (Sql.delete_repo ()) repo_id installation_id)
+    >>= function
+    | Ok () -> Abb.Future.return (Ok ())
+    | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+        Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
 end
 
 module Apply_requirements = struct
@@ -1912,13 +2278,8 @@ module Apply_requirements = struct
       CCList.filter
         (fun Terrat_commit_check.{ title; _ } ->
           not
-            (CCString.equal "terrateam apply" title
-            || CCString.prefix ~pre:"terrateam apply:" title
-            || CCString.prefix ~pre:"terrateam plan:" title
-            || CCList.mem
-                 ~eq:CCString.equal
-                 title
-                 [ "terrateam apply pre-hooks"; "terrateam apply post-hooks" ]
+            (CCString.equal "terrateam_job" title
+            || CCString.equal "terrateam apply" title
             || CCList.exists CCFun.(Lua_pattern.find title %> CCOption.is_some) ignore_matching_pats
             || CCList.exists (CCString.equal title) ignore_matching))
         commit_checks
@@ -2126,11 +2487,7 @@ module Tier = struct
              |> CCString.concat "\n")
            (Terrat_files_gitlab_sql.read fname))
 
-    let tier =
-      CCFun.(
-        CCOption.wrap Yojson.Safe.from_string
-        %> CCOption.map Terrat_tier.of_yojson
-        %> CCOption.flat_map CCResult.to_opt)
+    let tier = CCFun.(Terrat_tier.of_yojson %> CCResult.to_opt)
 
     let select_tier =
       Pgsql_io.Typed_sql.(
@@ -2143,7 +2500,7 @@ module Tier = struct
         Ret.text
         //
         (* tier *)
-        Ret.(ud' tier)
+        Ret.(u json tier)
         /^ read "select_tier.sql"
         /% Var.bigint "installation_id")
 
@@ -2181,15 +2538,10 @@ module Tier = struct
           | [] -> Abb.Future.return (Ok None)
           | users -> (
               let user = Api.User.to_string user in
-              let all_users =
-                Terrat_data.String_set.to_list
-                @@ Terrat_data.String_set.of_list (user :: CCList.map fst users)
-              in
+              let all_users = Sln_set.String.dedup_list (user :: CCList.map fst users) in
               (* Allow users that have used the product with-in the existing tier to use it. *)
               let allowed_users =
-                Terrat_data.String_set.of_list
-                @@ CCList.take num_users_per_month
-                @@ CCList.map fst users
+                Sln_set.String.of_list @@ CCList.take num_users_per_month @@ CCList.map fst users
               in
               Logs.info (fun m -> m "%s : TIER : id=%s : name=%s" request_id tier_id tier_name);
               Logs.info (fun m ->
@@ -2199,9 +2551,7 @@ module Tier = struct
                     (CCList.length all_users)
                     num_users_per_month);
               match CCList.length all_users with
-              | n
-                when n > num_users_per_month && not (Terrat_data.String_set.mem user allowed_users)
-                ->
+              | n when n > num_users_per_month && not (Sln_set.String.mem user allowed_users) ->
                   CCList.iter
                     (fun (user, first_run) ->
                       Logs.info (fun m ->
@@ -2235,108 +2585,6 @@ end
 
 module Comment = struct
   module Result = struct
-    let steps_has_changes steps =
-      let module P = struct
-        type t = { has_changes : bool [@default false] } [@@deriving of_yojson { strict = false }]
-      end in
-      let module O = Terrat_api_components.Workflow_step_output in
-      match
-        CCList.find_map
-          (function
-            | {
-                O.step = "tf/plan" | "pulumi/plan" | "custom/plan" | "fly/plan";
-                payload;
-                success;
-                _;
-              } -> (
-                match P.of_yojson (O.Payload.to_yojson payload) with
-                | Ok { P.has_changes } -> Some has_changes
-                | _ -> None)
-            | _ -> None)
-          steps
-      with
-      | Some has_changes -> has_changes
-      | None -> false
-
-    let steps_success steps =
-      let module O = Terrat_api_components.Workflow_step_output in
-      CCList.for_all (fun { O.success; ignore_errors; _ } -> success || ignore_errors) steps
-
-    module Publisher2 = struct
-      let rec iterate_comment_posts
-          ?(view = `Full)
-          request_id
-          account_status
-          config
-          client
-          is_layered_run
-          remaining_layers
-          results
-          pull_request
-          work_manifest =
-        let module Wm = Terrat_work_manifest3 in
-        let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
-        let module Comment_api = Terrat_vcs_gitlab_comment_publishers.Comment_api in
-        let module Publisher_tools = Terrat_vcs_gitlab_comment_publishers.Publisher_tools in
-        let by_scope = By_scope.group results.R2.steps in
-        let gates = results.R2.gates in
-        let output =
-          Publisher_tools.create_run_output
-            ~view
-            request_id
-            account_status
-            config
-            is_layered_run
-            remaining_layers
-            by_scope
-            gates
-            work_manifest
-        in
-        let open Abb.Future.Infix_monad in
-        Api.comment_on_pull_request ~request_id client pull_request output
-        >>= function
-        | Ok _ -> Abb.Future.return (Ok ())
-        | Error `Error -> (
-            let dirspaces =
-              CCList.filter
-                (function
-                  | Scope.Dirspace _, _ -> true
-                  | _ -> false)
-                by_scope
-            in
-            match (view, dirspaces) with
-            | _, [] -> assert false
-            | `Full, _ ->
-                iterate_comment_posts
-                  ~view:`Compact
-                  request_id
-                  account_status
-                  config
-                  client
-                  is_layered_run
-                  remaining_layers
-                  results
-                  pull_request
-                  work_manifest
-            | `Compact, _ ->
-                let kv =
-                  Snabela.Kv.(
-                    Map.of_list []
-                    (* CCOption.map_or *)
-                    (*   ~default:[] *)
-                    (*   (fun work_manifest_url -> *)
-                    (*     [ ("work_manifest_url", string (Uri.to_string work_manifest_url)) ]) *)
-                    (*   (S.work_manifest_url config work_manifest.Wm.account work_manifest) *))
-                in
-                Comment_api.apply_template_and_publish
-                  ~request_id
-                  client
-                  pull_request
-                  "ITERATE_COMMENT_POST2"
-                  Tmpl.comment_too_large
-                  kv)
-    end
-
     module Publisher3 = struct
       module Gcm = Terrat_vcs_comment.Make (Terrat_vcs_gitlab_comment.S)
 
@@ -2393,251 +2641,6 @@ module Comment = struct
         in
         Gcm.run t els
     end
-  end
-
-  module Result_publisher = struct
-    module Workflow_step_output = struct
-      type t = {
-        success : bool;
-        key : string option;
-        text : string;
-        step_type : string;
-        details : string option;
-      }
-    end
-
-    let maybe_credential_error_strings =
-      [
-        "no valid credential";
-        "Required token could not be found";
-        "could not find default credentials";
-      ]
-
-    let pre_hook_output_texts outputs =
-      let module Output = Terrat_api_components_hook_outputs.Pre.Items in
-      let module Text = Terrat_api_components_output_text in
-      let module Run = Terrat_api_components_workflow_output_run in
-      let module Checkout = Terrat_api_components_workflow_output_checkout in
-      let module Ce = Terrat_api_components_workflow_output_cost_estimation in
-      let module Oidc = Terrat_api_components_workflow_output_oidc in
-      outputs
-      |> CCList.filter_map (function
-           | Output.Workflow_output_run
-               Run.
-                 {
-                   workflow_step = Workflow_step.{ type_; cmd; _ };
-                   outputs = Some Text.{ text; output_key };
-                   success;
-                   _;
-                 } ->
-               Some
-                 Workflow_step_output.
-                   {
-                     key = output_key;
-                     text;
-                     success;
-                     step_type = type_;
-                     details = Some (CCString.concat " " cmd);
-                   }
-           | Output.Workflow_output_oidc
-               Oidc.
-                 {
-                   workflow_step = Workflow_step.{ type_; _ };
-                   outputs = Some Text.{ text; output_key };
-                   success;
-                   _;
-                 }
-           | Output.Workflow_output_checkout
-               Checkout.
-                 {
-                   workflow_step = Workflow_step.{ type_; _ };
-                   outputs = Text.{ text; output_key };
-                   success;
-                 }
-           | Output.Workflow_output_cost_estimation
-               Ce.
-                 {
-                   workflow_step = Workflow_step.{ type_; _ };
-                   outputs = Outputs.Output_text Text.{ text; output_key };
-                   success;
-                   _;
-                 } ->
-               Some
-                 Workflow_step_output.
-                   { key = output_key; text; success; step_type = type_; details = None }
-           | Output.Workflow_output_run
-               Run.{ workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ }
-           | Output.Workflow_output_oidc
-               Oidc.{ workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ } ->
-               Some
-                 Workflow_step_output.
-                   { key = None; text = ""; success; step_type = type_; details = None }
-           | Output.Workflow_output_env _
-           | Output.Workflow_output_cost_estimation
-               Ce.{ outputs = Outputs.Output_cost_estimation _; _ } -> None)
-
-    let post_hook_output_texts (outputs : Terrat_api_components_hook_outputs.Post.t) =
-      let module Output = Terrat_api_components_hook_outputs.Post.Items in
-      let module Text = Terrat_api_components_output_text in
-      let module Run = Terrat_api_components_workflow_output_run in
-      let module Oidc = Terrat_api_components_workflow_output_oidc in
-      let module Drift_create_issue = Terrat_api_components_workflow_output_drift_create_issue in
-      outputs
-      |> CCList.filter_map (function
-           | Output.Workflow_output_run
-               Run.
-                 {
-                   workflow_step = Workflow_step.{ type_; cmd; _ };
-                   outputs = Some Text.{ text; output_key };
-                   success;
-                   _;
-                 } ->
-               Some
-                 Workflow_step_output.
-                   {
-                     key = output_key;
-                     text;
-                     success;
-                     step_type = type_;
-                     details = Some (CCString.concat " " cmd);
-                   }
-           | Output.Workflow_output_oidc
-               Oidc.
-                 {
-                   workflow_step = Workflow_step.{ type_; _ };
-                   outputs = Some Text.{ text; output_key };
-                   success;
-                   _;
-                 }
-           | Output.Workflow_output_drift_create_issue
-               Drift_create_issue.
-                 {
-                   workflow_step = Workflow_step.{ type_; _ };
-                   outputs = Some Text.{ text; output_key };
-                   success;
-                   _;
-                 } ->
-               Some
-                 Workflow_step_output.
-                   { key = output_key; text; success; step_type = type_; details = None }
-           | Output.Workflow_output_run
-               Run.{ workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ }
-           | Output.Workflow_output_oidc
-               Oidc.{ workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ }
-           | Output.Workflow_output_drift_create_issue
-               Drift_create_issue.
-                 { workflow_step = Workflow_step.{ type_; _ }; outputs = None; success; _ } ->
-               Some
-                 Workflow_step_output.
-                   { key = None; text = ""; success; step_type = type_; details = None }
-           | Output.Workflow_output_env _ -> None)
-
-    let workflow_output_texts outputs =
-      let module Output = Terrat_api_components_workflow_outputs.Items in
-      let module Run = Terrat_api_components_workflow_output_run in
-      let module Init = Terrat_api_components_workflow_output_init in
-      let module Plan = Terrat_api_components_workflow_output_plan in
-      let module Apply = Terrat_api_components_workflow_output_apply in
-      let module Text = Terrat_api_components_output_text in
-      let module Output_plan = Terrat_api_components_output_plan in
-      let module Oidc = Terrat_api_components_workflow_output_oidc in
-      outputs
-      |> CCList.flat_map (function
-           | Output.Workflow_output_run
-               Run.
-                 {
-                   workflow_step = Workflow_step.{ type_; cmd; _ };
-                   outputs = Some Text.{ text; output_key };
-                   success;
-                   _;
-                 } ->
-               [
-                 Workflow_step_output.
-                   {
-                     key = output_key;
-                     text;
-                     success;
-                     step_type = type_;
-                     details = Some (CCString.concat " " cmd);
-                   };
-               ]
-           | Output.Workflow_output_oidc
-               Oidc.
-                 {
-                   workflow_step = Workflow_step.{ type_; _ };
-                   outputs = Some Text.{ text; output_key };
-                   success;
-                   _;
-                 }
-           | Output.Workflow_output_init
-               Init.
-                 {
-                   workflow_step = Workflow_step.{ type_; _ };
-                   outputs = Some Text.{ text; output_key };
-                   success;
-                   _;
-                 }
-           | Output.Workflow_output_plan
-               Plan.
-                 {
-                   workflow_step = Workflow_step.{ type_; _ };
-                   outputs = Some (Plan.Outputs.Output_text Text.{ text; output_key });
-                   success;
-                   _;
-                 }
-           | Output.Workflow_output_apply
-               Apply.
-                 {
-                   workflow_step = Workflow_step.{ type_; _ };
-                   outputs = Some Text.{ text; output_key };
-                   success;
-                   _;
-                 } ->
-               [
-                 Workflow_step_output.
-                   { step_type = type_; text; key = output_key; success; details = None };
-               ]
-           | Output.Workflow_output_plan
-               Plan.
-                 {
-                   workflow_step = Workflow_step.{ type_; _ };
-                   outputs = Some (Plan.Outputs.Output_plan Output_plan.{ plan; plan_text; _ });
-                   success;
-                   _;
-                 } ->
-               [
-                 Workflow_step_output.
-                   {
-                     step_type = type_;
-                     text = plan_text;
-                     key = Some "plan_text";
-                     success;
-                     details = None;
-                   };
-                 Workflow_step_output.
-                   { step_type = type_; text = plan; key = Some "plan"; success; details = None };
-               ]
-           | Output.Workflow_output_run _
-           | Output.Workflow_output_oidc _
-           | Output.Workflow_output_plan _
-           | Output.Workflow_output_env _
-           | Output.Workflow_output_init Init.{ outputs = None; _ }
-           | Output.Workflow_output_apply Apply.{ outputs = None; _ } -> [])
-
-    let has_changes_of_workflow_outputs outputs =
-      let module Output = Terrat_api_components_workflow_outputs.Items in
-      let module Plan = Terrat_api_components_workflow_output_plan in
-      let module Output_plan = Terrat_api_components_output_plan in
-      (* Find the plan output, and then extract the has changes if it's there *)
-      outputs
-      |> CCList.find_opt (function
-           | Output.Workflow_output_plan _ -> true
-           | _ -> false)
-      |> CCOption.flat_map (function
-           | Output.Workflow_output_plan
-               Plan.{ outputs = Some (Plan.Outputs.Output_plan Output_plan.{ has_changes; _ }); _ }
-             -> Some has_changes
-           | _ -> None)
   end
 
   let repo_config_failure ~request_id ~client ~pull_request ~title err =
@@ -2792,15 +2795,6 @@ module Comment = struct
           "DRIFT_TAG_QUERY_ERR"
           Tmpl.repo_config_err_depends_on_err
           kv
-    | `Drift_schedule_err s ->
-        let kv = Snabela.Kv.(Map.of_list [ ("schedule", string s) ]) in
-        Gcm_api.apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "DRIFT_SCHEDULE_ERR"
-          Tmpl.repo_config_err_drift_schedule_err
-          kv
     | `Drift_tag_query_err (q, err) ->
         let kv = Snabela.Kv.(Map.of_list [ ("query", string q); ("error", string err) ]) in
         Gcm_api.apply_template_and_publish
@@ -2819,34 +2813,6 @@ module Comment = struct
           "GLOB_PARSE_ERR"
           Tmpl.repo_config_err_glob_parse_err
           kv
-    | `Hooks_unknown_run_on_err s ->
-        let kv = Snabela.Kv.(Map.of_list [ ("run_on", string s) ]) in
-        Gcm_api.apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "HOOKS_UNKNOWN_RUN_ON_ERR"
-          Tmpl.repo_config_err_hooks_unknown_run_on_err
-          kv
-    | `Hooks_unknown_visible_on_err s ->
-        let kv = Snabela.Kv.(Map.of_list [ ("visible_on", string s) ]) in
-        Gcm_api.apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "HOOKS_UNKNOWN_VISIBLE_ON_ERR"
-          Tmpl.repo_config_err_hooks_unknown_visible_on_err
-          kv
-    | `Merge_strategy_parse_err s ->
-        let kv = `Assoc [ ("strategy", `String s) ] in
-        Abbs_future_combinators.Result.ignore
-        @@ Gcm_api.apply_template_and_publish_jinja
-             ~request_id
-             client
-             pull_request
-             "MERGE_STRATEGY_PARSE_ERR"
-             Tmpl.merge_strategy_parse_err
-             kv
     | `Pattern_parse_err s ->
         let kv = Snabela.Kv.(Map.of_list [ ("pattern", string s) ]) in
         Gcm_api.apply_template_and_publish
@@ -2856,16 +2822,6 @@ module Comment = struct
           "PATTERN_PARSE_ERR"
           Tmpl.repo_config_err_pattern_parse_err
           kv
-    | `Unknown_lock_policy_err s ->
-        let kv = Snabela.Kv.(Map.of_list [ ("lock_policy", string s) ]) in
-        Gcm_api.apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "UNKNOWN_LOCK_POLICY_ERR"
-          Tmpl.repo_config_err_unknown_lock_policy_err
-          kv
-    | `Unknown_plan_mode_err s -> assert false
     | `Window_parse_timezone_err tz ->
         let kv = Snabela.Kv.(Map.of_list [ ("tz", string tz) ]) in
         Gcm_api.apply_template_and_publish
@@ -2874,42 +2830,6 @@ module Comment = struct
           pull_request
           "WINDOW_PARSE_TIMEZONE_ERR"
           Tmpl.repo_config_err_window_parse_timezone_err
-          kv
-    | `Workflows_apply_unknown_run_on_err s ->
-        let kv = Snabela.Kv.(Map.of_list [ ("run_on", string s) ]) in
-        Gcm_api.apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "WORKFLOWS_APPLY_UNKNOWN_RUN_ON_ERR"
-          Tmpl.repo_config_err_workflows_apply_unknown_run_on_err
-          kv
-    | `Workflows_apply_unknown_visible_on_err s ->
-        let kv = Snabela.Kv.(Map.of_list [ ("visible_on", string s) ]) in
-        Gcm_api.apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "WORKFLOWS_APPLY_UNKNOWN_VISIBLE_ON_ERR"
-          Tmpl.repo_config_err_workflows_apply_unknown_visible_on_err
-          kv
-    | `Workflows_plan_unknown_run_on_err s ->
-        let kv = Snabela.Kv.(Map.of_list [ ("run_on", string s) ]) in
-        Gcm_api.apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "WORKFLOWS_PLAN_UNKNOWN_RUN_ON_ERR"
-          Tmpl.repo_config_err_workflows_plan_unknown_run_on_err
-          kv
-    | `Workflows_plan_unknown_visible_on_err s ->
-        let kv = Snabela.Kv.(Map.of_list [ ("visible_on", string s) ]) in
-        Gcm_api.apply_template_and_publish
-          ~request_id
-          client
-          pull_request
-          "WORKFLOWS_PLAN_UNKNOWN_VISIBLE_ON_ERR"
-          Tmpl.repo_config_err_workflows_plan_unknown_visible_on_err
           kv
     | `Workflows_tag_query_parse_err (q, err) ->
         let kv = Snabela.Kv.(Map.of_list [ ("query", string q); ("error", string err) ]) in
@@ -3279,6 +3199,23 @@ module Comment = struct
           kv
     | Msg.Conflicting_work_manifests wms ->
         let module Wm = Terrat_work_manifest3 in
+        let wms =
+          let module Key = struct
+            type t = string * bool [@@deriving ord]
+          end in
+          CCList.map
+            (fun ({ Wm.target; _ } as wm) ->
+              let id, is_pr =
+                match target with
+                | Terrat_vcs_provider2.Target.Pr pr ->
+                    (CCInt.to_string (Api.Pull_request.id pr), true)
+                | Terrat_vcs_provider2.Target.Drift _ -> ("drift", false)
+              in
+              ((id, is_pr), wm))
+            wms
+          |> CCList.sort_uniq ~cmp:(fun (a, _) (b, _) -> Key.compare a b)
+          |> CCList.map snd
+        in
         let kv =
           Snabela.Kv.(
             Map.of_list
@@ -3856,6 +3793,15 @@ module Comment = struct
           "RUN_WORK_MANIFEST_ERR_FAILED_TO_START_IDENTITY_VERIFICATION"
           Tmpl.failed_to_start_identity_verification_workflow
           kv
+    | Msg.Run_work_manifest_err (`Failed_to_start_with_msg_err "GITLAB_INPUTS_MISSING_DEFAULTS") ->
+        let kv = Snabela.Kv.(Map.of_list []) in
+        Gcm_api.apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "RUN_WORK_MANIFEST_ERR_FAILED_TO_START_MISSING_INPUTS"
+          Tmpl.failed_to_start_missing_inputs
+          kv
     | Msg.Run_work_manifest_err (`Failed_to_start | `Failed_to_start_with_msg_err _) ->
         let kv = Snabela.Kv.(Map.of_list []) in
         Gcm_api.apply_template_and_publish
@@ -4097,7 +4043,7 @@ module Repo_config = struct
     | { V1.View.access_control = { V1.Access_control.enabled = true; _ }; _ } ->
         Abb.Future.return (Error (`Premium_feature_err `Access_control))
     | { V1.View.drift = { V1.Drift.enabled = true; schedules }; _ }
-      when V1.String_map.cardinal schedules > 1 ->
+      when Sln_map.String.cardinal schedules > 1 ->
         Abb.Future.return (Error (`Premium_feature_err `Multiple_drift_schedules))
     | { V1.View.apply_requirements = { V1.Apply_requirements.checks; _ }; _ }
       when CCList.exists
@@ -4162,15 +4108,6 @@ module Work_manifest = struct
              |> CCString.concat "\n")
            (Terrat_files_gitlab_sql.read fname))
 
-    let policy =
-      let module P = struct
-        type t = Terrat_base_repo_config_v1.Access_control.Match_list.t [@@deriving yojson]
-      end in
-      CCFun.(
-        CCOption.wrap Yojson.Safe.from_string
-        %> CCOption.map P.of_yojson
-        %> CCOption.flat_map CCResult.to_opt)
-
     let insert_work_manifest_query = read "insert_work_manifest.sql"
 
     let insert_work_manifest () =
@@ -4181,7 +4118,7 @@ module Work_manifest = struct
         Ret.uuid
         //
         (* state *)
-        Ret.ud' Terrat_work_manifest3.State.of_string
+        Ret.u Ret.text Terrat_work_manifest3.State.of_string
         //
         (* created_at *)
         Ret.text
@@ -4247,18 +4184,16 @@ module Work_manifest = struct
 
     let update_run_type =
       Pgsql_io.Typed_sql.(sql /^ read "update_run_type.sql" /% Var.uuid "id" /% Var.text "run_type")
-  end
 
-  let make_run_telemetry config step repo =
-    let module Wm = Terrat_work_manifest3 in
-    Terrat_telemetry.Event.Run
-      {
-        app_type = "gitlab";
-        app_id = Terrat_config.Gitlab.app_id @@ Api.Config.vcs_config config;
-        step;
-        owner = Api.Repo.owner repo;
-        repo = Api.Repo.name repo;
-      }
+    let select_work_manifest_by_run_id () =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* id *)
+        Ret.uuid
+        /^ "select id from work_manifests where run_id = $run_id"
+        /% Var.text "run_id")
+  end
 
   let run ~request_id config client work_manifest =
     let module Pipeline_api = Gitlabc_projects_pipeline.PostApiV4ProjectsIdPipeline in
@@ -4276,6 +4211,21 @@ module Work_manifest = struct
               Api.Ref.to_string @@ Terrat_pull_request.base_branch_name pr)
       | { Wm.target = Terrat_vcs_provider2.Target.Drift { branch; _ }; _ } -> branch
     in
+    let build_pipeline_inputs ~work_manifest ~config () =
+      let base_inputs =
+        [
+          ("TERRATEAM_TRIGGER", `String "true");
+          ("WORK_TOKEN", `String (Ouuid.to_string work_manifest.Wm.id));
+          ("API_BASE_URL", `String (Terrat_config.api_base (Api.Config.config config) ^ "/gitlab"));
+        ]
+      in
+      let runs_on_inputs =
+        match work_manifest.Wm.runs_on with
+        | Some runs_on -> [ ("RUNS_ON", runs_on) ]
+        | None -> []
+      in
+      Sln_map.String.of_list (base_inputs @ runs_on_inputs)
+    in
     let run =
       let open Abbs_future_combinators.Infix_result_monad in
       let module Pipeline = Gitlabc_components.PostApiV4ProjectsIdPipeline in
@@ -4283,35 +4233,14 @@ module Work_manifest = struct
       let body =
         {
           Pipeline.ref_ = get_branch work_manifest;
-          variables =
+          inputs =
             Some
-              Pipeline.Variables.Items.(
-                CCList.flatten
-                  [
-                    [
-                      { key = "TERRATEAM_TRIGGER"; value = "true"; variable_type = "env_var" };
-                      {
-                        key = "WORK_TOKEN";
-                        value = Ouuid.to_string work_manifest.Wm.id;
-                        variable_type = "env_var";
-                      };
-                      {
-                        key = "API_BASE_URL";
-                        value = Terrat_config.api_base (Api.Config.config config) ^ "/gitlab";
-                        variable_type = "env_var";
-                      };
-                    ];
-                    (match work_manifest.Wm.runs_on with
-                    | Some runs_on ->
-                        [
-                          {
-                            key = "RUNS_ON";
-                            value = Yojson.Safe.to_string runs_on;
-                            variable_type = "env_var";
-                          };
-                        ]
-                    | None -> []);
-                  ]);
+              Pipeline.Inputs.
+                {
+                  primary = Json_schema.Empty_obj.t;
+                  additional = build_pipeline_inputs ~work_manifest ~config ();
+                };
+          variables = None;
         }
       in
       Openapic_abb.call
@@ -4328,6 +4257,14 @@ module Work_manifest = struct
              we care about is somewhere in the JSON error rather than decoding
              it. *)
           Abb.Future.return (Error (`Failed_to_start_with_msg_err "IDENTITY_VERIFICATION_ERR"))
+      | `Bad_request json
+        when CCString.find
+               ~sub:"Given inputs not defined in the `spec` section"
+               (Yojson.Safe.to_string json)
+             <> -1 ->
+          let err_msg = "Given inputs not defined in the `spec` section" in
+          Logs.err (fun m -> m "%s : %s : %s" request_id err_msg (Yojson.Safe.to_string json));
+          Abb.Future.return (Error (`Failed_to_start_with_msg_err "GITLAB_INPUTS_MISSING_DEFAULTS"))
       | (`Bad_request _ | `Unauthorized _ | `Forbidden _ | `Not_found _) as err ->
           Abb.Future.return (Error err)
     in
@@ -4400,9 +4337,7 @@ module Work_manifest = struct
                     in an array of strings, and it needs to be in a format
                     postgresql can turn back into an array.  So we use JSON
                     as the intermediate representation. *)
-                   CCOption.map
-                     (fun policy -> Yojson.Safe.to_string (Policy.to_yojson policy))
-                     policy)
+                   CCOption.map (fun policy -> Policy.to_yojson policy) policy)
                  denied_dirspaces)
               (CCList.replicate (CCList.length denied_dirspaces) work_manifest_id)))
       (CCList.chunks not_a_bad_chunk_size denied_dirspaces)
@@ -4428,7 +4363,7 @@ module Work_manifest = struct
                `Assoc [ ("dir", `String ds.Ds.dir); ("workspace", `String ds.Ds.workspace) ])
              work_manifest.Wm.changes)
       in
-      let dirspaces = Yojson.Safe.to_string dirspaces_json in
+      let dirspaces = dirspaces_json in
       let pull_number_opt =
         match work_manifest.Wm.target with
         | Terrat_vcs_provider2.Target.Pr pr -> Some (Api.Pull_request.id pr)
@@ -4470,7 +4405,7 @@ module Work_manifest = struct
             dirspaces
             run_kind
             work_manifest.Wm.environment
-            (CCOption.map Yojson.Safe.to_string work_manifest.Wm.runs_on))
+            work_manifest.Wm.runs_on)
       >>= function
       | [] -> assert false
       | (id, state, created_at) :: _ -> (
@@ -4503,7 +4438,25 @@ module Work_manifest = struct
         Abb.Future.return (Error `Error)
     | Error `Error -> Abb.Future.return (Error `Error)
 
+  let query' = Db.query_work_manifests
   let query = Db.query_work_manifest
+
+  let query_by_run_id ~request_id db run_id =
+    let run =
+      let open Abbs_future_combinators.Infix_result_monad in
+      Pgsql_io.Prepared_stmt.fetch db (Sql.select_work_manifest_by_run_id ()) ~f:CCFun.id run_id
+      >>= function
+      | [] -> Abb.Future.return (Ok None)
+      | id :: _ -> query ~request_id db id
+    in
+    let open Abb.Future.Infix_monad in
+    run
+    >>= function
+    | Ok _ as r -> Abb.Future.return r
+    | Error (#Pgsql_io.err as err) ->
+        Logs.err (fun m -> m "%s : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+    | Error `Error -> Abb.Future.return (Error `Error)
 
   let update_state ~request_id db work_manifest_id state =
     let module Wm = Terrat_work_manifest3 in
@@ -4596,9 +4549,7 @@ module Work_manifest = struct
                     in an array of strings, and it needs to be in a format
                     postgresql can turn back into an array.  So we use JSON
                     as the intermediate representation. *)
-                   CCOption.map
-                     (fun policy -> Yojson.Safe.to_string (Policy.to_yojson policy))
-                     policy)
+                   CCOption.map (fun policy -> Policy.to_yojson policy) policy)
                  denied_dirspaces)
               (CCList.replicate (CCList.length denied_dirspaces) work_manifest_id)))
       (CCList.chunks not_a_bad_chunk_size denied_dirspaces)
@@ -4685,10 +4636,7 @@ module Stacks = struct
           sql
           //
           (* stacks *)
-          Ret.ud'
-            CCFun.(
-              CCOption.wrap Yojson.Safe.from_string
-              %> CCOption.flat_map (Terrat_api_components.Stacks.of_yojson %> CCOption.of_result))
+          Ret.u Ret.json CCFun.(Terrat_api_components.Stacks.of_yojson %> CCOption.of_result)
           /^ read "select_stacks.sql"
           /% Var.bigint "repo_id"
           /% Var.bigint "pull_number")
@@ -4725,7 +4673,7 @@ module Stacks = struct
         (Sql.upsert_stacks ())
         (CCInt64.of_int repo_id)
         (CCInt64.of_int pull_request_id)
-        (Yojson.Safe.to_string @@ Terrat_api_components.Stacks.to_yojson stacks)
+        (Terrat_api_components.Stacks.to_yojson stacks)
       >>= function
       | Ok _ as r -> Abb.Future.return r
       | Error (#Pgsql_io.err as err) ->
@@ -4752,6 +4700,9 @@ module Stacks = struct
         db
         (Sql.select_dirspace_states ())
         ~f:(fun dir workspace state ->
+          let state =
+            CCResult.get_or_failwith @@ Terrat_api_components_stack_state.of_yojson (`String state)
+          in
           { Terrat_vcs_stacks.Dirspace_state.dirspace = { Terrat_dirspace.dir; workspace }; state })
         (CCInt64.of_int repo_id)
         (CCInt64.of_int pull_request_id)
@@ -4763,4 +4714,669 @@ module Stacks = struct
 
     let enforce_installation_access = enforce_installation_access
   end)
+end
+
+module Job_context = struct
+  module Tjc = Terrat_job_context
+
+  module Sql = struct
+    let read fname =
+      CCOption.get_exn_or
+        fname
+        (CCOption.map Pgsql_io.clean_string (Terrat_files_gitlab_sql.read fname))
+
+    let select_or_insert_pull_request_context =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* id *)
+        Ret.uuid
+        //
+        (* created_at *)
+        Ret.text
+        //
+        (* updated_at *)
+        Ret.text
+        /^ read "select_or_insert_pull_request_context.sql"
+        /% Var.bigint "repo_id"
+        /% Var.bigint "pull_number")
+
+    let select_or_insert_branch_context =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* id *)
+        Ret.uuid
+        //
+        (* created_at *)
+        Ret.text
+        //
+        (* updated_at *)
+        Ret.text
+        /^ read "select_or_insert_branch_context.sql"
+        /% Var.bigint "repo_id"
+        /% Var.text "branch")
+
+    let scope_of_json =
+      let module C = Terrat_job_context_param_context in
+      let module P = Terrat_job_context_param_pull_request in
+      let module B = Terrat_job_context_param_branch in
+      let module Bb = Terrat_job_context_param_branch_dest_branch in
+      let module S = Terrat_job_context.Context.Scope in
+      CCFun.(
+        C.of_yojson
+        %> CCResult.to_opt
+        %> CCOption.map (function
+             | C.Pull_request { P.pull_request } -> S.Pull_request pull_request
+             | C.Branch { B.branch } -> S.Branch (Api.Ref.of_string branch, None)
+             | C.Branch_dest_branch { Bb.branch; dest_branch } ->
+                 S.Branch (Api.Ref.of_string branch, Some (Api.Ref.of_string dest_branch))))
+
+    let select_context_by_id =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* created_at *)
+        Ret.text
+        //
+        (* scope *)
+        Ret.(u json scope_of_json)
+        //
+        (* updated_at *)
+        Ret.text
+        /^ read "select_context_by_id.sql"
+        /% Var.uuid "id")
+
+    let string_of_state = function
+      | Tjc.Job.State.Running -> "running"
+      | Tjc.Job.State.Completed -> "completed"
+      | Tjc.Job.State.Failed -> "failed"
+
+    let state_of_string = function
+      | "running" -> Some Tjc.Job.State.Running
+      | "completed" -> Some Tjc.Job.State.Completed
+      | "failed" -> Some Tjc.Job.State.Failed
+      | _ -> None
+
+    module Type_ = struct
+      let kind_to_json =
+        let module K = Terrat_job_context.Job.Type_.Kind in
+        let module O = Terrat_job_type_kind in
+        let module Kd = Terrat_job_type_kind_drift in
+        CCOption.map (function K.Drift { reconcile } ->
+            O.Kind_drift { Kd.reconcile; type_ = `Drift })
+
+      let json_to_kind =
+        let module K = Terrat_job_context.Job.Type_.Kind in
+        let module O = Terrat_job_type_kind in
+        let module Kd = Terrat_job_type_kind_drift in
+        CCOption.map (function O.Kind_drift { Kd.reconcile; type_ = _ } -> K.Drift { reconcile })
+
+      let to_json =
+        let module T = Terrat_job_context.Job.Type_ in
+        let module Jt = Terrat_job_type in
+        CCFun.(
+          (function
+          | T.Apply { tag_query; kind; force } ->
+              Jt.Type.Apply
+                {
+                  Jt.Apply.type_ = `Apply;
+                  tag_query = Some (Terrat_tag_query.to_string tag_query);
+                  kind = kind_to_json kind;
+                  force;
+                }
+          | T.Autoapply ->
+              Jt.Type.Apply
+                { Jt.Apply.type_ = `Apply; tag_query = None; kind = None; force = false }
+          | T.Autoplan -> Jt.Type.Plan { Jt.Plan.type_ = `Plan; tag_query = None; kind = None }
+          | T.Plan { tag_query; kind } ->
+              Jt.Type.Plan
+                {
+                  Jt.Plan.type_ = `Plan;
+                  tag_query = Some (Terrat_tag_query.to_string tag_query);
+                  kind = kind_to_json kind;
+                }
+          | T.Gate_approval { tokens } ->
+              Jt.Type.Gate_approval { Jt.Gate_approval.type_ = `Gate_approval; tokens }
+          | T.Index -> Jt.Type.Index { Jt.Index.type_ = `Index }
+          | T.Repo_config -> Jt.Type.Repo_config { Jt.Repo_config.type_ = `Repo_config }
+          | T.Unlock unlocks -> Jt.Type.Unlock { Jt.Unlock.type_ = `Unlock; ids = unlocks }
+          | T.Push -> Jt.Type.Push { Jt.Push.type_ = `Push })
+          %> Jt.Type.to_yojson)
+
+      let of_json =
+        let module T = Terrat_job_context.Job.Type_ in
+        let module Jt = Terrat_job_type in
+        CCFun.(
+          Jt.Type.of_yojson
+          %> CCResult.to_opt
+          %> CCOption.flat_map (function
+               | Jt.Type.Apply { Jt.Apply.type_ = _; tag_query = Some tag_query; kind; force } ->
+                   Some
+                     (T.Apply
+                        {
+                          tag_query = CCResult.get_exn @@ Terrat_tag_query.of_string tag_query;
+                          kind = json_to_kind kind;
+                          force;
+                        })
+               | Jt.Type.Apply { Jt.Apply.type_ = _; tag_query = None; kind = _; force = _ } ->
+                   Some T.Autoapply
+               | Jt.Type.Plan { Jt.Plan.type_ = _; tag_query = Some tag_query; kind } ->
+                   Some
+                     (T.Plan
+                        {
+                          tag_query = CCResult.get_exn @@ Terrat_tag_query.of_string tag_query;
+                          kind = json_to_kind kind;
+                        })
+               | Jt.Type.Plan { Jt.Plan.type_ = _; tag_query = None; kind = _ } -> Some T.Autoplan
+               | Jt.Type.Repo_config { Jt.Repo_config.type_ = _ } -> Some T.Repo_config
+               | Jt.Type.Unlock { Jt.Unlock.type_ = _; ids } -> Some (T.Unlock ids)
+               | Jt.Type.Gate_approval { Jt.Gate_approval.type_ = _; tokens } ->
+                   Some (T.Gate_approval { tokens })
+               | Jt.Type.Index { Jt.Index.type_ = _ } -> Some T.Index
+               | Jt.Type.Push { Jt.Push.type_ = _ } -> Some T.Push))
+    end
+
+    let string_of_initiator = Api.User.to_string
+    let initiator_of_string = CCFun.(Api.User.make %> CCOption.return)
+
+    let insert_job =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* id *)
+        Ret.uuid
+        //
+        (* created_at *)
+        Ret.text
+        //
+        (* updated_at *)
+        Ret.text
+        /^ read "insert_job.sql"
+        /% Var.uuid "context_id"
+        /% Var.ud (Var.text "state") string_of_state
+        /% Var.ud (Var.json "parameters") Type_.to_json
+        /% Var.ud (Var.option (Var.text "initiator")) (CCOption.map string_of_initiator))
+
+    let select_job_by_id =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* id *)
+        Ret.uuid
+        //
+        (* context_id *)
+        Ret.uuid
+        //
+        (* type *)
+        Ret.(u json Type_.of_json)
+        //
+        (* state *)
+        Ret.(u text state_of_string)
+        //
+        (* initiator *)
+        Ret.(option (u text initiator_of_string))
+        //
+        (* created_at *)
+        Ret.text
+        //
+        (* updated_at *)
+        Ret.text
+        //
+        (* completed_at *)
+        Ret.(option text)
+        /^ read "select_job_by_id.sql"
+        /% Var.uuid "id")
+
+    let select_job_by_work_manifest_id =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* id *)
+        Ret.uuid
+        //
+        (* context_id *)
+        Ret.uuid
+        //
+        (* type *)
+        Ret.(u json Type_.of_json)
+        //
+        (* state *)
+        Ret.(u text state_of_string)
+        //
+        (* initiator *)
+        Ret.(option (u text initiator_of_string))
+        //
+        (* created_at *)
+        Ret.text
+        //
+        (* updated_at *)
+        Ret.text
+        //
+        (* completed_at *)
+        Ret.(option text)
+        /^ read "select_job_by_work_manifest_id.sql"
+        /% Var.uuid "work_manifest")
+
+    let update_job_state =
+      Pgsql_io.Typed_sql.(
+        sql
+        /^ read "update_job_state.sql"
+        /% Var.uuid "job"
+        /% Var.ud (Var.text "state") string_of_state)
+
+    let upsert_job_work_manifest =
+      Pgsql_io.Typed_sql.(
+        sql /^ read "upsert_job_work_manifest.sql" /% Var.uuid "job" /% Var.uuid "work_manifest")
+
+    let select_job_work_manifests =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* work_manifest_id *)
+        Ret.uuid
+        /^ read "select_job_work_manifests.sql"
+        /% Var.uuid "job")
+
+    let to_compute_node_state =
+      Tjc.Compute_node.State.(
+        function
+        | "starting" -> Some Starting
+        | "running" -> Some Running
+        | "terminated" -> Some Terminated
+        | _ -> None)
+
+    let to_capabilities = CCFun.(Tjc.Compute_node.Capabilities.of_yojson %> CCOption.of_result)
+
+    let insert_compute_node () =
+      Pgsql_io.Typed_sql.(
+        sql
+        (* state *)
+        // Ret.u Ret.text to_compute_node_state
+        (* created_at *)
+        // Ret.text
+        (* updated_at *)
+        // Ret.text
+        /^ read "insert_compute_node.sql"
+        /% Var.uuid "id"
+        /% Var.(ud (json "capabilities") Tjc.Compute_node.Capabilities.to_yojson))
+
+    let select_compute_node () =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* id *)
+        Ret.uuid
+        //
+        (* state *)
+        Ret.u Ret.text to_compute_node_state
+        //
+        (* capabilities *)
+        Ret.u Ret.json to_capabilities
+        //
+        (* created_at *)
+        Ret.text
+        //
+        (* updated_at *)
+        Ret.text
+        /^ read "select_compute_node.sql"
+        /% Var.uuid "id")
+
+    let state_of_string =
+      let module S = Tjc.Compute_node_work.State in
+      function
+      | "created" -> Some S.Created
+      | "completed" -> Some S.Completed
+      | "aborted" -> Some S.Aborted
+      | _ -> None
+
+    let work_of_json = CCFun.(Terrat_api_components.Work_manifest.of_yojson %> CCResult.to_opt)
+
+    let select_compute_node_work =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* created_at *)
+        Ret.text
+        //
+        (* state *)
+        Ret.(u text state_of_string)
+        //
+        (* work *)
+        Ret.(u json work_of_json)
+        //
+        (* work_manifest *)
+        Ret.uuid
+        /^ read "select_compute_node_work.sql"
+        /% Var.uuid "compute_node_id")
+
+    let string_of_state =
+      let module S = Tjc.Compute_node.State in
+      function
+      | S.Starting -> "starting"
+      | S.Running -> "running"
+      | S.Terminated -> "terminated"
+
+    let update_compute_node_state =
+      Pgsql_io.Typed_sql.(
+        sql
+        /^ read "update_compute_node_state.sql"
+        /% Var.uuid "compute_node_id"
+        /% Var.(ud (text "state") string_of_state))
+
+    let upsert_compute_node_work =
+      Pgsql_io.Typed_sql.(
+        sql
+        /^ read "upsert_compute_node_work.sql"
+        /% Var.uuid "compute_node_id"
+        /% Var.uuid "work_manifest"
+        /% Var.ud (Var.json "work") Terrat_api_components.Work_manifest.to_yojson)
+  end
+
+  let create_or_get_for_pull_request ~request_id db _account repo pull_request_id =
+    let run =
+      let open Abbs_future_combinators.Infix_result_monad in
+      Pgsql_io.Prepared_stmt.fetch
+        db
+        Sql.select_or_insert_pull_request_context
+        ~f:(fun id created_at updated_at -> (id, created_at, updated_at))
+        (CCInt64.of_int @@ Api.Repo.id repo)
+        (CCInt64.of_int @@ pull_request_id)
+      >>= function
+      | [] -> assert false
+      | (id, created_at, updated_at) :: _ ->
+          Abb.Future.return
+            (Ok
+               {
+                 Tjc.Context.created_at;
+                 id;
+                 scope = Tjc.Context.Scope.Pull_request pull_request_id;
+                 updated_at;
+               })
+    in
+    let open Abb.Future.Infix_monad in
+    run
+    >>= function
+    | Ok _ as ret -> Abb.Future.return ret
+    | Error (#Pgsql_io.err as err) ->
+        Logs.err (fun m ->
+            m
+              "%s : JOB_CONTEXT : CREATE_OR_GET_FOR_PULL_REQUEST : %a"
+              request_id
+              Pgsql_io.pp_err
+              err);
+        Abb.Future.return (Error `Error)
+
+  let create_or_get_for_branch ~request_id db _account repo branch =
+    let run =
+      let open Abbs_future_combinators.Infix_result_monad in
+      Pgsql_io.Prepared_stmt.fetch
+        db
+        Sql.select_or_insert_branch_context
+        ~f:(fun id created_at updated_at -> (id, created_at, updated_at))
+        (CCInt64.of_int @@ Api.Repo.id repo)
+        (Api.Ref.to_string branch)
+      >>= function
+      | [] -> assert false
+      | (id, created_at, updated_at) :: _ ->
+          Abb.Future.return
+            (Ok
+               {
+                 Tjc.Context.created_at;
+                 id;
+                 scope = Tjc.Context.Scope.Branch (branch, None);
+                 updated_at;
+               })
+    in
+    let open Abb.Future.Infix_monad in
+    run
+    >>= function
+    | Ok _ as ret -> Abb.Future.return ret
+    | Error (#Pgsql_io.err as err) ->
+        Logs.err (fun m ->
+            m "%s : JOB_CONTEXT : CREATE_OR_GET_FOR_BRANCH : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
+  let query ~request_id db id =
+    let open Abb.Future.Infix_monad in
+    Pgsql_io.Prepared_stmt.fetch
+      db
+      Sql.select_context_by_id
+      ~f:(fun created_at scope updated_at ->
+        { Terrat_job_context.Context.created_at; id; scope; updated_at })
+      id
+    >>= function
+    | Ok r -> Abb.Future.return (Ok (CCOption.of_list r))
+    | Error (#Pgsql_io.err as err) ->
+        Logs.err (fun m -> m "%s : CONTEXT : QUERY : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
+  module Job = struct
+    let query_context = query
+
+    let create ~request_id db type_ context initiator =
+      let run =
+        let open Abbs_future_combinators.Infix_result_monad in
+        Pgsql_io.Prepared_stmt.fetch
+          db
+          Sql.insert_job
+          ~f:(fun id created_at updated_at -> (id, created_at, updated_at))
+          context.Tjc.Context.id
+          Tjc.Job.State.Running
+          type_
+          initiator
+        >>= function
+        | [] -> assert false
+        | (id, created_at, updated_at) :: _ ->
+            Abb.Future.return
+              (Ok
+                 {
+                   Tjc.Job.completed_at = None;
+                   context;
+                   created_at;
+                   id;
+                   initiator;
+                   state = Tjc.Job.State.Running;
+                   type_;
+                   updated_at = created_at;
+                 })
+      in
+      let open Abb.Future.Infix_monad in
+      run
+      >>= function
+      | Ok _ as r -> Abb.Future.return r
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m -> m "%s : JOB : CREATE : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
+
+    let query ~request_id db ~job_id =
+      let run =
+        let open Abbs_future_combinators.Infix_result_monad in
+        Pgsql_io.Prepared_stmt.fetch
+          db
+          Sql.select_job_by_id
+          ~f:(fun id context_id type_ state initiator created_at updated_at completed_at ->
+            (id, context_id, type_, state, initiator, created_at, updated_at, completed_at))
+          job_id
+        >>= function
+        | [] -> Abb.Future.return (Ok None)
+        | (id, context_id, type_, state, initiator, created_at, updated_at, completed_at) :: _ -> (
+            query_context ~request_id db context_id
+            >>= function
+            | None -> assert false
+            | Some context ->
+                let module J = Terrat_job_context.Job in
+                Abb.Future.return
+                  (Ok
+                     (Some
+                        {
+                          J.completed_at;
+                          context;
+                          created_at;
+                          id;
+                          initiator;
+                          state;
+                          type_;
+                          updated_at;
+                        })))
+      in
+      let open Abb.Future.Infix_monad in
+      run
+      >>= function
+      | Ok _ as r -> Abb.Future.return r
+      | Error `Error -> Abb.Future.return (Error `Error)
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m -> m "%s : JOB : QUERY : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
+
+    let query_all_by_context_id ~request_id db ~context_id () = raise (Failure "nyi")
+    let query_pending_by_context_id ~request_id db ~context_id () = raise (Failure "nyi")
+
+    let query_by_work_manifest_id ~request_id db ~work_manifest_id () =
+      let run =
+        let open Abbs_future_combinators.Infix_result_monad in
+        Pgsql_io.Prepared_stmt.fetch
+          db
+          Sql.select_job_by_work_manifest_id
+          ~f:(fun id context_id type_ state initiator created_at updated_at completed_at ->
+            (id, context_id, type_, state, initiator, created_at, updated_at, completed_at))
+          work_manifest_id
+        >>= function
+        | [] -> Abb.Future.return (Ok None)
+        | (id, context_id, type_, state, initiator, created_at, updated_at, completed_at) :: _ -> (
+            query_context ~request_id db context_id
+            >>= function
+            | None -> assert false
+            | Some context ->
+                let module J = Terrat_job_context.Job in
+                Abb.Future.return
+                  (Ok
+                     (Some
+                        {
+                          J.completed_at;
+                          context;
+                          created_at;
+                          id;
+                          initiator;
+                          state;
+                          type_;
+                          updated_at;
+                        })))
+      in
+      let open Abb.Future.Infix_monad in
+      run
+      >>= function
+      | Ok _ as r -> Abb.Future.return r
+      | Error `Error -> Abb.Future.return (Error `Error)
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m -> m "%s : JOB : QUERY : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
+
+    let update_state ~request_id db ~job_id state =
+      let open Abb.Future.Infix_monad in
+      Pgsql_io.Prepared_stmt.execute db Sql.update_job_state job_id state
+      >>= function
+      | Ok () -> Abb.Future.return (Ok ())
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m -> m "%s : JOB : UPDATE_STATE : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
+
+    let add_work_manifest ~request_id db ~job_id ~work_manifest_id () =
+      let open Abb.Future.Infix_monad in
+      Pgsql_io.Prepared_stmt.execute db Sql.upsert_job_work_manifest job_id work_manifest_id
+      >>= function
+      | Ok () -> Abb.Future.return (Ok ())
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m -> m "%s : JOB : ADD_WORK_MANIFEST : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
+
+    let query_work_manifests ~request_id db ~job_id () =
+      let run =
+        let open Abbs_future_combinators.Infix_result_monad in
+        Pgsql_io.Prepared_stmt.fetch db Sql.select_job_work_manifests ~f:CCFun.id job_id
+        >>= fun work_manifests -> Work_manifest.query' ~request_id db work_manifests
+      in
+      let open Abb.Future.Infix_monad in
+      run
+      >>= function
+      | Ok _ as r -> Abb.Future.return r
+      | Error `Error -> Abb.Future.return (Error `Error)
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m ->
+              m "%s : JOB : QUERY_WORK_MANIFESTS : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
+  end
+
+  module Compute_node = struct
+    let create ~request_id ~id ~capabilities db =
+      let open Abb.Future.Infix_monad in
+      Pgsql_io.Prepared_stmt.fetch
+        db
+        (Sql.insert_compute_node ())
+        ~f:(fun state created_at updated_at -> (state, created_at, updated_at))
+        id
+        capabilities
+      >>= function
+      | Ok [] -> assert false
+      | Ok ((state, created_at, updated_at) :: _) ->
+          Abb.Future.return
+            (Ok { Tjc.Compute_node.id; state; capabilities; created_at; updated_at })
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m -> m "%s : COMPUTE_NODE : CREATE : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
+
+    let query ~request_id ~compute_node_id db =
+      let open Abb.Future.Infix_monad in
+      Pgsql_io.Prepared_stmt.fetch
+        db
+        (Sql.select_compute_node ())
+        ~f:(fun id state capabilities created_at updated_at ->
+          { Tjc.Compute_node.id; state; capabilities; created_at; updated_at })
+        compute_node_id
+      >>= function
+      | Ok [] -> Abb.Future.return (Ok None)
+      | Ok (compute_node :: _) -> Abb.Future.return (Ok (Some compute_node))
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m -> m "%s : COMPUTE_NODE : CREATE : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
+
+    let query_work ~request_id ~compute_node_id db =
+      let open Abb.Future.Infix_monad in
+      Pgsql_io.Prepared_stmt.fetch
+        db
+        Sql.select_compute_node_work
+        ~f:(fun created_at state work work_manifest ->
+          { Tjc.Compute_node_work.compute_node_id; created_at; state; work; work_manifest })
+        compute_node_id
+      >>= function
+      | Ok r -> Abb.Future.return (Ok (CCOption.of_list r))
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m -> m "%s : COMPUTE_NODE : QUERY_WORK : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
+
+    let update_state ~request_id ~compute_node_id db state =
+      let open Abb.Future.Infix_monad in
+      Pgsql_io.Prepared_stmt.execute db Sql.update_compute_node_state compute_node_id state
+      >>= function
+      | Ok () -> Abb.Future.return (Ok ())
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m ->
+              m "%s : COMPUTE_NODE : UPDATE_STATE : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
+
+    let set_work ~request_id ~compute_node_id ~work_manifest db work =
+      let open Abb.Future.Infix_monad in
+      Pgsql_io.Prepared_stmt.execute
+        db
+        Sql.upsert_compute_node_work
+        compute_node_id
+        work_manifest
+        work
+      >>= function
+      | Ok () -> Abb.Future.return (Ok ())
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m ->
+              m "%s : COMPUTE_NODE : UPDATE_STATE : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
+  end
 end

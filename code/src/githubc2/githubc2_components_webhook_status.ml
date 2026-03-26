@@ -34,12 +34,22 @@ module Primary = struct
         module Primary = struct
           module Type = struct
             let t_of_yojson = function
-              | `String "Bot" -> Ok "Bot"
-              | `String "User" -> Ok "User"
-              | `String "Organization" -> Ok "Organization"
+              | `String "Bot" -> Ok `Bot
+              | `String "Organization" -> Ok `Organization
+              | `String "User" -> Ok `User
               | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-            type t = (string[@of_yojson t_of_yojson])
+            let t_to_yojson = function
+              | `Bot -> `String "Bot"
+              | `Organization -> `String "Organization"
+              | `User -> `String "User"
+
+            type t =
+              ([ `Bot
+               | `Organization
+               | `User
+               ]
+              [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
             [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
 
@@ -162,24 +172,58 @@ module Primary = struct
             module Primary = struct
               module Reason = struct
                 let t_of_yojson = function
-                  | `String "expired_key" -> Ok "expired_key"
-                  | `String "not_signing_key" -> Ok "not_signing_key"
-                  | `String "gpgverify_error" -> Ok "gpgverify_error"
-                  | `String "gpgverify_unavailable" -> Ok "gpgverify_unavailable"
-                  | `String "unsigned" -> Ok "unsigned"
-                  | `String "unknown_signature_type" -> Ok "unknown_signature_type"
-                  | `String "no_user" -> Ok "no_user"
-                  | `String "unverified_email" -> Ok "unverified_email"
-                  | `String "bad_email" -> Ok "bad_email"
-                  | `String "unknown_key" -> Ok "unknown_key"
-                  | `String "malformed_signature" -> Ok "malformed_signature"
-                  | `String "invalid" -> Ok "invalid"
-                  | `String "valid" -> Ok "valid"
-                  | `String "bad_cert" -> Ok "bad_cert"
-                  | `String "ocsp_pending" -> Ok "ocsp_pending"
+                  | `String "bad_cert" -> Ok `Bad_cert
+                  | `String "bad_email" -> Ok `Bad_email
+                  | `String "expired_key" -> Ok `Expired_key
+                  | `String "gpgverify_error" -> Ok `Gpgverify_error
+                  | `String "gpgverify_unavailable" -> Ok `Gpgverify_unavailable
+                  | `String "invalid" -> Ok `Invalid
+                  | `String "malformed_signature" -> Ok `Malformed_signature
+                  | `String "no_user" -> Ok `No_user
+                  | `String "not_signing_key" -> Ok `Not_signing_key
+                  | `String "ocsp_pending" -> Ok `Ocsp_pending
+                  | `String "unknown_key" -> Ok `Unknown_key
+                  | `String "unknown_signature_type" -> Ok `Unknown_signature_type
+                  | `String "unsigned" -> Ok `Unsigned
+                  | `String "unverified_email" -> Ok `Unverified_email
+                  | `String "valid" -> Ok `Valid
                   | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-                type t = (string[@of_yojson t_of_yojson])
+                let t_to_yojson = function
+                  | `Bad_cert -> `String "bad_cert"
+                  | `Bad_email -> `String "bad_email"
+                  | `Expired_key -> `String "expired_key"
+                  | `Gpgverify_error -> `String "gpgverify_error"
+                  | `Gpgverify_unavailable -> `String "gpgverify_unavailable"
+                  | `Invalid -> `String "invalid"
+                  | `Malformed_signature -> `String "malformed_signature"
+                  | `No_user -> `String "no_user"
+                  | `Not_signing_key -> `String "not_signing_key"
+                  | `Ocsp_pending -> `String "ocsp_pending"
+                  | `Unknown_key -> `String "unknown_key"
+                  | `Unknown_signature_type -> `String "unknown_signature_type"
+                  | `Unsigned -> `String "unsigned"
+                  | `Unverified_email -> `String "unverified_email"
+                  | `Valid -> `String "valid"
+
+                type t =
+                  ([ `Bad_cert
+                   | `Bad_email
+                   | `Expired_key
+                   | `Gpgverify_error
+                   | `Gpgverify_unavailable
+                   | `Invalid
+                   | `Malformed_signature
+                   | `No_user
+                   | `Not_signing_key
+                   | `Ocsp_pending
+                   | `Unknown_key
+                   | `Unknown_signature_type
+                   | `Unsigned
+                   | `Unverified_email
+                   | `Valid
+                   ]
+                  [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
                 [@@deriving yojson { strict = false; meta = true }, show, eq]
               end
 
@@ -215,12 +259,22 @@ module Primary = struct
         module Primary = struct
           module Type = struct
             let t_of_yojson = function
-              | `String "Bot" -> Ok "Bot"
-              | `String "User" -> Ok "User"
-              | `String "Organization" -> Ok "Organization"
+              | `String "Bot" -> Ok `Bot
+              | `String "Organization" -> Ok `Organization
+              | `String "User" -> Ok `User
               | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-            type t = (string[@of_yojson t_of_yojson])
+            let t_to_yojson = function
+              | `Bot -> `String "Bot"
+              | `Organization -> `String "Organization"
+              | `User -> `String "User"
+
+            type t =
+              ([ `Bot
+               | `Organization
+               | `User
+               ]
+              [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
             [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
 
@@ -289,13 +343,25 @@ module Primary = struct
 
   module State = struct
     let t_of_yojson = function
-      | `String "pending" -> Ok "pending"
-      | `String "success" -> Ok "success"
-      | `String "failure" -> Ok "failure"
-      | `String "error" -> Ok "error"
+      | `String "error" -> Ok `Error
+      | `String "failure" -> Ok `Failure
+      | `String "pending" -> Ok `Pending
+      | `String "success" -> Ok `Success
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Error -> `String "error"
+      | `Failure -> `String "failure"
+      | `Pending -> `String "pending"
+      | `Success -> `String "success"
+
+    type t =
+      ([ `Error
+       | `Failure
+       | `Pending
+       | `Success
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 

@@ -120,30 +120,52 @@ module List_org_campaigns = struct
   module Parameters = struct
     module Direction = struct
       let t_of_yojson = function
-        | `String "asc" -> Ok "asc"
-        | `String "desc" -> Ok "desc"
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Sort = struct
       let t_of_yojson = function
-        | `String "created" -> Ok "created"
-        | `String "updated" -> Ok "updated"
-        | `String "ends_at" -> Ok "ends_at"
-        | `String "published" -> Ok "published"
+        | `String "created" -> Ok `Created
+        | `String "ends_at" -> Ok `Ends_at
+        | `String "published" -> Ok `Published
+        | `String "updated" -> Ok `Updated
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Created -> `String "created"
+        | `Ends_at -> `String "ends_at"
+        | `Published -> `String "published"
+        | `Updated -> `String "updated"
+
+      type t =
+        ([ `Created
+         | `Ends_at
+         | `Published
+         | `Updated
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
-      direction : Direction.t; [@default "desc"]
+      direction : Direction.t; [@default `Desc]
       org : string;
       page : int; [@default 1]
       per_page : int; [@default 30]
-      sort : Sort.t; [@default "created"]
+      sort : Sort.t; [@default `Created]
       state : Githubc2_components.Campaign_state.t option; [@default None]
     }
     [@@deriving make, show, eq]
@@ -203,9 +225,10 @@ module List_org_campaigns = struct
          [
            ("page", Var (params.page, Int));
            ("per_page", Var (params.per_page, Int));
-           ("direction", Var (params.direction, String));
-           ("state", Var (params.state, Option String));
-           ("sort", Var (params.sort, String));
+           ("direction", Var (params.direction, Enum Direction.t_to_yojson));
+           ( "state",
+             Var (params.state, Option (Enum Githubc2_components.Campaign_state.t_to_yojson)) );
+           ("sort", Var (params.sort, Enum Sort.t_to_yojson));
          ])
       ~url
       ~responses:Responses.t

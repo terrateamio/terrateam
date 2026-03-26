@@ -28,7 +28,7 @@ module Drift = struct
           Ret.text
           //
           (* run_type *)
-          Ret.ud' Terrat_work_manifest3.Step.of_string
+          Ret.u Ret.text Terrat_work_manifest3.Step.of_string
           //
           (* created_at *)
           Ret.text
@@ -48,7 +48,10 @@ module Drift = struct
         owner;
         name;
         state;
-        run_type = Terrat_work_manifest3.Step.to_string run_type;
+        run_type =
+          CCResult.get_or_failwith
+          @@ Terrat_api_components.Run_type.of_yojson
+               (`String (Terrat_work_manifest3.Step.to_string run_type));
         created_at;
         completed_at;
         unlocked;

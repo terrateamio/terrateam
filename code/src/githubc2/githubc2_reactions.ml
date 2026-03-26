@@ -13,17 +13,37 @@ module Create_for_team_discussion_comment_in_org = struct
     module Primary = struct
       module Content = struct
         let t_of_yojson = function
-          | `String "+1" -> Ok "+1"
-          | `String "-1" -> Ok "-1"
-          | `String "laugh" -> Ok "laugh"
-          | `String "confused" -> Ok "confused"
-          | `String "heart" -> Ok "heart"
-          | `String "hooray" -> Ok "hooray"
-          | `String "rocket" -> Ok "rocket"
-          | `String "eyes" -> Ok "eyes"
+          | `String "+1" -> Ok `_1
+          | `String "-1" -> Ok `_1_2
+          | `String "confused" -> Ok `Confused
+          | `String "eyes" -> Ok `Eyes
+          | `String "heart" -> Ok `Heart
+          | `String "hooray" -> Ok `Hooray
+          | `String "laugh" -> Ok `Laugh
+          | `String "rocket" -> Ok `Rocket
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-        type t = (string[@of_yojson t_of_yojson])
+        let t_to_yojson = function
+          | `_1 -> `String "+1"
+          | `_1_2 -> `String "-1"
+          | `Confused -> `String "confused"
+          | `Eyes -> `String "eyes"
+          | `Heart -> `String "heart"
+          | `Hooray -> `String "hooray"
+          | `Laugh -> `String "laugh"
+          | `Rocket -> `String "rocket"
+
+        type t =
+          ([ `_1
+           | `_1_2
+           | `Confused
+           | `Eyes
+           | `Heart
+           | `Hooray
+           | `Laugh
+           | `Rocket
+           ]
+          [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
         [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
@@ -85,17 +105,38 @@ module List_for_team_discussion_comment_in_org = struct
   module Parameters = struct
     module Content = struct
       let t_of_yojson = function
-        | `String "+1" -> Ok "+1"
-        | `String "-1" -> Ok "-1"
-        | `String "laugh" -> Ok "laugh"
-        | `String "confused" -> Ok "confused"
-        | `String "heart" -> Ok "heart"
-        | `String "hooray" -> Ok "hooray"
-        | `String "rocket" -> Ok "rocket"
-        | `String "eyes" -> Ok "eyes"
+        | `String "+1" -> Ok `_1
+        | `String "-1" -> Ok `_1_2
+        | `String "confused" -> Ok `Confused
+        | `String "eyes" -> Ok `Eyes
+        | `String "heart" -> Ok `Heart
+        | `String "hooray" -> Ok `Hooray
+        | `String "laugh" -> Ok `Laugh
+        | `String "rocket" -> Ok `Rocket
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `_1 -> `String "+1"
+        | `_1_2 -> `String "-1"
+        | `Confused -> `String "confused"
+        | `Eyes -> `String "eyes"
+        | `Heart -> `String "heart"
+        | `Hooray -> `String "hooray"
+        | `Laugh -> `String "laugh"
+        | `Rocket -> `String "rocket"
+
+      type t =
+        ([ `_1
+         | `_1_2
+         | `Confused
+         | `Eyes
+         | `Heart
+         | `Hooray
+         | `Laugh
+         | `Rocket
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -140,7 +181,7 @@ module List_for_team_discussion_comment_in_org = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("content", Var (params.content, Option String));
+           ("content", Var (params.content, Option (Enum Content.t_to_yojson)));
            ("per_page", Var (params.per_page, Int));
            ("page", Var (params.page, Int));
          ])
@@ -205,17 +246,37 @@ module Create_for_team_discussion_in_org = struct
     module Primary = struct
       module Content = struct
         let t_of_yojson = function
-          | `String "+1" -> Ok "+1"
-          | `String "-1" -> Ok "-1"
-          | `String "laugh" -> Ok "laugh"
-          | `String "confused" -> Ok "confused"
-          | `String "heart" -> Ok "heart"
-          | `String "hooray" -> Ok "hooray"
-          | `String "rocket" -> Ok "rocket"
-          | `String "eyes" -> Ok "eyes"
+          | `String "+1" -> Ok `_1
+          | `String "-1" -> Ok `_1_2
+          | `String "confused" -> Ok `Confused
+          | `String "eyes" -> Ok `Eyes
+          | `String "heart" -> Ok `Heart
+          | `String "hooray" -> Ok `Hooray
+          | `String "laugh" -> Ok `Laugh
+          | `String "rocket" -> Ok `Rocket
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-        type t = (string[@of_yojson t_of_yojson])
+        let t_to_yojson = function
+          | `_1 -> `String "+1"
+          | `_1_2 -> `String "-1"
+          | `Confused -> `String "confused"
+          | `Eyes -> `String "eyes"
+          | `Heart -> `String "heart"
+          | `Hooray -> `String "hooray"
+          | `Laugh -> `String "laugh"
+          | `Rocket -> `String "rocket"
+
+        type t =
+          ([ `_1
+           | `_1_2
+           | `Confused
+           | `Eyes
+           | `Heart
+           | `Hooray
+           | `Laugh
+           | `Rocket
+           ]
+          [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
         [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
@@ -275,17 +336,38 @@ module List_for_team_discussion_in_org = struct
   module Parameters = struct
     module Content = struct
       let t_of_yojson = function
-        | `String "+1" -> Ok "+1"
-        | `String "-1" -> Ok "-1"
-        | `String "laugh" -> Ok "laugh"
-        | `String "confused" -> Ok "confused"
-        | `String "heart" -> Ok "heart"
-        | `String "hooray" -> Ok "hooray"
-        | `String "rocket" -> Ok "rocket"
-        | `String "eyes" -> Ok "eyes"
+        | `String "+1" -> Ok `_1
+        | `String "-1" -> Ok `_1_2
+        | `String "confused" -> Ok `Confused
+        | `String "eyes" -> Ok `Eyes
+        | `String "heart" -> Ok `Heart
+        | `String "hooray" -> Ok `Hooray
+        | `String "laugh" -> Ok `Laugh
+        | `String "rocket" -> Ok `Rocket
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `_1 -> `String "+1"
+        | `_1_2 -> `String "-1"
+        | `Confused -> `String "confused"
+        | `Eyes -> `String "eyes"
+        | `Heart -> `String "heart"
+        | `Hooray -> `String "hooray"
+        | `Laugh -> `String "laugh"
+        | `Rocket -> `String "rocket"
+
+      type t =
+        ([ `_1
+         | `_1_2
+         | `Confused
+         | `Eyes
+         | `Heart
+         | `Hooray
+         | `Laugh
+         | `Rocket
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -327,7 +409,7 @@ module List_for_team_discussion_in_org = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("content", Var (params.content, Option String));
+           ("content", Var (params.content, Option (Enum Content.t_to_yojson)));
            ("per_page", Var (params.per_page, Int));
            ("page", Var (params.page, Int));
          ])
@@ -389,17 +471,37 @@ module Create_for_commit_comment = struct
     module Primary = struct
       module Content = struct
         let t_of_yojson = function
-          | `String "+1" -> Ok "+1"
-          | `String "-1" -> Ok "-1"
-          | `String "laugh" -> Ok "laugh"
-          | `String "confused" -> Ok "confused"
-          | `String "heart" -> Ok "heart"
-          | `String "hooray" -> Ok "hooray"
-          | `String "rocket" -> Ok "rocket"
-          | `String "eyes" -> Ok "eyes"
+          | `String "+1" -> Ok `_1
+          | `String "-1" -> Ok `_1_2
+          | `String "confused" -> Ok `Confused
+          | `String "eyes" -> Ok `Eyes
+          | `String "heart" -> Ok `Heart
+          | `String "hooray" -> Ok `Hooray
+          | `String "laugh" -> Ok `Laugh
+          | `String "rocket" -> Ok `Rocket
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-        type t = (string[@of_yojson t_of_yojson])
+        let t_to_yojson = function
+          | `_1 -> `String "+1"
+          | `_1_2 -> `String "-1"
+          | `Confused -> `String "confused"
+          | `Eyes -> `String "eyes"
+          | `Heart -> `String "heart"
+          | `Hooray -> `String "hooray"
+          | `Laugh -> `String "laugh"
+          | `Rocket -> `String "rocket"
+
+        type t =
+          ([ `_1
+           | `_1_2
+           | `Confused
+           | `Eyes
+           | `Heart
+           | `Hooray
+           | `Laugh
+           | `Rocket
+           ]
+          [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
         [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
@@ -467,17 +569,38 @@ module List_for_commit_comment = struct
   module Parameters = struct
     module Content = struct
       let t_of_yojson = function
-        | `String "+1" -> Ok "+1"
-        | `String "-1" -> Ok "-1"
-        | `String "laugh" -> Ok "laugh"
-        | `String "confused" -> Ok "confused"
-        | `String "heart" -> Ok "heart"
-        | `String "hooray" -> Ok "hooray"
-        | `String "rocket" -> Ok "rocket"
-        | `String "eyes" -> Ok "eyes"
+        | `String "+1" -> Ok `_1
+        | `String "-1" -> Ok `_1_2
+        | `String "confused" -> Ok `Confused
+        | `String "eyes" -> Ok `Eyes
+        | `String "heart" -> Ok `Heart
+        | `String "hooray" -> Ok `Hooray
+        | `String "laugh" -> Ok `Laugh
+        | `String "rocket" -> Ok `Rocket
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `_1 -> `String "+1"
+        | `_1_2 -> `String "-1"
+        | `Confused -> `String "confused"
+        | `Eyes -> `String "eyes"
+        | `Heart -> `String "heart"
+        | `Hooray -> `String "hooray"
+        | `Laugh -> `String "laugh"
+        | `Rocket -> `String "rocket"
+
+      type t =
+        ([ `_1
+         | `_1_2
+         | `Confused
+         | `Eyes
+         | `Heart
+         | `Hooray
+         | `Laugh
+         | `Rocket
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -532,7 +655,7 @@ module List_for_commit_comment = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("content", Var (params.content, Option String));
+           ("content", Var (params.content, Option (Enum Content.t_to_yojson)));
            ("per_page", Var (params.per_page, Int));
            ("page", Var (params.page, Int));
          ])
@@ -594,17 +717,37 @@ module Create_for_issue_comment = struct
     module Primary = struct
       module Content = struct
         let t_of_yojson = function
-          | `String "+1" -> Ok "+1"
-          | `String "-1" -> Ok "-1"
-          | `String "laugh" -> Ok "laugh"
-          | `String "confused" -> Ok "confused"
-          | `String "heart" -> Ok "heart"
-          | `String "hooray" -> Ok "hooray"
-          | `String "rocket" -> Ok "rocket"
-          | `String "eyes" -> Ok "eyes"
+          | `String "+1" -> Ok `_1
+          | `String "-1" -> Ok `_1_2
+          | `String "confused" -> Ok `Confused
+          | `String "eyes" -> Ok `Eyes
+          | `String "heart" -> Ok `Heart
+          | `String "hooray" -> Ok `Hooray
+          | `String "laugh" -> Ok `Laugh
+          | `String "rocket" -> Ok `Rocket
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-        type t = (string[@of_yojson t_of_yojson])
+        let t_to_yojson = function
+          | `_1 -> `String "+1"
+          | `_1_2 -> `String "-1"
+          | `Confused -> `String "confused"
+          | `Eyes -> `String "eyes"
+          | `Heart -> `String "heart"
+          | `Hooray -> `String "hooray"
+          | `Laugh -> `String "laugh"
+          | `Rocket -> `String "rocket"
+
+        type t =
+          ([ `_1
+           | `_1_2
+           | `Confused
+           | `Eyes
+           | `Heart
+           | `Hooray
+           | `Laugh
+           | `Rocket
+           ]
+          [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
         [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
@@ -672,17 +815,38 @@ module List_for_issue_comment = struct
   module Parameters = struct
     module Content = struct
       let t_of_yojson = function
-        | `String "+1" -> Ok "+1"
-        | `String "-1" -> Ok "-1"
-        | `String "laugh" -> Ok "laugh"
-        | `String "confused" -> Ok "confused"
-        | `String "heart" -> Ok "heart"
-        | `String "hooray" -> Ok "hooray"
-        | `String "rocket" -> Ok "rocket"
-        | `String "eyes" -> Ok "eyes"
+        | `String "+1" -> Ok `_1
+        | `String "-1" -> Ok `_1_2
+        | `String "confused" -> Ok `Confused
+        | `String "eyes" -> Ok `Eyes
+        | `String "heart" -> Ok `Heart
+        | `String "hooray" -> Ok `Hooray
+        | `String "laugh" -> Ok `Laugh
+        | `String "rocket" -> Ok `Rocket
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `_1 -> `String "+1"
+        | `_1_2 -> `String "-1"
+        | `Confused -> `String "confused"
+        | `Eyes -> `String "eyes"
+        | `Heart -> `String "heart"
+        | `Hooray -> `String "hooray"
+        | `Laugh -> `String "laugh"
+        | `Rocket -> `String "rocket"
+
+      type t =
+        ([ `_1
+         | `_1_2
+         | `Confused
+         | `Eyes
+         | `Heart
+         | `Hooray
+         | `Laugh
+         | `Rocket
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -737,7 +901,7 @@ module List_for_issue_comment = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("content", Var (params.content, Option String));
+           ("content", Var (params.content, Option (Enum Content.t_to_yojson)));
            ("per_page", Var (params.per_page, Int));
            ("page", Var (params.page, Int));
          ])
@@ -799,17 +963,37 @@ module Create_for_issue = struct
     module Primary = struct
       module Content = struct
         let t_of_yojson = function
-          | `String "+1" -> Ok "+1"
-          | `String "-1" -> Ok "-1"
-          | `String "laugh" -> Ok "laugh"
-          | `String "confused" -> Ok "confused"
-          | `String "heart" -> Ok "heart"
-          | `String "hooray" -> Ok "hooray"
-          | `String "rocket" -> Ok "rocket"
-          | `String "eyes" -> Ok "eyes"
+          | `String "+1" -> Ok `_1
+          | `String "-1" -> Ok `_1_2
+          | `String "confused" -> Ok `Confused
+          | `String "eyes" -> Ok `Eyes
+          | `String "heart" -> Ok `Heart
+          | `String "hooray" -> Ok `Hooray
+          | `String "laugh" -> Ok `Laugh
+          | `String "rocket" -> Ok `Rocket
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-        type t = (string[@of_yojson t_of_yojson])
+        let t_to_yojson = function
+          | `_1 -> `String "+1"
+          | `_1_2 -> `String "-1"
+          | `Confused -> `String "confused"
+          | `Eyes -> `String "eyes"
+          | `Heart -> `String "heart"
+          | `Hooray -> `String "hooray"
+          | `Laugh -> `String "laugh"
+          | `Rocket -> `String "rocket"
+
+        type t =
+          ([ `_1
+           | `_1_2
+           | `Confused
+           | `Eyes
+           | `Heart
+           | `Hooray
+           | `Laugh
+           | `Rocket
+           ]
+          [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
         [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
@@ -877,17 +1061,38 @@ module List_for_issue = struct
   module Parameters = struct
     module Content = struct
       let t_of_yojson = function
-        | `String "+1" -> Ok "+1"
-        | `String "-1" -> Ok "-1"
-        | `String "laugh" -> Ok "laugh"
-        | `String "confused" -> Ok "confused"
-        | `String "heart" -> Ok "heart"
-        | `String "hooray" -> Ok "hooray"
-        | `String "rocket" -> Ok "rocket"
-        | `String "eyes" -> Ok "eyes"
+        | `String "+1" -> Ok `_1
+        | `String "-1" -> Ok `_1_2
+        | `String "confused" -> Ok `Confused
+        | `String "eyes" -> Ok `Eyes
+        | `String "heart" -> Ok `Heart
+        | `String "hooray" -> Ok `Hooray
+        | `String "laugh" -> Ok `Laugh
+        | `String "rocket" -> Ok `Rocket
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `_1 -> `String "+1"
+        | `_1_2 -> `String "-1"
+        | `Confused -> `String "confused"
+        | `Eyes -> `String "eyes"
+        | `Heart -> `String "heart"
+        | `Hooray -> `String "hooray"
+        | `Laugh -> `String "laugh"
+        | `Rocket -> `String "rocket"
+
+      type t =
+        ([ `_1
+         | `_1_2
+         | `Confused
+         | `Eyes
+         | `Heart
+         | `Hooray
+         | `Laugh
+         | `Rocket
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -949,7 +1154,7 @@ module List_for_issue = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("content", Var (params.content, Option String));
+           ("content", Var (params.content, Option (Enum Content.t_to_yojson)));
            ("per_page", Var (params.per_page, Int));
            ("page", Var (params.page, Int));
          ])
@@ -1011,17 +1216,37 @@ module Create_for_pull_request_review_comment = struct
     module Primary = struct
       module Content = struct
         let t_of_yojson = function
-          | `String "+1" -> Ok "+1"
-          | `String "-1" -> Ok "-1"
-          | `String "laugh" -> Ok "laugh"
-          | `String "confused" -> Ok "confused"
-          | `String "heart" -> Ok "heart"
-          | `String "hooray" -> Ok "hooray"
-          | `String "rocket" -> Ok "rocket"
-          | `String "eyes" -> Ok "eyes"
+          | `String "+1" -> Ok `_1
+          | `String "-1" -> Ok `_1_2
+          | `String "confused" -> Ok `Confused
+          | `String "eyes" -> Ok `Eyes
+          | `String "heart" -> Ok `Heart
+          | `String "hooray" -> Ok `Hooray
+          | `String "laugh" -> Ok `Laugh
+          | `String "rocket" -> Ok `Rocket
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-        type t = (string[@of_yojson t_of_yojson])
+        let t_to_yojson = function
+          | `_1 -> `String "+1"
+          | `_1_2 -> `String "-1"
+          | `Confused -> `String "confused"
+          | `Eyes -> `String "eyes"
+          | `Heart -> `String "heart"
+          | `Hooray -> `String "hooray"
+          | `Laugh -> `String "laugh"
+          | `Rocket -> `String "rocket"
+
+        type t =
+          ([ `_1
+           | `_1_2
+           | `Confused
+           | `Eyes
+           | `Heart
+           | `Hooray
+           | `Laugh
+           | `Rocket
+           ]
+          [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
         [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
@@ -1089,17 +1314,38 @@ module List_for_pull_request_review_comment = struct
   module Parameters = struct
     module Content = struct
       let t_of_yojson = function
-        | `String "+1" -> Ok "+1"
-        | `String "-1" -> Ok "-1"
-        | `String "laugh" -> Ok "laugh"
-        | `String "confused" -> Ok "confused"
-        | `String "heart" -> Ok "heart"
-        | `String "hooray" -> Ok "hooray"
-        | `String "rocket" -> Ok "rocket"
-        | `String "eyes" -> Ok "eyes"
+        | `String "+1" -> Ok `_1
+        | `String "-1" -> Ok `_1_2
+        | `String "confused" -> Ok `Confused
+        | `String "eyes" -> Ok `Eyes
+        | `String "heart" -> Ok `Heart
+        | `String "hooray" -> Ok `Hooray
+        | `String "laugh" -> Ok `Laugh
+        | `String "rocket" -> Ok `Rocket
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `_1 -> `String "+1"
+        | `_1_2 -> `String "-1"
+        | `Confused -> `String "confused"
+        | `Eyes -> `String "eyes"
+        | `Heart -> `String "heart"
+        | `Hooray -> `String "hooray"
+        | `Laugh -> `String "laugh"
+        | `Rocket -> `String "rocket"
+
+      type t =
+        ([ `_1
+         | `_1_2
+         | `Confused
+         | `Eyes
+         | `Heart
+         | `Hooray
+         | `Laugh
+         | `Rocket
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -1154,7 +1400,7 @@ module List_for_pull_request_review_comment = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("content", Var (params.content, Option String));
+           ("content", Var (params.content, Option (Enum Content.t_to_yojson)));
            ("per_page", Var (params.per_page, Int));
            ("page", Var (params.page, Int));
          ])
@@ -1216,15 +1462,31 @@ module Create_for_release = struct
     module Primary = struct
       module Content = struct
         let t_of_yojson = function
-          | `String "+1" -> Ok "+1"
-          | `String "laugh" -> Ok "laugh"
-          | `String "heart" -> Ok "heart"
-          | `String "hooray" -> Ok "hooray"
-          | `String "rocket" -> Ok "rocket"
-          | `String "eyes" -> Ok "eyes"
+          | `String "+1" -> Ok `_1
+          | `String "eyes" -> Ok `Eyes
+          | `String "heart" -> Ok `Heart
+          | `String "hooray" -> Ok `Hooray
+          | `String "laugh" -> Ok `Laugh
+          | `String "rocket" -> Ok `Rocket
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-        type t = (string[@of_yojson t_of_yojson])
+        let t_to_yojson = function
+          | `_1 -> `String "+1"
+          | `Eyes -> `String "eyes"
+          | `Heart -> `String "heart"
+          | `Hooray -> `String "hooray"
+          | `Laugh -> `String "laugh"
+          | `Rocket -> `String "rocket"
+
+        type t =
+          ([ `_1
+           | `Eyes
+           | `Heart
+           | `Hooray
+           | `Laugh
+           | `Rocket
+           ]
+          [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
         [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
@@ -1292,15 +1554,32 @@ module List_for_release = struct
   module Parameters = struct
     module Content = struct
       let t_of_yojson = function
-        | `String "+1" -> Ok "+1"
-        | `String "laugh" -> Ok "laugh"
-        | `String "heart" -> Ok "heart"
-        | `String "hooray" -> Ok "hooray"
-        | `String "rocket" -> Ok "rocket"
-        | `String "eyes" -> Ok "eyes"
+        | `String "+1" -> Ok `_1
+        | `String "eyes" -> Ok `Eyes
+        | `String "heart" -> Ok `Heart
+        | `String "hooray" -> Ok `Hooray
+        | `String "laugh" -> Ok `Laugh
+        | `String "rocket" -> Ok `Rocket
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `_1 -> `String "+1"
+        | `Eyes -> `String "eyes"
+        | `Heart -> `String "heart"
+        | `Hooray -> `String "hooray"
+        | `Laugh -> `String "laugh"
+        | `Rocket -> `String "rocket"
+
+      type t =
+        ([ `_1
+         | `Eyes
+         | `Heart
+         | `Hooray
+         | `Laugh
+         | `Rocket
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -1355,7 +1634,7 @@ module List_for_release = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("content", Var (params.content, Option String));
+           ("content", Var (params.content, Option (Enum Content.t_to_yojson)));
            ("per_page", Var (params.per_page, Int));
            ("page", Var (params.page, Int));
          ])
@@ -1417,17 +1696,37 @@ module Create_for_team_discussion_comment_legacy = struct
     module Primary = struct
       module Content = struct
         let t_of_yojson = function
-          | `String "+1" -> Ok "+1"
-          | `String "-1" -> Ok "-1"
-          | `String "laugh" -> Ok "laugh"
-          | `String "confused" -> Ok "confused"
-          | `String "heart" -> Ok "heart"
-          | `String "hooray" -> Ok "hooray"
-          | `String "rocket" -> Ok "rocket"
-          | `String "eyes" -> Ok "eyes"
+          | `String "+1" -> Ok `_1
+          | `String "-1" -> Ok `_1_2
+          | `String "confused" -> Ok `Confused
+          | `String "eyes" -> Ok `Eyes
+          | `String "heart" -> Ok `Heart
+          | `String "hooray" -> Ok `Hooray
+          | `String "laugh" -> Ok `Laugh
+          | `String "rocket" -> Ok `Rocket
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-        type t = (string[@of_yojson t_of_yojson])
+        let t_to_yojson = function
+          | `_1 -> `String "+1"
+          | `_1_2 -> `String "-1"
+          | `Confused -> `String "confused"
+          | `Eyes -> `String "eyes"
+          | `Heart -> `String "heart"
+          | `Hooray -> `String "hooray"
+          | `Laugh -> `String "laugh"
+          | `Rocket -> `String "rocket"
+
+        type t =
+          ([ `_1
+           | `_1_2
+           | `Confused
+           | `Eyes
+           | `Heart
+           | `Hooray
+           | `Laugh
+           | `Rocket
+           ]
+          [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
         [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
@@ -1474,17 +1773,38 @@ module List_for_team_discussion_comment_legacy = struct
   module Parameters = struct
     module Content = struct
       let t_of_yojson = function
-        | `String "+1" -> Ok "+1"
-        | `String "-1" -> Ok "-1"
-        | `String "laugh" -> Ok "laugh"
-        | `String "confused" -> Ok "confused"
-        | `String "heart" -> Ok "heart"
-        | `String "hooray" -> Ok "hooray"
-        | `String "rocket" -> Ok "rocket"
-        | `String "eyes" -> Ok "eyes"
+        | `String "+1" -> Ok `_1
+        | `String "-1" -> Ok `_1_2
+        | `String "confused" -> Ok `Confused
+        | `String "eyes" -> Ok `Eyes
+        | `String "heart" -> Ok `Heart
+        | `String "hooray" -> Ok `Hooray
+        | `String "laugh" -> Ok `Laugh
+        | `String "rocket" -> Ok `Rocket
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `_1 -> `String "+1"
+        | `_1_2 -> `String "-1"
+        | `Confused -> `String "confused"
+        | `Eyes -> `String "eyes"
+        | `Heart -> `String "heart"
+        | `Hooray -> `String "hooray"
+        | `Laugh -> `String "laugh"
+        | `Rocket -> `String "rocket"
+
+      type t =
+        ([ `_1
+         | `_1_2
+         | `Confused
+         | `Eyes
+         | `Heart
+         | `Hooray
+         | `Laugh
+         | `Rocket
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -1526,7 +1846,7 @@ module List_for_team_discussion_comment_legacy = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("content", Var (params.content, Option String));
+           ("content", Var (params.content, Option (Enum Content.t_to_yojson)));
            ("per_page", Var (params.per_page, Int));
            ("page", Var (params.page, Int));
          ])
@@ -1548,17 +1868,37 @@ module Create_for_team_discussion_legacy = struct
     module Primary = struct
       module Content = struct
         let t_of_yojson = function
-          | `String "+1" -> Ok "+1"
-          | `String "-1" -> Ok "-1"
-          | `String "laugh" -> Ok "laugh"
-          | `String "confused" -> Ok "confused"
-          | `String "heart" -> Ok "heart"
-          | `String "hooray" -> Ok "hooray"
-          | `String "rocket" -> Ok "rocket"
-          | `String "eyes" -> Ok "eyes"
+          | `String "+1" -> Ok `_1
+          | `String "-1" -> Ok `_1_2
+          | `String "confused" -> Ok `Confused
+          | `String "eyes" -> Ok `Eyes
+          | `String "heart" -> Ok `Heart
+          | `String "hooray" -> Ok `Hooray
+          | `String "laugh" -> Ok `Laugh
+          | `String "rocket" -> Ok `Rocket
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-        type t = (string[@of_yojson t_of_yojson])
+        let t_to_yojson = function
+          | `_1 -> `String "+1"
+          | `_1_2 -> `String "-1"
+          | `Confused -> `String "confused"
+          | `Eyes -> `String "eyes"
+          | `Heart -> `String "heart"
+          | `Hooray -> `String "hooray"
+          | `Laugh -> `String "laugh"
+          | `Rocket -> `String "rocket"
+
+        type t =
+          ([ `_1
+           | `_1_2
+           | `Confused
+           | `Eyes
+           | `Heart
+           | `Hooray
+           | `Laugh
+           | `Rocket
+           ]
+          [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
         [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
@@ -1604,17 +1944,38 @@ module List_for_team_discussion_legacy = struct
   module Parameters = struct
     module Content = struct
       let t_of_yojson = function
-        | `String "+1" -> Ok "+1"
-        | `String "-1" -> Ok "-1"
-        | `String "laugh" -> Ok "laugh"
-        | `String "confused" -> Ok "confused"
-        | `String "heart" -> Ok "heart"
-        | `String "hooray" -> Ok "hooray"
-        | `String "rocket" -> Ok "rocket"
-        | `String "eyes" -> Ok "eyes"
+        | `String "+1" -> Ok `_1
+        | `String "-1" -> Ok `_1_2
+        | `String "confused" -> Ok `Confused
+        | `String "eyes" -> Ok `Eyes
+        | `String "heart" -> Ok `Heart
+        | `String "hooray" -> Ok `Hooray
+        | `String "laugh" -> Ok `Laugh
+        | `String "rocket" -> Ok `Rocket
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `_1 -> `String "+1"
+        | `_1_2 -> `String "-1"
+        | `Confused -> `String "confused"
+        | `Eyes -> `String "eyes"
+        | `Heart -> `String "heart"
+        | `Hooray -> `String "hooray"
+        | `Laugh -> `String "laugh"
+        | `Rocket -> `String "rocket"
+
+      type t =
+        ([ `_1
+         | `_1_2
+         | `Confused
+         | `Eyes
+         | `Heart
+         | `Hooray
+         | `Laugh
+         | `Rocket
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -1654,7 +2015,7 @@ module List_for_team_discussion_legacy = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("content", Var (params.content, Option String));
+           ("content", Var (params.content, Option (Enum Content.t_to_yojson)));
            ("per_page", Var (params.per_page, Int));
            ("page", Var (params.page, Int));
          ])

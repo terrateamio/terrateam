@@ -25,7 +25,7 @@ module Dirspaceflow : sig
   type 'a t = {
     dirspace : Dirspace.t;
     workflow : 'a;
-    variables : string Terrat_data.String_map.t option;
+    variables : string Sln_map.String.t option;
   }
   [@@deriving eq, show]
 

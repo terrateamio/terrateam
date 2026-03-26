@@ -353,7 +353,102 @@ let test_msg_decode =
             | Error _ -> assert false)
         msgs)
 
+let test_binary_int2 =
+  Oth.test ~desc:"Binary int2 roundtrip" ~name:"binary_int2" (fun _ ->
+      let module E = Pgsql_codec.Binary_value.Encode in
+      let module D = Pgsql_codec.Binary_value.Decode in
+      assert (String.length (E.int2 42) = 2);
+      assert (D.int2 (E.int2 42) = Some 42);
+      assert (D.int2 (E.int2 (-1)) = Some (-1));
+      assert (D.int2 (E.int2 (-32768)) = Some (-32768));
+      assert (D.int2 (E.int2 32767) = Some 32767))
+
+let test_binary_int4 =
+  Oth.test ~desc:"Binary int4 roundtrip" ~name:"binary_int4" (fun _ ->
+      let module E = Pgsql_codec.Binary_value.Encode in
+      let module D = Pgsql_codec.Binary_value.Decode in
+      assert (String.length (E.int4 42l) = 4);
+      assert (D.int4 (E.int4 42l) = Some 42l);
+      assert (D.int4 (E.int4 (-1l)) = Some (-1l));
+      assert (D.int4 (E.int4 Int32.min_int) = Some Int32.min_int);
+      assert (D.int4 (E.int4 Int32.max_int) = Some Int32.max_int))
+
+let test_binary_int8 =
+  Oth.test ~desc:"Binary int8 roundtrip" ~name:"binary_int8" (fun _ ->
+      let module E = Pgsql_codec.Binary_value.Encode in
+      let module D = Pgsql_codec.Binary_value.Decode in
+      assert (String.length (E.int8 42L) = 8);
+      assert (D.int8 (E.int8 42L) = Some 42L);
+      assert (D.int8 (E.int8 (-1L)) = Some (-1L));
+      assert (D.int8 (E.int8 Int64.min_int) = Some Int64.min_int);
+      assert (D.int8 (E.int8 Int64.max_int) = Some Int64.max_int))
+
+let test_binary_float4 =
+  Oth.test ~desc:"Binary float4 roundtrip" ~name:"binary_float4" (fun _ ->
+      let module E = Pgsql_codec.Binary_value.Encode in
+      let module D = Pgsql_codec.Binary_value.Decode in
+      let e = E.float4 3.14 in
+      assert (String.length e = 4);
+      match D.float4 e with
+      | Some f -> assert (abs_float (f -. 3.14) < 0.001)
+      | None -> assert false)
+
+let test_binary_float8 =
+  Oth.test ~desc:"Binary float8 roundtrip" ~name:"binary_float8" (fun _ ->
+      let module E = Pgsql_codec.Binary_value.Encode in
+      let module D = Pgsql_codec.Binary_value.Decode in
+      let e = E.float8 3.141592653589793 in
+      assert (String.length e = 8);
+      assert (D.float8 e = Some 3.141592653589793))
+
+let test_binary_bool =
+  Oth.test ~desc:"Binary bool roundtrip" ~name:"binary_bool" (fun _ ->
+      let module E = Pgsql_codec.Binary_value.Encode in
+      let module D = Pgsql_codec.Binary_value.Decode in
+      assert (D.bool (E.bool true) = Some true);
+      assert (D.bool (E.bool false) = Some false);
+      assert (String.length (E.bool true) = 1))
+
+let test_binary_invalid =
+  Oth.test ~desc:"Binary decode invalid" ~name:"binary_invalid" (fun _ ->
+      let module D = Pgsql_codec.Binary_value.Decode in
+      assert (D.int2 "" = None);
+      assert (D.int2 "x" = None);
+      assert (D.int4 "ab" = None);
+      assert (D.int8 "abcd" = None);
+      assert (D.bool "" = None))
+
+let test_bind_binary_format =
+  Oth.test ~desc:"Bind frame binary format codes" ~name:"bind_binary_format" (fun _ ->
+      let buf = Buffer.create 64 in
+      Pgsql_codec.Encode.frontend_msg
+        buf
+        (Pgsql_codec.Frame.Frontend.Bind
+           {
+             portal = "p0";
+             stmt = "s0";
+             format_codes = [ true; false ];
+             values = [ Some "\x00\x2a"; Some "hello" ];
+             result_format_codes = [ true ];
+           });
+      let encoded = Buffer.contents buf in
+      assert (String.length encoded > 0))
+
 let test =
-  Oth.parallel [ test_empty_input; test_frontend_encode; test_partial_msg_decode; test_msg_decode ]
+  Oth.parallel
+    [
+      test_empty_input;
+      test_frontend_encode;
+      test_partial_msg_decode;
+      test_msg_decode;
+      test_binary_int2;
+      test_binary_int4;
+      test_binary_int8;
+      test_binary_float4;
+      test_binary_float8;
+      test_binary_bool;
+      test_binary_invalid;
+      test_bind_binary_format;
+    ]
 
 let () = Oth.run test

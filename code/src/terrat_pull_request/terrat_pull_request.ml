@@ -82,7 +82,6 @@ let id t = t.id
 let is_draft_pr t = t.draft
 let mergeable t = t.mergeable
 let provisional_merge_ref t = t.provisional_merge_ref
-let pull_number t = t.id
 let repo t = t.repo
 let state t = t.state
 let title t = t.title

@@ -25,6 +25,7 @@ module Request = struct
       | String : string v
       | Bool : bool v
       | Null : unit v
+      | Enum : ('a -> Yojson.Safe.t) -> 'a v
 
     type t = Var : ('a * 'a v) -> t
 
@@ -38,6 +39,10 @@ module Request = struct
       | Option t, Some v -> to_uritmpl_var t v
       | Option _, None -> None
       | Null, () -> None
+      | Enum to_yojson, v -> (
+          match to_yojson v with
+          | `String s -> Some (Uritmpl.Var.S s)
+          | _ -> assert false)
       | Array t, arr ->
           Some
             (Uritmpl.Var.A

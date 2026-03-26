@@ -1,0 +1,231 @@
+module Error = struct
+  type key_repr = string [@@deriving show]
+
+  type t = {
+    blocking : (key_repr * key_repr list) list;
+    cycle : key_repr list;
+    k : key_repr;
+    path : key_repr list;
+    running : (key_repr * key_repr list) list;
+  }
+  [@@deriving show]
+
+  exception Fetch_cycle_exn of t
+end
+
+module type S = sig
+  module Key_repr : sig
+    type t
+
+    val equal : t -> t -> bool
+    val to_string : t -> string
+  end
+
+  type 'v k
+
+  val key_repr_of_key : 'a k -> Key_repr.t
+
+  module C : sig
+    type 'a t
+
+    val return : 'a -> 'a t
+    val ( >>= ) : 'a t -> ('a -> 'b t) -> 'b t
+    val with_finally : (unit -> 'a t) -> finally:(unit -> unit t) -> 'a t
+  end
+
+  module Queue : sig
+    type t
+
+    val run : name:Key_repr.t -> t -> (unit -> 'a C.t) -> 'a C.t
+    val suspend : name:Key_repr.t -> t -> unit C.t
+    val unsuspend : name:Key_repr.t -> t -> unit C.t
+  end
+
+  module Notify : sig
+    type t
+
+    val create : unit -> t
+    val notify : t -> unit C.t
+    val wait : t -> unit C.t
+  end
+
+  module State : sig
+    type t
+
+    val set_k : t -> 'v k -> 'v -> unit C.t
+    val get_k : t -> 'v k -> 'v C.t
+    val get_k_opt : t -> 'v k -> 'v option C.t
+  end
+end
+
+module type T = sig
+  type 'v k
+  type key_repr
+  type 'a c
+  type state
+  type queue
+
+  module Fetcher : sig
+    type t = { fetch : 'r. 'r k -> 'r c }
+  end
+
+  module Task : sig
+    type 'v t = key_repr list -> state -> Fetcher.t -> 'v c
+  end
+
+  module Tasks : sig
+    type t = { get : 'v. state -> 'v k -> 'v Task.t option c }
+  end
+
+  module Rebuilder : sig
+    type t = { run : 'v. state -> 'v k -> 'v -> bool c }
+  end
+
+  module St : sig
+    type t
+
+    val create : state -> t
+    val get_state : t -> state
+    val running_count : t -> int
+    val blocking_count : t -> int
+  end
+
+  val build : queue -> Rebuilder.t -> Tasks.t -> 'v k -> St.t -> 'v c
+end
+
+module Make (M : S) :
+  T
+    with type 'a k = 'a M.k
+     and type key_repr = M.Key_repr.t
+     and type 'a c = 'a M.C.t
+     and type state = M.State.t
+     and type queue = M.Queue.t = struct
+  type 'a k = 'a M.k
+  type key_repr = M.Key_repr.t
+  type 'a c = 'a M.C.t
+  type state = M.State.t
+  type queue = M.Queue.t
+
+  module Fetcher = struct
+    type t = { fetch : 'r. 'r M.k -> 'r M.C.t }
+  end
+
+  module Task = struct
+    type 'v t = M.Key_repr.t list -> M.State.t -> Fetcher.t -> 'v M.C.t
+  end
+
+  module Tasks = struct
+    type t = { get : 'v. M.State.t -> 'v M.k -> 'v Task.t option M.C.t }
+  end
+
+  module Rebuilder = struct
+    type t = { run : 'v. M.State.t -> 'v M.k -> 'v -> bool M.C.t }
+  end
+
+  module St = struct
+    type t = {
+      state : M.State.t;
+      mutable running : (M.Key_repr.t * M.Key_repr.t list) list;
+      mutable blocking : (M.Key_repr.t * M.Key_repr.t list) list;
+      notify : M.Notify.t;
+    }
+
+    let create state = { state; running = []; blocking = []; notify = M.Notify.create () }
+    let get_state t = t.state
+    let running_count t = CCList.length t.running
+    let blocking_count t = CCList.length t.blocking
+
+    let assert_no_cycle k path t =
+      let running = t.running in
+      let blocking = t.blocking in
+      let topo =
+        CCList.filter_map
+          (fun (_, p) ->
+            match CCList.rev p with
+            | k :: vs -> Some (k, vs)
+            | [] -> None)
+          ((k, path) :: blocking)
+      in
+      match Tsort.sort topo with
+      | Tsort.Sorted _ -> ()
+      | Tsort.ErrorCycle cycle ->
+          raise
+            (Error.Fetch_cycle_exn
+               {
+                 Error.blocking =
+                   CCList.map
+                     (fun (k, p) -> (M.Key_repr.to_string k, CCList.map M.Key_repr.to_string p))
+                     blocking;
+                 cycle = CCList.map M.Key_repr.to_string cycle;
+                 k = M.Key_repr.to_string k;
+                 path = CCList.map M.Key_repr.to_string path;
+                 running =
+                   CCList.map
+                     (fun (k, p) -> (M.Key_repr.to_string k, CCList.map M.Key_repr.to_string p))
+                     running;
+               })
+
+    let rec block_k queue path t k f =
+      let repr = M.key_repr_of_key k in
+      if CCList.mem ~eq:(fun (k1, _) (k2, _) -> M.Key_repr.equal k1 k2) (repr, path) t.running then (
+        let open M.C in
+        t.blocking <- (repr, path) :: t.blocking;
+        assert_no_cycle repr path t;
+        M.C.with_finally
+          (fun () -> M.Notify.wait t.notify)
+          ~finally:(fun () ->
+            t.blocking <-
+              CCList.remove
+                ~eq:(fun (k1, _) (k2, _) -> M.Key_repr.equal k1 k2)
+                ~key:(repr, path)
+                t.blocking;
+            M.C.return ())
+        >>= fun () -> block_k queue path t k f)
+      else (
+        t.running <- (repr, path) :: t.running;
+        M.C.with_finally
+          (fun () -> M.Queue.run queue ~name:repr f)
+          ~finally:(fun () ->
+            t.running <-
+              CCList.remove
+                ~eq:(fun (k1, _) (k2, _) -> M.Key_repr.equal k1 k2)
+                ~key:(repr, path)
+                t.running;
+            M.Notify.notify t.notify))
+  end
+
+  let build queue rebuilder tasks k st =
+    let rec fetch : 'r. M.Key_repr.t list -> 'r M.k -> 'r M.C.t =
+     fun path k ->
+      let open M.C in
+      let suspend, unsuspend =
+        match CCList.rev path with
+        | [] -> ((fun _ -> M.C.return ()), fun _ -> M.C.return ())
+        | k :: _ -> (M.Queue.suspend ~name:k, M.Queue.unsuspend ~name:k)
+      in
+      let path = path @ [ M.key_repr_of_key k ] in
+      tasks.Tasks.get (St.get_state st) k
+      >>= function
+      | None -> M.State.get_k (St.get_state st) k
+      | Some task ->
+          M.C.with_finally
+            (fun () ->
+              suspend queue
+              >>= fun () ->
+              St.block_k queue path st k (fun () ->
+                  M.State.get_k_opt (St.get_state st) k
+                  >>= function
+                  | Some v -> (
+                      rebuilder.Rebuilder.run (St.get_state st) k v
+                      >>= function
+                      | true ->
+                          task path (St.get_state st) { Fetcher.fetch = (fun k -> fetch path k) }
+                          >>= fun v -> M.State.set_k (St.get_state st) k v >>= fun () -> return v
+                      | false -> return v)
+                  | None ->
+                      task path (St.get_state st) { Fetcher.fetch = (fun k -> fetch path k) }
+                      >>= fun v -> M.State.set_k (St.get_state st) k v >>= fun () -> return v))
+            ~finally:(fun () -> unsuspend queue)
+    in
+    fetch [] k
+end

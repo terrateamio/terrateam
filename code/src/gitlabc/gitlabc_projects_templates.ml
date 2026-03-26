@@ -2,15 +2,32 @@ module GetApiV4ProjectsIdTemplatesType = struct
   module Parameters = struct
     module Type = struct
       let t_of_yojson = function
-        | `String "dockerfiles" -> Ok "dockerfiles"
-        | `String "gitignores" -> Ok "gitignores"
-        | `String "gitlab_ci_ymls" -> Ok "gitlab_ci_ymls"
-        | `String "licenses" -> Ok "licenses"
-        | `String "issues" -> Ok "issues"
-        | `String "merge_requests" -> Ok "merge_requests"
+        | `String "dockerfiles" -> Ok `Dockerfiles
+        | `String "gitignores" -> Ok `Gitignores
+        | `String "gitlab_ci_ymls" -> Ok `Gitlab_ci_ymls
+        | `String "issues" -> Ok `Issues
+        | `String "licenses" -> Ok `Licenses
+        | `String "merge_requests" -> Ok `Merge_requests
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Dockerfiles -> `String "dockerfiles"
+        | `Gitignores -> `String "gitignores"
+        | `Gitlab_ci_ymls -> `String "gitlab_ci_ymls"
+        | `Issues -> `String "issues"
+        | `Licenses -> `String "licenses"
+        | `Merge_requests -> `String "merge_requests"
+
+      type t =
+        ([ `Dockerfiles
+         | `Gitignores
+         | `Gitlab_ci_ymls
+         | `Issues
+         | `Licenses
+         | `Merge_requests
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -48,7 +65,7 @@ module GetApiV4ProjectsIdTemplatesType = struct
       ~url_params:
         (let open Openapi.Request.Var in
          let open Parameters in
-         [ ("id", Var (params.id, String)); ("type", Var (params.type_, String)) ])
+         [ ("id", Var (params.id, String)); ("type", Var (params.type_, Enum Type.t_to_yojson)) ])
       ~query_params:
         (let open Openapi.Request.Var in
          let open Parameters in
@@ -62,15 +79,32 @@ module GetApiV4ProjectsIdTemplatesTypeName = struct
   module Parameters = struct
     module Type = struct
       let t_of_yojson = function
-        | `String "dockerfiles" -> Ok "dockerfiles"
-        | `String "gitignores" -> Ok "gitignores"
-        | `String "gitlab_ci_ymls" -> Ok "gitlab_ci_ymls"
-        | `String "licenses" -> Ok "licenses"
-        | `String "issues" -> Ok "issues"
-        | `String "merge_requests" -> Ok "merge_requests"
+        | `String "dockerfiles" -> Ok `Dockerfiles
+        | `String "gitignores" -> Ok `Gitignores
+        | `String "gitlab_ci_ymls" -> Ok `Gitlab_ci_ymls
+        | `String "issues" -> Ok `Issues
+        | `String "licenses" -> Ok `Licenses
+        | `String "merge_requests" -> Ok `Merge_requests
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Dockerfiles -> `String "dockerfiles"
+        | `Gitignores -> `String "gitignores"
+        | `Gitlab_ci_ymls -> `String "gitlab_ci_ymls"
+        | `Issues -> `String "issues"
+        | `Licenses -> `String "licenses"
+        | `Merge_requests -> `String "merge_requests"
+
+      type t =
+        ([ `Dockerfiles
+         | `Gitignores
+         | `Gitlab_ci_ymls
+         | `Issues
+         | `Licenses
+         | `Merge_requests
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -112,7 +146,7 @@ module GetApiV4ProjectsIdTemplatesTypeName = struct
          let open Parameters in
          [
            ("id", Var (params.id, String));
-           ("type", Var (params.type_, String));
+           ("type", Var (params.type_, Enum Type.t_to_yojson));
            ("name", Var (params.name, String));
          ])
       ~query_params:

@@ -1,20 +1,46 @@
 module Scopes = struct
   module Items = struct
     let t_of_yojson = function
-      | `String "api" -> Ok "api"
-      | `String "read_api" -> Ok "read_api"
-      | `String "create_runner" -> Ok "create_runner"
-      | `String "manage_runner" -> Ok "manage_runner"
-      | `String "k8s_proxy" -> Ok "k8s_proxy"
-      | `String "self_rotate" -> Ok "self_rotate"
-      | `String "read_repository" -> Ok "read_repository"
-      | `String "write_repository" -> Ok "write_repository"
-      | `String "read_observability" -> Ok "read_observability"
-      | `String "write_observability" -> Ok "write_observability"
-      | `String "ai_features" -> Ok "ai_features"
+      | `String "ai_features" -> Ok `Ai_features
+      | `String "api" -> Ok `Api
+      | `String "create_runner" -> Ok `Create_runner
+      | `String "k8s_proxy" -> Ok `K8s_proxy
+      | `String "manage_runner" -> Ok `Manage_runner
+      | `String "read_api" -> Ok `Read_api
+      | `String "read_observability" -> Ok `Read_observability
+      | `String "read_repository" -> Ok `Read_repository
+      | `String "self_rotate" -> Ok `Self_rotate
+      | `String "write_observability" -> Ok `Write_observability
+      | `String "write_repository" -> Ok `Write_repository
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Ai_features -> `String "ai_features"
+      | `Api -> `String "api"
+      | `Create_runner -> `String "create_runner"
+      | `K8s_proxy -> `String "k8s_proxy"
+      | `Manage_runner -> `String "manage_runner"
+      | `Read_api -> `String "read_api"
+      | `Read_observability -> `String "read_observability"
+      | `Read_repository -> `String "read_repository"
+      | `Self_rotate -> `String "self_rotate"
+      | `Write_observability -> `String "write_observability"
+      | `Write_repository -> `String "write_repository"
+
+    type t =
+      ([ `Ai_features
+       | `Api
+       | `Create_runner
+       | `K8s_proxy
+       | `Manage_runner
+       | `Read_api
+       | `Read_observability
+       | `Read_repository
+       | `Self_rotate
+       | `Write_observability
+       | `Write_repository
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 

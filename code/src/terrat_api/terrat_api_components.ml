@@ -7,6 +7,7 @@ module Bad_request_err = Terrat_api_components_bad_request_err
 module Dirspace = Terrat_api_components_dirspace
 module Dirspace_state = Terrat_api_components_dirspace_state
 module Error = Terrat_api_components_error
+module Error_response = Terrat_api_components_error_response
 module Gate = Terrat_api_components_gate
 module Github_user = Terrat_api_components_github_user
 module Gitlab_access_token = Terrat_api_components_gitlab_access_token

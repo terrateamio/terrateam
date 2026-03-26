@@ -62,12 +62,22 @@ module Primary = struct
 
   module Current_user_can_bypass = struct
     let t_of_yojson = function
-      | `String "always" -> Ok "always"
-      | `String "pull_requests_only" -> Ok "pull_requests_only"
-      | `String "never" -> Ok "never"
+      | `String "always" -> Ok `Always
+      | `String "never" -> Ok `Never
+      | `String "pull_requests_only" -> Ok `Pull_requests_only
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Always -> `String "always"
+      | `Never -> `String "never"
+      | `Pull_requests_only -> `String "pull_requests_only"
+
+    type t =
+      ([ `Always
+       | `Never
+       | `Pull_requests_only
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
@@ -78,24 +88,46 @@ module Primary = struct
 
   module Source_type = struct
     let t_of_yojson = function
-      | `String "Repository" -> Ok "Repository"
-      | `String "Organization" -> Ok "Organization"
-      | `String "Enterprise" -> Ok "Enterprise"
+      | `String "Enterprise" -> Ok `Enterprise
+      | `String "Organization" -> Ok `Organization
+      | `String "Repository" -> Ok `Repository
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Enterprise -> `String "Enterprise"
+      | `Organization -> `String "Organization"
+      | `Repository -> `String "Repository"
+
+    type t =
+      ([ `Enterprise
+       | `Organization
+       | `Repository
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Target = struct
     let t_of_yojson = function
-      | `String "branch" -> Ok "branch"
-      | `String "tag" -> Ok "tag"
-      | `String "push" -> Ok "push"
-      | `String "repository" -> Ok "repository"
+      | `String "branch" -> Ok `Branch
+      | `String "push" -> Ok `Push
+      | `String "repository" -> Ok `Repository
+      | `String "tag" -> Ok `Tag
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Branch -> `String "branch"
+      | `Push -> `String "push"
+      | `Repository -> `String "repository"
+      | `Tag -> `String "tag"
+
+    type t =
+      ([ `Branch
+       | `Push
+       | `Repository
+       | `Tag
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 

@@ -2,30 +2,68 @@ module GetApiV4UsersUserIdProjects = struct
   module Parameters = struct
     module Order_by = struct
       let t_of_yojson = function
-        | `String "id" -> Ok "id"
-        | `String "name" -> Ok "name"
-        | `String "path" -> Ok "path"
-        | `String "created_at" -> Ok "created_at"
-        | `String "updated_at" -> Ok "updated_at"
-        | `String "last_activity_at" -> Ok "last_activity_at"
-        | `String "similarity" -> Ok "similarity"
-        | `String "star_count" -> Ok "star_count"
-        | `String "storage_size" -> Ok "storage_size"
-        | `String "repository_size" -> Ok "repository_size"
-        | `String "wiki_size" -> Ok "wiki_size"
-        | `String "packages_size" -> Ok "packages_size"
+        | `String "created_at" -> Ok `Created_at
+        | `String "id" -> Ok `Id
+        | `String "last_activity_at" -> Ok `Last_activity_at
+        | `String "name" -> Ok `Name
+        | `String "packages_size" -> Ok `Packages_size
+        | `String "path" -> Ok `Path
+        | `String "repository_size" -> Ok `Repository_size
+        | `String "similarity" -> Ok `Similarity
+        | `String "star_count" -> Ok `Star_count
+        | `String "storage_size" -> Ok `Storage_size
+        | `String "updated_at" -> Ok `Updated_at
+        | `String "wiki_size" -> Ok `Wiki_size
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Created_at -> `String "created_at"
+        | `Id -> `String "id"
+        | `Last_activity_at -> `String "last_activity_at"
+        | `Name -> `String "name"
+        | `Packages_size -> `String "packages_size"
+        | `Path -> `String "path"
+        | `Repository_size -> `String "repository_size"
+        | `Similarity -> `String "similarity"
+        | `Star_count -> `String "star_count"
+        | `Storage_size -> `String "storage_size"
+        | `Updated_at -> `String "updated_at"
+        | `Wiki_size -> `String "wiki_size"
+
+      type t =
+        ([ `Created_at
+         | `Id
+         | `Last_activity_at
+         | `Name
+         | `Packages_size
+         | `Path
+         | `Repository_size
+         | `Similarity
+         | `Star_count
+         | `Storage_size
+         | `Updated_at
+         | `Wiki_size
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Sort = struct
       let t_of_yojson = function
-        | `String "asc" -> Ok "asc"
-        | `String "desc" -> Ok "desc"
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Topic = struct
@@ -34,12 +72,23 @@ module GetApiV4UsersUserIdProjects = struct
 
     module Visibility = struct
       let t_of_yojson = function
-        | `String "private" -> Ok "private"
-        | `String "internal" -> Ok "internal"
-        | `String "public" -> Ok "public"
+        | `String "internal" -> Ok `Internal
+        | `String "private" -> Ok `Private
+        | `String "public" -> Ok `Public
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Internal -> `String "internal"
+        | `Private -> `String "private"
+        | `Public -> `String "public"
+
+      type t =
+        ([ `Internal
+         | `Private
+         | `Public
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -54,7 +103,7 @@ module GetApiV4UsersUserIdProjects = struct
       marked_for_deletion_on : string option; [@default None]
       membership : bool; [@default false]
       min_access_level : int option; [@default None]
-      order_by : Order_by.t; [@default "created_at"]
+      order_by : Order_by.t; [@default `Created_at]
       owned : bool; [@default false]
       page : int; [@default 1]
       per_page : int; [@default 20]
@@ -63,7 +112,7 @@ module GetApiV4UsersUserIdProjects = struct
       search : string option; [@default None]
       search_namespaces : bool option; [@default None]
       simple : bool; [@default false]
-      sort : Sort.t; [@default "desc"]
+      sort : Sort.t; [@default `Desc]
       starred : bool; [@default false]
       statistics : bool; [@default false]
       topic : Topic.t option; [@default None]
@@ -107,10 +156,10 @@ module GetApiV4UsersUserIdProjects = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("order_by", Var (params.order_by, String));
-           ("sort", Var (params.sort, String));
+           ("order_by", Var (params.order_by, Enum Order_by.t_to_yojson));
+           ("sort", Var (params.sort, Enum Sort.t_to_yojson));
            ("archived", Var (params.archived, Option Bool));
-           ("visibility", Var (params.visibility, Option String));
+           ("visibility", Var (params.visibility, Option (Enum Visibility.t_to_yojson)));
            ("search", Var (params.search, Option String));
            ("search_namespaces", Var (params.search_namespaces, Option Bool));
            ("owned", Var (params.owned, Bool));

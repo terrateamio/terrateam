@@ -1,12 +1,22 @@
 module Primary = struct
   module Prebuild_availability = struct
     let t_of_yojson = function
-      | `String "none" -> Ok "none"
-      | `String "ready" -> Ok "ready"
-      | `String "in_progress" -> Ok "in_progress"
+      | `String "in_progress" -> Ok `In_progress
+      | `String "none" -> Ok `None
+      | `String "ready" -> Ok `Ready
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `In_progress -> `String "in_progress"
+      | `None -> `String "none"
+      | `Ready -> `String "ready"
+
+    type t =
+      ([ `In_progress
+       | `None
+       | `Ready
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 

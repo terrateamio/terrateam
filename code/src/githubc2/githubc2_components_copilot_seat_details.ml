@@ -20,12 +20,22 @@ end
 
 module Plan_type = struct
   let t_of_yojson = function
-    | `String "business" -> Ok "business"
-    | `String "enterprise" -> Ok "enterprise"
-    | `String "unknown" -> Ok "unknown"
+    | `String "business" -> Ok `Business
+    | `String "enterprise" -> Ok `Enterprise
+    | `String "unknown" -> Ok `Unknown
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Business -> `String "business"
+    | `Enterprise -> `String "enterprise"
+    | `Unknown -> `String "unknown"
+
+  type t =
+    ([ `Business
+     | `Enterprise
+     | `Unknown
+     ]
+    [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 

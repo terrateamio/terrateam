@@ -3,31 +3,53 @@ module Actions = struct
     module Primary = struct
       module Action = struct
         let t_of_yojson = function
-          | `String "create" -> Ok "create"
-          | `String "update" -> Ok "update"
-          | `String "move" -> Ok "move"
-          | `String "delete" -> Ok "delete"
-          | `String "chmod" -> Ok "chmod"
+          | `String "chmod" -> Ok `Chmod
+          | `String "create" -> Ok `Create
+          | `String "delete" -> Ok `Delete
+          | `String "move" -> Ok `Move
+          | `String "update" -> Ok `Update
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-        type t = (string[@of_yojson t_of_yojson])
+        let t_to_yojson = function
+          | `Chmod -> `String "chmod"
+          | `Create -> `String "create"
+          | `Delete -> `String "delete"
+          | `Move -> `String "move"
+          | `Update -> `String "update"
+
+        type t =
+          ([ `Chmod
+           | `Create
+           | `Delete
+           | `Move
+           | `Update
+           ]
+          [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
         [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       module Encoding = struct
         let t_of_yojson = function
-          | `String "text" -> Ok "text"
-          | `String "base64" -> Ok "base64"
+          | `String "base64" -> Ok `Base64
+          | `String "text" -> Ok `Text
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-        type t = (string[@of_yojson t_of_yojson])
+        let t_to_yojson = function
+          | `Base64 -> `String "base64"
+          | `Text -> `String "text"
+
+        type t =
+          ([ `Base64
+           | `Text
+           ]
+          [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
         [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       type t = {
         action : Action.t;
         content : string;
-        encoding : Encoding.t; [@default "text"]
+        encoding : Encoding.t; [@default `Text]
         execute_filemode : bool;
         file_path : string;
         last_commit_id : string option; [@default None]

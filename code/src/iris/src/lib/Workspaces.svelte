@@ -11,7 +11,8 @@
   import Card from './components/ui/Card.svelte';
   import ClickableCard from './components/ui/ClickableCard.svelte';
   import { VCS_PROVIDERS } from './vcs/providers';
-  
+  import { EXTERNAL_URLS } from './constants';
+
   // Get current VCS provider terminology
   $: currentProvider = $currentVCSProvider || 'github';
   $: terminology = VCS_PROVIDERS[currentProvider]?.terminology || VCS_PROVIDERS.github.terminology;
@@ -420,6 +421,9 @@
       <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">No Repositories Found</h3>
       <p class="text-gray-600 dark:text-gray-400 mb-6">
         No repositories are connected to this installation yet.
+      </p>
+      <p class="text-sm text-gray-500 dark:text-gray-400">
+        Need help? <a href={EXTERNAL_URLS.SLACK} target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:underline">Join our Slack community</a>
       </p>
     </Card>
   {:else if filteredRepositories.length === 0 && searchQuery}

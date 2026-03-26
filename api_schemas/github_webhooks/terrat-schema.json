@@ -102,11 +102,6 @@
           "type": "string"
         }
       },
-      "required": [
-        "enabled_by",
-        "merge_method",
-        "commit_message"
-      ],
       "title": "PullRequestAutoMerge",
       "type": "object"
     },

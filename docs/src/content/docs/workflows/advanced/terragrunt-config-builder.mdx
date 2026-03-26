@@ -1,0 +1,215 @@
+---
+title: Automatic Terragrunt Discovery with Config Builder
+description: Automatically discover and configure Terragrunt modules in large monorepos with dependency tracking
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import MermaidDiagram from '../../../../components/MermaidDiagram.astro';
+
+For large Terragrunt monorepos with hundreds of modules, manually configuring each module in `.terrateam/config.yml` is tedious and error-prone. Terrateam includes a built-in config builder that automatically discovers all `terragrunt.hcl` files and generates configuration with proper dependency tracking—similar to how [terragrunt-atlantis-config](https://github.com/transcend-io/terragrunt-atlantis-config) works for Atlantis.
+
+## When to Use This
+
+The Terragrunt config builder is ideal for:
+
+- Large monorepos with many Terragrunt modules
+- Repositories using Terragrunt's `dependency` blocks for module relationships
+- Teams migrating from Atlantis with terragrunt-atlantis-config
+- Avoiding manual maintenance of hundreds of `dirs` entries
+
+If you only have a handful of modules, manual configuration may be simpler. For everything else, the config builder automates the process.
+
+## How It Works
+
+The config builder:
+1. Scans the repository for all `terragrunt.hcl` files
+2. Parses each file to extract:
+   - `dependency` blocks → Creates `depends_on` relationships
+   - `dependencies` blocks → Multiple dependencies
+   - `include` blocks → Parent config files
+   - `terraform.source` → Local Terraform modules (remote sources ignored)
+   - `locals.extra_atlantis_dependencies` → Custom dependencies
+3. Generates configuration with `when_modified` patterns for each module
+4. Creates dependency chains using Terrateam's layered runs
+
+### What Gets Generated
+
+For each Terragrunt module, the config builder creates a `dirs` entry with:
+- `tags`: `['terragrunt']` for easy filtering
+- `when_modified.file_patterns`: List of files that trigger this module
+- `when_modified.depends_on`: Direct dependencies for layered execution
+
+## Quick Start
+
+<Steps>
+
+1. Enable the config builder in your `.terrateam/config.yml`:
+
+   ```yaml
+   engine:
+     name: terragrunt
+     version: 0.69.3
+
+   config_builder:
+     enabled: true
+     script: terragrunt-config-builder
+
+   when_modified:
+     autoplan: true
+   ```
+
+2. Commit and push your changes to a branch
+
+3. Create a pull request
+
+4. View the generated configuration by commenting on the PR:
+   ```
+   terrateam repo-config
+   ```
+
+5. Watch autoplan run for all discovered modules
+
+</Steps>
+
+:::tip
+The `terragrunt-config-builder` script is bundled with Terrateam, no installation required. Just reference it by name in the `config_builder.script` field.
+:::
+
+## Configuration
+
+### Basic Setup
+
+The minimum configuration to enable automatic Terragrunt discovery:
+
+<Tabs>
+<TabItem label="Simple">
+
+```yaml title=".terrateam/config.yml"
+engine:
+  name: terragrunt
+
+config_builder:
+  enabled: true
+  script: terragrunt-config-builder
+```
+
+</TabItem>
+
+<TabItem label="With Terragrunt Version">
+
+```yaml title=".terrateam/config.yml"
+engine:
+  name: terragrunt
+  version: 0.69.3
+
+config_builder:
+  enabled: true
+  script: terragrunt-config-builder
+```
+
+</TabItem>
+
+<TabItem label="Complete">
+
+```yaml title=".terrateam/config.yml"
+# Enable Terragrunt engine
+engine:
+  name: terragrunt
+  version: 0.69.3
+  tf_cmd: tofu # or "terraform"
+  tf_version: "1.10.7"
+
+# Enable automatic discovery
+config_builder:
+  enabled: true
+  script: terragrunt-config-builder
+```
+
+</TabItem>
+</Tabs>
+
+### How the Script is Called
+
+The config builder:
+1. Receives the current configuration as JSON via stdin
+2. Processes all terragrunt.hcl files
+3. Outputs the modified configuration as JSON to stdout
+
+The script runs in the GitHub Action environment with full access to your repository.
+
+## Example Output
+
+### Repository Structure
+
+```
+non-prod/
+├── us-east-1/
+│   ├── qa/
+│   │   ├── mysql/
+│   │   │   └── terragrunt.hcl
+│   │   └── webserver-cluster/
+│   │       └── terragrunt.hcl  # depends on mysql
+│   └── stage/
+│       ├── mysql/
+│       │   └── terragrunt.hcl
+│       └── webserver-cluster/
+│           └── terragrunt.hcl  # depends on mysql
+prod/
+├── us-east-1/
+│   └── prod/
+│       ├── mysql/
+│       │   └── terragrunt.hcl
+│       └── webserver-cluster/
+│           └── terragrunt.hcl  # depends on mysql
+repo.hcl
+aws.hcl
+```
+
+### Generated Configuration
+
+Running `terrateam repo-config` shows:
+
+```json
+{
+  "version": "1",
+  "dirs": {
+    "non-prod/us-east-1/qa/mysql": {
+      "tags": ["terragrunt"],
+      "when_modified": {
+        "file_patterns": [
+          "${DIR}/terragrunt.hcl",
+          "${DIR}/*.tf",
+          "${DIR}/*.tfvars"
+        ]
+      }
+    },
+    "non-prod/us-east-1/qa/webserver-cluster": {
+      "tags": ["terragrunt"],
+      "when_modified": {
+        "file_patterns": [
+          "${DIR}/terragrunt.hcl",
+          "${DIR}/*.tf",
+          "${DIR}/*.tfvars",
+          "non-prod/us-east-1/qa/mysql/terragrunt.hcl"
+        ],
+        "depends_on": "dir:non-prod/us-east-1/qa/mysql"
+      }
+    }
+    // ... similar entries for stage and prod
+  }
+}
+```
+
+**Key Points:**
+- Each module has a `dirs` entry
+- MySQL modules have no `depends_on` (no dependencies)
+- Webserver-cluster modules `depends_on` their corresponding MySQL
+- File patterns include the dependency's terragrunt.hcl
+
+## See Also
+
+- [Terragrunt Integration](/integrations/iac-tools/terragrunt) - Basic Terragrunt setup
+- [Config Builder Reference](/reference/configuration/config-builder) - Config builder configuration options
+- [Layered Runs](/workflows/advanced/layered-runs) - Understanding depends_on and execution order
+- [Dynamic Configuration](/workflows/advanced/dynamic-configuration) - How config_builder fits into the config merge process

@@ -499,6 +499,9 @@
           "const": "cdktf",
           "type": "string"
         },
+        "outputs": {
+          "$ref": "#/definitions/engine-tf-outputs"
+        },
         "override_tf_cmd": {
           "type": "string"
         },
@@ -587,6 +590,9 @@
           "const": "tofu",
           "type": "string"
         },
+        "outputs": {
+          "$ref": "#/definitions/engine-tf-outputs"
+        },
         "override_tf_cmd": {
           "type": "string"
         },
@@ -636,6 +642,9 @@
           "const": "terraform",
           "type": "string"
         },
+        "outputs": {
+          "$ref": "#/definitions/engine-tf-outputs"
+        },
         "override_tf_cmd": {
           "type": "string"
         },
@@ -655,6 +664,9 @@
           "const": "terragrunt",
           "type": "string"
         },
+        "outputs": {
+          "$ref": "#/definitions/engine-tf-outputs"
+        },
         "override_tf_cmd": {
           "type": "string"
         },
@@ -671,6 +683,15 @@
       "required": [
         "name"
       ],
+      "type": "object"
+    },
+    "engine-tf-outputs": {
+      "additionalProperties": false,
+      "properties": {
+        "collect": {
+          "type": "boolean"
+        }
+      },
       "type": "object"
     },
     "gate": {

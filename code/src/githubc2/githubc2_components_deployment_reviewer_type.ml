@@ -1,7 +1,15 @@
 let t_of_yojson = function
-  | `String "User" -> Ok "User"
-  | `String "Team" -> Ok "Team"
+  | `String "Team" -> Ok `Team
+  | `String "User" -> Ok `User
   | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-type t = (string[@of_yojson t_of_yojson])
+let t_to_yojson = function
+  | `Team -> `String "Team"
+  | `User -> `String "User"
+
+type t =
+  ([ `Team
+   | `User
+   ]
+  [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
 [@@deriving yojson { strict = false; meta = true }, show, eq]

@@ -2,42 +2,69 @@ module List_alerts_for_enterprise = struct
   module Parameters = struct
     module Direction = struct
       let t_of_yojson = function
-        | `String "asc" -> Ok "asc"
-        | `String "desc" -> Ok "desc"
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Sort = struct
       let t_of_yojson = function
-        | `String "created" -> Ok "created"
-        | `String "updated" -> Ok "updated"
+        | `String "created" -> Ok `Created
+        | `String "updated" -> Ok `Updated
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Created -> `String "created"
+        | `Updated -> `String "updated"
+
+      type t =
+        ([ `Created
+         | `Updated
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module State = struct
       let t_of_yojson = function
-        | `String "open" -> Ok "open"
-        | `String "resolved" -> Ok "resolved"
+        | `String "open" -> Ok `Open
+        | `String "resolved" -> Ok `Resolved
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Open -> `String "open"
+        | `Resolved -> `String "resolved"
+
+      type t =
+        ([ `Open
+         | `Resolved
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
       after : string option; [@default None]
       before : string option; [@default None]
-      direction : Direction.t; [@default "desc"]
+      direction : Direction.t; [@default `Desc]
       enterprise : string;
       is_multi_repo : bool; [@default false]
       is_publicly_leaked : bool; [@default false]
       per_page : int; [@default 30]
       resolution : string option; [@default None]
       secret_type : string option; [@default None]
-      sort : Sort.t; [@default "created"]
+      sort : Sort.t; [@default `Created]
       state : State.t option; [@default None]
       validity : string option; [@default None]
     }
@@ -96,11 +123,11 @@ module List_alerts_for_enterprise = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("state", Var (params.state, Option String));
+           ("state", Var (params.state, Option (Enum State.t_to_yojson)));
            ("secret_type", Var (params.secret_type, Option String));
            ("resolution", Var (params.resolution, Option String));
-           ("sort", Var (params.sort, String));
-           ("direction", Var (params.direction, String));
+           ("sort", Var (params.sort, Enum Sort.t_to_yojson));
+           ("direction", Var (params.direction, Enum Direction.t_to_yojson));
            ("per_page", Var (params.per_page, Int));
            ("before", Var (params.before, Option String));
            ("after", Var (params.after, Option String));
@@ -117,35 +144,62 @@ module List_alerts_for_org = struct
   module Parameters = struct
     module Direction = struct
       let t_of_yojson = function
-        | `String "asc" -> Ok "asc"
-        | `String "desc" -> Ok "desc"
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Sort = struct
       let t_of_yojson = function
-        | `String "created" -> Ok "created"
-        | `String "updated" -> Ok "updated"
+        | `String "created" -> Ok `Created
+        | `String "updated" -> Ok `Updated
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Created -> `String "created"
+        | `Updated -> `String "updated"
+
+      type t =
+        ([ `Created
+         | `Updated
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module State = struct
       let t_of_yojson = function
-        | `String "open" -> Ok "open"
-        | `String "resolved" -> Ok "resolved"
+        | `String "open" -> Ok `Open
+        | `String "resolved" -> Ok `Resolved
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Open -> `String "open"
+        | `Resolved -> `String "resolved"
+
+      type t =
+        ([ `Open
+         | `Resolved
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
       after : string option; [@default None]
       before : string option; [@default None]
-      direction : Direction.t; [@default "desc"]
+      direction : Direction.t; [@default `Desc]
       is_multi_repo : bool; [@default false]
       is_publicly_leaked : bool; [@default false]
       org : string;
@@ -153,7 +207,7 @@ module List_alerts_for_org = struct
       per_page : int; [@default 30]
       resolution : string option; [@default None]
       secret_type : string option; [@default None]
-      sort : Sort.t; [@default "created"]
+      sort : Sort.t; [@default `Created]
       state : State.t option; [@default None]
       validity : string option; [@default None]
     }
@@ -212,11 +266,11 @@ module List_alerts_for_org = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("state", Var (params.state, Option String));
+           ("state", Var (params.state, Option (Enum State.t_to_yojson)));
            ("secret_type", Var (params.secret_type, Option String));
            ("resolution", Var (params.resolution, Option String));
-           ("sort", Var (params.sort, String));
-           ("direction", Var (params.direction, String));
+           ("sort", Var (params.sort, Enum Sort.t_to_yojson));
+           ("direction", Var (params.direction, Enum Direction.t_to_yojson));
            ("page", Var (params.page, Int));
            ("per_page", Var (params.per_page, Int));
            ("before", Var (params.before, Option String));
@@ -234,35 +288,62 @@ module List_alerts_for_repo = struct
   module Parameters = struct
     module Direction = struct
       let t_of_yojson = function
-        | `String "asc" -> Ok "asc"
-        | `String "desc" -> Ok "desc"
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Sort = struct
       let t_of_yojson = function
-        | `String "created" -> Ok "created"
-        | `String "updated" -> Ok "updated"
+        | `String "created" -> Ok `Created
+        | `String "updated" -> Ok `Updated
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Created -> `String "created"
+        | `Updated -> `String "updated"
+
+      type t =
+        ([ `Created
+         | `Updated
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module State = struct
       let t_of_yojson = function
-        | `String "open" -> Ok "open"
-        | `String "resolved" -> Ok "resolved"
+        | `String "open" -> Ok `Open
+        | `String "resolved" -> Ok `Resolved
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Open -> `String "open"
+        | `Resolved -> `String "resolved"
+
+      type t =
+        ([ `Open
+         | `Resolved
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
       after : string option; [@default None]
       before : string option; [@default None]
-      direction : Direction.t; [@default "desc"]
+      direction : Direction.t; [@default `Desc]
       is_multi_repo : bool; [@default false]
       is_publicly_leaked : bool; [@default false]
       owner : string;
@@ -271,7 +352,7 @@ module List_alerts_for_repo = struct
       repo : string;
       resolution : string option; [@default None]
       secret_type : string option; [@default None]
-      sort : Sort.t; [@default "created"]
+      sort : Sort.t; [@default `Created]
       state : State.t option; [@default None]
       validity : string option; [@default None]
     }
@@ -327,11 +408,11 @@ module List_alerts_for_repo = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("state", Var (params.state, Option String));
+           ("state", Var (params.state, Option (Enum State.t_to_yojson)));
            ("secret_type", Var (params.secret_type, Option String));
            ("resolution", Var (params.resolution, Option String));
-           ("sort", Var (params.sort, String));
-           ("direction", Var (params.direction, String));
+           ("sort", Var (params.sort, Enum Sort.t_to_yojson));
+           ("direction", Var (params.direction, Enum Direction.t_to_yojson));
            ("page", Var (params.page, Int));
            ("per_page", Var (params.per_page, Int));
            ("before", Var (params.before, Option String));

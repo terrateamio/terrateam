@@ -2,11 +2,20 @@ module GetApiV4UsersUserIdMemberships = struct
   module Parameters = struct
     module Type = struct
       let t_of_yojson = function
-        | `String "Project" -> Ok "Project"
-        | `String "Namespace" -> Ok "Namespace"
+        | `String "Namespace" -> Ok `Namespace
+        | `String "Project" -> Ok `Project
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Namespace -> `String "Namespace"
+        | `Project -> `String "Project"
+
+      type t =
+        ([ `Namespace
+         | `Project
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -39,7 +48,7 @@ module GetApiV4UsersUserIdMemberships = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("type", Var (params.type_, Option String));
+           ("type", Var (params.type_, Option (Enum Type.t_to_yojson)));
            ("page", Var (params.page, Int));
            ("per_page", Var (params.per_page, Int));
          ])

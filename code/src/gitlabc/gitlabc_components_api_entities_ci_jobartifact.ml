@@ -1,51 +1,129 @@
 module File_format = struct
   let t_of_yojson = function
-    | `String "raw" -> Ok "raw"
-    | `String "zip" -> Ok "zip"
-    | `String "gzip" -> Ok "gzip"
+    | `String "gzip" -> Ok `Gzip
+    | `String "raw" -> Ok `Raw
+    | `String "zip" -> Ok `Zip
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Gzip -> `String "gzip"
+    | `Raw -> `String "raw"
+    | `Zip -> `String "zip"
+
+  type t =
+    ([ `Gzip
+     | `Raw
+     | `Zip
+     ]
+    [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module File_type = struct
   let t_of_yojson = function
-    | `String "archive" -> Ok "archive"
-    | `String "metadata" -> Ok "metadata"
-    | `String "trace" -> Ok "trace"
-    | `String "junit" -> Ok "junit"
-    | `String "sast" -> Ok "sast"
-    | `String "dependency_scanning" -> Ok "dependency_scanning"
-    | `String "container_scanning" -> Ok "container_scanning"
-    | `String "dast" -> Ok "dast"
-    | `String "codequality" -> Ok "codequality"
-    | `String "license_scanning" -> Ok "license_scanning"
-    | `String "performance" -> Ok "performance"
-    | `String "metrics" -> Ok "metrics"
-    | `String "metrics_referee" -> Ok "metrics_referee"
-    | `String "network_referee" -> Ok "network_referee"
-    | `String "lsif" -> Ok "lsif"
-    | `String "dotenv" -> Ok "dotenv"
-    | `String "cobertura" -> Ok "cobertura"
-    | `String "terraform" -> Ok "terraform"
-    | `String "accessibility" -> Ok "accessibility"
-    | `String "cluster_applications" -> Ok "cluster_applications"
-    | `String "secret_detection" -> Ok "secret_detection"
-    | `String "requirements" -> Ok "requirements"
-    | `String "coverage_fuzzing" -> Ok "coverage_fuzzing"
-    | `String "browser_performance" -> Ok "browser_performance"
-    | `String "load_performance" -> Ok "load_performance"
-    | `String "api_fuzzing" -> Ok "api_fuzzing"
-    | `String "cluster_image_scanning" -> Ok "cluster_image_scanning"
-    | `String "cyclonedx" -> Ok "cyclonedx"
-    | `String "requirements_v2" -> Ok "requirements_v2"
-    | `String "annotations" -> Ok "annotations"
-    | `String "repository_xray" -> Ok "repository_xray"
-    | `String "jacoco" -> Ok "jacoco"
+    | `String "accessibility" -> Ok `Accessibility
+    | `String "annotations" -> Ok `Annotations
+    | `String "api_fuzzing" -> Ok `Api_fuzzing
+    | `String "archive" -> Ok `Archive
+    | `String "browser_performance" -> Ok `Browser_performance
+    | `String "cluster_applications" -> Ok `Cluster_applications
+    | `String "cluster_image_scanning" -> Ok `Cluster_image_scanning
+    | `String "cobertura" -> Ok `Cobertura
+    | `String "codequality" -> Ok `Codequality
+    | `String "container_scanning" -> Ok `Container_scanning
+    | `String "coverage_fuzzing" -> Ok `Coverage_fuzzing
+    | `String "cyclonedx" -> Ok `Cyclonedx
+    | `String "dast" -> Ok `Dast
+    | `String "dependency_scanning" -> Ok `Dependency_scanning
+    | `String "dotenv" -> Ok `Dotenv
+    | `String "jacoco" -> Ok `Jacoco
+    | `String "junit" -> Ok `Junit
+    | `String "license_scanning" -> Ok `License_scanning
+    | `String "load_performance" -> Ok `Load_performance
+    | `String "lsif" -> Ok `Lsif
+    | `String "metadata" -> Ok `Metadata
+    | `String "metrics" -> Ok `Metrics
+    | `String "metrics_referee" -> Ok `Metrics_referee
+    | `String "network_referee" -> Ok `Network_referee
+    | `String "performance" -> Ok `Performance
+    | `String "repository_xray" -> Ok `Repository_xray
+    | `String "requirements" -> Ok `Requirements
+    | `String "requirements_v2" -> Ok `Requirements_v2
+    | `String "sast" -> Ok `Sast
+    | `String "secret_detection" -> Ok `Secret_detection
+    | `String "terraform" -> Ok `Terraform
+    | `String "trace" -> Ok `Trace
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Accessibility -> `String "accessibility"
+    | `Annotations -> `String "annotations"
+    | `Api_fuzzing -> `String "api_fuzzing"
+    | `Archive -> `String "archive"
+    | `Browser_performance -> `String "browser_performance"
+    | `Cluster_applications -> `String "cluster_applications"
+    | `Cluster_image_scanning -> `String "cluster_image_scanning"
+    | `Cobertura -> `String "cobertura"
+    | `Codequality -> `String "codequality"
+    | `Container_scanning -> `String "container_scanning"
+    | `Coverage_fuzzing -> `String "coverage_fuzzing"
+    | `Cyclonedx -> `String "cyclonedx"
+    | `Dast -> `String "dast"
+    | `Dependency_scanning -> `String "dependency_scanning"
+    | `Dotenv -> `String "dotenv"
+    | `Jacoco -> `String "jacoco"
+    | `Junit -> `String "junit"
+    | `License_scanning -> `String "license_scanning"
+    | `Load_performance -> `String "load_performance"
+    | `Lsif -> `String "lsif"
+    | `Metadata -> `String "metadata"
+    | `Metrics -> `String "metrics"
+    | `Metrics_referee -> `String "metrics_referee"
+    | `Network_referee -> `String "network_referee"
+    | `Performance -> `String "performance"
+    | `Repository_xray -> `String "repository_xray"
+    | `Requirements -> `String "requirements"
+    | `Requirements_v2 -> `String "requirements_v2"
+    | `Sast -> `String "sast"
+    | `Secret_detection -> `String "secret_detection"
+    | `Terraform -> `String "terraform"
+    | `Trace -> `String "trace"
+
+  type t =
+    ([ `Accessibility
+     | `Annotations
+     | `Api_fuzzing
+     | `Archive
+     | `Browser_performance
+     | `Cluster_applications
+     | `Cluster_image_scanning
+     | `Cobertura
+     | `Codequality
+     | `Container_scanning
+     | `Coverage_fuzzing
+     | `Cyclonedx
+     | `Dast
+     | `Dependency_scanning
+     | `Dotenv
+     | `Jacoco
+     | `Junit
+     | `License_scanning
+     | `Load_performance
+     | `Lsif
+     | `Metadata
+     | `Metrics
+     | `Metrics_referee
+     | `Network_referee
+     | `Performance
+     | `Repository_xray
+     | `Requirements
+     | `Requirements_v2
+     | `Sast
+     | `Secret_detection
+     | `Terraform
+     | `Trace
+     ]
+    [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 

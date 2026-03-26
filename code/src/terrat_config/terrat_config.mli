@@ -1,6 +1,15 @@
 module Github : sig
+  type action_dynamic_title_item =
+    [ `Pr_title
+    | `Pr_number
+    | `Run_kind
+    | `Run_type
+    ]
+  [@@deriving show]
+
   type t [@@deriving show]
 
+  val action_dynamic_title : t -> action_dynamic_title_item list
   val api_base_url : t -> Uri.t
   val app_client_id : t -> string
   val app_client_secret : t -> string
@@ -62,11 +71,14 @@ val create : unit -> (t, [> err ]) result
 val db : t -> string
 val db_connect_timeout : t -> float
 val db_host : t -> string
+val db_port : t -> int
 val db_idle_tx_timeout : t -> string
+val db_lock_timeout : t -> string
 val db_max_pool_size : t -> int
 val db_password : t -> string
 val db_user : t -> string
 val default_tier : t -> string
+val event_evaluator_slots : t -> int
 val gc : t -> Gc.t
 val github : t -> Github.t option
 val gitlab : t -> Gitlab.t option

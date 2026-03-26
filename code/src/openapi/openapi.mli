@@ -19,6 +19,7 @@ module Request : sig
       | String : string v
       | Bool : bool v
       | Null : unit v
+      | Enum : ('a -> Yojson.Safe.t) -> 'a v
 
     type t = Var : ('a * 'a v) -> t
   end

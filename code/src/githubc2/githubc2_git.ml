@@ -689,12 +689,22 @@ module Create_tag = struct
 
       module Type = struct
         let t_of_yojson = function
-          | `String "commit" -> Ok "commit"
-          | `String "tree" -> Ok "tree"
-          | `String "blob" -> Ok "blob"
+          | `String "blob" -> Ok `Blob
+          | `String "commit" -> Ok `Commit
+          | `String "tree" -> Ok `Tree
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-        type t = (string[@of_yojson t_of_yojson])
+        let t_to_yojson = function
+          | `Blob -> `String "blob"
+          | `Commit -> `String "commit"
+          | `Tree -> `String "tree"
+
+        type t =
+          ([ `Blob
+           | `Commit
+           | `Tree
+           ]
+          [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
         [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
@@ -836,25 +846,49 @@ module Create_tree = struct
           module Primary = struct
             module Mode = struct
               let t_of_yojson = function
-                | `String "100644" -> Ok "100644"
-                | `String "100755" -> Ok "100755"
-                | `String "040000" -> Ok "040000"
-                | `String "160000" -> Ok "160000"
-                | `String "120000" -> Ok "120000"
+                | `String "040000" -> Ok `V_040000
+                | `String "100644" -> Ok `V_100644
+                | `String "100755" -> Ok `V_100755
+                | `String "120000" -> Ok `V_120000
+                | `String "160000" -> Ok `V_160000
                 | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-              type t = (string[@of_yojson t_of_yojson])
+              let t_to_yojson = function
+                | `V_040000 -> `String "040000"
+                | `V_100644 -> `String "100644"
+                | `V_100755 -> `String "100755"
+                | `V_120000 -> `String "120000"
+                | `V_160000 -> `String "160000"
+
+              type t =
+                ([ `V_040000
+                 | `V_100644
+                 | `V_100755
+                 | `V_120000
+                 | `V_160000
+                 ]
+                [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
               [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
 
             module Type = struct
               let t_of_yojson = function
-                | `String "blob" -> Ok "blob"
-                | `String "tree" -> Ok "tree"
-                | `String "commit" -> Ok "commit"
+                | `String "blob" -> Ok `Blob
+                | `String "commit" -> Ok `Commit
+                | `String "tree" -> Ok `Tree
                 | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-              type t = (string[@of_yojson t_of_yojson])
+              let t_to_yojson = function
+                | `Blob -> `String "blob"
+                | `Commit -> `String "commit"
+                | `Tree -> `String "tree"
+
+              type t =
+                ([ `Blob
+                 | `Commit
+                 | `Tree
+                 ]
+                [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
               [@@deriving yojson { strict = false; meta = true }, show, eq]
             end
 

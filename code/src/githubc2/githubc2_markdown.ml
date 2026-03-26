@@ -5,17 +5,25 @@ module Render = struct
     module Primary = struct
       module Mode = struct
         let t_of_yojson = function
-          | `String "markdown" -> Ok "markdown"
-          | `String "gfm" -> Ok "gfm"
+          | `String "gfm" -> Ok `Gfm
+          | `String "markdown" -> Ok `Markdown
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-        type t = (string[@of_yojson t_of_yojson])
+        let t_to_yojson = function
+          | `Gfm -> `String "gfm"
+          | `Markdown -> `String "markdown"
+
+        type t =
+          ([ `Gfm
+           | `Markdown
+           ]
+          [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
         [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
       type t = {
         context : string option; [@default None]
-        mode : Mode.t; [@default "markdown"]
+        mode : Mode.t; [@default `Markdown]
         text : string;
       }
       [@@deriving make, yojson { strict = false; meta = true }, show, eq]

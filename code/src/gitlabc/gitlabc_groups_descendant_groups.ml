@@ -2,13 +2,26 @@ module GetApiV4GroupsIdDescendantGroups = struct
   module Parameters = struct
     module Order_by = struct
       let t_of_yojson = function
-        | `String "name" -> Ok "name"
-        | `String "path" -> Ok "path"
-        | `String "id" -> Ok "id"
-        | `String "similarity" -> Ok "similarity"
+        | `String "id" -> Ok `Id
+        | `String "name" -> Ok `Name
+        | `String "path" -> Ok `Path
+        | `String "similarity" -> Ok `Similarity
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Id -> `String "id"
+        | `Name -> `String "name"
+        | `Path -> `String "path"
+        | `Similarity -> `String "similarity"
+
+      type t =
+        ([ `Id
+         | `Name
+         | `Path
+         | `Similarity
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Skip_groups = struct
@@ -17,21 +30,41 @@ module GetApiV4GroupsIdDescendantGroups = struct
 
     module Sort = struct
       let t_of_yojson = function
-        | `String "asc" -> Ok "asc"
-        | `String "desc" -> Ok "desc"
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Visibility = struct
       let t_of_yojson = function
-        | `String "private" -> Ok "private"
-        | `String "internal" -> Ok "internal"
-        | `String "public" -> Ok "public"
+        | `String "internal" -> Ok `Internal
+        | `String "private" -> Ok `Private
+        | `String "public" -> Ok `Public
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Internal -> `String "internal"
+        | `Private -> `String "private"
+        | `Public -> `String "public"
+
+      type t =
+        ([ `Internal
+         | `Private
+         | `Public
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -39,14 +72,14 @@ module GetApiV4GroupsIdDescendantGroups = struct
       id : string;
       marked_for_deletion_on : string option; [@default None]
       min_access_level : int option; [@default None]
-      order_by : Order_by.t; [@default "name"]
+      order_by : Order_by.t; [@default `Name]
       owned : bool; [@default false]
       page : int; [@default 1]
       per_page : int; [@default 20]
       repository_storage : string option; [@default None]
       search : string option; [@default None]
       skip_groups : Skip_groups.t option; [@default None]
-      sort : Sort.t; [@default "asc"]
+      sort : Sort.t; [@default `Asc]
       statistics : bool; [@default false]
       top_level_only : bool option; [@default None]
       visibility : Visibility.t option; [@default None]
@@ -79,11 +112,11 @@ module GetApiV4GroupsIdDescendantGroups = struct
            ("statistics", Var (params.statistics, Bool));
            ("skip_groups", Var (params.skip_groups, Option (Array Int)));
            ("all_available", Var (params.all_available, Option Bool));
-           ("visibility", Var (params.visibility, Option String));
+           ("visibility", Var (params.visibility, Option (Enum Visibility.t_to_yojson)));
            ("search", Var (params.search, Option String));
            ("owned", Var (params.owned, Bool));
-           ("order_by", Var (params.order_by, String));
-           ("sort", Var (params.sort, String));
+           ("order_by", Var (params.order_by, Enum Order_by.t_to_yojson));
+           ("sort", Var (params.sort, Enum Sort.t_to_yojson));
            ("min_access_level", Var (params.min_access_level, Option Int));
            ("top_level_only", Var (params.top_level_only, Option Bool));
            ("repository_storage", Var (params.repository_storage, Option String));

@@ -1,5 +1,3 @@
-module String_map : module type of CCMap.Make (CCString)
-
 module Format : sig
   module Uri : sig
     type t = Uri.t [@@deriving yojson, show, eq]
@@ -54,13 +52,13 @@ module Additional_properties : sig
   module Make (P : Primary) (A : Additional) : sig
     type t = {
       primary : P.t;
-      additional : A.t String_map.t;
+      additional : A.t Sln_map.String.t;
     }
     [@@deriving yojson, show, eq]
 
-    val make : ?additional:A.t String_map.t -> P.t -> t
+    val make : ?additional:A.t Sln_map.String.t -> P.t -> t
     val value : t -> P.t
-    val additional : t -> A.t String_map.t
+    val additional : t -> A.t Sln_map.String.t
   end
 end
 

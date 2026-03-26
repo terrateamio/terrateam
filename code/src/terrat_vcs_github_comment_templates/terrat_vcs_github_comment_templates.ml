@@ -147,33 +147,12 @@ module Tmpl = struct
     read "repo_config_err_apply_requirements_check_tag_query_err.tmpl"
 
   let repo_config_err_depends_on_err = read "repo_config_err_depends_on_err.tmpl"
-  let repo_config_err_drift_schedule_err = read "repo_config_err_drift_schedule_err.tmpl"
   let repo_config_err_drift_tag_query_err = read "repo_config_err_drift_tag_query_err.tmpl"
   let repo_config_err_glob_parse_err = read "repo_config_err_glob_parse_err.tmpl"
-
-  let repo_config_err_hooks_unknown_run_on_err =
-    read "repo_config_err_hooks_unknown_run_on_err.tmpl"
-
-  let repo_config_err_hooks_unknown_visible_on_err =
-    read "repo_config_err_hooks_unknown_visible_on_err.tmpl"
-
   let repo_config_err_pattern_parse_err = read "repo_config_err_pattern_parse_err.tmpl"
-  let repo_config_err_unknown_lock_policy_err = read "repo_config_err_unknown_lock_policy_err.tmpl"
 
   let repo_config_err_window_parse_timezone_err =
     read "repo_config_err_window_parse_timezone_err.tmpl"
-
-  let repo_config_err_workflows_apply_unknown_run_on_err =
-    read "repo_config_err_workflows_apply_unknown_run_on_err.tmpl"
-
-  let repo_config_err_workflows_apply_unknown_visible_on_err =
-    read "repo_config_err_workflows_apply_unknown_visible_on_err.tmpl"
-
-  let repo_config_err_workflows_plan_unknown_run_on_err =
-    read "repo_config_err_workflows_plan_unknown_run_on_err.tmpl"
-
-  let repo_config_err_workflows_plan_unknown_visible_on_err =
-    read "repo_config_err_workflows_plan_unknown_visible_on_err.tmpl"
 
   let repo_config_err_workflows_tag_query_parse_err =
     read "repo_config_err_workflows_tag_query_parse_err.tmpl"
@@ -197,6 +176,5 @@ module Tmpl = struct
   let gate_check_failure = jinja "gate_check_failure.tmpl"
   let tier_check = read "tier_check.tmpl"
   let build_tree_failure = read "build_tree_failure.tmpl"
-  let merge_strategy_parse_err = jinja "merge_strategy_parse_err.tmpl"
   let notification_policy_tag_query_err = jinja "notification_policy_tag_query_err.tmpl"
 end

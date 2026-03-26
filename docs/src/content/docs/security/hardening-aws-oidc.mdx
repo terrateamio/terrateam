@@ -1,0 +1,198 @@
+---
+title: Hardening AWS OIDC
+description: Lock down your AWS IAM trust policy so only Terrateam-dispatched workflows can assume cloud roles
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import { Card } from '@astrojs/starlight/components';
+
+<Card title="Why harden your trust policy?" icon="warning">
+The default AWS OIDC trust policy scopes access by repository, meaning **any** GitHub Actions workflow in that repository can mint an OIDC token and assume the role — not just the Terrateam workflow. A malicious pull request that adds a new workflow file or modifies the existing one could assume the same role and exfiltrate credentials.
+</Card>
+
+This guide walks through progressively stronger controls to ensure only Terrateam-originated workflow runs can assume your AWS IAM role.
+
+## Layer 1: Restrict to the Terrateam Workflow
+
+Use GitHub's `job_workflow_ref` claim to ensure only the Terrateam workflow file can assume the role. Any other workflow file in the repository will be denied at the AWS level.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::ACCOUNT_ID:oidc-provider/token.actions.githubusercontent.com"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+        },
+        "StringLike": {
+          "token.actions.githubusercontent.com:sub": "repo:ORG/REPO:*",
+          "token.actions.githubusercontent.com:job_workflow_ref": "ORG/REPO/.github/workflows/terrateam.yml@*"
+        }
+      }
+    }
+  ]
+}
+```
+
+:::caution
+This alone doesn't prevent someone from **modifying** `terrateam.yml` to inject malicious steps. The modified workflow would still match the `job_workflow_ref` condition. See Layer 2 and Layer 3 for closing this gap.
+:::
+
+## Layer 2: Restrict to Terrateam-Dispatched Runs
+
+The GitHub OIDC token includes an `actor` claim — the user or app that triggered the workflow. When the Terrateam server dispatches your workflow, the actor is your Terrateam GitHub App bot (e.g. `terrateam-action[bot]`).
+
+Add the `actor` condition to your trust policy so only workflows dispatched by the Terrateam app can assume the role:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::ACCOUNT_ID:oidc-provider/token.actions.githubusercontent.com"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+          "token.actions.githubusercontent.com:actor": "terrateam-action[bot]",
+          "token.actions.githubusercontent.com:repository": "ORG/REPO",
+          "token.actions.githubusercontent.com:workflow": "Terrateam Workflow"
+        },
+        "StringLike": {
+          "token.actions.githubusercontent.com:sub": "repo:ORG/REPO:*"
+        }
+      }
+    }
+  ]
+}
+```
+
+:::note[Self-hosted users]
+If you are running a self-hosted Terrateam server with your own GitHub App, replace `terrateam-action[bot]` with your bot's name (e.g. `my-terrateam-app[bot]`).
+:::
+
+If someone manually dispatches the workflow or adds a new one, the actor will be their GitHub username and AWS will reject the token.
+
+## Layer 3: Enterprise Access Control
+
+:::tip[Enterprise Feature]
+`ci_config_update` and `terrateam_config_update` are available in the [Enterprise edition](/self-hosted/editions).
+:::
+
+Even with the trust policy locked down, someone could open a PR modifying `terrateam.yml` to add malicious steps. Enterprise [`ci_config_update`](/reference/configuration/access-control) prevents Terrateam from operating on any PR that modifies the workflow file unless the author is explicitly authorized:
+
+```yaml
+access_control:
+  enabled: true
+  ci_config_update: ['team:infra-admins']
+  terrateam_config_update: ['team:infra-admins']
+```
+
+| Setting | Protects | Effect |
+| --- | --- | --- |
+| `ci_config_update` | `.github/workflows/terrateam.yml` | Blocks Terrateam operations on PRs that modify the workflow file unless the author matches the ruleset |
+| `terrateam_config_update` | `.terrateam/config.yml` | Blocks Terrateam operations on PRs that modify the Terrateam config unless the author matches the ruleset |
+
+### Additional Hardening
+
+Combine with file-level access control and GitHub branch protections for defense in depth:
+
+```yaml
+access_control:
+  enabled: true
+  ci_config_update: ['team:infra-admins']
+  terrateam_config_update: ['team:infra-admins']
+  files:
+    '.github/workflows/': ['team:infra-admins']
+```
+
+Also consider adding a [`CODEOWNERS`](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners) file and branch protection rules on `.github/workflows/`.
+
+## Layer 4: Custom OIDC Subject Claims
+
+AWS only supports a subset of JWT claims in IAM trust policy conditions. Claims like `event_name`, `runner_environment`, and `repository_visibility` exist in the GitHub OIDC token but are **not** directly usable as IAM condition keys. See the [AWS documentation](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_iam-condition-keys.html#condition-keys-wif) for the full list of supported keys.
+
+As a workaround, GitHub allows you to [customize the `sub` claim](https://docs.github.com/en/actions/security-for-github-actions/security-hardening-your-deployments/about-security-hardening-with-openid-connect#customizing-the-subject-claims) to include additional values. This lets you enforce these claims through the `sub` condition in your trust policy.
+
+<Steps>
+
+1. ### Customize the subject claim
+
+   Use the GitHub CLI to add the desired claims to the `sub` field:
+
+   ```sh
+   gh api \
+     --method PUT \
+     -H "Accept: application/vnd.github+json" \
+     -H "X-GitHub-Api-Version: 2022-11-28" \
+     /repos/ORG/REPO/actions/oidc/customization/sub \
+     --input - <<< '{
+     "use_default": false,
+     "include_claim_keys": [
+       "repo",
+       "context",
+       "event_name",
+       "repository_visibility",
+       "runner_environment"
+     ]
+   }'
+   ```
+
+2. ### Update the trust policy
+
+   With the customized `sub` claim, you can now enforce all of these conditions in your trust policy:
+
+   ```json
+   {
+     "Version": "2012-10-17",
+     "Statement": [
+       {
+         "Effect": "Allow",
+         "Principal": {
+           "Federated": "arn:aws:iam::ACCOUNT_ID:oidc-provider/token.actions.githubusercontent.com"
+         },
+         "Action": "sts:AssumeRoleWithWebIdentity",
+         "Condition": {
+           "StringEquals": {
+             "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+             "token.actions.githubusercontent.com:actor": "terrateam-action[bot]",
+             "token.actions.githubusercontent.com:workflow": "Terrateam Workflow",
+             "token.actions.githubusercontent.com:repository": "ORG/REPO"
+           },
+           "StringLike": {
+             "token.actions.githubusercontent.com:sub": "repo:ORG/REPO:ref:*:event_name:workflow_dispatch:repository_visibility:private:runner_environment:self-hosted"
+           }
+         }
+       }
+     ]
+   }
+   ```
+
+   This ensures:
+   - Only the Terrateam GitHub App can trigger the workflow (`actor`)
+   - Only the named workflow can assume the role (`workflow`)
+   - Only `workflow_dispatch` events are accepted (not manual or other triggers)
+   - Only private repositories are accepted
+   - Only self-hosted runners are accepted
+
+</Steps>
+
+## Summary
+
+| Layer | Control | What It Prevents |
+| --- | --- | --- |
+| 1 | `job_workflow_ref` in trust policy | Other workflow files assuming the role |
+| 2 | `actor` in trust policy | Manual or non-Terrateam workflow dispatches |
+| 3 | Enterprise `ci_config_update` | Unauthorized modification of the workflow file |
+| 4 | Custom `sub` claim | Runs from non-dispatch events, public repos, or GitHub-hosted runners |
+
+For maximum security, combine all four layers. Layers 1 and 2 are available to all users. Layer 3 requires [Enterprise](/self-hosted/editions). Layer 4 is available to all users and provides the strongest trust policy enforcement.

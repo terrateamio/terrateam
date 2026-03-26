@@ -1,4 +1,5 @@
 type t = {
+  archived : bool option; [@default None]
   avatar_url : string option; [@default None]
   created_at : string option; [@default None]
   default_branch : string;

@@ -1,24 +1,48 @@
 module Minimum_access_level_for_delete = struct
   let t_of_yojson = function
-    | `String "maintainer" -> Ok "maintainer"
-    | `String "owner" -> Ok "owner"
-    | `String "admin" -> Ok "admin"
-    | `String "" -> Ok ""
+    | `String "" -> Ok `Empty
+    | `String "admin" -> Ok `Admin
+    | `String "maintainer" -> Ok `Maintainer
+    | `String "owner" -> Ok `Owner
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Empty -> `String ""
+    | `Admin -> `String "admin"
+    | `Maintainer -> `String "maintainer"
+    | `Owner -> `String "owner"
+
+  type t =
+    ([ `Empty
+     | `Admin
+     | `Maintainer
+     | `Owner
+     ]
+    [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Minimum_access_level_for_push = struct
   let t_of_yojson = function
-    | `String "maintainer" -> Ok "maintainer"
-    | `String "owner" -> Ok "owner"
-    | `String "admin" -> Ok "admin"
-    | `String "" -> Ok ""
+    | `String "" -> Ok `Empty
+    | `String "admin" -> Ok `Admin
+    | `String "maintainer" -> Ok `Maintainer
+    | `String "owner" -> Ok `Owner
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Empty -> `String ""
+    | `Admin -> `String "admin"
+    | `Maintainer -> `String "maintainer"
+    | `Owner -> `String "owner"
+
+  type t =
+    ([ `Empty
+     | `Admin
+     | `Maintainer
+     | `Owner
+     ]
+    [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 

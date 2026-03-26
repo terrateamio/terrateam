@@ -196,6 +196,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/github/installations/{installation_id}/repos/{repo_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["installations/delete-repo"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/github/installations/{installation_id}/work-manifests": {
         parameters: {
             query?: never;
@@ -367,6 +383,22 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gitlab/installations/{installation_id}/repos/{repo_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["gitlab-installations/delete-repo"];
         options?: never;
         head?: never;
         patch?: never;
@@ -693,6 +725,10 @@ export interface components {
         error: {
             msg: string;
         };
+        "error-response": {
+            data?: string;
+            id: string;
+        };
         gate: {
             all_of?: string[];
             any_of?: string[];
@@ -977,6 +1013,7 @@ export interface components {
             protocol_version?: number;
             result_version: number;
             run_kind: string;
+            run_kind_data?: components["schemas"]["run-kind-data-pull-request"];
             token: string;
             /** @constant */
             type: "apply";
@@ -1603,6 +1640,50 @@ export interface operations {
             };
         };
     };
+    "installations/delete-repo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                installation_id: string;
+                repo_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["error-response"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["error-response"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     "installations/list-work-manifests": {
         parameters: {
             query?: {
@@ -1938,6 +2019,50 @@ export interface operations {
                     "application/json": {
                         repositories: components["schemas"]["installation-repo"][];
                     };
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "gitlab-installations/delete-repo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                installation_id: string;
+                repo_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["error-response"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["error-response"];
                 };
             };
             403: {

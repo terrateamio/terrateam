@@ -41,6 +41,7 @@ val make :
   user:string option ->
   unit ->
   ('id, 'diff, 'checks, 'repo, 'ref) t
+[@@deriving show]
 
 val base_branch_name : ('id, 'diff, 'checks, 'repo, 'ref) t -> 'ref
 val base_ref : ('id, 'diff, 'checks, 'repo, 'ref) t -> 'ref

@@ -2,23 +2,43 @@ module Items = struct
   module Primary = struct
     module Evaluation_result = struct
       let t_of_yojson = function
-        | `String "pass" -> Ok "pass"
-        | `String "fail" -> Ok "fail"
-        | `String "bypass" -> Ok "bypass"
+        | `String "bypass" -> Ok `Bypass
+        | `String "fail" -> Ok `Fail
+        | `String "pass" -> Ok `Pass
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson])
+      let t_to_yojson = function
+        | `Bypass -> `String "bypass"
+        | `Fail -> `String "fail"
+        | `Pass -> `String "pass"
+
+      type t =
+        ([ `Bypass
+         | `Fail
+         | `Pass
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 
     module Result = struct
       let t_of_yojson = function
-        | `String "pass" -> Ok "pass"
-        | `String "fail" -> Ok "fail"
-        | `String "bypass" -> Ok "bypass"
+        | `String "bypass" -> Ok `Bypass
+        | `String "fail" -> Ok `Fail
+        | `String "pass" -> Ok `Pass
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson])
+      let t_to_yojson = function
+        | `Bypass -> `String "bypass"
+        | `Fail -> `String "fail"
+        | `Pass -> `String "pass"
+
+      type t =
+        ([ `Bypass
+         | `Fail
+         | `Pass
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
       [@@deriving yojson { strict = false; meta = true }, show, eq]
     end
 

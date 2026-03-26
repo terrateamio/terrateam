@@ -55,11 +55,20 @@ module GetApiV4ProjectsIdPipelineSchedules = struct
   module Parameters = struct
     module Scope = struct
       let t_of_yojson = function
-        | `String "active" -> Ok "active"
-        | `String "inactive" -> Ok "inactive"
+        | `String "active" -> Ok `Active
+        | `String "inactive" -> Ok `Inactive
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Active -> `String "active"
+        | `Inactive -> `String "inactive"
+
+      type t =
+        ([ `Active
+         | `Inactive
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -109,7 +118,7 @@ module GetApiV4ProjectsIdPipelineSchedules = struct
          [
            ("page", Var (params.page, Int));
            ("per_page", Var (params.per_page, Int));
-           ("scope", Var (params.scope, Option String));
+           ("scope", Var (params.scope, Option (Enum Scope.t_to_yojson)));
          ])
       ~url
       ~responses:Responses.t

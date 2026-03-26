@@ -1,4 +1,4 @@
-let run msg f =
+let run' msg f =
   let open Abb.Future.Infix_monad in
   Abb.Sys.monotonic ()
   >>= fun start ->
@@ -6,5 +6,7 @@ let run msg f =
   >>= fun ret ->
   Abb.Sys.monotonic ()
   >>= fun stop ->
-  msg (stop -. start);
+  msg ret (stop -. start);
   Abb.Future.return ret
+
+let run msg f = run' (fun _ -> msg) f

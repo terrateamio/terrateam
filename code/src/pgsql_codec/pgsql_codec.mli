@@ -31,13 +31,22 @@ module Frame : sig
       | CommandComplete of { tag : string }
       | CopyData of { data : string }
       | CopyDone
-      | CopyInResponse (* TODO *)
-      | CopyOutResponse (* TODO *)
-      | CopyBothResponse (* TODO *)
+      | CopyInResponse of {
+          format : int;
+          column_formats : int list;
+        }
+      | CopyOutResponse of {
+          format : int;
+          column_formats : int list;
+        }
+      | CopyBothResponse of {
+          format : int;
+          column_formats : int list;
+        }
       | DataRow of { data : string option list }
       | EmptyQueryResponse
       | ErrorResponse of { msgs : (char * string) list }
-      | FunctionCallResponse (* TODO *)
+      | FunctionCallResponse of { result : string option }
       | NegotiateProtocolVersion of {
           minor_version : int32;
           unrecognized_options : string list;
@@ -89,9 +98,9 @@ module Frame : sig
           typ : char;
           name : string;
         }
-      | CopyData (* TODO *)
-      | CopyDone (* TODO *)
-      | CopyFail (* TODO *)
+      | CopyData of { data : string }
+      | CopyDone
+      | CopyFail of { message : string }
       | Describe of {
           typ : char;
           name : string;
@@ -170,4 +179,24 @@ end
 module Encode : sig
   val backend_msg : Buffer.t -> Frame.Backend.t -> unit
   val frontend_msg : Buffer.t -> Frame.Frontend.t -> unit
+end
+
+module Binary_value : sig
+  module Encode : sig
+    val int2 : int -> string
+    val int4 : int32 -> string
+    val int8 : int64 -> string
+    val float4 : float -> string
+    val float8 : float -> string
+    val bool : bool -> string
+  end
+
+  module Decode : sig
+    val int2 : string -> int option
+    val int4 : string -> int32 option
+    val int8 : string -> int64 option
+    val float4 : string -> float option
+    val float8 : string -> float option
+    val bool : string -> bool option
+  end
 end

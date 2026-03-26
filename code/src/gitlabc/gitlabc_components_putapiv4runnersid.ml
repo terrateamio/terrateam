@@ -1,10 +1,18 @@
 module Access_level = struct
   let t_of_yojson = function
-    | `String "not_protected" -> Ok "not_protected"
-    | `String "ref_protected" -> Ok "ref_protected"
+    | `String "not_protected" -> Ok `Not_protected
+    | `String "ref_protected" -> Ok `Ref_protected
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Not_protected -> `String "not_protected"
+    | `Ref_protected -> `String "ref_protected"
+
+  type t =
+    ([ `Not_protected
+     | `Ref_protected
+     ]
+    [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 

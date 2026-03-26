@@ -80,7 +80,7 @@ module Account = struct
     let to_string = CCInt.to_string
   end
 
-  type t = { installation_id : int } [@@deriving make, yojson, eq]
+  type t = { installation_id : int } [@@deriving make, show, yojson, eq]
 
   let make installation_id = { installation_id }
   let id t = t.installation_id
@@ -114,7 +114,7 @@ module Repo = struct
     name : string;
     owner : string;
   }
-  [@@deriving eq, yojson]
+  [@@deriving show, eq, yojson]
 
   let make ~id ~name ~owner () = { id; name; owner }
   let id t = t.id
@@ -138,10 +138,11 @@ module Remote_repo = struct
     Repo.make ~id:(CCInt64.to_int id) ~owner ~name ()
 
   let default_branch t = t.R.primary.R.Primary.default_branch
+  let is_archived t = t.R.primary.R.Primary.archived
 end
 
 module Ref = struct
-  type t = string [@@deriving eq, yojson]
+  type t = string [@@deriving show, eq, yojson]
 
   let to_string = CCFun.id
   let of_string = CCFun.id
@@ -158,7 +159,7 @@ module Pull_request = struct
   include Terrat_pull_request
 
   type ('diff, 'checks) t = (Id.t, 'diff, 'checks, Repo.t, Ref.t) Terrat_pull_request.t
-  [@@deriving to_yojson]
+  [@@deriving show, to_yojson]
 end
 
 module Client = struct
@@ -479,18 +480,42 @@ let diff_of_github_diff =
   CCList.map
     Githubc2_components.Diff_entry.(
       function
-      | { primary = { Primary.filename; status = "added" | "copied"; _ }; _ } ->
+      | { primary = { Primary.filename; status = `Added | `Copied; _ }; _ } ->
           Terrat_change.Diff.Add { filename }
-      | { primary = { Primary.filename; status = "removed"; _ }; _ } ->
+      | { primary = { Primary.filename; status = `Removed; _ }; _ } ->
           Terrat_change.Diff.Remove { filename }
-      | { primary = { Primary.filename; status = "modified" | "changed" | "unchanged"; _ }; _ } ->
+      | { primary = { Primary.filename; status = `Modified | `Changed | `Unchanged; _ }; _ } ->
           Terrat_change.Diff.Change { filename }
       | {
           primary =
-            { Primary.filename; status = "renamed"; previous_filename = Some previous_filename; _ };
+            { Primary.filename; status = `Renamed; previous_filename = Some previous_filename; _ };
           _;
         } -> Terrat_change.Diff.Move { filename; previous_filename }
-      | _ -> failwith "nyi1")
+      | _ -> assert false)
+
+let fetch_diff_files ~request_id ~base_ref ~branch_ref repo client =
+  let run =
+    let open Abbs_future_combinators.Infix_result_monad in
+    Terrat_github.fetch_diff_files
+      ~owner:(Repo.owner repo)
+      ~repo:(Repo.name repo)
+      ~base_ref:(Ref.to_string base_ref)
+      ~branch_ref:(Ref.to_string branch_ref)
+      client.Client.client
+    >>= fun github_diff ->
+    (* TODO: Unique the diff?  Not sure if this is necessary? *)
+    let diff = diff_of_github_diff github_diff in
+    Abb.Future.return (Ok diff)
+  in
+  let open Abb.Future.Infix_monad in
+  run
+  >>= function
+  | Ok _ as r -> Abb.Future.return r
+  | Error `Error -> Abb.Future.return (Error `Error)
+  | Error (#Terrat_github.fetch_diff_files_err as err) ->
+      Logs.info (fun m ->
+          m "%s : FETCH_DIFF_FILES : %a" request_id Terrat_github.pp_fetch_diff_files_err err);
+      Abb.Future.return (Error `Error)
 
 let fetch_diff ~client ~owner ~repo pull_number =
   let open Abbs_future_combinators.Infix_result_monad in
@@ -568,12 +593,12 @@ let fetch_pull_request' request_id account client repo pull_request_id =
            ~id:pull_request_id
            ~state:
              (match (merge_commit_sha, state, merged, merged_at) with
-             | Some _, "open", _, _ -> Terrat_pull_request.State.(Open Open_status.Mergeable)
-             | None, "open", _, _ -> Terrat_pull_request.State.(Open Open_status.Merge_conflict)
-             | Some merge_commit_sha, "closed", true, Some merged_at ->
+             | Some _, `Open, _, _ -> Terrat_pull_request.State.(Open Open_status.Mergeable)
+             | None, `Open, _, _ -> Terrat_pull_request.State.(Open Open_status.Merge_conflict)
+             | Some merge_commit_sha, `Closed, true, Some merged_at ->
                  Terrat_pull_request.State.(
                    Merged Merged.{ merged_hash = merge_commit_sha; merged_at })
-             | _, "closed", false, _ -> Terrat_pull_request.State.Closed
+             | _, `Closed, false, _ -> Terrat_pull_request.State.Closed
              | _, _, _, _ -> assert false)
            ~title:(Some title)
            ~user:(Some login)
@@ -589,7 +614,15 @@ let fetch_pull_request' request_id account client repo pull_request_id =
 
 let fetch_pull_request ~request_id account client repo pull_request_id =
   let open Abb.Future.Infix_monad in
-  let fetch () = fetch_pull_request' request_id account client repo pull_request_id in
+  let fetch () =
+    Logs.info (fun m ->
+        m
+          "%s : FETCH_PULL_REQUEST : repo=%s : pull_request_id=%s"
+          request_id
+          (Repo.to_string repo)
+          (Pull_request.Id.to_string pull_request_id));
+    fetch_pull_request' request_id account client repo pull_request_id
+  in
   let f () =
     fetch ()
     >>= function
@@ -770,10 +803,10 @@ let merge_pull_request' request_id client pull_request merge_strategy =
   let repo = Terrat_pull_request.repo pull_request in
   let merge_method =
     match merge_strategy with
-    | Ms.Auto -> "merge"
-    | Ms.Merge -> "merge"
-    | Ms.Squash -> "squash"
-    | Ms.Rebase -> "rebase"
+    | Ms.Auto -> `Merge
+    | Ms.Merge -> `Merge
+    | Ms.Squash -> `Squash
+    | Ms.Rebase -> `Rebase
   in
   Logs.info (fun m ->
       m
@@ -814,7 +847,7 @@ let merge_pull_request' request_id client pull_request merge_strategy =
           m
             "%s : MERGE_METHOD_NOT_ALLOWED : METHOD %s : %s : %s : %d"
             request_id
-            merge_method
+            (Ms.to_string merge_strategy)
             (Repo.owner repo)
             (Repo.name repo)
             (Terrat_pull_request.id pull_request));
@@ -822,7 +855,7 @@ let merge_pull_request' request_id client pull_request merge_strategy =
         client.Client.client
         Githubc2_pulls.Merge.(
           make
-            ~body:Request_body.(make Primary.(make ~merge_method:(Some "squash") ()))
+            ~body:Request_body.(make Primary.(make ~merge_method:(Some `Squash) ()))
             Parameters.(
               make
                 ~owner:repo.Repo.owner
@@ -952,6 +985,17 @@ let get_repo_role ~request_id repo user client =
             request_id
             Terrat_github.pp_get_repo_collaborator_permission_err
             err);
+      Abb.Future.return (Error `Error)
+
+let get_org_role ~request_id ~org user client =
+  let open Abb.Future.Infix_monad in
+  Terrat_github.get_org_membership ~org ~user:(User.to_string user) client.Client.client
+  >>= function
+  | Ok _ as res -> Abb.Future.return res
+  | Error (#Terrat_github.get_org_membership_err as err) ->
+      Prmths.Counter.inc_one Metrics.github_errors_total;
+      Logs.info (fun m ->
+          m "%s : GET_ORG_ROLE : %a" request_id Terrat_github.pp_get_org_membership_err err);
       Abb.Future.return (Error `Error)
 
 let find_workflow_file ~request_id repo client =

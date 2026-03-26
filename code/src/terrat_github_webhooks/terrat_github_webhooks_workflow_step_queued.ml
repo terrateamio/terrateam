@@ -12,10 +12,13 @@ end
 
 module Status = struct
   let t_of_yojson = function
-    | `String "queued" -> Ok "queued"
+    | `String "queued" -> Ok `Queued
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Queued -> `String "queued"
+
+  type t = ([ `Queued ][@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 

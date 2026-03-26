@@ -1,15 +1,31 @@
 module Primary = struct
   module Activity_type = struct
     let t_of_yojson = function
-      | `String "push" -> Ok "push"
-      | `String "force_push" -> Ok "force_push"
-      | `String "branch_deletion" -> Ok "branch_deletion"
-      | `String "branch_creation" -> Ok "branch_creation"
-      | `String "pr_merge" -> Ok "pr_merge"
-      | `String "merge_queue_merge" -> Ok "merge_queue_merge"
+      | `String "branch_creation" -> Ok `Branch_creation
+      | `String "branch_deletion" -> Ok `Branch_deletion
+      | `String "force_push" -> Ok `Force_push
+      | `String "merge_queue_merge" -> Ok `Merge_queue_merge
+      | `String "pr_merge" -> Ok `Pr_merge
+      | `String "push" -> Ok `Push
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Branch_creation -> `String "branch_creation"
+      | `Branch_deletion -> `String "branch_deletion"
+      | `Force_push -> `String "force_push"
+      | `Merge_queue_merge -> `String "merge_queue_merge"
+      | `Pr_merge -> `String "pr_merge"
+      | `Push -> `String "push"
+
+    type t =
+      ([ `Branch_creation
+       | `Branch_deletion
+       | `Force_push
+       | `Merge_queue_merge
+       | `Pr_merge
+       | `Push
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 

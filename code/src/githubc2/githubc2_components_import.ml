@@ -18,25 +18,61 @@ module Primary = struct
 
   module Status_ = struct
     let t_of_yojson = function
-      | `String "auth" -> Ok "auth"
-      | `String "error" -> Ok "error"
-      | `String "none" -> Ok "none"
-      | `String "detecting" -> Ok "detecting"
-      | `String "choose" -> Ok "choose"
-      | `String "auth_failed" -> Ok "auth_failed"
-      | `String "importing" -> Ok "importing"
-      | `String "mapping" -> Ok "mapping"
-      | `String "waiting_to_push" -> Ok "waiting_to_push"
-      | `String "pushing" -> Ok "pushing"
-      | `String "complete" -> Ok "complete"
-      | `String "setup" -> Ok "setup"
-      | `String "unknown" -> Ok "unknown"
-      | `String "detection_found_multiple" -> Ok "detection_found_multiple"
-      | `String "detection_found_nothing" -> Ok "detection_found_nothing"
-      | `String "detection_needs_auth" -> Ok "detection_needs_auth"
+      | `String "auth" -> Ok `Auth
+      | `String "auth_failed" -> Ok `Auth_failed
+      | `String "choose" -> Ok `Choose
+      | `String "complete" -> Ok `Complete
+      | `String "detecting" -> Ok `Detecting
+      | `String "detection_found_multiple" -> Ok `Detection_found_multiple
+      | `String "detection_found_nothing" -> Ok `Detection_found_nothing
+      | `String "detection_needs_auth" -> Ok `Detection_needs_auth
+      | `String "error" -> Ok `Error
+      | `String "importing" -> Ok `Importing
+      | `String "mapping" -> Ok `Mapping
+      | `String "none" -> Ok `None
+      | `String "pushing" -> Ok `Pushing
+      | `String "setup" -> Ok `Setup
+      | `String "unknown" -> Ok `Unknown
+      | `String "waiting_to_push" -> Ok `Waiting_to_push
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Auth -> `String "auth"
+      | `Auth_failed -> `String "auth_failed"
+      | `Choose -> `String "choose"
+      | `Complete -> `String "complete"
+      | `Detecting -> `String "detecting"
+      | `Detection_found_multiple -> `String "detection_found_multiple"
+      | `Detection_found_nothing -> `String "detection_found_nothing"
+      | `Detection_needs_auth -> `String "detection_needs_auth"
+      | `Error -> `String "error"
+      | `Importing -> `String "importing"
+      | `Mapping -> `String "mapping"
+      | `None -> `String "none"
+      | `Pushing -> `String "pushing"
+      | `Setup -> `String "setup"
+      | `Unknown -> `String "unknown"
+      | `Waiting_to_push -> `String "waiting_to_push"
+
+    type t =
+      ([ `Auth
+       | `Auth_failed
+       | `Choose
+       | `Complete
+       | `Detecting
+       | `Detection_found_multiple
+       | `Detection_found_nothing
+       | `Detection_needs_auth
+       | `Error
+       | `Importing
+       | `Mapping
+       | `None
+       | `Pushing
+       | `Setup
+       | `Unknown
+       | `Waiting_to_push
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 

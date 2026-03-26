@@ -2,70 +2,144 @@ module GetApiV4GroupsIdPackages = struct
   module Parameters = struct
     module Order_by = struct
       let t_of_yojson = function
-        | `String "created_at" -> Ok "created_at"
-        | `String "name" -> Ok "name"
-        | `String "version" -> Ok "version"
-        | `String "type" -> Ok "type"
-        | `String "project_path" -> Ok "project_path"
+        | `String "created_at" -> Ok `Created_at
+        | `String "name" -> Ok `Name
+        | `String "project_path" -> Ok `Project_path
+        | `String "type" -> Ok `Type
+        | `String "version" -> Ok `Version
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Created_at -> `String "created_at"
+        | `Name -> `String "name"
+        | `Project_path -> `String "project_path"
+        | `Type -> `String "type"
+        | `Version -> `String "version"
+
+      type t =
+        ([ `Created_at
+         | `Name
+         | `Project_path
+         | `Type
+         | `Version
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Package_type = struct
       let t_of_yojson = function
-        | `String "maven" -> Ok "maven"
-        | `String "npm" -> Ok "npm"
-        | `String "conan" -> Ok "conan"
-        | `String "nuget" -> Ok "nuget"
-        | `String "pypi" -> Ok "pypi"
-        | `String "composer" -> Ok "composer"
-        | `String "generic" -> Ok "generic"
-        | `String "golang" -> Ok "golang"
-        | `String "debian" -> Ok "debian"
-        | `String "rubygems" -> Ok "rubygems"
-        | `String "helm" -> Ok "helm"
-        | `String "terraform_module" -> Ok "terraform_module"
-        | `String "rpm" -> Ok "rpm"
-        | `String "ml_model" -> Ok "ml_model"
+        | `String "composer" -> Ok `Composer
+        | `String "conan" -> Ok `Conan
+        | `String "debian" -> Ok `Debian
+        | `String "generic" -> Ok `Generic
+        | `String "golang" -> Ok `Golang
+        | `String "helm" -> Ok `Helm
+        | `String "maven" -> Ok `Maven
+        | `String "ml_model" -> Ok `Ml_model
+        | `String "npm" -> Ok `Npm
+        | `String "nuget" -> Ok `Nuget
+        | `String "pypi" -> Ok `Pypi
+        | `String "rpm" -> Ok `Rpm
+        | `String "rubygems" -> Ok `Rubygems
+        | `String "terraform_module" -> Ok `Terraform_module
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Composer -> `String "composer"
+        | `Conan -> `String "conan"
+        | `Debian -> `String "debian"
+        | `Generic -> `String "generic"
+        | `Golang -> `String "golang"
+        | `Helm -> `String "helm"
+        | `Maven -> `String "maven"
+        | `Ml_model -> `String "ml_model"
+        | `Npm -> `String "npm"
+        | `Nuget -> `String "nuget"
+        | `Pypi -> `String "pypi"
+        | `Rpm -> `String "rpm"
+        | `Rubygems -> `String "rubygems"
+        | `Terraform_module -> `String "terraform_module"
+
+      type t =
+        ([ `Composer
+         | `Conan
+         | `Debian
+         | `Generic
+         | `Golang
+         | `Helm
+         | `Maven
+         | `Ml_model
+         | `Npm
+         | `Nuget
+         | `Pypi
+         | `Rpm
+         | `Rubygems
+         | `Terraform_module
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Sort = struct
       let t_of_yojson = function
-        | `String "asc" -> Ok "asc"
-        | `String "desc" -> Ok "desc"
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Status = struct
       let t_of_yojson = function
-        | `String "default" -> Ok "default"
-        | `String "hidden" -> Ok "hidden"
-        | `String "processing" -> Ok "processing"
-        | `String "error" -> Ok "error"
-        | `String "pending_destruction" -> Ok "pending_destruction"
-        | `String "deprecated" -> Ok "deprecated"
+        | `String "default" -> Ok `Default
+        | `String "deprecated" -> Ok `Deprecated
+        | `String "error" -> Ok `Error
+        | `String "hidden" -> Ok `Hidden
+        | `String "pending_destruction" -> Ok `Pending_destruction
+        | `String "processing" -> Ok `Processing
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Default -> `String "default"
+        | `Deprecated -> `String "deprecated"
+        | `Error -> `String "error"
+        | `Hidden -> `String "hidden"
+        | `Pending_destruction -> `String "pending_destruction"
+        | `Processing -> `String "processing"
+
+      type t =
+        ([ `Default
+         | `Deprecated
+         | `Error
+         | `Hidden
+         | `Pending_destruction
+         | `Processing
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
       exclude_subgroups : bool; [@default false]
       id : string;
       include_versionless : bool option; [@default None]
-      order_by : Order_by.t; [@default "created_at"]
+      order_by : Order_by.t; [@default `Created_at]
       package_name : string option; [@default None]
       package_type : Package_type.t option; [@default None]
       package_version : string option; [@default None]
       page : int; [@default 1]
       per_page : int; [@default 20]
-      sort : Sort.t; [@default "asc"]
+      sort : Sort.t; [@default `Asc]
       status : Status.t option; [@default None]
     }
     [@@deriving make, show, eq]
@@ -105,13 +179,13 @@ module GetApiV4GroupsIdPackages = struct
            ("exclude_subgroups", Var (params.exclude_subgroups, Bool));
            ("page", Var (params.page, Int));
            ("per_page", Var (params.per_page, Int));
-           ("order_by", Var (params.order_by, String));
-           ("sort", Var (params.sort, String));
-           ("package_type", Var (params.package_type, Option String));
+           ("order_by", Var (params.order_by, Enum Order_by.t_to_yojson));
+           ("sort", Var (params.sort, Enum Sort.t_to_yojson));
+           ("package_type", Var (params.package_type, Option (Enum Package_type.t_to_yojson)));
            ("package_name", Var (params.package_name, Option String));
            ("package_version", Var (params.package_version, Option String));
            ("include_versionless", Var (params.include_versionless, Option Bool));
-           ("status", Var (params.status, Option String));
+           ("status", Var (params.status, Option (Enum Status.t_to_yojson)));
          ])
       ~url
       ~responses:Responses.t

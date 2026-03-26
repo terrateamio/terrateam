@@ -1,10 +1,13 @@
 module Primary = struct
   module Action = struct
     let t_of_yojson = function
-      | `String "added_to_repository" -> Ok "added_to_repository"
+      | `String "added_to_repository" -> Ok `Added_to_repository
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Added_to_repository -> `String "added_to_repository"
+
+    type t = ([ `Added_to_repository ][@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
@@ -60,12 +63,22 @@ module Primary = struct
         module Primary = struct
           module Type = struct
             let t_of_yojson = function
-              | `String "Bot" -> Ok "Bot"
-              | `String "User" -> Ok "User"
-              | `String "Organization" -> Ok "Organization"
+              | `String "Bot" -> Ok `Bot
+              | `String "Organization" -> Ok `Organization
+              | `String "User" -> Ok `User
               | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-            type t = (string[@of_yojson t_of_yojson])
+            let t_to_yojson = function
+              | `Bot -> `String "Bot"
+              | `Organization -> `String "Organization"
+              | `User -> `String "User"
+
+            type t =
+              ([ `Bot
+               | `Organization
+               | `User
+               ]
+              [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
             [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
 
@@ -147,12 +160,22 @@ module Primary = struct
 
       module Visibility = struct
         let t_of_yojson = function
-          | `String "public" -> Ok "public"
-          | `String "private" -> Ok "private"
-          | `String "internal" -> Ok "internal"
+          | `String "internal" -> Ok `Internal
+          | `String "private" -> Ok `Private
+          | `String "public" -> Ok `Public
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-        type t = (string[@of_yojson t_of_yojson])
+        let t_to_yojson = function
+          | `Internal -> `String "internal"
+          | `Private -> `String "private"
+          | `Public -> `String "public"
+
+        type t =
+          ([ `Internal
+           | `Private
+           | `Public
+           ]
+          [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
         [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 

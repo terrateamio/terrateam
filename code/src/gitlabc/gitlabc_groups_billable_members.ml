@@ -2,19 +2,44 @@ module GetApiV4GroupsIdBillableMembers = struct
   module Parameters = struct
     module Sort = struct
       let t_of_yojson = function
-        | `String "access_level_asc" -> Ok "access_level_asc"
-        | `String "access_level_desc" -> Ok "access_level_desc"
-        | `String "last_joined" -> Ok "last_joined"
-        | `String "name_asc" -> Ok "name_asc"
-        | `String "name_desc" -> Ok "name_desc"
-        | `String "oldest_joined" -> Ok "oldest_joined"
-        | `String "oldest_sign_in" -> Ok "oldest_sign_in"
-        | `String "recent_sign_in" -> Ok "recent_sign_in"
-        | `String "last_activity_on_asc" -> Ok "last_activity_on_asc"
-        | `String "last_activity_on_desc" -> Ok "last_activity_on_desc"
+        | `String "access_level_asc" -> Ok `Access_level_asc
+        | `String "access_level_desc" -> Ok `Access_level_desc
+        | `String "last_activity_on_asc" -> Ok `Last_activity_on_asc
+        | `String "last_activity_on_desc" -> Ok `Last_activity_on_desc
+        | `String "last_joined" -> Ok `Last_joined
+        | `String "name_asc" -> Ok `Name_asc
+        | `String "name_desc" -> Ok `Name_desc
+        | `String "oldest_joined" -> Ok `Oldest_joined
+        | `String "oldest_sign_in" -> Ok `Oldest_sign_in
+        | `String "recent_sign_in" -> Ok `Recent_sign_in
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Access_level_asc -> `String "access_level_asc"
+        | `Access_level_desc -> `String "access_level_desc"
+        | `Last_activity_on_asc -> `String "last_activity_on_asc"
+        | `Last_activity_on_desc -> `String "last_activity_on_desc"
+        | `Last_joined -> `String "last_joined"
+        | `Name_asc -> `String "name_asc"
+        | `Name_desc -> `String "name_desc"
+        | `Oldest_joined -> `String "oldest_joined"
+        | `Oldest_sign_in -> `String "oldest_sign_in"
+        | `Recent_sign_in -> `String "recent_sign_in"
+
+      type t =
+        ([ `Access_level_asc
+         | `Access_level_desc
+         | `Last_activity_on_asc
+         | `Last_activity_on_desc
+         | `Last_joined
+         | `Name_asc
+         | `Name_desc
+         | `Oldest_joined
+         | `Oldest_sign_in
+         | `Recent_sign_in
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -51,7 +76,7 @@ module GetApiV4GroupsIdBillableMembers = struct
            ("page", Var (params.page, Int));
            ("per_page", Var (params.per_page, Int));
            ("search", Var (params.search, Option String));
-           ("sort", Var (params.sort, Option String));
+           ("sort", Var (params.sort, Option (Enum Sort.t_to_yojson)));
          ])
       ~url
       ~responses:Responses.t

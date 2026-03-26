@@ -1,27 +1,52 @@
 module Event_type = struct
   let t_of_yojson = function
-    | `String "merge_request" -> Ok "merge_request"
+    | `String "merge_request" -> Ok `Merge_request
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Merge_request -> `String "merge_request"
+
+  type t = ([ `Merge_request ][@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Object_attributes = struct
   module Action = struct
     let t_of_yojson = function
-      | `String "approval" -> Ok "approval"
-      | `String "approved" -> Ok "approved"
-      | `String "close" -> Ok "close"
-      | `String "merge" -> Ok "merge"
-      | `String "open" -> Ok "open"
-      | `String "reopen" -> Ok "reopen"
-      | `String "unapproval" -> Ok "unapproval"
-      | `String "unapproved" -> Ok "unapproved"
-      | `String "update" -> Ok "update"
+      | `String "approval" -> Ok `Approval
+      | `String "approved" -> Ok `Approved
+      | `String "close" -> Ok `Close
+      | `String "merge" -> Ok `Merge
+      | `String "open" -> Ok `Open
+      | `String "reopen" -> Ok `Reopen
+      | `String "unapproval" -> Ok `Unapproval
+      | `String "unapproved" -> Ok `Unapproved
+      | `String "update" -> Ok `Update
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Approval -> `String "approval"
+      | `Approved -> `String "approved"
+      | `Close -> `String "close"
+      | `Merge -> `String "merge"
+      | `Open -> `String "open"
+      | `Reopen -> `String "reopen"
+      | `Unapproval -> `String "unapproval"
+      | `Unapproved -> `String "unapproved"
+      | `Update -> `String "update"
+
+    type t =
+      ([ `Approval
+       | `Approved
+       | `Close
+       | `Merge
+       | `Open
+       | `Reopen
+       | `Unapproval
+       | `Unapproved
+       | `Update
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
@@ -35,10 +60,13 @@ end
 
 module Object_kind = struct
   let t_of_yojson = function
-    | `String "merge_request" -> Ok "merge_request"
+    | `String "merge_request" -> Ok `Merge_request
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Merge_request -> `String "merge_request"
+
+  type t = ([ `Merge_request ][@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 

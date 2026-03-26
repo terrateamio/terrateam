@@ -1,16 +1,34 @@
 module Primary = struct
   module State = struct
     let t_of_yojson = function
-      | `String "error" -> Ok "error"
-      | `String "failure" -> Ok "failure"
-      | `String "inactive" -> Ok "inactive"
-      | `String "pending" -> Ok "pending"
-      | `String "success" -> Ok "success"
-      | `String "queued" -> Ok "queued"
-      | `String "in_progress" -> Ok "in_progress"
+      | `String "error" -> Ok `Error
+      | `String "failure" -> Ok `Failure
+      | `String "in_progress" -> Ok `In_progress
+      | `String "inactive" -> Ok `Inactive
+      | `String "pending" -> Ok `Pending
+      | `String "queued" -> Ok `Queued
+      | `String "success" -> Ok `Success
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Error -> `String "error"
+      | `Failure -> `String "failure"
+      | `In_progress -> `String "in_progress"
+      | `Inactive -> `String "inactive"
+      | `Pending -> `String "pending"
+      | `Queued -> `String "queued"
+      | `Success -> `String "success"
+
+    type t =
+      ([ `Error
+       | `Failure
+       | `In_progress
+       | `Inactive
+       | `Pending
+       | `Queued
+       | `Success
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 

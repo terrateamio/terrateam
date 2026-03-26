@@ -1,3 +1,22 @@
+module Metrics = struct
+  module Histogram = Prmths.Histogram (struct
+    let spec =
+      Prmths.Histogram_spec.of_list [ 0.1; 0.25; 0.5; 1.0; 2.5; 5.0; 10.0; 20.0; 30.0; 60.0 ]
+  end)
+
+  let request_duration =
+    let help = "HTTP request duration in seconds" in
+    Histogram.v_labels
+      ~label_names:[ "method" ]
+      ~help
+      ~namespace:"terrat"
+      "http_request_duration_seconds"
+
+  let observe uri meth duration =
+    let meth_str = Cohttp.Code.string_of_method meth in
+    Histogram.observe (Histogram.labels request_duration [ meth_str ]) duration
+end
+
 module Rt = struct
   let api () = Brtl_rtng.Route.(rel / "api")
   let api_404 () = Brtl_rtng.Route.(api () /% Path.any)
@@ -116,7 +135,7 @@ let run config storage services =
   in
   let mw_log =
     Brtl_mw_log.(
-      create Config.{ remote_ip_header = Some "X-Forwarded-For"; extra_key = (fun _ -> None) })
+      create (Config.make ~remote_ip_header:"X-Forwarded-For" ~metrics:Metrics.observe ()))
   in
   Logs.info (fun m -> m "Creating storage connection");
   Terrat_session.create storage

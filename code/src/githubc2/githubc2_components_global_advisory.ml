@@ -47,11 +47,19 @@ module Identifiers = struct
     module Primary = struct
       module Type = struct
         let t_of_yojson = function
-          | `String "CVE" -> Ok "CVE"
-          | `String "GHSA" -> Ok "GHSA"
+          | `String "CVE" -> Ok `CVE
+          | `String "GHSA" -> Ok `GHSA
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-        type t = (string[@of_yojson t_of_yojson])
+        let t_to_yojson = function
+          | `CVE -> `String "CVE"
+          | `GHSA -> `String "GHSA"
+
+        type t =
+          ([ `CVE
+           | `GHSA
+           ]
+          [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
         [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
@@ -74,25 +82,49 @@ end
 
 module Severity = struct
   let t_of_yojson = function
-    | `String "critical" -> Ok "critical"
-    | `String "high" -> Ok "high"
-    | `String "medium" -> Ok "medium"
-    | `String "low" -> Ok "low"
-    | `String "unknown" -> Ok "unknown"
+    | `String "critical" -> Ok `Critical
+    | `String "high" -> Ok `High
+    | `String "low" -> Ok `Low
+    | `String "medium" -> Ok `Medium
+    | `String "unknown" -> Ok `Unknown
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Critical -> `String "critical"
+    | `High -> `String "high"
+    | `Low -> `String "low"
+    | `Medium -> `String "medium"
+    | `Unknown -> `String "unknown"
+
+  type t =
+    ([ `Critical
+     | `High
+     | `Low
+     | `Medium
+     | `Unknown
+     ]
+    [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Type = struct
   let t_of_yojson = function
-    | `String "reviewed" -> Ok "reviewed"
-    | `String "unreviewed" -> Ok "unreviewed"
-    | `String "malware" -> Ok "malware"
+    | `String "malware" -> Ok `Malware
+    | `String "reviewed" -> Ok `Reviewed
+    | `String "unreviewed" -> Ok `Unreviewed
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Malware -> `String "malware"
+    | `Reviewed -> `String "reviewed"
+    | `Unreviewed -> `String "unreviewed"
+
+  type t =
+    ([ `Malware
+     | `Reviewed
+     | `Unreviewed
+     ]
+    [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 

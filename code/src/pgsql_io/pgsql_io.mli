@@ -15,8 +15,21 @@ type frame_err =
 [@@deriving show]
 
 type integrity_err = {
+  code : string;
   message : string;
   detail : string option;
+  constraint_name : string option;
+  table_name : string option;
+  schema_name : string option;
+  column_name : string option;
+}
+[@@deriving show]
+
+type pgsql_err = {
+  code : string;
+  message : string;
+  detail : string option;
+  hint : string option;
 }
 [@@deriving show]
 
@@ -28,12 +41,17 @@ type sql_parse_err =
 [@@deriving show]
 
 type err =
-  [ `Msgs of (char * string) list
+  [ `Pgsql_err of pgsql_err
   | frame_err
   | `Disconnected
   | `Bad_result of string option list
   | `Integrity_err of integrity_err
+  | `Unique_violation_err of integrity_err
+  | `Foreign_key_err of integrity_err
+  | `Deadlock_detected of pgsql_err
+  | `Lock_timeout of pgsql_err
   | `Statement_timeout
+  | `Syntax_err of pgsql_err
   | sql_parse_err
   ]
 [@@deriving show]
@@ -66,9 +84,10 @@ module Typed_sql : sig
 
     val varchar : string v
     val char : string v
+    val bytea : string v
     val tsquery : string v
     val uuid : Uuidm.t v
-    val json : string v
+    val json : Yojson.Safe.t v
     val jsonpath : string v
 
     (** Boolean types *)
@@ -107,14 +126,35 @@ module Typed_sql : sig
     val text : string t
     val varchar : string t
     val char : string t
-    val json : string t
+    val bytea : string t
+    val json : Yojson.Safe.t t
+    val jsonb : Yojson.Safe.t t
     val uuid : Uuidm.t t
     val boolean : bool t
+
+    (** Binary-format variants. These use PostgreSQL binary wire format for decoding. They are more
+        efficient but less forgiving: using the wrong type (e.g. [smallint_b] on an INTEGER column)
+        will cause a runtime parse failure. Prefer the text-format versions above unless you need
+        binary format for performance and can guarantee type correctness. *)
+    val smallint_b : int t
+
+    val integer_b : int32 t
+    val bigint_b : int64 t
+    val real_b : float t
+    val double_b : float t
+    val smallserial_b : int t
+    val serial_b : int32 t
+    val bigserial_b : int64 t
+    val money_b : int64 t
+    val boolean_b : bool t
+    val varchar_b : string t
+    val char_b : string t
+    val u : 'a t -> ('a -> 'b option) -> 'b t
+
     val ud : (string option list -> ('a * string option list) option) -> 'a t
+    [@@ocaml.deprecated "Use u instead"]
 
-    (** Simpler interface to user defined conversion. *)
-    val ud' : (string -> 'a option) -> 'a t
-
+    val ud' : (string -> 'a option) -> 'a t [@@ocaml.deprecated "Use u instead"]
     val option : 'a t -> 'a option t
     val debug : (string option list -> unit) -> 'a t -> 'a t
   end
@@ -229,6 +269,9 @@ val destroy : t -> unit Abb.Future.t
     connection is still alive. *)
 val connected : t -> bool
 
+(** Each connection is given a unique ID *)
+val id : t -> Uuidm.t
+
 (** Perform a network operation to test if the connection is alive. Return [true] if it succeeds and
     [false] if it not. This also sets [connected] to [false] if the connection is not alive. *)
 val ping : t -> bool Abb.Future.t
@@ -243,3 +286,30 @@ val tx : t -> f:(unit -> ('a, ([> err ] as 'e)) result Abb.Future.t) -> ('a, 'e)
 (** Help function that takes a string representing SQL and removes any comments (lines that start
     with --). This DOES NOT remove comments if they are not the very first entry on a line. *)
 val clean_string : string -> string
+
+module Copy_to : sig
+  type t
+
+  val null : t
+  val smallint : int -> t
+  val integer : int32 -> t
+  val bigint : int64 -> t
+  val real : float -> t
+  val double : float -> t
+  val money : int64 -> t
+  val boolean : bool -> t
+  val text : string -> t
+  val varchar : string -> t
+  val char : string -> t
+  val json : Yojson.Safe.t -> t
+  val jsonb : Yojson.Safe.t -> t
+  val bytea : string -> t
+  val uuid : Uuidm.t -> t
+end
+
+val copy_to :
+  table:string ->
+  cols:string list ->
+  t ->
+  Copy_to.t list list ->
+  (int, [> err ]) result Abb.Future.t

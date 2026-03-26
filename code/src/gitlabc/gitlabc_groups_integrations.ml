@@ -2744,62 +2744,171 @@ module DeleteApiV4GroupsIdIntegrationsSlug = struct
   module Parameters = struct
     module Slug = struct
       let t_of_yojson = function
-        | `String "apple-app-store" -> Ok "apple-app-store"
-        | `String "asana" -> Ok "asana"
-        | `String "assembla" -> Ok "assembla"
-        | `String "bamboo" -> Ok "bamboo"
-        | `String "bugzilla" -> Ok "bugzilla"
-        | `String "buildkite" -> Ok "buildkite"
-        | `String "campfire" -> Ok "campfire"
-        | `String "confluence" -> Ok "confluence"
-        | `String "custom-issue-tracker" -> Ok "custom-issue-tracker"
-        | `String "datadog" -> Ok "datadog"
-        | `String "diffblue-cover" -> Ok "diffblue-cover"
-        | `String "discord" -> Ok "discord"
-        | `String "drone-ci" -> Ok "drone-ci"
-        | `String "emails-on-push" -> Ok "emails-on-push"
-        | `String "external-wiki" -> Ok "external-wiki"
-        | `String "gitlab-slack-application" -> Ok "gitlab-slack-application"
-        | `String "google-play" -> Ok "google-play"
-        | `String "hangouts-chat" -> Ok "hangouts-chat"
-        | `String "harbor" -> Ok "harbor"
-        | `String "irker" -> Ok "irker"
-        | `String "jenkins" -> Ok "jenkins"
-        | `String "jira" -> Ok "jira"
-        | `String "jira-cloud-app" -> Ok "jira-cloud-app"
-        | `String "matrix" -> Ok "matrix"
-        | `String "mattermost-slash-commands" -> Ok "mattermost-slash-commands"
-        | `String "slack-slash-commands" -> Ok "slack-slash-commands"
-        | `String "packagist" -> Ok "packagist"
-        | `String "phorge" -> Ok "phorge"
-        | `String "pipelines-email" -> Ok "pipelines-email"
-        | `String "pivotaltracker" -> Ok "pivotaltracker"
-        | `String "pumble" -> Ok "pumble"
-        | `String "pushover" -> Ok "pushover"
-        | `String "redmine" -> Ok "redmine"
-        | `String "ewm" -> Ok "ewm"
-        | `String "youtrack" -> Ok "youtrack"
-        | `String "clickup" -> Ok "clickup"
-        | `String "slack" -> Ok "slack"
-        | `String "microsoft-teams" -> Ok "microsoft-teams"
-        | `String "mattermost" -> Ok "mattermost"
-        | `String "teamcity" -> Ok "teamcity"
-        | `String "telegram" -> Ok "telegram"
-        | `String "unify-circuit" -> Ok "unify-circuit"
-        | `String "webex-teams" -> Ok "webex-teams"
-        | `String "zentao" -> Ok "zentao"
-        | `String "squash-tm" -> Ok "squash-tm"
-        | `String "github" -> Ok "github"
-        | `String "git-guardian" -> Ok "git-guardian"
+        | `String "apple-app-store" -> Ok `Apple_app_store
+        | `String "asana" -> Ok `Asana
+        | `String "assembla" -> Ok `Assembla
+        | `String "bamboo" -> Ok `Bamboo
+        | `String "bugzilla" -> Ok `Bugzilla
+        | `String "buildkite" -> Ok `Buildkite
+        | `String "campfire" -> Ok `Campfire
+        | `String "clickup" -> Ok `Clickup
+        | `String "confluence" -> Ok `Confluence
+        | `String "custom-issue-tracker" -> Ok `Custom_issue_tracker
+        | `String "datadog" -> Ok `Datadog
+        | `String "diffblue-cover" -> Ok `Diffblue_cover
+        | `String "discord" -> Ok `Discord
+        | `String "drone-ci" -> Ok `Drone_ci
+        | `String "emails-on-push" -> Ok `Emails_on_push
+        | `String "ewm" -> Ok `Ewm
+        | `String "external-wiki" -> Ok `External_wiki
+        | `String "git-guardian" -> Ok `Git_guardian
+        | `String "github" -> Ok `Github
+        | `String "gitlab-slack-application" -> Ok `Gitlab_slack_application
         | `String "google-cloud-platform-artifact-registry" ->
-            Ok "google-cloud-platform-artifact-registry"
+            Ok `Google_cloud_platform_artifact_registry
         | `String "google-cloud-platform-workload-identity-federation" ->
-            Ok "google-cloud-platform-workload-identity-federation"
-        | `String "mock-ci" -> Ok "mock-ci"
-        | `String "mock-monitoring" -> Ok "mock-monitoring"
+            Ok `Google_cloud_platform_workload_identity_federation
+        | `String "google-play" -> Ok `Google_play
+        | `String "hangouts-chat" -> Ok `Hangouts_chat
+        | `String "harbor" -> Ok `Harbor
+        | `String "irker" -> Ok `Irker
+        | `String "jenkins" -> Ok `Jenkins
+        | `String "jira" -> Ok `Jira
+        | `String "jira-cloud-app" -> Ok `Jira_cloud_app
+        | `String "matrix" -> Ok `Matrix
+        | `String "mattermost" -> Ok `Mattermost
+        | `String "mattermost-slash-commands" -> Ok `Mattermost_slash_commands
+        | `String "microsoft-teams" -> Ok `Microsoft_teams
+        | `String "mock-ci" -> Ok `Mock_ci
+        | `String "mock-monitoring" -> Ok `Mock_monitoring
+        | `String "packagist" -> Ok `Packagist
+        | `String "phorge" -> Ok `Phorge
+        | `String "pipelines-email" -> Ok `Pipelines_email
+        | `String "pivotaltracker" -> Ok `Pivotaltracker
+        | `String "pumble" -> Ok `Pumble
+        | `String "pushover" -> Ok `Pushover
+        | `String "redmine" -> Ok `Redmine
+        | `String "slack" -> Ok `Slack
+        | `String "slack-slash-commands" -> Ok `Slack_slash_commands
+        | `String "squash-tm" -> Ok `Squash_tm
+        | `String "teamcity" -> Ok `Teamcity
+        | `String "telegram" -> Ok `Telegram
+        | `String "unify-circuit" -> Ok `Unify_circuit
+        | `String "webex-teams" -> Ok `Webex_teams
+        | `String "youtrack" -> Ok `Youtrack
+        | `String "zentao" -> Ok `Zentao
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Apple_app_store -> `String "apple-app-store"
+        | `Asana -> `String "asana"
+        | `Assembla -> `String "assembla"
+        | `Bamboo -> `String "bamboo"
+        | `Bugzilla -> `String "bugzilla"
+        | `Buildkite -> `String "buildkite"
+        | `Campfire -> `String "campfire"
+        | `Clickup -> `String "clickup"
+        | `Confluence -> `String "confluence"
+        | `Custom_issue_tracker -> `String "custom-issue-tracker"
+        | `Datadog -> `String "datadog"
+        | `Diffblue_cover -> `String "diffblue-cover"
+        | `Discord -> `String "discord"
+        | `Drone_ci -> `String "drone-ci"
+        | `Emails_on_push -> `String "emails-on-push"
+        | `Ewm -> `String "ewm"
+        | `External_wiki -> `String "external-wiki"
+        | `Git_guardian -> `String "git-guardian"
+        | `Github -> `String "github"
+        | `Gitlab_slack_application -> `String "gitlab-slack-application"
+        | `Google_cloud_platform_artifact_registry ->
+            `String "google-cloud-platform-artifact-registry"
+        | `Google_cloud_platform_workload_identity_federation ->
+            `String "google-cloud-platform-workload-identity-federation"
+        | `Google_play -> `String "google-play"
+        | `Hangouts_chat -> `String "hangouts-chat"
+        | `Harbor -> `String "harbor"
+        | `Irker -> `String "irker"
+        | `Jenkins -> `String "jenkins"
+        | `Jira -> `String "jira"
+        | `Jira_cloud_app -> `String "jira-cloud-app"
+        | `Matrix -> `String "matrix"
+        | `Mattermost -> `String "mattermost"
+        | `Mattermost_slash_commands -> `String "mattermost-slash-commands"
+        | `Microsoft_teams -> `String "microsoft-teams"
+        | `Mock_ci -> `String "mock-ci"
+        | `Mock_monitoring -> `String "mock-monitoring"
+        | `Packagist -> `String "packagist"
+        | `Phorge -> `String "phorge"
+        | `Pipelines_email -> `String "pipelines-email"
+        | `Pivotaltracker -> `String "pivotaltracker"
+        | `Pumble -> `String "pumble"
+        | `Pushover -> `String "pushover"
+        | `Redmine -> `String "redmine"
+        | `Slack -> `String "slack"
+        | `Slack_slash_commands -> `String "slack-slash-commands"
+        | `Squash_tm -> `String "squash-tm"
+        | `Teamcity -> `String "teamcity"
+        | `Telegram -> `String "telegram"
+        | `Unify_circuit -> `String "unify-circuit"
+        | `Webex_teams -> `String "webex-teams"
+        | `Youtrack -> `String "youtrack"
+        | `Zentao -> `String "zentao"
+
+      type t =
+        ([ `Apple_app_store
+         | `Asana
+         | `Assembla
+         | `Bamboo
+         | `Bugzilla
+         | `Buildkite
+         | `Campfire
+         | `Clickup
+         | `Confluence
+         | `Custom_issue_tracker
+         | `Datadog
+         | `Diffblue_cover
+         | `Discord
+         | `Drone_ci
+         | `Emails_on_push
+         | `Ewm
+         | `External_wiki
+         | `Git_guardian
+         | `Github
+         | `Gitlab_slack_application
+         | `Google_cloud_platform_artifact_registry
+         | `Google_cloud_platform_workload_identity_federation
+         | `Google_play
+         | `Hangouts_chat
+         | `Harbor
+         | `Irker
+         | `Jenkins
+         | `Jira
+         | `Jira_cloud_app
+         | `Matrix
+         | `Mattermost
+         | `Mattermost_slash_commands
+         | `Microsoft_teams
+         | `Mock_ci
+         | `Mock_monitoring
+         | `Packagist
+         | `Phorge
+         | `Pipelines_email
+         | `Pivotaltracker
+         | `Pumble
+         | `Pushover
+         | `Redmine
+         | `Slack
+         | `Slack_slash_commands
+         | `Squash_tm
+         | `Teamcity
+         | `Telegram
+         | `Unify_circuit
+         | `Webex_teams
+         | `Youtrack
+         | `Zentao
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -2840,7 +2949,7 @@ module DeleteApiV4GroupsIdIntegrationsSlug = struct
       ~url_params:
         (let open Openapi.Request.Var in
          let open Parameters in
-         [ ("slug", Var (params.slug, String)); ("id", Var (params.id, Int)) ])
+         [ ("slug", Var (params.slug, Enum Slug.t_to_yojson)); ("id", Var (params.id, Int)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
@@ -2851,62 +2960,171 @@ module GetApiV4GroupsIdIntegrationsSlug = struct
   module Parameters = struct
     module Slug = struct
       let t_of_yojson = function
-        | `String "apple-app-store" -> Ok "apple-app-store"
-        | `String "asana" -> Ok "asana"
-        | `String "assembla" -> Ok "assembla"
-        | `String "bamboo" -> Ok "bamboo"
-        | `String "bugzilla" -> Ok "bugzilla"
-        | `String "buildkite" -> Ok "buildkite"
-        | `String "campfire" -> Ok "campfire"
-        | `String "confluence" -> Ok "confluence"
-        | `String "custom-issue-tracker" -> Ok "custom-issue-tracker"
-        | `String "datadog" -> Ok "datadog"
-        | `String "diffblue-cover" -> Ok "diffblue-cover"
-        | `String "discord" -> Ok "discord"
-        | `String "drone-ci" -> Ok "drone-ci"
-        | `String "emails-on-push" -> Ok "emails-on-push"
-        | `String "external-wiki" -> Ok "external-wiki"
-        | `String "gitlab-slack-application" -> Ok "gitlab-slack-application"
-        | `String "google-play" -> Ok "google-play"
-        | `String "hangouts-chat" -> Ok "hangouts-chat"
-        | `String "harbor" -> Ok "harbor"
-        | `String "irker" -> Ok "irker"
-        | `String "jenkins" -> Ok "jenkins"
-        | `String "jira" -> Ok "jira"
-        | `String "jira-cloud-app" -> Ok "jira-cloud-app"
-        | `String "matrix" -> Ok "matrix"
-        | `String "mattermost-slash-commands" -> Ok "mattermost-slash-commands"
-        | `String "slack-slash-commands" -> Ok "slack-slash-commands"
-        | `String "packagist" -> Ok "packagist"
-        | `String "phorge" -> Ok "phorge"
-        | `String "pipelines-email" -> Ok "pipelines-email"
-        | `String "pivotaltracker" -> Ok "pivotaltracker"
-        | `String "pumble" -> Ok "pumble"
-        | `String "pushover" -> Ok "pushover"
-        | `String "redmine" -> Ok "redmine"
-        | `String "ewm" -> Ok "ewm"
-        | `String "youtrack" -> Ok "youtrack"
-        | `String "clickup" -> Ok "clickup"
-        | `String "slack" -> Ok "slack"
-        | `String "microsoft-teams" -> Ok "microsoft-teams"
-        | `String "mattermost" -> Ok "mattermost"
-        | `String "teamcity" -> Ok "teamcity"
-        | `String "telegram" -> Ok "telegram"
-        | `String "unify-circuit" -> Ok "unify-circuit"
-        | `String "webex-teams" -> Ok "webex-teams"
-        | `String "zentao" -> Ok "zentao"
-        | `String "squash-tm" -> Ok "squash-tm"
-        | `String "github" -> Ok "github"
-        | `String "git-guardian" -> Ok "git-guardian"
+        | `String "apple-app-store" -> Ok `Apple_app_store
+        | `String "asana" -> Ok `Asana
+        | `String "assembla" -> Ok `Assembla
+        | `String "bamboo" -> Ok `Bamboo
+        | `String "bugzilla" -> Ok `Bugzilla
+        | `String "buildkite" -> Ok `Buildkite
+        | `String "campfire" -> Ok `Campfire
+        | `String "clickup" -> Ok `Clickup
+        | `String "confluence" -> Ok `Confluence
+        | `String "custom-issue-tracker" -> Ok `Custom_issue_tracker
+        | `String "datadog" -> Ok `Datadog
+        | `String "diffblue-cover" -> Ok `Diffblue_cover
+        | `String "discord" -> Ok `Discord
+        | `String "drone-ci" -> Ok `Drone_ci
+        | `String "emails-on-push" -> Ok `Emails_on_push
+        | `String "ewm" -> Ok `Ewm
+        | `String "external-wiki" -> Ok `External_wiki
+        | `String "git-guardian" -> Ok `Git_guardian
+        | `String "github" -> Ok `Github
+        | `String "gitlab-slack-application" -> Ok `Gitlab_slack_application
         | `String "google-cloud-platform-artifact-registry" ->
-            Ok "google-cloud-platform-artifact-registry"
+            Ok `Google_cloud_platform_artifact_registry
         | `String "google-cloud-platform-workload-identity-federation" ->
-            Ok "google-cloud-platform-workload-identity-federation"
-        | `String "mock-ci" -> Ok "mock-ci"
-        | `String "mock-monitoring" -> Ok "mock-monitoring"
+            Ok `Google_cloud_platform_workload_identity_federation
+        | `String "google-play" -> Ok `Google_play
+        | `String "hangouts-chat" -> Ok `Hangouts_chat
+        | `String "harbor" -> Ok `Harbor
+        | `String "irker" -> Ok `Irker
+        | `String "jenkins" -> Ok `Jenkins
+        | `String "jira" -> Ok `Jira
+        | `String "jira-cloud-app" -> Ok `Jira_cloud_app
+        | `String "matrix" -> Ok `Matrix
+        | `String "mattermost" -> Ok `Mattermost
+        | `String "mattermost-slash-commands" -> Ok `Mattermost_slash_commands
+        | `String "microsoft-teams" -> Ok `Microsoft_teams
+        | `String "mock-ci" -> Ok `Mock_ci
+        | `String "mock-monitoring" -> Ok `Mock_monitoring
+        | `String "packagist" -> Ok `Packagist
+        | `String "phorge" -> Ok `Phorge
+        | `String "pipelines-email" -> Ok `Pipelines_email
+        | `String "pivotaltracker" -> Ok `Pivotaltracker
+        | `String "pumble" -> Ok `Pumble
+        | `String "pushover" -> Ok `Pushover
+        | `String "redmine" -> Ok `Redmine
+        | `String "slack" -> Ok `Slack
+        | `String "slack-slash-commands" -> Ok `Slack_slash_commands
+        | `String "squash-tm" -> Ok `Squash_tm
+        | `String "teamcity" -> Ok `Teamcity
+        | `String "telegram" -> Ok `Telegram
+        | `String "unify-circuit" -> Ok `Unify_circuit
+        | `String "webex-teams" -> Ok `Webex_teams
+        | `String "youtrack" -> Ok `Youtrack
+        | `String "zentao" -> Ok `Zentao
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Apple_app_store -> `String "apple-app-store"
+        | `Asana -> `String "asana"
+        | `Assembla -> `String "assembla"
+        | `Bamboo -> `String "bamboo"
+        | `Bugzilla -> `String "bugzilla"
+        | `Buildkite -> `String "buildkite"
+        | `Campfire -> `String "campfire"
+        | `Clickup -> `String "clickup"
+        | `Confluence -> `String "confluence"
+        | `Custom_issue_tracker -> `String "custom-issue-tracker"
+        | `Datadog -> `String "datadog"
+        | `Diffblue_cover -> `String "diffblue-cover"
+        | `Discord -> `String "discord"
+        | `Drone_ci -> `String "drone-ci"
+        | `Emails_on_push -> `String "emails-on-push"
+        | `Ewm -> `String "ewm"
+        | `External_wiki -> `String "external-wiki"
+        | `Git_guardian -> `String "git-guardian"
+        | `Github -> `String "github"
+        | `Gitlab_slack_application -> `String "gitlab-slack-application"
+        | `Google_cloud_platform_artifact_registry ->
+            `String "google-cloud-platform-artifact-registry"
+        | `Google_cloud_platform_workload_identity_federation ->
+            `String "google-cloud-platform-workload-identity-federation"
+        | `Google_play -> `String "google-play"
+        | `Hangouts_chat -> `String "hangouts-chat"
+        | `Harbor -> `String "harbor"
+        | `Irker -> `String "irker"
+        | `Jenkins -> `String "jenkins"
+        | `Jira -> `String "jira"
+        | `Jira_cloud_app -> `String "jira-cloud-app"
+        | `Matrix -> `String "matrix"
+        | `Mattermost -> `String "mattermost"
+        | `Mattermost_slash_commands -> `String "mattermost-slash-commands"
+        | `Microsoft_teams -> `String "microsoft-teams"
+        | `Mock_ci -> `String "mock-ci"
+        | `Mock_monitoring -> `String "mock-monitoring"
+        | `Packagist -> `String "packagist"
+        | `Phorge -> `String "phorge"
+        | `Pipelines_email -> `String "pipelines-email"
+        | `Pivotaltracker -> `String "pivotaltracker"
+        | `Pumble -> `String "pumble"
+        | `Pushover -> `String "pushover"
+        | `Redmine -> `String "redmine"
+        | `Slack -> `String "slack"
+        | `Slack_slash_commands -> `String "slack-slash-commands"
+        | `Squash_tm -> `String "squash-tm"
+        | `Teamcity -> `String "teamcity"
+        | `Telegram -> `String "telegram"
+        | `Unify_circuit -> `String "unify-circuit"
+        | `Webex_teams -> `String "webex-teams"
+        | `Youtrack -> `String "youtrack"
+        | `Zentao -> `String "zentao"
+
+      type t =
+        ([ `Apple_app_store
+         | `Asana
+         | `Assembla
+         | `Bamboo
+         | `Bugzilla
+         | `Buildkite
+         | `Campfire
+         | `Clickup
+         | `Confluence
+         | `Custom_issue_tracker
+         | `Datadog
+         | `Diffblue_cover
+         | `Discord
+         | `Drone_ci
+         | `Emails_on_push
+         | `Ewm
+         | `External_wiki
+         | `Git_guardian
+         | `Github
+         | `Gitlab_slack_application
+         | `Google_cloud_platform_artifact_registry
+         | `Google_cloud_platform_workload_identity_federation
+         | `Google_play
+         | `Hangouts_chat
+         | `Harbor
+         | `Irker
+         | `Jenkins
+         | `Jira
+         | `Jira_cloud_app
+         | `Matrix
+         | `Mattermost
+         | `Mattermost_slash_commands
+         | `Microsoft_teams
+         | `Mock_ci
+         | `Mock_monitoring
+         | `Packagist
+         | `Phorge
+         | `Pipelines_email
+         | `Pivotaltracker
+         | `Pumble
+         | `Pushover
+         | `Redmine
+         | `Slack
+         | `Slack_slash_commands
+         | `Squash_tm
+         | `Teamcity
+         | `Telegram
+         | `Unify_circuit
+         | `Webex_teams
+         | `Youtrack
+         | `Zentao
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -2947,7 +3165,7 @@ module GetApiV4GroupsIdIntegrationsSlug = struct
       ~url_params:
         (let open Openapi.Request.Var in
          let open Parameters in
-         [ ("slug", Var (params.slug, String)); ("id", Var (params.id, Int)) ])
+         [ ("slug", Var (params.slug, Enum Slug.t_to_yojson)); ("id", Var (params.id, Int)) ])
       ~query_params:[]
       ~url
       ~responses:Responses.t

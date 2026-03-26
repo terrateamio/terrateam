@@ -1,479 +1,844 @@
 module Primary = struct
   module Actions = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Administration = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Checks = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Codespaces = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Contents = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Dependabot_secrets = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Deployments = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Email_addresses = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Environments = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Followers = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Git_ssh_keys = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Gpg_keys = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Interaction_limits = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Issues = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Members = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Metadata_ = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Organization_administration = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Organization_announcement_banners = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Organization_copilot_seat_management = struct
     let t_of_yojson = function
-      | `String "write" -> Ok "write"
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Write -> `String "write"
+
+    type t = ([ `Write ][@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Organization_custom_org_roles = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Organization_custom_properties = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
-      | `String "admin" -> Ok "admin"
+      | `String "admin" -> Ok `Admin
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Admin -> `String "admin"
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Admin
+       | `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Organization_custom_roles = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Organization_events = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
+      | `String "read" -> Ok `Read
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+
+    type t = ([ `Read ][@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Organization_hooks = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Organization_packages = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Organization_personal_access_token_requests = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Organization_personal_access_tokens = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Organization_plan = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
+      | `String "read" -> Ok `Read
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+
+    type t = ([ `Read ][@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Organization_projects = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
-      | `String "admin" -> Ok "admin"
+      | `String "admin" -> Ok `Admin
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Admin -> `String "admin"
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Admin
+       | `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Organization_secrets = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Organization_self_hosted_runners = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Organization_user_blocking = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Packages = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Pages = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Profile = struct
     let t_of_yojson = function
-      | `String "write" -> Ok "write"
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Write -> `String "write"
+
+    type t = ([ `Write ][@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Pull_requests = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Repository_custom_properties = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Repository_hooks = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Repository_projects = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
-      | `String "admin" -> Ok "admin"
+      | `String "admin" -> Ok `Admin
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Admin -> `String "admin"
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Admin
+       | `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Secret_scanning_alerts = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Secrets = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Security_events = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Single_file = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Starring = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Statuses = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Team_discussions = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Vulnerability_alerts = struct
     let t_of_yojson = function
-      | `String "read" -> Ok "read"
-      | `String "write" -> Ok "write"
+      | `String "read" -> Ok `Read
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Read -> `String "read"
+      | `Write -> `String "write"
+
+    type t =
+      ([ `Read
+       | `Write
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Workflows = struct
     let t_of_yojson = function
-      | `String "write" -> Ok "write"
+      | `String "write" -> Ok `Write
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Write -> `String "write"
+
+    type t = ([ `Write ][@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 

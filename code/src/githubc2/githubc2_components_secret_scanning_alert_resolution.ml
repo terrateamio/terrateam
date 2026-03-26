@@ -1,9 +1,18 @@
 let t_of_yojson = function
-  | `String "false_positive" -> Ok "false_positive"
-  | `String "wont_fix" -> Ok "wont_fix"
-  | `String "revoked" -> Ok "revoked"
-  | `String "used_in_tests" -> Ok "used_in_tests"
+  | `String "false_positive" -> Ok `False_positive
+  | `String "revoked" -> Ok `Revoked
+  | `String "used_in_tests" -> Ok `Used_in_tests
+  | `String "wont_fix" -> Ok `Wont_fix
   | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-type t = (string[@of_yojson t_of_yojson]) option
+let t_to_yojson = function
+  | `False_positive -> `String "false_positive"
+  | `Revoked -> `String "revoked"
+  | `Used_in_tests -> `String "used_in_tests"
+  | `Wont_fix -> `String "wont_fix"
+
+type t =
+  ([ `False_positive | `Revoked | `Used_in_tests | `Wont_fix ]
+  [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+  option
 [@@deriving yojson { strict = false; meta = true }, show, eq]

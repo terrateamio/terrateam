@@ -12,8 +12,8 @@
   import LoadingSpinner from './components/ui/LoadingSpinner.svelte';
   import type { Dirspace } from './types';
   import { VCS_PROVIDERS } from './vcs/providers';
-  import { areUpgradeNudgesEnabled, getRunLimitThreshold, getBillingPeriodDates } from './utils/environment';
-  
+  import { EXTERNAL_URLS } from './constants';
+
   // Get current VCS provider terminology
   $: currentProvider = $currentVCSProvider || 'github';
   $: terminology = VCS_PROVIDERS[currentProvider]?.terminology || VCS_PROVIDERS.github.terminology;
@@ -34,12 +34,7 @@
     conversionRate: 0,
     avgDuration: 0,
     topUsers: [] as Array<{ name: string; count: number }>,
-    environments: [] as Array<{ name: string; successRate: number; total: number }>,
-    // Run usage for Free tier (billing period)
-    runCountBillingPeriod: 0,
-    runUsagePercentage: 0,
-    billingPeriodEnd: null as Date | null,
-    daysRemaining: 0
+    environments: [] as Array<{ name: string; successRate: number; total: number }>
   };
 
   // Recent activity data
@@ -175,56 +170,6 @@
         stats.avgDuration = 0;
       }
       
-      // Check if we need to load billing period run count for Free tier
-      if ($selectedInstallation?.tier?.name?.toLowerCase() === 'free' && areUpgradeNudgesEnabled()) {
-        if (!$selectedInstallation.created_at) {
-          // Fallback to rolling 30-day window if no created_at
-          const thirtyDaysAgo = new Date();
-          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-          const dateFilter30 = thirtyDaysAgo.toISOString().split('T')[0];
-          
-          try {
-            const response30Days = await api.getInstallationDirspaces($selectedInstallation.id, {
-              q: `created_at:${dateFilter30}..`,
-              limit: 100 // API caps at 100
-            });
-            
-            stats.runCountBillingPeriod = response30Days?.dirspaces?.length || 0;
-            stats.runUsagePercentage = (stats.runCountBillingPeriod / getRunLimitThreshold()) * 100;
-          } catch (err) {
-            console.error('Error loading 30-day run count:', err);
-            stats.runCountBillingPeriod = 0;
-            stats.runUsagePercentage = 0;
-          }
-        } else {
-          // Use billing period based on installation creation date
-          const billingPeriod = getBillingPeriodDates($selectedInstallation.created_at);
-          stats.billingPeriodEnd = billingPeriod.end;
-          stats.daysRemaining = billingPeriod.daysRemaining;
-          
-          // Format dates for API query
-          const startDate = billingPeriod.start.toISOString().split('T')[0];
-          const endDate = billingPeriod.end.toISOString().split('T')[0];
-          
-          try {
-            const responseBilling = await api.getInstallationDirspaces($selectedInstallation.id, {
-              q: `created_at:${startDate}..${endDate}`,
-              limit: 100 // API caps at 100
-            });
-            
-            stats.runCountBillingPeriod = responseBilling?.dirspaces?.length || 0;
-            stats.runUsagePercentage = (stats.runCountBillingPeriod / getRunLimitThreshold()) * 100;
-          } catch (err) {
-            console.error('Error loading billing period run count:', err);
-            stats.runCountBillingPeriod = 0;
-            stats.runUsagePercentage = 0;
-          }
-        }
-      } else {
-        stats.runCountBillingPeriod = 0;
-        stats.runUsagePercentage = 0;
-      }
-
     } catch (err) {
       console.error('Error loading dashboard stats:', err);
       statsError = err instanceof Error ? err.message : 'Failed to load dashboard statistics';
@@ -325,18 +270,6 @@
   function navigateToDetail(operationId: string): void {
     navigateToRun(operationId);
   }
-  
-  function getUsageColor(percentage: number): string {
-    if (percentage >= 90) return 'bg-red-500';
-    if (percentage >= 70) return 'bg-amber-500';
-    return 'bg-green-500';
-  }
-  
-  function getUsageTextColor(percentage: number): string {
-    if (percentage >= 90) return 'text-red-600 dark:text-red-400';
-    if (percentage >= 70) return 'text-amber-600 dark:text-amber-400';
-    return 'text-green-600 dark:text-green-400';
-  }
 
 </script>
 
@@ -350,81 +283,41 @@
           <p class="text-sm md:text-base text-gray-700 dark:text-gray-300 mb-4">
             New to Terrateam? Check out our getting started guide to learn the basics and set up your first workspace.
           </p>
-          <ClickableCard 
-            padding="sm"
-            hover={true}
-            on:click={() => window.location.hash = '#/getting-started'}
-            aria-label="Open getting started guide"
-            class="inline-block bg-white dark:bg-blue-800/30 border-blue-300 dark:border-blue-600 hover:border-blue-400 dark:hover:border-blue-500"
-          >
-            <div class="flex items-center space-x-2 text-blue-700 dark:text-blue-300">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
-              <span class="font-medium">Getting Started Guide</span>
-            </div>
-          </ClickableCard>
+          <div class="flex flex-wrap gap-3">
+            <ClickableCard
+              padding="sm"
+              hover={true}
+              on:click={() => window.location.hash = '#/getting-started'}
+              aria-label="Open getting started guide"
+              class="inline-block bg-white dark:bg-blue-800/30 border-blue-300 dark:border-blue-600 hover:border-blue-400 dark:hover:border-blue-500"
+            >
+              <div class="flex items-center space-x-2 text-blue-700 dark:text-blue-300">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                <span class="font-medium">Getting Started Guide</span>
+              </div>
+            </ClickableCard>
+            <ClickableCard
+              padding="sm"
+              hover={true}
+              on:click={() => window.open(EXTERNAL_URLS.SLACK, '_blank')}
+              aria-label="Join Slack community"
+              class="inline-block bg-white dark:bg-blue-800/30 border-blue-300 dark:border-blue-600 hover:border-blue-400 dark:hover:border-blue-500"
+            >
+              <div class="flex items-center space-x-2 text-blue-700 dark:text-blue-300">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523c-1.393 0-2.522-1.13-2.522-2.523s1.13-2.523 2.522-2.523h2.52v2.523zm1.268 0c0-1.393 1.13-2.523 2.522-2.523s2.522 1.13 2.522 2.523v6.313c0 1.393-1.13 2.522-2.522 2.522s-2.522-1.13-2.522-2.522v-6.313zM8.832 5.042a2.528 2.528 0 0 1-2.522-2.52C6.31 1.13 7.44 0 8.832 0s2.522 1.13 2.522 2.522v2.52H8.832zm0 1.268c1.393 0 2.522 1.13 2.522 2.522s-1.13 2.522-2.522 2.522H2.522C1.13 11.354 0 10.224 0 8.832s1.13-2.522 2.522-2.522h6.31zM18.956 8.832c0-1.393 1.13-2.522 2.522-2.522S24 7.44 24 8.832s-1.13 2.522-2.522 2.522h-2.522V8.832zm-1.268 0c0 1.393-1.13 2.522-2.522 2.522s-2.522-1.13-2.522-2.522V2.522C12.644 1.13 13.774 0 15.166 0s2.522 1.13 2.522 2.522v6.31zM15.166 18.956c1.393 0 2.522 1.13 2.522 2.522S16.56 24 15.166 24s-2.522-1.13-2.522-2.522v-2.522h2.522zm0-1.268c-1.393 0-2.522-1.13-2.522-2.522s1.13-2.522 2.522-2.522h6.312c1.393 0 2.522 1.13 2.522 2.522s-1.13 2.522-2.522 2.522h-6.312z"/>
+                </svg>
+                <span class="font-medium">Join our Slack</span>
+              </div>
+            </ClickableCard>
+          </div>
         </div>
         <img src="/assets/images/logo-symbol.svg" alt="Infrastructure Orchestration" class="hidden md:block w-56 h-56 opacity-30" />
       </div>
     </Card>
   </div>
-
-  <!-- Monthly Usage Banner (Free tier only) -->
-  {#if $selectedInstallation?.tier?.name?.toLowerCase() === 'free' && areUpgradeNudgesEnabled() && !isLoadingStats}
-    <div class="mb-8 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 p-4">
-      <div class="max-w-7xl mx-auto">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <!-- Left side: Usage info -->
-          <div class="flex-1">
-            <div class="flex items-center gap-3 mb-2">
-              <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Monthly Usage</h3>
-              <span class="text-2xl font-bold {getUsageTextColor(stats.runUsagePercentage)}">
-                {stats.runCountBillingPeriod} / {getRunLimitThreshold()} runs
-              </span>
-              <span class="text-sm text-gray-500 dark:text-gray-400">
-                {#if $selectedInstallation?.created_at}
-                  in billing period ({stats.daysRemaining} days left)
-                {:else}
-                  in 30 days
-                {/if}
-              </span>
-            </div>
-            
-            <!-- Progress bar -->
-            <div class="relative">
-              <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3 overflow-hidden">
-                <div 
-                  class="h-3 rounded-full transition-all duration-500 {getUsageColor(stats.runUsagePercentage)}"
-                  style="width: {Math.min(stats.runUsagePercentage, 100)}%"
-                />
-              </div>
-              <!-- Threshold markers -->
-              <div class="absolute top-0 left-[70%] h-3 w-px bg-gray-400 dark:bg-gray-500" />
-              <div class="absolute top-0 left-[90%] h-3 w-px bg-gray-400 dark:bg-gray-500" />
-            </div>
-            
-            <div class="mt-2 text-xs {stats.runUsagePercentage >= 70 ? getUsageTextColor(stats.runUsagePercentage) : 'text-gray-500 dark:text-gray-400'}">
-              {getRunLimitThreshold() - stats.runCountBillingPeriod} runs remaining this billing period
-            </div>
-          </div>
-          
-          <!-- Right side: CTA -->
-          {#if stats.runUsagePercentage >= 70}
-            <a
-              href="#/subscription"
-              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 whitespace-nowrap"
-            >
-              Upgrade for unlimited runs
-              <svg class="ml-2 -mr-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </a>
-          {/if}
-        </div>
-      </div>
-    </div>
-  {/if}
 
   {#if $installationsLoading}
     <div class="flex justify-center items-center py-12 mb-8">
@@ -661,6 +554,9 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <p class="text-sm">No recent activity to display</p>
+            <p class="text-sm mt-2">
+              Need help? <a href={EXTERNAL_URLS.SLACK} target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:underline">Join our Slack community</a>
+            </p>
           </div>
         {:else}
           <div class="space-y-3">

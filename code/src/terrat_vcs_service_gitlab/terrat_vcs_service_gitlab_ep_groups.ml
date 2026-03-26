@@ -20,7 +20,7 @@ module List = struct
     Openapic_abb.collect_all
       ~page:Openapic_abb.Page.gitlab
       client
-      Groups.(make (Parameters.make ~order_by:"name" ()))
+      Groups.(make (Parameters.make ~order_by:`Name ()))
     >>= fun groups ->
     let module G = Gitlabc_components_api_entities_group in
     let module R = Terrat_api_components_gitlab_group in

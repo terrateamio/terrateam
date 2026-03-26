@@ -471,7 +471,11 @@ module Make (Sched_state : S) = struct
     let u = collapse_alias (u_of_t t) in
     match u.state with
     | `Alias _ -> assert false
-    | `Det v -> return (f v)
+    | `Det v -> (
+        try return (f v)
+        with exn ->
+          let exn' = (exn, Some (Printexc.get_raw_backtrace ())) in
+          t_of_u { state = `Exn exn' })
     | (`Aborted | `Exn _) as st -> t_of_u { state = st }
     | `Undet undet ->
         let u' = undetermined ~f:(run_with_state t) ~deps:[ Dep u ] () in

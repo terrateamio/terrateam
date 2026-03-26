@@ -2,23 +2,35 @@ module Code = struct
   module Parameters = struct
     module Order = struct
       let t_of_yojson = function
-        | `String "desc" -> Ok "desc"
-        | `String "asc" -> Ok "asc"
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Sort = struct
       let t_of_yojson = function
-        | `String "indexed" -> Ok "indexed"
+        | `String "indexed" -> Ok `Indexed
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Indexed -> `String "indexed"
+
+      type t = ([ `Indexed ][@of_yojson t_of_yojson] [@to_yojson t_to_yojson]) [@@deriving show, eq]
     end
 
     type t = {
-      order : Order.t; [@default "desc"]
+      order : Order.t; [@default `Desc]
       page : int; [@default 1]
       per_page : int; [@default 30]
       q : string;
@@ -102,8 +114,8 @@ module Code = struct
          let open Parameters in
          [
            ("q", Var (params.q, String));
-           ("sort", Var (params.sort, Option String));
-           ("order", Var (params.order, String));
+           ("sort", Var (params.sort, Option (Enum Sort.t_to_yojson)));
+           ("order", Var (params.order, Enum Order.t_to_yojson));
            ("per_page", Var (params.per_page, Int));
            ("page", Var (params.page, Int));
          ])
@@ -116,24 +128,42 @@ module Commits = struct
   module Parameters = struct
     module Order = struct
       let t_of_yojson = function
-        | `String "desc" -> Ok "desc"
-        | `String "asc" -> Ok "asc"
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Sort = struct
       let t_of_yojson = function
-        | `String "author-date" -> Ok "author-date"
-        | `String "committer-date" -> Ok "committer-date"
+        | `String "author-date" -> Ok `Author_date
+        | `String "committer-date" -> Ok `Committer_date
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Author_date -> `String "author-date"
+        | `Committer_date -> `String "committer-date"
+
+      type t =
+        ([ `Author_date
+         | `Committer_date
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
-      order : Order.t; [@default "desc"]
+      order : Order.t; [@default `Desc]
       page : int; [@default 1]
       per_page : int; [@default 30]
       q : string;
@@ -187,8 +217,8 @@ module Commits = struct
          let open Parameters in
          [
            ("q", Var (params.q, String));
-           ("sort", Var (params.sort, Option String));
-           ("order", Var (params.order, String));
+           ("sort", Var (params.sort, Option (Enum Sort.t_to_yojson)));
+           ("order", Var (params.order, Enum Order.t_to_yojson));
            ("per_page", Var (params.per_page, Int));
            ("page", Var (params.page, Int));
          ])
@@ -201,34 +231,70 @@ module Issues_and_pull_requests = struct
   module Parameters = struct
     module Order = struct
       let t_of_yojson = function
-        | `String "desc" -> Ok "desc"
-        | `String "asc" -> Ok "asc"
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Sort = struct
       let t_of_yojson = function
-        | `String "comments" -> Ok "comments"
-        | `String "reactions" -> Ok "reactions"
-        | `String "reactions-+1" -> Ok "reactions-+1"
-        | `String "reactions--1" -> Ok "reactions--1"
-        | `String "reactions-smile" -> Ok "reactions-smile"
-        | `String "reactions-thinking_face" -> Ok "reactions-thinking_face"
-        | `String "reactions-heart" -> Ok "reactions-heart"
-        | `String "reactions-tada" -> Ok "reactions-tada"
-        | `String "interactions" -> Ok "interactions"
-        | `String "created" -> Ok "created"
-        | `String "updated" -> Ok "updated"
+        | `String "comments" -> Ok `Comments
+        | `String "created" -> Ok `Created
+        | `String "interactions" -> Ok `Interactions
+        | `String "reactions" -> Ok `Reactions
+        | `String "reactions-+1" -> Ok `Reactions__1
+        | `String "reactions--1" -> Ok `Reactions__1_2
+        | `String "reactions-heart" -> Ok `Reactions_heart
+        | `String "reactions-smile" -> Ok `Reactions_smile
+        | `String "reactions-tada" -> Ok `Reactions_tada
+        | `String "reactions-thinking_face" -> Ok `Reactions_thinking_face
+        | `String "updated" -> Ok `Updated
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Comments -> `String "comments"
+        | `Created -> `String "created"
+        | `Interactions -> `String "interactions"
+        | `Reactions -> `String "reactions"
+        | `Reactions__1 -> `String "reactions-+1"
+        | `Reactions__1_2 -> `String "reactions--1"
+        | `Reactions_heart -> `String "reactions-heart"
+        | `Reactions_smile -> `String "reactions-smile"
+        | `Reactions_tada -> `String "reactions-tada"
+        | `Reactions_thinking_face -> `String "reactions-thinking_face"
+        | `Updated -> `String "updated"
+
+      type t =
+        ([ `Comments
+         | `Created
+         | `Interactions
+         | `Reactions
+         | `Reactions__1
+         | `Reactions__1_2
+         | `Reactions_heart
+         | `Reactions_smile
+         | `Reactions_tada
+         | `Reactions_thinking_face
+         | `Updated
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
       advanced_search : string option; [@default None]
-      order : Order.t; [@default "desc"]
+      order : Order.t; [@default `Desc]
       page : int; [@default 1]
       per_page : int; [@default 30]
       q : string;
@@ -312,8 +378,8 @@ module Issues_and_pull_requests = struct
          let open Parameters in
          [
            ("q", Var (params.q, String));
-           ("sort", Var (params.sort, Option String));
-           ("order", Var (params.order, String));
+           ("sort", Var (params.sort, Option (Enum Sort.t_to_yojson)));
+           ("order", Var (params.order, Enum Order.t_to_yojson));
            ("per_page", Var (params.per_page, Int));
            ("page", Var (params.page, Int));
            ("advanced_search", Var (params.advanced_search, Option String));
@@ -327,24 +393,42 @@ module Labels = struct
   module Parameters = struct
     module Order = struct
       let t_of_yojson = function
-        | `String "desc" -> Ok "desc"
-        | `String "asc" -> Ok "asc"
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Sort = struct
       let t_of_yojson = function
-        | `String "created" -> Ok "created"
-        | `String "updated" -> Ok "updated"
+        | `String "created" -> Ok `Created
+        | `String "updated" -> Ok `Updated
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Created -> `String "created"
+        | `Updated -> `String "updated"
+
+      type t =
+        ([ `Created
+         | `Updated
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
-      order : Order.t; [@default "desc"]
+      order : Order.t; [@default `Desc]
       page : int; [@default 1]
       per_page : int; [@default 30]
       q : string;
@@ -422,8 +506,8 @@ module Labels = struct
          [
            ("repository_id", Var (params.repository_id, Int));
            ("q", Var (params.q, String));
-           ("sort", Var (params.sort, Option String));
-           ("order", Var (params.order, String));
+           ("sort", Var (params.sort, Option (Enum Sort.t_to_yojson)));
+           ("order", Var (params.order, Enum Order.t_to_yojson));
            ("per_page", Var (params.per_page, Int));
            ("page", Var (params.page, Int));
          ])
@@ -436,26 +520,48 @@ module Repos = struct
   module Parameters = struct
     module Order = struct
       let t_of_yojson = function
-        | `String "desc" -> Ok "desc"
-        | `String "asc" -> Ok "asc"
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Sort = struct
       let t_of_yojson = function
-        | `String "stars" -> Ok "stars"
-        | `String "forks" -> Ok "forks"
-        | `String "help-wanted-issues" -> Ok "help-wanted-issues"
-        | `String "updated" -> Ok "updated"
+        | `String "forks" -> Ok `Forks
+        | `String "help-wanted-issues" -> Ok `Help_wanted_issues
+        | `String "stars" -> Ok `Stars
+        | `String "updated" -> Ok `Updated
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Forks -> `String "forks"
+        | `Help_wanted_issues -> `String "help-wanted-issues"
+        | `Stars -> `String "stars"
+        | `Updated -> `String "updated"
+
+      type t =
+        ([ `Forks
+         | `Help_wanted_issues
+         | `Stars
+         | `Updated
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
-      order : Order.t; [@default "desc"]
+      order : Order.t; [@default `Desc]
       page : int; [@default 1]
       per_page : int; [@default 30]
       q : string;
@@ -532,8 +638,8 @@ module Repos = struct
          let open Parameters in
          [
            ("q", Var (params.q, String));
-           ("sort", Var (params.sort, Option String));
-           ("order", Var (params.order, String));
+           ("sort", Var (params.sort, Option (Enum Sort.t_to_yojson)));
+           ("order", Var (params.order, Enum Order.t_to_yojson));
            ("per_page", Var (params.per_page, Int));
            ("page", Var (params.page, Int));
          ])
@@ -609,25 +715,45 @@ module Users = struct
   module Parameters = struct
     module Order = struct
       let t_of_yojson = function
-        | `String "desc" -> Ok "desc"
-        | `String "asc" -> Ok "asc"
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Sort = struct
       let t_of_yojson = function
-        | `String "followers" -> Ok "followers"
-        | `String "repositories" -> Ok "repositories"
-        | `String "joined" -> Ok "joined"
+        | `String "followers" -> Ok `Followers
+        | `String "joined" -> Ok `Joined
+        | `String "repositories" -> Ok `Repositories
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Followers -> `String "followers"
+        | `Joined -> `String "joined"
+        | `Repositories -> `String "repositories"
+
+      type t =
+        ([ `Followers
+         | `Joined
+         | `Repositories
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
-      order : Order.t; [@default "desc"]
+      order : Order.t; [@default `Desc]
       page : int; [@default 1]
       per_page : int; [@default 30]
       q : string;
@@ -704,8 +830,8 @@ module Users = struct
          let open Parameters in
          [
            ("q", Var (params.q, String));
-           ("sort", Var (params.sort, Option String));
-           ("order", Var (params.order, String));
+           ("sort", Var (params.sort, Option (Enum Sort.t_to_yojson)));
+           ("order", Var (params.order, Enum Order.t_to_yojson));
            ("per_page", Var (params.per_page, Int));
            ("page", Var (params.page, Int));
          ])

@@ -1,5 +1,3 @@
-module String_map = CCMap.Make (CCString)
-module String_set = CCSet.Make (CCString)
 module Properties = Json_schema_conv.Properties
 module Value = Json_schema_conv.Value
 module Additional_properties = Json_schema_conv.Additional_properties
@@ -37,7 +35,7 @@ module Request_body = struct
 end
 
 module Response = struct
-  type t_ = { content : Media_type.t Properties.t [@default String_map.empty] }
+  type t_ = { content : Media_type.t Properties.t [@default Sln_map.String.empty] }
   [@@deriving yojson { strict = false }]
 
   type t = t_ Value.t [@@deriving yojson]
@@ -71,10 +69,11 @@ end
 
 module Components = struct
   type t = {
-    schemas : Schema.t Properties.t; [@default String_map.empty]
-    responses : Response.t Properties.t; [@default String_map.empty]
-    parameters : Parameter.t Properties.t; [@default String_map.empty]
-    request_bodies : Request_body.t Properties.t; [@default String_map.empty] [@key "requestBodies"]
+    schemas : Schema.t Properties.t; [@default Sln_map.String.empty]
+    responses : Response.t Properties.t; [@default Sln_map.String.empty]
+    parameters : Parameter.t Properties.t; [@default Sln_map.String.empty]
+    request_bodies : Request_body.t Properties.t;
+        [@default Sln_map.String.empty] [@key "requestBodies"]
   }
   [@@deriving yojson { strict = false }]
 end
@@ -110,7 +109,8 @@ let module_name_of_string s =
   |> CCString.capitalize_ascii
 
 let module_name_of_field_name { Components.schemas; _ } s =
-  if String_map.mem (CCString.replace ~sub:"_" ~by:"-" s) schemas then module_name_of_string s ^ "_"
+  if Sln_map.String.mem (CCString.replace ~sub:"_" ~by:"-" s) schemas then
+    module_name_of_string s ^ "_"
   else module_name_of_string s
 
 let rec resolve_ref typ lookup ref_ =
@@ -126,13 +126,13 @@ let rec resolve_ref typ lookup ref_ =
   | Value.V v -> v
 
 let resolve_schema_ref { Components.schemas; _ } =
-  resolve_ref "schemas" (CCFun.flip String_map.get schemas)
+  resolve_ref "schemas" (CCFun.flip Sln_map.String.get schemas)
 
 let resolve_response_ref { Components.responses; _ } =
-  resolve_ref "responses" (CCFun.flip String_map.get responses)
+  resolve_ref "responses" (CCFun.flip Sln_map.String.get responses)
 
 let resolve_parameter_ref { Components.parameters; _ } =
-  resolve_ref "parameters" (CCFun.flip String_map.get parameters)
+  resolve_ref "parameters" (CCFun.flip Sln_map.String.get parameters)
 
 (* TODO: Fix this because we are actually only converting Schemas into
    Components and not into Components.Schemas.  This might change if we start
@@ -222,25 +222,26 @@ let http_status_to_name = function
   | code -> "Http_" ^ code
 
 let get_json_media_type m =
-  match String_map.get "application/json" m with
-  | None -> String_map.get "*/*" m
+  match Sln_map.String.get "application/json" m with
+  | None -> Sln_map.String.get "*/*" m
   | r -> r
 
 let module_name_of_operation_id s = s |> CCString.replace ~sub:"/" ~by:"_" |> module_name_of_string
 
 let field_name_of_schema s =
   match CCString.lowercase_ascii s with
-  | ( "type"
-    | "in"
-    | "object"
-    | "class"
-    | "to"
-    | "private"
-    | "include"
-    | "ref"
-    | "method"
+  | ( "class"
     | "end"
-    | "external" ) as s -> s ^ "_"
+    | "external"
+    | "in"
+    | "include"
+    | "method"
+    | "module"
+    | "object"
+    | "private"
+    | "ref"
+    | "to"
+    | "type" ) as s -> s ^ "_"
   | s when CCString.prefix ~pre:"_" s -> cleanup_name @@ CCString.drop_while (( = ) '_') s ^ "_"
   | s when CCString.prefix ~pre:"$" s -> cleanup_name @@ CCString.drop_while (( = ) '$') s ^ "_"
   | s when CCString.prefix ~pre:"@" s -> cleanup_name @@ CCString.drop_while (( = ) '@') s ^ "_"
@@ -248,25 +249,29 @@ let field_name_of_schema s =
   | "-1" -> "minus_one"
   | s -> cleanup_name s
 
-let field_default_of_value typ default =
-  match (default, typ) with
-  | `String s, Some "boolean" ->
+let field_default_of_value typ enum default =
+  match (default, typ, enum) with
+  | `String s, Some "boolean", _ ->
       Some Ast_helper.(Exp.construct (Location.mknoloc (Gen.ident [ s ])) None)
-  | `String s, _ -> Some Ast_helper.(Exp.constant (Const.string s))
-  | `Bool b, _ ->
+  | `String s, _, Some enum_json -> (
+      match Gen.variant_name_of_default enum_json s with
+      | Some tag -> Some Ast_helper.(Exp.variant tag None)
+      | None -> Some Ast_helper.(Exp.constant (Const.string s)))
+  | `String s, _, None -> Some Ast_helper.(Exp.constant (Const.string s))
+  | `Bool b, _, _ ->
       Some Ast_helper.(Exp.construct (Location.mknoloc (Gen.ident [ Bool.to_string b ])) None)
-  | `Float fl, _ -> Some Ast_helper.(Exp.constant (Const.float (CCFloat.to_string fl)))
-  | `Int int, _ -> Some Ast_helper.(Exp.constant (Const.integer (CCInt.to_string int)))
-  | `List [], _ -> Some Json_schema_conv.Gen.(make_list [])
-  | `List (`String _ :: _ as v), _ ->
+  | `Float fl, _, _ -> Some Ast_helper.(Exp.constant (Const.float (CCFloat.to_string fl)))
+  | `Int int, _, _ -> Some Ast_helper.(Exp.constant (Const.integer (CCInt.to_string int)))
+  | `List [], _, _ -> Some Json_schema_conv.Gen.(make_list [])
+  | `List (`String _ :: _ as v), _, _ ->
       Some
         Json_schema_conv.Gen.(
           make_list
             (CCList.map
                (fun s -> Ast_helper.(Exp.constant (Const.string s)))
                (Yojson.Safe.Util.filter_string v)))
-  | `List _, _ -> (* TODO: Add more *) None
-  | json, _ ->
+  | `List _, _, _ -> (* TODO: Add more *) None
+  | json, _, _ ->
       failwith (Printf.sprintf "Unknown field default value: %s" (Yojson.Safe.to_string json))
 
 let record_field_attrs schema name required =
@@ -279,19 +284,19 @@ let record_field_attrs schema name required =
             (fun default ->
               Gen.field_default
                 (Ast_helper.Exp.construct (Location.mknoloc (Gen.ident [ "Some" ])) (Some default)))
-            (field_default_of_value schema.Schema.typ default)
+            (field_default_of_value schema.Schema.typ schema.Schema.enum default)
       | Some default ->
           CCOption.map_or
             ~default:[]
             (fun default -> Gen.field_default default)
-            (field_default_of_value schema.Schema.typ default)
-      | None when (not (String_set.mem name required)) || schema.Schema.nullable ->
+            (field_default_of_value schema.Schema.typ schema.Schema.enum default)
+      | None when (not (Sln_set.String.mem name required)) || schema.Schema.nullable ->
           Gen.field_default_none
       | None -> []);
       (if CCString.equal (field_name_of_schema name) name then [] else Gen.yojson_key_name name);
     ]
 
-let request_param_of_op_params components param_in params =
+let request_param_of_op_params base_module_name components param_in params =
   let params =
     params
     |> CCList.filter_map (fun p ->
@@ -308,7 +313,18 @@ let request_param_of_op_params components param_in params =
       let array obj =
         Ast_helper.(Exp.construct (Location.mknoloc (Gen.ident [ "Array" ])) (Some obj))
       in
-      let rec type_desc_of_schema = function
+      let enum_module_of_schema_value param_module schema_value =
+        match schema_value with
+        | Value.Ref ref_ -> module_name_of_ref base_module_name "paths" ref_
+        | Value.V _ -> [ param_module ]
+      in
+      let rec type_desc_of_schema ~enum_module = function
+        | { Schema.typ = Some "string"; enum = Some _; _ } ->
+            Ast_helper.Exp.construct
+              (Location.mknoloc (Gen.ident [ "Enum" ]))
+              (Some
+                 (Ast_helper.Exp.ident
+                    (Location.mknoloc (Gen.ident (enum_module @ [ "t_to_yojson" ])))))
         | { Schema.typ = Some typ; format; _ } as schema when Json_schema_conv.is_prim_type schema
           -> (
             match Json_schema_conv.extract_prim_type schema with
@@ -319,7 +335,15 @@ let request_param_of_op_params components param_in params =
             | Some "number" -> assert false
             | _ -> assert false)
         | { Schema.typ = Some "array"; items = Some items; _ } ->
-            array (type_desc_of_schema (resolve_schema_ref components items))
+            let items_enum_module =
+              match items with
+              | Value.Ref ref_ -> module_name_of_ref base_module_name "paths" ref_
+              | Value.V _ -> enum_module @ [ "Items" ]
+            in
+            array
+              (type_desc_of_schema
+                 ~enum_module:items_enum_module
+                 (resolve_schema_ref components items))
         | schema -> failwith (Schema.show_t_ schema)
       in
       let open Ast_helper in
@@ -366,7 +390,10 @@ let request_param_of_op_params components param_in params =
                                         (Exp.tuple
                                            [
                                              Exp.ident (Location.mknoloc (Gen.ident [ "v" ]));
-                                             type_desc_of_schema schema;
+                                             type_desc_of_schema
+                                               ~enum_module:
+                                                 [ module_name_of_string p.Parameter.name ]
+                                               schema;
                                            ]))))
                            @@ CCList.map (resolve_schema_ref components) schemas)
                           @
@@ -385,7 +412,12 @@ let request_param_of_op_params components param_in params =
                             ]
                           else [])
                     | schema ->
-                        let type_desc = type_desc_of_schema schema in
+                        let enum_module =
+                          enum_module_of_schema_value
+                            (module_name_of_string p.Parameter.name)
+                            p.Parameter.schema
+                        in
+                        let type_desc = type_desc_of_schema ~enum_module schema in
                         let type_desc =
                           if
                             (p.Parameter.required || CCOption.is_some schema.Schema.default)
@@ -430,14 +462,14 @@ let convert_str_operation strict_records base_module_name components uritmpl op_
           typ = Some "object";
           additional_properties = Additional_properties.Bool false;
           properties =
-            String_map.of_list
+            Sln_map.String.of_list
               (CCList.map
                  (fun p ->
                    let { Parameter.name; schema; _ } = resolve_parameter_ref components p in
                    (name, schema))
                  op.Operation.parameters);
           required =
-            String_set.of_list
+            Sln_set.String.of_list
               (CCList.filter_map
                  (fun p ->
                    let p = resolve_parameter_ref components p in
@@ -542,7 +574,7 @@ let convert_str_operation strict_records base_module_name components uritmpl op_
     in
     let resolved_responses =
       op.Operation.responses
-      |> String_map.to_list
+      |> Sln_map.String.to_list
       |> CCList.sort (fun (a, _) (b, _) -> CCString.compare a b)
       |> CCList.map (fun (c, r) -> (c, resolve_response_ref components r))
     in
@@ -710,9 +742,17 @@ let convert_str_operation strict_records base_module_name components uritmpl op_
              [
                (Asttypes.Labelled "headers", Gen.make_list []);
                ( Asttypes.Labelled "url_params",
-                 request_param_of_op_params components "path" op.Operation.parameters );
+                 request_param_of_op_params
+                   base_module_name
+                   components
+                   "path"
+                   op.Operation.parameters );
                ( Asttypes.Labelled "query_params",
-                 request_param_of_op_params components "query" op.Operation.parameters );
+                 request_param_of_op_params
+                   base_module_name
+                   components
+                   "query"
+                   op.Operation.parameters );
                (Asttypes.Labelled "url", Exp.ident (Location.mknoloc (Gen.ident [ "url" ])));
                ( Asttypes.Labelled "responses",
                  Exp.ident (Location.mknoloc (Gen.ident [ "Responses"; "t" ])) );
@@ -840,7 +880,7 @@ let convert_str_components
                (CCString.lowercase_ascii
                   (base_module_name ^ "_components_" ^ module_name_of_string name ^ ".ml")))
             (fun oc -> CCIO.write_line oc (Pprintast.string_of_structure m)))
-    (String_map.to_list schemas);
+    (Sln_map.String.to_list schemas);
   let sts =
     CCList.map
       (fun name ->
@@ -852,7 +892,7 @@ let convert_str_components
             (Mb.mk
                (Location.mknoloc (Some (module_name_of_string name)))
                (Mod.ident (Location.mknoloc (Json_schema_conv.Gen.ident [ module_name ]))))))
-      (schemas |> String_map.to_list |> CCList.map fst |> CCList.sort CCString.compare)
+      (schemas |> Sln_map.String.to_list |> CCList.map fst |> CCList.sort CCString.compare)
   in
   CCIO.with_out
     (Filename.concat output_dir (CCString.lowercase_ascii (base_module_name ^ "_components.ml")))
@@ -874,10 +914,10 @@ let convert_str_paths strict_records output_base base_module_name components pat
                (`Delete, path.Path.delete);
                (`Patch, path.Path.patch);
              ]))
-      (String_map.to_list paths)
+      (Sln_map.String.to_list paths)
     |> CCList.flatten
     |> CCList.map (fun ((op, _) as v) -> (fst @@ CCString.Split.left_exn ~by:"/" op, [ v ]))
-    |> String_map.of_list_with ~f:(fun _ -> CCList.append)
+    |> Sln_map.String.of_list_with ~f:(fun _ -> CCList.append)
   in
   CCList.iter
     (fun (name, operations) ->
@@ -895,7 +935,7 @@ let convert_str_paths strict_records output_base base_module_name components pat
       CCIO.with_out
         (output_base ^ "_" ^ CCString.lowercase_ascii (module_name_of_string name) ^ ".ml")
         (fun oc -> CCIO.write_line oc (Pprintast.string_of_structure modules)))
-    (String_map.to_list modules)
+    (Sln_map.String.to_list modules)
 
 let convert_str_document strict_records output_dir base_module_name { Document.paths; components } =
   let output_base = Filename.concat output_dir (CCString.lowercase_ascii base_module_name) in

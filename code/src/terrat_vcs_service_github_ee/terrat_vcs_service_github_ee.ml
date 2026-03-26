@@ -1,6 +1,3 @@
-module String_map = CCMap.Make (CCString)
-module String_set = CCSet.Make (CCString)
-
 let src = Logs.Src.create "vcs_service_github_oss"
 
 module Logs = (val Logs.src_log src : Logs.LOG)
@@ -70,11 +67,7 @@ module Provider :
                |> CCString.concat "\n")
              (Terrat_files_github_sql.read fname))
 
-      let gate =
-        CCFun.(
-          CCOption.wrap Yojson.Safe.from_string
-          %> CCOption.map Terrat_gate.of_yojson
-          %> CCOption.flat_map CCResult.to_opt)
+      let gate = CCFun.(Terrat_gate.of_yojson %> CCResult.to_opt)
 
       let insert_gate_approval =
         Pgsql_io.Typed_sql.(
@@ -110,7 +103,7 @@ module Provider :
           Ret.(option text)
           //
           (* gate *)
-          Ret.ud' gate
+          Ret.u Ret.json gate
           //
           (* dir *)
           Ret.text
@@ -165,8 +158,8 @@ module Provider :
           approvers;
         let approvers_map =
           CCList.fold_left
-            (fun acc (token, approver) -> String_map.add_to_list token approver acc)
-            String_map.empty
+            (fun acc (token, approver) -> Sln_map.String.add_to_list token approver acc)
+            Sln_map.String.empty
             approvers
         in
         Api.fetch_pull_request_reviews
@@ -176,7 +169,7 @@ module Provider :
           client
         >>= fun reviews ->
         let approved_reviewers =
-          String_set.of_list
+          Sln_set.String.of_list
           @@ CCList.filter_map
                (let module R = Terrat_pull_request_review in
                function
@@ -187,8 +180,10 @@ module Provider :
         (* This is all users that have approved this pull request either by the
            VCS UI or explicit gate keeper *)
         let all_approvers =
-          String_set.to_list
-            (String_set.union approved_reviewers (String_set.of_list @@ CCList.map snd approvers))
+          Sln_set.String.to_list
+            (Sln_set.String.union
+               approved_reviewers
+               (Sln_set.String.of_list @@ CCList.map snd approvers))
         in
         Pgsql_io.Prepared_stmt.fetch
           db
@@ -279,9 +274,9 @@ module Provider :
                       let gate_approvers =
                         match token with
                         | Some token ->
-                            String_set.of_list
+                            Sln_set.String.of_list
                             @@ CCOption.get_or ~default:[]
-                            @@ String_map.find_opt token approvers_map
+                            @@ Sln_map.String.find_opt token approvers_map
                         | None -> approved_reviewers
                       in
                       (* A map of query to users who have approved that token.
@@ -291,15 +286,15 @@ module Provider :
                         CCList.map
                           (fun m ->
                             ( m,
-                              CCList.filter CCFun.(flip String_set.mem gate_approvers)
+                              CCList.filter CCFun.(flip Sln_set.String.mem gate_approvers)
                               @@ CCOption.get_or ~default:[]
                               @@ Match_map.find_opt m query_to_users ))
                           all_of
                       in
                       (* Set of users that have approved the token for the any_of matches. *)
                       let any_of_set =
-                        String_set.of_list
-                        @@ CCList.filter CCFun.(flip String_set.mem gate_approvers)
+                        Sln_set.String.of_list
+                        @@ CCList.filter CCFun.(flip Sln_set.String.mem gate_approvers)
                         @@ CCList.flat_map
                              CCFun.(
                                flip Match_map.find_opt query_to_users %> CCOption.get_or ~default:[])
@@ -307,7 +302,7 @@ module Provider :
                       in
                       let passed =
                         CCList.for_all CCFun.(snd %> CCList.is_empty %> not) all_of
-                        && any_of_count <= String_set.cardinal any_of_set
+                        && any_of_count <= Sln_set.String.cardinal any_of_set
                       in
                       let all_of =
                         CCList.filter_map
@@ -320,7 +315,8 @@ module Provider :
                         {
                           Terrat_gate.all_of;
                           any_of;
-                          any_of_count = CCInt.max 0 (any_of_count - String_set.cardinal any_of_set);
+                          any_of_count =
+                            CCInt.max 0 (any_of_count - Sln_set.String.cardinal any_of_set);
                         }
                       in
                       Logs.info (fun m ->
@@ -678,6 +674,7 @@ module Provider :
   module Commit_check = Terrat_vcs_service_github_provider.Commit_check
   module Ui = Terrat_vcs_service_github_provider.Ui
   module Comment = Terrat_vcs_service_github_provider.Comment
+  module Job_context = Terrat_vcs_service_github_provider.Job_context
   module Stacks = Terrat_vcs_service_github_provider.Stacks
 end
 

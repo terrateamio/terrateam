@@ -95,12 +95,12 @@ module Make (M : M with type db = Pgsql_io.t) = struct
     [
       (* no changes is explicitly left out here because we treat no_changes
          special when determining stack stack *)
-      "plan_failed";
-      "plan_pending";
-      "apply_failed";
-      "apply_pending";
-      "apply_ready";
-      "apply_success";
+      `Plan_failed;
+      `Plan_pending;
+      `Apply_failed;
+      `Apply_pending;
+      `Apply_ready;
+      `Apply_success;
     ]
 
   let outer_stack_name = function
@@ -113,7 +113,7 @@ module Make (M : M with type db = Pgsql_io.t) = struct
         {
           Tac.Stack_inner.name;
           paths;
-          state = "no_changes";
+          state = `No_changes;
           dirspaces =
             CCList.filter_map
               (function
@@ -126,7 +126,7 @@ module Make (M : M with type db = Pgsql_io.t) = struct
                     Some
                       {
                         Tac.Stack_inner.Dirspaces.Items.dirspace = { Tac.Dirspace.dir; workspace };
-                        state = "no_changes";
+                        state = `No_changes;
                       }
                 | _ -> None)
               dirspace_configs;
@@ -138,13 +138,13 @@ module Make (M : M with type db = Pgsql_io.t) = struct
     let topology =
       config
       |> Tcm.Config.stack_topology
-      |> Terrat_data.String_map.to_list
+      |> Sln_map.String.to_list
       |> Tsort.sort
       |> (function
       | Tsort.Sorted topo -> topo
       | Tsort.ErrorCycle _ -> assert false)
       |> CCList.uniq_succ ~eq:CCString.equal
-      |> CCList.filter_map (fun s -> Terrat_data.String_map.find_opt s stacks)
+      |> CCList.filter_map (fun s -> Sln_map.String.find_opt s stacks)
     in
     (* Group all stack entries together if their paths start with the same first
        element.  There can be multiple paths but we're just going to ignore that
@@ -168,7 +168,7 @@ module Make (M : M with type db = Pgsql_io.t) = struct
               {
                 Tac.Stack_outer.name = outer_stack_name ss;
                 stacks = inner_stacks dirspace_configs ss;
-                state = "no_changes";
+                state = `No_changes;
                 (* We store as "no_changes" in the database because when we
                    query it is when we will fill in the details. *)
               })
@@ -183,10 +183,10 @@ module Make (M : M with type db = Pgsql_io.t) = struct
       CCListLabels.fold_left ~f:CCInt.min ~init:(CCList.length stack_state_ordering)
       @@ CCList.filter_map
            (fun { Tac.Stack_inner.Dirspaces.Items.state; _ } ->
-             CCList.find_index (CCString.equal state) stack_state_ordering)
+             CCList.find_index (Terrat_api_components.Stack_state.equal state) stack_state_ordering)
            dirspaces
     in
-    if min_state = CCList.length stack_state_ordering then "no_changes"
+    if min_state = CCList.length stack_state_ordering then `No_changes
     else CCList.nth stack_state_ordering min_state
 
   let update_inner_stack_state dirspace_states s =
@@ -203,7 +203,7 @@ module Make (M : M with type db = Pgsql_io.t) = struct
           {
             Tac.Stack_inner.Dirspaces.Items.dirspace;
             state =
-              CCOption.get_or ~default:"no_changes"
+              CCOption.get_or ~default:`No_changes
               @@ Terrat_data.Dirspace_map.find_opt
                    { Terrat_dirspace.dir; workspace }
                    dirspace_states;

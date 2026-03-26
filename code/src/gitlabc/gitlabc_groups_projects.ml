@@ -2,36 +2,77 @@ module GetApiV4GroupsIdProjects = struct
   module Parameters = struct
     module Order_by = struct
       let t_of_yojson = function
-        | `String "id" -> Ok "id"
-        | `String "name" -> Ok "name"
-        | `String "path" -> Ok "path"
-        | `String "created_at" -> Ok "created_at"
-        | `String "updated_at" -> Ok "updated_at"
-        | `String "last_activity_at" -> Ok "last_activity_at"
-        | `String "similarity" -> Ok "similarity"
-        | `String "star_count" -> Ok "star_count"
+        | `String "created_at" -> Ok `Created_at
+        | `String "id" -> Ok `Id
+        | `String "last_activity_at" -> Ok `Last_activity_at
+        | `String "name" -> Ok `Name
+        | `String "path" -> Ok `Path
+        | `String "similarity" -> Ok `Similarity
+        | `String "star_count" -> Ok `Star_count
+        | `String "updated_at" -> Ok `Updated_at
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Created_at -> `String "created_at"
+        | `Id -> `String "id"
+        | `Last_activity_at -> `String "last_activity_at"
+        | `Name -> `String "name"
+        | `Path -> `String "path"
+        | `Similarity -> `String "similarity"
+        | `Star_count -> `String "star_count"
+        | `Updated_at -> `String "updated_at"
+
+      type t =
+        ([ `Created_at
+         | `Id
+         | `Last_activity_at
+         | `Name
+         | `Path
+         | `Similarity
+         | `Star_count
+         | `Updated_at
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Sort = struct
       let t_of_yojson = function
-        | `String "asc" -> Ok "asc"
-        | `String "desc" -> Ok "desc"
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Visibility = struct
       let t_of_yojson = function
-        | `String "private" -> Ok "private"
-        | `String "internal" -> Ok "internal"
-        | `String "public" -> Ok "public"
+        | `String "internal" -> Ok `Internal
+        | `String "private" -> Ok `Private
+        | `String "public" -> Ok `Public
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Internal -> `String "internal"
+        | `Private -> `String "private"
+        | `Public -> `String "public"
+
+      type t =
+        ([ `Internal
+         | `Private
+         | `Public
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -40,13 +81,13 @@ module GetApiV4GroupsIdProjects = struct
       include_ancestor_groups : bool; [@default false]
       include_subgroups : bool; [@default false]
       min_access_level : int option; [@default None]
-      order_by : Order_by.t; [@default "created_at"]
+      order_by : Order_by.t; [@default `Created_at]
       owned : bool; [@default false]
       page : int; [@default 1]
       per_page : int; [@default 20]
       search : string option; [@default None]
       simple : bool; [@default false]
-      sort : Sort.t; [@default "desc"]
+      sort : Sort.t; [@default `Desc]
       starred : bool; [@default false]
       visibility : Visibility.t option; [@default None]
       with_custom_attributes : bool; [@default false]
@@ -80,10 +121,10 @@ module GetApiV4GroupsIdProjects = struct
          let open Parameters in
          [
            ("archived", Var (params.archived, Option Bool));
-           ("visibility", Var (params.visibility, Option String));
+           ("visibility", Var (params.visibility, Option (Enum Visibility.t_to_yojson)));
            ("search", Var (params.search, Option String));
-           ("order_by", Var (params.order_by, String));
-           ("sort", Var (params.sort, String));
+           ("order_by", Var (params.order_by, Enum Order_by.t_to_yojson));
+           ("sort", Var (params.sort, Enum Sort.t_to_yojson));
            ("simple", Var (params.simple, Bool));
            ("owned", Var (params.owned, Bool));
            ("starred", Var (params.starred, Bool));
@@ -107,47 +148,86 @@ module GetApiV4GroupsIdProjectsShared = struct
   module Parameters = struct
     module Order_by = struct
       let t_of_yojson = function
-        | `String "id" -> Ok "id"
-        | `String "name" -> Ok "name"
-        | `String "path" -> Ok "path"
-        | `String "created_at" -> Ok "created_at"
-        | `String "updated_at" -> Ok "updated_at"
-        | `String "last_activity_at" -> Ok "last_activity_at"
-        | `String "star_count" -> Ok "star_count"
+        | `String "created_at" -> Ok `Created_at
+        | `String "id" -> Ok `Id
+        | `String "last_activity_at" -> Ok `Last_activity_at
+        | `String "name" -> Ok `Name
+        | `String "path" -> Ok `Path
+        | `String "star_count" -> Ok `Star_count
+        | `String "updated_at" -> Ok `Updated_at
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Created_at -> `String "created_at"
+        | `Id -> `String "id"
+        | `Last_activity_at -> `String "last_activity_at"
+        | `Name -> `String "name"
+        | `Path -> `String "path"
+        | `Star_count -> `String "star_count"
+        | `Updated_at -> `String "updated_at"
+
+      type t =
+        ([ `Created_at
+         | `Id
+         | `Last_activity_at
+         | `Name
+         | `Path
+         | `Star_count
+         | `Updated_at
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Sort = struct
       let t_of_yojson = function
-        | `String "asc" -> Ok "asc"
-        | `String "desc" -> Ok "desc"
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     module Visibility = struct
       let t_of_yojson = function
-        | `String "private" -> Ok "private"
-        | `String "internal" -> Ok "internal"
-        | `String "public" -> Ok "public"
+        | `String "internal" -> Ok `Internal
+        | `String "private" -> Ok `Private
+        | `String "public" -> Ok `Public
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Internal -> `String "internal"
+        | `Private -> `String "private"
+        | `Public -> `String "public"
+
+      type t =
+        ([ `Internal
+         | `Private
+         | `Public
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
       archived : bool option; [@default None]
       id : string;
       min_access_level : int option; [@default None]
-      order_by : Order_by.t; [@default "created_at"]
+      order_by : Order_by.t; [@default `Created_at]
       page : int; [@default 1]
       per_page : int; [@default 20]
       search : string option; [@default None]
       simple : bool; [@default false]
-      sort : Sort.t; [@default "desc"]
+      sort : Sort.t; [@default `Desc]
       starred : bool; [@default false]
       visibility : Visibility.t option; [@default None]
       with_custom_attributes : bool; [@default false]
@@ -179,10 +259,10 @@ module GetApiV4GroupsIdProjectsShared = struct
          let open Parameters in
          [
            ("archived", Var (params.archived, Option Bool));
-           ("visibility", Var (params.visibility, Option String));
+           ("visibility", Var (params.visibility, Option (Enum Visibility.t_to_yojson)));
            ("search", Var (params.search, Option String));
-           ("order_by", Var (params.order_by, String));
-           ("sort", Var (params.sort, String));
+           ("order_by", Var (params.order_by, Enum Order_by.t_to_yojson));
+           ("sort", Var (params.sort, Enum Sort.t_to_yojson));
            ("simple", Var (params.simple, Bool));
            ("starred", Var (params.starred, Bool));
            ("with_issues_enabled", Var (params.with_issues_enabled, Bool));

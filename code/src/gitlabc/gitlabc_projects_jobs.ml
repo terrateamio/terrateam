@@ -3,22 +3,53 @@ module GetApiV4ProjectsIdJobs = struct
     module Scope = struct
       module Items = struct
         let t_of_yojson = function
-          | `String "created" -> Ok "created"
-          | `String "waiting_for_resource" -> Ok "waiting_for_resource"
-          | `String "preparing" -> Ok "preparing"
-          | `String "waiting_for_callback" -> Ok "waiting_for_callback"
-          | `String "pending" -> Ok "pending"
-          | `String "running" -> Ok "running"
-          | `String "success" -> Ok "success"
-          | `String "failed" -> Ok "failed"
-          | `String "canceling" -> Ok "canceling"
-          | `String "canceled" -> Ok "canceled"
-          | `String "skipped" -> Ok "skipped"
-          | `String "manual" -> Ok "manual"
-          | `String "scheduled" -> Ok "scheduled"
+          | `String "canceled" -> Ok `Canceled
+          | `String "canceling" -> Ok `Canceling
+          | `String "created" -> Ok `Created
+          | `String "failed" -> Ok `Failed
+          | `String "manual" -> Ok `Manual
+          | `String "pending" -> Ok `Pending
+          | `String "preparing" -> Ok `Preparing
+          | `String "running" -> Ok `Running
+          | `String "scheduled" -> Ok `Scheduled
+          | `String "skipped" -> Ok `Skipped
+          | `String "success" -> Ok `Success
+          | `String "waiting_for_callback" -> Ok `Waiting_for_callback
+          | `String "waiting_for_resource" -> Ok `Waiting_for_resource
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-        type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+        let t_to_yojson = function
+          | `Canceled -> `String "canceled"
+          | `Canceling -> `String "canceling"
+          | `Created -> `String "created"
+          | `Failed -> `String "failed"
+          | `Manual -> `String "manual"
+          | `Pending -> `String "pending"
+          | `Preparing -> `String "preparing"
+          | `Running -> `String "running"
+          | `Scheduled -> `String "scheduled"
+          | `Skipped -> `String "skipped"
+          | `Success -> `String "success"
+          | `Waiting_for_callback -> `String "waiting_for_callback"
+          | `Waiting_for_resource -> `String "waiting_for_resource"
+
+        type t =
+          ([ `Canceled
+           | `Canceling
+           | `Created
+           | `Failed
+           | `Manual
+           | `Pending
+           | `Preparing
+           | `Running
+           | `Scheduled
+           | `Skipped
+           | `Success
+           | `Waiting_for_callback
+           | `Waiting_for_resource
+           ]
+          [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+        [@@deriving show, eq]
       end
 
       type t = Items.t list [@@deriving show, eq]
@@ -69,7 +100,7 @@ module GetApiV4ProjectsIdJobs = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("scope", Var (params.scope, Option (Array String)));
+           ("scope", Var (params.scope, Option (Array (Enum Scope.Items.t_to_yojson))));
            ("page", Var (params.page, Int));
            ("per_page", Var (params.per_page, Int));
          ])

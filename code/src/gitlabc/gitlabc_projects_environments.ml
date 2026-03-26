@@ -52,12 +52,23 @@ module GetApiV4ProjectsIdEnvironments = struct
   module Parameters = struct
     module States = struct
       let t_of_yojson = function
-        | `String "stopped" -> Ok "stopped"
-        | `String "stopping" -> Ok "stopping"
-        | `String "available" -> Ok "available"
+        | `String "available" -> Ok `Available
+        | `String "stopped" -> Ok `Stopped
+        | `String "stopping" -> Ok `Stopping
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-      type t = (string[@of_yojson t_of_yojson]) [@@deriving show, eq]
+      let t_to_yojson = function
+        | `Available -> `String "available"
+        | `Stopped -> `String "stopped"
+        | `Stopping -> `String "stopping"
+
+      type t =
+        ([ `Available
+         | `Stopped
+         | `Stopping
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -106,7 +117,7 @@ module GetApiV4ProjectsIdEnvironments = struct
            ("per_page", Var (params.per_page, Int));
            ("name", Var (params.name, Option String));
            ("search", Var (params.search, Option String));
-           ("states", Var (params.states, Option String));
+           ("states", Var (params.states, Option (Enum States.t_to_yojson)));
          ])
       ~url
       ~responses:Responses.t

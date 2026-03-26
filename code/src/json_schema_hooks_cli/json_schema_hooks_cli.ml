@@ -45,7 +45,7 @@ let module_name_of_string s =
   |> CCString.capitalize_ascii
 
 let module_name_of_field_name defs s =
-  if Json_schema_conv.String_map.mem (CCString.replace ~sub:"_" ~by:"-" s) defs then
+  if Sln_map.String.mem (CCString.replace ~sub:"_" ~by:"-" s) defs then
     module_name_of_string s ^ "_"
   else module_name_of_string s
 
@@ -62,8 +62,18 @@ let variant_name_of_ref ref_ =
 
 let field_name_of_schema s =
   match CCString.lowercase_ascii s with
-  | ("type" | "in" | "object" | "class" | "to" | "private" | "include" | "ref" | "method" | "end")
-    as s -> s ^ "_"
+  | ( "class"
+    | "end"
+    | "external"
+    | "in"
+    | "include"
+    | "method"
+    | "module"
+    | "object"
+    | "private"
+    | "ref"
+    | "to"
+    | "type" ) as s -> s ^ "_"
   | s when CCString.prefix ~pre:"_" s -> CCString.drop_while (( = ) '_') s ^ "_"
   | s when CCString.prefix ~pre:"$" s -> CCString.drop_while (( = ) '$') s ^ "_"
   | s when CCString.prefix ~pre:"@" s -> CCString.drop_while (( = ) '@') s ^ "_"
@@ -77,26 +87,30 @@ let field_name_of_schema s =
       | s when CCString.prefix ~pre:"_" s -> CCString.drop_while (( = ) '_') s ^ "_"
       | s -> s)
 
-let field_default_of_value typ default =
+let field_default_of_value typ enum default =
   let module Gen = Json_schema_conv.Gen in
-  match (default, typ) with
-  | `String s, Some "boolean" ->
+  match (default, typ, enum) with
+  | `String s, Some "boolean", _ ->
       Some Ast_helper.(Exp.construct (Location.mknoloc (Gen.ident [ s ])) None)
-  | `String s, _ -> Some Ast_helper.(Exp.constant (Const.string s))
-  | `Bool b, _ ->
+  | `String s, _, Some enum_json -> (
+      match Gen.variant_name_of_default enum_json s with
+      | Some tag -> Some Ast_helper.(Exp.variant tag None)
+      | None -> Some Ast_helper.(Exp.constant (Const.string s)))
+  | `String s, _, None -> Some Ast_helper.(Exp.constant (Const.string s))
+  | `Bool b, _, _ ->
       Some Ast_helper.(Exp.construct (Location.mknoloc (Gen.ident [ Bool.to_string b ])) None)
-  | `Float fl, _ -> Some Ast_helper.(Exp.constant (Const.float (CCFloat.to_string fl)))
-  | `Int int, _ -> Some Ast_helper.(Exp.constant (Const.integer (CCInt.to_string int)))
-  | `List [], _ -> Some Json_schema_conv.Gen.(make_list [])
-  | `List (`String _ :: _ as v), _ ->
+  | `Float fl, _, _ -> Some Ast_helper.(Exp.constant (Const.float (CCFloat.to_string fl)))
+  | `Int int, _, _ -> Some Ast_helper.(Exp.constant (Const.integer (CCInt.to_string int)))
+  | `List [], _, _ -> Some Json_schema_conv.Gen.(make_list [])
+  | `List (`String _ :: _ as v), _, _ ->
       Some
         Json_schema_conv.Gen.(
           make_list
             (CCList.map
                (fun s -> Ast_helper.(Exp.constant (Const.string s)))
                (Yojson.Safe.Util.filter_string v)))
-  | `List _, _ -> (* TODO: Add more *) None
-  | json, _ ->
+  | `List _, _, _ -> (* TODO: Add more *) None
+  | json, _, _ ->
       failwith (Printf.sprintf "Unknown field default value: %s" (Yojson.Safe.to_string json))
 
 let rec resolve_ref definitions ref_ =
@@ -105,7 +119,7 @@ let rec resolve_ref definitions ref_ =
   | Value.Ref ref_ -> (
       match CCString.split_on_char '/' ref_ with
       | [ "#"; "definitions"; name ] -> (
-          match Json_schema_conv.String_map.get name definitions with
+          match Sln_map.String.get name definitions with
           | Some (Value.Ref _ as ref_) -> resolve_ref definitions ref_
           | Some (Value.V v) -> v
           | None -> failwith (Printf.sprintf "Could not resolve ref: %s" ref_))
@@ -129,7 +143,7 @@ let rec collect_schema_refs
              match schema with
              | Value.Ref ref_ -> [ ref_ ]
              | Value.V schema -> collect_schema_refs schema)
-           (String_map.to_list properties));
+           (Sln_map.String.to_list properties));
       (match additional_properties with
       | Additional_properties.Bool _ -> []
       | Additional_properties.V (Value.V schema) -> collect_schema_refs schema
@@ -171,9 +185,7 @@ let convert_def strict_records definitions module_base def =
            [
              (if CCString.equal field_name name then []
               else Json_schema_conv.Gen.yojson_key_name name);
-             (if
-                Json_schema_conv.String_set.mem name required
-                && not schema.Json_schema_conv.Schema.nullable
+             (if Sln_set.String.mem name required && not schema.Json_schema_conv.Schema.nullable
               then []
               else
                 match schema.Json_schema_conv.Schema.default with
@@ -185,12 +197,18 @@ let convert_def strict_records definitions module_base def =
                           (Ast_helper.Exp.construct
                              (Location.mknoloc (Json_schema_conv.Gen.ident [ "Some" ]))
                              (Some default)))
-                      (field_default_of_value schema.Json_schema_conv.Schema.typ default)
+                      (field_default_of_value
+                         schema.Json_schema_conv.Schema.typ
+                         schema.Json_schema_conv.Schema.enum
+                         default)
                 | Some default ->
                     CCOption.map_or
                       ~default:[]
                       (fun default -> Json_schema_conv.Gen.field_default default)
-                      (field_default_of_value schema.Json_schema_conv.Schema.typ default)
+                      (field_default_of_value
+                         schema.Json_schema_conv.Schema.typ
+                         schema.Json_schema_conv.Schema.enum
+                         default)
                 | None -> Json_schema_conv.Gen.field_default_none);
            ])
        ~resolve_ref:(resolve_ref definitions)
@@ -209,7 +227,7 @@ let convert_document strict_records output_dir output_name { Document.definition
         Json_schema_conv.{ (Schema.make_t_ ()) with Schema.one_of = Some [ Value.Ref ref_ ] }
     | None, None -> assert false
   in
-  Json_schema_conv.String_map.iter
+  Sln_map.String.iter
     (fun name def ->
       match def with
       | Json_schema_conv.Value.Ref _ -> ()
@@ -233,10 +251,7 @@ let convert_document strict_records output_dir output_name { Document.definition
             (Mb.mk
                (Location.mknoloc (Some (module_name_of_string name)))
                (Mod.ident (Location.mknoloc (Json_schema_conv.Gen.ident [ module_name ])))))
-        (definitions
-        |> Json_schema_conv.String_map.to_list
-        |> CCList.map fst
-        |> CCList.sort CCString.compare)
+        (definitions |> Sln_map.String.to_list |> CCList.map fst |> CCList.sort CCString.compare)
       @ [
           Str.module_
             (Mb.mk

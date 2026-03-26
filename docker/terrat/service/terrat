@@ -104,11 +104,12 @@ def main():
 
     # Run db migration
     if os.environ.get('TERRAT_STRACE'):
+        print('Running in strace', os.environ.get('TERRAT_STRACE'))
         subprocess.check_call([
             '/usr/bin/strace',
             '-ff',
             '-o',
-            '/tmp/strace-migrate.log',
+            os.environ.get('TERRAT_STRACE'),
             '-t',
             '-s',
             '100',
@@ -122,12 +123,14 @@ def main():
 
     # Run server
     if os.environ.get('TERRAT_STRACE'):
+        print('Running in strace', os.environ.get('TERRAT_STRACE'))
         os.execv('/usr/bin/strace',
                  [
                      '/usr/bin/strace',
                      '-ff',
+                     '-A',
                      '-o',
-                     '/tmp/strace.log',
+                     os.environ.get('TERRAT_STRACE'),
                      '-t',
                      '-s',
                      '100',

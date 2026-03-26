@@ -4,21 +4,37 @@ end
 
 module Relationship = struct
   let t_of_yojson = function
-    | `String "direct" -> Ok "direct"
-    | `String "indirect" -> Ok "indirect"
+    | `String "direct" -> Ok `Direct
+    | `String "indirect" -> Ok `Indirect
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Direct -> `String "direct"
+    | `Indirect -> `String "indirect"
+
+  type t =
+    ([ `Direct
+     | `Indirect
+     ]
+    [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 
 module Scope = struct
   let t_of_yojson = function
-    | `String "runtime" -> Ok "runtime"
-    | `String "development" -> Ok "development"
+    | `String "development" -> Ok `Development
+    | `String "runtime" -> Ok `Runtime
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Development -> `String "development"
+    | `Runtime -> `String "runtime"
+
+  type t =
+    ([ `Development
+     | `Runtime
+     ]
+    [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 

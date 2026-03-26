@@ -1,12 +1,22 @@
 module Parent = struct
   module Privacy = struct
     let t_of_yojson = function
-      | `String "open" -> Ok "open"
-      | `String "closed" -> Ok "closed"
-      | `String "secret" -> Ok "secret"
+      | `String "closed" -> Ok `Closed
+      | `String "open" -> Ok `Open
+      | `String "secret" -> Ok `Secret
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Closed -> `String "closed"
+      | `Open -> `String "open"
+      | `Secret -> `String "secret"
+
+    type t =
+      ([ `Closed
+       | `Open
+       | `Secret
+       ]
+      [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
@@ -28,12 +38,22 @@ end
 
 module Privacy = struct
   let t_of_yojson = function
-    | `String "open" -> Ok "open"
-    | `String "closed" -> Ok "closed"
-    | `String "secret" -> Ok "secret"
+    | `String "closed" -> Ok `Closed
+    | `String "open" -> Ok `Open
+    | `String "secret" -> Ok `Secret
     | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-  type t = (string[@of_yojson t_of_yojson])
+  let t_to_yojson = function
+    | `Closed -> `String "closed"
+    | `Open -> `String "open"
+    | `Secret -> `String "secret"
+
+  type t =
+    ([ `Closed
+     | `Open
+     | `Secret
+     ]
+    [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
   [@@deriving yojson { strict = false; meta = true }, show, eq]
 end
 

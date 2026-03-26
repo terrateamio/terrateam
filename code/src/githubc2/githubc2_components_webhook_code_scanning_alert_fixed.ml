@@ -1,10 +1,13 @@
 module Primary = struct
   module Action = struct
     let t_of_yojson = function
-      | `String "fixed" -> Ok "fixed"
+      | `String "fixed" -> Ok `Fixed
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `Fixed -> `String "fixed"
+
+    type t = ([ `Fixed ][@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
@@ -14,12 +17,22 @@ module Primary = struct
         module Primary = struct
           module Type = struct
             let t_of_yojson = function
-              | `String "Bot" -> Ok "Bot"
-              | `String "User" -> Ok "User"
-              | `String "Organization" -> Ok "Organization"
+              | `String "Bot" -> Ok `Bot
+              | `String "Organization" -> Ok `Organization
+              | `String "User" -> Ok `User
               | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-            type t = (string[@of_yojson t_of_yojson])
+            let t_to_yojson = function
+              | `Bot -> `String "Bot"
+              | `Organization -> `String "Organization"
+              | `User -> `String "User"
+
+            type t =
+              ([ `Bot
+               | `Organization
+               | `User
+               ]
+              [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
             [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
 
@@ -55,12 +68,22 @@ module Primary = struct
 
       module Dismissed_reason = struct
         let t_of_yojson = function
-          | `String "false positive" -> Ok "false positive"
-          | `String "won't fix" -> Ok "won't fix"
-          | `String "used in tests" -> Ok "used in tests"
+          | `String "false positive" -> Ok `False_positive
+          | `String "used in tests" -> Ok `Used_in_tests
+          | `String "won't fix" -> Ok `Won_t_fix
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-        type t = (string[@of_yojson t_of_yojson])
+        let t_to_yojson = function
+          | `False_positive -> `String "false positive"
+          | `Used_in_tests -> `String "used in tests"
+          | `Won_t_fix -> `String "won't fix"
+
+        type t =
+          ([ `False_positive
+           | `Used_in_tests
+           | `Won_t_fix
+           ]
+          [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
         [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 
@@ -100,12 +123,22 @@ module Primary = struct
 
           module State = struct
             let t_of_yojson = function
-              | `String "open" -> Ok "open"
-              | `String "dismissed" -> Ok "dismissed"
-              | `String "fixed" -> Ok "fixed"
+              | `String "dismissed" -> Ok `Dismissed
+              | `String "fixed" -> Ok `Fixed
+              | `String "open" -> Ok `Open
               | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-            type t = (string[@of_yojson t_of_yojson])
+            let t_to_yojson = function
+              | `Dismissed -> `String "dismissed"
+              | `Fixed -> `String "fixed"
+              | `Open -> `String "open"
+
+            type t =
+              ([ `Dismissed
+               | `Fixed
+               | `Open
+               ]
+              [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
             [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
 
@@ -130,13 +163,25 @@ module Primary = struct
         module Primary = struct
           module Severity = struct
             let t_of_yojson = function
-              | `String "none" -> Ok "none"
-              | `String "note" -> Ok "note"
-              | `String "warning" -> Ok "warning"
-              | `String "error" -> Ok "error"
+              | `String "error" -> Ok `Error
+              | `String "none" -> Ok `None
+              | `String "note" -> Ok `Note
+              | `String "warning" -> Ok `Warning
               | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-            type t = (string[@of_yojson t_of_yojson])
+            let t_to_yojson = function
+              | `Error -> `String "error"
+              | `None -> `String "none"
+              | `Note -> `String "note"
+              | `Warning -> `String "warning"
+
+            type t =
+              ([ `Error
+               | `None
+               | `Note
+               | `Warning
+               ]
+              [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
             [@@deriving yojson { strict = false; meta = true }, show, eq]
           end
 
@@ -163,10 +208,13 @@ module Primary = struct
 
       module State = struct
         let t_of_yojson = function
-          | `String "fixed" -> Ok "fixed"
+          | `String "fixed" -> Ok `Fixed
           | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-        type t = (string[@of_yojson t_of_yojson])
+        let t_to_yojson = function
+          | `Fixed -> `String "fixed"
+
+        type t = ([ `Fixed ][@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
         [@@deriving yojson { strict = false; meta = true }, show, eq]
       end
 

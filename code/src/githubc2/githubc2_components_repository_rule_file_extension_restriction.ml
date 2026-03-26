@@ -14,10 +14,13 @@ module Primary = struct
 
   module Type = struct
     let t_of_yojson = function
-      | `String "file_extension_restriction" -> Ok "file_extension_restriction"
+      | `String "file_extension_restriction" -> Ok `File_extension_restriction
       | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
-    type t = (string[@of_yojson t_of_yojson])
+    let t_to_yojson = function
+      | `File_extension_restriction -> `String "file_extension_restriction"
+
+    type t = ([ `File_extension_restriction ][@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
