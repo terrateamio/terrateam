@@ -4672,6 +4672,9 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           Abb.Future.return (Ok (Id.Event_kind_index, state))
       | Event.Pull_request_comment { comment = Terrat_comment.Gate_approval _; _ } ->
           Abb.Future.return (Ok (Id.Event_kind_gate_approval, state))
+      | Event.Pull_request_comment
+          { comment = Terrat_comment.(Apply_cancel | Apply_scheduled _); _ } ->
+          Abb.Future.return (Error (`Noop state))
       | Event.Push _ -> Abb.Future.return (Ok (Id.Event_kind_push, state))
       | Event.Run_scheduled_drift -> Abb.Future.return (Ok (Id.Event_kind_run_drift, state))
       | Event.Run_drift _ ->
@@ -5249,7 +5252,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Event.Pull_request_comment
           {
             comment =
-              Terrat_comment.(Feedback _ | Help | Repo_config | Unlock _ | Index | Gate_approval _);
+              Terrat_comment.(
+                ( Feedback _
+                | Help
+                | Repo_config
+                | Unlock _
+                | Index
+                | Gate_approval _
+                | Apply_cancel
+                | Apply_scheduled _ ));
             _;
           } -> assert false
       | Event.Push _ | Event.Run_drift _ -> assert false

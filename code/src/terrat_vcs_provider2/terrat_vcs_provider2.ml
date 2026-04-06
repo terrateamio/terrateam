@@ -170,6 +170,9 @@ module Msg = struct
     | Tier_check of Terrat_tier.Check.t
     | Unexpected_temporary_err
     | Unlock_success
+    | Apply_scheduled of { scheduled_at : string }
+    | Apply_schedule_cancelled
+    | Apply_schedule_nothing_to_cancel
 end
 
 module type S = sig
@@ -398,6 +401,40 @@ module type S = sig
         [> `Error ] )
       result
       Abb.Future.t
+
+    val store_scheduled_apply :
+      request_id:string ->
+      t ->
+      Api.Repo.t ->
+      Api.Pull_request.Id.t ->
+      string ->
+      Terrat_tag_query.t option ->
+      string ->
+      (Uuidm.t, [> `Error ]) result Abb.Future.t
+
+    val query_due_scheduled_applies :
+      request_id:string ->
+      t ->
+      ( (Uuidm.t
+        * Api.Account.t
+        * Api.Repo.t
+        * Api.Pull_request.Id.t
+        * Terrat_tag_query.t option
+        * string)
+        list,
+        [> `Error ] )
+      result
+      Abb.Future.t
+
+    val update_scheduled_apply_state :
+      request_id:string -> t -> Uuidm.t -> string -> (unit, [> `Error ]) result Abb.Future.t
+
+    val cancel_scheduled_applies_for_pull_request :
+      request_id:string ->
+      t ->
+      Api.Repo.t ->
+      Api.Pull_request.Id.t ->
+      (Uuidm.t list, [> `Error ]) result Abb.Future.t
 
     val cleanup_repo_configs : request_id:string -> t -> (unit, [> `Error ]) result Abb.Future.t
     val cleanup_flow_states : request_id:string -> t -> (unit, [> `Error ]) result Abb.Future.t

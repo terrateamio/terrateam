@@ -1412,6 +1412,21 @@ struct
           >>= fun () ->
           fetch Keys.pull_request_event
           >>= fun pull_request_event ->
+          (match pull_request_event with
+          | E.Comment
+              {
+                comment = Terrat_comment.Apply_scheduled { tag_query = _; scheduled_at };
+                comment_id = _;
+              } ->
+              fetch Keys.publish_comment
+              >>= fun publish_comment ->
+              publish_comment' publish_comment (Msg.Apply_scheduled { scheduled_at })
+          | E.Comment { comment = Terrat_comment.Apply_cancel; comment_id = _ } ->
+              fetch Keys.publish_comment
+              >>= fun publish_comment ->
+              publish_comment' publish_comment Msg.Apply_schedule_cancelled
+          | _ -> Abb.Future.return (Ok ()))
+          >>= fun () ->
           let job_type =
             match pull_request_event with
             | E.Open | E.Sync | E.Ready_for_review -> Some Tjc.Job.Type_.Autoplan
@@ -1430,6 +1445,7 @@ struct
                 | Terrat_comment.Unlock unlocks ->
                     Some (Tjc.Job.Type_.Unlock (CCList.sort_uniq ~cmp:CCString.compare unlocks))
                 | Terrat_comment.Index -> Some Tjc.Job.Type_.Index
+                | Terrat_comment.Apply_scheduled _ | Terrat_comment.Apply_cancel -> None
                 | Terrat_comment.Help
                 | Terrat_comment.Apply_autoapprove _
                 | Terrat_comment.Feedback _ -> raise (Failure "nyi"))

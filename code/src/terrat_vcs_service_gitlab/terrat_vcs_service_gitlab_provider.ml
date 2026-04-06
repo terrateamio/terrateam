@@ -676,6 +676,71 @@ module Db = struct
         Ret.(option text)
         /^ select_missing_drift_scheduled_runs_query)
 
+    let insert_scheduled_apply_query = read "insert_scheduled_apply.sql"
+
+    let insert_scheduled_apply () =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* id *)
+        Ret.uuid
+        /^ insert_scheduled_apply_query
+        /% Var.bigint "repo"
+        /% Var.bigint "pull_number"
+        /% Var.(option (text "tag_query"))
+        /% Var.text "scheduled_at"
+        /% Var.text "created_by")
+
+    let select_due_scheduled_applies_query = read "select_due_scheduled_applies.sql"
+
+    let select_due_scheduled_applies () =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* id *)
+        Ret.uuid
+        //
+        (* installation_id *)
+        Ret.bigint
+        //
+        (* repository_id *)
+        Ret.bigint
+        //
+        (* owner *)
+        Ret.text
+        //
+        (* name *)
+        Ret.text
+        //
+        (* pull_number *)
+        Ret.bigint
+        //
+        (* tag_query *)
+        Ret.(option (u text CCFun.(Terrat_tag_query.of_string %> CCResult.to_opt)))
+        //
+        (* scheduled_at *)
+        Ret.text
+        /^ select_due_scheduled_applies_query)
+
+    let update_scheduled_apply_state_query = read "update_scheduled_apply_state.sql"
+
+    let update_scheduled_apply_state () =
+      Pgsql_io.Typed_sql.(
+        sql /^ update_scheduled_apply_state_query /% Var.uuid "id" /% Var.text "state")
+
+    let cancel_scheduled_applies_for_pull_request_query =
+      read "cancel_scheduled_applies_for_pull_request.sql"
+
+    let cancel_scheduled_applies_for_pull_request () =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* id *)
+        Ret.uuid
+        /^ cancel_scheduled_applies_for_pull_request_query
+        /% Var.bigint "repository"
+        /% Var.bigint "pull_number")
+
     let cleanup_repo_configs = Pgsql_io.Typed_sql.(sql /^ read "cleanup_repo_configs.sql")
     let delete_stale_flow_states_query = read "delete_stale_flow_states.sql"
     let delete_stale_flow_states () = Pgsql_io.Typed_sql.(sql /^ delete_stale_flow_states_query)
@@ -1971,6 +2036,75 @@ module Db = struct
     | Ok _ as ret -> Abb.Future.return ret
     | Error (#Pgsql_io.err as err) ->
         Logs.err (fun m -> m "%s : DRIFT : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
+  let store_scheduled_apply ~request_id db repo pull_number created_by tag_query scheduled_at =
+    let open Abb.Future.Infix_monad in
+    let tag_query_str = CCOption.map Terrat_tag_query.to_string tag_query in
+    Metrics.Psql_query_time.time (Metrics.psql_query_time "insert_scheduled_apply") (fun () ->
+        Pgsql_io.Prepared_stmt.fetch
+          db
+          (Sql.insert_scheduled_apply ())
+          ~f:(fun id -> id)
+          (CCInt64.of_int (Api.Repo.id repo))
+          (CCInt64.of_int pull_number)
+          tag_query_str
+          scheduled_at
+          created_by)
+    >>= function
+    | Ok [ id ] -> Abb.Future.return (Ok id)
+    | Ok _ -> Abb.Future.return (Error `Error)
+    | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+        Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
+  let query_due_scheduled_applies ~request_id db =
+    let open Abb.Future.Infix_monad in
+    Metrics.Psql_query_time.time (Metrics.psql_query_time "select_due_scheduled_applies") (fun () ->
+        Pgsql_io.Prepared_stmt.fetch
+          db
+          (Sql.select_due_scheduled_applies ())
+          ~f:(fun id installation_id repository_id owner name pull_number tag_query scheduled_at ->
+            ( id,
+              Api.Account.make @@ CCInt64.to_int installation_id,
+              Api.Repo.make ~id:(CCInt64.to_int repository_id) ~owner ~name (),
+              CCInt64.to_int pull_number,
+              tag_query,
+              scheduled_at )))
+    >>= function
+    | Ok _ as ret -> Abb.Future.return ret
+    | Error (#Pgsql_io.err as err) ->
+        Logs.err (fun m -> m "%s : SCHEDULED_APPLY : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
+  let update_scheduled_apply_state ~request_id db id state =
+    let open Abb.Future.Infix_monad in
+    Metrics.Psql_query_time.time (Metrics.psql_query_time "update_scheduled_apply_state") (fun () ->
+        Pgsql_io.Prepared_stmt.execute db (Sql.update_scheduled_apply_state ()) id state)
+    >>= function
+    | Ok () -> Abb.Future.return (Ok ())
+    | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+        Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
+  let cancel_scheduled_applies_for_pull_request ~request_id db repo pull_number =
+    let open Abb.Future.Infix_monad in
+    Metrics.Psql_query_time.time
+      (Metrics.psql_query_time "cancel_scheduled_applies_for_pull_request")
+      (fun () ->
+        Pgsql_io.Prepared_stmt.fetch
+          db
+          (Sql.cancel_scheduled_applies_for_pull_request ())
+          ~f:(fun id -> id)
+          (CCInt64.of_int (Api.Repo.id repo))
+          (CCInt64.of_int pull_number))
+    >>= function
+    | Ok _ as ret -> Abb.Future.return ret
+    | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+        Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
 
   let cleanup_repo_configs ~request_id db =
@@ -3907,6 +4041,33 @@ module Comment = struct
           pull_request
           "UNLOCK_SUCCESS"
           Tmpl.unlock_success
+          kv
+    | Msg.Apply_scheduled { scheduled_at } ->
+        let kv = Snabela.Kv.(Map.of_list [ ("scheduled_at", string scheduled_at) ]) in
+        Gcm_api.apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "APPLY_SCHEDULED"
+          Tmpl.apply_scheduled
+          kv
+    | Msg.Apply_schedule_cancelled ->
+        let kv = Snabela.Kv.(Map.of_list []) in
+        Gcm_api.apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "APPLY_SCHEDULE_CANCELLED"
+          Tmpl.apply_schedule_cancelled
+          kv
+    | Msg.Apply_schedule_nothing_to_cancel ->
+        let kv = Snabela.Kv.(Map.of_list []) in
+        Gcm_api.apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "APPLY_SCHEDULE_NOTHING_TO_CANCEL"
+          Tmpl.apply_schedule_nothing_to_cancel
           kv
 end
 

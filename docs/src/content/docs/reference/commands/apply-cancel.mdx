@@ -1,0 +1,37 @@
+---
+title: terrateam apply-cancel
+description: Cancel all pending scheduled applies on a pull request
+---
+
+Cancel all pending scheduled applies on the current pull request.
+
+## Usage
+
+```
+terrateam apply-cancel
+```
+
+## Examples
+
+```
+terrateam apply-cancel
+```
+
+If there are pending scheduled applies, Terrateam responds:
+
+> All scheduled applies have been cancelled.
+
+If there are no pending scheduled applies:
+
+> No pending scheduled applies to cancel.
+
+## Behavior
+
+- Cancels all pending scheduled applies on the pull request, regardless of their scheduled time or tag query.
+- Already-running or completed scheduled applies are not affected.
+- This command does not cancel regular (non-scheduled) applies.
+
+## Related Commands
+
+- [terrateam apply scheduled](/reference/commands/apply-scheduled) - Schedule an apply for a future time
+- [terrateam apply](/reference/commands/apply) - Apply immediately

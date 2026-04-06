@@ -61,6 +61,16 @@ module Db = struct
     raise (Failure "nyi")
 
   let query_missing_drift_scheduled_runs ~request_id db = raise (Failure "nyi")
+
+  let store_scheduled_apply ~request_id db repo pull_number created_by tag_query scheduled_at =
+    raise (Failure "nyi")
+
+  let query_due_scheduled_applies ~request_id db = raise (Failure "nyi")
+  let update_scheduled_apply_state ~request_id db id state = raise (Failure "nyi")
+
+  let cancel_scheduled_applies_for_pull_request ~request_id db repo pull_number =
+    raise (Failure "nyi")
+
   let cleanup_repo_configs ~request_id db = raise (Failure "nyi")
   let cleanup_flow_states ~request_id db = raise (Failure "nyi")
   let cleanup_plans ~request_id db = raise (Failure "nyi")
