@@ -141,6 +141,7 @@ export default defineConfig({
                 { label: "Terragrunt", link: "/integrations/iac-tools/terragrunt" },
                 { label: "Pulumi", link: "/integrations/iac-tools/pulumi" },
                 { label: "CDK for Terraform", link: "/integrations/iac-tools/cdktf" },
+                { label: "Stategraph", link: "/integrations/iac-tools/stategraph" },
                 { label: "Migrate from Terraform Cloud", link: "/integrations/iac-tools/terraform-cloud-migration" },
               ],
             },

@@ -1,0 +1,149 @@
+---
+title: Stategraph
+description: Learn how to use Stategraph, a Terraform-compatible state management platform, with Terrateam
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+[Stategraph](https://stategraph.com) is a Terraform-compatible state management platform that normalizes your infrastructure state into a queryable database. It wraps the standard Terraform workflow, so `stategraph tf plan` and `stategraph tf apply` behave the same way while giving you SQL-like queries, dependency analysis, and drift detection on top. Terrateam supports Stategraph through its [custom engine](/advanced-usage/custom-engine) feature.
+
+## Configuring Stategraph
+
+### Global
+
+To use Stategraph for all Terrateam operations, configure a custom engine in your `.terrateam/config.yml`:
+
+```yaml
+engine:
+  name: custom
+  init:
+    - bash
+    - -c
+    - curl -sSL https://get.stategraph.com/install.sh | sh -s -- --no-sudo
+  plan:
+    - bash
+    - -c
+    - >-
+      export PATH="$HOME/.local/bin:$PATH" &&
+      stategraph tf plan --out "$TERRATEAM_PLAN_FILE"
+      | tee "$TERRATEAM_TMPDIR/sg-plan-output.txt"
+  diff:
+    - cat
+    - $TERRATEAM_TMPDIR/sg-plan-output.txt
+  apply:
+    - bash
+    - -c
+    - >-
+      export PATH="$HOME/.local/bin:$PATH" &&
+      stategraph tf apply "$TERRATEAM_PLAN_FILE"
+```
+
+### Specific Workflow
+
+To scope Stategraph to a subset of directories via a tag query:
+
+```yaml
+workflows:
+  - tag_query: infra
+    engine:
+      name: custom
+      init:
+        - bash
+        - -c
+        - curl -sSL https://get.stategraph.com/install.sh | sh -s -- --no-sudo
+      plan:
+        - bash
+        - -c
+        - >-
+          export PATH="$HOME/.local/bin:$PATH" &&
+          stategraph tf plan --out "$TERRATEAM_PLAN_FILE"
+          | tee "$TERRATEAM_TMPDIR/sg-plan-output.txt"
+      diff:
+        - cat
+        - $TERRATEAM_TMPDIR/sg-plan-output.txt
+      apply:
+        - bash
+        - -c
+        - >-
+          export PATH="$HOME/.local/bin:$PATH" &&
+          stategraph tf apply "$TERRATEAM_PLAN_FILE"
+```
+
+## How It Works
+
+The custom engine defines four steps that Terrateam executes in order:
+
+1. **`init`** — Downloads and installs the Stategraph CLI into `~/.local/bin`.
+2. **`plan`** — Runs `stategraph tf plan`, writing the binary plan file to `$TERRATEAM_PLAN_FILE`. The human-readable output is captured to a temporary file with `tee` so it can be displayed on the pull request.
+3. **`diff`** — Reads back the captured plan output. Terrateam displays this in the PR comment as the plan diff.
+4. **`apply`** — Runs `stategraph tf apply` with the saved plan file, exactly like `terraform apply <planfile>`.
+
+## Using Stategraph with Terrateam
+
+<Steps>
+1. Add the custom engine configuration to your `.terrateam/config.yml`.
+
+1. Open a pull request with changes to your Terraform code.
+
+1. Terrateam runs the Stategraph plan and comments on the pull request with the plan output.
+
+1. Review the plan output and collaborate with your team.
+
+1. Once approved, comment `terrateam apply` to trigger an apply using Stategraph.
+
+1. Terrateam runs the apply and comments with the results.
+</Steps>
+
+## Environment Variables
+
+### Stategraph CLI
+
+The Stategraph CLI requires the following environment variables:
+
+- **`STATEGRAPH_API_BASE`** — URL of your Stategraph server (e.g., `https://stategraph.example.com`).
+- **`STATEGRAPH_API_KEY`** — API key for authenticating with Stategraph. Create one through the Stategraph UI or API.
+- **`STATEGRAPH_TENANT_ID`** — The tenant ID for your Stategraph organization.
+
+`STATEGRAPH_API_KEY` is sensitive and should be stored as a secret:
+
+- **GitHub**: Go to your repository **Settings → Secrets and variables → Actions → New repository secret** and add `STATEGRAPH_API_KEY`.
+- **GitLab**: Go to your project **Settings → CI/CD → Variables**, add `STATEGRAPH_API_KEY`, and check **Mask variable**.
+
+Terrateam automatically makes GitHub Secrets and GitLab CI/CD variables available as environment variables.
+
+`STATEGRAPH_API_BASE` and `STATEGRAPH_TENANT_ID` can also be set in your `.terrateam/config.yml` using hooks or workflows.
+
+**Using hooks** (applies to all workflows):
+
+```yaml
+hooks:
+  all:
+    pre:
+      - type: env
+        name: STATEGRAPH_API_BASE
+        cmd: ['echo', '$STATEGRAPH_API_BASE']
+      - type: env
+        name: STATEGRAPH_TENANT_ID
+        cmd: ['echo', '$STATEGRAPH_TENANT_ID']
+```
+
+**Using workflows** (scoped to specific tag queries):
+
+```yaml
+workflows:
+  - tag_query: infra
+    plan:
+      - type: env
+        name: STATEGRAPH_API_BASE
+        cmd: ['echo', '$STATEGRAPH_API_BASE']
+      - type: env
+        name: STATEGRAPH_TENANT_ID
+        cmd: ['echo', '$STATEGRAPH_TENANT_ID']
+    apply:
+      - type: env
+        name: STATEGRAPH_API_BASE
+        cmd: ['echo', '$STATEGRAPH_API_BASE']
+      - type: env
+        name: STATEGRAPH_TENANT_ID
+        cmd: ['echo', '$STATEGRAPH_TENANT_ID']
+```
