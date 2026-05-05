@@ -352,11 +352,6 @@ module Db = struct
         /% Var.(array (option (boolean "changed")))
         /% Var.(str_array (option (text "id"))))
 
-    let upsert_flow_state_query = read "update_flow_state.sql"
-
-    let upsert_flow_state () =
-      Pgsql_io.Typed_sql.(sql /^ upsert_flow_state_query /% Var.uuid "id" /% Var.text "data")
-
     let insert_dirspace =
       Pgsql_io.Typed_sql.(
         sql
@@ -456,22 +451,7 @@ module Db = struct
         //
         (* id *)
         Ret.uuid
-        /^ read "select_next_work_manifest.sql"
-        /% Var.boolean "new_age")
-
-    let select_flow_state_query = read "select_flow_data.sql"
-
-    let select_flow_state () =
-      Pgsql_io.Typed_sql.(
-        sql
-        //
-        (* data *)
-        Ret.text
-        /^ select_flow_state_query
-        /% Var.uuid "id")
-
-    let delete_flow_state_query = read "delete_flow_state.sql"
-    let delete_flow_state () = Pgsql_io.Typed_sql.(sql /^ delete_flow_state_query /% Var.uuid "id")
+        /^ read "select_next_work_manifest.sql")
 
     let select_out_of_diff_applies =
       Pgsql_io.Typed_sql.(
@@ -678,8 +658,6 @@ module Db = struct
         /^ select_missing_drift_scheduled_runs_query)
 
     let cleanup_repo_configs = Pgsql_io.Typed_sql.(sql /^ read "cleanup_repo_configs.sql")
-    let delete_stale_flow_states_query = read "delete_stale_flow_states.sql"
-    let delete_stale_flow_states () = Pgsql_io.Typed_sql.(sql /^ delete_stale_flow_states_query)
 
     let delete_old_plans =
       Pgsql_io.Typed_sql.(
@@ -1246,16 +1224,6 @@ module Db = struct
         Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
 
-  let store_flow_state ~request_id db work_manifest_id data =
-    let open Abb.Future.Infix_monad in
-    Metrics.Psql_query_time.time (Metrics.psql_query_time "upsert_flow_state") (fun () ->
-        Pgsql_io.Prepared_stmt.execute db (Sql.upsert_flow_state ()) work_manifest_id data)
-    >>= function
-    | Ok () -> Abb.Future.return (Ok ())
-    | Error (#Pgsql_io.err as err) ->
-        Logs.err (fun m -> m "%s: ERROR : %a" request_id Pgsql_io.pp_err err);
-        Abb.Future.return (Error `Error)
-
   let store_dirspaceflows ~request_id ~base_ref ~branch_ref db repo dirspaceflows =
     let id = CCInt64.of_int (Api.Repo.id repo) in
     let run =
@@ -1632,11 +1600,11 @@ module Db = struct
         Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
 
-  let query_next_pending_work_manifest ?(new_age = false) ~request_id db =
+  let query_next_pending_work_manifest ?new_age:_ ~request_id db =
     let run =
       let open Abbs_future_combinators.Infix_result_monad in
       Metrics.Psql_query_time.time (Metrics.psql_query_time "select_next_work_manifest") (fun () ->
-          Pgsql_io.Prepared_stmt.fetch db ~f:CCFun.id Sql.select_next_work_manifest new_age)
+          Pgsql_io.Prepared_stmt.fetch db ~f:CCFun.id Sql.select_next_work_manifest)
       >>= function
       | [] -> Abb.Future.return (Ok None)
       | [ id ] ->
@@ -1665,27 +1633,6 @@ module Db = struct
         Logs.err (fun m -> m "%s: ERROR : %a" request_id Pgsql_pool.pp_err err);
         Abb.Future.return (Error `Error)
     | Error `Error -> Abb.Future.return (Error `Error)
-
-  let query_flow_state ~request_id db work_manifest_id =
-    let open Abb.Future.Infix_monad in
-    Metrics.Psql_query_time.time (Metrics.psql_query_time "select_flow_state") (fun () ->
-        Pgsql_io.Prepared_stmt.fetch db (Sql.select_flow_state ()) ~f:CCFun.id work_manifest_id)
-    >>= function
-    | Ok (data :: _) -> Abb.Future.return (Ok (Some data))
-    | Ok [] -> Abb.Future.return (Ok None)
-    | Error (#Pgsql_io.err as err) ->
-        Logs.err (fun m -> m "%s: ERROR : %a" request_id Pgsql_io.pp_err err);
-        Abb.Future.return (Error `Error)
-
-  let delete_flow_state ~request_id db work_manifest_id =
-    let open Abb.Future.Infix_monad in
-    Metrics.Psql_query_time.time (Metrics.psql_query_time "delete_flow_state") (fun () ->
-        Pgsql_io.Prepared_stmt.execute db (Sql.delete_flow_state ()) work_manifest_id)
-    >>= function
-    | Ok () -> Abb.Future.return (Ok ())
-    | Error (#Pgsql_io.err as err) ->
-        Logs.err (fun m -> m "%s: ERROR : %a" request_id Pgsql_io.pp_err err);
-        Abb.Future.return (Error `Error)
 
   let query_pull_request_out_of_change_applies ~request_id db pull_request =
     let run =
@@ -2026,16 +1973,6 @@ module Db = struct
     | Error (#Pgsql_io.err as err) ->
         Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
-        Abb.Future.return (Error `Error)
-
-  let cleanup_flow_states ~request_id db =
-    let open Abb.Future.Infix_monad in
-    Metrics.Psql_query_time.time (Metrics.psql_query_time "delete_stale_flow_states") (fun () ->
-        Pgsql_io.Prepared_stmt.execute db (Sql.delete_stale_flow_states ()))
-    >>= function
-    | Ok () -> Abb.Future.return (Ok ())
-    | Error (#Pgsql_io.err as err) ->
-        Logs.err (fun m -> m "%s: ERROR : %a" request_id Pgsql_io.pp_err err);
         Abb.Future.return (Error `Error)
 
   let cleanup_plans ~request_id db =

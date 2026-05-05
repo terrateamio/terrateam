@@ -247,9 +247,6 @@ module type S = sig
       Terrat_api_components.Work_manifest_build_tree_result.Files.t ->
       (unit, [> `Error ]) result Abb.Future.t
 
-    val store_flow_state :
-      request_id:string -> t -> Uuidm.t -> string -> (unit, [> `Error ]) result Abb.Future.t
-
     val store_dirspaceflows :
       request_id:string ->
       base_ref:Api.Ref.t ->
@@ -320,12 +317,6 @@ module type S = sig
         [> `Error ] )
       result
       Abb.Future.t
-
-    val query_flow_state :
-      request_id:string -> t -> Uuidm.t -> (string option, [> `Error ]) result Abb.Future.t
-
-    val delete_flow_state :
-      request_id:string -> t -> Uuidm.t -> (unit, [> `Error ]) result Abb.Future.t
 
     val query_pull_request_out_of_change_applies :
       request_id:string ->
@@ -402,7 +393,6 @@ module type S = sig
       Abb.Future.t
 
     val cleanup_repo_configs : request_id:string -> t -> (unit, [> `Error ]) result Abb.Future.t
-    val cleanup_flow_states : request_id:string -> t -> (unit, [> `Error ]) result Abb.Future.t
     val cleanup_plans : request_id:string -> t -> (unit, [> `Error ]) result Abb.Future.t
 
     val unlock :

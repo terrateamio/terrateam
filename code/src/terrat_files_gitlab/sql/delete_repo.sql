@@ -45,11 +45,6 @@ delete_work_manifest_steps as (
     using work_manifests as wm, repo as r
     where work_manifest_steps.work_manifest_id = wm.id and wm.repo = r.core_id
 ),
-delete_flow_states as (
-    delete from flow_states
-    using work_manifests as wm, repo as r
-    where flow_states.id = wm.id and wm.repo = r.core_id
-),
 delete_pull_request_stacks as (
     delete from pull_request_stacks
     using pull_requests as pr

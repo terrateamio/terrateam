@@ -23,7 +23,6 @@ module Db = struct
   let store_index_result ~request_id db work_manifest_id index_result = raise (Failure "nyi")
   let store_repo_config_json ~request_id db account ref_ json = raise (Failure "nyi")
   let store_repo_tree ~request_id db account ref_ files = raise (Failure "nyi")
-  let store_flow_state ~request_id db work_manifest_id state = raise (Failure "nyi")
 
   let store_dirspaceflows ~request_id ~base_ref ~branch_ref db repo dirspaceflows =
     raise (Failure "nyi")
@@ -36,8 +35,6 @@ module Db = struct
   let query_repo_config_json ~request_id db account ref_ = raise (Failure "nyi")
   let query_repo_tree ?base_ref ~request_id db accoutn ref_ = raise (Failure "nyi")
   let query_next_pending_work_manifest ?new_age ~request_id db = raise (Failure "nyi")
-  let query_flow_state ~request_id db work_manifest_id = raise (Failure "nyi")
-  let delete_flow_state ~request_id db work_manifest_id = raise (Failure "nyi")
   let query_pull_request_out_of_change_applies ~request_id db pull_request = raise (Failure "nyi")
   let query_applied_dirspaces_for_context ~request_id db context = raise (Failure "nyi")
   let query_applied_dirspaces ~request_id db pull_request = raise (Failure "nyi")
@@ -62,7 +59,6 @@ module Db = struct
 
   let query_missing_drift_scheduled_runs ~request_id db = raise (Failure "nyi")
   let cleanup_repo_configs ~request_id db = raise (Failure "nyi")
-  let cleanup_flow_states ~request_id db = raise (Failure "nyi")
   let cleanup_plans ~request_id db = raise (Failure "nyi")
   let unlock ~request_id db repo unlock_id = raise (Failure "nyi")
   let query_plan ~request_id db work_manifest_id dirspace = raise (Failure "nyi")
