@@ -113,8 +113,6 @@ next_work_manifests as (
 )
 select wm.id from work_manifests as wm
 inner join next_work_manifests as nwm on nwm.id = wm.id
-left join flow_states
-  on flow_states.id = wm.id
-where nwm.rn = 1 and wm.state = 'queued' and ((flow_states.id is null and $new_age) or (flow_states.id is not null and not $new_age))
+where nwm.rn = 1 and wm.state = 'queued'
 for update of wm skip locked
 limit 1

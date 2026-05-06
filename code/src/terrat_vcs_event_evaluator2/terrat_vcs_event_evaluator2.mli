@@ -77,4 +77,10 @@ module Make (S : Terrat_vcs_provider2.S) : sig
     exec:Exec.t ->
     unit ->
     unit Abb.Future.t
+
+  val run_plan_cleanup :
+    request_id:string -> storage:Terrat_storage.t -> (unit, [> `Error ]) result Abb.Future.t
+
+  val run_repo_config_cleanup :
+    request_id:string -> storage:Terrat_storage.t -> (unit, [> `Error ]) result Abb.Future.t
 end
