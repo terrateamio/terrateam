@@ -1,5 +1,12 @@
 let ctx = Terrat_base_repo_config_v1.Ctx.make ~dest_branch:"main" ~branch:"test" ()
 
+let depends_on_q ?(prune_on_no_change = false) s =
+  {
+    Terrat_base_repo_config_v1.Depends_on.tag_query =
+      CCResult.get_exn (Terrat_tag_query.of_string s);
+    prune_on_no_change;
+  }
+
 (* This configuration is used for tests of the dirs configuration *)
 let dirs_config =
   let module R = Terrat_base_repo_config_v1 in
@@ -1777,9 +1784,7 @@ let test_depends_on =
                                     R.Dirs.Workspace.make
                                       ~when_modified:
                                         (R.When_modified.make
-                                           ~depends_on:
-                                             (CCResult.get_exn
-                                                (Terrat_tag_query.of_string "dir:base"))
+                                           ~depends_on:(depends_on_q "dir:base")
                                            ())
                                       () );
                                 ])
@@ -1820,9 +1825,7 @@ let test_depends_on_multiple_depends =
                                     R.Dirs.Workspace.make
                                       ~when_modified:
                                         (R.When_modified.make
-                                           ~depends_on:
-                                             (CCResult.get_exn
-                                                (Terrat_tag_query.of_string "dir:base"))
+                                           ~depends_on:(depends_on_q "dir:base")
                                            ())
                                       () );
                                 ])
@@ -1836,9 +1839,7 @@ let test_depends_on_multiple_depends =
                                     R.Dirs.Workspace.make
                                       ~when_modified:
                                         (R.When_modified.make
-                                           ~depends_on:
-                                             (CCResult.get_exn
-                                                (Terrat_tag_query.of_string "dir:base"))
+                                           ~depends_on:(depends_on_q "dir:base")
                                            ())
                                       () );
                                 ])
@@ -1886,9 +1887,7 @@ let test_depends_on_multiple_depends_2 =
                                     R.Dirs.Workspace.make
                                       ~when_modified:
                                         (R.When_modified.make
-                                           ~depends_on:
-                                             (CCResult.get_exn
-                                                (Terrat_tag_query.of_string "dir:base"))
+                                           ~depends_on:(depends_on_q "dir:base")
                                            ())
                                       () );
                                 ])
@@ -1902,9 +1901,7 @@ let test_depends_on_multiple_depends_2 =
                                     R.Dirs.Workspace.make
                                       ~when_modified:
                                         (R.When_modified.make
-                                           ~depends_on:
-                                             (CCResult.get_exn
-                                                (Terrat_tag_query.of_string "dir:base"))
+                                           ~depends_on:(depends_on_q "dir:base")
                                            ())
                                       () );
                                 ])
@@ -1919,9 +1916,7 @@ let test_depends_on_multiple_depends_2 =
                                       ~when_modified:
                                         (R.When_modified.make
                                            ~depends_on:
-                                             (CCResult.get_exn
-                                                (Terrat_tag_query.of_string
-                                                   "dir:database1 or dir:database2"))
+                                             (depends_on_q "dir:database1 or dir:database2")
                                            ())
                                       () );
                                 ])
@@ -1976,9 +1971,7 @@ let test_depends_on_multiple_depends_disjoint =
                                     R.Dirs.Workspace.make
                                       ~when_modified:
                                         (R.When_modified.make
-                                           ~depends_on:
-                                             (CCResult.get_exn
-                                                (Terrat_tag_query.of_string "dir:base"))
+                                           ~depends_on:(depends_on_q "dir:base")
                                            ())
                                       () );
                                 ])
@@ -1992,9 +1985,7 @@ let test_depends_on_multiple_depends_disjoint =
                                     R.Dirs.Workspace.make
                                       ~when_modified:
                                         (R.When_modified.make
-                                           ~depends_on:
-                                             (CCResult.get_exn
-                                                (Terrat_tag_query.of_string "dir:base"))
+                                           ~depends_on:(depends_on_q "dir:base")
                                            ())
                                       () );
                                 ])
@@ -2008,9 +1999,7 @@ let test_depends_on_multiple_depends_disjoint =
                                     R.Dirs.Workspace.make
                                       ~when_modified:
                                         (R.When_modified.make
-                                           ~depends_on:
-                                             (CCResult.get_exn
-                                                (Terrat_tag_query.of_string "dir:database1"))
+                                           ~depends_on:(depends_on_q "dir:database1")
                                            ())
                                       () );
                                 ])
@@ -2024,9 +2013,7 @@ let test_depends_on_multiple_depends_disjoint =
                                     R.Dirs.Workspace.make
                                       ~when_modified:
                                         (R.When_modified.make
-                                           ~depends_on:
-                                             (CCResult.get_exn
-                                                (Terrat_tag_query.of_string "dir:database2"))
+                                           ~depends_on:(depends_on_q "dir:database2")
                                            ())
                                       () );
                                 ])
@@ -2073,9 +2060,7 @@ let test_depends_on_cycle =
                                     R.Dirs.Workspace.make
                                       ~when_modified:
                                         (R.When_modified.make
-                                           ~depends_on:
-                                             (CCResult.get_exn
-                                                (Terrat_tag_query.of_string "dir:database"))
+                                           ~depends_on:(depends_on_q "dir:database")
                                            ())
                                       () );
                                 ])
@@ -2089,9 +2074,7 @@ let test_depends_on_cycle =
                                     R.Dirs.Workspace.make
                                       ~when_modified:
                                         (R.When_modified.make
-                                           ~depends_on:
-                                             (CCResult.get_exn
-                                                (Terrat_tag_query.of_string "dir:base"))
+                                           ~depends_on:(depends_on_q "dir:base")
                                            ())
                                       () );
                                 ])
@@ -2138,9 +2121,7 @@ let test_depends_on_relative_dir =
                                     R.Dirs.Workspace.make
                                       ~when_modified:
                                         (R.When_modified.make
-                                           ~depends_on:
-                                             (CCResult.get_exn
-                                                (Terrat_tag_query.of_string "relative_dir:../base"))
+                                           ~depends_on:(depends_on_q "relative_dir:../base")
                                            ())
                                       () );
                                 ])
@@ -2172,6 +2153,159 @@ let test_depends_on_relative_dir =
              (dirspace_eq
                 { Terrat_dirspace.dir = "projects/proj1/database"; workspace = "default" })
              changes)))
+
+let test_depends_on_prune_on_no_change_chain =
+  Oth.test ~name:"depends_on prune_on_no_change chain" (fun _ ->
+      let module R = Terrat_base_repo_config_v1 in
+      let file_list = [ "a/main.tf"; "b/main.tf"; "c/main.tf"; "d/main.tf"; "e/main.tf" ] in
+      let dir tag prune =
+        R.Dirs.Dir.make
+          ~workspaces:
+            (Sln_map.String.of_list
+               [
+                 ( "default",
+                   R.Dirs.Workspace.make
+                     ~when_modified:
+                       (R.When_modified.make
+                          ~depends_on:(depends_on_q ~prune_on_no_change:prune tag)
+                          ())
+                     () );
+               ])
+          ()
+      in
+      let repo_config =
+        R.derive
+          ~ctx
+          ~index:Terrat_base_repo_config_v1.Index.empty
+          ~file_list
+          (R.of_view
+             (R.View.make
+                ~dirs:
+                  (Sln_map.String.of_list
+                     [
+                       ("a", dir "dir:b" false);
+                       ("b", dir "dir:c" false);
+                       ("c", dir "dir:d" true);
+                       ("d", dir "dir:e" false);
+                     ])
+                ()))
+      in
+      let diff =
+        Terrat_change.Diff.[ Add { filename = "b/main.tf" }; Add { filename = "d/main.tf" } ]
+      in
+      let config =
+        CCResult.get_exn
+          (Terrat_change_match3.synthesize_config
+             ~index:Terrat_base_repo_config_v1.Index.empty
+             repo_config)
+      in
+      let changes = Terrat_change_match3.match_diff_list config diff in
+      let layer_dirs =
+        CCList.map
+          (CCList.map (fun { Terrat_change_match3.Dirspace_config.dirspace; _ } ->
+               dirspace.Terrat_dirspace.dir))
+          changes
+      in
+      assert (CCList.equal (CCList.equal CCString.equal) layer_dirs [ [ "d" ]; [ "b" ]; [ "a" ] ]))
+
+let test_depends_on_prune_on_no_change_all_pruned =
+  Oth.test ~name:"depends_on prune_on_no_change all pruned" (fun _ ->
+      let module R = Terrat_base_repo_config_v1 in
+      let file_list = [ "a/main.tf"; "b/main.tf"; "c/main.tf" ] in
+      let dir tag =
+        R.Dirs.Dir.make
+          ~workspaces:
+            (Sln_map.String.of_list
+               [
+                 ( "default",
+                   R.Dirs.Workspace.make
+                     ~when_modified:
+                       (R.When_modified.make
+                          ~depends_on:(depends_on_q ~prune_on_no_change:true tag)
+                          ())
+                     () );
+               ])
+          ()
+      in
+      let repo_config =
+        R.derive
+          ~ctx
+          ~index:Terrat_base_repo_config_v1.Index.empty
+          ~file_list
+          (R.of_view
+             (R.View.make
+                ~dirs:(Sln_map.String.of_list [ ("a", dir "dir:b"); ("b", dir "dir:c") ])
+                ()))
+      in
+      let diff = Terrat_change.Diff.[ Add { filename = "c/main.tf" } ] in
+      let config =
+        CCResult.get_exn
+          (Terrat_change_match3.synthesize_config
+             ~index:Terrat_base_repo_config_v1.Index.empty
+             repo_config)
+      in
+      let changes = Terrat_change_match3.match_diff_list config diff in
+      let layer_dirs =
+        CCList.map
+          (CCList.map (fun { Terrat_change_match3.Dirspace_config.dirspace; _ } ->
+               dirspace.Terrat_dirspace.dir))
+          changes
+      in
+      assert (CCList.equal (CCList.equal CCString.equal) layer_dirs [ [ "c" ] ]))
+
+let test_force_matches_not_pruned =
+  Oth.test ~name:"force_matches not pruned" (fun _ ->
+      let module R = Terrat_base_repo_config_v1 in
+      let file_list = [ "a/main.tf"; "b/main.tf" ] in
+      let repo_config =
+        R.derive
+          ~ctx
+          ~index:Terrat_base_repo_config_v1.Index.empty
+          ~file_list
+          (R.of_view
+             (R.View.make
+                ~dirs:
+                  (Sln_map.String.of_list
+                     [
+                       ( "a",
+                         R.Dirs.Dir.make
+                           ~workspaces:
+                             (Sln_map.String.of_list
+                                [
+                                  ( "default",
+                                    R.Dirs.Workspace.make
+                                      ~when_modified:
+                                        (R.When_modified.make
+                                           ~depends_on:
+                                             (depends_on_q ~prune_on_no_change:true "dir:b")
+                                           ())
+                                      () );
+                                ])
+                           () );
+                     ])
+                ()))
+      in
+      let config =
+        CCResult.get_exn
+          (Terrat_change_match3.synthesize_config
+             ~index:Terrat_base_repo_config_v1.Index.empty
+             repo_config)
+      in
+      let force =
+        CCOption.get_exn_or
+          "force-match"
+          (Terrat_change_match3.of_dirspace
+             config
+             { Terrat_dirspace.dir = "a"; workspace = "default" })
+      in
+      let changes = Terrat_change_match3.match_diff_list ~force_matches:[ force ] config [] in
+      let layer_dirs =
+        CCList.map
+          (CCList.map (fun { Terrat_change_match3.Dirspace_config.dirspace; _ } ->
+               dirspace.Terrat_dirspace.dir))
+          changes
+      in
+      assert (CCList.equal (CCList.equal CCString.equal) layer_dirs [ [ "a" ] ]))
 
 let test_files_in_same_dir_match_multiple_dirs =
   Oth.test ~name:"files_in_same_dir_match_multiple_dirs" (fun _ ->
@@ -2365,6 +2499,9 @@ let test =
       test_depends_on_multiple_depends_disjoint;
       test_depends_on_cycle;
       test_depends_on_relative_dir;
+      test_depends_on_prune_on_no_change_chain;
+      test_depends_on_prune_on_no_change_all_pruned;
+      test_force_matches_not_pruned;
       test_files_in_same_dir_match_multiple_dirs;
       test_large_directory_timing;
     ]
