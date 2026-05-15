@@ -398,7 +398,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       event =
     match Sys.getenv_opt "TERRAT_EVENT_EVALUATOR_MODE" with
     | None | Some ("" | "new-age" | "legacy-drift") -> (
-        let open Abb.Future.Infix_monad in
         let store =
           Hmap.empty
           |> Keys.Key.add Keys.account account
@@ -407,6 +406,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           |> Keys.Key.add Keys.user (Some user)
           |> Keys.Key.add Keys.work_manifest_event None
         in
+        let open Abb.Future.Infix_monad in
         run_pull_request_event
           ~request_id
           ~config

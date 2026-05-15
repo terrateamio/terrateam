@@ -425,7 +425,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     Hmap.Key.create "check_dirspaces_owned_by_other_pull_requests"
 
   let check_pull_request_state : unit Key.t = Hmap.Key.create "check_pull_request_state"
-  let check_fork_pr : unit Key.t = Hmap.Key.create "check_fork_pr"
 
   let maybe_create_completed_apply_check : unit Key.t =
     Hmap.Key.create "maybe_create_completed_apply_check"
