@@ -663,6 +663,8 @@ let create_commit_checks ~request_id client repo ref_ checks =
     let open Abbs_future_combinators.Infix_result_monad in
     let module Glg = Gitlabc_projects_repository.GetApiV4ProjectsIdRepositoryCommitsShaStatuses in
     let module Glc = Gitlabc_components_api_entities_commitstatus in
+    let module Glp = Gitlabc_projects_pipelines.GetApiV4ProjectsIdPipelines in
+    let module Glpb = Gitlabc_components_api_entities_ci_pipelinebasic in
     let module Tcc = Terrat_commit_check in
     (* For GitLab, we only care about the terrateam apply status checks.  Status
        checks do not show the same as in GitHub, so creating the extras is not
@@ -670,26 +672,69 @@ let create_commit_checks ~request_id client repo ref_ checks =
     let checks =
       CCList.filter (fun { Tcc.title; _ } -> CCString.equal title "terrateam apply") checks
     in
-    Openapic_abb.collect_all
-      ~page:Openapic_abb.Page.gitlab
-      client.Client.client
-      Glg.(
-        make
-          (Parameters.make
-             ~id:(CCInt.to_string @@ Repo.id repo)
-             ~sha:ref_
-             ~name:(Some "terrateam apply")
-             ()))
-    >>= fun existing_checks ->
-    let pipeline_id =
-      match existing_checks with
-      | { Glc.pipeline_id; _ } :: _ -> pipeline_id
-      | _ -> None
+    let lookup_mr_pipeline_id () =
+      let open Abb.Future.Infix_monad in
+      call
+        client.Client.client
+        Glp.(
+          make
+            (Parameters.make
+               ~id:(CCInt.to_string @@ Repo.id repo)
+               ~sha:(Some ref_)
+               ~source:(Some `Merge_request_event)
+               ~per_page:1
+               ()))
+      >>= function
+      | Ok resp -> (
+          match Openapi.Response.value resp with
+          | `OK ({ Glpb.id; _ } :: _) -> Abb.Future.return (Ok id)
+          | `OK [] -> Abb.Future.return (Ok None)
+          | `Unauthorized | `Forbidden ->
+              Logs.info (fun m ->
+                  m "%s : CREATE_COMMIT_CHECKS : MR_PIPELINE_LOOKUP_FAILED : auth" request_id);
+              Abb.Future.return (Ok None))
+      | Error err ->
+          Logs.info (fun m ->
+              m
+                "%s : CREATE_COMMIT_CHECKS : MR_PIPELINE_LOOKUP_FAILED : %a"
+                request_id
+                Openapic_abb.pp_call_err
+                err);
+          Abb.Future.return (Ok None)
     in
+    lookup_mr_pipeline_id ()
+    >>= fun mr_pipeline_id ->
+    (match mr_pipeline_id with
+    | Some _ -> Abb.Future.return (Ok (mr_pipeline_id, "mr_pipeline"))
+    | None ->
+        Openapic_abb.collect_all
+          ~page:Openapic_abb.Page.gitlab
+          client.Client.client
+          Glg.(
+            make
+              (Parameters.make
+                 ~id:(CCInt.to_string @@ Repo.id repo)
+                 ~sha:ref_
+                 ~name:(Some "terrateam apply")
+                 ()))
+        >>= fun existing_checks ->
+        let pipeline_id =
+          match existing_checks with
+          | { Glc.pipeline_id; _ } :: _ -> pipeline_id
+          | _ -> None
+        in
+        let source =
+          match pipeline_id with
+          | Some _ -> "existing_status"
+          | None -> "none"
+        in
+        Abb.Future.return (Ok (pipeline_id, source)))
+    >>= fun (pipeline_id, source) ->
     Logs.info (fun m ->
         m
-          "%s : CREATE_COMMIT_CHECKS : UPDATING_WITH_PIPELINE_ID : pipeline_id=%s"
+          "%s : CREATE_COMMIT_CHECKS : UPDATING_WITH_PIPELINE_ID : source=%s : pipeline_id=%s"
           request_id
+          source
           (CCOption.map_or ~default:"" CCInt.to_string pipeline_id));
     let module C = Terrat_commit_check in
     let module Body = Gitlabc_components_postapiv4projectsidstatusessha in

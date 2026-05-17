@@ -68531,13 +68531,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Get all Pipelines of the project",
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/API_Entities_Ci_PipelineBasic"
-              },
-              "type": "array"
-            }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/API_Entities_Ci_PipelineBasic"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Get all Pipelines of the project"
           },
           "401": {
             "description": "Unauthorized"
