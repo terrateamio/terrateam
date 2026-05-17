@@ -560,7 +560,12 @@ let fetch_pull_request ~request_id _account client repo merge_request_iid =
     } =
       mr
     in
-    let mergeable = CCOption.map (CCString.equal "mergeable") detailed_merge_status in
+    let mergeable =
+      CCOption.map
+        (fun status ->
+          CCList.mem ~eq:CCString.equal status [ "mergeable"; "ci_still_running"; "ci_must_pass" ])
+        detailed_merge_status
+    in
     let checks =
       state = "merged"
       || CCOption.map_or
