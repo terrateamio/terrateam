@@ -301,18 +301,6 @@ struct
           config
           db)
 
-  let get_repo_role s client repo user =
-    time_it
-      s
-      (fun m log_id time ->
-        m
-          "%s : GET_REPO_ROLE : repo = %s : user = %s : time=%f"
-          log_id
-          (S.Api.Repo.to_string repo)
-          (S.Api.User.to_string user)
-          time)
-      (fun () -> S.Api.get_repo_role ~request_id:(Builder.log_id s) repo user client)
-
   module Tasks = struct
     let run = Tasks_base.run
 
@@ -717,63 +705,6 @@ struct
                 (S.Api.Pull_request.Id.to_string @@ S.Api.Pull_request.id pull_request));
           Builder.run_db s ~f:(fun db -> store_pull_request s db pull_request))
 
-    (* Fork PR gate. Fork PRs run untrusted code, so the operation a fork PR
-       triggers is gated. This is a per-event check with no stored state:
-         - A [plan] is allowed only when it was explicitly requested by a user
-           with [write] (or higher) permission on the destination repo.
-         - Autoplan and every form of apply are always rejected.
-       The gate has no effect on PRs that are not from a fork. It is evaluated
-       as part of [can_run_plan] and [can_run_apply]; returning [Error `Noop]
-       silently drops the operation. *)
-    let check_fork_pr =
-      run ~name:"check_fork_pr" (fun s { Bs.Fetcher.fetch } ->
-          let authorize_fork_pr_plan () =
-            let open Irm in
-            fetch Keys.client
-            >>= fun client ->
-            fetch Keys.repo
-            >>= fun repo ->
-            fetch Keys.user
-            >>= function
-            | None -> assert false
-            | Some user -> (
-                get_repo_role s client repo user
-                >>= function
-                | Some role when CCList.mem ~eq:CCString.equal role [ "admin"; "maintain"; "write" ]
-                  ->
-                    Logs.info (fun m ->
-                        m "%s : FORK_PR_GATE : plan_authorized : role=%s" (Builder.log_id s) role);
-                    Abb.Future.return (Ok ())
-                | role ->
-                    Logs.info (fun m ->
-                        m
-                          "%s : FORK_PR_GATE : plan_user_lacks_write : role=%s"
-                          (Builder.log_id s)
-                          (CCOption.get_or ~default:"none" role));
-                    Abb.Future.return (Error `Noop))
-          in
-          let open Irm in
-          fetch Keys.pull_request
-          >>= fun pull_request ->
-          if not (S.Api.Pull_request.is_fork pull_request) then Abb.Future.return (Ok ())
-          else
-            fetch Keys.job
-            >>= fun job ->
-            match job.Tjc.Job.type_ with
-            | Tjc.Job.Type_.Plan _ -> authorize_fork_pr_plan ()
-            | Tjc.Job.Type_.Autoplan ->
-                Logs.info (fun m ->
-                    m "%s : FORK_PR_GATE : autoplan_blocked_on_fork" (Builder.log_id s));
-                Abb.Future.return (Error `Noop)
-            | Tjc.Job.Type_.(Apply _ | Autoapply) ->
-                Logs.info (fun m ->
-                    m "%s : FORK_PR_GATE : apply_blocked_on_fork" (Builder.log_id s));
-                Abb.Future.return (Error `Noop)
-            | Tjc.Job.Type_.(Gate_approval _ | Help | Index | Push | Repo_config | Unlock _) ->
-                (* [check_fork_pr] is only fetched from [can_run_plan] and
-                   [can_run_apply], so the job is always a plan or apply. *)
-                assert false)
-
     let check_pull_request_state =
       run ~name:"check_pull_request_state" (fun s { Bs.Fetcher.fetch } ->
           let module Pr = Terrat_pull_request in
@@ -1014,8 +945,7 @@ struct
             (fetch Keys.pull_request)
             (fetch Keys.access_control_eval_apply)
             (fetch Keys.user)
-          >>= fun (access_control, _matches, _client, _pull_request, access_control_result, _user)
-                ->
+          >>= fun (access_control, _matches, _client, _pull_request, access_control_result, _user) ->
           Abb.Future.return
             (access_control_result
               : (R.t, Terrat_access_control2.err) result
@@ -1345,10 +1275,6 @@ struct
             let open Irm in
             fetch Keys.check_pull_request_state
             >>= fun () ->
-            (* Gate fork PRs before building the config or tree, since those
-               run untrusted code from the fork. *)
-            fetch Keys.check_fork_pr
-            >>= fun () ->
             (* Building these two happens to build all sorts of useful
                dependencies for us, so build those first so the rest can
                efficiently be done concurrently. *)
@@ -1405,10 +1331,6 @@ struct
           let run =
             let open Irm in
             fetch Keys.check_pull_request_state
-            >>= fun () ->
-            (* Gate fork PRs before locking the repository or building the
-               config or tree, since those run untrusted code from the fork. *)
-            fetch Keys.check_fork_pr
             >>= fun () ->
             (* Lock the repository to serialize apply checks and prevent
                concurrent applies on the same repository. *)
@@ -1705,7 +1627,6 @@ struct
          Tasks.check_dirspaces_owned_by_other_pull_requests
     |> Hmap.add (coerce Keys.check_dirspaces_to_apply) Tasks.check_dirspaces_to_apply
     |> Hmap.add (coerce Keys.check_dirspaces_to_plan) Tasks.check_dirspaces_to_plan
-    |> Hmap.add (coerce Keys.check_fork_pr) Tasks.check_fork_pr
     |> Hmap.add (coerce Keys.check_gates) Tasks.check_gates
     |> Hmap.add (coerce Keys.check_merge_conflict) Tasks.check_merge_conflict
     |> Hmap.add (coerce Keys.check_pull_request_state) Tasks.check_pull_request_state

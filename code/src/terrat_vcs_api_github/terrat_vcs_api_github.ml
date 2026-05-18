@@ -566,15 +566,6 @@ let fetch_pull_request' request_id _account client repo pull_request_id =
   let base_sha = Base.(base.primary.Primary.sha) in
   let head_sha = Head.(head.primary.Primary.sha) in
   let branch_name = Head.(head.primary.Primary.ref_) in
-  let head_repo = Head.(head.primary.Primary.repo) in
-  let head_is_fork =
-    let module R = Ghc_comp.Repository in
-    R.(head_repo.primary.Primary.fork)
-  in
-  let head_repo_full_name =
-    let module R = Ghc_comp.Repository in
-    Some R.(head_repo.primary.Primary.full_name)
-  in
   let draft = CCOption.get_or ~default:false draft in
   Prmths.Counter.inc_one (Metrics.pull_request_mergeable_state_count mergeable_state);
   Logs.info (fun m ->
@@ -617,8 +608,6 @@ let fetch_pull_request' request_id _account client repo pull_request_id =
              || CCList.mem ~eq:CCString.equal mergeable_state [ "clean"; "unstable"; "has_hooks" ])
            ~diff
            ~draft
-           ~head_repo_full_name
-           ~is_fork:head_is_fork
            ~mergeable
            ~provisional_merge_ref:merge_commit_sha
            () ))

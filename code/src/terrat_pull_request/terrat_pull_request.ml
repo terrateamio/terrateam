@@ -29,9 +29,7 @@ type ('id, 'diff, 'checks, 'repo, 'ref) t = {
   checks : 'checks;
   diff : 'diff;
   draft : bool;
-  head_repo_full_name : string option;
   id : 'id;
-  is_fork : bool;
   mergeable : bool option;
   provisional_merge_ref : 'ref option;
   repo : 'repo;
@@ -49,9 +47,7 @@ let make
     ~checks
     ~diff
     ~draft
-    ?(head_repo_full_name = None)
     ~id
-    ?(is_fork = false)
     ~mergeable
     ~provisional_merge_ref
     ~repo
@@ -67,9 +63,7 @@ let make
     checks;
     diff;
     draft;
-    head_repo_full_name;
     id;
-    is_fork;
     mergeable;
     provisional_merge_ref;
     repo;
@@ -84,10 +78,8 @@ let branch_name t = t.branch_name
 let branch_ref t = t.branch_ref
 let checks t = t.checks
 let diff t = t.diff
-let head_repo_full_name t = t.head_repo_full_name
 let id t = t.id
 let is_draft_pr t = t.draft
-let is_fork t = t.is_fork
 let mergeable t = t.mergeable
 let provisional_merge_ref t = t.provisional_merge_ref
 let repo t = t.repo

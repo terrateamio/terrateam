@@ -32,9 +32,7 @@ val make :
   checks:'checks ->
   diff:'diff ->
   draft:bool ->
-  ?head_repo_full_name:string option ->
   id:'id ->
-  ?is_fork:bool ->
   mergeable:bool option ->
   provisional_merge_ref:'ref option ->
   repo:'repo ->
@@ -51,10 +49,8 @@ val branch_name : ('id, 'diff, 'checks, 'repo, 'ref) t -> 'ref
 val branch_ref : ('id, 'diff, 'checks, 'repo, 'ref) t -> 'ref
 val checks : ('id, 'diff', 'checks, 'repo, 'ref) t -> 'checks
 val diff : ('id, 'diff, 'checks, 'repo, 'ref) t -> 'diff
-val head_repo_full_name : ('id, 'diff, 'checks, 'repo, 'ref) t -> string option
 val id : ('id, 'diff, 'checks, 'repo, 'ref) t -> 'id
 val is_draft_pr : ('id, 'diff, 'checks, 'repo, 'ref) t -> bool
-val is_fork : ('id, 'diff, 'checks, 'repo, 'ref) t -> bool
 val mergeable : ('id, 'diff, 'checks, 'repo, 'ref) t -> bool option
 val provisional_merge_ref : ('id, 'diff, 'checks, 'repo, 'ref) t -> 'ref option
 val repo : ('id, 'diff, 'checks, 'repo, 'ref) t -> 'repo
