@@ -320,6 +320,35 @@
       },
       "type": "array"
     },
+    "depends-on": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/depends-on-tag-query"
+        },
+        {
+          "$ref": "#/definitions/depends-on-object"
+        }
+      ]
+    },
+    "depends-on-object": {
+      "additionalProperties": false,
+      "properties": {
+        "prune_on_no_change": {
+          "default": false,
+          "type": "boolean"
+        },
+        "tag_query": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "tag_query"
+      ],
+      "type": "object"
+    },
+    "depends-on-tag-query": {
+      "type": "string"
+    },
     "destination-branch-name": {
       "type": "string"
     },
@@ -1620,7 +1649,7 @@
           "type": "boolean"
         },
         "depends_on": {
-          "type": "string"
+          "$ref": "#/definitions/depends-on"
         },
         "file_patterns": {
           "default": [
@@ -1648,7 +1677,7 @@
           "type": "boolean"
         },
         "depends_on": {
-          "type": "string"
+          "$ref": "#/definitions/depends-on"
         },
         "file_patterns": {
           "items": {

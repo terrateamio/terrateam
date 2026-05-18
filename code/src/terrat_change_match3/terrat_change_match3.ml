@@ -65,6 +65,7 @@ end
 
 let match_dependency ~dependent ~dependency =
   let module Wm = R.When_modified in
+  let module Depends_on = R.Depends_on in
   let module S = R.Stacks.Stack in
   let module Rules = R.Stacks.Rules in
   let { Dirspace_config.dirspace; tags; stack_name; _ } = dependent in
@@ -79,13 +80,14 @@ let match_dependency ~dependent ~dependency =
   CCList.mem ~eq:CCString.equal stack_name modified_by
   || CCOption.map_or
        ~default:false
-       (fun depends_on ->
+       (fun { Depends_on.tag_query; prune_on_no_change = _ } ->
          let ctx = Terrat_tag_query.Ctx.make ~working_dirspace ~dirspace () in
-         Terrat_tag_query.match_ ~ctx ~tag_set:tags depends_on)
+         Terrat_tag_query.match_ ~ctx ~tag_set:tags tag_query)
        depends_on
 
 let match_plan_after_dependency ~dependent ~dependency =
   let module Wm = R.When_modified in
+  let module Depends_on = R.Depends_on in
   let module S = R.Stacks.Stack in
   let module Rules = R.Stacks.Rules in
   let { Dirspace_config.dirspace; tags; stack_name; _ } = dependent in
@@ -100,9 +102,9 @@ let match_plan_after_dependency ~dependent ~dependency =
   CCList.mem ~eq:CCString.equal stack_name plan_after
   || CCOption.map_or
        ~default:false
-       (fun depends_on ->
+       (fun { Depends_on.tag_query; prune_on_no_change = _ } ->
          let ctx = Terrat_tag_query.Ctx.make ~working_dirspace ~dirspace () in
-         Terrat_tag_query.match_ ~ctx ~tag_set:tags depends_on)
+         Terrat_tag_query.match_ ~ctx ~tag_set:tags tag_query)
        depends_on
 
 (* [matches] are those dirspace configs that we have identified from the diff.
@@ -230,6 +232,7 @@ end
       look up all those that depend on it running first. *)
 let topology_of_dirspace_configs dirspaces =
   let module Wm = R.When_modified in
+  let module Depends_on = R.Depends_on in
   let module S = R.Stacks.Stack in
   let module Rules = R.Stacks.Rules in
   let dirspaces = Dirspace_map.to_list dirspaces in
@@ -250,7 +253,11 @@ let topology_of_dirspace_configs dirspaces =
           ~f:(fun acc (dirspace, { Dirspace_config.tags; stack_name; _ }) ->
             let ctx = Terrat_tag_query.Ctx.make ~working_dirspace ~dirspace () in
             if
-              CCOption.map_or ~default:false (Terrat_tag_query.match_ ~ctx ~tag_set:tags) depends_on
+              CCOption.map_or
+                ~default:false
+                (fun { Depends_on.tag_query; prune_on_no_change = _ } ->
+                  Terrat_tag_query.match_ ~ctx ~tag_set:tags tag_query)
+                depends_on
               || CCList.mem ~eq:CCString.equal stack_name all_stack_deps
             then
               (* This says adds [working_dirspace] in the list of dirspaces that
@@ -711,6 +718,22 @@ let match_dir_map dirspaces dir_map =
        dir_map
        (dirspaces, []))
 
+let prune_no_change_dirspaces real_change_set layers =
+  let module Wm = R.When_modified in
+  let module Depends_on = R.Depends_on in
+  let keep { Dirspace_config.dirspace; when_modified = { Wm.depends_on; _ }; _ } =
+    Dirspace_set.mem dirspace real_change_set
+    || CCOption.map_or
+         ~default:true
+         (fun { Depends_on.prune_on_no_change; _ } -> not prune_on_no_change)
+         depends_on
+  in
+  layers
+  |> CCList.map (CCList.filter keep)
+  |> CCList.filter (function
+       | [] -> false
+       | _ :: _ -> true)
+
 let match_diff_list ?(force_matches = []) config diff_list =
   (* If this fpath maps to a symlink we want to rewrite it to be the symlink *)
   let map_symlink_file_path symlinks fpath =
@@ -727,15 +750,22 @@ let match_diff_list ?(force_matches = []) config diff_list =
   let modifies_lookup =
     build_modifies_lookup @@ Iter.to_list @@ Dirspace_map.values config.Config.dirspaces
   in
-  diff_list
-  |> CCList.flat_map files_of_diff
-  |> CCList.flat_map (map_symlink_file_path config.Config.symlinks)
-  |> make_dir_map
-  |> match_dir_map config.Config.dirspaces
-  |> CCList.append force_matches
+  let real_matches =
+    diff_list
+    |> CCList.flat_map files_of_diff
+    |> CCList.flat_map (map_symlink_file_path config.Config.symlinks)
+    |> make_dir_map
+    |> match_dir_map config.Config.dirspaces
+    |> CCList.append force_matches
+  in
+  let real_change_set =
+    Dirspace_set.of_list (CCList.map (fun { Dirspace_config.dirspace; _ } -> dirspace) real_matches)
+  in
+  real_matches
   |> collect_depends_on_dependents config.Config.topology config.Config.dirspaces
   |> collect_modified_by_dependents ~path:[] modifies_lookup config.Config.dirspaces
   |> sort config.Config.topology config.Config.dirspaces
+  |> prune_no_change_dirspaces real_change_set
 
 let of_dirspace config dirspace = Dirspace_map.get dirspace config.Config.dirspaces
 

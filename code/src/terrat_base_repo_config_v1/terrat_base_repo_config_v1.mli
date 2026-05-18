@@ -408,12 +408,20 @@ module File_pattern_list : sig
   type t = File_pattern.t list [@@deriving show, yojson, eq]
 end
 
+module Depends_on : sig
+  type t = {
+    tag_query : Tag_query.t;
+    prune_on_no_change : bool; [@default false]
+  }
+  [@@deriving make, show, yojson, eq]
+end
+
 module When_modified : sig
   type t = {
     autoapply : bool; [@default false]
     autoplan : bool; [@default false]
     autoplan_draft_pr : bool; [@default true]
-    depends_on : Tag_query.t option;
+    depends_on : Depends_on.t option;
     file_patterns : File_pattern_list.t;
         [@default
           [

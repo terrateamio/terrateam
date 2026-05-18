@@ -772,12 +772,20 @@ module File_pattern_list = struct
   type t = File_pattern.t list [@@deriving show, yojson, eq]
 end
 
+module Depends_on = struct
+  type t = {
+    tag_query : Tag_query.t;
+    prune_on_no_change : bool; [@default false]
+  }
+  [@@deriving make, show, yojson, eq]
+end
+
 module When_modified = struct
   type t = {
     autoapply : bool; [@default false]
     autoplan : bool; [@default true]
     autoplan_draft_pr : bool; [@default true]
-    depends_on : Tag_query.t option;
+    depends_on : Depends_on.t option;
     file_patterns : File_pattern_list.t;
         [@default
           [
@@ -1459,6 +1467,19 @@ let of_version_1_apply_requirements_checks =
 
 let of_version_1_file_patterns fp = CCResult.map_l File_pattern.make fp
 
+let of_version_1_depends_on depends_on =
+  let module D = Terrat_repo_config_depends_on in
+  let module Obj = Terrat_repo_config_depends_on_object in
+  match depends_on with
+  | D.Depends_on_tag_query s ->
+      CCResult.map
+        (fun tag_query -> { Depends_on.tag_query; prune_on_no_change = false })
+        (Terrat_tag_query.of_string s)
+  | D.Depends_on_object { Obj.tag_query; prune_on_no_change } ->
+      CCResult.map
+        (fun tag_query -> { Depends_on.tag_query; prune_on_no_change })
+        (Terrat_tag_query.of_string tag_query)
+
 let of_version_1_dirs_when_modified default_when_modified when_modified =
   let open CCResult.Infix in
   let module Wm = When_modified in
@@ -1470,7 +1491,7 @@ let of_version_1_dirs_when_modified default_when_modified when_modified =
   CCResult.map_err
     (function
       | _ -> failwith "nyi")
-    (map_opt Terrat_tag_query.of_string depends_on)
+    (map_opt of_version_1_depends_on depends_on)
   >>= fun depends_on ->
   map_opt of_version_1_file_patterns file_patterns
   >>= fun file_patterns ->
@@ -2105,7 +2126,7 @@ let of_version_1_when_modified when_modified =
   CCResult.map_err
     (function
       | `Tag_query_error err -> `Depends_on_err err)
-    (map_opt Terrat_tag_query.of_string depends_on)
+    (map_opt of_version_1_depends_on depends_on)
   >>= fun depends_on ->
   of_version_1_file_patterns (update_file_patterns file_patterns)
   >>= fun file_patterns ->
@@ -2792,6 +2813,13 @@ let to_version_1_destination_branches db =
       Db.Items.Destination_branch_object { Obj.branch; source_branches = Some source_branches })
     db
 
+let to_version_1_depends_on { Depends_on.tag_query; prune_on_no_change } =
+  Terrat_repo_config_depends_on.Depends_on_object
+    {
+      Terrat_repo_config_depends_on_object.tag_query = Terrat_tag_query.to_string tag_query;
+      prune_on_no_change;
+    }
+
 let to_version_1_dirs_dir_when_modified wm =
   let module Wm = Terrat_repo_config.When_modified_nullable in
   let { When_modified.autoapply; autoplan; autoplan_draft_pr; depends_on; file_patterns } = wm in
@@ -2799,7 +2827,7 @@ let to_version_1_dirs_dir_when_modified wm =
     Wm.autoapply = Some autoapply;
     autoplan = Some autoplan;
     autoplan_draft_pr = Some autoplan_draft_pr;
-    depends_on = CCOption.map Terrat_tag_query.to_string depends_on;
+    depends_on = CCOption.map to_version_1_depends_on depends_on;
     file_patterns = Some (CCList.map File_pattern.to_string file_patterns);
   }
 
@@ -3061,10 +3089,10 @@ let to_version_1_hooks_op_oidc = function
         {
           Azure.audience;
           client_id;
-          provider = "azure";
+          provider = `Azure;
           subscription_id;
           tenant_id;
-          type_ = "oidc";
+          type_ = `Oidc;
         }
 
 let to_version_1_hooks_op_run r =
@@ -3267,7 +3295,7 @@ let to_version_1_when_modified when_modified =
     Wm.autoapply;
     autoplan;
     autoplan_draft_pr;
-    depends_on = CCOption.map Terrat_tag_query.to_string depends_on;
+    depends_on = CCOption.map to_version_1_depends_on depends_on;
     file_patterns = CCList.map File_pattern.to_string file_patterns;
   }
 
