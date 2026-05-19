@@ -27,8 +27,11 @@ latest_dirspace_work_manifests as (
     left join latest_pull_request_merged_sha as lprms
         on true
     where gwm.repository = $repository
--- Find those work manifests that are done by this pr or are some kind of apply
-          and (gwm.pull_number is not distinct from $pull_number or gwm.run_type in ('autoapply', 'apply'))
+-- Consider work manifests that belong to this pull request, are some kind of
+-- apply, or belong to a pull request that has been merged.
+          and (gwm.pull_number is not distinct from $pull_number
+               or gwm.run_type in ('autoapply', 'apply')
+               or gpr.merged_at is not null)
           and (
 -- If this the PR is not merged then we expect the base and branch refs to match
 -- the refs in the PR
@@ -51,7 +54,12 @@ latest_dirspace_work_manifests as (
 -- This row is for a PR but not ours, so we just want applies (which is validated through the test above)
               or gpr.pull_number is distinct from $pull_number
           )
-    order by gwm.repository, wmr.path, wmr.workspace, gwm.created_at desc
+-- A work manifest affects the base branch when it runs or, for a merged pull
+-- request, when it is merged.  Rank by whichever happened later so that an
+-- overlapping dirspace applied or merged by another pull request after this
+-- plan was created supersedes it.
+    order by gwm.repository, wmr.path, wmr.workspace,
+             greatest(gwm.created_at, gpr.merged_at) desc, gwm.created_at desc
 )
 select
     ds.path,
