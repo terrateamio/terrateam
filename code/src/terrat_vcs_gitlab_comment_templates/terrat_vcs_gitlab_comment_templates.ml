@@ -85,6 +85,7 @@ module Tmpl = struct
   let pull_request_not_mergeable = read [%blob "tmpl/pull_request_not_mergeable.tmpl"]
   let apply_no_matching_dirspaces = read [%blob "tmpl/apply_no_matching_dirspaces.tmpl"]
   let plan_no_matching_dirspaces = read [%blob "tmpl/plan_no_matching_dirspaces.tmpl"]
+  let plan_all_changes_applied = read [%blob "tmpl/plan_all_changes_applied.tmpl"]
   let base_branch_not_default_branch = read [%blob "tmpl/dest_branch_no_match.tmpl"]
   let auto_apply_running = read [%blob "tmpl/auto_apply_running.tmpl"]
   let bad_custom_branch_tag_pattern = read [%blob "tmpl/bad_custom_branch_tag_pattern.tmpl"]

@@ -3588,6 +3588,15 @@ module Comment = struct
           "MISSING_PLANS"
           Tmpl.missing_plans
           kv
+    | Msg.Plan_all_changes_applied ->
+        let kv = Snabela.Kv.(Map.of_list []) in
+        Gcm_api.apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "PLAN_ALL_CHANGES_APPLIED"
+          Tmpl.plan_all_changes_applied
+          kv
     | Msg.Plan_no_matching_dirspaces ->
         let kv = Snabela.Kv.(Map.of_list []) in
         Gcm_api.apply_template_and_publish

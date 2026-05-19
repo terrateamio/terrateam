@@ -136,6 +136,7 @@ module Msg = struct
     | Maybe_stale_work_manifests of ('account, 'target) Terrat_work_manifest3.Existing.t list
     | Mismatched_refs
     | Missing_plans of Terrat_change.Dirspace.t list
+    | Plan_all_changes_applied
     | Plan_no_matching_dirspaces
     | Premium_feature_err of premium_features
     | Pull_request_not_appliable of ('pull_request * 'apply_requirements)
