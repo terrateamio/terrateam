@@ -424,7 +424,10 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
     end
 
     let trigger_bytes = Bytes.of_string "0"
-    let trigger_eventfd eventfd = ignore (UnixLabels.write eventfd ~buf:trigger_bytes ~pos:0 ~len:1)
+
+    let trigger_eventfd eventfd =
+      try ignore (UnixLabels.write eventfd ~buf:trigger_bytes ~pos:0 ~len:1)
+      with Unix.Unix_error (Unix.EAGAIN, _, _) | Unix.Unix_error (Unix.EWOULDBLOCK, _, _) -> ()
 
     let consume_eventfd eventfd =
       let buf = Bytes.create 4 in
