@@ -127,11 +127,21 @@ module Workflow_step : sig
     [@@deriving show, yojson, eq]
   end
 
+  module Format : sig
+    type t =
+      | Code
+      | Raw
+      | Markdown
+      | Code_lang of string
+    [@@deriving show, yojson, eq]
+  end
+
   module Run : sig
     type t = {
       capture_output : bool; [@default false]
       cmd : Cmd.t;
       env : string Sln_map.String.t option;
+      format : Format.t; [@default Format.Code]
       ignore_errors : bool; [@default false]
       on_error : Yojson.Safe.t list; [@default []]
       run_on : Run_on.t; [@default Run_on.Success]

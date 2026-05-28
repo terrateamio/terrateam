@@ -1081,6 +1081,9 @@
           },
           "type": "object"
         },
+        "format": {
+          "$ref": "#/definitions/hook-op-run-format"
+        },
         "ignore_errors": {
           "default": false,
           "type": "boolean"
@@ -1105,6 +1108,41 @@
         "cmd"
       ],
       "type": "object"
+    },
+    "hook-op-run-format": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/hook-op-run-format-str"
+        },
+        {
+          "$ref": "#/definitions/hook-op-run-format-obj"
+        }
+      ]
+    },
+    "hook-op-run-format-obj": {
+      "additionalProperties": false,
+      "properties": {
+        "lang": {
+          "type": "string"
+        },
+        "type": {
+          "const": "code",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "lang"
+      ],
+      "type": "object"
+    },
+    "hook-op-run-format-str": {
+      "enum": [
+        "code",
+        "raw",
+        "markdown"
+      ],
+      "type": "string"
     },
     "hook-op-slack": {
       "additionalProperties": false,
