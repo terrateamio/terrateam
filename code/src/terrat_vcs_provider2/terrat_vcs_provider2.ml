@@ -152,12 +152,6 @@ module Msg = struct
     | Str_template_err of Str_template.err
     | Synthesize_config_err of Terrat_change_match3.synthesize_config_err
     | Tag_query_err of Terrat_tag_query_ast.err
-    | Tf_op_result of {
-        is_layered_run : bool;
-        remaining_layers : Terrat_change_match3.Dirspace_config.t list list;
-        result : Terrat_api_components_work_manifest_tf_operation_result.t;
-        work_manifest : ('account, 'target) Terrat_work_manifest3.Existing.t;
-      }
     | Tf_op_result2 of {
         account_status : Account_status.t;
         db : 'db;

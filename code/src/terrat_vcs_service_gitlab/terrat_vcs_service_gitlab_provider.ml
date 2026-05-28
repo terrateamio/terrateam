@@ -3839,7 +3839,6 @@ module Comment = struct
           "TAG_QUERY_ERR"
           Tmpl.tag_query_error
           kv
-    | Msg.Tf_op_result _ -> raise (Failure "NOT SUPPORTED")
     | Msg.Tf_op_result2
         {
           account_status;

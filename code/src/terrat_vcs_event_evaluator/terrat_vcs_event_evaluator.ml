@@ -3158,8 +3158,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       initiate_work_manifest state state.State.request_id (Ctx.storage ctx) run_id sha work_manifest
       >>= function
       | Some
-          ({ Wm.account; id; branch_ref = _; base_ref = _; state = Wm.State.(Queued | Running); _ } as wm)
-        ->
+          ({ Wm.account; id; branch_ref = _; base_ref = _; state = Wm.State.(Queued | Running); _ }
+           as wm) ->
           generate_index_run_dirs ctx state wm
           >>= fun wm ->
           Dv.base_ref ctx state
@@ -4535,8 +4535,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | Terrat_api_components_work_manifest_result.Work_manifest_tf_operation_result result ->
           Dv.client ctx state
           >>= fun client ->
-          Dv.matches ctx state op
-          >>= fun matches ->
           let work_manifest_result = S.Work_manifest.result result in
           store_tf_operation_result
             state.State.request_id
@@ -4557,19 +4555,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                    (S.Api.Pull_request.branch_ref pull_request)
                    work_manifest
                    work_manifest_result
-                 >>= fun () ->
-                 publish_msg
-                   state.State.request_id
-                   client
-                   (S.Api.User.to_string @@ Event.user state.State.event)
-                   pull_request
-                   (Msg.Tf_op_result
-                      {
-                        is_layered_run = CCList.length matches.Dv.Matches.all_matches > 1;
-                        remaining_layers = matches.Dv.Matches.all_unapplied_matches;
-                        result;
-                        work_manifest;
-                      })
                  >>= fun () -> Abb.Future.return (Ok state))
            else Abb.Future.return (Ok state))
           >>= fun state ->
@@ -6416,7 +6401,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             sha
             work_manifest
           >>= function
-          | Some { Wm.account; id; branch_ref = _; base_ref = _; state = Wm.State.(Queued | Running); _ } ->
+          | Some
+              {
+                Wm.account;
+                id;
+                branch_ref = _;
+                base_ref = _;
+                state = Wm.State.(Queued | Running);
+                _;
+              } ->
               Dv.base_branch_name ctx state
               >>= fun base_branch_name' ->
               Dv.repo_config ctx state
@@ -6708,7 +6701,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
             sha
             work_manifest
           >>= function
-          | Some { Wm.account; id; branch_ref = _; base_ref = _; state = Wm.State.(Queued | Running); _ } ->
+          | Some
+              {
+                Wm.account;
+                id;
+                branch_ref = _;
+                base_ref = _;
+                state = Wm.State.(Queued | Running);
+                _;
+              } ->
               Dv.repo_config ctx state
               >>= fun repo_config ->
               Dv.repo_tree_branch ctx state
