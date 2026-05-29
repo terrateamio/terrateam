@@ -126,8 +126,8 @@ terrat-job:
 github-api:
 	cd $(ROOT) && $(DUNE) build code/src/openapi_cli/openapi_cli.exe
 	jq -S . < ../api_schemas/github_api/api.github.com.json > /tmp/$$$$.json && mv /tmp/$$$$.json ../api_schemas/github_api/api.github.com.json
-	rm -rf src/githubc2
 	mkdir -p src/githubc2
+	rm -f src/githubc2/*.ml
 	env OCAMLRUNPARAM=b $(ROOT)/_build/default/code/src/openapi_cli/openapi_cli.exe \
 	  convert --non-strict-records --input ../api_schemas/github_api/api.github.com.json --name githubc2 --output-dir ./src/githubc2/
 	find src/githubc2/ -type f \( -name '*.ml' -o -name '*.mli' \) -exec ocamlformat -i '{}' \;
@@ -135,8 +135,8 @@ github-api:
 gitlab-api:
 	cd $(ROOT) && $(DUNE) build code/src/openapi_cli/openapi_cli.exe
 	jq -S . < ../api_schemas/gitlab_api/api.json > /tmp/$$$$.json && mv /tmp/$$$$.json ../api_schemas/gitlab_api/api.json
-	rm -rf src/gitlabc
 	mkdir -p src/gitlabc
+	rm -f src/gitlabc/*.ml
 	env OCAMLRUNPARAM=b $(ROOT)/_build/default/code/src/openapi_cli/openapi_cli.exe \
 	  convert --non-strict-records --input ../api_schemas/gitlab_api/api.json --name gitlabc --output-dir ./src/gitlabc/
 	find src/gitlabc/ -type f \( -name '*.ml' -o -name '*.mli' \) -exec ocamlformat -i '{}' \;

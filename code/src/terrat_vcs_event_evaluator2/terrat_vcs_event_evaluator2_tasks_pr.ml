@@ -1136,21 +1136,26 @@ struct
     let check_gates =
       run ~name:"check_gates" (fun s { Bs.Fetcher.fetch } ->
           let open Irm in
-          Fc.Result.all3
+          Fc.Result.all4
             (fetch Keys.client)
             (fetch Keys.pull_request)
             (fetch Keys.working_set_matches)
-          >>= fun (client, pull_request, working_set_matches) ->
-          let module Dc = Terrat_change_match3.Dirspace_config in
-          let dirspaces = CCList.map (fun { Dc.dirspace; _ } -> dirspace) working_set_matches in
-          Builder.run_db s ~f:(fun db -> gate_eval s db client pull_request dirspaces)
-          >>= function
-          | [] -> Abb.Future.return (Ok ())
-          | denied ->
-              fetch Keys.publish_comment
-              >>= fun publish_comment ->
-              publish_comment' publish_comment (Msg.Gate_check_failure denied)
-              >>= fun () -> Abb.Future.return (Error `Noop))
+            (fetch Keys.job)
+          >>= fun (client, pull_request, working_set_matches, job) ->
+          match job with
+          | { Tjc.Job.type_ = Tjc.Job.Type_.Apply { force = true; tag_query = _; kind = _ }; _ } ->
+              Abb.Future.return (Ok ())
+          | _ -> (
+              let module Dc = Terrat_change_match3.Dirspace_config in
+              let dirspaces = CCList.map (fun { Dc.dirspace; _ } -> dirspace) working_set_matches in
+              Builder.run_db s ~f:(fun db -> gate_eval s db client pull_request dirspaces)
+              >>= function
+              | [] -> Abb.Future.return (Ok ())
+              | denied ->
+                  fetch Keys.publish_comment
+                  >>= fun publish_comment ->
+                  publish_comment' publish_comment (Msg.Gate_check_failure denied)
+                  >>= fun () -> Abb.Future.return (Error `Noop)))
 
     let check_dirspaces_owned_by_other_pull_requests =
       run ~name:"check_dirspaces_owned_by_other_pull_requests" (fun s { Bs.Fetcher.fetch } ->

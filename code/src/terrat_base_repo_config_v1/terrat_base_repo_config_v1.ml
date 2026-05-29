@@ -388,11 +388,21 @@ module Workflow_step = struct
     [@@deriving show, yojson, eq]
   end
 
+  module Format = struct
+    type t =
+      | Code
+      | Raw
+      | Markdown
+      | Code_lang of string
+    [@@deriving show, yojson, eq]
+  end
+
   module Run = struct
     type t = {
       capture_output : bool; [@default false]
       cmd : Cmd.t;
       env : string Sln_map.String.t option;
+      format : Format.t; [@default Format.Code]
       ignore_errors : bool; [@default false]
       on_error : Yojson.Safe.t list; [@default []]
       run_on : Run_on.t; [@default Run_on.Success]
@@ -1529,6 +1539,16 @@ let of_version_1_visible_on =
   | `Failure -> V.Failure
   | `Success -> V.Success
 
+let of_version_1_run_format =
+  let module F = Workflow_step.Format in
+  let module Fmt = Terrat_repo_config_hook_op_run_format in
+  let module Obj = Terrat_repo_config_hook_op_run_format_obj in
+  function
+  | Fmt.Hook_op_run_format_str `Code -> F.Code
+  | Fmt.Hook_op_run_format_str `Raw -> F.Raw
+  | Fmt.Hook_op_run_format_str `Markdown -> F.Markdown
+  | Fmt.Hook_op_run_format_obj { Obj.type_ = `Code; lang } -> F.Code_lang lang
+
 let of_version_1_hook_op =
   let module Op = Terrat_repo_config_hook_op in
   function
@@ -1614,11 +1634,22 @@ let of_version_1_hook_op =
   | Op.Hook_op_run op ->
       let open CCResult.Infix in
       let module Op = Terrat_repo_config_hook_op_run in
-      let { Op.capture_output; cmd; env; run_on; type_ = _; ignore_errors; visible_on; on_error } =
+      let {
+        Op.capture_output;
+        cmd;
+        env;
+        format;
+        run_on;
+        type_ = _;
+        ignore_errors;
+        visible_on;
+        on_error;
+      } =
         op
       in
       let run_on = CCOption.map of_version_1_run_on run_on in
       let visible_on = CCOption.map of_version_1_visible_on visible_on in
+      let format = CCOption.map of_version_1_run_format format in
       map_opt (fun { Op.Env.additional; _ } -> Ok additional) env
       >>= fun env ->
       Ok
@@ -1629,6 +1660,7 @@ let of_version_1_hook_op =
               ~ignore_errors
               ?visible_on
               ?env
+              ?format
               ?run_on
               ?on_error
               ()))
@@ -1690,6 +1722,7 @@ let of_version_1_workflow_op_list ops =
             Op.capture_output;
             cmd;
             env;
+            format;
             run_on;
             type_ = _;
             ignore_errors;
@@ -1700,6 +1733,7 @@ let of_version_1_workflow_op_list ops =
           in
           let run_on = CCOption.map of_version_1_run_on run_on in
           let visible_on = CCOption.map of_version_1_visible_on visible_on in
+          let format = CCOption.map of_version_1_run_format format in
           map_opt (fun { Op.Env.additional; _ } -> Ok additional) env
           >>= fun env ->
           Ok
@@ -1709,6 +1743,7 @@ let of_version_1_workflow_op_list ops =
                   ~cmd
                   ~ignore_errors
                   ?env
+                  ?format
                   ?run_on
                   ?visible_on
                   ?on_error
@@ -3008,6 +3043,16 @@ let to_version_1_visible_on = function
   | Workflow_step.Visible_on.Failure -> `Failure
   | Workflow_step.Visible_on.Success -> `Success
 
+let to_version_1_run_format =
+  let module F = Workflow_step.Format in
+  let module Fmt = Terrat_repo_config_hook_op_run_format in
+  let module Obj = Terrat_repo_config_hook_op_run_format_obj in
+  function
+  | F.Code -> Fmt.Hook_op_run_format_str `Code
+  | F.Raw -> Fmt.Hook_op_run_format_str `Raw
+  | F.Markdown -> Fmt.Hook_op_run_format_str `Markdown
+  | F.Code_lang lang -> Fmt.Hook_op_run_format_obj { Obj.type_ = `Code; lang }
+
 let to_version_1_lock_policy = function
   | Workflows.Entry.Lock_policy.Apply -> `Apply
   | Workflows.Entry.Lock_policy.Merge -> `Merge
@@ -3086,24 +3131,27 @@ let to_version_1_hooks_op_oidc = function
       let module Azure = Terrat_repo_config.Hook_op_oidc_azure in
       let { Workflow_step.Oidc.Azure.audience; client_id; subscription_id; tenant_id } = oidc in
       Oidc.Hook_op_oidc_azure
-        {
-          Azure.audience;
-          client_id;
-          provider = `Azure;
-          subscription_id;
-          tenant_id;
-          type_ = `Oidc;
-        }
+        { Azure.audience; client_id; provider = `Azure; subscription_id; tenant_id; type_ = `Oidc }
 
 let to_version_1_hooks_op_run r =
   let module R = Terrat_repo_config.Hook_op_run in
-  let { Workflow_step.Run.capture_output; cmd; env; run_on; ignore_errors; visible_on; on_error } =
+  let {
+    Workflow_step.Run.capture_output;
+    cmd;
+    env;
+    format;
+    run_on;
+    ignore_errors;
+    visible_on;
+    on_error;
+  } =
     r
   in
   {
     R.capture_output;
     cmd;
     env = CCOption.map (fun env -> R.Env.make ~additional:env Json_schema.Empty_obj.t) env;
+    format = Some (to_version_1_run_format format);
     ignore_errors;
     run_on = Some (to_version_1_run_on run_on);
     type_ = `Run;

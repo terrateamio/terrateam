@@ -12,18 +12,19 @@ module Output = struct
   type t = {
     cmd : string option;
     name : string;
+    raw : bool;
     success : bool;
     text : string;
     text_decorator : string option;
     visible_on : Visible_on.t;
   }
 
-  let make ?cmd ?text_decorator ~name ~success ~text ~visible_on () =
+  let make ?cmd ?text_decorator ?(raw = false) ~name ~success ~text ~visible_on () =
     (* If name looks like <namespace>/<action> then remove the namespace *)
     let name = CCOption.map_or ~default:name snd (CCString.Split.right ~by:"/" name) in
-    { cmd; name; success; text; text_decorator; visible_on }
+    { cmd; name; raw; success; text; text_decorator; visible_on }
 
-  let to_kv { cmd; name; success; text; text_decorator; visible_on = _ } =
+  let to_kv { cmd; name; raw; success; text; text_decorator; visible_on = _ } =
     `Assoc
       (CCList.flatten
          [
@@ -31,6 +32,7 @@ module Output = struct
              ("name", `String name);
              ("text", `String text);
              ("success", `Bool success);
+             ("raw", `Bool raw);
              ("text_decorator", `String (CCOption.get_or ~default:"" text_decorator));
            ];
            CCOption.map_or ~default:[] (fun cmd -> [ ("cmd", `String cmd) ]) cmd;
@@ -51,8 +53,12 @@ let steps_has_changes steps =
   match
     CCList.find_map
       (function
-        | { O.step = "tf/plan" | "pulumi/plan" | "custom/plan" | "fly/plan"; payload; success = _; _ }
-          -> (
+        | {
+            O.step = "tf/plan" | "pulumi/plan" | "custom/plan" | "fly/plan";
+            payload;
+            success = _;
+            _;
+          } -> (
             match P.of_yojson (O.Payload.to_yojson payload) with
             | Ok { P.has_changes } -> Some has_changes
             | _ -> None)
@@ -152,6 +158,7 @@ let output_of_run ?(default_visible_on = Visible_on.Failure) output =
   let module P = struct
     type t = {
       cmd : string list option; [@default None]
+      format : Yojson.Safe.t option; [@default None]
       text : string option; [@default None]
       visible_on : string option;
     }
@@ -160,10 +167,22 @@ let output_of_run ?(default_visible_on = Visible_on.Failure) output =
   let module O = Terrat_api_components.Workflow_step_output in
   let open CCResult.Infix in
   P.of_yojson (O.Payload.to_yojson output.O.payload)
-  >>= fun { P.cmd; text; visible_on } ->
+  >>= fun { P.cmd; format; text; visible_on } ->
+  let text_decorator, raw =
+    match format with
+    | None | Some (`String "code") -> (None, false)
+    | Some (`String "raw") | Some (`String "markdown") -> (None, true)
+    | Some (`Assoc fields) -> (
+        match CCList.assoc_opt ~eq:CCString.equal "lang" fields with
+        | Some (`String lang) -> (Some lang, false)
+        | _ -> (None, false))
+    | Some _ -> (None, false)
+  in
   Ok
     (Output.make
        ?cmd:(CCOption.map (CCString.concat " ") cmd)
+       ?text_decorator
+       ~raw
        ~name:output.O.step
        ~success:output.O.success
        ~text:(CCOption.get_or ~default:"" text)

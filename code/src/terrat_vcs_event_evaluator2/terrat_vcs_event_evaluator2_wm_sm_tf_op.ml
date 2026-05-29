@@ -766,8 +766,6 @@ struct
           else Abb.Future.return (Ok ())
       | Wmr.Work_manifest_tf_operation_result result ->
           let open Irm in
-          fetch Keys.matches
-          >>= fun matches ->
           let work_manifest_result = S.Work_manifest.result result in
           Builder.run_db s ~f:(fun db ->
               time_it
@@ -801,18 +799,6 @@ struct
               branch_ref
               work_manifest
               work_manifest_result
-            >>= fun () ->
-            fetch Keys.publish_comment
-            >>= fun publish_comment ->
-            publish_comment'
-              publish_comment
-              (Msg.Tf_op_result
-                 {
-                   is_layered_run = CCList.length matches.Keys.Matches.all_matches > 1;
-                   remaining_layers = matches.Keys.Matches.all_unapplied_matches;
-                   result;
-                   work_manifest;
-                 })
             >>= fun () -> Abb.Future.return (Ok ())
           else Abb.Future.return (Ok ())
       | Wmr.Work_manifest_index_result _ -> assert false

@@ -180,8 +180,6 @@ module Tmpl = struct
   let repo_config_err_workflows_tag_query_parse_err =
     read [%blob "tmpl/repo_config_err_workflows_tag_query_parse_err.tmpl"]
 
-  let plan_complete = read [%blob "tmpl/plan_complete.tmpl"]
-  let apply_complete = read [%blob "tmpl/apply_complete.tmpl"]
   let plan_complete2 = jinja [%blob "tmpl/plan_complete2.tmpl"]
   let apply_complete2 = jinja [%blob "tmpl/apply_complete2.tmpl"]
   let automerge_failure = read [%blob "tmpl/automerge_error.tmpl"]
