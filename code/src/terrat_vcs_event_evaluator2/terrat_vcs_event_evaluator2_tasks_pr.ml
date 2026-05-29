@@ -945,7 +945,8 @@ struct
             (fetch Keys.pull_request)
             (fetch Keys.access_control_eval_apply)
             (fetch Keys.user)
-          >>= fun (access_control, _matches, _client, _pull_request, access_control_result, _user) ->
+          >>= fun (access_control, _matches, _client, _pull_request, access_control_result, _user)
+                ->
           Abb.Future.return
             (access_control_result
               : (R.t, Terrat_access_control2.err) result
@@ -1073,29 +1074,42 @@ struct
                     (fetch Keys.maybe_create_completed_apply_check)
                     (publish_comment' publish_comment Msg.Plan_no_matching_dirspaces)
                   >>= fun ((), ()) -> Abb.Future.return (Error `Noop)
-              | _ :: _ ->
-                  fetch Keys.repo
-                  >>= fun repo ->
-                  fetch Keys.account
-                  >>= fun account ->
-                  fetch Keys.client
-                  >>= fun _client ->
-                  fetch Keys.working_branch_ref
-                  >>= fun working_branch_ref ->
-                  let checks =
-                    [
-                      S.Commit_check.make_str
-                        ~config:(Builder.State.config s)
-                        ~description:"Waiting"
-                        ~status:Terrat_commit_check.Status.Queued
-                        ~repo
-                        ~account
-                        "terrateam apply";
-                    ]
-                  in
-                  fetch Keys.create_commit_checks
-                  >>= fun create_commit_checks ->
-                  create_commit_checks' create_commit_checks working_branch_ref checks)
+              | _ :: _ -> (
+                  fetch Keys.all_unapplied_matches
+                  >>= function
+                  | [] ->
+                      (* There are matching changes, but every one of them has
+                         already been applied, so there is nothing left to
+                         plan. *)
+                      fetch Keys.publish_comment
+                      >>= fun publish_comment ->
+                      Fc.Result.all2
+                        (fetch Keys.maybe_create_completed_apply_check)
+                        (publish_comment' publish_comment Msg.Plan_all_changes_applied)
+                      >>= fun ((), ()) -> Abb.Future.return (Error `Noop)
+                  | _ :: _ ->
+                      fetch Keys.repo
+                      >>= fun repo ->
+                      fetch Keys.account
+                      >>= fun account ->
+                      fetch Keys.client
+                      >>= fun _client ->
+                      fetch Keys.working_branch_ref
+                      >>= fun working_branch_ref ->
+                      let checks =
+                        [
+                          S.Commit_check.make_str
+                            ~config:(Builder.State.config s)
+                            ~description:"Waiting"
+                            ~status:Terrat_commit_check.Status.Queued
+                            ~repo
+                            ~account
+                            "terrateam apply";
+                        ]
+                      in
+                      fetch Keys.create_commit_checks
+                      >>= fun create_commit_checks ->
+                      create_commit_checks' create_commit_checks working_branch_ref checks))
           | _ -> Abb.Future.return (Ok ()))
 
     let check_dirspaces_to_apply =
