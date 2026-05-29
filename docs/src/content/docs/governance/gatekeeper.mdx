@@ -48,6 +48,10 @@ Gates that are not associated with a token require all requested approvers to ap
 5. **Workflow continues**: Once approved, the workflow proceeds as if the step had succeeded
 </Steps>
 
+:::note[Force applies bypass gates]
+A force apply ([`terrateam apply-force`](/reference/commands/apply-force/)) bypasses all gates. Gated steps are skipped and no gate approval is requested.
+:::
+
 ## Configuring Gates
 
 Gates can be added to the following workflow step types:
