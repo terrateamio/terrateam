@@ -95,6 +95,7 @@ Custom commands can be run using the `run` step type.
 | env | Object | Environment variables to set for this execution. Object keys are environment variable names and the value is a string. |
 | ignore_errors | Boolean | Set to `true` if failure should be ignored.  Default is `false.` |
 | visible_on | String | When the output of the command should be visible in a PR comment or the UI.  Options are `always`, `failure`, `success`.  Default is `failure`. |
+| format | String or Object | Controls how captured command output is rendered in PR comments. String values: `code` (default, fenced code block), `raw` (rendered as-is), `markdown` (rendered as markdown). Object form `{ type: code, lang: <language> }` produces a fenced code block with syntax highlighting for `<language>`. |
 | gate | Object | Gate configuration for manual approval if the command fails (see Gate section below) |
 
 ### Checkov
