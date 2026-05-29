@@ -264,6 +264,10 @@
         "require_explicit_apply": {
           "default": false,
           "type": "boolean"
+        },
+        "retain_pr_title": {
+          "default": false,
+          "type": "boolean"
         }
       },
       "type": "object"

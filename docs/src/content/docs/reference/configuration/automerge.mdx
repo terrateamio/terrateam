@@ -12,6 +12,7 @@ automerge:
   delete_branch: false
   merge_strategy: auto
   require_explicit_apply: false
+  retain_pr_title: false
 ```
 
 ## Keys
@@ -21,6 +22,7 @@ automerge:
 | delete_branch | boolean | Specifies whether the branch should be deleted after the PR is merged. Default is false. |
 | merge_strategy | string | The merge method to use when automerging. One of `auto`, `merge`, `rebase`, or `squash`. Default is `auto`. See [Merge Strategy](#merge-strategy) for details. |
 | require_explicit_apply | boolean | Specifies whether an explicit "terrateam apply" is necessary for `automerge` functionality to be applied. Default is false. |
+| retain_pr_title | boolean | When merging with `squash`, use the pull request title (followed by `(#PR_NUMBER)`) as the merge commit title instead of the default `Terrateam Automerge #PR_NUMBER`. Default is false. See [Commit Title](#commit-title) for details. |
 
 ## Merge Strategy
 The `merge_strategy` key controls how Terrateam merges the pull request.
@@ -33,6 +35,13 @@ The `merge_strategy` key controls how Terrateam merges the pull request.
 | `squash` | Squashes all commits in the pull request into a single commit. |
 
 The selected strategy must be allowed by the repository's merge settings. If the strategy is disabled at the repository level, the merge will fail (except for `auto`, which falls back on GitHub as described above).
+
+## Commit Title
+By default, when Terrateam squashes a pull request it sets the commit title to `Terrateam Automerge #PR_NUMBER`. Because every automerged commit then looks nearly identical, the main branch history can be hard to navigate.
+
+Set `retain_pr_title: true` to use the original pull request title as the squash commit title instead. The pull request number is appended in parentheses, producing a title like `My pull request title (#123)`. If the pull request title is unavailable, Terrateam falls back to the default `Terrateam Automerge #PR_NUMBER`.
+
+This setting only affects squash merges (`merge_strategy: squash`, or `auto` when it falls back to squash). On GitLab it sets the squash commit message.
 
 ## Examples
 ### Enable Automerge
@@ -59,6 +68,16 @@ automerge:
 ```
 
 This configuration will enable automerge and squash all commits in the pull request into a single commit when merging.
+
+### Retain Pull Request Title in Squash Commit
+```yaml
+automerge:
+  enabled: true
+  merge_strategy: squash
+  retain_pr_title: true
+```
+
+This configuration will enable automerge with squash and use the pull request title (followed by `(#PR_NUMBER)`) as the squash commit title instead of the default `Terrateam Automerge #PR_NUMBER`.
 
 ## Considerations
 When enabling automerge, keep the following in mind:

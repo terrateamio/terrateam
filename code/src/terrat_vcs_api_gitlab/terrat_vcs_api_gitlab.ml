@@ -962,19 +962,24 @@ let fetch_pull_request_requested_reviews ~request_id repo pull_number client =
           m "%s : FETCH_PULL_REQUEST_REQUESTED_REVIEWS : %a" request_id Openapic_abb.pp_call_err err);
       Abb.Future.return (Error `Error)
 
-let merge_pull_request ~request_id client pull_request merge_strategy =
+let merge_pull_request ~request_id ?(retain_pr_title = false) client pull_request merge_strategy =
   let module Gl =
     Gitlabc_projects_merge_requests.PutApiV4ProjectsIdMergeRequestsMergeRequestIidMerge
   in
   let module Glb = Gitlabc_components_putapiv4projectsidmergerequestsmergerequestiidmerge in
   let module Ms = Terrat_base_repo_config_v1.Automerge.Merge_strategy in
+  let is_squash = merge_strategy = Ms.Squash in
   let merge_commit_message = None in
   let merge_when_pipeline_succeeds = None in
   let sha = None in
   let should_remove_source_branch = None in
   let skip_merge_train = None in
-  let squash = Some (merge_strategy = Ms.Squash) in
-  let squash_commit_message = None in
+  let squash = Some is_squash in
+  let squash_commit_message =
+    match (retain_pr_title && is_squash, Terrat_pull_request.title pull_request) with
+    | true, (Some _ as title) -> title
+    | _, _ -> None
+  in
   let body =
     {
       Glb.merge_commit_message;

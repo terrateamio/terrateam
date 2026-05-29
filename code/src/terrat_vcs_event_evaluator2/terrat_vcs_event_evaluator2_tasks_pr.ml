@@ -1554,6 +1554,7 @@ struct
                 delete_branch = delete_branch';
                 merge_strategy;
                 require_explicit_apply;
+                retain_pr_title;
               } =
                 V1.automerge repo_config
               in
@@ -1582,6 +1583,7 @@ struct
                       (Am.Merge_strategy.to_string merge_strategy));
                 S.Api.merge_pull_request
                   ~request_id:(Builder.log_id s)
+                  ~retain_pr_title
                   client
                   pull_request
                   merge_strategy

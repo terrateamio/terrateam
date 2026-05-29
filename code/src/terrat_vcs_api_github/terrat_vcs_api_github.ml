@@ -797,7 +797,7 @@ let fetch_pull_request_requested_reviews ~request_id repo pull_number client =
           m "%s : FETCH_PULL_REQUEST_REQUESTED_REVIEWS: %a" request_id Githubc2_abb.pp_call_err err);
       Abb.Future.return (Error `Error)
 
-let merge_pull_request' request_id client pull_request merge_strategy =
+let merge_pull_request' ?(retain_pr_title = false) request_id client pull_request merge_strategy =
   let open Abbs_future_combinators.Infix_result_monad in
   let module Ms = Terrat_base_repo_config_v1.Automerge.Merge_strategy in
   let repo = Terrat_pull_request.repo pull_request in
@@ -807,6 +807,12 @@ let merge_pull_request' request_id client pull_request merge_strategy =
     | Ms.Merge -> `Merge
     | Ms.Squash -> `Squash
     | Ms.Rebase -> `Rebase
+  in
+  let commit_title =
+    match (retain_pr_title, Terrat_pull_request.title pull_request) with
+    | true, Some title -> Printf.sprintf "%s (#%d)" title (Terrat_pull_request.id pull_request)
+    | (true | false), (Some _ | None) ->
+        Printf.sprintf "Terrateam Automerge #%d" (Terrat_pull_request.id pull_request)
   in
   Logs.info (fun m ->
       m
@@ -822,15 +828,7 @@ let merge_pull_request' request_id client pull_request merge_strategy =
         ~body:
           Request_body.(
             make
-              Primary.(
-                make
-                  ~commit_title:
-                    (Some
-                       (Printf.sprintf
-                          "Terrateam Automerge #%d"
-                          (Terrat_pull_request.id pull_request)))
-                  ~merge_method:(Some merge_method)
-                  ()))
+              Primary.(make ~commit_title:(Some commit_title) ~merge_method:(Some merge_method) ()))
         Parameters.(
           make
             ~owner:repo.Repo.owner
@@ -869,13 +867,13 @@ let merge_pull_request' request_id client pull_request merge_strategy =
   | (`Conflict _ | `Forbidden _ | `Method_not_allowed _ | `Not_found _ | `Unprocessable_entity _) as
     err -> Abb.Future.return (Error err)
 
-let merge_pull_request ~request_id client pull_request merge_strategy =
+let merge_pull_request ~request_id ?retain_pr_title client pull_request merge_strategy =
   let num_tries = 3 in
   let sleep_time = Duration.(to_f (of_sec 2)) in
   Abbs_future_combinators.retry
     ~f:(fun () ->
       let open Abb.Future.Infix_monad in
-      merge_pull_request' request_id client pull_request merge_strategy
+      merge_pull_request' ?retain_pr_title request_id client pull_request merge_strategy
       >>= function
       | Ok _ as ret -> Abb.Future.return ret
       | Error (#Githubc2_abb.call_err as err) ->

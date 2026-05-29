@@ -212,6 +212,7 @@ module type S = sig
 
   val merge_pull_request :
     request_id:string ->
+    ?retain_pr_title:bool ->
     Client.t ->
     ('diff, 'checks) Pull_request.t ->
     Terrat_base_repo_config_v1.Automerge.Merge_strategy.t ->
