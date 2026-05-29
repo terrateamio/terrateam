@@ -85,6 +85,21 @@ In this example, changes to either the `network` or `database` directory will tr
     depends_on: 'relative_dir:../network'
   ```
 
+#### Pruning Layers Without Changes
+
+By default, when a dependency of a layer changes, the dependent layer is pulled into the run even if it has no changes of its own. To keep a layer in the dependency ordering without forcing it to run whenever an upstream layer changes, use the object form of `depends_on` and set `prune_on_no_change: true`. The layer still participates in layering calculations for anything that depends on it, but it is dropped from evaluation unless it has its own changes.
+
+```yaml
+dirs:
+  database:
+    when_modified:
+      depends_on:
+        tag_query: 'dir:network'
+        prune_on_no_change: true
+      file_patterns: ["${DIR}/*.tf"]
+```
+Here, `database` is ordered after `network`, but a change to `network` alone will not trigger a plan or apply for `database` — only changes within `database` will.
+
 ## Use Cases
 
 ### Sequential Infrastructure Deployment
