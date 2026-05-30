@@ -959,6 +959,16 @@ module Engine = struct
     [@@deriving make, show, yojson, eq]
   end
 
+  module Tfmigrate = struct
+    type t = {
+      override_tf_cmd : string option;
+      tf_cmd : string; [@default "terraform"]
+      tf_version : string option;
+      version : string option;
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
   type t =
     | Cdktf of Cdktf.t
     | Custom of Custom.t
@@ -969,6 +979,7 @@ module Engine = struct
     | Stategraph of Stategraph.t
     | Terraform of Terraform.t
     | Terragrunt of Terragrunt.t
+    | Tfmigrate of Tfmigrate.t
   [@@deriving show, yojson, eq]
 end
 
@@ -2004,6 +2015,19 @@ let of_version_1_workflow_engine cdktf terraform_version terragrunt default_engi
                       ?tf_cmd:(CCOption.or_ ~else_:default_tf_cmd sg.E.tf_cmd)
                       ?tf_version:(CCOption.or_ ~else_:default_tf_version sg.E.tf_version)
                       ?version:(CCOption.or_ ~else_:default_wrapper_version sg.E.version)
+                      ())))
+      | E.Engine_tfmigrate tm ->
+          let module E = Terrat_repo_config_engine_tfmigrate in
+          Ok
+            (Some
+               Engine.(
+                 Tfmigrate
+                   (Tfmigrate.make
+                      ?override_tf_cmd:
+                        (CCOption.or_ ~else_:default_override_tf_cmd tm.E.override_tf_cmd)
+                      ?tf_cmd:(CCOption.or_ ~else_:default_tf_cmd tm.E.tf_cmd)
+                      ?tf_version:(CCOption.or_ ~else_:default_tf_version tm.E.tf_version)
+                      ?version:(CCOption.or_ ~else_:default_wrapper_version tm.E.version)
                       ()))))
   | true, _, _, _ ->
       (* Cdktf *)
@@ -2345,6 +2369,18 @@ let of_version_1_engine default_tf_version engine =
                       ?version:sg.E.version
                       ?outputs:(CCOption.map of_version_1_engine_tf_outputs sg.E.outputs)
                       ?override_tf_cmd:sg.E.override_tf_cmd
+                      ())))
+      | E.Engine_tfmigrate tm ->
+          let module E = Terrat_repo_config_engine_tfmigrate in
+          Ok
+            (Some
+               Engine.(
+                 Tfmigrate
+                   (Tfmigrate.make
+                      ?tf_cmd:tm.E.tf_cmd
+                      ?tf_version:(CCOption.or_ ~else_:default_tf_version tm.E.tf_version)
+                      ?version:tm.E.version
+                      ?override_tf_cmd:tm.E.override_tf_cmd
                       ()))))
   | Some default_tf_version, _ ->
       Ok (Some Engine.(Terraform (Terraform.make ~version:default_tf_version ())))
@@ -3032,6 +3068,11 @@ let to_version_1_engine engine =
           outputs = Some (to_version_1_engine_tf_outputs outputs);
           override_tf_cmd;
         }
+  | Engine.Tfmigrate tm ->
+      let module T = Terrat_repo_config.Engine_tfmigrate in
+      let { Engine.Tfmigrate.tf_cmd; tf_version; version; override_tf_cmd } = tm in
+      E.Engine_tfmigrate
+        { T.name = `Tfmigrate; tf_cmd = Some tf_cmd; tf_version; version; override_tf_cmd }
 
 let to_version_1_run_on = function
   | Workflow_step.Run_on.Always -> `Always
