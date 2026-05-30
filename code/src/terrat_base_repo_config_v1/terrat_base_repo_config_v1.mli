@@ -354,6 +354,7 @@ module Automerge : sig
     enabled : bool; [@default false]
     merge_strategy : Merge_strategy.t; [@default Merge_strategy.Merge]
     require_explicit_apply : bool; [@default false]
+    retain_pr_title : bool; [@default false]
   }
   [@@deriving make, show, yojson, eq]
 end

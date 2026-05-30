@@ -27,5 +27,6 @@ type t = {
   enabled : bool; [@default false]
   merge_strategy : Merge_strategy.t; [@default `Auto]
   require_explicit_apply : bool; [@default false]
+  retain_pr_title : bool; [@default false]
 }
 [@@deriving yojson { strict = true; meta = true }, make, show, eq]

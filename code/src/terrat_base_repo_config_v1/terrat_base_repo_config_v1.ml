@@ -651,6 +651,7 @@ module Automerge = struct
     enabled : bool; [@default false]
     merge_strategy : Merge_strategy.t; [@default Merge_strategy.Auto]
     require_explicit_apply : bool; [@default false]
+    retain_pr_title : bool; [@default false]
   }
   [@@deriving make, show, yojson, eq]
 end
@@ -2107,9 +2108,18 @@ let of_version_1_apply_requirements apply_requirements =
 
 let of_version_automerge automerge =
   let module Am = Terrat_repo_config_automerge in
-  let { Am.delete_branch; enabled; merge_strategy; require_explicit_apply } = automerge in
+  let { Am.delete_branch; enabled; merge_strategy; require_explicit_apply; retain_pr_title } =
+    automerge
+  in
   let merge_strategy = Automerge.Merge_strategy.make merge_strategy in
-  Ok (Automerge.make ~delete_branch ~enabled ~merge_strategy ~require_explicit_apply ())
+  Ok
+    (Automerge.make
+       ~delete_branch
+       ~enabled
+       ~merge_strategy
+       ~require_explicit_apply
+       ~retain_pr_title
+       ())
 
 let of_version_1_batch_runs batch_runs =
   let module Br = Terrat_repo_config_batch_runs in
@@ -2807,7 +2817,10 @@ let to_version_1_apply_requirements ar =
 let to_version_1_automerge automerge =
   let module Am = Terrat_repo_config.Automerge in
   let module Ms = Automerge.Merge_strategy in
-  let { Automerge.delete_branch; enabled; merge_strategy; require_explicit_apply } = automerge in
+  let { Automerge.delete_branch; enabled; merge_strategy; require_explicit_apply; retain_pr_title }
+      =
+    automerge
+  in
   let merge_strategy =
     match merge_strategy with
     | Ms.Auto -> `Auto
@@ -2815,7 +2828,7 @@ let to_version_1_automerge automerge =
     | Ms.Rebase -> `Rebase
     | Ms.Squash -> `Squash
   in
-  { Am.delete_branch; enabled; merge_strategy; require_explicit_apply }
+  { Am.delete_branch; enabled; merge_strategy; require_explicit_apply; retain_pr_title }
 
 let to_version_1_batch_runs batch_runs =
   let module Br = Terrat_repo_config.Batch_runs in
