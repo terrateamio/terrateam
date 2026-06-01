@@ -1,0 +1,4 @@
+(test
+ (name test_string_roundtrip)
+ (libraries mql oth)
+ (preprocess (pps ppx_deriving.show ppx_deriving.eq)))
