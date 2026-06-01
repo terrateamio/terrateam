@@ -90,6 +90,110 @@ module List_dirspaces = struct
       `Get
 end
 
+module Mql = struct
+  module Parameters = struct
+    type t = {
+      installation_id : string;
+      page : string option; [@default None]
+      q : string;
+      tz : string option; [@default None]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      module Items = struct
+        type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = false }, show, eq]
+      end
+
+      type t = Items.t list [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Bad_request = struct
+      type t = Terrat_api_components.Bad_request_err.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Forbidden = struct end
+
+    type t =
+      [ `OK of OK.t
+      | `Bad_request of Bad_request.t
+      | `Forbidden
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("400", Openapi.of_json_body (fun v -> `Bad_request v) Bad_request.of_yojson);
+        ("403", fun _ -> Ok `Forbidden);
+      ]
+  end
+
+  let url = "/api/v1/github/installations/{installation_id}/mql"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("installation_id", Var (params.installation_id, String)) ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("q", Var (params.q, String));
+           ("tz", Var (params.tz, Option String));
+           ("page", Var (params.page, Option String));
+         ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module Mql_schema = struct
+  module Parameters = struct
+    type t = { installation_id : string } [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Terrat_api_components.Mql_schema_response.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Forbidden = struct end
+
+    type t =
+      [ `OK of OK.t
+      | `Forbidden
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson); ("403", fun _ -> Ok `Forbidden);
+      ]
+  end
+
+  let url = "/api/v1/github/installations/{installation_id}/mql/schema"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("installation_id", Var (params.installation_id, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
 module List_pull_requests = struct
   module Parameters = struct
     module Page = struct
@@ -522,6 +626,110 @@ module Get_work_manifest_outputs = struct
            ("limit", Var (params.limit, Option Int));
            ("lite", Var (params.lite, Bool));
          ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module Gitlab_mql = struct
+  module Parameters = struct
+    type t = {
+      installation_id : string;
+      page : string option; [@default None]
+      q : string;
+      tz : string option; [@default None]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      module Items = struct
+        type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = false }, show, eq]
+      end
+
+      type t = Items.t list [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Bad_request = struct
+      type t = Terrat_api_components.Bad_request_err.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Forbidden = struct end
+
+    type t =
+      [ `OK of OK.t
+      | `Bad_request of Bad_request.t
+      | `Forbidden
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("400", Openapi.of_json_body (fun v -> `Bad_request v) Bad_request.of_yojson);
+        ("403", fun _ -> Ok `Forbidden);
+      ]
+  end
+
+  let url = "/api/v1/gitlab/installations/{installation_id}/mql"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("installation_id", Var (params.installation_id, String)) ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("q", Var (params.q, String));
+           ("tz", Var (params.tz, Option String));
+           ("page", Var (params.page, Option String));
+         ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module Gitlab_mql_schema = struct
+  module Parameters = struct
+    type t = { installation_id : string } [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Terrat_api_components.Mql_schema_response.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Forbidden = struct end
+
+    type t =
+      [ `OK of OK.t
+      | `Forbidden
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson); ("403", fun _ -> Ok `Forbidden);
+      ]
+  end
+
+  let url = "/api/v1/gitlab/installations/{installation_id}/mql/schema"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("installation_id", Var (params.installation_id, String)) ])
+      ~query_params:[]
       ~url
       ~responses:Responses.t
       `Get

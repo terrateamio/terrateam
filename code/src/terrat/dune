@@ -35,6 +35,8 @@
   logs.fmt
   lru
   lua_pattern
+  mql
+  mql_to_pgsql
   mirage-crypto-pk
   mirage-crypto-rng.unix
   ouuid

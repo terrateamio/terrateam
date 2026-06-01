@@ -1,0 +1,3 @@
+(library
+ (name ttm_sql)
+ (libraries abb abbs cmdliner containers logs mql sln terrat_api ttm_client))
