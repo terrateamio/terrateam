@@ -2,19 +2,19 @@
   import { onMount } from 'svelte';
   import router from 'svelte-spa-router';
   import { isAuthenticated, isLoading, getCurrentUser, redirectToIntendedUrl } from './lib/auth';
-  import { api, isApiError } from './lib/api';
+  import { api } from './lib/api';
   import {
     installations,
     selectedInstallation,
     installationsLoading,
     installationsError,
-    defaultInstallationId,
+    installationsInitialized,
     theme,
     hasVisitedBefore,
     markAsVisited,
-    currentVCSProvider,
     serverConfig
   } from './lib/stores';
+  import { loadInstallations } from './lib/installations';
   import { getMaintenanceConfig } from './lib/utils/maintenance';
   import MaintenanceMode from './lib/MaintenanceMode.svelte';
   import Login from './lib/Login.svelte';
@@ -88,38 +88,39 @@
   
   // Auto-redirect authenticated users based on intended URL or whether they've visited before
   // Only redirect when we have all the data we need (auth + installations loaded)
-  $: if (!maintenanceConfig.isMaintenanceMode && $isAuthenticated && !$isLoading && installationsInitialized && !$installationsLoading && (window.location.hash === '#/' || window.location.hash === '')) {
-    
+  $: if (!maintenanceConfig.isMaintenanceMode && $isAuthenticated && !$isLoading && $installationsInitialized && !$installationsLoading && (window.location.hash === '#/' || window.location.hash === '')) {
+
     // First priority: Check for stored intended URL
     const redirectedToIntended = redirectToIntendedUrl();
-    if (redirectedToIntended) {
-    } else {
-      // Fallback: Based on whether they've visited before  
-      // We now know installations are loaded, so we can make the decision
-      if ($installations.length === 0) {
-        // User has no installations, redirect to getting started regardless
+    if (!redirectedToIntended) {
+      // Fallback: Based on whether they've visited before
+      if ($installations.length > 0) {
+        // User has installations — route to the selected one's dashboard.
+        if ($selectedInstallation) {
+          if ($hasVisitedBefore) {
+            window.location.hash = `#/i/${$selectedInstallation.id}/dashboard`;
+          } else {
+            window.location.hash = '#/getting-started';
+            markAsVisited(); // Mark as visited when they first see getting started
+          }
+        }
+        // else: installations exist but none selected yet - wait for selection to complete
+      } else if (!$installationsError) {
+        // Definitive empty result (successful fetch, genuinely no installations):
+        // send the user to getting started / demo mode.
         window.location.hash = '#/getting-started';
         if (!$hasVisitedBefore) {
           markAsVisited();
         }
-      } else if ($selectedInstallation) {
-        // User has installations and one is selected
-        if ($hasVisitedBefore) {
-          window.location.hash = `#/i/${$selectedInstallation.id}/dashboard`;
-        } else {
-          window.location.hash = '#/getting-started';
-          markAsVisited(); // Mark as visited when they first see getting started
-        }
-      } else {
-        // Installations exist but none selected yet - wait for selection to complete
       }
+      // else: failed to load installations and nothing is cached — stay at root;
+      // AuthenticationLoader surfaces the error with a retry instead of demo mode.
     }
   }
   
-  // Load installations when user is authenticated (only once)
-  let installationsInitialized = false;
-  $: if (!maintenanceConfig.isMaintenanceMode && $isAuthenticated && !$isLoading && !installationsInitialized) {
-    installationsInitialized = true;
+  // Load installations when user is authenticated. loadInstallations() guards
+  // against duplicate loads and marks installationsInitialized internally.
+  $: if (!maintenanceConfig.isMaintenanceMode && $isAuthenticated && !$isLoading && !$installationsInitialized) {
     loadInstallations();
   }
 
@@ -133,56 +134,6 @@
     }
   }
 
-  async function loadInstallations() {
-    if ($installationsLoading) return;
-    
-    installationsLoading.set(true);
-    installationsError.set(null);
-    
-    try {
-      const provider = $currentVCSProvider;
-      const response = await api.getUserInstallations(provider);
-      
-      if (response && response.installations) {
-        installations.set(response.installations);
-        
-        // Auto-select installation based on default setting or first available
-        if (response.installations.length > 0 && !$selectedInstallation) {
-          let installationToSelect = response.installations[0];
-          
-          // Try to find the default installation if one is set
-          if ($defaultInstallationId) {
-            const defaultInstallation = response.installations.find(inst => inst.id === $defaultInstallationId);
-            if (defaultInstallation) {
-              installationToSelect = defaultInstallation;
-            } else {
-            }
-          } else {
-          }
-          
-          selectedInstallation.set(installationToSelect);
-        }
-      } else {
-        console.warn('No installations found in response:', response);
-        installations.set([]);
-      }
-    } catch (err) {
-      console.error('Error loading installations:', err);
-      
-      // For GitLab, if we get a 404, treat it as "no installations" rather than an error
-      // This handles the case where the GitLab installations endpoint isn't implemented yet
-      if ($currentVCSProvider === 'gitlab' && isApiError(err) && err.status === 404) {
-        installations.set([]);
-        installationsError.set(null);
-      } else {
-        installationsError.set('Failed to load installations');
-        installations.set([]);
-      }
-    } finally {
-      installationsLoading.set(false);
-    }
-  }
-  
   // Handle legacy URL redirects
   function handleLegacyUrlRedirect() {
     const path = window.location.pathname;

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { isAuthenticated, storeIntendedUrl } from '../../auth';
-  import { installations, installationsLoading, currentVCSProvider } from '../../stores';
+  import { installations, installationsLoading, installationsError, currentVCSProvider } from '../../stores';
   import Sidebar from '../../Sidebar.svelte';
   import { VCS_PROVIDERS } from '../../vcs/providers';
 
@@ -86,7 +86,7 @@
     {/if}
 
     <!-- Getting Started Banner (shown when no installations are connected) -->
-    {#if !$installationsLoading && $installations.length === 0 && activeItem !== 'getting-started' && activeItem !== 'login'}
+    {#if !$installationsLoading && !$installationsError && $installations.length === 0 && activeItem !== 'getting-started' && activeItem !== 'login'}
       <div class="bg-[var(--sg-success-bg)] border-b border-[var(--sg-success)]">
         <div class="px-4 md:px-6 py-3">
           <div class="flex items-center justify-between">

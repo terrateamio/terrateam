@@ -11,10 +11,79 @@ export const availableProviders: Writable<VCSProvider[]> = writable(['github', '
 export const serverConfig: Writable<ServerConfig> = writable();
 
 // Organization/installation state
-export const installations: Writable<Installation[]> = writable([]);
-export const selectedInstallation: Writable<Installation | null> = writable(null);
+//
+// Installations are hydrated from a last-known-good cache so that a transient
+// failure to reach the installations endpoint does not drop the user into
+// "demo mode" (which keys off an empty installations list). Only a *successful*
+// fetch is authoritative and may overwrite this cache — see loadInstallations()
+// in ./installations.
+const INSTALLATIONS_CACHE_KEY = 'installations-cache';
+
+function loadCachedInstallations(): Installation[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const cached = localStorage.getItem(INSTALLATIONS_CACHE_KEY);
+    if (!cached) return [];
+    const parsed = JSON.parse(cached);
+    // Tolerate both the current `{ installations, timestamp }` shape and a
+    // legacy bare array.
+    const list = Array.isArray(parsed) ? parsed : parsed?.installations;
+    if (Array.isArray(list) && list.every((i) => i && typeof i.id === 'string')) {
+      return list as Installation[];
+    }
+  } catch (e) {
+    console.warn('Failed to load installations from cache:', e);
+  }
+  return [];
+}
+
+function resolveInitialSelectedInstallation(list: Installation[]): Installation | null {
+  if (list.length === 0) return null;
+  try {
+    const defaultId = localStorage.getItem('defaultInstallationId');
+    if (defaultId) {
+      const match = list.find((i) => i.id === defaultId);
+      if (match) return match;
+    }
+  } catch (e) {
+    console.warn('Failed to resolve default installation:', e);
+  }
+  return list[0];
+}
+
+// Persist the last successfully-fetched installations as the last-known-good set.
+export function cacheInstallations(list: Installation[]): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(
+      INSTALLATIONS_CACHE_KEY,
+      JSON.stringify({ installations: list, timestamp: Date.now() })
+    );
+  } catch (e) {
+    console.warn('Failed to cache installations:', e);
+  }
+}
+
+export function clearInstallationsCache(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(INSTALLATIONS_CACHE_KEY);
+  } catch (e) {
+    console.warn('Failed to clear installations cache:', e);
+  }
+}
+
+const initialInstallations = loadCachedInstallations();
+
+export const installations: Writable<Installation[]> = writable(initialInstallations);
+export const selectedInstallation: Writable<Installation | null> = writable(
+  resolveInitialSelectedInstallation(initialInstallations)
+);
 export const installationsLoading: Writable<boolean> = writable(false);
 export const installationsError: Writable<string | null> = writable(null);
+// Whether installations have been fetched at least once this session. Drives the
+// root routing decision and guards against duplicate concurrent loads.
+export const installationsInitialized: Writable<boolean> = writable(false);
 
 // Global repository cache for the current installation with persistence
 function createPersistentRepositoryCache() {

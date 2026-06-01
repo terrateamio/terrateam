@@ -342,7 +342,7 @@
       <LoadingSpinner size="lg" />
       <span class="ml-3 text-[var(--sg-text-muted)]">Loading {terminology.organizations}...</span>
     </div>
-  {:else if $installationsError}
+  {:else if $installationsError && $installations.length === 0}
     <ErrorMessage type="error" message="Failed to load {terminology.organizations}: {$installationsError}" />
   {:else if $installations.length === 0}
     <Card padding="lg" class="text-center">
