@@ -8,7 +8,7 @@ standalone_expr: WITH
 ##
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected.
 
 standalone_expr: NOT WITH
 ##
@@ -20,7 +20,7 @@ standalone_expr: NOT WITH
 ## NOT
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after 'not'.
 
 standalone_expr: MINUS WITH
 ##
@@ -32,7 +32,7 @@ standalone_expr: MINUS WITH
 ## MINUS
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after unary '-'.
 
 standalone_expr: LPAREN WITH
 ##
@@ -45,7 +45,7 @@ standalone_expr: LPAREN WITH
 ## LPAREN
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression or tuple expected after '('.
 
 standalone_expr: IDENTIFIER WITH
 ##
@@ -59,7 +59,7 @@ standalone_expr: IDENTIFIER WITH
 ## IDENTIFIER
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator, '(' for function call, or end of expression after identifier.
 
 standalone_expr: IDENTIFIER LPAREN WITH
 ##
@@ -72,7 +72,7 @@ standalone_expr: IDENTIFIER LPAREN WITH
 ## IDENTIFIER LPAREN
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression or ')' expected in function call argument list.
 
 standalone_expr: EXISTS WITH
 ##
@@ -84,7 +84,7 @@ standalone_expr: EXISTS WITH
 ## EXISTS
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected '(' after 'exists'.
 
 standalone_expr: EXISTS LPAREN WHERE
 ##
@@ -96,7 +96,7 @@ standalone_expr: EXISTS LPAREN WHERE
 ## EXISTS LPAREN
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Query expected inside 'exists ('.
 
 start: WITH WITH
 ##
@@ -108,7 +108,7 @@ start: WITH WITH
 ## WITH
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Identifier expected for CTE name after 'with'.
 
 start: WITH IDENTIFIER WITH
 ##
@@ -121,7 +121,7 @@ start: WITH IDENTIFIER WITH
 ## IDENTIFIER
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected 'as' after CTE name.
 
 start: WITH IDENTIFIER AS WITH
 ##
@@ -134,7 +134,7 @@ start: WITH IDENTIFIER AS WITH
 ## IDENTIFIER AS
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected '(' or 'materialized' after 'as' in CTE definition.
 
 start: WITH IDENTIFIER AS MATERIALIZED WITH
 ##
@@ -146,7 +146,7 @@ start: WITH IDENTIFIER AS MATERIALIZED WITH
 ## IDENTIFIER AS MATERIALIZED
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected '(' after 'materialized'.
 
 start: WITH IDENTIFIER AS MATERIALIZED LPAREN WHERE
 ##
@@ -158,7 +158,7 @@ start: WITH IDENTIFIER AS MATERIALIZED LPAREN WHERE
 ## IDENTIFIER AS MATERIALIZED LPAREN
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Query expected inside materialized CTE.
 
 start: SELECT WITH
 ##
@@ -170,7 +170,7 @@ start: SELECT WITH
 ## SELECT
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Select list expected after 'select'.
 
 standalone_expr: COUNT WITH
 ##
@@ -182,7 +182,7 @@ standalone_expr: COUNT WITH
 ## COUNT
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected '(' after 'count'.
 
 standalone_expr: COUNT LPAREN WITH
 ##
@@ -194,7 +194,7 @@ standalone_expr: COUNT LPAREN WITH
 ## COUNT LPAREN
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected '*' inside 'count(...)'.
 
 standalone_expr: COUNT LPAREN STAR WITH
 ##
@@ -206,7 +206,7 @@ standalone_expr: COUNT LPAREN STAR WITH
 ## COUNT LPAREN STAR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected ')' to close 'count(*)'.
 
 start: SELECT FALSE AS IDENTIFIER WITH
 ##
@@ -219,7 +219,7 @@ start: SELECT FALSE AS IDENTIFIER WITH
 ## select_list_columns
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected ',' or 'from' after select column.
 
 start: SELECT FALSE COMMA WITH
 ##
@@ -231,7 +231,7 @@ start: SELECT FALSE COMMA WITH
 ## select_list_columns COMMA
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Column expression expected after ',' in select list.
 
 start: SELECT FALSE WHERE
 ##
@@ -274,7 +274,7 @@ start: SELECT FALSE WHERE
 ## expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator, 'as', ',' or 'from' after column expression.
 
 standalone_expr: FALSE STAR WITH
 ##
@@ -286,7 +286,7 @@ standalone_expr: FALSE STAR WITH
 ## expr STAR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after '*'.
 
 standalone_expr: FALSE STAR FALSE WITH
 ##
@@ -328,7 +328,7 @@ standalone_expr: FALSE STAR FALSE WITH
 ## expr STAR expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator or end of expression.
 
 standalone_expr: FALSE LBRACKET WITH
 ##
@@ -340,7 +340,7 @@ standalone_expr: FALSE LBRACKET WITH
 ## expr LBRACKET
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected inside '[...]'.
 
 standalone_expr: FALSE LBRACKET FALSE WHERE
 ##
@@ -382,7 +382,7 @@ standalone_expr: FALSE LBRACKET FALSE WHERE
 ## expr LBRACKET expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected ']' to close index expression.
 
 standalone_expr: FALSE PLUS WITH
 ##
@@ -394,7 +394,7 @@ standalone_expr: FALSE PLUS WITH
 ## expr PLUS
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after '+'.
 
 standalone_expr: FALSE PLUS FALSE WITH
 ##
@@ -436,7 +436,7 @@ standalone_expr: FALSE PLUS FALSE WITH
 ## expr PLUS expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator or end of expression.
 
 standalone_expr: FALSE JSON_VAL WITH
 ##
@@ -448,7 +448,7 @@ standalone_expr: FALSE JSON_VAL WITH
 ## expr JSON_VAL
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after '->'.
 
 standalone_expr: FALSE JSON_VAL FALSE WITH
 ##
@@ -490,7 +490,7 @@ standalone_expr: FALSE JSON_VAL FALSE WITH
 ## expr JSON_VAL expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator or end of expression.
 
 standalone_expr: FALSE DOUBLE_COLON WITH
 ##
@@ -502,7 +502,7 @@ standalone_expr: FALSE DOUBLE_COLON WITH
 ## expr DOUBLE_COLON
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Identifier (type name) expected after '::'.
 
 standalone_expr: FALSE DOT WITH
 ##
@@ -514,7 +514,7 @@ standalone_expr: FALSE DOT WITH
 ## expr DOT
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Identifier expected after '.'.
 
 standalone_expr: FALSE JSON_TEXT WITH
 ##
@@ -526,7 +526,7 @@ standalone_expr: FALSE JSON_TEXT WITH
 ## expr JSON_TEXT
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after '->>'.
 
 standalone_expr: FALSE JSON_TEXT FALSE WITH
 ##
@@ -568,7 +568,7 @@ standalone_expr: FALSE JSON_TEXT FALSE WITH
 ## expr JSON_TEXT expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator or end of expression.
 
 standalone_expr: FALSE JSON_OBJ_QUERY WITH
 ##
@@ -580,7 +580,7 @@ standalone_expr: FALSE JSON_OBJ_QUERY WITH
 ## expr JSON_OBJ_QUERY
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+String literal expected after '#>>'.
 
 standalone_expr: FALSE DOUBLE_PIPE WITH
 ##
@@ -592,7 +592,7 @@ standalone_expr: FALSE DOUBLE_PIPE WITH
 ## expr DOUBLE_PIPE
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after '||'.
 
 standalone_expr: FALSE DOUBLE_PIPE FALSE WITH
 ##
@@ -634,7 +634,7 @@ standalone_expr: FALSE DOUBLE_PIPE FALSE WITH
 ## expr DOUBLE_PIPE expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator or end of expression.
 
 standalone_expr: FALSE DIV WITH
 ##
@@ -646,7 +646,7 @@ standalone_expr: FALSE DIV WITH
 ## expr DIV
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after '/'.
 
 standalone_expr: FALSE DIV FALSE WITH
 ##
@@ -688,7 +688,7 @@ standalone_expr: FALSE DIV FALSE WITH
 ## expr DIV expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator or end of expression.
 
 standalone_expr: FALSE OR WITH
 ##
@@ -700,7 +700,7 @@ standalone_expr: FALSE OR WITH
 ## expr OR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after 'or'.
 
 standalone_expr: FALSE OR FALSE WITH
 ##
@@ -742,7 +742,7 @@ standalone_expr: FALSE OR FALSE WITH
 ## expr OR expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator or end of expression.
 
 standalone_expr: FALSE NOT_EQUAL WITH
 ##
@@ -754,7 +754,7 @@ standalone_expr: FALSE NOT_EQUAL WITH
 ## expr NOT_EQUAL
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after '<>'.
 
 standalone_expr: FALSE NOT_EQUAL FALSE WITH
 ##
@@ -796,7 +796,7 @@ standalone_expr: FALSE NOT_EQUAL FALSE WITH
 ## expr NOT_EQUAL expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator or end of expression.
 
 standalone_expr: FALSE MINUS WITH
 ##
@@ -808,7 +808,7 @@ standalone_expr: FALSE MINUS WITH
 ## expr MINUS
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after '-'.
 
 standalone_expr: FALSE MINUS FALSE WITH
 ##
@@ -850,7 +850,7 @@ standalone_expr: FALSE MINUS FALSE WITH
 ## expr MINUS expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator or end of expression.
 
 standalone_expr: FALSE NOT WITH
 ##
@@ -863,7 +863,7 @@ standalone_expr: FALSE NOT WITH
 ## expr NOT
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected 'like' or 'ilike' after 'not'.
 
 standalone_expr: FALSE NOT LIKE WITH
 ##
@@ -875,7 +875,7 @@ standalone_expr: FALSE NOT LIKE WITH
 ## expr NOT LIKE
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after 'not like'.
 
 standalone_expr: FALSE NOT LIKE FALSE WITH
 ##
@@ -917,7 +917,7 @@ standalone_expr: FALSE NOT LIKE FALSE WITH
 ## expr NOT LIKE expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator or end of expression.
 
 standalone_expr: FALSE NOT ILIKE WITH
 ##
@@ -929,7 +929,7 @@ standalone_expr: FALSE NOT ILIKE WITH
 ## expr NOT ILIKE
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after 'not ilike'.
 
 standalone_expr: FALSE NOT ILIKE FALSE WITH
 ##
@@ -971,7 +971,7 @@ standalone_expr: FALSE NOT ILIKE FALSE WITH
 ## expr NOT ILIKE expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator or end of expression.
 
 standalone_expr: FALSE LTE WITH
 ##
@@ -983,7 +983,7 @@ standalone_expr: FALSE LTE WITH
 ## expr LTE
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after '<='.
 
 standalone_expr: FALSE LTE FALSE WITH
 ##
@@ -1025,7 +1025,7 @@ standalone_expr: FALSE LTE FALSE WITH
 ## expr LTE expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator or end of expression.
 
 standalone_expr: FALSE LT WITH
 ##
@@ -1037,7 +1037,7 @@ standalone_expr: FALSE LT WITH
 ## expr LT
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after '<'.
 
 standalone_expr: FALSE LT FALSE WITH
 ##
@@ -1079,7 +1079,7 @@ standalone_expr: FALSE LT FALSE WITH
 ## expr LT expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator or end of expression.
 
 standalone_expr: FALSE LIKE WITH
 ##
@@ -1091,7 +1091,7 @@ standalone_expr: FALSE LIKE WITH
 ## expr LIKE
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after 'like'.
 
 standalone_expr: FALSE LIKE FALSE WITH
 ##
@@ -1133,7 +1133,7 @@ standalone_expr: FALSE LIKE FALSE WITH
 ## expr LIKE expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator or end of expression.
 
 standalone_expr: FALSE JSON_SUBSET WITH
 ##
@@ -1145,7 +1145,7 @@ standalone_expr: FALSE JSON_SUBSET WITH
 ## expr JSON_SUBSET
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after '@>'.
 
 standalone_expr: FALSE JSON_SUBSET FALSE WITH
 ##
@@ -1187,7 +1187,7 @@ standalone_expr: FALSE JSON_SUBSET FALSE WITH
 ## expr JSON_SUBSET expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator or end of expression.
 
 standalone_expr: FALSE IS_NOT_DISTINCT_FROM WITH
 ##
@@ -1199,7 +1199,7 @@ standalone_expr: FALSE IS_NOT_DISTINCT_FROM WITH
 ## expr IS_NOT_DISTINCT_FROM
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after 'is not distinct from'.
 
 standalone_expr: FALSE IS_NOT_DISTINCT_FROM FALSE WITH
 ##
@@ -1241,7 +1241,7 @@ standalone_expr: FALSE IS_NOT_DISTINCT_FROM FALSE WITH
 ## expr IS_NOT_DISTINCT_FROM expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator or end of expression.
 
 standalone_expr: FALSE IS_NOT WITH
 ##
@@ -1253,7 +1253,7 @@ standalone_expr: FALSE IS_NOT WITH
 ## expr IS_NOT
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after 'is not'.
 
 standalone_expr: FALSE IS_NOT FALSE WITH
 ##
@@ -1295,7 +1295,7 @@ standalone_expr: FALSE IS_NOT FALSE WITH
 ## expr IS_NOT expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator or end of expression.
 
 standalone_expr: FALSE IS_DISTINCT_FROM WITH
 ##
@@ -1307,7 +1307,7 @@ standalone_expr: FALSE IS_DISTINCT_FROM WITH
 ## expr IS_DISTINCT_FROM
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after 'is distinct from'.
 
 standalone_expr: FALSE IS_DISTINCT_FROM FALSE WITH
 ##
@@ -1349,7 +1349,7 @@ standalone_expr: FALSE IS_DISTINCT_FROM FALSE WITH
 ## expr IS_DISTINCT_FROM expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator or end of expression.
 
 standalone_expr: FALSE IS WITH
 ##
@@ -1361,7 +1361,7 @@ standalone_expr: FALSE IS WITH
 ## expr IS
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after 'is'.
 
 standalone_expr: FALSE IS FALSE WITH
 ##
@@ -1403,7 +1403,7 @@ standalone_expr: FALSE IS FALSE WITH
 ## expr IS expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator or end of expression.
 
 standalone_expr: FALSE IN WITH
 ##
@@ -1416,7 +1416,7 @@ standalone_expr: FALSE IN WITH
 ## expr IN
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected '(' after 'in'.
 
 standalone_expr: FALSE IN LPAREN WHERE
 ##
@@ -1429,7 +1429,7 @@ standalone_expr: FALSE IN LPAREN WHERE
 ## expr IN LPAREN
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression list or subquery expected inside 'in (...)'.
 
 standalone_expr: FALSE IN LPAREN LPAREN WHERE
 ##
@@ -1443,7 +1443,7 @@ standalone_expr: FALSE IN LPAREN LPAREN WHERE
 ## LPAREN
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression, tuple, or query expected after '('.
 
 standalone_expr: LPAREN FALSE COMMA FALSE COMMA WITH
 ##
@@ -1455,7 +1455,7 @@ standalone_expr: LPAREN FALSE COMMA FALSE COMMA WITH
 ## tuple COMMA
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after ',' in tuple.
 
 standalone_expr: LPAREN FALSE COMMA FALSE COMMA FALSE WHERE
 ##
@@ -1497,7 +1497,7 @@ standalone_expr: LPAREN FALSE COMMA FALSE COMMA FALSE WHERE
 ## tuple COMMA expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator, ',' or ')' after expression in tuple.
 
 standalone_expr: FALSE ILIKE WITH
 ##
@@ -1509,7 +1509,7 @@ standalone_expr: FALSE ILIKE WITH
 ## expr ILIKE
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after 'ilike'.
 
 standalone_expr: FALSE ILIKE FALSE WITH
 ##
@@ -1551,7 +1551,7 @@ standalone_expr: FALSE ILIKE FALSE WITH
 ## expr ILIKE expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator or end of expression.
 
 standalone_expr: FALSE GTE WITH
 ##
@@ -1563,7 +1563,7 @@ standalone_expr: FALSE GTE WITH
 ## expr GTE
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after '>='.
 
 standalone_expr: FALSE GTE FALSE WITH
 ##
@@ -1605,7 +1605,7 @@ standalone_expr: FALSE GTE FALSE WITH
 ## expr GTE expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator or end of expression.
 
 standalone_expr: FALSE GT WITH
 ##
@@ -1617,7 +1617,7 @@ standalone_expr: FALSE GT WITH
 ## expr GT
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after '>'.
 
 standalone_expr: FALSE GT FALSE WITH
 ##
@@ -1659,7 +1659,7 @@ standalone_expr: FALSE GT FALSE WITH
 ## expr GT expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator or end of expression.
 
 standalone_expr: FALSE EQUAL WITH
 ##
@@ -1671,7 +1671,7 @@ standalone_expr: FALSE EQUAL WITH
 ## expr EQUAL
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after '='.
 
 standalone_expr: FALSE EQUAL FALSE WITH
 ##
@@ -1713,7 +1713,7 @@ standalone_expr: FALSE EQUAL FALSE WITH
 ## expr EQUAL expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator or end of expression.
 
 standalone_expr: FALSE AND WITH
 ##
@@ -1725,7 +1725,7 @@ standalone_expr: FALSE AND WITH
 ## expr AND
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after 'and'.
 
 standalone_expr: FALSE AND FALSE WITH
 ##
@@ -1767,7 +1767,7 @@ standalone_expr: FALSE AND FALSE WITH
 ## expr AND expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator or end of expression.
 
 start: LPAREN SELECT FALSE FROM IDENTIFIER RPAREN WITH
 ##
@@ -1781,7 +1781,7 @@ start: LPAREN SELECT FALSE FROM IDENTIFIER RPAREN WITH
 ## query_body
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected 'union', 'order by', 'limit', ')' or end of query.
 
 start: SELECT FALSE FROM IDENTIFIER UNION WITH
 ##
@@ -1794,7 +1794,7 @@ start: SELECT FALSE FROM IDENTIFIER UNION WITH
 ## query_body UNION
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Query expected after 'union'.
 
 start: LPAREN WHERE
 ##
@@ -1806,7 +1806,7 @@ start: LPAREN WHERE
 ## LPAREN
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Query expected inside '('.
 
 start: LPAREN SELECT FALSE FROM IDENTIFIER EOF
 ##
@@ -1835,7 +1835,7 @@ start: LPAREN SELECT FALSE FROM IDENTIFIER EOF
 ## In state 116, spurious reduction of production query -> query_body order_by_opt
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected ')' to close parenthesized query.
 
 start: SELECT FALSE FROM IDENTIFIER UNION ALL WITH
 ##
@@ -1847,7 +1847,7 @@ start: SELECT FALSE FROM IDENTIFIER UNION ALL WITH
 ## query_body UNION ALL
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Query expected after 'union all'.
 
 start: SELECT FALSE FROM IDENTIFIER ORDER WITH
 ##
@@ -1859,7 +1859,7 @@ start: SELECT FALSE FROM IDENTIFIER ORDER WITH
 ## ORDER
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected 'by' after 'order'.
 
 start: SELECT FALSE FROM IDENTIFIER ORDER BY WITH
 ##
@@ -1871,7 +1871,7 @@ start: SELECT FALSE FROM IDENTIFIER ORDER BY WITH
 ## ORDER BY
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after 'order by'.
 
 start: SELECT FALSE FROM IDENTIFIER ORDER BY FALSE ASC WITH
 ##
@@ -1884,7 +1884,7 @@ start: SELECT FALSE FROM IDENTIFIER ORDER BY FALSE ASC WITH
 ## ORDER BY order_by_exprs
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected ',', 'limit', ')' or end of query after order-by expression.
 
 start: SELECT FALSE FROM IDENTIFIER LIMIT WITH
 ##
@@ -1896,7 +1896,7 @@ start: SELECT FALSE FROM IDENTIFIER LIMIT WITH
 ## LIMIT
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Integer expected after 'limit'.
 
 start: SELECT FALSE FROM IDENTIFIER ORDER BY FALSE COMMA WITH
 ##
@@ -1908,7 +1908,7 @@ start: SELECT FALSE FROM IDENTIFIER ORDER BY FALSE COMMA WITH
 ## order_by_exprs COMMA
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after ',' in order-by list.
 
 start: SELECT FALSE FROM IDENTIFIER ORDER BY FALSE WHERE
 ##
@@ -1952,7 +1952,7 @@ start: SELECT FALSE FROM IDENTIFIER ORDER BY FALSE WHERE
 ## expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator, 'asc', 'desc', ',', 'limit', ')' or end of query after order-by expression.
 
 standalone_expr: LPAREN FALSE WHERE
 ##
@@ -1995,7 +1995,7 @@ standalone_expr: LPAREN FALSE WHERE
 ## LPAREN expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected ')' to close parenthesized expression.
 
 standalone_expr: LPAREN FALSE COMMA WITH
 ##
@@ -2007,7 +2007,7 @@ standalone_expr: LPAREN FALSE COMMA WITH
 ## expr COMMA
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after ',' in tuple.
 
 standalone_expr: LPAREN FALSE COMMA FALSE WHERE
 ##
@@ -2049,7 +2049,7 @@ standalone_expr: LPAREN FALSE COMMA FALSE WHERE
 ## expr COMMA expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected ',' or ')' in tuple.
 
 standalone_expr: FALSE IN LPAREN SELECT FALSE FROM IDENTIFIER EOF
 ##
@@ -2078,7 +2078,7 @@ standalone_expr: FALSE IN LPAREN SELECT FALSE FROM IDENTIFIER EOF
 ## In state 116, spurious reduction of production query -> query_body order_by_opt
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected ')' to close 'in (...)' subquery.
 
 standalone_expr: FALSE IN LPAREN FALSE COMMA WITH
 ##
@@ -2090,7 +2090,7 @@ standalone_expr: FALSE IN LPAREN FALSE COMMA WITH
 ## in_list COMMA
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after ',' in IN list.
 
 standalone_expr: FALSE IN LPAREN FALSE COMMA FALSE WHERE
 ##
@@ -2132,7 +2132,7 @@ standalone_expr: FALSE IN LPAREN FALSE COMMA FALSE WHERE
 ## in_list COMMA expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected ',' or ')' in IN list.
 
 standalone_expr: FALSE IN LPAREN FALSE WHERE
 ##
@@ -2174,7 +2174,7 @@ standalone_expr: FALSE IN LPAREN FALSE WHERE
 ## expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator, ',' or ')' after expression in IN list.
 
 start: SELECT FALSE AS WITH
 ##
@@ -2186,7 +2186,7 @@ start: SELECT FALSE AS WITH
 ## expr AS
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Identifier expected after 'as' for column alias.
 
 start: SELECT STAR WITH
 ##
@@ -2198,7 +2198,7 @@ start: SELECT STAR WITH
 ## SELECT select_list
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected 'from' after select list.
 
 start: SELECT FALSE FROM WITH
 ##
@@ -2210,7 +2210,7 @@ start: SELECT FALSE FROM WITH
 ## SELECT select_list FROM
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Table reference or 'unnest(...)' expected after 'from'.
 
 start: SELECT FALSE FROM UNNEST WITH
 ##
@@ -2222,7 +2222,7 @@ start: SELECT FALSE FROM UNNEST WITH
 ## UNNEST
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected '(' after 'unnest'.
 
 start: SELECT FALSE FROM UNNEST LPAREN WITH
 ##
@@ -2234,7 +2234,7 @@ start: SELECT FALSE FROM UNNEST LPAREN WITH
 ## UNNEST LPAREN
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected inside 'unnest(...)'.
 
 start: SELECT FALSE FROM UNNEST LPAREN FALSE WHERE
 ##
@@ -2276,7 +2276,7 @@ start: SELECT FALSE FROM UNNEST LPAREN FALSE WHERE
 ## UNNEST LPAREN expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator or ')' after expression in 'unnest(...)'.
 
 start: SELECT FALSE FROM UNNEST LPAREN FALSE RPAREN WITH
 ##
@@ -2288,7 +2288,7 @@ start: SELECT FALSE FROM UNNEST LPAREN FALSE RPAREN WITH
 ## UNNEST LPAREN expr RPAREN
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected 'as' after 'unnest(...)'.
 
 start: SELECT FALSE FROM UNNEST LPAREN FALSE RPAREN AS WITH
 ##
@@ -2300,7 +2300,7 @@ start: SELECT FALSE FROM UNNEST LPAREN FALSE RPAREN AS WITH
 ## UNNEST LPAREN expr RPAREN AS
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Identifier expected for 'unnest(...)' alias.
 
 start: SELECT FALSE FROM IDENTIFIER WITH
 ##
@@ -2313,7 +2313,7 @@ start: SELECT FALSE FROM IDENTIFIER WITH
 ## IDENTIFIER
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected 'as', ',', a join keyword, 'where', 'group by', 'order by', 'limit', 'union', ')' or end of query after table name.
 
 start: SELECT FALSE FROM IDENTIFIER AS WITH
 ##
@@ -2325,7 +2325,7 @@ start: SELECT FALSE FROM IDENTIFIER AS WITH
 ## IDENTIFIER AS
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Identifier expected for table alias after 'as'.
 
 start: SELECT FALSE FROM IDENTIFIER ON
 ##
@@ -2346,7 +2346,7 @@ start: SELECT FALSE FROM IDENTIFIER ON
 ## In state 180, spurious reduction of production tables -> from_item
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected ',', a join keyword, 'where', 'group by', 'order by', 'limit', 'union', ')' or end of query after table list.
 
 start: SELECT FALSE FROM IDENTIFIER WHERE WITH
 ##
@@ -2358,7 +2358,7 @@ start: SELECT FALSE FROM IDENTIFIER WHERE WITH
 ## WHERE
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after 'where'.
 
 start: SELECT FALSE FROM IDENTIFIER WHERE FALSE WHERE
 ##
@@ -2400,7 +2400,7 @@ start: SELECT FALSE FROM IDENTIFIER WHERE FALSE WHERE
 ## WHERE expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator, 'group by', 'order by', 'limit', 'union', ')' or end of query after WHERE expression.
 
 start: SELECT FALSE FROM IDENTIFIER GROUP WITH
 ##
@@ -2413,7 +2413,7 @@ start: SELECT FALSE FROM IDENTIFIER GROUP WITH
 ## GROUP
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected 'by' after 'group'.
 
 start: SELECT FALSE FROM IDENTIFIER GROUP BY WITH
 ##
@@ -2426,7 +2426,7 @@ start: SELECT FALSE FROM IDENTIFIER GROUP BY WITH
 ## GROUP BY
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after 'group by'.
 
 start: SELECT FALSE FROM IDENTIFIER GROUP BY FALSE HAVING WITH
 ##
@@ -2438,7 +2438,7 @@ start: SELECT FALSE FROM IDENTIFIER GROUP BY FALSE HAVING WITH
 ## GROUP BY group_by_exprs HAVING
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after 'having'.
 
 start: SELECT FALSE FROM IDENTIFIER GROUP BY FALSE HAVING FALSE WHERE
 ##
@@ -2480,7 +2480,7 @@ start: SELECT FALSE FROM IDENTIFIER GROUP BY FALSE HAVING FALSE WHERE
 ## GROUP BY group_by_exprs HAVING expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator, 'order by', 'limit', 'union', ')' or end of query after HAVING expression.
 
 start: SELECT FALSE FROM IDENTIFIER GROUP BY FALSE COMMA WITH
 ##
@@ -2492,7 +2492,7 @@ start: SELECT FALSE FROM IDENTIFIER GROUP BY FALSE COMMA WITH
 ## group_by_exprs COMMA
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after ',' in group-by list.
 
 start: SELECT FALSE FROM IDENTIFIER GROUP BY FALSE COMMA FALSE WHERE
 ##
@@ -2534,7 +2534,7 @@ start: SELECT FALSE FROM IDENTIFIER GROUP BY FALSE COMMA FALSE WHERE
 ## group_by_exprs COMMA expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator, ',', 'having', 'order by', 'limit', 'union', ')' or end of query after group-by expression.
 
 start: SELECT FALSE FROM IDENTIFIER GROUP BY FALSE WHERE
 ##
@@ -2576,7 +2576,7 @@ start: SELECT FALSE FROM IDENTIFIER GROUP BY FALSE WHERE
 ## expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator, ',', 'having', 'order by', 'limit', 'union', ')' or end of query after group-by expression.
 
 start: SELECT FALSE FROM IDENTIFIER RIGHT WITH
 ##
@@ -2588,7 +2588,7 @@ start: SELECT FALSE FROM IDENTIFIER RIGHT WITH
 ## RIGHT
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected 'join' after 'right'.
 
 start: SELECT FALSE FROM IDENTIFIER RIGHT JOIN WITH
 ##
@@ -2600,7 +2600,7 @@ start: SELECT FALSE FROM IDENTIFIER RIGHT JOIN WITH
 ## RIGHT JOIN
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Table reference expected after 'right join'.
 
 start: SELECT FALSE FROM IDENTIFIER RIGHT JOIN IDENTIFIER WHERE
 ##
@@ -2618,7 +2618,7 @@ start: SELECT FALSE FROM IDENTIFIER RIGHT JOIN IDENTIFIER WHERE
 ## In state 140, spurious reduction of production table -> IDENTIFIER
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected 'on' after join table.
 
 start: SELECT FALSE FROM IDENTIFIER RIGHT JOIN IDENTIFIER ON WITH
 ##
@@ -2630,7 +2630,7 @@ start: SELECT FALSE FROM IDENTIFIER RIGHT JOIN IDENTIFIER ON WITH
 ## RIGHT JOIN table ON
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Join condition expression expected after 'on'.
 
 start: SELECT FALSE FROM IDENTIFIER RIGHT JOIN IDENTIFIER ON FALSE RBRACKET
 ##
@@ -2672,7 +2672,7 @@ start: SELECT FALSE FROM IDENTIFIER RIGHT JOIN IDENTIFIER ON FALSE RBRACKET
 ## RIGHT JOIN table ON expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator, another join, 'where', 'group by', 'order by', 'limit', 'union', ')' or end of query after join condition.
 
 start: SELECT FALSE FROM IDENTIFIER LEFT WITH
 ##
@@ -2684,7 +2684,7 @@ start: SELECT FALSE FROM IDENTIFIER LEFT WITH
 ## LEFT
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected 'join' after 'left'.
 
 start: SELECT FALSE FROM IDENTIFIER LEFT JOIN WITH
 ##
@@ -2696,7 +2696,7 @@ start: SELECT FALSE FROM IDENTIFIER LEFT JOIN WITH
 ## LEFT JOIN
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Table reference expected after 'left join'.
 
 start: SELECT FALSE FROM IDENTIFIER LEFT JOIN IDENTIFIER WHERE
 ##
@@ -2714,7 +2714,7 @@ start: SELECT FALSE FROM IDENTIFIER LEFT JOIN IDENTIFIER WHERE
 ## In state 140, spurious reduction of production table -> IDENTIFIER
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected 'on' after join table.
 
 start: SELECT FALSE FROM IDENTIFIER LEFT JOIN IDENTIFIER ON WITH
 ##
@@ -2726,7 +2726,7 @@ start: SELECT FALSE FROM IDENTIFIER LEFT JOIN IDENTIFIER ON WITH
 ## LEFT JOIN table ON
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Join condition expression expected after 'on'.
 
 start: SELECT FALSE FROM IDENTIFIER LEFT JOIN IDENTIFIER ON FALSE RBRACKET
 ##
@@ -2768,7 +2768,7 @@ start: SELECT FALSE FROM IDENTIFIER LEFT JOIN IDENTIFIER ON FALSE RBRACKET
 ## LEFT JOIN table ON expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator, another join, 'where', 'group by', 'order by', 'limit', 'union', ')' or end of query after join condition.
 
 start: SELECT FALSE FROM IDENTIFIER INNER WITH
 ##
@@ -2780,7 +2780,7 @@ start: SELECT FALSE FROM IDENTIFIER INNER WITH
 ## INNER
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected 'join' after 'inner'.
 
 start: SELECT FALSE FROM IDENTIFIER INNER JOIN WITH
 ##
@@ -2792,7 +2792,7 @@ start: SELECT FALSE FROM IDENTIFIER INNER JOIN WITH
 ## INNER JOIN
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Table reference expected after 'inner join'.
 
 start: SELECT FALSE FROM IDENTIFIER INNER JOIN IDENTIFIER WHERE
 ##
@@ -2810,7 +2810,7 @@ start: SELECT FALSE FROM IDENTIFIER INNER JOIN IDENTIFIER WHERE
 ## In state 140, spurious reduction of production table -> IDENTIFIER
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected 'on' after join table.
 
 start: SELECT FALSE FROM IDENTIFIER INNER JOIN IDENTIFIER ON WITH
 ##
@@ -2822,7 +2822,7 @@ start: SELECT FALSE FROM IDENTIFIER INNER JOIN IDENTIFIER ON WITH
 ## INNER JOIN table ON
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Join condition expression expected after 'on'.
 
 start: SELECT FALSE FROM IDENTIFIER INNER JOIN IDENTIFIER ON FALSE RBRACKET
 ##
@@ -2864,7 +2864,7 @@ start: SELECT FALSE FROM IDENTIFIER INNER JOIN IDENTIFIER ON FALSE RBRACKET
 ## INNER JOIN table ON expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator, another join, 'where', 'group by', 'order by', 'limit', 'union', ')' or end of query after join condition.
 
 start: SELECT FALSE FROM IDENTIFIER COMMA WITH
 ##
@@ -2876,7 +2876,7 @@ start: SELECT FALSE FROM IDENTIFIER COMMA WITH
 ## tables COMMA
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Table reference or 'unnest(...)' expected after ',' in FROM clause.
 
 start: WITH IDENTIFIER AS MATERIALIZED LPAREN SELECT FALSE FROM IDENTIFIER EOF
 ##
@@ -2905,7 +2905,7 @@ start: WITH IDENTIFIER AS MATERIALIZED LPAREN SELECT FALSE FROM IDENTIFIER EOF
 ## In state 116, spurious reduction of production query -> query_body order_by_opt
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected ')' to close materialized CTE.
 
 start: WITH IDENTIFIER AS LPAREN WHERE
 ##
@@ -2917,7 +2917,7 @@ start: WITH IDENTIFIER AS LPAREN WHERE
 ## IDENTIFIER AS LPAREN
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Query expected inside CTE.
 
 start: WITH IDENTIFIER AS LPAREN SELECT FALSE FROM IDENTIFIER EOF
 ##
@@ -2946,7 +2946,7 @@ start: WITH IDENTIFIER AS LPAREN SELECT FALSE FROM IDENTIFIER EOF
 ## In state 116, spurious reduction of production query -> query_body order_by_opt
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected ')' to close CTE.
 
 start: WITH IDENTIFIER AS LPAREN SELECT FALSE FROM IDENTIFIER RPAREN WHERE
 ##
@@ -2959,7 +2959,7 @@ start: WITH IDENTIFIER AS LPAREN SELECT FALSE FROM IDENTIFIER RPAREN WHERE
 ## WITH ctes
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected ',' or a query after CTE definitions.
 
 start: WITH IDENTIFIER AS LPAREN SELECT FALSE FROM IDENTIFIER RPAREN COMMA WITH
 ##
@@ -2971,7 +2971,7 @@ start: WITH IDENTIFIER AS LPAREN SELECT FALSE FROM IDENTIFIER RPAREN COMMA WITH
 ## ctes COMMA
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+CTE name (identifier) expected after ',' in WITH clause.
 
 standalone_expr: EXISTS LPAREN SELECT FALSE FROM IDENTIFIER EOF
 ##
@@ -3000,7 +3000,7 @@ standalone_expr: EXISTS LPAREN SELECT FALSE FROM IDENTIFIER EOF
 ## In state 116, spurious reduction of production query -> query_body order_by_opt
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected ')' to close 'exists (...)'.
 
 standalone_expr: IDENTIFIER LPAREN FALSE COMMA WITH
 ##
@@ -3012,7 +3012,7 @@ standalone_expr: IDENTIFIER LPAREN FALSE COMMA WITH
 ## fun_args COMMA
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expression expected after ',' in function argument list.
 
 standalone_expr: IDENTIFIER LPAREN FALSE COMMA FALSE WHERE
 ##
@@ -3054,7 +3054,7 @@ standalone_expr: IDENTIFIER LPAREN FALSE COMMA FALSE WHERE
 ## fun_args COMMA expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator, ',' or ')' after function argument.
 
 standalone_expr: IDENTIFIER LPAREN FALSE WHERE
 ##
@@ -3096,7 +3096,7 @@ standalone_expr: IDENTIFIER LPAREN FALSE WHERE
 ## expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator, ',' or ')' after function argument.
 
 standalone_expr: MINUS FALSE WITH
 ##
@@ -3138,7 +3138,7 @@ standalone_expr: MINUS FALSE WITH
 ## MINUS expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator or end of expression after negated expression.
 
 standalone_expr: NOT FALSE WITH
 ##
@@ -3180,7 +3180,7 @@ standalone_expr: NOT FALSE WITH
 ## NOT expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator or end of expression after 'not' expression.
 
 standalone_expr: FALSE WHERE
 ##
@@ -3222,7 +3222,7 @@ standalone_expr: FALSE WHERE
 ## expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator or end of expression.
 
 start: WHERE
 ##
@@ -3234,7 +3234,7 @@ start: WHERE
 ##
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected 'select' or 'with' at start of query.
 
 start: SELECT FALSE FROM IDENTIFIER RPAREN
 ##
@@ -3263,5 +3263,4 @@ start: SELECT FALSE FROM IDENTIFIER RPAREN
 ## In state 116, spurious reduction of production query -> query_body order_by_opt
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
+Expected end of input after query.

@@ -11,6 +11,7 @@ module Ast : sig
   val limit : t -> int option
   val set_limit : int -> t -> t
   val of_string : string -> (t, [> err ]) result
+  val expr_of_string : string -> (Mql_ast.expr, [> err ]) result
   val to_string : t -> string
   val expr_to_string : Mql_ast.expr -> string
 end

@@ -24,11 +24,13 @@ module Ast = struct
         With { materialized; name; query; body = set_limit limit body }
     | Query { body; order_by; limit = _ } -> Query { body; order_by; limit = Some limit }
 
-  let state checkpoint =
+  let state env =
     let module I = Mql_parser.MenhirInterpreter in
-    match I.top checkpoint with
-    | None -> 0
-    | Some (I.Element (s, _, _, _)) -> I.number s
+    (* [current_state_number] works even when the parser stack is empty,
+       which is the case for an error at the very first token of input.
+       Using [top] for this would collapse all entry-points to state 0
+       and lose the entry-specific error message. *)
+    I.current_state_number env
 
   let position checkpoint =
     let module I = Mql_parser.MenhirInterpreter in
@@ -127,6 +129,18 @@ module Ast = struct
     let lexer = Sedlexing.with_tokenizer Mql_lexer.token lexbuf in
     match
       loop lexer lexbuf (Mql_parser.Incremental.start (fst @@ Sedlexing.lexing_positions lexbuf))
+    with
+    | Ok r -> Ok r
+    | Error (pos, err) -> Error (`Error (pos, s, CCString.trim err))
+
+  let expr_of_string s =
+    let lexbuf = Sedlexing.Utf8.from_string (s ^ "\n") in
+    let lexer = Sedlexing.with_tokenizer Mql_lexer.token lexbuf in
+    match
+      loop
+        lexer
+        lexbuf
+        (Mql_parser.Incremental.standalone_expr (fst @@ Sedlexing.lexing_positions lexbuf))
     with
     | Ok r -> Ok r
     | Error (pos, err) -> Error (`Error (pos, s, CCString.trim err))
