@@ -1,13 +1,13 @@
 module Diff = Simple_diff.Make (String)
 
 let rec pp = function
-  | []                    -> ()
-  | Diff.Equal vs :: ds   ->
+  | [] -> ()
+  | Diff.Equal vs :: ds ->
       Printf.printf "Equal [ ";
       Array.iter (Printf.printf "%s; ") vs;
       Printf.printf "]\n";
       pp ds
-  | Diff.Added vs :: ds   ->
+  | Diff.Added vs :: ds ->
       Printf.printf "Added [ ";
       Array.iter (Printf.printf "%s; ") vs;
       Printf.printf "]\n";

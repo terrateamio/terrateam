@@ -1,16 +1,13 @@
-(** [Abb_channel_queue] is an implementation of {!Abb_channel} and it is
-    parameterized over a futures implementation.  It is a
-    multiple-producer-single-consumer channel. *)
+(** [Abb_channel_queue] is an implementation of {!Abb_channel} and it is parameterized over a
+    futures implementation. It is a multiple-producer-single-consumer channel. *)
 module Make (Fut : Abb_intf.Future.S) : sig
   module T : sig
     type 'a t
 
-    (** Create a queue implementation.  An optional [fast_count] parameter
-        specifies how large the queue can be before backpressure kicks in.  If
-        the length of the queue is less than [fast_count], the future returned
-        by [send] will be determined.  If the length is greater than
-        [fast_count], the future will be determined when it is taken off of the
-        queue. *)
+    (** Create a queue implementation. An optional [fast_count] parameter specifies how large the
+        queue can be before backpressure kicks in. If the length of the queue is less than
+        [fast_count], the future returned by [send] will be determined. If the length is greater
+        than [fast_count], the future will be determined when it is taken off of the queue. *)
     val create : ?fast_count:int -> unit -> 'a t Fut.t
 
     val send : 'a t -> 'a -> unit Abb_channel_intf.channel_ret Fut.t

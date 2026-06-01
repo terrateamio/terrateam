@@ -1,11 +1,11 @@
 (* Basic test for temp_file revop. *)
 
 let is_ok = function
-  | Ok _    -> true
+  | Ok _ -> true
   | Error _ -> false
 
 let is_error = function
-  | Ok _    -> false
+  | Ok _ -> false
   | Error _ -> true
 
 let filename_oprev = Revops_sys.temp_file ()

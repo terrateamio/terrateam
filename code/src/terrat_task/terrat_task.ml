@@ -10,7 +10,9 @@ module Sql = struct
   let insert_task () =
     Pgsql_io.Typed_sql.(
       sql
-      // (* id *) Ret.uuid
+      //
+      (* id *)
+      Ret.uuid
       /^ "insert into tasks (name) values ($name) returning id"
       /% Var.text "name")
 

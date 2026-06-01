@@ -87,7 +87,9 @@ let snabela_apply kv_file transformers append_transformers =
         | None -> failwith "nyi")
       append_transformers
   in
-  let cache = Snabela.of_template ~append_transformers:at template (Sln_map.String.to_list transformers) in
+  let cache =
+    Snabela.of_template ~append_transformers:at template (Sln_map.String.to_list transformers)
+  in
   Snabela.apply cache kv
   >>= fun applied ->
   output_string stdout applied;

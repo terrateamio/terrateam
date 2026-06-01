@@ -15,9 +15,9 @@ module Response : sig
   val headers : t -> (string * string) list
 end
 
-(** Send a request to [url] with [body] using [meth].  A successful response
-   means that the destination responded with a valid HTTP response, even if the
-   HTTP response constitutes an error. *)
+(** Send a request to [url] with [body] using [meth]. A successful response means that the
+    destination responded with a valid HTTP response, even if the HTTP response constitutes an
+    error. *)
 val fetch :
   ?headers:(string * string) list ->
   ?body:string ->

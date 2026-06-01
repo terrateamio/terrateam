@@ -75,8 +75,7 @@ module Server = struct
   let rec take_until_undet waiting =
     match Queue.take_opt waiting with
     | Some { Waiting.promise; queued_at = _ } as w
-      when Abb.Future.(state (Promise.future promise)) = `Undet ->
-        w
+      when Abb.Future.(state (Promise.future promise)) = `Undet -> w
     | Some _ -> take_until_undet waiting
     | None -> None
 

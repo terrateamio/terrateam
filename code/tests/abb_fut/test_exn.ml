@@ -183,7 +183,7 @@ let test_exn_applicative_determined_after_abort_fun =
         Fut.Infix_app.(
           (fun _ _ -> ())
           <$> (let open Fut.Infix_monad in
-              Fut.Promise.future start >>= fun () -> failwith "exn")
+               Fut.Promise.future start >>= fun () -> failwith "exn")
           <*> Fut.Promise.(future (create ~abort ())))
       in
       ignore (Fut.run_with_state fut state);

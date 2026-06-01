@@ -16,7 +16,7 @@ let tests =
   ]
 
 let compare_mtch res = function
-  | None   -> res = None
+  | None -> res = None
   | Some m -> res = Some (Lua_pattern.Match.range m)
 
 let compare_captures captures = function

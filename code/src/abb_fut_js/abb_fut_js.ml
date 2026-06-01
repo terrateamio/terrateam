@@ -5,15 +5,13 @@ end)
 let dummy_state = Abb_fut.State.create ()
 let run t = ignore (run_with_state t dummy_state)
 
-class type ['a] promise =
-  object
-    method then_ :
-      ('a -> 'b) Js_of_ocaml.Js.callback -> 'b promise Js_of_ocaml.Js.t Js_of_ocaml.Js.meth
+class type ['a] promise = object
+  method then_ :
+    ('a -> 'b) Js_of_ocaml.Js.callback -> 'b promise Js_of_ocaml.Js.t Js_of_ocaml.Js.meth
 
-    method catch :
-      (Js_of_ocaml.Js.error Js_of_ocaml.Js.t -> 'b) ->
-      'b promise Js_of_ocaml.Js.t Js_of_ocaml.Js.meth
-  end
+  method catch :
+    (Js_of_ocaml.Js.error Js_of_ocaml.Js.t -> 'b) -> 'b promise Js_of_ocaml.Js.t Js_of_ocaml.Js.meth
+end
 
 let unsafe_of_promise : 'a promise Js_of_ocaml.Js.t -> 'b t =
  fun v ->

@@ -2,11 +2,10 @@ module Js = Js_of_ocaml.Js
 
 module Blob = struct
   module J = struct
-    class type t =
-      object
-        method slice : int -> int -> t Js.t Js.meth
-        method size : int Js.readonly_prop
-      end
+    class type t = object
+      method slice : int -> int -> t Js.t Js.meth
+      method size : int Js.readonly_prop
+    end
   end
 
   type t = J.t Js.t
@@ -17,11 +16,10 @@ end
 
 module Headers = struct
   module J = struct
-    class type t =
-      object
-        method get : Js.js_string Js.t -> Js.js_string Js.t Js.opt Js.meth
-        method set : Js.js_string Js.t -> Js.js_string Js.t -> unit Js.meth
-      end
+    class type t = object
+      method get : Js.js_string Js.t -> Js.js_string Js.t Js.opt Js.meth
+      method set : Js.js_string Js.t -> Js.js_string Js.t -> unit Js.meth
+    end
 
     let constr : (t Js.t -> t Js.t) Js.constr = Js.Unsafe.global##._Headers
   end
@@ -35,12 +33,11 @@ end
 
 module Request = struct
   module J = struct
-    class type t =
-      object
-        method method_ : Js.js_string Js.t Js.readonly_prop
-        method url : Js.js_string Js.t Js.readonly_prop
-        method headers : Headers.t Js.readonly_prop
-      end
+    class type t = object
+      method method_ : Js.js_string Js.t Js.readonly_prop
+      method url : Js.js_string Js.t Js.readonly_prop
+      method headers : Headers.t Js.readonly_prop
+    end
   end
 
   type t = J.t Js.t
@@ -52,19 +49,17 @@ end
 
 module Response = struct
   module J = struct
-    class type t =
-      object
-        method clone : t Js.t Js.meth
-        method blob : Blob.t Abb_js.Future.promise Js.t Js.meth
-        method status : int Js.readonly_prop
-        method headers : Headers.t Js.readonly_prop
-      end
+    class type t = object
+      method clone : t Js.t Js.meth
+      method blob : Blob.t Abb_js.Future.promise Js.t Js.meth
+      method status : int Js.readonly_prop
+      method headers : Headers.t Js.readonly_prop
+    end
 
-    class type opts =
-      object
-        method headers : Headers.t Js.readonly_prop
-        method status : int Js.readonly_prop
-      end
+    class type opts = object
+      method headers : Headers.t Js.readonly_prop
+      method status : int Js.readonly_prop
+    end
 
     let constr : (Blob.t -> opts Js.t -> t Js.t) Js.constr = Js.Unsafe.global##._Response
   end
@@ -88,12 +83,11 @@ end
 module Background_fetch_registration = struct
   module Record = struct
     module J = struct
-      class type t =
-        object
-          method id : Js.js_string Js.t Js.readonly_prop
-          method request : Request.t Js.readonly_prop
-          method responseReady : Response.t Abb_js.Future.promise Js.t Js.readonly_prop
-        end
+      class type t = object
+        method id : Js.js_string Js.t Js.readonly_prop
+        method request : Request.t Js.readonly_prop
+        method responseReady : Response.t Abb_js.Future.promise Js.t Js.readonly_prop
+      end
     end
 
     type t = J.t Js.t
@@ -104,25 +98,24 @@ module Background_fetch_registration = struct
   end
 
   module J = struct
-    class type t =
-      object
-        method id : Js.js_string Js.t Js.readonly_prop
-        method uploadTotal : int Js.readonly_prop
-        method uploaded : int Js.readonly_prop
-        method downloadTotal : int Js.readonly_prop
-        method downloaded : int Js.readonly_prop
-        method result : Js.js_string Js.t Js.readonly_prop
-        method failureReason : Js.js_string Js.t Js.readonly_prop
-        method recordsAvailable : bool Js.t Js.readonly_prop
-        method abort : bool Js.t Abb_js.Future.promise Js.t Js.meth
-        method matchAll : Record.t Js.js_array Js.t Abb_js.Future.promise Js.t Js.meth
-        method match_ : Request.t -> Record.t Js.optdef Abb_js.Future.promise Js.t Js.meth
+    class type t = object
+      method id : Js.js_string Js.t Js.readonly_prop
+      method uploadTotal : int Js.readonly_prop
+      method uploaded : int Js.readonly_prop
+      method downloadTotal : int Js.readonly_prop
+      method downloaded : int Js.readonly_prop
+      method result : Js.js_string Js.t Js.readonly_prop
+      method failureReason : Js.js_string Js.t Js.readonly_prop
+      method recordsAvailable : bool Js.t Js.readonly_prop
+      method abort : bool Js.t Abb_js.Future.promise Js.t Js.meth
+      method matchAll : Record.t Js.js_array Js.t Abb_js.Future.promise Js.t Js.meth
+      method match_ : Request.t -> Record.t Js.optdef Abb_js.Future.promise Js.t Js.meth
 
-        method addEventListener :
-          Js.js_string Js.t -> ('self Js.t, unit -> unit) Js.meth_callback -> unit Js.meth
+      method addEventListener :
+        Js.js_string Js.t -> ('self Js.t, unit -> unit) Js.meth_callback -> unit Js.meth
 
-        method removeEventListener : Js.js_string Js.t -> unit Js.meth
-      end
+      method removeEventListener : Js.js_string Js.t -> unit Js.meth
+    end
   end
 
   type t = J.t Js.t
@@ -164,11 +157,10 @@ end
 
 module Background_fetch_event = struct
   module J = struct
-    class type t =
-      object
-        method waitUntil : unit Abb_js.Future.promise Js.t -> unit Js.meth
-        method registration : Background_fetch_registration.t Js.readonly_prop
-      end
+    class type t = object
+      method waitUntil : unit Abb_js.Future.promise Js.t -> unit Js.meth
+      method registration : Background_fetch_registration.t Js.readonly_prop
+    end
   end
 
   type t = J.t Js.t
@@ -184,12 +176,11 @@ end
 module Registration = struct
   module Icon_def = struct
     module J = struct
-      class type t =
-        object
-          method sizes : Js.js_string Js.t Js.readonly_prop
-          method src : Js.js_string Js.t Js.readonly_prop
-          method type_ : Js.js_string Js.t Js.optdef Js.readonly_prop
-        end
+      class type t = object
+        method sizes : Js.js_string Js.t Js.readonly_prop
+        method src : Js.js_string Js.t Js.readonly_prop
+        method type_ : Js.js_string Js.t Js.optdef Js.readonly_prop
+      end
     end
 
     type t = J.t Js.t
@@ -204,12 +195,11 @@ module Registration = struct
 
   module Options = struct
     module J = struct
-      class type t =
-        object
-          method title : Js.js_string Js.t Js.readonly_prop
-          method icons : Icon_def.t Js.js_array Js.t Js.readonly_prop
-          method downloadTotal : int Js.readonly_prop
-        end
+      class type t = object
+        method title : Js.js_string Js.t Js.readonly_prop
+        method icons : Icon_def.t Js.js_array Js.t Js.readonly_prop
+        method downloadTotal : int Js.readonly_prop
+      end
     end
 
     type t = J.t Js.t
@@ -223,26 +213,24 @@ module Registration = struct
   end
 
   module J = struct
-    class type bf =
-      object
-        method fetch :
-          Js.js_string Js.t ->
-          Js.js_string Js.t Js.js_array Js.t ->
-          Options.t ->
-          Background_fetch_registration.t Abb_js.Future.promise Js.t Js.meth
+    class type bf = object
+      method fetch :
+        Js.js_string Js.t ->
+        Js.js_string Js.t Js.js_array Js.t ->
+        Options.t ->
+        Background_fetch_registration.t Abb_js.Future.promise Js.t Js.meth
 
-        method getIds : Js.js_string Js.t Js.js_array Js.t Abb_js.Future.promise Js.t Js.meth
+      method getIds : Js.js_string Js.t Js.js_array Js.t Abb_js.Future.promise Js.t Js.meth
 
-        method get :
-          Js.js_string Js.t ->
-          Background_fetch_registration.t Js.optdef Abb_js.Future.promise Js.t Js.meth
-      end
+      method get :
+        Js.js_string Js.t ->
+        Background_fetch_registration.t Js.optdef Abb_js.Future.promise Js.t Js.meth
+    end
 
-    class type t =
-      object
-        method installing : bool Js.t Js.readonly_prop
-        method backgroundFetch : bf Js.t Js.readonly_prop
-      end
+    class type t = object
+      method installing : bool Js.t Js.readonly_prop
+      method backgroundFetch : bf Js.t Js.readonly_prop
+    end
   end
 
   type t = J.t Js.t
@@ -267,20 +255,16 @@ end
 
 module Service_worker_container = struct
   module J = struct
-    class type register_opts =
-      object
-        method scope : Js.js_string Js.t Js.readonly_prop
-      end
+    class type register_opts = object
+      method scope : Js.js_string Js.t Js.readonly_prop
+    end
 
-    class type t =
-      object
-        method register :
-          Js.js_string Js.t ->
-          register_opts Js.t ->
-          Registration.t Abb_js.Future.promise Js.t Js.meth
+    class type t = object
+      method register :
+        Js.js_string Js.t -> register_opts Js.t -> Registration.t Abb_js.Future.promise Js.t Js.meth
 
-        method ready : Registration.t Abb_js.Future.promise Js.t Js.readonly_prop
-      end
+      method ready : Registration.t Abb_js.Future.promise Js.t Js.readonly_prop
+    end
   end
 
   type t = J.t Js.t
@@ -300,14 +284,11 @@ end
 
 module Cache = struct
   module J = struct
-    class type t =
-      object
-        method addAll :
-          Js.js_string Js.t Js.js_array Js.t -> unit Abb_js.Future.promise Js.t Js.meth
-
-        method put : Request.t -> Response.t -> unit Abb_js.Future.promise Js.t Js.meth
-        method delete : Js.js_string Js.t -> bool Js.t Abb_js.Future.promise Js.t Js.meth
-      end
+    class type t = object
+      method addAll : Js.js_string Js.t Js.js_array Js.t -> unit Abb_js.Future.promise Js.t Js.meth
+      method put : Request.t -> Response.t -> unit Abb_js.Future.promise Js.t Js.meth
+      method delete : Js.js_string Js.t -> bool Js.t Abb_js.Future.promise Js.t Js.meth
+    end
   end
 
   type t = J.t Js.t
@@ -325,17 +306,16 @@ end
 
 module Cache_storage = struct
   module J = struct
-    class type t =
-      object
-        method open_ : Js.js_string Js.t -> Cache.t Abb_js.Future.promise Js.t Js.meth
-        method match_ : Request.t -> Response.t Js.optdef Abb_js.Future.promise Js.t Js.meth
+    class type t = object
+      method open_ : Js.js_string Js.t -> Cache.t Abb_js.Future.promise Js.t Js.meth
+      method match_ : Request.t -> Response.t Js.optdef Abb_js.Future.promise Js.t Js.meth
 
-        method match_string :
-          Js.js_string Js.t -> Response.t Js.optdef Abb_js.Future.promise Js.t Js.meth
+      method match_string :
+        Js.js_string Js.t -> Response.t Js.optdef Abb_js.Future.promise Js.t Js.meth
 
-        method keys : Js.js_string Js.t Js.js_array Js.t Abb_js.Future.promise Js.t Js.meth
-        method delete : Js.js_string Js.t -> unit Abb_js.Future.promise Js.t Js.meth
-      end
+      method keys : Js.js_string Js.t Js.js_array Js.t Abb_js.Future.promise Js.t Js.meth
+      method delete : Js.js_string Js.t -> unit Abb_js.Future.promise Js.t Js.meth
+    end
   end
 
   type t = J.t Js.t
@@ -355,10 +335,9 @@ end
 module Global_scope = struct
   module Event = struct
     module J = struct
-      class type t =
-        object
-          method waitUntil : unit Abb_js.Future.promise Js.t -> unit Js.meth
-        end
+      class type t = object
+        method waitUntil : unit Abb_js.Future.promise Js.t -> unit Js.meth
+      end
     end
 
     type t = J.t Js.t
@@ -370,10 +349,9 @@ module Global_scope = struct
 
   module Install_event = struct
     module J = struct
-      class type t =
-        object
-          method waitUntil : unit Abb_js.Future.promise Js.t -> unit Js.meth
-        end
+      class type t = object
+        method waitUntil : unit Abb_js.Future.promise Js.t -> unit Js.meth
+      end
     end
 
     type t = J.t Js.t
@@ -385,11 +363,10 @@ module Global_scope = struct
 
   module Fetch_event = struct
     module J = struct
-      class type t =
-        object
-          method request : Request.t Js.readonly_prop
-          method respondWith : Response.t Abb_js.Future.promise Js.t -> unit Js.meth
-        end
+      class type t = object
+        method request : Request.t Js.readonly_prop
+        method respondWith : Response.t Abb_js.Future.promise Js.t -> unit Js.meth
+      end
     end
 
     type t = J.t Js.t
@@ -403,10 +380,9 @@ module Global_scope = struct
 
   module Clients = struct
     module J = struct
-      class type t =
-        object
-          method claim : unit Abb_js.Future.promise Js.t Js.meth
-        end
+      class type t = object
+        method claim : unit Abb_js.Future.promise Js.t Js.meth
+      end
     end
 
     type t = J.t Js.t
@@ -415,18 +391,15 @@ module Global_scope = struct
   end
 
   module J = struct
-    class type t =
-      object
-        method skipWaiting : unit Abb_js.Future.promise Js.t Js.meth
+    class type t = object
+      method skipWaiting : unit Abb_js.Future.promise Js.t Js.meth
 
-        method oninstall :
-          ('self Js.t, Install_event.t -> unit) Js.meth_callback Js.opt Js.writeonly_prop
+      method oninstall :
+        ('self Js.t, Install_event.t -> unit) Js.meth_callback Js.opt Js.writeonly_prop
 
-        method onactivate : ('self Js.t, Event.t -> unit) Js.meth_callback Js.opt Js.writeonly_prop
-
-        method onfetch :
-          ('self Js.t, Fetch_event.t -> unit) Js.meth_callback Js.opt Js.writeonly_prop
-      end
+      method onactivate : ('self Js.t, Event.t -> unit) Js.meth_callback Js.opt Js.writeonly_prop
+      method onfetch : ('self Js.t, Fetch_event.t -> unit) Js.meth_callback Js.opt Js.writeonly_prop
+    end
   end
 
   type t = J.t Js.t

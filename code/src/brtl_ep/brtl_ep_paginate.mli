@@ -10,9 +10,9 @@ module type S = sig
   val cursor_of_first : t -> string list option
   val cursor_of_last : t -> string list option
 
-  (** Says if there is another page in whatever direction was chosen.  If [next]
-      was called, it means there is another page after that page shown and if
-      [prev] it means there is another page prior to that page. *)
+  (** Says if there is another page in whatever direction was chosen. If [next] was called, it means
+      there is another page after that page shown and if [prev] it means there is another page prior
+      to that page. *)
   val has_another_page : t -> bool
 
   val rspnc_of_err : token:string -> err -> Brtl_rspnc.t

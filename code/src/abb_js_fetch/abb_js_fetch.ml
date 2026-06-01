@@ -47,25 +47,24 @@ let fetch ?(headers = []) ?body ~meth ~url () =
       ()
   in
   Fut.await fut (function
-      | Ok resp ->
-          let body = F.Response.as_body resp in
-          Fut.await (F.Body.text body) (function
-              | Ok text ->
-                  Abb_fut_js.run
-                    (Abb_fut_js.Promise.set
-                       promise
-                       (Ok
-                          {
-                            Response.status = F.Response.status resp;
-                            text = Jstr.to_string text;
-                            headers =
-                              F.Headers.fold
-                                (fun k v acc ->
-                                  (CCString.lowercase_ascii (Jstr.to_string k), Jstr.to_string v)
-                                  :: acc)
-                                (F.Response.headers resp)
-                                [];
-                          }))
-              | Error err -> Abb_fut_js.run (Abb_fut_js.Promise.set promise (Error (`Js_err err))))
-      | Error err -> Abb_fut_js.run (Abb_fut_js.Promise.set promise (Error (`Js_err err))));
+    | Ok resp ->
+        let body = F.Response.as_body resp in
+        Fut.await (F.Body.text body) (function
+          | Ok text ->
+              Abb_fut_js.run
+                (Abb_fut_js.Promise.set
+                   promise
+                   (Ok
+                      {
+                        Response.status = F.Response.status resp;
+                        text = Jstr.to_string text;
+                        headers =
+                          F.Headers.fold
+                            (fun k v acc ->
+                              (CCString.lowercase_ascii (Jstr.to_string k), Jstr.to_string v) :: acc)
+                            (F.Response.headers resp)
+                            [];
+                      }))
+          | Error err -> Abb_fut_js.run (Abb_fut_js.Promise.set promise (Error (`Js_err err))))
+    | Error err -> Abb_fut_js.run (Abb_fut_js.Promise.set promise (Error (`Js_err err))));
   Abb_fut_js.Promise.future promise

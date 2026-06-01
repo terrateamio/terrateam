@@ -1,11 +1,10 @@
 (** Logic-less template replacement. *)
 
-(** [Kv] represents the values to be used in during replacement in a template.
-    There are two classes: scalars and lists.  Only scalars can be used in
-    replacement.  Lists can be iterated.
+(** [Kv] represents the values to be used in during replacement in a template. There are two
+    classes: scalars and lists. Only scalars can be used in replacement. Lists can be iterated.
 
-    Convenience function are provided for constructing a value of type [t] as
-    well as pretty printing. *)
+    Convenience function are provided for constructing a value of type [t] as well as pretty
+    printing. *)
 module Kv : sig
   module Map : CCMap.S with type key = string
 
@@ -48,14 +47,14 @@ end
 
 type line_number = int
 
-(** Error type when applying a key-value to a template.  When necessary, the
-    line number in the template is included in the error. *)
+(** Error type when applying a key-value to a template. When necessary, the line number in the
+    template is included in the error. *)
 type err =
   [ `Missing_key of string * line_number  (** Key was missing on the line *)
   | `Expected_boolean of string * line_number  (** Expected a boolean in a section. *)
   | `Expected_list of string * line_number  (** Expected a list in a section. *)
   | `Missing_transformer of string * line_number  (** Transformer was not found. *)
-  | `Non_scalar_key of string * line_number  (** Non-scalar value used in  replacement *)
+  | `Non_scalar_key of string * line_number  (** Non-scalar value used in replacement *)
   | `Premature_eof  (** Reached an unexpected EOF. *)
   | `Missing_closing_section of string  (** Failed to provide a close for the section. *)
   ]
@@ -67,11 +66,11 @@ type t
 (** Standard function to convert a scalar into a string. *)
 val string_of_scalar : Kv.scalar -> string
 
-(** Turn a parsed template and transformers into a compiled representation that
-    can be applied to a kv.
+(** Turn a parsed template and transformers into a compiled representation that can be applied to a
+    kv.
 
-    The [append_transformers] parameter contains transformers that will be
-    applied to every replacement. *)
+    The [append_transformers] parameter contains transformers that will be applied to every
+    replacement. *)
 val of_template :
   ?append_transformers:(Kv.scalar -> Kv.scalar) list -> Template.t -> Transformer.t list -> t
 

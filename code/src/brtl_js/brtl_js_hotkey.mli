@@ -1,9 +1,8 @@
-(** Key combination that has been pressed.  They keys are sorted to make
-   matching possible.  The values are exactly as they appear in a key event,
-   including case except if they are a letters.  For example, ArrowUp,
-   ArrowDown, Control, k, q.  But letters are always lowercase, for example "K"
-   would be ["Shift"; "k"].  On some browsers, the arrow keys have synonyms and
-   these are converted to the standard Arrow(Up|Down|Left|Right). *)
+(** Key combination that has been pressed. They keys are sorted to make matching possible. The
+    values are exactly as they appear in a key event, including case except if they are a letters.
+    For example, ArrowUp, ArrowDown, Control, k, q. But letters are always lowercase, for example
+    "K" would be ["Shift"; "k"]. On some browsers, the arrow keys have synonyms and these are
+    converted to the standard Arrow(Up|Down|Left|Right). *)
 module Key_combo : sig
   type t
 
