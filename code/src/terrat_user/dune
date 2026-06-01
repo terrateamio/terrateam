@@ -3,6 +3,7 @@
  (libraries
   abb
   containers
+  cstruct
   duration
   jwt
   pgsql_io

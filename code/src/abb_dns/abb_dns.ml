@@ -111,15 +111,15 @@ module Make (Abb : Abb_intf.S) = struct
       Abb.Socket.sendto
         ctx.sock
         ~bufs:
-          Abb_intf.Write_buf.[ { buf = Cstruct.to_bytes data; pos = 0; len = Cstruct.length data } ]
+          Abb_intf.Write_buf.[ { buf = Bytes.of_string data; pos = 0; len = String.length data } ]
         ctx.sockaddr
       >>= function
-      | Ok n when n = Cstruct.length data -> (
+      | Ok n when n = String.length data -> (
           let buf = Bytes.create (64 * 1024) in
           Abb.Socket.recvfrom ctx.sock ~buf ~pos:0 ~len:(Bytes.length buf)
           >>= function
           | Ok (n, _) ->
-              let data = Cstruct.of_bytes ~len:n buf in
+              let data = Bytes.sub_string buf 0 n in
               Abb.Future.return (Ok data)
           | Error (#Abb_intf.Errors.recvfrom as err) ->
               Abb.Future.return (Error (`Msg (Abb_intf.Errors.show_recvfrom err))))
@@ -132,5 +132,5 @@ module Make (Abb : Abb_intf.S) = struct
 
   include Dns_client.Make (Transport)
 
-  let () = Mirage_crypto_rng_unix.initialize (module Mirage_crypto_rng.Fortuna)
+  let () = Mirage_crypto_rng_unix.use_default ()
 end

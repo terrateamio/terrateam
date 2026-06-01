@@ -1773,4 +1773,4 @@ left join dep_hotspot on true|};
 
 let () =
   Random.self_init ();
-  Oth.run ~file:__FILE__ test
+  Oth.run test

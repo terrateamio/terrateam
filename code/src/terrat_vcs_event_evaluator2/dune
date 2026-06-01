@@ -5,6 +5,7 @@
   abb_bounded_suspendable_executor
   abbs
   buildsys
+  cstruct
   logs
   ouuid
   prmths

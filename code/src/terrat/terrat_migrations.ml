@@ -108,7 +108,7 @@ let add_encryption_key { Migrate.config = _; storage = _; tx = db } =
     Pgsql_io.Typed_sql.(
       sql
       /^ "insert into encryption_keys (rank, data) values(0, decode($data, 'base64'))"
-      /% Var.(ud (text "data") CCFun.(Cstruct.to_string %> Base64.encode_exn)))
+      /% Var.(ud (text "data") Base64.encode_exn))
   in
   Pgsql_io.Prepared_stmt.execute db insert_encryption_key key
   >>= fun () -> Abb.Future.return (Ok `Sync)
