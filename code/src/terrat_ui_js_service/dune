@@ -1,4 +1,19 @@
 (library
  (name terrat_ui_js_service)
- (libraries abb_fut_js abb_js brtl_js2 duration hljs tabler_icons terrat_api terrat_dirspace terrat_plan_diff terrat_ui_js_service_vcs)
- (preprocess (pps ppx_deriving.eq ppx_deriving.ord ppx_deriving.show ppx_deriving_yojson)))
+ (libraries
+  abb_fut_js
+  abb_js
+  brtl_js2
+  duration
+  hljs
+  tabler_icons
+  terrat_api
+  terrat_dirspace
+  terrat_plan_diff
+  terrat_ui_js_service_vcs)
+ (preprocess
+  (pps
+   ppx_deriving.eq
+   ppx_deriving.ord
+   ppx_deriving.show
+   ppx_deriving_yojson)))

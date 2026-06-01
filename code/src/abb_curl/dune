@@ -11,5 +11,7 @@
   luv
   sln
   uri)
- (flags (:standard -w -27-69))
- (preprocess (pps ppx_deriving.show ppx_deriving.eq)))
+ (flags
+  (:standard -w -27-69))
+ (preprocess
+  (pps ppx_deriving.show ppx_deriving.eq)))

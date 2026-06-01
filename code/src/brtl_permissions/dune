@@ -1,4 +1,5 @@
 (library
  (name brtl_permissions)
  (libraries abbs brtl brtl_ep containers)
- (preprocess (pps ppx_deriving.show)))
+ (preprocess
+  (pps ppx_deriving.show)))

@@ -23,11 +23,7 @@
  (action
   (progn
    (bash
-    "cd $DUNE_SOURCEROOT/code/src/iris && \
-       (test -L api.json || ln -sf ../../../api_schemas/terrat/api.json api.json) && \
-       for i in 1 2 3; do npm install && break || { echo \"npm install failed (try $i/3), sleeping 15s...\"; sleep 15; }; done && \
-       npm run generate-api-types && \
-       npm run build")
+    "cd $DUNE_SOURCEROOT/code/src/iris && (test -L api.json || ln -sf ../../../api_schemas/terrat/api.json api.json) && for i in 1 2 3; do npm install && break || { echo \"npm install failed (try $i/3), sleeping 15s...\"; sleep 15; }; done && npm run generate-api-types && npm run build")
    (bash "touch %{target}"))))
 
 (alias

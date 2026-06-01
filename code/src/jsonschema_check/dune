@@ -2,17 +2,23 @@
 ; `system_configuration`, which on macOS need CoreFoundation +
 ; SystemConfiguration frameworks at link time. On Linux those Rust
 ; crates use the BSD socket API directly and need no extra flags.
+
 (rule
  (target c_library_flags.sexp)
  (action
-  (with-stdout-to %{target}
+  (with-stdout-to
+   %{target}
    (bash
     "case '%{ocaml-config:system}' in macosx) echo '(-framework CoreFoundation -framework SystemConfiguration)';; *) echo '()';; esac"))))
 
 (library
  (name jsonschema_check)
  (libraries containers)
- (preprocess (pps ppx_deriving.show))
- (foreign_stubs (language c) (names jsonschema_check_stubs))
+ (preprocess
+  (pps ppx_deriving.show))
+ (foreign_stubs
+  (language c)
+  (names jsonschema_check_stubs))
  (foreign_archives ../jsonschema-rs/jsonschema_c_wrapper)
- (c_library_flags (:include c_library_flags.sexp)))
+ (c_library_flags
+  (:include c_library_flags.sexp)))

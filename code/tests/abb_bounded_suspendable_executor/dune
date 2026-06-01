@@ -1,4 +1,11 @@
 (test
  (name test)
- (libraries abb_bounded_suspendable_executor abb_fut abb_intf containers oth unix)
- (preprocess (pps ppx_deriving.eq ppx_deriving.show)))
+ (libraries
+  abb_bounded_suspendable_executor
+  abb_fut
+  abb_intf
+  containers
+  oth
+  unix)
+ (preprocess
+  (pps ppx_deriving.eq ppx_deriving.show)))

@@ -1,5 +1,7 @@
 (library
  (name prmths)
  (libraries abb abbs asetmap astring fmt re)
- (ocamlopt_flags (:standard -w -67))
- (ocamlc_flags (:standard -w -67)))
+ (ocamlopt_flags
+  (:standard -w -67))
+ (ocamlc_flags
+  (:standard -w -67)))

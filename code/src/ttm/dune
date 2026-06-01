@@ -1,7 +1,19 @@
 (executable
  (name ttm)
- (libraries ISO8601 abb cmdliner logs logs.cli logs.fmt logs.threaded mirage-crypto-rng.unix ttm_kv ttm_secrets)
- (link_flags (:standard (:include ttm_link_flags.sexp))))
+ (libraries
+  ISO8601
+  abb
+  cmdliner
+  logs
+  logs.cli
+  logs.fmt
+  logs.threaded
+  mirage-crypto-rng.unix
+  ttm_kv
+  ttm_secrets)
+ (link_flags
+  (:standard
+   (:include ttm_link_flags.sexp))))
 
 ; ttm is the distributed CLI client. We statically link it on Linux so
 ; users can drop the binary onto any musl-compatible system without
@@ -17,17 +29,11 @@
 ; macOS path emits no flags: Apple discourages static linking against
 ; the system frameworks that Rust crates pull in, and the pds setup
 ; never tried it either.
+
 (rule
  (target ttm_link_flags.sexp)
  (action
-  (with-stdout-to %{target}
+  (with-stdout-to
+   %{target}
    (bash
-    "case '%{ocaml-config:system}' in
-       linux)
-         out='(-cclib -static -cclib -no-pie';
-         for tok in $(pkg-config --static --libs libcurl libffi libuv gmp); do
-           out=\"$out -cclib $tok\";
-         done;
-         echo \"$out)\";;
-       *) echo '()';;
-     esac"))))
+    "case '%{ocaml-config:system}' in\n       linux)\n         out='(-cclib -static -cclib -no-pie';\n         for tok in $(pkg-config --static --libs libcurl libffi libuv gmp); do\n           out=\"$out -cclib $tok\";\n         done;\n         echo \"$out)\";;\n       *) echo '()';;\n     esac"))))

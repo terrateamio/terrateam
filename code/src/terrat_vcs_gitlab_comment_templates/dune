@@ -1,5 +1,7 @@
 (library
  (name terrat_vcs_gitlab_comment_templates)
  (libraries brtl terrat_plan_diff)
- (preprocessor_deps (glob_files tmpl/*.tmpl))
- (preprocess (pps ppx_blob)))
+ (preprocessor_deps
+  (glob_files tmpl/*.tmpl))
+ (preprocess
+  (pps ppx_blob)))

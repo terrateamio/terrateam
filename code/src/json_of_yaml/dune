@@ -1,4 +1,6 @@
 (library
  (name json_of_yaml)
- (foreign_stubs (language c) (names json_of_yaml_stubs))
+ (foreign_stubs
+  (language c)
+  (names json_of_yaml_stubs))
  (foreign_archives ../json_of_yaml-rs/json_of_yaml))

@@ -1,5 +1,15 @@
 (library
  (name brtl_js)
  (wrapped false)
- (libraries abb_js furi js_of_ocaml js_of_ocaml-tyxml ouuid ppx_deriving react reactiveData uri)
- (preprocess (pps js_of_ocaml-ppx ppx_deriving.ord)))
+ (libraries
+  abb_js
+  furi
+  js_of_ocaml
+  js_of_ocaml-tyxml
+  ouuid
+  ppx_deriving
+  react
+  reactiveData
+  uri)
+ (preprocess
+  (pps js_of_ocaml-ppx ppx_deriving.ord)))

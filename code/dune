@@ -3,11 +3,7 @@
 (env
  (dev
   (flags
-   (:standard
-    -strict-sequence
-    -strict-formats
-    -w
-    "+d+f+p+u+s+40+K+L+R")))
+   (:standard -strict-sequence -strict-formats -w "+d+f+p+u+s+40+K+L+R")))
  (release
   (flags
    (:standard
@@ -18,6 +14,7 @@
     "+d+f+p+u+s+40+K+L+R"))))
 
 ; Aggregate alias: `dune build @code/terrat` produces the full terrateam backend
+
 (alias
  (name terrat)
  (deps

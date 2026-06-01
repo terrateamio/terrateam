@@ -1,4 +1,5 @@
 (library
  (name terrat_vcs_comment)
  (libraries abbs containers terrat_data terrat_dirspace)
- (preprocess (pps ppx_deriving.ord ppx_deriving.show)))
+ (preprocess
+  (pps ppx_deriving.ord ppx_deriving.show)))

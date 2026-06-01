@@ -17,5 +17,7 @@
   terrat_vcs_github_comment_templates
   terrat_vcs_provider2
   terrat_work_manifest3)
- (preprocessor_deps (glob_files sql/*.sql))
- (preprocess (pps ppx_blob ppx_deriving.ord ppx_deriving.show ppx_deriving_yojson)))
+ (preprocessor_deps
+  (glob_files sql/*.sql))
+ (preprocess
+  (pps ppx_blob ppx_deriving.ord ppx_deriving.show ppx_deriving_yojson)))

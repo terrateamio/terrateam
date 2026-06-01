@@ -1,4 +1,15 @@
 (library
  (name ttm_kv)
- (libraries abb abbs base64 cmdliner kv_store_intf logs sha terrat_access_token_caps terrat_user_caps ttm_client)
- (preprocess (pps ppx_deriving.show ppx_deriving_yojson)))
+ (libraries
+  abb
+  abbs
+  base64
+  cmdliner
+  kv_store_intf
+  logs
+  sha
+  terrat_access_token_caps
+  terrat_user_caps
+  ttm_client)
+ (preprocess
+  (pps ppx_deriving.show ppx_deriving_yojson)))

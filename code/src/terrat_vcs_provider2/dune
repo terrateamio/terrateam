@@ -1,4 +1,22 @@
 (library
  (name terrat_vcs_provider2)
- (libraries abb jsonu pgsql_io str_template terrat_access_control2 terrat_api terrat_base_repo_config_v1 terrat_change terrat_commit_check terrat_config terrat_gate terrat_job_context terrat_pull_request terrat_tier terrat_vcs_api terrat_vcs_stacks terrat_work_manifest3)
- (preprocess (pps ppx_deriving.show)))
+ (libraries
+  abb
+  jsonu
+  pgsql_io
+  str_template
+  terrat_access_control2
+  terrat_api
+  terrat_base_repo_config_v1
+  terrat_change
+  terrat_commit_check
+  terrat_config
+  terrat_gate
+  terrat_job_context
+  terrat_pull_request
+  terrat_tier
+  terrat_vcs_api
+  terrat_vcs_stacks
+  terrat_work_manifest3)
+ (preprocess
+  (pps ppx_deriving.show)))

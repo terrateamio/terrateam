@@ -1,4 +1,5 @@
 (library
  (name terrat_data)
  (libraries containers sln terrat_dirspace ppx_deriving)
- (preprocess (pps ppx_deriving.show)))
+ (preprocess
+  (pps ppx_deriving.show)))

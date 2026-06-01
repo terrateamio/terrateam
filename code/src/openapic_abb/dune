@@ -1,6 +1,9 @@
 (library
  (name openapic_abb)
  (libraries abb abb_curl abbs containers json_schema openapi ppx_deriving)
- (ocamlopt_flags (:standard -w -69))
- (ocamlc_flags (:standard -w -69))
- (preprocess (pps ppx_deriving.show)))
+ (ocamlopt_flags
+  (:standard -w -69))
+ (ocamlc_flags
+  (:standard -w -69))
+ (preprocess
+  (pps ppx_deriving.show)))

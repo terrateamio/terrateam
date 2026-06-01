@@ -2,6 +2,9 @@
  (name snabela)
  (wrapped false)
  (libraries process containers sedlex sln ppx_deriving)
- (ocamlopt_flags (:standard -w -27))
- (ocamlc_flags (:standard -w -27))
- (preprocess (pps sedlex.ppx ppx_deriving.show ppx_deriving.eq)))
+ (ocamlopt_flags
+  (:standard -w -27))
+ (ocamlc_flags
+  (:standard -w -27))
+ (preprocess
+  (pps sedlex.ppx ppx_deriving.show ppx_deriving.eq)))

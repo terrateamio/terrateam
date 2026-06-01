@@ -1,6 +1,12 @@
 (library
  (name terrat_repo_config)
  (wrapped false)
- (flags (:standard -w -27-67))
+ (flags
+  (:standard -w -27-67))
  (libraries json_schema yojson)
- (preprocess (pps ppx_deriving.eq ppx_deriving.make ppx_deriving.show ppx_deriving_yojson)))
+ (preprocess
+  (pps
+   ppx_deriving.eq
+   ppx_deriving.make
+   ppx_deriving.show
+   ppx_deriving_yojson)))

@@ -1,12 +1,14 @@
 (library
  (name otls)
  (libraries ctypes ctypes.foreign otls_bindings)
- (flags (:standard -w -32-37-60))
+ (flags
+  (:standard -w -32-37-60))
  (library_flags -linkall)
  (ctypes
   (external_library_name libtls)
   (build_flags_resolver pkg_config)
-  (headers (preamble "#include <tls.h>"))
+  (headers
+   (preamble "#include <tls.h>"))
   (type_description
    (instance Types)
    (functor Otls_bindings_types))

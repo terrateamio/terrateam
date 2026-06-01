@@ -1,4 +1,11 @@
 (library
  (name abb_bounded_suspendable_executor)
- (libraries abb_intf abb_service_local abb_time containers containers-data iter)
- (preprocess (pps ppx_deriving.ord)))
+ (libraries
+  abb_intf
+  abb_service_local
+  abb_time
+  containers
+  containers-data
+  iter)
+ (preprocess
+  (pps ppx_deriving.ord)))

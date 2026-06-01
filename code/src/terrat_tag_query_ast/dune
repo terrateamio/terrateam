@@ -1,4 +1,10 @@
 (library
  (name terrat_tag_query_ast)
- (libraries containers terrat_tag_query_lexer terrat_tag_query_parser terrat_tag_query_parser_value ppx_deriving)
- (preprocess (pps ppx_deriving.show)))
+ (libraries
+  containers
+  terrat_tag_query_lexer
+  terrat_tag_query_parser
+  terrat_tag_query_parser_value
+  ppx_deriving)
+ (preprocess
+  (pps ppx_deriving.show)))

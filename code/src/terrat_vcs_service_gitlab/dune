@@ -25,5 +25,7 @@
   terrat_vcs_provider2_gitlab
   terrat_vcs_service
   terrat_vcs_stacks)
- (preprocessor_deps (glob_files sql/*.sql))
- (preprocess (pps ppx_blob ppx_deriving.ord ppx_deriving.show ppx_deriving_yojson)))
+ (preprocessor_deps
+  (glob_files sql/*.sql))
+ (preprocess
+  (pps ppx_blob ppx_deriving.ord ppx_deriving.show ppx_deriving_yojson)))

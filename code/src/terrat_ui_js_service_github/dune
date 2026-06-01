@@ -1,4 +1,11 @@
 (library
  (name terrat_ui_js_service_github)
- (libraries abb_js abb_js_fetch brtl_js2 tabler_icons terrat_api terrat_ui_js_service)
- (preprocess (pps ppx_deriving.eq)))
+ (libraries
+  abb_js
+  abb_js_fetch
+  brtl_js2
+  tabler_icons
+  terrat_api
+  terrat_ui_js_service)
+ (preprocess
+  (pps ppx_deriving.eq)))

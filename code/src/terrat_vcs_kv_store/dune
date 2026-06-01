@@ -1,4 +1,12 @@
 (library
  (name terrat_vcs_kv_store)
- (libraries brtl brtl_ep terrat_kv_store terrat_session terrat_storage terrat_user terrat_vcs_provider2)
- (preprocess (pps ppx_deriving_yojson)))
+ (libraries
+  brtl
+  brtl_ep
+  terrat_kv_store
+  terrat_session
+  terrat_storage
+  terrat_user
+  terrat_vcs_provider2)
+ (preprocess
+  (pps ppx_deriving_yojson)))

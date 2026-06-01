@@ -1,4 +1,15 @@
 (library
  (name abb_scheduler_luv)
- (libraries abb_domain_pool abb_fut abb_intf containers iter luv mtime mtime.clock unix ppx_deriving)
- (preprocess (pps ppx_deriving.ord)))
+ (libraries
+  abb_domain_pool
+  abb_fut
+  abb_intf
+  containers
+  iter
+  luv
+  mtime
+  mtime.clock
+  unix
+  ppx_deriving)
+ (preprocess
+  (pps ppx_deriving.ord)))

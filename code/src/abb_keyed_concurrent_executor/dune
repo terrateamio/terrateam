@@ -1,4 +1,5 @@
 (library
  (name abb_keyed_concurrent_executor)
  (libraries abb_future_combinators abb_intf abb_service_local containers)
- (preprocess (pps ppx_deriving.show)))
+ (preprocess
+  (pps ppx_deriving.show)))

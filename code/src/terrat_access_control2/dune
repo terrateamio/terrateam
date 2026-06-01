@@ -1,4 +1,14 @@
 (library
  (name terrat_access_control2)
- (libraries abb abbs containers ppx_deriving sln terrat_base_repo_config_v1 terrat_change terrat_change_match3 terrat_config)
- (preprocess (pps ppx_deriving.show)))
+ (libraries
+  abb
+  abbs
+  containers
+  ppx_deriving
+  sln
+  terrat_base_repo_config_v1
+  terrat_change
+  terrat_change_match3
+  terrat_config)
+ (preprocess
+  (pps ppx_deriving.show)))

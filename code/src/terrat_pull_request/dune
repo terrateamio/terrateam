@@ -2,4 +2,9 @@
  (name terrat_pull_request)
  (wrapped false)
  (libraries ppx_deriving)
- (preprocess (pps ppx_deriving.eq ppx_deriving.make ppx_deriving.show ppx_deriving_yojson)))
+ (preprocess
+  (pps
+   ppx_deriving.eq
+   ppx_deriving.make
+   ppx_deriving.show
+   ppx_deriving_yojson)))

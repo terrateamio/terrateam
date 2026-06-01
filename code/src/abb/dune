@@ -4,4 +4,7 @@
 
 (rule
  (target abb.ml)
- (action (with-stdout-to %{target} (echo "include Abb_scheduler_luv"))))
+ (action
+  (with-stdout-to
+   %{target}
+   (echo "include Abb_scheduler_luv"))))

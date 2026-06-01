@@ -1,4 +1,5 @@
 (test
  (name test)
  (libraries oth oth_abb terrat_vcs_comment)
- (preprocess (pps ppx_deriving.ord ppx_deriving.show)))
+ (preprocess
+  (pps ppx_deriving.ord ppx_deriving.show)))

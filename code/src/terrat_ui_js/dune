@@ -1,4 +1,19 @@
 (executable
  (name terrat_ui_js)
- (libraries abb_fut_js abb_js abb_js_fetch brtl_js2 duration hljs tabler_icons terrat_api terrat_data terrat_dirspace terrat_plan_diff terrat_ui_js_service terrat_ui_js_service_github terrat_ui_js_service_gitlab)
- (preprocess (pps ppx_deriving.show)))
+ (libraries
+  abb_fut_js
+  abb_js
+  abb_js_fetch
+  brtl_js2
+  duration
+  hljs
+  tabler_icons
+  terrat_api
+  terrat_data
+  terrat_dirspace
+  terrat_plan_diff
+  terrat_ui_js_service
+  terrat_ui_js_service_github
+  terrat_ui_js_service_gitlab)
+ (preprocess
+  (pps ppx_deriving.show)))

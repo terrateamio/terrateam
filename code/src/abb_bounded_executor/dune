@@ -1,6 +1,15 @@
 (library
  (name abb_bounded_executor)
- (libraries abb_future_combinators abb_intf abb_service_local abb_time containers containers-data)
- (ocamlopt_flags (:standard -w -67))
- (ocamlc_flags (:standard -w -67))
- (preprocess (pps ppx_deriving.ord)))
+ (libraries
+  abb_future_combinators
+  abb_intf
+  abb_service_local
+  abb_time
+  containers
+  containers-data)
+ (ocamlopt_flags
+  (:standard -w -67))
+ (ocamlc_flags
+  (:standard -w -67))
+ (preprocess
+  (pps ppx_deriving.ord)))
