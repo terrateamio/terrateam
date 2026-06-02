@@ -22,10 +22,19 @@ jobs:
           echo "VERSION_TAG=${VERSION_TAG}" >> "${GITHUB_ENV}"
           echo "version_tag=${VERSION_TAG}" >> "${GITHUB_OUTPUT}"
 
-  build-amd64:
+  build:
     needs: set-version-tag
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.runs-on }}
     environment: production
+
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+        include:
+          - arch: amd64
+            runs-on: ubuntu-22.04
+          - arch: arm64
+            runs-on: ubuntu-22.04-arm64
 
     permissions:
       contents: write
@@ -46,7 +55,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push amd64 image
+      - name: Build and push ${{ matrix.arch }} image
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -54,44 +63,10 @@ jobs:
           push: true
           target: build-base
           tags: |
-            ghcr.io/${{ github.repository_owner }}/terrat-base:${{ env.VERSION_TAG }}-amd64
-
-  build-arm64:
-    needs: set-version-tag
-    runs-on: ubuntu-22.04-arm64
-    environment: production
-
-    permissions:
-      contents: write
-      packages: write
-      id-token: write
-
-    env:
-      VERSION_TAG: ${{ needs.set-version-tag.outputs.version_tag }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push arm64 image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: docker/terrat/Dockerfile
-          push: true
-          target: build-base
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/terrat-base:${{ env.VERSION_TAG }}-arm64
+            ghcr.io/${{ github.repository_owner }}/terrat-base:${{ env.VERSION_TAG }}-${{ matrix.arch }}
 
   create-manifest:
-    needs: [set-version-tag, build-amd64, build-arm64]
+    needs: [set-version-tag, build]
     runs-on: ubuntu-22.04
     environment: production
 
