@@ -58,10 +58,14 @@ let post' _config storage api_key infracost_uri path ctx =
   match Cohttp.Header.get (Brtl_ctx.Request.headers request) "x-api-key" with
   | Some work_manifest_id -> (
       (match Uuidm.of_string work_manifest_id with
-      | Some work_manifest_id ->
-          Pgsql_pool.with_conn storage ~f:(fun db ->
-              Pgsql_io.Prepared_stmt.fetch db Sql.verify_work_manifest ~f:CCFun.id work_manifest_id)
-      | None -> Abb.Future.return (Error `Bad_work_manifest))
+        | Some work_manifest_id ->
+            Pgsql_pool.with_conn storage ~f:(fun db ->
+                Pgsql_io.Prepared_stmt.fetch
+                  db
+                  Sql.verify_work_manifest
+                  ~f:CCFun.id
+                  work_manifest_id)
+        | None -> Abb.Future.return (Error `Bad_work_manifest))
       >>= function
       | Ok (_ :: _) -> (
           let uri = Uri.with_path infracost_uri (Uri.path infracost_uri ^ "/" ^ path) in

@@ -77,8 +77,8 @@ let test_dynamic =
       let tasks_map =
         Hmap.empty
         |> Hmap.add (coerce b1) (fun _ _ { Bs.Fetcher.fetch } ->
-               let open Excel.C in
-               fetch a1 >>= fun a1 -> Excel.C.return (a1 + 1))
+            let open Excel.C in
+            fetch a1 >>= fun a1 -> Excel.C.return (a1 + 1))
       in
       let tasks =
         { Bs.Tasks.get = (fun _ k -> Excel.C.return @@ Hmap.find (coerce k) tasks_map) }
@@ -96,11 +96,11 @@ let test_dynamic2 =
       let tasks_map =
         Hmap.empty
         |> Hmap.add (coerce b1) (fun _ _ { Bs.Fetcher.fetch } ->
-               let open Excel.C in
-               fetch a1 >>= fun a1 -> Excel.C.return (a1 + 1))
+            let open Excel.C in
+            fetch a1 >>= fun a1 -> Excel.C.return (a1 + 1))
         |> Hmap.add (coerce b2) (fun _ _ { Bs.Fetcher.fetch } ->
-               let open Excel.C in
-               fetch a1 >>= fun a1 -> fetch b1 >>= fun b1 -> Excel.C.return (a1 + b1))
+            let open Excel.C in
+            fetch a1 >>= fun a1 -> fetch b1 >>= fun b1 -> Excel.C.return (a1 + b1))
       in
       let tasks =
         { Bs.Tasks.get = (fun _ k -> Excel.C.return @@ Hmap.find (coerce k) tasks_map) }

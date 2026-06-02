@@ -197,14 +197,14 @@ struct
       (fun () ->
         Abbs_future_combinators.to_result
         @@ Abb.Thread.run (fun () ->
-               CCList.filter
-                 (Terrat_change_match3.match_tag_query ~tag_query:Terrat_tag_query.any)
-                 (CCList.flatten
-                    (Terrat_change_match3.match_diff_list
-                       config
-                       (CCList.map
-                          (fun filename -> Terrat_change.Diff.(Change { filename }))
-                          repo_tree)))))
+            CCList.filter
+              (Terrat_change_match3.match_tag_query ~tag_query:Terrat_tag_query.any)
+              (CCList.flatten
+                 (Terrat_change_match3.match_diff_list
+                    config
+                    (CCList.map
+                       (fun filename -> Terrat_change.Diff.(Change { filename }))
+                       repo_tree)))))
     >>= fun matches ->
     Abb.Future.return (Wm_sm.dirspaceflows_of_changes repo_config_raw matches)
     >>= fun dirspaceflows ->

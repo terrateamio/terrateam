@@ -133,7 +133,8 @@ module Make (Fut : Abb_intf.Future.S) = struct
   let to_abb_channel (type m) (t : m T.t) =
     let module Msg : Msg with type t = m = struct
       type t = m
-    end in
+    end
+    in
     let module Chan = Channel (T) (Msg) in
     Abbc.create (module Chan) (t : m T.t)
 end

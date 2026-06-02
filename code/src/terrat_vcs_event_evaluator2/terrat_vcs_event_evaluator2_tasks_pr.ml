@@ -1438,48 +1438,49 @@ struct
           fetch Keys.pull_request_event
           >>= fun pull_request_event ->
           (match pull_request_event with
-          | E.Comment { comment = Terrat_comment.Feedback feedback; _ } ->
-              fetch Keys.account
-              >>= fun account ->
-              fetch Keys.repo
-              >>= fun repo ->
-              fetch Keys.pull_request_id
-              >>= fun pull_request_id ->
-              Logs.info (fun m ->
-                  m
-                    "%s : FEEDBACK : account=%s : repo=%s : pull_number=%s : user=%s : %s"
-                    (Builder.log_id s)
-                    (S.Api.Account.to_string account)
-                    (S.Api.Repo.to_string repo)
-                    (S.Api.Pull_request.Id.to_string pull_request_id)
-                    (CCOption.map_or ~default:"" S.Api.User.to_string user)
-                    feedback);
-              Abb.Future.return (Ok None)
-          | E.Open | E.Sync | E.Ready_for_review ->
-              Abb.Future.return (Ok (Some Tjc.Job.Type_.Autoplan))
-          | E.Close -> Abb.Future.return (Ok (Some Tjc.Job.Type_.Autoapply))
-          | E.Comment { comment_id = _; comment } -> (
-              match comment with
-              | Terrat_comment.Apply { tag_query } ->
-                  Abb.Future.return
-                    (Ok (Some (Tjc.Job.Type_.Apply { tag_query; kind = None; force = false })))
-              | Terrat_comment.Gate_approval { tokens } ->
-                  Abb.Future.return (Ok (Some (Tjc.Job.Type_.Gate_approval { tokens })))
-              | Terrat_comment.Plan { tag_query } ->
-                  Abb.Future.return (Ok (Some (Tjc.Job.Type_.Plan { tag_query; kind = None })))
-              | Terrat_comment.Apply_force { tag_query } ->
-                  Abb.Future.return
-                    (Ok (Some (Tjc.Job.Type_.Apply { tag_query; kind = None; force = true })))
-              | Terrat_comment.Repo_config ->
-                  Abb.Future.return (Ok (Some Tjc.Job.Type_.Repo_config))
-              | Terrat_comment.Unlock unlocks ->
-                  Abb.Future.return
-                    (Ok
-                       (Some (Tjc.Job.Type_.Unlock (CCList.sort_uniq ~cmp:CCString.compare unlocks))))
-              | Terrat_comment.Index -> Abb.Future.return (Ok (Some Tjc.Job.Type_.Index))
-              | Terrat_comment.Help -> Abb.Future.return (Ok (Some Tjc.Job.Type_.Help))
-              | Terrat_comment.Apply_autoapprove _ | Terrat_comment.Feedback _ ->
-                  raise (Failure "nyi")))
+            | E.Comment { comment = Terrat_comment.Feedback feedback; _ } ->
+                fetch Keys.account
+                >>= fun account ->
+                fetch Keys.repo
+                >>= fun repo ->
+                fetch Keys.pull_request_id
+                >>= fun pull_request_id ->
+                Logs.info (fun m ->
+                    m
+                      "%s : FEEDBACK : account=%s : repo=%s : pull_number=%s : user=%s : %s"
+                      (Builder.log_id s)
+                      (S.Api.Account.to_string account)
+                      (S.Api.Repo.to_string repo)
+                      (S.Api.Pull_request.Id.to_string pull_request_id)
+                      (CCOption.map_or ~default:"" S.Api.User.to_string user)
+                      feedback);
+                Abb.Future.return (Ok None)
+            | E.Open | E.Sync | E.Ready_for_review ->
+                Abb.Future.return (Ok (Some Tjc.Job.Type_.Autoplan))
+            | E.Close -> Abb.Future.return (Ok (Some Tjc.Job.Type_.Autoapply))
+            | E.Comment { comment_id = _; comment } -> (
+                match comment with
+                | Terrat_comment.Apply { tag_query } ->
+                    Abb.Future.return
+                      (Ok (Some (Tjc.Job.Type_.Apply { tag_query; kind = None; force = false })))
+                | Terrat_comment.Gate_approval { tokens } ->
+                    Abb.Future.return (Ok (Some (Tjc.Job.Type_.Gate_approval { tokens })))
+                | Terrat_comment.Plan { tag_query } ->
+                    Abb.Future.return (Ok (Some (Tjc.Job.Type_.Plan { tag_query; kind = None })))
+                | Terrat_comment.Apply_force { tag_query } ->
+                    Abb.Future.return
+                      (Ok (Some (Tjc.Job.Type_.Apply { tag_query; kind = None; force = true })))
+                | Terrat_comment.Repo_config ->
+                    Abb.Future.return (Ok (Some Tjc.Job.Type_.Repo_config))
+                | Terrat_comment.Unlock unlocks ->
+                    Abb.Future.return
+                      (Ok
+                         (Some
+                            (Tjc.Job.Type_.Unlock (CCList.sort_uniq ~cmp:CCString.compare unlocks))))
+                | Terrat_comment.Index -> Abb.Future.return (Ok (Some Tjc.Job.Type_.Index))
+                | Terrat_comment.Help -> Abb.Future.return (Ok (Some Tjc.Job.Type_.Help))
+                | Terrat_comment.Apply_autoapprove _ | Terrat_comment.Feedback _ ->
+                    raise (Failure "nyi")))
           >>= fun job_type ->
           match job_type with
           | Some job_type ->

@@ -72,19 +72,19 @@ module Request = struct
       headers
       |> to_uritmpl_var
       |> CCList.map (fun (n, v) ->
-             match v with
-             | Uritmpl.Var.S s -> (n, s)
-             | _ -> assert false)
+          match v with
+          | Uritmpl.Var.S s -> (n, s)
+          | _ -> assert false)
     in
     let url_params = to_uritmpl_var url_params in
     let query_params =
       query_params
       |> to_uritmpl_var
       |> CCList.map (fun (n, v) ->
-             match v with
-             | Uritmpl.Var.S s -> (n, [ s ])
-             | Uritmpl.Var.A arr -> (n, arr)
-             | Uritmpl.Var.M _ -> assert false)
+          match v with
+          | Uritmpl.Var.S s -> (n, [ s ])
+          | Uritmpl.Var.A arr -> (n, arr)
+          | Uritmpl.Var.M _ -> assert false)
     in
     let url =
       url

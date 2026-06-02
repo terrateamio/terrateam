@@ -69,10 +69,10 @@ module Response = struct
   let create ~body ~headers ~status =
     new%js J.constr
       body
-      (object%js
-         val headers = headers
-         val status = status
-      end)
+      object%js
+        val headers = headers
+        val status = status
+      end
 
   let clone (t : t) = t##clone
   let blob (t : t) = Abb_js.Future.unsafe_of_promise t##blob
@@ -273,9 +273,9 @@ module Service_worker_container = struct
     let promise : Registration.t Abb_js.Future.promise Js.t =
       t##register
         (Js.string worker_path)
-        (object%js
-           val scope = Js.string scope
-        end)
+        object%js
+          val scope = Js.string scope
+        end
     in
     Abb_js.Future.unsafe_of_promise promise
 

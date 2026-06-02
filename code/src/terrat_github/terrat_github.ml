@@ -627,10 +627,10 @@ let rec get_tree ~owner ~repo ~sha client =
       let files =
         tree
         |> CCList.filter_map (fun item ->
-               let module Items = Githubc2_components_git_tree.Primary.Tree.Items in
-               match item.Items.primary.Items.Primary.type_ with
-               | "blob" -> Some item.Items.primary.Items.Primary.path
-               | _ -> None)
+            let module Items = Githubc2_components_git_tree.Primary.Tree.Items in
+            match item.Items.primary.Items.Primary.type_ with
+            | "blob" -> Some item.Items.primary.Items.Primary.path
+            | _ -> None)
       in
       Abb.Future.return (Ok files)
   | `Not_found _ as err -> Abb.Future.return (Error err)

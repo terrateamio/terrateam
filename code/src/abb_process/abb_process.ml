@@ -51,15 +51,15 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
         let stdout_r = Abb.File.of_native stdout_r in
         let stderr_r = Abb.File.of_native stderr_r in
         (match input with
-        | Some input ->
-            Abb.File.write
-              stdin_w
-              Abb_intf.Write_buf.
-                [ { buf = Bytes.of_string input; pos = 0; len = String.length input } ]
-            >>= fun n ->
-            assert (n = String.length input);
-            Abb.Future.return (Ok ())
-        | None -> Abb.Future.return (Ok ()))
+          | Some input ->
+              Abb.File.write
+                stdin_w
+                Abb_intf.Write_buf.
+                  [ { buf = Bytes.of_string input; pos = 0; len = String.length input } ]
+              >>= fun n ->
+              assert (n = String.length input);
+              Abb.Future.return (Ok ())
+          | None -> Abb.Future.return (Ok ()))
         >>= fun () ->
         Abb.File.close stdin_w
         >>= fun () ->

@@ -6,10 +6,10 @@ let transform plan_text =
   |> CCString.split_on_char '\n'
   |> CCSeq.of_list
   |> CCSeq.map (fun line ->
-         match Lua_pattern.substitute ~s:line ~r:add_remove_sub add_remove_pat with
-         | Some line -> line
-         | None -> line)
+      match Lua_pattern.substitute ~s:line ~r:add_remove_sub add_remove_pat with
+      | Some line -> line
+      | None -> line)
   |> CCSeq.map (fun line ->
-         if (not (CCString.is_empty line)) && line.[0] = '~' then CCString.set line 0 '!' else line)
+      if (not (CCString.is_empty line)) && line.[0] = '~' then CCString.set line 0 '!' else line)
   |> CCSeq.to_list
   |> CCString.concat "\n"

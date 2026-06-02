@@ -705,30 +705,30 @@ let create_commit_checks ~request_id client repo ref_ checks =
     lookup_mr_pipeline_id ()
     >>= fun mr_pipeline_id ->
     (match mr_pipeline_id with
-    | Some _ -> Abb.Future.return (Ok (mr_pipeline_id, "mr_pipeline"))
-    | None ->
-        Openapic_abb.collect_all
-          ~page:Openapic_abb.Page.gitlab
-          client.Client.client
-          Glg.(
-            make
-              (Parameters.make
-                 ~id:(CCInt.to_string @@ Repo.id repo)
-                 ~sha:ref_
-                 ~name:(Some "terrateam apply")
-                 ()))
-        >>= fun existing_checks ->
-        let pipeline_id =
-          match existing_checks with
-          | { Glc.pipeline_id; _ } :: _ -> pipeline_id
-          | _ -> None
-        in
-        let source =
-          match pipeline_id with
-          | Some _ -> "existing_status"
-          | None -> "none"
-        in
-        Abb.Future.return (Ok (pipeline_id, source)))
+      | Some _ -> Abb.Future.return (Ok (mr_pipeline_id, "mr_pipeline"))
+      | None ->
+          Openapic_abb.collect_all
+            ~page:Openapic_abb.Page.gitlab
+            client.Client.client
+            Glg.(
+              make
+                (Parameters.make
+                   ~id:(CCInt.to_string @@ Repo.id repo)
+                   ~sha:ref_
+                   ~name:(Some "terrateam apply")
+                   ()))
+          >>= fun existing_checks ->
+          let pipeline_id =
+            match existing_checks with
+            | { Glc.pipeline_id; _ } :: _ -> pipeline_id
+            | _ -> None
+          in
+          let source =
+            match pipeline_id with
+            | Some _ -> "existing_status"
+            | None -> "none"
+          in
+          Abb.Future.return (Ok (pipeline_id, source)))
     >>= fun (pipeline_id, source) ->
     Logs.info (fun m ->
         m

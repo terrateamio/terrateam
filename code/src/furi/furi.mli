@@ -31,10 +31,10 @@
     Given the following URI patterns.
 
     {[
-      let search_rt = Furi.(rel / "search" /? Query.string "query")
-      let hello_rt = Furi.(rel / "hello" /% Path.string /% Path.string)
-      let age_rt = Furi.(rel / "age" /% Path.int)
-      let age_height_rt = Furi.(rel / "age_height" /? Query.int "age" /? Query.int "height")
+    let search_rt = Furi.(rel / "search" /? Query.string "query")
+    let hello_rt = Furi.(rel / "hello" /% Path.string /% Path.string)
+    let age_rt = Furi.(rel / "age" /% Path.int)
+    let age_height_rt = Furi.(rel / "age_height" /? Query.int "age" /? Query.int "height")
     ]}
 
     And the following handler functions:
@@ -52,13 +52,13 @@
     They can be combined into a routing table like:
 
     {[
-      let routes =
-        [
-          search_rt --> handle_search;
-          hello_rt --> handle_hello;
-          age_rt --> handle_age;
-          age_height_rt --> handle_age_height;
-        ]
+    let routes =
+      [
+        search_rt --> handle_search;
+        hello_rt --> handle_hello;
+        age_rt --> handle_age;
+        age_height_rt --> handle_age_height;
+      ]
     ]}
 
     Finally, given a URI, they can be matched with:
@@ -91,7 +91,7 @@
     when a query parameter [q] is present.
 
     {[
-      [ search_rt --> search; homepage_rt --> homepage ]
+    [ search_rt --> search; homepage_rt --> homepage ]
     ]}
 
     Similarly, if there are multiple query searches with the same path but different numbers of

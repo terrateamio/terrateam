@@ -300,8 +300,8 @@ let request_param_of_op_params base_module_name components param_in params =
   let params =
     params
     |> CCList.filter_map (fun p ->
-           let p = resolve_parameter_ref components p in
-           if CCString.equal p.Parameter.in_ param_in then Some p else None)
+        let p = resolve_parameter_ref components p in
+        if CCString.equal p.Parameter.in_ param_in then Some p else None)
   in
   match params with
   | [] -> Gen.make_list []
@@ -353,83 +353,82 @@ let request_param_of_op_params base_module_name components param_in params =
            (Opn.mk (Mod.ident (Location.mknoloc (Gen.ident [ "Parameters" ]))))
            (params
            |> CCList.map (fun p ->
-                  let param_name =
-                    Exp.ident
-                      (Location.mknoloc
-                         (Gen.ident [ "params"; field_name_of_schema p.Parameter.name ]))
-                  in
-                  let type_desc =
-                    match resolve_schema_ref components p.Parameter.schema with
-                    | { Schema.one_of = Some schemas; _ } as schema ->
-                        let is_optional =
-                          not
-                            ((p.Parameter.required || CCOption.is_some schema.Schema.default)
-                            && not schema.Schema.nullable)
-                        in
-                        let wrap_option =
-                          if is_optional then fun v ->
-                            Pat.construct (Location.mknoloc (Gen.ident [ "Some" ])) (Some ([], v))
-                          else CCFun.id
-                        in
-                        Exp.match_
-                          param_name
-                          ((CCList.mapi (fun idx schema ->
-                                Exp.case
-                                  (wrap_option
-                                     (Pat.construct
-                                        (Location.mknoloc
-                                           (Gen.ident
-                                              [
-                                                module_name_of_string p.Parameter.name;
-                                                Printf.sprintf "V%d" idx;
-                                              ]))
-                                        (Some ([], Pat.var (Location.mknoloc "v")))))
-                                  (Exp.construct
-                                     (Location.mknoloc (Gen.ident [ "Var" ]))
-                                     (Some
-                                        (Exp.tuple
+               let param_name =
+                 Exp.ident
+                   (Location.mknoloc
+                      (Gen.ident [ "params"; field_name_of_schema p.Parameter.name ]))
+               in
+               let type_desc =
+                 match resolve_schema_ref components p.Parameter.schema with
+                 | { Schema.one_of = Some schemas; _ } as schema ->
+                     let is_optional =
+                       not
+                         ((p.Parameter.required || CCOption.is_some schema.Schema.default)
+                         && not schema.Schema.nullable)
+                     in
+                     let wrap_option =
+                       if is_optional then fun v ->
+                         Pat.construct (Location.mknoloc (Gen.ident [ "Some" ])) (Some ([], v))
+                       else CCFun.id
+                     in
+                     Exp.match_
+                       param_name
+                       ((CCList.mapi (fun idx schema ->
+                             Exp.case
+                               (wrap_option
+                                  (Pat.construct
+                                     (Location.mknoloc
+                                        (Gen.ident
                                            [
-                                             Exp.ident (Location.mknoloc (Gen.ident [ "v" ]));
-                                             type_desc_of_schema
-                                               ~enum_module:
-                                                 [ module_name_of_string p.Parameter.name ]
-                                               schema;
-                                           ]))))
-                           @@ CCList.map (resolve_schema_ref components) schemas)
-                          @
-                          if is_optional then
-                            [
-                              Exp.case
-                                (Pat.construct (Location.mknoloc (Gen.ident [ "None" ])) None)
-                                (Exp.construct
-                                   (Location.mknoloc (Gen.ident [ "Var" ]))
-                                   (Some
-                                      (Exp.tuple
-                                         [
-                                           Exp.tuple [];
-                                           Exp.ident (Location.mknoloc (Gen.ident [ "Null" ]));
-                                         ])));
-                            ]
-                          else [])
-                    | schema ->
-                        let enum_module =
-                          enum_module_of_schema_value
-                            (module_name_of_string p.Parameter.name)
-                            p.Parameter.schema
-                        in
-                        let type_desc = type_desc_of_schema ~enum_module schema in
-                        let type_desc =
-                          if
-                            (p.Parameter.required || CCOption.is_some schema.Schema.default)
-                            && not schema.Schema.nullable
-                          then type_desc
-                          else option type_desc
-                        in
-                        Exp.construct
-                          (Location.mknoloc (Gen.ident [ "Var" ]))
-                          (Some (Exp.tuple [ param_name; type_desc ]))
-                  in
-                  Exp.tuple [ Exp.constant (Const.string p.Parameter.name); type_desc ])
+                                             module_name_of_string p.Parameter.name;
+                                             Printf.sprintf "V%d" idx;
+                                           ]))
+                                     (Some ([], Pat.var (Location.mknoloc "v")))))
+                               (Exp.construct
+                                  (Location.mknoloc (Gen.ident [ "Var" ]))
+                                  (Some
+                                     (Exp.tuple
+                                        [
+                                          Exp.ident (Location.mknoloc (Gen.ident [ "v" ]));
+                                          type_desc_of_schema
+                                            ~enum_module:[ module_name_of_string p.Parameter.name ]
+                                            schema;
+                                        ]))))
+                        @@ CCList.map (resolve_schema_ref components) schemas)
+                       @
+                       if is_optional then
+                         [
+                           Exp.case
+                             (Pat.construct (Location.mknoloc (Gen.ident [ "None" ])) None)
+                             (Exp.construct
+                                (Location.mknoloc (Gen.ident [ "Var" ]))
+                                (Some
+                                   (Exp.tuple
+                                      [
+                                        Exp.tuple [];
+                                        Exp.ident (Location.mknoloc (Gen.ident [ "Null" ]));
+                                      ])));
+                         ]
+                       else [])
+                 | schema ->
+                     let enum_module =
+                       enum_module_of_schema_value
+                         (module_name_of_string p.Parameter.name)
+                         p.Parameter.schema
+                     in
+                     let type_desc = type_desc_of_schema ~enum_module schema in
+                     let type_desc =
+                       if
+                         (p.Parameter.required || CCOption.is_some schema.Schema.default)
+                         && not schema.Schema.nullable
+                       then type_desc
+                       else option type_desc
+                     in
+                     Exp.construct
+                       (Location.mknoloc (Gen.ident [ "Var" ]))
+                       (Some (Exp.tuple [ param_name; type_desc ]))
+               in
+               Exp.tuple [ Exp.constant (Const.string p.Parameter.name); type_desc ])
            |> Gen.make_list))
 
 (* To convert an operation we need to convert the parameters, request body, and
@@ -637,64 +636,60 @@ let convert_str_operation strict_records base_module_name components uritmpl op_
                      (Pat.var (Location.mknoloc "t"))
                      (resolved_responses
                      |> CCList.map (fun (code, r) ->
-                            match get_json_media_type r.Response.content with
-                            | Some r ->
-                                Exp.tuple
-                                  [
-                                    Exp.constant (Const.string code);
-                                    Exp.apply
-                                      (Exp.ident
+                         match get_json_media_type r.Response.content with
+                         | Some r ->
+                             Exp.tuple
+                               [
+                                 Exp.constant (Const.string code);
+                                 Exp.apply
+                                   (Exp.ident
+                                      (Location.mknoloc (Gen.ident [ "Openapi"; "of_json_body" ])))
+                                   [
+                                     ( Asttypes.Nolabel,
+                                       Exp.function_
+                                         [
+                                           {
+                                             Parsetree.pparam_loc = Location.none;
+                                             pparam_desc =
+                                               Parsetree.Pparam_val
+                                                 ( Asttypes.Nolabel,
+                                                   None,
+                                                   Pat.var (Location.mknoloc "v") );
+                                           };
+                                         ]
+                                         None
+                                         (Parsetree.Pfunction_body
+                                            (Exp.variant
+                                               (http_status_to_name code)
+                                               (Some
+                                                  (Exp.ident (Location.mknoloc (Gen.ident [ "v" ]))))))
+                                     );
+                                     ( Asttypes.Nolabel,
+                                       Exp.ident
                                          (Location.mknoloc
-                                            (Gen.ident [ "Openapi"; "of_json_body" ])))
-                                      [
-                                        ( Asttypes.Nolabel,
-                                          Exp.function_
-                                            [
-                                              {
-                                                Parsetree.pparam_loc = Location.none;
-                                                pparam_desc =
-                                                  Parsetree.Pparam_val
-                                                    ( Asttypes.Nolabel,
-                                                      None,
-                                                      Pat.var (Location.mknoloc "v") );
-                                              };
-                                            ]
-                                            None
-                                            (Parsetree.Pfunction_body
-                                               (Exp.variant
-                                                  (http_status_to_name code)
-                                                  (Some
-                                                     (Exp.ident
-                                                        (Location.mknoloc (Gen.ident [ "v" ]))))))
-                                        );
-                                        ( Asttypes.Nolabel,
-                                          Exp.ident
-                                            (Location.mknoloc
-                                               (Gen.ident [ http_status_to_name code; "of_yojson" ]))
-                                        );
-                                      ];
-                                  ]
-                            | None ->
-                                Exp.tuple
-                                  [
-                                    Exp.constant (Const.string code);
-                                    Exp.function_
-                                      [
-                                        {
-                                          Parsetree.pparam_loc = Location.none;
-                                          pparam_desc =
-                                            Parsetree.Pparam_val
-                                              ( Asttypes.Nolabel,
-                                                None,
-                                                Pat.var (Location.mknoloc "_") );
-                                        };
-                                      ]
-                                      None
-                                      (Parsetree.Pfunction_body
-                                         (Exp.construct
-                                            (Location.mknoloc (Gen.ident [ "Ok" ]))
-                                            (Some (Exp.variant (http_status_to_name code) None))));
-                                  ])
+                                            (Gen.ident [ http_status_to_name code; "of_yojson" ]))
+                                     );
+                                   ];
+                               ]
+                         | None ->
+                             Exp.tuple
+                               [
+                                 Exp.constant (Const.string code);
+                                 Exp.function_
+                                   [
+                                     {
+                                       Parsetree.pparam_loc = Location.none;
+                                       pparam_desc =
+                                         Parsetree.Pparam_val
+                                           (Asttypes.Nolabel, None, Pat.var (Location.mknoloc "_"));
+                                     };
+                                   ]
+                                   None
+                                   (Parsetree.Pfunction_body
+                                      (Exp.construct
+                                         (Location.mknoloc (Gen.ident [ "Ok" ]))
+                                         (Some (Exp.variant (http_status_to_name code) None))));
+                               ])
                      |> Gen.make_list);
                  ];
              ])))

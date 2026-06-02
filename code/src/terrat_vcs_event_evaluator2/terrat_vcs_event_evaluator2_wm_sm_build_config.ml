@@ -194,19 +194,19 @@ struct
     let index = None in
     Abbs_future_combinators.to_result
     @@ Abb.Thread.run (fun () ->
-           Terrat_base_repo_config_v1.derive
-             ~ctx:
-               (Terrat_base_repo_config_v1.Ctx.make
-                  ~dest_branch:(S.Api.Ref.to_string dest_branch_name)
-                  ~branch:(S.Api.Ref.to_string branch_name)
-                  ())
-             ~index:
-               (CCOption.map_or
-                  ~default:Terrat_base_repo_config_v1.Index.empty
-                  (fun { Terrat_vcs_provider2.Index.index; _ } -> index)
-                  index)
-             ~file_list:repo_tree
-             repo_config_raw)
+        Terrat_base_repo_config_v1.derive
+          ~ctx:
+            (Terrat_base_repo_config_v1.Ctx.make
+               ~dest_branch:(S.Api.Ref.to_string dest_branch_name)
+               ~branch:(S.Api.Ref.to_string branch_name)
+               ())
+          ~index:
+            (CCOption.map_or
+               ~default:Terrat_base_repo_config_v1.Index.empty
+               (fun { Terrat_vcs_provider2.Index.index; _ } -> index)
+               index)
+          ~file_list:repo_tree
+          repo_config_raw)
     >>= fun repo_config ->
     let module B = Terrat_api_components.Work_manifest_build_config in
     let config =

@@ -96,9 +96,9 @@ let rec start_ping_loop config =
   Abb.Sys.sleep one_hour
   >>= fun () ->
   (match Terrat_config.github config with
-  | Some github ->
-      send
-        (Terrat_config.telemetry config)
-        (Event.Ping { app_type = "github"; app_id = Terrat_config.Github.app_id github })
-  | None -> Abb.Future.return ())
+    | Some github ->
+        send
+          (Terrat_config.telemetry config)
+          (Event.Ping { app_type = "github"; app_id = Terrat_config.Github.app_id github })
+    | None -> Abb.Future.return ())
   >>= fun () -> start_ping_loop config

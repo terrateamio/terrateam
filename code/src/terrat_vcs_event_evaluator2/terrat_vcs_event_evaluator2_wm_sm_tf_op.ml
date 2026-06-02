@@ -177,8 +177,8 @@ struct
       (fun (k, dsfs) ->
         dsfs
         |> CCList.sort (fun l r ->
-               (*Ensure chunks are sorted by dirspace so chunks are consistent between runs. *)
-               Terrat_dirspace.compare (Dsf.to_dirspace l) (Dsf.to_dirspace r))
+            (*Ensure chunks are sorted by dirspace so chunks are consistent between runs. *)
+            Terrat_dirspace.compare (Dsf.to_dirspace l) (Dsf.to_dirspace r))
         |> CCList.chunks max_workspaces_per_batch
         |> CCList.map (fun chunk -> (k, chunk)))
       partitions
@@ -407,9 +407,9 @@ struct
     >>= fun access_control_results ->
     Abb.Future.return
       (let module R = Terrat_access_control2.R in
-      (access_control_results
-        : (R.t, Terrat_access_control2.err) result
-        :> (R.t, [> Terrat_access_control2.err ]) result))
+       (access_control_results
+         : (R.t, Terrat_access_control2.err) result
+         :> (R.t, [> Terrat_access_control2.err ]) result))
     >>= fun access_control_results ->
     let { Terrat_access_control2.R.pass = passed_dirspaces; deny = denied_dirspaces } =
       access_control_results
@@ -719,15 +719,15 @@ struct
               >>= fun index ->
               Abbs_future_combinators.to_result
               @@ Abb.Thread.run (fun () ->
-                     Terrat_base_repo_config_v1.derive
-                       ~ctx:
-                         (Terrat_base_repo_config_v1.Ctx.make
-                            ~dest_branch:(S.Api.Ref.to_string dest_branch_name)
-                            ~branch:(S.Api.Ref.to_string branch_name)
-                            ())
-                       ~index
-                       ~file_list:repo_tree
-                       repo_config)
+                  Terrat_base_repo_config_v1.derive
+                    ~ctx:
+                      (Terrat_base_repo_config_v1.Ctx.make
+                         ~dest_branch:(S.Api.Ref.to_string dest_branch_name)
+                         ~branch:(S.Api.Ref.to_string branch_name)
+                         ())
+                    ~index
+                    ~file_list:repo_tree
+                    repo_config)
               >>= fun repo_config ->
               Abb.Future.return (Terrat_change_match3.synthesize_config ~index repo_config)
               >>= fun synthesized_config -> Abb.Future.return (Ok (repo_config, synthesized_config))

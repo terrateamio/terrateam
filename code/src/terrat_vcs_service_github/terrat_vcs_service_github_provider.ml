@@ -2345,23 +2345,23 @@ module Apply_requirements = struct
     Abbs_future_combinators.Infix_result_app.(
       (fun reviews commit_checks requested_reviews -> (reviews, commit_checks, requested_reviews))
       <$> Abbs_time_it.run (log_time request_id "FETCH_APPROVED_TIME") (fun () ->
-              Api.fetch_pull_request_reviews
-                ~request_id
-                (Api.Pull_request.repo pull_request)
-                (Api.Pull_request.id pull_request)
-                client)
+          Api.fetch_pull_request_reviews
+            ~request_id
+            (Api.Pull_request.repo pull_request)
+            (Api.Pull_request.id pull_request)
+            client)
       <*> Abbs_time_it.run (log_time request_id "FETCH_COMMIT_CHECKS_TIME") (fun () ->
-              Api.fetch_commit_checks
-                ~request_id
-                client
-                (Api.Pull_request.repo pull_request)
-                (Api.Pull_request.branch_ref pull_request))
+          Api.fetch_commit_checks
+            ~request_id
+            client
+            (Api.Pull_request.repo pull_request)
+            (Api.Pull_request.branch_ref pull_request))
       <*> Abbs_time_it.run (log_time request_id "FETCH_REQUESTED_REVIEWS") (fun () ->
-              Api.fetch_pull_request_requested_reviews
-                ~request_id
-                (Api.Pull_request.repo pull_request)
-                (Api.Pull_request.id pull_request)
-                client))
+          Api.fetch_pull_request_requested_reviews
+            ~request_id
+            (Api.Pull_request.repo pull_request)
+            (Api.Pull_request.id pull_request)
+            client))
     >>= fun (reviews, commit_checks, requested_reviews) ->
     let approved_reviews =
       CCList.filter
@@ -5089,10 +5089,10 @@ module Job_context = struct
         C.of_yojson
         %> CCResult.to_opt
         %> CCOption.map (function
-             | C.Pull_request { P.pull_request } -> S.Pull_request pull_request
-             | C.Branch { B.branch } -> S.Branch (Api.Ref.of_string branch, None)
-             | C.Branch_dest_branch { Bb.branch; dest_branch } ->
-                 S.Branch (Api.Ref.of_string branch, Some (Api.Ref.of_string dest_branch))))
+          | C.Pull_request { P.pull_request } -> S.Pull_request pull_request
+          | C.Branch { B.branch } -> S.Branch (Api.Ref.of_string branch, None)
+          | C.Branch_dest_branch { Bb.branch; dest_branch } ->
+              S.Branch (Api.Ref.of_string branch, Some (Api.Ref.of_string dest_branch))))
 
     let select_context_by_id =
       Pgsql_io.Typed_sql.(
@@ -5174,31 +5174,31 @@ module Job_context = struct
           Jt.Type.of_yojson
           %> CCResult.to_opt
           %> CCOption.flat_map (function
-               | Jt.Type.Apply { Jt.Apply.type_ = _; tag_query = Some tag_query; kind; force } ->
-                   Some
-                     (T.Apply
-                        {
-                          tag_query = CCResult.get_exn @@ Terrat_tag_query.of_string tag_query;
-                          kind = json_to_kind kind;
-                          force;
-                        })
-               | Jt.Type.Apply { Jt.Apply.type_ = _; tag_query = None; kind = _; force = _ } ->
-                   Some T.Autoapply
-               | Jt.Type.Plan { Jt.Plan.type_ = _; tag_query = Some tag_query; kind } ->
-                   Some
-                     (T.Plan
-                        {
-                          tag_query = CCResult.get_exn @@ Terrat_tag_query.of_string tag_query;
-                          kind = json_to_kind kind;
-                        })
-               | Jt.Type.Plan { Jt.Plan.type_ = _; tag_query = None; kind = _ } -> Some T.Autoplan
-               | Jt.Type.Repo_config { Jt.Repo_config.type_ = _ } -> Some T.Repo_config
-               | Jt.Type.Unlock { Jt.Unlock.type_ = _; ids } -> Some (T.Unlock ids)
-               | Jt.Type.Gate_approval { Jt.Gate_approval.type_ = _; tokens } ->
-                   Some (T.Gate_approval { tokens })
-               | Jt.Type.Help { Jt.Help.type_ = _ } -> Some T.Help
-               | Jt.Type.Index { Jt.Index.type_ = _ } -> Some T.Index
-               | Jt.Type.Push { Jt.Push.type_ = _ } -> Some T.Push))
+            | Jt.Type.Apply { Jt.Apply.type_ = _; tag_query = Some tag_query; kind; force } ->
+                Some
+                  (T.Apply
+                     {
+                       tag_query = CCResult.get_exn @@ Terrat_tag_query.of_string tag_query;
+                       kind = json_to_kind kind;
+                       force;
+                     })
+            | Jt.Type.Apply { Jt.Apply.type_ = _; tag_query = None; kind = _; force = _ } ->
+                Some T.Autoapply
+            | Jt.Type.Plan { Jt.Plan.type_ = _; tag_query = Some tag_query; kind } ->
+                Some
+                  (T.Plan
+                     {
+                       tag_query = CCResult.get_exn @@ Terrat_tag_query.of_string tag_query;
+                       kind = json_to_kind kind;
+                     })
+            | Jt.Type.Plan { Jt.Plan.type_ = _; tag_query = None; kind = _ } -> Some T.Autoplan
+            | Jt.Type.Repo_config { Jt.Repo_config.type_ = _ } -> Some T.Repo_config
+            | Jt.Type.Unlock { Jt.Unlock.type_ = _; ids } -> Some (T.Unlock ids)
+            | Jt.Type.Gate_approval { Jt.Gate_approval.type_ = _; tokens } ->
+                Some (T.Gate_approval { tokens })
+            | Jt.Type.Help { Jt.Help.type_ = _ } -> Some T.Help
+            | Jt.Type.Index { Jt.Index.type_ = _ } -> Some T.Index
+            | Jt.Type.Push { Jt.Push.type_ = _ } -> Some T.Push))
     end
 
     let string_of_initiator = Api.User.to_string

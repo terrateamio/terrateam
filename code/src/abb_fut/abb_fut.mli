@@ -29,7 +29,7 @@
     done. This execution is not tail recursive. The following code will result in blowing the stack:
 
     {[
-      let rec loop () = return () >>= fun () -> loop ()
+    let rec loop () = return () >>= fun () -> loop ()
     ]}
 
     {1 What happens when a Promise gets set or aborted?}

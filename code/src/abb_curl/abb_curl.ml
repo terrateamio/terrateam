@@ -847,8 +847,8 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
             Mutex.protect t.mutex (fun () -> Queue.add (In_event.Cancel id) t.in_event);
             trigger_eventfd t.trigger_eventfd;
             (match Id_map.get id t.responses with
-            | Some (_, p) -> Abb.Future.Promise.set p (Error `Cancelled)
-            | None -> Fc.unit)
+              | Some (_, p) -> Abb.Future.Promise.set p (Error `Cancelled)
+              | None -> Fc.unit)
             >>= fun () ->
             Abb.Future.return
               {

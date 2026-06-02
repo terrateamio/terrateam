@@ -85,21 +85,21 @@ let list ~log_id ~owner ~repo ~ref_ client =
         let module App = Githubc2_components.Nullable_integration in
         checks
         |> CCList.filter (function
-             | Check_run.
-                 {
-                   primary =
-                     Primary.
-                       {
-                         app = Some App.{ primary = Primary.{ slug = Some "github-actions"; _ }; _ };
-                         _;
-                       };
-                   _;
-                 } ->
-                 (* We are filtering out checks from the github app because that
+          | Check_run.
+              {
+                primary =
+                  Primary.
+                    {
+                      app = Some App.{ primary = Primary.{ slug = Some "github-actions"; _ }; _ };
+                      _;
+                    };
+                _;
+              } ->
+              (* We are filtering out checks from the github app because that
                       is metadata about running the action and not the action
                       output itself. *)
-                 false
-             | _ -> true)
+              false
+          | _ -> true)
         |> CCList.sort
              (fun
                Check_run.{ primary = Primary.{ completed_at = c1; _ }; _ }

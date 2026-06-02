@@ -1647,11 +1647,11 @@ let test_concurrent_exn_raise =
                  Abb.Future.Promise.future in_tx
                  >>= fun () -> Abb.Sys.sleep 0.0 >>= fun () -> raise (Failure "crash"))
             <*> Pgsql_io.tx conn ~f:(fun () ->
-                    let open Abbs_future_combinators.Infix_result_monad in
-                    Abbs_future_combinators.to_result (Abb.Future.Promise.set in_tx ())
-                    >>= fun () ->
-                    Pgsql_io.Prepared_stmt.execute conn insert_good_sql "foo bar" 12l
-                    >>= fun () -> Pgsql_io.Prepared_stmt.execute conn insert_good_sql "foo" 12l))
+                let open Abbs_future_combinators.Infix_result_monad in
+                Abbs_future_combinators.to_result (Abb.Future.Promise.set in_tx ())
+                >>= fun () ->
+                Pgsql_io.Prepared_stmt.execute conn insert_good_sql "foo bar" 12l
+                >>= fun () -> Pgsql_io.Prepared_stmt.execute conn insert_good_sql "foo" 12l))
         >>= function
         | `Det () -> Oth.Assert.false_ "expected exception but got det"
         | `Exn (_, _) ->

@@ -79,10 +79,10 @@ let tenv_cache =
           CCOption.wrap Yojson.Safe.from_string
           %> CCOption.flat_map (V.of_yojson %> CCOption.of_result)
           %> CCOption.flat_map (fun ({ V.body_path; _ } as v) ->
-                 (* Ensure that the path the body is actually written to exists,
+              (* Ensure that the path the body is actually written to exists,
                     otherwise we could get into a scenario where the body is
                     gone and we keep on returning a non-existent path *)
-                 if not (Sys.file_exists body_path) then None else Some v));
+              if not (Sys.file_exists body_path) then None else Some v));
     }
 
 let get _config storage _origin work_manifest_id path ctx =
