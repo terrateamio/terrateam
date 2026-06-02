@@ -1,5 +1,22 @@
 (library
  (name pgsql_io)
- (libraries abb abb_intf abbs abbs_tls base64 containers cryptokit logs num ouuid pgsql_codec uuidm yojson zarith ppx_deriving)
- (flags (:standard -w -27-37-69))
- (preprocess (pps ppx_deriving.eq ppx_deriving.show)))
+ (libraries
+  abb
+  abb_intf
+  abbs
+  abbs_tls
+  base64
+  containers
+  cryptokit
+  logs
+  num
+  ouuid
+  pgsql_codec
+  uuidm
+  yojson
+  zarith
+  ppx_deriving)
+ (flags
+  (:standard -w -27-37-69))
+ (preprocess
+  (pps ppx_deriving.eq ppx_deriving.show)))

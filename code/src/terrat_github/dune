@@ -1,4 +1,14 @@
 (library
  (name terrat_github)
- (libraries abb abbs containers githubc2 githubc2_abb jwt openapi prmths terrat_config)
- (preprocess (pps ppx_deriving.show ppx_deriving_yojson)))
+ (libraries
+  abb
+  abbs
+  containers
+  githubc2
+  githubc2_abb
+  jwt
+  openapi
+  prmths
+  terrat_config)
+ (preprocess
+  (pps ppx_deriving.show ppx_deriving_yojson)))

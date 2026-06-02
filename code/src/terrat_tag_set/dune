@@ -1,4 +1,5 @@
 (library
  (name terrat_tag_set)
  (libraries containers ppx_deriving sln)
- (preprocess (pps ppx_deriving.show)))
+ (preprocess
+  (pps ppx_deriving.show)))

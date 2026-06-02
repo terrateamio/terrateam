@@ -329,9 +329,7 @@ module Comp = struct
                                  span
                                    ~at:At.[ class' (Jstr.v "quickstart-note") ]
                                    [ txt' "Safe sandbox" ];
-                                 span
-                                   ~at:At.[ class' (Jstr.v "quickstart-time") ]
-                                   [ txt' "2 min" ];
+                                 span ~at:At.[ class' (Jstr.v "quickstart-time") ] [ txt' "2 min" ];
                                ];
                            ];
                          div
@@ -405,9 +403,7 @@ module Comp = struct
                                  span
                                    ~at:At.[ class' (Jstr.v "quickstart-note") ]
                                    [ txt' "Admin access needed" ];
-                                 span
-                                   ~at:At.[ class' (Jstr.v "quickstart-time") ]
-                                   [ txt' "5 min" ];
+                                 span ~at:At.[ class' (Jstr.v "quickstart-time") ] [ txt' "5 min" ];
                                ];
                            ];
                          div

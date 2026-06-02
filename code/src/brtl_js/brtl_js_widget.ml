@@ -127,10 +127,10 @@ module React = struct
         ~a:[ Brtl_js.Html.a_id datalist_id ]
         ~children:
           (`Options
-            (Brtl_js.Rlist.map
-               (fun item ->
-                 Brtl_js.Html.option ~a:[ Brtl_js.Html.a_value item ] (Brtl_js.Html.txt ""))
-               options))
+             (Brtl_js.Rlist.map
+                (fun item ->
+                  Brtl_js.Html.option ~a:[ Brtl_js.Html.a_value item ] (Brtl_js.Html.txt ""))
+                options))
         ()
     in
     let set_value ?step s =

@@ -1,4 +1,11 @@
 (library
  (name terrat_vcs_event_evaluator2_targets)
- (libraries hmap terrat_base_repo_config_v1 terrat_change terrat_comment terrat_dirspace terrat_vcs_provider2)
- (preprocess (pps ppx_deriving.show)))
+ (libraries
+  hmap
+  terrat_base_repo_config_v1
+  terrat_change
+  terrat_comment
+  terrat_dirspace
+  terrat_vcs_provider2)
+ (preprocess
+  (pps ppx_deriving.show)))

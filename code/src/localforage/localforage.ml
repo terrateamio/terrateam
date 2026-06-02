@@ -1,21 +1,19 @@
 module Js = Js_of_ocaml.Js
 
-class type create_options =
-  object
-    method name : Js.js_string Js.t Js.readonly_prop
-  end
+class type create_options = object
+  method name : Js.js_string Js.t Js.readonly_prop
+end
 
-class type store =
-  object
-    method createInstance : create_options Js.t -> store Js.t Js.meth
-    method dropInstance : unit Abb_fut_js.promise Js.t Js.meth
-    method setItem : Js.js_string Js.t -> Js.Unsafe.any -> unit Abb_fut_js.promise Js.t Js.meth
-    method getItem : Js.js_string Js.t -> Js.Unsafe.any Js.opt Abb_fut_js.promise Js.t Js.meth
-    method removeItem : Js.js_string Js.t -> unit Abb_fut_js.promise Js.t Js.meth
-    method clear : unit Abb_fut_js.promise Js.t Js.meth
-    method length : int Abb_fut_js.promise Js.t Js.meth
-    method keys : Js.js_string Js.js_array Js.t Abb_fut_js.promise Js.t Js.meth
-  end
+class type store = object
+  method createInstance : create_options Js.t -> store Js.t Js.meth
+  method dropInstance : unit Abb_fut_js.promise Js.t Js.meth
+  method setItem : Js.js_string Js.t -> Js.Unsafe.any -> unit Abb_fut_js.promise Js.t Js.meth
+  method getItem : Js.js_string Js.t -> Js.Unsafe.any Js.opt Abb_fut_js.promise Js.t Js.meth
+  method removeItem : Js.js_string Js.t -> unit Abb_fut_js.promise Js.t Js.meth
+  method clear : unit Abb_fut_js.promise Js.t Js.meth
+  method length : int Abb_fut_js.promise Js.t Js.meth
+  method keys : Js.js_string Js.js_array Js.t Abb_fut_js.promise Js.t Js.meth
+end
 
 let global : unit -> store Js.t = fun _ -> Js.Unsafe.global##.localforage
 

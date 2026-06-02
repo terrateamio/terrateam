@@ -3,8 +3,14 @@
 ; build dir, and (setenv SRC_DIR . ...) points the test at it —
 ; together they let the OCaml find its fixtures under files/
 ; without knowing about dune's _build/ layout.
+
 (test
  (name test)
  (libraries containers hcl_ast oth)
- (deps (source_tree files))
- (action (setenv SRC_DIR . (run %{test}))))
+ (deps
+  (source_tree files))
+ (action
+  (setenv
+   SRC_DIR
+   .
+   (run %{test}))))

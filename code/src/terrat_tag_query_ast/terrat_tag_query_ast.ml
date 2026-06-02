@@ -39,7 +39,7 @@ let of_string s =
   | exception Terrat_tag_query_parser_value.In_dir_tag_error err ->
       Error
         (`Tag_query_error
-          ( s,
-            Printf.sprintf
-              "The `in` operator only accepts `dir` on the right hand side, got `%s`."
-              err ))
+           ( s,
+             Printf.sprintf
+               "The `in` operator only accepts `dir` on the right hand side, got `%s`."
+               err ))

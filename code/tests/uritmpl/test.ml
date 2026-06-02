@@ -21,13 +21,13 @@ let test_vars =
 
 let expand s =
   match Uritmpl.of_string s with
-    | Ok tmpl -> Uritmpl.expand tmpl test_vars
-    | Error _ -> assert false
+  | Ok tmpl -> Uritmpl.expand tmpl test_vars
+  | Error _ -> assert false
 
 let of_string_to_string_matches s =
   match Uritmpl.of_string s with
-    | Ok tmpl -> s = Uritmpl.to_string tmpl
-    | Error _ -> failwith s
+  | Ok tmpl -> s = Uritmpl.to_string tmpl
+  | Error _ -> failwith s
 
 let test_no_variable_expansion =
   Oth.test ~name:"No Variables" (fun _ -> assert (expand "foo" = "foo"))

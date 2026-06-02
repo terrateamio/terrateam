@@ -1,6 +1,9 @@
 (library
  (name abb_happy_eyeballs)
  (libraries abb_future_combinators abb_intf containers happy-eyeballs)
- (preprocess (pps ppx_deriving.show))
- (ocamlopt_flags (:standard -w -27))
- (ocamlc_flags (:standard -w -27)))
+ (preprocess
+  (pps ppx_deriving.show))
+ (ocamlopt_flags
+  (:standard -w -27))
+ (ocamlc_flags
+  (:standard -w -27)))

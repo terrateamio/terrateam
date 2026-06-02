@@ -26,8 +26,7 @@ type t
     - [max_uses] specifies the maximum number of times a connection can be used before it is
       recycled. After reaching this limit, the connection is destroyed on return and a new one will
       be created on demand. This guards against long-lived connection issues such as memory leaks in
-      the PostgreSQL backend or stale prepared statements. By default, this is 10.
-*)
+      the PostgreSQL backend or stale prepared statements. By default, this is 10. *)
 val create :
   ?metrics:(Metrics.t -> unit Abb.Future.t) ->
   ?idle_check:Duration.t ->

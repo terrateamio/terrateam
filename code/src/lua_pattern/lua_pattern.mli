@@ -1,5 +1,5 @@
-(** Implementation of Lua patterns.  Patterns are a simplified regex meant to
-    be easier to implement and use. *)
+(** Implementation of Lua patterns. Patterns are a simplified regex meant to be easier to implement
+    and use. *)
 type t
 
 (** Captures are ranges that have been matched in the search string. *)
@@ -39,20 +39,19 @@ val of_string : string -> t option
 
     @param start optional place in the search string to start searching
 
-    @return [None] if the pattern is not found, [Some (s, e)] if the pattern was
-    found, where the range is \[s, e) *)
+    @return
+      [None] if the pattern is not found, [Some (s, e)] if the pattern was found, where the range is
+      \[s, e) *)
 val find : ?start:int -> string -> t -> (int * int) option
 
 (** Match a pattern in the search string.
 
     @param start optional place in the search string to start
 
-    @return [None] if the pattern was not found, [Some m] if the pattern was
-    found. *)
+    @return [None] if the pattern was not found, [Some m] if the pattern was found. *)
 val mtch : ?start:int -> string -> t -> Match.t option
 
-(** Replace a matches in a string.  Replacing is a function on the {!Match.t}
-    returning a new string.
+(** Replace a matches in a string. Replacing is a function on the {!Match.t} returning a new string.
 
     @param start optional place in the search string to start
 
@@ -60,8 +59,9 @@ val mtch : ?start:int -> string -> t -> Match.t option
 
     @param r replace function
 
-    @return [None] if the pattern was not found, [Some str] where [str] is the
-    string with replacements applied *)
+    @return
+      [None] if the pattern was not found, [Some str] where [str] is the string with replacements
+      applied *)
 val substitute : ?start:int -> s:string -> r:(Match.t -> string) -> t -> string option
 
 (** Helper function for the common case where {!substitute} is to replace a

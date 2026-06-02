@@ -1,5 +1,7 @@
 (library
  (name terrat_vcs_api_nyi)
  (libraries logs ppx_deriving terrat_change terrat_pull_request)
- (flags (:standard -w -27-32-53))
- (preprocess (pps ppx_deriving.eq ppx_deriving.show ppx_deriving_yojson)))
+ (flags
+  (:standard -w -27-32-53))
+ (preprocess
+  (pps ppx_deriving.eq ppx_deriving.show ppx_deriving_yojson)))

@@ -1,4 +1,12 @@
 (executable
  (name opentofu_mods_cli)
- (libraries cmdliner containers opentofu_mods path_glob ppx_deriving sln yojson)
- (preprocess (pps ppx_deriving.show ppx_deriving_yojson)))
+ (libraries
+  cmdliner
+  containers
+  opentofu_mods
+  path_glob
+  ppx_deriving
+  sln
+  yojson)
+ (preprocess
+  (pps ppx_deriving.show ppx_deriving_yojson)))

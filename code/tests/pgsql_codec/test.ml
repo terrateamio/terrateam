@@ -349,8 +349,8 @@ let test_msg_decode =
         (fun s ->
           let s = Bytes.of_string s in
           match Pgsql_codec.Decode.backend_msg decoder s ~pos:0 ~len:(Bytes.length s) with
-            | Ok _    -> ()
-            | Error _ -> assert false)
+          | Ok _ -> ()
+          | Error _ -> assert false)
         msgs)
 
 let test_binary_int2 =

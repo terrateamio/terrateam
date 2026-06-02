@@ -36,10 +36,7 @@ let test_of_version_1_json_with_version =
   Oth.test ~name:"of_version_1_json: stategraph engine (with version)" (fun _ ->
       let json =
         `Assoc
-          [
-            ( "engine",
-              `Assoc [ ("name", `String "stategraph"); ("version", `String "1.2.1") ] );
-          ]
+          [ ("engine", `Assoc [ ("name", `String "stategraph"); ("version", `String "1.2.1") ]) ]
       in
       match V1.of_version_1_json json with
       | Ok cfg -> (
@@ -56,10 +53,7 @@ let test_to_version_1_round_trip =
   Oth.test ~name:"to_version_1: stategraph engine round-trips through Version_1" (fun _ ->
       let json =
         `Assoc
-          [
-            ( "engine",
-              `Assoc [ ("name", `String "stategraph"); ("version", `String "1.2.1") ] );
-          ]
+          [ ("engine", `Assoc [ ("name", `String "stategraph"); ("version", `String "1.2.1") ]) ]
       in
       match V1.of_version_1_json json with
       | Ok cfg -> (
@@ -67,7 +61,7 @@ let test_to_version_1_round_trip =
           match v1.Repo.Version_1.engine with
           | Some
               (Repo.Engine.Engine_stategraph
-                { Sg_schema.name = `Stategraph; version = Some "1.2.1" }) -> ()
+                 { Sg_schema.name = `Stategraph; version = Some "1.2.1" }) -> ()
           | _ -> failwith "Round-trip to Version_1 did not produce Engine_stategraph")
       | Error _ -> failwith "of_version_1_json failed in round-trip setup")
 

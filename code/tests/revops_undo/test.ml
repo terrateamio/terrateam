@@ -1,9 +1,7 @@
 (* Basic test for undo functionality of revops. *)
 
 let initial = "Initial"
-
 let changed = "Changed"
-
 let state = ref initial
 
 let oprev =

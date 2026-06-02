@@ -16,8 +16,8 @@ let test1 =
       ignore (Fut.run_with_state (Fut.Promise.set promise ()) state);
       assert (Fut.state fut1 = `Det ());
       match Fut.state fut2 with
-        | `Det t -> assert (Fut.state t = `Det ())
-        | _      -> assert false)
+      | `Det t -> assert (Fut.state t = `Det ())
+      | _ -> assert false)
 
 let test2 =
   Oth.test ~desc:"Testing fork background" ~name:"Fork test #2" (fun _ ->
@@ -30,8 +30,8 @@ let test2 =
       ignore (Fut.run_with_state (Fut.Promise.set promise ()) state);
       assert (Fut.state fut1 = `Det ());
       match Fut.state fut2 with
-        | `Det t -> assert (Fut.state t = `Det ())
-        | _      -> assert false)
+      | `Det t -> assert (Fut.state t = `Det ())
+      | _ -> assert false)
 
 let test3 =
   Oth.test ~desc:"Testing aborting a fork" ~name:"Fork abort" (fun _ ->

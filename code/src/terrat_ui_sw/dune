@@ -1,4 +1,5 @@
 (executable
  (name terrat_ui_sw)
  (libraries abb_fut_js brtl_js terrat_ui_js_cache js_of_ocaml service_worker)
- (preprocess (pps js_of_ocaml-ppx)))
+ (preprocess
+  (pps js_of_ocaml-ppx)))

@@ -1,4 +1,21 @@
 (library
  (name terrat_vcs_event_evaluator2)
- (libraries abb abb_bounded_suspendable_executor abbs buildsys logs ouuid prmths sha sln terrat_base_repo_config_v1 terrat_comment terrat_kv_store terrat_storage terrat_vcs_event_evaluator terrat_vcs_event_evaluator2_targets terrat_vcs_provider2)
- (preprocess (pps ppx_deriving.eq ppx_deriving.show ppx_deriving_yojson)))
+ (libraries
+  abb
+  abb_bounded_suspendable_executor
+  abbs
+  buildsys
+  logs
+  ouuid
+  prmths
+  sha
+  sln
+  terrat_base_repo_config_v1
+  terrat_comment
+  terrat_kv_store
+  terrat_storage
+  terrat_vcs_event_evaluator
+  terrat_vcs_event_evaluator2_targets
+  terrat_vcs_provider2)
+ (preprocess
+  (pps ppx_deriving.eq ppx_deriving.show ppx_deriving_yojson)))

@@ -8,14 +8,13 @@ end
 module Choice : sig
   type 'a t
 
-  (** Create a choice which has a value (must match what a route will return),
-     and a title that the user will see, and maps to a URI when clicked *)
+  (** Create a choice which has a value (must match what a route will return), and a title that the
+      user will see, and maps to a URI when clicked *)
   val create : value:'a -> title:Title.t -> Uri.t -> 'a t
 end
 
-(** Run nav bar component.  Given a nav choices, and a way to map the current
-   URL to the choice.  [selected] and [unselected] correspond to the CSS
-   classes. *)
+(** Run nav bar component. Given a nav choices, and a way to map the current URL to the choice.
+    [selected] and [unselected] correspond to the CSS classes. *)
 val run :
   eq:('a -> 'a -> bool) ->
   nav_class:string ->

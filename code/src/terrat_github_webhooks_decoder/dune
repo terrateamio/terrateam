@@ -1,4 +1,11 @@
 (library
  (name terrat_github_webhooks_decoder)
- (libraries cohttp containers json_schema mirage-crypto terrat_github_webhooks yojson)
- (preprocess (pps ppx_deriving.eq ppx_deriving.show)))
+ (libraries
+  cohttp
+  containers
+  json_schema
+  mirage-crypto
+  terrat_github_webhooks
+  yojson)
+ (preprocess
+  (pps ppx_deriving.eq ppx_deriving.show)))

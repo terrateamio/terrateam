@@ -2,15 +2,13 @@ module Js = Js_of_ocaml.Js
 
 module Blob = struct
   module J = struct
-    class type t =
-      object
-        method text : Js.js_string Js.t Abb_js.Future.promise Js.t Js.meth
-      end
+    class type t = object
+      method text : Js.js_string Js.t Abb_js.Future.promise Js.t Js.meth
+    end
 
-    class type property_bag =
-      object
-        method type_ : Js.js_string Js.t Js.readonly_prop
-      end
+    class type property_bag = object
+      method type_ : Js.js_string Js.t Js.readonly_prop
+    end
 
     let constr : (Js.js_string Js.t Js.js_array Js.t -> property_bag Js.t -> t Js.t) Js.constr =
       Js.Unsafe.global##._Blob
@@ -33,11 +31,10 @@ end
 
 module Clipboard_item = struct
   module J = struct
-    class type t =
-      object
-        method types : Js.js_string Js.t Js.js_array Js.t Js.readonly_prop
-        method getType : Js.js_string Js.t -> Blob.t Abb_js.Future.promise Js.t Js.meth
-      end
+    class type t = object
+      method types : Js.js_string Js.t Js.js_array Js.t Js.readonly_prop
+      method getType : Js.js_string Js.t -> Blob.t Abb_js.Future.promise Js.t Js.meth
+    end
 
     let constr : ('a -> t Js.t) Js.constr = Js.Unsafe.global##._ClipboardItem
   end
@@ -53,16 +50,15 @@ module Clipboard_item = struct
 end
 
 module J = struct
-  class type t =
-    object
-      method read : Clipboard_item.t Js.js_array Js.t Abb_js.Future.promise Js.t Js.meth
-      method readText : Js.js_string Js.t Abb_js.Future.promise Js.t Js.meth
+  class type t = object
+    method read : Clipboard_item.t Js.js_array Js.t Abb_js.Future.promise Js.t Js.meth
+    method readText : Js.js_string Js.t Abb_js.Future.promise Js.t Js.meth
 
-      method write :
-        Clipboard_item.t Js.js_array Js.t -> unit Js.optdef Abb_js.Future.promise Js.t Js.meth
+    method write :
+      Clipboard_item.t Js.js_array Js.t -> unit Js.optdef Abb_js.Future.promise Js.t Js.meth
 
-      method writeText : Js.js_string Js.t -> unit Js.optdef Abb_js.Future.promise Js.t Js.meth
-    end
+    method writeText : Js.js_string Js.t -> unit Js.optdef Abb_js.Future.promise Js.t Js.meth
+  end
 end
 
 type t = J.t Js.t

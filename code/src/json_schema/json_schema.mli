@@ -12,15 +12,15 @@ module Format : sig
   end
 end
 
-(** This serializes into a Yojson.Safe.t but guarantees that the it's an object,
-   not a scalar such as [string] or [int] *)
+(** This serializes into a Yojson.Safe.t but guarantees that the it's an object, not a scalar such
+    as [string] or [int] *)
 module Obj : sig
   type t = Yojson.Safe.t [@@deriving yojson, show, eq]
 end
 
-(** Represents an object with no elements to be serialized/deserialized.  This
-   does not ensure that the object is empty, just that the any object is
-   accepted and none of its attributes are serialized/deserialized. *)
+(** Represents an object with no elements to be serialized/deserialized. This does not ensure that
+    the object is empty, just that the any object is accepted and none of its attributes are
+    serialized/deserialized. *)
 module Empty_obj : sig
   type t [@@deriving yojson, show, eq]
 
@@ -31,11 +31,10 @@ module Empty_obj : sig
   end
 end
 
-(** Represents an object to be validated that has additional properties.  It is
-   broken up into two parts: the known portions of the object and the additional
-   fields, which must match some schema.  The primary portion must have the JSON
-   meta data in order to know what the keys are such that they can be avoided in
-   decoding the additional parts. *)
+(** Represents an object to be validated that has additional properties. It is broken up into two
+    parts: the known portions of the object and the additional fields, which must match some schema.
+    The primary portion must have the JSON meta data in order to know what the keys are such that
+    they can be avoided in decoding the additional parts. *)
 module Additional_properties : sig
   module type Primary = sig
     type t [@@deriving yojson, show, eq]

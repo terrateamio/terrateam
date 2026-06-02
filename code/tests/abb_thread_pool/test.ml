@@ -1,7 +1,7 @@
 let basic_test =
   Oth.test ~desc:"Simple test that executes a sleep" ~name:"Basic sleep test" (fun _ ->
       let pool = Abb_thread_pool.create ~capacity:1 ~wait:Unix.pipe in
-      let (wait, _) =
+      let wait, _ =
         Abb_thread_pool.enqueue
           pool
           ~f:(fun () -> Unix.sleep 1)
@@ -15,13 +15,13 @@ let parallel_test =
   Oth.test ~desc:"Verify work runs in parallel" ~name:"Parallel test" (fun _ ->
       let pool = Abb_thread_pool.create ~capacity:2 ~wait:Unix.pipe in
       let start = Unix.time () in
-      let (wait1, _) =
+      let wait1, _ =
         Abb_thread_pool.enqueue
           pool
           ~f:(fun () -> Unix.sleep 3)
           ~trigger:(fun (_, trigger) _ -> Unix.close trigger)
       in
-      let (wait2, _) =
+      let wait2, _ =
         Abb_thread_pool.enqueue
           pool
           ~f:(fun () -> Unix.sleep 3)
@@ -39,19 +39,19 @@ let serialize_test =
   Oth.test ~desc:"Verify overcapacity work is serialized" ~name:"Serialize test" (fun _ ->
       let pool = Abb_thread_pool.create ~capacity:2 ~wait:Unix.pipe in
       let start = Unix.time () in
-      let (wait1, _) =
+      let wait1, _ =
         Abb_thread_pool.enqueue
           pool
           ~f:(fun () -> Unix.sleep 3)
           ~trigger:(fun (_, trigger) _ -> Unix.close trigger)
       in
-      let (wait2, _) =
+      let wait2, _ =
         Abb_thread_pool.enqueue
           pool
           ~f:(fun () -> Unix.sleep 3)
           ~trigger:(fun (_, trigger) _ -> Unix.close trigger)
       in
-      let (wait3, _) =
+      let wait3, _ =
         Abb_thread_pool.enqueue
           pool
           ~f:(fun () -> Unix.sleep 3)

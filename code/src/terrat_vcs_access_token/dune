@@ -1,4 +1,14 @@
 (library
  (name terrat_vcs_access_token)
- (libraries abb brtl brtl_ep containers logs terrat_api terrat_session terrat_user terrat_vcs_provider2)
- (preprocess (pps ppx_deriving_yojson)))
+ (libraries
+  abb
+  brtl
+  brtl_ep
+  containers
+  logs
+  terrat_api
+  terrat_session
+  terrat_user
+  terrat_vcs_provider2)
+ (preprocess
+  (pps ppx_deriving_yojson)))

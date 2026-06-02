@@ -1,6 +1,22 @@
 (library
  (name openapi_conv)
- (libraries compiler-libs.common containers json_schema_conv ocaml-compiler-libs.common ocaml-compiler-libs.shadow sln tsort yojson ppx_deriving)
- (ocamlopt_flags (:standard -w -27))
- (ocamlc_flags (:standard -w -27))
- (preprocess (pps ppx_deriving.eq ppx_deriving.ord ppx_deriving.show ppx_deriving_yojson)))
+ (libraries
+  compiler-libs.common
+  containers
+  json_schema_conv
+  ocaml-compiler-libs.common
+  ocaml-compiler-libs.shadow
+  sln
+  tsort
+  yojson
+  ppx_deriving)
+ (ocamlopt_flags
+  (:standard -w -27))
+ (ocamlc_flags
+  (:standard -w -27))
+ (preprocess
+  (pps
+   ppx_deriving.eq
+   ppx_deriving.ord
+   ppx_deriving.show
+   ppx_deriving_yojson)))

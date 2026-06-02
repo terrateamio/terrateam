@@ -1,4 +1,5 @@
 (library
  (name terrat_scope)
  (libraries terrat_api terrat_data terrat_dirspace)
- (preprocess (pps ppx_deriving.eq ppx_deriving.ord)))
+ (preprocess
+  (pps ppx_deriving.eq ppx_deriving.ord)))

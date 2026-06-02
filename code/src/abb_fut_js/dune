@@ -1,4 +1,5 @@
 (library
  (name abb_fut_js)
  (libraries abb_fut js_of_ocaml)
- (preprocess (pps js_of_ocaml-ppx)))
+ (preprocess
+  (pps js_of_ocaml-ppx)))

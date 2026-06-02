@@ -1,4 +1,16 @@
 (library
  (name terrat_vcs_stacks)
- (libraries brtl brtl_ep containers sln terrat_api terrat_change_match3 terrat_session terrat_storage terrat_user terrat_vcs_api tsort)
- (preprocess (pps ppx_deriving.eq ppx_deriving.show)))
+ (libraries
+  brtl
+  brtl_ep
+  containers
+  sln
+  terrat_api
+  terrat_change_match3
+  terrat_session
+  terrat_storage
+  terrat_user
+  terrat_vcs_api
+  tsort)
+ (preprocess
+  (pps ppx_deriving.eq ppx_deriving.show)))

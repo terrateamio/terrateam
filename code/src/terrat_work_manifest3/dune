@@ -1,4 +1,5 @@
 (library
  (name terrat_work_manifest3)
  (libraries terrat_base_repo_config_v1 terrat_change terrat_tag_query uuidm)
- (preprocess (pps ppx_deriving.show)))
+ (preprocess
+  (pps ppx_deriving.show)))

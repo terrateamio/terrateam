@@ -1,4 +1,9 @@
 (library
  (name terrat_tier)
  (libraries containers ppx_deriving)
- (preprocess (pps ppx_deriving.eq ppx_deriving.make ppx_deriving.show ppx_deriving_yojson)))
+ (preprocess
+  (pps
+   ppx_deriving.eq
+   ppx_deriving.make
+   ppx_deriving.show
+   ppx_deriving_yojson)))

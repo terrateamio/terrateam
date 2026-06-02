@@ -1,4 +1,5 @@
 (library
  (name terrat_gate)
  (libraries terrat_api terrat_base_repo_config_v1)
- (preprocess (pps ppx_deriving.show ppx_deriving_yojson)))
+ (preprocess
+  (pps ppx_deriving.show ppx_deriving_yojson)))

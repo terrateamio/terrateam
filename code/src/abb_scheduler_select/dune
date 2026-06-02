@@ -1,4 +1,14 @@
 (library
  (name abb_scheduler_select)
- (libraries abb_fut abb_intf abb_thread_pool containers iter mtime mtime.clock ppx_deriving unix)
- (preprocess (pps ppx_deriving.ord)))
+ (libraries
+  abb_fut
+  abb_intf
+  abb_thread_pool
+  containers
+  iter
+  mtime
+  mtime.clock
+  ppx_deriving
+  unix)
+ (preprocess
+  (pps ppx_deriving.ord)))

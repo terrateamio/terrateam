@@ -1,4 +1,11 @@
 (library
  (name terrat_vcs_api)
- (libraries abb pgsql_io terrat_change terrat_commit_check terrat_config terrat_pull_request)
- (preprocess (pps ppx_deriving.eq ppx_deriving.show ppx_deriving_yojson)))
+ (libraries
+  abb
+  pgsql_io
+  terrat_change
+  terrat_commit_check
+  terrat_config
+  terrat_pull_request)
+ (preprocess
+  (pps ppx_deriving.eq ppx_deriving.show ppx_deriving_yojson)))

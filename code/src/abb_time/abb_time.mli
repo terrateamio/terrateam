@@ -6,18 +6,17 @@ module Monad : sig
   end
 end
 
-(** Getting the time depends on side-effects from the system, so getting time is
-    needs to be wrapped in some kind of monad.  [Abb_time] does not directly
-    depend on [Abb_intf.S] because that is far too big of a dependency when all
-    that [Abb_time] cares about is that the value returned from [time] and
-    [monotonic] is wrapped in some monadic value. *)
+(** Getting the time depends on side-effects from the system, so getting time is needs to be wrapped
+    in some kind of monad. [Abb_time] does not directly depend on [Abb_intf.S] because that is far
+    too big of a dependency when all that [Abb_time] cares about is that the value returned from
+    [time] and [monotonic] is wrapped in some monadic value. *)
 module Time_make (M : Monad.S) : sig
   module type S = sig
     (** Return the time, in seconds as a float, since an epoch. *)
     val time : unit -> float M.t
 
-    (** Return the elapsed time, in seconds as a float, since an arbitrary stable
-        point in the past.  This is not affected by wall-clock changes. *)
+    (** Return the elapsed time, in seconds as a float, since an arbitrary stable point in the past.
+        This is not affected by wall-clock changes. *)
     val monotonic : unit -> float M.t
   end
 end
@@ -29,8 +28,8 @@ module Span : sig
   val of_sec : float -> t
   val to_sec : t -> float
 
-  (** Compare two spans, however beware that the underlying representation might
-      be a float which makes this an untrustworthy comparison. *)
+  (** Compare two spans, however beware that the underlying representation might be a float which
+      makes this an untrustworthy comparison. *)
   val compare : t -> t -> int
 end
 
@@ -39,8 +38,8 @@ module Make (M : Monad.S) (Time : Time_make(M).S) : sig
   module Wall : sig
     type t
 
-    (** Return a value representing the wall-clock time from an epoch.  There is
-        no guarantee on the relative values between two calls to [now]. *)
+    (** Return a value representing the wall-clock time from an epoch. There is no guarantee on the
+        relative values between two calls to [now]. *)
     val now : unit -> t M.t
 
     (** Subtract two times and return a [Span.t].  The first value is subtracted
@@ -57,9 +56,8 @@ module Make (M : Monad.S) (Time : Time_make(M).S) : sig
     val to_sec : t -> float
     val of_sec : float -> t
 
-    (** Compare two wall-clock times, however beware that the underlying
-        representation might be a float which makes this an untrustworthy
-        comparison. *)
+    (** Compare two wall-clock times, however beware that the underlying representation might be a
+        float which makes this an untrustworthy comparison. *)
     val compare : t -> t -> int
   end
 
@@ -67,10 +65,9 @@ module Make (M : Monad.S) (Time : Time_make(M).S) : sig
   module Mono : sig
     type t
 
-    (** Return a value representing the time since an arbitrary, stable, point
-        in the past.  This is not affected by changes in the system time.
-        Successive calls to [now] are guaranteed to be greater than or equal to
-        each other. *)
+    (** Return a value representing the time since an arbitrary, stable, point in the past. This is
+        not affected by changes in the system time. Successive calls to [now] are guaranteed to be
+        greater than or equal to each other. *)
     val now : unit -> t M.t
 
     (** Subtract two times and return a [Span.t].  The first value is subtracted
@@ -87,9 +84,8 @@ module Make (M : Monad.S) (Time : Time_make(M).S) : sig
     val to_sec : t -> float
     val of_sec : float -> t
 
-    (** Compare two monotonic times, however beware that the underlying
-        representation might be a float which makes this an untrustworthy
-        comparison. *)
+    (** Compare two monotonic times, however beware that the underlying representation might be a
+        float which makes this an untrustworthy comparison. *)
     val compare : t -> t -> int
   end
 end

@@ -1,4 +1,5 @@
 (library
  (name buildsys)
  (libraries buildsys_intf containers tsort)
- (preprocess (pps ppx_deriving.show)))
+ (preprocess
+  (pps ppx_deriving.show)))

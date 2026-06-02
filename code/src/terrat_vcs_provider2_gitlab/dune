@@ -1,3 +1,8 @@
 (library
  (name terrat_vcs_provider2_gitlab)
- (libraries terrat_job_context_param terrat_job_type terrat_vcs_api_gitlab terrat_vcs_comment terrat_vcs_provider2))
+ (libraries
+  terrat_job_context_param
+  terrat_job_type
+  terrat_vcs_api_gitlab
+  terrat_vcs_comment
+  terrat_vcs_provider2))

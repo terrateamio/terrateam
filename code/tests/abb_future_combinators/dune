@@ -4,4 +4,5 @@
  ; basic.ml has unused-open / unused-value-declaration that would block
  ; the dev profile build (used when DUNE_PROFILE=dev is set). Suppress
  ; those two warnings here; the rest of the strict regime stays on.
- (flags (:standard -w -32-33)))
+ (flags
+  (:standard -w -32-33)))

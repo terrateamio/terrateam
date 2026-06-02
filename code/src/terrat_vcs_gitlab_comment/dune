@@ -1,5 +1,20 @@
 (library
  (name terrat_vcs_gitlab_comment)
  (wrapped false)
- (libraries abb_future_combinators logs minijinja pgsql_io pgsql_pagination pgsql_pool terrat_comment terrat_plan_diff terrat_scope terrat_vcs_api_gitlab terrat_vcs_comment terrat_vcs_gitlab_comment_templates terrat_vcs_provider2 terrat_work_manifest3)
- (preprocess (pps ppx_deriving.ord ppx_deriving.show ppx_deriving_yojson)))
+ (libraries
+  abb_future_combinators
+  logs
+  minijinja
+  pgsql_io
+  pgsql_pagination
+  pgsql_pool
+  terrat_comment
+  terrat_plan_diff
+  terrat_scope
+  terrat_vcs_api_gitlab
+  terrat_vcs_comment
+  terrat_vcs_gitlab_comment_templates
+  terrat_vcs_provider2
+  terrat_work_manifest3)
+ (preprocess
+  (pps ppx_deriving.ord ppx_deriving.show ppx_deriving_yojson)))

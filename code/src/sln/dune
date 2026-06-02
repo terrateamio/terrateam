@@ -2,4 +2,5 @@
  (name sln)
  (wrapped false)
  (libraries containers yojson)
- (preprocess (pps ppx_deriving_yojson ppx_deriving.show)))
+ (preprocess
+  (pps ppx_deriving_yojson ppx_deriving.show)))

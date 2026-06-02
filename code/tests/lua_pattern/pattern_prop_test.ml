@@ -18,11 +18,11 @@ let pattern_does_not_crash_prop =
        QCheck.Gen.(pair (str ~len:(int_bound 100)) str))
     (fun (str, pat) ->
       match Lua_pattern.of_string pat with
-        | None   -> true
-        | Some p -> (
-            match CCResult.guard (fun () -> Lua_pattern.mtch str p) with
-              | Ok _    -> true
-              | Error _ -> false))
+      | None -> true
+      | Some p -> (
+          match CCResult.guard (fun () -> Lua_pattern.mtch str p) with
+          | Ok _ -> true
+          | Error _ -> false))
 
 let prop_tests =
   Oth.test ~name:"Prop Tests" (fun _ ->

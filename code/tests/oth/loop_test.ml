@@ -1,5 +1,4 @@
 let iterations = 100
-
 let loops = ref 0
 
 let loop_test _ =

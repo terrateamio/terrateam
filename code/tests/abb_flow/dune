@@ -1,4 +1,5 @@
 (test
  (name test)
  (libraries abb_flow abb_scheduler_select containers oth_abb)
- (preprocess (pps ppx_deriving.eq ppx_deriving.show)))
+ (preprocess
+  (pps ppx_deriving.eq ppx_deriving.show)))

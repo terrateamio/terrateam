@@ -1,6 +1,16 @@
 (library
  (name abb_cache)
- (libraries abb abb_future_combinators abb_intf abb_io containers duration lru)
- (ocamlopt_flags (:standard -w -32))
- (ocamlc_flags (:standard -w -32))
- (preprocess (pps ppx_deriving.ord ppx_deriving.show)))
+ (libraries
+  abb
+  abb_future_combinators
+  abb_intf
+  abb_io
+  containers
+  duration
+  lru)
+ (ocamlopt_flags
+  (:standard -w -32))
+ (ocamlc_flags
+  (:standard -w -32))
+ (preprocess
+  (pps ppx_deriving.ord ppx_deriving.show)))
