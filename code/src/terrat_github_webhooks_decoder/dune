@@ -3,8 +3,8 @@
  (libraries
   cohttp
   containers
+  digestif
   json_schema
-  mirage-crypto
   terrat_github_webhooks
   yojson)
  (preprocess
