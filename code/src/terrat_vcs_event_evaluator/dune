@@ -2,6 +2,7 @@
  (name terrat_vcs_event_evaluator)
  (libraries
   abb_flow
+  cstruct
   logs
   ouuid
   prmths

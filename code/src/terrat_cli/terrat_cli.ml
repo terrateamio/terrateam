@@ -258,9 +258,7 @@ struct
               Abb.Sys.time ()
               >>= fun time ->
               let pem =
-                match
-                  X509.Private_key.decode_pem (Cstruct.of_string (CCIO.with_in pem CCIO.read_all))
-                with
+                match X509.Private_key.decode_pem (CCIO.with_in pem CCIO.read_all) with
                 | Ok (`RSA v) -> v
                 | Ok _ -> failwith "Expected RSA"
                 | Error (`Msg s) -> failwith ("Error: " ^ s)
@@ -309,7 +307,7 @@ struct
 
   let () =
     Printf.eprintf "Starting Terrateam Server CLI\n%!";
-    Mirage_crypto_rng_unix.initialize (module Mirage_crypto_rng.Fortuna);
+    Mirage_crypto_rng_unix.use_default ();
     let info = Cmdliner.Cmd.info "terrat" in
     exit @@ Cmdliner.Cmd.eval @@ Cmdliner.Cmd.group ~default:Cmdline.default_cmd info cmds
 end
