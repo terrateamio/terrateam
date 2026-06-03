@@ -124,6 +124,15 @@ module Cmdline = struct
     let exits = C.Cmd.Exit.defaults in
     C.Cmd.v (C.Cmd.info "migrate" ~doc ~exits) C.Term.(const f $ logs)
 
+  let tokens_create_cmd f =
+    let doc = "Create and output a new system-user token with all capabilities enabled." in
+    let exits = C.Cmd.Exit.defaults in
+    C.Cmd.v (C.Cmd.info "create" ~doc ~exits) C.Term.(const f $ logs)
+
+  let tokens_cmd create =
+    let doc = "Manage system tokens." in
+    C.Cmd.group (C.Cmd.info "tokens" ~doc) [ tokens_create_cmd create ]
+
   let default_cmd = C.Term.(ret (const (`Help (`Pager, None))))
 end
 
@@ -247,6 +256,95 @@ struct
         Logs.err (fun m -> m "Config file failed to load %s" (Terrat_config.show_err err));
         exit 1
 
+  let tokens_create () =
+    (* Capabilities that have no parameters; this is "all capabilities" in the
+       usable sense. [Installation_id] and [Vcs] are intentionally omitted: both
+       *restrict* a token to a specific installation/VCS rather than enabling
+       anything, and neither is required for a token to be accepted. *)
+    let all_capabilities =
+      Terrat_user.Capability.
+        [
+          Access_token_create;
+          Access_token_refresh;
+          Kv_store_read;
+          Kv_store_system_read;
+          Kv_store_system_write;
+          Kv_store_write;
+          Mql_admin;
+        ]
+    in
+    let insert_access_token () =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* id *)
+        Ret.uuid
+        /^ "insert into access_tokens (capabilities, name, user_id) values ($capabilities, $name, \
+            $user_id) returning id"
+        /% Var.json "capabilities"
+        /% Var.text "name"
+        /% Var.uuid "user_id")
+    in
+    let run () =
+      match Terrat_config.create () with
+      | Ok config -> (
+          let open Abb.Future.Infix_monad in
+          Terrat_storage.create config
+          >>= fun storage ->
+          Pgsql_pool.with_conn storage ~f:(fun db ->
+              let open Abbs_future_combinators.Infix_result_monad in
+              (* The system user has no associated VCS user; it is identified by
+                 type = 'system' in users2. *)
+              Terrat_user.create_system_user db
+              >>= fun system_user ->
+              Pgsql_io.Prepared_stmt.fetch
+                db
+                (insert_access_token ())
+                ~f:CCFun.id
+                (`List (CCList.map Terrat_user.Capability.to_yojson all_capabilities))
+                "system"
+                (Terrat_user.id system_user)
+              >>= function
+              | [] -> assert false
+              | access_token_id :: _ ->
+                  (* Mint a long-lived token: because an [access_token_id] is
+                     present, no expiration is required. *)
+                  let user =
+                    Terrat_user.make
+                      ~access_token_id
+                      ~capabilities:all_capabilities
+                      ~id:(Terrat_user.id system_user)
+                      ()
+                  in
+                  Terrat_user.Token.to_token db user)
+          >>= function
+          | Ok token ->
+              print_endline token;
+              Abb.Future.return ()
+          | Error (#Pgsql_io.err as err) ->
+              Logs.err (fun m -> m "TOKENS_CREATE : %a" Pgsql_io.pp_err err);
+              exit 1
+          | Error (#Pgsql_pool.err as err) ->
+              Logs.err (fun m -> m "TOKENS_CREATE : %a" Pgsql_pool.pp_err err);
+              exit 1
+          | Error (`Expiration_too_long_err _) ->
+              (* Unreachable: an [access_token_id] is always present. *)
+              Logs.err (fun m -> m "TOKENS_CREATE : EXPIRATION_TOO_LONG");
+              exit 1)
+      | Error (#Terrat_config.err as err) ->
+          Logs.err (fun m -> m "CONFIG : ERROR : %s" (Terrat_config.show_err err));
+          exit 1
+    in
+    match Abb.Scheduler.run_with_state run with
+    | `Det () -> ()
+    | `Aborted -> assert false
+    | `Exn (exn, bt_opt) ->
+        Logs.err (fun m -> m "%s" (Printexc.to_string exn));
+        CCOption.iter
+          (fun bt -> Logs.err (fun m -> m "%s" (Printexc.raw_backtrace_to_string bt)))
+          bt_opt;
+        assert false
+
   let generate_auth_token app_id pem inst_id =
     let run () =
       match Terrat_config.create () with
@@ -258,9 +356,7 @@ struct
               Abb.Sys.time ()
               >>= fun time ->
               let pem =
-                match
-                  X509.Private_key.decode_pem (Cstruct.of_string (CCIO.with_in pem CCIO.read_all))
-                with
+                match X509.Private_key.decode_pem (CCIO.with_in pem CCIO.read_all) with
                 | Ok (`RSA v) -> v
                 | Ok _ -> failwith "Expected RSA"
                 | Error (`Msg s) -> failwith ("Error: " ^ s)
@@ -305,11 +401,17 @@ struct
         assert false
 
   let cmds =
-    Cmdline.[ server_cmd server; migrate_cmd migrate; generate_auth_token_cmd generate_auth_token ]
+    Cmdline.
+      [
+        server_cmd server;
+        migrate_cmd migrate;
+        generate_auth_token_cmd generate_auth_token;
+        tokens_cmd tokens_create;
+      ]
 
   let () =
     Printf.eprintf "Starting Terrateam Server CLI\n%!";
-    Mirage_crypto_rng_unix.initialize (module Mirage_crypto_rng.Fortuna);
+    Mirage_crypto_rng_unix.use_default ();
     let info = Cmdliner.Cmd.info "terrat" in
     exit @@ Cmdliner.Cmd.eval @@ Cmdliner.Cmd.group ~default:Cmdline.default_cmd info cmds
 end

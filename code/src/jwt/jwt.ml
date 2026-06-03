@@ -28,17 +28,15 @@ module Verifier = struct
     | RS256 of Pub_key.t
 
   let rs256_verify key hp signature =
-    let cs = Cstruct.of_string signature in
-    let hs = Cstruct.of_string hp in
-    Mirage_crypto_pk.Rsa.PKCS1.verify ~hashp:(( = ) `SHA256) ~key ~signature:cs (`Message hs)
+    Mirage_crypto_pk.Rsa.PKCS1.verify ~hashp:(( = ) `SHA256) ~key ~signature (`Message hp)
 
-  let mac_verify algo hp signature = Cstruct.to_string (algo (Cstruct.of_string hp)) = signature
+  let mac_verify algo hp signature = algo hp = signature
 
   let verify t hp signature =
     let f =
       match t with
-      | HS256 x -> mac_verify (Mirage_crypto.Hash.SHA256.hmac ~key:(Cstruct.of_string x))
-      | HS512 x -> mac_verify (Mirage_crypto.Hash.SHA512.hmac ~key:(Cstruct.of_string x))
+      | HS256 x -> mac_verify Digestif.SHA256.(CCFun.(hmac_string ~key:x %> to_raw_string))
+      | HS512 x -> mac_verify Digestif.SHA512.(CCFun.(hmac_string ~key:x %> to_raw_string))
       | RS256 x -> rs256_verify x
     in
     f hp signature
@@ -61,17 +59,14 @@ module Signer = struct
     | HS512 of string
     | RS256 of Priv_key.t
 
-  let rs256_sign key hp =
-    Cstruct.to_string
-      (Mirage_crypto_pk.Rsa.PKCS1.sign ~hash:`SHA256 ~key (`Message (Cstruct.of_string hp)))
-
-  let mac_sign algo hp = Cstruct.to_string (algo (Cstruct.of_string hp))
+  let rs256_sign key hp = Mirage_crypto_pk.Rsa.PKCS1.sign ~hash:`SHA256 ~key (`Message hp)
+  let mac_sign algo hp = algo hp
 
   let sign t hp =
     let f =
       match t with
-      | HS256 x -> mac_sign (Mirage_crypto.Hash.SHA256.hmac ~key:(Cstruct.of_string x))
-      | HS512 x -> mac_sign (Mirage_crypto.Hash.SHA512.hmac ~key:(Cstruct.of_string x))
+      | HS256 x -> mac_sign Digestif.SHA256.(CCFun.(hmac_string ~key:x %> to_raw_string))
+      | HS512 x -> mac_sign Digestif.SHA512.(CCFun.(hmac_string ~key:x %> to_raw_string))
       | RS256 x -> rs256_sign x
     in
     f hp

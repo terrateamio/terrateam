@@ -148,6 +148,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/github/installations/{installation_id}/mql": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["installations/mql"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/github/installations/{installation_id}/mql/schema": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["installations/mql-schema"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/github/installations/{installation_id}/pull-requests": {
         parameters: {
             query?: never;
@@ -364,6 +396,38 @@ export interface paths {
             cookie?: never;
         };
         get: operations["gitlab-installations/list-dirspaces"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gitlab/installations/{installation_id}/mql": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["installations/gitlab-mql"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gitlab/installations/{installation_id}/mql/schema": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["installations/gitlab-mql-schema"];
         put?: never;
         post?: never;
         delete?: never;
@@ -911,6 +975,19 @@ export interface components {
         };
         "kv-size": {
             size: number;
+        };
+        "mql-schema-column": {
+            type: string;
+        };
+        "mql-schema-response": {
+            tables: {
+                [key: string]: components["schemas"]["mql-schema-table"];
+            };
+        };
+        "mql-schema-table": {
+            columns: {
+                [key: string]: components["schemas"]["mql-schema-column"];
+            };
         };
         "output-cost-estimation": {
             cost_estimation: {
@@ -1548,6 +1625,72 @@ export interface operations {
             };
         };
     };
+    "installations/mql": {
+        parameters: {
+            query: {
+                q: string;
+                tz?: string;
+                page?: string;
+            };
+            header?: never;
+            path: {
+                installation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown[];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["bad-request-err"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "installations/mql-schema": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                installation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["mql-schema-response"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     "installations/list-pull-requests": {
         parameters: {
             query?: {
@@ -1988,6 +2131,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["bad-request-err"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "installations/gitlab-mql": {
+        parameters: {
+            query: {
+                q: string;
+                tz?: string;
+                page?: string;
+            };
+            header?: never;
+            path: {
+                installation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown[];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["bad-request-err"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "installations/gitlab-mql-schema": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                installation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["mql-schema-response"];
                 };
             };
             403: {

@@ -1,0 +1,21 @@
+(library
+ (name mql_parser)
+ (wrapped false)
+ (flags (:standard -w -27))
+ (libraries menhirCST menhirLib mql_ast))
+
+(menhir
+ (modules mql_parser)
+ (flags --explain --table --unparsing))
+
+(rule
+ (target mql_parser_errors.ml)
+ (deps mql_parser.mly mql_parser_errors.messages)
+ (action
+  (with-stdout-to
+   %{target}
+   (run
+    menhir
+    %{dep:mql_parser.mly}
+    --compile-errors
+    %{dep:mql_parser_errors.messages}))))

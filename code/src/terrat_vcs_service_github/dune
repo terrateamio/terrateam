@@ -5,6 +5,8 @@
   brtl_permissions
   logs
   minijinja
+  mql
+  mql_to_pgsql
   pgsql_io
   pgsql_pagination
   pgsql_pool
