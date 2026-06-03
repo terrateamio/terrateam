@@ -376,8 +376,8 @@ module Decode = struct
         int32
         >>= fun n ->
         (match Int32.to_int n with
-        | -1 -> return None
-        | n -> bytes n >>= fun s -> return (Some s))
+          | -1 -> return None
+          | n -> bytes n >>= fun s -> return (Some s))
         >>= fun result -> return (FunctionCallResponse { result })
     | 'v' ->
         int32

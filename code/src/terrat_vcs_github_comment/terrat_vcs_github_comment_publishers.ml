@@ -326,8 +326,8 @@ module Publisher_tools = struct
     let dirspaces =
       by_scope
       |> CCList.filter_map (function
-           | Scope.Dirspace dirspace, steps -> Some (dirspace, steps)
-           | _ -> None)
+        | Scope.Dirspace dirspace, steps -> Some (dirspace, steps)
+        | _ -> None)
       |> CCList.sort dirspace_compare
     in
     let overall_success =

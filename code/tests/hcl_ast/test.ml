@@ -66,16 +66,16 @@ let parse_tests =
   |> CCList.sort CCString.compare
   |> CCList.filter (CCString.suffix ~suf:".hcl")
   |> CCList.flat_map (fun fname ->
-         if CCString.suffix ~suf:"_bad.hcl" fname then
-           [
-             (* make_fail_test_expected (Filename.concat files_dir fname); *)
-             make_fail_test (Filename.concat files_dir fname);
-           ]
-         else
-           [
-             (* make_success_test_expected (Filename.concat files_dir fname); *)
-             make_success_test (Filename.concat files_dir fname);
-           ])
+      if CCString.suffix ~suf:"_bad.hcl" fname then
+        [
+          (* make_fail_test_expected (Filename.concat files_dir fname); *)
+          make_fail_test (Filename.concat files_dir fname);
+        ]
+      else
+        [
+          (* make_success_test_expected (Filename.concat files_dir fname); *)
+          make_success_test (Filename.concat files_dir fname);
+        ])
 
 let test = Oth.parallel parse_tests
 

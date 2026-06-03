@@ -29,28 +29,25 @@ let run ~eq ~nav_class ~selected ~unselected ~choices routes state =
            Brtl_js.Rhtml.div ~a:[ a_class [ nav_class ] ]
            @@ Brtl_js.Rlist.from_signal
            @@ Brtl_js.React.S.map (fun mtch ->
-                  let compare =
-                    match mtch with
-                    | Some v -> eq (Brtl_js_rtng.Match.apply v)
-                    | None -> fun _ -> false
-                  in
-                  CCList.map
-                    (fun choice ->
-                      div
-                        ~a:
-                          [
-                            a_class
-                              [ (if compare choice.Choice.value then selected else unselected) ];
-                            a_onclick
-                            @@ Brtl_js.handler_sync (fun _ ->
-                                   Brtl_js.Router.navigate
-                                     (Brtl_js.State.router state)
-                                     choice.Choice.uri);
-                          ]
-                        (match choice.Choice.title with
-                        | `Txt title -> [ txt title ]
-                        | `Html elt -> elt ()))
-                    choices)
+               let compare =
+                 match mtch with
+                 | Some v -> eq (Brtl_js_rtng.Match.apply v)
+                 | None -> fun _ -> false
+               in
+               CCList.map
+                 (fun choice ->
+                   div
+                     ~a:
+                       [
+                         a_class [ (if compare choice.Choice.value then selected else unselected) ];
+                         a_onclick
+                         @@ Brtl_js.handler_sync (fun _ ->
+                             Brtl_js.Router.navigate (Brtl_js.State.router state) choice.Choice.uri);
+                       ]
+                     (match choice.Choice.title with
+                     | `Txt title -> [ txt title ]
+                     | `Html elt -> elt ()))
+                 choices)
            @@ Brtl_js.React.S.map
                 ~eq:(fun m1 m2 ->
                   match (m1, m2) with

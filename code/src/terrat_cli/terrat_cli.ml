@@ -46,11 +46,11 @@ module Cmdline = struct
           loggers
           |> CCString.split_on_char ','
           |> CCList.map (function
-               | logger when CCString.length logger > 0 && CCString.get logger 0 = '+' ->
-                   (`Add, CCString.drop 1 logger)
-               | logger when CCString.length logger > 0 && CCString.get logger 0 = '-' ->
-                   (`Remove, CCString.drop 1 logger)
-               | logger -> raise (Failure (Printf.sprintf "Unknown logger: %S" logger))))
+            | logger when CCString.length logger > 0 && CCString.get logger 0 = '+' ->
+                (`Add, CCString.drop 1 logger)
+            | logger when CCString.length logger > 0 && CCString.get logger 0 = '-' ->
+                (`Remove, CCString.drop 1 logger)
+            | logger -> raise (Failure (Printf.sprintf "Unknown logger: %S" logger))))
         loggers
     in
     Logs.set_reporter (reporter Format.std_formatter);

@@ -592,65 +592,64 @@ let synthesize_config ~index repo_config =
       |> R.dirs
       |> Sln_map.String.to_list
       |> CCList.flat_map (fun (dirname, config) ->
-             let module D = R.Dirs.Dir in
-             let module Ws = R.Dirs.Workspace in
-             let module Wm = R.When_modified in
-             CCList.flat_map
-               (fun (workspace, workspace_config) ->
-                 let dirspace = { Terrat_dirspace.dir = dirname; workspace } in
-                 let tags = Terrat_tag_set.of_list workspace_config.Ws.tags in
-                 (* Determine which stack the dirspace is part of.  In this
+          let module D = R.Dirs.Dir in
+          let module Ws = R.Dirs.Workspace in
+          let module Wm = R.When_modified in
+          CCList.flat_map
+            (fun (workspace, workspace_config) ->
+              let dirspace = { Terrat_dirspace.dir = dirname; workspace } in
+              let tags = Terrat_tag_set.of_list workspace_config.Ws.tags in
+              (* Determine which stack the dirspace is part of.  In this
                     implementation, a dirspace can only be part of a single
                     stack.  If a dirspace does not match any stack AND there is
                     no [default] stack configured by the user, the dirspace
                     implicitly gets made part of the default stack.  In the
                     future, this dirspace should actually be filtered out rather
                     than fail. *)
-                 let stack_name, stack_config =
-                   match match_stacks dirspace tags stack_configs with
-                   | [] when no_default_stack ->
-                       ( "default",
-                         R.Stacks.Stack.make ~type_:(R.Stacks.Type_.Stack Terrat_tag_query.any) ()
-                       )
-                   | [] -> raise (Synthesize_config_err (`Workspace_matches_no_stacks_err dirspace))
-                   | [ (stack_name, stack_config) ] -> (stack_name, stack_config)
-                   | _ :: _ ->
-                       raise (Synthesize_config_err (`Workspace_in_multiple_stacks_err dirspace))
-                 in
-                 let tags =
-                   Terrat_tag_set.of_list
-                     (CCList.map
-                        (fun n -> "stack_name:" ^ n)
-                        (stack_name
-                        :: Sln_map.String.get_or ~default:[] stack_name stack_to_nested_lookup)
-                     @ workspace_config.Ws.tags)
-                 in
-                 (* If the dirspace is explicitly ignored via an empty
+              let stack_name, stack_config =
+                match match_stacks dirspace tags stack_configs with
+                | [] when no_default_stack ->
+                    ( "default",
+                      R.Stacks.Stack.make ~type_:(R.Stacks.Type_.Stack Terrat_tag_query.any) () )
+                | [] -> raise (Synthesize_config_err (`Workspace_matches_no_stacks_err dirspace))
+                | [ (stack_name, stack_config) ] -> (stack_name, stack_config)
+                | _ :: _ ->
+                    raise (Synthesize_config_err (`Workspace_in_multiple_stacks_err dirspace))
+              in
+              let tags =
+                Terrat_tag_set.of_list
+                  (CCList.map
+                     (fun n -> "stack_name:" ^ n)
+                     (stack_name
+                     :: Sln_map.String.get_or ~default:[] stack_name stack_to_nested_lookup)
+                  @ workspace_config.Ws.tags)
+              in
+              (* If the dirspace is explicitly ignored via an empty
                     [file_patterns], do not even include it so that we don't
                     waste time trying to match against it. *)
-                 match workspace_config.Ws.when_modified.Wm.file_patterns with
-                 | [] -> []
-                 | _ :: _ ->
-                     [
-                       ( dirspace,
-                         {
-                           Dirspace_config.dirspace;
-                           file_pattern_matcher =
-                             compile_file_pattern_matcher
-                               workspace_config.Ws.when_modified.Wm.file_patterns;
-                           lock_branch_target = config.D.lock_branch_target;
-                           stack_config;
-                           stack_name;
-                           stack_paths =
-                             (match Sln_map.String.find_opt stack_name stack_paths_lookup with
-                             | Some paths -> paths
-                             | None when CCString.equal stack_name "default" -> [ [ "default" ] ]
-                             | None -> assert false);
-                           tags;
-                           when_modified = workspace_config.Ws.when_modified;
-                         } );
-                     ])
-               (Sln_map.String.to_list config.D.workspaces @ Sln_map.String.to_list config.D.stacks))
+              match workspace_config.Ws.when_modified.Wm.file_patterns with
+              | [] -> []
+              | _ :: _ ->
+                  [
+                    ( dirspace,
+                      {
+                        Dirspace_config.dirspace;
+                        file_pattern_matcher =
+                          compile_file_pattern_matcher
+                            workspace_config.Ws.when_modified.Wm.file_patterns;
+                        lock_branch_target = config.D.lock_branch_target;
+                        stack_config;
+                        stack_name;
+                        stack_paths =
+                          (match Sln_map.String.find_opt stack_name stack_paths_lookup with
+                          | Some paths -> paths
+                          | None when CCString.equal stack_name "default" -> [ [ "default" ] ]
+                          | None -> assert false);
+                        tags;
+                        when_modified = workspace_config.Ws.when_modified;
+                      } );
+                  ])
+            (Sln_map.String.to_list config.D.workspaces @ Sln_map.String.to_list config.D.stacks))
     in
     let default_stack =
       CCList.find_opt
@@ -731,8 +730,8 @@ let prune_no_change_dirspaces real_change_set layers =
   layers
   |> CCList.map (CCList.filter keep)
   |> CCList.filter (function
-       | [] -> false
-       | _ :: _ -> true)
+    | [] -> false
+    | _ :: _ -> true)
 
 let match_diff_list ?(force_matches = []) config diff_list =
   (* If this fpath maps to a symlink we want to rewrite it to be the symlink *)

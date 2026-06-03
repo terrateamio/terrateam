@@ -145,9 +145,9 @@ let load_github () =
       env_str "GITHUB_APP_PEM"
       >>= fun app_pem_content ->
       (match X509.Private_key.decode_pem (Cstruct.of_string app_pem_content) with
-      | Ok (`RSA v) -> Ok v
-      | Ok _ -> Error (`Bad_pem "Expected RSA")
-      | Error (`Msg s) -> Error (`Bad_pem s))
+        | Ok (`RSA v) -> Ok v
+        | Ok _ -> Error (`Bad_pem "Expected RSA")
+        | Error (`Msg s) -> Error (`Bad_pem s))
       >>= fun app_pem ->
       env_str "GITHUB_APP_CLIENT_SECRET"
       >>= fun app_client_secret ->
@@ -180,12 +180,12 @@ let load_github () =
             |> CCString.split_on_char ','
             |> CCList.sort_uniq ~cmp:CCString.compare
             |> CCList.filter_map (function
-                 | "pr_title" -> Some `Pr_title
-                 | "pr_number" -> Some `Pr_number
-                 | "run_kind" -> Some `Run_kind
-                 | "run_type" -> Some `Run_type
-                 | "" -> None
-                 | _ -> None))
+              | "pr_title" -> Some `Pr_title
+              | "pr_number" -> Some `Pr_number
+              | "run_kind" -> Some `Run_kind
+              | "run_type" -> Some `Run_type
+              | "" -> None
+              | _ -> None))
           (Sys.getenv_opt "GITHUB_ACTION_DYNAMIC_TITLE")
       in
       Ok

@@ -35,9 +35,9 @@ let render str =
             if Js.to_string lang <> "" && Js.Optdef.test (hljs##getLanguage lang) then
               (hljs##highlight
                  str
-                 (object%js
-                    val language = lang
-                 end))##.value
+                 object%js
+                   val language = lang
+                 end)##.value
             else Js.string "")
     end
   in

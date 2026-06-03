@@ -114,12 +114,12 @@ let start_telemetry config =
       let open Abb.Future.Infix_monad in
       Logs.info (fun m -> m "Telemetry enabled with endpoint %a" Uri.pp uri);
       (match Terrat_config.github config with
-      | Some github ->
-          Terrat_telemetry.send
-            tc
-            (Terrat_telemetry.Event.Start
-               { app_type = "github"; app_id = Terrat_config.Github.app_id github })
-      | None -> Abb.Future.return ())
+        | Some github ->
+            Terrat_telemetry.send
+              tc
+              (Terrat_telemetry.Event.Start
+                 { app_type = "github"; app_id = Terrat_config.Github.app_id github })
+        | None -> Abb.Future.return ())
       >>= fun () ->
       Abbs_future_combinators.ignore (Abb.Future.fork (Terrat_telemetry.start_ping_loop config))
 

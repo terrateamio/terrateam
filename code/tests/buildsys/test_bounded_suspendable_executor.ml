@@ -188,9 +188,9 @@ let tests =
         let tasks_map =
           Hmap.empty
           |> Hmap.add (coerce a1) (fun _ _ _ ->
-                 let open Fut.Infix_monad in
-                 Fut.Promise.set work_started ()
-                 >>= fun () -> Fut.Promise.future trigger >>= fun () -> Fut.return 10)
+              let open Fut.Infix_monad in
+              Fut.Promise.set work_started ()
+              >>= fun () -> Fut.Promise.future trigger >>= fun () -> Fut.return 10)
         in
         let tasks =
           { Bs.Tasks.get = (fun _ k -> Builder.C.return (Hmap.find (coerce k) tasks_map)) }
@@ -226,8 +226,8 @@ let tests =
           Hmap.empty
           |> Hmap.add (coerce a1) (fun _ _ _ -> raise (Failure "test exception"))
           |> Hmap.add (coerce b1) (fun _ _ { Bs.Fetcher.fetch } ->
-                 let open Fut.Infix_monad in
-                 fetch a1 >>= fun v -> Fut.return (v + 1))
+              let open Fut.Infix_monad in
+              fetch a1 >>= fun v -> Fut.return (v + 1))
         in
         let tasks =
           { Bs.Tasks.get = (fun _ k -> Builder.C.return (Hmap.find (coerce k) tasks_map)) }

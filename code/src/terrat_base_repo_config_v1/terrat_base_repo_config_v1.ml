@@ -746,10 +746,10 @@ module File_pattern = struct
             %> CCString.drop_while (( = ) '/')
             %> CCString.rev)
         @@ CCList.filter (fun word ->
-               (* [3] is just an arbitrary limit of what a string that adds value
+            (* [3] is just an arbitrary limit of what a string that adds value
                in discriminating a check is. Short strings are likely to not
                tell us much. *)
-               CCString.length word > 3)
+            CCString.length word > 3)
         @@ CCString.split_on_char '*' s'
       in
       Ok { s; p = Path_glob.Glob.parse ("<" ^ sanitize s' ^ ">"); negate; prefix; suffix; words }
@@ -1303,10 +1303,9 @@ let of_version_1_access_control_files files =
     files
     |> Sln_map.String.to_list
     |> CCResult.map_l (fun (path, match_list) ->
-           match of_version_1_match_list match_list with
-           | Ok match_list -> Ok (path, match_list)
-           | Error (`Match_parse_err err) ->
-               Error (`Access_control_file_match_parse_err (path, err)))
+        match of_version_1_match_list match_list with
+        | Ok match_list -> Ok (path, match_list)
+        | Error (`Match_parse_err err) -> Error (`Access_control_file_match_parse_err (path, err)))
   in
   let open CCResult.Infix in
   ret >>= fun r -> Ok (Sln_map.String.of_list r)
@@ -2401,14 +2400,14 @@ let of_version_1_stack_config names =
       let module Sn = Terrat_repo_config_stack_nested_config in
       let module V = Terrat_repo_config_stack_variables in
       (match v with
-      | S.Stack_config { Sc.tag_query; rules; variables } ->
-          CCResult.map_err
-            (function
-              | `Tag_query_error err -> `Stack_config_tag_query_err err)
-            (Terrat_tag_query.of_string tag_query)
-          >>= fun tag_query -> Ok (Stacks.Type_.Stack tag_query, rules, variables)
-      | S.Stack_nested_config { Sn.stacks; rules; variables } ->
-          Ok (Stacks.Type_.Nested stacks, rules, variables))
+        | S.Stack_config { Sc.tag_query; rules; variables } ->
+            CCResult.map_err
+              (function
+                | `Tag_query_error err -> `Stack_config_tag_query_err err)
+              (Terrat_tag_query.of_string tag_query)
+            >>= fun tag_query -> Ok (Stacks.Type_.Stack tag_query, rules, variables)
+        | S.Stack_nested_config { Sn.stacks; rules; variables } ->
+            Ok (Stacks.Type_.Nested stacks, rules, variables))
       >>= fun (type_, rules, variables) ->
       let module R = Terrat_repo_config_stack_rules in
       let { R.apply_after; auto_apply; modified_by; plan_after } =
@@ -2447,9 +2446,9 @@ let of_version_1_notification_policy policy =
     (Terrat_tag_query.of_string tag_query)
   >>= fun tag_query ->
   (match comment_strategy with
-  | `Append -> Ok Policy.Strategy.Append
-  | `Delete -> Ok Policy.Strategy.Delete
-  | `Minimize -> Ok Policy.Strategy.Minimize)
+    | `Append -> Ok Policy.Strategy.Append
+    | `Delete -> Ok Policy.Strategy.Delete
+    | `Minimize -> Ok Policy.Strategy.Minimize)
   >>= fun comment_strategy -> Ok { Policy.tag_query; comment_strategy }
 
 let of_version_1_notifications notifications =
@@ -2952,11 +2951,11 @@ let to_version_1_drift drift =
             Schedule.reconcile;
             schedule =
               (let module S = Drift.Schedule.Sched in
-              match schedule with
-              | S.Hourly -> `Hourly
-              | S.Daily -> `Daily
-              | S.Weekly -> `Weekly
-              | S.Monthly -> `Monthly);
+               match schedule with
+               | S.Hourly -> `Hourly
+               | S.Daily -> `Daily
+               | S.Weekly -> `Weekly
+               | S.Monthly -> `Monthly);
             tag_query = Terrat_tag_query.to_string tag_query;
             window;
           } ))
@@ -3813,28 +3812,28 @@ let derive ~ctx ~index ~file_list repo_config =
   let glob_dir_matches =
     file_list
     |> CCList.filter_map (fun fname ->
-           (* Only going to synthesize directories that match the filename but
+        (* Only going to synthesize directories that match the filename but
               also their directory is not explicitly specified in the dirs
               section of the config.  We then translate it back to the dirname.
               This means we will get the same match multiple times as we walk
               the file list so we then have to remove duplicates *)
-           CCOption.map
-             (fun (d, config) ->
-               (* Include the length of the matched directory in the output,
+        CCOption.map
+          (fun (d, config) ->
+            (* Include the length of the matched directory in the output,
                   this is used in the case of multiple directory configs
                   matching, we take the longer. *)
-               (Filename.dirname fname, CCString.length (File_pattern.to_string d), config))
-             (CCList.find_opt
-                (fun (d, _) ->
-                  (not (Sln_map.String.mem (Filename.dirname fname) dirs))
-                  && File_pattern.is_match d fname)
-                glob_dirs))
+            (Filename.dirname fname, CCString.length (File_pattern.to_string d), config))
+          (CCList.find_opt
+             (fun (d, _) ->
+               (not (Sln_map.String.mem (Filename.dirname fname) dirs))
+               && File_pattern.is_match d fname)
+             glob_dirs))
     |> CCList.sort (fun (d1, l1, _) (d2, l2, _) ->
-           (* Sort in reveres order, we want the longer matches first. *)
-           let module Cmp = struct
-             type t = string * int [@@deriving ord]
-           end in
-           Cmp.compare (d2, l2) (d1, l1))
+        (* Sort in reveres order, we want the longer matches first. *)
+        let module Cmp = struct
+          type t = string * int [@@deriving ord]
+        end in
+        Cmp.compare (d2, l2) (d1, l1))
     |> CCList.map (fun (d1, _, config) -> (d1, config))
     |> uniq_succ ~eq:(fun (d1, _) (d2, _) -> CCString.equal d1 d2)
   in
@@ -3876,24 +3875,23 @@ let derive ~ctx ~index ~file_list repo_config =
     in
     file_list
     |> CCList.filter (fun fname ->
-           let dirname = Filename.dirname fname in
-           not (Sln_map.String.mem dirname specified_dirs))
+        let dirname = Filename.dirname fname in
+        not (Sln_map.String.mem dirname specified_dirs))
     |> make_dir_map
     |> Sln_map.String.to_list
     |> CCList.filter test
     |> CCList.map (fun (dirname, _) ->
-           let dir = Dirs.Dir.make () in
-           let dir =
-             {
-               dir with
-               Dirs.Dir.workspaces =
-                 Sln_map.String.map
-                   (fun config ->
-                     { config with Dirs.Workspace.when_modified = default_when_modified })
-                   dir.Dirs.Dir.workspaces;
-             }
-           in
-           (dirname, dir))
+        let dir = Dirs.Dir.make () in
+        let dir =
+          {
+            dir with
+            Dirs.Dir.workspaces =
+              Sln_map.String.map
+                (fun config -> { config with Dirs.Workspace.when_modified = default_when_modified })
+                dir.Dirs.Dir.workspaces;
+          }
+        in
+        (dirname, dir))
     |> Sln_map.String.of_list
   in
   let dirs = Sln_map.String.union (fun _ _ _ -> assert false) specified_dirs remaining_dirs in

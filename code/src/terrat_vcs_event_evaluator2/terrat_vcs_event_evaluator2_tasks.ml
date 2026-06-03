@@ -149,15 +149,15 @@ struct
         (fun () ->
           Abbs_future_combinators.to_result
           @@ Abb.Thread.run (fun () ->
-                 Terrat_base_repo_config_v1.derive
-                   ~ctx:
-                     (Terrat_base_repo_config_v1.Ctx.make
-                        ~dest_branch:(S.Api.Ref.to_string dest_branch_name)
-                        ~branch:(S.Api.Ref.to_string branch_name)
-                        ())
-                   ~index
-                   ~file_list:repo_tree
-                   repo_config_raw))
+              Terrat_base_repo_config_v1.derive
+                ~ctx:
+                  (Terrat_base_repo_config_v1.Ctx.make
+                     ~dest_branch:(S.Api.Ref.to_string dest_branch_name)
+                     ~branch:(S.Api.Ref.to_string branch_name)
+                     ())
+                ~index
+                ~file_list:repo_tree
+                repo_config_raw))
       >>= fun repo_config ->
       Builder.run_db
         s
@@ -522,16 +522,16 @@ struct
             let unapplied_dirspaces =
               all_unapplied_matches
               |> CCList.flat_map (fun layer ->
-                     CCList.map (fun { Dc.dirspace; _ } -> dirspace) layer)
+                  CCList.map (fun { Dc.dirspace; _ } -> dirspace) layer)
               |> Terrat_data.Dirspace_set.of_list
             in
             let working_layer =
               all_matches
               |> CCList.filter (fun layer ->
-                     CCList.exists
-                       (fun { Dc.dirspace; _ } ->
-                         Terrat_data.Dirspace_set.mem dirspace unapplied_dirspaces)
-                       layer)
+                  CCList.exists
+                    (fun { Dc.dirspace; _ } ->
+                      Terrat_data.Dirspace_set.mem dirspace unapplied_dirspaces)
+                    layer)
               |> CCList.head_opt
               |> CCOption.get_or ~default:[]
             in
@@ -1552,14 +1552,14 @@ struct
             (fun () ->
               Abbs_future_combinators.to_result
               @@ Abb.Thread.run (fun () ->
-                     CCList.filter
-                       (Terrat_change_match3.match_tag_query ~tag_query:Terrat_tag_query.any)
-                       (CCList.flatten
-                          (Terrat_change_match3.match_diff_list
-                             config
-                             (CCList.map
-                                (fun filename -> Terrat_change.Diff.(Change { filename }))
-                                repo_tree)))))
+                  CCList.filter
+                    (Terrat_change_match3.match_tag_query ~tag_query:Terrat_tag_query.any)
+                    (CCList.flatten
+                       (Terrat_change_match3.match_diff_list
+                          config
+                          (CCList.map
+                             (fun filename -> Terrat_change.Diff.(Change { filename }))
+                             repo_tree)))))
           >>= function
           | [] -> Abb.Future.return (Ok Terrat_base_repo_config_v1.Index.empty)
           | _ -> (
@@ -1637,14 +1637,14 @@ struct
             (fun () ->
               Abbs_future_combinators.to_result
               @@ Abb.Thread.run (fun () ->
-                     CCList.filter
-                       (Terrat_change_match3.match_tag_query ~tag_query:Terrat_tag_query.any)
-                       (CCList.flatten
-                          (Terrat_change_match3.match_diff_list
-                             config
-                             (CCList.map
-                                (fun filename -> Terrat_change.Diff.(Change { filename }))
-                                repo_tree)))))
+                  CCList.filter
+                    (Terrat_change_match3.match_tag_query ~tag_query:Terrat_tag_query.any)
+                    (CCList.flatten
+                       (Terrat_change_match3.match_diff_list
+                          config
+                          (CCList.map
+                             (fun filename -> Terrat_change.Diff.(Change { filename }))
+                             repo_tree)))))
           >>= function
           | [] -> Abb.Future.return (Ok Terrat_base_repo_config_v1.Index.empty)
           | _ -> (
@@ -1692,12 +1692,12 @@ struct
             (fun () ->
               Abbs_future_combinators.to_result
               @@ Abb.Thread.run (fun () ->
-                     CCList.flatten
-                       (Terrat_change_match3.match_diff_list
-                          config
-                          (CCList.map
-                             (fun filename -> Terrat_change.Diff.(Change { filename }))
-                             repo_tree))))
+                  CCList.flatten
+                    (Terrat_change_match3.match_diff_list
+                       config
+                       (CCList.map
+                          (fun filename -> Terrat_change.Diff.(Change { filename }))
+                          repo_tree))))
           >>= fun matches ->
           let workflows = Terrat_base_repo_config_v1.workflows repo_config in
           let dirspaceflows =
@@ -1768,12 +1768,12 @@ struct
             (fun () ->
               Abbs_future_combinators.to_result
               @@ Abb.Thread.run (fun () ->
-                     CCList.flatten
-                       (Terrat_change_match3.match_diff_list
-                          config
-                          (CCList.map
-                             (fun filename -> Terrat_change.Diff.(Change { filename }))
-                             repo_tree))))
+                  CCList.flatten
+                    (Terrat_change_match3.match_diff_list
+                       config
+                       (CCList.map
+                          (fun filename -> Terrat_change.Diff.(Change { filename }))
+                          repo_tree))))
           >>= fun matches ->
           let workflows = Terrat_base_repo_config_v1.workflows repo_config in
           let dirspaceflows =

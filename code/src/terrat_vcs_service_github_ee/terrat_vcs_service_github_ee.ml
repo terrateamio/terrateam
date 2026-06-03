@@ -167,9 +167,9 @@ module Provider :
           Sln_set.String.of_list
           @@ CCList.filter_map
                (let module R = Terrat_pull_request_review in
-               function
-               | { R.status = R.Status.Approved; user; _ } -> user
-               | _ -> None)
+                function
+                | { R.status = R.Status.Approved; user; _ } -> user
+                | _ -> None)
                reviews
         in
         (* This is all users that have approved this pull request either by the

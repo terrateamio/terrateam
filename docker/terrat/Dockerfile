@@ -70,9 +70,7 @@ RUN eval $(opam env) && \
     opam switch create -y 5.3.0 && \
     eval $(opam env) && \
     opam repository add opam-acsl opam && \
-    opam pin add -y cmdliner 1.3.0 && \
-    opam pin add -y containers 3.12 && \
-    opam install -j$(nproc --all) -y --no-depexts dune menhir ocamlformat.0.27.0 && \
+    opam install -j$(nproc --all) -y --no-depexts dune menhir ocamlformat.0.29.0 && \
     xargs -a code/opam.pins opam install -j$(nproc --all) -y --no-depexts && \
     ulimit -s 524288 && ulimit -a && \
     time make -C code test-terrat terrat && \

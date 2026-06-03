@@ -27,9 +27,9 @@ module Typed = struct
   let create ~encode ~decode name =
     let store =
       (global ())##createInstance
-        (object%js
-           val name = Js.string name
-        end)
+        object%js
+          val name = Js.string name
+        end
     in
     { store; encode; decode }
 

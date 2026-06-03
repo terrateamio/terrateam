@@ -70,7 +70,7 @@ struct
            if that configuration was not specified. *)
         access_control.Ace.config.Ac.policies
         |> CCList.map (fun ({ P.tag_query; _ } as p) ->
-               Terrat_access_control2.Policy.{ tag_query; policy = selector p })
+            Terrat_access_control2.Policy.{ tag_query; policy = selector p })
       in
       Abbs_time_it.run
         (fun t ->
@@ -96,7 +96,7 @@ struct
         let pass_with_superapproval =
           pass
           |> CCList.map (fun ({ Terrat_change_match3.Dirspace_config.dirspace; _ } as ch) ->
-                 (dirspace, ch))
+              (dirspace, ch))
           |> Terrat_data.Dirspace_map.of_list
         in
         Abbs_future_combinators.List_result.fold_left

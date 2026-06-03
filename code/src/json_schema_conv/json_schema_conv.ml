@@ -6,8 +6,8 @@ module Properties = struct
     m
     |> Yojson.Safe.Util.to_assoc
     |> CCList.map (fun (k, v) ->
-           let open CCResult.Infix in
-           of_yojson v >>= fun v -> Ok (k, v))
+        let open CCResult.Infix in
+        of_yojson v >>= fun v -> Ok (k, v))
     |> CCResult.flatten_l
     |> CCResult.map Sln_map.String.of_list
 

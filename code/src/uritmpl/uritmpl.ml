@@ -223,9 +223,9 @@ let expand t vars =
           let res =
             vs
             |> List.map (fun v ->
-                   match expand_var expand_spec vars v with
-                   | Some r -> [ r ]
-                   | None -> [])
+                match expand_var expand_spec vars v with
+                | Some r -> [ r ]
+                | None -> [])
             |> List.flatten
           in
           match res with

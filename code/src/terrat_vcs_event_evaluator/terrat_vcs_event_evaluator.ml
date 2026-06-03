@@ -1261,7 +1261,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
              default if that configuration was not specified. *)
           t.config.Ac.policies
           |> CCList.map (fun ({ P.tag_query; _ } as p) ->
-                 Terrat_access_control2.Policy.{ tag_query; policy = selector p })
+              Terrat_access_control2.Policy.{ tag_query; policy = selector p })
         in
         Abbs_time_it.run (log_time t.request_id "ACCESS_CONTROL_SUPERAPPROVAL_EVAL") (fun () ->
             Access_control.eval t.ctx policies change_matches)
@@ -1283,7 +1283,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           let pass_with_superapproval =
             pass
             |> CCList.map (fun ({ Terrat_change_match3.Dirspace_config.dirspace; _ } as ch) ->
-                   (dirspace, ch))
+                (dirspace, ch))
             |> Dirspace_map.of_list
           in
           Abbs_future_combinators.List_result.fold_left
@@ -1961,10 +1961,10 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         let working_layer =
           all_matches
           |> CCList.filter (fun layer ->
-                 CCList.exists
-                   (fun { Dc.dirspace; _ } ->
-                     Terrat_data.Dirspace_set.mem dirspace unapplied_dirspaces)
-                   layer)
+              CCList.exists
+                (fun { Dc.dirspace; _ } ->
+                  Terrat_data.Dirspace_set.mem dirspace unapplied_dirspaces)
+                layer)
           |> CCList.head_opt
           |> CCOption.get_or ~default:[]
         in
@@ -2367,11 +2367,11 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         Abbs_time_it.run (log_time state.State.request_id "DERIVE") (fun () ->
             Abbs_future_combinators.to_result
             @@ Abb.Thread.run (fun () ->
-                   Terrat_base_repo_config_v1.derive
-                     ~ctx:(Terrat_base_repo_config_v1.Ctx.make ~dest_branch ~branch ())
-                     ~index:Terrat_base_repo_config_v1.Index.empty
-                     ~file_list:repo_tree
-                     repo_config))
+                Terrat_base_repo_config_v1.derive
+                  ~ctx:(Terrat_base_repo_config_v1.Ctx.make ~dest_branch ~branch ())
+                  ~index:Terrat_base_repo_config_v1.Index.empty
+                  ~file_list:repo_tree
+                  repo_config))
         >>= fun repo_config ->
         Abb.Future.return
           (Terrat_change_match3.synthesize_config
@@ -2381,12 +2381,12 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         Abbs_time_it.run (log_time state.State.request_id "MATCH_DIFF_LIST") (fun () ->
             Abbs_future_combinators.to_result
             @@ Abb.Thread.run (fun () ->
-                   CCList.flatten
-                     (Terrat_change_match3.match_diff_list
-                        config
-                        (CCList.map
-                           (fun filename -> Terrat_change.Diff.(Change { filename }))
-                           repo_tree))))
+                CCList.flatten
+                  (Terrat_change_match3.match_diff_list
+                     config
+                     (CCList.map
+                        (fun filename -> Terrat_change.Diff.(Change { filename }))
+                        repo_tree))))
         >>= fun matches ->
         let workflows = Terrat_base_repo_config_v1.workflows repo_config in
         let dirspaceflows =
@@ -3102,11 +3102,11 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       Abbs_time_it.run (log_time state.State.request_id "DERIVE") (fun () ->
           Abbs_future_combinators.to_result
           @@ Abb.Thread.run (fun () ->
-                 Terrat_base_repo_config_v1.derive
-                   ~ctx:(Terrat_base_repo_config_v1.Ctx.make ~dest_branch ~branch ())
-                   ~index:Terrat_base_repo_config_v1.Index.empty
-                   ~file_list:repo_tree
-                   repo_config))
+              Terrat_base_repo_config_v1.derive
+                ~ctx:(Terrat_base_repo_config_v1.Ctx.make ~dest_branch ~branch ())
+                ~index:Terrat_base_repo_config_v1.Index.empty
+                ~file_list:repo_tree
+                repo_config))
       >>= fun repo_config ->
       Abb.Future.return
         (Terrat_change_match3.synthesize_config
@@ -3117,14 +3117,14 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       Abbs_time_it.run (log_time state.State.request_id "MATCH_DIFF_LIST") (fun () ->
           Abbs_future_combinators.to_result
           @@ Abb.Thread.run (fun () ->
-                 CCList.filter
-                   (Terrat_change_match3.match_tag_query ~tag_query)
-                   (CCList.flatten
-                      (Terrat_change_match3.match_diff_list
-                         config
-                         (CCList.map
-                            (fun filename -> Terrat_change.Diff.(Change { filename }))
-                            repo_tree)))))
+              CCList.filter
+                (Terrat_change_match3.match_tag_query ~tag_query)
+                (CCList.flatten
+                   (Terrat_change_match3.match_diff_list
+                      config
+                      (CCList.map
+                         (fun filename -> Terrat_change.Diff.(Change { filename }))
+                         repo_tree)))))
       >>= fun matches ->
       Abb.Future.return (dirspaceflows_of_changes repo_config matches)
       >>= fun dirspaceflows ->
@@ -3185,15 +3185,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           Abbs_time_it.run (log_time state.State.request_id "DERIVE") (fun () ->
               Abbs_future_combinators.to_result
               @@ Abb.Thread.run (fun () ->
-                     Terrat_base_repo_config_v1.derive
-                       ~ctx:
-                         (Terrat_base_repo_config_v1.Ctx.make
-                            ~dest_branch:(S.Api.Ref.to_string base_branch_name)
-                            ~branch:(S.Api.Ref.to_string branch_name)
-                            ())
-                       ~index:Terrat_base_repo_config_v1.Index.empty
-                       ~file_list:repo_tree
-                       repo_config))
+                  Terrat_base_repo_config_v1.derive
+                    ~ctx:
+                      (Terrat_base_repo_config_v1.Ctx.make
+                         ~dest_branch:(S.Api.Ref.to_string base_branch_name)
+                         ~branch:(S.Api.Ref.to_string branch_name)
+                         ())
+                    ~index:Terrat_base_repo_config_v1.Index.empty
+                    ~file_list:repo_tree
+                    repo_config))
           >>= fun repo_config ->
           create_token (S.Api.Account.Id.to_string @@ S.Api.Account.id account) id (Ctx.storage ctx)
           >>= fun token ->
@@ -3325,8 +3325,8 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         (fun (k, dsfs) ->
           dsfs
           |> CCList.sort (fun l r ->
-                 (*Ensure chunks are sorted by dirspace so chunks are consistent between runs. *)
-                 Terrat_dirspace.compare (Dsf.to_dirspace l) (Dsf.to_dirspace r))
+              (*Ensure chunks are sorted by dirspace so chunks are consistent between runs. *)
+              Terrat_dirspace.compare (Dsf.to_dirspace l) (Dsf.to_dirspace r))
           |> CCList.chunks max_workspaces_per_batch
           |> CCList.map (fun chunk -> (k, chunk)))
         partitions
@@ -4269,15 +4269,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               Abbs_time_it.run (log_time state.State.request_id "DERIVE") (fun () ->
                   Abbs_future_combinators.to_result
                   @@ Abb.Thread.run (fun () ->
-                         Terrat_base_repo_config_v1.derive
-                           ~ctx:
-                             (Terrat_base_repo_config_v1.Ctx.make
-                                ~dest_branch:(S.Api.Ref.to_string base_branch_name)
-                                ~branch:(S.Api.Ref.to_string branch_name)
-                                ())
-                           ~index
-                           ~file_list:repo_tree
-                           repo_config))
+                      Terrat_base_repo_config_v1.derive
+                        ~ctx:
+                          (Terrat_base_repo_config_v1.Ctx.make
+                             ~dest_branch:(S.Api.Ref.to_string base_branch_name)
+                             ~branch:(S.Api.Ref.to_string branch_name)
+                             ())
+                        ~index
+                        ~file_list:repo_tree
+                        repo_config))
               >>= fun repo_config ->
               Abb.Future.return (Terrat_change_match3.synthesize_config ~index repo_config)
               >>= fun config ->
@@ -4352,15 +4352,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               Abbs_time_it.run (log_time state.State.request_id "DERIVE") (fun () ->
                   Abbs_future_combinators.to_result
                   @@ Abb.Thread.run (fun () ->
-                         Terrat_base_repo_config_v1.derive
-                           ~ctx:
-                             (Terrat_base_repo_config_v1.Ctx.make
-                                ~dest_branch:(S.Api.Ref.to_string base_branch_name)
-                                ~branch:(S.Api.Ref.to_string branch_name)
-                                ())
-                           ~index
-                           ~file_list:repo_tree
-                           repo_config))
+                      Terrat_base_repo_config_v1.derive
+                        ~ctx:
+                          (Terrat_base_repo_config_v1.Ctx.make
+                             ~dest_branch:(S.Api.Ref.to_string base_branch_name)
+                             ~branch:(S.Api.Ref.to_string branch_name)
+                             ())
+                        ~index
+                        ~file_list:repo_tree
+                        repo_config))
               >>= fun repo_config ->
               Abb.Future.return (Terrat_change_match3.synthesize_config ~index repo_config)
               >>= fun config ->
@@ -4487,19 +4487,19 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                    Abbs_time_it.run (log_time state.State.request_id "DERIVE") (fun () ->
                        Abbs_future_combinators.to_result
                        @@ Abb.Thread.run (fun () ->
-                              Terrat_base_repo_config_v1.derive
-                                ~ctx:
-                                  (Terrat_base_repo_config_v1.Ctx.make
-                                     ~dest_branch:
-                                       (S.Api.Ref.to_string
-                                          (S.Api.Pull_request.base_branch_name pull_request))
-                                     ~branch:
-                                       (S.Api.Ref.to_string
-                                          (S.Api.Pull_request.branch_name pull_request))
-                                     ())
-                                ~index
-                                ~file_list:repo_tree
-                                repo_config))
+                           Terrat_base_repo_config_v1.derive
+                             ~ctx:
+                               (Terrat_base_repo_config_v1.Ctx.make
+                                  ~dest_branch:
+                                    (S.Api.Ref.to_string
+                                       (S.Api.Pull_request.base_branch_name pull_request))
+                                  ~branch:
+                                    (S.Api.Ref.to_string
+                                       (S.Api.Pull_request.branch_name pull_request))
+                                  ())
+                             ~index
+                             ~file_list:repo_tree
+                             repo_config))
                    >>= fun repo_config ->
                    Abb.Future.return (Terrat_change_match3.synthesize_config ~index repo_config)
                    >>= fun synthesized_config ->
@@ -4878,15 +4878,15 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           Abbs_time_it.run (log_time state.State.request_id "DERIVE") (fun () ->
               Abbs_future_combinators.to_result
               @@ Abb.Thread.run (fun () ->
-                     Terrat_base_repo_config_v1.derive
-                       ~ctx:
-                         (Terrat_base_repo_config_v1.Ctx.make
-                            ~dest_branch:(S.Api.Ref.to_string base_branch_name)
-                            ~branch:(S.Api.Ref.to_string branch_name)
-                            ())
-                       ~index
-                       ~file_list:repo_tree
-                       repo_config))
+                  Terrat_base_repo_config_v1.derive
+                    ~ctx:
+                      (Terrat_base_repo_config_v1.Ctx.make
+                         ~dest_branch:(S.Api.Ref.to_string base_branch_name)
+                         ~branch:(S.Api.Ref.to_string branch_name)
+                         ())
+                    ~index
+                    ~file_list:repo_tree
+                    repo_config))
           >>= fun repo_config ->
           Abb.Future.return (Terrat_change_match3.synthesize_config ~index repo_config)
           >>= fun config ->
@@ -4942,17 +4942,16 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         Abbs_time_it.run (log_time state.State.request_id "DERIVE") (fun () ->
             Abbs_future_combinators.to_result
             @@ Abb.Thread.run (fun () ->
-                   Terrat_base_repo_config_v1.derive
-                     ~ctx:
-                       (Terrat_base_repo_config_v1.Ctx.make
-                          ~dest_branch:
-                            (S.Api.Ref.to_string (S.Api.Pull_request.base_branch_name pull_request))
-                          ~branch:
-                            (S.Api.Ref.to_string (S.Api.Pull_request.branch_name pull_request))
-                          ())
-                     ~index
-                     ~file_list:repo_tree
-                     repo_config))
+                Terrat_base_repo_config_v1.derive
+                  ~ctx:
+                    (Terrat_base_repo_config_v1.Ctx.make
+                       ~dest_branch:
+                         (S.Api.Ref.to_string (S.Api.Pull_request.base_branch_name pull_request))
+                       ~branch:(S.Api.Ref.to_string (S.Api.Pull_request.branch_name pull_request))
+                       ())
+                  ~index
+                  ~file_list:repo_tree
+                  repo_config))
         >>= fun repo_config ->
         match Terrat_change_match3.synthesize_config ~index repo_config with
         | Ok _config ->
@@ -6739,19 +6738,19 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               Abbs_time_it.run (log_time state.State.request_id "DERIVE") (fun () ->
                   Abbs_future_combinators.to_result
                   @@ Abb.Thread.run (fun () ->
-                         Terrat_base_repo_config_v1.derive
-                           ~ctx:
-                             (Terrat_base_repo_config_v1.Ctx.make
-                                ~dest_branch:(S.Api.Ref.to_string base_branch_name)
-                                ~branch:(S.Api.Ref.to_string branch_name)
-                                ())
-                           ~index:
-                             (CCOption.map_or
-                                ~default:Terrat_base_repo_config_v1.Index.empty
-                                (fun { Terrat_vcs_provider2.Index.index; _ } -> index)
-                                index)
-                           ~file_list:repo_tree
-                           repo_config))
+                      Terrat_base_repo_config_v1.derive
+                        ~ctx:
+                          (Terrat_base_repo_config_v1.Ctx.make
+                             ~dest_branch:(S.Api.Ref.to_string base_branch_name)
+                             ~branch:(S.Api.Ref.to_string branch_name)
+                             ())
+                        ~index:
+                          (CCOption.map_or
+                             ~default:Terrat_base_repo_config_v1.Index.empty
+                             (fun { Terrat_vcs_provider2.Index.index; _ } -> index)
+                             index)
+                        ~file_list:repo_tree
+                        repo_config))
               >>= fun repo_config ->
               H.create_token
                 (S.Api.Account.Id.to_string @@ S.Api.Account.id account)
@@ -7776,18 +7775,18 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           | `Success _ ->
               let open Abb.Future.Infix_monad in
               (match resume_point with
-              | `Work_manifest work_manifest_id ->
-                  Pgsql_pool.with_conn (Ctx.storage ctx) ~f:(fun db ->
-                      delete_flow_state (Ctx.request_id ctx) db work_manifest_id)
-              | `Resume _ -> Abb.Future.return (Ok ()))
+                | `Work_manifest work_manifest_id ->
+                    Pgsql_pool.with_conn (Ctx.storage ctx) ~f:(fun db ->
+                        delete_flow_state (Ctx.request_id ctx) db work_manifest_id)
+                | `Resume _ -> Abb.Future.return (Ok ()))
               >>= fun _ -> Abb.Future.return (Ok ())
           | `Failure _ ->
               let open Abb.Future.Infix_monad in
               (match resume_point with
-              | `Work_manifest work_manifest_id ->
-                  Pgsql_pool.with_conn (Ctx.storage ctx) ~f:(fun db ->
-                      delete_flow_state (Ctx.request_id ctx) db work_manifest_id)
-              | `Resume _ -> Abb.Future.return (Ok ()))
+                | `Work_manifest work_manifest_id ->
+                    Pgsql_pool.with_conn (Ctx.storage ctx) ~f:(fun db ->
+                        delete_flow_state (Ctx.request_id ctx) db work_manifest_id)
+                | `Resume _ -> Abb.Future.return (Ok ()))
               >>= fun _ -> Abb.Future.return (Error `Error)
           | `Yield resume' -> (
               let state = Flow.Yield.state resume' in
