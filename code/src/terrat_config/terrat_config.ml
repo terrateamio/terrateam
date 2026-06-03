@@ -144,7 +144,7 @@ let load_github () =
       let webhook_secret = Sys.getenv_opt "GITHUB_WEBHOOK_SECRET" in
       env_str "GITHUB_APP_PEM"
       >>= fun app_pem_content ->
-      (match X509.Private_key.decode_pem (Cstruct.of_string app_pem_content) with
+      (match X509.Private_key.decode_pem app_pem_content with
         | Ok (`RSA v) -> Ok v
         | Ok _ -> Error (`Bad_pem "Expected RSA")
         | Error (`Msg s) -> Error (`Bad_pem s))

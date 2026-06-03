@@ -23,12 +23,16 @@ let run ?secret headers body =
           (CCString.Split.left ~by:"=")
           (Cohttp.Header.get headers "x-hub-signature-256")
       with
-      | Some ("sha256", x_hub_sig) ->
-          let x_hub_sig = Cstruct.of_hex x_hub_sig in
-          let computed_sig =
-            Mirage_crypto.Hash.SHA256.hmac ~key:(Cstruct.of_string secret) (Cstruct.of_string body)
-          in
-          if Cstruct.equal x_hub_sig computed_sig then decode headers body
-          else Error (`Bad_signature (Cstruct.to_string computed_sig, Cstruct.to_string x_hub_sig))
+      | Some ("sha256", x_hub_sig) -> (
+          let computed_sig = Digestif.SHA256.hmac_string ~key:secret body in
+          match Digestif.SHA256.of_hex_opt x_hub_sig with
+          | Some provided_sig when Digestif.SHA256.equal provided_sig computed_sig ->
+              decode headers body
+          | Some provided_sig ->
+              Error
+                (`Bad_signature
+                   ( Digestif.SHA256.to_raw_string computed_sig,
+                     Digestif.SHA256.to_raw_string provided_sig ))
+          | None -> Error (`Bad_signature (Digestif.SHA256.to_raw_string computed_sig, x_hub_sig)))
       | _ -> Error `Missing_signature)
   | None -> decode headers body
