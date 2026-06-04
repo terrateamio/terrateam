@@ -68,6 +68,23 @@ type get_user_installations_err =
   ]
 [@@deriving show]
 
+type get_user_orgs_err =
+  [ Githubc2_abb.call_err
+  | `Unauthorized of Githubc2_components.Basic_error.t
+  | `Forbidden of Githubc2_components.Basic_error.t
+  | `Not_modified
+  ]
+[@@deriving show]
+
+type get_user_org_memberships_err =
+  [ Githubc2_abb.call_err
+  | `Unauthorized of Githubc2_components.Basic_error.t
+  | `Forbidden of Githubc2_components.Basic_error.t
+  | `Not_modified
+  | `Unprocessable_entity of Githubc2_components.Validation_error.t
+  ]
+[@@deriving show]
+
 type get_installation_repos_err =
   [ Githubc2_abb.call_err
   | `Not_modified
@@ -152,6 +169,7 @@ type get_tree_err =
 type get_team_membership_in_org_err = Githubc2_abb.call_err [@@deriving show]
 type get_repo_collaborator_permission_err = Githubc2_abb.call_err [@@deriving show]
 type get_org_membership_err = Githubc2_abb.call_err [@@deriving show]
+type get_org_membership_diag_err = Githubc2_abb.call_err [@@deriving show]
 
 let max_get_tree_chunks = 20
 
@@ -373,8 +391,34 @@ let get_user_installations client =
       make Parameters.(make ~per_page:100 ()))
   >>= fun resp ->
   match Openapi.Response.value resp with
-  | `OK R.OK.{ primary = Primary.{ installations; _ }; _ } -> Abb.Future.return (Ok installations)
+  | `OK R.OK.{ primary = Primary.{ installations; total_count; _ }; _ } ->
+      Abb.Future.return (Ok (installations, total_count))
   | (`Forbidden _ | `Not_modified | `Unauthorized _) as err -> Abb.Future.return (Error err)
+
+(* Diagnostic: the organizations the user's own token can see (gated by the app's org Members
+   permission and any org SSO/third-party approval). Used to localize empty /user/installations. *)
+let get_user_orgs client =
+  let open Abbs_future_combinators.Infix_result_monad in
+  Prmths.Counter.inc_one (Metrics.fn_call_total "get_user_orgs");
+  call client Githubc2_orgs.List_for_authenticated_user.(make Parameters.(make ~per_page:100 ()))
+  >>= fun resp ->
+  match Openapi.Response.value resp with
+  | `OK orgs -> Abb.Future.return (Ok orgs)
+  | (`Forbidden _ | `Not_modified | `Unauthorized _) as err -> Abb.Future.return (Error err)
+
+(* Diagnostic: the user's organization memberships (with role and active/pending state) as seen by
+   the user's token. Distinguishes "token cannot see the org at all" from "sees it but no install". *)
+let get_user_org_memberships client =
+  let open Abbs_future_combinators.Infix_result_monad in
+  Prmths.Counter.inc_one (Metrics.fn_call_total "get_user_org_memberships");
+  call
+    client
+    Githubc2_orgs.List_memberships_for_authenticated_user.(make Parameters.(make ~per_page:100 ()))
+  >>= fun resp ->
+  match Openapi.Response.value resp with
+  | `OK memberships -> Abb.Future.return (Ok memberships)
+  | (`Forbidden _ | `Not_modified | `Unauthorized _ | `Unprocessable_entity _) as err ->
+      Abb.Future.return (Error err)
 
 let get_installation_repos client =
   let module R = Githubc2_apps.List_repos_accessible_to_installation.Responses in
@@ -676,6 +720,32 @@ let get_org_membership ~org ~user client =
       if state = `Active then
         Abb.Future.return (Ok (Some (if role = `Admin then `Admin else `User)))
       else Abb.Future.return (Ok None)
+
+(* Diagnostic: what the APP (installation token) sees about a user's membership in an org. Returns a
+   human-readable description rather than a decision, and distinguishes "not a member" from "the app
+   is not allowed to read org members" (which itself is a likely cause of empty user installations). *)
+let get_org_membership_diag ~org ~user client =
+  Prmths.Counter.inc_one (Metrics.fn_call_total "get_org_membership_diag");
+  let open Abbs_future_combinators.Infix_result_monad in
+  let module Membership = Githubc2_components.Org_membership in
+  call client Githubc2_orgs.Get_membership_for_user.(make Parameters.(make ~org ~username:user))
+  >>= fun resp ->
+  match Openapi.Response.value resp with
+  | `OK Membership.{ primary = Primary.{ role; state; _ }; _ } ->
+      let role =
+        match role with
+        | `Admin -> "admin"
+        | `Billing_manager -> "billing_manager"
+        | `Member -> "member"
+      in
+      let state =
+        match state with
+        | `Active -> "active"
+        | `Pending -> "pending"
+      in
+      Abb.Future.return (Ok (Printf.sprintf "member(role=%s,state=%s)" role state))
+  | `Not_found _ -> Abb.Future.return (Ok "not-a-member")
+  | `Forbidden _ -> Abb.Future.return (Ok "app-cannot-read-org-members(needs-org-Members:read)")
 
 module Commit_status = struct
   type create_err = Githubc2_abb.call_err [@@deriving show]

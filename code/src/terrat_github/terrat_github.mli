@@ -24,6 +24,23 @@ type get_user_installations_err =
   ]
 [@@deriving show]
 
+type get_user_orgs_err =
+  [ Githubc2_abb.call_err
+  | `Unauthorized of Githubc2_components.Basic_error.t
+  | `Forbidden of Githubc2_components.Basic_error.t
+  | `Not_modified
+  ]
+[@@deriving show]
+
+type get_user_org_memberships_err =
+  [ Githubc2_abb.call_err
+  | `Unauthorized of Githubc2_components.Basic_error.t
+  | `Forbidden of Githubc2_components.Basic_error.t
+  | `Not_modified
+  | `Unprocessable_entity of Githubc2_components.Validation_error.t
+  ]
+[@@deriving show]
+
 type get_installation_repos_err =
   [ Githubc2_abb.call_err
   | `Not_modified
@@ -108,6 +125,7 @@ type get_tree_err =
 type get_team_membership_in_org_err = Githubc2_abb.call_err [@@deriving show]
 type get_repo_collaborator_permission_err = Githubc2_abb.call_err [@@deriving show]
 type get_org_membership_err = Githubc2_abb.call_err [@@deriving show]
+type get_org_membership_diag_err = Githubc2_abb.call_err [@@deriving show]
 
 module Commit_status : sig
   type create_err = Githubc2_abb.call_err [@@deriving show]
@@ -250,7 +268,16 @@ val fetch_diff_files :
 
 val get_user_installations :
   Githubc2_abb.t ->
-  (Githubc2_components.Installation.t list, [> get_user_installations_err ]) result Abb.Future.t
+  (Githubc2_components.Installation.t list * int, [> get_user_installations_err ]) result
+  Abb.Future.t
+
+val get_user_orgs :
+  Githubc2_abb.t ->
+  (Githubc2_components.Organization_simple.t list, [> get_user_orgs_err ]) result Abb.Future.t
+
+val get_user_org_memberships :
+  Githubc2_abb.t ->
+  (Githubc2_components.Org_membership.t list, [> get_user_org_memberships_err ]) result Abb.Future.t
 
 val get_installation_repos :
   Githubc2_abb.t ->
@@ -331,6 +358,12 @@ val get_org_membership :
   user:string ->
   Githubc2_abb.t ->
   ([ `Admin | `User ] option, [> get_org_membership_err ]) result Abb.Future.t
+
+val get_org_membership_diag :
+  org:string ->
+  user:string ->
+  Githubc2_abb.t ->
+  (string, [> get_org_membership_diag_err ]) result Abb.Future.t
 
 (** GitHub does not include Oauth operations in their JSON schema, so implementing here. *)
 module Oauth : sig
