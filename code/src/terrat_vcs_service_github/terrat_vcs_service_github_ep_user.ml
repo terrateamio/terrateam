@@ -119,6 +119,17 @@ module Installations = struct
         /^ read [%blob "sql/upsert_user_installations.sql"]
         /% Var.(uuid "user_id")
         /% Var.(array (bigint "installation_ids")))
+
+    let select_installations_for_diag () =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* id *)
+        Ret.bigint
+        //
+        (* login *)
+        Ret.text
+        /^ read [%blob "sql/select_installations_for_diag.sql"])
   end
 
   (* Render a GitHub installation as a compact, log-friendly summary. The installation [id] is the
@@ -137,17 +148,111 @@ module Installations = struct
     in
     Printf.sprintf "id=%d type=%s login=%s" id target_type login
 
+  (* App-side cross-check. For each org Terrateam has an installation for, ask the APP (installation
+     token) whether it considers [login] a member. If the app confirms an active membership in an org
+     whose installation the user's OWN token did not return, that is an airtight GitHub-side
+     regression to report. "app-cannot-read-org-members" instead means the app lacks the org
+     Members:read permission, which is itself a leading suspect for empty user installations. *)
+  let log_app_token_cross_check ~request_id ~user_id config storage ~login =
+    let vcs_config = Terrat_vcs_service_github_provider.Api.Config.vcs_config config in
+    let open Abb.Future.Infix_monad in
+    Pgsql_pool.with_conn storage ~f:(fun db ->
+        Pgsql_io.Prepared_stmt.fetch
+          db
+          (Sql.select_installations_for_diag ())
+          ~f:(fun id org_login -> (id, org_login)))
+    >>= function
+    | Error (#Pgsql_pool.err as err) ->
+        Logs.warn (fun m ->
+            m
+              "%s : DIAG : user=%a : cross-check could not read local installations : %a"
+              request_id
+              Uuidm.pp
+              user_id
+              Pgsql_pool.pp_err
+              err);
+        Abb.Future.return (Ok ())
+    | Error (#Pgsql_io.err as err) ->
+        Logs.warn (fun m ->
+            m
+              "%s : DIAG : user=%a : cross-check could not read local installations : %a"
+              request_id
+              Uuidm.pp
+              user_id
+              Pgsql_io.pp_err
+              err);
+        Abb.Future.return (Ok ())
+    | Ok installations ->
+        Logs.info (fun m ->
+            m
+              "%s : DIAG : user=%a : cross_check_login=%s : asking the app token about this user's \
+               membership in %d local installation(s)"
+              request_id
+              Uuidm.pp
+              user_id
+              login
+              (CCList.length installations));
+        Abbs_future_combinators.List_result.iter
+          ~f:(fun (installation_id, org_login) ->
+            Terrat_github.get_installation_access_token vcs_config (CCInt64.to_int installation_id)
+            >>= function
+            | Error err ->
+                Logs.warn (fun m ->
+                    m
+                      "%s : DIAG : user=%a : cross-check could not mint app token for org=%s \
+                       installation_id=%Ld : %a"
+                      request_id
+                      Uuidm.pp
+                      user_id
+                      org_login
+                      installation_id
+                      Terrat_github.pp_get_installation_access_token_err
+                      err);
+                Abb.Future.return (Ok ())
+            | Ok inst_token -> (
+                Terrat_github.with_client
+                  vcs_config
+                  (`Bearer inst_token)
+                  (Terrat_github.get_org_membership_diag ~org:org_login ~user:login)
+                >>= function
+                | Ok desc ->
+                    Logs.info (fun m ->
+                        m
+                          "%s : DIAG : user=%a : app_sees org=%s installation_id=%Ld : %s"
+                          request_id
+                          Uuidm.pp
+                          user_id
+                          org_login
+                          installation_id
+                          desc);
+                    Abb.Future.return (Ok ())
+                | Error err ->
+                    Logs.warn (fun m ->
+                        m
+                          "%s : DIAG : user=%a : app membership check failed org=%s \
+                           installation_id=%Ld : %a"
+                          request_id
+                          Uuidm.pp
+                          user_id
+                          org_login
+                          installation_id
+                          Terrat_github.pp_get_org_membership_diag_err
+                          err);
+                    Abb.Future.return (Ok ())))
+          installations
+        >>= fun _ -> Abb.Future.return (Ok ())
+
   (* Best-effort visibility probe. When GitHub returns no installations for a user's valid token we
      ask that same token what else it can see - the authenticated identity, the orgs it can list,
      and the user's org memberships (role + active/pending state). Comparing these against a working
      user pinpoints where access is lost on GitHub's side. Every sub-call swallows its own errors
      and only logs, so this never affects the response. *)
-  let log_github_visibility_diagnostics ~request_id ~user_id config token =
+  let log_github_visibility_diagnostics ~request_id ~user_id config storage token =
     let vcs_config = Terrat_vcs_service_github_provider.Api.Config.vcs_config config in
     let open Abb.Future.Infix_monad in
     Terrat_github.user ~config:vcs_config ~access_token:token ()
     >>= (fun res ->
-    (match res with
+    match res with
     | Ok current_user ->
         let module Gar = Githubc2_users.Get_authenticated.Responses.OK in
         let module Pr = Githubc2_components.Private_user in
@@ -158,7 +263,8 @@ module Installations = struct
           | Gar.Public_user { Pu.login; _ } -> login
         in
         Logs.info (fun m ->
-            m "%s : DIAG : user=%a : token_login=%s" request_id Uuidm.pp user_id login)
+            m "%s : DIAG : user=%a : token_login=%s" request_id Uuidm.pp user_id login);
+        Abb.Future.return (Some login)
     | Error err ->
         Logs.warn (fun m ->
             m
@@ -167,9 +273,9 @@ module Installations = struct
               Uuidm.pp
               user_id
               Terrat_github.pp_user_err
-              err));
-    Abb.Future.return ())
-    >>= fun () ->
+              err);
+        Abb.Future.return None)
+    >>= fun login_opt ->
     Terrat_github.with_client vcs_config (`Bearer token) Terrat_github.get_user_orgs
     >>= (fun res ->
     (match res with
@@ -245,7 +351,9 @@ module Installations = struct
               user_id
               Terrat_github.pp_get_user_org_memberships_err
               err));
-    Abb.Future.return (Ok ())
+    match login_opt with
+    | None -> Abb.Future.return (Ok ())
+    | Some login -> log_app_token_cross_check ~request_id ~user_id config storage ~login
 
   let get' ~request_id config storage user =
     let open Abbs_future_combinators.Infix_result_monad in
@@ -281,7 +389,7 @@ module Installations = struct
              request_id
              Uuidm.pp
              user_id);
-       log_github_visibility_diagnostics ~request_id ~user_id config token)
+       log_github_visibility_diagnostics ~request_id ~user_id config storage token)
      else Abb.Future.return (Ok ()))
     >>= fun () ->
     Pgsql_pool.with_conn storage ~f:(fun db ->
