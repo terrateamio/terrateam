@@ -68,6 +68,23 @@ type get_user_installations_err =
   ]
 [@@deriving show]
 
+type get_user_orgs_err =
+  [ Githubc2_abb.call_err
+  | `Unauthorized of Githubc2_components.Basic_error.t
+  | `Forbidden of Githubc2_components.Basic_error.t
+  | `Not_modified
+  ]
+[@@deriving show]
+
+type get_user_org_memberships_err =
+  [ Githubc2_abb.call_err
+  | `Unauthorized of Githubc2_components.Basic_error.t
+  | `Forbidden of Githubc2_components.Basic_error.t
+  | `Not_modified
+  | `Unprocessable_entity of Githubc2_components.Validation_error.t
+  ]
+[@@deriving show]
+
 type get_installation_repos_err =
   [ Githubc2_abb.call_err
   | `Not_modified
@@ -373,8 +390,34 @@ let get_user_installations client =
       make Parameters.(make ~per_page:100 ()))
   >>= fun resp ->
   match Openapi.Response.value resp with
-  | `OK R.OK.{ primary = Primary.{ installations; _ }; _ } -> Abb.Future.return (Ok installations)
+  | `OK R.OK.{ primary = Primary.{ installations; total_count; _ }; _ } ->
+      Abb.Future.return (Ok (installations, total_count))
   | (`Forbidden _ | `Not_modified | `Unauthorized _) as err -> Abb.Future.return (Error err)
+
+(* Diagnostic: the organizations the user's own token can see (gated by the app's org Members
+   permission and any org SSO/third-party approval). Used to localize empty /user/installations. *)
+let get_user_orgs client =
+  let open Abbs_future_combinators.Infix_result_monad in
+  Prmths.Counter.inc_one (Metrics.fn_call_total "get_user_orgs");
+  call client Githubc2_orgs.List_for_authenticated_user.(make Parameters.(make ~per_page:100 ()))
+  >>= fun resp ->
+  match Openapi.Response.value resp with
+  | `OK orgs -> Abb.Future.return (Ok orgs)
+  | (`Forbidden _ | `Not_modified | `Unauthorized _) as err -> Abb.Future.return (Error err)
+
+(* Diagnostic: the user's organization memberships (with role and active/pending state) as seen by
+   the user's token. Distinguishes "token cannot see the org at all" from "sees it but no install". *)
+let get_user_org_memberships client =
+  let open Abbs_future_combinators.Infix_result_monad in
+  Prmths.Counter.inc_one (Metrics.fn_call_total "get_user_org_memberships");
+  call
+    client
+    Githubc2_orgs.List_memberships_for_authenticated_user.(make Parameters.(make ~per_page:100 ()))
+  >>= fun resp ->
+  match Openapi.Response.value resp with
+  | `OK memberships -> Abb.Future.return (Ok memberships)
+  | (`Forbidden _ | `Not_modified | `Unauthorized _ | `Unprocessable_entity _) as err ->
+      Abb.Future.return (Error err)
 
 let get_installation_repos client =
   let module R = Githubc2_apps.List_repos_accessible_to_installation.Responses in

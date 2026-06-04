@@ -137,6 +137,116 @@ module Installations = struct
     in
     Printf.sprintf "id=%d type=%s login=%s" id target_type login
 
+  (* Best-effort visibility probe. When GitHub returns no installations for a user's valid token we
+     ask that same token what else it can see - the authenticated identity, the orgs it can list,
+     and the user's org memberships (role + active/pending state). Comparing these against a working
+     user pinpoints where access is lost on GitHub's side. Every sub-call swallows its own errors
+     and only logs, so this never affects the response. *)
+  let log_github_visibility_diagnostics ~request_id ~user_id config token =
+    let vcs_config = Terrat_vcs_service_github_provider.Api.Config.vcs_config config in
+    let open Abb.Future.Infix_monad in
+    Terrat_github.user ~config:vcs_config ~access_token:token ()
+    >>= (fun res ->
+    (match res with
+    | Ok current_user ->
+        let module Gar = Githubc2_users.Get_authenticated.Responses.OK in
+        let module Pr = Githubc2_components.Private_user in
+        let module Pu = Githubc2_components.Public_user in
+        let login =
+          match current_user with
+          | Gar.Private_user { Pr.primary = { Pr.Primary.login; _ }; _ }
+          | Gar.Public_user { Pu.login; _ } -> login
+        in
+        Logs.info (fun m ->
+            m "%s : DIAG : user=%a : token_login=%s" request_id Uuidm.pp user_id login)
+    | Error err ->
+        Logs.warn (fun m ->
+            m
+              "%s : DIAG : user=%a : identity lookup failed : %a"
+              request_id
+              Uuidm.pp
+              user_id
+              Terrat_github.pp_user_err
+              err));
+    Abb.Future.return ())
+    >>= fun () ->
+    Terrat_github.with_client vcs_config (`Bearer token) Terrat_github.get_user_orgs
+    >>= (fun res ->
+    (match res with
+    | Ok orgs ->
+        let module O = Githubc2_components.Organization_simple in
+        Logs.info (fun m ->
+            m
+              "%s : DIAG : user=%a : user_orgs_visible=%d : [%s]"
+              request_id
+              Uuidm.pp
+              user_id
+              (CCList.length orgs)
+              (String.concat
+                 ", "
+                 (CCList.map (fun { O.primary = { O.Primary.login; _ }; _ } -> login) orgs)))
+    | Error err ->
+        Logs.warn (fun m ->
+            m
+              "%s : DIAG : user=%a : user_orgs lookup failed (a 403 here means the token cannot \
+               read this user's org list at all - app org Members:read permission or org \
+               SSO/third-party approval) : %a"
+              request_id
+              Uuidm.pp
+              user_id
+              Terrat_github.pp_get_user_orgs_err
+              err));
+    Abb.Future.return ())
+    >>= fun () ->
+    Terrat_github.with_client vcs_config (`Bearer token) Terrat_github.get_user_org_memberships
+    >>= fun res ->
+    (match res with
+    | Ok memberships ->
+        let module Om = Githubc2_components.Org_membership in
+        let module O = Githubc2_components.Organization_simple in
+        let show_membership
+            {
+              Om.primary =
+                {
+                  Om.Primary.organization = { O.primary = { O.Primary.login; _ }; _ };
+                  role;
+                  state;
+                  _;
+                };
+              _;
+            } =
+          let role =
+            match role with
+            | `Admin -> "admin"
+            | `Billing_manager -> "billing_manager"
+            | `Member -> "member"
+          in
+          let state =
+            match state with
+            | `Active -> "active"
+            | `Pending -> "pending"
+          in
+          Printf.sprintf "%s(role=%s,state=%s)" login role state
+        in
+        Logs.info (fun m ->
+            m
+              "%s : DIAG : user=%a : user_org_memberships=%d : [%s]"
+              request_id
+              Uuidm.pp
+              user_id
+              (CCList.length memberships)
+              (String.concat ", " (CCList.map show_membership memberships)))
+    | Error err ->
+        Logs.warn (fun m ->
+            m
+              "%s : DIAG : user=%a : org memberships lookup failed : %a"
+              request_id
+              Uuidm.pp
+              user_id
+              Terrat_github.pp_get_user_org_memberships_err
+              err));
+    Abb.Future.return (Ok ())
+
   let get' ~request_id config storage user =
     let open Abbs_future_combinators.Infix_result_monad in
     let module I = Githubc2_components.Installation in
@@ -148,29 +258,32 @@ module Installations = struct
       (Terrat_vcs_service_github_provider.Api.Config.vcs_config config)
       (`Bearer token)
       Terrat_github.get_user_installations
-    >>= fun installations ->
-    (* What GitHub reports for this user's token. GET /user/installations only returns installations
-       the user can reach through repositories they can access, so an org member with no access to a
-       covered repository legitimately sees an empty list here even though the app is installed. *)
+    >>= fun (installations, total_count) ->
+    (* github_returned is what the user actually gets; total_count is GitHub's own count of
+       installations it considers accessible to this token (if they disagree, GitHub is filtering
+       the page). GET /user/installations only surfaces installations the user can reach through a
+       repository they can access. *)
     Logs.info (fun m ->
         m
-          "%s : INSTALLATIONS : user=%a : github_returned=%d : [%s]"
+          "%s : INSTALLATIONS : user=%a : github_returned=%d : total_count=%d : [%s]"
           request_id
           Uuidm.pp
           user_id
           (CCList.length installations)
+          total_count
           (String.concat ", " (CCList.map summarize_installation installations)));
-    if CCList.is_empty installations then
-      Logs.warn (fun m ->
-          m
-            "%s : INSTALLATIONS : user=%a : github returned zero installations - the user's OAuth \
-             token cannot see any installation of this GitHub App. This is expected when the user \
-             cannot access (through their organization membership) any repository the app is \
-             installed on; verify the user has access to at least one covered repository and that \
-             SAML SSO is authorized for their token."
-            request_id
-            Uuidm.pp
-            user_id);
+    (if CCList.is_empty installations then (
+       Logs.warn (fun m ->
+           m
+             "%s : INSTALLATIONS : user=%a : github_returned=0 - GitHub returned an empty \
+              installation list for this user's valid token (this is the demo-mode trigger). \
+              Emitting visibility diagnostics below to localize where access is lost."
+             request_id
+             Uuidm.pp
+             user_id);
+       log_github_visibility_diagnostics ~request_id ~user_id config token)
+     else Abb.Future.return (Ok ()))
+    >>= fun () ->
     Pgsql_pool.with_conn storage ~f:(fun db ->
         Pgsql_io.Prepared_stmt.fetch
           db
