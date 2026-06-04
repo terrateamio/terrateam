@@ -95,13 +95,20 @@ A gate is satisfied only when all conditions are met. See [documentation](https:
   {%- endif %}
 
 ## Terrateam Plan Output{% if environment is defined %}: {{ environment }}{% endif %} :thumbsup:
+
+| Dir | Workspace | Status |
+|-----|-----------|--------|
+{%- for d in dirspaces %}
+| `{{ d.dir }}` | `{{ d.workspace }}` | {% if d.success %}{% if d.has_changes is defined and d.has_changes %}⚠️ Changes{% elif d.has_changes is defined and not d.has_changes %}✅ No changes{% else %}✅{% endif %}{% else %}❌ Failed{% endif %} |
+{%- endfor %}
+
 <details>
-  <summary>Expand for plan output details</summary>
+  <summary>Expand for full plan output</summary>
 
 {%- else %}
 ## Plans :heavy_multiplication_x:
   {%- if work_manifest_url is defined %}
- 
+
 Outputs can be viewed in the Terrateam Console [here]({{ work_manifest_url }}).
 
   {%- endif %}
@@ -115,8 +122,15 @@ Running plans **FAILED**.  See **Terrateam Plan Output**.
 After resolving the issue, run `terrateam plan` to execute the plan operation again.
 
 ## Terrateam Plan Output{% if environment is defined %}: {{ environment }}{% endif %} :heavy_multiplication_x:
+
+| Dir | Workspace | Status |
+|-----|-----------|--------|
+{%- for d in dirspaces %}
+| `{{ d.dir }}` | `{{ d.workspace }}` | {% if d.success %}{% if d.has_changes is defined and d.has_changes %}⚠️ Changes{% elif d.has_changes is defined and not d.has_changes %}✅ No changes{% else %}✅{% endif %}{% else %}❌ Failed{% endif %} |
+{%- endfor %}
+
 <details>
-  <summary>Expand for plan output details</summary>
+  <summary>Expand for full plan output</summary>
 
 {%- endif %}
 {%- if pre_hooks %}
