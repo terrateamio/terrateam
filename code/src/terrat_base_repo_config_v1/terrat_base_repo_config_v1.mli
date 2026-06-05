@@ -586,6 +586,16 @@ module Engine : sig
     [@@deriving make, show, yojson, eq]
   end
 
+  module Tfmigrate : sig
+    type t = {
+      override_tf_cmd : string option;
+      tf_cmd : string; [@default "terraform"]
+      tf_version : string option;
+      version : string option;
+    }
+    [@@deriving make, show, yojson, eq]
+  end
+
   type t =
     | Cdktf of Cdktf.t
     | Custom of Custom.t
@@ -596,6 +606,7 @@ module Engine : sig
     | Stategraph of Stategraph.t
     | Terraform of Terraform.t
     | Terragrunt of Terragrunt.t
+    | Tfmigrate of Tfmigrate.t
   [@@deriving show, yojson, eq]
 end
 
