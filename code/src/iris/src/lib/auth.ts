@@ -237,6 +237,25 @@ export async function getCurrentUser(): Promise<User | null> {
 }
 
 export async function logout(): Promise<void> {
+  // Clear cached installation state first so a different user signing in on a
+  // shared browser can never see the previous user's last-known-good list.
+  try {
+    const {
+      installations,
+      selectedInstallation,
+      installationsError,
+      installationsInitialized,
+      clearInstallationsCache
+    } = await import('./stores');
+    installations.set([]);
+    selectedInstallation.set(null);
+    installationsError.set(null);
+    installationsInitialized.set(false);
+    clearInstallationsCache();
+  } catch (e) {
+    console.warn('Failed to clear installation state on logout:', e);
+  }
+
   try {
     const response = await fetch(`${API_BASE}/api/v1/logout`, {
       method: 'POST',
