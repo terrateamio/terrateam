@@ -66,6 +66,7 @@ services:
       # SELF_HOSTED_INFRACOST_API_KEY: "REPLACE_WITH_32_CHARACTER_STRING"  # Must match cloud-pricing-api key
       TERRAT_UI_BASE: "${TERRAT_UI_BASE}"
       TERRAT_WEB_BASE_URL: "${TERRAT_WEB_BASE_URL}"
+      TERRAT_API_BASE: "${TERRAT_API_BASE}"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 3s
