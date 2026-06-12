@@ -275,7 +275,6 @@ export default defineConfig({
           label: "Company",
           collapsed: true,
           items: [
-            { label: "Support", link: "/support" },
             { label: "Billing", link: "/billing" },
           ],
         },
