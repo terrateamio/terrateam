@@ -95,6 +95,16 @@ A gate is satisfied only when all conditions are met. See [documentation](https:
   {%- endif %}
 
 ## Terrateam Plan Output{% if environment is defined %}: {{ environment }}{% endif %} :thumbsup:
+
+{%- set summaries = dirspaces | selectattr("plan_summary") | list %}
+{%- if summaries %}
+| Dir | Workspace | Changes |
+| --- | --------- | ------- |
+  {%- for d in summaries %}
+| `{{ d.dir }}` | `{{ d.workspace }}` | {{ d.plan_summary }} |
+  {%- endfor %}
+
+{%- endif %}
 <details>
   <summary>Expand for plan output details</summary>
 
