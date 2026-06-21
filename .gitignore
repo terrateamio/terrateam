@@ -25,6 +25,9 @@ pnpm-debug.log*
 # Temporary files
 *~
 
+# Test TAP output
+*.tap
+
 # Python cache
 *__pycache__.*
 
