@@ -854,9 +854,34 @@ module Cursor = struct
         Io.reset conn >>= fun _ -> Abb.Future.return (Error (`Unmatching_frame fs))
 
   and consume_fetch_process_frame conn row_func st fs data =
-    match Row_func.F.kbind (row_func.Row_func.f st) data row_func.Row_func.func with
-    | Some fr -> consume_fetch_frames conn row_func (row_func.Row_func.post_f st fr) fs
-    | None -> Abb.Future.return (Error (`Bad_result data))
+    let open Abb.Future.Infix_monad in
+    (* A row decode failure (None) OR a raising row function (e.g. one that uses
+       get_or_failwith / get_exn) must NOT abandon the rest of the response: the
+       remaining DataRows + CommandComplete + ReadyForQuery would be left on the
+       wire, desyncing the next operation and leaving the connection idle in an
+       open transaction.  So drain to ReadyForQuery first, then surface the
+       failure.  Note: run_db's serializer propagates a raised exception but does
+       NOT clean up the connection, so cleaning up here is the only safe place. *)
+    match
+      try `Ok (Row_func.F.kbind (row_func.Row_func.f st) data row_func.Row_func.func)
+      with exn -> `Exn (exn, Printexc.get_raw_backtrace ())
+    with
+    | `Ok (Some fr) -> consume_fetch_frames conn row_func (row_func.Row_func.post_f st fr) fs
+    | `Ok None ->
+        drain_fetch_response conn fs >>= fun () -> Abb.Future.return (Error (`Bad_result data))
+    | `Exn (exn, bt) ->
+        drain_fetch_response conn fs >>= fun () -> Printexc.raise_with_backtrace exn bt
+
+  (* Consume and discard frames up to (and including) the next ReadyForQuery,
+     WITHOUT sending a Sync (the fetch's own Sync is already outstanding, so its
+     ReadyForQuery is already on its way).  Best effort: a read error just ends
+     the drain. *)
+  and drain_fetch_response conn fs =
+    let open Abb.Future.Infix_monad in
+    Io.consume_until ~fs conn (function
+      | Pgsql_codec.Frame.Backend.ReadyForQuery _ -> true
+      | _ -> false)
+    >>= fun _ -> Abb.Future.return ()
 
   and consume_fetch_end conn row_func st = function
     | [] ->
