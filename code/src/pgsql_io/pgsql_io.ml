@@ -67,41 +67,78 @@ let log_query t query =
   t.query_log.(t.query_log_pos) <- query;
   t.query_log_pos <- (t.query_log_pos + 1) mod query_log_size
 
-(* Only called on a detected desync -- formats the recent history into one log
-   line per category, truncated so a giant row/query can't blow up the log. *)
+let dump_max_frames = 256
+
+(* Only called on a detected desync. Emits ONE log line per frame and per query
+   rather than one megaline per category: every message stays short and complete,
+   so there is no length-cap exposure. Two rules make this robust against the log
+   pipeline (which cuts a message at its first newline):
+   - each line is internally flattened -- a single frame's derived-show is itself
+     multi-line, so even a one-frame line must collapse its own whitespace;
+   - each line carries an explicit zero-padded index, so the original order can be
+     reconstructed even if the pipeline interleaves or reorders lines.
+   Records are newest-first (index 0 = most recent), so the culprit is at the
+   front and any dropped/rate-limited lines cost only old context. *)
 let dump_desync_context t ~reason ~received =
-  let trunc n s = if String.length s > n then String.sub s 0 n ^ "…" else s in
+  let id = Uuidm.to_string t.id in
+  (* Collapse all whitespace runs to single spaces so each emitted line is a
+     single physical line (no embedded newlines for the pipeline to cut at). *)
+  let flatten s =
+    let b = Buffer.create (String.length s) in
+    let prev_sp = ref true in
+    String.iter
+      (fun c ->
+        match c with
+        | ' ' | '\t' | '\n' | '\r' ->
+            if not !prev_sp then Buffer.add_char b ' ';
+            prev_sp := true
+        | c ->
+            Buffer.add_char b c;
+            prev_sp := false)
+      s;
+    Buffer.contents b
+  in
+  let trunc n s =
+    let s = flatten s in
+    if String.length s > n then String.sub s 0 n ^ "…" else s
+  in
+  let idx pos size i = (((pos - 1 - i) mod size) + size) mod size in
   let frames =
     CCList.init frame_log_size (fun i ->
-        match t.frame_log.((t.frame_log_pos + i) mod frame_log_size) with
+        match t.frame_log.(idx t.frame_log_pos frame_log_size i) with
         | LF_none -> None
-        | LF_tx f -> Some (trunc 160 (Format.asprintf "Tx %a" Pgsql_codec.Frame.Frontend.pp f))
-        | LF_rx f -> Some (trunc 160 (Format.asprintf "Rx %a" Pgsql_codec.Frame.Backend.pp f)))
+        | LF_tx f -> Some (trunc 300 (Format.asprintf "Tx %a" Pgsql_codec.Frame.Frontend.pp f))
+        | LF_rx f -> Some (trunc 300 (Format.asprintf "Rx %a" Pgsql_codec.Frame.Backend.pp f)))
     |> CCList.keep_some
   in
   let queries =
     CCList.init query_log_size (fun i ->
-        let q = t.query_log.((t.query_log_pos + i) mod query_log_size) in
-        if q = "" then None else Some (trunc 200 q))
+        let q = t.query_log.(idx t.query_log_pos query_log_size i) in
+        if q = "" then None else Some (trunc 500 q))
     |> CCList.keep_some
   in
   let received =
-    CCList.map (fun f -> trunc 200 (Format.asprintf "%a" Pgsql_codec.Frame.Backend.pp f)) received
+    CCList.map (fun f -> trunc 500 (Format.asprintf "%a" Pgsql_codec.Frame.Backend.pp f)) received
   in
+  let shown_frames = CCList.take dump_max_frames frames in
   Logs.err (fun m ->
       m
-        "%s : PGSQL_DESYNC : reason=%s : in_tx=%b : received=[%s]"
-        (Uuidm.to_string t.id)
+        "%s : PGSQL_DESYNC : reason=%s : in_tx=%b : received=%d : queries=%d : frames=%d/%d \
+         (newest_first)"
+        id
         reason
         t.in_tx
-        (String.concat " ; " received));
-  Logs.err (fun m ->
-      m
-        "%s : PGSQL_DESYNC : recent_queries=[%s]"
-        (Uuidm.to_string t.id)
-        (String.concat " | " queries));
-  Logs.err (fun m ->
-      m "%s : PGSQL_DESYNC : recent_frames=[%s]" (Uuidm.to_string t.id) (String.concat " ; " frames))
+        (List.length received)
+        (List.length queries)
+        (List.length shown_frames)
+        (List.length frames));
+  List.iteri
+    (fun i s -> Logs.err (fun m -> m "%s : PGSQL_DESYNC : received[%02d]=%s" id i s))
+    received;
+  List.iteri (fun i s -> Logs.err (fun m -> m "%s : PGSQL_DESYNC : query[%02d]=%s" id i s)) queries;
+  List.iteri
+    (fun i s -> Logs.err (fun m -> m "%s : PGSQL_DESYNC : frame[%04d]=%s" id i s))
+    shown_frames
 
 let add_expected_frame t frame = t.expected_frames <- frame :: t.expected_frames
 let add_expected_frames t frames = t.expected_frames <- List.rev frames @ t.expected_frames
