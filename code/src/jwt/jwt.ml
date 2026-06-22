@@ -30,13 +30,14 @@ module Verifier = struct
   let rs256_verify key hp signature =
     Mirage_crypto_pk.Rsa.PKCS1.verify ~hashp:(( = ) `SHA256) ~key ~signature (`Message hp)
 
-  let mac_verify algo hp signature = algo hp = signature
+  (* Constant-time comparison to prevent timing attacks *)
+  let mac_verify algo hp signature = Eqaf.equal (algo hp) signature
 
   let verify t hp signature =
     let f =
       match t with
-      | HS256 x -> mac_verify Digestif.SHA256.(CCFun.(hmac_string ~key:x %> to_raw_string))
-      | HS512 x -> mac_verify Digestif.SHA512.(CCFun.(hmac_string ~key:x %> to_raw_string))
+      | HS256 x -> mac_verify (fun m -> Digestif.SHA256.(to_raw_string (hmac_string ~key:x m)))
+      | HS512 x -> mac_verify (fun m -> Digestif.SHA512.(to_raw_string (hmac_string ~key:x m)))
       | RS256 x -> rs256_verify x
     in
     f hp signature
@@ -65,8 +66,8 @@ module Signer = struct
   let sign t hp =
     let f =
       match t with
-      | HS256 x -> mac_sign Digestif.SHA256.(CCFun.(hmac_string ~key:x %> to_raw_string))
-      | HS512 x -> mac_sign Digestif.SHA512.(CCFun.(hmac_string ~key:x %> to_raw_string))
+      | HS256 x -> mac_sign (fun m -> Digestif.SHA256.(to_raw_string (hmac_string ~key:x m)))
+      | HS512 x -> mac_sign (fun m -> Digestif.SHA512.(to_raw_string (hmac_string ~key:x m)))
       | RS256 x -> rs256_sign x
     in
     f hp

@@ -44,6 +44,15 @@ let gen_unique_id t prefix =
   t.unique_id <- t.unique_id + 1;
   ret
 
+(* Defined up here (rather than near the other lifecycle functions) so the Io
+   module can call it directly when it needs to fail a connection. *)
+let destroy t =
+  (* Destroy is idempotent *)
+  if t.connected then (
+    t.connected <- false;
+    Abbs_future_combinators.ignore (Abbs_io_buffered.close_writer t.w))
+  else Abb.Future.return ()
+
 type integrity_err = {
   code : string;
   message : string;
@@ -171,16 +180,64 @@ module Io = struct
          * List.iter (fun frame -> Printf.printf "Fs %s\n%!" (Pgsql_codec.Frame.Backend.show frame)) fs; *)
         Abb.Future.return (Ok fs)
 
-  let error_response conn fs =
+  (* The backend's ReadyForQuery status byte ('I' idle, 'T' in tx, 'E' failed
+     tx) is the authoritative transaction state.  Trust it over our own in_tx
+     flag.  Gating the drain on in_tx (rather than resyncing from the server)
+     means a stale in_tx makes us reject the real ReadyForQuery and wait forever
+     for one that will never come -- a permanent idle-in-transaction hang.  Loud
+     log on disagreement so the desync is visible in production. *)
+  let resync_in_tx conn status =
+    let backend_in_tx = status = 'T' || status = 'E' in
+    if backend_in_tx <> conn.in_tx then (
+      (* The connection was in an unexpected state: our in_tx flag disagreed with
+         the backend's authoritative transaction status.  Resync the flag so this
+         op fails fast (instead of hanging on a ReadyForQuery that never comes),
+         but also FAIL THE CONNECTION -- a desync means we can no longer trust the
+         frame stream, so mark it dead.  The pool destroys dead connections on
+         return rather than handing the corruption to the next caller. *)
+      Logs.err (fun m ->
+          m
+            "%s CONNECTION DESYNC DETECTED : in_tx=%b backend_status=%c : failing and closing the \
+             connection"
+            (Uuidm.to_string conn.id)
+            conn.in_tx
+            status);
+      conn.in_tx <- backend_in_tx;
+      (* Fail the connection: a desync means we can no longer trust the frame
+         stream.  [destroy] flips [connected] AND closes the writer, so the
+         underlying socket is released (not leaked) and the connection is never
+         reused.  Idempotent, so a later [destroy] from the pool is a safe
+         no-op. *)
+      destroy conn)
+    else (
+      conn.in_tx <- backend_in_tx;
+      Abb.Future.return ())
+
+  (* Drain frames up to the next ReadyForQuery -- [consume] runs the actual
+     consume loop with the status-capturing predicate we pass it -- then resync
+     conn.in_tx from the backend's authoritative status.  Shared by
+     [error_response] and [reset] so the ReadyForQuery / in_tx handling lives in
+     exactly one place. *)
+  let drain_to_ready_for_query conn ~consume =
     let open Abbs_future_combinators.Infix_result_monad in
     conn.expected_frames <- [];
-    consume_until ~fs conn (function
-      | Pgsql_codec.Frame.Backend.ReadyForQuery { status = 'T' | 'E' } when conn.in_tx -> true
-      | Pgsql_codec.Frame.Backend.ReadyForQuery { status = 'I' } when not conn.in_tx -> true
+    let status = ref None in
+    consume (function
+      | Pgsql_codec.Frame.Backend.ReadyForQuery { status = s } ->
+          status := Some s;
+          true
       | _ -> false)
     >>= fun res ->
+    let open Abb.Future.Infix_monad in
+    (match !status with
+      | Some s -> resync_in_tx conn s
+      | None -> Abb.Future.return ())
+    >>= fun () ->
     assert (res = []);
     Abb.Future.return (Ok ())
+
+  let error_response conn fs =
+    drain_to_ready_for_query conn ~consume:(fun is_ready -> consume_until ~fs conn is_ready)
 
   let handle_err_frame msgs =
     let c = CCList.Assoc.get_exn ~eq:Char.equal 'C' msgs in
@@ -246,20 +303,8 @@ module Io = struct
     let open Abbs_future_combinators.Infix_result_monad in
     send_frame conn Pgsql_codec.Frame.Frontend.Sync
     >>= fun () ->
-    conn.expected_frames <- [];
-    consume_matching
-      ~skip_leading_unmatched:true
-      conn
-      Pgsql_codec.Frame.Backend.
-        [
-          (function
-          | ReadyForQuery { status = 'T' | 'E' } when conn.in_tx -> true
-          | ReadyForQuery { status = 'I' } when not conn.in_tx -> true
-          | _ -> false);
-        ]
-    >>= fun res ->
-    assert (res = []);
-    Abb.Future.return (Ok ())
+    drain_to_ready_for_query conn ~consume:(fun is_ready ->
+        consume_matching ~skip_leading_unmatched:true conn [ is_ready ])
 end
 
 type frame_err =
@@ -809,9 +854,34 @@ module Cursor = struct
         Io.reset conn >>= fun _ -> Abb.Future.return (Error (`Unmatching_frame fs))
 
   and consume_fetch_process_frame conn row_func st fs data =
-    match Row_func.F.kbind (row_func.Row_func.f st) data row_func.Row_func.func with
-    | Some fr -> consume_fetch_frames conn row_func (row_func.Row_func.post_f st fr) fs
-    | None -> Abb.Future.return (Error (`Bad_result data))
+    let open Abb.Future.Infix_monad in
+    (* A row decode failure (None) OR a raising row function (e.g. one that uses
+       get_or_failwith / get_exn) must NOT abandon the rest of the response: the
+       remaining DataRows + CommandComplete + ReadyForQuery would be left on the
+       wire, desyncing the next operation and leaving the connection idle in an
+       open transaction.  So drain to ReadyForQuery first, then surface the
+       failure.  Note: run_db's serializer propagates a raised exception but does
+       NOT clean up the connection, so cleaning up here is the only safe place. *)
+    match
+      try `Ok (Row_func.F.kbind (row_func.Row_func.f st) data row_func.Row_func.func)
+      with exn -> `Exn (exn, Printexc.get_raw_backtrace ())
+    with
+    | `Ok (Some fr) -> consume_fetch_frames conn row_func (row_func.Row_func.post_f st fr) fs
+    | `Ok None ->
+        drain_fetch_response conn fs >>= fun () -> Abb.Future.return (Error (`Bad_result data))
+    | `Exn (exn, bt) ->
+        drain_fetch_response conn fs >>= fun () -> Printexc.raise_with_backtrace exn bt
+
+  (* Consume and discard frames up to (and including) the next ReadyForQuery,
+     WITHOUT sending a Sync (the fetch's own Sync is already outstanding, so its
+     ReadyForQuery is already on its way).  Best effort: a read error just ends
+     the drain. *)
+  and drain_fetch_response conn fs =
+    let open Abb.Future.Infix_monad in
+    Io.consume_until ~fs conn (function
+      | Pgsql_codec.Frame.Backend.ReadyForQuery _ -> true
+      | _ -> false)
+    >>= fun _ -> Abb.Future.return ()
 
   and consume_fetch_end conn row_func st = function
     | [] ->
@@ -1458,13 +1528,6 @@ let create
     | Error `Unsupported_auth_sspi_err
     | Error (`Unexpected _)
     | Error (`Parse_error _) ) as err -> Abb.Future.return err
-
-let destroy t =
-  (* Destroy is idempotent *)
-  if t.connected then (
-    t.connected <- false;
-    Abbs_future_combinators.ignore (Abbs_io_buffered.close_writer t.w))
-  else Abb.Future.return ()
 
 let connected t = t.connected
 let id t = t.id

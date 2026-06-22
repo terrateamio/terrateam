@@ -111,10 +111,10 @@ module Make (Abb : Abb_intf.S) = struct
       Abb.Socket.sendto
         ctx.sock
         ~bufs:
-          Abb_intf.Write_buf.[ { buf = Bytes.of_string data; pos = 0; len = String.length data } ]
+          Abb_intf.Write_buf.[ { buf = Bytes.of_string data; pos = 0; len = CCString.length data } ]
         ctx.sockaddr
       >>= function
-      | Ok n when n = String.length data -> (
+      | Ok n when n = CCString.length data -> (
           let buf = Bytes.create (64 * 1024) in
           Abb.Socket.recvfrom ctx.sock ~buf ~pos:0 ~len:(Bytes.length buf)
           >>= function
