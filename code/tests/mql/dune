@@ -1,4 +1,5 @@
 (tests
  (names test_string_roundtrip test_parser_errors)
  (libraries mql oth)
- (preprocess (pps ppx_deriving.show ppx_deriving.eq)))
+ (preprocess
+  (pps ppx_deriving.show ppx_deriving.eq)))

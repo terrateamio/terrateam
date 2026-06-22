@@ -1,4 +1,5 @@
 (test
  (name test)
  (libraries mql_to_pgsql oth)
- (preprocess (pps ppx_deriving.show ppx_deriving.eq)))
+ (preprocess
+  (pps ppx_deriving.show ppx_deriving.eq)))

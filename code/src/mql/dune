@@ -1,4 +1,5 @@
 (library
  (name mql)
  (libraries containers mql_ast mql_lexer mql_parser)
- (preprocess (pps ppx_deriving.show ppx_deriving.eq)))
+ (preprocess
+  (pps ppx_deriving.show ppx_deriving.eq)))

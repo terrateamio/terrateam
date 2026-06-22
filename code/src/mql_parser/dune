@@ -1,7 +1,8 @@
 (library
  (name mql_parser)
  (wrapped false)
- (flags (:standard -w -27))
+ (flags
+  (:standard -w -27))
  (libraries menhirCST menhirLib mql_ast))
 
 (menhir

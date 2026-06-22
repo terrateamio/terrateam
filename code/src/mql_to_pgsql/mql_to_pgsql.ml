@@ -269,8 +269,8 @@ let floats t = t.rw.Rw.floats
 let valid_identifier s =
   (not (CCString.is_empty s))
   && (match s.[0] with
-     | 'a' .. 'z' | 'A' .. 'Z' | '_' -> true
-     | _ -> false)
+    | 'a' .. 'z' | 'A' .. 'Z' | '_' -> true
+    | _ -> false)
   && CCString.for_all
        (function
          | 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' -> true
@@ -412,7 +412,7 @@ let lookup_col_type ?table ~rw col =
       | Some [ (_, col) ] -> Some col.Schema.Column.type_
       | Some (_ :: _) -> raise (Rw_exn (`Ambiguous_column_err col))
       | None
-      (* An unrecognised bare column is only tolerated when a table with an
+        (* An unrecognised bare column is only tolerated when a table with an
          unknown column set (a CTE / [unnest] / subquery-derived table) is
          actually IN SCOPE for this select -- the column could belong to it. *)
         when String_map.exists
