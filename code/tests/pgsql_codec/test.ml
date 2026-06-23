@@ -434,9 +434,35 @@ let test_bind_binary_format =
       let encoded = Buffer.contents buf in
       assert (String.length encoded > 0))
 
+(* Regression: a frame whose final bytes complete it EXACTLY on a read boundary
+   must be decoded, not stranded.  Only `bytes n` (a value field, e.g. a
+   ReadyForQuery status or a DataRow column) arms needed_bytes; if the remaining
+   bytes are then delivered exactly, the decoder used to leave needed_bytes at 0
+   and return Ok [] -- stranding the complete frame in its buffer and hanging the
+   connection (idle-in-transaction reap at 240s in production). *)
+let test_exact_boundary_decode =
+  Oth.test
+    ~desc:"Frame completing exactly on a boundary decodes"
+    ~name:"exact boundary decode"
+    (fun _ ->
+      let decoder = Pgsql_codec.Decode.create () in
+      (* ReadyForQuery: 'Z' + int32 length(5) + 1 status char.  The status is read
+         via `bytes 1`, so splitting before it arms needed_bytes; the status byte
+         then completes the frame exactly. *)
+      let header = Bytes.of_string "Z\000\000\000\005" in
+      let status = Bytes.of_string "I" in
+      let r1 = Pgsql_codec.Decode.backend_msg decoder header ~pos:0 ~len:(Bytes.length header) in
+      assert (r1 = Ok []);
+      assert (Pgsql_codec.Decode.needed_bytes decoder = Some 1);
+      let r2 = Pgsql_codec.Decode.backend_msg decoder status ~pos:0 ~len:(Bytes.length status) in
+      (* The frame must be SURFACED here, not stranded.  Buggy code returned Ok []
+         (and left needed_bytes at Some 0), which is what hung the connection. *)
+      assert (r2 = Ok Pgsql_codec.Frame.Backend.[ ReadyForQuery { status = 'I' } ]))
+
 let test =
   Oth.parallel
     [
+      test_exact_boundary_decode;
       test_empty_input;
       test_frontend_encode;
       test_partial_msg_decode;

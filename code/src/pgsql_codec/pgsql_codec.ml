@@ -486,8 +486,16 @@ module Decode = struct
     else (
       Buffer.add_subbytes t.buf buf pos len;
       t.needed_bytes <- t.needed_bytes - len;
-      let b = Buffer.to_bytes t.buf in
-      if t.needed_bytes < 0 then run_backend_msg t 0 b (Bytes.length b) else Ok [])
+      (* <= 0, not < 0: when exactly the needed bytes arrive the frame is complete
+         and must be decoded.  Treating exactly-0 as "still waiting" stranded the
+         buffered frame and left needed_bytes at Some 0, hanging the read.  Reset
+         to -1 first since run_backend_msg only re-arms needed_bytes if a *later*
+         frame is still partial. *)
+      if t.needed_bytes <= 0 then (
+        t.needed_bytes <- -1;
+        let b = Buffer.to_bytes t.buf in
+        run_backend_msg t 0 b (Bytes.length b))
+      else Ok [])
 
   let frontend_msg t ~pos ~len buf = failwith "nyi"
   let needed_bytes t = if t.needed_bytes < 0 then None else Some t.needed_bytes
