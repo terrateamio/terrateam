@@ -14,16 +14,6 @@ module Backend_key_data = struct
   }
 end
 
-(* Lightweight per-connection diagnostic history.  We keep a ring buffer of the
-   recent control frames (DataRow/CopyData are skipped -- they are bulk and
-   uninteresting for protocol desyncs) and of the recent SQL.  Pushing is O(1)
-   and allocation-free; we only ever format/log this when a desync is detected,
-   so it is cheap enough for production. *)
-type logged_frame =
-  | LF_none
-  | LF_tx of Pgsql_codec.Frame.Frontend.t
-  | LF_rx of Pgsql_codec.Frame.Backend.t
-
 type t = {
   mutable connected : bool;
   decoder : Pgsql_codec.Decode.t;
@@ -39,106 +29,7 @@ type t = {
   mutable busy : bool;
   buf_size_threshold : int;
   id : Uuidm.t;
-  frame_log : logged_frame array;
-  mutable frame_log_pos : int;
-  query_log : string array;
-  mutable query_log_pos : int;
 }
-
-let frame_log_size = 1024
-let query_log_size = 64
-
-let log_tx_frame t frame =
-  (* Skip bulk data frames -- only protocol/control frames matter for desyncs. *)
-  match frame with
-  | Pgsql_codec.Frame.Frontend.CopyData _ -> ()
-  | _ ->
-      t.frame_log.(t.frame_log_pos) <- LF_tx frame;
-      t.frame_log_pos <- (t.frame_log_pos + 1) mod frame_log_size
-
-let log_rx_frame t frame =
-  match frame with
-  | Pgsql_codec.Frame.Backend.DataRow _ | Pgsql_codec.Frame.Backend.CopyData _ -> ()
-  | _ ->
-      t.frame_log.(t.frame_log_pos) <- LF_rx frame;
-      t.frame_log_pos <- (t.frame_log_pos + 1) mod frame_log_size
-
-let log_query t query =
-  t.query_log.(t.query_log_pos) <- query;
-  t.query_log_pos <- (t.query_log_pos + 1) mod query_log_size
-
-let dump_max_frames = 256
-
-(* Only called on a detected desync. Emits ONE log line per frame and per query
-   rather than one megaline per category: every message stays short and complete,
-   so there is no length-cap exposure. Two rules make this robust against the log
-   pipeline (which cuts a message at its first newline):
-   - each line is internally flattened -- a single frame's derived-show is itself
-     multi-line, so even a one-frame line must collapse its own whitespace;
-   - each line carries an explicit zero-padded index, so the original order can be
-     reconstructed even if the pipeline interleaves or reorders lines.
-   Records are newest-first (index 0 = most recent), so the culprit is at the
-   front and any dropped/rate-limited lines cost only old context. *)
-let dump_desync_context t ~reason ~received =
-  let id = Uuidm.to_string t.id in
-  (* Collapse all whitespace runs to single spaces so each emitted line is a
-     single physical line (no embedded newlines for the pipeline to cut at). *)
-  let flatten s =
-    let b = Buffer.create (String.length s) in
-    let prev_sp = ref true in
-    String.iter
-      (fun c ->
-        match c with
-        | ' ' | '\t' | '\n' | '\r' ->
-            if not !prev_sp then Buffer.add_char b ' ';
-            prev_sp := true
-        | c ->
-            Buffer.add_char b c;
-            prev_sp := false)
-      s;
-    Buffer.contents b
-  in
-  let trunc n s =
-    let s = flatten s in
-    if String.length s > n then String.sub s 0 n ^ "…" else s
-  in
-  let idx pos size i = (((pos - 1 - i) mod size) + size) mod size in
-  let frames =
-    CCList.init frame_log_size (fun i ->
-        match t.frame_log.(idx t.frame_log_pos frame_log_size i) with
-        | LF_none -> None
-        | LF_tx f -> Some (trunc 300 (Format.asprintf "Tx %a" Pgsql_codec.Frame.Frontend.pp f))
-        | LF_rx f -> Some (trunc 300 (Format.asprintf "Rx %a" Pgsql_codec.Frame.Backend.pp f)))
-    |> CCList.keep_some
-  in
-  let queries =
-    CCList.init query_log_size (fun i ->
-        let q = t.query_log.(idx t.query_log_pos query_log_size i) in
-        if q = "" then None else Some (trunc 500 q))
-    |> CCList.keep_some
-  in
-  let received =
-    CCList.map (fun f -> trunc 500 (Format.asprintf "%a" Pgsql_codec.Frame.Backend.pp f)) received
-  in
-  let shown_frames = CCList.take dump_max_frames frames in
-  Logs.err (fun m ->
-      m
-        "%s : PGSQL_DESYNC : reason=%s : in_tx=%b : received=%d : queries=%d : frames=%d/%d \
-         (newest_first)"
-        id
-        reason
-        t.in_tx
-        (List.length received)
-        (List.length queries)
-        (List.length shown_frames)
-        (List.length frames));
-  List.iteri
-    (fun i s -> Logs.err (fun m -> m "%s : PGSQL_DESYNC : received[%02d]=%s" id i s))
-    received;
-  List.iteri (fun i s -> Logs.err (fun m -> m "%s : PGSQL_DESYNC : query[%02d]=%s" id i s)) queries;
-  List.iteri
-    (fun i s -> Logs.err (fun m -> m "%s : PGSQL_DESYNC : frame[%04d]=%s" id i s))
-    shown_frames
 
 let add_expected_frame t frame = t.expected_frames <- frame :: t.expected_frames
 let add_expected_frames t frames = t.expected_frames <- List.rev frames @ t.expected_frames
@@ -193,7 +84,6 @@ module Io = struct
 
   let send_frame conn frame =
     if conn.connected then (
-      log_tx_frame conn frame;
       let send_frame' =
         Logs.debug (fun m ->
             m "%s Tx %a" (Uuidm.to_string conn.id) Pgsql_codec.Frame.Frontend.pp frame);
@@ -238,7 +128,6 @@ module Io = struct
     | Ok fs as r ->
         List.iter
           (fun frame ->
-            log_rx_frame conn frame;
             Logs.debug (fun m ->
                 m "%s Rx %a" (Uuidm.to_string conn.id) Pgsql_codec.Frame.Backend.pp frame))
           fs;
@@ -408,7 +297,6 @@ module Io = struct
     | _, _ :: r_fs when skip_leading_unmatched -> match_frames ~skip_leading_unmatched conn fs r_fs
     | _, _ ->
         let open Abb.Future.Infix_monad in
-        dump_desync_context conn ~reason:"consume_matching" ~received:received_fs;
         reset conn >>= fun _ -> Abb.Future.return (Error (`Unmatching_frame received_fs))
 
   and reset conn =
@@ -907,7 +795,6 @@ module Cursor = struct
     | Pgsql_codec.Frame.Backend.CommandComplete _ :: fs -> consume_exec_end conn row_func st fs
     | Pgsql_codec.Frame.Backend.DataRow _ :: _ as fs ->
         let open Abb.Future.Infix_monad in
-        dump_desync_context conn ~reason:"consume_unmatching" ~received:fs;
         Io.reset conn >>= fun _ -> Abb.Future.return (Error (`Unmatching_frame fs))
     | Pgsql_codec.Frame.Backend.ErrorResponse { msgs } :: _ as fs ->
         let open Abb.Future.Infix_monad in
@@ -917,7 +804,6 @@ module Cursor = struct
         consume_exec_frames conn row_func st fs
     | fs ->
         let open Abb.Future.Infix_monad in
-        dump_desync_context conn ~reason:"consume_unmatching" ~received:fs;
         Io.reset conn >>= fun _ -> Abb.Future.return (Error (`Unmatching_frame fs))
 
   and consume_exec_end conn row_func st = function
@@ -931,7 +817,6 @@ module Cursor = struct
         Io.error_response conn fs >>= fun _ -> Abb.Future.return (Error (Io.handle_err_frame msgs))
     | fs ->
         let open Abb.Future.Infix_monad in
-        dump_desync_context conn ~reason:"consume_unmatching" ~received:fs;
         Io.reset conn >>= fun _ -> Abb.Future.return (Error (`Unmatching_frame fs))
 
   let execute t =
@@ -966,7 +851,6 @@ module Cursor = struct
         consume_fetch_frames conn row_func st fs
     | fs ->
         let open Abb.Future.Infix_monad in
-        dump_desync_context conn ~reason:"consume_unmatching" ~received:fs;
         Io.reset conn >>= fun _ -> Abb.Future.return (Error (`Unmatching_frame fs))
 
   and consume_fetch_process_frame conn row_func st fs data =
@@ -1010,7 +894,6 @@ module Cursor = struct
         Io.error_response conn fs >>= fun _ -> Abb.Future.return (Error (Io.handle_err_frame msgs))
     | fs ->
         let open Abb.Future.Infix_monad in
-        dump_desync_context conn ~reason:"consume_unmatching" ~received:fs;
         Io.reset conn >>= fun _ -> Abb.Future.return (Error (`Unmatching_frame fs))
 
   let fetch ?(n = 0) t =
@@ -1068,7 +951,6 @@ module Prepared_stmt = struct
     let stmt = gen_unique_id conn "s" in
     Abb.Future.return (Typed_sql.to_query sql)
     >>= fun query ->
-    log_query conn query;
     let frame =
       Pgsql_codec.Frame.Frontend.(
         Parse { stmt; query; data_types = Typed_sql.to_data_type_list sql })
@@ -1517,10 +1399,6 @@ and create_sm_perform_login r w ?passwd ~notice_response ~buf_size_threshold ~us
       busy = false;
       buf_size_threshold;
       id = Ouuid.v4 ();
-      frame_log = Array.make frame_log_size LF_none;
-      frame_log_pos = 0;
-      query_log = Array.make query_log_size "";
-      query_log_pos = 0;
     }
   in
   let msgs = [ ("user", user); ("database", database) ] in
