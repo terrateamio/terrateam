@@ -2567,11 +2567,54 @@ let test_bad_result_dirty_conn =
       ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
+(* Regression for the pgsql_codec needed_bytes off-by-one: a row value whose
+   frame completes exactly on the 8192-byte read boundary used to strand the
+   decoded frame and hang the fetch (idle-in-transaction reap at 240s in
+   production).  Sweeping a small window of value sizes reliably lands on the
+   boundary (observed at 8152 here); each fetch is guarded by a timeout so a
+   regression FAILS fast instead of hanging the suite. *)
+let test_boundary_sweep =
+  Oth_abb.test
+    ~desc:"Large-value fetch boundary (codec needed_bytes)"
+    ~name:"boundary_sweep"
+    (fun () ->
+      let open Abb.Future.Infix_monad in
+      let f conn =
+        let rec sweep n =
+          if n > 8175 then Abb.Future.return (Ok ())
+          else
+            let fetch_sql =
+              Pgsql_io.Typed_sql.(sql // Ret.text /^ Printf.sprintf "SELECT repeat('x', %d)" n)
+            in
+            Abbs_future_combinators.timeout
+              ~timeout:(Abb.Sys.sleep 10.0)
+              (Pgsql_io.Prepared_stmt.fetch conn fetch_sql ~f:(fun s -> s))
+            >>= function
+            | `Ok (Ok [ s ]) when String.length s = n -> sweep (n + 1)
+            | `Ok (Ok _) ->
+                Oth.Assert.false_ (Printf.sprintf "unexpected result shape at value size %d" n)
+            | `Ok (Error e) ->
+                Oth.Assert.false_
+                  (Printf.sprintf "fetch error at value size %d: %s" n (Pgsql_io.show_err e))
+            | `Timeout ->
+                Oth.Assert.false_
+                  (Printf.sprintf
+                     "fetch HUNG at value size %d (pgsql_codec needed_bytes off-by-one)"
+                     n)
+        in
+        sweep 8140
+      in
+      with_conn f
+      >>= fun r ->
+      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      Abb.Future.return ())
+
 let test =
   Oth_abb.(
     to_sync_test
       (serial
          [
+           test_boundary_sweep;
            test_bad_result_dirty_conn;
            test_ignore_error_then_query;
            test_in_tx_commit_desync;
