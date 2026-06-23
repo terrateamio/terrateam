@@ -266,6 +266,31 @@ let output_of_steps steps =
 
 let kv_of_outputs outputs = CCList.map Output.to_kv outputs
 
+let plan_summary_of_steps steps =
+  let module P = struct
+    type t = {
+      text : string;
+      plan : string option; [@default None]
+    }
+    [@@deriving of_yojson { strict = false }]
+  end in
+  let module O = Terrat_api_components.Workflow_step_output in
+  CCList.find_map
+    (function
+      | { O.step = "tf/plan" | "pulumi/plan" | "custom/plan" | "fly/plan";
+          payload;
+          success = true;
+          _ } -> (
+          match P.of_yojson (O.Payload.to_yojson payload) with
+          | Ok { P.text; plan } ->
+              let content = CCOption.get_or ~default:text plan in
+              content
+              |> CCString.split_on_char '\n'
+              |> CCList.find_opt (CCString.prefix ~pre:"Plan:")
+          | Error _ -> None)
+      | _ -> None)
+    steps
+
 let dirspace_compare (dirspace1, steps1) (dirspace2, steps2) =
   let module Cmp = struct
     type t = bool * bool * Terrat_dirspace.t [@@deriving ord]
@@ -440,6 +465,7 @@ module Publisher_tools = struct
                       (fun ({ Terrat_dirspace.dir; workspace }, steps) ->
                         let has_changes = steps_has_changes steps in
                         let success = steps_success steps in
+                        let plan_summary = plan_summary_of_steps steps in
                         `Assoc
                           (CCList.flatten
                              [
@@ -453,6 +479,10 @@ module Publisher_tools = struct
                                         (Output.filter ~overall_success (output_of_steps steps))) );
                                  ("has_changes", `Bool has_changes);
                                ];
+                               CCOption.map_or
+                                 ~default:[]
+                                 (fun s -> [ ("plan_summary", `String s) ])
+                                 plan_summary;
                              ]))
                       dirspaces) );
                ( "gates",
