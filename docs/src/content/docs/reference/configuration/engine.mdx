@@ -3,7 +3,7 @@ title: engine
 description: The engine configuration reference
 ---
 
-The `engine` configuration allows you to specify which tool should be used for executing plan and apply operations. Terrateam supports multiple tools, including Terraform, OpenTofu, Terragrunt, Pulumi, CDKTF, Stategraph, and custom engines. This configuration can be defined globally or overridden per workflow by including it under the `workflows` key.
+The `engine` configuration allows you to specify which tool should be used for executing plan and apply operations. Terrateam supports multiple tools, including Terraform, OpenTofu, Terragrunt, Pulumi, CDKTF, Stategraph, tfmigrate, and custom engines. This configuration can be defined globally or overridden per workflow by including it under the `workflows` key.
 
 ## Default Configuration
 ```yaml
@@ -18,7 +18,7 @@ There are different valid keys depending on the engine `name`.
 
 | Key | Type | Description |
 |-----|------|-------------|
-| name | String | The name of the tool to use for executing Terraform operations. Can be `terraform`, `tofu`, `terragrunt`, `cdktf`, `pulumi`, `stategraph`, or `custom`. Default is `terraform`. |
+| name | String | The name of the tool to use for executing Terraform operations. Can be `terraform`, `tofu`, `terragrunt`, `cdktf`, `pulumi`, `stategraph`, `tfmigrate`, or `custom`. Default is `terraform`. |
 
 ### terraform and tofu
 
@@ -64,6 +64,20 @@ Use [Stategraph](https://stategraph.com) as the execution engine. Requires a Sta
 | outputs | Object | See `outputs` below. |
 
 The runner reads `STATEGRAPH_API_BASE`, `STATEGRAPH_API_KEY`, and `STATEGRAPH_TENANT_ID` from the environment. All three are required.
+
+### tfmigrate
+
+Use [tfmigrate](https://github.com/minamijoyo/tfmigrate) as the execution engine for Terraform/OpenTofu **state migrations** (`state mv`/`rm`/`import`/`replace-provider`, and cross-state `multi_state mv`). Migrations live in a dedicated dirspace and run as a reviewable plan/apply that replaces a normal plan/apply for that change. Terrateam tracks migration history automatically in its built-in KV store, so there is no `history {}` block and no S3/GCS backend to configure. See the [tfmigrate integration guide](/integrations/iac-tools/tfmigrate/) for the directory convention and a worked example.
+
+| Key | Type | Description |
+|-----|------|-------------|
+| name | String | `tfmigrate` |
+| version | String | Optional. Reserved for pinning the tfmigrate binary version. |
+| override_tf_cmd | String | Override the name of the program tfmigrate invokes. |
+| tf_cmd | String | Which underlying Terraform-compatible program tfmigrate wraps.  By default it is `terraform`. |
+| tf_version | String | The version of the underlying Terraform-compatible tool to use (either Terraform or Tofu). |
+
+Unlike the other engines, `tfmigrate` has no `outputs` key — a state migration produces no Terraform outputs.
 
 ## custom
 
@@ -142,6 +156,15 @@ engine:
 
 Requires `STATEGRAPH_API_BASE`, `STATEGRAPH_API_KEY`, `STATEGRAPH_TENANT_ID` in the runner secrets, plus a `stategraph.json` committed in each dirspace. See the [Stategraph integration guide](/integrations/iac-tools/stategraph/).
 
+### Using tfmigrate
+```yaml
+engine:
+  name: tfmigrate
+  tf_cmd: tofu
+```
+
+Set this engine on the `.terrateam/tfmigrate` migration dirspace only. Migration history is managed automatically in the Terrateam KV store — no `history {}` block or remote storage to configure. See the [tfmigrate integration guide](/integrations/iac-tools/tfmigrate/).
+
 ### Using a Custom Engine
 ```yaml
 engine:
@@ -161,5 +184,6 @@ When configuring `engine`, keep the following in mind:
 - The `terragrunt` engine uses Terragrunt, a thin wrapper for Terraform that provides extra tools for keeping your configurations DRY, working with multiple Terraform modules, and managing remote state.
 - The `cdktf` engine uses CDKTF (Cloud Development Kit for Terraform), which allows you to define your infrastructure using familiar programming languages like TypeScript, Python, Go, and Java.
 - The `stategraph` engine uses [Stategraph](https://stategraph.com), a database-backed replacement for the flat Terraform state file.
+- The `tfmigrate` engine uses [tfmigrate](https://github.com/minamijoyo/tfmigrate) to run reviewable Terraform/OpenTofu state migrations. Set it on a dedicated migration dirspace (conventionally `.terrateam/tfmigrate`); migration history is tracked automatically in the Terrateam KV store. See the [tfmigrate integration guide](/integrations/iac-tools/tfmigrate/).
 - When using `terragrunt` or `cdktf`, you can specify the version of Terraform or OpenTofu CLI to use with the `tf_version` option. This allows you to control the underlying Terraform version independently of the Terragrunt or CDKTF version.
 - The `custom` engine allows full control over each step in the pipeline. All steps are optional - you may specify only the steps relevant to your use case. The `TERRATEAM_PLAN_FILE` environment variable allows passing data from the plan step to the apply step. The `outputs` step, if defined, must return valid JSON.

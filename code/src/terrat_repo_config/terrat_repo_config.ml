@@ -49,6 +49,7 @@ module Engine_stategraph = Terrat_repo_config_engine_stategraph
 module Engine_terraform = Terrat_repo_config_engine_terraform
 module Engine_terragrunt = Terrat_repo_config_engine_terragrunt
 module Engine_tf_outputs = Terrat_repo_config_engine_tf_outputs
+module Engine_tfmigrate = Terrat_repo_config_engine_tfmigrate
 module Gate = Terrat_repo_config_gate
 module Hook = Terrat_repo_config_hook
 module Hook_list = Terrat_repo_config_hook_list

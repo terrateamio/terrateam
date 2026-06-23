@@ -1,0 +1,139 @@
+---
+title: tfmigrate
+description: Run reviewable Terraform/OpenTofu state migrations with tfmigrate as a Terrateam engine
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+[tfmigrate](https://github.com/minamijoyo/tfmigrate) performs Terraform/OpenTofu **state** migrations — `state mv`, `state rm`, `import`, `replace-provider`, and cross-state `multi_state mv` — declared in HCL and run as a reviewable plan/apply step. Terrateam can use tfmigrate as an execution engine so a state refactor goes through the same pull request, plan, and apply flow as the rest of your infrastructure.
+
+A migration is pure state movement, so it **replaces** the normal plan/apply for that change rather than running alongside one.
+
+:::note
+Keep migrations in their own pull requests, separate from infrastructure changes. This is tfmigrate's own documented best practice and keeps the state surgery easy to review and revert.
+:::
+
+## How it works
+
+`tfmigrate plan` pulls the real remote state, applies your state operations to a temporary local copy, runs a Terraform/OpenTofu plan, and **succeeds only if that plan is clean** (no diff). It touches nothing remote — it is a pure safety check. `tfmigrate apply` performs the surgery for real and pushes the new state to your backend, again verifying a clean plan.
+
+Terrateam tracks which migrations have already been applied in its built-in KV store. You do **not** configure a `history {}` block or any S3/GCS backend — Terrateam manages migration history for you.
+
+## Prerequisites
+
+Before enabling the tfmigrate engine you need:
+
+1. A real Terraform/OpenTofu directory with a configured remote backend (for example an S3 backend) that Terrateam already manages as a normal dirspace.
+1. The provider credentials that directory needs, available to the runner as usual — tfmigrate runs `init`, `plan`, and the state operations against the live backend.
+
+The Terrateam runner image already includes the `tfmigrate` binary, so there is nothing to install.
+
+## The migration directory
+
+Migrations live in a single, well-known dirspace: **`.terrateam/tfmigrate/`**. Each migration file names its target Terraform directory with a repo-root-relative `dir`.
+
+```
+.terrateam/
+├── config.yml
+└── tfmigrate/                       # the migration dirspace
+    ├── .tfmigrate.hcl               # marker file (see below)
+    └── 20260601_rename.hcl          # a migration, dir = "prod"
+prod/
+└── main.tf                          # your real Terraform + backend (a normal dirspace)
+```
+
+<Steps>
+1. Create the marker file `.terrateam/tfmigrate/.tfmigrate.hcl`. It only needs to exist — Terrateam injects `migration_dir` and managed history storage automatically, so the file can be empty or hold a comment:
+
+   ```hcl
+   # .terrateam/tfmigrate/.tfmigrate.hcl
+   #
+   # Marks .terrateam/tfmigrate as a Terrateam tfmigrate dirspace.
+   # Terrateam manages migration_dir and history; nothing else is needed here.
+   ```
+
+1. Enable the engine on the migration dirspace in `.terrateam/config.yml`. A directory with no `*.tf` files is not auto-discovered, and the default `${DIR}/*.tf` change patterns would never match a migration, so both are declared explicitly:
+
+   ```yaml
+   # .terrateam/config.yml
+   dirs:
+     .terrateam/tfmigrate:
+       tags: [tfmigrate]
+       when_modified:
+         file_patterns: ["${DIR}/*.hcl"]
+         autoapply: false
+   workflows:
+     - tag_query: "tfmigrate"
+       engine:
+         name: tfmigrate
+         tf_cmd: tofu          # omit or set "terraform" to wrap Terraform
+   ```
+
+1. Add a migration file. The `dir` is relative to the repository root:
+
+   ```hcl
+   # .terrateam/tfmigrate/20260601_rename.hcl
+   migration "state" "rename_sg" {
+     dir     = "prod"
+     actions = ["mv aws_security_group.foo aws_security_group.baz"]
+   }
+   ```
+</Steps>
+
+Because the `prod/` dirspace keeps its default `${DIR}/*.tf` patterns, a migration-only pull request does **not** trigger a normal plan in `prod/`, and an ordinary `.tf` change in `prod/` does **not** trigger the migration. The two stay cleanly separated with no special change-detection rules.
+
+## Running a migration
+
+<Steps>
+1. Open a pull request that adds (or updates) a migration file under `.terrateam/tfmigrate/`.
+
+1. Terrateam runs `tfmigrate plan`. The comment shows the dry-run: the state operations applied to a temporary copy of the state, followed by a clean (no-diff) plan, and a pending apply.
+
+1. Review the plan and comment `terrateam apply`.
+
+1. Terrateam runs `tfmigrate apply`. The state surgery is performed against your real backend, a final plan confirms the result is clean, and the migration is recorded in Terrateam's history. A later plan in the target directory is clean.
+</Steps>
+
+Re-running apply is a no-op: the migration is already recorded in history, so tfmigrate reports there is nothing left to migrate.
+
+## Worked example: rename a resource
+
+You renamed a resource in `prod/` from `aws_security_group.foo` to `aws_security_group.baz`. Without a state migration, Terraform would destroy and recreate the security group. Instead:
+
+<Steps>
+1. Make the code change in `prod/` and the matching migration in `.terrateam/tfmigrate/`, in **separate pull requests** — open the migration PR first.
+
+   ```hcl
+   # .terrateam/tfmigrate/20260601_rename.hcl
+   migration "state" "rename_sg" {
+     dir     = "prod"
+     actions = ["mv aws_security_group.foo aws_security_group.baz"]
+   }
+   ```
+
+1. Terrateam plans the migration and shows a clean plan once the state is moved. Merge and apply it.
+
+1. Open the follow-up PR with the renamed resource in `prod/main.tf`. Its plan is now clean — the state already points at `aws_security_group.baz`.
+</Steps>
+
+## Advanced
+
+### **Cross-directory migrations**
+
+A `multi_state` migration moves resources between two state files. Its `from_dir` and `to_dir` are repo-root-relative, like `dir`:
+
+  ```hcl
+  migration "multi_state" "move" {
+    from_dir = "network"
+    to_dir   = "platform"
+    actions  = ["mv aws_vpc.main aws_vpc.main"]
+  }
+  ```
+
+### **Mixing engines across targets**
+
+The single `.terrateam/tfmigrate` dirspace uses one underlying tool (`tf_cmd`). If you need to migrate some directories with OpenTofu and others with Terraform, add a second migration dirspace (for example `.terrateam/tfmigrate-tf/`) with its own `dirs:` entry and `engine`.
+
+### **History**
+
+Terrateam stores migration history per repository and migration directory in its KV store. Do not add a `history {}` block to `.tfmigrate.hcl` — Terrateam manages it.

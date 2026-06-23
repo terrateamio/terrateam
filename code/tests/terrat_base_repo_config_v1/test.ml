@@ -6,6 +6,7 @@
 module V1 = Terrat_base_repo_config_v1
 module Repo = Terrat_repo_config
 module Sg_schema = Terrat_repo_config.Engine_stategraph
+module Tm_schema = Terrat_repo_config.Engine_tfmigrate
 
 let pp_engine = function
   | V1.Engine.Stategraph _ -> "Stategraph"
@@ -17,6 +18,7 @@ let pp_engine = function
   | V1.Engine.Pulumi -> "Pulumi"
   | V1.Engine.Terraform _ -> "Terraform"
   | V1.Engine.Terragrunt _ -> "Terragrunt"
+  | V1.Engine.Tfmigrate _ -> "Tfmigrate"
 
 let test_of_version_1_json_minimal =
   Oth.test ~name:"of_version_1_json: stategraph engine (no version)" (fun _ ->
@@ -65,12 +67,62 @@ let test_to_version_1_round_trip =
           | _ -> failwith "Round-trip to Version_1 did not produce Engine_stategraph")
       | Error _ -> failwith "of_version_1_json failed in round-trip setup")
 
+let test_of_version_1_json_tfmigrate_minimal =
+  Oth.test ~name:"of_version_1_json: tfmigrate engine (no version)" (fun _ ->
+      let json = `Assoc [ ("engine", `Assoc [ ("name", `String "tfmigrate") ]) ] in
+      match V1.of_version_1_json json with
+      | Ok cfg -> (
+          match V1.engine cfg with
+          | V1.Engine.Tfmigrate { V1.Engine.Tfmigrate.version = None; _ } -> ()
+          | other ->
+              failwith
+                (Printf.sprintf
+                   "Expected Engine.Tfmigrate with version=None, got %s"
+                   (pp_engine other)))
+      | Error _ -> failwith "of_version_1_json failed on minimal tfmigrate engine config")
+
+let test_of_version_1_json_tfmigrate_with_version =
+  Oth.test ~name:"of_version_1_json: tfmigrate engine (with version)" (fun _ ->
+      let json =
+        `Assoc
+          [ ("engine", `Assoc [ ("name", `String "tfmigrate"); ("version", `String "0.4.5") ]) ]
+      in
+      match V1.of_version_1_json json with
+      | Ok cfg -> (
+          match V1.engine cfg with
+          | V1.Engine.Tfmigrate { V1.Engine.Tfmigrate.version = Some "0.4.5"; _ } -> ()
+          | other ->
+              failwith
+                (Printf.sprintf
+                   "Expected Engine.Tfmigrate with version=Some 0.4.5, got %s"
+                   (pp_engine other)))
+      | Error _ -> failwith "of_version_1_json failed on tfmigrate engine with version")
+
+let test_to_version_1_tfmigrate_round_trip =
+  Oth.test ~name:"to_version_1: tfmigrate engine round-trips through Version_1" (fun _ ->
+      let json =
+        `Assoc
+          [ ("engine", `Assoc [ ("name", `String "tfmigrate"); ("version", `String "0.4.5") ]) ]
+      in
+      match V1.of_version_1_json json with
+      | Ok cfg -> (
+          let v1 = V1.to_version_1 cfg in
+          match v1.Repo.Version_1.engine with
+          | Some
+              (Repo.Engine.Engine_tfmigrate
+                 { Tm_schema.name = `Tfmigrate; version = Some "0.4.5"; _ }) -> ()
+          | _ -> failwith "Round-trip to Version_1 did not produce Engine_tfmigrate")
+      | Error _ -> failwith "of_version_1_json failed in tfmigrate round-trip setup")
+
 let test =
   Oth.parallel
     [
       test_of_version_1_json_minimal;
       test_of_version_1_json_with_version;
       test_to_version_1_round_trip;
+      test_of_version_1_json_tfmigrate_minimal;
+      test_of_version_1_json_tfmigrate_with_version;
+      test_to_version_1_tfmigrate_round_trip;
     ]
 
 let () =
