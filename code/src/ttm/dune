@@ -10,7 +10,8 @@
   logs.threaded
   mirage-crypto-rng.unix
   ttm_kv
-  ttm_secrets)
+  ttm_secrets
+  ttm_sql)
  (link_flags
   (:standard
    (:include ttm_link_flags.sexp))))

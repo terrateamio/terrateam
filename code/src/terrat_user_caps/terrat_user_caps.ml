@@ -9,6 +9,7 @@ type t =
   | Kv_store_system_read
   | Kv_store_system_write
   | Kv_store_write
+  | Mql_admin
   | Vcs of string
 [@@deriving show, eq, ord]
 
@@ -31,18 +32,29 @@ let to_yojson' = function
   | Kv_store_system_write -> E.Kv_store_system_write `Kv_store_system_write
   | Kv_store_write -> E.Kv_store_write `Kv_store_write
   | Vcs vcs -> E.Vcs { Cs.Vcs.name = `Vcs; vcs }
+  (* [Mql_admin] has no representation in the generated [Event] type because it
+     is intentionally kept out of the public capabilities schema. It is handled
+     directly in [to_yojson] below and never reaches here. *)
+  | Mql_admin -> assert false
 
-let to_yojson = CCFun.(to_yojson' %> E.to_yojson)
+(* [Mql_admin] is serialized as a bare string outside the schema-generated
+   [Event] type so it does not appear in the public capabilities API/UI. *)
+let to_yojson = function
+  | Mql_admin -> `String "mql_admin"
+  | t -> E.to_yojson (to_yojson' t)
 
-let of_yojson json =
-  let open CCResult.Infix in
-  E.of_yojson json
-  >>= function
-  | E.Access_token_create `Access_token_create -> Ok Access_token_create
-  | E.Access_token_refresh `Access_token_refresh -> Ok Access_token_refresh
-  | E.Installation_id { Cs.Installation_id.name = `Installation_id; id } -> Ok (Installation_id id)
-  | E.Kv_store_read `Kv_store_read -> Ok Kv_store_read
-  | E.Kv_store_system_read `Kv_store_system_read -> Ok Kv_store_system_read
-  | E.Kv_store_system_write `Kv_store_system_write -> Ok Kv_store_system_write
-  | E.Kv_store_write `Kv_store_write -> Ok Kv_store_write
-  | E.Vcs { Cs.Vcs.name = `Vcs; vcs } -> Ok (Vcs vcs)
+let of_yojson = function
+  | `String "mql_admin" -> Ok Mql_admin
+  | json -> (
+      let open CCResult.Infix in
+      E.of_yojson json
+      >>= function
+      | E.Access_token_create `Access_token_create -> Ok Access_token_create
+      | E.Access_token_refresh `Access_token_refresh -> Ok Access_token_refresh
+      | E.Installation_id { Cs.Installation_id.name = `Installation_id; id } ->
+          Ok (Installation_id id)
+      | E.Kv_store_read `Kv_store_read -> Ok Kv_store_read
+      | E.Kv_store_system_read `Kv_store_system_read -> Ok Kv_store_system_read
+      | E.Kv_store_system_write `Kv_store_system_write -> Ok Kv_store_system_write
+      | E.Kv_store_write `Kv_store_write -> Ok Kv_store_write
+      | E.Vcs { Cs.Vcs.name = `Vcs; vcs } -> Ok (Vcs vcs))

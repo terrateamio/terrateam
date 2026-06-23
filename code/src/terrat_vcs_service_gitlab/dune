@@ -7,6 +7,8 @@
   gitlab_webhooks_decoder
   logs
   minijinja
+  mql
+  mql_to_pgsql
   pgsql_pagination
   sln
   terrat_code_idx

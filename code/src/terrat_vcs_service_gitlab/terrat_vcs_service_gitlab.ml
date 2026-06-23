@@ -27,6 +27,12 @@ struct
     let enforce_installation_access = Provider.enforce_installation_access
   end)
 
+  module Ep_mql = Terrat_vcs_service_gitlab_ep_mql.Make (struct
+    module Account_id = Provider.Api.Account.Id
+
+    let enforce_installation_access = Provider.enforce_installation_access
+  end)
+
   module Ep_repo_delete =
     Terrat_vcs_service_gitlab_ep_repo_delete.Make
       (Provider)
@@ -127,6 +133,18 @@ struct
       let gitlab_installations_repo_delete () =
         Brtl_rtng.Route.(gitlab_installations () /% Path.int / "repos" /% Path.string)
 
+      let gitlab_installation_mql_schema () =
+        Brtl_rtng.Route.(gitlab_installations () /% Path.int / "mql" / "schema")
+
+      let gitlab_installation_mql () =
+        Brtl_rtng.Route.(
+          gitlab_installations ()
+          /% Path.int
+          / "mql"
+          /? Query.(option (string "q"))
+          /? Query.(option (string "tz"))
+          /? Query.(option (string "page")))
+
       let gitlab_installation_dirspaces () =
         Brtl_rtng.Route.(
           gitlab_installations ()
@@ -200,6 +218,8 @@ struct
               Rt.gitlab_installation_work_manifest_outputs ()
               --> Ep_inst.List_work_manifest_outputs.get config storage );
             (`PUT, Rt.gitlab_installation_tokens () --> Ep_inst.Token.put config storage);
+            (`GET, Rt.gitlab_installation_mql_schema () --> Ep_mql.Schema.get config storage);
+            (`GET, Rt.gitlab_installation_mql () --> Ep_mql.run config storage);
             (* Work manifests *)
             (`POST, Rt.gitlab_work_manifest_plan () --> Work_manifest.Plans.post config storage);
             (`GET, Rt.gitlab_get_work_manifest_plan () --> Work_manifest.Plans.get config storage);

@@ -80,7 +80,7 @@ module Cmdline = struct
   let default_cmd = C.Term.(ret (const (`Help (`Pager, None))))
 end
 
-let cmds = Cmdline.[ Ttm_kv.cmd logs; Ttm_secrets.cmd logs ]
+let cmds = Cmdline.[ Ttm_kv.cmd logs; Ttm_secrets.cmd logs; Ttm_sql.cmd logs ]
 
 let () =
   Mirage_crypto_rng_unix.use_default ();
