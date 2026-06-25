@@ -573,7 +573,25 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
               let pos' = !pos in
               pos := !pos + CCInt.min n len;
               CCString.sub body pos' (CCInt.min n len))
-            else "")
+            else "");
+        (* The body lives entirely in memory, so let curl rewind it whenever it
+           needs to resend the request: following a redirect, re-establishing a
+           connection that was dropped mid-send, replaying after a proxy or
+           TLS-inspecting middlebox interrupts the stream, etc.  Without a seek
+           function curl cannot rewind the read callback and fails these resends
+           with CURLE_SEND_FAIL_REWIND ("Send failed since rewinding of the data
+           stream failed"). *)
+        Curl.set_seekfunction handle (fun offset cmd ->
+            let target =
+              match cmd with
+              | Curl.SEEK_SET -> Int64.to_int offset
+              | Curl.SEEK_CUR -> !pos + Int64.to_int offset
+              | Curl.SEEK_END -> length + Int64.to_int offset
+            in
+            if target >= 0 && target <= length then (
+              pos := target;
+              Curl.SEEKFUNC_OK)
+            else Curl.SEEKFUNC_FAIL)
 
       let setup_request handle meth_ headers uri =
         let debug_enabled = ref false in
