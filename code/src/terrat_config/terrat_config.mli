@@ -77,6 +77,19 @@ val db_lock_timeout : t -> string
 val db_max_pool_size : t -> int
 val db_password : t -> string
 val db_user : t -> string
+
+(** Read-only database configuration. Falls back to primary DB config when
+    DB_RO_* environment variables are not set. *)
+
+val db_ro : t -> string
+val db_ro_connect_timeout : t -> float
+val db_ro_host : t -> string
+val db_ro_port : t -> int
+val db_ro_idle_tx_timeout : t -> string
+val db_ro_lock_timeout : t -> string
+val db_ro_max_pool_size : t -> int
+val db_ro_password : t -> string
+val db_ro_user : t -> string
 val default_tier : t -> string
 val event_evaluator_slots : t -> int
 val gc : t -> Gc.t

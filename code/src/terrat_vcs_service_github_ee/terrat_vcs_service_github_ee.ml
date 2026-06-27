@@ -683,7 +683,7 @@ module Routes = struct
         let vcs = "github"
       end)
 
-  let routes config storage = Ep_access_token.routes config storage
+  let routes config storage ~ro_storage = Ep_access_token.routes config storage ~ro_storage
 end
 
 include Terrat_vcs_service_github.Make (Provider) (Routes)
