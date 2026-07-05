@@ -234,6 +234,16 @@ module type S = sig
       Yojson.Safe.t ->
       (unit, [> `Error ]) result Abb.Future.t
 
+    val store_repo_config_history :
+      request_id:string ->
+      t ->
+      Api.Account.t ->
+      Api.Repo.t ->
+      branch:Api.Ref.t ->
+      sha:Api.Ref.t ->
+      Yojson.Safe.t ->
+      (unit, [> `Error ]) result Abb.Future.t
+
     val store_repo_tree :
       request_id:string ->
       t ->
