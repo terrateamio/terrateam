@@ -18,8 +18,7 @@ alter table repo_configs
       add column branch text;
 
 alter table repo_configs
-      drop constraint repo_configs_pkey,
-      drop constraint repo_configs_fut_pkey;
+      drop constraint repo_configs_pkey;
 
 create unique index repo_configs_built_key
        on repo_configs (installation, sha)
