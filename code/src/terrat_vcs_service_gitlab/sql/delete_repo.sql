@@ -120,6 +120,11 @@ delete_change_dirspaces as (
     using repo as r
     where change_dirspaces.repo = r.core_id
 ),
+delete_repo_configs as (
+    delete from repo_configs
+    using repo as r
+    where repo_configs.repo = r.core_id
+),
 delete_drift_schedules as (
     delete from drift_schedules
     using repo as r

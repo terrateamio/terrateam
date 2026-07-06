@@ -337,6 +337,16 @@ module Db = struct
         /% Var.text "sha"
         /% Var.json "data")
 
+    let insert_repo_config_history =
+      Pgsql_io.Typed_sql.(
+        sql
+        /^ read [%blob "sql/insert_repo_config_history.sql"]
+        /% Var.text "branch"
+        /% Var.text "sha"
+        /% Var.json "data"
+        /% Var.bigint "repository_id"
+        /% Var.bigint "installation_id")
+
     let insert_repo_tree =
       Pgsql_io.Typed_sql.(
         sql
@@ -1216,6 +1226,24 @@ module Db = struct
           (CCInt64.of_int @@ Api.Account.id account)
           (Api.Ref.to_string ref_)
           json)
+    >>= function
+    | Ok () -> Abb.Future.return (Ok ())
+    | Error (#Pgsql_io.err as err) ->
+        Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+        Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
+
+  let store_repo_config_history ~request_id db account repo ~branch ~sha json =
+    let open Abb.Future.Infix_monad in
+    Metrics.Psql_query_time.time (Metrics.psql_query_time "insert_repo_config_history") (fun () ->
+        Pgsql_io.Prepared_stmt.execute
+          db
+          Sql.insert_repo_config_history
+          (Api.Ref.to_string branch)
+          (Api.Ref.to_string sha)
+          json
+          (CCInt64.of_int @@ Api.Repo.id repo)
+          (CCInt64.of_int @@ Api.Account.id account))
     >>= function
     | Ok () -> Abb.Future.return (Ok ())
     | Error (#Pgsql_io.err as err) ->

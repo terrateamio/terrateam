@@ -277,6 +277,8 @@ let migrations =
     ("add-drift-branch", run_sql [%blob "migrations/2026-01-08-add-drift-branch.sql"]);
     ( "delete-existing-repo-tree-cache",
       run_sql [%blob "migrations/2026-03-19-delete-repo-tree-cache.sql"] );
+    ( "extend-repo-configs-with-history",
+      run_sql [%blob "migrations/2026-07-05-extend-repo-configs-with-history.sql"] );
   ]
 
 let run config storage = Mig.run { Migrate.config; storage; tx = () } migrations

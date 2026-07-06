@@ -22,6 +22,10 @@ module Db = struct
   let store_index ~request_id db work_manifest_id index = raise (Failure "nyi")
   let store_index_result ~request_id db work_manifest_id index_result = raise (Failure "nyi")
   let store_repo_config_json ~request_id db account ref_ json = raise (Failure "nyi")
+
+  let store_repo_config_history ~request_id db account repo ~branch ~sha json =
+    raise (Failure "nyi")
+
   let store_repo_tree ~request_id db account ref_ files = raise (Failure "nyi")
   let store_flow_state ~request_id db work_manifest_id state = raise (Failure "nyi")
 

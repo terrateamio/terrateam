@@ -128,8 +128,34 @@ struct
           | Error (#Terrat_kv_store.err as err) -> Abb.Future.return (Error err))
       | Error _ as err -> Abb.Future.return err
 
+    (* Persist the fully-derived config to the repo_configs history so it can be
+       analyzed by org/repo/branch over time. Failures here must not fail the
+       evaluation, so errors are logged and swallowed. *)
+    let write_config_history ~account ~repo ~branch ~sha repo_config_json s =
+      let open Abb.Future.Infix_monad in
+      Builder.run_db s ~f:(fun db ->
+          S.Db.store_repo_config_history
+            ~request_id:(Builder.log_id s)
+            db
+            account
+            repo
+            ~branch
+            ~sha
+            repo_config_json)
+      >>= function
+      | Ok () | Error `Closed -> Abb.Future.return (Ok ())
+      | Error (#Builder.err as err) ->
+          Logs.err (fun m ->
+              m "%s : RECORD_REPO_CONFIG_HISTORY : %a" (Builder.log_id s) Builder.pp_err err);
+          Abb.Future.return (Ok ())
+
+    (* [record_history] carries the (account, repo, branch) identity to snapshot
+       the derived config under. It is [Some] only on the full-index derive
+       paths, so an empty-index intermediate never overwrites the canonical
+       config for a given (repo, branch, sha). *)
     let derive
         ~cache_key
+        ~record_history
         ~dest_branch_name
         ~branch_name
         ~branch_ref
@@ -159,17 +185,21 @@ struct
                 ~file_list:repo_tree
                 repo_config_raw))
       >>= fun repo_config ->
-      Builder.run_db
-        s
-        ~f:
-          (store
-             ~cache_key
-             (Terrat_repo_config.Version_1.to_yojson
-             @@ Terrat_base_repo_config_v1.to_version_1 repo_config))
-      >>= fun _ -> Abb.Future.return (Ok repo_config)
+      let repo_config_json =
+        Terrat_repo_config.Version_1.to_yojson
+        @@ Terrat_base_repo_config_v1.to_version_1 repo_config
+      in
+      Builder.run_db s ~f:(store ~cache_key repo_config_json)
+      >>= fun _ ->
+      (match record_history with
+        | Some (account, repo, branch) ->
+            write_config_history ~account ~repo ~branch ~sha:branch_ref repo_config_json s
+        | None -> Abb.Future.return (Ok ()))
+      >>= fun () -> Abb.Future.return (Ok repo_config)
 
     let derived_repo_config
         ~cache_key
+        ~record_history
         ~dest_branch_name
         ~branch_name
         ~branch_ref
@@ -194,6 +224,7 @@ struct
                     err);
               derive
                 ~cache_key
+                ~record_history
                 ~dest_branch_name
                 ~branch_name
                 ~branch_ref
@@ -204,6 +235,7 @@ struct
       | None ->
           derive
             ~cache_key
+            ~record_history
             ~dest_branch_name
             ~branch_name
             ~branch_ref
@@ -1256,6 +1288,7 @@ struct
           in
           Cache.derived_repo_config
             ~cache_key
+            ~record_history:None
             ~dest_branch_name
             ~branch_name
             ~branch_ref
@@ -1293,6 +1326,7 @@ struct
           in
           Cache.derived_repo_config
             ~cache_key
+            ~record_history:(Some (account, repo, branch_name))
             ~dest_branch_name
             ~branch_name
             ~branch_ref
@@ -1428,6 +1462,7 @@ struct
           in
           Cache.derived_repo_config
             ~cache_key
+            ~record_history:None
             ~dest_branch_name
             ~branch_name
             ~branch_ref:dest_branch_ref
@@ -1465,6 +1500,7 @@ struct
           in
           Cache.derived_repo_config
             ~cache_key
+            ~record_history:(Some (account, repo, dest_branch_name))
             ~dest_branch_name
             ~branch_name
             ~branch_ref:dest_branch_ref
