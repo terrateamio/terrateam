@@ -13,6 +13,7 @@ module Logs = (val Logs.src_log src : Logs.LOG)
 module S = struct
   type t = {
     account_status : Terrat_vcs_provider2.Account_status.t;
+    tier_runs : Terrat_tier.Check.runs_per_month option;
     client : Api.Client.t;
     config : Api.Config.t;
     db : Pgsql_io.t;
@@ -69,6 +70,7 @@ module S = struct
         ~view:(if compact then `Compact else `Full)
         t.request_id
         t.account_status
+        t.tier_runs
         t.config
         t.is_layered_run
         t.remaining_layers
@@ -89,6 +91,7 @@ module S = struct
             ~view:`Compact
             t.request_id
             t.account_status
+            t.tier_runs
             t.config
             t.is_layered_run
             t.remaining_layers
@@ -109,6 +112,7 @@ module S = struct
                 ~view:`Compact
                 t.request_id
                 t.account_status
+                t.tier_runs
                 t.config
                 t.is_layered_run
                 t.remaining_layers
@@ -132,6 +136,7 @@ module S = struct
         ~view:(if compact then `Compact else `Full)
         t.request_id
         t.account_status
+        t.tier_runs
         t.config
         t.is_layered_run
         t.remaining_layers

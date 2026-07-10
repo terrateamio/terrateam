@@ -306,6 +306,7 @@ module Publisher_tools = struct
       ~view
       request_id
       account_status
+      tier_runs
       config
       is_layered_run
       remaining_dirspace_configs
@@ -401,6 +402,11 @@ module Publisher_tools = struct
                ~default:[]
                (fun env -> [ ("environment", `String env) ])
                work_manifest.Wm.environment;
+             CCOption.map_or
+               ~default:[]
+               (fun { Terrat_tier.Check.used; limit } ->
+                 [ ("runs_used", `Int used); ("runs_limit", `Int limit) ])
+               tier_runs;
              [
                ( "account_status",
                  `String

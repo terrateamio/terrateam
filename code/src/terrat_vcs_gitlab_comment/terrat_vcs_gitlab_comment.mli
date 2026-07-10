@@ -4,6 +4,7 @@ module Scope = Terrat_scope.Scope
 module S : sig
   type t = {
     account_status : Terrat_vcs_provider2.Account_status.t;
+    tier_runs : Terrat_tier.Check.runs_per_month option;
     client : Api.Client.t;
     config : Api.Config.t;
     db : Pgsql_io.t;

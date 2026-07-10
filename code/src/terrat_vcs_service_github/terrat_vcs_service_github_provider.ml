@@ -2638,7 +2638,7 @@ module Tier = struct
             Abb.Future.return (Ok (Some { Terrat_tier.Check.users = all_users; limit }))
         | _ -> Abb.Future.return (Ok None))
 
-  let check_runs_per_month ~request_id account limit db =
+  let runs_usage' ~request_id account limit db =
     if limit = CCInt.max_int then Abb.Future.return (Ok None)
     else
       let open Abbs_future_combinators.Infix_result_monad in
@@ -2653,8 +2653,37 @@ module Tier = struct
           let used = CCInt64.to_int used in
           Logs.info (fun m ->
               m "%s : TIER_CHECK : RUNS_PER_MONTH : used=%d : limit=%d" request_id used limit);
-          if used >= limit then Abb.Future.return (Ok (Some { Terrat_tier.Check.used; limit }))
-          else Abb.Future.return (Ok None)
+          Abb.Future.return (Ok (Some { Terrat_tier.Check.used; limit }))
+
+  let check_runs_per_month ~request_id account limit db =
+    let open Abbs_future_combinators.Infix_result_monad in
+    runs_usage' ~request_id account limit db
+    >>= function
+    | Some { Terrat_tier.Check.used; limit } when used >= limit ->
+        Abb.Future.return (Ok (Some { Terrat_tier.Check.used; limit }))
+    | Some _ | None -> Abb.Future.return (Ok None)
+
+  let runs_usage ~request_id account db =
+    let run =
+      let open Abbs_future_combinators.Infix_result_monad in
+      Pgsql_io.Prepared_stmt.fetch
+        db
+        Sql.select_tier
+        ~f:(fun id name tier -> (id, name, tier))
+        (CCInt64.of_int @@ Api.Account.id account)
+      >>= function
+      | [] -> assert false
+      | (_, _, tier) :: _ ->
+          let { Terrat_tier.runs_per_month; _ } = tier in
+          runs_usage' ~request_id account runs_per_month db
+    in
+    let open Abb.Future.Infix_monad in
+    run
+    >>= function
+    | Ok _ as res -> Abb.Future.return res
+    | Error (#Pgsql_io.err as err) ->
+        Logs.err (fun m -> m "%s : %a" request_id Pgsql_io.pp_err err);
+        Abb.Future.return (Error `Error)
 
   let check ~request_id user account db =
     let run =
@@ -2715,6 +2744,12 @@ module Comment = struct
           work_manifest =
         let module Tcm = Terrat_vcs_github_comment in
         let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
+        let open Abb.Future.Infix_monad in
+        (* The comment is best effort: if we cannot load the tier's runs usage,
+           still publish it, just without the usage warning. *)
+        Tier.runs_usage ~request_id work_manifest.Terrat_work_manifest3.account db
+        >>= fun tier_runs ->
+        let tier_runs = CCResult.get_or ~default:None tier_runs in
         let pull_request =
           Api.Pull_request.set_diff () pull_request |> Api.Pull_request.set_checks ()
         in
@@ -2731,6 +2766,7 @@ module Comment = struct
           {
             Tcm.S.request_id;
             account_status;
+            tier_runs;
             config;
             client;
             db;
