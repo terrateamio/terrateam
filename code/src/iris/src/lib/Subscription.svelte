@@ -202,7 +202,7 @@
         <!-- Stripe Pricing Table -->
         <div class="max-w-6xl mx-auto">
           <stripe-pricing-table
-            pricing-table-id="prctbl_1SxvXECgvqrOzjiX8RSDgkcO"
+            pricing-table-id="prctbl_1TrcdtCgvqrOzjiXFcr3ag7p"
             publishable-key="pk_live_51L5snICgvqrOzjiXc1uOhAIpPQxNO8ohf4ew34zsilOHF1ZTT7fqjhTob6BccqNmKjreh3f0dsj6JWQVsKfqUewj00DFDgiz87"
           >
           </stripe-pricing-table>

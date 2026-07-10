@@ -19,4 +19,4 @@ export { default as PageLayout } from './layout/PageLayout.svelte';
 export { default as RootHandler } from './layout/RootHandler.svelte';
 
 // Trial Banner Components
-export { default as RegulatedTrialBanner } from './RegulatedTrialBanner.svelte';
+export { default as ProTrialBanner } from './ProTrialBanner.svelte';
