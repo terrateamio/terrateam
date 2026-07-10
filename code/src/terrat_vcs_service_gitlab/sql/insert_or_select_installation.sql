@@ -2,7 +2,7 @@
 -- even if it already exists.
 with
 attempted_insert as (
-    insert into gitlab_installations (id, name) values($id, $name)
+    insert into gitlab_installations (id, name, tier) values($id, $name, $tier)
     on conflict (id) do nothing
     returning webhook_secret, state
 ),

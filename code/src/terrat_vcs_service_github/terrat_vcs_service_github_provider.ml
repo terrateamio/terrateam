@@ -2597,7 +2597,64 @@ module Tier = struct
         Ret.text
         /^ read [%blob "sql/select_users_this_month.sql"]
         /% Var.bigint "installation_id")
+
+    let select_runs_this_month =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* count *)
+        Ret.bigint
+        /^ read [%blob "sql/select_runs_this_month.sql"]
+        /% Var.bigint "installation_id")
   end
+
+  let check_users_per_month ~request_id user account limit db =
+    let open Abbs_future_combinators.Infix_result_monad in
+    Pgsql_io.Prepared_stmt.fetch
+      db
+      Sql.select_users_this_month
+      ~f:(fun user created_at -> (user, created_at))
+      (CCInt64.of_int @@ Api.Account.id account)
+    >>= function
+    | [] -> Abb.Future.return (Ok None)
+    | users -> (
+        let user = Api.User.to_string user in
+        let all_users = Sln_set.String.dedup_list (user :: CCList.map fst users) in
+        (* Allow users that have used the product with-in the existing tier to use it. *)
+        let allowed_users = Sln_set.String.of_list @@ CCList.take limit @@ CCList.map fst users in
+        Logs.info (fun m ->
+            m
+              "%s : TIER_CHECK : NUM_USERS_PER_MONTH : all_users=%d : limit=%d"
+              request_id
+              (CCList.length all_users)
+              limit);
+        match CCList.length all_users with
+        | n when n > limit && not (Sln_set.String.mem user allowed_users) ->
+            CCList.iter
+              (fun (user, first_run) ->
+                Logs.info (fun m ->
+                    m "%s : TIER_CHECK : user=%s : first_run=%s" request_id user first_run))
+              users;
+            Abb.Future.return (Ok (Some { Terrat_tier.Check.users = all_users; limit }))
+        | _ -> Abb.Future.return (Ok None))
+
+  let check_runs_per_month ~request_id account limit db =
+    if limit = CCInt.max_int then Abb.Future.return (Ok None)
+    else
+      let open Abbs_future_combinators.Infix_result_monad in
+      Pgsql_io.Prepared_stmt.fetch
+        db
+        Sql.select_runs_this_month
+        ~f:CCFun.id
+        (CCInt64.of_int @@ Api.Account.id account)
+      >>= function
+      | [] -> assert false
+      | used :: _ ->
+          let used = CCInt64.to_int used in
+          Logs.info (fun m ->
+              m "%s : TIER_CHECK : RUNS_PER_MONTH : used=%d : limit=%d" request_id used limit);
+          if used >= limit then Abb.Future.return (Ok (Some { Terrat_tier.Check.used; limit }))
+          else Abb.Future.return (Ok None)
 
   let check ~request_id user account db =
     let run =
@@ -2610,44 +2667,17 @@ module Tier = struct
       >>= function
       | [] -> assert false
       | (tier_id, tier_name, tier) :: _ -> (
-          let { Terrat_tier.num_users_per_month; _ } = tier in
-          Pgsql_io.Prepared_stmt.fetch
-            db
-            Sql.select_users_this_month
-            ~f:(fun user created_at -> (user, created_at))
-            (CCInt64.of_int @@ Api.Account.id account)
-          >>= function
-          | [] -> Abb.Future.return (Ok None)
-          | users -> (
-              let user = Api.User.to_string user in
-              let all_users = Sln_set.String.dedup_list (user :: CCList.map fst users) in
-              (* Allow users that have used the product with-in the existing tier to use it. *)
-              let allowed_users =
-                Sln_set.String.of_list @@ CCList.take num_users_per_month @@ CCList.map fst users
-              in
-              Logs.info (fun m -> m "%s : TIER : id=%s : name=%s" request_id tier_id tier_name);
-              Logs.info (fun m ->
-                  m
-                    "%s : TIER_CHECK : NUM_USERS_PER_MONTH : all_users=%d : limit=%d"
-                    request_id
-                    (CCList.length all_users)
-                    num_users_per_month);
-              match CCList.length all_users with
-              | n when n > num_users_per_month && not (Sln_set.String.mem user allowed_users) ->
-                  CCList.iter
-                    (fun (user, first_run) ->
-                      Logs.info (fun m ->
-                          m "%s : TIER_CHECK : user=%s : first_run=%s" request_id user first_run))
-                    users;
-                  Abb.Future.return
-                    (Ok
-                       (Some
-                          {
-                            Terrat_tier.Check.tier_name;
-                            users_per_month =
-                              { Terrat_tier.Check.users = all_users; limit = num_users_per_month };
-                          }))
-              | _ -> Abb.Future.return (Ok None)))
+          let { Terrat_tier.num_users_per_month; runs_per_month; _ } = tier in
+          Logs.info (fun m -> m "%s : TIER : id=%s : name=%s" request_id tier_id tier_name);
+          check_users_per_month ~request_id user account num_users_per_month db
+          >>= fun users_check ->
+          check_runs_per_month ~request_id account runs_per_month db
+          >>= fun runs_check ->
+          match (users_check, runs_check) with
+          | None, None -> Abb.Future.return (Ok None)
+          | users_per_month, runs_per_month ->
+              Abb.Future.return
+                (Ok (Some { Terrat_tier.Check.tier_name; users_per_month; runs_per_month })))
     in
     let open Abb.Future.Infix_monad in
     run
@@ -4007,7 +4037,7 @@ module Comment = struct
         | Error _ -> Abb.Future.return (Error `Error))
     | Msg.Tier_check checks ->
         let module C = Terrat_tier.Check in
-        let { C.tier_name; users_per_month } = checks in
+        let { C.tier_name; users_per_month; runs_per_month } = checks in
         let kv =
           Snabela.Kv.(
             Map.of_list
@@ -4015,18 +4045,29 @@ module Comment = struct
                 ("tier_name", string tier_name);
                 ( "num_users_per_month",
                   list
-                    [
-                      Map.of_list
-                        [
-                          ( "all_users",
-                            list
-                            @@ CCList.map
-                                 (fun user -> Map.of_list [ ("name", string user) ])
-                                 users_per_month.C.users );
-                          ("limit", int users_per_month.C.limit);
-                          ("num_users", int @@ CCList.length users_per_month.C.users);
-                        ];
-                    ] );
+                    (CCOption.map_or
+                       ~default:[]
+                       (fun { C.users; limit } ->
+                         [
+                           Map.of_list
+                             [
+                               ( "all_users",
+                                 list
+                                 @@ CCList.map
+                                      (fun user -> Map.of_list [ ("name", string user) ])
+                                      users );
+                               ("limit", int limit);
+                               ("num_users", int @@ CCList.length users);
+                             ];
+                         ])
+                       users_per_month) );
+                ( "runs_per_month",
+                  list
+                    (CCOption.map_or
+                       ~default:[]
+                       (fun { C.used; limit } ->
+                         [ Map.of_list [ ("used", int used); ("limit", int limit) ] ])
+                       runs_per_month) );
               ])
         in
         Abbs_future_combinators.Result.ignore

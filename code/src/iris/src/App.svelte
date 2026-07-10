@@ -37,7 +37,7 @@
   import Stacks from './lib/Stacks.svelte';
   import StackDetail from './lib/StackDetail.svelte';
   import RootHandler from './lib/components/layout/RootHandler.svelte';
-  import RegulatedTrialBanner from './lib/components/RegulatedTrialBanner.svelte';
+  import ProTrialBanner from './lib/components/ProTrialBanner.svelte';
   import LoadingSpinner from './lib/components/ui/LoadingSpinner.svelte';
   
   // Check for maintenance mode
@@ -242,7 +242,7 @@
 {:else}
   <!-- Global trial notification banner -->
   {#if $isAuthenticated}
-    <RegulatedTrialBanner />
+    <ProTrialBanner />
   {/if}
   
   <!-- Main app content -->

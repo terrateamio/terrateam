@@ -151,7 +151,8 @@ module Make (S : S with type Account_id.t = int) = struct
           Ret.text
           /^ read [%blob "sql/insert_or_select_installation.sql"]
           /% Var.bigint "id"
-          /% Var.text "name")
+          /% Var.text "name"
+          /% Var.text "tier")
     end
 
     let affirm_is_admin client installation_id user_id =
@@ -205,7 +206,9 @@ module Make (S : S with type Account_id.t = int) = struct
               let module W = Terrat_api_components.Gitlab_webhook in
               { W.webhook_secret = Some webhook_secret; webhook_url; state })
             (CCInt64.of_int installation_id)
-            name)
+            name
+            (Terrat_config.default_tier
+            @@ Terrat_vcs_service_gitlab_provider.Api.Config.config config))
       >>= function
       | [] -> assert false
       | webhook_secret :: _ -> Abb.Future.return (Ok webhook_secret)

@@ -40,28 +40,17 @@
 
   $: currentMessage = messages[messageIndex];
 
-  // Features included in Regulated tier (that will be lost when dropping to Startup)
-  const regulatedFeatures = [
-    'API access',
-    'CODEOWNERS integration',
-    'Role-based access control',
-    'Gatekeeper approvals',
-    'Centralized config',
-    '365-day audit retention'
+  // What's lost when the Pro trial ends and the account drops to Free.
+  // Free keeps every feature but is capped at 50 runs/month, 3 users,
+  // and 1 private runner.
+  const allFeatures = [
+    'Unlimited runs (Free: 50/month)',
+    'Unlimited users (Free: 3)',
+    'Unlimited private runners (Free: 1)',
+    'Unlimited concurrency',
+    'Priority support (email and Slack)',
+    '365-day audit retention (Free: 30-day)'
   ];
-
-  // Features included in Growth tier (also lost when dropping to Startup)
-  const growthFeatures = [
-    'Scheduled drift detection',
-    'Programmatic config generation',
-    'Customer-owned plan storage',
-    'Apply requirements',
-    'Email support',
-    '90-day audit retention'
-  ];
-
-  // Combined features for display
-  const allFeatures = [...growthFeatures, ...regulatedFeatures];
 
   // Calculate days remaining reactively
   $: daysRemaining = $selectedInstallation?.trial_ends_at
@@ -69,12 +58,12 @@
     : null;
 
   // Determine if we should show the banner
-  // Tier name may include a date suffix like "regulated-2026-01-07"
-  $: isRegulatedTier = $selectedInstallation?.tier?.name?.toLowerCase().startsWith('regulated') ?? false;
+  // Tier name may include a date suffix like "pro-2026-07-10"
+  $: isProTier = $selectedInstallation?.tier?.name?.toLowerCase().startsWith('pro') ?? false;
 
   $: shouldShowBanner =
     areTrialBannersEnabled() &&
-    isRegulatedTier &&
+    isProTier &&
     daysRemaining !== null &&
     daysRemaining > 0;
 
