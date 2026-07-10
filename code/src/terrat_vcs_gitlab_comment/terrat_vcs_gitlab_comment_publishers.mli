@@ -40,6 +40,7 @@ module Publisher_tools : sig
     view:[> `Compact ] ->
     string ->
     [< `Active | `Disabled | `Expired | `Trial_ending of int64 > `Trial_ending ] ->
+    Terrat_tier.Check.runs_per_month option ->
     Api.Config.t ->
     bool ->
     'a list ->

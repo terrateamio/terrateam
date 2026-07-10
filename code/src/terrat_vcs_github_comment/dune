@@ -12,6 +12,7 @@
   terrat_github
   terrat_plan_diff
   terrat_scope
+  terrat_tier
   terrat_vcs_api_github
   terrat_vcs_comment
   terrat_vcs_github_comment_templates
