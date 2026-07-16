@@ -1,3 +1,4 @@
+module Batch : module type of Terrat_vcs_event_evaluator2_batch
 module Exec : module type of Abb_bounded_suspendable_executor.Make (Abb.Future) (CCString) (Abb.Sys)
 
 val create_exec : slots:int -> unit -> Exec.t Abb.Future.t

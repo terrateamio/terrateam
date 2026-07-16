@@ -36,12 +36,17 @@ struct
     | Ok () -> Abb.Future.return (Ok ())
     | Error `Error -> Abb.Future.return (Error `Error)
 
-  let create_commit_checks' f branch_ref checks =
-    let open Abb.Future.Infix_monad in
-    f branch_ref checks
-    >>= function
-    | Ok () -> Abb.Future.return (Ok ())
-    | Error `Error -> Abb.Future.return (Error `Error)
+  (* Wrapper so that when we call [create_commit_checks] the error type lines up.  Creating no
+     checks is a no-op: performing it would dirty the commit checks, forcing anyone that reads them
+     afterwards to fetch them again for no benefit. *)
+  let create_commit_checks' f branch_ref = function
+    | [] -> Abb.Future.return (Ok ())
+    | checks -> (
+        let open Abb.Future.Infix_monad in
+        f branch_ref checks
+        >>= function
+        | Ok () -> Abb.Future.return (Ok ())
+        | Error `Error -> Abb.Future.return (Error `Error))
 
   let match_tag_queries ~accessor ~changes queries =
     CCList.map
@@ -111,91 +116,15 @@ struct
     dirspaceflows_of_changes_with_branch_target repo_config changes
     >>= fun dirspaceflows -> Ok (strip_lock_branch_target dirspaceflows)
 
-  (* Partitions a dirspaceflows by a few attributes:
+  let partition_by_run_params = Terrat_vcs_event_evaluator2_batch.partition_by_run_params
 
-       1. The environment, so all environments get their own work manifest.
-
-       2. runs_on, so any runs that get their own runs_on configuration get
-          their own work manifest.
-
-       3. Overlapping workspaces.  This way if a dir has multiple workspace that
-          will run in it, it will get its own run.  This ensure isolation between
-          those directories. *)
-  let partition_by_run_params ~max_workspaces_per_batch dirspaceflows =
-    let module M = struct
-      type t = string option * Yojson.Safe.t option [@@deriving eq]
-    end in
-    let module Dsf = Terrat_change.Dirspaceflow in
-    let module We = Terrat_base_repo_config_v1.Workflows.Entry in
-    let partitioned_by_dir =
-      let rec update_first_match ~test ~update = function
-        | [] -> None
-        | x :: xs when test x -> Some (update x :: xs)
-        | x :: xs ->
-            let open CCOption.Infix in
-            update_first_match ~test ~update xs >>= fun xs -> Some (x :: xs)
-      in
-      let partitions =
-        CCList.fold_left
-          (fun groups ({ Dsf.dirspace = { Terrat_dirspace.dir; _ }; _ } as dsf) ->
-            match
-              update_first_match
-                ~test:CCFun.(Sln_map.String.mem dir %> not)
-                ~update:(Sln_map.String.add dir dsf)
-                groups
-            with
-            | Some groups -> groups
-            | None -> Sln_map.String.singleton dir dsf :: groups)
-          []
-          dirspaceflows
-      in
-      CCList.map CCFun.(Sln_map.String.to_list %> CCList.map snd) partitions
-    in
-    let partitions =
-      CCList.flat_map
-        (fun dirspaceflows ->
-          CCListLabels.fold_left
-            ~f:(fun acc dsf ->
-              let k =
-                match dsf with
-                | {
-                 Dsf.workflow = Some { Dsf.Workflow.workflow = { We.environment; runs_on; _ }; _ };
-                 _;
-                } -> (environment, runs_on)
-                | _ -> (None, None)
-              in
-              CCList.Assoc.update
-                ~eq:M.equal
-                ~f:(fun v -> Some (dsf :: CCOption.get_or ~default:[] v))
-                k
-                acc)
-            ~init:[]
-            dirspaceflows)
-        partitioned_by_dir
-    in
-    CCList.flat_map
-      (fun (k, dsfs) ->
-        dsfs
-        |> CCList.sort (fun l r ->
-            (*Ensure chunks are sorted by dirspace so chunks are consistent between runs. *)
-            Terrat_dirspace.compare (Dsf.to_dirspace l) (Dsf.to_dirspace r))
-        |> CCList.chunks max_workspaces_per_batch
-        |> CCList.map (fun chunk -> (k, chunk)))
-      partitions
-
-  let create_op_commit_checks
-      create_commit_checks
-      config
-      account
-      repo
-      ref_
-      work_manifest
-      description
-      status =
+  (* The commit checks for an operation on a work manifest.  Separate from creating them so that
+     callers operating on many work manifests can collect the checks and create them in one call. *)
+  let op_commit_checks config account repo work_manifest description status =
     let module Wm = Terrat_work_manifest3 in
     let module Status = Terrat_commit_check.Status in
     match work_manifest.Wm.changes with
-    | [] -> Abb.Future.return (Ok ())
+    | [] -> []
     | dirspaces ->
         let run_type =
           match CCList.rev work_manifest.Wm.steps with
@@ -239,8 +168,21 @@ struct
                 ())
             dirspaces
         in
-        let checks = aggregate @ dirspace_checks in
-        create_commit_checks' create_commit_checks ref_ checks
+        aggregate @ dirspace_checks
+
+  let create_op_commit_checks
+      create_commit_checks
+      config
+      account
+      repo
+      ref_
+      work_manifest
+      description
+      status =
+    create_commit_checks'
+      create_commit_checks
+      ref_
+      (op_commit_checks config account repo work_manifest description status)
 
   let create_op_commit_checks_of_result
       create_commit_checks
@@ -451,6 +393,20 @@ struct
     let dirspaceflows_by_run_params =
       partition_by_run_params ~max_workspaces_per_batch dirspaceflows
     in
+    let batch_sizes = CCList.map CCFun.(snd %> CCList.length) dirspaceflows_by_run_params in
+    Logs.info (fun m ->
+        m
+          "%s : WORK_MANIFEST : BATCHES : num_batches=%d : num_dirspaces=%d : max_batch=%d : \
+           min_batch=%d : max_workspaces_per_batch=%d"
+          (Builder.log_id s)
+          (CCList.length dirspaceflows_by_run_params)
+          (CCList.fold_left ( + ) 0 batch_sizes)
+          (CCList.fold_left CCInt.max 0 batch_sizes)
+          (CCList.fold_left
+             CCInt.min
+             (CCOption.get_or ~default:0 (CCList.head_opt batch_sizes))
+             batch_sizes)
+          max_workspaces_per_batch);
     fetch Keys.target
     >>= fun target ->
     fetch Keys.initiator
@@ -506,33 +462,45 @@ struct
               (fun m log_id time -> m "%s : WORK_MANIFEST : CREATE : time=%f" log_id time)
               (fun () -> S.Work_manifest.create ~request_id:(Builder.log_id s) db work_manifest))
         >>= fun work_manifest ->
-        fetch Keys.branch_ref
-        >>= fun branch_ref ->
-        fetch Keys.create_commit_checks
-        >>= fun create_commit_checks ->
-        fetch Keys.commit_checks
-        >>= fun commit_checks ->
-        create_op_commit_checks
-          create_commit_checks
-          (Builder.State.config s)
-          account
-          repo
-          branch_ref
-          work_manifest
-          "Queued"
-          Terrat_commit_check.Status.Queued
-        >>= fun () ->
-        maybe_create_pending_apply_commit_checks
-          create_commit_checks
-          (Builder.State.config s)
-          account
-          repo
-          branch_ref
-          (CCList.flatten matches.Keys.Matches.all_matches)
-          (Terrat_base_repo_config_v1.apply_requirements repo_config)
-          commit_checks
-        >>= fun () -> Abb.Future.return (Ok work_manifest))
+        Abb.Future.return
+          (Ok
+             ( work_manifest,
+               op_commit_checks
+                 (Builder.State.config s)
+                 account
+                 repo
+                 work_manifest
+                 "Queued"
+                 Terrat_commit_check.Status.Queued )))
       dirspaceflows_by_run_params
+    >>= fun work_manifests_and_checks ->
+    let work_manifests = CCList.map fst work_manifests_and_checks in
+    fetch Keys.branch_ref
+    >>= fun branch_ref ->
+    fetch Keys.create_commit_checks
+    >>= fun create_commit_checks ->
+    (* Create the checks for every work manifest in one call.  Creating them per work manifest
+       dirties the commit checks between each one, and the fetch below would then have to be
+       performed once per work manifest rather than once. *)
+    create_commit_checks'
+      create_commit_checks
+      branch_ref
+      (CCList.flat_map snd work_manifests_and_checks)
+    >>= fun () ->
+    (* Does not depend on any one work manifest, so it is performed once, after the checks above
+       have been created, rather than once per work manifest. *)
+    fetch Keys.commit_checks
+    >>= fun commit_checks ->
+    maybe_create_pending_apply_commit_checks
+      create_commit_checks
+      (Builder.State.config s)
+      account
+      repo
+      branch_ref
+      (CCList.flatten matches.Keys.Matches.all_matches)
+      (Terrat_base_repo_config_v1.apply_requirements repo_config)
+      commit_checks
+    >>= fun () -> Abb.Future.return (Ok work_manifests)
 
   module Plan = struct
     let eq base_ref' branch_ref' { Wm.base_ref; branch_ref; steps; _ } =
