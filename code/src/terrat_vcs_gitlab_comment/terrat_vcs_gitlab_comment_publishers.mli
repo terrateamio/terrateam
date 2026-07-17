@@ -38,6 +38,8 @@ end
 module Publisher_tools : sig
   val create_run_output :
     view:[> `Compact ] ->
+    pull_number:int option ->
+    dirspace_run_urls:(Terrat_dirspace.t * string) list ->
     string ->
     [< `Active | `Disabled | `Expired | `Trial_ending of int64 > `Trial_ending ] ->
     Terrat_tier.Check.runs_per_month option ->

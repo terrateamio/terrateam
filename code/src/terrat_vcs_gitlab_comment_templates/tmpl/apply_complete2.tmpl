@@ -126,7 +126,7 @@ No output shown due to comment size.
 {%- endif %}
 {%- for d in dirspaces %}
 
-## {{ d.dir }} | {{ d.workspace }} |  {% if d.success %}:white_check_mark:{% else %}:heavy_multiplication_x:{% endif %}
+## {% if d.run_url %}[{{ d.dir }} | {{ d.workspace }}]({{ d.run_url }}){% else %}{{ d.dir }} | {{ d.workspace }}{% endif %} |  {% if d.success %}:white_check_mark:{% else %}:heavy_multiplication_x:{% endif %}
   {%- if compact_dirspaces %}
 
 <details>

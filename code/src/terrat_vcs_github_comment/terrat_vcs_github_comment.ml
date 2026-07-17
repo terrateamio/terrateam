@@ -236,17 +236,38 @@ module S = struct
     let request_id = t.request_id in
     Api.minimize_pull_request_comment ~request_id t.client t.pull_request comment_id
 
+  (* Link to the PR-level runs page so the comment (which aggregates every work
+     manifest for the pull request) points at all of them, not just the last one
+     to post. *)
+  let pull_number t = Some (Api.Pull_request.id t.pull_request)
+
+  (* Per-dirspace deep links to the specific work manifest run that produced each
+     dirspace's output. *)
+  let dirspace_run_urls t els =
+    CCList.filter_map
+      (fun el ->
+        match
+          Ui.run_url t.config t.work_manifest.Terrat_work_manifest3.account el.work_manifest_id
+        with
+        | Some uri -> Some (el.dirspace, Uri.to_string uri)
+        | None -> None)
+      els
+
   let post_comment t els =
     let open Abb.Future.Infix_monad in
     let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
     (* TODO: Stop using the result, move gates to to t *)
     let gates = t.result.R2.gates in
+    let pull_number = pull_number t in
+    let dirspace_run_urls = dirspace_run_urls t els in
     let by_dirspace = CCList.map (fun el -> (Scope.Dirspace el.dirspace, el.steps)) els in
     let by_scope = t.hooks @ by_dirspace in
     let compact = CCList.exists (fun { compact; _ } -> compact) els in
     let body =
       Publisher_tools.create_run_output
         ~view:(if compact then `Compact else `Full)
+        ~pull_number
+        ~dirspace_run_urls
         t.request_id
         t.account_status
         t.tier_runs
@@ -268,6 +289,8 @@ module S = struct
         let body =
           Publisher_tools.create_run_output
             ~view:`Compact
+            ~pull_number
+            ~dirspace_run_urls
             t.request_id
             t.account_status
             t.tier_runs
@@ -289,6 +312,8 @@ module S = struct
             let body =
               Publisher_tools.create_run_output
                 ~view:`Compact
+                ~pull_number
+                ~dirspace_run_urls
                 t.request_id
                 t.account_status
                 t.tier_runs
@@ -307,12 +332,16 @@ module S = struct
   let rendered_length t els =
     let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
     let gates = t.result.R2.gates in
+    let pull_number = pull_number t in
+    let dirspace_run_urls = dirspace_run_urls t els in
     let by_dirspace = CCList.map (fun el -> (Scope.Dirspace el.dirspace, el.steps)) els in
     let by_scope = t.hooks @ by_dirspace in
     let compact = CCList.exists (fun { compact; _ } -> compact) els in
     let body =
       Publisher_tools.create_run_output
         ~view:(if compact then `Compact else `Full)
+        ~pull_number
+        ~dirspace_run_urls
         t.request_id
         t.account_status
         t.tier_runs
