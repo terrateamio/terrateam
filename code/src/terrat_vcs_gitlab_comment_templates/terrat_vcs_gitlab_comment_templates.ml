@@ -196,6 +196,9 @@ module Tmpl = struct
   let premium_feature_err_require_completed_reviews =
     read [%blob "tmpl/premium_feature_err_require_completed_reviews.tmpl"]
 
+  let premium_feature_err_notifications_summary =
+    read [%blob "tmpl/premium_feature_err_notifications_summary.tmpl"]
+
   let repo_config_merge_err = read [%blob "tmpl/repo_config_merge_err.tmpl"]
   let gate_check_failure = jinja [%blob "tmpl/gate_check_failure.tmpl"]
   let tier_check = read [%blob "tmpl/tier_check.tmpl"]

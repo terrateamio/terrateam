@@ -1,5 +1,18 @@
 {%- if overall_success %}
 ## Applies :white_check_mark:
+  {%- if summary and dirspaces %}
+{%- set failed = dirspaces | rejectattr("success") | list %}
+{%- set applied = dirspaces | selectattr("success") | list %}
+
+**{{ dirspaces | length }} dirspace{{ 's' if dirspaces | length != 1 else '' }}** · {{ applied | length }} applied · {{ failed | length }} failed
+
+| Directory | Workspace | Result |
+| --- | --- | :---: |
+    {%- for d in dirspaces %}
+| `{{ d.dir }}` | `{{ d.workspace }}` | {% if d.success %}:white_check_mark:{% else %}:x:{% endif %} |
+    {%- endfor %}
+
+  {%- endif %}
   {%- if account_status == 'trial_ending' %}
 
 > [!WARNING]
@@ -43,6 +56,19 @@ Not all [dirspaces](https://docs.terrateam.io/getting-started/concepts/#dirspace
 {%- else %}
 
 ## Applies :heavy_multiplication_x:
+  {%- if summary and dirspaces %}
+{%- set failed = dirspaces | rejectattr("success") | list %}
+{%- set applied = dirspaces | selectattr("success") | list %}
+
+**{{ dirspaces | length }} dirspace{{ 's' if dirspaces | length != 1 else '' }}** · {{ applied | length }} applied · {{ failed | length }} failed
+
+| Directory | Workspace | Result |
+| --- | --- | :---: |
+    {%- for d in dirspaces %}
+| `{{ d.dir }}` | `{{ d.workspace }}` | {% if d.success %}:white_check_mark:{% else %}:x:{% endif %} |
+    {%- endfor %}
+
+  {%- endif %}
   {%- if work_manifest_url is defined %}
     
 Outputs can be viewed in the Terrateam Console [here]({{ work_manifest_url }}).
