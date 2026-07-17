@@ -1,3 +1,4 @@
+module Batch = Terrat_vcs_event_evaluator2_batch
 module Fc = Abbs_future_combinators
 module Irm = Fc.Infix_result_monad
 module Tjc = Terrat_job_context
