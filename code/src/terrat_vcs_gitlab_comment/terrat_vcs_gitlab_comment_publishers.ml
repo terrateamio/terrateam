@@ -306,6 +306,7 @@ end
 module Publisher_tools = struct
   let create_run_output
       ~view
+      ~summary
       request_id
       account_status
       tier_runs
@@ -442,6 +443,7 @@ module Publisher_tools = struct
                    |> kv_of_outputs) );
                ("compact_view", `Bool (view = `Compact));
                ("compact_dirspaces", `Bool (CCList.length dirspaces > 5));
+               ("summary", `Bool summary);
                ( "dirspaces",
                  `List
                    (CCList.map

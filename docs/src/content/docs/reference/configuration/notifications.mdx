@@ -11,18 +11,39 @@ notifications:
   policies:
     - tag_query: ''
       comment_strategy: 'minimize'
+  summary:
+    enabled: false
 ```
 
 ## Keys
 | Key | Type | Description |
 | --- | --- | --- |
 | `policies` | array | A list of notification policy objects that specifies which comment update strategies apply for particular tags . |
+| `summary` | object | Controls the summary header shown at the top of plan and apply comments. |
 
 ### Policies
 | Key | Type | Description |
 | --- | --- | --- |
 | `comment_strategy` | string | Specifies the strategy Terrateam will when creating new comments. Values are `append` (don't modify old comments, just keep apending), `minimize` (old comments get minimized) or `delete` (old comments get removed). Default is `minimize`. |
 | `tag_query` | string | See [tag queries](/advanced-workflows/tags). |
+
+### Summary
+
+:::note
+The summary header is an [Enterprise](/editions) feature. Enabling it on the Open Source Edition is not supported: Terrateam will post a message that this is a commercial feature instead of running the operation.
+:::
+
+| Key | Type | Description |
+| --- | --- | --- |
+| `enabled` | boolean | When `true`, each plan and apply comment starts with a summary header: a one-line rollup and a table of the dirspaces (directory and workspace combinations) executed in that comment, with their result and, for plans, whether there are changes. This lets reviewers see what a comment covers without expanding the full output. Default is `false`. |
+
+The summary header is rendered above the collapsed plan/apply output. Enable it (Enterprise only):
+
+```yaml
+notifications:
+  summary:
+    enabled: true
+```
 
 ## Examples
 ### Multiple Comment Strategies for Diferent Dirspaces

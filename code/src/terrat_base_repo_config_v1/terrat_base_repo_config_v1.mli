@@ -680,7 +680,14 @@ module Notifications : sig
     [@@deriving make, show, yojson, eq]
   end
 
-  type t = { policies : Policy.t list [@default [ Policy.make ~tag_query:Tag_query.any () ]] }
+  module Summary : sig
+    type t = { enabled : bool [@default false] } [@@deriving make, show, yojson, eq]
+  end
+
+  type t = {
+    policies : Policy.t list; [@default [ Policy.make ~tag_query:Tag_query.any () ]]
+    summary : Summary.t; [@default Summary.make ()]
+  }
   [@@deriving make, show, yojson, eq]
 end
 

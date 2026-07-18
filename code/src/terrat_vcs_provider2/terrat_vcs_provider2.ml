@@ -3,6 +3,7 @@ type premium_features =
   | `Multiple_drift_schedules
   | `Gatekeeping
   | `Require_completed_reviews
+  | `Notifications_summary
   ]
 [@@deriving show]
 

@@ -57,17 +57,26 @@ module S = struct
   let delete_comment _t _comment_id = raise (Failure "nyi")
   let minimize_comment _t _comment_id = raise (Failure "nyi")
 
+  let summary_enabled t =
+    let module N = Terrat_base_repo_config_v1.Notifications in
+    let { N.summary = { N.Summary.enabled; _ }; _ } =
+      Terrat_base_repo_config_v1.notifications t.repo_config
+    in
+    enabled
+
   let post_comment t els =
     let open Abb.Future.Infix_monad in
     let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
     (* TODO: Stop using the result, move gates to to t *)
     let gates = t.result.R2.gates in
+    let summary = summary_enabled t in
     let by_dirspace = CCList.map (fun el -> (Scope.Dirspace el.dirspace, el.steps)) els in
     let by_scope = t.hooks @ by_dirspace in
     let compact = CCList.exists (fun { compact; _ } -> compact) els in
     let body =
       Publisher_tools.create_run_output
         ~view:(if compact then `Compact else `Full)
+        ~summary
         t.request_id
         t.account_status
         t.tier_runs
@@ -89,6 +98,7 @@ module S = struct
         let body =
           Publisher_tools.create_run_output
             ~view:`Compact
+            ~summary
             t.request_id
             t.account_status
             t.tier_runs
@@ -110,6 +120,7 @@ module S = struct
             let body =
               Publisher_tools.create_run_output
                 ~view:`Compact
+                ~summary
                 t.request_id
                 t.account_status
                 t.tier_runs
@@ -128,12 +139,14 @@ module S = struct
   let rendered_length t els =
     let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
     let gates = t.result.R2.gates in
+    let summary = summary_enabled t in
     let by_dirspace = CCList.map (fun el -> (Scope.Dirspace el.dirspace, el.steps)) els in
     let by_scope = t.hooks @ by_dirspace in
     let compact = CCList.exists (fun { compact; _ } -> compact) els in
     let body =
       Publisher_tools.create_run_output
         ~view:(if compact then `Compact else `Full)
+        ~summary
         t.request_id
         t.account_status
         t.tier_runs

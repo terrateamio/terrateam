@@ -38,6 +38,7 @@ end
 module Publisher_tools : sig
   val create_run_output :
     view:[> `Compact ] ->
+    summary:bool ->
     string ->
     [< `Active | `Disabled | `Expired | `Trial_ending of int64 > `Trial_ending ] ->
     Terrat_tier.Check.runs_per_month option ->
