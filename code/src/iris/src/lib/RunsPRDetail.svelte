@@ -25,6 +25,11 @@
 
   $: prNumber = params.prNumber ? parseInt(params.prNumber) : null;
 
+  // Only surface the Stacks section when the pull request actually has stacks.
+  // Reviewers arriving from a pull request comment want the runs; an empty
+  // stacks tree is surprising noise.
+  $: hasStacks = (stacks?.stacks?.length ?? 0) > 0;
+
   // Check if user came from a specific run detail page
   let lastRunId: string | null = null;
   $: if (typeof window !== 'undefined') {
@@ -343,12 +348,14 @@
             View on {$currentVCSProvider === 'github' ? 'GitHub' : 'GitLab'}
           </Button>
         {/if}
-        <Button variant="outline" size="md" on:click={handleRefreshStacks}>
-          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          Refresh Stacks
-        </Button>
+        {#if hasStacks}
+          <Button variant="outline" size="md" on:click={handleRefreshStacks}>
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Refresh Stacks
+          </Button>
+        {/if}
         <Button variant="outline" size="md" on:click={handleRefreshRuns}>
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -357,21 +364,6 @@
         </Button>
       </div>
     </Card>
-
-    <!-- Stacks Section -->
-    <div class="mb-6">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-xl font-semibold text-[var(--sg-text)]">
-          Infrastructure Stacks
-        </h2>
-      </div>
-
-      <StackTree
-        {stacks}
-        loading={isStacksLoading}
-        error={stacksError}
-      />
-    </div>
 
     <!-- Runs Section -->
     <div class="mb-6">
@@ -472,5 +464,22 @@
         </Card>
       {/if}
     </div>
+
+    {#if hasStacks}
+      <!-- Stacks Section -->
+      <div class="mb-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-semibold text-[var(--sg-text)]">
+            Infrastructure Stacks
+          </h2>
+        </div>
+
+        <StackTree
+          {stacks}
+          loading={isStacksLoading}
+          error={stacksError}
+        />
+      </div>
+    {/if}
   {/if}
 </PageLayout>

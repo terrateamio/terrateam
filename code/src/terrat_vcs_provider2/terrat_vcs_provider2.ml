@@ -670,7 +670,11 @@ module type S = sig
 
   module Ui : sig
     val work_manifest_url :
-      Api.Config.t -> Api.Account.t -> ('a, 'b) Terrat_work_manifest3.Existing.t -> Uri.t option
+      Api.Config.t ->
+      Api.Account.t ->
+      int option ->
+      ('a, 'b) Terrat_work_manifest3.Existing.t ->
+      Uri.t option
   end
 
   module Job_context : sig

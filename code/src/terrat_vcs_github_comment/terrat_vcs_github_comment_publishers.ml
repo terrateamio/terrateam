@@ -305,6 +305,8 @@ module Publisher_tools = struct
   let create_run_output
       ~view
       ~summary
+      ~pull_number
+      ~dirspace_run_urls
       request_id
       account_status
       tier_runs
@@ -398,7 +400,7 @@ module Publisher_tools = struct
                ~default:[]
                (fun work_manifest_url ->
                  [ ("work_manifest_url", `String (Uri.to_string work_manifest_url)) ])
-               (Ui.work_manifest_url config work_manifest.Wm.account work_manifest);
+               (Ui.work_manifest_url config work_manifest.Wm.account pull_number work_manifest);
              CCOption.map_or
                ~default:[]
                (fun env -> [ ("environment", `String env) ])
@@ -445,9 +447,19 @@ module Publisher_tools = struct
                ( "dirspaces",
                  `List
                    (CCList.map
-                      (fun ({ Terrat_dirspace.dir; workspace }, steps) ->
+                      (fun (({ Terrat_dirspace.dir; workspace } as dirspace), steps) ->
                         let has_changes = steps_has_changes steps in
                         let success = steps_success steps in
+                        let run_url =
+                          match
+                            CCList.assoc_opt
+                              ~eq:(fun a b -> Terrat_dirspace.compare a b = 0)
+                              dirspace
+                              dirspace_run_urls
+                          with
+                          | Some url -> `String url
+                          | None -> `Null
+                        in
                         `Assoc
                           (CCList.flatten
                              [
@@ -460,6 +472,7 @@ module Publisher_tools = struct
                                      (kv_of_outputs
                                         (Output.filter ~overall_success (output_of_steps steps))) );
                                  ("has_changes", `Bool has_changes);
+                                 ("run_url", run_url);
                                ];
                              ]))
                       dirspaces) );

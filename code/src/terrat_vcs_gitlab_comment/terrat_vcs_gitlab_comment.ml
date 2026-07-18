@@ -56,6 +56,11 @@ module S = struct
   let upsert_comment_id _t _els _cid = Abb.Future.return (Ok ())
   let delete_comment _t _comment_id = raise (Failure "nyi")
   let minimize_comment _t _comment_id = raise (Failure "nyi")
+  let pull_number t = Some (Api.Pull_request.id t.pull_request)
+
+  (* GitLab has no Console run pages (see [Ui.run_url]) and does not yet track a
+     per-dirspace work manifest id, so there are no per-dirspace run links. *)
+  let dirspace_run_urls _t _els = []
 
   let summary_enabled t =
     let module N = Terrat_base_repo_config_v1.Notifications in
@@ -70,6 +75,8 @@ module S = struct
     (* TODO: Stop using the result, move gates to to t *)
     let gates = t.result.R2.gates in
     let summary = summary_enabled t in
+    let pull_number = pull_number t in
+    let dirspace_run_urls = dirspace_run_urls t els in
     let by_dirspace = CCList.map (fun el -> (Scope.Dirspace el.dirspace, el.steps)) els in
     let by_scope = t.hooks @ by_dirspace in
     let compact = CCList.exists (fun { compact; _ } -> compact) els in
@@ -77,6 +84,8 @@ module S = struct
       Publisher_tools.create_run_output
         ~view:(if compact then `Compact else `Full)
         ~summary
+        ~pull_number
+        ~dirspace_run_urls
         t.request_id
         t.account_status
         t.tier_runs
@@ -99,6 +108,8 @@ module S = struct
           Publisher_tools.create_run_output
             ~view:`Compact
             ~summary
+            ~pull_number
+            ~dirspace_run_urls
             t.request_id
             t.account_status
             t.tier_runs
@@ -121,6 +132,8 @@ module S = struct
               Publisher_tools.create_run_output
                 ~view:`Compact
                 ~summary
+                ~pull_number
+                ~dirspace_run_urls
                 t.request_id
                 t.account_status
                 t.tier_runs
@@ -140,6 +153,8 @@ module S = struct
     let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
     let gates = t.result.R2.gates in
     let summary = summary_enabled t in
+    let pull_number = pull_number t in
+    let dirspace_run_urls = dirspace_run_urls t els in
     let by_dirspace = CCList.map (fun el -> (Scope.Dirspace el.dirspace, el.steps)) els in
     let by_scope = t.hooks @ by_dirspace in
     let compact = CCList.exists (fun { compact; _ } -> compact) els in
@@ -147,6 +162,8 @@ module S = struct
       Publisher_tools.create_run_output
         ~view:(if compact then `Compact else `Full)
         ~summary
+        ~pull_number
+        ~dirspace_run_urls
         t.request_id
         t.account_status
         t.tier_runs
