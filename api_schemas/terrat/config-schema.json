@@ -1222,6 +1222,19 @@
             "$ref": "#/definitions/notification-policy"
           },
           "type": "array"
+        },
+        "summary": {
+          "$ref": "#/definitions/notifications-summary"
+        }
+      },
+      "type": "object"
+    },
+    "notifications-summary": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": false,
+          "type": "boolean"
         }
       },
       "type": "object"

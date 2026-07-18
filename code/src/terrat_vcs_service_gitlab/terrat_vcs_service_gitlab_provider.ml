@@ -3736,6 +3736,15 @@ module Comment = struct
           "PREMIUM_FEATURE_REQUIRE_COMPLETED_REVIEWS"
           Tmpl.premium_feature_err_require_completed_reviews
           kv
+    | Msg.Premium_feature_err `Notifications_summary ->
+        let kv = Snabela.Kv.(Map.of_list []) in
+        Gcm_api.apply_template_and_publish
+          ~request_id
+          client
+          pull_request
+          "PREMIUM_FEATURE_NOTIFICATIONS_SUMMARY"
+          Tmpl.premium_feature_err_notifications_summary
+          kv
     | Msg.Pull_request_not_appliable (_, apply_requirements) ->
         let module Dc = Terrat_change_match3.Dirspace_config in
         let module Ds = Terrat_dirspace in
@@ -4178,6 +4187,11 @@ module Repo_config = struct
                   }
                 -> require_completed_reviews)
              checks -> Abb.Future.return (Error (`Premium_feature_err `Require_completed_reviews))
+    | {
+     V1.View.notifications =
+       { V1.Notifications.summary = { V1.Notifications.Summary.enabled = true }; _ };
+     _;
+    } -> Abb.Future.return (Error (`Premium_feature_err `Notifications_summary))
     | _ -> Abb.Future.return (Ok (provenance, final_repo_config))
 end
 

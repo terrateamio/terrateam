@@ -236,6 +236,13 @@ module S = struct
     let request_id = t.request_id in
     Api.minimize_pull_request_comment ~request_id t.client t.pull_request comment_id
 
+  let summary_enabled t =
+    let module N = Terrat_base_repo_config_v1.Notifications in
+    let { N.summary = { N.Summary.enabled; _ }; _ } =
+      Terrat_base_repo_config_v1.notifications t.repo_config
+    in
+    enabled
+
   (* Link to the PR-level runs page so the comment (which aggregates every work
      manifest for the pull request) points at all of them, not just the last one
      to post. *)
@@ -258,6 +265,7 @@ module S = struct
     let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
     (* TODO: Stop using the result, move gates to to t *)
     let gates = t.result.R2.gates in
+    let summary = summary_enabled t in
     let pull_number = pull_number t in
     let dirspace_run_urls = dirspace_run_urls t els in
     let by_dirspace = CCList.map (fun el -> (Scope.Dirspace el.dirspace, el.steps)) els in
@@ -266,6 +274,7 @@ module S = struct
     let body =
       Publisher_tools.create_run_output
         ~view:(if compact then `Compact else `Full)
+        ~summary
         ~pull_number
         ~dirspace_run_urls
         t.request_id
@@ -289,6 +298,7 @@ module S = struct
         let body =
           Publisher_tools.create_run_output
             ~view:`Compact
+            ~summary
             ~pull_number
             ~dirspace_run_urls
             t.request_id
@@ -312,6 +322,7 @@ module S = struct
             let body =
               Publisher_tools.create_run_output
                 ~view:`Compact
+                ~summary
                 ~pull_number
                 ~dirspace_run_urls
                 t.request_id
@@ -332,6 +343,7 @@ module S = struct
   let rendered_length t els =
     let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
     let gates = t.result.R2.gates in
+    let summary = summary_enabled t in
     let pull_number = pull_number t in
     let dirspace_run_urls = dirspace_run_urls t els in
     let by_dirspace = CCList.map (fun el -> (Scope.Dirspace el.dirspace, el.steps)) els in
@@ -340,6 +352,7 @@ module S = struct
     let body =
       Publisher_tools.create_run_output
         ~view:(if compact then `Compact else `Full)
+        ~summary
         ~pull_number
         ~dirspace_run_urls
         t.request_id

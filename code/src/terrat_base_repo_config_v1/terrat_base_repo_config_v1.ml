@@ -1054,7 +1054,17 @@ module Notifications = struct
     [@@deriving make, show, yojson, eq]
   end
 
-  type t = { policies : Policy.t list [@default [ Policy.make ~tag_query:Tag_query.any () ]] }
+  module Summary = struct
+    (* Enterprise feature: the comment summary header only renders in the
+       Enterprise Edition.  Defaults to disabled so Open Source users are not
+       blocked by the premium-feature gate on the default configuration. *)
+    type t = { enabled : bool [@default false] } [@@deriving make, show, yojson, eq]
+  end
+
+  type t = {
+    policies : Policy.t list; [@default [ Policy.make ~tag_query:Tag_query.any () ]]
+    summary : Summary.t; [@default Summary.make ()]
+  }
   [@@deriving make, show, yojson, eq]
 end
 
@@ -2454,10 +2464,16 @@ let of_version_1_notification_policy policy =
 let of_version_1_notifications notifications =
   let open CCResult.Infix in
   let module N = Terrat_repo_config_notifications in
-  let { N.policies } = notifications in
+  let module Sn = Terrat_repo_config_notifications_summary in
+  let { N.policies; summary } = notifications in
   let policies = CCOption.get_or ~default:[] policies in
+  let summary =
+    match summary with
+    | Some { Sn.enabled } -> { Notifications.Summary.enabled }
+    | None -> Notifications.Summary.make ()
+  in
   CCResult.map_l of_version_1_notification_policy policies
-  >>= fun policies -> Ok { Notifications.policies }
+  >>= fun policies -> Ok { Notifications.policies; summary }
 
 let of_version_1_storage storage =
   let open CCResult.Infix in
@@ -3284,8 +3300,12 @@ let to_version_1_notification_policy policy =
 
 let to_version_1_notifications notifications =
   let module N = Terrat_repo_config.Notifications in
-  let { Notifications.policies } = notifications in
-  { N.policies = Some (CCList.map to_version_1_notification_policy policies) }
+  let module Sn = Terrat_repo_config.Notifications_summary in
+  let { Notifications.policies; summary = { Notifications.Summary.enabled } } = notifications in
+  {
+    N.policies = Some (CCList.map to_version_1_notification_policy policies);
+    summary = Some { Sn.enabled };
+  }
 
 let to_version_1_storage_plans plans =
   match plans with
