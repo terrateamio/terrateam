@@ -67,6 +67,9 @@ Set the currency for the cost estimates. This overrides the `currency` setting i
 ##### `INFRACOST_ARGS`
 Pass additional arguments to the `infracost` command. For example, you can use `--show-skipped` to include resources that were skipped in the cost estimate.
 
+##### `INFRACOST_CONFIG_FILE`
+Use your own Infracost [config file](https://www.infracost.io/docs/features/config_file/) instead of the one Terrateam generates. Set it to a path relative to the repository root (or absolute). If the file is missing on a branch — such as the base branch used to compute the previous cost — Terrateam falls back to the generated config.
+
 ## Viewing Cost Estimates
 
 When Terrateam generates a cost estimate for a pull request, it will add a comment to the pull request with the following information:

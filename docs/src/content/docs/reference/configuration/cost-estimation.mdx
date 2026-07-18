@@ -46,6 +46,7 @@ Terrateam supports the following Infracost environment variables:
 |------|-------------|
 | `INFRACOST_API_KEY` | User's Infracost API key. [Sign up](https://www.infracost.io/) and navigate to the `Org Settings` page to get your free Infracost API key. |
 | `INFRACOST_CURRENCY` | An [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217#Active_codes) currency code to report results. The value in the repository configuration takes precedence. |
+| `INFRACOST_CONFIG_FILE` | Path to a custom Infracost [config file](https://www.infracost.io/docs/features/config_file/) to use instead of the one Terrateam generates. Relative paths are resolved from the repository root. |
 
 ## Examples
 ### Enable Cost Estimation with Default Settings
@@ -69,3 +70,15 @@ cost_estimation:
   currency: EUR
 ```
 This configuration will enable cost estimation and report results in Euros (EUR).
+
+### Use a Custom Infracost Config File
+By default Terrateam generates an Infracost [config file](https://www.infracost.io/docs/features/config_file/) listing the directories and workspaces being run. To use your own instead, set the `INFRACOST_CONFIG_FILE` environment variable to its path. The value can be set with an [`env` hook](/reference/configuration/hooks):
+```yaml
+hooks:
+  plan:
+    pre:
+      - type: env
+        name: INFRACOST_CONFIG_FILE
+        cmd: ["echo", "infracost.yml"]
+```
+The path is relative to the repository root (or absolute). If the file does not exist on a given branch — for example the base branch used to compute the previous cost — Terrateam falls back to the config it generates.
