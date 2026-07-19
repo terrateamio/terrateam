@@ -78,6 +78,7 @@ drift_schedule_windows as (
     select
         repository,
         name,
+        branch,
         window_start,
         window_end
     from ds
@@ -98,13 +99,17 @@ chosen_drift_schedule as (
         ds.repo_core_id
     from ds
     inner join drift_schedules
-        on drift_schedules.repo = ds.repo_core_id and drift_schedules.name = ds.name
+        on drift_schedules.repo = ds.repo_core_id
+           and drift_schedules.name = ds.name
+           and drift_schedules.branch = coalesce(ds.branch, '')
     inner join github_installation_repositories as gir
         on gir.id = ds.repository
     inner join github_installations as gi
         on gi.id = gir.installation_id
     left join drift_schedule_windows as dsw
-        on (dsw.repository, dsw.name) = (ds.repository, ds.name)
+        on dsw.repository = ds.repository
+           and dsw.name = ds.name
+           and coalesce(dsw.branch, '') = coalesce(ds.branch, '')
     where (dsw.window_start is null
            or (dsw.window_start <= dsw.window_end
                and dsw.window_start <= current_timestamp
@@ -135,6 +140,7 @@ select
     repository,
     owner,
     name,
+    branch,
     reconcile,
     tag_query,
     window_start,

@@ -2849,7 +2849,7 @@ struct
               >>= fun repo_config ->
               let ({ D.enabled; schedules } as drift) = V1.drift repo_config in
               CCList.iter
-                (fun (name, { D.Schedule.tag_query; reconcile; schedule; window }) ->
+                (fun (name, { D.Schedule.tag_query; reconcile; schedule; window; _ }) ->
                   Logs.info (fun m ->
                       m
                         "%s : DRIFT : UPDATE_SCHEDULE : name=%s : enabled=%B : repo=%s : \
@@ -2899,13 +2899,13 @@ struct
                 (Builder.log_id s)
                 (CCList.length schedules));
           Abbs_future_combinators.List.iter
-            ~f:(fun (name, account, repo, reconcile, tag_query, window) ->
+            ~f:(fun (name, account, repo, branch, reconcile, tag_query, window) ->
               let run =
                 let open Irm in
                 Logs.info (fun m ->
                     m
                       "%s : DRIFT : RUN : name=%s : account=%s : repo=%s : reconcile=%s : \
-                       tag_query=%s : window=%s"
+                       tag_query=%s : window=%s : branch=%s"
                       (Builder.log_id s)
                       name
                       (S.Api.Account.to_string account)
@@ -2916,7 +2916,8 @@ struct
                          ~default:""
                          (fun (window_start, window_end) ->
                            Printf.sprintf "%s-%s" window_start window_end)
-                         window));
+                         window)
+                      (CCOption.get_or ~default:"" branch));
                 Builder.run_db s ~f:(fun db ->
                     S.Api.create_client
                       ~request_id:(Builder.log_id s)
@@ -2945,13 +2946,50 @@ struct
                 | Ok remote_repo -> (
                     let open Irm in
                     let default_branch = S.Api.Remote_repo.default_branch remote_repo in
+                    let target_branch =
+                      CCOption.map_or
+                        ~default:default_branch
+                        (fun branch -> S.Api.Ref.of_string branch)
+                        branch
+                    in
+                    (match branch with
+                      | None -> Abb.Future.return (Ok ())
+                      | Some branch -> (
+                          time_it
+                            s
+                            (fun m log_id time ->
+                              m
+                                "%s : FETCH_BRANCH_SHA : repo = %s : branch = %s : time=%f"
+                                log_id
+                                (S.Api.Repo.to_string repo)
+                                branch
+                                time)
+                            (fun () ->
+                              S.Api.fetch_branch_sha
+                                ~request_id:(Builder.log_id s)
+                                client
+                                repo
+                                target_branch)
+                          >>= function
+                          | Some _ -> Abb.Future.return (Ok ())
+                          | None ->
+                              Logs.info (fun m ->
+                                  m
+                                    "%s : DRIFT : SKIP_MISSING_BRANCH : name=%s : repo=%s : \
+                                     branch=%s"
+                                    (Builder.log_id s)
+                                    name
+                                    (S.Api.Repo.to_string repo)
+                                    branch);
+                              Abb.Future.return (Error `Noop)))
+                    >>= fun () ->
                     Builder.run_db s ~f:(fun db ->
                         S.Job_context.create_or_get_for_branch
                           ~request_id:(Builder.log_id s)
                           db
                           account
                           repo
-                          default_branch)
+                          target_branch)
                     >>= fun context ->
                     Builder.run_db s ~f:(fun db ->
                         time_it
@@ -2994,26 +3032,23 @@ struct
                       |> Builder.State.set_tasks (Tasks_branch.tasks (Builder.State.tasks s))
                     in
                     let open Abb.Future.Infix_monad in
-                    Builder.eval s' Keys.iter_job
+                    Builder.eval s' Keys.update_context_branch_hashes
                     >>= function
-                    | (Ok _ | Error (`Noop | `Suspend_eval _)) as r -> Abb.Future.return r
-                    | Error (#Builder.err as err) ->
-                        Logs.err (fun m ->
-                            m
-                              "%s : RUN : DRIFT : account = %s : repo = %s : %a"
-                              (Builder.log_id s)
-                              (S.Api.Account.to_string account)
-                              (S.Api.Repo.to_string repo)
-                              Builder.pp_err
-                              err);
-                        Builder.run_db s ~f:(fun db ->
-                            S.Db.store_drift_schedule
-                              ~request_id:(Builder.log_id s)
-                              db
-                              repo
-                              Terrat_base_repo_config_v1.
-                                { Drift.enabled = false; schedules = Sln_map.String.empty })
-                        >>= fun _ -> Abb.Future.return (Error err))
+                    | Ok () | Error `Noop | Error (`Suspend_eval _) -> Builder.eval s' Keys.iter_job
+                    | Error (#Builder.err as err) -> (
+                        Abb.Future.return (Error err)
+                        >>= function
+                        | (Ok _ | Error (`Noop | `Suspend_eval _)) as r -> Abb.Future.return r
+                        | Error (#Builder.err as err) ->
+                            Logs.err (fun m ->
+                                m
+                                  "%s : RUN : DRIFT : account = %s : repo = %s : %a"
+                                  (Builder.log_id s)
+                                  (S.Api.Account.to_string account)
+                                  (S.Api.Repo.to_string repo)
+                                  Builder.pp_err
+                                  err);
+                            Abb.Future.return (Ok ())))
                 | Error `Error ->
                     Logs.err (fun m ->
                         m
