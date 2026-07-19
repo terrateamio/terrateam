@@ -104,8 +104,22 @@ module Provider : module type of Terrat_vcs_service_gitlab_provider = struct
           | None -> Abb.Future.return (Ok None))
       | None -> Abb.Future.return (Ok None)
 
+    let repo_config_system_defaults system_defaults =
+      let module V1 = Terrat_base_repo_config_v1 in
+      let system_defaults = CCOption.get_or ~default:V1.default system_defaults in
+      let view = V1.to_view system_defaults in
+      let { V1.View.notifications; _ } = view in
+      let notifications =
+        {
+          notifications with
+          V1.Notifications.summary = V1.Notifications.Summary.make ~enabled:true ();
+        }
+      in
+      V1.of_view { view with V1.View.notifications }
+
     let fetch_with_provenance ?system_defaults ?built_config request_id client repo ref_ =
       let open Abbs_future_combinators.Infix_result_monad in
+      let system_defaults = repo_config_system_defaults system_defaults in
       Abbs_future_combinators.Infix_result_app.(
         (fun remote_repo centralized_repo -> (remote_repo, centralized_repo))
         <$> Api.fetch_remote_repo ~request_id client repo
@@ -214,12 +228,10 @@ module Provider : module type of Terrat_vcs_service_gitlab_provider = struct
              (Jsonu.merge ~base:(get_json base) (get_json v)))
       in
       let system_defaults =
-        CCOption.map
-          (fun config ->
-            ( "system_defaults",
-              Terrat_repo_config.Version_1.to_yojson
-                (Terrat_base_repo_config_v1.to_version_1 config) ))
-          system_defaults
+        Some
+          ( "system_defaults",
+            Terrat_repo_config.Version_1.to_yojson
+              (Terrat_base_repo_config_v1.to_version_1 system_defaults) )
       in
       let built_config = CCOption.map (fun config -> ("config_builder", config)) built_config in
       match

@@ -12,7 +12,7 @@ notifications:
     - tag_query: ''
       comment_strategy: 'minimize'
   summary:
-    enabled: false
+    enabled: true
 ```
 
 ## Keys
@@ -35,14 +35,14 @@ The summary header is an [Enterprise](/editions) feature. Enabling it on the Ope
 
 | Key | Type | Description |
 | --- | --- | --- |
-| `enabled` | boolean | When `true`, each plan and apply comment starts with a summary header: a one-line rollup and a table of the dirspaces (directory and workspace combinations) executed in that comment, with their result and, for plans, whether there are changes. This lets reviewers see what a comment covers without expanding the full output. Default is `false`. |
+| `enabled` | boolean | When `true`, each plan and apply comment starts with a summary header: a one-line rollup and a table of the dirspaces (directory and workspace combinations) executed in that comment, with their result and, for plans, whether there are changes. This lets reviewers see what a comment covers without expanding the full output. Default is `true` in Enterprise Edition and `false` in Open Source Edition. |
 
-The summary header is rendered above the collapsed plan/apply output. Enable it (Enterprise only):
+The summary header is rendered above the collapsed plan/apply output. It is enabled by default in Enterprise Edition. To disable it:
 
 ```yaml
 notifications:
   summary:
-    enabled: true
+    enabled: false
 ```
 
 ## Examples
