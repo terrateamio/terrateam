@@ -16,12 +16,12 @@
   {%- endif %}
   {%- if account_status == 'trial_ending' %}
 > [!WARNING]
-> Your Terrateam trial ends in **{{ trial_end_days }} days**.  To avoid an interruption in service, please reach out to support@terrateam.io or contact us on [our Slack](https://terrateam.io/slack).
+> Your Stategraph trial ends in **{{ trial_end_days }} days**.  To avoid an interruption in service, please reach out to support@stategraph.com or contact us on [our Slack](https://stategraph.com/slack).
 
   {%- endif %}
   {%- if runs_limit is defined and runs_used >= runs_limit * 0.8 %}
 > [!WARNING]
-> Your account has used **{{ runs_used }} of {{ runs_limit }}** runs included in your plan this month.  Once the limit is reached, further runs are blocked until next month.  To remove the limit, [upgrade your plan](https://app.terrateam.io/#/subscription).
+> Your account has used **{{ runs_used }} of {{ runs_limit }}** runs included in your plan this month.  Once the limit is reached, further runs are blocked until next month.  To remove the limit, [upgrade your plan](https://app.stategraph.com/#/subscription).
 
   {%- endif %}
   {%- if work_manifest_url is defined %}
@@ -37,7 +37,7 @@ The plan output exceeds the size limit for pull request comments. You can view t
 <details open>
   <summary><h2>Access Control :no_entry:</h2></summary>
 
-Not all [dirspaces](https://docs.terrateam.io/getting-started/concepts/#dirspace) were run because the user did not have access.  The following dirspaces were not run:
+Not all [dirspaces](https://stategraph.com/docs/getting-started/concepts/#dirspace) were run because the user did not have access.  The following dirspaces were not run:
 
 | Dir | Workspace | Policy |
 | --- | --------- | ------ |
@@ -108,7 +108,7 @@ Gatekeeper uses `all_of`, `any_of`, and `any_of_count` to define approval rules:
 - `any_of` - Lists users or groups that may approve.
 - `any_of_count` - Sets how many approvals are required from the `any_of` list.
 
-A gate is satisfied only when all conditions are met. See [documentation](https://docs.terrateam.io/advanced-workflows/gatekeeper-requirements) for details.
+A gate is satisfied only when all conditions are met. See [documentation](https://stategraph.com/docs/advanced-workflows/gatekeeper-requirements) for details.
 </details>
 
   {%- endif %}

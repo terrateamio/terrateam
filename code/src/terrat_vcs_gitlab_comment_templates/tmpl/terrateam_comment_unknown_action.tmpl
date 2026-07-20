@@ -2,22 +2,22 @@
 
 Unknown command, see the list of valid commands below.
 
-List of Terrateam commands:
+List of Stategraph commands:
 
 - `stategraph plan` - Perform a plan command across all changes.
 - `stategraph plan <tag_query>` - Perform a plan command across only those changes which match the tag query.
 - `stategraph apply` - Perform an apply command across all changes.
 - `stategraph apply <tag_query>` - Perform an apply command across only those changes which match the tag query.
-- `stategraph apply-force` - Run an apply even if the change has not passed [apply requirements](https://docs.terrateam.io/configuration-reference/apply-requirements/).
-- `stategraph apply-force <tag_query>` - Run an apply even if the change has not passed [apply requirements](https://docs.terrateam.io/configuration-reference/apply-requirements/) across only those changes which match the tag query.
+- `stategraph apply-force` - Run an apply even if the change has not passed [apply requirements](https://stategraph.com/docs/configuration-reference/apply-requirements/).
+- `stategraph apply-force <tag_query>` - Run an apply even if the change has not passed [apply requirements](https://stategraph.com/docs/configuration-reference/apply-requirements/) across only those changes which match the tag query.
 - `stategraph apply-autoapprove` - Performs a plan and apply it in the same execution.
 - `stategraph apply-autoapprove <tag_query>` - Perform a plan and apply it in the same execution across only those changes which match the tag query.
 - `stategraph gate approve <token1> <token2> ... <tokenN>` - Approve a gate.
-- `stategraph repo-config` - Output the evaluated repository configuration as Terrateam, including config builder and indexer outputs incorporated in it.
+- `stategraph repo-config` - Output the evaluated repository configuration as Stategraph, including config builder and indexer outputs incorporated in it.
 - `stategraph unlock` - Release any locks this pull request owns.  Useful for getting out of a sticky situation.
 - `stategraph unlock <pull requests number>` - Release any locks owned by the listed pull requests.
 - `stategraph feedback <msg>` - Give use feedback.
 
 For help see:
 
-https://terrateam.io/docs
+https://stategraph.com/docs

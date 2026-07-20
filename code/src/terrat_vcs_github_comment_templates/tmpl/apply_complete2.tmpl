@@ -16,12 +16,12 @@
   {%- if account_status == 'trial_ending' %}
 
 > [!WARNING]
-> Your Terrateam trial ends in **{{ trial_end_days }} days**.  To avoid an interruption in service, please reach out to support@terrateam.io or contact us on [our Slack](https://terrateam.io/slack).
+> Your Stategraph trial ends in **{{ trial_end_days }} days**.  To avoid an interruption in service, please reach out to support@stategraph.com or contact us on [our Slack](https://stategraph.com/slack).
 
   {%- endif %}
   {%- if work_manifest_url is defined %}
 
-Outputs can be viewed in the Terrateam Console [here]({{ work_manifest_url }}).
+Outputs can be viewed in the Stategraph Console [here]({{ work_manifest_url }}).
 
   {%- endif %}
   {%- if denied_dirspaces %}
@@ -29,7 +29,7 @@ Outputs can be viewed in the Terrateam Console [here]({{ work_manifest_url }}).
 <details open>
   <summary><h2>Access Control :no_entry:</h2></summary>
 
-Not all [dirspaces](https://docs.terrateam.io/getting-started/concepts/#dirspace) were run because the user did not have access.  The following dirspaces were not run:
+Not all [dirspaces](https://stategraph.com/docs/getting-started/concepts/#dirspace) were run because the user did not have access.  The following dirspaces were not run:
 
 | Dir | Workspace | Policy |
 | --- | --------- | ------ |
@@ -49,7 +49,7 @@ Not all [dirspaces](https://docs.terrateam.io/getting-started/concepts/#dirspace
 
   {%- endif %}
 
-## Terrateam Apply Output{% if environment is defined %}: {{ environment }}{% endif %} :white_check_mark:
+## Stategraph Apply Output{% if environment is defined %}: {{ environment }}{% endif %} :white_check_mark:
 <details>
   <summary>Expand for apply output details</summary>
 
@@ -71,13 +71,13 @@ Not all [dirspaces](https://docs.terrateam.io/getting-started/concepts/#dirspace
   {%- endif %}
   {%- if work_manifest_url is defined %}
     
-Outputs can be viewed in the Terrateam Console [here]({{ work_manifest_url }}).
+Outputs can be viewed in the Stategraph Console [here]({{ work_manifest_url }}).
 
   {%- endif %}
 
-Running plans **FAILED**.  See **Terrateam Apply Output**.
+Running plans **FAILED**.  See **Stategraph Apply Output**.
 
-## Terrateam Apply Output{% if environment is defined %}: {{ environment }}{% endif %} :heavy_multiplication_x:
+## Stategraph Apply Output{% if environment is defined %}: {{ environment }}{% endif %} :heavy_multiplication_x:
 
 <details>
   <summary>Expand for apply output details</summary>
