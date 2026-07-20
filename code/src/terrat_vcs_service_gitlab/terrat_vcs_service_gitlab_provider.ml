@@ -4097,8 +4097,8 @@ module Repo_config = struct
     in
     Abbs_future_combinators.Infix_result_app.(
       (fun default_repo_config repo_config -> (default_repo_config, repo_config))
-      <$> fetch_repo_config_file request_id client repo default_branch_ref ".terrateam/config"
-      <*> fetch_repo_config_file request_id client repo ref_ ".terrateam/config")
+      <$> fetch_repo_config_file request_id client repo default_branch_ref ".stategraph/config"
+      <*> fetch_repo_config_file request_id client repo ref_ ".stategraph/config")
     >>= fun (default_repo_config, repo_config) ->
     let wrap_err fname =
       Abbs_future_combinators.Result.map_err ~f:(function

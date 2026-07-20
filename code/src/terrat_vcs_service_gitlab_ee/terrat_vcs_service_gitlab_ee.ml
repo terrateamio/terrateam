@@ -164,8 +164,8 @@ module Provider : module type of Terrat_vcs_service_gitlab_provider = struct
               client
               centralized_repo
               ("config/" ^ Api.Repo.name repo ^ "/config")
-        <*> fetch_repo_config_file request_id client repo default_branch_ref ".terrateam/config"
-        <*> fetch_repo_config_file request_id client repo ref_ ".terrateam/config")
+        <*> fetch_repo_config_file request_id client repo default_branch_ref ".stategraph/config"
+        <*> fetch_repo_config_file request_id client repo ref_ ".stategraph/config")
       >>= fun ( global_defaults,
                 global_overrides,
                 repo_defaults,
