@@ -9,4 +9,7 @@ type t = {
   enabled : bool; [@default false]
   schedules : Schedules.t;
 }
-[@@deriving yojson { strict = true; meta = true }, make, show, eq]
+(* strict = false so Stategraph-owned drift keys (e.g. ai_analysis, reconcile_pr)
+   in the .stategraph/config.yml drift block are accepted and ignored here;
+   Stategraph reads them from the raw config. *)
+[@@deriving yojson { strict = false; meta = true }, make, show, eq]
