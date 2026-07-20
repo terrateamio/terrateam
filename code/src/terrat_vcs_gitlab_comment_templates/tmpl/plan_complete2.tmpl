@@ -69,7 +69,7 @@ Not all [dirspaces](https://docs.terrateam.io/getting-started/concepts/#dirspace
 | `{{ g.token }}` | {% if g.dir %}`{{ g.dir }}`{% endif %} | {% if g.workspace %}`{{ g.workspace }}`{% endif %} | {% for p in g.all_of %}`{{ p.q }}` {% endfor %} | {% for p in g.any_of %}`{{ p.q }}` {% endfor %} | {{ g.any_of_count }} |
     {%- endfor %}
 
-These gates are fulfilled by commenting `terrateam gate approve <token1> <token2> ... <tokenN>`.
+These gates are fulfilled by commenting `stategraph gate approve <token1> <token2> ... <tokenN>`.
 {%- endif %}
 {%- if approval_gates %}
 
@@ -93,7 +93,7 @@ To continue, users matching the `Required Approvers` and `Any Approvers` must ap
 To approve a gate with a token, comment the following:
 
 ```
-terrateam gate approve <token1> <token2> ... <tokenN>
+stategraph gate approve <token1> <token2> ... <tokenN>
 ```
 
 Where `<token>` is the token to be approved.
@@ -145,7 +145,7 @@ The plan output exceeds the size limit for pull request comments. You can view t
 
 Running plans **FAILED**.  See **Stategraph Plan Output**.
 
-After resolving the issue, run `terrateam plan` to execute the plan operation again.
+After resolving the issue, run `stategraph plan` to execute the plan operation again.
 
 ## Stategraph Plan Output{% if environment is defined %}: {{ environment }}{% endif %} :heavy_multiplication_x:
 <details>
@@ -298,7 +298,7 @@ No output shown due to comment size.
 To apply all these changes, comment:
 
 ```
-terrateam apply
+stategraph apply
 ```
 
 {%- endif %}
@@ -308,6 +308,6 @@ terrateam apply
 <details>
   <summary><h3>Feedback?</h3></summary>
 
-Questions? Comments? Give feedback by commenting `terrateam feedback <your msg>`.  Your message lands directly in our inbox.
+Questions? Comments? Give feedback by commenting `stategraph feedback <your msg>`.  Your message lands directly in our inbox.
 
 </details>

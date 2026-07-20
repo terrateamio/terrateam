@@ -1,4 +1,4 @@
-let trigger_words = [ "terrateam"; "terraform"; "tofu" ]
+let trigger_words = [ "terrateam"; "terraform"; "tofu"; "stategraph" ]
 
 type t =
   | Apply of { tag_query : Terrat_tag_query.t }
@@ -74,14 +74,14 @@ let parse s =
   | None -> Error `Not_terrateam
 
 let to_string = function
-  | Apply { tag_query } -> "terrateam apply " ^ Terrat_tag_query.to_string tag_query
+  | Apply { tag_query } -> "stategraph apply " ^ Terrat_tag_query.to_string tag_query
   | Apply_autoapprove { tag_query } ->
-      "terrateam apply-autoapprove " ^ Terrat_tag_query.to_string tag_query
-  | Apply_force { tag_query } -> "terrateam apply-force " ^ Terrat_tag_query.to_string tag_query
-  | Feedback feedback -> "terrateam feedback " ^ feedback
-  | Gate_approval { tokens } -> "terrateam gate approval " ^ CCString.concat " " tokens
-  | Help -> "terrateam help"
-  | Index -> "terrateam index"
-  | Plan { tag_query } -> "terrateam plan " ^ Terrat_tag_query.to_string tag_query
-  | Repo_config -> "terrateam repo-config"
-  | Unlock ids -> "terrateam unlock " ^ CCString.concat " " ids
+      "stategraph apply-autoapprove " ^ Terrat_tag_query.to_string tag_query
+  | Apply_force { tag_query } -> "stategraph apply-force " ^ Terrat_tag_query.to_string tag_query
+  | Feedback feedback -> "stategraph feedback " ^ feedback
+  | Gate_approval { tokens } -> "stategraph gate approval " ^ CCString.concat " " tokens
+  | Help -> "stategraph help"
+  | Index -> "stategraph index"
+  | Plan { tag_query } -> "stategraph plan " ^ Terrat_tag_query.to_string tag_query
+  | Repo_config -> "stategraph repo-config"
+  | Unlock ids -> "stategraph unlock " ^ CCString.concat " " ids
