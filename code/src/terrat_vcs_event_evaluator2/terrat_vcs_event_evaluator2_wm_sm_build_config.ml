@@ -71,11 +71,11 @@ struct
     let branch_name = S.Api.Ref.to_string branch_name in
     if branch = branch_name then "terrateam build-config" else "terrateam build-config " ^ branch
 
-  let create ~dest_branch_ref ~branch_ref ~branch s { Bs.Fetcher.fetch } =
+  let create ~cache_ref ~dest_branch_ref ~branch_ref ~branch s { Bs.Fetcher.fetch } =
     let open Irm in
     fetch Keys.account
     >>= fun account ->
-    Builder.run_db s ~f:(fun db -> query_repo_config_json s db account branch_ref)
+    Builder.run_db s ~f:(fun db -> query_repo_config_json s db account cache_ref)
     >>= function
     | None ->
         fetch Keys.repo
@@ -248,7 +248,7 @@ struct
     fetch Keys.publish_comment
     >>= fun publish_comment -> publish_comment' publish_comment Msg.Unexpected_temporary_err
 
-  let result ~branch_ref ~branch work_manifest result s { Bs.Fetcher.fetch } =
+  let result ~cache_ref ~branch_ref ~branch work_manifest result s { Bs.Fetcher.fetch } =
     let open Irm in
     let fail msg =
       fetch Keys.account
@@ -286,7 +286,7 @@ struct
             let open Irm in
             fetch Keys.account
             >>= fun account ->
-            Builder.run_db s ~f:(fun db -> store_repo_config_json s db account branch_ref config)
+            Builder.run_db s ~f:(fun db -> store_repo_config_json s db account cache_ref config)
             >>= fun () ->
             fetch Keys.repo
             >>= fun repo ->
@@ -321,15 +321,15 @@ struct
         assert false
     | Terrat_api_components_work_manifest_result.Work_manifest_index_result _ -> assert false
 
-  let run ~dest_branch_ref ~branch_ref ~branch ~name =
+  let run ~cache_ref ~dest_branch_ref ~branch_ref ~branch ~name =
     Wm_sm.run
       ~name
       ~eq:(eq dest_branch_ref branch_ref)
       ~dest_branch_ref
       ~branch_ref
       ~branch
-      ~create
+      ~create:(create ~cache_ref)
       ~initiate:(initiate ~branch)
       ~fail:(fail ~branch)
-      ~result:(result ~branch_ref ~branch)
+      ~result:(result ~cache_ref ~branch_ref ~branch)
 end

@@ -5,6 +5,7 @@ module Make
   module Wm_sm : module type of Terrat_vcs_event_evaluator2_wm_sm.Make (S) (Keys)
 
   val run :
+    cache_ref:S.Api.Ref.t ->
     dest_branch_ref:S.Api.Ref.t ->
     branch_ref:S.Api.Ref.t ->
     branch:S.Api.Ref.t ->

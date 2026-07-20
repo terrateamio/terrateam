@@ -28,6 +28,28 @@ struct
   let time_it s l f =
     Abbs_time_it.run (fun time -> Logs.info (fun m -> l m (Builder.log_id s) time)) f
 
+  let repo_config_hash repo_config =
+    let json_str =
+      repo_config
+      |> Terrat_base_repo_config_v1.to_version_1
+      |> Terrat_repo_config.Version_1.to_yojson
+      |> Yojson.Safe.sort
+      |> Yojson.Safe.to_string
+    in
+    Sha256.(to_hex (string json_str))
+
+  let build_config_cache_ref ref_ repo_config =
+    S.Api.Ref.of_string (S.Api.Ref.to_string ref_ ^ ":" ^ repo_config_hash repo_config)
+
+  let repo_config_cache_key account repo ref_ repo_config =
+    S.Api.Account.to_string account
+    ^ "."
+    ^ S.Api.Repo.to_string repo
+    ^ "."
+    ^ S.Api.Ref.to_string ref_
+    ^ ":"
+    ^ repo_config_hash repo_config
+
   let update_job_state_completed s job_id db =
     time_it
       s
@@ -835,9 +857,13 @@ struct
           >>= fun dest_branch_ref ->
           fetch Keys.working_branch_ref
           >>= fun branch_ref ->
+          fetch Keys.repo_config_raw'
+          >>= fun (_, repo_config_raw) ->
+          let cache_ref = build_config_cache_ref branch_ref repo_config_raw in
           fetch Keys.working_branch_name
           >>= fun branch ->
           Build_config_wm.run
+            ~cache_ref
             ~dest_branch_ref
             ~branch_ref
             ~branch
@@ -1059,9 +1085,13 @@ struct
           >>= fun _ ->
           fetch Keys.dest_branch_ref
           >>= fun dest_branch_ref ->
+          fetch Keys.repo_config_dest_branch_raw'
+          >>= fun (_, repo_config_raw) ->
+          let cache_ref = build_config_cache_ref dest_branch_ref repo_config_raw in
           fetch Keys.dest_branch_name
           >>= fun branch ->
           Build_config_wm.run
+            ~cache_ref
             ~dest_branch_ref
             ~branch_ref:dest_branch_ref
             ~branch
@@ -1081,6 +1111,7 @@ struct
           >>= fun (_, repo_config_raw) ->
           let config_builder = V1.config_builder repo_config_raw in
           if config_builder.V1.Config_builder.enabled then
+            let cache_ref = build_config_cache_ref dest_branch_ref repo_config_raw in
             fetch Keys.built_repo_config_dest_branch_wm_completed
             >>= fun _ ->
             Builder.run_db s ~f:(fun db ->
@@ -1094,11 +1125,7 @@ struct
                       (S.Api.Ref.to_string dest_branch_ref)
                       time)
                   (fun () ->
-                    S.Db.query_repo_config_json
-                      ~request_id:(Builder.log_id s)
-                      db
-                      account
-                      dest_branch_ref))
+                    S.Db.query_repo_config_json ~request_id:(Builder.log_id s) db account cache_ref))
           else Abb.Future.return (Ok None))
 
     let repo_tree_dest_branch =
@@ -1179,6 +1206,7 @@ struct
           >>= fun (_, repo_config_raw) ->
           let config_builder = V1.config_builder repo_config_raw in
           if config_builder.V1.Config_builder.enabled then
+            let cache_ref = build_config_cache_ref branch_ref repo_config_raw in
             fetch Keys.built_repo_config_branch_wm_completed
             >>= fun _ ->
             Builder.run_db s ~f:(fun db ->
@@ -1192,7 +1220,7 @@ struct
                       (S.Api.Ref.to_string branch_ref)
                       time)
                   (fun () ->
-                    S.Db.query_repo_config_json ~request_id:(Builder.log_id s) db account branch_ref))
+                    S.Db.query_repo_config_json ~request_id:(Builder.log_id s) db account cache_ref))
           else Abb.Future.return (Ok None))
 
     let repo_config_system_defaults =
@@ -1280,11 +1308,7 @@ struct
           >>= fun branch_ref ->
           let cache_key =
             ( "cache2.derived_repo_config_empty_index",
-              S.Api.Account.to_string account
-              ^ "."
-              ^ S.Api.Repo.to_string repo
-              ^ "."
-              ^ S.Api.Ref.to_string branch_ref )
+              repo_config_cache_key account repo branch_ref repo_config_raw )
           in
           Cache.derived_repo_config
             ~cache_key
@@ -1318,11 +1342,7 @@ struct
           >>= fun branch_ref ->
           let cache_key =
             ( "cache2.derived_repo_config",
-              S.Api.Account.to_string account
-              ^ "."
-              ^ S.Api.Repo.to_string repo
-              ^ "."
-              ^ S.Api.Ref.to_string branch_ref )
+              repo_config_cache_key account repo branch_ref repo_config_raw )
           in
           Cache.derived_repo_config
             ~cache_key
@@ -1454,11 +1474,7 @@ struct
           >>= fun dest_branch_ref ->
           let cache_key =
             ( "cache2.repo_config_empty_index",
-              S.Api.Account.to_string account
-              ^ "."
-              ^ S.Api.Repo.to_string repo
-              ^ "."
-              ^ S.Api.Ref.to_string dest_branch_ref )
+              repo_config_cache_key account repo dest_branch_ref repo_config_raw )
           in
           Cache.derived_repo_config
             ~cache_key
@@ -1492,11 +1508,7 @@ struct
           >>= fun dest_branch_ref ->
           let cache_key =
             ( "cache2.repo_config_empty_index",
-              S.Api.Account.to_string account
-              ^ "."
-              ^ S.Api.Repo.to_string repo
-              ^ "."
-              ^ S.Api.Ref.to_string dest_branch_ref )
+              repo_config_cache_key account repo dest_branch_ref repo_config_raw )
           in
           Cache.derived_repo_config
             ~cache_key
