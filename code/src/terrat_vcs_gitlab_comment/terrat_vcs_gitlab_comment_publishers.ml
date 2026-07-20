@@ -54,7 +54,7 @@ let steps_has_changes steps =
     CCList.find_map
       (function
         | {
-            O.step = "tf/plan" | "pulumi/plan" | "custom/plan" | "fly/plan";
+            O.step = "tf/plan" | "pulumi/plan" | "custom/plan" | "fly/plan" | "stategraph/plan";
             payload;
             success = _;
             _;
