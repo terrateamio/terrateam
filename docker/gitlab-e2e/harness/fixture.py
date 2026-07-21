@@ -54,7 +54,13 @@ terrateam_job:
   extends: .terrateam_template
 """
 
+# notifications.summary.enabled defaults to false, and the per-dirspace table in
+# the plan and apply comments is only rendered when it is on.  Scenarios that
+# assert on which dirspaces ran need that table, so the fixture turns it on.
 DEFAULT_CONFIG_YML = """\
+notifications:
+  summary:
+    enabled: true
 when_modified:
   file_patterns:
     - '${DIR}/*.tf'
@@ -120,6 +126,7 @@ class Fixture:
         self.project = None
         self.hook = None
         self._created_groups = []
+        self._branches = set()
 
     @property
     def id(self):
@@ -199,22 +206,30 @@ class Fixture:
     # -- convenience used by scenarios -------------------------------------
 
     def branch_with_change(self, branch, dirs=("dev",), revision="2", message=None):
-        """Create a branch that changes the given dirs, producing a plan diff."""
+        """Commit a change to the given dirs, producing a plan diff.
+
+        Creates ``branch`` off the default branch the first time and commits
+        onto it thereafter, which is what a scenario pushing a second commit to
+        an open merge request needs.  GitLab rejects ``start_branch`` for a
+        branch that already exists.
+        """
         actions = []
         for d in dirs:
             body = _root_tf(d).replace('revision = "1"', 'revision = "%s"' % revision)
             actions.append({"action": "update", "file_path": "%s/main.tf" % d, "content": body})
+        start_branch = None if branch in self._branches else self.default_branch
         gitlab.retry(
             lambda: self._gl.commit(
                 self.id,
                 branch,
                 message or ("CHG Touch %s" % ", ".join(dirs)),
                 actions,
-                start_branch=self.default_branch,
+                start_branch=start_branch,
             ),
             attempts=6,
             delay=2,
         )
+        self._branches.add(branch)
         return branch
 
     def open_mr(self, branch, title=None):

@@ -24,7 +24,7 @@ def autoplan_on_open(ctx):
     ctx.wait_for_note_containing(mr["iid"], markers.PLAN_COMPLETE)
     # The plan should have found a change: the fixture bumps a trigger value.
     note = ctx.wait_for_note_containing(mr["iid"], markers.PLAN_SUCCESS)
-    ctx.assert_true("`dev`" in note["body"], "plan comment names the dev dirspace")
+    ctx.assert_names_dirspace(note["body"], "dev")
     ctx.wait_for_status(mr["sha"], "terrateam apply", states=("success", "pending", "failed"))
 
 
@@ -84,7 +84,8 @@ def merge_is_handled(ctx):
         return current.get("detailed_merge_status") == "mergeable" or None
 
     ctx.wait_for("the MR to become mergeable", mergeable)
-    ctx.gl.merge_merge_request(ctx.fixture.id, mr["iid"])
+    current = ctx.gl.merge_request(ctx.fixture.id, mr["iid"])
+    ctx.gl.merge_merge_request(ctx.fixture.id, mr["iid"], sha=current["sha"])
 
     def merged():
         current = ctx.gl.merge_request(ctx.fixture.id, mr["iid"])
@@ -99,15 +100,13 @@ def merge_is_handled(ctx):
 def dirspace_targeting(ctx):
     mr = _fixture_with_mr(ctx, dirs=("dev", "prod"))
     note = ctx.wait_for_note_containing(mr["iid"], markers.PLAN_COMPLETE)
-    ctx.assert_true("`dev`" in note["body"], "plan comment names dev")
-    ctx.assert_true("`prod`" in note["body"], "plan comment names prod")
+    ctx.assert_names_dirspace(note["body"], "dev")
+    ctx.assert_names_dirspace(note["body"], "prod")
 
     ctx.comment(mr["iid"], "terrateam apply dir:dev")
     applied = ctx.wait_for_note_containing(mr["iid"], markers.APPLY_COMPLETE)
-    ctx.assert_true("`dev`" in applied["body"], "apply comment names dev")
-    ctx.assert_true(
-        "`prod`" not in applied["body"], "apply comment does not name prod (targeting held)"
-    )
+    ctx.assert_names_dirspace(applied["body"], "dev")
+    ctx.assert_names_dirspace(applied["body"], "prod", present=False)
 
 
 @scenario("1.7", "terrateam unlock releases a lock", phase=1)

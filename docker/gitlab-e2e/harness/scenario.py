@@ -181,6 +181,27 @@ class Ctx:
 
     # -- generic -----------------------------------------------------------
 
+    def assert_names_dirspace(self, body, dir_, present=True):
+        """Assert a comment does (or does not) report a run for ``dir_``.
+
+        The plan and apply templates render a dirspace two different ways: as a
+        row in the summary table (`` `dev` ``) when notifications.summary is
+        enabled, and as a per-dirspace section otherwise.  Accept either, so the
+        assertion is about the dirspace having run rather than about which
+        template branch produced the comment.
+        """
+        forms = ["`%s`" % dir_, "**Dir**: %s" % dir_, "## %s |" % dir_]
+        found = [f for f in forms if f in body]
+        if present and not found:
+            raise AssertionFailed(
+                "comment does not report a run for %r (looked for %s)" % (dir_, forms)
+            )
+        if not present and found:
+            raise AssertionFailed("comment unexpectedly reports a run for %r via %s" % (dir_, found))
+        self.log(
+            "ok: comment %s a run for %r" % ("reports" if present else "does not report", dir_)
+        )
+
     def assert_true(self, cond, message):
         if not cond:
             raise AssertionFailed(message)

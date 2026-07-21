@@ -124,8 +124,17 @@ class Gitlab:
     def update_merge_request(self, project_id, iid, **kwargs):
         return self.put("/projects/%d/merge_requests/%d" % (project_id, iid), body=kwargs)
 
-    def merge_merge_request(self, project_id, iid):
-        return self.put("/projects/%d/merge_requests/%d/merge" % (project_id, iid), body={})
+    def merge_merge_request(self, project_id, iid, sha=None):
+        """Merge an MR.
+
+        GitLab requires ``sha`` when the project has "merge only if pipeline
+        succeeds" or an equivalent guard, and returns 400 "SHA must be provided
+        when merging" otherwise, so pass the head sha.
+        """
+        body = {}
+        if sha:
+            body["sha"] = sha
+        return self.put("/projects/%d/merge_requests/%d/merge" % (project_id, iid), body=body)
 
     def approve_merge_request(self, project_id, iid):
         return self.post("/projects/%d/merge_requests/%d/approve" % (project_id, iid))
