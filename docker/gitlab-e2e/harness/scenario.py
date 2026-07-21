@@ -177,7 +177,16 @@ class Ctx:
         )
         if proc.returncode != 0:
             raise AssertionFailed("psql failed: %s" % (proc.stderr.strip(),))
-        return [line for line in proc.stdout.strip().splitlines() if line]
+        # A multi-statement query prints a command tag per statement (BEGIN,
+        # ROLLBACK, INSERT 0 1, ...) interleaved with the rows.  Drop the tags
+        # so callers only see result rows.
+        tags = ("BEGIN", "COMMIT", "ROLLBACK", "SET")
+        prefixes = ("INSERT ", "UPDATE ", "DELETE ", "SELECT ", "CREATE ", "DROP ")
+        return [
+            line
+            for line in (l.strip() for l in proc.stdout.strip().splitlines())
+            if line and line not in tags and not line.startswith(prefixes)
+        ]
 
     # -- generic -----------------------------------------------------------
 

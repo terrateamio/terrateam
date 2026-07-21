@@ -37,11 +37,16 @@ def commit_status_details_url(ctx):
     )
 
     # --- the link ------------------------------------------------------
+    # The aggregate "terrateam apply" status is created without a work manifest
+    # -- it summarises the merge request rather than one run -- so it links to
+    # the Terrateam base URL rather than to /i/<id>/runs/<uuid>.  That matches
+    # the GitHub provider, whose make has the same None branch.  The regression
+    # this guards is target_url being absent entirely, which is what it was.
     target = status.get("target_url")
     ctx.assert_true(bool(target), "the commit status carries a target_url (got %r)" % target)
     ctx.assert_true(
-        target.startswith(ctx.cfg.terrateam_url + "/i/" + str(ctx.cfg.installation_id)),
-        "the target_url points at this installation: %s" % target,
+        target.startswith(ctx.cfg.terrateam_url),
+        "the target_url points at this Terrateam: %s" % target,
     )
 
     # --- the deliberate absence of per-dirspace statuses ---------------
