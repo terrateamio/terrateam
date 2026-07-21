@@ -749,9 +749,26 @@ let create_commit_checks ~request_id client repo ref_ checks =
     let module Glp = Gitlabc_projects_pipelines.GetApiV4ProjectsIdPipelines in
     let module Glpb = Gitlabc_components_api_entities_ci_pipelinebasic in
     let module Tcc = Terrat_commit_check in
-    (* For GitLab, we only care about the terrateam apply status checks.  Status
-       checks do not show the same as in GitHub, so creating the extras is not
-       valuable. *)
+    (* Only the "terrateam apply" check is published, and unlike GitHub this is
+       load bearing rather than a display preference.
+
+       A GitLab commit status is attached to a pipeline, and the pipeline's own
+       status is the aggregate of the statuses attached to it.  Every check
+       below is posted against the merge request's pipeline (see
+       [lookup_mr_pipeline_id]), so publishing a check per dirspace would fold
+       each one into that pipeline's result: a queued or failed plan for a
+       single directory would drive the whole pipeline to pending or failed.
+       That feeds [detailed_merge_status] as [ci_must_pass], so on a project
+       that requires a green pipeline to merge it would block the merge on
+       Terrateam's own bookkeeping, and it would also make the merge request
+       read as broken while a plan is merely in flight.
+
+       GitHub has no equivalent coupling: its checks are independent of one
+       another, which is why the GitHub service publishes them all.
+
+       If per-dirspace visibility is wanted here, it needs its own status
+       grouping rather than the merge request pipeline -- do not simply widen
+       this filter. *)
     let checks =
       CCList.filter (fun { Tcc.title; _ } -> CCString.equal title "terrateam apply") checks
     in
@@ -822,7 +839,7 @@ let create_commit_checks ~request_id client repo ref_ checks =
     let module C = Terrat_commit_check in
     let module Body = Gitlabc_components_postapiv4projectsidstatusessha in
     Abbs_future_combinators.List_result.iter
-      ~f:(fun { C.status; title; description; _ } ->
+      ~f:(fun { C.status; title; description; details_url } ->
         let body =
           {
             Body.context = "terrateam external";
@@ -838,7 +855,10 @@ let create_commit_checks ~request_id client repo ref_ checks =
               | C.Status.Completed -> `Success
               | C.Status.Failed -> `Failed
               | C.Status.Canceled -> `Canceled);
-            target_url = None;
+            (* GitLab renders this as the link on the status, the same as
+               GitHub's details_url.  It is empty when there is no work manifest
+               to point at, and GitLab rejects an empty string, so send None. *)
+            target_url = (if CCString.is_empty details_url then None else Some details_url);
           }
         in
         Logs.info (fun m ->
@@ -1252,4 +1272,20 @@ let get_org_role ~request_id ~org user client =
       Logs.err (fun m -> m "%s : GET_ORG_ROLE : %a" request_id Openapic_abb.pp_call_err err);
       Abb.Future.return (Error `Error)
 
+(* Deliberately a constant rather than a lookup.  The only caller is
+   [Access_control.is_ci_changed], which asks whether a merge request touches
+   the CI configuration so the ci_config_update policy can be applied, and it
+   treats [None] as "the CI config did not change".
+
+   Checking the repository for the file would therefore be a bypass: a merge
+   request that *adds* .gitlab-ci.yml is exactly the case the policy exists to
+   catch, and the file does not yet exist on the branch being compared against,
+   so the lookup would return [None] and the policy would not fire.  Returning
+   the conventional path unconditionally means the diff is always checked
+   against it, which is the safe direction to be wrong in.
+
+   GitLab reads the pipeline definition from .gitlab-ci.yml unless a project
+   overrides ci_config_path.  Honouring that override would be a genuine
+   improvement, but it must be read from the project settings rather than by
+   probing the repository, for the reason above. *)
 let find_workflow_file ~request_id:_ _repo _client = Abb.Future.return (Ok (Some ".gitlab-ci.yml"))
