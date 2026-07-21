@@ -622,6 +622,7 @@ module type S = sig
     val query_by_run_id :
       request_id:string ->
       Db.t ->
+      Api.Account.t ->
       string ->
       ( ( Api.Account.t,
           ((unit, unit) Api.Pull_request.t, Api.Repo.t) Target.t )

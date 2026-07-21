@@ -4335,14 +4335,21 @@ module Work_manifest = struct
       Pgsql_io.Typed_sql.(
         sql /^ read [%blob "sql/update_run_type.sql"] /% Var.uuid "id" /% Var.text "run_type")
 
+    (* Scoped to the installation.  [run_id] comes from a webhook payload and
+       [work_manifests] is shared by every installation and both VCS providers,
+       so an unscoped lookup lets any sender who can guess a run id reach
+       another installation's work manifest.  GitLab CI job ids are small
+       sequential integers, which makes guessing trivial. *)
     let select_work_manifest_by_run_id () =
       Pgsql_io.Typed_sql.(
         sql
         //
         (* id *)
         Ret.uuid
-        /^ "select id from work_manifests where run_id = $run_id"
-        /% Var.text "run_id")
+        /^ "select id from gitlab_work_manifests where run_id = $run_id and installation_id = \
+            $installation_id"
+        /% Var.text "run_id"
+        /% Var.bigint "installation_id")
   end
 
   let run ~request_id config client work_manifest =
@@ -4591,10 +4598,15 @@ module Work_manifest = struct
   let query' = Db.query_work_manifests
   let query = Db.query_work_manifest
 
-  let query_by_run_id ~request_id db run_id =
+  let query_by_run_id ~request_id db account run_id =
     let run =
       let open Abbs_future_combinators.Infix_result_monad in
-      Pgsql_io.Prepared_stmt.fetch db (Sql.select_work_manifest_by_run_id ()) ~f:CCFun.id run_id
+      Pgsql_io.Prepared_stmt.fetch
+        db
+        (Sql.select_work_manifest_by_run_id ())
+        ~f:CCFun.id
+        run_id
+        (CCInt64.of_int (Api.Account.id account))
       >>= function
       | [] -> Abb.Future.return (Ok None)
       | id :: _ -> query ~request_id db id

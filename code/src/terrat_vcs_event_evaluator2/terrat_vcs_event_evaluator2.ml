@@ -468,7 +468,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         |> Keys.Key.add Keys.run_id run_id
       in
       with_conn storage ~f:(fun db ->
-          S.Work_manifest.query_by_run_id ~request_id db run_id
+          S.Work_manifest.query_by_run_id ~request_id db account run_id
           >>= function
           | Some work_manifest -> (
               S.Db.query_flow_state ~request_id db work_manifest.Terrat_work_manifest3.id
