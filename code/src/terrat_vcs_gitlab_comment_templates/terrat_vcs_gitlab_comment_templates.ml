@@ -207,7 +207,3 @@ module Tmpl = struct
   let notification_policy_tag_query_err =
     jinja [%blob "tmpl/notification_policy_tag_query_err.tmpl"]
 end
-
-module Ui = struct
-  let work_manifest_url _config _account = raise (Failure "nyi")
-end
