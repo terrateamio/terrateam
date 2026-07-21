@@ -38,6 +38,15 @@ module Sql = struct
     Pgsql_io.Typed_sql.(
       sql /^ read [%blob "sql/update_installation_to_installed.sql"] /% Var.bigint "installation_id")
 
+  let select_repo_installation () =
+    Pgsql_io.Typed_sql.(
+      sql
+      //
+      (* installation_id *)
+      Ret.bigint
+      /^ read [%blob "sql/select_repo_installation.sql"]
+      /% Var.bigint "id")
+
   let insert_installation_repository () =
     Pgsql_io.Typed_sql.(
       sql
@@ -66,10 +75,17 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
     CCString.Split.left ~by:"/" path_with_namespace
 
   (* Run [f] with the owner and name decoded from [path_with_namespace],
-     logging a NOOP if the path cannot be decoded. *)
-  let with_repo request_id path_with_namespace f =
+     logging a NOOP if the path cannot be decoded.
+
+     The installation is authenticated, because it comes from looking up the
+     webhook secret the request presented, but the repository comes from the
+     payload, so the two have to be checked against each other.  A repository id
+     already owned by a different installation means the event names someone
+     else's repository and is dropped.  An id no installation owns yet is a
+     genuine first touch and is allowed through, which is how onboarding records
+     repositories. *)
+  let with_repo request_id storage installation_id repo_id path_with_namespace f =
     match parse_path_with_namespace path_with_namespace with
-    | Some (owner, name) -> f owner name
     | None ->
         Logs.warn (fun m ->
             m
@@ -77,6 +93,27 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
               request_id
               path_with_namespace);
         Abb.Future.return (Ok ())
+    | Some (owner, name) -> (
+        let open Abb.Future.Infix_monad in
+        Pgsql_pool.with_conn storage ~f:(fun db ->
+            Pgsql_io.Prepared_stmt.fetch
+              db
+              (Sql.select_repo_installation ())
+              ~f:CCFun.id
+              (CCInt64.of_int repo_id))
+        >>= function
+        | Ok (owning :: _) when CCInt64.to_int owning <> installation_id ->
+            Logs.warn (fun m ->
+                m
+                  "%s : NOOP : REPO_OWNED_BY_OTHER_INSTALLATION : repo_id=%d : installation_id=%d \
+                   : owning_installation_id=%Ld"
+                  request_id
+                  repo_id
+                  installation_id
+                  owning);
+            Abb.Future.return (Ok ())
+        | Ok _ -> f owner name
+        | Error (#Pgsql_pool.err | #Pgsql_io.err) -> Abb.Future.return (Error `Error))
 
   let upsert_installation_repo request_id _config storage installation_id =
     let module E = Gitlab_webhooks.Event in
@@ -93,7 +130,7 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
     | E.Job_event { Je.project; _ } ->
         let module P = Gitlab_webhooks_project in
         let { P.id; path_with_namespace; _ } = project in
-        with_repo request_id path_with_namespace
+        with_repo request_id storage (CCInt64.to_int installation_id) id path_with_namespace
         @@ fun owner name ->
         Pgsql_pool.with_conn storage ~f:(fun db ->
             Pgsql_io.Prepared_stmt.execute
@@ -125,7 +162,7 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
           _;
         }
       when ref_ = "refs/heads/" ^ default_branch ->
-        with_repo request_id path_with_namespace
+        with_repo request_id storage installation_id repo_id path_with_namespace
         @@ fun owner name ->
         let account = P.Api.Account.make installation_id in
         let repo = P.Api.Repo.make ~id:repo_id ~name ~owner () in
@@ -142,7 +179,7 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
           merge_request = { Mr.iid = Some pull_request_id; _ };
           _;
         } -> (
-        with_repo request_id path_with_namespace
+        with_repo request_id storage installation_id repo_id path_with_namespace
         @@ fun owner name ->
         let account = P.Api.Account.make installation_id in
         let repo = P.Api.Repo.make ~id:repo_id ~name ~owner () in
@@ -178,7 +215,7 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
           object_attributes = { Mreoa.action; iid = pull_request_id; _ };
           _;
         } -> (
-        with_repo request_id path_with_namespace
+        with_repo request_id storage installation_id repo_id path_with_namespace
         @@ fun owner name ->
         let account = P.Api.Account.make installation_id in
         let repo = P.Api.Repo.make ~id:repo_id ~name ~owner () in
@@ -267,7 +304,7 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
           project = { Pr.id = repo_id; path_with_namespace; _ };
           _;
         } ->
-        with_repo request_id path_with_namespace
+        with_repo request_id storage installation_id repo_id path_with_namespace
         @@ fun owner name ->
         let account = P.Api.Account.make installation_id in
         let repo = P.Api.Repo.make ~id:repo_id ~name ~owner () in
