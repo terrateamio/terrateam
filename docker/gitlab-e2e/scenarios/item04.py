@@ -7,10 +7,22 @@ knowing the work manifest id was the entire credential.  After the fix they
 take the caller's access token from the session and require it to be the work
 manifest's token.
 
-3.8 "inverts" in the sense that an unauthenticated call must now be rejected,
-while a real run still completes.  Both halves are asserted here: the failure
-path first, then the happy path, because a scenario that only proves calls get
-rejected would also pass if the whole service were down.
+**This scenario is expected to fail against main today, and that is the point.**
+
+Running it against a build with the server-side checks enabled proved the
+enforcement cannot ship yet: the GitLab runner authenticates by putting the raw
+work manifest id in the URL path and never sends an Authorization header at
+all, so turning the checks on returns 403 to the runner and no plan ever
+completes.  See items/04 for the evidence.
+
+It therefore stands as the acceptance test for the coordinated change that
+closes item 04: teach terrat-runner to send the token the initiate response
+already returns, roll that out, and only then enable the server checks.  When
+both halves below pass, the item is done.
+
+Both halves matter: the failure path first, then the happy path, because a
+scenario that only proves calls get rejected would also pass if the whole
+service were down.
 """
 
 import json
@@ -69,7 +81,10 @@ def work_manifest_requires_token(ctx):
     # depending on the endpoint; after it they must be refused.
     for method, path, body in (
         ("GET", "/%s/workspaces" % work_manifest_id, None),
-        ("GET", "/%s/plans?dir=dev&workspace=default" % work_manifest_id, None),
+        # The GET route's query parameters are path and workspace, not dir --
+        # getting them wrong routes to nothing and returns 404, which would
+        # look like a pass if the assertion accepted it.
+        ("GET", "/%s/plans?path=dev&workspace=default" % work_manifest_id, None),
         (
             "POST",
             "/%s/plans" % work_manifest_id,
@@ -77,6 +92,8 @@ def work_manifest_requires_token(ctx):
         ),
     ):
         status = _call(api + path, method=method, token=None)
+        # 404 is explicitly not accepted: it means the route did not match, so
+        # the call never reached the check being tested.
         ctx.assert_true(
             status in (401, 403),
             "%s %s without a token is refused (got %s)" % (method, path.split("?")[0], status),
