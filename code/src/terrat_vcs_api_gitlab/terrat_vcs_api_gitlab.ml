@@ -971,7 +971,12 @@ let merge_pull_request ~request_id ?(retain_pr_title = false) client pull_reques
   let is_squash = merge_strategy = Ms.Squash in
   let merge_commit_message = None in
   let merge_when_pipeline_succeeds = None in
-  let sha = None in
+  (* GitLab rejects a merge with "SHA must be provided when merging" unless the
+     head of the source branch is passed, so automerge failed outright without
+     it.  Sending it is also the safer behaviour: GitLab refuses the merge if
+     the branch has moved on since, rather than merging something newer than
+     what was planned and approved. *)
+  let sha = Some (Ref.to_string (Terrat_pull_request.branch_ref pull_request)) in
   let should_remove_source_branch = None in
   let skip_merge_train = None in
   let squash = Some is_squash in
