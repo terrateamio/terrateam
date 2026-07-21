@@ -11,6 +11,8 @@ credentials are ever needed.
 
 import time
 
+from . import gitlab
+
 # The pipeline spec Terrateam triggers.  The four inputs are exactly what
 # Terrat_vcs_service_gitlab_provider.build_pipeline_inputs sends
 # (TERRATEAM_TRIGGER, WORK_TOKEN, API_BASE_URL and optionally RUNS_ON).  Every
@@ -167,7 +169,14 @@ class Fixture:
             {"action": "create", "file_path": path, "content": body}
             for path, body in sorted(content.items())
         ]
-        self._gl.commit(self.id, "main", "ADD Terrateam e2e fixture", actions)
+        # A freshly created project is not immediately consistent on
+        # gitlab.com: the project exists but its repository can still 404 for a
+        # second or two, so the seeding commit has to be retried.
+        gitlab.retry(
+            lambda: self._gl.commit(self.id, "main", "ADD Terrateam e2e fixture", actions),
+            attempts=6,
+            delay=2,
+        )
         # A freshly created project reports no default_branch until the first
         # commit lands.
         self.project = self._gl.project(self.id)
@@ -195,12 +204,16 @@ class Fixture:
         for d in dirs:
             body = _root_tf(d).replace('revision = "1"', 'revision = "%s"' % revision)
             actions.append({"action": "update", "file_path": "%s/main.tf" % d, "content": body})
-        self._gl.commit(
-            self.id,
-            branch,
-            message or ("CHG Touch %s" % ", ".join(dirs)),
-            actions,
-            start_branch=self.default_branch,
+        gitlab.retry(
+            lambda: self._gl.commit(
+                self.id,
+                branch,
+                message or ("CHG Touch %s" % ", ".join(dirs)),
+                actions,
+                start_branch=self.default_branch,
+            ),
+            attempts=6,
+            delay=2,
         )
         return branch
 

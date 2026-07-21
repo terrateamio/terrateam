@@ -133,12 +133,26 @@ class Ctx:
     # -- server side -------------------------------------------------------
 
     def server_logs(self):
-        """Recent Terrateam server logs, if the environment exposes them."""
+        """Terrateam server logs produced since this scenario started.
+
+        The window matters.  Scenarios run in sequence against one long-lived
+        server, so a fixed window such as ``--since 15m`` makes one scenario
+        assert on lines an earlier scenario produced -- which reads as a
+        failure in the wrong scenario.  ``{since}`` in TERRATEAM_LOGS_CMD is
+        substituted with this scenario's own age.
+        """
         if not self.cfg.logs_cmd:
             raise Skipped("TERRATEAM_LOGS_CMD is not set, cannot inspect server logs")
-        proc = subprocess.run(
-            self.cfg.logs_cmd, shell=True, capture_output=True, text=True, timeout=120
-        )
+        cmd = self.cfg.logs_cmd
+        if "{since}" in cmd:
+            # A few seconds of slack for clock skew between here and the server.
+            cmd = cmd.replace("{since}", "%ds" % (int(time.time() - self._started) + 5))
+        else:
+            self.log(
+                "warning: TERRATEAM_LOGS_CMD has no {since} placeholder, so log "
+                "assertions can pick up lines from earlier scenarios"
+            )
+        proc = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=120)
         return proc.stdout + proc.stderr
 
     def assert_not_in_logs(self, needle):

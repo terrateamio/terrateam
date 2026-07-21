@@ -68,7 +68,11 @@ def deep_subgroup_path(ctx):
     """
     # Two levels of nesting gives a path_with_namespace of
     # <group>/<a>/<b>/<project> -- the a/b/c/repo shape the item calls out.
-    ctx.fixture.create(subgroups=("e2e-a", "e2e-b"))
+    # The names carry the run's unique suffix because GitLab deletes groups
+    # asynchronously: reusing a fixed name collides with the previous run's
+    # group while it is still marked for deletion.
+    suffix = ctx.fixture.name.rsplit("-", 1)[-1]
+    ctx.fixture.create(subgroups=("e2e-a-%s" % suffix, "e2e-b-%s" % suffix))
     ctx.log("fixture path is %s" % ctx.fixture.path)
     ctx.assert_true(
         ctx.fixture.path.count("/") >= 3, "the fixture really is deeply nested"
