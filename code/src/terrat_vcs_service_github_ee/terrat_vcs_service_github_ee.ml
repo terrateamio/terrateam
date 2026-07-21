@@ -50,8 +50,21 @@ module Provider :
                 | None -> Abb.Future.return (Ok false))
             | Ok None -> Abb.Future.return (Ok false)
             | Error _ -> Abb.Future.return (Error `Error))
-        | None -> raise (Failure "nyi")
-        (* Abb.Future.return (Error (`Invalid_query query)) *))
+        (* The role named in the access control query is not one this VCS
+           defines, which is a mistake in the repo config.  It used to raise,
+           turning a config typo into a 500 with a backtrace.  Report it as an
+           error instead, and name the offending role so it is diagnosable.
+
+           This should really surface as `Invalid_query so the user is told
+           which role is wrong, and the renderers already handle that message.
+           Doing so means widening Terrat_access_control2.query_err and
+           Terrat_vcs_provider2.access_control_query_err past [`Error], which
+           ripples into the evaluator and every provider; each of those sites
+           needs a deliberate decision about how an unevaluatable policy should
+           behave, so it is left as follow-up rather than done here. *)
+        | None ->
+            Logs.err (fun m -> m "%s : ACCESS_CONTROL : UNKNOWN_ROLE : role=%s" request_id value);
+            Abb.Future.return (Error `Error))
     | M.Any -> Abb.Future.return (Ok true)
 
   module Gate = struct

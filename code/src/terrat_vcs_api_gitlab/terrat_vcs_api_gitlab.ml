@@ -1169,4 +1169,20 @@ let get_org_role ~request_id ~org user client =
       Logs.err (fun m -> m "%s : GET_ORG_ROLE : %a" request_id Openapic_abb.pp_call_err err);
       Abb.Future.return (Error `Error)
 
+(* Deliberately a constant rather than a lookup.  The only caller is
+   [Access_control.is_ci_changed], which asks whether a merge request touches
+   the CI configuration so the ci_config_update policy can be applied, and it
+   treats [None] as "the CI config did not change".
+
+   Checking the repository for the file would therefore be a bypass: a merge
+   request that *adds* .gitlab-ci.yml is exactly the case the policy exists to
+   catch, and the file does not yet exist on the branch being compared against,
+   so the lookup would return [None] and the policy would not fire.  Returning
+   the conventional path unconditionally means the diff is always checked
+   against it, which is the safe direction to be wrong in.
+
+   GitLab reads the pipeline definition from .gitlab-ci.yml unless a project
+   overrides ci_config_path.  Honouring that override would be a genuine
+   improvement, but it must be read from the project settings rather than by
+   probing the repository, for the reason above. *)
 let find_workflow_file ~request_id:_ _repo _client = Abb.Future.return (Ok (Some ".gitlab-ci.yml"))
