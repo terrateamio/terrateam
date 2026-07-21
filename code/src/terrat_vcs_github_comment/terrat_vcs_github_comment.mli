@@ -20,6 +20,7 @@ module S : sig
   }
 
   type el = {
+    applied : bool;
     compact : bool;
     dirspace : Terrat_dirspace.t;
     steps : Terrat_api_components_workflow_step_output.t list;
@@ -36,6 +37,7 @@ module S : sig
 
   val create_el :
     t ->
+    ?applied:bool ->
     work_manifest_id:Uuidm.t ->
     Terrat_dirspace.t ->
     Terrat_api_components_workflow_step_output.t list ->
