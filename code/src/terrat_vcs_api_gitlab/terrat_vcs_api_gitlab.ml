@@ -500,41 +500,40 @@ let delete_pull_request_comment ~request_id client pull_request comment_id =
           m "%s : DELETE_COMMENT_ON_PULL_REQUEST : %a" request_id Openapic_abb.pp_call_err err);
       Abb.Future.return (Ok ())
 
-(* GitLab has no equivalent of GitHub's "minimize comment", so collapse the note
-   instead: rewrite its body as a closed [<details>] block wrapping what was
-   there.  The content stays available, it just stops taking up the whole
-   screen on a busy merge request, which is the point of minimizing.  Fetch the
-   body first so nothing is lost, and if the fetch fails fall back to a
-   placeholder rather than dropping the comment. *)
+(* GitLab has no equivalent of GitHub's "minimize comment", so collapse the
+   note instead: replace its body with a closed [<details>] block.
+
+   Unlike GitHub's minimize this does not keep the original output, and the
+   generated client is why.  Reading the note first in order to wrap its body
+   needs [API_Entities_Note], which declares [system], [id] and [project_id] as
+   [string option] where GitLab sends booleans and integers, so decoding a real
+   note fails with a conversion error.  That is what made the first attempt at
+   this silently do nothing while delete worked.
+
+   Collapsing to a marker is therefore what minimize means here, and it is the
+   outcome audit item 05 allows for.  The full output is still in the run page
+   the comment links to and in the GitLab CI log.  Preserving it inline needs
+   the client's note schema fixed first. *)
 let minimize_pull_request_comment ~request_id client pull_request comment_id =
-  let module Get =
-    Gitlabc_projects_merge_requests.GetApiV4ProjectsIdMergeRequestsMergeRequestIidNotesNotesId
-  in
-  let module Put =
+  let module Gl =
     Gitlabc_projects_merge_requests.PutApiV4ProjectsIdMergeRequestsMergeRequestIidNotesNotesId
   in
-  let id = CCInt.to_string @@ Repo.id @@ Terrat_pull_request.repo pull_request in
-  let merge_request_iid = Terrat_pull_request.id pull_request in
-  let collapsed body =
-    "<details><summary>Outdated output (minimized)</summary>\n\n" ^ body ^ "\n\n</details>"
+  let body =
+    "<details><summary>Outdated output (minimized)</summary>\n\n\
+     This output was superseded by a later run.\n\n\
+     </details>"
   in
   let run =
     let open Abbs_future_combinators.Infix_result_monad in
     call
       client.Client.client
-      Get.(make (Parameters.make ~id ~merge_request_iid ~note_id:comment_id))
-    >>= fun resp ->
-    let body =
-      match Openapi.Response.value resp with
-      | `OK note -> (
-          match note.Gitlabc_components.API_Entities_Note.body with
-          | Some body -> collapsed body
-          | None -> collapsed "")
-      | `Not_found -> collapsed ""
-    in
-    call
-      client.Client.client
-      Put.(make (Parameters.make ~body ~id ~merge_request_iid ~note_id:comment_id))
+      Gl.(
+        make
+          (Parameters.make
+             ~body
+             ~id:(CCInt.to_string @@ Repo.id @@ Terrat_pull_request.repo pull_request)
+             ~merge_request_iid:(Terrat_pull_request.id pull_request)
+             ~note_id:comment_id))
     >>= fun resp ->
     match Openapi.Response.value resp with
     | `OK -> Abb.Future.return (Ok ())
@@ -544,9 +543,9 @@ let minimize_pull_request_comment ~request_id client pull_request comment_id =
   run
   >>= function
   | Ok () -> Abb.Future.return (Ok ())
-  | Error (#Get.Responses.t as err) ->
+  | Error (#Gl.Responses.t as err) ->
       Logs.err (fun m ->
-          m "%s : MINIMIZE_COMMENT_ON_PULL_REQUEST : %a" request_id Get.Responses.pp err);
+          m "%s : MINIMIZE_COMMENT_ON_PULL_REQUEST : %a" request_id Gl.Responses.pp err);
       (* Ignore all errors as this can fail for a bunch of reasons and we don't
          want to block the actual commenting *)
       Abb.Future.return (Ok ())
