@@ -1,3 +1,109 @@
+module GetApiV4GroupsIdBillableMembersUserIdMemberships = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      page : int; [@default 1]
+      per_page : int; [@default 20]
+      user_id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/groups/{id}/billable_members/{user_id}/memberships"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)); ("user_id", Var (params.user_id, Int)) ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module GetApiV4GroupsIdBillableMembersUserIdIndirect = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      page : int; [@default 1]
+      per_page : int; [@default 20]
+      user_id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/groups/{id}/billable_members/{user_id}/indirect"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)); ("user_id", Var (params.user_id, Int)) ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module DeleteApiV4GroupsIdBillableMembersUserId = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      user_id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module No_content = struct end
+
+    type t = [ `No_content ] [@@deriving show, eq]
+
+    let t = [ ("204", fun _ -> Ok `No_content) ]
+  end
+
+  let url = "/api/v4/groups/{id}/billable_members/{user_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)); ("user_id", Var (params.user_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
 module GetApiV4GroupsIdBillableMembers = struct
   module Parameters = struct
     module Sort = struct
@@ -78,112 +184,6 @@ module GetApiV4GroupsIdBillableMembers = struct
            ("search", Var (params.search, Option String));
            ("sort", Var (params.sort, Option (Enum Sort.t_to_yojson)));
          ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module DeleteApiV4GroupsIdBillableMembersUserId = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      user_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module No_content = struct end
-
-    type t = [ `No_content ] [@@deriving show, eq]
-
-    let t = [ ("204", fun _ -> Ok `No_content) ]
-  end
-
-  let url = "/api/v4/groups/{id}/billable_members/{user_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, String)); ("user_id", Var (params.user_id, Int)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Delete
-end
-
-module GetApiV4GroupsIdBillableMembersUserIdIndirect = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      page : int; [@default 1]
-      per_page : int; [@default 20]
-      user_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-
-    type t = [ `OK ] [@@deriving show, eq]
-
-    let t = [ ("200", fun _ -> Ok `OK) ]
-  end
-
-  let url = "/api/v4/groups/{id}/billable_members/{user_id}/indirect"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, String)); ("user_id", Var (params.user_id, Int)) ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module GetApiV4GroupsIdBillableMembersUserIdMemberships = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      page : int; [@default 1]
-      per_page : int; [@default 20]
-      user_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-
-    type t = [ `OK ] [@@deriving show, eq]
-
-    let t = [ ("200", fun _ -> Ok `OK) ]
-  end
-
-  let url = "/api/v4/groups/{id}/billable_members/{user_id}/memberships"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, String)); ("user_id", Var (params.user_id, Int)) ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
       ~url
       ~responses:Responses.t
       `Get

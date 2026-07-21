@@ -1,3 +1,35 @@
+module DeleteApiV4UsersIdEmailsEmailId = struct
+  module Parameters = struct
+    type t = {
+      email_id : int;
+      id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/users/{id}/emails/{email_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, Int)); ("email_id", Var (params.email_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
 module PostApiV4UsersIdEmails = struct
   module Parameters = struct
     type t = { id : int } [@@deriving make, show, eq]
@@ -67,36 +99,4 @@ module GetApiV4UsersIdEmails = struct
       ~url
       ~responses:Responses.t
       `Get
-end
-
-module DeleteApiV4UsersIdEmailsEmailId = struct
-  module Parameters = struct
-    type t = {
-      email_id : int;
-      id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-
-    type t = [ `OK ] [@@deriving show, eq]
-
-    let t = [ ("200", fun _ -> Ok `OK) ]
-  end
-
-  let url = "/api/v4/users/{id}/emails/{email_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, Int)); ("email_id", Var (params.email_id, Int)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Delete
 end

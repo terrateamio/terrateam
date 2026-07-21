@@ -1,7 +1,8 @@
-module GetApiV4ProjectsIdResourceGroups = struct
+module GetApiV4ProjectsIdResourceGroupsKeyUpcomingJobs = struct
   module Parameters = struct
     type t = {
       id : string;
+      key : string;
       page : int; [@default 1]
       per_page : int; [@default 20]
     }
@@ -26,7 +27,7 @@ module GetApiV4ProjectsIdResourceGroups = struct
       ]
   end
 
-  let url = "/api/v4/projects/{id}/resource_groups"
+  let url = "/api/v4/projects/{id}/resource_groups/{key}/upcoming_jobs"
 
   let make params =
     Openapi.Request.make
@@ -34,7 +35,7 @@ module GetApiV4ProjectsIdResourceGroups = struct
       ~url_params:
         (let open Openapi.Request.Var in
          let open Parameters in
-         [ ("id", Var (params.id, String)) ])
+         [ ("id", Var (params.id, String)); ("key", Var (params.key, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
          let open Parameters in
@@ -140,11 +141,10 @@ module GetApiV4ProjectsIdResourceGroupsKey = struct
       `Get
 end
 
-module GetApiV4ProjectsIdResourceGroupsKeyUpcomingJobs = struct
+module GetApiV4ProjectsIdResourceGroups = struct
   module Parameters = struct
     type t = {
       id : string;
-      key : string;
       page : int; [@default 1]
       per_page : int; [@default 20]
     }
@@ -169,7 +169,7 @@ module GetApiV4ProjectsIdResourceGroupsKeyUpcomingJobs = struct
       ]
   end
 
-  let url = "/api/v4/projects/{id}/resource_groups/{key}/upcoming_jobs"
+  let url = "/api/v4/projects/{id}/resource_groups"
 
   let make params =
     Openapi.Request.make
@@ -177,7 +177,7 @@ module GetApiV4ProjectsIdResourceGroupsKeyUpcomingJobs = struct
       ~url_params:
         (let open Openapi.Request.Var in
          let open Parameters in
-         [ ("id", Var (params.id, String)); ("key", Var (params.key, String)) ])
+         [ ("id", Var (params.id, String)) ])
       ~query_params:
         (let open Openapi.Request.Var in
          let open Parameters in

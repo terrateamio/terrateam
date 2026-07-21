@@ -1,3 +1,46 @@
+module PostApiV4GroupsIdRunnersResetRegistrationToken = struct
+  module Parameters = struct
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+    module Unauthorized = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `Created
+      | `Unauthorized
+      | `Forbidden
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("201", fun _ -> Ok `Created);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/groups/{id}/runners/reset_registration_token"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
 module GetApiV4GroupsIdRunners = struct
   module Parameters = struct
     module Status = struct
@@ -110,47 +153,4 @@ module GetApiV4GroupsIdRunners = struct
       ~url
       ~responses:Responses.t
       `Get
-end
-
-module PostApiV4GroupsIdRunnersResetRegistrationToken = struct
-  module Parameters = struct
-    type t = { id : string } [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module Created = struct end
-    module Unauthorized = struct end
-    module Forbidden = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `Created
-      | `Unauthorized
-      | `Forbidden
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("201", fun _ -> Ok `Created);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("403", fun _ -> Ok `Forbidden);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/groups/{id}/runners/reset_registration_token"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, String)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Post
 end

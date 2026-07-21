@@ -1,3 +1,2723 @@
+module GetApiV4ProjectsIdMergeRequestsMergeRequestIidVersionsVersionId = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+      unidiff : bool; [@default false]
+      version_id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/versions/{version_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+           ("version_id", Var (params.version_id, Int));
+         ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("unidiff", Var (params.unidiff, Bool)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module GetApiV4ProjectsIdMergeRequestsMergeRequestIidVersions = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+      page : int; [@default 1]
+      per_page : int; [@default 20]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/versions"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PostApiV4ProjectsIdMergeRequestsMergeRequestIidUnapprove = struct
+  module Parameters = struct
+    type t = {
+      id : int;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `Created
+      | `Unauthorized
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("201", fun _ -> Ok `Created);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/unapprove"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, Int)); ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module GetApiV4ProjectsIdMergeRequestsMergeRequestIidTimeStats = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Unauthorized
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK); ("401", fun _ -> Ok `Unauthorized); ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/time_stats"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PostApiV4ProjectsIdMergeRequestsMergeRequestIidTimeEstimate = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidTimeEstimate.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+    module Bad_request = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `Created
+      | `Bad_request
+      | `Unauthorized
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("201", fun _ -> Ok `Created);
+        ("400", fun _ -> Ok `Bad_request);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/time_estimate"
+
+  let make ?body =
+   fun params ->
+    Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module GetApiV4ProjectsIdMergeRequestsMergeRequestIidReviewers = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Gitlabc_components.API_Entities_MergeRequestReviewer.t list
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Not_found = struct end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson); ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/reviewers"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PostApiV4ProjectsIdMergeRequestsMergeRequestIidResetTimeEstimate = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `Created
+      | `Unauthorized
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("201", fun _ -> Ok `Created);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/reset_time_estimate"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module PostApiV4ProjectsIdMergeRequestsMergeRequestIidResetSpentTime = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `Created
+      | `Unauthorized
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("201", fun _ -> Ok `Created);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/reset_spent_time"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module PutApiV4ProjectsIdMergeRequestsMergeRequestIidResetApprovals = struct
+  module Parameters = struct
+    type t = {
+      id : int;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Unauthorized
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK); ("401", fun _ -> Ok `Unauthorized); ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/reset_approvals"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, Int)); ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Put
+end
+
+module GetApiV4ProjectsIdMergeRequestsMergeRequestIidRelatedIssues = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+      page : int; [@default 1]
+      per_page : int; [@default 20]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Forbidden
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [ ("200", fun _ -> Ok `OK); ("403", fun _ -> Ok `Forbidden); ("404", fun _ -> Ok `Not_found) ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/related_issues"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PutApiV4ProjectsIdMergeRequestsMergeRequestIidRebase = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdMergeRequestsMergeRequestIidRebase.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+    module Conflict = struct end
+
+    type t =
+      [ `OK
+      | `Forbidden
+      | `Not_found
+      | `Conflict
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+        ("409", fun _ -> Ok `Conflict);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/rebase"
+
+  let make ?body =
+   fun params ->
+    Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Put
+end
+
+module GetApiV4ProjectsIdMergeRequestsMergeRequestIidRawDiffs = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Forbidden
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [ ("200", fun _ -> Ok `OK); ("403", fun _ -> Ok `Forbidden); ("404", fun _ -> Ok `Not_found) ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/raw_diffs"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PostApiV4ProjectsIdMergeRequestsMergeRequestIidPipelines = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidPipelines.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+    module Bad_request = struct end
+    module Not_found = struct end
+    module Method_not_allowed = struct end
+
+    type t =
+      [ `Created
+      | `Bad_request
+      | `Not_found
+      | `Method_not_allowed
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("201", fun _ -> Ok `Created);
+        ("400", fun _ -> Ok `Bad_request);
+        ("404", fun _ -> Ok `Not_found);
+        ("405", fun _ -> Ok `Method_not_allowed);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/pipelines"
+
+  let make ?body =
+   fun params ->
+    Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module GetApiV4ProjectsIdMergeRequestsMergeRequestIidPipelines = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/pipelines"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module GetApiV4ProjectsIdMergeRequestsMergeRequestIidParticipants = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/participants"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module DeleteApiV4ProjectsIdMergeRequestsMergeRequestIidNotesNoteIdAwardEmojiAwardId = struct
+  module Parameters = struct
+    type t = {
+      award_id : int;
+      id : int;
+      merge_request_iid : int;
+      note_id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module No_content = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `No_content
+      | `Unauthorized
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("204", fun _ -> Ok `No_content);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url =
+    "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/notes/{note_id}/award_emoji/{award_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("award_id", Var (params.award_id, Int));
+           ("id", Var (params.id, Int));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+           ("note_id", Var (params.note_id, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
+module GetApiV4ProjectsIdMergeRequestsMergeRequestIidNotesNoteIdAwardEmojiAwardId = struct
+  module Parameters = struct
+    type t = {
+      award_id : int;
+      id : int;
+      merge_request_iid : int;
+      note_id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
+  end
+
+  let url =
+    "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/notes/{note_id}/award_emoji/{award_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("award_id", Var (params.award_id, Int));
+           ("id", Var (params.id, Int));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+           ("note_id", Var (params.note_id, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PostApiV4ProjectsIdMergeRequestsMergeRequestIidNotesNoteIdAwardEmoji = struct
+  module Parameters = struct
+    type t = {
+      id : int;
+      merge_request_iid : int;
+      name : string;
+      note_id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct
+      type t = Gitlabc_components.API_Entities_AwardEmoji.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Bad_request = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `Created of Created.t
+      | `Bad_request
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
+        ("400", fun _ -> Ok `Bad_request);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/notes/{note_id}/award_emoji"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, Int));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+           ("note_id", Var (params.note_id, Int));
+         ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("name", Var (params.name, String)) ])
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module GetApiV4ProjectsIdMergeRequestsMergeRequestIidNotesNoteIdAwardEmoji = struct
+  module Parameters = struct
+    type t = {
+      id : int;
+      merge_request_iid : int;
+      note_id : int;
+      page : int; [@default 1]
+      per_page : int; [@default 20]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/notes/{note_id}/award_emoji"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, Int));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+           ("note_id", Var (params.note_id, Int));
+         ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module DeleteApiV4ProjectsIdMergeRequestsMergeRequestIidNotesNotesId = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+      note_id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/notes/{note_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+           ("note_id", Var (params.note_id, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
+module PutApiV4ProjectsIdMergeRequestsMergeRequestIidNotesNotesId = struct
+  module Parameters = struct
+    type t = {
+      body : string;
+      id : string;
+      merge_request_iid : int;
+      note_id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/notes/{note_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+           ("note_id", Var (params.note_id, Int));
+         ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("body", Var (params.body, String)) ])
+      ~url
+      ~responses:Responses.t
+      `Put
+end
+
+module GetApiV4ProjectsIdMergeRequestsMergeRequestIidNotesNotesId = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+      note_id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Gitlabc_components.API_Entities_Note.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Not_found = struct end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson); ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/notes/{note_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+           ("note_id", Var (params.note_id, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PostApiV4ProjectsIdMergeRequestsMergeRequestIidNotesNotesId = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = { body : string } [@@deriving make, yojson { strict = false; meta = true }, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct
+      type t = { id : int } [@@deriving yojson { strict = false; meta = true }, show, eq]
+    end
+
+    module Not_found = struct end
+
+    type t =
+      [ `Created of Created.t
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/notes"
+
+  let make ?body =
+   fun params ->
+    Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module GetApiV4ProjectsIdMergeRequestsMergeRequestIidNotes = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Gitlabc_components.API_Entities_Note.t list
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Not_found = struct end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson); ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/notes"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module GetApiV4ProjectsIdMergeRequestsMergeRequestIidMergeRef = struct
+  module Parameters = struct
+    module Order_by = struct
+      let t_of_yojson = function
+        | `String "created_at" -> Ok `Created_at
+        | `String "updated_at" -> Ok `Updated_at
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      let t_to_yojson = function
+        | `Created_at -> `String "created_at"
+        | `Updated_at -> `String "updated_at"
+
+      type t =
+        ([ `Created_at
+         | `Updated_at
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
+    end
+
+    module Sort = struct
+      let t_of_yojson = function
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
+    end
+
+    type t = {
+      id : string;
+      merge_request_iid : int;
+      order_by : Order_by.t option; [@default None]
+      sort : Sort.t option; [@default None]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Bad_request = struct end
+
+    type t =
+      [ `OK
+      | `Bad_request
+      ]
+    [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK); ("400", fun _ -> Ok `Bad_request) ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/merge_ref"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("sort", Var (params.sort, Option (Enum Sort.t_to_yojson)));
+           ("order_by", Var (params.order_by, Option (Enum Order_by.t_to_yojson)));
+         ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PutApiV4ProjectsIdMergeRequestsMergeRequestIidMerge = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdMergeRequestsMergeRequestIidMerge.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Gitlabc_components.API_Entities_MergeRequest.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Bad_request = struct
+      type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Unauthorized = struct
+      type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Not_found = struct
+      type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Method_not_allowed = struct
+      type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Conflict = struct
+      type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Unprocessable_entity = struct
+      type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    type t =
+      [ `OK of OK.t
+      | `Bad_request of Bad_request.t
+      | `Unauthorized of Unauthorized.t
+      | `Not_found of Not_found.t
+      | `Method_not_allowed of Method_not_allowed.t
+      | `Conflict of Conflict.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("400", Openapi.of_json_body (fun v -> `Bad_request v) Bad_request.of_yojson);
+        ("401", Openapi.of_json_body (fun v -> `Unauthorized v) Unauthorized.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ("405", Openapi.of_json_body (fun v -> `Method_not_allowed v) Method_not_allowed.of_yojson);
+        ("409", Openapi.of_json_body (fun v -> `Conflict v) Conflict.of_yojson);
+        ( "422",
+          Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/merge"
+
+  let make ?body =
+   fun params ->
+    Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Put
+end
+
+module PutApiV4ProjectsIdMergeRequestsMergeRequestIidDraftNotesDraftNoteIdPublish = struct
+  module Parameters = struct
+    type t = {
+      draft_note_id : int;
+      id : string;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module No_content = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `No_content
+      | `Unauthorized
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("204", fun _ -> Ok `No_content);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url =
+    "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/draft_notes/{draft_note_id}/publish"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+           ("draft_note_id", Var (params.draft_note_id, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Put
+end
+
+module DeleteApiV4ProjectsIdMergeRequestsMergeRequestIidDraftNotesDraftNoteId = struct
+  module Parameters = struct
+    type t = {
+      draft_note_id : int;
+      id : string;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module No_content = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `No_content
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t = [ ("204", fun _ -> Ok `No_content); ("404", fun _ -> Ok `Not_found) ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/draft_notes/{draft_note_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+           ("draft_note_id", Var (params.draft_note_id, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
+module PutApiV4ProjectsIdMergeRequestsMergeRequestIidDraftNotesDraftNoteId = struct
+  module Parameters = struct
+    type t = {
+      draft_note_id : int;
+      id : string;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t =
+      Gitlabc_components.PutApiV4ProjectsIdMergeRequestsMergeRequestIidDraftNotesDraftNoteId.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Unauthorized
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK); ("401", fun _ -> Ok `Unauthorized); ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/draft_notes/{draft_note_id}"
+
+  let make ?body =
+   fun params ->
+    Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+           ("draft_note_id", Var (params.draft_note_id, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Put
+end
+
+module GetApiV4ProjectsIdMergeRequestsMergeRequestIidDraftNotesDraftNoteId = struct
+  module Parameters = struct
+    type t = {
+      draft_note_id : int;
+      id : string;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Unauthorized
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK); ("401", fun _ -> Ok `Unauthorized); ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/draft_notes/{draft_note_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+           ("draft_note_id", Var (params.draft_note_id, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PostApiV4ProjectsIdMergeRequestsMergeRequestIidDraftNotesBulkPublish = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module No_content = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `No_content
+      | `Unauthorized
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("204", fun _ -> Ok `No_content);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/draft_notes/bulk_publish"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module PostApiV4ProjectsIdMergeRequestsMergeRequestIidDraftNotes = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidDraftNotes.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `Created
+      | `Unauthorized
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("201", fun _ -> Ok `Created);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/draft_notes"
+
+  let make ?body =
+   fun params ->
+    Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module GetApiV4ProjectsIdMergeRequestsMergeRequestIidDraftNotes = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Unauthorized
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK); ("401", fun _ -> Ok `Unauthorized); ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/draft_notes"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module GetApiV4ProjectsIdMergeRequestsMergeRequestIidDiffs = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+      page : int; [@default 1]
+      per_page : int; [@default 20]
+      unidiff : bool; [@default false]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Gitlabc_components.API_Entities_Diff.t list
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Forbidden = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK of OK.t
+      | `Forbidden
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/diffs"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("page", Var (params.page, Int));
+           ("per_page", Var (params.per_page, Int));
+           ("unidiff", Var (params.unidiff, Bool));
+         ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module DeleteApiV4ProjectsIdMergeRequestsMergeRequestIidContextCommits = struct
+  module Parameters = struct
+    module Commits = struct
+      type t = string list [@@deriving show, eq]
+    end
+
+    type t = {
+      commits : Commits.t;
+      id : string;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module No_content = struct end
+    module Bad_request = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `No_content
+      | `Bad_request
+      | `Unauthorized
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("204", fun _ -> Ok `No_content);
+        ("400", fun _ -> Ok `Bad_request);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/context_commits"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("commits", Var (params.commits, Array String)) ])
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
+module PostApiV4ProjectsIdMergeRequestsMergeRequestIidContextCommits = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidContextCommits.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `Created
+      | `Unauthorized
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("201", fun _ -> Ok `Created);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/context_commits"
+
+  let make ?body =
+   fun params ->
+    Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module GetApiV4ProjectsIdMergeRequestsMergeRequestIidContextCommits = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/context_commits"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module GetApiV4ProjectsIdMergeRequestsMergeRequestIidCommits = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+      page : int; [@default 1]
+      per_page : int; [@default 20]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/commits"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module GetApiV4ProjectsIdMergeRequestsMergeRequestIidClosesIssues = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+      page : int; [@default 1]
+      per_page : int; [@default 20]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Forbidden
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [ ("200", fun _ -> Ok `OK); ("403", fun _ -> Ok `Forbidden); ("404", fun _ -> Ok `Not_found) ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/closes_issues"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module GetApiV4ProjectsIdMergeRequestsMergeRequestIidChanges = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+      unidiff : bool; [@default false]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/changes"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("unidiff", Var (params.unidiff, Bool)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PostApiV4ProjectsIdMergeRequestsMergeRequestIidCancelMergeWhenPipelineSucceeds = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+    module Method_not_allowed = struct end
+    module Not_acceptable = struct end
+
+    type t =
+      [ `Created
+      | `Unauthorized
+      | `Not_found
+      | `Method_not_allowed
+      | `Not_acceptable
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("201", fun _ -> Ok `Created);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("404", fun _ -> Ok `Not_found);
+        ("405", fun _ -> Ok `Method_not_allowed);
+        ("406", fun _ -> Ok `Not_acceptable);
+      ]
+  end
+
+  let url =
+    "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/cancel_merge_when_pipeline_succeeds"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module DeleteApiV4ProjectsIdMergeRequestsMergeRequestIidAwardEmojiAwardId = struct
+  module Parameters = struct
+    type t = {
+      award_id : int;
+      id : int;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module No_content = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `No_content
+      | `Unauthorized
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("204", fun _ -> Ok `No_content);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/award_emoji/{award_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("award_id", Var (params.award_id, Int));
+           ("id", Var (params.id, Int));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
+module GetApiV4ProjectsIdMergeRequestsMergeRequestIidAwardEmojiAwardId = struct
+  module Parameters = struct
+    type t = {
+      award_id : int;
+      id : int;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/award_emoji/{award_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("award_id", Var (params.award_id, Int));
+           ("id", Var (params.id, Int));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PostApiV4ProjectsIdMergeRequestsMergeRequestIidAwardEmoji = struct
+  module Parameters = struct
+    type t = {
+      id : int;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidAwardEmoji.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+    module Bad_request = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `Created
+      | `Bad_request
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("201", fun _ -> Ok `Created);
+        ("400", fun _ -> Ok `Bad_request);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/award_emoji"
+
+  let make ?body =
+   fun params ->
+    Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, Int)); ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module GetApiV4ProjectsIdMergeRequestsMergeRequestIidAwardEmoji = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+      page : int; [@default 1]
+      per_page : int; [@default 20]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/award_emoji"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PostApiV4ProjectsIdMergeRequestsMergeRequestIidApprove = struct
+  module Parameters = struct
+    type t = {
+      id : int;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidApprove.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `Created
+      | `Unauthorized
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("201", fun _ -> Ok `Created);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/approve"
+
+  let make ?body =
+   fun params ->
+    Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, Int)); ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module PostApiV4ProjectsIdMergeRequestsMergeRequestIidApprovals = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidApprovals.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+
+    type t = [ `Created ] [@@deriving show, eq]
+
+    let t = [ ("201", fun _ -> Ok `Created) ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/approvals"
+
+  let make ?body =
+   fun params ->
+    Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module GetApiV4ProjectsIdMergeRequestsMergeRequestIidApprovals = struct
+  module Parameters = struct
+    type t = {
+      id : int;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Gitlabc_components.API_Entities_MergeRequestApprovals.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Not_found = struct end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson); ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/approvals"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, Int)); ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module GetApiV4ProjectsIdMergeRequestsMergeRequestIidApprovalState = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/approval_state"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PostApiV4ProjectsIdMergeRequestsMergeRequestIidAddSpentTime = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidAddSpentTime.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `Created
+      | `Unauthorized
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("201", fun _ -> Ok `Created);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/add_spent_time"
+
+  let make ?body =
+   fun params ->
+    Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module DeleteApiV4ProjectsIdMergeRequestsMergeRequestIid = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module No_content = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+    module Precondition_failed = struct end
+
+    type t =
+      [ `No_content
+      | `Unauthorized
+      | `Not_found
+      | `Precondition_failed
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("204", fun _ -> Ok `No_content);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("404", fun _ -> Ok `Not_found);
+        ("412", fun _ -> Ok `Precondition_failed);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
+module PutApiV4ProjectsIdMergeRequestsMergeRequestIid = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      merge_request_iid : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdMergeRequestsMergeRequestIid.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Bad_request = struct end
+    module Not_found = struct end
+    module Conflict = struct end
+    module Unprocessable_entity = struct end
+
+    type t =
+      [ `OK
+      | `Bad_request
+      | `Not_found
+      | `Conflict
+      | `Unprocessable_entity
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK);
+        ("400", fun _ -> Ok `Bad_request);
+        ("404", fun _ -> Ok `Not_found);
+        ("409", fun _ -> Ok `Conflict);
+        ("422", fun _ -> Ok `Unprocessable_entity);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}"
+
+  let make ?body =
+   fun params ->
+    Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Put
+end
+
+module GetApiV4ProjectsIdMergeRequestsMergeRequestIid = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      include_diverged_commits_count : bool option; [@default None]
+      include_rebase_in_progress : bool option; [@default None]
+      merge_request_iid : int;
+      render_html : bool option; [@default None]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      type t = Gitlabc_components.API_Entities_MergeRequest.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Not_found = struct end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson); ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("merge_request_iid", Var (params.merge_request_iid, Int));
+         ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("render_html", Var (params.render_html, Option Bool));
+           ( "include_diverged_commits_count",
+             Var (params.include_diverged_commits_count, Option Bool) );
+           ("include_rebase_in_progress", Var (params.include_rebase_in_progress, Option Bool));
+         ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module GetApiV4ProjectsIdMergeRequestsEventableIdResourceMilestoneEventsEventId = struct
+  module Parameters = struct
+    type t = {
+      event_id : string;
+      eventable_id : int;
+      id : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
+  end
+
+  let url =
+    "/api/v4/projects/{id}/merge_requests/{eventable_id}/resource_milestone_events/{event_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("id", Var (params.id, String));
+           ("event_id", Var (params.event_id, String));
+           ("eventable_id", Var (params.eventable_id, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module GetApiV4ProjectsIdMergeRequestsEventableIdResourceMilestoneEvents = struct
+  module Parameters = struct
+    type t = {
+      eventable_id : int;
+      id : string;
+      page : int; [@default 1]
+      per_page : int; [@default 20]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/projects/{id}/merge_requests/{eventable_id}/resource_milestone_events"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)); ("eventable_id", Var (params.eventable_id, Int)) ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
 module PostApiV4ProjectsIdMergeRequests = struct
   module Parameters = struct
     type t = { id : string } [@@deriving make, show, eq]
@@ -369,2726 +3089,6 @@ module GetApiV4ProjectsIdMergeRequests = struct
            ("per_page", Var (params.per_page, Int));
            ("iids", Var (params.iids, Option (Array Int)));
          ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module GetApiV4ProjectsIdMergeRequestsEventableIdResourceMilestoneEvents = struct
-  module Parameters = struct
-    type t = {
-      eventable_id : int;
-      id : string;
-      page : int; [@default 1]
-      per_page : int; [@default 20]
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-
-    type t = [ `OK ] [@@deriving show, eq]
-
-    let t = [ ("200", fun _ -> Ok `OK) ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{eventable_id}/resource_milestone_events"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, String)); ("eventable_id", Var (params.eventable_id, Int)) ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module GetApiV4ProjectsIdMergeRequestsEventableIdResourceMilestoneEventsEventId = struct
-  module Parameters = struct
-    type t = {
-      event_id : string;
-      eventable_id : int;
-      id : string;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
-  end
-
-  let url =
-    "/api/v4/projects/{id}/merge_requests/{eventable_id}/resource_milestone_events/{event_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("event_id", Var (params.event_id, String));
-           ("eventable_id", Var (params.eventable_id, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module DeleteApiV4ProjectsIdMergeRequestsMergeRequestIid = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module No_content = struct end
-    module Unauthorized = struct end
-    module Not_found = struct end
-    module Precondition_failed = struct end
-
-    type t =
-      [ `No_content
-      | `Unauthorized
-      | `Not_found
-      | `Precondition_failed
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("204", fun _ -> Ok `No_content);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("404", fun _ -> Ok `Not_found);
-        ("412", fun _ -> Ok `Precondition_failed);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Delete
-end
-
-module PutApiV4ProjectsIdMergeRequestsMergeRequestIid = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Request_body = struct
-    type t = Gitlabc_components.PutApiV4ProjectsIdMergeRequestsMergeRequestIid.t
-    [@@deriving yojson { strict = false; meta = true }, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Bad_request = struct end
-    module Not_found = struct end
-    module Conflict = struct end
-    module Unprocessable_entity = struct end
-
-    type t =
-      [ `OK
-      | `Bad_request
-      | `Not_found
-      | `Conflict
-      | `Unprocessable_entity
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("200", fun _ -> Ok `OK);
-        ("400", fun _ -> Ok `Bad_request);
-        ("404", fun _ -> Ok `Not_found);
-        ("409", fun _ -> Ok `Conflict);
-        ("422", fun _ -> Ok `Unprocessable_entity);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}"
-
-  let make ?body =
-   fun params ->
-    Openapi.Request.make
-      ?body:(CCOption.map Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Put
-end
-
-module GetApiV4ProjectsIdMergeRequestsMergeRequestIid = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      include_diverged_commits_count : bool option; [@default None]
-      include_rebase_in_progress : bool option; [@default None]
-      merge_request_iid : int;
-      render_html : bool option; [@default None]
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct
-      type t = Gitlabc_components.API_Entities_MergeRequest.t
-      [@@deriving yojson { strict = false; meta = false }, show, eq]
-    end
-
-    module Not_found = struct end
-
-    type t =
-      [ `OK of OK.t
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson); ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("render_html", Var (params.render_html, Option Bool));
-           ( "include_diverged_commits_count",
-             Var (params.include_diverged_commits_count, Option Bool) );
-           ("include_rebase_in_progress", Var (params.include_rebase_in_progress, Option Bool));
-         ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module PostApiV4ProjectsIdMergeRequestsMergeRequestIidAddSpentTime = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Request_body = struct
-    type t = Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidAddSpentTime.t
-    [@@deriving yojson { strict = false; meta = true }, show, eq]
-  end
-
-  module Responses = struct
-    module Created = struct end
-    module Unauthorized = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `Created
-      | `Unauthorized
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("201", fun _ -> Ok `Created);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/add_spent_time"
-
-  let make ?body =
-   fun params ->
-    Openapi.Request.make
-      ?body:(CCOption.map Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Post
-end
-
-module GetApiV4ProjectsIdMergeRequestsMergeRequestIidApprovalState = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-
-    type t = [ `OK ] [@@deriving show, eq]
-
-    let t = [ ("200", fun _ -> Ok `OK) ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/approval_state"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module PostApiV4ProjectsIdMergeRequestsMergeRequestIidApprovals = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Request_body = struct
-    type t = Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidApprovals.t
-    [@@deriving yojson { strict = false; meta = true }, show, eq]
-  end
-
-  module Responses = struct
-    module Created = struct end
-
-    type t = [ `Created ] [@@deriving show, eq]
-
-    let t = [ ("201", fun _ -> Ok `Created) ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/approvals"
-
-  let make ?body =
-   fun params ->
-    Openapi.Request.make
-      ?body:(CCOption.map Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Post
-end
-
-module GetApiV4ProjectsIdMergeRequestsMergeRequestIidApprovals = struct
-  module Parameters = struct
-    type t = {
-      id : int;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct
-      type t = Gitlabc_components.API_Entities_MergeRequestApprovals.t
-      [@@deriving yojson { strict = false; meta = false }, show, eq]
-    end
-
-    module Not_found = struct end
-
-    type t =
-      [ `OK of OK.t
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson); ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/approvals"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, Int)); ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module PostApiV4ProjectsIdMergeRequestsMergeRequestIidApprove = struct
-  module Parameters = struct
-    type t = {
-      id : int;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Request_body = struct
-    type t = Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidApprove.t
-    [@@deriving yojson { strict = false; meta = true }, show, eq]
-  end
-
-  module Responses = struct
-    module Created = struct end
-    module Unauthorized = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `Created
-      | `Unauthorized
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("201", fun _ -> Ok `Created);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/approve"
-
-  let make ?body =
-   fun params ->
-    Openapi.Request.make
-      ?body:(CCOption.map Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, Int)); ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Post
-end
-
-module PostApiV4ProjectsIdMergeRequestsMergeRequestIidAwardEmoji = struct
-  module Parameters = struct
-    type t = {
-      id : int;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Request_body = struct
-    type t = Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidAwardEmoji.t
-    [@@deriving yojson { strict = false; meta = true }, show, eq]
-  end
-
-  module Responses = struct
-    module Created = struct end
-    module Bad_request = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `Created
-      | `Bad_request
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("201", fun _ -> Ok `Created);
-        ("400", fun _ -> Ok `Bad_request);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/award_emoji"
-
-  let make ?body =
-   fun params ->
-    Openapi.Request.make
-      ?body:(CCOption.map Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, Int)); ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Post
-end
-
-module GetApiV4ProjectsIdMergeRequestsMergeRequestIidAwardEmoji = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-      page : int; [@default 1]
-      per_page : int; [@default 20]
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/award_emoji"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module DeleteApiV4ProjectsIdMergeRequestsMergeRequestIidAwardEmojiAwardId = struct
-  module Parameters = struct
-    type t = {
-      award_id : int;
-      id : int;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module No_content = struct end
-    module Unauthorized = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `No_content
-      | `Unauthorized
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("204", fun _ -> Ok `No_content);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/award_emoji/{award_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("award_id", Var (params.award_id, Int));
-           ("id", Var (params.id, Int));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Delete
-end
-
-module GetApiV4ProjectsIdMergeRequestsMergeRequestIidAwardEmojiAwardId = struct
-  module Parameters = struct
-    type t = {
-      award_id : int;
-      id : int;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/award_emoji/{award_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("award_id", Var (params.award_id, Int));
-           ("id", Var (params.id, Int));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module PostApiV4ProjectsIdMergeRequestsMergeRequestIidCancelMergeWhenPipelineSucceeds = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module Created = struct end
-    module Unauthorized = struct end
-    module Not_found = struct end
-    module Method_not_allowed = struct end
-    module Not_acceptable = struct end
-
-    type t =
-      [ `Created
-      | `Unauthorized
-      | `Not_found
-      | `Method_not_allowed
-      | `Not_acceptable
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("201", fun _ -> Ok `Created);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("404", fun _ -> Ok `Not_found);
-        ("405", fun _ -> Ok `Method_not_allowed);
-        ("406", fun _ -> Ok `Not_acceptable);
-      ]
-  end
-
-  let url =
-    "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/cancel_merge_when_pipeline_succeeds"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Post
-end
-
-module GetApiV4ProjectsIdMergeRequestsMergeRequestIidChanges = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-      unidiff : bool; [@default false]
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/changes"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("unidiff", Var (params.unidiff, Bool)) ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module GetApiV4ProjectsIdMergeRequestsMergeRequestIidClosesIssues = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-      page : int; [@default 1]
-      per_page : int; [@default 20]
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Forbidden = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Forbidden
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [ ("200", fun _ -> Ok `OK); ("403", fun _ -> Ok `Forbidden); ("404", fun _ -> Ok `Not_found) ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/closes_issues"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module GetApiV4ProjectsIdMergeRequestsMergeRequestIidCommits = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-      page : int; [@default 1]
-      per_page : int; [@default 20]
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/commits"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module DeleteApiV4ProjectsIdMergeRequestsMergeRequestIidContextCommits = struct
-  module Parameters = struct
-    module Commits = struct
-      type t = string list [@@deriving show, eq]
-    end
-
-    type t = {
-      commits : Commits.t;
-      id : string;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module No_content = struct end
-    module Bad_request = struct end
-    module Unauthorized = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `No_content
-      | `Bad_request
-      | `Unauthorized
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("204", fun _ -> Ok `No_content);
-        ("400", fun _ -> Ok `Bad_request);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/context_commits"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("commits", Var (params.commits, Array String)) ])
-      ~url
-      ~responses:Responses.t
-      `Delete
-end
-
-module PostApiV4ProjectsIdMergeRequestsMergeRequestIidContextCommits = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Request_body = struct
-    type t = Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidContextCommits.t
-    [@@deriving yojson { strict = false; meta = true }, show, eq]
-  end
-
-  module Responses = struct
-    module Created = struct end
-    module Unauthorized = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `Created
-      | `Unauthorized
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("201", fun _ -> Ok `Created);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/context_commits"
-
-  let make ?body =
-   fun params ->
-    Openapi.Request.make
-      ?body:(CCOption.map Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Post
-end
-
-module GetApiV4ProjectsIdMergeRequestsMergeRequestIidContextCommits = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/context_commits"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module GetApiV4ProjectsIdMergeRequestsMergeRequestIidDiffs = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-      page : int; [@default 1]
-      per_page : int; [@default 20]
-      unidiff : bool; [@default false]
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct
-      type t = Gitlabc_components.API_Entities_Diff.t list
-      [@@deriving yojson { strict = false; meta = false }, show, eq]
-    end
-
-    module Forbidden = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK of OK.t
-      | `Forbidden
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
-        ("403", fun _ -> Ok `Forbidden);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/diffs"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("page", Var (params.page, Int));
-           ("per_page", Var (params.per_page, Int));
-           ("unidiff", Var (params.unidiff, Bool));
-         ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module PostApiV4ProjectsIdMergeRequestsMergeRequestIidDraftNotes = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Request_body = struct
-    type t = Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidDraftNotes.t
-    [@@deriving yojson { strict = false; meta = true }, show, eq]
-  end
-
-  module Responses = struct
-    module Created = struct end
-    module Unauthorized = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `Created
-      | `Unauthorized
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("201", fun _ -> Ok `Created);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/draft_notes"
-
-  let make ?body =
-   fun params ->
-    Openapi.Request.make
-      ?body:(CCOption.map Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Post
-end
-
-module GetApiV4ProjectsIdMergeRequestsMergeRequestIidDraftNotes = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Unauthorized = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Unauthorized
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("200", fun _ -> Ok `OK); ("401", fun _ -> Ok `Unauthorized); ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/draft_notes"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module PostApiV4ProjectsIdMergeRequestsMergeRequestIidDraftNotesBulkPublish = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module No_content = struct end
-    module Unauthorized = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `No_content
-      | `Unauthorized
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("204", fun _ -> Ok `No_content);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/draft_notes/bulk_publish"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Post
-end
-
-module DeleteApiV4ProjectsIdMergeRequestsMergeRequestIidDraftNotesDraftNoteId = struct
-  module Parameters = struct
-    type t = {
-      draft_note_id : int;
-      id : string;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module No_content = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `No_content
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t = [ ("204", fun _ -> Ok `No_content); ("404", fun _ -> Ok `Not_found) ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/draft_notes/{draft_note_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-           ("draft_note_id", Var (params.draft_note_id, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Delete
-end
-
-module PutApiV4ProjectsIdMergeRequestsMergeRequestIidDraftNotesDraftNoteId = struct
-  module Parameters = struct
-    type t = {
-      draft_note_id : int;
-      id : string;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Request_body = struct
-    type t =
-      Gitlabc_components.PutApiV4ProjectsIdMergeRequestsMergeRequestIidDraftNotesDraftNoteId.t
-    [@@deriving yojson { strict = false; meta = true }, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Unauthorized = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Unauthorized
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("200", fun _ -> Ok `OK); ("401", fun _ -> Ok `Unauthorized); ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/draft_notes/{draft_note_id}"
-
-  let make ?body =
-   fun params ->
-    Openapi.Request.make
-      ?body:(CCOption.map Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-           ("draft_note_id", Var (params.draft_note_id, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Put
-end
-
-module GetApiV4ProjectsIdMergeRequestsMergeRequestIidDraftNotesDraftNoteId = struct
-  module Parameters = struct
-    type t = {
-      draft_note_id : int;
-      id : string;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Unauthorized = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Unauthorized
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("200", fun _ -> Ok `OK); ("401", fun _ -> Ok `Unauthorized); ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/draft_notes/{draft_note_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-           ("draft_note_id", Var (params.draft_note_id, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module PutApiV4ProjectsIdMergeRequestsMergeRequestIidDraftNotesDraftNoteIdPublish = struct
-  module Parameters = struct
-    type t = {
-      draft_note_id : int;
-      id : string;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module No_content = struct end
-    module Unauthorized = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `No_content
-      | `Unauthorized
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("204", fun _ -> Ok `No_content);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url =
-    "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/draft_notes/{draft_note_id}/publish"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-           ("draft_note_id", Var (params.draft_note_id, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Put
-end
-
-module PutApiV4ProjectsIdMergeRequestsMergeRequestIidMerge = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Request_body = struct
-    type t = Gitlabc_components.PutApiV4ProjectsIdMergeRequestsMergeRequestIidMerge.t
-    [@@deriving yojson { strict = false; meta = true }, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct
-      type t = Gitlabc_components.API_Entities_MergeRequest.t
-      [@@deriving yojson { strict = false; meta = false }, show, eq]
-    end
-
-    module Bad_request = struct
-      type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = false }, show, eq]
-    end
-
-    module Unauthorized = struct
-      type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = false }, show, eq]
-    end
-
-    module Not_found = struct
-      type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = false }, show, eq]
-    end
-
-    module Method_not_allowed = struct
-      type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = false }, show, eq]
-    end
-
-    module Conflict = struct
-      type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = false }, show, eq]
-    end
-
-    module Unprocessable_entity = struct
-      type t = Yojson.Safe.t [@@deriving yojson { strict = false; meta = false }, show, eq]
-    end
-
-    type t =
-      [ `OK of OK.t
-      | `Bad_request of Bad_request.t
-      | `Unauthorized of Unauthorized.t
-      | `Not_found of Not_found.t
-      | `Method_not_allowed of Method_not_allowed.t
-      | `Conflict of Conflict.t
-      | `Unprocessable_entity of Unprocessable_entity.t
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
-        ("400", Openapi.of_json_body (fun v -> `Bad_request v) Bad_request.of_yojson);
-        ("401", Openapi.of_json_body (fun v -> `Unauthorized v) Unauthorized.of_yojson);
-        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
-        ("405", Openapi.of_json_body (fun v -> `Method_not_allowed v) Method_not_allowed.of_yojson);
-        ("409", Openapi.of_json_body (fun v -> `Conflict v) Conflict.of_yojson);
-        ( "422",
-          Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/merge"
-
-  let make ?body =
-   fun params ->
-    Openapi.Request.make
-      ?body:(CCOption.map Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Put
-end
-
-module GetApiV4ProjectsIdMergeRequestsMergeRequestIidMergeRef = struct
-  module Parameters = struct
-    module Order_by = struct
-      let t_of_yojson = function
-        | `String "created_at" -> Ok `Created_at
-        | `String "updated_at" -> Ok `Updated_at
-        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-      let t_to_yojson = function
-        | `Created_at -> `String "created_at"
-        | `Updated_at -> `String "updated_at"
-
-      type t =
-        ([ `Created_at
-         | `Updated_at
-         ]
-        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
-      [@@deriving show, eq]
-    end
-
-    module Sort = struct
-      let t_of_yojson = function
-        | `String "asc" -> Ok `Asc
-        | `String "desc" -> Ok `Desc
-        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-      let t_to_yojson = function
-        | `Asc -> `String "asc"
-        | `Desc -> `String "desc"
-
-      type t =
-        ([ `Asc
-         | `Desc
-         ]
-        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
-      [@@deriving show, eq]
-    end
-
-    type t = {
-      id : string;
-      merge_request_iid : int;
-      order_by : Order_by.t option; [@default None]
-      sort : Sort.t option; [@default None]
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Bad_request = struct end
-
-    type t =
-      [ `OK
-      | `Bad_request
-      ]
-    [@@deriving show, eq]
-
-    let t = [ ("200", fun _ -> Ok `OK); ("400", fun _ -> Ok `Bad_request) ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/merge_ref"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("sort", Var (params.sort, Option (Enum Sort.t_to_yojson)));
-           ("order_by", Var (params.order_by, Option (Enum Order_by.t_to_yojson)));
-         ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module PostApiV4ProjectsIdMergeRequestsMergeRequestIidNotesNotesId = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Request_body = struct
-    type t = { body : string } [@@deriving make, yojson { strict = false; meta = true }, show, eq]
-  end
-
-  module Responses = struct
-    module Created = struct
-      type t = { id : int } [@@deriving yojson { strict = false; meta = true }, show, eq]
-    end
-
-    module Not_found = struct end
-
-    type t =
-      [ `Created of Created.t
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/notes"
-
-  let make ?body =
-   fun params ->
-    Openapi.Request.make
-      ?body:(CCOption.map Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Post
-end
-
-module GetApiV4ProjectsIdMergeRequestsMergeRequestIidNotes = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct
-      type t = Gitlabc_components.API_Entities_Note.t list
-      [@@deriving yojson { strict = false; meta = false }, show, eq]
-    end
-
-    module Not_found = struct end
-
-    type t =
-      [ `OK of OK.t
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson); ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/notes"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module DeleteApiV4ProjectsIdMergeRequestsMergeRequestIidNotesNotesId = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-      note_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/notes/{note_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-           ("note_id", Var (params.note_id, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Delete
-end
-
-module PutApiV4ProjectsIdMergeRequestsMergeRequestIidNotesNotesId = struct
-  module Parameters = struct
-    type t = {
-      body : string;
-      id : string;
-      merge_request_iid : int;
-      note_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/notes/{note_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-           ("note_id", Var (params.note_id, Int));
-         ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("body", Var (params.body, String)) ])
-      ~url
-      ~responses:Responses.t
-      `Put
-end
-
-module GetApiV4ProjectsIdMergeRequestsMergeRequestIidNotesNotesId = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-      note_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct
-      type t = Gitlabc_components.API_Entities_Note.t
-      [@@deriving yojson { strict = false; meta = false }, show, eq]
-    end
-
-    module Not_found = struct end
-
-    type t =
-      [ `OK of OK.t
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson); ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/notes/{note_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-           ("note_id", Var (params.note_id, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module PostApiV4ProjectsIdMergeRequestsMergeRequestIidNotesNoteIdAwardEmoji = struct
-  module Parameters = struct
-    type t = {
-      id : int;
-      merge_request_iid : int;
-      name : string;
-      note_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module Created = struct
-      type t = Gitlabc_components.API_Entities_AwardEmoji.t
-      [@@deriving yojson { strict = false; meta = false }, show, eq]
-    end
-
-    module Bad_request = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `Created of Created.t
-      | `Bad_request
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("201", Openapi.of_json_body (fun v -> `Created v) Created.of_yojson);
-        ("400", fun _ -> Ok `Bad_request);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/notes/{note_id}/award_emoji"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, Int));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-           ("note_id", Var (params.note_id, Int));
-         ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("name", Var (params.name, String)) ])
-      ~url
-      ~responses:Responses.t
-      `Post
-end
-
-module GetApiV4ProjectsIdMergeRequestsMergeRequestIidNotesNoteIdAwardEmoji = struct
-  module Parameters = struct
-    type t = {
-      id : int;
-      merge_request_iid : int;
-      note_id : int;
-      page : int; [@default 1]
-      per_page : int; [@default 20]
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/notes/{note_id}/award_emoji"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, Int));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-           ("note_id", Var (params.note_id, Int));
-         ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module DeleteApiV4ProjectsIdMergeRequestsMergeRequestIidNotesNoteIdAwardEmojiAwardId = struct
-  module Parameters = struct
-    type t = {
-      award_id : int;
-      id : int;
-      merge_request_iid : int;
-      note_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module No_content = struct end
-    module Unauthorized = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `No_content
-      | `Unauthorized
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("204", fun _ -> Ok `No_content);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url =
-    "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/notes/{note_id}/award_emoji/{award_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("award_id", Var (params.award_id, Int));
-           ("id", Var (params.id, Int));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-           ("note_id", Var (params.note_id, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Delete
-end
-
-module GetApiV4ProjectsIdMergeRequestsMergeRequestIidNotesNoteIdAwardEmojiAwardId = struct
-  module Parameters = struct
-    type t = {
-      award_id : int;
-      id : int;
-      merge_request_iid : int;
-      note_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
-  end
-
-  let url =
-    "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/notes/{note_id}/award_emoji/{award_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("award_id", Var (params.award_id, Int));
-           ("id", Var (params.id, Int));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-           ("note_id", Var (params.note_id, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module GetApiV4ProjectsIdMergeRequestsMergeRequestIidParticipants = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/participants"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module PostApiV4ProjectsIdMergeRequestsMergeRequestIidPipelines = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Request_body = struct
-    type t = Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidPipelines.t
-    [@@deriving yojson { strict = false; meta = true }, show, eq]
-  end
-
-  module Responses = struct
-    module Created = struct end
-    module Bad_request = struct end
-    module Not_found = struct end
-    module Method_not_allowed = struct end
-
-    type t =
-      [ `Created
-      | `Bad_request
-      | `Not_found
-      | `Method_not_allowed
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("201", fun _ -> Ok `Created);
-        ("400", fun _ -> Ok `Bad_request);
-        ("404", fun _ -> Ok `Not_found);
-        ("405", fun _ -> Ok `Method_not_allowed);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/pipelines"
-
-  let make ?body =
-   fun params ->
-    Openapi.Request.make
-      ?body:(CCOption.map Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Post
-end
-
-module GetApiV4ProjectsIdMergeRequestsMergeRequestIidPipelines = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/pipelines"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module GetApiV4ProjectsIdMergeRequestsMergeRequestIidRawDiffs = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Forbidden = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Forbidden
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [ ("200", fun _ -> Ok `OK); ("403", fun _ -> Ok `Forbidden); ("404", fun _ -> Ok `Not_found) ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/raw_diffs"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module PutApiV4ProjectsIdMergeRequestsMergeRequestIidRebase = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Request_body = struct
-    type t = Gitlabc_components.PutApiV4ProjectsIdMergeRequestsMergeRequestIidRebase.t
-    [@@deriving yojson { strict = false; meta = true }, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Forbidden = struct end
-    module Not_found = struct end
-    module Conflict = struct end
-
-    type t =
-      [ `OK
-      | `Forbidden
-      | `Not_found
-      | `Conflict
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("200", fun _ -> Ok `OK);
-        ("403", fun _ -> Ok `Forbidden);
-        ("404", fun _ -> Ok `Not_found);
-        ("409", fun _ -> Ok `Conflict);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/rebase"
-
-  let make ?body =
-   fun params ->
-    Openapi.Request.make
-      ?body:(CCOption.map Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Put
-end
-
-module GetApiV4ProjectsIdMergeRequestsMergeRequestIidRelatedIssues = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-      page : int; [@default 1]
-      per_page : int; [@default 20]
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Forbidden = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Forbidden
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [ ("200", fun _ -> Ok `OK); ("403", fun _ -> Ok `Forbidden); ("404", fun _ -> Ok `Not_found) ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/related_issues"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module PutApiV4ProjectsIdMergeRequestsMergeRequestIidResetApprovals = struct
-  module Parameters = struct
-    type t = {
-      id : int;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Unauthorized = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Unauthorized
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("200", fun _ -> Ok `OK); ("401", fun _ -> Ok `Unauthorized); ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/reset_approvals"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, Int)); ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Put
-end
-
-module PostApiV4ProjectsIdMergeRequestsMergeRequestIidResetSpentTime = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module Created = struct end
-    module Unauthorized = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `Created
-      | `Unauthorized
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("201", fun _ -> Ok `Created);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/reset_spent_time"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Post
-end
-
-module PostApiV4ProjectsIdMergeRequestsMergeRequestIidResetTimeEstimate = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module Created = struct end
-    module Unauthorized = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `Created
-      | `Unauthorized
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("201", fun _ -> Ok `Created);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/reset_time_estimate"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Post
-end
-
-module GetApiV4ProjectsIdMergeRequestsMergeRequestIidReviewers = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct
-      type t = Gitlabc_components.API_Entities_MergeRequestReviewer.t list
-      [@@deriving yojson { strict = false; meta = false }, show, eq]
-    end
-
-    module Not_found = struct end
-
-    type t =
-      [ `OK of OK.t
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson); ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/reviewers"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module PostApiV4ProjectsIdMergeRequestsMergeRequestIidTimeEstimate = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Request_body = struct
-    type t = Gitlabc_components.PostApiV4ProjectsIdMergeRequestsMergeRequestIidTimeEstimate.t
-    [@@deriving yojson { strict = false; meta = true }, show, eq]
-  end
-
-  module Responses = struct
-    module Created = struct end
-    module Bad_request = struct end
-    module Unauthorized = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `Created
-      | `Bad_request
-      | `Unauthorized
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("201", fun _ -> Ok `Created);
-        ("400", fun _ -> Ok `Bad_request);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/time_estimate"
-
-  let make ?body =
-   fun params ->
-    Openapi.Request.make
-      ?body:(CCOption.map Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Post
-end
-
-module GetApiV4ProjectsIdMergeRequestsMergeRequestIidTimeStats = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Unauthorized = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Unauthorized
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("200", fun _ -> Ok `OK); ("401", fun _ -> Ok `Unauthorized); ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/time_stats"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module PostApiV4ProjectsIdMergeRequestsMergeRequestIidUnapprove = struct
-  module Parameters = struct
-    type t = {
-      id : int;
-      merge_request_iid : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module Created = struct end
-    module Unauthorized = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `Created
-      | `Unauthorized
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("201", fun _ -> Ok `Created);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/unapprove"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, Int)); ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Post
-end
-
-module GetApiV4ProjectsIdMergeRequestsMergeRequestIidVersions = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-      page : int; [@default 1]
-      per_page : int; [@default 20]
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-
-    type t = [ `OK ] [@@deriving show, eq]
-
-    let t = [ ("200", fun _ -> Ok `OK) ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/versions"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-         ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module GetApiV4ProjectsIdMergeRequestsMergeRequestIidVersionsVersionId = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      merge_request_iid : int;
-      unidiff : bool; [@default false]
-      version_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-
-    type t = [ `OK ] [@@deriving show, eq]
-
-    let t = [ ("200", fun _ -> Ok `OK) ]
-  end
-
-  let url = "/api/v4/projects/{id}/merge_requests/{merge_request_iid}/versions/{version_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, String));
-           ("merge_request_iid", Var (params.merge_request_iid, Int));
-           ("version_id", Var (params.version_id, Int));
-         ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("unidiff", Var (params.unidiff, Bool)) ])
       ~url
       ~responses:Responses.t
       `Get

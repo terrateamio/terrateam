@@ -1,3 +1,89 @@
+module DeleteApiV4GroupsIdDeployTokensTokenId = struct
+  module Parameters = struct
+    type t = {
+      id : int;
+      token_id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module No_content = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `No_content
+      | `Unauthorized
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("204", fun _ -> Ok `No_content);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/groups/{id}/deploy_tokens/{token_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, Int)); ("token_id", Var (params.token_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
+module GetApiV4GroupsIdDeployTokensTokenId = struct
+  module Parameters = struct
+    type t = {
+      id : int;
+      token_id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Unauthorized
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK); ("401", fun _ -> Ok `Unauthorized); ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/groups/{id}/deploy_tokens/{token_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, Int)); ("token_id", Var (params.token_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
 module PostApiV4GroupsIdDeployTokens = struct
   module Parameters = struct
     type t = { id : int } [@@deriving make, show, eq]
@@ -99,92 +185,6 @@ module GetApiV4GroupsIdDeployTokens = struct
            ("per_page", Var (params.per_page, Int));
            ("active", Var (params.active, Option Bool));
          ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module DeleteApiV4GroupsIdDeployTokensTokenId = struct
-  module Parameters = struct
-    type t = {
-      id : int;
-      token_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module No_content = struct end
-    module Unauthorized = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `No_content
-      | `Unauthorized
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("204", fun _ -> Ok `No_content);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/groups/{id}/deploy_tokens/{token_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, Int)); ("token_id", Var (params.token_id, Int)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Delete
-end
-
-module GetApiV4GroupsIdDeployTokensTokenId = struct
-  module Parameters = struct
-    type t = {
-      id : int;
-      token_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Unauthorized = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Unauthorized
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("200", fun _ -> Ok `OK); ("401", fun _ -> Ok `Unauthorized); ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/groups/{id}/deploy_tokens/{token_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, Int)); ("token_id", Var (params.token_id, Int)) ])
-      ~query_params:[]
       ~url
       ~responses:Responses.t
       `Get

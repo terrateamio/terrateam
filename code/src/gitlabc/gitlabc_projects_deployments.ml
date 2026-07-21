@@ -1,383 +1,3 @@
-module PostApiV4ProjectsIdDeployments = struct
-  module Parameters = struct
-    type t = { id : string } [@@deriving make, show, eq]
-  end
-
-  module Request_body = struct
-    type t = Gitlabc_components.PostApiV4ProjectsIdDeployments.t
-    [@@deriving yojson { strict = false; meta = true }, show, eq]
-  end
-
-  module Responses = struct
-    module Created = struct end
-    module Bad_request = struct end
-    module Unauthorized = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `Created
-      | `Bad_request
-      | `Unauthorized
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("201", fun _ -> Ok `Created);
-        ("400", fun _ -> Ok `Bad_request);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/deployments"
-
-  let make ?body =
-   fun params ->
-    Openapi.Request.make
-      ?body:(CCOption.map Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, String)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Post
-end
-
-module GetApiV4ProjectsIdDeployments = struct
-  module Parameters = struct
-    module Order_by = struct
-      let t_of_yojson = function
-        | `String "created_at" -> Ok `Created_at
-        | `String "finished_at" -> Ok `Finished_at
-        | `String "id" -> Ok `Id
-        | `String "iid" -> Ok `Iid
-        | `String "updated_at" -> Ok `Updated_at
-        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-      let t_to_yojson = function
-        | `Created_at -> `String "created_at"
-        | `Finished_at -> `String "finished_at"
-        | `Id -> `String "id"
-        | `Iid -> `String "iid"
-        | `Updated_at -> `String "updated_at"
-
-      type t =
-        ([ `Created_at
-         | `Finished_at
-         | `Id
-         | `Iid
-         | `Updated_at
-         ]
-        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
-      [@@deriving show, eq]
-    end
-
-    module Sort = struct
-      let t_of_yojson = function
-        | `String "asc" -> Ok `Asc
-        | `String "desc" -> Ok `Desc
-        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-      let t_to_yojson = function
-        | `Asc -> `String "asc"
-        | `Desc -> `String "desc"
-
-      type t =
-        ([ `Asc
-         | `Desc
-         ]
-        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
-      [@@deriving show, eq]
-    end
-
-    module Status = struct
-      let t_of_yojson = function
-        | `String "blocked" -> Ok `Blocked
-        | `String "canceled" -> Ok `Canceled
-        | `String "created" -> Ok `Created
-        | `String "failed" -> Ok `Failed
-        | `String "running" -> Ok `Running
-        | `String "skipped" -> Ok `Skipped
-        | `String "success" -> Ok `Success
-        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-      let t_to_yojson = function
-        | `Blocked -> `String "blocked"
-        | `Canceled -> `String "canceled"
-        | `Created -> `String "created"
-        | `Failed -> `String "failed"
-        | `Running -> `String "running"
-        | `Skipped -> `String "skipped"
-        | `Success -> `String "success"
-
-      type t =
-        ([ `Blocked
-         | `Canceled
-         | `Created
-         | `Failed
-         | `Running
-         | `Skipped
-         | `Success
-         ]
-        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
-      [@@deriving show, eq]
-    end
-
-    type t = {
-      environment : string option; [@default None]
-      finished_after : string option; [@default None]
-      finished_before : string option; [@default None]
-      id : string;
-      order_by : Order_by.t; [@default `Id]
-      page : int; [@default 1]
-      per_page : int; [@default 20]
-      sort : Sort.t; [@default `Asc]
-      status : Status.t option; [@default None]
-      updated_after : string option; [@default None]
-      updated_before : string option; [@default None]
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Bad_request = struct end
-    module Unauthorized = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Bad_request
-      | `Unauthorized
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("200", fun _ -> Ok `OK);
-        ("400", fun _ -> Ok `Bad_request);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/deployments"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, String)) ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("page", Var (params.page, Int));
-           ("per_page", Var (params.per_page, Int));
-           ("order_by", Var (params.order_by, Enum Order_by.t_to_yojson));
-           ("sort", Var (params.sort, Enum Sort.t_to_yojson));
-           ("updated_after", Var (params.updated_after, Option String));
-           ("updated_before", Var (params.updated_before, Option String));
-           ("finished_after", Var (params.finished_after, Option String));
-           ("finished_before", Var (params.finished_before, Option String));
-           ("environment", Var (params.environment, Option String));
-           ("status", Var (params.status, Option (Enum Status.t_to_yojson)));
-         ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module DeleteApiV4ProjectsIdDeploymentsDeploymentId = struct
-  module Parameters = struct
-    type t = {
-      deployment_id : int;
-      id : string;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module No_content = struct end
-    module Bad_request = struct end
-    module Forbidden = struct end
-
-    type t =
-      [ `No_content
-      | `Bad_request
-      | `Forbidden
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("204", fun _ -> Ok `No_content);
-        ("400", fun _ -> Ok `Bad_request);
-        ("403", fun _ -> Ok `Forbidden);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/deployments/{deployment_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, String)); ("deployment_id", Var (params.deployment_id, Int)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Delete
-end
-
-module PutApiV4ProjectsIdDeploymentsDeploymentId = struct
-  module Parameters = struct
-    type t = {
-      deployment_id : int;
-      id : string;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Request_body = struct
-    type t = Gitlabc_components.PutApiV4ProjectsIdDeploymentsDeploymentId.t
-    [@@deriving yojson { strict = false; meta = true }, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Bad_request = struct end
-    module Unauthorized = struct end
-    module Forbidden = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Bad_request
-      | `Unauthorized
-      | `Forbidden
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("200", fun _ -> Ok `OK);
-        ("400", fun _ -> Ok `Bad_request);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("403", fun _ -> Ok `Forbidden);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/deployments/{deployment_id}"
-
-  let make ?body =
-   fun params ->
-    Openapi.Request.make
-      ?body:(CCOption.map Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, String)); ("deployment_id", Var (params.deployment_id, Int)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Put
-end
-
-module GetApiV4ProjectsIdDeploymentsDeploymentId = struct
-  module Parameters = struct
-    type t = {
-      deployment_id : int;
-      id : string;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Unauthorized = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Unauthorized
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("200", fun _ -> Ok `OK); ("401", fun _ -> Ok `Unauthorized); ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/deployments/{deployment_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, String)); ("deployment_id", Var (params.deployment_id, Int)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module PostApiV4ProjectsIdDeploymentsDeploymentIdApproval = struct
-  module Parameters = struct
-    type t = {
-      deployment_id : int;
-      id : string;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Request_body = struct
-    type t = Gitlabc_components.PostApiV4ProjectsIdDeploymentsDeploymentIdApproval.t
-    [@@deriving yojson { strict = false; meta = true }, show, eq]
-  end
-
-  module Responses = struct
-    module Created = struct end
-
-    type t = [ `Created ] [@@deriving show, eq]
-
-    let t = [ ("201", fun _ -> Ok `Created) ]
-  end
-
-  let url = "/api/v4/projects/{id}/deployments/{deployment_id}/approval"
-
-  let make ?body =
-   fun params ->
-    Openapi.Request.make
-      ?body:(CCOption.map Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, String)); ("deployment_id", Var (params.deployment_id, Int)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Post
-end
-
 module GetApiV4ProjectsIdDeploymentsDeploymentIdMergeRequests = struct
   module Parameters = struct
     module Approved = struct
@@ -676,6 +296,386 @@ module GetApiV4ProjectsIdDeploymentsDeploymentIdMergeRequests = struct
            ("approved", Var (params.approved, Option (Enum Approved.t_to_yojson)));
            ("merge_user_id", Var (params.merge_user_id, Option Int));
            ("merge_user_username", Var (params.merge_user_username, Option String));
+         ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PostApiV4ProjectsIdDeploymentsDeploymentIdApproval = struct
+  module Parameters = struct
+    type t = {
+      deployment_id : int;
+      id : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdDeploymentsDeploymentIdApproval.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+
+    type t = [ `Created ] [@@deriving show, eq]
+
+    let t = [ ("201", fun _ -> Ok `Created) ]
+  end
+
+  let url = "/api/v4/projects/{id}/deployments/{deployment_id}/approval"
+
+  let make ?body =
+   fun params ->
+    Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)); ("deployment_id", Var (params.deployment_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module DeleteApiV4ProjectsIdDeploymentsDeploymentId = struct
+  module Parameters = struct
+    type t = {
+      deployment_id : int;
+      id : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module No_content = struct end
+    module Bad_request = struct end
+    module Forbidden = struct end
+
+    type t =
+      [ `No_content
+      | `Bad_request
+      | `Forbidden
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("204", fun _ -> Ok `No_content);
+        ("400", fun _ -> Ok `Bad_request);
+        ("403", fun _ -> Ok `Forbidden);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/deployments/{deployment_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)); ("deployment_id", Var (params.deployment_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
+module PutApiV4ProjectsIdDeploymentsDeploymentId = struct
+  module Parameters = struct
+    type t = {
+      deployment_id : int;
+      id : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdDeploymentsDeploymentId.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Bad_request = struct end
+    module Unauthorized = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Bad_request
+      | `Unauthorized
+      | `Forbidden
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK);
+        ("400", fun _ -> Ok `Bad_request);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/deployments/{deployment_id}"
+
+  let make ?body =
+   fun params ->
+    Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)); ("deployment_id", Var (params.deployment_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Put
+end
+
+module GetApiV4ProjectsIdDeploymentsDeploymentId = struct
+  module Parameters = struct
+    type t = {
+      deployment_id : int;
+      id : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Unauthorized
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK); ("401", fun _ -> Ok `Unauthorized); ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/deployments/{deployment_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)); ("deployment_id", Var (params.deployment_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PostApiV4ProjectsIdDeployments = struct
+  module Parameters = struct
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdDeployments.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+    module Bad_request = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `Created
+      | `Bad_request
+      | `Unauthorized
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("201", fun _ -> Ok `Created);
+        ("400", fun _ -> Ok `Bad_request);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/deployments"
+
+  let make ?body =
+   fun params ->
+    Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module GetApiV4ProjectsIdDeployments = struct
+  module Parameters = struct
+    module Order_by = struct
+      let t_of_yojson = function
+        | `String "created_at" -> Ok `Created_at
+        | `String "finished_at" -> Ok `Finished_at
+        | `String "id" -> Ok `Id
+        | `String "iid" -> Ok `Iid
+        | `String "updated_at" -> Ok `Updated_at
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      let t_to_yojson = function
+        | `Created_at -> `String "created_at"
+        | `Finished_at -> `String "finished_at"
+        | `Id -> `String "id"
+        | `Iid -> `String "iid"
+        | `Updated_at -> `String "updated_at"
+
+      type t =
+        ([ `Created_at
+         | `Finished_at
+         | `Id
+         | `Iid
+         | `Updated_at
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
+    end
+
+    module Sort = struct
+      let t_of_yojson = function
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
+    end
+
+    module Status = struct
+      let t_of_yojson = function
+        | `String "blocked" -> Ok `Blocked
+        | `String "canceled" -> Ok `Canceled
+        | `String "created" -> Ok `Created
+        | `String "failed" -> Ok `Failed
+        | `String "running" -> Ok `Running
+        | `String "skipped" -> Ok `Skipped
+        | `String "success" -> Ok `Success
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      let t_to_yojson = function
+        | `Blocked -> `String "blocked"
+        | `Canceled -> `String "canceled"
+        | `Created -> `String "created"
+        | `Failed -> `String "failed"
+        | `Running -> `String "running"
+        | `Skipped -> `String "skipped"
+        | `Success -> `String "success"
+
+      type t =
+        ([ `Blocked
+         | `Canceled
+         | `Created
+         | `Failed
+         | `Running
+         | `Skipped
+         | `Success
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
+    end
+
+    type t = {
+      environment : string option; [@default None]
+      finished_after : string option; [@default None]
+      finished_before : string option; [@default None]
+      id : string;
+      order_by : Order_by.t; [@default `Id]
+      page : int; [@default 1]
+      per_page : int; [@default 20]
+      sort : Sort.t; [@default `Asc]
+      status : Status.t option; [@default None]
+      updated_after : string option; [@default None]
+      updated_before : string option; [@default None]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Bad_request = struct end
+    module Unauthorized = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Bad_request
+      | `Unauthorized
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK);
+        ("400", fun _ -> Ok `Bad_request);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/deployments"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)) ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("page", Var (params.page, Int));
+           ("per_page", Var (params.per_page, Int));
+           ("order_by", Var (params.order_by, Enum Order_by.t_to_yojson));
+           ("sort", Var (params.sort, Enum Sort.t_to_yojson));
+           ("updated_after", Var (params.updated_after, Option String));
+           ("updated_before", Var (params.updated_before, Option String));
+           ("finished_after", Var (params.finished_after, Option String));
+           ("finished_before", Var (params.finished_before, Option String));
+           ("environment", Var (params.environment, Option String));
+           ("status", Var (params.status, Option (Enum Status.t_to_yojson)));
          ])
       ~url
       ~responses:Responses.t

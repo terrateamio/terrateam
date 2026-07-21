@@ -1,3 +1,108 @@
+module DeleteApiV4UsersId = struct
+  module Parameters = struct
+    type t = {
+      hard_delete : bool option; [@default None]
+      id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/users/{id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, Int)) ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("hard_delete", Var (params.hard_delete, Option Bool)) ])
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
+module PutApiV4UsersId = struct
+  module Parameters = struct
+    type t = { id : int } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4UsersId.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/users/{id}"
+
+  let make ?body =
+   fun params ->
+    Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Put
+end
+
+module GetApiV4UsersId = struct
+  module Parameters = struct
+    type t = {
+      id : int;
+      with_custom_attributes : bool; [@default false]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/users/{id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, Int)) ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("with_custom_attributes", Var (params.with_custom_attributes, Bool)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
 module PostApiV4Users = struct
   module Parameters = struct end
 
@@ -154,111 +259,6 @@ module GetApiV4Users = struct
            ("saml_provider_id", Var (params.saml_provider_id, Option Int));
            ("auditors", Var (params.auditors, Bool));
          ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module DeleteApiV4UsersId = struct
-  module Parameters = struct
-    type t = {
-      hard_delete : bool option; [@default None]
-      id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-
-    type t = [ `OK ] [@@deriving show, eq]
-
-    let t = [ ("200", fun _ -> Ok `OK) ]
-  end
-
-  let url = "/api/v4/users/{id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, Int)) ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("hard_delete", Var (params.hard_delete, Option Bool)) ])
-      ~url
-      ~responses:Responses.t
-      `Delete
-end
-
-module PutApiV4UsersId = struct
-  module Parameters = struct
-    type t = { id : int } [@@deriving make, show, eq]
-  end
-
-  module Request_body = struct
-    type t = Gitlabc_components.PutApiV4UsersId.t
-    [@@deriving yojson { strict = false; meta = true }, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-
-    type t = [ `OK ] [@@deriving show, eq]
-
-    let t = [ ("200", fun _ -> Ok `OK) ]
-  end
-
-  let url = "/api/v4/users/{id}"
-
-  let make ?body =
-   fun params ->
-    Openapi.Request.make
-      ?body:(CCOption.map Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, Int)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Put
-end
-
-module GetApiV4UsersId = struct
-  module Parameters = struct
-    type t = {
-      id : int;
-      with_custom_attributes : bool; [@default false]
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-
-    type t = [ `OK ] [@@deriving show, eq]
-
-    let t = [ ("200", fun _ -> Ok `OK) ]
-  end
-
-  let url = "/api/v4/users/{id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, Int)) ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("with_custom_attributes", Var (params.with_custom_attributes, Bool)) ])
       ~url
       ~responses:Responses.t
       `Get

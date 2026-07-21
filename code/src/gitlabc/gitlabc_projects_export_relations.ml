@@ -1,24 +1,21 @@
-module PostApiV4ProjectsIdExportRelations = struct
+module GetApiV4ProjectsIdExportRelationsStatus = struct
   module Parameters = struct
-    type t = { id : string } [@@deriving make, show, eq]
-  end
-
-  module Request_body = struct
-    type t = Gitlabc_components.PostApiV4ProjectsIdExportRelations.t
-    [@@deriving yojson { strict = false; meta = true }, show, eq]
+    type t = {
+      id : string;
+      relation : string option; [@default None]
+    }
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
-    module Accepted = struct end
-    module Bad_request = struct end
+    module OK = struct end
     module Unauthorized = struct end
     module Forbidden = struct end
     module Not_found = struct end
     module Service_unavailable = struct end
 
     type t =
-      [ `Accepted
-      | `Bad_request
+      [ `OK
       | `Unauthorized
       | `Forbidden
       | `Not_found
@@ -28,8 +25,7 @@ module PostApiV4ProjectsIdExportRelations = struct
 
     let t =
       [
-        ("202", fun _ -> Ok `Accepted);
-        ("400", fun _ -> Ok `Bad_request);
+        ("200", fun _ -> Ok `OK);
         ("401", fun _ -> Ok `Unauthorized);
         ("403", fun _ -> Ok `Forbidden);
         ("404", fun _ -> Ok `Not_found);
@@ -37,21 +33,22 @@ module PostApiV4ProjectsIdExportRelations = struct
       ]
   end
 
-  let url = "/api/v4/projects/{id}/export_relations"
+  let url = "/api/v4/projects/{id}/export_relations/status"
 
-  let make ?body =
-   fun params ->
+  let make params =
     Openapi.Request.make
-      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
          let open Parameters in
          [ ("id", Var (params.id, String)) ])
-      ~query_params:[]
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("relation", Var (params.relation, Option String)) ])
       ~url
       ~responses:Responses.t
-      `Post
+      `Get
 end
 
 module GetApiV4ProjectsIdExportRelationsDownload = struct
@@ -119,24 +116,27 @@ module GetApiV4ProjectsIdExportRelationsDownload = struct
       `Get
 end
 
-module GetApiV4ProjectsIdExportRelationsStatus = struct
+module PostApiV4ProjectsIdExportRelations = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      relation : string option; [@default None]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdExportRelations.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
-    module OK = struct end
+    module Accepted = struct end
+    module Bad_request = struct end
     module Unauthorized = struct end
     module Forbidden = struct end
     module Not_found = struct end
     module Service_unavailable = struct end
 
     type t =
-      [ `OK
+      [ `Accepted
+      | `Bad_request
       | `Unauthorized
       | `Forbidden
       | `Not_found
@@ -146,7 +146,8 @@ module GetApiV4ProjectsIdExportRelationsStatus = struct
 
     let t =
       [
-        ("200", fun _ -> Ok `OK);
+        ("202", fun _ -> Ok `Accepted);
+        ("400", fun _ -> Ok `Bad_request);
         ("401", fun _ -> Ok `Unauthorized);
         ("403", fun _ -> Ok `Forbidden);
         ("404", fun _ -> Ok `Not_found);
@@ -154,20 +155,19 @@ module GetApiV4ProjectsIdExportRelationsStatus = struct
       ]
   end
 
-  let url = "/api/v4/projects/{id}/export_relations/status"
+  let url = "/api/v4/projects/{id}/export_relations"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
          let open Parameters in
          [ ("id", Var (params.id, String)) ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("relation", Var (params.relation, Option String)) ])
+      ~query_params:[]
       ~url
       ~responses:Responses.t
-      `Get
+      `Post
 end

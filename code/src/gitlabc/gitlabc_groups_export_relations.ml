@@ -1,22 +1,21 @@
-module PostApiV4GroupsIdExportRelations = struct
+module GetApiV4GroupsIdExportRelationsStatus = struct
   module Parameters = struct
-    type t = { id : string } [@@deriving make, show, eq]
-  end
-
-  module Request_body = struct
-    type t = Gitlabc_components.PostApiV4GroupsIdExportRelations.t
-    [@@deriving yojson { strict = false; meta = true }, show, eq]
+    type t = {
+      id : string;
+      relation : string option; [@default None]
+    }
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
-    module Accepted = struct end
+    module OK = struct end
     module Unauthorized = struct end
     module Forbidden = struct end
     module Not_found = struct end
     module Service_unavailable = struct end
 
     type t =
-      [ `Accepted
+      [ `OK
       | `Unauthorized
       | `Forbidden
       | `Not_found
@@ -26,7 +25,7 @@ module PostApiV4GroupsIdExportRelations = struct
 
     let t =
       [
-        ("202", fun _ -> Ok `Accepted);
+        ("200", fun _ -> Ok `OK);
         ("401", fun _ -> Ok `Unauthorized);
         ("403", fun _ -> Ok `Forbidden);
         ("404", fun _ -> Ok `Not_found);
@@ -34,21 +33,22 @@ module PostApiV4GroupsIdExportRelations = struct
       ]
   end
 
-  let url = "/api/v4/groups/{id}/export_relations"
+  let url = "/api/v4/groups/{id}/export_relations/status"
 
-  let make ?body =
-   fun params ->
+  let make params =
     Openapi.Request.make
-      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
          let open Parameters in
          [ ("id", Var (params.id, String)) ])
-      ~query_params:[]
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("relation", Var (params.relation, Option String)) ])
       ~url
       ~responses:Responses.t
-      `Post
+      `Get
 end
 
 module GetApiV4GroupsIdExportRelationsDownload = struct
@@ -110,24 +110,25 @@ module GetApiV4GroupsIdExportRelationsDownload = struct
       `Get
 end
 
-module GetApiV4GroupsIdExportRelationsStatus = struct
+module PostApiV4GroupsIdExportRelations = struct
   module Parameters = struct
-    type t = {
-      id : string;
-      relation : string option; [@default None]
-    }
-    [@@deriving make, show, eq]
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4GroupsIdExportRelations.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
   module Responses = struct
-    module OK = struct end
+    module Accepted = struct end
     module Unauthorized = struct end
     module Forbidden = struct end
     module Not_found = struct end
     module Service_unavailable = struct end
 
     type t =
-      [ `OK
+      [ `Accepted
       | `Unauthorized
       | `Forbidden
       | `Not_found
@@ -137,7 +138,7 @@ module GetApiV4GroupsIdExportRelationsStatus = struct
 
     let t =
       [
-        ("200", fun _ -> Ok `OK);
+        ("202", fun _ -> Ok `Accepted);
         ("401", fun _ -> Ok `Unauthorized);
         ("403", fun _ -> Ok `Forbidden);
         ("404", fun _ -> Ok `Not_found);
@@ -145,20 +146,19 @@ module GetApiV4GroupsIdExportRelationsStatus = struct
       ]
   end
 
-  let url = "/api/v4/groups/{id}/export_relations/status"
+  let url = "/api/v4/groups/{id}/export_relations"
 
-  let make params =
+  let make ?body =
+   fun params ->
     Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
          let open Parameters in
          [ ("id", Var (params.id, String)) ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("relation", Var (params.relation, Option String)) ])
+      ~query_params:[]
       ~url
       ~responses:Responses.t
-      `Get
+      `Post
 end
