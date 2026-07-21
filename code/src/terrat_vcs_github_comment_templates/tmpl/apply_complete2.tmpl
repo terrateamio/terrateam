@@ -155,8 +155,7 @@ No output shown due to comment size.
 ## {% if d.run_url %}[{{ d.dir }} | {{ d.workspace }}]({{ d.run_url }}){% else %}{{ d.dir }} | {{ d.workspace }}{% endif %} | {% if d.applied is defined and d.applied %}Applied :white_check_mark:{% elif d.success %}:white_check_mark:{% else %}:heavy_multiplication_x:{% endif %}
   {%- if d.applied is defined and d.applied %}
 
-> [!NOTE]
-> This plan was already applied.  It is kept here for history and does not reflect pending changes.
+> **Already applied.**  This plan is kept for history and does not reflect pending changes.
 
 <details>
   <summary>Plan output (already applied)</summary>
