@@ -30,6 +30,7 @@ pnpm-debug.log*
 
 # Python cache
 *__pycache__.*
+__pycache__/
 
 # Dune-generated merlin config
 code/.merlin

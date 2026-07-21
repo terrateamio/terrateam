@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+#
+# Run one or more GitLab e2e scenarios against a live GitLab and a live
+# Terrateam server.  See README.md.
+#
+#   ./run-scenario --list
+#   ./run-scenario 1.1
+#   ./run-scenario 3.3 3.4
+#   ./run-scenario --all
+#
+set -euo pipefail
+
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Load .env if present.  Values already in the environment win, so CI can
+# override without editing the file.
+if [[ -f "$here/.env" ]]; then
+    set -o allexport
+    # shellcheck disable=SC1091
+    source "$here/.env"
+    set +o allexport
+fi
+
+export PYTHONPATH="$here${PYTHONPATH:+:$PYTHONPATH}"
+exec python3 -m harness.runner "$@"
