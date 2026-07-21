@@ -466,11 +466,93 @@ let comment_on_pull_request ~request_id client pull_request body =
           m "%s : COMMENT_ON_PULL_REQUEST : %a" request_id Openapic_abb.pp_call_err err);
       Abb.Future.return (Error `Error)
 
-let delete_pull_request_comment ~request_id:_ _client _pull_request _comment_id =
-  raise (Failure "nyi")
+let delete_pull_request_comment ~request_id client pull_request comment_id =
+  let module Gl =
+    Gitlabc_projects_merge_requests.DeleteApiV4ProjectsIdMergeRequestsMergeRequestIidNotesNotesId
+  in
+  let run =
+    let open Abbs_future_combinators.Infix_result_monad in
+    call
+      client.Client.client
+      Gl.(
+        make
+          (Parameters.make
+             ~id:(CCInt.to_string @@ Repo.id @@ Terrat_pull_request.repo pull_request)
+             ~merge_request_iid:(Terrat_pull_request.id pull_request)
+             ~note_id:comment_id))
+    >>= fun resp ->
+    match Openapi.Response.value resp with
+    | `OK -> Abb.Future.return (Ok ())
+    | `Not_found -> Abb.Future.return (Error `Not_found)
+  in
+  let open Abb.Future.Infix_monad in
+  run
+  >>= function
+  | Ok () -> Abb.Future.return (Ok ())
+  | Error (#Gl.Responses.t as err) ->
+      Logs.err (fun m ->
+          m "%s : DELETE_COMMENT_ON_PULL_REQUEST : %a" request_id Gl.Responses.pp err);
+      (* Ignore all errors as this can fail for a bunch of reasons and we don't
+         want to block the actual commenting *)
+      Abb.Future.return (Ok ())
+  | Error (#Openapic_abb.call_err as err) ->
+      Logs.err (fun m ->
+          m "%s : DELETE_COMMENT_ON_PULL_REQUEST : %a" request_id Openapic_abb.pp_call_err err);
+      Abb.Future.return (Ok ())
 
-let minimize_pull_request_comment ~request_id:_ _client _pull_request _comment_id =
-  raise (Failure "nyi")
+(* GitLab has no equivalent of GitHub's "minimize comment", so collapse the
+   note instead: replace its body with a closed [<details>] block.
+
+   Unlike GitHub's minimize this does not keep the original output, and the
+   generated client is why.  Reading the note first in order to wrap its body
+   needs [API_Entities_Note], which declares [system], [id] and [project_id] as
+   [string option] where GitLab sends booleans and integers, so decoding a real
+   note fails with a conversion error.  That is what made the first attempt at
+   this silently do nothing while delete worked.
+
+   Collapsing to a marker is therefore what minimize means here, and it is the
+   outcome audit item 05 allows for.  The full output is still in the run page
+   the comment links to and in the GitLab CI log.  Preserving it inline needs
+   the client's note schema fixed first. *)
+let minimize_pull_request_comment ~request_id client pull_request comment_id =
+  let module Gl =
+    Gitlabc_projects_merge_requests.PutApiV4ProjectsIdMergeRequestsMergeRequestIidNotesNotesId
+  in
+  let body =
+    "<details><summary>Outdated output (minimized)</summary>\n\n\
+     This output was superseded by a later run.\n\n\
+     </details>"
+  in
+  let run =
+    let open Abbs_future_combinators.Infix_result_monad in
+    call
+      client.Client.client
+      Gl.(
+        make
+          (Parameters.make
+             ~body
+             ~id:(CCInt.to_string @@ Repo.id @@ Terrat_pull_request.repo pull_request)
+             ~merge_request_iid:(Terrat_pull_request.id pull_request)
+             ~note_id:comment_id))
+    >>= fun resp ->
+    match Openapi.Response.value resp with
+    | `OK -> Abb.Future.return (Ok ())
+    | `Not_found -> Abb.Future.return (Error `Not_found)
+  in
+  let open Abb.Future.Infix_monad in
+  run
+  >>= function
+  | Ok () -> Abb.Future.return (Ok ())
+  | Error (#Gl.Responses.t as err) ->
+      Logs.err (fun m ->
+          m "%s : MINIMIZE_COMMENT_ON_PULL_REQUEST : %a" request_id Gl.Responses.pp err);
+      (* Ignore all errors as this can fail for a bunch of reasons and we don't
+         want to block the actual commenting *)
+      Abb.Future.return (Ok ())
+  | Error (#Openapic_abb.call_err as err) ->
+      Logs.err (fun m ->
+          m "%s : MINIMIZE_COMMENT_ON_PULL_REQUEST : %a" request_id Openapic_abb.pp_call_err err);
+      Abb.Future.return (Ok ())
 
 let fetch_diff ~request_id ~client ~repo merge_request_iid =
   let module Gl =
@@ -1189,4 +1271,20 @@ let get_org_role ~request_id ~org user client =
       Logs.err (fun m -> m "%s : GET_ORG_ROLE : %a" request_id Openapic_abb.pp_call_err err);
       Abb.Future.return (Error `Error)
 
+(* Deliberately a constant rather than a lookup.  The only caller is
+   [Access_control.is_ci_changed], which asks whether a merge request touches
+   the CI configuration so the ci_config_update policy can be applied, and it
+   treats [None] as "the CI config did not change".
+
+   Checking the repository for the file would therefore be a bypass: a merge
+   request that *adds* .gitlab-ci.yml is exactly the case the policy exists to
+   catch, and the file does not yet exist on the branch being compared against,
+   so the lookup would return [None] and the policy would not fire.  Returning
+   the conventional path unconditionally means the diff is always checked
+   against it, which is the safe direction to be wrong in.
+
+   GitLab reads the pipeline definition from .gitlab-ci.yml unless a project
+   overrides ci_config_path.  Honouring that override would be a genuine
+   improvement, but it must be read from the project settings rather than by
+   probing the repository, for the reason above. *)
 let find_workflow_file ~request_id:_ _repo _client = Abb.Future.return (Ok (Some ".gitlab-ci.yml"))
