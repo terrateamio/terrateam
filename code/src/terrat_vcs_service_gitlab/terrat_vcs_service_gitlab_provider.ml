@@ -4207,8 +4207,19 @@ module Commit_check = struct
   let make_dirspace_title ~run_type { Terrat_dirspace.dir; workspace } =
     Printf.sprintf "terrateam %s: %s %s" run_type dir workspace
 
-  let make ?work_manifest:_ ~config:_ ~description ~title ~status ~repo:_ ~account:_ () =
-    Terrat_commit_check.make ~details_url:"" ~description ~title ~status
+  let make ?work_manifest ~config ~description ~title ~status ~repo:_ ~account () =
+    let module Wm = Terrat_work_manifest3 in
+    let details_url =
+      match work_manifest with
+      | Some work_manifest ->
+          Printf.sprintf
+            "%s/i/%d/runs/%s"
+            (Uri.to_string @@ Terrat_config.terrateam_web_base_url @@ Api.Config.config config)
+            (Api.Account.id account)
+            (Uuidm.to_string work_manifest.Wm.id)
+      | None -> Uri.to_string @@ Terrat_config.terrateam_web_base_url @@ Api.Config.config config
+    in
+    Terrat_commit_check.make ~details_url ~description ~title ~status
 
   let make_str ?work_manifest ~config ~description ~status ~repo ~account s =
     make ?work_manifest ~config ~description ~title:s ~status ~repo ~account ()
