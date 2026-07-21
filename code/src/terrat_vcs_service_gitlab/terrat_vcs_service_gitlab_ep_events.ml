@@ -54,12 +54,31 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
 
   let decode ctx = Gitlab_webhooks_decoder.run @@ Brtl_ctx.body ctx
 
+  (* [path_with_namespace] is the full GitLab project path, for example
+     [group/project] or, for a project in nested subgroups,
+     [group/subgroup/project].  Splitting on the first [/] puts the top-level
+     group in [owner] and the remainder in [name], which is what
+     [Terrat_vcs_api_gitlab] does when it decodes a remote repo, so the two
+     agree.  [Repo.to_string] joins them back with a [/], so deeply nested
+     projects round-trip unchanged.  A path with no [/] at all is not something
+     GitLab produces, so it is treated as undecodable rather than fatal. *)
   let parse_path_with_namespace path_with_namespace =
-    match CCString.Split.left ~by:"/" path_with_namespace with
-    | Some (owner, name) -> (owner, name)
-    | None -> raise (Failure "nyi")
+    CCString.Split.left ~by:"/" path_with_namespace
 
-  let upsert_installation_repo _config storage installation_id =
+  (* Run [f] with the owner and name decoded from [path_with_namespace],
+     logging a NOOP if the path cannot be decoded. *)
+  let with_repo request_id path_with_namespace f =
+    match parse_path_with_namespace path_with_namespace with
+    | Some (owner, name) -> f owner name
+    | None ->
+        Logs.warn (fun m ->
+            m
+              "%s : NOOP : MALFORMED_PATH_WITH_NAMESPACE : path_with_namespace=%s"
+              request_id
+              path_with_namespace);
+        Abb.Future.return (Ok ())
+
+  let upsert_installation_repo request_id _config storage installation_id =
     let module E = Gitlab_webhooks.Event in
     let module Pe = Gitlab_webhooks_push_event in
     let module Mre = Gitlab_webhooks_merge_request_event in
@@ -74,7 +93,8 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
     | E.Job_event { Je.project; _ } ->
         let module P = Gitlab_webhooks_project in
         let { P.id; path_with_namespace; _ } = project in
-        let owner, name = parse_path_with_namespace path_with_namespace in
+        with_repo request_id path_with_namespace
+        @@ fun owner name ->
         Pgsql_pool.with_conn storage ~f:(fun db ->
             Pgsql_io.Prepared_stmt.execute
               db
@@ -105,7 +125,8 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
           _;
         }
       when ref_ = "refs/heads/" ^ default_branch ->
-        let owner, name = parse_path_with_namespace path_with_namespace in
+        with_repo request_id path_with_namespace
+        @@ fun owner name ->
         let account = P.Api.Account.make installation_id in
         let repo = P.Api.Repo.make ~id:repo_id ~name ~owner () in
         let user = P.Api.User.make user_username in
@@ -121,7 +142,8 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
           merge_request = { Mr.iid = Some pull_request_id; _ };
           _;
         } -> (
-        let owner, name = parse_path_with_namespace path_with_namespace in
+        with_repo request_id path_with_namespace
+        @@ fun owner name ->
         let account = P.Api.Account.make installation_id in
         let repo = P.Api.Repo.make ~id:repo_id ~name ~owner () in
         let user = P.Api.User.make username in
@@ -156,7 +178,8 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
           object_attributes = { Mreoa.action; iid = pull_request_id; _ };
           _;
         } -> (
-        let owner, name = parse_path_with_namespace path_with_namespace in
+        with_repo request_id path_with_namespace
+        @@ fun owner name ->
         let account = P.Api.Account.make installation_id in
         let repo = P.Api.Repo.make ~id:repo_id ~name ~owner () in
         let user = P.Api.User.make username in
@@ -219,7 +242,23 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
               ~pull_request_id
               ~user
               Evaluator2.Pull_request_event.Close
-        | _ -> raise (Failure "nyi"))
+        (* Approval state is re-read from GitLab when apply requirements are
+           evaluated, so approval events do not need to trigger any work of
+           their own.  They are matched explicitly rather than with a wildcard
+           so that a new action added to the webhook type is a compile error
+           instead of a dropped event. *)
+        | `Approval ->
+            Logs.debug (fun m -> m "%s : NOOP : MERGE_REQUEST_APPROVAL" request_id);
+            Abb.Future.return (Ok ())
+        | `Approved ->
+            Logs.debug (fun m -> m "%s : NOOP : MERGE_REQUEST_APPROVED" request_id);
+            Abb.Future.return (Ok ())
+        | `Unapproval ->
+            Logs.debug (fun m -> m "%s : NOOP : MERGE_REQUEST_UNAPPROVAL" request_id);
+            Abb.Future.return (Ok ())
+        | `Unapproved ->
+            Logs.debug (fun m -> m "%s : NOOP : MERGE_REQUEST_UNAPPROVED" request_id);
+            Abb.Future.return (Ok ()))
     | E.Pipeline_event _ -> Abb.Future.return (Ok ())
     | E.Job_event
         {
@@ -228,7 +267,8 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
           project = { Pr.id = repo_id; path_with_namespace; _ };
           _;
         } ->
-        let owner, name = parse_path_with_namespace path_with_namespace in
+        with_repo request_id path_with_namespace
+        @@ fun owner name ->
         let account = P.Api.Account.make installation_id in
         let repo = P.Api.Repo.make ~id:repo_id ~name ~owner () in
         Evaluator2.work_manifest_job_failed
@@ -265,7 +305,7 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
         >>= fun event ->
         (* We insert the repository here so that during onboarding we can verify
            to the user that the webhook was successfully received *)
-        upsert_installation_repo config storage installation_id event
+        upsert_installation_repo (Brtl_ctx.token ctx) config storage installation_id event
     | (installation_id, _) :: _ ->
         Abb.Future.return @@ decode ctx
         >>= fun event ->
