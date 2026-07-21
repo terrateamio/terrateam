@@ -1,3 +1,60 @@
+; The terrat_api modules are generated from api_schemas/terrat/api.json by
+; openapi_cli. This rule generates the modules into a `gen` directory target,
+; formats them with ocamlformat, and promotes the formatted files into this
+; directory (where the library below picks them up as ordinary sources). dune
+; does not pre-create directory targets and the generator open_out's without
+; mkdir, so the action creates `gen` first.
+
+(rule
+ (alias generate-api-types)
+ (mode
+  (promote
+   (into .)))
+ (deps ../../.ocamlformat ../../../api_schemas/terrat/api.json)
+ (targets
+  (dir gen))
+ (action
+  (progn
+   (run mkdir -p gen)
+   (run
+    %{exe:../openapi_cli/openapi_cli.exe}
+    convert
+    --non-strict-records
+    --input
+    ../../../api_schemas/terrat/api.json
+    --name
+    terrat_api
+    --output-dir
+    gen)
+   (run bash -c "ocamlformat -i gen/*.ml"))))
+
+; Normalise the input schema in place with `jq -S` and promote it back to
+; api_schemas, so `dune build @code/generate-api-types` keeps the committed JSON
+; canonical. The target is produced in this directory and promoted into the
+; schema's directory; its basename must match the schema file.
+
+(rule
+ (alias generate-api-types)
+ (mode
+  (promote
+   (into ../../../api_schemas/terrat)))
+ (deps
+  (file ../../../api_schemas/terrat/api.json))
+ (target api.json)
+ (action
+  (with-stdout-to
+   api.json
+   (run jq -S . ../../../api_schemas/terrat/api.json))))
+
+; (input schema, destination dir) pair for the codegen manifest; see code/dune.
+
+(rule
+ (target terrat_api.generate-api-types-pairs)
+ (action
+  (with-stdout-to
+   terrat_api.generate-api-types-pairs
+   (echo "api_schemas/terrat/api.json code/src/terrat_api\n"))))
+
 (library
  (name terrat_api)
  (wrapped false)
@@ -10,3 +67,12 @@
    ppx_deriving.make
    ppx_deriving.show
    ppx_deriving_yojson)))
+
+; Make `dune build code/src/<lib>` regenerate from the schema: the package's
+; @all alias depends on the generate-api-types alias, so the input schema is a
+; build input of the package, not only of @.../generate-api-types.
+
+(alias
+ (name all)
+ (deps
+  (alias generate-api-types)))
