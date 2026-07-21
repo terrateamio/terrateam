@@ -1,3 +1,7 @@
+let src = Logs.Src.create "vcs_service_gitlab_ee"
+
+module Logs = (val Logs.src_log src : Logs.LOG)
+
 module Provider : module type of Terrat_vcs_service_gitlab_provider = struct
   let name = Terrat_vcs_service_gitlab_provider.name
   let enforce_installation_access = Terrat_vcs_service_gitlab_provider.enforce_installation_access
@@ -48,7 +52,336 @@ module Provider : module type of Terrat_vcs_service_gitlab_provider = struct
         (* Abb.Future.return (Error (`Invalid_query query)) *))
     | M.Any -> Abb.Future.return (Ok true)
 
-  module Gate = Terrat_vcs_service_gitlab_provider.Gate
+  module Gate = struct
+    module Sql = struct
+      let read s =
+        s
+        |> CCString.split_on_char '\n'
+        |> CCList.filter CCFun.(CCString.prefix ~pre:"--" %> not)
+        |> CCString.concat "\n"
+
+      let gate = CCFun.(Terrat_gate.of_yojson %> CCResult.to_opt)
+
+      let insert_gate_approval =
+        Pgsql_io.Typed_sql.(
+          sql
+          /^ read [%blob "sql/insert_gate_approval.sql"]
+          /% Var.text "approver"
+          /% Var.text "token"
+          /% Var.bigint "repository"
+          /% Var.bigint "pull_number"
+          /% Var.text "sha")
+
+      let select_gate_approvals =
+        Pgsql_io.Typed_sql.(
+          sql
+          //
+          (* token *)
+          Ret.text
+          //
+          (* approver *)
+          Ret.text
+          /^ read [%blob "sql/select_gate_approvals.sql"]
+          /% Var.bigint "repository"
+          /% Var.bigint "pull_number")
+
+      let select_gates =
+        Pgsql_io.Typed_sql.(
+          sql
+          //
+          (* name *)
+          Ret.(option text)
+          //
+          (* token *)
+          Ret.(option text)
+          //
+          (* gate *)
+          Ret.u Ret.json gate
+          //
+          (* dir *)
+          Ret.text
+          //
+          (* workspace *)
+          Ret.text
+          /^ read [%blob "sql/select_gates.sql"]
+          /% Var.bigint "repository"
+          /% Var.bigint "pull_number"
+          /% Var.(str_array (text "dirs"))
+          /% Var.(str_array (text "workspaces")))
+    end
+
+    let add_approval ~request_id ~token ~approver pull_request db =
+      let open Abb.Future.Infix_monad in
+      let repo_id = CCInt64.of_int @@ Api.Repo.id @@ Terrat_pull_request.repo pull_request in
+      let pull_number = CCInt64.of_int @@ Terrat_pull_request.id pull_request in
+      let sha = Api.Ref.to_string @@ Terrat_pull_request.branch_ref pull_request in
+      Pgsql_io.Prepared_stmt.execute
+        db
+        Sql.insert_gate_approval
+        approver
+        token
+        repo_id
+        pull_number
+        sha
+      >>= function
+      | Ok () -> Abb.Future.return (Ok ())
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m -> m "%s : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
+
+    let eval ~request_id client dirspaces pull_request db =
+      let module Match_set = CCSet.Make (Terrat_base_repo_config_v1.Access_control.Match) in
+      let module Match_map = CCMap.Make (Terrat_base_repo_config_v1.Access_control.Match) in
+      let run =
+        let open Abbs_future_combinators.Infix_result_monad in
+        let repo = Terrat_pull_request.repo pull_request in
+        let repo_id = CCInt64.of_int @@ Api.Repo.id @@ Terrat_pull_request.repo pull_request in
+        let pull_number = CCInt64.of_int @@ Terrat_pull_request.id pull_request in
+        Pgsql_io.Prepared_stmt.fetch
+          db
+          Sql.select_gate_approvals
+          ~f:(fun token approver -> (token, approver))
+          repo_id
+          pull_number
+        >>= fun approvers ->
+        CCList.iter
+          (fun (token, approver) ->
+            Logs.info (fun m ->
+                m "%s : CHECK_GATE : token=%s : approver=%s" request_id token approver))
+          approvers;
+        let approvers_map =
+          CCList.fold_left
+            (fun acc (token, approver) -> Sln_map.String.add_to_list token approver acc)
+            Sln_map.String.empty
+            approvers
+        in
+        Api.fetch_pull_request_reviews
+          ~request_id
+          (Api.Pull_request.repo pull_request)
+          (Api.Pull_request.id pull_request)
+          client
+        >>= fun reviews ->
+        let approved_reviewers =
+          Sln_set.String.of_list
+          @@ CCList.filter_map
+               (let module R = Terrat_pull_request_review in
+                function
+                | { R.status = R.Status.Approved; user; _ } -> user
+                | _ -> None)
+               reviews
+        in
+        (* This is all users that have approved this pull request either by the
+           VCS UI or explicit gate keeper *)
+        let all_approvers =
+          Sln_set.String.to_list
+            (Sln_set.String.union
+               approved_reviewers
+               (Sln_set.String.of_list @@ CCList.map snd approvers))
+        in
+        Pgsql_io.Prepared_stmt.fetch
+          db
+          Sql.select_gates
+          ~f:(fun name token gate dir workspace ->
+            (token, name, gate, { Terrat_dirspace.dir; workspace }))
+          repo_id
+          pull_number
+          (CCList.map (fun { Terrat_dirspace.dir; _ } -> dir) dirspaces)
+          (CCList.map (fun { Terrat_dirspace.workspace; _ } -> workspace) dirspaces)
+        >>= fun gates ->
+        let gates_map =
+          Terrat_data.Dirspace_map.to_list
+          @@ CCList.fold_left
+               (fun acc (token, name, gate, dirspace) ->
+                 Terrat_data.Dirspace_map.add_to_list dirspace (token, name, gate) acc)
+               Terrat_data.Dirspace_map.empty
+               gates
+        in
+        let all_queries =
+          Match_set.to_list
+          @@ Match_set.of_list
+          @@ CCList.flat_map
+               (fun (_, gates) ->
+                 CCList.flat_map
+                   (fun (_, _, { Terrat_gate.all_of; any_of; any_of_count = _ }) -> all_of @ any_of)
+                   gates)
+               gates_map
+        in
+        (* Given all of the queries and all approvers, match an approver against
+           the query.  This way we can go from query -> list of users who match
+           it. *)
+        Abbs_future_combinators.List_result.map
+          ~f:(fun q ->
+            Abbs_future_combinators.List_result.map
+              ~f:(fun approver ->
+                match_user ~request_id client repo approver q
+                >>= function
+                | true -> Abb.Future.return (Ok (Some approver))
+                | false -> Abb.Future.return (Ok None))
+              all_approvers
+            >>= fun res ->
+            let res = CCList.filter_map CCFun.id res in
+            Abb.Future.return (Ok (q, res)))
+          all_queries
+        >>= fun query_results ->
+        let query_to_users = Match_map.of_list query_results in
+        Abb.Future.return
+          (Ok
+             (CCList.flat_map
+                (fun (dirspace, gates) ->
+                  CCList.filter_map
+                    (fun (token, name, { Terrat_gate.all_of; any_of; any_of_count }) ->
+                      let { Terrat_dirspace.dir; workspace } = dirspace in
+                      Logs.info (fun m ->
+                          m
+                            "%s : GATE : dir=%s : workspace=%s : token=%s : name=%s : all_of=%s"
+                            request_id
+                            dir
+                            workspace
+                            (CCOption.get_or ~default:"" token)
+                            (CCOption.get_or ~default:"" name)
+                            (CCString.concat " " @@ CCList.map Terrat_gate.Match.to_string all_of));
+                      Logs.info (fun m ->
+                          m
+                            "%s : GATE : dir=%s : workspace=%s : token=%s : name=%s : any_of=%s"
+                            request_id
+                            dir
+                            workspace
+                            (CCOption.get_or ~default:"" token)
+                            (CCOption.get_or ~default:"" name)
+                            (CCString.concat " " @@ CCList.map Terrat_gate.Match.to_string any_of));
+                      Logs.info (fun m ->
+                          m
+                            "%s : GATE : dir=%s : workspace=%s : token=%s : name=%s : \
+                             any_of_count=%d"
+                            request_id
+                            dir
+                            workspace
+                            (CCOption.get_or ~default:"" token)
+                            (CCOption.get_or ~default:"" name)
+                            any_of_count);
+                      (* Given a gate, we want to know if it has been approved
+                         by everyone that must be.  If [token] is [Some string]
+                         then that means we need to match it to the specific
+                         token approvers, if it is not then it means we need to
+                         match it against the VCS approvers. *)
+                      let gate_approvers =
+                        match token with
+                        | Some token ->
+                            Sln_set.String.of_list
+                            @@ CCOption.get_or ~default:[]
+                            @@ Sln_map.String.find_opt token approvers_map
+                        | None -> approved_reviewers
+                      in
+                      (* A map of query to users who have approved that token.
+                         An empty list for the query means that it has not been
+                         approved by anyone. *)
+                      let all_of =
+                        CCList.map
+                          (fun m ->
+                            ( m,
+                              CCList.filter CCFun.(flip Sln_set.String.mem gate_approvers)
+                              @@ CCOption.get_or ~default:[]
+                              @@ Match_map.find_opt m query_to_users ))
+                          all_of
+                      in
+                      (* Set of users that have approved the token for the any_of matches. *)
+                      let any_of_set =
+                        Sln_set.String.of_list
+                        @@ CCList.filter CCFun.(flip Sln_set.String.mem gate_approvers)
+                        @@ CCList.flat_map
+                             CCFun.(
+                               flip Match_map.find_opt query_to_users %> CCOption.get_or ~default:[])
+                             any_of
+                      in
+                      let passed =
+                        CCList.for_all CCFun.(snd %> CCList.is_empty %> not) all_of
+                        && any_of_count <= Sln_set.String.cardinal any_of_set
+                      in
+                      let all_of =
+                        CCList.filter_map
+                          (function
+                            | q, [] -> Some q
+                            | _q, _ -> None)
+                          all_of
+                      in
+                      let result =
+                        {
+                          Terrat_gate.all_of;
+                          any_of;
+                          any_of_count =
+                            CCInt.max 0 (any_of_count - Sln_set.String.cardinal any_of_set);
+                        }
+                      in
+                      Logs.info (fun m ->
+                          m
+                            "%s : GATE : RESULT : dir=%s : workspace=%s : token=%s : name=%s : \
+                             all_of=%s"
+                            request_id
+                            dir
+                            workspace
+                            (CCOption.get_or ~default:"" token)
+                            (CCOption.get_or ~default:"" name)
+                            (CCString.concat " " @@ CCList.map Terrat_gate.Match.to_string all_of));
+                      Logs.info (fun m ->
+                          m
+                            "%s : GATE : RESULT : dir=%s : workspace=%s : token=%s : name=%s : \
+                             any_of=%s"
+                            request_id
+                            dir
+                            workspace
+                            (CCOption.get_or ~default:"" token)
+                            (CCOption.get_or ~default:"" name)
+                            (CCString.concat " " @@ CCList.map Terrat_gate.Match.to_string any_of));
+                      Logs.info (fun m ->
+                          m
+                            "%s : GATE : RESULT : dir=%s : workspace=%s : token=%s : name=%s : \
+                             any_of_count=%d"
+                            request_id
+                            dir
+                            workspace
+                            (CCOption.get_or ~default:"" token)
+                            (CCOption.get_or ~default:"" name)
+                            any_of_count);
+                      Logs.info (fun m ->
+                          m
+                            "%s : GATE : RESULT : dir=%s : workspace=%s : token=%s : name=%s : \
+                             passed=%s"
+                            request_id
+                            dir
+                            workspace
+                            (CCOption.get_or ~default:"" token)
+                            (CCOption.get_or ~default:"" name)
+                            (Bool.to_string passed));
+                      if passed then None
+                      else
+                        Some
+                          {
+                            Terrat_vcs_provider2.Gate_eval.dirspace =
+                              (if
+                                 Terrat_dirspace.equal
+                                   dirspace
+                                   { Terrat_dirspace.dir = ""; workspace = "" }
+                               then None
+                               else Some dirspace);
+                            token;
+                            name;
+                            result;
+                          })
+                    gates)
+                gates_map))
+      in
+      let open Abb.Future.Infix_monad in
+      run
+      >>= function
+      | Ok res -> Abb.Future.return (Ok res)
+      | Error (#Pgsql_io.err as err) ->
+          Logs.err (fun m -> m "%s : %a" request_id Pgsql_io.pp_err err);
+          Abb.Future.return (Error `Error)
+      | Error `Error ->
+          Logs.err (fun m -> m "%s" request_id);
+          Abb.Future.return (Error `Error)
+  end
+
   module Work_manifest = Terrat_vcs_service_gitlab_provider.Work_manifest
 
   module Repo_config = struct
