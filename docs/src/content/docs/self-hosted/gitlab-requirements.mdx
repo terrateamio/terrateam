@@ -1,0 +1,86 @@
+---
+title: GitLab Requirements
+description: The minimum GitLab version Terrateam supports, which API features set that floor, and how to check your instance.
+---
+
+Terrateam requires **GitLab 18.1 or later**, Community or Enterprise Edition.
+
+gitlab.com always meets this requirement. The constraint applies to self-managed
+instances.
+
+## Checking your version
+
+```sh
+curl --header "PRIVATE-TOKEN: <your-token>" \
+  "https://gitlab.example.com/api/v4/metadata"
+```
+
+```json
+{ "version": "18.1.0", "revision": "abc123def45", "enterprise": true }
+```
+
+## Why 18.1
+
+The floor is set by a single feature: **pipeline inputs on the pipeline trigger
+API**. Terrateam starts every plan and apply by triggering a pipeline with
+`inputs` on `POST /projects/:id/pipeline`, passing the work token and API base
+URL that the job needs to call back.
+
+That parameter reached general availability in **GitLab 18.1**. It first
+appeared in 17.10 behind the `ci_inputs_for_pipelines` feature flag, but the
+flag's default state is documented inconsistently for 17.x and a self-managed
+administrator can have it disabled either way, so 17.x cannot be relied on.
+
+The failure mode below 17.10 is quiet, which is the main reason to state a
+floor at all. GitLab's API discards unrecognised parameters rather than
+rejecting them, so the trigger returns `201 Created` and the pipeline starts —
+but the job runs without its inputs and fails when it tries to authenticate.
+Nothing in the response indicates the inputs were dropped.
+
+If Terrateam does report the problem, it surfaces as
+`GITLAB_INPUTS_MISSING_DEFAULTS`, which means the `.gitlab-ci.yml` `spec` block
+did not declare every input Terrateam sends. All four need a default:
+
+```yaml
+spec:
+  inputs:
+    TERRATEAM_TRIGGER:
+      type: string
+      default: "$TERRATEAM_TRIGGER"
+    WORK_TOKEN:
+      type: string
+      default: "$WORK_TOKEN"
+    API_BASE_URL:
+      type: string
+      default: "$API_BASE_URL"
+    RUNS_ON:
+      type: array
+      default: []
+---
+```
+
+## Other version-sensitive features
+
+These all sit below the 18.1 floor, so they are informational — but they are
+what a lower floor would run into first, in the order it would hit them.
+
+| Feature | Minimum | Used for |
+|---|---|---|
+| `detailed_merge_status` on merge requests | 15.6 | Mergeability, and the apply requirement that checks it |
+| `detailed_merge_status: "conflict"` | 16.11 | Reporting a merge conflict as the reason an apply is blocked |
+| Merge request `/diffs` | 15.7 | Determining which directories a merge request changed |
+| Merge request `/reviewers` | 15.3 | Apply requirements based on review |
+| `members/all/:user_id` | 12.4 | Access control by group membership |
+
+The `conflict` value is worth calling out. It was named `broken_status` before
+16.11, and Terrateam matches only `conflict`. On 15.6 through 16.10 a
+conflicted merge request is therefore reported as mergeable in the merge
+request state. Applies are still correctly blocked, because the separate
+mergeability check does not treat `broken_status` as mergeable — the
+consequence is a misleading status, not an unsafe apply.
+
+## Merge request approvals
+
+Terrateam reads `approved_by` from the merge request approvals API, which is
+available on all GitLab tiers. Apply requirements that depend on approvals work
+on Community Edition; they do not need Premium or Ultimate.

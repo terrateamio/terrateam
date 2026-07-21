@@ -201,6 +201,7 @@ export default defineConfig({
             { label: "Kubernetes", link: "/quickstart/self-hosted/kubernetes" },
             { label: "AWS ECS", link: "/quickstart/self-hosted/aws" },
             { label: "Environment Variables", link: "/self-hosted/environment-variables" },
+            { label: "GitLab Requirements", link: "/self-hosted/gitlab-requirements" },
             { label: "Observability and Metrics", link: "/self-hosted/observability-metrics" },
           ],
         },

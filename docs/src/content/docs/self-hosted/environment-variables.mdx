@@ -64,11 +64,15 @@ For GitHub Enterprise Server deployments:
 
 ### GitLab Self-Hosted
 
-For self-hosted GitLab instances:
+For self-hosted GitLab instances. Terrateam requires GitLab 18.1 or later — see
+[GitLab Requirements](/self-hosted/gitlab-requirements).
+
+Both values are the origin only, with no path. Terrateam appends `/api/v4`
+itself, so including it here produces requests to `/api/api/v4/...`.
 
 | Variable | Description | Default | Example |
 |----------|-------------|---------|---------|
-| `GITLAB_API_BASE_URL` | GitLab API base URL | `https://gitlab.com/api` | `https://gitlab.example.com/api` |
+| `GITLAB_API_BASE_URL` | GitLab API base URL | `https://gitlab.com` | `https://gitlab.example.com` |
 | `GITLAB_WEB_BASE_URL` | GitLab web base URL | `https://gitlab.com` | `https://gitlab.example.com` |
 
 ### Proxy Configuration
