@@ -2215,8 +2215,21 @@ module Apply_requirements = struct
                 | None -> Abb.Future.return (Ok false))
             | Ok None -> Abb.Future.return (Ok false)
             | Error _ -> Abb.Future.return (Error `Error))
-        | None -> raise (Failure "nyi")
-        (* Abb.Future.return (Error (`Invalid_query query)) *))
+        (* The role named in the access control query is not one this VCS
+           defines, which is a mistake in the repo config.  It used to raise,
+           turning a config typo into a 500 with a backtrace.  Report it as an
+           error instead, and name the offending role so it is diagnosable.
+
+           This should really surface as `Invalid_query so the user is told
+           which role is wrong, and the renderers already handle that message.
+           Doing so means widening Terrat_access_control2.query_err and
+           Terrat_vcs_provider2.access_control_query_err past [`Error], which
+           ripples into the evaluator and every provider; each of those sites
+           needs a deliberate decision about how an unevaluatable policy should
+           behave, so it is left as follow-up rather than done here. *)
+        | None ->
+            Logs.err (fun m -> m "%s : ACCESS_CONTROL : UNKNOWN_ROLE : role=%s" request_id value);
+            Abb.Future.return (Error `Error))
     | M.Any -> Abb.Future.return (Ok true)
 
   let compute_approved ~request_id client repo approved approved_reviews requested_reviews =
@@ -4352,6 +4365,16 @@ module Work_manifest = struct
         /% Var.bigint "installation_id")
   end
 
+  let make_run_telemetry config step repo =
+    Terrat_telemetry.Event.Run
+      {
+        app_type = "gitlab";
+        app_id = Terrat_config.Gitlab.app_id @@ Api.Config.vcs_config config;
+        step;
+        owner = Api.Repo.owner repo;
+        repo = Api.Repo.name repo;
+      }
+
   let run ~request_id config client work_manifest =
     let module Pipeline_api = Gitlabc_projects_pipeline.PostApiV4ProjectsIdPipeline in
     let module Wm = Terrat_work_manifest3 in
@@ -4405,7 +4428,19 @@ module Work_manifest = struct
         Pipeline_api.(make ~body (Parameters.make ~id:(CCInt.to_string @@ Api.Repo.id repo)))
       >>= fun resp ->
       match Openapi.Response.value resp with
-      | `Created _ -> Abb.Future.return (Ok ())
+      | `Created _ -> (
+          (* GitLab usage was invisible in telemetry because only the GitHub
+             provider reported runs. *)
+          match CCList.last_opt work_manifest.Wm.steps with
+          | Some step ->
+              (* [send] is not in the result monad the rest of this function
+                 uses. *)
+              let open Abb.Future.Infix_monad in
+              Terrat_telemetry.send
+                (Terrat_config.telemetry @@ Api.Config.config config)
+                (make_run_telemetry config step repo)
+              >>= fun () -> Abb.Future.return (Ok ())
+          | None -> Abb.Future.return (Ok ()))
       | `Bad_request json
         when CCString.find ~sub:"Identity verification is required in order to run CI jobs"
              @@ Yojson.Safe.to_string json

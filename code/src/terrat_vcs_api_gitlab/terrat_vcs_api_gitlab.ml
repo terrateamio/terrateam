@@ -663,8 +663,27 @@ let fetch_pull_request ~request_id _account client repo merge_request_iid =
       | "opened", _, _, _ -> Terrat_pull_request.State.(Open Open_status.Mergeable)
       | "merged", _, Some merge_commit_sha, Some merged_at ->
           Terrat_pull_request.State.(Merged { Merged.merged_hash = merge_commit_sha; merged_at })
+      (* A merged merge request without a merge commit sha is not a broken
+         response.  GitLab leaves it null for some merge methods, squash in
+         particular, where the resulting commit is reported elsewhere.  Fall
+         back to the head of the source branch rather than crashing, since the
+         merged hash is only used to identify what was merged. *)
+      | "merged", _, merge_commit_sha, merged_at ->
+          Terrat_pull_request.State.(
+            Merged
+              {
+                Merged.merged_hash =
+                  CCOption.get_or ~default:(Ref.to_string branch_ref) merge_commit_sha;
+                merged_at = CCOption.get_or ~default:"" merged_at;
+              })
       | "closed", _, _, _ -> Terrat_pull_request.State.Closed
-      | _, _, _, _ -> assert false
+      (* "locked" is the remaining state GitLab documents, and it is transient
+         while a merge is in progress.  Treat anything unrecognised as closed:
+         it stops Terrateam acting on the merge request, which is the safe
+         outcome, and it used to raise. *)
+      | state, _, _, _ ->
+          Logs.info (fun m -> m "%s : UNEXPECTED_MERGE_REQUEST_STATE : %s" request_id state);
+          Terrat_pull_request.State.Closed
     in
     let draft = CCOption.get_or ~default:false draft in
     let provisional_merge_ref = None in
@@ -1073,7 +1092,12 @@ let merge_pull_request ~request_id ?(retain_pr_title = false) client pull_reques
   let is_squash = merge_strategy = Ms.Squash in
   let merge_commit_message = None in
   let merge_when_pipeline_succeeds = None in
-  let sha = None in
+  (* GitLab rejects a merge with "SHA must be provided when merging" unless the
+     head of the source branch is passed, so automerge failed outright without
+     it.  Sending it is also the safer behaviour: GitLab refuses the merge if
+     the branch has moved on since, rather than merging something newer than
+     what was planned and approved. *)
+  let sha = Some (Ref.to_string (Terrat_pull_request.branch_ref pull_request)) in
   let should_remove_source_branch = None in
   let skip_merge_train = None in
   let squash = Some is_squash in
