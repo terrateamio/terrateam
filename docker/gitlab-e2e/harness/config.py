@@ -37,6 +37,14 @@ class Config:
         # on the repo with that installation's access token.
         self.group = _require("GITLAB_TEST_GROUP")
 
+        # A second GitLab account, used where one user acting alone cannot
+        # produce the situation under test.  Gate approvals are the case that
+        # needs it: select_gate_approvals excludes approvals whose approver is
+        # the merge request author, so a gate can never be satisfied by the
+        # person who opened the merge request.  Scenarios that need this skip
+        # when it is unset rather than failing.
+        self.approver_token = os.environ.get("GITLAB_APPROVER_TOKEN")
+
         # Terrateam
         self.terrateam_url = _require("TERRATEAM_WEB_BASE_URL").rstrip("/")
         self.webhook_url = os.environ.get(

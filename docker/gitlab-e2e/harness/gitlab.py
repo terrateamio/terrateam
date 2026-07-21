@@ -170,6 +170,13 @@ class Gitlab:
     def job_trace(self, project_id, job_id):
         return self.get("/projects/%d/jobs/%d/trace" % (project_id, job_id), raw=True)
 
+    def add_project_member(self, project_id, user_id, access_level=30):
+        """Invite a user to a project.  30 is Developer."""
+        return self.post(
+            "/projects/%d/members" % project_id,
+            body={"user_id": user_id, "access_level": access_level},
+        )
+
     # -- webhooks ----------------------------------------------------------
 
     def create_project_hook(self, project_id, url, token):

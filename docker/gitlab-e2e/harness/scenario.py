@@ -102,6 +102,33 @@ class Ctx:
         self.log("commenting %r on !%d" % (body, iid))
         return self.gl.create_note(self.fixture.id, iid, body)
 
+    def comment_as_approver(self, iid, body):
+        """Comment as the second account.
+
+        Needed wherever the acting user must not be the merge request author --
+        gate approvals in particular, which the server excludes when the
+        approver opened the merge request.
+        """
+        if not self.cfg.approver_token:
+            raise Skipped(
+                "GITLAB_APPROVER_TOKEN is not set, and this needs a user who is not the "
+                "merge request author"
+            )
+        from . import gitlab as gitlab_mod
+
+        other = gitlab_mod.Gitlab(self.cfg.gitlab_api_url, self.cfg.approver_token)
+        # Group membership does not reach a project created moments ago, so
+        # invite the account explicitly.  Harmless if it is already a member.
+        who = other.current_user()
+        try:
+            self.gl.add_project_member(self.fixture.id, who["id"])
+            self.log("invited %s to the fixture project" % who["username"])
+        except gitlab_mod.GitlabError as exc:
+            if exc.status not in (409, 400):
+                raise
+        self.log("commenting %r on !%d as %s" % (body, iid, who["username"]))
+        return gitlab_mod.retry(lambda: other.create_note(self.fixture.id, iid, body))
+
     # -- commit statuses ---------------------------------------------------
 
     def statuses(self, sha):

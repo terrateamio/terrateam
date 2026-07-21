@@ -17,7 +17,8 @@ does not repeat them:
 
 This scenario needs an **EE** server.  On OSS the apply is refused with the
 premium-feature message instead, which the scenario reports as a skip rather
-than a failure.
+than a failure.  It also needs GITLAB_APPROVER_TOKEN, a second account, because
+self-approval is deliberately excluded.
 """
 
 from harness.scenario import Skipped, scenario
@@ -83,7 +84,12 @@ def gates_block_apply(ctx):
     ctx.assert_no_note_containing(mr["iid"], markers.APPLY_COMPLETE)
 
     # --- approving the gate unblocks it --------------------------------
-    ctx.comment(mr["iid"], "terrateam gate approve %s" % GATE_TOKEN)
+    # The approval must come from someone other than the merge request author:
+    # select_gate_approvals ends in `approver <> gpr.username`, so a gate can
+    # never be satisfied by the person who opened the merge request.  Approving
+    # as the author leaves the gate blocked, which looks exactly like the
+    # feature being broken -- it is the feature working.
+    ctx.comment_as_approver(mr["iid"], "terrateam gate approve %s" % GATE_TOKEN)
 
     def approval_recorded():
         rows = ctx.psql(
