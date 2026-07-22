@@ -476,6 +476,27 @@ let minimize_pull_request_comment ~request_id client pull_request comment_id =
          want to block the actual commenting *)
       Abb.Future.return (Ok ())
 
+let update_pull_request_comment ~request_id client pull_request comment_id body =
+  let open Abb.Future.Infix_monad in
+  Terrat_github.update_comment
+    ~owner:(Repo.owner (Terrat_pull_request.repo pull_request))
+    ~repo:(Repo.name (Terrat_pull_request.repo pull_request))
+    ~comment_id
+    ~body
+    client.Client.client
+  >>= function
+  | Ok () -> Abb.Future.return (Ok ())
+  | Error `Not_found -> Abb.Future.return (Error `Not_found)
+  | Error (#Terrat_github.update_comment_err as err) ->
+      Prmths.Counter.inc_one Metrics.github_errors_total;
+      Logs.err (fun m ->
+          m
+            "%s : UPDATE_COMMENT_ON_PULL_REQUEST : %a"
+            request_id
+            Terrat_github.pp_update_comment_err
+            err);
+      Abb.Future.return (Error `Error)
+
 let diff_of_github_diff =
   CCList.map
     Githubc2_components.Diff_entry.(

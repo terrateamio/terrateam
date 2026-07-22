@@ -135,6 +135,13 @@ type minimize_comment_err =
   ]
 [@@deriving show]
 
+type update_comment_err =
+  [ Githubc2_abb.call_err
+  | `Not_found
+  | `Unprocessable_entity of Githubc2_components.Validation_error.t
+  ]
+[@@deriving show]
+
 type publish_reaction_err =
   [ Githubc2_abb.call_err
   | `Unprocessable_entity of Githubc2_components.Validation_error.t
@@ -552,6 +559,30 @@ let minimize_comment ~owner ~repo ~comment_id client =
           | `OK -> Abb.Future.return (Ok ())
           | `Not_found -> Abb.Future.return (Error `Not_found)))
   | `Not_found _ -> Abb.Future.return (Error `Not_found)
+
+let update_comment ~owner ~repo ~comment_id ~body client =
+  Prmths.Counter.inc_one (Metrics.fn_call_total "update_comment");
+  let open Abb.Future.Infix_monad in
+  (* No retries: a deleted comment comes back as an error (404) and retrying
+     it just delays the caller's fallback of posting a fresh comment. *)
+  call
+    ~tries:1
+    client
+    Githubc2_issues.Update_comment.(
+      make
+        ~body:Request_body.(make Primary.{ body })
+        Parameters.(make ~comment_id:(CCInt64.of_int comment_id) ~owner ~repo))
+  >>= function
+  | Ok resp -> (
+      match Openapi.Response.value resp with
+      | `OK _ -> Abb.Future.return (Ok ())
+      | `Unprocessable_entity _ as err -> Abb.Future.return (Error err))
+  | Error (`Missing_response resp) when Openapi.Response.status resp = 404 ->
+      (* A comment that has been deleted by the user comes back as a 404, which
+         the generated client does not have a response for, so detect that case
+         here. *)
+      Abb.Future.return (Error `Not_found)
+  | Error (#Githubc2_abb.call_err as err) -> Abb.Future.return (Error err)
 
 let react_to_comment ?(content = `Rocket) ~owner ~repo ~comment_id client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "react_to_comment");

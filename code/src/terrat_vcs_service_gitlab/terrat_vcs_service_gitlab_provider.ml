@@ -4041,6 +4041,10 @@ module Comment = struct
              "WORK_MANIFEST_RUN_FAILED"
              Tmpl.work_manifest_run_failed
              kv
+
+  (* The unified summary comment is not implemented for GitLab yet. *)
+  let drain_unified_comment ~request_id:_ _config _storage _work_manifest_id = Abb.Future.return ()
+  let mark_unified_comment_dirty ~request_id:_ _db _work_manifest_id = Abb.Future.return (Ok ())
 end
 
 module Repo_config = struct
@@ -4189,7 +4193,7 @@ module Repo_config = struct
              checks -> Abb.Future.return (Error (`Premium_feature_err `Require_completed_reviews))
     | {
      V1.View.notifications =
-       { V1.Notifications.summary = { V1.Notifications.Summary.enabled = true }; _ };
+       { V1.Notifications.summary = { V1.Notifications.Summary.enabled = true; _ }; _ };
      _;
     } -> Abb.Future.return (Error (`Premium_feature_err `Notifications_summary))
     | _ -> Abb.Future.return (Ok (provenance, final_repo_config))

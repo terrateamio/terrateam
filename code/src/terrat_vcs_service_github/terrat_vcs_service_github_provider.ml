@@ -4065,22 +4065,51 @@ module Comment = struct
           work_manifest;
         } -> (
         let open Abb.Future.Infix_monad in
-        Result.Publisher3.post_comment
-          request_id
-          account_status
-          config
-          client
-          db
-          is_layered_run
-          remaining_layers
-          repo_config
-          result
-          pull_request
-          synthesized_config
-          work_manifest
-        >>= function
-        | Ok cid -> Abb.Future.return (Ok cid)
-        | Error _ -> Abb.Future.return (Error `Error))
+        let module V1 = Terrat_base_repo_config_v1 in
+        let module N = V1.Notifications in
+        let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
+        let module Wm = Terrat_work_manifest3 in
+        let post_classic () =
+          Result.Publisher3.post_comment
+            request_id
+            account_status
+            config
+            client
+            db
+            is_layered_run
+            remaining_layers
+            repo_config
+            result
+            pull_request
+            synthesized_config
+            work_manifest
+          >>= function
+          | Ok cid -> Abb.Future.return (Ok cid)
+          | Error _ -> Abb.Future.return (Error `Error)
+        in
+        let { N.summary = { N.Summary.enabled; mode }; _ } = V1.notifications repo_config in
+        let unified =
+          enabled
+          &&
+          match mode with
+          | N.Summary.Mode.Pull_request -> true
+          | N.Summary.Mode.Header -> false
+        in
+        if not unified then post_classic ()
+        else
+          (* The unified summary comment replaces the per work manifest result
+             comment.  Gates and access control denials have no other surface,
+             so results carrying them still post the classic comment. *)
+          Terrat_vcs_github_comment_unified.mark_dirty ~request_id db work_manifest.Wm.id
+          >>= function
+          | Ok () -> (
+              match (result.R2.gates, work_manifest.Wm.denied_dirspaces) with
+              | (None | Some []), [] -> Abb.Future.return (Ok ())
+              | _, _ -> post_classic ())
+          | Error `Error ->
+              (* If the refresh cannot be tracked, fall back to the classic
+                 comment rather than losing the output entirely. *)
+              post_classic ())
     | Msg.Tier_check checks ->
         let module C = Terrat_tier.Check in
         let { C.tier_name; users_per_month; runs_per_month } = checks in
@@ -4154,6 +4183,12 @@ module Comment = struct
              "WORK_MANIFEST_RUN_FAILED"
              Tmpl.work_manifest_run_failed
              kv
+
+  let drain_unified_comment ~request_id config storage work_manifest_id =
+    Terrat_vcs_github_comment_unified.drain ~request_id config storage work_manifest_id
+
+  let mark_unified_comment_dirty ~request_id db work_manifest_id =
+    Terrat_vcs_github_comment_unified.mark_dirty_if_tracked ~request_id db work_manifest_id
 end
 
 module Repo_config = struct
@@ -4302,7 +4337,7 @@ module Repo_config = struct
              checks -> Abb.Future.return (Error (`Premium_feature_err `Require_completed_reviews))
     | {
      V1.View.notifications =
-       { V1.Notifications.summary = { V1.Notifications.Summary.enabled = true }; _ };
+       { V1.Notifications.summary = { V1.Notifications.Summary.enabled = true; _ }; _ };
      _;
     } -> Abb.Future.return (Error (`Premium_feature_err `Notifications_summary))
     | _ -> Abb.Future.return (Ok (provenance, final_repo_config))

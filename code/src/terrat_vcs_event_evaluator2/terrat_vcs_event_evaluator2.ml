@@ -474,26 +474,44 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               S.Db.query_flow_state ~request_id db work_manifest.Terrat_work_manifest3.id
               >>= function
               | Some _ -> Abb.Future.return (Ok (`Legacy work_manifest))
-              | None -> Abb.Future.return (Ok `New_age))
-          | None -> Abb.Future.return (Ok `New_age))
+              | None -> Abb.Future.return (Ok (`New_age (Some work_manifest))))
+          | None -> Abb.Future.return (Ok (`New_age None)))
       >>= function
-      | `New_age ->
+      | `New_age work_manifest ->
           with_conn storage ~f:(fun db ->
               Pgsql_io.tx db ~f:(fun () ->
                   let open Abb.Future.Infix_monad in
                   Builder.State.make ~log_id:request_id ~config ~store ~db ~exec ~tasks ()
                   >>= fun s ->
                   Logs.info (fun m -> m "%s : target=%s" (Builder.log_id s) (Hmap.Key.info target));
-                  tx_safe ~request_id @@ Builder.eval s target))
+                  tx_safe ~request_id @@ Builder.eval s target
+                  >>= fun r ->
+                  (* Best effort so the unified comment reflects the failure. *)
+                  match work_manifest with
+                  | Some { Terrat_work_manifest3.id; _ } ->
+                      S.Comment.mark_unified_comment_dirty ~request_id db id
+                      >>= fun _ -> Abb.Future.return r
+                  | None -> Abb.Future.return r))
+          >>= fun _ ->
+          Abb.Future.return
+            (Ok (CCOption.map (fun { Terrat_work_manifest3.id; _ } -> id) work_manifest))
       | `Legacy work_manifest ->
           let ctx = Legacy.Ctx.make ~config ~storage ~request_id () in
           Legacy.run_work_manifest_failure ~ctx work_manifest.Terrat_work_manifest3.id
-          >>= fun _ -> Abb.Future.return (Ok (`Ok ()))
+          >>= fun _ -> Abb.Future.return (Ok (Some work_manifest.Terrat_work_manifest3.id))
     in
     let open Abb.Future.Infix_monad in
     log_err ~request_id run
     >>= function
-    | Ok _ -> Abb.Future.return (Ok ())
+    | Ok work_manifest_id ->
+        CCOption.map_or
+          ~default:(Abb.Future.return ())
+          (fun work_manifest_id ->
+            Fc.ignore
+              (Abb.Future.fork
+                 (S.Comment.drain_unified_comment ~request_id config storage work_manifest_id)))
+          work_manifest_id
+        >>= fun () -> Abb.Future.return (Ok ())
     | Error _ -> Abb.Future.return (Error `Error)
 
   let compute_node_poll ~request_id ~config ~storage ~exec ~compute_node_id offering =
@@ -834,6 +852,10 @@ module Make (S : Terrat_vcs_provider2.S) = struct
                     work_manifest_id
                     Terrat_work_manifest3.State.Aborted
                   >>= fun () ->
+                  let open Abb.Future.Infix_monad in
+                  (* Best effort so the unified comment reflects the abort. *)
+                  S.Comment.mark_unified_comment_dirty ~request_id db work_manifest_id
+                  >>= fun _ ->
                   run_work_manifest_event
                     ~request_id
                     ~config
@@ -855,6 +877,19 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         | Ok _ -> Abb.Future.return (Ok ())
         | Error _ -> Abb.Future.return (Error `Error))
       ~finally:(fun () ->
+        Fc.ignore
+          (Abb.Future.fork
+             (S.Comment.drain_unified_comment ~request_id config storage work_manifest_id))
+        >>= fun () ->
+        (* The legacy evaluator resolves its result future while its
+           transaction is still open, so the dirty mark may not be visible to
+           the drain above yet.  A delayed second drain picks it up. *)
+        Fc.ignore
+          (Abb.Future.fork
+             (Abb.Sys.sleep 10.0
+             >>= fun () ->
+             S.Comment.drain_unified_comment ~request_id config storage work_manifest_id))
+        >>= fun () ->
         Fc.ignore
         @@ Abb.Future.fork
         @@ run_missing_drift_schedules ~request_id ~config ~storage ~exec ())

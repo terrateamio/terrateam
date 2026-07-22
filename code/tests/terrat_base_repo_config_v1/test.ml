@@ -65,12 +65,76 @@ let test_to_version_1_round_trip =
           | _ -> failwith "Round-trip to Version_1 did not produce Engine_stategraph")
       | Error _ -> failwith "of_version_1_json failed in round-trip setup")
 
+let test_notifications_summary_mode_pull_request =
+  Oth.test ~name:"of_version_1_json: notifications summary mode pull_request" (fun _ ->
+      let module Sum = V1.Notifications.Summary in
+      let json =
+        `Assoc
+          [
+            ( "notifications",
+              `Assoc
+                [
+                  ("summary", `Assoc [ ("enabled", `Bool true); ("mode", `String "pull_request") ]);
+                ] );
+          ]
+      in
+      match V1.of_version_1_json json with
+      | Ok cfg -> (
+          let { V1.Notifications.summary; _ } = V1.notifications cfg in
+          match summary with
+          | { Sum.enabled = true; mode = Sum.Mode.Pull_request } -> ()
+          | _ -> failwith "Expected summary enabled=true with mode=Pull_request")
+      | Error _ -> failwith "of_version_1_json failed on notifications summary pull_request config")
+
+let test_notifications_summary_mode_default =
+  Oth.test ~name:"of_version_1_json: notifications summary mode defaults to header" (fun _ ->
+      let module Sum = V1.Notifications.Summary in
+      let json =
+        `Assoc [ ("notifications", `Assoc [ ("summary", `Assoc [ ("enabled", `Bool true) ]) ]) ]
+      in
+      match V1.of_version_1_json json with
+      | Ok cfg -> (
+          let { V1.Notifications.summary; _ } = V1.notifications cfg in
+          match summary with
+          | { Sum.enabled = true; mode = Sum.Mode.Header } -> ()
+          | _ -> failwith "Expected summary enabled=true with default mode=Header")
+      | Error _ -> failwith "of_version_1_json failed on notifications summary default mode config")
+
+let test_notifications_summary_mode_round_trip =
+  Oth.test ~name:"to_version_1: notifications summary mode round-trips" (fun _ ->
+      let module Sn = Repo.Notifications_summary in
+      let round_trip mode_str expected =
+        let json =
+          `Assoc
+            [
+              ( "notifications",
+                `Assoc
+                  [ ("summary", `Assoc [ ("enabled", `Bool true); ("mode", `String mode_str) ]) ] );
+            ]
+        in
+        match V1.of_version_1_json json with
+        | Ok cfg -> (
+            let v1 = V1.to_version_1 cfg in
+            match v1.Repo.Version_1.notifications with
+            | Some { Repo.Notifications.summary = Some { Sn.enabled = true; mode }; _ } ->
+                if mode <> expected then
+                  failwith
+                    (Printf.sprintf "Round-trip of mode %s produced a different mode" mode_str)
+            | _ -> failwith "Round-trip to Version_1 did not produce a notifications summary")
+        | Error _ -> failwith "of_version_1_json failed in notifications summary round-trip setup"
+      in
+      round_trip "pull_request" `Pull_request;
+      round_trip "header" `Header)
+
 let test =
   Oth.parallel
     [
       test_of_version_1_json_minimal;
       test_of_version_1_json_with_version;
       test_to_version_1_round_trip;
+      test_notifications_summary_mode_pull_request;
+      test_notifications_summary_mode_default;
+      test_notifications_summary_mode_round_trip;
     ]
 
 let () =

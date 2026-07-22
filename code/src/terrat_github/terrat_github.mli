@@ -91,6 +91,13 @@ type minimize_comment_err =
   ]
 [@@deriving show]
 
+type update_comment_err =
+  [ Githubc2_abb.call_err
+  | `Not_found
+  | `Unprocessable_entity of Githubc2_components.Validation_error.t
+  ]
+[@@deriving show]
+
 type publish_reaction_err =
   [ Githubc2_abb.call_err
   | `Unprocessable_entity of Githubc2_components.Validation_error.t
@@ -296,6 +303,14 @@ val minimize_comment :
   comment_id:int ->
   Githubc2_abb.t ->
   (unit, [> minimize_comment_err ]) result Abb.Future.t
+
+val update_comment :
+  owner:string ->
+  repo:string ->
+  comment_id:int ->
+  body:string ->
+  Githubc2_abb.t ->
+  (unit, [> update_comment_err ]) result Abb.Future.t
 
 val react_to_comment :
   ?content:Githubc2_reactions.Create_for_issue_comment.Request_body.Primary.Content.t ->

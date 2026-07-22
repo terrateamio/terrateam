@@ -513,6 +513,18 @@ module type S = sig
         Api.Config.t )
       Msg.t ->
       (unit, [> `Error ]) result Abb.Future.t
+
+    (** Refresh the unified summary comment of the pull request the given work manifest belongs to,
+        if it has been marked dirty. Runs on its own connections after the result transaction
+        commits and is best effort: it must log and swallow its errors. *)
+    val drain_unified_comment :
+      request_id:string -> Api.Config.t -> Pgsql_pool.t -> Uuidm.t -> unit Abb.Future.t
+
+    (** Mark the unified summary comment of the work manifest's pull request as needing a refresh,
+        but only if the pull request already tracks one. Used by failure paths so aborted runs show
+        up in the comment. *)
+    val mark_unified_comment_dirty :
+      request_id:string -> Db.t -> Uuidm.t -> (unit, [> `Error ]) result Abb.Future.t
   end
 
   module Repo_config : sig
