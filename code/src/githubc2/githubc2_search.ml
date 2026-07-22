@@ -1,4 +1,4 @@
-module Code = struct
+module Users = struct
   module Parameters = struct
     module Order = struct
       let t_of_yojson = function
@@ -20,13 +20,23 @@ module Code = struct
 
     module Sort = struct
       let t_of_yojson = function
-        | `String "indexed" -> Ok `Indexed
+        | `String "followers" -> Ok `Followers
+        | `String "joined" -> Ok `Joined
+        | `String "repositories" -> Ok `Repositories
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
       let t_to_yojson = function
-        | `Indexed -> `String "indexed"
+        | `Followers -> `String "followers"
+        | `Joined -> `String "joined"
+        | `Repositories -> `String "repositories"
 
-      type t = ([ `Indexed ][@of_yojson t_of_yojson] [@to_yojson t_to_yojson]) [@@deriving show, eq]
+      type t =
+        ([ `Followers
+         | `Joined
+         | `Repositories
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
     end
 
     type t = {
@@ -43,7 +53,7 @@ module Code = struct
     module OK = struct
       module Primary = struct
         module Items = struct
-          type t = Githubc2_components.Code_search_result_item.t list
+          type t = Githubc2_components.User_search_result_item.t list
           [@@deriving yojson { strict = false; meta = false }, show, eq]
         end
 
@@ -59,11 +69,6 @@ module Code = struct
     end
 
     module Not_modified = struct end
-
-    module Forbidden = struct
-      type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show, eq]
-    end
 
     module Unprocessable_entity = struct
       type t = Githubc2_components.Validation_error.t
@@ -86,7 +91,6 @@ module Code = struct
     type t =
       [ `OK of OK.t
       | `Not_modified
-      | `Forbidden of Forbidden.t
       | `Unprocessable_entity of Unprocessable_entity.t
       | `Service_unavailable of Service_unavailable.t
       ]
@@ -96,14 +100,13 @@ module Code = struct
       [
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
         ("304", fun _ -> Ok `Not_modified);
-        ("403", Openapi.of_json_body (fun v -> `Forbidden v) Forbidden.of_yojson);
         ( "422",
           Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
         ("503", Openapi.of_json_body (fun v -> `Service_unavailable v) Service_unavailable.of_yojson);
       ]
   end
 
-  let url = "/search/code"
+  let url = "/search/users"
 
   let make params =
     Openapi.Request.make
@@ -124,50 +127,12 @@ module Code = struct
       `Get
 end
 
-module Commits = struct
+module Topics = struct
   module Parameters = struct
-    module Order = struct
-      let t_of_yojson = function
-        | `String "asc" -> Ok `Asc
-        | `String "desc" -> Ok `Desc
-        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-      let t_to_yojson = function
-        | `Asc -> `String "asc"
-        | `Desc -> `String "desc"
-
-      type t =
-        ([ `Asc
-         | `Desc
-         ]
-        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
-      [@@deriving show, eq]
-    end
-
-    module Sort = struct
-      let t_of_yojson = function
-        | `String "author-date" -> Ok `Author_date
-        | `String "committer-date" -> Ok `Committer_date
-        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-      let t_to_yojson = function
-        | `Author_date -> `String "author-date"
-        | `Committer_date -> `String "committer-date"
-
-      type t =
-        ([ `Author_date
-         | `Committer_date
-         ]
-        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
-      [@@deriving show, eq]
-    end
-
     type t = {
-      order : Order.t; [@default `Desc]
       page : int; [@default 1]
       per_page : int; [@default 30]
       q : string;
-      sort : Sort.t option; [@default None]
     }
     [@@deriving make, show, eq]
   end
@@ -176,7 +141,7 @@ module Commits = struct
     module OK = struct
       module Primary = struct
         module Items = struct
-          type t = Githubc2_components.Commit_search_result_item.t list
+          type t = Githubc2_components.Topic_search_result_item.t list
           [@@deriving yojson { strict = false; meta = false }, show, eq]
         end
 
@@ -206,7 +171,7 @@ module Commits = struct
       ]
   end
 
-  let url = "/search/commits"
+  let url = "/search/topics"
 
   let make params =
     Openapi.Request.make
@@ -216,6 +181,263 @@ module Commits = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
+           ("q", Var (params.q, String));
+           ("per_page", Var (params.per_page, Int));
+           ("page", Var (params.page, Int));
+         ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module Repos = struct
+  module Parameters = struct
+    module Order = struct
+      let t_of_yojson = function
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
+    end
+
+    module Sort = struct
+      let t_of_yojson = function
+        | `String "forks" -> Ok `Forks
+        | `String "help-wanted-issues" -> Ok `Help_wanted_issues
+        | `String "stars" -> Ok `Stars
+        | `String "updated" -> Ok `Updated
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      let t_to_yojson = function
+        | `Forks -> `String "forks"
+        | `Help_wanted_issues -> `String "help-wanted-issues"
+        | `Stars -> `String "stars"
+        | `Updated -> `String "updated"
+
+      type t =
+        ([ `Forks
+         | `Help_wanted_issues
+         | `Stars
+         | `Updated
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
+    end
+
+    type t = {
+      order : Order.t; [@default `Desc]
+      page : int; [@default 1]
+      per_page : int; [@default 30]
+      q : string;
+      sort : Sort.t option; [@default None]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      module Primary = struct
+        module Items = struct
+          type t = Githubc2_components.Repo_search_result_item.t list
+          [@@deriving yojson { strict = false; meta = false }, show, eq]
+        end
+
+        type t = {
+          incomplete_results : bool;
+          items : Items.t;
+          total_count : int;
+        }
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+    end
+
+    module Not_modified = struct end
+
+    module Unprocessable_entity = struct
+      type t = Githubc2_components.Validation_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Service_unavailable = struct
+      module Primary = struct
+        type t = {
+          code : string option; [@default None]
+          documentation_url : string option; [@default None]
+          message : string option; [@default None]
+        }
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+    end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      | `Unprocessable_entity of Unprocessable_entity.t
+      | `Service_unavailable of Service_unavailable.t
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("304", fun _ -> Ok `Not_modified);
+        ( "422",
+          Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
+        ("503", Openapi.of_json_body (fun v -> `Service_unavailable v) Service_unavailable.of_yojson);
+      ]
+  end
+
+  let url = "/search/repositories"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("q", Var (params.q, String));
+           ("sort", Var (params.sort, Option (Enum Sort.t_to_yojson)));
+           ("order", Var (params.order, Enum Order.t_to_yojson));
+           ("per_page", Var (params.per_page, Int));
+           ("page", Var (params.page, Int));
+         ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module Labels = struct
+  module Parameters = struct
+    module Order = struct
+      let t_of_yojson = function
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
+    end
+
+    module Sort = struct
+      let t_of_yojson = function
+        | `String "created" -> Ok `Created
+        | `String "updated" -> Ok `Updated
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      let t_to_yojson = function
+        | `Created -> `String "created"
+        | `Updated -> `String "updated"
+
+      type t =
+        ([ `Created
+         | `Updated
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
+    end
+
+    type t = {
+      order : Order.t; [@default `Desc]
+      page : int; [@default 1]
+      per_page : int; [@default 30]
+      q : string;
+      repository_id : int;
+      sort : Sort.t option; [@default None]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      module Primary = struct
+        module Items = struct
+          type t = Githubc2_components.Label_search_result_item.t list
+          [@@deriving yojson { strict = false; meta = false }, show, eq]
+        end
+
+        type t = {
+          incomplete_results : bool;
+          items : Items.t;
+          total_count : int;
+        }
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+    end
+
+    module Not_modified = struct end
+
+    module Forbidden = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Not_found = struct
+      type t = Githubc2_components.Basic_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Unprocessable_entity = struct
+      type t = Githubc2_components.Validation_error.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      | `Forbidden of Forbidden.t
+      | `Not_found of Not_found.t
+      | `Unprocessable_entity of Unprocessable_entity.t
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("304", fun _ -> Ok `Not_modified);
+        ("403", Openapi.of_json_body (fun v -> `Forbidden v) Forbidden.of_yojson);
+        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
+        ( "422",
+          Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
+      ]
+  end
+
+  let url = "/search/labels"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("repository_id", Var (params.repository_id, Int));
            ("q", Var (params.q, String));
            ("sort", Var (params.sort, Option (Enum Sort.t_to_yojson)));
            ("order", Var (params.order, Enum Order.t_to_yojson));
@@ -389,7 +611,7 @@ module Issues_and_pull_requests = struct
       `Get
 end
 
-module Labels = struct
+module Commits = struct
   module Parameters = struct
     module Order = struct
       let t_of_yojson = function
@@ -411,17 +633,17 @@ module Labels = struct
 
     module Sort = struct
       let t_of_yojson = function
-        | `String "created" -> Ok `Created
-        | `String "updated" -> Ok `Updated
+        | `String "author-date" -> Ok `Author_date
+        | `String "committer-date" -> Ok `Committer_date
         | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
 
       let t_to_yojson = function
-        | `Created -> `String "created"
-        | `Updated -> `String "updated"
+        | `Author_date -> `String "author-date"
+        | `Committer_date -> `String "committer-date"
 
       type t =
-        ([ `Created
-         | `Updated
+        ([ `Author_date
+         | `Committer_date
          ]
         [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
       [@@deriving show, eq]
@@ -432,7 +654,6 @@ module Labels = struct
       page : int; [@default 1]
       per_page : int; [@default 30]
       q : string;
-      repository_id : int;
       sort : Sort.t option; [@default None]
     }
     [@@deriving make, show, eq]
@@ -442,7 +663,103 @@ module Labels = struct
     module OK = struct
       module Primary = struct
         module Items = struct
-          type t = Githubc2_components.Label_search_result_item.t list
+          type t = Githubc2_components.Commit_search_result_item.t list
+          [@@deriving yojson { strict = false; meta = false }, show, eq]
+        end
+
+        type t = {
+          incomplete_results : bool;
+          items : Items.t;
+          total_count : int;
+        }
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
+    end
+
+    module Not_modified = struct end
+
+    type t =
+      [ `OK of OK.t
+      | `Not_modified
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
+        ("304", fun _ -> Ok `Not_modified);
+      ]
+  end
+
+  let url = "/search/commits"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("q", Var (params.q, String));
+           ("sort", Var (params.sort, Option (Enum Sort.t_to_yojson)));
+           ("order", Var (params.order, Enum Order.t_to_yojson));
+           ("per_page", Var (params.per_page, Int));
+           ("page", Var (params.page, Int));
+         ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module Code = struct
+  module Parameters = struct
+    module Order = struct
+      let t_of_yojson = function
+        | `String "asc" -> Ok `Asc
+        | `String "desc" -> Ok `Desc
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      let t_to_yojson = function
+        | `Asc -> `String "asc"
+        | `Desc -> `String "desc"
+
+      type t =
+        ([ `Asc
+         | `Desc
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
+    end
+
+    module Sort = struct
+      let t_of_yojson = function
+        | `String "indexed" -> Ok `Indexed
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      let t_to_yojson = function
+        | `Indexed -> `String "indexed"
+
+      type t = ([ `Indexed ][@of_yojson t_of_yojson] [@to_yojson t_to_yojson]) [@@deriving show, eq]
+    end
+
+    type t = {
+      order : Order.t; [@default `Desc]
+      page : int; [@default 1]
+      per_page : int; [@default 30]
+      q : string;
+      sort : Sort.t option; [@default None]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct
+      module Primary = struct
+        module Items = struct
+          type t = Githubc2_components.Code_search_result_item.t list
           [@@deriving yojson { strict = false; meta = false }, show, eq]
         end
 
@@ -464,22 +781,30 @@ module Labels = struct
       [@@deriving yojson { strict = false; meta = false }, show, eq]
     end
 
-    module Not_found = struct
-      type t = Githubc2_components.Basic_error.t
-      [@@deriving yojson { strict = false; meta = false }, show, eq]
-    end
-
     module Unprocessable_entity = struct
       type t = Githubc2_components.Validation_error.t
       [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
+    module Service_unavailable = struct
+      module Primary = struct
+        type t = {
+          code : string option; [@default None]
+          documentation_url : string option; [@default None]
+          message : string option; [@default None]
+        }
+        [@@deriving yojson { strict = false; meta = true }, show, eq]
+      end
+
+      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
     end
 
     type t =
       [ `OK of OK.t
       | `Not_modified
       | `Forbidden of Forbidden.t
-      | `Not_found of Not_found.t
       | `Unprocessable_entity of Unprocessable_entity.t
+      | `Service_unavailable of Service_unavailable.t
       ]
     [@@deriving show, eq]
 
@@ -488,338 +813,13 @@ module Labels = struct
         ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
         ("304", fun _ -> Ok `Not_modified);
         ("403", Openapi.of_json_body (fun v -> `Forbidden v) Forbidden.of_yojson);
-        ("404", Openapi.of_json_body (fun v -> `Not_found v) Not_found.of_yojson);
-        ( "422",
-          Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
-      ]
-  end
-
-  let url = "/search/labels"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:[]
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("repository_id", Var (params.repository_id, Int));
-           ("q", Var (params.q, String));
-           ("sort", Var (params.sort, Option (Enum Sort.t_to_yojson)));
-           ("order", Var (params.order, Enum Order.t_to_yojson));
-           ("per_page", Var (params.per_page, Int));
-           ("page", Var (params.page, Int));
-         ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module Repos = struct
-  module Parameters = struct
-    module Order = struct
-      let t_of_yojson = function
-        | `String "asc" -> Ok `Asc
-        | `String "desc" -> Ok `Desc
-        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-      let t_to_yojson = function
-        | `Asc -> `String "asc"
-        | `Desc -> `String "desc"
-
-      type t =
-        ([ `Asc
-         | `Desc
-         ]
-        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
-      [@@deriving show, eq]
-    end
-
-    module Sort = struct
-      let t_of_yojson = function
-        | `String "forks" -> Ok `Forks
-        | `String "help-wanted-issues" -> Ok `Help_wanted_issues
-        | `String "stars" -> Ok `Stars
-        | `String "updated" -> Ok `Updated
-        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-      let t_to_yojson = function
-        | `Forks -> `String "forks"
-        | `Help_wanted_issues -> `String "help-wanted-issues"
-        | `Stars -> `String "stars"
-        | `Updated -> `String "updated"
-
-      type t =
-        ([ `Forks
-         | `Help_wanted_issues
-         | `Stars
-         | `Updated
-         ]
-        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
-      [@@deriving show, eq]
-    end
-
-    type t = {
-      order : Order.t; [@default `Desc]
-      page : int; [@default 1]
-      per_page : int; [@default 30]
-      q : string;
-      sort : Sort.t option; [@default None]
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct
-      module Primary = struct
-        module Items = struct
-          type t = Githubc2_components.Repo_search_result_item.t list
-          [@@deriving yojson { strict = false; meta = false }, show, eq]
-        end
-
-        type t = {
-          incomplete_results : bool;
-          items : Items.t;
-          total_count : int;
-        }
-        [@@deriving yojson { strict = false; meta = true }, show, eq]
-      end
-
-      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-    end
-
-    module Not_modified = struct end
-
-    module Unprocessable_entity = struct
-      type t = Githubc2_components.Validation_error.t
-      [@@deriving yojson { strict = false; meta = false }, show, eq]
-    end
-
-    module Service_unavailable = struct
-      module Primary = struct
-        type t = {
-          code : string option; [@default None]
-          documentation_url : string option; [@default None]
-          message : string option; [@default None]
-        }
-        [@@deriving yojson { strict = false; meta = true }, show, eq]
-      end
-
-      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-    end
-
-    type t =
-      [ `OK of OK.t
-      | `Not_modified
-      | `Unprocessable_entity of Unprocessable_entity.t
-      | `Service_unavailable of Service_unavailable.t
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
-        ("304", fun _ -> Ok `Not_modified);
         ( "422",
           Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
         ("503", Openapi.of_json_body (fun v -> `Service_unavailable v) Service_unavailable.of_yojson);
       ]
   end
 
-  let url = "/search/repositories"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:[]
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("q", Var (params.q, String));
-           ("sort", Var (params.sort, Option (Enum Sort.t_to_yojson)));
-           ("order", Var (params.order, Enum Order.t_to_yojson));
-           ("per_page", Var (params.per_page, Int));
-           ("page", Var (params.page, Int));
-         ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module Topics = struct
-  module Parameters = struct
-    type t = {
-      page : int; [@default 1]
-      per_page : int; [@default 30]
-      q : string;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct
-      module Primary = struct
-        module Items = struct
-          type t = Githubc2_components.Topic_search_result_item.t list
-          [@@deriving yojson { strict = false; meta = false }, show, eq]
-        end
-
-        type t = {
-          incomplete_results : bool;
-          items : Items.t;
-          total_count : int;
-        }
-        [@@deriving yojson { strict = false; meta = true }, show, eq]
-      end
-
-      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-    end
-
-    module Not_modified = struct end
-
-    type t =
-      [ `OK of OK.t
-      | `Not_modified
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
-        ("304", fun _ -> Ok `Not_modified);
-      ]
-  end
-
-  let url = "/search/topics"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:[]
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("q", Var (params.q, String));
-           ("per_page", Var (params.per_page, Int));
-           ("page", Var (params.page, Int));
-         ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module Users = struct
-  module Parameters = struct
-    module Order = struct
-      let t_of_yojson = function
-        | `String "asc" -> Ok `Asc
-        | `String "desc" -> Ok `Desc
-        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-      let t_to_yojson = function
-        | `Asc -> `String "asc"
-        | `Desc -> `String "desc"
-
-      type t =
-        ([ `Asc
-         | `Desc
-         ]
-        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
-      [@@deriving show, eq]
-    end
-
-    module Sort = struct
-      let t_of_yojson = function
-        | `String "followers" -> Ok `Followers
-        | `String "joined" -> Ok `Joined
-        | `String "repositories" -> Ok `Repositories
-        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-      let t_to_yojson = function
-        | `Followers -> `String "followers"
-        | `Joined -> `String "joined"
-        | `Repositories -> `String "repositories"
-
-      type t =
-        ([ `Followers
-         | `Joined
-         | `Repositories
-         ]
-        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
-      [@@deriving show, eq]
-    end
-
-    type t = {
-      order : Order.t; [@default `Desc]
-      page : int; [@default 1]
-      per_page : int; [@default 30]
-      q : string;
-      sort : Sort.t option; [@default None]
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct
-      module Primary = struct
-        module Items = struct
-          type t = Githubc2_components.User_search_result_item.t list
-          [@@deriving yojson { strict = false; meta = false }, show, eq]
-        end
-
-        type t = {
-          incomplete_results : bool;
-          items : Items.t;
-          total_count : int;
-        }
-        [@@deriving yojson { strict = false; meta = true }, show, eq]
-      end
-
-      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-    end
-
-    module Not_modified = struct end
-
-    module Unprocessable_entity = struct
-      type t = Githubc2_components.Validation_error.t
-      [@@deriving yojson { strict = false; meta = false }, show, eq]
-    end
-
-    module Service_unavailable = struct
-      module Primary = struct
-        type t = {
-          code : string option; [@default None]
-          documentation_url : string option; [@default None]
-          message : string option; [@default None]
-        }
-        [@@deriving yojson { strict = false; meta = true }, show, eq]
-      end
-
-      include Json_schema.Additional_properties.Make (Primary) (Json_schema.Obj)
-    end
-
-    type t =
-      [ `OK of OK.t
-      | `Not_modified
-      | `Unprocessable_entity of Unprocessable_entity.t
-      | `Service_unavailable of Service_unavailable.t
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson);
-        ("304", fun _ -> Ok `Not_modified);
-        ( "422",
-          Openapi.of_json_body (fun v -> `Unprocessable_entity v) Unprocessable_entity.of_yojson );
-        ("503", Openapi.of_json_body (fun v -> `Service_unavailable v) Service_unavailable.of_yojson);
-      ]
-  end
-
-  let url = "/search/users"
+  let url = "/search/code"
 
   let make params =
     Openapi.Request.make

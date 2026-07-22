@@ -23,3 +23,20 @@
   src/terrat_code_indexer/terrat_code_indexer.exe
   src/ttm/ttm.exe
   (alias src/iris/all)))
+
+; Codegen registry. Every dune-generated library declares its (input schema,
+; destination dir) pair as a `<lib>.generate-api-types-pairs` rule next to its
+; `(library)` (see e.g. src/terrat_api/dune). This rule collects them all into a
+; single manifest, so `make -C code generate-api-types` / `check-api-types`
+; drive regeneration off the per-package declarations rather than a
+; hand-maintained list. `(dirs src tests)` above bounds the recursive glob to
+; our sources.
+
+(rule
+ (target codegen-manifest)
+ (deps
+  (glob_files_rec *.generate-api-types-pairs))
+ (action
+  (with-stdout-to
+   codegen-manifest
+   (run cat %{deps}))))

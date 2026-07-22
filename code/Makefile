@@ -1,10 +1,7 @@
 .PHONY: all terrat
 .PHONY: terrat_oss terrat_ee terrat_code_indexer ttm iris
 .PHONY: test-terrat
-.PHONY: terrat-schemas
-.PHONY: terrat-api terrat-repo-config terrat-capabilities terrat-webhooks
-.PHONY: terrat-job-context terrat-job
-.PHONY: github-api gitlab-api gitlab-webhooks
+.PHONY: generate-api-types check-api-types
 .PHONY: clean
 
 # Disable make-level parallelism. Every target here is a single `dune
@@ -56,98 +53,43 @@ iris:
 test-terrat:
 	cd $(ROOT) && $(DUNE) runtest code/tests/
 
-# Schema regenerators. Each normalises the source JSON, wipes the
-# generated directory, runs the generator, then formats the output.
+# Code generation lives entirely in dune. Each generated library carries, next
+# to its `(library)`: a `(rule (mode (promote (into .))) (targets (dir gen)) ...)`
+# that runs the generator, formats the output with ocamlformat and promotes it
+# into the library directory; a `(rule (mode (promote (into ../../../api_schemas/...))))`
+# that normalises its input schema in place with `jq -S`, driven by
+# `dune build @code/generate-api-types`; and a
+# `<lib>.generate-api-types-pairs` rule declaring its `(input schema, destination
+# dir)` pair. code/dune aggregates those pairs into `codegen-manifest`, so the
+# set of generated libraries is never hand-listed here -- adding a library to
+# the mechanism is purely a matter of editing its own dune file.
 #
-# Sub-targets are invoked sequentially via recursive $(MAKE) rather than
-# listed as prerequisites: each one calls `dune build` for its generator
-# and dune holds a workspace lock, so `make -j` over prerequisites would
-# serialise on the lock at best, fail at worst. Recipe lines run
-# sequentially regardless of -j, which is what we want here.
-terrat-schemas:
-	$(MAKE) terrat-api
-	$(MAKE) terrat-repo-config
-	$(MAKE) terrat-webhooks
-	$(MAKE) terrat-capabilities
-	$(MAKE) terrat-job-context
-	$(MAKE) terrat-job
-	$(MAKE) gitlab-api
-	$(MAKE) gitlab-webhooks
-	$(MAKE) github-api
+# This target just clears the previous output and dune directory target per pair
+# (promote-into does not delete modules the generator no longer produces, and
+# dropping the target forces dune to re-run the promote rule on a warm tree),
+# then asks dune to regenerate + re-normalise everything via the alias in a
+# single invocation -- concurrent dune processes abort on dune's global build
+# lock, so a per-pair loop under -j would race.
+CODEGEN_MANIFEST := $(ROOT)/_build/default/code/codegen-manifest
 
-terrat-api:
-	cd $(ROOT) && $(DUNE) build code/src/openapi_cli/openapi_cli.exe
-	jq -S . < ../api_schemas/terrat/api.json > /tmp/$$$$.json && mv /tmp/$$$$.json ../api_schemas/terrat/api.json
-	rm -f ./src/terrat_api/*.ml
-	env OCAMLRUNPARAM=b $(ROOT)/_build/default/code/src/openapi_cli/openapi_cli.exe \
-	  convert --non-strict-records --input ../api_schemas/terrat/api.json --name terrat_api --output-dir ./src/terrat_api
-	find src/terrat_api -type f \( -name '*.ml' -o -name '*.mli' \) -exec ocamlformat -i '{}' \;
+generate-api-types:
+	cd $(ROOT) && $(DUNE) build code/codegen-manifest
+	@while read input dest; do \
+	  echo "regenerating $$dest from $$input"; \
+	  rm -f "$(ROOT)/$$dest"/*.ml; \
+	  rm -rf "$(ROOT)/_build/default/$$dest/gen"; \
+	done < $(CODEGEN_MANIFEST)
+	cd $(ROOT) && $(DUNE) build @code/generate-api-types
 
-terrat-repo-config:
-	cd $(ROOT) && $(DUNE) build code/src/json_schema_hooks_cli/json_schema_hooks_cli.exe
-	jq -S . < ../api_schemas/terrat/config-schema.json > /tmp/$$$$.json && mv /tmp/$$$$.json ../api_schemas/terrat/config-schema.json
-	rm -f ./src/terrat_repo_config/*.ml
-	env OCAMLRUNPARAM=b $(ROOT)/_build/default/code/src/json_schema_hooks_cli/json_schema_hooks_cli.exe \
-	  convert --input ../api_schemas/terrat/config-schema.json --name terrat_repo_config --output-dir=./src/terrat_repo_config/
-	find src/terrat_repo_config/ -type f \( -name '*.ml' -o -name '*.mli' \) -exec ocamlformat -i '{}' \;
-
-terrat-capabilities:
-	cd $(ROOT) && $(DUNE) build code/src/json_schema_hooks_cli/json_schema_hooks_cli.exe
-	jq -S . < ../api_schemas/terrat/capabilities.json > /tmp/$$$$.json && mv /tmp/$$$$.json ../api_schemas/terrat/capabilities.json
-	rm -f ./src/terrat_access_token_caps/*.ml
-	env OCAMLRUNPARAM=b $(ROOT)/_build/default/code/src/json_schema_hooks_cli/json_schema_hooks_cli.exe \
-	  convert --input ../api_schemas/terrat/capabilities.json --name terrat_access_token_caps --output-dir=./src/terrat_access_token_caps/
-	find src/terrat_access_token_caps/ -type f \( -name '*.ml' -o -name '*.mli' \) -exec ocamlformat -i '{}' \;
-
-terrat-webhooks:
-	cd $(ROOT) && $(DUNE) build code/src/json_schema_hooks_cli/json_schema_hooks_cli.exe
-	jq -S . < ../api_schemas/github_webhooks/terrat-schema.json > /tmp/$$$$.json && mv /tmp/$$$$.json ../api_schemas/github_webhooks/terrat-schema.json
-	rm -f ./src/terrat_github_webhooks/*.ml
-	env OCAMLRUNPARAM=b $(ROOT)/_build/default/code/src/json_schema_hooks_cli/json_schema_hooks_cli.exe \
-	  convert -i ../api_schemas/github_webhooks/terrat-schema.json -n terrat_github_webhooks --output-dir ./src/terrat_github_webhooks/ --non-strict-records
-	find src/terrat_github_webhooks/ -type f \( -name '*.ml' -o -name '*.mli' \) -exec ocamlformat -i '{}' \;
-
-terrat-job-context:
-	cd $(ROOT) && $(DUNE) build code/src/json_schema_hooks_cli/json_schema_hooks_cli.exe
-	jq -S . < ../api_schemas/terrat/job_context.json > /tmp/$$$$.json && mv /tmp/$$$$.json ../api_schemas/terrat/job_context.json
-	rm -f ./src/terrat_job_context_param/*.ml
-	env OCAMLRUNPARAM=b $(ROOT)/_build/default/code/src/json_schema_hooks_cli/json_schema_hooks_cli.exe \
-	  convert --input ../api_schemas/terrat/job_context.json --name terrat_job_context_param --output-dir=./src/terrat_job_context_param/
-	find src/terrat_job_context_param/ -type f \( -name '*.ml' -o -name '*.mli' \) -exec ocamlformat -i '{}' \;
-
-terrat-job:
-	cd $(ROOT) && $(DUNE) build code/src/json_schema_hooks_cli/json_schema_hooks_cli.exe
-	jq -S . < ../api_schemas/terrat/job.json > /tmp/$$$$.json && mv /tmp/$$$$.json ../api_schemas/terrat/job.json
-	rm -f ./src/terrat_job_type/*.ml
-	env OCAMLRUNPARAM=b $(ROOT)/_build/default/code/src/json_schema_hooks_cli/json_schema_hooks_cli.exe \
-	  convert --input ../api_schemas/terrat/job.json --name terrat_job_type --output-dir=./src/terrat_job_type/
-	find src/terrat_job_type/ -type f \( -name '*.ml' -o -name '*.mli' \) -exec ocamlformat -i '{}' \;
-
-github-api:
-	cd $(ROOT) && $(DUNE) build code/src/openapi_cli/openapi_cli.exe
-	jq -S . < ../api_schemas/github_api/api.github.com.json > /tmp/$$$$.json && mv /tmp/$$$$.json ../api_schemas/github_api/api.github.com.json
-	mkdir -p src/githubc2
-	rm -f src/githubc2/*.ml
-	env OCAMLRUNPARAM=b $(ROOT)/_build/default/code/src/openapi_cli/openapi_cli.exe \
-	  convert --non-strict-records --input ../api_schemas/github_api/api.github.com.json --name githubc2 --output-dir ./src/githubc2/
-	find src/githubc2/ -type f \( -name '*.ml' -o -name '*.mli' \) -exec ocamlformat -i '{}' \;
-
-gitlab-api:
-	cd $(ROOT) && $(DUNE) build code/src/openapi_cli/openapi_cli.exe
-	jq -S . < ../api_schemas/gitlab_api/api.json > /tmp/$$$$.json && mv /tmp/$$$$.json ../api_schemas/gitlab_api/api.json
-	mkdir -p src/gitlabc
-	rm -f src/gitlabc/*.ml
-	env OCAMLRUNPARAM=b $(ROOT)/_build/default/code/src/openapi_cli/openapi_cli.exe \
-	  convert --non-strict-records --input ../api_schemas/gitlab_api/api.json --name gitlabc --output-dir ./src/gitlabc/
-	find src/gitlabc/ -type f \( -name '*.ml' -o -name '*.mli' \) -exec ocamlformat -i '{}' \;
-
-gitlab-webhooks:
-	cd $(ROOT) && $(DUNE) build code/src/json_schema_hooks_cli/json_schema_hooks_cli.exe
-	jq -S . < ../api_schemas/gitlab_api/webhooks.json > /tmp/$$$$.json && mv /tmp/$$$$.json ../api_schemas/gitlab_api/webhooks.json
-	rm -f ./src/gitlab_webhooks/*.ml
-	env OCAMLRUNPARAM=b $(ROOT)/_build/default/code/src/json_schema_hooks_cli/json_schema_hooks_cli.exe \
-	  convert -i ../api_schemas/gitlab_api/webhooks.json -n gitlab_webhooks --output-dir ./src/gitlab_webhooks/ --non-strict-records
-	find src/gitlab_webhooks/ -type f \( -name '*.ml' -o -name '*.mli' \) -exec ocamlformat -i '{}' \;
+# OCaml counterpart of the frontend's `npm run check-api-types`: regenerate
+# every dune-managed codegen target and fail if the committed output (or a
+# normalised input schema) drifts.
+check-api-types: generate-api-types
+	cd $(ROOT) && git diff --exit-code -- api_schemas $$(awk '{ print $$2 }' $(CODEGEN_MANIFEST)) || { \
+	  echo 'ERROR: generated files are out of sync with the schemas in api_schemas/.'; \
+	  echo 'Run `make -C code check-api-types` and commit the updated api_schemas/ + generated dirs.'; \
+	  exit 1; \
+	}
 
 clean:
 	cd $(ROOT) && $(DUNE) clean

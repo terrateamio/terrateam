@@ -1,11 +1,152 @@
-module PostApiV4ProjectsIdHooks = struct
+module DeleteApiV4ProjectsIdHooksHookIdUrlVariablesKey = struct
   module Parameters = struct
-    type t = { id : string } [@@deriving make, show, eq]
+    type t = {
+      hook_id : int;
+      id : int;
+      key : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module No_content = struct end
+
+    type t = [ `No_content ] [@@deriving show, eq]
+
+    let t = [ ("204", fun _ -> Ok `No_content) ]
+  end
+
+  let url = "/api/v4/projects/{id}/hooks/{hook_id}/url_variables/{key}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("hook_id", Var (params.hook_id, Int));
+           ("key", Var (params.key, String));
+           ("id", Var (params.id, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
+module PutApiV4ProjectsIdHooksHookIdUrlVariablesKey = struct
+  module Parameters = struct
+    type t = {
+      hook_id : int;
+      id : int;
+      key : string;
+    }
+    [@@deriving make, show, eq]
   end
 
   module Request_body = struct
-    type t = Gitlabc_components.PostApiV4ProjectsIdHooks.t
+    type t = Gitlabc_components.PutApiV4ProjectsIdHooksHookIdUrlVariablesKey.t
     [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/projects/{id}/hooks/{hook_id}/url_variables/{key}"
+
+  let make ?body =
+   fun params ->
+    Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("hook_id", Var (params.hook_id, Int));
+           ("key", Var (params.key, String));
+           ("id", Var (params.id, Int));
+         ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Put
+end
+
+module PostApiV4ProjectsIdHooksHookIdTestTrigger = struct
+  module Parameters = struct
+    module Trigger = struct
+      let t_of_yojson = function
+        | `String "confidential_issues_events" -> Ok `Confidential_issues_events
+        | `String "confidential_note_events" -> Ok `Confidential_note_events
+        | `String "deployment_events" -> Ok `Deployment_events
+        | `String "emoji_events" -> Ok `Emoji_events
+        | `String "feature_flag_events" -> Ok `Feature_flag_events
+        | `String "issues_events" -> Ok `Issues_events
+        | `String "job_events" -> Ok `Job_events
+        | `String "merge_requests_events" -> Ok `Merge_requests_events
+        | `String "note_events" -> Ok `Note_events
+        | `String "pipeline_events" -> Ok `Pipeline_events
+        | `String "push_events" -> Ok `Push_events
+        | `String "releases_events" -> Ok `Releases_events
+        | `String "resource_access_token_events" -> Ok `Resource_access_token_events
+        | `String "tag_push_events" -> Ok `Tag_push_events
+        | `String "vulnerability_events" -> Ok `Vulnerability_events
+        | `String "wiki_page_events" -> Ok `Wiki_page_events
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      let t_to_yojson = function
+        | `Confidential_issues_events -> `String "confidential_issues_events"
+        | `Confidential_note_events -> `String "confidential_note_events"
+        | `Deployment_events -> `String "deployment_events"
+        | `Emoji_events -> `String "emoji_events"
+        | `Feature_flag_events -> `String "feature_flag_events"
+        | `Issues_events -> `String "issues_events"
+        | `Job_events -> `String "job_events"
+        | `Merge_requests_events -> `String "merge_requests_events"
+        | `Note_events -> `String "note_events"
+        | `Pipeline_events -> `String "pipeline_events"
+        | `Push_events -> `String "push_events"
+        | `Releases_events -> `String "releases_events"
+        | `Resource_access_token_events -> `String "resource_access_token_events"
+        | `Tag_push_events -> `String "tag_push_events"
+        | `Vulnerability_events -> `String "vulnerability_events"
+        | `Wiki_page_events -> `String "wiki_page_events"
+
+      type t =
+        ([ `Confidential_issues_events
+         | `Confidential_note_events
+         | `Deployment_events
+         | `Emoji_events
+         | `Feature_flag_events
+         | `Issues_events
+         | `Job_events
+         | `Merge_requests_events
+         | `Note_events
+         | `Pipeline_events
+         | `Push_events
+         | `Releases_events
+         | `Resource_access_token_events
+         | `Tag_push_events
+         | `Vulnerability_events
+         | `Wiki_page_events
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
+    end
+
+    type t = {
+      hook_id : int;
+      id : int;
+      trigger : Trigger.t;
+    }
+    [@@deriving make, show, eq]
   end
 
   module Responses = struct
@@ -13,12 +154,14 @@ module PostApiV4ProjectsIdHooks = struct
     module Bad_request = struct end
     module Not_found = struct end
     module Unprocessable_entity = struct end
+    module Too_many_requests = struct end
 
     type t =
       [ `Created
       | `Bad_request
       | `Not_found
       | `Unprocessable_entity
+      | `Too_many_requests
       ]
     [@@deriving show, eq]
 
@@ -28,204 +171,63 @@ module PostApiV4ProjectsIdHooks = struct
         ("400", fun _ -> Ok `Bad_request);
         ("404", fun _ -> Ok `Not_found);
         ("422", fun _ -> Ok `Unprocessable_entity);
+        ("429", fun _ -> Ok `Too_many_requests);
       ]
   end
 
-  let url = "/api/v4/projects/{id}/hooks"
+  let url = "/api/v4/projects/{id}/hooks/{hook_id}/test/{trigger}"
 
-  let make ?body =
-   fun params ->
+  let make params =
     Openapi.Request.make
-      ?body:(CCOption.map Request_body.to_yojson body)
       ~headers:[]
       ~url_params:
         (let open Openapi.Request.Var in
          let open Parameters in
-         [ ("id", Var (params.id, String)) ])
+         [
+           ("hook_id", Var (params.hook_id, Int));
+           ("trigger", Var (params.trigger, Enum Trigger.t_to_yojson));
+           ("id", Var (params.id, Int));
+         ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
       `Post
 end
 
-module GetApiV4ProjectsIdHooks = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      page : int; [@default 1]
-      per_page : int; [@default 20]
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-
-    type t = [ `OK ] [@@deriving show, eq]
-
-    let t = [ ("200", fun _ -> Ok `OK) ]
-  end
-
-  let url = "/api/v4/projects/{id}/hooks"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, String)) ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module DeleteApiV4ProjectsIdHooksHookId = struct
+module PostApiV4ProjectsIdHooksHookIdEventsHookLogIdResend = struct
   module Parameters = struct
     type t = {
       hook_id : int;
-      id : string;
+      hook_log_id : int;
+      id : int;
     }
     [@@deriving make, show, eq]
   end
 
   module Responses = struct
-    module No_content = struct end
-
-    type t = [ `No_content ] [@@deriving show, eq]
-
-    let t = [ ("204", fun _ -> Ok `No_content) ]
-  end
-
-  let url = "/api/v4/projects/{id}/hooks/{hook_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, String)); ("hook_id", Var (params.hook_id, Int)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Delete
-end
-
-module PutApiV4ProjectsIdHooksHookId = struct
-  module Parameters = struct
-    type t = {
-      hook_id : int;
-      id : string;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Request_body = struct
-    type t = Gitlabc_components.PutApiV4ProjectsIdHooksHookId.t
-    [@@deriving yojson { strict = false; meta = true }, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Bad_request = struct end
+    module Created = struct end
     module Not_found = struct end
     module Unprocessable_entity = struct end
+    module Too_many_requests = struct end
 
     type t =
-      [ `OK
-      | `Bad_request
+      [ `Created
       | `Not_found
       | `Unprocessable_entity
+      | `Too_many_requests
       ]
     [@@deriving show, eq]
 
     let t =
       [
-        ("200", fun _ -> Ok `OK);
-        ("400", fun _ -> Ok `Bad_request);
+        ("201", fun _ -> Ok `Created);
         ("404", fun _ -> Ok `Not_found);
         ("422", fun _ -> Ok `Unprocessable_entity);
+        ("429", fun _ -> Ok `Too_many_requests);
       ]
   end
 
-  let url = "/api/v4/projects/{id}/hooks/{hook_id}"
-
-  let make ?body =
-   fun params ->
-    Openapi.Request.make
-      ?body:(CCOption.map Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, String)); ("hook_id", Var (params.hook_id, Int)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Put
-end
-
-module GetApiV4ProjectsIdHooksHookId = struct
-  module Parameters = struct
-    type t = {
-      hook_id : int;
-      id : string;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
-  end
-
-  let url = "/api/v4/projects/{id}/hooks/{hook_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, String)); ("hook_id", Var (params.hook_id, Int)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module DeleteApiV4ProjectsIdHooksHookIdCustomHeadersKey = struct
-  module Parameters = struct
-    type t = {
-      hook_id : int;
-      id : int;
-      key : string;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module No_content = struct end
-
-    type t = [ `No_content ] [@@deriving show, eq]
-
-    let t = [ ("204", fun _ -> Ok `No_content) ]
-  end
-
-  let url = "/api/v4/projects/{id}/hooks/{hook_id}/custom_headers/{key}"
+  let url = "/api/v4/projects/{id}/hooks/{hook_id}/events/{hook_log_id}/resend"
 
   let make params =
     Openapi.Request.make
@@ -234,58 +236,14 @@ module DeleteApiV4ProjectsIdHooksHookIdCustomHeadersKey = struct
         (let open Openapi.Request.Var in
          let open Parameters in
          [
-           ("hook_id", Var (params.hook_id, Int));
-           ("key", Var (params.key, String));
            ("id", Var (params.id, Int));
+           ("hook_id", Var (params.hook_id, Int));
+           ("hook_log_id", Var (params.hook_log_id, Int));
          ])
       ~query_params:[]
       ~url
       ~responses:Responses.t
-      `Delete
-end
-
-module PutApiV4ProjectsIdHooksHookIdCustomHeadersKey = struct
-  module Parameters = struct
-    type t = {
-      hook_id : int;
-      id : int;
-      key : string;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Request_body = struct
-    type t = Gitlabc_components.PutApiV4ProjectsIdHooksHookIdCustomHeadersKey.t
-    [@@deriving yojson { strict = false; meta = true }, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-
-    type t = [ `OK ] [@@deriving show, eq]
-
-    let t = [ ("200", fun _ -> Ok `OK) ]
-  end
-
-  let url = "/api/v4/projects/{id}/hooks/{hook_id}/custom_headers/{key}"
-
-  let make ?body =
-   fun params ->
-    Openapi.Request.make
-      ?body:(CCOption.map Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("hook_id", Var (params.hook_id, Int));
-           ("key", Var (params.key, String));
-           ("id", Var (params.id, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Put
+      `Post
 end
 
 module GetApiV4ProjectsIdHooksHookIdEvents = struct
@@ -559,174 +517,7 @@ module GetApiV4ProjectsIdHooksHookIdEvents = struct
       `Get
 end
 
-module PostApiV4ProjectsIdHooksHookIdEventsHookLogIdResend = struct
-  module Parameters = struct
-    type t = {
-      hook_id : int;
-      hook_log_id : int;
-      id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module Created = struct end
-    module Not_found = struct end
-    module Unprocessable_entity = struct end
-    module Too_many_requests = struct end
-
-    type t =
-      [ `Created
-      | `Not_found
-      | `Unprocessable_entity
-      | `Too_many_requests
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("201", fun _ -> Ok `Created);
-        ("404", fun _ -> Ok `Not_found);
-        ("422", fun _ -> Ok `Unprocessable_entity);
-        ("429", fun _ -> Ok `Too_many_requests);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/hooks/{hook_id}/events/{hook_log_id}/resend"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("id", Var (params.id, Int));
-           ("hook_id", Var (params.hook_id, Int));
-           ("hook_log_id", Var (params.hook_log_id, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Post
-end
-
-module PostApiV4ProjectsIdHooksHookIdTestTrigger = struct
-  module Parameters = struct
-    module Trigger = struct
-      let t_of_yojson = function
-        | `String "confidential_issues_events" -> Ok `Confidential_issues_events
-        | `String "confidential_note_events" -> Ok `Confidential_note_events
-        | `String "deployment_events" -> Ok `Deployment_events
-        | `String "emoji_events" -> Ok `Emoji_events
-        | `String "feature_flag_events" -> Ok `Feature_flag_events
-        | `String "issues_events" -> Ok `Issues_events
-        | `String "job_events" -> Ok `Job_events
-        | `String "merge_requests_events" -> Ok `Merge_requests_events
-        | `String "note_events" -> Ok `Note_events
-        | `String "pipeline_events" -> Ok `Pipeline_events
-        | `String "push_events" -> Ok `Push_events
-        | `String "releases_events" -> Ok `Releases_events
-        | `String "resource_access_token_events" -> Ok `Resource_access_token_events
-        | `String "tag_push_events" -> Ok `Tag_push_events
-        | `String "vulnerability_events" -> Ok `Vulnerability_events
-        | `String "wiki_page_events" -> Ok `Wiki_page_events
-        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-      let t_to_yojson = function
-        | `Confidential_issues_events -> `String "confidential_issues_events"
-        | `Confidential_note_events -> `String "confidential_note_events"
-        | `Deployment_events -> `String "deployment_events"
-        | `Emoji_events -> `String "emoji_events"
-        | `Feature_flag_events -> `String "feature_flag_events"
-        | `Issues_events -> `String "issues_events"
-        | `Job_events -> `String "job_events"
-        | `Merge_requests_events -> `String "merge_requests_events"
-        | `Note_events -> `String "note_events"
-        | `Pipeline_events -> `String "pipeline_events"
-        | `Push_events -> `String "push_events"
-        | `Releases_events -> `String "releases_events"
-        | `Resource_access_token_events -> `String "resource_access_token_events"
-        | `Tag_push_events -> `String "tag_push_events"
-        | `Vulnerability_events -> `String "vulnerability_events"
-        | `Wiki_page_events -> `String "wiki_page_events"
-
-      type t =
-        ([ `Confidential_issues_events
-         | `Confidential_note_events
-         | `Deployment_events
-         | `Emoji_events
-         | `Feature_flag_events
-         | `Issues_events
-         | `Job_events
-         | `Merge_requests_events
-         | `Note_events
-         | `Pipeline_events
-         | `Push_events
-         | `Releases_events
-         | `Resource_access_token_events
-         | `Tag_push_events
-         | `Vulnerability_events
-         | `Wiki_page_events
-         ]
-        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
-      [@@deriving show, eq]
-    end
-
-    type t = {
-      hook_id : int;
-      id : int;
-      trigger : Trigger.t;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module Created = struct end
-    module Bad_request = struct end
-    module Not_found = struct end
-    module Unprocessable_entity = struct end
-    module Too_many_requests = struct end
-
-    type t =
-      [ `Created
-      | `Bad_request
-      | `Not_found
-      | `Unprocessable_entity
-      | `Too_many_requests
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("201", fun _ -> Ok `Created);
-        ("400", fun _ -> Ok `Bad_request);
-        ("404", fun _ -> Ok `Not_found);
-        ("422", fun _ -> Ok `Unprocessable_entity);
-        ("429", fun _ -> Ok `Too_many_requests);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/hooks/{hook_id}/test/{trigger}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("hook_id", Var (params.hook_id, Int));
-           ("trigger", Var (params.trigger, Enum Trigger.t_to_yojson));
-           ("id", Var (params.id, Int));
-         ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Post
-end
-
-module DeleteApiV4ProjectsIdHooksHookIdUrlVariablesKey = struct
+module DeleteApiV4ProjectsIdHooksHookIdCustomHeadersKey = struct
   module Parameters = struct
     type t = {
       hook_id : int;
@@ -744,7 +535,7 @@ module DeleteApiV4ProjectsIdHooksHookIdUrlVariablesKey = struct
     let t = [ ("204", fun _ -> Ok `No_content) ]
   end
 
-  let url = "/api/v4/projects/{id}/hooks/{hook_id}/url_variables/{key}"
+  let url = "/api/v4/projects/{id}/hooks/{hook_id}/custom_headers/{key}"
 
   let make params =
     Openapi.Request.make
@@ -763,7 +554,7 @@ module DeleteApiV4ProjectsIdHooksHookIdUrlVariablesKey = struct
       `Delete
 end
 
-module PutApiV4ProjectsIdHooksHookIdUrlVariablesKey = struct
+module PutApiV4ProjectsIdHooksHookIdCustomHeadersKey = struct
   module Parameters = struct
     type t = {
       hook_id : int;
@@ -774,7 +565,7 @@ module PutApiV4ProjectsIdHooksHookIdUrlVariablesKey = struct
   end
 
   module Request_body = struct
-    type t = Gitlabc_components.PutApiV4ProjectsIdHooksHookIdUrlVariablesKey.t
+    type t = Gitlabc_components.PutApiV4ProjectsIdHooksHookIdCustomHeadersKey.t
     [@@deriving yojson { strict = false; meta = true }, show, eq]
   end
 
@@ -786,7 +577,7 @@ module PutApiV4ProjectsIdHooksHookIdUrlVariablesKey = struct
     let t = [ ("200", fun _ -> Ok `OK) ]
   end
 
-  let url = "/api/v4/projects/{id}/hooks/{hook_id}/url_variables/{key}"
+  let url = "/api/v4/projects/{id}/hooks/{hook_id}/custom_headers/{key}"
 
   let make ?body =
    fun params ->
@@ -805,4 +596,213 @@ module PutApiV4ProjectsIdHooksHookIdUrlVariablesKey = struct
       ~url
       ~responses:Responses.t
       `Put
+end
+
+module DeleteApiV4ProjectsIdHooksHookId = struct
+  module Parameters = struct
+    type t = {
+      hook_id : int;
+      id : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module No_content = struct end
+
+    type t = [ `No_content ] [@@deriving show, eq]
+
+    let t = [ ("204", fun _ -> Ok `No_content) ]
+  end
+
+  let url = "/api/v4/projects/{id}/hooks/{hook_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)); ("hook_id", Var (params.hook_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
+module PutApiV4ProjectsIdHooksHookId = struct
+  module Parameters = struct
+    type t = {
+      hook_id : int;
+      id : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdHooksHookId.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Bad_request = struct end
+    module Not_found = struct end
+    module Unprocessable_entity = struct end
+
+    type t =
+      [ `OK
+      | `Bad_request
+      | `Not_found
+      | `Unprocessable_entity
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK);
+        ("400", fun _ -> Ok `Bad_request);
+        ("404", fun _ -> Ok `Not_found);
+        ("422", fun _ -> Ok `Unprocessable_entity);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/hooks/{hook_id}"
+
+  let make ?body =
+   fun params ->
+    Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)); ("hook_id", Var (params.hook_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Put
+end
+
+module GetApiV4ProjectsIdHooksHookId = struct
+  module Parameters = struct
+    type t = {
+      hook_id : int;
+      id : string;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK); ("404", fun _ -> Ok `Not_found) ]
+  end
+
+  let url = "/api/v4/projects/{id}/hooks/{hook_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)); ("hook_id", Var (params.hook_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PostApiV4ProjectsIdHooks = struct
+  module Parameters = struct
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PostApiV4ProjectsIdHooks.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+    module Bad_request = struct end
+    module Not_found = struct end
+    module Unprocessable_entity = struct end
+
+    type t =
+      [ `Created
+      | `Bad_request
+      | `Not_found
+      | `Unprocessable_entity
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("201", fun _ -> Ok `Created);
+        ("400", fun _ -> Ok `Bad_request);
+        ("404", fun _ -> Ok `Not_found);
+        ("422", fun _ -> Ok `Unprocessable_entity);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/hooks"
+
+  let make ?body =
+   fun params ->
+    Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module GetApiV4ProjectsIdHooks = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      page : int; [@default 1]
+      per_page : int; [@default 20]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+
+    type t = [ `OK ] [@@deriving show, eq]
+
+    let t = [ ("200", fun _ -> Ok `OK) ]
+  end
+
+  let url = "/api/v4/projects/{id}/hooks"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)) ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("page", Var (params.page, Int)); ("per_page", Var (params.per_page, Int)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
 end

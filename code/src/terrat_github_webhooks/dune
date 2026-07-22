@@ -1,3 +1,64 @@
+; The terrat_github_webhooks modules are generated from
+; api_schemas/github_webhooks/terrat-schema.json by json_schema_hooks_cli. This
+; rule generates the modules into a `gen` directory target, formats them with
+; ocamlformat, and promotes the formatted files into this directory (where the
+; library below picks them up as ordinary sources). dune does not pre-create
+; directory targets and the generator open_out's without mkdir, so the action
+; creates `gen` first.
+
+(rule
+ (alias generate-api-types)
+ (mode
+  (promote
+   (into .)))
+ (deps
+  ../../.ocamlformat
+  ../../../api_schemas/github_webhooks/terrat-schema.json)
+ (targets
+  (dir gen))
+ (action
+  (progn
+   (run mkdir -p gen)
+   (run
+    %{exe:../json_schema_hooks_cli/json_schema_hooks_cli.exe}
+    convert
+    -i
+    ../../../api_schemas/github_webhooks/terrat-schema.json
+    -n
+    terrat_github_webhooks
+    --output-dir
+    gen
+    --non-strict-records)
+   (run bash -c "ocamlformat -i gen/*.ml"))))
+
+; Normalise the input schema in place with `jq -S` and promote it back to
+; api_schemas, so `dune build @code/generate-api-types` keeps the committed JSON
+; canonical. The target is produced in this directory and promoted into the
+; schema's directory; its basename must match the schema file.
+
+(rule
+ (alias generate-api-types)
+ (mode
+  (promote
+   (into ../../../api_schemas/github_webhooks)))
+ (deps
+  (file ../../../api_schemas/github_webhooks/terrat-schema.json))
+ (target terrat-schema.json)
+ (action
+  (with-stdout-to
+   terrat-schema.json
+   (run jq -S . ../../../api_schemas/github_webhooks/terrat-schema.json))))
+
+; (input schema, destination dir) pair for the codegen manifest; see code/dune.
+
+(rule
+ (target terrat_github_webhooks.generate-api-types-pairs)
+ (action
+  (with-stdout-to
+   terrat_github_webhooks.generate-api-types-pairs
+   (echo
+    "api_schemas/github_webhooks/terrat-schema.json code/src/terrat_github_webhooks\n"))))
+
 (library
  (name terrat_github_webhooks)
  (wrapped false)
@@ -10,3 +71,12 @@
    ppx_deriving.make
    ppx_deriving.show
    ppx_deriving_yojson)))
+
+; Make `dune build code/src/<lib>` regenerate from the schema: the package's
+; @all alias depends on the generate-api-types alias, so the input schema is a
+; build input of the package, not only of @.../generate-api-types.
+
+(alias
+ (name all)
+ (deps
+  (alias generate-api-types)))

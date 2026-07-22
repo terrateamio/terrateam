@@ -1,3 +1,96 @@
+module DeleteApiV4ProjectsIdRunnersRunnerId = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      runner_id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module No_content = struct end
+    module Bad_request = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+    module Precondition_failed = struct end
+
+    type t =
+      [ `No_content
+      | `Bad_request
+      | `Forbidden
+      | `Not_found
+      | `Precondition_failed
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("204", fun _ -> Ok `No_content);
+        ("400", fun _ -> Ok `Bad_request);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+        ("412", fun _ -> Ok `Precondition_failed);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/runners/{runner_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)); ("runner_id", Var (params.runner_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
+module PostApiV4ProjectsIdRunnersResetRegistrationToken = struct
+  module Parameters = struct
+    type t = { id : string } [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+    module Unauthorized = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `Created
+      | `Unauthorized
+      | `Forbidden
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("201", fun _ -> Ok `Created);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/runners/reset_registration_token"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
 module PostApiV4ProjectsIdRunners = struct
   module Parameters = struct
     type t = { id : string } [@@deriving make, show, eq]
@@ -207,97 +300,4 @@ module GetApiV4ProjectsIdRunners = struct
       ~url
       ~responses:Responses.t
       `Get
-end
-
-module PostApiV4ProjectsIdRunnersResetRegistrationToken = struct
-  module Parameters = struct
-    type t = { id : string } [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module Created = struct end
-    module Unauthorized = struct end
-    module Forbidden = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `Created
-      | `Unauthorized
-      | `Forbidden
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("201", fun _ -> Ok `Created);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("403", fun _ -> Ok `Forbidden);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/runners/reset_registration_token"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, String)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Post
-end
-
-module DeleteApiV4ProjectsIdRunnersRunnerId = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      runner_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module No_content = struct end
-    module Bad_request = struct end
-    module Forbidden = struct end
-    module Not_found = struct end
-    module Precondition_failed = struct end
-
-    type t =
-      [ `No_content
-      | `Bad_request
-      | `Forbidden
-      | `Not_found
-      | `Precondition_failed
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("204", fun _ -> Ok `No_content);
-        ("400", fun _ -> Ok `Bad_request);
-        ("403", fun _ -> Ok `Forbidden);
-        ("404", fun _ -> Ok `Not_found);
-        ("412", fun _ -> Ok `Precondition_failed);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/runners/{runner_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, String)); ("runner_id", Var (params.runner_id, Int)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Delete
 end

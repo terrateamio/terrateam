@@ -14,7 +14,7 @@
 
 # Building
 - To build a target run `make -j$(nproc) <target>` from `code/`.
-- To build the Terrateam API schemas run `make terrat-schemas`.
+- To regenerate the OCaml API types from the schemas run `make generate-api-types` (or `dune build @code/generate-api-types`); to verify they are up-to-date run `make check-api-types`.
 - To build Terrateam client and server run `make terrat`.
 - Targets are also reachable directly via dune from the repo root, e.g. `dune build code/src/terrat_oss/terrat_oss.exe`. `dune-workspace` pins `(profile release)` as the default; the devcontainer overrides via `DUNE_PROFILE=dev`.
 - Always use `tail` to reduce the amount of data being processed when building.

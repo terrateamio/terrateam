@@ -1,3 +1,647 @@
+module GetApiV4ProjectsIdPipelinesPipelineIdVariables = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      pipeline_id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Unauthorized = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Unauthorized
+      | `Forbidden
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/pipelines/{pipeline_id}/variables"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)); ("pipeline_id", Var (params.pipeline_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module GetApiV4ProjectsIdPipelinesPipelineIdTestReportSummary = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      pipeline_id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Unauthorized = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Unauthorized
+      | `Forbidden
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/pipelines/{pipeline_id}/test_report_summary"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)); ("pipeline_id", Var (params.pipeline_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module GetApiV4ProjectsIdPipelinesPipelineIdTestReport = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      pipeline_id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Unauthorized = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Unauthorized
+      | `Forbidden
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/pipelines/{pipeline_id}/test_report"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)); ("pipeline_id", Var (params.pipeline_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PostApiV4ProjectsIdPipelinesPipelineIdRetry = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      pipeline_id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+    module Unauthorized = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `Created
+      | `Unauthorized
+      | `Forbidden
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("201", fun _ -> Ok `Created);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/pipelines/{pipeline_id}/retry"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)); ("pipeline_id", Var (params.pipeline_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module PutApiV4ProjectsIdPipelinesPipelineIdMetadata = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      pipeline_id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Request_body = struct
+    type t = Gitlabc_components.PutApiV4ProjectsIdPipelinesPipelineIdMetadata.t
+    [@@deriving yojson { strict = false; meta = true }, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Bad_request = struct end
+    module Unauthorized = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Bad_request
+      | `Unauthorized
+      | `Forbidden
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK);
+        ("400", fun _ -> Ok `Bad_request);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/pipelines/{pipeline_id}/metadata"
+
+  let make ?body =
+   fun params ->
+    Openapi.Request.make
+      ?body:(CCOption.map Request_body.to_yojson body)
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)); ("pipeline_id", Var (params.pipeline_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Put
+end
+
+module GetApiV4ProjectsIdPipelinesPipelineIdJobs = struct
+  module Parameters = struct
+    module Scope = struct
+      let t_of_yojson = function
+        | `String "canceled" -> Ok `Canceled
+        | `String "canceling" -> Ok `Canceling
+        | `String "created" -> Ok `Created
+        | `String "failed" -> Ok `Failed
+        | `String "manual" -> Ok `Manual
+        | `String "pending" -> Ok `Pending
+        | `String "preparing" -> Ok `Preparing
+        | `String "running" -> Ok `Running
+        | `String "scheduled" -> Ok `Scheduled
+        | `String "skipped" -> Ok `Skipped
+        | `String "success" -> Ok `Success
+        | `String "waiting_for_callback" -> Ok `Waiting_for_callback
+        | `String "waiting_for_resource" -> Ok `Waiting_for_resource
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      let t_to_yojson = function
+        | `Canceled -> `String "canceled"
+        | `Canceling -> `String "canceling"
+        | `Created -> `String "created"
+        | `Failed -> `String "failed"
+        | `Manual -> `String "manual"
+        | `Pending -> `String "pending"
+        | `Preparing -> `String "preparing"
+        | `Running -> `String "running"
+        | `Scheduled -> `String "scheduled"
+        | `Skipped -> `String "skipped"
+        | `Success -> `String "success"
+        | `Waiting_for_callback -> `String "waiting_for_callback"
+        | `Waiting_for_resource -> `String "waiting_for_resource"
+
+      type t =
+        ([ `Canceled
+         | `Canceling
+         | `Created
+         | `Failed
+         | `Manual
+         | `Pending
+         | `Preparing
+         | `Running
+         | `Scheduled
+         | `Skipped
+         | `Success
+         | `Waiting_for_callback
+         | `Waiting_for_resource
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
+    end
+
+    type t = {
+      id : string;
+      include_retried : bool; [@default false]
+      page : int; [@default 1]
+      per_page : int; [@default 20]
+      pipeline_id : int;
+      scope : Scope.t option; [@default None]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Unauthorized = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Unauthorized
+      | `Forbidden
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/pipelines/{pipeline_id}/jobs"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)); ("pipeline_id", Var (params.pipeline_id, Int)) ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("include_retried", Var (params.include_retried, Bool));
+           ("scope", Var (params.scope, Option (Enum Scope.t_to_yojson)));
+           ("page", Var (params.page, Int));
+           ("per_page", Var (params.per_page, Int));
+         ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module PostApiV4ProjectsIdPipelinesPipelineIdCancel = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      pipeline_id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module Created = struct end
+    module Unauthorized = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `Created
+      | `Unauthorized
+      | `Forbidden
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("201", fun _ -> Ok `Created);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/pipelines/{pipeline_id}/cancel"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)); ("pipeline_id", Var (params.pipeline_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Post
+end
+
+module GetApiV4ProjectsIdPipelinesPipelineIdBridges = struct
+  module Parameters = struct
+    module Scope = struct
+      let t_of_yojson = function
+        | `String "canceled" -> Ok `Canceled
+        | `String "canceling" -> Ok `Canceling
+        | `String "created" -> Ok `Created
+        | `String "failed" -> Ok `Failed
+        | `String "manual" -> Ok `Manual
+        | `String "pending" -> Ok `Pending
+        | `String "preparing" -> Ok `Preparing
+        | `String "running" -> Ok `Running
+        | `String "scheduled" -> Ok `Scheduled
+        | `String "skipped" -> Ok `Skipped
+        | `String "success" -> Ok `Success
+        | `String "waiting_for_callback" -> Ok `Waiting_for_callback
+        | `String "waiting_for_resource" -> Ok `Waiting_for_resource
+        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
+
+      let t_to_yojson = function
+        | `Canceled -> `String "canceled"
+        | `Canceling -> `String "canceling"
+        | `Created -> `String "created"
+        | `Failed -> `String "failed"
+        | `Manual -> `String "manual"
+        | `Pending -> `String "pending"
+        | `Preparing -> `String "preparing"
+        | `Running -> `String "running"
+        | `Scheduled -> `String "scheduled"
+        | `Skipped -> `String "skipped"
+        | `Success -> `String "success"
+        | `Waiting_for_callback -> `String "waiting_for_callback"
+        | `Waiting_for_resource -> `String "waiting_for_resource"
+
+      type t =
+        ([ `Canceled
+         | `Canceling
+         | `Created
+         | `Failed
+         | `Manual
+         | `Pending
+         | `Preparing
+         | `Running
+         | `Scheduled
+         | `Skipped
+         | `Success
+         | `Waiting_for_callback
+         | `Waiting_for_resource
+         ]
+        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
+      [@@deriving show, eq]
+    end
+
+    type t = {
+      id : string;
+      page : int; [@default 1]
+      per_page : int; [@default 20]
+      pipeline_id : int;
+      scope : Scope.t option; [@default None]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Unauthorized = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Unauthorized
+      | `Forbidden
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/pipelines/{pipeline_id}/bridges"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)); ("pipeline_id", Var (params.pipeline_id, Int)) ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [
+           ("scope", Var (params.scope, Option (Enum Scope.t_to_yojson)));
+           ("page", Var (params.page, Int));
+           ("per_page", Var (params.per_page, Int));
+         ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module DeleteApiV4ProjectsIdPipelinesPipelineId = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      pipeline_id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module No_content = struct end
+    module Forbidden = struct end
+
+    type t =
+      [ `No_content
+      | `Forbidden
+      ]
+    [@@deriving show, eq]
+
+    let t = [ ("204", fun _ -> Ok `No_content); ("403", fun _ -> Ok `Forbidden) ]
+  end
+
+  let url = "/api/v4/projects/{id}/pipelines/{pipeline_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)); ("pipeline_id", Var (params.pipeline_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Delete
+end
+
+module GetApiV4ProjectsIdPipelinesPipelineId = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      pipeline_id : int;
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Unauthorized = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Unauthorized
+      | `Forbidden
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/pipelines/{pipeline_id}"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)); ("pipeline_id", Var (params.pipeline_id, Int)) ])
+      ~query_params:[]
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
+module GetApiV4ProjectsIdPipelinesLatest = struct
+  module Parameters = struct
+    type t = {
+      id : string;
+      ref_ : string option; [@default None] [@key "ref"]
+    }
+    [@@deriving make, show, eq]
+  end
+
+  module Responses = struct
+    module OK = struct end
+    module Unauthorized = struct end
+    module Forbidden = struct end
+    module Not_found = struct end
+
+    type t =
+      [ `OK
+      | `Unauthorized
+      | `Forbidden
+      | `Not_found
+      ]
+    [@@deriving show, eq]
+
+    let t =
+      [
+        ("200", fun _ -> Ok `OK);
+        ("401", fun _ -> Ok `Unauthorized);
+        ("403", fun _ -> Ok `Forbidden);
+        ("404", fun _ -> Ok `Not_found);
+      ]
+  end
+
+  let url = "/api/v4/projects/{id}/pipelines/latest"
+
+  let make params =
+    Openapi.Request.make
+      ~headers:[]
+      ~url_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("id", Var (params.id, String)) ])
+      ~query_params:
+        (let open Openapi.Request.Var in
+         let open Parameters in
+         [ ("ref", Var (params.ref_, Option String)) ])
+      ~url
+      ~responses:Responses.t
+      `Get
+end
+
 module GetApiV4ProjectsIdPipelines = struct
   module Parameters = struct
     module Order_by = struct
@@ -264,650 +908,6 @@ module GetApiV4ProjectsIdPipelines = struct
            ("source", Var (params.source, Option (Enum Source.t_to_yojson)));
            ("name", Var (params.name, Option String));
          ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module GetApiV4ProjectsIdPipelinesLatest = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      ref_ : string option; [@default None] [@key "ref"]
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Unauthorized = struct end
-    module Forbidden = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Unauthorized
-      | `Forbidden
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("200", fun _ -> Ok `OK);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("403", fun _ -> Ok `Forbidden);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/pipelines/latest"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, String)) ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("ref", Var (params.ref_, Option String)) ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module DeleteApiV4ProjectsIdPipelinesPipelineId = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      pipeline_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module No_content = struct end
-    module Forbidden = struct end
-
-    type t =
-      [ `No_content
-      | `Forbidden
-      ]
-    [@@deriving show, eq]
-
-    let t = [ ("204", fun _ -> Ok `No_content); ("403", fun _ -> Ok `Forbidden) ]
-  end
-
-  let url = "/api/v4/projects/{id}/pipelines/{pipeline_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, String)); ("pipeline_id", Var (params.pipeline_id, Int)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Delete
-end
-
-module GetApiV4ProjectsIdPipelinesPipelineId = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      pipeline_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Unauthorized = struct end
-    module Forbidden = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Unauthorized
-      | `Forbidden
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("200", fun _ -> Ok `OK);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("403", fun _ -> Ok `Forbidden);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/pipelines/{pipeline_id}"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, String)); ("pipeline_id", Var (params.pipeline_id, Int)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module GetApiV4ProjectsIdPipelinesPipelineIdBridges = struct
-  module Parameters = struct
-    module Scope = struct
-      let t_of_yojson = function
-        | `String "canceled" -> Ok `Canceled
-        | `String "canceling" -> Ok `Canceling
-        | `String "created" -> Ok `Created
-        | `String "failed" -> Ok `Failed
-        | `String "manual" -> Ok `Manual
-        | `String "pending" -> Ok `Pending
-        | `String "preparing" -> Ok `Preparing
-        | `String "running" -> Ok `Running
-        | `String "scheduled" -> Ok `Scheduled
-        | `String "skipped" -> Ok `Skipped
-        | `String "success" -> Ok `Success
-        | `String "waiting_for_callback" -> Ok `Waiting_for_callback
-        | `String "waiting_for_resource" -> Ok `Waiting_for_resource
-        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-      let t_to_yojson = function
-        | `Canceled -> `String "canceled"
-        | `Canceling -> `String "canceling"
-        | `Created -> `String "created"
-        | `Failed -> `String "failed"
-        | `Manual -> `String "manual"
-        | `Pending -> `String "pending"
-        | `Preparing -> `String "preparing"
-        | `Running -> `String "running"
-        | `Scheduled -> `String "scheduled"
-        | `Skipped -> `String "skipped"
-        | `Success -> `String "success"
-        | `Waiting_for_callback -> `String "waiting_for_callback"
-        | `Waiting_for_resource -> `String "waiting_for_resource"
-
-      type t =
-        ([ `Canceled
-         | `Canceling
-         | `Created
-         | `Failed
-         | `Manual
-         | `Pending
-         | `Preparing
-         | `Running
-         | `Scheduled
-         | `Skipped
-         | `Success
-         | `Waiting_for_callback
-         | `Waiting_for_resource
-         ]
-        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
-      [@@deriving show, eq]
-    end
-
-    type t = {
-      id : string;
-      page : int; [@default 1]
-      per_page : int; [@default 20]
-      pipeline_id : int;
-      scope : Scope.t option; [@default None]
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Unauthorized = struct end
-    module Forbidden = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Unauthorized
-      | `Forbidden
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("200", fun _ -> Ok `OK);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("403", fun _ -> Ok `Forbidden);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/pipelines/{pipeline_id}/bridges"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, String)); ("pipeline_id", Var (params.pipeline_id, Int)) ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("scope", Var (params.scope, Option (Enum Scope.t_to_yojson)));
-           ("page", Var (params.page, Int));
-           ("per_page", Var (params.per_page, Int));
-         ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module PostApiV4ProjectsIdPipelinesPipelineIdCancel = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      pipeline_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module Created = struct end
-    module Unauthorized = struct end
-    module Forbidden = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `Created
-      | `Unauthorized
-      | `Forbidden
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("201", fun _ -> Ok `Created);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("403", fun _ -> Ok `Forbidden);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/pipelines/{pipeline_id}/cancel"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, String)); ("pipeline_id", Var (params.pipeline_id, Int)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Post
-end
-
-module GetApiV4ProjectsIdPipelinesPipelineIdJobs = struct
-  module Parameters = struct
-    module Scope = struct
-      let t_of_yojson = function
-        | `String "canceled" -> Ok `Canceled
-        | `String "canceling" -> Ok `Canceling
-        | `String "created" -> Ok `Created
-        | `String "failed" -> Ok `Failed
-        | `String "manual" -> Ok `Manual
-        | `String "pending" -> Ok `Pending
-        | `String "preparing" -> Ok `Preparing
-        | `String "running" -> Ok `Running
-        | `String "scheduled" -> Ok `Scheduled
-        | `String "skipped" -> Ok `Skipped
-        | `String "success" -> Ok `Success
-        | `String "waiting_for_callback" -> Ok `Waiting_for_callback
-        | `String "waiting_for_resource" -> Ok `Waiting_for_resource
-        | json -> Error ("Unknown value: " ^ Yojson.Safe.pretty_to_string json)
-
-      let t_to_yojson = function
-        | `Canceled -> `String "canceled"
-        | `Canceling -> `String "canceling"
-        | `Created -> `String "created"
-        | `Failed -> `String "failed"
-        | `Manual -> `String "manual"
-        | `Pending -> `String "pending"
-        | `Preparing -> `String "preparing"
-        | `Running -> `String "running"
-        | `Scheduled -> `String "scheduled"
-        | `Skipped -> `String "skipped"
-        | `Success -> `String "success"
-        | `Waiting_for_callback -> `String "waiting_for_callback"
-        | `Waiting_for_resource -> `String "waiting_for_resource"
-
-      type t =
-        ([ `Canceled
-         | `Canceling
-         | `Created
-         | `Failed
-         | `Manual
-         | `Pending
-         | `Preparing
-         | `Running
-         | `Scheduled
-         | `Skipped
-         | `Success
-         | `Waiting_for_callback
-         | `Waiting_for_resource
-         ]
-        [@of_yojson t_of_yojson] [@to_yojson t_to_yojson])
-      [@@deriving show, eq]
-    end
-
-    type t = {
-      id : string;
-      include_retried : bool; [@default false]
-      page : int; [@default 1]
-      per_page : int; [@default 20]
-      pipeline_id : int;
-      scope : Scope.t option; [@default None]
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Unauthorized = struct end
-    module Forbidden = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Unauthorized
-      | `Forbidden
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("200", fun _ -> Ok `OK);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("403", fun _ -> Ok `Forbidden);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/pipelines/{pipeline_id}/jobs"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, String)); ("pipeline_id", Var (params.pipeline_id, Int)) ])
-      ~query_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [
-           ("include_retried", Var (params.include_retried, Bool));
-           ("scope", Var (params.scope, Option (Enum Scope.t_to_yojson)));
-           ("page", Var (params.page, Int));
-           ("per_page", Var (params.per_page, Int));
-         ])
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module PutApiV4ProjectsIdPipelinesPipelineIdMetadata = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      pipeline_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Request_body = struct
-    type t = Gitlabc_components.PutApiV4ProjectsIdPipelinesPipelineIdMetadata.t
-    [@@deriving yojson { strict = false; meta = true }, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Bad_request = struct end
-    module Unauthorized = struct end
-    module Forbidden = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Bad_request
-      | `Unauthorized
-      | `Forbidden
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("200", fun _ -> Ok `OK);
-        ("400", fun _ -> Ok `Bad_request);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("403", fun _ -> Ok `Forbidden);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/pipelines/{pipeline_id}/metadata"
-
-  let make ?body =
-   fun params ->
-    Openapi.Request.make
-      ?body:(CCOption.map Request_body.to_yojson body)
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, String)); ("pipeline_id", Var (params.pipeline_id, Int)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Put
-end
-
-module PostApiV4ProjectsIdPipelinesPipelineIdRetry = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      pipeline_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module Created = struct end
-    module Unauthorized = struct end
-    module Forbidden = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `Created
-      | `Unauthorized
-      | `Forbidden
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("201", fun _ -> Ok `Created);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("403", fun _ -> Ok `Forbidden);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/pipelines/{pipeline_id}/retry"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, String)); ("pipeline_id", Var (params.pipeline_id, Int)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Post
-end
-
-module GetApiV4ProjectsIdPipelinesPipelineIdTestReport = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      pipeline_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Unauthorized = struct end
-    module Forbidden = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Unauthorized
-      | `Forbidden
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("200", fun _ -> Ok `OK);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("403", fun _ -> Ok `Forbidden);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/pipelines/{pipeline_id}/test_report"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, String)); ("pipeline_id", Var (params.pipeline_id, Int)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module GetApiV4ProjectsIdPipelinesPipelineIdTestReportSummary = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      pipeline_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Unauthorized = struct end
-    module Forbidden = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Unauthorized
-      | `Forbidden
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("200", fun _ -> Ok `OK);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("403", fun _ -> Ok `Forbidden);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/pipelines/{pipeline_id}/test_report_summary"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, String)); ("pipeline_id", Var (params.pipeline_id, Int)) ])
-      ~query_params:[]
-      ~url
-      ~responses:Responses.t
-      `Get
-end
-
-module GetApiV4ProjectsIdPipelinesPipelineIdVariables = struct
-  module Parameters = struct
-    type t = {
-      id : string;
-      pipeline_id : int;
-    }
-    [@@deriving make, show, eq]
-  end
-
-  module Responses = struct
-    module OK = struct end
-    module Unauthorized = struct end
-    module Forbidden = struct end
-    module Not_found = struct end
-
-    type t =
-      [ `OK
-      | `Unauthorized
-      | `Forbidden
-      | `Not_found
-      ]
-    [@@deriving show, eq]
-
-    let t =
-      [
-        ("200", fun _ -> Ok `OK);
-        ("401", fun _ -> Ok `Unauthorized);
-        ("403", fun _ -> Ok `Forbidden);
-        ("404", fun _ -> Ok `Not_found);
-      ]
-  end
-
-  let url = "/api/v4/projects/{id}/pipelines/{pipeline_id}/variables"
-
-  let make params =
-    Openapi.Request.make
-      ~headers:[]
-      ~url_params:
-        (let open Openapi.Request.Var in
-         let open Parameters in
-         [ ("id", Var (params.id, String)); ("pipeline_id", Var (params.pipeline_id, Int)) ])
-      ~query_params:[]
       ~url
       ~responses:Responses.t
       `Get

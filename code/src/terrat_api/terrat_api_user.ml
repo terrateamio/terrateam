@@ -1,20 +1,27 @@
-module Logout = struct
+module Whoami = struct
   module Parameters = struct end
 
   module Responses = struct
-    module OK = struct end
+    module OK = struct
+      type t = Terrat_api_components.User.t
+      [@@deriving yojson { strict = false; meta = false }, show, eq]
+    end
+
     module Forbidden = struct end
 
     type t =
-      [ `OK
+      [ `OK of OK.t
       | `Forbidden
       ]
     [@@deriving show, eq]
 
-    let t = [ ("200", fun _ -> Ok `OK); ("403", fun _ -> Ok `Forbidden) ]
+    let t =
+      [
+        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson); ("403", fun _ -> Ok `Forbidden);
+      ]
   end
 
-  let url = "/api/v1/logout"
+  let url = "/api/v1/whoami"
 
   let make () =
     Openapi.Request.make
@@ -23,7 +30,7 @@ module Logout = struct
       ~query_params:[]
       ~url
       ~responses:Responses.t
-      `Post
+      `Get
 end
 
 module List_github_installations = struct
@@ -66,30 +73,23 @@ module List_github_installations = struct
       `Get
 end
 
-module Whoami = struct
+module Logout = struct
   module Parameters = struct end
 
   module Responses = struct
-    module OK = struct
-      type t = Terrat_api_components.User.t
-      [@@deriving yojson { strict = false; meta = false }, show, eq]
-    end
-
+    module OK = struct end
     module Forbidden = struct end
 
     type t =
-      [ `OK of OK.t
+      [ `OK
       | `Forbidden
       ]
     [@@deriving show, eq]
 
-    let t =
-      [
-        ("200", Openapi.of_json_body (fun v -> `OK v) OK.of_yojson); ("403", fun _ -> Ok `Forbidden);
-      ]
+    let t = [ ("200", fun _ -> Ok `OK); ("403", fun _ -> Ok `Forbidden) ]
   end
 
-  let url = "/api/v1/whoami"
+  let url = "/api/v1/logout"
 
   let make () =
     Openapi.Request.make
@@ -98,5 +98,5 @@ module Whoami = struct
       ~query_params:[]
       ~url
       ~responses:Responses.t
-      `Get
+      `Post
 end
