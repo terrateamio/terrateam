@@ -1,7 +1,3 @@
 (library
  (name oth)
- (libraries domainslib duration containers revops unix)
- (ocamlopt_flags
-  (:standard -w -27))
- (ocamlc_flags
-  (:standard -w -27)))
+ (libraries abb_intf containers domainslib duration revops unix))
