@@ -1,0 +1,9 @@
+(executable
+  (name ISO8601_TEST)
+  (flags :standard -warn-error -a)
+  (libraries unix oUnit ISO8601))
+
+(alias
+  (name runtest)
+  (deps ISO8601_TEST.exe)
+  (action (run ./ISO8601_TEST.exe)))

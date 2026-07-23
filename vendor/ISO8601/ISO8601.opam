@@ -1,0 +1,22 @@
+opam-version: "2.0"
+version: "0.2.6"
+name: "ISO8601"
+authors: [ "Julien Sagot" ]
+maintainer: ["c-cube" "ocaml-community"]
+homepage: "http://github.com/ocaml-community/ISO8601.ml/"
+dev-repo: "git+https://github.com/ocaml-community/ISO8601.ml.git"
+doc: "http://ocaml-community.github.io/ISO8601.ml/"
+bug-reports: "https://github.com/ocaml-community/ISO8601.ml/issues"
+synopsis: "ISO 8601 and RFC 3999 date parsing for OCaml"
+build: [
+  ["dune" "build" "-p" name]
+  ["dune" "build" "@doc" "-p" name] {with-doc}
+  #["dune" "runtest" "-p" name] {with-test}
+]
+depends: [
+  "dune" {>= "1.0"}
+  "base-unix"
+  "ocaml" {>= "3.12.1" }
+  "odoc" {with-doc}
+  "ounit" {with-test}
+]

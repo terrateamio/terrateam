@@ -1,0 +1,8 @@
+(library
+ (name ISO8601)
+ (public_name ISO8601)
+ (flags :standard -warn-error -50)
+ (wrapped true)
+ (libraries unix))
+
+(ocamllex ISO8601_lexer)
