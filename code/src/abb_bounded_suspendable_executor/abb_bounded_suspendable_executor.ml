@@ -1,9 +1,8 @@
 module Queue = CCFQueue
 
-module Make (Fut : Abb_intf.Future.S) (Key : Map.OrderedType) (Time : Abb_time.Time_make(Fut).S) =
-struct
-  module Channel = Abb_channel.Make (Fut)
-  module Service = Abb_service_local.Make (Fut)
+module Make (S : Abb_intf.S) (Key : Map.OrderedType) = struct
+  module Fut = S.Future
+  module Service = Abb_service_local.Make (S)
   module Fc = Abb_future_combinators.Make (Fut)
 
   module Logger = struct
@@ -26,17 +25,8 @@ struct
 
   module Name_map = CCMap.Make (Name)
 
-  let rec is_prefix ~eq ~pre l =
-    match (pre, l) with
-    | c1 :: pre, c2 :: l when eq c1 c2 -> is_prefix ~eq ~pre l
-    | _ :: _, _ :: _ -> false
-    | [], _ :: _ -> true
-    | _, [] -> false
-
-  let _is_key_prefix = is_prefix ~eq:(fun a b -> 0 = Key.compare a b)
-
   module Task = struct
-    type t = Task : (Name.t * (unit -> 'a Fut.t) * 'a Fut.Promise.t * float) -> t
+    type t = Task : (Name.t * (unit -> 'a Fut.t, 'a) Service.Request.t * float) -> t
   end
 
   module Msg = struct
@@ -56,40 +46,26 @@ struct
       logger : Logger.t option;
     }
 
-    let exec logger w (Task.Task (name, f, p, enqueued_at)) =
+    let exec logger w (Task.Task (name, req, enqueued_at)) =
       let open Fut.Infix_monad in
-      Time.monotonic ()
+      S.Sys.monotonic ()
       >>= fun now ->
       let queue_time = now -. enqueued_at in
       CCOption.iter (fun { Logger.exec_task = log; _ } -> log name) logger;
       CCOption.iter (fun { Logger.queue_time = log; _ } -> log queue_time) logger;
       Fut.fork
-        (let run =
-           try
-             Fut.await_bind
-               (function
-                 | `Det ret -> Fut.Promise.set p ret
-                 | `Exn exn_bt -> Fut.Promise.set_exn p exn_bt
-                 | `Aborted -> Fut.abort (Fut.Promise.future p))
-               (f ())
-           with exn ->
-             let bt = Printexc.get_raw_backtrace () in
-             Fut.Promise.set_exn p (exn, Some bt)
-         in
-         Fc.with_finally
-           (fun () ->
-             Fut.add_dep ~dep:run (Fut.Promise.future p);
-             run)
+        (Fc.with_finally
+           (fun () -> Service.respond req (fun () -> Service.Request.payload req ()))
            ~finally:(fun () ->
              CCOption.iter (fun { Logger.complete_task = log; _ } -> log name) logger;
-             Channel.send w (Msg.Work_done name) >>= fun _ -> Fut.return ()))
+             S.Chan.send w (Msg.Work_done name) >>= fun _ -> Fut.return ()))
       >>= fun _ -> Fut.return ()
 
     let rec exec_next_n_tasks remaining_slots w t =
       if 0 < remaining_slots then
         let open Fut.Infix_monad in
         match Queue.take_front t.queue with
-        | Some ((Task.Task (n, _, _, _) as task), queue) ->
+        | Some ((Task.Task (n, _, _) as task), queue) ->
             let t = { t with queue; running_tasks = Name_map.add n task t.running_tasks } in
             exec t.logger w task >>= fun () -> exec_next_n_tasks (remaining_slots - 1) w t
         | None -> Fut.return t
@@ -136,15 +112,15 @@ struct
         suspended_tasks = Name_map.remove name t.suspended_tasks;
       }
 
-    let rec loop t w r =
+    let rec loop t chan =
       let open Fut.Infix_monad in
-      Channel.recv r
+      S.Chan.recv chan
       >>= function
-      | `Ok (Msg.Enqueue task) ->
-          let (Task.Task (n, _, _, _)) = task in
+      | Ok (Msg.Enqueue task) ->
+          let (Task.Task (n, _, _)) = task in
           CCOption.iter (fun { Logger.enqueue = log; _ } -> log n) t.logger;
           let t = { t with queue = Queue.snoc t.queue task } in
-          maybe_exec_task w t
+          maybe_exec_task chan t
           >>= fun t ->
           CCOption.iter
             (fun { Logger.running_tasks = log; _ } -> log (Name_map.cardinal t.running_tasks))
@@ -153,10 +129,10 @@ struct
             (fun { Logger.suspended_tasks = log; _ } ->
               log (Name_map.cardinal t.suspended_tasks) (Name_map.keys t.suspended_tasks))
             t.logger;
-          loop t w r
-      | `Ok (Msg.Suspend name) ->
+          loop t chan
+      | Ok (Msg.Suspend name) ->
           CCOption.iter (fun { Logger.suspend_task = log; _ } -> log name) t.logger;
-          maybe_exec_task w (suspend_task name t)
+          maybe_exec_task chan (suspend_task name t)
           >>= fun t ->
           CCOption.iter
             (fun { Logger.running_tasks = log; _ } -> log (Name_map.cardinal t.running_tasks))
@@ -165,10 +141,10 @@ struct
             (fun { Logger.suspended_tasks = log; _ } ->
               log (Name_map.cardinal t.suspended_tasks) (Name_map.keys t.suspended_tasks))
             t.logger;
-          loop t w r
-      | `Ok (Msg.Unsuspend name) ->
+          loop t chan
+      | Ok (Msg.Unsuspend name) ->
           CCOption.iter (fun { Logger.unsuspend_task = log; _ } -> log name) t.logger;
-          maybe_exec_task w (unsuspend_task name t)
+          maybe_exec_task chan (unsuspend_task name t)
           >>= fun t ->
           CCOption.iter
             (fun { Logger.running_tasks = log; _ } -> log (Name_map.cardinal t.running_tasks))
@@ -177,29 +153,33 @@ struct
             (fun { Logger.suspended_tasks = log; _ } ->
               log (Name_map.cardinal t.suspended_tasks) (Name_map.keys t.suspended_tasks))
             t.logger;
-          loop t w r
-      | `Ok (Msg.Work_done name) ->
+          loop t chan
+      | Ok (Msg.Work_done name) ->
           CCOption.iter (fun { Logger.work_done = log; _ } -> log name) t.logger;
           let t = complete_task name t in
-          maybe_exec_task w t
+          maybe_exec_task chan t
           >>= fun t ->
           CCOption.iter
-            (fun { Logger.running_tasks = log; exec_task = _; _ } ->
-              log (Name_map.cardinal t.running_tasks))
+            (fun { Logger.running_tasks = log; _ } -> log (Name_map.cardinal t.running_tasks))
             t.logger;
           CCOption.iter
             (fun { Logger.suspended_tasks = log; _ } ->
               log (Name_map.cardinal t.suspended_tasks) (Name_map.keys t.suspended_tasks))
             t.logger;
-          loop t w r
-      | `Closed -> Fut.return ()
+          loop t chan
+      | Error `Chan_closed -> Fut.return ()
   end
 
-  type t = { w : Msg.t Service.w }
+  type t = { w : Msg.t Service.t }
 
   let create ?logger ~slots () =
     let open Fut.Infix_monad in
+    (* The internal queue lives inside [Server.t]; the service Chan only
+       carries control traffic ([Enqueue], [Work_done], [Suspend], etc.).
+       Pick a capacity that absorbs bursts without parking callers on the
+       [run] enqueue path. *)
     Service.create
+      ~capacity:100_000
       (Server.loop
          {
            Server.slots;
@@ -212,25 +192,24 @@ struct
 
   let run ~name t f =
     let open Fut.Infix_monad in
-    let p = Fut.Promise.create () in
-    Time.monotonic ()
+    S.Sys.monotonic ()
     >>= fun enqueued_at ->
-    Channel.send t.w (Msg.Enqueue (Task.Task (name, f, p, enqueued_at)))
+    Service.call t.w (fun req -> Msg.Enqueue (Task.Task (name, req, enqueued_at))) f
     >>= function
-    | `Ok () -> Fut.Promise.future p
-    | `Closed -> assert false
+    | Ok v -> Fut.return v
+    | Error `Chan_closed -> assert false
 
   let suspend ~name t =
     let open Fut.Infix_monad in
-    Channel.send t.w (Msg.Suspend name)
+    S.Chan.send t.w (Msg.Suspend name)
     >>= function
-    | `Ok () -> Fut.return ()
-    | `Closed -> assert false
+    | Ok () -> Fut.return ()
+    | Error `Chan_closed -> assert false
 
   let unsuspend ~name t =
     let open Fut.Infix_monad in
-    Channel.send t.w (Msg.Unsuspend name)
+    S.Chan.send t.w (Msg.Unsuspend name)
     >>= function
-    | `Ok () -> Fut.return ()
-    | `Closed -> assert false
+    | Ok () -> Fut.return ()
+    | Error `Chan_closed -> assert false
 end

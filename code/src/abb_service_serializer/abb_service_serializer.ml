@@ -1,28 +1,35 @@
-module Make (Fut : Abb_intf.Future.S) = struct
-  open Fut.Infix_monad
-  module Channel = Abb_channel.Make (Fut)
-  module Service_local = Abb_service_local.Make (Fut)
-  module Fut_comb = Abb_future_combinators.Make (Fut)
+module Make (S : Abb_intf.S) = struct
+  module Fut = S.Future
+  module Service_local = Abb_service_local.Make (S)
 
-  type msg = Run : ((unit -> 'a Fut.t) * 'a Fut.Promise.t) -> msg
-  type t = (Channel.writer, msg) Channel.t
-
-  module Server = struct
-    let loop (Run (f, p)) =
-      Fut.await (Fut_comb.on_failure f ~failure:(fun () -> Fut_comb.unit))
-      >>= function
-      | `Det v -> Fut.Promise.set p v
-      | `Exn exn -> Fut.Promise.set_exn p exn
-      | `Aborted -> Fut.abort (Fut.Promise.future p)
-
-    let init _ reader = Channel.Combinators.fold ~f:(fun () msg -> loop msg) ~init:() reader
+  module Req = struct
+    type 'resp t = Run : (unit -> 'resp Fut.t) -> 'resp t
   end
 
-  let create () = Service_local.create Server.init
+  module Svc = Service_local.Make_typed (Req)
+
+  type msg = Svc.msg
+  type t = Svc.svc
+
+  module Server = struct
+    let rec loop chan =
+      let open Fut.Infix_monad in
+      S.Chan.recv chan
+      >>= function
+      | Ok (Svc.Msg req) ->
+          let (Req.Run f) = Service_local.Request.payload req in
+          Service_local.respond req f >>= fun () -> loop chan
+      | Error `Chan_closed -> Fut.return ()
+  end
+
+  let create () = Svc.create Server.loop
 
   let run t ~f =
-    let p = Fut.Promise.create () in
-    Channel.Combinators.send_promise t (Run (f, p)) p
+    let open Fut.Infix_monad in
+    Svc.call t (Req.Run f)
+    >>= function
+    | Ok v -> Fut.return (`Ok v)
+    | Error `Chan_closed -> Fut.return `Closed
 
   module Mutex = struct
     type serializer = t

@@ -1,21 +1,31 @@
-module Unix = UnixLabels
-module Sys_stdlib = Sys
-
 module Native = struct
   type t = unit
 end
 
+type task_data = unit
+
 module Future = Abb_fut.Make (struct
+  type data = task_data
+
+  let zero_data = ()
+
   type t = unit
 end)
 
 module Scheduler = struct
   type t = unit
 
+  let capabilities = []
   let create ?thread_pool_size ?exec_duration () = failwith "nyi"
   let destroy t = failwith "nyi"
   let run t f = failwith "nyi"
   let run_with_state ?thread_pool_size ?exec_duration f = failwith "nyi"
+end
+
+module Task = struct
+  let id () = failwith "nyi"
+  let name () = failwith "nyi"
+  let run ?name ?pinned f = failwith "nyi"
 end
 
 module Sys = struct
@@ -103,7 +113,7 @@ module Process = struct
     let to_native () = ()
   end
 
-  let spawn p dups = failwith "nyi"
+  let spawn ~stdin:_ ~stdout:_ ~stderr:_ _ = failwith "nyi"
   let pid t = failwith "nyi"
   let wait t = failwith "nyi"
   let exit_code t = failwith "nyi"
@@ -113,4 +123,13 @@ end
 
 module Thread = struct
   let run f = failwith "nyi"
+end
+
+module Chan = struct
+  type 'a t = unit
+
+  let create ~capacity () = failwith "nyi"
+  let send t v = failwith "nyi"
+  let recv t = failwith "nyi"
+  let close t = failwith "nyi"
 end

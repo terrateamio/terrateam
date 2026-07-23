@@ -1,3 +1,4 @@
 (library
  (name abb_test)
- (libraries containers oth oth_abb abb_intf abb_future_combinators))
+ (wrapped false)
+ (libraries abb_intf abb_future_combinators oth oth_abb containers unix))

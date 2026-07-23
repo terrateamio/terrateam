@@ -1,7 +1,6 @@
 (library
  (name abb_curl)
  (libraries
-  abb_channel
   abb_future_combinators
   abb_intf
   abb_service_local
@@ -11,7 +10,5 @@
   luv
   sln
   uri)
- (flags
-  (:standard -w -27-69))
  (preprocess
   (pps ppx_deriving.show ppx_deriving.eq)))

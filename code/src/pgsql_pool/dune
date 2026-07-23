@@ -1,7 +1,5 @@
 (library
  (name pgsql_pool)
  (libraries abb abbs containers pgsql_io)
- (flags
-  (:standard -w -33))
  (preprocess
   (pps ppx_deriving.show)))

@@ -1,13 +1,16 @@
 module Fut = Abb_fut.Make (struct
+  type data = unit
+
+  let zero_data = ()
+
   type t = unit
 end)
 
 module Fut_comb = Abb_future_combinators.Make (Fut)
 
-let dummy_state = Abb_fut.State.create ()
-
 let test_success =
   Oth.test ~name:"App success" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let p1 = Fut.Promise.create () in
       let p2 = Fut.Promise.create () in
       let both =
@@ -23,6 +26,7 @@ let test_success =
 
 let test_first_error =
   Oth.test ~name:"First fail" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let p1 = Fut.Promise.create () in
       let p2 = Fut.Promise.create () in
       let both =
@@ -38,6 +42,7 @@ let test_first_error =
 
 let test_second_error =
   Oth.test ~name:"Second fail" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let p1 = Fut.Promise.create () in
       let p2 = Fut.Promise.create () in
       let both =
@@ -53,6 +58,7 @@ let test_second_error =
 
 let test_first_abort =
   Oth.test ~name:"First Abort" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let p1 = Fut.Promise.create () in
       let p2 = Fut.Promise.create () in
       let both =
@@ -67,6 +73,7 @@ let test_first_abort =
 
 let test_second_abort =
   Oth.test ~name:"Second Abort" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let p1 = Fut.Promise.create () in
       let p2 = Fut.Promise.create () in
       let both =

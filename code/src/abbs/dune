@@ -4,8 +4,6 @@
  (libraries
   abb
   abb_cache
-  abb_channel
-  abb_channel_queue
   abb_future_combinators
   abb_happy_eyeballs
   abb_io

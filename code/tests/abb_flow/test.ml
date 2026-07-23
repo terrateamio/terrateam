@@ -19,8 +19,6 @@ module State = struct
     match CCInt.of_string s with
     | Some n -> Ok n
     | None -> Error ()
-
-  let merge n1 n2 = n1 + n2
 end
 
 module Flow = Abb_flow.Make (Abb.Future) (Id) (State)
@@ -45,7 +43,7 @@ let test_failure =
   Oth_abb.test ~name:"Failure" (fun _ ->
       let flow =
         Flow.Flow.action
-          [ Flow.Step.make ~id:"one" ~f:(fun () n -> Abb.Future.return (`Failure ())) () ]
+          [ Flow.Step.make ~id:"one" ~f:(fun () _ -> Abb.Future.return (`Failure ())) () ]
       in
       let flow = Flow.create flow in
       let open Abb.Future.Infix_monad in
@@ -135,38 +133,6 @@ let test_multistep_flow =
       >>= function
       | `Success n ->
           assert (n = 2);
-          Abb.Future.return ()
-      | `Failure _ -> assert false
-      | `Yield _ -> assert false)
-
-let test_multistep_with_logging =
-  Oth_abb.test ~name:"Multi-step flow with logging" (fun _ ->
-      let flow =
-        Flow.Flow.action
-          [
-            Flow.Step.make ~id:"one" ~f:(fun () n -> Abb.Future.return (`Success (n + 1))) ();
-            Flow.Step.make ~id:"two" ~f:(fun () n -> Abb.Future.return (`Success (n + 1))) ();
-            Flow.Step.make ~id:"three" ~f:(fun () n -> Abb.Future.return (`Success (n + 1))) ();
-          ]
-      in
-      let executed_steps = ref [] in
-      let log = function
-        | Flow.Event.Step_start (step, _) -> executed_steps := Flow.Step.id step :: !executed_steps
-        | Flow.Event.Step_end _ -> ()
-        | Flow.Event.Choice_start _
-        | Flow.Event.Choice_end _
-        | Flow.Event.Finally_start _
-        | Flow.Event.Finally_resume _
-        | Flow.Event.Recover_choice _
-        | Flow.Event.Recover_start _ -> ()
-      in
-      let flow = Flow.create ~log flow in
-      let open Abb.Future.Infix_monad in
-      Flow.run () 0 flow
-      >>= function
-      | `Success n ->
-          assert (n = 3);
-          assert (!executed_steps = [ "one"; "two"; "three" ]);
           Abb.Future.return ()
       | `Failure _ -> assert false
       | `Yield _ -> assert false)
@@ -369,7 +335,7 @@ let test_finally_failure =
                  [
                    Flow.Step.make
                      ~id:"one"
-                     ~f:(fun () state ->
+                     ~f:(fun () _ ->
                        incr v;
                        Abb.Future.return (`Failure ()))
                      ();
@@ -506,7 +472,7 @@ let test_recover_failure =
                  [
                    Flow.Step.make
                      ~id:"one"
-                     ~f:(fun () state ->
+                     ~f:(fun () _ ->
                        incr v;
                        Abb.Future.return (`Failure ()))
                      ();
@@ -679,7 +645,7 @@ let test_recover_failure_yield_success =
                      ();
                    Flow.Step.make
                      ~id:"two"
-                     ~f:(fun () state ->
+                     ~f:(fun () _ ->
                        incr v;
                        Abb.Future.return (`Failure ()))
                      ();

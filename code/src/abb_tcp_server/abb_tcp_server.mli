@@ -1,7 +1,5 @@
 module Make (Abb : Abb_intf.S) : sig
-  type reader = Abb_channel.Make(Abb.Future).reader
-  type ('a, 'm) channel = ('a, 'm) Abb_channel.Make(Abb.Future).t
-  type t = (reader, Abb.Socket.tcp Abb.Socket.t) channel
+  type t = Abb.Socket.tcp Abb.Socket.t Abb.Chan.t
 
   type errors =
     [ Abb_intf.Errors.bind

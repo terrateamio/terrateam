@@ -1,3 +1,6 @@
 (library
  (name abb_fut)
- (libraries abb_intf))
+ (libraries abb_intf)
+ (preprocess
+  (action
+   (run cppo -D "ABB_FUT_DEBUG %{env:ABB_FUT_DEBUG=1}" %{input-file}))))

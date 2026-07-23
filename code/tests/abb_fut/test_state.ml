@@ -1,9 +1,12 @@
 module Fut = Abb_fut.Make (struct
+  type data = unit
+
+  let zero_data = ()
+
   type t = int
 end)
 
 open Fut.Infix_monad
-open Fut.Infix_app
 
 let test1 =
   Oth.test ~desc:"State update" ~name:"State test #1" (fun _ ->

@@ -122,7 +122,6 @@ struct
      callers operating on many work manifests can collect the checks and create them in one call. *)
   let op_commit_checks config account repo work_manifest description status =
     let module Wm = Terrat_work_manifest3 in
-    let module Status = Terrat_commit_check.Status in
     match work_manifest.Wm.changes with
     | [] -> []
     | dirspaces ->
@@ -152,7 +151,6 @@ struct
           ]
         in
         let dirspace_checks =
-          let module Ds = Terrat_change.Dirspace in
           let module Dsf = Terrat_change.Dirspaceflow in
           CCList.map
             (fun { Dsf.dirspace; _ } ->
@@ -194,7 +192,6 @@ struct
       result =
     let module Wm = Terrat_work_manifest3 in
     let module Wmr = Terrat_vcs_provider2.Work_manifest_result in
-    let module Status = Terrat_commit_check.Status in
     let status = function
       | true -> Terrat_commit_check.Status.Completed
       | false -> Terrat_commit_check.Status.Failed
@@ -230,8 +227,6 @@ struct
     in
     let dirspace_checks =
       if CCList.length result.Wmr.dirspaces_success <= dirspace_check_threshold then
-        let module Ds = Terrat_change.Dirspace in
-        let module Dsf = Terrat_change.Dirspaceflow in
         CCList.map
           (fun (dirspace, success) ->
             S.Commit_check.make_dirspace

@@ -1,5 +1,3 @@
-module List = ListLabels
-
 let src = Logs.Src.create "cohttp_abb"
 
 module Logs = (val Logs.src_log src : Logs.LOG)
@@ -29,8 +27,6 @@ type run_err =
 
 module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
   module Happy_eyeballs = Abb_happy_eyeballs.Make (Abb)
-  module Channel = Abb_channel.Make (Abb.Future)
-  module Channel_queue = Abb_channel_queue.Make (Abb.Future)
   module Fut_comb = Abb_future_combinators.Make (Abb.Future)
   module Io = Cohttp_abb_io.Make (Abb)
   module Buffered = Abb_io_buffered.Make (Abb.Future)
@@ -493,7 +489,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
           | `Det (`Res (`Ok as ret)) | `Det (`Res (`Stop as ret)) ->
               Fut_comb.ignore (Buffered.flushed w)
               >>= fun () ->
-              Fut_comb.ignore (Channel.send wc ret) >>= fun () -> run_handler config conn r w wc
+              Fut_comb.ignore (Abb.Chan.send wc ret) >>= fun () -> run_handler config conn r w wc
           | `Det (`Timeout as err) | (`Exn _ as err) -> (
               (* If it was a timeout, then close the connection.  If it was an
                  exception, this will be done for us in the [failure]
@@ -508,27 +504,27 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
                    (fun () -> Config.on_handler_err config req err)
                    ~failure:(fun () -> Fut_comb.unit))
               >>= function
-              | `Det (`Ok as ret) | `Det (`Stop as ret) -> Fut_comb.ignore (Channel.send wc ret)
+              | `Det (`Ok as ret) | `Det (`Stop as ret) -> Fut_comb.ignore (Abb.Chan.send wc ret)
               | `Aborted -> Abb.Future.return ()
-              | `Exn (exn, _) -> Fut_comb.ignore (Channel.send wc (`Exn exn)))
+              | `Exn (exn, _) -> Fut_comb.ignore (Abb.Chan.send wc (`Exn exn)))
           | `Aborted -> Abb.Future.return ())
       | `Req `Eof ->
           Fut_comb.ignore (Abb.Socket.close conn)
-          >>= fun () -> Fut_comb.ignore (Abb.Future.fork (Channel.send wc `Ok))
+          >>= fun () -> Fut_comb.ignore (Abb.Future.fork (Abb.Chan.send wc `Ok))
       | `Req (`Invalid str) -> (
           Fut_comb.ignore (Abb.Socket.close conn)
           >>= fun () ->
           Config.on_protocol_err config (`Error str)
           >>= function
-          | `Ok -> Fut_comb.ignore (Channel.send wc `Ok)
-          | `Stop -> Fut_comb.ignore (Channel.send wc `Stop))
+          | `Ok -> Fut_comb.ignore (Abb.Chan.send wc `Ok)
+          | `Stop -> Fut_comb.ignore (Abb.Chan.send wc `Stop))
       | `Timeout -> (
           Fut_comb.ignore (Abb.Socket.close conn)
           >>= fun () ->
           Config.on_protocol_err config `Timeout
           >>= function
-          | `Ok -> Fut_comb.ignore (Channel.send wc `Ok)
-          | `Stop -> Fut_comb.ignore (Channel.send wc `Stop))
+          | `Ok -> Fut_comb.ignore (Abb.Chan.send wc `Ok)
+          | `Stop -> Fut_comb.ignore (Abb.Chan.send wc `Stop))
 
     let rec tcp_accept_loop sock config bf wc =
       let open Abb.Future.Infix_monad in
@@ -543,7 +539,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
           (* In the case the client disconnected between accepting and getting
              here, just ignore the error. *)
           tcp_accept_loop sock config bf wc
-      | Error `E_bad_file ->
+      | Error `E_file_closed | Error `E_bad_file ->
           (* This should never happen. *)
           assert false
       | Error `E_file_table_full ->
@@ -559,12 +555,12 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
 
     let rec handler_response_loop config rc =
       let open Abb.Future.Infix_monad in
-      Channel.recv rc
+      Abb.Chan.recv rc
       >>= function
-      | `Ok `Ok -> handler_response_loop config rc
-      | `Ok `Stop -> Abb.Future.return (Ok ())
-      | `Ok (`Exn exn) -> Abb.Future.return (Error (`Exn exn))
-      | `Closed -> Abb.Future.return (Ok ())
+      | Ok `Ok -> handler_response_loop config rc
+      | Ok `Stop -> Abb.Future.return (Ok ())
+      | Ok (`Exn exn) -> Abb.Future.return (Error (`Exn exn))
+      | Error `Chan_closed -> Abb.Future.return (Ok ())
 
     let run_tcp_server config bf =
       let open Fut_comb.Infix_result_monad in
@@ -576,15 +572,15 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
       >>= fun () ->
       Abb.Future.return (Abb.Socket.listen tcp ~backlog:128)
       >>= fun () ->
-      Fut_comb.to_result (Channel_queue.T.create ~fast_count:1000 ())
-      >>= fun queue ->
-      let rc, wc = Channel_queue.to_abb_channel queue in
-      let accept_loop = tcp_accept_loop tcp config bf wc in
+      let rc = Abb.Chan.create ~capacity:1000 () in
+      let accept_loop = tcp_accept_loop tcp config bf rc in
       Fut_comb.with_finally
         (fun () ->
           let open Abb.Future.Infix_monad in
           Abb.Future.fork accept_loop >>= fun _ -> handler_response_loop config rc)
-        ~finally:(fun () -> Channel.close_reader rc)
+        ~finally:(fun () ->
+          Abb.Chan.close rc;
+          Abb.Future.return ())
 
     let run config =
       let open Abb.Future.Infix_monad in
@@ -620,6 +616,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
         | Error `E_address_not_available ) as err -> err
       | Error `E_access
       | Error `E_again
+      | Error `E_file_closed
       | Error `E_bad_file
       | Error `E_dest_address_required
       | Error `E_invalid

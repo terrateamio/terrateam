@@ -1,6 +1,7 @@
 (library
  (name abb_scheduler_select)
  (libraries
+  abb_fd_socket
   abb_fut
   abb_intf
   abb_thread_pool
@@ -8,7 +9,7 @@
   iter
   mtime
   mtime.clock
-  ppx_deriving
-  unix)
+  unix
+  ppx_deriving)
  (preprocess
   (pps ppx_deriving.ord)))

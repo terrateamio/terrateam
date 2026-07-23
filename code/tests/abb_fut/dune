@@ -1,3 +1,5 @@
-(test
- (name test)
- (libraries oth abb_intf abb_fut))
+(tests
+ (names test test_abort test_exn test_fork test_state test_data)
+ (libraries abb_fut oth)
+ (flags
+  (:standard -w -38)))

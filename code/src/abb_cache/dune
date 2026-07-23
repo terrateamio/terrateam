@@ -8,9 +8,5 @@
   containers
   duration
   lru)
- (ocamlopt_flags
-  (:standard -w -32))
- (ocamlc_flags
-  (:standard -w -32))
  (preprocess
   (pps ppx_deriving.ord ppx_deriving.show)))

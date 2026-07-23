@@ -2,6 +2,7 @@
  (name abb_scheduler_luv)
  (libraries
   abb_domain_pool
+  abb_fd_socket
   abb_fut
   abb_intf
   containers
@@ -9,6 +10,7 @@
   luv
   mtime
   mtime.clock
+  saturn
   unix
   ppx_deriving)
  (preprocess

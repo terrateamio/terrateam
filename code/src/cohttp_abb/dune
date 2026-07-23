@@ -1,8 +1,6 @@
 (library
  (name cohttp_abb)
  (libraries
-  abb_channel
-  abb_channel_queue
   abb_future_combinators
   abb_happy_eyeballs
   abb_intf

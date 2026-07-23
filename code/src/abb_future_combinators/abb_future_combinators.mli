@@ -100,6 +100,12 @@ module Make (Fut : Abb_intf.Future.S) : sig
   val protect_finally :
     setup:(unit -> 'a Fut.t) -> finally:('a -> unit Fut.t) -> ('a -> 'b Fut.t) -> 'b Fut.t
 
+  (** [tap f fut] returns a future that propagates [fut]'s outcome unchanged -- its determined
+      value, its exception, or its abort -- while calling [f] with that outcome as it passes
+      through. [f] is a pure observer: it cannot alter what propagates. An abort of the returned
+      future is propagated down to [fut]. [f] must not raise. *)
+  val tap : ('a Abb_intf.Future.Set.t -> unit) -> 'a Fut.t -> 'a Fut.t
+
   (** Link two futures together. If one is aborted or fails the other one will be aborted or failed.
   *)
   val link : 'a Fut.t -> 'b Fut.t -> unit
@@ -138,6 +144,18 @@ module Make (Fut : Abb_intf.Future.S) : sig
       exception is raised, catch the exception and return a failed future. *)
   val guard : (unit -> 'a Fut.t) -> 'a Fut.t
 
+  (** [when_ b f] runs [f ()] if [b] is [true], otherwise returns a future determined to [()].
+      Equivalent to Haskell's
+      {{:https://hackage.haskell.org/package/base/docs/Control-Monad.html#v:when}
+       [Control.Monad.when]}. *)
+  val when_ : bool -> (unit -> unit Fut.t) -> unit Fut.t
+
+  (** [when_m mb f] runs [f ()] if [mb] determines to [true], otherwise returns a future determined
+      to [()]. Equivalent to Haskell's
+      {{:https://hackage-content.haskell.org/package/extra-1.8.1/docs/Control-Monad-Extra.html#v:whenM}
+       [whenM]}. *)
+  val when_m : bool Fut.t -> (unit -> unit Fut.t) -> unit Fut.t
+
   module List : sig
     (** Map a list in serial *)
     val map : f:('a -> 'b Fut.t) -> 'a list -> 'b list Fut.t
@@ -174,6 +192,18 @@ module Make (Fut : Abb_intf.Future.S) : sig
 
     val ( >>= ) : ('a, 'c) t -> ('a -> ('b, 'c) t) -> ('b, 'c) t
     val ( >>| ) : ('a, 'c) t -> ('a -> 'b) -> ('b, 'c) t
+
+    (** [when_ b f] runs [f ()] if [b] is [true], otherwise returns a future determined to [Ok ()].
+        Equivalent to Haskell's
+        {{:https://hackage.haskell.org/package/base/docs/Control-Monad.html#v:when}
+         [Control.Monad.when]}. *)
+    val when_ : bool -> (unit -> (unit, 'c) t) -> (unit, 'c) t
+
+    (** [when_m mb f] runs [f ()] if [mb] determines to [Ok true], otherwise returns a future
+        determined to [Ok ()] (or propagates the [Error]). Equivalent to Haskell's
+        {{:https://hackage-content.haskell.org/package/extra-1.8.1/docs/Control-Monad-Extra.html#v:whenM}
+         [whenM]}. *)
+    val when_m : (bool, 'c) t -> (unit -> (unit, 'c) t) -> (unit, 'c) t
   end
 
   (** Applicative for result types. Execute all futures and execute the given function or return the

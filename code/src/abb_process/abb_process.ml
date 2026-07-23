@@ -12,7 +12,7 @@ type check_output_err =
   ]
 [@@deriving show]
 
-let args program args = Abb_intf.Process.{ exec_name = program; args = program :: args; env = None }
+let args ?env program args = Abb_intf.Process.{ exec_name = program; args = program :: args; env }
 
 module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
   module Fut_comb = Abb_future_combinators.Make (Abb.Future)

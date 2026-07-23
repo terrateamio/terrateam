@@ -2,7 +2,6 @@ module Fc = Abbs_future_combinators
 module Irm = Abbs_future_combinators.Infix_result_monad
 module Tjc = Terrat_job_context
 module Msg = Terrat_vcs_provider2.Msg
-module P2 = Terrat_vcs_provider2
 
 module Make
     (S : Terrat_vcs_provider2.S)
@@ -11,15 +10,12 @@ struct
   let src = Logs.Src.create ("vcs_event_evaluator2_tasks." ^ S.name)
 
   module Logs = (val Logs.src_log src : Logs.LOG)
-  module Wm_sm = Terrat_vcs_event_evaluator2_wm_sm.Make (S) (Keys)
   module Repo_tree_wm = Terrat_vcs_event_evaluator2_wm_sm_repo_tree.Make (S) (Keys)
   module Build_config_wm = Terrat_vcs_event_evaluator2_wm_sm_build_config.Make (S) (Keys)
   module Indexer_wm = Terrat_vcs_event_evaluator2_wm_sm_indexer.Make (S) (Keys)
   module Tf_op_wm = Terrat_vcs_event_evaluator2_wm_sm_tf_op.Make (S) (Keys)
-  module Access_control = Terrat_vcs_event_evaluator2_access_control.Make (S) (Keys)
   module Hmap = Keys.Hmap
   module Builder = Terrat_vcs_event_evaluator2_builder.Make (S)
-  module B = Builder.B
   module Bs = Builder.Bs
   module Tasks_base = Terrat_vcs_event_evaluator2_tasks_base.Make (S) (Keys)
   module Tasks_pr = Terrat_vcs_event_evaluator2_tasks_pr.Make (S) (Keys)
@@ -773,7 +769,6 @@ struct
 
     let repo_tree_branch_wm_completed =
       run ~name:"repo_tree_branch_wm_completed" (fun s ({ Bs.Fetcher.fetch } as fetcher) ->
-          let module Wm = Terrat_work_manifest3 in
           let open Irm in
           fetch Keys.dest_branch_ref
           >>= fun dest_branch_ref ->
@@ -826,7 +821,6 @@ struct
 
     let built_repo_config_branch_wm_completed =
       run ~name:"built_repo_config_branch_wm_completed" (fun s ({ Bs.Fetcher.fetch } as fetcher) ->
-          let module Wm = Terrat_work_manifest3 in
           let open Irm in
           (* Ensure the tree is accessible, building if necessary *)
           fetch Keys.repo_tree_branch
@@ -1006,7 +1000,6 @@ struct
 
     let repo_tree_dest_branch_wm_completed =
       run ~name:"repo_tree_dest_branch_wm_completed" (fun s ({ Bs.Fetcher.fetch } as fetcher) ->
-          let module Wm = Terrat_work_manifest3 in
           let open Irm in
           fetch Keys.dest_branch_ref
           >>= fun dest_branch_ref ->
@@ -1052,7 +1045,6 @@ struct
       run
         ~name:"built_repo_config_dest_branch_wm_completed"
         (fun s ({ Bs.Fetcher.fetch } as fetcher) ->
-          let module Wm = Terrat_work_manifest3 in
           let open Irm in
           (* Ensure the tree is accessible, building if necessary *)
           fetch Keys.repo_tree_dest_branch
@@ -2273,7 +2265,6 @@ struct
 
     let maybe_complete_job_from_work_manifest_event =
       run ~name:"maybe_complete_job_from_work_manifest_event" (fun s { Bs.Fetcher.fetch } ->
-          let module Wm = Terrat_work_manifest3 in
           let open Irm in
           fetch Keys.work_manifest_event
           >>= function
@@ -2624,7 +2615,6 @@ struct
 
     let eval_work_manifest_event =
       run ~name:"eval_work_manifest_event" (fun s { Bs.Fetcher.fetch } ->
-          let module Wm = Terrat_work_manifest3 in
           let open Irm in
           fetch Keys.work_manifest_event
           >>= function
@@ -3294,8 +3284,6 @@ struct
     let complete_no_change_dirspaces =
       run ~name:"complete_no_change_dirspaces" (fun s { Bs.Fetcher.fetch } ->
           let module Wm = Terrat_work_manifest3 in
-          let module Ds = Terrat_dirspace in
-          let module Dsf = Terrat_change.Dirspaceflow in
           let module Dc = Terrat_change_match3.Dirspace_config in
           let open Irm in
           fetch Keys.work_manifests_for_job

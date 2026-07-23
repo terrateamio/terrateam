@@ -454,7 +454,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
   let perform options headers meth_ uri =
     let handle = Curl.init () in
     try
-      Logs.debug (fun m -> Curl.set_verbose handle true);
+      Logs.debug (fun _ -> Curl.set_verbose handle true);
       CCList.iter
         (function
           | Options.Follow_location -> Curl.set_followlocation handle true

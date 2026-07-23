@@ -2,7 +2,7 @@ let src = Logs.Src.create "infracost"
 
 module Logs = (val Logs.src_log src : Logs.LOG)
 module Http = Cohttp_abb.Make (Abb)
-module Exec = Abb_keyed_concurrent_executor.Make (Abb.Future) (CCString)
+module Exec = Abb_keyed_concurrent_executor.Make (Abb) (CCString)
 
 module Metrics = struct
   module DefaultHistogram = Prmths.Histogram (struct

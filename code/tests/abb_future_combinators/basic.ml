@@ -1,13 +1,16 @@
 module Fut = Abb_fut.Make (struct
+  type data = unit
+
+  let zero_data = ()
+
   type t = unit
 end)
 
 module Fut_comb = Abb_future_combinators.Make (Fut)
 
-let dummy_state = Abb_fut.State.create ()
-
 let first1 =
   Oth.test ~desc:"first returns determined future" ~name:"first with one determined" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let p1 = Fut.Promise.create () in
       let p2 = Fut.Promise.create () in
       let res = Fut_comb.first (Fut.Promise.future p1) (Fut.Promise.future p2) in
@@ -21,6 +24,7 @@ let first1 =
 
 let first2 =
   Oth.test ~desc:"first returns determined future" ~name:"first with both determined" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let p1 = Fut.Promise.create () in
       let p2 = Fut.Promise.create () in
       let res = Fut_comb.first (Fut.Promise.future p1) (Fut.Promise.future p2) in
@@ -37,6 +41,7 @@ let first2 =
 
 let first3 =
   Oth.test ~desc:"Abort aborts the whole thing" ~name:"Abort first" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let p1 = Fut.Promise.create () in
       let p2 = Fut.Promise.create () in
       let res = Fut_comb.first (Fut.Promise.future p1) (Fut.Promise.future p2) in
@@ -48,6 +53,7 @@ let first3 =
 
 let firstl1 =
   Oth.test ~desc:"firstl returns determined future" ~name:"firstl with one determined" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let p1 = Fut.Promise.create () in
       let p2 = Fut.Promise.create () in
       let res = Fut_comb.firstl [ Fut.Promise.future p1; Fut.Promise.future p2 ] in
@@ -62,6 +68,7 @@ let firstl1 =
 
 let firstl2 =
   Oth.test ~desc:"firstl returns determined future" ~name:"firstl with both determined" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let p1 = Fut.Promise.create () in
       let p2 = Fut.Promise.create () in
       let res = Fut_comb.firstl [ Fut.Promise.future p1; Fut.Promise.future p2 ] in
@@ -79,6 +86,7 @@ let firstl2 =
 
 let firstl3 =
   Oth.test ~desc:"Abort aborts the whole thing" ~name:"Abort firstl" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let p1 = Fut.Promise.create () in
       let p2 = Fut.Promise.create () in
       let res = Fut_comb.firstl [ Fut.Promise.future p1; Fut.Promise.future p2 ] in
@@ -90,6 +98,7 @@ let firstl3 =
 
 let map1 =
   Oth.test ~desc:"Simple map test" ~name:"Simple map" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let vs = [ 1; 2; 3 ] in
       let fut = Fut_comb.List.map ~f:Fut.return vs in
       ignore (Fut.run_with_state fut dummy_state);
@@ -97,6 +106,7 @@ let map1 =
 
 let map2 =
   Oth.test ~desc:"Simple map test" ~name:"Simple map" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let vs = [ 1; 2; 3 ] in
       let fut = Fut_comb.List.map ~f:Fut.return vs in
       ignore (Fut.run_with_state fut dummy_state);
@@ -107,6 +117,7 @@ let firstl4 =
     ~desc:"Aborting one of the inputs aborts the whole thing"
     ~name:"Abort firstl input"
     (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let p1 = Fut.Promise.create () in
       let p2 = Fut.Promise.create () in
       let res = Fut_comb.firstl [ Fut.Promise.future p1; Fut.Promise.future p2 ] in
@@ -121,6 +132,7 @@ let first4 =
     ~desc:"Aborting one of the inputs aborts the whole thing"
     ~name:"Abort first input"
     (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let p1 = Fut.Promise.create () in
       let p2 = Fut.Promise.create () in
       let res = Fut_comb.first (Fut.Promise.future p1) (Fut.Promise.future p2) in
@@ -132,6 +144,7 @@ let first4 =
 
 let with_finally_success =
   Oth.test ~desc:"Test the finally block is run on success" ~name:"with_finally success" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let finally_exec = ref 0 in
       let p = Fut.Promise.create () in
       let fut =
@@ -149,6 +162,7 @@ let with_finally_success =
 
 let with_finally_aborted =
   Oth.test ~desc:"Test the finally block is run on abort" ~name:"with_finally aborted" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let finally_exec = ref 0 in
       let p = Fut.Promise.create () in
       let fut =
@@ -169,6 +183,7 @@ let with_finally_aborted_complete =
     ~desc:"Test the finally block finishes before next step"
     ~name:"with_finally aborted complete"
     (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let finally_exec = ref 0 in
       let next_step_finally_count = ref 0 in
       let trigger_finally_step = Fut.Promise.create () in
@@ -199,6 +214,7 @@ let with_finally_exn =
     ~desc:"Test the finally block is run on a fut determining to an exn"
     ~name:"with_finally exn"
     (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let finally_exec = ref 0 in
       let p = Fut.Promise.create () in
       let fut =
@@ -221,6 +237,7 @@ let with_finally_raise =
     ~desc:"Test the finally block is run on raising in the function"
     ~name:"with_finally raise"
     (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let finally_exec = ref 0 in
       let fut =
         Fut_comb.with_finally
@@ -241,6 +258,7 @@ let with_finally_exn_in_finally =
     ~desc:"Test the finally block where the finally throws an exception"
     ~name:"with_finally exn in finally"
     (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let fut =
         Fut_comb.with_finally (fun () -> Fut.return ()) ~finally:(fun () -> failwith "finally")
       in
@@ -259,6 +277,7 @@ let with_finally_exn_in_body_and_finally =
     ~desc:"Test the finally block where the body and finally throws an exception"
     ~name:"with_finally exn in body and finally"
     (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let fut =
         Fut_comb.with_finally (fun () -> failwith "body") ~finally:(fun () -> failwith "finally")
       in
@@ -277,6 +296,7 @@ let with_finally_aborted_from_outside =
     ~desc:"Test the finally block is run on abort from the outside"
     ~name:"with_finally aborted outside"
     (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let finally_exec = ref 0 in
       let p = Fut.Promise.create () in
       let fut =
@@ -295,6 +315,7 @@ let with_finally_aborted_from_outside =
 
 let with_finally_nested_raise =
   Oth.test ~name:"with_finally nested raise" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let inner_first = ref false in
       let inner_finally = ref false in
       let outer_finally = ref false in
@@ -321,6 +342,7 @@ let with_finally_nested_raise =
 
 let with_finally_nested_abort =
   Oth.test ~name:"with_finally nested abort" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let inner_first = ref false in
       let inner_finally = ref false in
       let outer_finally = ref false in
@@ -348,6 +370,7 @@ let with_finally_nested_abort =
 
 let with_finally_nested_abort_outside =
   Oth.test ~name:"with_finally nested abort outside" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let inner_first = ref false in
       let inner_finally = ref false in
       let outer_finally = ref false in
@@ -375,6 +398,7 @@ let with_finally_nested_abort_outside =
 
 let with_finally_nested_abort_sequenced =
   Oth.test ~name:"with_finally nested abort sequenced" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let inner_first = ref false in
       let inner_finally = ref false in
       let outer_finally = ref false in
@@ -408,6 +432,7 @@ let with_finally_nested_abort_sequenced =
 
 let with_finally_nested_exn_sequenced =
   Oth.test ~name:"with_finally nested exn sequenced" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let inner_first = ref false in
       let inner_finally = ref false in
       let outer_finally = ref false in
@@ -458,6 +483,7 @@ let with_finally_nested_exn_sequenced =
 
 let on_failure_success =
   Oth.test ~desc:"Test the failure block is not run on success" ~name:"on_failure success" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let failure_exec = ref 0 in
       let p = Fut.Promise.create () in
       let fut =
@@ -474,6 +500,7 @@ let on_failure_success =
 
 let on_failure_aborted =
   Oth.test ~desc:"Test the failure block is run on abort" ~name:"on_failure aborted" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let failure_exec = ref 0 in
       let p = Fut.Promise.create () in
       let fut =
@@ -494,6 +521,7 @@ let on_failure_aborted_from_outside =
     ~desc:"Test the failure block is run on abort from the outside"
     ~name:"on_failure aborted outside"
     (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let failure_exec = ref 0 in
       let p = Fut.Promise.create () in
       let fut =
@@ -515,6 +543,7 @@ let on_failure_exn =
     ~desc:"Test the failure block is run on a fut determining to an exn"
     ~name:"on_failure exn"
     (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let failure_exec = ref 0 in
       let p = Fut.Promise.create () in
       let fut =
@@ -537,6 +566,7 @@ let on_failure_raise =
     ~desc:"Test the failure block is run on raising in the function"
     ~name:"on_failure raise"
     (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let failure_exec = ref 0 in
       let fut =
         Fut_comb.on_failure
@@ -554,6 +584,7 @@ let on_failure_raise =
 
 let timeout_timeout =
   Oth.test ~desc:"Test timeout when the timeout function fires" ~name:"timeout timeout" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let timeout = Fut.Promise.create () in
       let call = Fut.Promise.create () in
       let wait = Fut_comb.timeout ~timeout:(Fut.Promise.future timeout) (Fut.Promise.future call) in
@@ -565,6 +596,7 @@ let timeout_timeout =
 
 let timeout_success =
   Oth.test ~desc:"Test timeout when the operation succeeds" ~name:"timeout success" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let timeout = Fut.Promise.create () in
       let call = Fut.Promise.create () in
       let wait = Fut_comb.timeout ~timeout:(Fut.Promise.future timeout) (Fut.Promise.future call) in
@@ -576,6 +608,7 @@ let timeout_success =
 
 let protect_test =
   Oth.test ~name:"protect" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let protected = Fut.Promise.create () in
       let trigger = Fut.Promise.create () in
       let fut =
@@ -592,6 +625,7 @@ let protect_test =
 
 let protect_fork_finally_abort_in_protect_test =
   Oth.test ~name:"protect fork_finally pattern abort in protect" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let hit_finally = ref false in
       let protected = Fut.Promise.create () in
       let trigger1 = Fut.Promise.create () in
@@ -620,6 +654,7 @@ let protect_fork_finally_abort_in_protect_test =
 
 let protect_fork_finally_abort_in_finally_test =
   Oth.test ~name:"protect fork_finally pattern abort in finally" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let hit_finally = ref false in
       let protected = Fut.Promise.create () in
       let trigger1 = Fut.Promise.create () in
@@ -649,6 +684,7 @@ let protect_fork_finally_abort_in_finally_test =
 
 let protect_fork_finally_abort_in_on_failure_test =
   Oth.test ~name:"protect fork_on_failure pattern abort in on_failure" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let hit_failure = ref false in
       let protected = Fut.Promise.create () in
       let trigger1 = Fut.Promise.create () in
@@ -678,6 +714,7 @@ let protect_fork_finally_abort_in_on_failure_test =
 
 let protect_finally_abort_in_protect_test =
   Oth.test ~name:"protect_finally abort in protect" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let hit_finally = ref false in
       let protected = Fut.Promise.create () in
       let trigger1 = Fut.Promise.create () in
@@ -703,6 +740,7 @@ let protect_finally_abort_in_protect_test =
 
 let protect_finally_abort_in_body_test =
   Oth.test ~name:"protect_finally abort in body" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let hit_finally = ref false in
       let protected = Fut.Promise.create () in
       let trigger1 = Fut.Promise.create () in
@@ -728,6 +766,7 @@ let protect_finally_abort_in_body_test =
 
 let protect_finally_exn_in_body_test =
   Oth.test ~name:"protect_finally exn in body" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let hit_finally = ref false in
       let trigger1 = Fut.Promise.create () in
       let trigger2 = Fut.Promise.create () in
@@ -753,6 +792,7 @@ let protect_finally_exn_in_body_test =
 
 let protect_finally_abort_in_finally_test =
   Oth.test ~name:"protect_finally abort in finally" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let hit_finally = ref false in
       let protected = Fut.Promise.create () in
       let trigger1 = Fut.Promise.create () in
@@ -782,6 +822,7 @@ let protect_finally_abort_in_finally_test =
 
 let protect_finally_success_test =
   Oth.test ~name:"protect_finally success" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
       let hit_finally = ref false in
       let protected = Fut.Promise.create () in
       let trigger1 = Fut.Promise.create () in
@@ -803,6 +844,101 @@ let protect_finally_success_test =
       assert (Fut.state (Fut.Promise.future protected) = `Det ());
       assert (Fut.state fut = `Det ());
       assert !hit_finally)
+
+let tap_det =
+  Oth.test ~desc:"tap observes and propagates a determined value" ~name:"tap det" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
+      let observed = ref None in
+      let p = Fut.Promise.create () in
+      let fut =
+        Fut_comb.tap
+          (function
+            | `Det v -> observed := Some v
+            | `Exn _ | `Aborted -> assert false)
+          (Fut.Promise.future p)
+      in
+      ignore (Fut.run_with_state fut dummy_state);
+      assert (Fut.state fut = `Undet);
+      ignore (Fut.run_with_state (Fut.Promise.set p 42) dummy_state);
+      assert (!observed = Some 42);
+      assert (Fut.state fut = `Det 42))
+
+let tap_det_error =
+  Oth.test
+    ~desc:"tap propagates a determined value unchanged regardless of its contents"
+    ~name:"tap det error"
+    (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
+      let observed = ref false in
+      let p = Fut.Promise.create () in
+      let fut =
+        Fut_comb.tap
+          (function
+            | `Det (Error `Boom) -> observed := true
+            | `Det (Ok _) | `Exn _ | `Aborted -> assert false)
+          (Fut.Promise.future p)
+      in
+      ignore (Fut.run_with_state fut dummy_state);
+      ignore (Fut.run_with_state (Fut.Promise.set p (Error `Boom)) dummy_state);
+      assert !observed;
+      assert (Fut.state fut = `Det (Error `Boom)))
+
+let tap_exn =
+  Oth.test ~desc:"tap observes and propagates an exception" ~name:"tap exn" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
+      let observed = ref false in
+      let p = Fut.Promise.create () in
+      let fut =
+        Fut_comb.tap
+          (function
+            | `Exn (Failure _, _) -> observed := true
+            | `Exn _ | `Det _ | `Aborted -> assert false)
+          (Fut.Promise.future p)
+      in
+      ignore (Fut.run_with_state fut dummy_state);
+      ignore (Fut.run_with_state (Fut.Promise.set_exn p (Failure "boom", None)) dummy_state);
+      assert !observed;
+      match Fut.state fut with
+      | `Exn (Failure _, None) -> ()
+      | _ -> assert false)
+
+let tap_aborted =
+  Oth.test ~desc:"tap observes and propagates an abort of the input" ~name:"tap aborted" (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
+      let observed = ref false in
+      let p = Fut.Promise.create () in
+      let fut =
+        Fut_comb.tap
+          (function
+            | `Aborted -> observed := true
+            | `Det _ | `Exn _ -> assert false)
+          (Fut.Promise.future p)
+      in
+      ignore (Fut.run_with_state fut dummy_state);
+      ignore (Fut.run_with_state (Fut.abort (Fut.Promise.future p)) dummy_state);
+      assert !observed;
+      assert (Fut.state fut = `Aborted))
+
+let tap_aborted_from_outside =
+  Oth.test
+    ~desc:"aborting the tapped future propagates the abort down to the input"
+    ~name:"tap aborted outside"
+    (fun _ ->
+      let dummy_state = Abb_fut.State.create () in
+      let observed = ref false in
+      let p = Fut.Promise.create () in
+      let fut =
+        Fut_comb.tap
+          (function
+            | `Aborted -> observed := true
+            | `Det _ | `Exn _ -> assert false)
+          (Fut.Promise.future p)
+      in
+      ignore (Fut.run_with_state fut dummy_state);
+      ignore (Fut.run_with_state (Fut.abort fut) dummy_state);
+      assert !observed;
+      assert (Fut.state fut = `Aborted);
+      assert (Fut.state (Fut.Promise.future p) = `Aborted))
 
 let () =
   Oth.(
@@ -849,4 +985,9 @@ let () =
            protect_finally_exn_in_body_test;
            protect_fork_finally_abort_in_finally_test;
            protect_finally_success_test;
+           tap_det;
+           tap_det_error;
+           tap_exn;
+           tap_aborted;
+           tap_aborted_from_outside;
          ]))

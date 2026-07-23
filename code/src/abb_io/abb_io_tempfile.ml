@@ -3,12 +3,13 @@ let num_tries = 1000
 module Make (Abb : Abb_intf.S) = struct
   module Fut_comb = Abb_future_combinators.Make (Abb.Future)
 
-  let with_filename ?temp_dir ~prefix ~suffix f =
+  let with_filename ?temp_dir ?(keep_if = fun () -> false) ~prefix ~suffix f =
     try
       let fname = Filename.temp_file ?temp_dir prefix suffix in
       Fut_comb.with_finally
         (fun () -> f fname)
-        ~finally:(fun () -> Fut_comb.ignore (Abb.File.unlink fname))
+        ~finally:(fun () ->
+          if keep_if () then Abb.Future.return () else Fut_comb.ignore (Abb.File.unlink fname))
     with Sys_error str -> Abb.Future.return (Error (`Temp_file_error str))
 
   let rec rm_rf dir_name =
@@ -41,7 +42,7 @@ module Make (Abb : Abb_intf.S) = struct
     let rnd = Random.int 999999 in
     Filename.concat temp_dir (Printf.sprintf "%s%06x%s" prefix rnd suffix)
 
-  let with_dirname ?temp_dir ~prefix ~suffix f =
+  let with_dirname ?temp_dir ?(keep_if = fun () -> false) ~prefix ~suffix f =
     let temp_dir = CCOption.get_or ~default:(Filename.get_temp_dir_name ()) temp_dir in
     let rec try_create = function
       | 0 -> Abb.Future.return (Error `Temp_dir_error)
@@ -53,7 +54,8 @@ module Make (Abb : Abb_intf.S) = struct
           | Ok () ->
               Fut_comb.with_finally
                 (fun () -> f dir_name)
-                ~finally:(fun () -> Fut_comb.ignore (rm_rf dir_name))
+                ~finally:(fun () ->
+                  if keep_if () then Abb.Future.return () else Fut_comb.ignore (rm_rf dir_name))
           | Error `E_exists | Error `E_is_dir -> try_create (n - 1)
           | Error `E_not_dir
           | Error `E_loop

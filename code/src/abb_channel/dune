@@ -1,4 +1,0 @@
-(library
- (name abb_channel)
- (wrapped false)
- (libraries abb_intf abb_future_combinators))

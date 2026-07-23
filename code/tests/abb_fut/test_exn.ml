@@ -1,4 +1,8 @@
 module Fut = Abb_fut.Make (struct
+  type data = unit
+
+  let zero_data = ()
+
   type t = unit
 end)
 
@@ -15,7 +19,7 @@ let test1 =
       let fut1 = Fut.Promise.future p1 in
       let fut2 =
         fut1
-        >>| fun v ->
+        >>| fun _ ->
         raising := true;
         raise Foo
       in
@@ -41,7 +45,7 @@ let test2 =
         raise Foo
       in
       let both v1 v2 = (v1, v2) in
-      let fut3 = both <$> fut1 <*> fut2 >>| fun (v1, v2) -> executed_anyways := true in
+      let fut3 = both <$> fut1 <*> fut2 >>| fun (_v1, _v2) -> executed_anyways := true in
       ignore (Fut.run_with_state fut3 state);
       ignore (Fut.run_with_state (Fut.Promise.set p1 ()) state);
       assert !raising;
@@ -68,7 +72,7 @@ let test3 =
         raise Foo
       in
       let both v1 v2 = (v1, v2) in
-      let fut3 = both <$> fut1 <*> fut2 >>| fun (v1, v2) -> executed_anyways := true in
+      let fut3 = both <$> fut1 <*> fut2 >>| fun (_v1, _v2) -> executed_anyways := true in
       let fut4 = Fut.await fut3 in
       ignore (Fut.run_with_state fut4 state);
       ignore (Fut.run_with_state (Fut.Promise.set p1 ()) state);
@@ -102,7 +106,7 @@ let test4 =
         raise Foo
       in
       let both v1 v2 = (v1, v2) in
-      let fut3 = both <$> fut1 <*> fut2 >>| fun (v1, v2) -> executed_anyways := true in
+      let fut3 = both <$> fut1 <*> fut2 >>| fun (_v1, _v2) -> executed_anyways := true in
       let fut4 = Fut.await fut3 in
       ignore (Fut.run_with_state fut4 state);
       ignore (Fut.run_with_state (Fut.Promise.set_exn p1 (Foo, None)) state);
@@ -137,7 +141,7 @@ let test5 =
         raise Foo
       in
       let both v1 v2 = (v1, v2) in
-      let fut4 = both <$> fut1 <*> fut3 >>| fun (v1, v2) -> executed_anyways := true in
+      let fut4 = both <$> fut1 <*> fut3 >>| fun (_v1, _v2) -> executed_anyways := true in
       let fut4 = Fut.await fut4 in
       ignore (Fut.run_with_state fut4 state);
       ignore (Fut.run_with_state (Fut.Promise.set p2 ()) state);

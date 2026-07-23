@@ -7,9 +7,5 @@
   abb_time
   containers
   containers-data)
- (ocamlopt_flags
-  (:standard -w -67))
- (ocamlc_flags
-  (:standard -w -67))
  (preprocess
   (pps ppx_deriving.ord)))
