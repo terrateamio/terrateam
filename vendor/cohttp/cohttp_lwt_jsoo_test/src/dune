@@ -1,0 +1,15 @@
+(executable
+ (name cohttp_lwt_jsoo_test)
+ (modes js)
+ (libraries cohttp cohttp-lwt cohttp-lwt-jsoo lwt js_of_ocaml-lwt)
+ (preprocess
+  (pps lwt_ppx js_of_ocaml-ppx)))
+
+(rule
+ (alias runjstest)
+ (deps test.js cohttp_lwt_jsoo_test.bc.js)
+ (action
+  (setenv
+   NODE_PATH
+   "%{project_root}/cohttp_lwt_jsoo_test/node_modules"
+   (run ./test.js))))

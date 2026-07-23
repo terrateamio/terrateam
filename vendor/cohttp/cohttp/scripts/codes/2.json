@@ -1,0 +1,200 @@
+{
+    "class":{
+        "title":"Success",
+        "class":"2"
+    },
+    "codes":{
+        "200":{
+            "code":"200",
+            "title":"OK",
+            "summary":"standard response for successful HTTP requests",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"Standard response for successful HTTP requests. The actual response will depend on the request method used. In a GET request, the response will contain an entity corresponding to the requested resource. In a POST request the response will contain an entity describing or containing the result of the action.",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#200"
+                },
+                "ietf":{
+                    "body":"The request has succeeded. The information returned with the response is dependent on the method used in the request, for example: GET an entity corresponding to the requested resource is sent in the response; HEAD the entity-header fields corresponding to the requested resource are sent in the response without any message-body; POST an entity describing or containing the result of the action;",
+                    "link":"http:\/\/www.ietf.org\/rfc\/rfc2616.txt"
+                }
+            },
+            "references":{
+                "rails":{
+                    "title":"Rails HTTP Status Symbol",
+                    "value":":ok"
+                }
+            }
+        },
+        "201":{
+            "code":"201",
+            "title":"Created",
+            "summary":"request has been fulfilled;  new resource created",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"The request has been fulfilled and resulted in a new resource being created.",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#201"
+                },
+                "ietf":{
+                    "body":"The request has been fulfilled and resulted in a new resource being created. The newly created resource can be referenced by the URI(s) returned in the entity of the response, with the most specific URI for the resource given by a Location header field. The response SHOULD include an entity containing a list of resource characteristics and location(s) from which the user or user agent can choose the one most appropriate. The entity format is specified by the media type given in the Content-Type header field. The origin server MUST create the resource before returning the 201 status code. If the action cannot be carried out immediately, the server SHOULD respond with 202 (Accepted) response instead.\r\n A 201 response MAY contain an ETag response header field indicating the current value of the entity tag for the requested variant just created.",
+                    "link":"http:\/\/www.ietf.org\/rfc\/rfc2616.txt"
+                }
+            },
+            "references":{
+                "rails":{
+                    "title":"Rails HTTP Status Symbol",
+                    "value":":created"
+                }
+            }
+        },
+        "202":{
+            "code":"202",
+            "title":"Accepted",
+            "summary":"request accepted, processing pending",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"The request has been accepted for processing, but the processing has not been completed. The request might or might not eventually be acted upon, as it might be disallowed when processing actually takes place.[2]",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#202"
+                },
+                "ietf":{
+                    "body":"The request has been accepted for processing, but the processing has not been completed. The request might or might not eventually be acted upon, as it might be disallowed when processing actually takes place. There is no facility for re-sending a status code from an asynchronous operation such as this. \r\nThe 202 response is intentionally non-committal. Its purpose is to allow a server to accept a request for some other process (perhaps a batch-oriented process that is only run once per day) without requiring that the user agent's connection to the server persist until the process is completed. The entity returned with this response SHOULD include an indication of the request's current status and either a pointer to a status monitor or some estimate of when the user can expect the request to be fulfilled.",
+                    "link":"http:\/\/www.ietf.org\/rfc\/rfc2616.txt"
+                }
+            },
+            "references":{
+                "rails":{
+                    "title":"Rails HTTP Status Symbol",
+                    "value":":accepted"
+                }
+            }
+        },
+        "203":{
+            "code":"203",
+            "title":"Non-Authoritative Information (since HTTP\/1.1)",
+            "summary":"request processed, information may be from another source",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"The server successfully processed the request, but is returning information that may be from another source.",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#203"
+                },
+                "ietf":{
+                    "body":"The returned metainformation in the entity-header is not the definitive set as available from the origin server, but is gathered from a local or a third-party copy. The set presented MAY be a subset or superset of the original version. For example, including local annotation information about the resource might result in a superset of the metainformation known by the origin server. Use of this response code is not required and is only appropriate when the response would otherwise be 200 (OK).",
+                    "link":"http:\/\/www.ietf.org\/rfc\/rfc2616.txt"
+                }
+            },
+            "references":{
+                "rails":{
+                    "title":"Rails HTTP Status Symbol",
+                    "value":":non_authoritative_information"
+                }
+            }
+        },
+        "204":{
+            "code":"204",
+            "title":"No Content",
+            "summary":"request processed, no content returned",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"The server successfully processed the request, but is not returning any content.",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#204"
+                },
+                "ietf":{
+                    "body":"The server has fulfilled the request but does not need to return an entity-body, and might want to return updated metainformation. The response MAY include new or updated metainformation in the form of entity-headers, which if present SHOULD be associated with the requested variant.\r\nIf the client is a user agent, it SHOULD NOT change its document view from that which caused the request to be sent. This response is primarily intended to allow input for actions to take place without causing a change to the user agent's active document view, although any new or updated metainformation SHOULD be applied to the document currently in the user agent's active view.\r\nThe 204 response MUST NOT include a message-body, and thus is always terminated by the first empty line after the header fields.",
+                    "link":"http:\/\/www.ietf.org\/rfc\/rfc2616.txt"
+                }
+            },
+            "references":{
+                "rails":{
+                    "title":"Rails HTTP Status Symbol",
+                    "value":":no_content"
+                }
+            }
+        },
+        "205":{
+            "code":"205",
+            "title":"Reset Content",
+            "summary":"request processed, no content returned, reset document view",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"The server successfully processed the request, but is not returning any content. Unlike a 204 response, this response requires that the requester reset the document view.",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#205"
+                },
+                "ietf":{
+                    "body":"The server has fulfilled the request and the user agent SHOULD reset the document view which caused the request to be sent. This response is primarily intended to allow input for actions to take place via user input, followed by a clearing of the form in which the input is given so that the user can easily initiate another input action. The response MUST NOT include an entity.",
+                    "link":"http:\/\/www.ietf.org\/rfc\/rfc2616.txt"
+                }
+            },
+            "references":{
+                "rails":{
+                    "title":"Rails HTTP Status Symbol",
+                    "value":":reset_content"
+                }
+            }
+        },
+        "206":{
+            "code":"206",
+            "title":"Partial Content",
+            "summary":"partial resource return due to request header",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"The server is delivering only part of the resource due to a range header sent by the client. The range header is used by tools like wget to enable resuming of interrupted downloads, or split a download into multiple simultaneous streams.",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#206"
+                },
+                "ietf":{
+                    "body":"The server has fulfilled the partial GET request for the resource. The request MUST have included a Range header field indicating the desired range, and MAY have included an If-Range header field to make the request conditional.\r\nThe response MUST include the following header fields:\r\nEither a Content-Range header field (section 14.16) indicating the range included with this response, or a multipart\/byteranges Content-Type including Content-Range fields for each part. If a Content-Length header field is present in the response, its value MUST match the actual number of OCTETs transmitted in the message-body.\r\nDate\r\nETag and\/or Content-Location, if the header would have been sent in a 200 response to the same request\r\nExpires, Cache-Control, and\/or Vary, if the field-value might differ from that sent in any previous response for the same variant\r\nIf the 206 response is the result of an If-Range request that used a strong cache validator, the response SHOULD NOT include other entity-headers. If the response is the result of an If-Range request that used a weak validator, the response MUST NOT include other entity-headers; this prevents inconsistencies between cached entity-bodies and updated headers. Otherwise, the response MUST include all of the entity-headers that would have been returned with a 200 (OK) response to the same request.\r\nA cache MUST NOT combine a 206 response with other previously cached content if the ETag or Last-Modified headers do not match exactly.\r\nA cache that does not support the Range and Content-Range headers MUST NOT cache 206 (Partial) responses.",
+                    "link":"http:\/\/www.ietf.org\/rfc\/rfc2616.txt"
+                }
+            },
+            "references":{
+                "rails":{
+                    "title":"Rails HTTP Status Symbol",
+                    "value":":partial_content"
+                }
+            }
+        },
+        "207":{
+            "code":"207",
+            "title":"Multi-Status (WebDAV) (RFC 4918)",
+            "summary":"XML, can contain multiple separate responses",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"The message body that follows is an XML message and can contain a number of separate response codes, depending on how many sub-requests were made.",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#207"
+                }
+            },
+            "references":{
+                "rails":{
+                    "title":"Rails HTTP Status Symbol",
+                    "value":":multi_status"
+                }
+            }
+        },
+        "208":{
+            "code":"208",
+            "title":"Already Reported (WebDAV) (RFC 5842)",
+            "summary":"results previously returned ",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"The members of a DAV binding have already been enumerated in a previous reply to this request, and are not being included again.",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#208"
+                }
+            }
+        },
+        "226":{
+            "code":"226",
+            "title":"IM Used (RFC 3229)",
+            "summary":"request fulfilled, reponse is instance-manipulations",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"The server has fulfilled a GET request for the resource, and the response is a representation of the result of one or more instance-manipulations applied to the current instance.",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#226"
+                }
+            },
+            "references":{
+                "rails":{
+                    "title":"Rails HTTP Status Symbol",
+                    "value":":im_used"
+                }
+            }
+        }
+    }
+}

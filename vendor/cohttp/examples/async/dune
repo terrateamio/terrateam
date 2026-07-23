@@ -1,0 +1,8 @@
+(executables
+ (names hello_world receive_post s3_cp)
+ (libraries mirage-crypto cohttp-async base async_kernel core_unix.command_unix))
+
+(alias
+ (name runtest)
+ (package cohttp-async)
+ (deps hello_world.exe receive_post.exe))

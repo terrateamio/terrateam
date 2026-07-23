@@ -1,0 +1,6 @@
+.*.swp
+_build/
+*.install
+.merlin
+_opam/
+node_modules

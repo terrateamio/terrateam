@@ -1,0 +1,8 @@
+(library
+ (name cohttp_async)
+ (synopsis "Async backend")
+ (public_name cohttp-async)
+ (libraries logs.fmt base fmt async_unix async_kernel uri uri.services
+   uri-sexp ipaddr.unix conduit-async magic-mime cohttp)
+ (preprocess
+  (pps ppx_sexp_conv)))

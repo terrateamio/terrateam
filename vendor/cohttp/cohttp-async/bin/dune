@@ -1,0 +1,6 @@
+(executables
+ (names cohttp_curl_async cohttp_server_async)
+ (package cohttp-async)
+ (public_names cohttp-curl-async cohttp-server-async)
+ (libraries cohttp-async async_kernel async.async_command async_unix base
+   cohttp cohttp_server fmt.tty core_unix.command_unix))

@@ -1,0 +1,7 @@
+(library
+ (name cohttp_lwt_jsoo)
+ (public_name cohttp-lwt-jsoo)
+ (synopsis "XHR/Lwt based http client")
+ (preprocess
+  (pps js_of_ocaml-ppx))
+ (libraries js_of_ocaml cohttp-lwt logs))

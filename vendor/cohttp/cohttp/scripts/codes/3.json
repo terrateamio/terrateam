@@ -1,0 +1,187 @@
+{
+    "class":{
+        "title":"Redirection",
+        "class":"3"
+    },
+    "codes":{
+        "300":{
+            "code":"300",
+            "title":"Multiple Choices",
+            "summary":"multiple options for the resource delivered",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"Indicates multiple options for the resource that the client may follow. It, for instance, could be used to present different format options for video, list files with different extensions, or word sense disambiguation.",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#300"
+                },
+                "ietf":{
+                    "body":"The requested resource corresponds to any one of a set of representations, each with its own specific location, and agent- driven negotiation information is being provided so that the user (or user agent) can select a preferred representation and redirect its request to that location.\r\nUnless it was a HEAD request, the response SHOULD include an entity containing a list of resource characteristics and location(s) from which the user or user agent can choose the one most appropriate. The entity format is specified by the media type given in the Content- Type header field. Depending upon the format and the capabilities of the user agent, selection of the most appropriate choice MAY be performed automatically. However, this specification does not define any standard for such automatic selection.\r\nIf the server has a preferred choice of representation, it SHOULD include the specific URI for that representation in the Location field; user agents MAY use the Location field value for automatic redirection. This response is cacheable unless indicated otherwise.",
+                    "link":"http:\/\/www.ietf.org\/rfc\/rfc2616.txt"
+                }
+            },
+            "references":{
+                "rails":{
+                    "title":"Rails HTTP Status Symbol",
+                    "value":":multiple_choices"
+                }
+            }
+        },
+        "301":{
+            "code":"301",
+            "title":"Moved Permanently",
+            "summary":"this and all future requests directed to the given URI",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"This and all future requests should be directed to the given URI.",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#301"
+                },
+                "ietf":{
+                    "body":"The requested resource has been assigned a new permanent URI and any future references to this resource SHOULD use one of the returned URIs. Clients with link editing capabilities ought to automatically re-link references to the Request-URI to one or more of the new references returned by the server, where possible. This response is cacheable unless indicated otherwise.\r\nThe new permanent URI SHOULD be given by the Location field in the response. Unless the request method was HEAD, the entity of the response SHOULD contain a short hypertext note with a hyperlink to the new URI(s).\r\nIf the 301 status code is received in response to a request other than GET or HEAD, the user agent MUST NOT automatically redirect the request unless it can be confirmed by the user, since this might change the conditions under which the request was issued.\r\nNote: When automatically redirecting a POST request after receiving a 301 status code, some existing HTTP\/1.0 user agents will erroneously change it into a GET request.",
+                    "link":"http:\/\/www.ietf.org\/rfc\/rfc2616.txt"
+                }
+            },
+            "references":{
+                "rails":{
+                    "title":"Rails HTTP Status Symbol",
+                    "value":":moved_permanently"
+                }
+            }
+        },
+        "302":{
+            "code":"302",
+            "title":"Found",
+            "summary":"temporary response to request found via alternative URI",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"This is an example of industrial practice contradicting the standard. HTTP\/1.0 specification (RFC 1945) required the client to perform a temporary redirect (the original describing phrase was \"Moved Temporarily\"), but popular browsers implemented 302 with the functionality of a 303 See Other. Therefore, HTTP\/1.1 added status codes 303 and 307 to distinguish between the two behaviours. However, some Web applications and frameworks use the 302 status code as if it were the 303.",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#302"
+                },
+                "ietf":{
+                    "body":"The requested resource resides temporarily under a different URI. Since the redirection might be altered on occasion, the client SHOULD continue to use the Request-URI for future requests. This response is only cacheable if indicated by a Cache-Control or Expires header field.\r\nThe temporary URI SHOULD be given by the Location field in the response. Unless the request method was HEAD, the entity of the response SHOULD contain a short hypertext note with a hyperlink to the new URI(s).\r\nIf the 302 status code is received in response to a request other than GET or HEAD, the user agent MUST NOT automatically redirect the request unless it can be confirmed by the user, since this might change the conditions under which the request was issued.\r\nNote: RFC 1945 and RFC 2068 specify that the client is not allowed to change the method on the redirected request. However, most existing user agent implementations treat 302 as if it were a 303 response, performing a GET on the Location field-value regardless of the original request method. The status codes 303 and 307 have been added for servers that wish to make unambiguously clear which kind of reaction is expected of the client.",
+                    "link":"http:\/\/www.ietf.org\/rfc\/rfc2616.txt"
+                }
+            },
+            "references":{
+                "rails":{
+                    "title":"Rails HTTP Status Symbol",
+                    "value":":found"
+                }
+            }
+        },
+        "303":{
+            "code":"303",
+            "title":"See Other",
+            "summary":"permanent response to request found via alternative URI",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"The response to the request can be found under another URI using a GET method. When received in response to a POST (or PUT\/DELETE), it should be assumed that the server has received the data and the redirect should be issued with a separate GET message.",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#303"
+                },
+                "ietf":{
+                    "body":"The response to the request can be found under a different URI and SHOULD be retrieved using a GET method on that resource. This method exists primarily to allow the output of a POST-activated script to redirect the user agent to a selected resource. The new URI is not a substitute reference for the originally requested resource. The 303 response MUST NOT be cached, but the response to the second (redirected) request might be cacheable.\r\nThe different URI SHOULD be given by the Location field in the response. Unless the request method was HEAD, the entity of the response SHOULD contain a short hypertext note with a hyperlink to the new URI(s).\r\nNote: Many pre-HTTP\/1.1 user agents do not understand the 303 status. When interoperability with such clients is a concern, the 302 status code may be used instead, since most user agents react to a 302 response as described here for 303.",
+                    "link":"http:\/\/www.ietf.org\/rfc\/rfc2616.txt"
+                }
+            },
+            "references":{
+                "rails":{
+                    "title":"Rails HTTP Status Symbol",
+                    "value":":see_other"
+                }
+            }
+        },
+        "304":{
+            "code":"304",
+            "title":"Not Modified",
+            "summary":"resource has not been modified since last requested",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"Indicates the resource has not been modified since last requested. Typically, the HTTP client provides a header like the If-Modified-Since header to provide a time against which to compare. Using this saves bandwidth and reprocessing on both the server and client, as only the header data must be sent and received in comparison to the entirety of the page being re-processed by the server, then sent again using more bandwidth of the server and client.",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#304"
+                },
+                "ietf":{
+                    "body":"If the client has performed a conditional GET request and access is allowed, but the document has not been modified, the server SHOULD respond with this status code. The 304 response MUST NOT contain a message-body, and thus is always terminated by the first empty line after the header fields.\r\nThe response MUST include the following header fields:\r\nDate, unless its omission is required\r\nIf a clockless origin server obeys these rules, and proxies and clients add their own Date to any response received without one (as already specified by RFC 2068), caches will operate correctly.\r\nETag and\/or Content-Location, if the header would have been sent in a 200 response to the same request\r\nExpires, Cache-Control, and\/or Vary, if the field-value might differ from that sent in any previous response for the same variant\r\nIf the conditional GET used a strong cache validator, the response SHOULD NOT include other entity-headers. Otherwise (i.e., the conditional GET used a weak validator), the response MUST NOT include other entity-headers; this prevents inconsistencies between cached entity-bodies and updated headers.\r\nIf a 304 response indicates an entity not currently cached, then the cache MUST disregard the response and repeat the request without the conditional.\r\nIf a cache uses a received 304 response to update a cache entry, the cache MUST update the entry to reflect any new field values given in the response.",
+                    "link":"http:\/\/www.ietf.org\/rfc\/rfc2616.txt"
+                }
+            },
+            "references":{
+                "rails":{
+                    "title":"Rails HTTP Status Symbol",
+                    "value":":not_modified"
+                }
+            }
+        },
+        "305":{
+            "code":"305",
+            "title":"Use Proxy (since HTTP\/1.1)",
+            "summary":"content located elsewhere, retrieve from there",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"Many HTTP clients (such as Mozilla and Internet Explorer) do not correctly handle responses with this status code, primarily for security reasons.",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#305"
+                },
+                "ietf":{
+                    "body":"The requested resource MUST be accessed through the proxy given by the Location field. The Location field gives the URI of the proxy. The recipient is expected to repeat this single request via the proxy. 305 responses MUST only be generated by origin servers.\r\nNote: RFC 2068 was not clear that 305 was intended to redirect a single request, and to be generated by origin servers only. Not observing these limitations has significant security consequences.",
+                    "link":"http:\/\/www.ietf.org\/rfc\/rfc2616.txt"
+                }
+            },
+            "references":{
+                "rails":{
+                    "title":"Rails HTTP Status Symbol",
+                    "value":":use_proxy"
+                }
+            }
+        },
+        "306":{
+            "code":"306",
+            "title":"Switch Proxy",
+            "summary":"subsequent requests should use the specified proxy",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"No longer used. Originally meant \"Subsequent requests should use the specified proxy.\"",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#306"
+                },
+                "ietf":{
+                    "body":"The 306 status code was used in a previous version of the specification, is no longer used, and the code is reserved.",
+                    "link":"http:\/\/www.ietf.org\/rfc\/rfc2616.txt"
+                }
+            }
+        },
+        "307":{
+            "code":"307",
+            "title":"Temporary Redirect (since HTTP\/1.1)",
+            "summary":"connect again to different URI as provided",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"In this occasion, the request should be repeated with another URI, but future requests can still use the original URI. In contrast to 303, the request method should not be changed when reissuing the original request. For instance, a POST request must be repeated using another POST request.",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#307"
+                },
+                "ietf":{
+                    "body":"The requested resource resides temporarily under a different URI. Since the redirection MAY be altered on occasion, the client SHOULD continue to use the Request-URI for future requests. This response is only cacheable if indicated by a Cache-Control or Expires header field.\r\nThe temporary URI SHOULD be given by the Location field in the response. Unless the request method was HEAD, the entity of the response SHOULD contain a short hypertext note with a hyperlink to the new URI(s) , since many pre-HTTP\/1.1 user agents do not understand the 307 status. Therefore, the note SHOULD contain the information necessary for a user to repeat the original request on the new URI.\r\nIf the 307 status code is received in response to a request other than GET or HEAD, the user agent MUST NOT automatically redirect the request unless it can be confirmed by the user, since this might change the conditions under which the request was issued.",
+                    "link":"http:\/\/www.ietf.org\/rfc\/rfc2616.txt"
+                }
+            },
+            "references":{
+                "rails":{
+                    "title":"Rails HTTP Status Symbol",
+                    "value":":temporary_redirect"
+                }
+            }
+        },
+        "308":{
+            "code":"308",
+            "title":"Permanent Redirect",
+            "summary":"connect again to a different URI using the same method",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"The request, and all future requests should be repeated using another URI. 307 and 308 (as proposed) parallel the behaviours of 302 and 301, but do not allow the HTTP method to change. So, for example, submitting a form to a permanently redirected resource may continue smoothly.",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#308"
+                }
+            },
+            "references":{
+                "rails":{
+                    "title":"Rails HTTP Status Symbol",
+                    "value":":no_content"
+                }
+            }
+        }
+    }
+}

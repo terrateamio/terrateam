@@ -1,0 +1,89 @@
+{
+    "class":{
+        "title":"Informational",
+        "class":"1"
+    },
+    "codes":{
+        "100":{
+            "code":"100",
+            "title":"Continue",
+            "summary":"Client should continue with request",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"This means that the server has received the request headers, and that the client should proceed to send the request body (in the case of a request for which a body needs to be sent; for example, a POST request). If the request body is large, sending it to a server when a request has already been rejected based upon inappropriate headers is inefficient. To have a server check if the request could be accepted based on the request's headers alone, a client must send Expect: 100-continue as a header in its initial request and check if a 100 Continue status code is received in response before continuing (or receive 417 Expectation Failed and not continue).",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#100"
+                },
+                "ietf":{
+                    "body":"The client SHOULD continue with its request. This interim response is used to inform the client that the initial part of the request has been received and has not yet been rejected by the server. The client SHOULD continue by sending the remainder of the request or, if the request has already been completed, ignore this response. The server MUST send a final response after the request has been completed.",
+                    "link":"http:\/\/www.ietf.org\/rfc\/rfc2616.txt"
+                }
+            },
+            "references":{
+                "rails":{
+                    "title":"Rails HTTP Status Symbol",
+                    "value":":continue"
+                }
+            }
+        },
+        "101":{
+            "code":"101",
+            "title":"Switching Protocols",
+            "summary":"Server is switching protocols",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"This means the requester has asked the server to switch protocols and the server is acknowledging that it will do so.",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#101"
+                },
+                "ietf":{
+                    "body":"The server understands and is willing to comply with the client's request, via the Upgrade message header field, for a change in the application protocol being used on this connection. The server will switch protocols to those defined by the response's Upgrade header field immediately after the empty line which terminates the 101 response. \r\nThe protocol SHOULD be switched only when it is advantageous to do so. For example, switching to a newer version of HTTP is advantageous over older versions, and switching to a real-time, synchronous protocol might be advantageous when delivering resources that use such features.",
+                    "link":"http:\/\/www.ietf.org\/rfc\/rfc2616.txt"
+                }
+            },
+            "references":{
+                "rails":{
+                    "title":"Rails HTTP Status Symbol",
+                    "value":":switching_protocols"
+                }
+            }
+        },
+        "102":{
+            "code":"102",
+            "title":"Processing (WebDAV) (RFC 2518)",
+            "summary":"Server has received and is processing the request",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"As a WebDAV request may contain many sub-requests involving file operations, it may take a long time to complete the request. This code indicates that the server has received and is processing the request, but no response is available yet. This prevents the client from timing out and assuming the request was lost.",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#102"
+                }
+            },
+            "references":{
+                "rails":{
+                    "title":"Rails HTTP Status Symbol",
+                    "value":":processing"
+                }
+            }
+        },
+        "103":{
+            "code":"103",
+            "title":"Checkpoint",
+            "summary":"resume aborted PUT or POST requests",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"This code is used in the Resumable HTTP Requests Proposal to resume aborted PUT or POST requests.",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#103"
+                }
+            }
+        },
+        "122":{
+            "code":"122",
+            "title":"Request-URI too long",
+            "summary":"URI is longer than a maximum of 2083 characters",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"This is a non-standard IE7-only code which means the URI is longer than a maximum of 2083 characters.",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#122"
+                }
+            }
+        }
+    }
+}

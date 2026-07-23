@@ -1,0 +1,59 @@
+(executable
+ (name test_accept)
+ (modules test_accept)
+ (forbidden_libraries base)
+ (libraries cohttp alcotest fmt))
+
+(rule
+ (alias runtest)
+ (package cohttp)
+ (action
+  (run ./test_accept.exe)))
+
+(executable
+ (name test_header)
+ (modules unitary_test_header test_header)
+ (forbidden_libraries base)
+ (libraries cohttp alcotest fmt))
+
+(rule
+ (alias runtest)
+ (package cohttp)
+ (action
+  (run ./test_header.exe)))
+
+(executable
+ (name test_request)
+ (modules test_request)
+ (forbidden_libraries base)
+ (libraries cohttp alcotest fmt))
+
+(rule
+ (alias runtest)
+ (package cohttp)
+ (action
+  (run ./test_request.exe)))
+
+(executable
+ (name test_body)
+ (modules test_body)
+ (forbidden_libraries base)
+ (libraries cohttp alcotest fmt))
+
+(rule
+ (alias runtest)
+ (package cohttp)
+ (action
+  (run ./test_body.exe)))
+
+(executable
+ (name test_path)
+ (modules test_path)
+ (forbidden_libraries base)
+ (libraries cohttp alcotest fmt))
+
+(rule
+ (alias runtest)
+ (package cohttp)
+ (action
+  (run ./test_path.exe)))
