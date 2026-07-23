@@ -1,0 +1,3 @@
+(library
+ (name cohttp_async_test)
+ (libraries fmt.tty uri.services async_kernel cohttp_test cohttp-async))

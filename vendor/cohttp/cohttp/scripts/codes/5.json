@@ -1,0 +1,234 @@
+{
+    "class":{
+        "title":"Server Error",
+        "class":"5"
+    },
+    "codes":{
+        "500":{
+            "code":"500",
+            "title":"Internal Server Error",
+            "summary":"generic error message",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"A generic error message, given when no more specific message is suitable.",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#500"
+                },
+                "ietf":{
+                    "body":"The server encountered an unexpected condition which prevented it from fulfilling the request.",
+                    "link":"http:\/\/www.ietf.org\/rfc\/rfc2616.txt"
+                }
+            },
+            "references":{
+                "rails":{
+                    "title":"Rails HTTP Status Symbol",
+                    "value":":internal_server_error"
+                }
+            }
+        },
+        "501":{
+            "code":"501",
+            "title":"Not Implemented",
+            "summary":"server does not recognise method or lacks ability to fulfill",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"The server either does not recognise the request method, or it lacks the ability to fulfill the request.[2]",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#501"
+                },
+                "ietf":{
+                    "body":"The server does not support the functionality required to fulfill the request. This is the appropriate response when the server does not recognize the request method and is not capable of supporting it for any resource.",
+                    "link":"http:\/\/www.ietf.org\/rfc\/rfc2616.txt"
+                }
+            },
+            "references":{
+                "rails":{
+                    "title":"Rails HTTP Status Symbol",
+                    "value":":not_implemented"
+                }
+            }
+        },
+        "502":{
+            "code":"502",
+            "title":"Bad Gateway",
+            "summary":"server received an invalid response from upstream server",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"The server was acting as a gateway or proxy and received an invalid response from the upstream server.[2]",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#502"
+                },
+                "ietf":{
+                    "body":"The server, while acting as a gateway or proxy, received an invalid response from the upstream server it accessed in attempting to fulfill the request.",
+                    "link":"http:\/\/www.ietf.org\/rfc\/rfc2616.txt"
+                }
+            },
+            "references":{
+                "rails":{
+                    "title":"Rails HTTP Status Symbol",
+                    "value":":bad_gateway"
+                }
+            }
+        },
+        "503":{
+            "code":"503",
+            "title":"Service Unavailable",
+            "summary":"server is currently unavailable",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"The server is currently unavailable (because it is overloaded or down for maintenance).[2] Generally, this is a temporary state.",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#503"
+                },
+                "ietf":{
+                    "body":"The server is currently unable to handle the request due to a temporary overloading or maintenance of the server. The implication is that this is a temporary condition which will be alleviated after some delay. If known, the length of the delay MAY be indicated in a Retry-After header. If no Retry-After is given, the client SHOULD handle the response as it would for a 500 response.\r\nNote: The existence of the 503 status code does not imply that a server must use it when becoming overloaded. Some servers may wish to simply refuse the connection.",
+                    "link":"http:\/\/www.ietf.org\/rfc\/rfc2616.txt"
+                }
+            },
+            "references":{
+                "rails":{
+                    "title":"Rails HTTP Status Symbol",
+                    "value":":service_unavailable"
+                }
+            }
+        },
+        "504":{
+            "code":"504",
+            "title":"Gateway Timeout",
+            "summary":"gateway did not receive response from upstream server",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"The server was acting as a gateway or proxy and did not receive a timely response from the upstream server.[2]",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#504"
+                },
+                "ietf":{
+                    "body":"The server, while acting as a gateway or proxy, did not receive a timely response from the upstream server specified by the URI (e.g. HTTP, FTP, LDAP) or some other auxiliary server (e.g. DNS) it needed to access in attempting to complete the request.\r\nNote: Note to implementors: some deployed proxies are known to return 400 or 500 when DNS lookups time out.",
+                    "link":"http:\/\/www.ietf.org\/rfc\/rfc2616.txt"
+                }
+            },
+            "references":{
+                "rails":{
+                    "title":"Rails HTTP Status Symbol",
+                    "value":":gateway_timeout"
+                }
+            }
+        },
+        "505":{
+            "code":"505",
+            "title":"HTTP Version Not Supported",
+            "summary":"server does not support the HTTP protocol version",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"The server does not support the HTTP protocol version used in the request.[2]",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#505"
+                },
+                "ietf":{
+                    "body":"The server does not support, or refuses to support, the HTTP protocol version that was used in the request message. The server is indicating that it is unable or unwilling to complete the request using the same major version as the client. The response SHOULD contain an entity describing why that version is not supported and what other protocols are supported by that server.",
+                    "link":"http:\/\/www.ietf.org\/rfc\/rfc2616.txt"
+                }
+            },
+            "references":{
+                "rails":{
+                    "title":"Rails HTTP Status Symbol",
+                    "value":":http_version_not_supported"
+                }
+            }
+        },
+        "506":{
+            "code":"506",
+            "title":"Variant Also Negotiates (RFC 2295)",
+            "summary":"content negotiation for the request results in a circular reference",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"Transparent content negotiation for the request results in a circular reference.[23]",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#506"
+                }
+            }
+        },
+        "507":{
+            "code":"507",
+            "title":"Insufficient Storage (WebDAV) (RFC 4918)",
+            "summary":"server is unable to store the representation",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"The server is unable to store the representation needed to complete the request.[7]",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#507"
+                }
+            },
+            "references":{
+                "rails":{
+                    "title":"Rails HTTP Status Symbol",
+                    "value":":insufficient_storage"
+                }
+            }
+        },
+        "508":{
+            "code":"508",
+            "title":"Loop Detected (WebDAV) (RFC 5842)",
+            "summary":"server detected an infinite loop while processing the request",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"The server detected an infinite loop while processing the request (sent in lieu of 208).",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#508"
+                }
+            }
+        },
+        "509":{
+            "code":"509",
+            "title":"Bandwidth Limit Exceeded (Apache bw\/limited extension)",
+            "summary":"bandwidth limit exceeded",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"This status code, while used by many servers, is not specified in any RFCs.",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#509"
+                }
+            }
+        },
+        "510":{
+            "code":"510",
+            "title":"Not Extended (RFC 2774)",
+            "summary":"further extensions to the request are required",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"Further extensions to the request are required for the server to fulfill it.[24]",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#510"
+                }
+            },
+            "references":{
+                "rails":{
+                    "title":"Rails HTTP Status Symbol",
+                    "value":":not_extended"
+                }
+            }
+        },
+        "511":{
+            "code":"511",
+            "title":"Network Authentication Required",
+            "summary":"client needs to authenticate to gain network access",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"The client needs to authenticate to gain network access. Intended for use by intercepting proxies used to control access to the network (e.g. \"captive portals\" used to require agreement to Terms of Service before granting full Internet access via a Wi-Fi hotspot). Proposed in an Internet-Draft.[19]",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#511"
+                }
+            }
+        },
+        "598":{
+            "code":"598",
+            "title":"Network read timeout error",
+            "summary":"network read timeout behind the proxy ",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"This status code is not specified in any RFCs, but is used by some HTTP proxies to signal a network read timeout behind the proxy to a client in front of the proxy.",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#598"
+                }
+            }
+        },
+        "599":{
+            "code":"599",
+            "title":"Network connect timeout error",
+            "summary":"network connect timeout behind the proxy",
+            "descriptions":{
+                "wikipedia":{
+                    "body":"This status code is not specified in any RFCs, but is used by some HTTP proxies to signal a network connect timeout behind the proxy to a client in front of the proxy.",
+                    "link":"http:\/\/en.wikipedia.org\/wiki\/List_of_HTTP_status_codes#599"
+                }
+            }
+        }
+    }
+}

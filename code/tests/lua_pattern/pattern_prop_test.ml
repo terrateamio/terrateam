@@ -5,7 +5,7 @@ let pat_chars =
 
 let str ?(len = QCheck.Gen.int_bound 10) =
   let open QCheck.Gen in
-  list_size len (oneofl pat_chars) >>= fun l -> return (CCString.of_list l)
+  list_size len (oneof_list pat_chars) >>= fun l -> return (CCString.of_list l)
 
 (* This validates that random patterns do not case the matcher to crash *)
 let pattern_does_not_crash_prop =

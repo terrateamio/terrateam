@@ -1,0 +1,43 @@
+(executable
+ (name test_parser)
+ (modules test_parser)
+ (libraries cohttp-lwt-unix oUnit lwt.unix))
+
+(rule
+ (alias runtest)
+ (package cohttp-lwt-unix)
+ (action
+  (run ./test_parser.exe)))
+
+(executable
+ (modules test_sanity)
+ (name test_sanity)
+ (libraries cohttp_lwt_unix_test cohttp-lwt-unix))
+
+(executable
+ (modules test_sanity_noisy)
+ (name test_sanity_noisy)
+ (libraries cohttp_lwt_unix_test cohttp-lwt-unix))
+
+(rule
+ (alias runtest)
+ (package cohttp-lwt-unix)
+ (action
+  (run ./test_sanity.exe)))
+
+(rule
+ (alias runtest)
+ (package cohttp-lwt-unix)
+ (action
+  (run ./test_sanity_noisy.exe)))
+
+(executable
+ (modules test_body)
+ (name test_body)
+ (libraries cohttp_lwt_unix_test cohttp-lwt-unix))
+
+(rule
+ (alias runtest)
+ (package cohttp-lwt-unix)
+ (action
+  (run ./test_body.exe)))

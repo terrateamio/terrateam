@@ -71,6 +71,8 @@ RUN eval $(opam env) && \
     eval $(opam env) && \
     opam repository add opam-acsl opam && \
     opam install -j$(nproc --all) -y --no-depexts dune menhir ocamlformat.0.29.0 && \
+    opam pin add -n ISO8601 vendor/ISO8601 --no-depexts && \
+    opam pin add -n cohttp vendor/cohttp --no-depexts && \
     xargs -a code/opam.pins opam install -j$(nproc --all) -y --no-depexts && \
     ulimit -s 524288 && ulimit -a && \
     time make -C code test-terrat terrat && \

@@ -1,0 +1,26 @@
+(executable
+ (name fuzz_header)
+ (libraries crowbar cohttp))
+
+(rule
+ (alias runtest)
+ (package cohttp)
+ (action
+  (run ./fuzz_header.exe)))
+
+(rule
+ (alias fuzz)
+ (deps
+  (:exe fuzz_header.exe)
+  (source_tree inputs))
+ (action
+  (run afl-fuzz -i inputs -o findings -- ./%{exe} @@)))
+
+(rule
+ (alias bun-fuzz)
+ (locks %{project_root}/bun)
+ (deps
+  (:exe fuzz_me.exe)
+  (source_tree input))
+ (action
+  (run bun --input inputs --output findings -- ./%{exe})))

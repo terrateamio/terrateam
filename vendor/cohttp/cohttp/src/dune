@@ -1,0 +1,25 @@
+(rule
+ (with-stdout-to
+  conf.ml
+  (echo "let version = \"%{version:cohttp}\"")))
+
+(rule
+ (targets code.ml code.mli)
+ (deps
+  (source_tree "../scripts/codes"))
+ (action
+  (chdir
+   "../scripts"
+   (run ./generate.exe))))
+
+(library
+ (name cohttp)
+ (public_name cohttp)
+ (synopsis "Co-operative Client/Server HTTP library.")
+ (preprocess
+  (pps ppx_sexp_conv))
+ (libraries re stringext uri uri-sexp sexplib0 bytes base64))
+
+(ocamllex accept_lexer)
+
+(ocamlyacc accept_parser)

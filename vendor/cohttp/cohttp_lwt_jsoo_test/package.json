@@ -1,0 +1,10 @@
+{
+  "name": "ocaml-cohttp",
+  "version": "4.0.0",
+  "description": "An OCaml library for HTTP clients and servers",
+  "repository": "https://github.com/mirage/ocaml-cohttp",
+  "license": "ISC",
+  "dependencies": {
+    "xmlhttprequest": "^1.8.0"
+  }
+}

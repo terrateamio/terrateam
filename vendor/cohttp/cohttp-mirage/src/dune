@@ -1,0 +1,8 @@
+(library
+ (name cohttp_mirage)
+ (public_name cohttp-mirage)
+ (synopsis "Mirage backend for cohttp")
+ (preprocess
+  (pps ppx_sexp_conv))
+ (libraries conduit-mirage cohttp-lwt mirage-channel mirage-kv mirage-flow
+   magic-mime astring))
