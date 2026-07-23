@@ -807,6 +807,7 @@ let protect_finally_success_test =
 let () =
   Oth.(
     run
+      ~file:__FILE__
       (parallel
          [
            first1;

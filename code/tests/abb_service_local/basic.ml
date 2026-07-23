@@ -36,4 +36,4 @@ let service_throws_exn =
 
 let () =
   Random.self_init ();
-  Oth.(run (parallel [ basic_run; service_throws_exn ]))
+  Oth.(run ~file:__FILE__ (parallel [ basic_run; service_throws_exn ]))

@@ -477,4 +477,4 @@ let test =
       test_bind_binary_format;
     ]
 
-let () = Oth.run test
+let () = Oth.run ~file:__FILE__ test

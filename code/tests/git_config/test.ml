@@ -75,4 +75,4 @@ let test = Oth.parallel [ test1; test2; test3; test4; test5 ]
 
 let () =
   Random.self_init ();
-  Oth.run test
+  Oth.run ~file:__FILE__ test

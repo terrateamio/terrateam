@@ -34,4 +34,4 @@ let test = Oth.parallel [ test_valid; test_invalid; test_invalid2; test_missing_
 
 let () =
   Random.self_init ();
-  Oth.run test
+  Oth.run ~file:__FILE__ test

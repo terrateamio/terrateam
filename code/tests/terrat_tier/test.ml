@@ -26,4 +26,4 @@ let test = Oth.parallel [ test_empty_features; test_free_tier_features; test_unk
 
 let () =
   Random.self_init ();
-  Oth.run test
+  Oth.run ~file:__FILE__ test

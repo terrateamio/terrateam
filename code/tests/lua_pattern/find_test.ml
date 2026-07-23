@@ -44,4 +44,4 @@ let test_pat str pat res _ =
 let create_test (str, pat, res) =
   Oth.test ~name:(Printf.sprintf "find %s %s" str pat) (test_pat str pat res)
 
-let () = Oth.(run (serial (List.map ~f:create_test tests)))
+let () = Oth.(run ~file:__FILE__ (serial (List.map ~f:create_test tests)))

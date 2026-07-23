@@ -563,4 +563,4 @@ let tests =
 
 let () =
   Random.self_init ();
-  Oth.(run (parallel tests))
+  Oth.(run ~file:__FILE__ (parallel tests))

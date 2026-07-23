@@ -12,4 +12,4 @@ let test = Oth.parallel [ test_simple ]
 
 let () =
   Random.self_init ();
-  Oth.run test
+  Oth.run ~file:__FILE__ test

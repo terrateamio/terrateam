@@ -302,6 +302,7 @@ let test_abort_determined_after_completed =
 let () =
   Oth.(
     run
+      ~file:__FILE__
       (parallel
          [
            test1;

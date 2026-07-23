@@ -111,7 +111,7 @@ let test_insert_row_null =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 let test_fetch_row =
@@ -391,7 +391,7 @@ let test_insert_execute =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 let test_stmt_fetch =
@@ -475,7 +475,7 @@ let test_integrity_fail =
       >>= fun () ->
       test
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_unit r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_unit r);
       Abb.Future.return ())
 
 let test_integrity_recover =
@@ -533,7 +533,7 @@ let test_integrity_recover =
       >>= fun () ->
       test
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_unit r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_unit r);
       Abb.Future.return ())
 
 let test_rollback =
@@ -577,7 +577,7 @@ let test_rollback =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 let test_bad_state =
@@ -654,7 +654,7 @@ let test_copy_to =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 let test_copy_to_conflict =
@@ -744,7 +744,7 @@ let test_copy_to_bytea =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 let test_text_special_chars =
@@ -795,7 +795,7 @@ let test_text_special_chars =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 let test_text_nul_byte =
@@ -861,7 +861,7 @@ let test_copy_to_special_chars =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 let test_text_empty_vs_null =
@@ -898,7 +898,7 @@ let test_text_empty_vs_null =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 let test_integer_bounds =
@@ -942,7 +942,7 @@ let test_integer_bounds =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 let test_copy_to_integer_bounds =
@@ -991,7 +991,7 @@ let test_copy_to_integer_bounds =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 let test_float_special_values =
@@ -1052,7 +1052,7 @@ let test_float_special_values =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 let test_json_invalid =
@@ -1122,7 +1122,7 @@ let test_copy_to_jsonb =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 let test_json_round_trip =
@@ -1157,7 +1157,7 @@ let test_json_round_trip =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 let test_json_cross_type =
@@ -1206,7 +1206,7 @@ let test_json_cross_type =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 let test_bytea_large =
@@ -1240,7 +1240,7 @@ let test_bytea_large =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 let test_query_dangerous_values =
@@ -1285,7 +1285,7 @@ let test_query_dangerous_values =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 let test_copy_to_bytea_large =
@@ -1324,7 +1324,7 @@ let test_copy_to_bytea_large =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 let test_copy_to_single_row =
@@ -1352,7 +1352,7 @@ let test_copy_to_single_row =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 let test_copy_to_empty =
@@ -1379,7 +1379,7 @@ let test_copy_to_empty =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 let test_copy_to_bytea_with_trailer_bytes =
@@ -1424,7 +1424,7 @@ let test_copy_to_bytea_with_trailer_bytes =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 let pp_quad pp1 pp2 pp3 pp4 fmt (a, b, c, d) =
@@ -1486,7 +1486,7 @@ let test_copy_to_all_nulls =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 let test_copy_to_many_columns =
@@ -1533,7 +1533,7 @@ let test_copy_to_many_columns =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 let pp_quint pp1 pp2 pp3 pp4 pp5 fmt (a, b, c, d, e) =
@@ -1613,7 +1613,7 @@ let test_copy_to_mixed_types =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 let test_concurrent_exn_raise =
@@ -1744,7 +1744,7 @@ let test_ret_u_all_types =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 let test_bytea_var_ret =
@@ -1787,7 +1787,7 @@ let test_bytea_var_ret =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 let test_bigint_column_smallint_ret =
@@ -1816,7 +1816,7 @@ let test_bigint_column_smallint_ret =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 let test_bigint_column_smallint_b_ret_fails =
@@ -1848,7 +1848,7 @@ let test_bigint_column_smallint_b_ret_fails =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 let test_ret_b_all_types =
@@ -1904,7 +1904,7 @@ let test_ret_b_all_types =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 let test_large_jsonb_fetch =
@@ -2052,7 +2052,7 @@ let test_large_jsonb_fetch =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 (* The user's scenario: issue a query that errors, do NOT bubble the error up
@@ -2164,7 +2164,7 @@ let test_in_tx_commit_desync =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 (* Hypothesis: the evaluator leaves the connection dirty by aborting a db op
@@ -2211,7 +2211,7 @@ let test_desync_after_abort =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 (* Validate: when a NOTIFY fires INSIDE A TRIGGER (transactional), does the
@@ -2462,7 +2462,7 @@ let test_reset_stray_rfq =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 (* THE hypothesis: a fetch whose Ret type annotation is wrong for the data hits
@@ -2564,7 +2564,7 @@ let test_bad_result_dirty_conn =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 (* Regression for the pgsql_codec needed_bytes off-by-one: a row value whose
@@ -2606,7 +2606,7 @@ let test_boundary_sweep =
       in
       with_conn f
       >>= fun r ->
-      ignore (Oth.Assert.ok ~pp:pp_pgsql_combined_err r);
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
 let test =
@@ -2689,4 +2689,4 @@ let () =
   Random.self_init ();
   Logs.set_reporter (reporter Format.std_formatter);
   Logs.set_level ~all:true (Some Logs.Info);
-  Oth.run test
+  Oth.run ~file:__FILE__ test

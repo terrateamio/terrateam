@@ -81,4 +81,4 @@ let test = Oth.parallel parse_tests
 
 let () =
   Random.self_init ();
-  Oth.run test
+  Oth.run ~file:__FILE__ test

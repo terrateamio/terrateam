@@ -13,4 +13,4 @@ let test = Oth.parallel [ test_simple; test_of_empty_string ]
 
 let () =
   Random.self_init ();
-  Oth.run test
+  Oth.run ~file:__FILE__ test

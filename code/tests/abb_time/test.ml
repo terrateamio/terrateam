@@ -35,4 +35,4 @@ let mono_diff_prop =
 
 let () =
   Random.self_init ();
-  Oth.(run (parallel [ loop 10 wall_diff_prop; loop 10 mono_diff_prop ]))
+  Oth.(run ~file:__FILE__ (parallel [ loop 10 wall_diff_prop; loop 10 mono_diff_prop ]))

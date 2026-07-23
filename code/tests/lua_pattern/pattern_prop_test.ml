@@ -28,4 +28,4 @@ let prop_tests =
   Oth.test ~name:"Prop Tests" (fun _ ->
       QCheck.Test.check_exn ~rand:(Std_random.State.make_self_init ()) pattern_does_not_crash_prop)
 
-let () = Oth.run prop_tests
+let () = Oth.run ~file:__FILE__ prop_tests

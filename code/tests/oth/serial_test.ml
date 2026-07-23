@@ -14,6 +14,7 @@ let serial_test _ =
 let () =
   Oth.(
     run
+      ~file:__FILE__
       (serial
          (List.map
             ~f:(test ~name:"Serial Test")
