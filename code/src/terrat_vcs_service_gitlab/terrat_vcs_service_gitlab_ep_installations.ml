@@ -179,7 +179,6 @@ module Make (S : S with type Account_id.t = int) = struct
       Abb.Future.return (Ok name)
 
     let get' config storage user installation_id webhook_url =
-      let module Tsql = Terrat_vcs_service_gitlab_sql_queries in
       let module Oauth = Terrat_vcs_service_gitlab_user.Oauth in
       let open Abbs_future_combinators.Infix_result_monad in
       let vcs_config = Terrat_vcs_service_gitlab_provider.Api.Config.vcs_config config in
@@ -623,8 +622,6 @@ module Make (S : S with type Account_id.t = int) = struct
                           run_id
                           environment
                         ->
-                        let module D = Terrat_api_components.Kind_drift in
-                        let module I = Terrat_api_components.Kind_index in
                         let module P = Terrat_api_components.Kind_pull_request in
                         let module Ds = Terrat_api_components.Installation_dirspace in
                         {
@@ -1267,8 +1264,6 @@ module Make (S : S with type Account_id.t = int) = struct
                           run_id
                           environment
                         ->
-                        let module D = Terrat_api_components.Kind_drift in
-                        let module I = Terrat_api_components.Kind_index in
                         let module P = Terrat_api_components.Kind_pull_request in
                         let module Wm = Terrat_api_components.Installation_work_manifest in
                         {

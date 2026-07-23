@@ -35,8 +35,6 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
     | Some _ | None -> Abb.Future.return (Error (Brtl_ctx.set_response `Forbidden ctx))
 
   module Initiate = struct
-    module I = Terrat_api_components_work_manifest_initiate
-
     let post' config storage exec work_manifest_id initiate ctx =
       let request_id = Brtl_ctx.token ctx in
       Evaluator2.compute_node_poll
@@ -141,7 +139,6 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
           let open Abb.Future.Infix_monad in
           let request_id = Brtl_ctx.token ctx in
           Pgsql_pool.with_conn storage ~f:(fun db ->
-              let module Pc = Terrat_api_components.Plan_create in
               P.Db.query_plan ~request_id db work_manifest_id { Terrat_dirspace.dir; workspace })
           >>= function
           | Ok (Some data) ->

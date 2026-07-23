@@ -2,7 +2,6 @@ let src = Logs.Src.create "vcs_github_comment_publishers"
 
 module Logs = (val Logs.src_log src : Logs.LOG)
 module Api = Terrat_vcs_api_github
-module By_scope = Terrat_scope.By_scope
 module Scope = Terrat_scope.Scope
 module Tmpl = Terrat_vcs_github_comment_templates.Tmpl
 module Ui = Terrat_vcs_github_comment_ui.Ui
@@ -317,10 +316,7 @@ module Publisher_tools = struct
       gates
       work_manifest =
     let module Wm = Terrat_work_manifest3 in
-    let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
     let module O = Terrat_api_components.Workflow_step_output in
-    let module Sds = Terrat_api_components.Workflow_step_output_scope_dirspace in
-    let module Sr = Terrat_api_components.Workflow_step_output_scope_run in
     let hooks_pre =
       CCList.Assoc.get ~eq:Scope.equal (Scope.Run { flow = "hooks"; subflow = "pre" }) by_scope
     in

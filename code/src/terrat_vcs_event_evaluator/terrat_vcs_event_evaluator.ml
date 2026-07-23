@@ -12,10 +12,6 @@ let dirspace_check_threshold = 50
 module Metrics = struct
   module DefaultHistogram = Prmths.DefaultHistogram
 
-  module Dirspaces_per_work_manifest_histogram = Prmths.Histogram (struct
-    let spec = Prmths.Histogram_spec.of_list [ 1.0; 5.0; 10.0; 20.0; 50.0; 100.0 ]
-  end)
-
   let namespace = "terrat"
   let subsystem = "evaluator"
 
@@ -2628,7 +2624,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         state =
       let module St = State.St in
       let module I = State.Io.I in
-      let module O = State.Io.O in
       let module Wm = Terrat_work_manifest3 in
       let states_of_work_manifests work_manifests =
         CCList.map
@@ -2942,7 +2937,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     let eval_plan_work_manifest_iter ~store ~fetch ~fallthrough ctx state =
       let module St = State.St in
       let module I = State.Io.I in
-      let module O = State.Io.O in
       let open Abbs_future_combinators.Infix_result_monad in
       match (state.State.st, state.State.input, state.State.work_manifest_id) with
       | ( St.Waiting_for_work_manifest_result,
@@ -3342,7 +3336,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         description
         status =
       let module Wm = Terrat_work_manifest3 in
-      let module Status = Terrat_commit_check.Status in
       match work_manifest.Wm.changes with
       | [] -> Abb.Future.return (Ok ())
       | dirspaces ->
@@ -3373,7 +3366,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           in
           let dirspace_checks =
             if CCList.length dirspaces <= dirspace_check_threshold then
-              let module Ds = Terrat_change.Dirspace in
               let module Dsf = Terrat_change.Dirspaceflow in
               CCList.map
                 (fun { Dsf.dirspace; _ } ->
@@ -3404,7 +3396,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         result =
       let module Wm = Terrat_work_manifest3 in
       let module Wmr = Terrat_vcs_provider2.Work_manifest_result in
-      let module Status = Terrat_commit_check.Status in
       let status = function
         | true -> Terrat_commit_check.Status.Completed
         | false -> Terrat_commit_check.Status.Failed
@@ -3440,8 +3431,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       in
       let dirspace_checks =
         if CCList.length result.Wmr.dirspaces_success <= dirspace_check_threshold then
-          let module Ds = Terrat_change.Dirspace in
-          let module Dsf = Terrat_change.Dirspaceflow in
           CCList.map
             (fun (dirspace, success) ->
               S.Commit_check.make_dirspace
@@ -3817,7 +3806,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
         dirspaceflows_by_run_params
 
     let run_op_work_manifest_iter_create op ctx state =
-      let module V1 = Terrat_base_repo_config_v1 in
       let module Wm = Terrat_work_manifest3 in
       let open Abbs_future_combinators.Infix_result_monad in
       Abbs_future_combinators.Infix_result_app.(
@@ -6126,9 +6114,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     let create_drift_events ctx state =
       match state.State.st with
       | State.St.Initial -> (
-          let module V1 = Terrat_base_repo_config_v1 in
-          let module D = V1.Drift in
-          let module Wm = Terrat_work_manifest3 in
           let open Abbs_future_combinators.Infix_result_monad in
           query_missing_drift_scheduled_runs state.State.request_id (Ctx.storage ctx)
           >>= function
@@ -6194,8 +6179,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
     let run_drift_reconcile_work_manifest_iter = run_apply_work_manifest_iter `Apply
 
     let check_reconcile _ctx state =
-      let module V1 = Terrat_base_repo_config_v1 in
-      let module D = V1.Drift in
       match state.State.event with
       | Event.Run_drift { reconcile = Some true; _ } -> Abb.Future.return (Ok state)
       | Event.Run_drift { reconcile = Some false | None; _ } ->
@@ -6443,7 +6426,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               Abb.Future.return (Ok (Some response))
           | Some _ | None -> Abb.Future.return (Ok None))
         ~result:(fun ctx state result work_manifest ->
-          let module Wm = Terrat_work_manifest3 in
           let module Wmr = Terrat_api_components.Work_manifest_result in
           let module Bt = Terrat_api_components.Work_manifest_build_tree_result in
           let module Bf = Terrat_api_components.Work_manifest_build_result_failure in
@@ -6775,7 +6757,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               Abb.Future.return (Ok (Some response))
           | Some _ | None -> Abb.Future.return (Ok None))
         ~result:(fun ctx state result work_manifest ->
-          let module Wm = Terrat_work_manifest3 in
           let module Wmr = Terrat_api_components.Work_manifest_result in
           let module Bc = Terrat_api_components.Work_manifest_build_config_result in
           let module Bf = Terrat_api_components.Work_manifest_build_result_failure in
@@ -6953,7 +6934,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
 
     let complete_no_change_dirspaces ctx state =
       let module Wm = Terrat_work_manifest3 in
-      let module Ds = Terrat_dirspace in
       let module Dsf = Terrat_change.Dirspaceflow in
       let module Dc = Terrat_change_match3.Dirspace_config in
       let open Abbs_future_combinators.Infix_result_monad in

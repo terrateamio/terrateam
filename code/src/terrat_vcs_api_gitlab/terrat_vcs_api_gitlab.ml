@@ -940,7 +940,6 @@ let fetch_pull_request_requested_reviews ~request_id repo pull_number client =
     | `OK reviews ->
         let module R = Gitlabc_components.API_Entities_MergeRequestReviewer in
         let module Ub = Gitlabc_components.API_Entities_UserBasic in
-        let module Prr = Terrat_pull_request_review in
         Abb.Future.return
           (Ok
              (CCList.map

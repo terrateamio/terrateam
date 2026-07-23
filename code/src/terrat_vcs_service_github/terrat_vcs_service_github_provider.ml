@@ -1531,7 +1531,6 @@ module Db = struct
     | Error `Error -> Abb.Future.return (Error `Error)
 
   let store_drift_schedule ~request_id db repo drift =
-    let module V1 = Terrat_base_repo_config_v1 in
     let module D = Terrat_base_repo_config_v1.Drift in
     let { D.enabled; schedules; _ } = drift in
     let open Abb.Future.Infix_monad in
@@ -2341,7 +2340,6 @@ module Apply_requirements = struct
     let module Afm = Ar.Apply_after_merge in
     let module Mc = Ar.Merge_conflicts in
     let module Sc = Ar.Status_checks in
-    let module Ac = Ar.Approved in
     let open Abbs_future_combinators.Infix_result_monad in
     let log_time ?m request_id name t =
       Logs.info (fun m -> m "%s : %s : %f" request_id name t);
@@ -4473,7 +4471,6 @@ module Work_manifest = struct
   end
 
   let make_run_telemetry config step repo =
-    let module Wm = Terrat_work_manifest3 in
     Terrat_telemetry.Event.Run
       {
         app_type = "github";
@@ -5026,7 +5023,6 @@ module Work_manifest = struct
     }
 
   let result2 result =
-    let module O = Terrat_api_components.Workflow_step_output in
     let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
     let by_scope = By_scope.group result.R2.steps in
     let steps_success steps =
