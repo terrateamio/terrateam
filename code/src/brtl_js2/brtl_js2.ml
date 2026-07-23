@@ -3,11 +3,6 @@ module Brr_fut = struct
     let p = Abb_fut_js.Promise.create () in
     Fut.await fut (fun v -> Abb_fut_js.run (Abb_fut_js.Promise.set p v));
     Abb_fut_js.Promise.future p
-
-  let brr_fut_of_fut fut =
-    let open Abb_fut_js.Infix_monad in
-    let brr_fut, set = Fut.create () in
-    Abb_fut_js.fork (fut >>| set) >>= fun _ -> Abb_fut_js.return brr_fut
 end
 
 module Note = struct
@@ -285,7 +280,7 @@ end
 module Path = struct
   let rec chop_dir path =
     match CCString.Split.right ~by:"/" path with
-    | Some (dir, "") -> chop_dir path
+    | Some (_, "") -> chop_dir path
     | Some (dir, _) -> dir
     | None -> "/"
 
@@ -305,7 +300,7 @@ module Path = struct
       consumed_path
       path
 
-  let abs t = function
+  let abs _ = function
     | [] -> "/"
     | path -> CCList.fold_left (fun path frag -> path ^ "/" ^ frag) "" path
 end

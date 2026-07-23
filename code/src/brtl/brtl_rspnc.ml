@@ -16,7 +16,7 @@ type t = {
 let create_stream
     ?version
     ?(headers = Cohttp.Header.init ())
-    ?(encoding = Encoding.chunked)
+    ?encoding:(_encoding = Encoding.chunked)
     ~status
     body =
   let headers = Cohttp.Header.add_unless_exists headers "connection" "keep-alive" in

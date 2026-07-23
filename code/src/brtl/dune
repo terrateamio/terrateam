@@ -1,6 +1,14 @@
 (library
  (name brtl)
  (wrapped false)
- (flags
-  (:standard -w -27-33))
- (libraries abb_intf abbs cohttp_abb hmap logs ouuid snabela uri yojson))
+ (libraries
+  abb_intf
+  abbs
+  cohttp_abb
+  containers
+  hmap
+  logs
+  ouuid
+  snabela
+  uri
+  yojson))
