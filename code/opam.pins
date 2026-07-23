@@ -7,7 +7,6 @@ cmdliner.2.1.1
 cohttp
 containers.3.18
 containers-data.3.18
-crunch.4.0.0
 cryptokit.1.20
 cstruct.6.2.0
 ctypes.0.23.0
