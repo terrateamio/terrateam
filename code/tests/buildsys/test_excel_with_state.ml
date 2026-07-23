@@ -124,4 +124,4 @@ let test = Oth.parallel [ test_const; test_dynamic; test_dynamic2; test_key_does
 
 let () =
   Random.self_init ();
-  Oth.run test
+  Oth.run ~file:__FILE__ test

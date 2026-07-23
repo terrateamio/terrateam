@@ -94,4 +94,4 @@ let test =
       test_to_query_dollar_quoted_string_delim;
     ]
 
-let () = Oth.run test
+let () = Oth.run ~file:__FILE__ test

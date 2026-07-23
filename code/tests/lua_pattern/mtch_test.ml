@@ -39,4 +39,4 @@ let test_mtch str pat res captures _ =
 let create_test (str, pat, res, captures) =
   Oth.test ~name:(Printf.sprintf "mtch %s %s" str pat) (test_mtch str pat res captures)
 
-let () = Oth.(run (serial (List.map ~f:create_test tests)))
+let () = Oth.(run ~file:__FILE__ (serial (List.map ~f:create_test tests)))

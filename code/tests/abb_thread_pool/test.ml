@@ -70,4 +70,4 @@ let serialize_test =
 
 let () =
   Random.self_init ();
-  Oth.(run (parallel [ basic_test; parallel_test; serialize_test ]))
+  Oth.(run ~file:__FILE__ (parallel [ basic_test; parallel_test; serialize_test ]))

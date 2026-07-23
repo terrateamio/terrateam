@@ -183,6 +183,7 @@ let () =
   Random.self_init ();
   Oth.(
     run
+      ~file:__FILE__
       (parallel
          [
            simple_send;

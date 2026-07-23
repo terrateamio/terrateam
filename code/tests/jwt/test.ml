@@ -166,4 +166,4 @@ let test =
 let () =
   Mirage_crypto_rng_unix.use_default ();
   Random.self_init ();
-  Oth.run test
+  Oth.run ~file:__FILE__ test

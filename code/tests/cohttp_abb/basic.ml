@@ -23,4 +23,4 @@ let test = Oth_abb.(to_sync_test (parallel [ basic ]))
 
 let () =
   Random.self_init ();
-  Oth.run test
+  Oth.run ~file:__FILE__ test

@@ -45,4 +45,4 @@ let test3 =
 
 let () =
   Random.self_init ();
-  Oth.(run (parallel [ test1; test2; test3 ]))
+  Oth.(run ~file:__FILE__ (parallel [ test1; test2; test3 ]))

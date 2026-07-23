@@ -82,5 +82,6 @@ let test_second_abort =
 let () =
   Oth.(
     run
+      ~file:__FILE__
       (parallel
          [ test_success; test_first_error; test_second_error; test_first_abort; test_second_abort ]))

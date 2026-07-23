@@ -12,6 +12,7 @@ let validate_loops _ =
 let () =
   Oth.(
     run
+      ~file:__FILE__
       (serial
          [
            name ~name:"Loop Test" (silent (loop iterations (test ~name:"Loop test" loop_test)));

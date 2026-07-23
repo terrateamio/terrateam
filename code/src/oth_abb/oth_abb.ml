@@ -1,51 +1,24 @@
 module Make (Abb : Abb_intf.S) = struct
-  module Fut_comb = Abb_future_combinators.Make (Abb.Future)
-
   module Test = struct
-    type t = Oth.State.t -> Oth.Run_result.t Abb.Future.t
+    type t = Oth.Test.t
   end
 
-  let time_test f =
-    let open Abb.Future.Infix_monad in
-    let start = Unix.gettimeofday () in
-    try
-      Abb.Future.await (f ())
-      >>= fun res ->
-      let stop = Unix.gettimeofday () in
-      let duration = Duration.of_f (stop -. start) in
-      match res with
-      | `Det _res -> Abb.Future.return (duration, `Ok)
-      | `Aborted -> assert false
-      | `Exn _ as err -> Abb.Future.return (duration, err)
-    with exn ->
-      let stop = Unix.gettimeofday () in
-      let duration = Duration.of_f (stop -. start) in
-      Abb.Future.return (duration, `Exn (exn, Some (Printexc.get_raw_backtrace ())))
-
-  let serial : Test.t list -> Test.t =
-   fun tests state ->
-    let open Abb.Future.Infix_monad in
-    Fut_comb.List.map ~f:(fun test -> test state) tests
-    >>= fun deep_result ->
-    let flat_rr = CCListLabels.flat_map ~f:Oth.Run_result.test_results deep_result in
-    Abb.Future.return (Oth.Run_result.of_test_results flat_rr)
-
-  let parallel = serial
+  let parallel = Oth.parallel
+  let serial = Oth.serial
   let timeout _duration _test = failwith "nyi"
 
-  let test ?desc ~name f _state =
-    let open Abb.Future.Infix_monad in
-    time_test f
-    >>= fun (duration, res) ->
-    let test_results = Oth.Test_result.[ { name; desc; duration; res } ] in
-    Abb.Future.return (Oth.Run_result.of_test_results test_results)
+  let thread_pool_size () =
+    let parallelism = Oth.parallelism () in
+    max 2 ((Domain.recommended_domain_count () - parallelism) / parallelism)
 
-  let result_test _f _s = failwith "nyi"
+  let run_sched f =
+    match Abb.Scheduler.run_with_state ~thread_pool_size:(thread_pool_size ()) (fun () -> f ()) with
+    | `Det () -> ()
+    | `Aborted -> assert false
+    | `Exn (exn, Some bt) -> Printexc.raise_with_backtrace exn bt
+    | `Exn (exn, None) -> raise exn
 
-  let to_sync_test test =
-    Oth.raw_test (fun state ->
-        let res = Abb.Scheduler.run_with_state (fun () -> test state) in
-        match res with
-        | `Det rr -> rr
-        | _ -> assert false)
+  let test ?tags ?desc ~name f = Oth.test ?tags ?desc ~name (fun _state -> run_sched f)
+  let result_test _f _state = failwith "nyi"
+  let to_sync_test = CCFun.id
 end

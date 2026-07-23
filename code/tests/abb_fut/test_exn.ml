@@ -201,6 +201,7 @@ let () =
   Random.self_init ();
   Oth.(
     run
+      ~file:__FILE__
       (parallel
          [
            test1;
