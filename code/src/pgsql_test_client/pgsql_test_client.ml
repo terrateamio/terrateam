@@ -46,10 +46,6 @@ let pp_pgsql_combined_err fmt = function
 
 let pp_unit fmt () = Format.pp_print_string fmt "()"
 
-let pp_result_unit fmt = function
-  | Ok () -> Format.fprintf fmt "Ok ()"
-  | Error err -> Format.fprintf fmt "Error %a" pp_pgsql_combined_err err
-
 let pp_string_list fmt l =
   Format.fprintf fmt "[%s]" (String.concat "; " (List.map (fun s -> Printf.sprintf "%S" s) l))
 
@@ -1633,25 +1629,18 @@ let test_concurrent_exn_raise =
         Pgsql_io.Prepared_stmt.execute conn create_sql
         >>= fun () ->
         let open Abb.Future.Infix_monad in
-        let in_tx = Abb.Future.Promise.create () in
+        (* Run a tx to completion, then raise inside the same awaited future.
+           Awaiting the tx first means it has committed (and cleared [in_tx])
+           before the exception propagates, so reusing the connection in the
+           [`Exn] branch is deterministic -- the old applicative form started the
+           second tx while the first might still be settling, which intermittently
+           tripped [Nested_tx_not_supported]. *)
         Abb.Future.await
-          Abb.Future.Infix_app.(
-            (fun _ res ->
-              match res with
-              | Ok () -> ()
-              | Error (#Pgsql_io.err as err) ->
-                  print_endline (Pgsql_io.show_err err);
-                  Oth.Assert.false_ "unexpected pgsql error in concurrent test"
-              | Error _ -> Oth.Assert.false_ "unexpected error in concurrent test")
-            <$> (let open Abb.Future.Infix_monad in
-                 Abb.Future.Promise.future in_tx
-                 >>= fun () -> Abb.Sys.sleep 0.0 >>= fun () -> raise (Failure "crash"))
-            <*> Pgsql_io.tx conn ~f:(fun () ->
-                let open Abbs_future_combinators.Infix_result_monad in
-                Abbs_future_combinators.to_result (Abb.Future.Promise.set in_tx ())
-                >>= fun () ->
-                Pgsql_io.Prepared_stmt.execute conn insert_good_sql "foo bar" 12l
-                >>= fun () -> Pgsql_io.Prepared_stmt.execute conn insert_good_sql "foo" 12l))
+          (Pgsql_io.tx conn ~f:(fun () ->
+               let open Abbs_future_combinators.Infix_result_monad in
+               Pgsql_io.Prepared_stmt.execute conn insert_good_sql "foo bar" 12l
+               >>= fun () -> Pgsql_io.Prepared_stmt.execute conn insert_good_sql "foo" 12l)
+          >>= fun _ -> raise (Failure "crash"))
         >>= function
         | `Det () -> Oth.Assert.false_ "expected exception but got det"
         | `Exn (_, _) ->
@@ -1673,7 +1662,6 @@ let test_ret_u_all_types =
       let open Abb.Future.Infix_monad in
       let f conn =
         let open Abbs_future_combinators.Infix_result_monad in
-        let module Ret = Pgsql_io.Typed_sql.Ret in
         let create_sql =
           Pgsql_io.Typed_sql.(
             sql
@@ -1798,7 +1786,6 @@ let test_bigint_column_smallint_ret =
       let open Abb.Future.Infix_monad in
       let f conn =
         let open Abbs_future_combinators.Infix_result_monad in
-        let module Ret = Pgsql_io.Typed_sql.Ret in
         let create_sql = Pgsql_io.Typed_sql.(sql /^ "CREATE TABLE foo (v BIGINT)") in
         let insert_sql =
           Pgsql_io.Typed_sql.(sql /^ "INSERT INTO foo (v) VALUES($v)" /% Var.bigint "v")
@@ -1827,7 +1814,6 @@ let test_bigint_column_smallint_b_ret_fails =
       let open Abb.Future.Infix_monad in
       let f conn =
         let open Abbs_future_combinators.Infix_result_monad in
-        let module Ret = Pgsql_io.Typed_sql.Ret in
         let create_sql = Pgsql_io.Typed_sql.(sql /^ "CREATE TABLE foo (v BIGINT)") in
         let insert_sql =
           Pgsql_io.Typed_sql.(sql /^ "INSERT INTO foo (v) VALUES($v)" /% Var.bigint "v")
@@ -1856,7 +1842,6 @@ let test_ret_b_all_types =
       let open Abb.Future.Infix_monad in
       let f conn =
         let open Abbs_future_combinators.Infix_result_monad in
-        let module Ret = Pgsql_io.Typed_sql.Ret in
         let create_sql =
           Pgsql_io.Typed_sql.(
             sql
@@ -1907,6 +1892,387 @@ let test_ret_b_all_types =
       ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
       Abb.Future.return ())
 
+(* Regression for the pgsql_codec needed_bytes off-by-one: a row value whose
+   frame completes exactly on the 8192-byte read boundary used to strand the
+   decoded frame and hang the fetch (idle-in-transaction reap at 240s in
+   production).  Sweeping a small window of value sizes reliably lands on the
+   boundary; each fetch is guarded by a timeout so a regression FAILS fast
+   instead of hanging the suite. *)
+let test_boundary_sweep =
+  Oth_abb.test
+    ~desc:"Large-value fetch boundary (codec needed_bytes)"
+    ~name:"boundary_sweep"
+    (fun () ->
+      let open Abb.Future.Infix_monad in
+      let f conn =
+        let rec sweep n =
+          if n > 8175 then Abb.Future.return (Ok ())
+          else
+            let fetch_sql =
+              Pgsql_io.Typed_sql.(sql // Ret.text /^ Printf.sprintf "SELECT repeat('x', %d)" n)
+            in
+            Abbs_future_combinators.timeout
+              ~timeout:(Abb.Sys.sleep 10.0)
+              (Pgsql_io.Prepared_stmt.fetch conn fetch_sql ~f:(fun s -> s))
+            >>= function
+            | `Ok (Ok [ s ]) when String.length s = n -> sweep (n + 1)
+            | `Ok (Ok _) ->
+                Oth.Assert.false_ (Printf.sprintf "unexpected result shape at value size %d" n)
+            | `Ok (Error e) ->
+                Oth.Assert.false_
+                  (Printf.sprintf "fetch error at value size %d: %s" n (Pgsql_io.show_err e))
+            | `Timeout ->
+                Oth.Assert.false_
+                  (Printf.sprintf
+                     "fetch HUNG at value size %d (pgsql_codec needed_bytes off-by-one)"
+                     n)
+        in
+        sweep 8140
+      in
+      with_conn f
+      >>= fun r ->
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
+      Abb.Future.return ())
+
+(* Manufacture an in_tx desync: a COMMIT ends the backend's transaction behind
+   pgsql_io's back, so the backend reports 'I' while conn.in_tx stays true
+   (execute accepts any ReadyForQuery and never touches in_tx).  Then issue a
+   failing statement.  Pre-fix, error_response only accepts a ReadyForQuery whose
+   status agrees with conn.in_tx ('T'|'E'); the backend sends 'I', the frame is
+   dropped, and the read blocks forever -- the 240s idle-in-transaction stall.
+   The fix resyncs in_tx from the backend's authoritative status, so the error
+   surfaces instead of hanging. *)
+let test_in_tx_commit_desync =
+  Oth_abb.test
+    ~desc:"in_tx desync + erroring stmt must not hang in error_response"
+    ~name:"in_tx_commit_desync"
+    (fun () ->
+      let open Abb.Future.Infix_monad in
+      let commit_sql = Pgsql_io.Typed_sql.(sql /^ "COMMIT") in
+      let bad_sql = Pgsql_io.Typed_sql.(sql // Ret.integer /^ "SELECT (1 / 0)::integer") in
+      let f conn =
+        Abbs_future_combinators.timeout
+          ~timeout:(Abb.Sys.sleep 20.0)
+          (Pgsql_io.tx conn ~f:(fun () ->
+               let open Abbs_future_combinators.Infix_result_monad in
+               Pgsql_io.Prepared_stmt.execute conn commit_sql
+               >>= fun () ->
+               Pgsql_io.Prepared_stmt.fetch conn bad_sql ~f:(fun n -> Int32.to_int n)
+               >>= fun _ -> Abb.Future.return (Ok ())))
+        >>= (function
+        | `Ok (Ok ()) | `Ok (Error _) -> Abb.Future.return ()
+        | `Timeout ->
+            Oth.Assert.false_
+              "HANG : error_response stuck waiting for a ReadyForQuery that never comes")
+        >>= fun () -> Abb.Future.return (Ok ())
+      in
+      with_conn f
+      >>= fun r ->
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
+      Abb.Future.return ())
+
+(* A fetch whose Ret type is wrong for the column (smallint_b on a BIGINT) hits
+   the Bad_result path.  Pre-fix that path returned WITHOUT draining the rest of
+   the response (remaining DataRows + CommandComplete + ReadyForQuery), so a
+   caller that ignores the error and reuses the connection inherits a desynced
+   frame stream -- a dirty, idle-in-transaction connection.  The fix drains to
+   ReadyForQuery before surfacing the error.  A raising row function must be
+   handled the same way: drain, then re-raise. *)
+let test_bad_result_dirty_conn =
+  Oth_abb.test
+    ~desc:"ignored Bad_result / raising row func must leave the connection clean"
+    ~name:"bad_result_dirty_conn"
+    (fun () ->
+      let open Abb.Future.Infix_monad in
+      let create_sql =
+        Pgsql_io.Typed_sql.(sql /^ "CREATE TABLE IF NOT EXISTS tt_bigt (v BIGINT)")
+      in
+      let truncate_sql = Pgsql_io.Typed_sql.(sql /^ "TRUNCATE tt_bigt") in
+      let insert_sql =
+        Pgsql_io.Typed_sql.(sql /^ "INSERT INTO tt_bigt SELECT generate_series(1, 20000)")
+      in
+      let bad_fetch = Pgsql_io.Typed_sql.(sql // Ret.smallint_b /^ "SELECT v FROM tt_bigt") in
+      let good_fetch = Pgsql_io.Typed_sql.(sql // Ret.bigint /^ "SELECT v FROM tt_bigt") in
+      let assert_reuse_ok label = function
+        | `Ok (Ok rows) when List.length rows = 20000 -> Abb.Future.return ()
+        | `Ok (Ok rows) ->
+            Oth.Assert.false_
+              (Printf.sprintf "%s : reuse returned %d rows" label (List.length rows))
+        | `Ok (Error e) ->
+            Oth.Assert.false_ (Printf.sprintf "%s : reuse failed : %s" label (Pgsql_io.show_err e))
+        | `Timeout -> Oth.Assert.false_ (Printf.sprintf "%s : HANG on dirty conn" label)
+      in
+      let f conn =
+        Pgsql_io.Prepared_stmt.execute conn create_sql
+        >>= fun _ ->
+        Pgsql_io.Prepared_stmt.execute conn truncate_sql
+        >>= fun _ ->
+        Pgsql_io.Prepared_stmt.execute conn insert_sql
+        >>= fun _ ->
+        (* Scenario 1: a Bad_result is ignored, then the connection is reused. *)
+        Abbs_future_combinators.timeout
+          ~timeout:(Abb.Sys.sleep 15.0)
+          (Pgsql_io.tx conn ~f:(fun () ->
+               Pgsql_io.Prepared_stmt.fetch conn bad_fetch ~f:(fun v -> v)
+               >>= fun _r1 -> Pgsql_io.Prepared_stmt.fetch conn good_fetch ~f:(fun v -> v)))
+        >>= fun res1 ->
+        assert_reuse_ok "bad_result" res1
+        >>= fun () ->
+        (* Scenario 2: a row function that RAISES mid-result; the exn must be
+           caught, the response drained, and the connection left clean. *)
+        Abbs_future_combinators.timeout
+          ~timeout:(Abb.Sys.sleep 15.0)
+          (Pgsql_io.tx conn ~f:(fun () ->
+               Abb.Future.await_bind
+                 (fun _ -> Abb.Future.return ())
+                 (Pgsql_io.Prepared_stmt.fetch conn good_fetch ~f:(fun _v -> failwith "decode boom"))
+               >>= fun () -> Pgsql_io.Prepared_stmt.fetch conn good_fetch ~f:(fun v -> v)))
+        >>= fun res2 -> assert_reuse_ok "raise" res2 >>= fun () -> Abb.Future.return (Ok ())
+      in
+      with_conn f
+      >>= fun r ->
+      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
+      Abb.Future.return ())
+
+let notification_payload = function
+  | Some n -> Some n.Pgsql_io.payload
+  | None -> None
+
+(* Bound [wait_for_notification] with a timeout so a hung wait fails the test
+   rather than hanging the suite. *)
+let wait_notification conn =
+  let open Abb.Future.Infix_monad in
+  Abbs_future_combinators.timeout
+    ~timeout:(Abb.Sys.sleep 10.0)
+    (Pgsql_io.wait_for_notification conn)
+  >>= function
+  | `Ok (Ok n) -> Abb.Future.return (Ok n)
+  | `Ok (Error _ as e) -> Abb.Future.return e
+  | `Timeout -> Oth.Assert.false_ "timed out waiting for notification"
+
+(* NOTIFY from a second, independent connection -- the realistic case, and it
+   sidesteps the asynchronous delivery timing of a self-NOTIFY.  Sequential: by
+   the time this returns, the notification is committed, so a listening
+   connection that already issued LISTEN will receive it on its next read. *)
+let notify_from_new_conn ~channel ?payload () =
+  with_conn (fun conn -> Pgsql_io.notify conn ~channel ?payload ())
+
+let test_listen_notify =
+  Oth_abb.test ~desc:"LISTEN/NOTIFY cross-connection delivery" ~name:"listen_notify" (fun () ->
+      let open Abb.Future.Infix_monad in
+      let f conn =
+        let open Abbs_future_combinators.Infix_result_monad in
+        Pgsql_io.listen conn ~channel:"sg_basic"
+        >>= fun () ->
+        notify_from_new_conn ~channel:"sg_basic" ~payload:"hello" ()
+        >>= fun () -> wait_notification conn
+      in
+      with_conn f
+      >>= function
+      | Ok n ->
+          Oth.Assert.Eq.string ~expected:"sg_basic" ~actual:n.Pgsql_io.channel;
+          Oth.Assert.Eq.string ~expected:"hello" ~actual:n.Pgsql_io.payload;
+          Abb.Future.return ()
+      | Error _ -> Oth.Assert.false_ "unexpected error")
+
+let test_get_notification =
+  Oth_abb.test ~desc:"get_notification non-blocking drain" ~name:"get_notification" (fun () ->
+      let open Abb.Future.Infix_monad in
+      let f conn =
+        let open Abbs_future_combinators.Infix_result_monad in
+        (* Nothing received yet: get_notification is None. *)
+        let empty_before = Pgsql_io.get_notification conn in
+        Pgsql_io.listen conn ~channel:"sg_get"
+        >>= fun () ->
+        notify_from_new_conn ~channel:"sg_get" ~payload:"first" ()
+        >>= fun () ->
+        notify_from_new_conn ~channel:"sg_get" ~payload:"second" ()
+        >>= fun () ->
+        (* Notifications are delivered asynchronously, so a read must happen before
+           they are queued.  Drain two, preferring the non-blocking get_notification
+           (which succeeds once a read has enqueued more than it popped) and falling
+           back to a blocking wait. *)
+        let rec drain acc n =
+          if n = 0 then Abb.Future.return (Ok (CCList.rev acc))
+          else
+            match Pgsql_io.get_notification conn with
+            | Some notif -> drain (notif :: acc) (n - 1)
+            | None -> wait_notification conn >>= fun notif -> drain (notif :: acc) (n - 1)
+        in
+        drain [] 2
+        >>= fun notifs ->
+        (* Queue fully drained. *)
+        let empty_after = Pgsql_io.get_notification conn in
+        Abb.Future.return (Ok (empty_before, notifs, empty_after))
+      in
+      with_conn f
+      >>= function
+      | Ok (empty_before, notifs, empty_after) ->
+          Oth.Assert.Eq.string_option ~expected:None ~actual:(notification_payload empty_before);
+          Oth.Assert.Eq.string_list
+            ~expected:[ "first"; "second" ]
+            ~actual:(CCList.map (fun n -> n.Pgsql_io.payload) notifs);
+          Oth.Assert.Eq.string_option ~expected:None ~actual:(notification_payload empty_after);
+          Abb.Future.return ()
+      | Error _ -> Oth.Assert.false_ "unexpected error")
+
+let test_notification_during_fetch =
+  Oth_abb.test ~desc:"NOTIFY during fetch is harmless" ~name:"notification_during_fetch" (fun () ->
+      let open Abb.Future.Infix_monad in
+      let f conn =
+        let open Abbs_future_combinators.Infix_result_monad in
+        Pgsql_io.listen conn ~channel:"sg_during"
+        >>= fun () ->
+        (* Notification is committed (from another connection) and pending before we
+           fetch: the fetch must still return the right rows, and the notification
+           must be captured (it either rides the fetch's frame stream or arrives on
+           the following wait). *)
+        notify_from_new_conn ~channel:"sg_during" ~payload:"during" ()
+        >>= fun () ->
+        Pgsql_io.Prepared_stmt.fetch
+          conn
+          Pgsql_io.Typed_sql.(sql // Ret.integer /^ "SELECT 1")
+          ~f:(fun n -> n)
+        >>= fun rows ->
+        (match Pgsql_io.get_notification conn with
+          | Some n -> Abb.Future.return (Ok n)
+          | None -> wait_notification conn)
+        >>= fun n -> Abb.Future.return (Ok (rows, n))
+      in
+      with_conn f
+      >>= function
+      | Ok (rows, n) ->
+          Oth.Assert.Eq.list ~eq:Int32.equal ~pp:pp_int32 ~expected:[ 1l ] ~actual:rows;
+          Oth.Assert.Eq.string ~expected:"sg_during" ~actual:n.Pgsql_io.channel;
+          Oth.Assert.Eq.string ~expected:"during" ~actual:n.Pgsql_io.payload;
+          Abb.Future.return ()
+      | Error _ -> Oth.Assert.false_ "unexpected error")
+
+let test_unlisten_stops_delivery =
+  Oth_abb.test ~desc:"UNLISTEN stops delivery" ~name:"unlisten_stops_delivery" (fun () ->
+      let open Abb.Future.Infix_monad in
+      let f conn =
+        let open Abbs_future_combinators.Infix_result_monad in
+        Pgsql_io.listen conn ~channel:"sg_un"
+        >>= fun () ->
+        Pgsql_io.unlisten conn ~channel:"sg_un"
+        >>= fun () ->
+        notify_from_new_conn ~channel:"sg_un" ~payload:"ignored" ()
+        >>= fun () ->
+        (* Drive a read cycle: a wrongly-delivered notification would be queued by
+           this fetch.  The queue must stay empty. *)
+        Pgsql_io.Prepared_stmt.fetch
+          conn
+          Pgsql_io.Typed_sql.(sql // Ret.integer /^ "SELECT 1")
+          ~f:(fun n -> n)
+        >>= fun _ -> Abb.Future.return (Ok (Pgsql_io.get_notification conn))
+      in
+      with_conn f
+      >>= function
+      | Ok no ->
+          Oth.Assert.Eq.string_option ~expected:None ~actual:(notification_payload no);
+          Abb.Future.return ()
+      | Error _ -> Oth.Assert.false_ "unexpected error")
+
+let test_wait_abort_leaves_conn_valid =
+  Oth_abb.test
+    ~desc:"Aborted wait leaves connection valid"
+    ~name:"wait_abort_leaves_conn_valid"
+    (fun () ->
+      let open Abb.Future.Infix_monad in
+      let f conn =
+        let open Abbs_future_combinators.Infix_result_monad in
+        Pgsql_io.listen conn ~channel:"sg_abort"
+        >>= fun () ->
+        (* No notifier, short timeout: the wait must time out, aborting
+           wait_for_notification mid-read. *)
+        let open Abb.Future.Infix_monad in
+        Abbs_future_combinators.timeout
+          ~timeout:(Abb.Sys.sleep 1.0)
+          (Pgsql_io.wait_for_notification conn)
+        >>= fun wait_res ->
+        let timed_out =
+          match wait_res with
+          | `Timeout -> true
+          | `Ok _ -> false
+        in
+        (* The connection must still work: a query (would raise "busy" if the abort
+           leaked the guard), then a fresh notification must be delivered. *)
+        let open Abbs_future_combinators.Infix_result_monad in
+        Pgsql_io.Prepared_stmt.fetch
+          conn
+          Pgsql_io.Typed_sql.(sql // Ret.integer /^ "SELECT 1")
+          ~f:(fun n -> n)
+        >>= fun rows ->
+        notify_from_new_conn ~channel:"sg_abort" ~payload:"after" ()
+        >>= fun () ->
+        wait_notification conn >>= fun n -> Abb.Future.return (Ok (timed_out, rows, n))
+      in
+      with_conn f
+      >>= function
+      | Ok (timed_out, rows, n) ->
+          Oth.Assert.Eq.bool ~expected:true ~actual:timed_out;
+          Oth.Assert.Eq.list ~eq:Int32.equal ~pp:pp_int32 ~expected:[ 1l ] ~actual:rows;
+          Oth.Assert.Eq.string ~expected:"after" ~actual:n.Pgsql_io.payload;
+          Abb.Future.return ()
+      | Error _ -> Oth.Assert.false_ "unexpected error")
+
+(* Stress the exact race called out in review: abort firing as a notification is
+   arriving.  A short, per-iteration-varied timeout makes the abort land before,
+   during, and after delivery across many iterations.  The timing is random but the
+   asserted invariant is not: a timed-out wait must never lose the notification (a
+   following bounded wait must still return it), and the connection must stay valid
+   after every abort.  Loss or desync would fail deterministically. *)
+let test_abort_during_delivery_no_loss =
+  Oth_abb.test
+    ~desc:"Abort racing an incoming notify never loses it or desyncs"
+    ~name:"abort_during_delivery_no_loss"
+    (fun () ->
+      let open Abb.Future.Infix_monad in
+      let iterations = 100 in
+      let f conn_a =
+        let open Abbs_future_combinators.Infix_result_monad in
+        Pgsql_io.listen conn_a ~channel:"sg_race"
+        >>= fun () ->
+        with_conn (fun conn_b ->
+            let rec loop i =
+              if i > iterations then Abb.Future.return (Ok ())
+              else
+                let open Abbs_future_combinators.Infix_result_monad in
+                let payload = Printf.sprintf "p%d" i in
+                Pgsql_io.notify conn_b ~channel:"sg_race" ~payload ()
+                >>= fun () ->
+                let timeout_s = 0.0005 +. (0.0005 *. float_of_int (i mod 8)) in
+                let open Abb.Future.Infix_monad in
+                Abbs_future_combinators.timeout
+                  ~timeout:(Abb.Sys.sleep timeout_s)
+                  (Pgsql_io.wait_for_notification conn_a)
+                >>= fun raced ->
+                let open Abbs_future_combinators.Infix_result_monad in
+                (match raced with
+                  | `Ok (Ok n) -> Abb.Future.return (Ok n)
+                  | `Ok (Error _ as e) -> Abb.Future.return e
+                  (* Aborted -- possibly mid-arrival.  The notification must not be
+                   lost: a bounded blocking wait must still return it. *)
+                  | `Timeout -> wait_notification conn_a)
+                >>= fun n ->
+                Oth.Assert.Eq.string ~expected:payload ~actual:n.Pgsql_io.payload;
+                (* No desync and no leaked busy guard: the connection still works. *)
+                Pgsql_io.Prepared_stmt.fetch
+                  conn_a
+                  Pgsql_io.Typed_sql.(sql // Ret.integer /^ "SELECT 1")
+                  ~f:(fun n -> n)
+                >>= fun rows ->
+                Oth.Assert.Eq.list ~eq:Int32.equal ~pp:pp_int32 ~expected:[ 1l ] ~actual:rows;
+                loop (i + 1)
+            in
+            loop 1)
+      in
+      with_conn f
+      >>= function
+      | Ok () -> Abb.Future.return ()
+      | Error _ -> Oth.Assert.false_ "unexpected error")
+
 let test_large_jsonb_fetch =
   Oth_abb.test
     ~desc:"Large jsonb fetch (simulate compute_node_work.work read-back)"
@@ -1923,51 +2289,67 @@ let test_large_jsonb_fetch =
         | Some u -> u
         | None -> failwith "bad uuid"
       in
+      let module Payload = struct
+        (* A [(string * _) list] field is rendered by ppx_deriving_yojson as a
+           JSON object, which keeps the dynamically-keyed [dirs] map shaped like
+           the real compute_node_work config. *)
+        type workflow = {
+          tag_query : string;
+          engine : string;
+        }
+        [@@deriving to_yojson]
+
+        type dir = { tags : string list } [@@deriving to_yojson]
+
+        type config = {
+          workflows : workflow list;
+          dirs : (string * dir) list;
+          notes : string;
+        }
+        [@@deriving to_yojson]
+
+        type dirspace = {
+          dir : string;
+          workspace : string;
+        }
+        [@@deriving to_yojson]
+
+        type t = {
+          version : int;
+          config : config;
+          dirspaces : dirspace list;
+          filler : string;
+        }
+        [@@deriving to_yojson]
+      end in
       let mk_payload filler_size =
-        `Assoc
-          [
-            ("version", `Int 1);
-            ( "config",
-              `Assoc
-                [
-                  ( "workflows",
-                    `List
-                      [
-                        `Assoc
-                          [
-                            ("tag_query", `String "dir:services/* and (env:prod or env:dev)");
-                            ("engine", `String "terraform");
-                          ];
-                      ] );
-                  ( "dirs",
-                    `Assoc
-                      [
-                        ( "services/caf\xc3\xa9-app",
-                          `Assoc
-                            [
-                              ( "tags",
-                                `List
-                                  [
-                                    `String "na\xc3\xafve";
-                                    `String "\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e";
-                                  ] );
-                            ] );
-                      ] );
-                  ( "notes",
-                    `String
-                      "sp\xc3\xabcial \xe2\x80\x94 chars: \"quotes\", \\backslash, \ttab, emoji \
-                       \xf0\x9f\x9a\x80" );
-                ] );
-            ( "dirspaces",
-              `List
-                (List.init 50 (fun i ->
-                     `Assoc
-                       [
-                         ("dir", `String (Printf.sprintf "services/svc-%d" i));
-                         ("workspace", `String "default");
-                       ])) );
-            ("filler", `String (String.make filler_size 'x'));
-          ]
+        Payload.to_yojson
+          {
+            Payload.version = 1;
+            config =
+              {
+                Payload.workflows =
+                  [
+                    {
+                      Payload.tag_query = "dir:services/* and (env:prod or env:dev)";
+                      engine = "terraform";
+                    };
+                  ];
+                dirs =
+                  [
+                    ( "services/caf\xc3\xa9-app",
+                      { Payload.tags = [ "na\xc3\xafve"; "\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e" ] }
+                    );
+                  ];
+                notes =
+                  "sp\xc3\xabcial \xe2\x80\x94 chars: \"quotes\", \\backslash, \ttab, emoji \
+                   \xf0\x9f\x9a\x80";
+              };
+            dirspaces =
+              List.init 50 (fun i ->
+                  { Payload.dir = Printf.sprintf "services/svc-%d" i; workspace = "default" });
+            filler = String.make filler_size 'x';
+          }
       in
       let f conn =
         let create_sql =
@@ -2060,565 +2442,21 @@ let test_large_jsonb_fetch =
    connection and see whether it hangs.  Run across the meaningful variants:
    outside vs inside a tx, and a runtime error (1/0, fails at Execute, after
    Sync) vs a parse-time error (missing relation, fails at Parse). *)
-let test_ignore_error_then_query =
-  Oth_abb.test
-    ~desc:"ignore an erroring query, then issue another on the same conn"
-    ~name:"ignore_error_then_query"
-    (fun () ->
-      let open Abb.Future.Infix_monad in
-      let bad_runtime = Pgsql_io.Typed_sql.(sql // Ret.integer /^ "SELECT (1 / 0)::integer") in
-      let bad_parse =
-        Pgsql_io.Typed_sql.(sql // Ret.integer /^ "SELECT x FROM definitely_missing_table_xyz")
-      in
-      let good = Pgsql_io.Typed_sql.(sql // Ret.integer /^ "SELECT 1::integer") in
-      let probe label conn bad =
-        Logs.info (fun m -> m "%s : issuing erroring query (result will be IGNORED)" label);
-        Pgsql_io.Prepared_stmt.fetch conn bad ~f:(fun n -> Int32.to_int n)
-        >>= fun res ->
-        (match res with
-        | Ok _ -> Logs.info (fun m -> m "%s : first query returned Ok (unexpected)" label)
-        | Error e ->
-            Logs.info (fun m -> m "%s : first query Error %s (IGNORED)" label (Pgsql_io.show_err e)));
-        Logs.info (fun m -> m "%s : issuing SECOND query on same conn" label);
-        Abbs_future_combinators.timeout
-          ~timeout:(Abb.Sys.sleep 12.0)
-          (Pgsql_io.Prepared_stmt.fetch conn good ~f:(fun n -> Int32.to_int n))
-        >>= function
-        | `Ok (Ok rows) ->
-            Logs.info (fun m -> m "%s : SECOND ok rows=%d (NO HANG)" label (List.length rows));
-            Abb.Future.return (Ok ())
-        | `Ok (Error e) ->
-            Logs.info (fun m -> m "%s : SECOND Error %s (NO HANG)" label (Pgsql_io.show_err e));
-            Abb.Future.return (Ok ())
-        | `Timeout ->
-            Logs.err (fun m -> m "%s : SECOND HANG : *** stalled on same conn ***" label);
-            Abb.Future.return (Ok ())
-      in
-      let in_tx label conn bad =
-        Abbs_future_combinators.timeout
-          ~timeout:(Abb.Sys.sleep 30.0)
-          (Pgsql_io.tx conn ~f:(fun () -> probe label conn bad))
-        >>= fun _ -> Abb.Future.return (Ok ())
-      in
-      with_conn (fun conn -> probe "A_NOTX_RUNTIME" conn bad_runtime)
-      >>= fun _ ->
-      with_conn (fun conn -> probe "B_NOTX_PARSE" conn bad_parse)
-      >>= fun _ ->
-      with_conn (fun conn -> in_tx "C_TX_RUNTIME" conn bad_runtime)
-      >>= fun _ ->
-      with_conn (fun conn -> in_tx "D_TX_PARSE" conn bad_parse) >>= fun _ -> Abb.Future.return ())
-
-(* Hypothesis (the real one): pgsql_io hangs inside a tx waiting for a
-   ReadyForQuery that never comes.  error_response/reset only accept a
-   ReadyForQuery whose status agrees with conn.in_tx:
-
-     | ReadyForQuery { status = 'T' | 'E' } when conn.in_tx     -> true
-     | ReadyForQuery { status = 'I' }       when not conn.in_tx -> true
-     | _ -> false
-
-   fetch/execute, by contrast, accept ANY ReadyForQuery status and never touch
-   in_tx.  So if conn.in_tx ever disagrees with the backend's real transaction
-   status, the *next statement that errors* routes into error_response, which
-   waits forever for a ReadyForQuery that will never arrive -- connection idle,
-   tx open -- exactly the 240s idle-in-transaction stall.
-
-   This test manufactures the desync (in_tx = true while the backend is at 'I')
-   and then issues a failing statement.  The point isn't the manufacturing step
-   -- it's to prove that *given a desynced in_tx*, an error is a permanent hang. *)
-let test_in_tx_commit_desync =
-  Oth_abb.test
-    ~desc:"in_tx desync + erroring stmt hangs forever in error_response"
-    ~name:"in_tx_commit_desync"
-    (fun () ->
-      let open Abb.Future.Infix_monad in
-      let f conn =
-        let commit_sql = Pgsql_io.Typed_sql.(sql /^ "COMMIT") in
-        let bad_sql = Pgsql_io.Typed_sql.(sql // Ret.integer /^ "SELECT (1 / 0)::integer") in
-        Abbs_future_combinators.timeout
-          ~timeout:(Abb.Sys.sleep 20.0)
-          (Pgsql_io.tx conn ~f:(fun () ->
-               let open Abbs_future_combinators.Infix_result_monad in
-               (* End the backend's tx behind pgsql_io's back: backend goes to
-                  'I', but conn.in_tx stays true (execute accepts any RFQ). *)
-               Pgsql_io.Prepared_stmt.execute conn commit_sql
-               >>= fun () ->
-               Logs.info (fun m ->
-                   m "DESYNC : COMMIT executed -> backend at 'I', conn.in_tx still true");
-               (* Now an erroring statement.  consume_fetch sees ErrorResponse ->
-                  error_response waits for RFQ 'T'|'E' (in_tx) but backend sends
-                  'I' -> dropped -> wait_for_frames blocks forever. *)
-               Logs.info (fun m -> m "DESYNC : issuing erroring stmt (1/0)");
-               Pgsql_io.Prepared_stmt.fetch conn bad_sql ~f:(fun n -> Int32.to_int n)
-               >>= fun _ -> Abb.Future.return (Ok ())))
-        >>= function
-        | `Ok (Ok ()) ->
-            Logs.info (fun m -> m "NO_HANG : tx completed (no desync hang)");
-            Abb.Future.return (Ok ())
-        | `Ok (Error err) ->
-            Logs.info (fun m -> m "NO_HANG : tx returned error %s" (Pgsql_io.show_err err));
-            Abb.Future.return (Ok ())
-        | `Timeout ->
-            Logs.err (fun m ->
-                m "HANG : *** error_response stuck waiting for a ReadyForQuery that never comes ***");
-            Abb.Future.return (Ok ())
-      in
-      with_conn f
-      >>= fun r ->
-      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
-      Abb.Future.return ())
-
-(* Hypothesis: the evaluator leaves the connection dirty by aborting a db op
-   mid-protocol (timeout / suspend short-circuit / orphaned parallel fetch).
-   Execute is sent, the response is never consumed, so the NEXT op on the same
-   connection inherits a desynced frame stream and stalls. This is testable on
-   plaintext and does not involve any pgsql_io bug -- it's about how the op is
-   driven. *)
-let test_desync_after_abort =
-  Oth_abb.test
-    ~desc:"Aborting a db op mid-flight leaves the connection unusable"
-    ~name:"desync_after_abort"
-    (fun () ->
-      let open Abb.Future.Infix_monad in
-      let f conn =
-        let slow_sql = Pgsql_io.Typed_sql.(sql // Ret.text /^ "SELECT pg_sleep(5)::text") in
-        let normal_sql = Pgsql_io.Typed_sql.(sql // Ret.integer /^ "SELECT 1::integer") in
-        (* op 1: slow query aborted after 0.5s (Execute on the wire, response
-           never read). *)
-        Logs.info (fun m -> m "ABORT_OP : start slow query, 0.5s timeout");
-        Abbs_future_combinators.timeout
-          ~timeout:(Abb.Sys.sleep 0.5)
-          (Pgsql_io.Prepared_stmt.fetch conn slow_sql ~f:(fun s -> s))
-        >>= fun abort_res ->
-        (match abort_res with
-        | `Timeout -> Logs.info (fun m -> m "ABORT_OP : aborted mid-flight (timed out)")
-        | `Ok (Ok _) -> Logs.info (fun m -> m "ABORT_OP : completed before timeout (no abort)")
-        | `Ok (Error err) -> Logs.info (fun m -> m "ABORT_OP : err %s" (Pgsql_io.show_err err)));
-        (* op 2: a trivial fetch on the SAME connection. Does it hang? *)
-        Logs.info (fun m -> m "NEXT_OP : start trivial fetch on same connection");
-        Abbs_future_combinators.timeout
-          ~timeout:(Abb.Sys.sleep 20.0)
-          (Pgsql_io.Prepared_stmt.fetch conn normal_sql ~f:(fun n -> Int32.to_int n))
-        >>= function
-        | `Ok (Ok rows) ->
-            Logs.info (fun m -> m "NEXT_OP : OK : rows=%d (no desync)" (List.length rows));
-            Abb.Future.return (Ok ())
-        | `Ok (Error err) ->
-            Logs.err (fun m -> m "NEXT_OP : ERR : %s (connection broke)" (Pgsql_io.show_err err));
-            Abb.Future.return (Ok ())
-        | `Timeout ->
-            Logs.err (fun m -> m "NEXT_OP : HANG : *** 20s+ STALL REPRODUCED on same conn ***");
-            Abb.Future.return (Ok ())
-      in
-      with_conn f
-      >>= fun r ->
-      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
-      Abb.Future.return ())
-
-(* Validate: when a NOTIFY fires INSIDE A TRIGGER (transactional), does the
-   connection ever see a NotificationResponse, and WHEN -- mid-tx, at commit, or
-   never?  And does it appear on the executing connection or only on a separate
-   LISTENer?  This decides whether the trigger-NOTIFY can even desync the eval. *)
-let test_trigger_notify =
-  Oth_abb.test
-    ~desc:"when does a trigger-fired NOTIFY produce a NotificationResponse"
-    ~name:"trigger_notify"
-    (fun () ->
-      let open Abb.Future.Infix_monad in
-      let open_raw () =
-        Pgsql_io.create ~tls_config:(`Prefer tls_config) ~host ~user ~passwd database
-        >>= function
-        | Ok c -> Abb.Future.return c
-        | Error e ->
-            Logs.err (fun m -> m "create err %s" (Pgsql_io.show_create_err e));
-            failwith "conn"
-      in
-      let close c = Abbs_future_combinators.ignore (Pgsql_io.destroy c) in
-      let exec conn label q =
-        Pgsql_io.Prepared_stmt.execute conn Pgsql_io.Typed_sql.(sql /^ q)
-        >>= fun r ->
-        (match r with
-        | Ok () -> Logs.info (fun m -> m ">>> %s : OK" label)
-        | Error e -> Logs.err (fun m -> m ">>> %s : *** ERR : %s ***" label (Pgsql_io.show_err e)));
-        Abb.Future.return r
-      in
-      let fetch1 conn label =
-        Pgsql_io.Prepared_stmt.fetch
-          conn
-          Pgsql_io.Typed_sql.(sql // Ret.integer /^ "SELECT 1::integer")
-          ~f:(fun n -> Int32.to_int n)
-        >>= fun r ->
-        (match r with
-        | Ok rows -> Logs.info (fun m -> m ">>> %s : OK rows=%d" label (List.length rows))
-        | Error e -> Logs.err (fun m -> m ">>> %s : *** ERR : %s ***" label (Pgsql_io.show_err e)));
-        Abb.Future.return r
-      in
-      let setup conn =
-        exec conn "DROP TRIGGER" "DROP TRIGGER IF EXISTS tt_trig ON tt_trig_test"
-        >>= fun _ ->
-        exec conn "DROP TABLE" "DROP TABLE IF EXISTS tt_trig_test"
-        >>= fun _ ->
-        exec
-          conn
-          "CREATE FUNC"
-          "CREATE OR REPLACE FUNCTION tt_notify_trigger() RETURNS trigger AS 'BEGIN PERFORM \
-           pg_notify(''tt_chan'', ''fired''); RETURN NEW; END;' LANGUAGE plpgsql"
-        >>= fun _ ->
-        exec conn "CREATE TABLE" "CREATE TABLE tt_trig_test (id integer)"
-        >>= fun _ ->
-        exec
-          conn
-          "CREATE TRIGGER"
-          "CREATE TRIGGER tt_trig AFTER INSERT OR UPDATE ON tt_trig_test FOR EACH ROW EXECUTE \
-           PROCEDURE tt_notify_trigger()"
-        >>= fun _ -> Abb.Future.return ()
-      in
-      (* SCEN A: executing conn IS LISTENing; trigger fires inside a raw tx.
-         Watch each step for a NotificationResponse. *)
-      open_raw ()
-      >>= fun a ->
-      setup a
-      >>= fun () ->
-      Logs.info (fun m -> m "===== A : self-LISTEN, trigger fires inside tx =====");
-      exec a "A.LISTEN" "LISTEN tt_chan"
-      >>= fun _ ->
-      exec a "A.BEGIN" "BEGIN"
-      >>= fun _ ->
-      exec a "A.INSERT(fires trigger)" "INSERT INTO tt_trig_test VALUES (1)"
-      >>= fun _ ->
-      fetch1 a "A.SELECT-mid-tx"
-      >>= fun _ ->
-      exec a "A.COMMIT" "COMMIT"
-      >>= fun _ ->
-      fetch1 a "A.SELECT-post-commit"
-      >>= fun _ ->
-      fetch1 a "A.SELECT-post-commit-2"
-      >>= fun _ ->
-      close a
-      >>= fun () ->
-      (* SCEN B: executing conn is NOT listening; trigger fires.  Expect no frame. *)
-      open_raw ()
-      >>= fun b ->
-      Logs.info (fun m -> m "===== B : NOT listening, trigger fires =====");
-      exec b "B.INSERT(fires trigger)" "INSERT INTO tt_trig_test VALUES (2)"
-      >>= fun _ ->
-      fetch1 b "B.SELECT-after"
-      >>= fun _ ->
-      close b
-      >>= fun () ->
-      (* SCEN C: A2 LISTENs; B2 (separate conn) fires trigger + commits; then A2 does work
-         -- async delivery to a LISTENer while it is mid-stream. *)
-      open_raw ()
-      >>= fun a2 ->
-      open_raw ()
-      >>= fun b2 ->
-      Logs.info (fun m -> m "===== C : separate LISTENer gets async delivery =====");
-      exec a2 "C.A2.LISTEN" "LISTEN tt_chan"
-      >>= fun _ ->
-      exec b2 "C.B2.INSERT(fires+commits)" "INSERT INTO tt_trig_test VALUES (3)"
-      >>= fun _ ->
-      fetch1 a2 "C.A2.SELECT"
-      >>= fun _ ->
-      fetch1 a2 "C.A2.SELECT2"
-      >>= fun _ -> close a2 >>= fun () -> close b2 >>= fun () -> Abb.Future.return ())
-
-(* Experiment battery: try to drive a frame to be batched with a ReadyForQuery
-   so consume_exec_end / consume_fetch_end hit their singleton [ReadyForQuery _]
-   assumption and return Unmatching_frame.  An async NotificationResponse
-   (LISTEN/NOTIFY) is the realistic way to get an extra frame into the stream. *)
-let test_singleton_repro =
-  Oth_abb.test
-    ~desc:"reproduce the consume_*_end singleton [ReadyForQuery] assumption"
-    ~name:"singleton_repro"
-    (fun () ->
-      let open Abb.Future.Infix_monad in
-      let open_raw () =
-        Pgsql_io.create ~tls_config:(`Prefer tls_config) ~host ~user ~passwd database
-        >>= function
-        | Ok c -> Abb.Future.return c
-        | Error e ->
-            Logs.err (fun m -> m "create err %s" (Pgsql_io.show_create_err e));
-            failwith "conn"
-      in
-      let close c = Abbs_future_combinators.ignore (Pgsql_io.destroy c) in
-      let exec conn label sql =
-        Pgsql_io.Prepared_stmt.execute conn sql
-        >>= fun r ->
-        (match r with
-        | Ok () -> Logs.info (fun m -> m ">>> %s : OK" label)
-        | Error e -> Logs.err (fun m -> m ">>> %s : *** ERR : %s ***" label (Pgsql_io.show_err e)));
-        Abb.Future.return r
-      in
-      let fetch1 conn label sql =
-        Pgsql_io.Prepared_stmt.fetch conn sql ~f:(fun n -> Int32.to_int n)
-        >>= fun r ->
-        (match r with
-        | Ok rows -> Logs.info (fun m -> m ">>> %s : OK rows=%d" label (List.length rows))
-        | Error e -> Logs.err (fun m -> m ">>> %s : *** ERR : %s ***" label (Pgsql_io.show_err e)));
-        Abb.Future.return r
-      in
-      let listen = Pgsql_io.Typed_sql.(sql /^ "LISTEN tt_chan") in
-      let notify = Pgsql_io.Typed_sql.(sql /^ "NOTIFY tt_chan, 'p'") in
-      let sel = Pgsql_io.Typed_sql.(sql // Ret.integer /^ "SELECT 1::integer") in
-      (* S1: self LISTEN + NOTIFY -- watch the NOTIFY's own consume and follow-up SELECTs *)
-      Logs.info (fun m -> m "===== S1 : self listen + notify =====");
-      open_raw ()
-      >>= fun c1 ->
-      exec c1 "S1.LISTEN" listen
-      >>= fun _ ->
-      exec c1 "S1.NOTIFY" notify
-      >>= fun _ ->
-      fetch1 c1 "S1.SELECT" sel
-      >>= fun _ ->
-      fetch1 c1 "S1.SELECT2" sel
-      >>= fun _ ->
-      close c1
-      >>= fun () ->
-      (* S2: A LISTENs, B NOTIFYs, then A runs SELECTs -- pending notification on A *)
-      Logs.info (fun m -> m "===== S2 : cross-conn notify =====");
-      open_raw ()
-      >>= fun a2 ->
-      open_raw ()
-      >>= fun b2 ->
-      exec a2 "S2.A.LISTEN" listen
-      >>= fun _ ->
-      exec b2 "S2.B.NOTIFY" notify
-      >>= fun _ ->
-      exec b2 "S2.B.NOTIFY2" notify
-      >>= fun _ ->
-      fetch1 a2 "S2.A.SELECT" sel
-      >>= fun _ ->
-      fetch1 a2 "S2.A.SELECT2" sel
-      >>= fun _ ->
-      close a2
-      >>= fun () ->
-      close b2
-      >>= fun () ->
-      (* S3: A LISTENs and runs a slow query; B NOTIFYs during the sleep *)
-      Logs.info (fun m -> m "===== S3 : notify during slow query =====");
-      open_raw ()
-      >>= fun a3 ->
-      open_raw ()
-      >>= fun b3 ->
-      exec a3 "S3.A.LISTEN" listen
-      >>= fun _ ->
-      Abb.Future.fork
-        (Abb.Sys.sleep 1.0
-        >>= fun () -> Abbs_future_combinators.ignore (exec b3 "S3.B.NOTIFY-during" notify))
-      >>= fun _ ->
-      let slow = Pgsql_io.Typed_sql.(sql // Ret.text /^ "SELECT pg_sleep(3)::text") in
-      Pgsql_io.Prepared_stmt.fetch a3 slow ~f:(fun s -> s)
-      >>= fun r3 ->
-      (match r3 with
-      | Ok _ -> Logs.info (fun m -> m ">>> S3.A.SLEEP : OK")
-      | Error e -> Logs.err (fun m -> m ">>> S3.A.SLEEP : *** ERR : %s ***" (Pgsql_io.show_err e)));
-      fetch1 a3 "S3.A.SELECT-after" sel
-      >>= fun _ -> close a3 >>= fun () -> close b3 >>= fun () -> Abb.Future.return ())
-
-(* Deterministic, data-independent proof of the reset/Sync accounting bug:
-   `SET TimeZone` is GUC_REPORT, so it emits a ParameterStatus frame.
-   consume_exec_frames doesn't handle ParameterStatus -> it routes to `reset`.
-   `reset` sends its OWN Sync (a SECOND one; the SET's Sync was already in
-   flight), consumes the first ReadyForQuery, and leaves reset's-Sync's
-   ReadyForQuery stray on the wire -- which then blocks/desyncs the next query. *)
-let test_reset_stray_rfq =
-  Oth_abb.test
-    ~desc:"reset's extra Sync leaves a stray ReadyForQuery that breaks the next query"
-    ~name:"reset_stray_rfq"
-    (fun () ->
-      let open Abb.Future.Infix_monad in
-      let f conn =
-        let set_tz = Pgsql_io.Typed_sql.(sql /^ "SET application_name = 'tt_repro_xyz'") in
-        let sel = Pgsql_io.Typed_sql.(sql // Ret.integer /^ "SELECT 1::integer") in
-        Logs.info (fun m -> m ">>> SET TimeZone (emits ParameterStatus -> should trip reset)");
-        Pgsql_io.Prepared_stmt.execute conn set_tz
-        >>= fun r1 ->
-        (match r1 with
-        | Ok () -> Logs.info (fun m -> m ">>> SET : OK")
-        | Error e -> Logs.err (fun m -> m ">>> SET : *** ERR : %s ***" (Pgsql_io.show_err e)));
-        Logs.info (fun m -> m ">>> SELECT #1 (does it read a stray ReadyForQuery?)");
-        Abbs_future_combinators.timeout
-          ~timeout:(Abb.Sys.sleep 10.0)
-          (Pgsql_io.Prepared_stmt.fetch conn sel ~f:(fun n -> Int32.to_int n))
-        >>= (fun res ->
-        (match res with
-        | `Ok (Ok rows) -> Logs.info (fun m -> m ">>> SELECT #1 : OK rows=%d" (List.length rows))
-        | `Ok (Error e) ->
-            Logs.err (fun m -> m ">>> SELECT #1 : *** ERR : %s ***" (Pgsql_io.show_err e))
-        | `Timeout -> Logs.err (fun m -> m ">>> SELECT #1 : *** HANG (stray RFQ) ***"));
-        Abb.Future.return ())
-        >>= fun () ->
-        Logs.info (fun m -> m ">>> SELECT #2 (is the connection still desynced?)");
-        Abbs_future_combinators.timeout
-          ~timeout:(Abb.Sys.sleep 10.0)
-          (Pgsql_io.Prepared_stmt.fetch conn sel ~f:(fun n -> Int32.to_int n))
-        >>= (fun res ->
-        (match res with
-        | `Ok (Ok rows) -> Logs.info (fun m -> m ">>> SELECT #2 : OK rows=%d" (List.length rows))
-        | `Ok (Error e) ->
-            Logs.err (fun m -> m ">>> SELECT #2 : *** ERR : %s ***" (Pgsql_io.show_err e))
-        | `Timeout -> Logs.err (fun m -> m ">>> SELECT #2 : *** HANG ***"));
-        Abb.Future.return ())
-        >>= fun () -> Abb.Future.return (Ok ())
-      in
-      with_conn f
-      >>= fun r ->
-      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
-      Abb.Future.return ())
-
-(* THE hypothesis: a fetch whose Ret type annotation is wrong for the data hits
-   pgsql_io.ml:859 (Bad_result) and returns WITHOUT draining the rest of the
-   response (remaining DataRows + CommandComplete + ReadyForQuery{T}).  If the
-   caller IGNORES that error and keeps using the connection, the leftover frames
-   desync the next op, and the connection stays idle-in-transaction. *)
-let test_bad_result_dirty_conn =
-  Oth_abb.test
-    ~desc:"ignored Bad_result leaves undrained frames and a dirty in-tx connection"
-    ~name:"bad_result_dirty_conn"
-    (fun () ->
-      let open Abb.Future.Infix_monad in
-      let module Ret = Pgsql_io.Typed_sql.Ret in
-      let f conn =
-        let create_sql =
-          Pgsql_io.Typed_sql.(sql /^ "CREATE TABLE IF NOT EXISTS tt_bigt (v BIGINT)")
-        in
-        let truncate_sql = Pgsql_io.Typed_sql.(sql /^ "TRUNCATE tt_bigt") in
-        (* bulk-insert many rows so the failing fetch's response spans multiple
-           reads -- rows after the first stay on the wire when Bad_result bails *)
-        let insert_sql =
-          Pgsql_io.Typed_sql.(sql /^ "INSERT INTO tt_bigt SELECT generate_series(1, 20000)")
-        in
-        (* wrong return type: smallint_b reads a BIGINT column -> Bad_result *)
-        let bad_fetch = Pgsql_io.Typed_sql.(sql // Ret.smallint_b /^ "SELECT v FROM tt_bigt") in
-        let good_fetch = Pgsql_io.Typed_sql.(sql // Ret.bigint /^ "SELECT v FROM tt_bigt") in
-        Pgsql_io.Prepared_stmt.execute conn create_sql
-        >>= fun _ ->
-        Pgsql_io.Prepared_stmt.execute conn truncate_sql
-        >>= fun _ ->
-        Pgsql_io.Prepared_stmt.execute conn insert_sql
-        >>= fun _ ->
-        Logs.info (fun m ->
-            m "===== inside tx : bad fetch (wrong type), IGNORE error, reuse conn =====");
-        Abbs_future_combinators.timeout
-          ~timeout:(Abb.Sys.sleep 15.0)
-          (Pgsql_io.tx conn ~f:(fun () ->
-               let open Abb.Future.Infix_monad in
-               Pgsql_io.Prepared_stmt.fetch conn bad_fetch ~f:(fun v -> v)
-               >>= fun r1 ->
-               (match r1 with
-               | Error (`Bad_result _) ->
-                   Logs.info (fun m ->
-                       m ">>> BAD FETCH : Bad_result (IGNORING it, like a buggy caller)")
-               | Ok _ -> Logs.info (fun m -> m ">>> BAD FETCH : Ok (unexpected)")
-               | Error e ->
-                   Logs.info (fun m -> m ">>> BAD FETCH : other err %s" (Pgsql_io.show_err e)));
-               Logs.info (fun m -> m ">>> NEXT OP : reuse the same connection (dirty?)");
-               Pgsql_io.Prepared_stmt.fetch conn good_fetch ~f:(fun v -> v)
-               >>= fun r2 ->
-               (match r2 with
-               | Ok rows -> Logs.info (fun m -> m ">>> NEXT OP : OK rows=%d" (List.length rows))
-               | Error e ->
-                   Logs.err (fun m -> m ">>> NEXT OP : *** ERR : %s ***" (Pgsql_io.show_err e)));
-               Abb.Future.return (Ok ())))
-        >>= fun res ->
-        (match res with
-        | `Ok (Ok ()) -> Logs.info (fun m -> m ">>> TX : committed cleanly")
-        | `Ok (Error e) -> Logs.err (fun m -> m ">>> TX : *** ERR : %s ***" (Pgsql_io.show_err e))
-        | `Timeout ->
-            Logs.err (fun m -> m ">>> TX : *** HANG : idle-in-transaction on dirty conn ***"));
-        (* SCENARIO 2: a row function that RAISES mid-large-result.  The exception
-           must be caught, the response drained, the exception re-raised, and the
-           connection left clean for the next op. *)
-        Logs.info (fun m -> m "===== inside tx2 : RAISING row function, reuse conn =====");
-        Abbs_future_combinators.timeout
-          ~timeout:(Abb.Sys.sleep 15.0)
-          (Pgsql_io.tx conn ~f:(fun () ->
-               let open Abb.Future.Infix_monad in
-               Abb.Future.await_bind
-                 (function
-                   | `Det _ ->
-                       Logs.info (fun m -> m ">>> RAISE FETCH : returned (no exn?!)");
-                       Abb.Future.return ()
-                   | `Exn (exn, _) ->
-                       Logs.info (fun m ->
-                           m ">>> RAISE FETCH : exn caught (IGNORING) : %s" (Printexc.to_string exn));
-                       Abb.Future.return ()
-                   | `Aborted ->
-                       Logs.info (fun m -> m ">>> RAISE FETCH : aborted");
-                       Abb.Future.return ())
-                 (Pgsql_io.Prepared_stmt.fetch conn good_fetch ~f:(fun _v -> failwith "decode boom"))
-               >>= fun () ->
-               Logs.info (fun m -> m ">>> NEXT OP 2 : reuse the same connection (dirty?)");
-               Pgsql_io.Prepared_stmt.fetch conn good_fetch ~f:(fun v -> v)
-               >>= fun r2 ->
-               (match r2 with
-               | Ok rows -> Logs.info (fun m -> m ">>> NEXT OP 2 : OK rows=%d" (List.length rows))
-               | Error e ->
-                   Logs.err (fun m -> m ">>> NEXT OP 2 : *** ERR : %s ***" (Pgsql_io.show_err e)));
-               Abb.Future.return (Ok ())))
-        >>= fun res2 ->
-        (match res2 with
-        | `Ok (Ok ()) -> Logs.info (fun m -> m ">>> TX2 : committed cleanly")
-        | `Ok (Error e) -> Logs.err (fun m -> m ">>> TX2 : *** ERR : %s ***" (Pgsql_io.show_err e))
-        | `Timeout -> Logs.err (fun m -> m ">>> TX2 : *** HANG ***"));
-        Abb.Future.return (Ok ())
-      in
-      with_conn f
-      >>= fun r ->
-      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
-      Abb.Future.return ())
-
-(* Regression for the pgsql_codec needed_bytes off-by-one: a row value whose
-   frame completes exactly on the 8192-byte read boundary used to strand the
-   decoded frame and hang the fetch (idle-in-transaction reap at 240s in
-   production).  Sweeping a small window of value sizes reliably lands on the
-   boundary (observed at 8152 here); each fetch is guarded by a timeout so a
-   regression FAILS fast instead of hanging the suite. *)
-let test_boundary_sweep =
-  Oth_abb.test
-    ~desc:"Large-value fetch boundary (codec needed_bytes)"
-    ~name:"boundary_sweep"
-    (fun () ->
-      let open Abb.Future.Infix_monad in
-      let f conn =
-        let rec sweep n =
-          if n > 8175 then Abb.Future.return (Ok ())
-          else
-            let fetch_sql =
-              Pgsql_io.Typed_sql.(sql // Ret.text /^ Printf.sprintf "SELECT repeat('x', %d)" n)
-            in
-            Abbs_future_combinators.timeout
-              ~timeout:(Abb.Sys.sleep 10.0)
-              (Pgsql_io.Prepared_stmt.fetch conn fetch_sql ~f:(fun s -> s))
-            >>= function
-            | `Ok (Ok [ s ]) when String.length s = n -> sweep (n + 1)
-            | `Ok (Ok _) ->
-                Oth.Assert.false_ (Printf.sprintf "unexpected result shape at value size %d" n)
-            | `Ok (Error e) ->
-                Oth.Assert.false_
-                  (Printf.sprintf "fetch error at value size %d: %s" n (Pgsql_io.show_err e))
-            | `Timeout ->
-                Oth.Assert.false_
-                  (Printf.sprintf
-                     "fetch HUNG at value size %d (pgsql_codec needed_bytes off-by-one)"
-                     n)
-        in
-        sweep 8140
-      in
-      with_conn f
-      >>= fun r ->
-      ignore (Oth.Assert.ok_pp ~pp:pp_pgsql_combined_err r);
-      Abb.Future.return ())
 
 let test =
   Oth_abb.(
     to_sync_test
       (serial
          [
+           test_listen_notify;
+           test_get_notification;
+           test_notification_during_fetch;
+           test_unlisten_stops_delivery;
+           test_wait_abort_leaves_conn_valid;
+           test_abort_during_delivery_no_loss;
            test_boundary_sweep;
-           test_bad_result_dirty_conn;
-           test_ignore_error_then_query;
            test_in_tx_commit_desync;
-           test_desync_after_abort;
+           test_bad_result_dirty_conn;
            test_large_jsonb_fetch;
            test_insert_row_null;
            test_fetch_row;
@@ -2661,13 +2499,9 @@ let test =
            test_bigint_column_smallint_ret;
            test_bigint_column_smallint_b_ret_fails;
            test_ret_b_all_types;
+           test_query_dangerous_values;
+           test_copy_to_single_row;
          ]))
-
-(* Diagnostic experiments that reproduce bugs not yet fixed (consume_*_end
-   singleton frame assumption, reset's extra Sync, async NotificationResponse /
-   ParameterStatus handling).  Kept defined for when those are addressed. *)
-let () = ignore [ test_reset_stray_rfq; test_trigger_notify; test_singleton_repro ]
-let () = ignore (pp_result_unit, test_query_dangerous_values, test_copy_to_single_row)
 
 let reporter ppf =
   let report _src level ~over k msgf =
@@ -2688,5 +2522,5 @@ let reporter ppf =
 let () =
   Random.self_init ();
   Logs.set_reporter (reporter Format.std_formatter);
-  Logs.set_level ~all:true (Some Logs.Info);
+  Logs.set_level ~all:true (Some Logs.Debug);
   Oth.run ~file:__FILE__ test

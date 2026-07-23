@@ -1,3 +1,17 @@
 (executable
  (name pgsql_test_client)
- (libraries ISO8601 abb abbs logs oth oth_abb pgsql_io))
+ (libraries
+  ISO8601
+  abb
+  abbs
+  containers
+  logs
+  oth
+  oth_abb
+  otls
+  pgsql_io
+  unix
+  uuidm
+  yojson)
+ (preprocess
+  (pps ppx_deriving_yojson)))
