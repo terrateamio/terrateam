@@ -97,7 +97,7 @@ docker-compose up setup
 
 ## Configuration
 
-Configure workflows via `.terrateam/config.yml`. See [Configuration Reference](https://docs.terrateam.io/configuration-reference).
+Configure workflows via `.terrateam/config.yml`. See [Configuration Reference](http://web.archive.org/web/20251016230723/http://web.archive.org/web/20251016230723/https://docs.terrateam.io/configuration-reference).
 
 ---
 
