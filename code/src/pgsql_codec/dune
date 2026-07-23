@@ -2,9 +2,5 @@
  (name pgsql_codec)
  (wrapped false)
  (libraries ocplib-endian ppx_deriving)
- (ocamlopt_flags
-  (:standard -w -27))
- (ocamlc_flags
-  (:standard -w -27))
  (preprocess
   (pps ppx_deriving.show ppx_deriving.eq)))

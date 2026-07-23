@@ -1,5 +1,3 @@
 (library
  (name brtl_mw_session)
- (flags
-  (:standard -w -27))
  (libraries abb_intf brtl))

@@ -1,9 +1,5 @@
 (library
  (name uritmpl)
  (libraries sedlex uri ppx_deriving)
- (ocamlopt_flags
-  (:standard -w -27))
- (ocamlc_flags
-  (:standard -w -27))
  (preprocess
   (pps sedlex.ppx ppx_deriving.show ppx_deriving.eq)))
