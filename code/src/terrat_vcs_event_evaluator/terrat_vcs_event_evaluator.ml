@@ -1731,15 +1731,46 @@ module Make (S : Terrat_vcs_provider2.S) = struct
           >>= fun remote_repo ->
           Abb.Future.return (Ok (S.Api.Remote_repo.default_branch remote_repo))
 
-    let query_built_config ctx state =
+    let build_config_cache_ref ref_ repo_config =
+      let json_str =
+        repo_config
+        |> Terrat_base_repo_config_v1.to_version_1
+        |> Terrat_repo_config.Version_1.to_yojson
+        |> Yojson.Safe.sort
+        |> Yojson.Safe.to_string
+      in
+      let sha256_hex = Sha256.(to_hex (string json_str)) in
+      S.Api.Ref.of_string (S.Api.Ref.to_string ref_ ^ ":" ^ sha256_hex)
+
+    let repo_config_build_cache_ref ctx state =
       let open Abbs_future_combinators.Infix_result_monad in
+      client ctx state
+      >>= fun client ->
+      branch_ref ctx state
+      >>= fun branch_ref' ->
       working_branch_ref ctx state
       >>= fun working_branch_ref' ->
+      repo_config_system_defaults ctx state
+      >>= fun system_defaults ->
+      Repo_config.fetch_with_provenance
+        ~system_defaults
+        state.State.request_id
+        (Ctx.config ctx)
+        client
+        (Event.repo state.State.event)
+        branch_ref'
+      >>= fun (_, repo_config) ->
+      Abb.Future.return (Ok (build_config_cache_ref working_branch_ref' repo_config))
+
+    let query_built_config ctx state =
+      let open Abbs_future_combinators.Infix_result_monad in
+      repo_config_build_cache_ref ctx state
+      >>= fun build_cache_ref ->
       query_repo_config_json
         state.State.request_id
         (Ctx.storage ctx)
         (Event.account state.State.event)
-        working_branch_ref'
+        build_cache_ref
 
     let query_built_tree ctx state =
       let open Abbs_future_combinators.Infix_result_monad in
@@ -6824,13 +6855,13 @@ module Make (S : Terrat_vcs_provider2.S) = struct
               | Ok _ ->
                   let open Abbs_future_combinators.Infix_result_monad in
                   let account = Event.account state.State.event in
-                  Dv.working_branch_ref ctx state
-                  >>= fun working_branch_ref' ->
+                  Dv.repo_config_build_cache_ref ctx state
+                  >>= fun build_cache_ref ->
                   store_repo_config_json
                     state.State.request_id
                     (Ctx.storage ctx)
                     account
-                    working_branch_ref'
+                    build_cache_ref
                     config
                   >>= fun () ->
                   H.run_interactive ctx state (fun () ->

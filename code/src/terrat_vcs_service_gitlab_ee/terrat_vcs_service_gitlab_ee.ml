@@ -288,13 +288,16 @@ module Provider : module type of Terrat_vcs_service_gitlab_provider = struct
                    repo_config ))
       | _, _, (Some (_, _) as forced_repo_config), _, _ ->
           let provenance =
-            collect_provenance [ system_defaults; global_defaults; forced_repo_config ]
+            collect_provenance
+              [ system_defaults; global_defaults; built_config; forced_repo_config ]
           in
-          validate_configs [ system_defaults; global_defaults; forced_repo_config ]
+          validate_configs [ system_defaults; global_defaults; built_config; forced_repo_config ]
           >>= fun () ->
           Abb.Future.return (merge ~base:system_defaults global_defaults)
           >>= fun global_defaults ->
-          Abb.Future.return (merge ~base:global_defaults forced_repo_config)
+          Abb.Future.return (merge ~base:global_defaults built_config)
+          >>= fun repo_config ->
+          Abb.Future.return (merge ~base:repo_config forced_repo_config)
           >>= fun repo_config ->
           wrap_err
             "repo"
