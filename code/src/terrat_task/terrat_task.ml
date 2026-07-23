@@ -13,8 +13,9 @@ module Sql = struct
       //
       (* id *)
       Ret.uuid
-      /^ "insert into tasks (name) values ($name) returning id"
-      /% Var.text "name")
+      /^ "insert into tasks (name, user_id) values ($name, $user_id) returning id"
+      /% Var.text "name"
+      /% Var.option (Var.uuid "user_id"))
 
   let update_task () =
     Pgsql_io.Typed_sql.(
@@ -27,17 +28,18 @@ end
 type 'a t = {
   id : 'a;
   name : string;
+  user_id : Uuidm.t option;
 }
 
 type fresh = unit
 type stored = Uuidm.t
 
-let make ~name () = { id = (); name }
+let make ~name ?user_id () = { id = (); name; user_id }
 let id t = t.id
 
 let store db t =
   let open Abbs_future_combinators.Infix_result_monad in
-  Pgsql_io.Prepared_stmt.fetch db (Sql.insert_task ()) ~f:CCFun.id t.name
+  Pgsql_io.Prepared_stmt.fetch db (Sql.insert_task ()) ~f:CCFun.id t.name t.user_id
   >>= function
   | [] -> assert false
   | id :: _ -> Abb.Future.return (Ok { t with id })

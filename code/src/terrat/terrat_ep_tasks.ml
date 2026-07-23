@@ -13,15 +13,16 @@ module Sql = struct
       (* updated_at *)
       Ret.text
       /^ "select name, state, to_char(updated_at, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') from tasks \
-          where id = $id"
-      /% Var.uuid "id")
+          where id = $id and user_id = $user_id"
+      /% Var.uuid "id"
+      /% Var.uuid "user_id")
 end
 
 let get storage task_id =
   Brtl_ep.run_result_json ~f:(fun ctx ->
       let open Abbs_future_combinators.Infix_result_monad in
       Terrat_session.with_session ctx
-      >>= fun _ ->
+      >>= fun user ->
       let open Abb.Future.Infix_monad in
       let id = Uuidm.to_string task_id in
       Pgsql_pool.with_conn storage ~f:(fun db ->
@@ -30,7 +31,8 @@ let get storage task_id =
             (Sql.select_task ())
             ~f:(fun name state updated_at ->
               { Terrat_api_components.Task.id; name; state; updated_at })
-            task_id)
+            task_id
+            (Terrat_user.id user))
       >>= function
       | Ok (task :: _) ->
           let body = Terrat_api_components.Task.to_yojson task |> Yojson.Safe.to_string in

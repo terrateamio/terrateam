@@ -9,7 +9,7 @@ type run_err =
   | Pgsql_io.err
   ]
 
-val make : name:string -> unit -> fresh t
+val make : name:string -> ?user_id:Uuidm.t -> unit -> fresh t
 val id : stored t -> Uuidm.t
 val store : Pgsql_io.t -> fresh t -> (stored t, [> store_err ]) result Abb.Future.t
 val abort : Pgsql_io.t -> stored t -> (unit, [> abort_err ]) result Abb.Future.t

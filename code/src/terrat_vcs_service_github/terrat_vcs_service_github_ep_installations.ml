@@ -1300,6 +1300,7 @@ module Make (S : S with type Account_id.t = int) = struct
               ~request_id:(Brtl_ctx.token ctx)
               ~config
               ~storage
+              ~user_id:(Terrat_user.id user)
               (Terrat_vcs_service_github_installation.Id.make installation_id)
             >>= function
             | Ok task ->
