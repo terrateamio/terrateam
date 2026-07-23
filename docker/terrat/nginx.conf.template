@@ -46,6 +46,14 @@ http {
         access_log   ${TERRAT_ACCESS_LOG};
         server_tokens off;
 
+        # nginx replaces, rather than merges, inherited add_header directives as
+        # soon as a location declares its own, so these are repeated in each
+        # location that sets any header of its own.
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+        add_header X-Frame-Options "DENY" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
         location / {
 
             set $cspNonce '$request_id';
@@ -64,6 +72,10 @@ http {
             index index.html index.htm;
             try_files $uri $uri/ /index.html =404;
             add_header Content-Security-Policy "default-src 'self'; img-src 'self' https://avatars.githubusercontent.com https://secure.gravatar.com https://www.redditstatic.com https://alb.reddit.com; script-src 'self' 'nonce-$cspNonce' https://*.posthog.com https://www.redditstatic.com https://js.stripe.com; style-src 'self' 'nonce-$cspNonce'; object-src 'none'; connect-src 'self' https://*.posthog.com https://o4509570379677696.ingest.de.sentry.io https://api.web3forms.com https://alb.reddit.com https://pixel-config.reddit.com https://conversions-config.reddit.com https://www.redditstatic.com; font-src 'self'; worker-src 'self' blob:; frame-src https://js.stripe.com; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; manifest-src 'self'; media-src 'none'; upgrade-insecure-requests;";
+            add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+            add_header X-Frame-Options "DENY" always;
+            add_header X-Content-Type-Options "nosniff" always;
+            add_header Referrer-Policy "strict-origin-when-cross-origin" always;
         }
 
         location /api {
@@ -86,6 +98,14 @@ http {
 
             # Add a long timeout to match the timeouts on the server side.
             proxy_read_timeout 120;
+
+            # API responses carry organisation-scoped data and must not be
+            # stored by browsers or intermediary caches.
+            add_header Cache-Control "no-store" always;
+            add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+            add_header X-Frame-Options "DENY" always;
+            add_header X-Content-Type-Options "nosniff" always;
+            add_header Referrer-Policy "strict-origin-when-cross-origin" always;
         }
 
         # Turn off rate limit for health checks
