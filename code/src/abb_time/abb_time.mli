@@ -33,7 +33,7 @@ module Span : sig
   val compare : t -> t -> int
 end
 
-module Make (M : Monad.S) (Time : Time_make(M).S) : sig
+module Make (M : Monad.S) (_ : Time_make(M).S) : sig
   (** Wall-clock time. *)
   module Wall : sig
     type t

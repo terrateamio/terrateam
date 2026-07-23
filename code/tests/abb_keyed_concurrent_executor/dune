@@ -1,3 +1,8 @@
 (test
  (name test)
- (libraries oth abb_intf abb_fut containers abb_keyed_concurrent_executor))
+ (libraries
+  abb_keyed_concurrent_executor
+  abb_scheduler_select
+  containers
+  oth
+  oth_abb))

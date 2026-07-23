@@ -1,4 +1,8 @@
 include Abb_fut.Make (struct
+  type data = unit
+
+  let zero_data = ()
+
   type t = unit
 end)
 

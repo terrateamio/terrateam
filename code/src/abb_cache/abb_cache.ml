@@ -314,14 +314,6 @@ module Make (Abb : Abb_intf.S) = struct
         Hashtbl.replace t.cache k run;
         Abb.Future.fork run >>= fun _ -> run
 
-      let read_keys filename keys =
-        let open Fut_comb.Infix_result_monad in
-        Fut_comb.List_result.map
-          ~f:(fun k ->
-            Abb_io_file.read_file (filename ^ "." ^ k)
-            >>= fun content -> Abb.Future.return (Ok (k, content)))
-          keys
-
       let fetch t k args =
         let open Abb.Future.Infix_monad in
         let filename = Filename.concat t.opts.path @@ id_of_k k in

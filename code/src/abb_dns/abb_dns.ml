@@ -17,7 +17,7 @@ module Make (Abb : Abb_intf.S) = struct
 
     type t = {
       nameservers : io_addr list;
-      mutable preferred_ns : io_addr option;
+      preferred_ns : io_addr option;
       timeout_ns : int64;
     }
 
@@ -41,7 +41,7 @@ module Make (Abb : Abb_intf.S) = struct
     let bind = Abb.Future.bind
     let lift = Abb.Future.return
 
-    let create ?(nameservers : (Dns.proto * io_addr list) option) ~timeout stack =
+    let create ?(nameservers : (Dns.proto * io_addr list) option) ~timeout _ =
       match nameservers with
       | Some (`Udp, nameservers) -> { nameservers; preferred_ns = None; timeout_ns = timeout }
       | Some (`Tcp, _) -> invalid_arg "tcp not supported"

@@ -283,6 +283,60 @@ val ping : t -> bool Abb.Future.t
     Nested transactions are not supported. *)
 val tx : t -> f:(unit -> ('a, ([> err ] as 'e)) result Abb.Future.t) -> ('a, 'e) result Abb.Future.t
 
+(** {1 Asynchronous notifications (LISTEN / NOTIFY)}
+
+    A single NOTIFY received on the connection, carrying the originating backend [pid], the
+    [channel], and the [payload]. *)
+type notification = {
+  pid : int32;
+  channel : string;
+  payload : string;
+}
+
+(** Notifications received on a connection (for channels it has [listen]ed to) are enqueued on the
+    connection as they are decoded — both while blocked in [wait_for_notification] and while
+    consuming the results of any ordinary query/fetch on the connection. [wait_for_notification]
+    pops the oldest, blocking for the next if the queue is empty; [get_notification] pops without
+    blocking. The usual flow is [listen] on one or more channels, then drain via either function.
+
+    [wait_for_notification] is a single reader: while it is blocked the connection must not be used
+    for queries (a concurrent query raises ["SQL connection busy"]). Dedicate a connection to
+    listening. *)
+
+(** Issue [LISTEN] on [channel] so this connection begins receiving its NOTIFYs. *)
+val listen : t -> channel:string -> (unit, [> err ]) result Abb.Future.t
+
+(** Issue [UNLISTEN] on [channel]. *)
+val unlisten : t -> channel:string -> (unit, [> err ]) result Abb.Future.t
+
+(** Issue [UNLISTEN *], removing all of this connection's channel registrations in a single round
+    trip, and clear the connection's "may have listens" flag. Pending notifications committed before
+    this runs are flushed into the queue as its response is consumed; pair with
+    [drain_notifications] to discard them. *)
+val unlisten_all : t -> (unit, [> err ]) result Abb.Future.t
+
+(** Whether [listen] has ever been issued on this connection (and not since cleared by
+    [unlisten_all]). A conservative flag — not a per-channel set. Lets a caller (e.g. a connection
+    pool) skip the [unlisten_all] round trip on a connection that never listened. *)
+val has_listens : t -> bool
+
+(** Issue [NOTIFY] on [channel] with [payload] (default empty). Channel and payload are sent as
+    bound parameters via [pg_notify]. *)
+val notify : t -> channel:string -> ?payload:string -> unit -> (unit, [> err ]) result Abb.Future.t
+
+(** Pop the oldest queued notification, or — if the queue is empty — block until the next one
+    arrives, then return it ([Error `Disconnected] if the connection drops). Takes no timeout
+    argument: bound it with [Abbs_future_combinators.timeout]. An abort (e.g. from a wrapping
+    [timeout]) leaves the connection valid and reusable. *)
+val wait_for_notification : t -> (notification, [> err ]) result Abb.Future.t
+
+(** Pop the oldest queued notification if one is present, else return [None] immediately. Use to
+    drain already-received notifications without blocking. *)
+val get_notification : t -> notification option
+
+(** Discard all queued notifications without any database round trip. *)
+val drain_notifications : t -> unit
+
 (** Help function that takes a string representing SQL and removes any comments (lines that start
     with --). This DOES NOT remove comments if they are not the very first entry on a line. *)
 val clean_string : string -> string

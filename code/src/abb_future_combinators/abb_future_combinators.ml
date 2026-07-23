@@ -214,6 +214,25 @@ module Make (Fut : Abb_intf.Future.S) = struct
         fut)
     >>= fun _ -> Fut.Promise.future p
 
+  let tap f fut =
+    let open Fut.Infix_monad in
+    (* Mirror [protect_finally]: hand back a fresh promise whose future is wired to [fut] via
+       [add_dep] so an abort of the returned future flows down to [fut], then re-propagate [fut]'s
+       outcome (value, exception, or abort) unchanged after handing it to [f]. [f] is purely an
+       observer -- it does not alter what propagates. *)
+    let p = Fut.Promise.create () in
+    Fut.add_dep ~dep:fut (Fut.Promise.future p);
+    Fut.fork
+      (Fut.await_bind
+         (fun set ->
+           f set;
+           match set with
+           | `Det v -> Fut.Promise.set p v
+           | `Exn exn -> Fut.Promise.set_exn p exn
+           | `Aborted -> Fut.abort (Fut.Promise.future p))
+         fut)
+    >>= fun _ -> Fut.Promise.future p
+
   let to_result fut = fut >>= fun v -> Fut.return (Ok v)
 
   let of_option = function
@@ -265,6 +284,8 @@ module Make (Fut : Abb_intf.Future.S) = struct
     Fut.Promise.set_exn p (exn, None) >>= fun () -> Fut.Promise.future p
 
   let guard f = try f () with exn -> of_exn exn
+  let when_ b f = if b then f () else unit
+  let when_m mb f = mb >>= fun b -> when_ b f
 
   module Infix_result_monad = struct
     type ('a, 'b) t = ('a, 'b) result Fut.t
@@ -280,6 +301,9 @@ module Make (Fut : Abb_intf.Future.S) = struct
       >>| function
       | Ok v -> Ok (f v)
       | Error _ as err -> err
+
+    let when_ b f = if b then f () else Fut.return (Ok ())
+    let when_m mb f = mb >>= fun b -> when_ b f
   end
 
   module Infix_result_app = struct

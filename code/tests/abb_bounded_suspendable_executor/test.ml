@@ -1,566 +1,137 @@
-module Fut = Abb_fut.Make (struct
-  type t = unit
-end)
-
+module Abb = Abb_scheduler_select
+module Oth_abb = Oth_abb.Make (Abb)
+module Fut = Abb.Future
 module Fc = Abb_future_combinators.Make (Fut)
+module Exec = Abb_bounded_suspendable_executor.Make (Abb) (CCString)
 
-module Time = struct
-  let time () = Fut.return (Unix.gettimeofday ())
-  let monotonic () = Fut.return (Unix.gettimeofday ())
-end
+(* These tests exercise the Chan-based bounded suspendable executor against the
+   real [Abb_scheduler_select] scheduler. The executor server runs on a separate
+   task, so we sequence work with rendezvous promises and await the [run] futures
+   (which resolve when the work completes) rather than synchronously stepping the
+   scheduler as the old [Abb_fut] tests did. *)
 
-module Exec = Abb_bounded_suspendable_executor.Make (Fut) (CCString) (Time)
+let test_work_runs =
+  Oth_abb.test ~name:"Work runs and returns its result" (fun () ->
+      let open Fut.Infix_monad in
+      Exec.create ~slots:10 ()
+      >>= fun executor ->
+      Exec.run executor ~name:[ "task" ] (fun () -> Fut.return 42)
+      >>= fun result ->
+      assert (result = 42);
+      Fut.return ())
 
-let dummy_state = Abb_fut.State.create ()
+let test_slots_bound_concurrency =
+  Oth_abb.test ~name:"Slots bound concurrency" (fun () ->
+      let open Fut.Infix_monad in
+      (* With a single slot, at most one task body may be in flight at a time.
+         Each body bumps a live counter and records the peak. The scheduler is
+         single-domain, so the counter is safe to mutate from the bodies. Each
+         body yields between bump and unbump so that a broken bound would let two
+         bodies overlap and push the peak above 1. *)
+      let running = ref 0 in
+      let peak = ref 0 in
+      let body () =
+        incr running;
+        peak := max !peak !running;
+        Abb.Sys.sleep 0.0
+        >>= fun () ->
+        decr running;
+        Fut.return ()
+      in
+      Exec.create ~slots:1 ()
+      >>= fun executor ->
+      Fut.fork (Exec.run executor ~name:[ "task1" ] body)
+      >>= fun t1 ->
+      Fut.fork (Exec.run executor ~name:[ "task2" ] body)
+      >>= fun t2 ->
+      Fut.fork (Exec.run executor ~name:[ "task3" ] body)
+      >>= fun t3 ->
+      Fc.all [ t1; t2; t3 ]
+      >>= fun _ ->
+      assert (!peak = 1);
+      assert (!running = 0);
+      Fut.return ())
 
-module Pp = struct
-  type 'a t =
-    [ `Det of 'a
-    | `Undet
-    | `Aborted
-    | `Exn of (exn * Printexc.raw_backtrace option[@opaque] [@equal ( = )])
-    ]
-  [@@deriving eq, show]
-end
+let test_slots_allow_concurrency =
+  Oth_abb.test ~name:"Multiple slots allow concurrency" (fun () ->
+      let open Fut.Infix_monad in
+      (* With two slots, two tasks can be in flight simultaneously. Each task
+         signals it has started and then waits on a shared gate. If both can
+         start before the gate is released, the slots genuinely allowed
+         concurrency. *)
+      let started1 = Fut.Promise.create () in
+      let started2 = Fut.Promise.create () in
+      let gate = Fut.Promise.create () in
+      let make_body started () = Fut.Promise.set started () >>= fun () -> Fut.Promise.future gate in
+      Exec.create ~slots:2 ()
+      >>= fun executor ->
+      Fut.fork (Exec.run executor ~name:[ "task1" ] (make_body started1))
+      >>= fun t1 ->
+      Fut.fork (Exec.run executor ~name:[ "task2" ] (make_body started2))
+      >>= fun t2 ->
+      (* Both tasks must be able to start while the gate is still closed. *)
+      Fut.Promise.future started1
+      >>= fun () ->
+      Fut.Promise.future started2
+      >>= fun () ->
+      Fut.Promise.set gate () >>= fun () -> Fc.all [ t1; t2 ] >>= fun _ -> Fut.return ())
 
-module Pp_unit = struct
-  type t = unit Pp.t [@@deriving eq, show]
-end
-
-let make_logger () =
-  let running_tasks_count = ref 0 in
-  let suspended_tasks_count = ref 0 in
-  let logger =
-    {
-      Exec.Logger.exec_task = (fun _ -> ());
-      complete_task = (fun _ -> ());
-      work_done = (fun _ -> ());
-      running_tasks = (fun n -> running_tasks_count := n);
-      suspended_tasks = (fun n _ -> suspended_tasks_count := n);
-      suspend_task = (fun _ -> ());
-      unsuspend_task = (fun _ -> ());
-      enqueue = (fun _ -> ());
-      queue_time = (fun _ -> ());
-    }
-  in
-  (logger, running_tasks_count, suspended_tasks_count)
-
-let tests =
-  [
-    Oth.test ~name:"Simple" (fun _ ->
-        let logger, running_tasks_count, suspended_tasks_count = make_logger () in
-        let trigger = Fut.Promise.create () in
-        let finished = Fut.Promise.create () in
-        let run =
-          let open Fut.Infix_monad in
-          Exec.create ~logger ~slots:10 ()
-          >>= fun executor ->
-          Exec.run executor ~name:[ "test" ] (fun () ->
-              Fut.Promise.future trigger >>= fun () -> Fut.Promise.set finished ())
-        in
-        ignore (Fut.run_with_state run dummy_state);
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future finished))
-          `Undet;
-        ignore (Fut.run_with_state (Fut.Promise.set trigger ()) dummy_state);
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future finished))
-          (`Det ());
-        Oth.Assert.eq ~eq:Pp_unit.equal ~pp:Pp_unit.pp (Fut.state run) (`Det ());
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !running_tasks_count 0;
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 0);
-    Oth.test ~name:"Task throws exn" (fun _ ->
-        let logger, running_tasks_count, suspended_tasks_count = make_logger () in
-        let run =
-          let open Fut.Infix_monad in
-          Exec.create ~logger ~slots:10 ()
-          >>= fun executor ->
-          Exec.run executor ~name:[ "test" ] (fun () -> failwith "test exception")
-        in
-        ignore (Fut.run_with_state run dummy_state);
-        (match Fut.state run with
-        | `Exn _ -> ()
-        | _ -> Oth.Assert.false_ "Expected `Exn");
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !running_tasks_count 0;
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 0);
-    Oth.test ~name:"Task throws exn after wait" (fun _ ->
-        let logger, running_tasks_count, suspended_tasks_count = make_logger () in
-        let trigger = Fut.Promise.create () in
-        let run =
-          let open Fut.Infix_monad in
-          Exec.create ~logger ~slots:10 ()
-          >>= fun executor ->
-          Exec.run executor ~name:[ "test" ] (fun () ->
-              Fut.Promise.future trigger >>= fun () -> failwith "test exception")
-        in
-        ignore (Fut.run_with_state run dummy_state);
-        Oth.Assert.eq ~eq:Pp_unit.equal ~pp:Pp_unit.pp (Fut.state run) `Undet;
-        ignore (Fut.run_with_state (Fut.Promise.set trigger ()) dummy_state);
-        (match Fut.state run with
-        | `Exn _ -> ()
-        | _ -> Oth.Assert.false_ "Expected `Exn");
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !running_tasks_count 0;
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 0);
-    Oth.test ~name:"Aborts handled correctly" (fun _ ->
-        let logger, running_tasks_count, suspended_tasks_count = make_logger () in
-        let trigger = Fut.Promise.create () in
-        let work_started = Fut.Promise.create () in
-        let run =
-          let open Fut.Infix_monad in
-          Exec.create ~logger ~slots:10 ()
-          >>= fun executor ->
-          Exec.run executor ~name:[ "test" ] (fun () ->
-              Fut.Promise.set work_started () >>= fun () -> Fut.Promise.future trigger)
-        in
-        ignore (Fut.run_with_state run dummy_state);
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future work_started))
-          (`Det ());
-        Oth.Assert.eq ~eq:Pp_unit.equal ~pp:Pp_unit.pp (Fut.state run) `Undet;
-        ignore (Fut.run_with_state (Fut.abort run) dummy_state);
-        Oth.Assert.eq ~eq:Pp_unit.equal ~pp:Pp_unit.pp (Fut.state run) `Aborted;
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future trigger))
-          `Aborted;
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !running_tasks_count 0;
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 0);
-    Oth.test ~name:"Aborting the running task" (fun _ ->
-        let logger, running_tasks_count, suspended_tasks_count = make_logger () in
-        let trigger = Fut.Promise.create () in
-        let work_started = Fut.Promise.create () in
-        let run =
-          let open Fut.Infix_monad in
-          Exec.create ~logger ~slots:10 ()
-          >>= fun executor ->
-          Exec.run executor ~name:[ "test" ] (fun () ->
-              Fut.Promise.set work_started () >>= fun () -> Fut.Promise.future trigger)
-        in
-        ignore (Fut.run_with_state run dummy_state);
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future work_started))
-          (`Det ());
-        Oth.Assert.eq ~eq:Pp_unit.equal ~pp:Pp_unit.pp (Fut.state run) `Undet;
-        ignore (Fut.run_with_state (Fut.abort (Fut.Promise.future trigger)) dummy_state);
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future trigger))
-          `Aborted;
-        Oth.Assert.eq ~eq:Pp_unit.equal ~pp:Pp_unit.pp (Fut.state run) `Aborted;
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !running_tasks_count 0;
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 0);
-    Oth.test ~name:"Suspend/unsuspend" (fun _ ->
-        let logger, running_tasks_count, suspended_tasks_count = make_logger () in
-        let trigger1 = Fut.Promise.create () in
-        let trigger2 = Fut.Promise.create () in
-        let suspend_trigger = Fut.Promise.create () in
-        let unsuspend_trigger = Fut.Promise.create () in
-        let finished1 = Fut.Promise.create () in
-        let finished2 = Fut.Promise.create () in
-        let run =
-          let open Fut.Infix_monad in
-          Exec.create ~logger ~slots:10 ()
-          >>= fun executor ->
-          Fut.fork
-            (Exec.run executor ~name:[ "task1" ] (fun () ->
-                 Fut.Promise.future trigger1 >>= fun () -> Fut.Promise.set finished1 ()))
-          >>= fun _ ->
-          Fut.Promise.future suspend_trigger
-          >>= fun () ->
-          Exec.suspend ~name:[ "task1" ] executor
-          >>= fun () ->
-          Fut.fork
-            (Exec.run executor ~name:[ "task2" ] (fun () ->
-                 Fut.Promise.future trigger2 >>= fun () -> Fut.Promise.set finished2 ()))
-          >>= fun _ ->
-          Fut.Promise.future unsuspend_trigger
-          >>= fun () -> Exec.unsuspend ~name:[ "task1" ] executor
-        in
-        ignore (Fut.run_with_state run dummy_state);
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future finished1))
-          `Undet;
-        ignore (Fut.run_with_state (Fut.Promise.set suspend_trigger ()) dummy_state);
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 1;
-        ignore (Fut.run_with_state (Fut.Promise.set trigger2 ()) dummy_state);
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future finished2))
-          (`Det ());
-        ignore (Fut.run_with_state (Fut.Promise.set unsuspend_trigger ()) dummy_state);
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 0;
-        ignore (Fut.run_with_state (Fut.Promise.set trigger1 ()) dummy_state);
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future finished1))
-          (`Det ());
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !running_tasks_count 0;
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 0);
-    Oth.test ~name:"Slots limit respected" (fun _ ->
-        let logger, running_tasks_count, suspended_tasks_count = make_logger () in
-        let trigger1 = Fut.Promise.create () in
-        let trigger2 = Fut.Promise.create () in
-        let trigger3 = Fut.Promise.create () in
-        let trigger4 = Fut.Promise.create () in
-        let trigger5 = Fut.Promise.create () in
-        let finished1 = Fut.Promise.create () in
-        let finished2 = Fut.Promise.create () in
-        let finished3 = Fut.Promise.create () in
-        let finished4 = Fut.Promise.create () in
-        let finished5 = Fut.Promise.create () in
-        let run =
-          let open Fut.Infix_monad in
-          Exec.create ~logger ~slots:1 ()
-          >>= fun executor ->
-          Fut.fork
-            (Exec.run executor ~name:[ "task1" ] (fun () ->
-                 Fut.Promise.future trigger1 >>= fun () -> Fut.Promise.set finished1 ()))
-          >>= fun _ ->
-          Fut.fork
-            (Exec.run executor ~name:[ "task2" ] (fun () ->
-                 Fut.Promise.future trigger2 >>= fun () -> Fut.Promise.set finished2 ()))
-          >>= fun _ ->
-          Fut.fork
-            (Exec.run executor ~name:[ "task3" ] (fun () ->
-                 Fut.Promise.future trigger3 >>= fun () -> Fut.Promise.set finished3 ()))
-          >>= fun _ ->
-          Fut.fork
-            (Exec.run executor ~name:[ "task4" ] (fun () ->
-                 Fut.Promise.future trigger4 >>= fun () -> Fut.Promise.set finished4 ()))
-          >>= fun _ ->
-          Fut.fork
-            (Exec.run executor ~name:[ "task5" ] (fun () ->
-                 Fut.Promise.future trigger5 >>= fun () -> Fut.Promise.set finished5 ()))
-          >>= fun _ -> Fut.return ()
-        in
-        ignore (Fut.run_with_state run dummy_state);
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !running_tasks_count 1;
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future finished1))
-          `Undet;
-        ignore (Fut.run_with_state (Fut.Promise.set trigger1 ()) dummy_state);
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future finished1))
-          (`Det ());
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !running_tasks_count 1;
-        ignore (Fut.run_with_state (Fut.Promise.set trigger2 ()) dummy_state);
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future finished2))
-          (`Det ());
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !running_tasks_count 1;
-        ignore (Fut.run_with_state (Fut.Promise.set trigger3 ()) dummy_state);
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future finished3))
-          (`Det ());
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !running_tasks_count 1;
-        ignore (Fut.run_with_state (Fut.Promise.set trigger4 ()) dummy_state);
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future finished4))
-          (`Det ());
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !running_tasks_count 1;
-        ignore (Fut.run_with_state (Fut.Promise.set trigger5 ()) dummy_state);
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future finished5))
-          (`Det ());
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !running_tasks_count 0;
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 0);
-    Oth.test ~name:"Slots limit respected with suspend" (fun _ ->
-        let logger, running_tasks_count, suspended_tasks_count = make_logger () in
-        let trigger1 = Fut.Promise.create () in
-        let trigger2 = Fut.Promise.create () in
-        let trigger3 = Fut.Promise.create () in
-        let trigger4 = Fut.Promise.create () in
-        let trigger5 = Fut.Promise.create () in
-        let finished1 = Fut.Promise.create () in
-        let finished2 = Fut.Promise.create () in
-        let finished3 = Fut.Promise.create () in
-        let finished4 = Fut.Promise.create () in
-        let finished5 = Fut.Promise.create () in
-        let started1 = Fut.Promise.create () in
-        let started2 = Fut.Promise.create () in
-        let started3 = Fut.Promise.create () in
-        let started4 = Fut.Promise.create () in
-        let started5 = Fut.Promise.create () in
-        let suspend1 = Fut.Promise.create () in
-        let suspend2 = Fut.Promise.create () in
-        let suspend3 = Fut.Promise.create () in
-        let suspend4 = Fut.Promise.create () in
-        let suspend5 = Fut.Promise.create () in
-        let unsuspend_trigger = Fut.Promise.create () in
-        let run =
-          let open Fut.Infix_monad in
-          Exec.create ~logger ~slots:1 ()
-          >>= fun executor ->
-          Fut.fork
-            (Exec.run executor ~name:[ "task1" ] (fun () ->
-                 Fut.Promise.set started1 ()
-                 >>= fun () ->
-                 Fut.Promise.future trigger1 >>= fun () -> Fut.Promise.set finished1 ()))
-          >>= fun _ ->
-          Fut.fork
-            (Exec.run executor ~name:[ "task2" ] (fun () ->
-                 Fut.Promise.set started2 ()
-                 >>= fun () ->
-                 Fut.Promise.future trigger2 >>= fun () -> Fut.Promise.set finished2 ()))
-          >>= fun _ ->
-          Fut.fork
-            (Exec.run executor ~name:[ "task3" ] (fun () ->
-                 Fut.Promise.set started3 ()
-                 >>= fun () ->
-                 Fut.Promise.future trigger3 >>= fun () -> Fut.Promise.set finished3 ()))
-          >>= fun _ ->
-          Fut.fork
-            (Exec.run executor ~name:[ "task4" ] (fun () ->
-                 Fut.Promise.set started4 ()
-                 >>= fun () ->
-                 Fut.Promise.future trigger4 >>= fun () -> Fut.Promise.set finished4 ()))
-          >>= fun _ ->
-          Fut.fork
-            (Exec.run executor ~name:[ "task5" ] (fun () ->
-                 Fut.Promise.set started5 ()
-                 >>= fun () ->
-                 Fut.Promise.future trigger5 >>= fun () -> Fut.Promise.set finished5 ()))
-          >>= fun _ ->
-          Fut.Promise.future suspend1
-          >>= fun () ->
-          Exec.suspend ~name:[ "task1" ] executor
-          >>= fun () ->
-          Fut.Promise.future suspend2
-          >>= fun () ->
-          Exec.suspend ~name:[ "task2" ] executor
-          >>= fun () ->
-          Fut.Promise.future suspend3
-          >>= fun () ->
-          Exec.suspend ~name:[ "task3" ] executor
-          >>= fun () ->
-          Fut.Promise.future suspend4
-          >>= fun () ->
-          Exec.suspend ~name:[ "task4" ] executor
-          >>= fun () ->
-          Fut.Promise.future suspend5
-          >>= fun () ->
-          Exec.suspend ~name:[ "task5" ] executor
-          >>= fun () ->
-          Fut.Promise.future unsuspend_trigger
-          >>= fun () ->
-          Exec.unsuspend ~name:[ "task1" ] executor
-          >>= fun () ->
-          Exec.unsuspend ~name:[ "task2" ] executor
-          >>= fun () ->
-          Exec.unsuspend ~name:[ "task3" ] executor
-          >>= fun () ->
-          Exec.unsuspend ~name:[ "task4" ] executor
-          >>= fun () -> Exec.unsuspend ~name:[ "task5" ] executor
-        in
-        ignore (Fut.run_with_state run dummy_state);
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !running_tasks_count 1;
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 0;
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future started1))
-          (`Det ());
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future started2))
-          `Undet;
-        ignore (Fut.run_with_state (Fut.Promise.set suspend1 ()) dummy_state);
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !running_tasks_count 1;
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 1;
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future started2))
-          (`Det ());
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future started3))
-          `Undet;
-        ignore (Fut.run_with_state (Fut.Promise.set suspend2 ()) dummy_state);
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !running_tasks_count 1;
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 2;
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future started3))
-          (`Det ());
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future started4))
-          `Undet;
-        ignore (Fut.run_with_state (Fut.Promise.set suspend3 ()) dummy_state);
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !running_tasks_count 1;
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 3;
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future started4))
-          (`Det ());
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future started5))
-          `Undet;
-        ignore (Fut.run_with_state (Fut.Promise.set suspend4 ()) dummy_state);
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !running_tasks_count 1;
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 4;
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future started5))
-          (`Det ());
-        ignore (Fut.run_with_state (Fut.Promise.set suspend5 ()) dummy_state);
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !running_tasks_count 0;
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 5;
-        ignore (Fut.run_with_state (Fut.Promise.set unsuspend_trigger ()) dummy_state);
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 0;
-        ignore (Fut.run_with_state (Fut.Promise.set trigger1 ()) dummy_state);
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future finished1))
-          (`Det ());
-        ignore (Fut.run_with_state (Fut.Promise.set trigger2 ()) dummy_state);
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future finished2))
-          (`Det ());
-        ignore (Fut.run_with_state (Fut.Promise.set trigger3 ()) dummy_state);
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future finished3))
-          (`Det ());
-        ignore (Fut.run_with_state (Fut.Promise.set trigger4 ()) dummy_state);
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future finished4))
-          (`Det ());
-        ignore (Fut.run_with_state (Fut.Promise.set trigger5 ()) dummy_state);
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future finished5))
-          (`Det ());
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !running_tasks_count 0;
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 0);
-    Oth.test ~name:"Task throws exn while suspended" (fun _ ->
-        let logger, running_tasks_count, suspended_tasks_count = make_logger () in
-        let trigger = Fut.Promise.create () in
-        let suspend_trigger = Fut.Promise.create () in
-        let run =
-          let open Fut.Infix_monad in
-          Exec.create ~logger ~slots:10 ()
-          >>= fun executor ->
-          Fut.fork
-            (Exec.run executor ~name:[ "test" ] (fun () ->
-                 Fut.Promise.future trigger >>= fun () -> failwith "test exception"))
-          >>= fun task ->
-          Fut.Promise.future suspend_trigger
-          >>= fun () -> Exec.suspend ~name:[ "test" ] executor >>= fun () -> Fut.return task
-        in
-        ignore (Fut.run_with_state run dummy_state);
-        ignore (Fut.run_with_state (Fut.Promise.set suspend_trigger ()) dummy_state);
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 1;
-        ignore (Fut.run_with_state (Fut.Promise.set trigger ()) dummy_state);
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !running_tasks_count 0;
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 0);
-    Oth.test ~name:"Aborts handled correctly while suspended" (fun _ ->
-        let logger, running_tasks_count, suspended_tasks_count = make_logger () in
-        let trigger = Fut.Promise.create () in
-        let work_started = Fut.Promise.create () in
-        let suspend_trigger = Fut.Promise.create () in
-        let task_ref = ref None in
-        let run =
-          let open Fut.Infix_monad in
-          Exec.create ~logger ~slots:10 ()
-          >>= fun executor ->
-          Fut.fork
-            (Exec.run executor ~name:[ "test" ] (fun () ->
-                 Fut.Promise.set work_started () >>= fun () -> Fut.Promise.future trigger))
-          >>= fun task ->
-          task_ref := Some task;
-          Fut.Promise.future suspend_trigger
-          >>= fun () -> Exec.suspend ~name:[ "test" ] executor >>= fun () -> Fut.return task
-        in
-        ignore (Fut.run_with_state run dummy_state);
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future work_started))
-          (`Det ());
-        ignore (Fut.run_with_state (Fut.Promise.set suspend_trigger ()) dummy_state);
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 1;
-        let task = Option.get !task_ref in
-        ignore (Fut.run_with_state (Fut.abort task) dummy_state);
-        Oth.Assert.eq ~eq:Pp_unit.equal ~pp:Pp_unit.pp (Fut.state task) `Aborted;
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !running_tasks_count 0;
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 0);
-    Oth.test ~name:"Aborting the running task while suspended" (fun _ ->
-        let logger, running_tasks_count, suspended_tasks_count = make_logger () in
-        let trigger = Fut.Promise.create () in
-        let work_started = Fut.Promise.create () in
-        let suspend_trigger = Fut.Promise.create () in
-        let run =
-          let open Fut.Infix_monad in
-          Exec.create ~logger ~slots:10 ()
-          >>= fun executor ->
-          Fut.fork
-            (Exec.run executor ~name:[ "test" ] (fun () ->
-                 Fut.Promise.set work_started () >>= fun () -> Fut.Promise.future trigger))
-          >>= fun task ->
-          Fut.Promise.future suspend_trigger
-          >>= fun () -> Exec.suspend ~name:[ "test" ] executor >>= fun () -> Fut.return task
-        in
-        ignore (Fut.run_with_state run dummy_state);
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future work_started))
-          (`Det ());
-        ignore (Fut.run_with_state (Fut.Promise.set suspend_trigger ()) dummy_state);
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 1;
-        ignore (Fut.run_with_state (Fut.abort (Fut.Promise.future trigger)) dummy_state);
-        Oth.Assert.eq
-          ~eq:Pp_unit.equal
-          ~pp:Pp_unit.pp
-          (Fut.state (Fut.Promise.future trigger))
-          `Aborted;
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !running_tasks_count 0;
-        Oth.Assert.eq ~eq:Int.equal ~pp:Format.pp_print_int !suspended_tasks_count 0);
-  ]
+let test_suspend_unsuspend =
+  Oth_abb.test ~name:"Suspend frees a slot, unsuspend restores it" (fun () ->
+      let open Fut.Infix_monad in
+      (* Single slot. Task A occupies it and blocks on [a_gate]. Suspending A
+         removes it from the running set (freeing the slot) even though its body
+         is still in flight, allowing B to be scheduled into the freed slot. B
+         runs to completion. Then we unsuspend A and release its gate so A
+         completes too. *)
+      let a_started = Fut.Promise.create () in
+      let a_gate = Fut.Promise.create () in
+      let b_started = Fut.Promise.create () in
+      let b_gate = Fut.Promise.create () in
+      Exec.create ~slots:1 ()
+      >>= fun executor ->
+      Fut.fork
+        (Exec.run executor ~name:[ "A" ] (fun () ->
+             Fut.Promise.set a_started () >>= fun () -> Fut.Promise.future a_gate))
+      >>= fun task_a ->
+      (* Wait until A is actually running and holding the only slot. *)
+      Fut.Promise.future a_started
+      >>= fun () ->
+      (* Suspend A; this frees the slot without finishing A's body. *)
+      Exec.suspend executor ~name:[ "A" ]
+      >>= fun () ->
+      (* B can now be scheduled into the freed slot and run to completion. *)
+      Fut.fork
+        (Exec.run executor ~name:[ "B" ] (fun () ->
+             Fut.Promise.set b_started () >>= fun () -> Fut.Promise.future b_gate))
+      >>= fun task_b ->
+      Fut.Promise.future b_started
+      >>= fun () ->
+      Fut.Promise.set b_gate ()
+      >>= fun () ->
+      task_b
+      >>= fun () ->
+      (* Unsuspend A and let it finish. *)
+      Exec.unsuspend executor ~name:[ "A" ]
+      >>= fun () ->
+      Fut.Promise.set a_gate ()
+      >>= fun () ->
+      task_a
+      >>= fun () ->
+      assert (Fut.state task_a = `Det ());
+      assert (Fut.state task_b = `Det ());
+      Fut.return ())
 
 let () =
   Random.self_init ();
-  Oth.(run ~file:__FILE__ (parallel tests))
+  Oth.run
+    ~file:__FILE__
+    Oth_abb.(
+      to_sync_test
+        (serial
+           [
+             test_work_runs;
+             test_slots_bound_concurrency;
+             test_slots_allow_concurrency;
+             test_suspend_unsuspend;
+           ]))

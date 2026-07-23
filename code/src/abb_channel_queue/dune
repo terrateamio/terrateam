@@ -1,3 +1,0 @@
-(library
- (name abb_channel_queue)
- (libraries abb_intf abb_channel abb_future_combinators))

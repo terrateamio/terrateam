@@ -55,7 +55,7 @@ module Make (Abb : Abb_intf.S) = struct
       let module Sa = Abb_intf.Socket.Sockaddr in
       match Abb.Socket.getsockname tcp with
       | Sa.Inet { Sa.port; _ } -> port
-      | Sa.Unix _ -> assert false
+      | Sa.Unix _ -> Oth.Assert.false_ "getsockname returned a Unix address for an Inet socket"
     in
     let cb_fut = cb port in
     Printf.printf "Waiting on accept\n";

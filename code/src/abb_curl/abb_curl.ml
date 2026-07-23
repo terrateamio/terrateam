@@ -380,8 +380,7 @@ module Id = struct
 end
 
 module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
-  module Service_local = Abb_service_local.Make (Abb.Future)
-  module Channel = Abb_channel.Make (Abb.Future)
+  module Service_local = Abb_service_local.Make (Abb)
   module Fc = Abb_future_combinators.Make (Abb.Future)
   module Method = Method
   module Status = Status
@@ -427,7 +426,8 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
 
     let trigger_eventfd eventfd =
       try ignore (UnixLabels.write eventfd ~buf:trigger_bytes ~pos:0 ~len:1)
-      with Unix.Unix_error (Unix.EAGAIN, _, _) | Unix.Unix_error (Unix.EWOULDBLOCK, _, _) -> ()
+      with Unix.Unix_error (Unix.EAGAIN, _, _) | Unix.Unix_error (Unix.EWOULDBLOCK, _, _) ->
+        Logs.debug (fun m -> m "TRIGGER_EVENTFD_FULL : pipe already signaled, skipping")
 
     let consume_eventfd eventfd =
       let buf = Bytes.create 4 in
@@ -502,7 +502,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
             in
             Curl.cleanup handle;
             match Id_map.get id t.responses with
-            | Some resp ->
+            | Some _resp ->
                 t.responses <- Id_map.remove id t.responses;
                 t.requests <- Id_map.remove id t.requests;
                 t.handles <- Id_map.remove id t.handles;
@@ -562,36 +562,37 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
                 t.polls <- Int_map.remove fd_int t.polls
             | None -> ())
 
-      let maybe_set_body_writer handle body =
-        let body = CCOption.get_or ~default:"" body in
-        let pos = ref 0 in
-        let length = CCString.length body in
-        Curl.set_postfieldsize handle length;
-        Curl.set_readfunction handle (fun n ->
-            if !pos < length then (
-              let len = length - !pos in
-              let pos' = !pos in
-              pos := !pos + CCInt.min n len;
-              CCString.sub body pos' (CCInt.min n len))
-            else "");
-        (* The body lives entirely in memory, so let curl rewind it whenever it
-           needs to resend the request: following a redirect, re-establishing a
-           connection that was dropped mid-send, replaying after a proxy or
-           TLS-inspecting middlebox interrupts the stream, etc.  Without a seek
-           function curl cannot rewind the read callback and fails these resends
-           with CURLE_SEND_FAIL_REWIND ("Send failed since rewinding of the data
-           stream failed"). *)
-        Curl.set_seekfunction handle (fun offset cmd ->
-            let target =
-              match cmd with
-              | Curl.SEEK_SET -> Int64.to_int offset
-              | Curl.SEEK_CUR -> !pos + Int64.to_int offset
-              | Curl.SEEK_END -> length + Int64.to_int offset
-            in
-            if target >= 0 && target <= length then (
-              pos := target;
-              Curl.SEEKFUNC_OK)
-            else Curl.SEEKFUNC_FAIL)
+      let maybe_set_body_writer handle = function
+        | Some body ->
+            let pos = ref 0 in
+            let length = CCString.length body in
+            Curl.set_postfieldsize handle length;
+            Curl.set_readfunction handle (fun n ->
+                if !pos < length then (
+                  let len = length - !pos in
+                  let pos' = !pos in
+                  pos := !pos + CCInt.min n len;
+                  CCString.sub body pos' (CCInt.min n len))
+                else "");
+            (* The body lives entirely in memory, so let curl rewind it whenever
+               it needs to resend the request: following a redirect,
+               re-establishing a connection that was dropped mid-send, replaying
+               after a proxy or TLS-inspecting middlebox interrupts the stream,
+               etc.  Without a seek function curl cannot rewind the read callback
+               and fails these resends with CURLE_SEND_FAIL_REWIND ("Send failed
+               since rewinding of the data stream failed"). *)
+            Curl.set_seekfunction handle (fun offset cmd ->
+                let target =
+                  match cmd with
+                  | Curl.SEEK_SET -> Int64.to_int offset
+                  | Curl.SEEK_CUR -> !pos + Int64.to_int offset
+                  | Curl.SEEK_END -> length + Int64.to_int offset
+                in
+                if target >= 0 && target <= length then (
+                  pos := target;
+                  Curl.SEEKFUNC_OK)
+                else Curl.SEEKFUNC_FAIL)
+        | None -> ()
 
       let setup_request handle meth_ headers uri =
         let debug_enabled = ref false in
@@ -607,8 +608,8 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
             maybe_set_body_writer handle body
         | `POST body ->
             Curl.set_post handle true;
-            (* Ensure that a post always has a body, requests seem to hang otherwise. *)
-            maybe_set_body_writer handle body
+            (* Use set_postfields for POST - set_readfunction alone doesn't work without set_postfieldsize *)
+            Curl.set_postfields handle (CCOption.get_or ~default:"" body)
         | `DELETE body ->
             Curl.set_customrequest handle "DELETE";
             maybe_set_body_writer handle body
@@ -657,7 +658,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
 
       let process_request
           t
-          ({ Request.options; headers; body_reader; meth_; uri; id; _ } as request) =
+          ({ Request.options; headers; body_reader = _; meth_; uri; id; _ } as request) =
         Logs.debug (fun m -> m "process_request : id=%s : uri=%a" id Uri.pp uri);
         let handle = Curl.init () in
         t.requests <- Id_map.add id request t.requests;
@@ -799,16 +800,17 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
     end
 
     module Server = struct
+      type response_envelope = (Request.t, (Response.t, request_err) result) Service_local.Request.t
+
       module Msg = struct
         type t =
-          | Request of {
-              request : Request.t;
-              p : (Response.t, request_err) result Abb.Future.Promise.t;
-            }
+          | Request of response_envelope
           | Cancel of Id.t
           | Iterate
       end
 
+      (* [wait_eventfd] and [iterate_fut] are kept on the record to anchor the resources
+         for their lifetime; the rest of the code reads through other fields. *)
       type t = {
         wait_eventfd : Unix.file_descr;
         trigger_eventfd : Unix.file_descr;
@@ -817,8 +819,20 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
         out_event : Out_event.t Queue.t;
         iterate_fut : unit Abb.Future.t;
         body_readers : (string -> unit Abb.Future.t) Id_map.t;
-        responses : (Request.t * (Response.t, request_err) result Abb.Future.Promise.t) Id_map.t;
+        responses : response_envelope Id_map.t;
       }
+      [@@warning "-69"]
+
+      (* Send the curl result back to the caller via the reply chan
+         embedded in the request envelope.  The reply chan may be closed
+         already (caller aborted) -- the send returns [`Chan_closed] and
+         we drop the result.  Matches [Service_local.respond]'s
+         behaviour. *)
+      let send_reply (req : response_envelope) result =
+        let open Abb.Future.Infix_monad in
+        Abb.Chan.send (Service_local.Request.reply_chan req) (`Det result)
+        >>= function
+        | Ok () | Error `Chan_closed -> Abb.Future.return ()
 
       let rec process_events t =
         let event = Mutex.protect t.mutex (fun () -> Queue.take_opt t.out_event) in
@@ -826,9 +840,10 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
         | Some (Out_event.Ret (id, ret)) -> (
             let open Abb.Future.Infix_monad in
             match Id_map.get id t.responses with
-            | Some (request, p) ->
+            | Some req ->
+                let request = Service_local.Request.payload req in
                 Logs.debug (fun m -> m "RET : id=%s : uri=%a" id Uri.pp request.Request.uri);
-                Abb.Future.Promise.set p ret
+                send_reply req ret
                 >>= fun () ->
                 process_events
                   {
@@ -844,8 +859,9 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
             | None -> process_events t)
         | None -> Abb.Future.return t
 
-      let handle_msg t w r = function
-        | Msg.Request { request; p } ->
+      let handle_msg t = function
+        | Msg.Request req ->
+            let request = Service_local.Request.payload req in
             let id = request.Request.id in
             Logs.debug (fun m -> m "MSG : REQUEST : id=%s : uri=%a" id Uri.pp request.Request.uri);
             let body_reader = request.Request.body_reader in
@@ -853,7 +869,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
               {
                 t with
                 body_readers = Id_map.add id body_reader t.body_readers;
-                responses = Id_map.add id (request, p) t.responses;
+                responses = Id_map.add id req t.responses;
               }
             in
             Mutex.protect t.mutex (fun () -> Queue.add (In_event.Request request) t.in_event);
@@ -865,7 +881,7 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
             Mutex.protect t.mutex (fun () -> Queue.add (In_event.Cancel id) t.in_event);
             trigger_eventfd t.trigger_eventfd;
             (match Id_map.get id t.responses with
-              | Some (_, p) -> Abb.Future.Promise.set p (Error `Cancelled)
+              | Some req -> send_reply req (Error `Cancelled)
               | None -> Fc.unit)
             >>= fun () ->
             Abb.Future.return
@@ -876,33 +892,33 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
               }
         | Msg.Iterate -> process_events t
 
-      let rec loop t w r =
+      let rec loop t chan =
         let open Abb.Future.Infix_monad in
-        Channel.recv r
+        Abb.Chan.recv chan
         >>= function
-        | `Ok msg -> handle_msg t w r msg >>= fun t -> loop t w r
-        | `Closed ->
+        | Ok msg -> handle_msg t msg >>= fun t -> loop t chan
+        | Error `Chan_closed ->
             Mutex.protect t.mutex (fun () -> Queue.add In_event.Shutdown t.in_event);
             trigger_eventfd t.trigger_eventfd;
             Abb.Future.return ()
 
-      let rec iterate_loop eventfd buf w =
+      let rec iterate_loop eventfd buf chan =
         let open Abb.Future.Infix_monad in
         Logs.debug (fun m -> m "ITERATE_LOOP");
         Abb.File.read eventfd ~buf ~pos:0 ~len:(Bytes.length buf)
         >>= fun _ ->
-        Channel.send w Msg.Iterate
+        Abb.Chan.send chan Msg.Iterate
         >>= function
-        | `Ok () -> iterate_loop eventfd buf w
-        | `Closed -> Abb.Future.return ()
+        | Ok () -> iterate_loop eventfd buf chan
+        | Error `Chan_closed -> Abb.Future.return ()
 
-      let start w r =
+      let start chan =
         let open Abb.Future.Infix_monad in
         let wait_eventfd, trigger_eventfd, mutex, in_event, out_event = Loop.start () in
         Abb.Future.fork
           (let buf = Bytes.create 4 in
            let eventfd = Abb.File.of_native wait_eventfd in
-           iterate_loop eventfd buf w)
+           iterate_loop eventfd buf chan)
         >>= fun iterate_fut ->
         let t =
           {
@@ -916,11 +932,11 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
             responses = Id_map.empty;
           }
         in
-        loop t w r
+        loop t chan
     end
 
     type t = {
-      w : Server.Msg.t Service_local.w;
+      w : Server.Msg.t Service_local.t;
       mutable id_gen : Id.Gen.t;
     }
 
@@ -931,21 +947,36 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
       Logs.debug (fun m -> m "STARTED");
       Abb.Future.return { w; id_gen = Id.Gen.make () }
 
-    let destroy t = Fc.ignore (Channel.close t.w)
+    let destroy t =
+      Abb.Chan.close t.w;
+      Abb.Future.return ()
+
+    let send_to_chan chan msg =
+      let open Abb.Future.Infix_monad in
+      Abb.Chan.send chan msg
+      >>| function
+      | Ok () -> Ok ()
+      | Error `Chan_closed -> Error `Closed
 
     let request t options headers body_reader meth_ uri =
-      let open Fc.Infix_result_monad in
       let id, id_gen = Id.Gen.next t.id_gen in
       t.id_gen <- id_gen;
-      let p = Abb.Future.Promise.create () in
-      Channel.Combinators.to_result
-        (Channel.send
-           t.w
-           (Server.Msg.Request
-              { request = { Request.options; headers; body_reader; meth_; uri; id }; p }))
-      >>= fun () -> Abb.Future.return (Ok (id, Abb.Future.Promise.future p))
+      let curl_req = { Request.options; headers; body_reader; meth_; uri; id } in
+      (* [Service_local.call] handles reply-chan allocation, send,
+         recv, and re-materialization on the caller's State.t.  The
+         returned future carries the response result; if the service
+         is closed the call yields [Error `Chan_closed] which we
+         surface as [Error `Closed] to match the existing API. *)
+      let response_fut =
+        let open Abb.Future.Infix_monad in
+        Service_local.call t.w (fun req -> Server.Msg.Request req) curl_req
+        >>= function
+        | Ok res -> Abb.Future.return res
+        | Error `Chan_closed -> Abb.Future.return (Error `Closed)
+      in
+      Abb.Future.return (Ok (id, response_fut))
 
-    let cancel t id = Channel.Combinators.to_result (Channel.send t.w (Server.Msg.Cancel id))
+    let cancel t id = send_to_chan t.w (Server.Msg.Cancel id)
   end
 
   let default_connector = Connector.create ()

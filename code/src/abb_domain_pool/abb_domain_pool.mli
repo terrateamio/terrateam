@@ -1,29 +1,32 @@
-(** A simple thread pool implementation. *)
+(** A pool of worker domains that runs caller-supplied thunks.
 
-type 'a t
+    Workers park on a condition variable until work arrives. When a thunk completes the worker
+    returns to the pool to pick up the next one; whatever cross-domain delivery the caller wants
+    (e.g. pushing a completion record onto an op queue) is the caller's responsibility, baked into
+    the submitted thunk. *)
 
-(** Create a thread pool with the defined capacity. [capacity] number of threads will be started and
-    maintained at all times.
+type t
 
-    @param wait a function which generates a value to wait on. This is executed in the main thread.
-*)
-val create : capacity:int -> wait:(unit -> 'a) -> 'a t
+(** Create a pool of [capacity] worker domains. [capacity] must be positive. *)
+val create : capacity:int -> t
 
-(** Add a new piece of work to the queue. Threads will consume the work as they become available.
+(** Submit a thunk to be run on some worker domain. The thunk runs to completion on whichever worker
+    picks it up. An exception escaping the thunk is not caught by the pool — the worker domain dies
+    and [destroy] re-raises it via [Domain.join].
 
-    @param f the work that will be executed in the thread.
+    If [aborted] is supplied, the caller can set it any time between submission and the worker
+    popping the thunk; the worker reads the flag once after popping and silently skips the thunk if
+    it is set. Aborting after the worker has started running the thunk has no effect (OCaml threads
+    cannot be safely interrupted). *)
+val enqueue : ?aborted:bool Atomic.t -> t -> (unit -> unit) -> unit
 
-    @param trigger
-      the function to call with the result and a wait token to signal the work is complete. If the
-      function threw an exception, trigger is called with that.
+(** Best-effort variant of [enqueue]. Returns [true] iff a worker was idle and the thunk was placed
+    on the queue (a signal was sent and that worker will pick it up). Returns [false] if every
+    worker is currently busy — the thunk is {b not} queued in that case; the caller is expected to
+    run the work themselves rather than wait for a worker.
 
-    @return the value created by the wait so the caller can setup hooks for the work completing. *)
-val enqueue :
-  'a t ->
-  f:(unit -> 'b) ->
-  trigger:('a -> ('b, exn * Printexc.raw_backtrace option) result -> unit) ->
-  'a
+    [aborted] has the same meaning as in {!enqueue}. *)
+val try_enqueue : ?aborted:bool Atomic.t -> t -> (unit -> unit) -> bool
 
-(** Destroy the thread pool. Destroy does not wait for any work executing in the thread pool to be
-    finished before returning. *)
-val destroy : 'a t -> unit
+(** Signal all workers to shut down and join their domains. *)
+val destroy : t -> unit

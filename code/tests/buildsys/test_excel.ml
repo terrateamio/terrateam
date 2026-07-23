@@ -51,7 +51,7 @@ module Bs = Buildsys.Make (Excel)
 
 external coerce : 'a Hmap.key -> 'a Bs.Task.t Hmap.key = "%identity"
 
-let rebuilder = { Bs.Rebuilder.run = (fun st _k _v -> false) }
+let rebuilder = { Bs.Rebuilder.run = (fun _st _k _v -> false) }
 
 let test_const =
   Oth.test ~name:"const" (fun _ ->

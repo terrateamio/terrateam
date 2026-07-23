@@ -1,0 +1,3 @@
+(library
+ (name abb_fd_socket)
+ (libraries unix))

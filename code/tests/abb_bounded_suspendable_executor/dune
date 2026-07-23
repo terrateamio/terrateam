@@ -2,10 +2,8 @@
  (name test)
  (libraries
   abb_bounded_suspendable_executor
-  abb_fut
-  abb_intf
+  abb_future_combinators
+  abb_scheduler_select
   containers
   oth
-  unix)
- (preprocess
-  (pps ppx_deriving.eq ppx_deriving.show)))
+  oth_abb))

@@ -257,13 +257,17 @@ module Of (Abb : Abb_intf.S) = struct
       Abb.Socket.Tcp.recv sock ~buf ~pos ~len
       >>| function
       | Ok n -> Ok n
-      | Error `E_bad_file | Error `E_connection_reset | Error `E_not_connected -> Error `E_io
+      | Error `E_file_closed
+      | Error `E_bad_file
+      | Error `E_connection_reset
+      | Error `E_not_connected -> Error `E_io
       | Error (`Unexpected _) as err -> err
     in
     let write ~bufs =
       Abb.Socket.Tcp.send sock ~bufs
       >>| function
       | Ok n -> Ok n
+      | Error `E_file_closed
       | Error `E_bad_file
       | Error `E_access
       | Error `E_no_buffers

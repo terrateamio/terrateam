@@ -119,7 +119,7 @@ module Make (Abb : Abb_intf.S) = struct
         Abb.Sys.monotonic ()
         >>= fun ts ->
         let ts = Duration.(to_us_64 (of_f ts)) in
-        let he, cont, actions = Happy_eyeballs.timer he ts in
+        let he, cont, _actions = Happy_eyeballs.timer he ts in
         match cont with
         | `Suspend -> Abb.Future.return (Error (`He_connect_err ("", "timeout")))
         | `Act ->

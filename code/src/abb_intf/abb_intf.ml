@@ -240,14 +240,16 @@ module Errors = struct
   [@@deriving show, eq]
 
   type recvfrom =
-    [ `E_bad_file
+    [ `E_file_closed
+    | `E_bad_file
     | `E_connection_reset
     | unexpected
     ]
   [@@deriving show, eq]
 
   type sendto =
-    [ `E_bad_file
+    [ `E_file_closed
+    | `E_bad_file
     | `E_access
     | `E_no_buffers
     | `E_host_unreachable
@@ -265,7 +267,8 @@ module Errors = struct
   [@@deriving show, eq]
 
   type listen =
-    [ `E_bad_file
+    [ `E_file_closed
+    | `E_bad_file
     | `E_dest_address_required
     | `E_invalid
     | `E_op_not_supported
@@ -274,7 +277,8 @@ module Errors = struct
   [@@deriving show, eq]
 
   type accept =
-    [ `E_bad_file
+    [ `E_file_closed
+    | `E_bad_file
     | `E_file_table_full
     | `E_invalid
     | `E_connection_aborted
@@ -295,7 +299,8 @@ module Errors = struct
   [@@deriving show, eq]
 
   type bind =
-    [ `E_bad_file
+    [ `E_file_closed
+    | `E_bad_file
     | `E_again
     | `E_invalid
     | `E_address_not_available
@@ -314,7 +319,8 @@ module Errors = struct
   [@@deriving show, eq]
 
   type tcp_sock_connect =
-    [ `E_bad_file
+    [ `E_file_closed
+    | `E_bad_file
     | `E_invalid
     | `E_address_not_available
     | `E_address_family_not_supported
@@ -330,7 +336,8 @@ module Errors = struct
   [@@deriving show, eq]
 
   type recv =
-    [ `E_bad_file
+    [ `E_file_closed
+    | `E_bad_file
     | `E_connection_reset
     | `E_not_connected
     | unexpected
@@ -338,7 +345,8 @@ module Errors = struct
   [@@deriving show, eq]
 
   type send =
-    [ `E_bad_file
+    [ `E_file_closed
+    | `E_bad_file
     | `E_access
     | `E_no_buffers
     | `E_host_unreachable
@@ -350,7 +358,8 @@ module Errors = struct
   [@@deriving show, eq]
 
   type nodelay =
-    [ `E_bad_file
+    [ `E_file_closed
+    | `E_bad_file
     | unexpected
     ]
   [@@deriving show, eq]
@@ -361,6 +370,9 @@ module Errors = struct
     | unexpected
     ]
   [@@deriving show, eq]
+
+  type chan_send_err = [ `Chan_closed ] [@@deriving show, eq]
+  type chan_recv_err = [ `Chan_closed ] [@@deriving show, eq]
 end
 
 (** An implementation of future must provide an interface which works within these types. *)
@@ -370,9 +382,12 @@ module Future = struct
       [ `Det of 'a
       | `Undet
       | `Aborted
-      | `Exn of (exn * Printexc.raw_backtrace option[@opaque])
+      | `Exn of
+        (exn * Printexc.raw_backtrace option
+        [@printer fun fmt (exn, _) -> Format.fprintf fmt "%s" (Printexc.to_string exn)]
+        [@equal fun (exn1, _) (exn2, _) -> exn1 = exn2])
       ]
-    [@@deriving show]
+    [@@deriving show, eq]
   end
 
   module Set = struct
@@ -617,6 +632,14 @@ module Process = struct
   [@@deriving show, eq]
 end
 
+(** A capability that a scheduler may support. Schedulers advertise their capabilities through
+    {!S.Scheduler.capabilities} so that capability-dependent code (e.g. tests that require real
+    parallelism) can adapt to the scheduler they are running against. *)
+module Scheduler_capability = struct
+  type t = [ `Multi_domain  (** The scheduler can run work on more than one OCaml domain. *) ]
+  [@@deriving show, eq]
+end
+
 (** The scheduler interface. This only has those types and value that the implementation must
     specify. Common values across all schedulers are pulled out of the module type *)
 module type S = sig
@@ -631,10 +654,66 @@ module type S = sig
 
   module Future : Future.S
 
+  (** {2 Tasks}
+
+      Futures are how asynchornous computation is expressed and evaluated. Tasks are a grouping for
+      asynchronous computations. A Task is a context in-which futures are evaluated. A Task has an
+      id, represented as an integer and an optional name, represented as a string.
+
+      All work happens in a task with a scheduler creating at least one, initial, task to begin work
+      in.
+
+      If a scheduler supports running work on different domains, a Task may be executed on a
+      different domain than it is created, and care must be taken to ensure all cross-task
+      communication is performed via domain-safe primitives. *)
+  module Task : sig
+    (** Get the ID of the task. ID's are guaranteed to be unique in a process. *)
+    val id : unit -> int Future.t
+
+    (** Fetch the optional name of the task. Names are not guaranteed to be unique in a process.
+        Names exist for human consumption and to aid in debugging. *)
+    val name : unit -> string option Future.t
+
+    (** Run a function in a task, giving it an optional name. The return value is a future which is
+        determined when the task has been created and started. It is determined to another future
+        which is determined when the task completes.
+
+        [?pinned] (default [true]) controls where the task body and its async-op callbacks may run.
+
+        A {b pinned} task always runs on the scheduler domain — its body and every callback for
+        every async wait are guaranteed to execute on the scheduler. Pinning is the right default
+        for code that touches scheduler-domain state directly or that the caller wants to be
+        sequenced with other scheduler work.
+
+        An {b unpinned} task is best-effort parallel: its body and each callback {b prefer} a worker
+        domain in the scheduler's thread pool, but if every worker is busy (e.g. holding
+        {!Thread.run} payloads) the work runs inline on the scheduler domain instead. So an unpinned
+        task {b may} run on a worker, on the scheduler, or alternate between them across callbacks —
+        there is no guarantee of parallelism, only of progress. Whichever domain runs a callback,
+        only one runs at a time per task, so the task's [Abb_fut] state is never accessed
+        concurrently. Resolving the outer Future returned to the caller is routed back to the
+        scheduler domain so the caller's Future state is mutated only there.
+
+        Use [~pinned:false] for tasks that mix CPU work with async waits and would benefit from
+        running on a worker when one is available. Pure-async tasks gain nothing from unpinning;
+        pure-CPU work should use {!Thread.run}, which {b always} dispatches to the pool (and waits
+        for a worker rather than degrading to the scheduler).
+
+        {b Aborting.} Aborting the (inner) future returned by [run] aborts the task body itself,
+        pinned or unpinned: the body stops at its next async suspension point and the future
+        resolves to [`Aborted]. A body that is purely CPU-bound between such points runs to
+        completion before the abort takes effect — same as a pinned task or a {!Thread.run} payload
+        — so to interrupt sooner the body must cooperate (e.g. select on a cancel channel). *)
+    val run : ?name:string -> ?pinned:bool -> (unit -> 'a Future.t) -> 'a Future.t Future.t
+  end
+
   (** {2 Scheduler Management} *)
 
   module Scheduler : sig
     type t
+
+    (** The set of capabilities this scheduler supports. *)
+    val capabilities : Scheduler_capability.t list
 
     val create : ?thread_pool_size:int -> ?exec_duration:(float -> unit) -> unit -> t
     val destroy : t -> unit
@@ -970,5 +1049,42 @@ module type S = sig
     (** Run a function in a thread. Aborting this future is not guaranteed to abort stop the thread.
     *)
     val run : (unit -> 'a) -> 'a Future.t
+  end
+
+  (** {2 Channels}
+
+      A bounded, uni-directional channel with multiple-producer / single-consumer (MPSC) semantics.
+
+      In a multi-domain scheduler (e.g. [Abb_scheduler_luv]) the channel is the primary cross-domain
+      communication primitive and is domain-safe: any number of producer domains can call
+      {!Chan.send} concurrently, but only a single consumer. Concurrent receives from multiple
+      consumer domains is undefined behavior.
+
+      [send]: append a value. If the channel is at capacity, the returned future stays [`Undet]
+      until a consumer makes room; the wait becomes a scheduler operation. Returns [`Chan_closed] if
+      the channel is closed and the value cannot be accepted.
+
+      [recv]: remove the next value. If the channel is empty, the future stays [`Undet] until a
+      producer sends; the wait becomes a scheduler operation. Returns [`Chan_closed] only when the
+      channel is closed AND empty (closed channels still drain remaining items).
+
+      Both wait paths are race-free: state transitions (queue contents, parked waiters, closed flag)
+      happen under a single mutex, so a producer can never miss a parked consumer that just
+      registered, and vice versa. *)
+  module Chan : sig
+    type 'a t
+
+    (** Create an MPSC channel with bounded capacity [capacity]. [capacity] must be >= 1; an
+        [Invalid_argument] is raised otherwise. The trailing [unit] keeps the signature stable
+        against future optional parameters. *)
+    val create : capacity:int -> unit -> 'a t
+
+    val send : 'a t -> 'a -> (unit, [> Errors.chan_send_err ]) result Future.t
+    val recv : 'a t -> ('a, [> Errors.chan_recv_err ]) result Future.t
+
+    (** Mark the channel closed. Pending sends whose values have not yet been accepted fail with
+        [`Chan_closed]; subsequent sends fail immediately. Receives drain remaining items, then fail
+        with [`Chan_closed]. Idempotent. *)
+    val close : 'a t -> unit
   end
 end

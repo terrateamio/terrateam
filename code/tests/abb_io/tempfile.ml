@@ -5,7 +5,7 @@ module Tempfile = Abb_io_tempfile.Make (Abb)
 let test_tempfile =
   Oth_abb.test ~desc:"Simple tempfile test" ~name:"tempfile" (fun () ->
       let open Abb.Future.Infix_monad in
-      Tempfile.with_filename ~prefix:"test" ~suffix:"test" (fun fname -> Abb.Future.return (Ok ()))
+      Tempfile.with_filename ~prefix:"test" ~suffix:"test" (fun _ -> Abb.Future.return (Ok ()))
       >>| fun r -> assert (r = Ok ()))
 
 let test_tempfile_cleanup =

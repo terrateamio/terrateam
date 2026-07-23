@@ -1,4 +1,8 @@
 module Fut = Abb_fut.Make (struct
+  type data = unit
+
+  let zero_data = ()
+
   type t = unit
 end)
 
@@ -184,7 +188,7 @@ let test11 =
       let fut2 = Fut.Promise.future p2 in
       let fut3 = fut2 >>| fun _ -> () in
       let both v1 v2 = (v1, v2) in
-      let fut4 = both <$> fut1 <*> fut3 >>| fun (v1, v2) -> executed_anyways := true in
+      let fut4 = both <$> fut1 <*> fut3 >>| fun (_v1, _v2) -> executed_anyways := true in
       let fut4 = Fut.await fut4 in
       ignore (Fut.run_with_state fut4 state);
       ignore (Fut.run_with_state (Fut.abort fut2) state);
@@ -287,10 +291,7 @@ let test_abort_determined_after_completed =
   Oth.test ~name:"Abort determined after completed" (fun _ ->
       let state = Abb_fut.State.create () in
       let trigger_next_step = Fut.Promise.create () in
-      let abort () =
-        let open Fut.Infix_monad in
-        Fut.Promise.future trigger_next_step
-      in
+      let abort () = Fut.Promise.future trigger_next_step in
       let fut = Fut.Promise.(future (create ~abort ())) in
       let abort_fut = Fut.abort fut in
       assert (Fut.state abort_fut = `Undet);

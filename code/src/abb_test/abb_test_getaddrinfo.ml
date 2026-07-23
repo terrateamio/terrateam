@@ -1,5 +1,3 @@
-module Unix = UnixLabels
-
 module Make (Abb : Abb_intf.S) = struct
   module Oth_abb = Oth_abb.Make (Abb)
 
@@ -16,8 +14,9 @@ module Make (Abb : Abb_intf.S) = struct
             List.iter
               (fun ai ->
                 match ai.Abb_intf.Socket.Addrinfo.addr with
-                | Abb_intf.Socket.Sockaddr.Unix _ -> assert false
-                | Abb_intf.Socket.Sockaddr.Inet inet -> ())
+                | Abb_intf.Socket.Sockaddr.Unix _ ->
+                    Oth.Assert.false_ "getaddrinfo for localhost returned a Unix address"
+                | Abb_intf.Socket.Sockaddr.Inet _ -> ())
               r;
             Abb.Future.return ()
         | Error _ -> failwith "getaddrinfo failed")

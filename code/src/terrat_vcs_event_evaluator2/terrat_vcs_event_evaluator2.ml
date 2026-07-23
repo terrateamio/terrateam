@@ -2,9 +2,7 @@ module Batch = Terrat_vcs_event_evaluator2_batch
 module Fc = Abbs_future_combinators
 module Irm = Fc.Infix_result_monad
 module Tjc = Terrat_job_context
-module Msg = Terrat_vcs_provider2.Msg
-module P2 = Terrat_vcs_provider2
-module Exec = Abb_bounded_suspendable_executor.Make (Abb.Future) (CCString) (Abb.Sys)
+module Exec = Abb_bounded_suspendable_executor.Make (Abb) (CCString)
 
 module Queue_time_histogram = Prmths.Histogram (struct
   let spec = Prmths.Histogram_spec.of_list [ 0.01; 0.1; 0.25; 0.5; 1.0; 2.5; 5.0; 7.5; 10.0; 15.0 ]
@@ -32,10 +30,6 @@ module Metrics = struct
 end
 
 module Exec_logger = struct
-  let src = Logs.Src.create "vcs_event_evaluator2.exec"
-
-  module Logs = (val Logs.src_log src : Logs.LOG)
-
   let tasks_concurrent_max = ref 0
 
   (* let logger = *)
@@ -98,8 +92,6 @@ module Make (S : Terrat_vcs_provider2.S) = struct
   module Keys = Terrat_vcs_event_evaluator2_targets.Make (S)
   module Hmap = Keys.Hmap
   module Builder = Terrat_vcs_event_evaluator2_builder.Make (S)
-  module B = Builder.B
-  module Bs = Builder.Bs
   module Tasks = Terrat_vcs_event_evaluator2_tasks.Make (S) (Keys)
   module Tasks_base = Terrat_vcs_event_evaluator2_tasks_base.Make (S) (Keys)
   module Tasks_pr = Terrat_vcs_event_evaluator2_tasks_pr.Make (S) (Keys)

@@ -7,28 +7,34 @@
     Order is guaranteed across keys. For example, consider a queue with 3 items in it with the
     following keys: 1) [A], 2) [A, B], 3) [B, C]. Once (1) is executing, (2) cannot be, however (3)
     could be, based purely on the overlapping keys. But (2) would lock a key that (3) depends on.
-    Therefore, (3) should only run after (2). *)
+    Therefore, (3) should only run after (2).
+
+    {b Domain-safety:} cross-task communication uses the [Chan]-based request/reply pattern from RFD
+    675 (via {!Abb_service_local}), so callers and the executor's server task may live on different
+    domains. The work function passed to {!Make.create} runs on the server task's domain — any
+    mutable state your closure captures must be safe to access there. The same constraint applies to
+    per-work items passed to {!Make.enqueue}: they are consumed on the server's domain. *)
 
 type enqueue_err = [ `Closed ] [@@deriving show]
 
-module Make (Fut : Abb_intf.Future.S) (Key : Map.OrderedType) : sig
+module Make (S : Abb_intf.S) (Key : Map.OrderedType) : sig
   type 'a t
 
   (** Create an executor with the specified number of slots and a function that knows how to create
       the list of keys from the work item. *)
-  val create : slots:int -> ('a -> unit Fut.t) -> 'a t Fut.t
+  val create : slots:int -> ('a -> unit S.Future.t) -> 'a t S.Future.t
 
   (** Enqueue a piece of work, return immediately. If the queue is draining, [enqueue] will return
       [`Closed]. An empty key list does not block on any other key, including other empty key lists.
   *)
-  val enqueue : 'a t -> keys:Key.t list -> 'a -> (unit, [> enqueue_err ]) result Fut.t
+  val enqueue : 'a t -> keys:Key.t list -> 'a -> (unit, [> enqueue_err ]) result S.Future.t
 
   (** Destroy the executor immediately. Do not wait for any executing or queued work to complete. If
       the executor has already been destroyed, this is a noop. *)
-  val destroy : 'a t -> unit Fut.t
+  val destroy : 'a t -> unit
 
   (** Prevent the queue from accepting any more work, wait for all work to complete (queued and
       in-flight), and destroy the queue. Return when queue has been destroyed. If the executor has
       already been destroyed, this is a noop. *)
-  val drain_and_destroy : 'a t -> unit Fut.t
+  val drain_and_destroy : 'a t -> unit S.Future.t
 end

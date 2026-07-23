@@ -1,9 +1,12 @@
 module Fut = Abb_fut.Make (struct
+  type data = unit
+
+  let zero_data = ()
+
   type t = unit
 end)
 
 open Fut.Infix_monad
-open Fut.Infix_app
 
 let test1 =
   Oth.test ~desc:"Testing fork background" ~name:"Fork test #1" (fun _ ->

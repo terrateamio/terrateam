@@ -1,3 +1,14 @@
+(** A bounded pool of PostgreSQL connections.
+
+    Cross-task communication with the pool task uses the [Chan]-based request/reply pattern from RFD
+    675 (via {!Abbs_service_local}), so callers and the pool's server task may live on different
+    domains.
+
+    {b Domain-safety of [~f]:} the [~f] callback you pass to {!with_conn} is invoked on the caller's
+    chain (not the pool task's), so it runs wherever you invoked [with_conn]. The connection handle
+    ([Pgsql_io.t]) passed to [f] should only be used from within that closure; do not stash it in
+    shared mutable state that another task or domain might read. *)
+
 exception Pgsql_pool_closed
 
 module Metrics : sig
@@ -43,9 +54,17 @@ val create :
   string ->
   t Abb.Future.t
 
-(** Destroy the pool. All idle connections are closed and connections in use are closed once they
-    are no longer used. *)
-val destroy : t -> unit Abb.Future.t
+(** Destroy the pool. Rejects all waiters, closes every idle connection immediately, and waits for
+    in-use connections to be returned and closed. Blocks until draining completes or [timeout]
+    elapses.
+
+    If [timeout] elapses before all in-use connections are returned (a connection leak), a warning
+    is logged, the underlying channel is closed, and the future resolves; any eventual [Return] of
+    the leaked connection will find the channel closed and destroy the connection via [with_conn]'s
+    finally handler.
+
+    [timeout] defaults to 30 seconds. *)
+val destroy : ?timeout:Duration.t -> t -> unit Abb.Future.t
 
 (** Perform an operation with a connection. If there is no available idle connection and there are
     fewer than [max_conns] created, then create a new one and use it, otherwise wait until a
