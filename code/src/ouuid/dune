@@ -1,3 +1,5 @@
 (library
  (name ouuid)
- (libraries uuidm))
+ (libraries uuidm yojson)
+ (preprocess
+  (pps ppx_deriving_yojson)))
