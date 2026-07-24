@@ -8,6 +8,7 @@ module type ROUTES = sig
   val routes :
     config ->
     Terrat_storage.t ->
+    ro_storage:Terrat_storage.t ->
     (Brtl_rtng.Method.t * Brtl_rtng.Handler.t Brtl_rtng.Route.Route.t) list
 end
 
@@ -43,6 +44,7 @@ struct
     plan_cleanup : unit Abb.Future.t;
     repo_config_cleanup : unit Abb.Future.t;
     storage : Terrat_storage.t;
+    ro_storage : Terrat_storage.t;
     exec : Terrat_vcs_event_evaluator2.Exec.t;
   }
   [@@warning "-69"]
@@ -182,27 +184,30 @@ struct
     let routes t =
       let config = t.config in
       let storage = t.storage in
+      let ro_storage = t.ro_storage in
       let exec = t.exec in
-      Routes.routes config storage
-      @ Provider.Stacks.routes config storage
-      @ Kv_store.routes config storage
+      Routes.routes config storage ~ro_storage
+      @ Provider.Stacks.routes config ro_storage
+      @ Kv_store.routes config storage ~ro_storage
       @ Brtl_rtng.Route.
           [
             (* Installations *)
-            (`GET, Rt.gitlab_installation_dirspaces () --> Ep_inst.List_dirspaces.get config storage);
-            (`GET, Rt.gitlab_installations_repos () --> Ep_inst.List_repos.get config storage);
+            ( `GET,
+              Rt.gitlab_installation_dirspaces () --> Ep_inst.List_dirspaces.get config ro_storage
+            );
+            (`GET, Rt.gitlab_installations_repos () --> Ep_inst.List_repos.get config ro_storage);
             ( `DELETE,
               Rt.gitlab_installations_repo_delete () --> Ep_repo_delete.delete config storage );
             ( `GET,
               Rt.gitlab_installation_work_manifests ()
-              --> Ep_inst.List_work_manifests.get config storage );
+              --> Ep_inst.List_work_manifests.get config ro_storage );
             ( `GET,
               Rt.gitlab_installation_work_manifest_outputs ()
-              --> Ep_inst.List_work_manifest_outputs.get config storage );
+              --> Ep_inst.List_work_manifest_outputs.get config ro_storage );
             (`PUT, Rt.gitlab_installation_tokens () --> Ep_inst.Token.put config storage);
             (* Work manifests *)
             (`POST, Rt.gitlab_work_manifest_plan () --> Work_manifest.Plans.post config storage);
-            (`GET, Rt.gitlab_get_work_manifest_plan () --> Work_manifest.Plans.get config storage);
+            (`GET, Rt.gitlab_get_work_manifest_plan () --> Work_manifest.Plans.get config ro_storage);
             ( `PUT,
               Rt.gitlab_work_manifest_results () --> Work_manifest.Results.put config storage exec
             );
@@ -210,8 +215,8 @@ struct
               Rt.gitlab_work_manifest_initiate ()
               --> Work_manifest.Initiate.post config storage exec );
             ( `GET,
-              Rt.gitlab_work_manifest_workspaces () --> Work_manifest.Workspaces.get config storage
-            );
+              Rt.gitlab_work_manifest_workspaces ()
+              --> Work_manifest.Workspaces.get config ro_storage );
             (`POST, Rt.gitlab_events () --> Ep_events.post config storage exec);
             (`GET, Rt.gitlab_installations () --> Ep_inst.List.get config storage);
             (`GET, Rt.gitlab_installations_webhook () --> Ep_inst.Webhook.get config storage);
@@ -220,7 +225,8 @@ struct
             ( `GET,
               Rt.gitlab_callback () --> Terrat_vcs_service_gitlab_ep_callback.get config storage );
             ( `GET,
-              Rt.gitlab_whoami () --> Terrat_vcs_service_gitlab_ep_user.Whoami.get config storage );
+              Rt.gitlab_whoami () --> Terrat_vcs_service_gitlab_ep_user.Whoami.get config ro_storage
+            );
           ]
   end
 
@@ -273,7 +279,7 @@ struct
 
     let name _ = "gitlab"
 
-    let start config vcs_config storage exec =
+    let start config vcs_config storage ~ro_storage exec =
       let open Abb.Future.Infix_monad in
       let config = Provider.Api.Config.make ~config ~vcs_config () in
       Abb.Future.Infix_app.(
@@ -285,7 +291,17 @@ struct
         <*> Abb.Future.fork (repo_config_cleanup config storage))
       >>= fun (drift, flow_state_cleanup, plan_cleanup, repo_config_cleanup) ->
       Abb.Future.return
-        (Ok { config; drift; flow_state_cleanup; plan_cleanup; repo_config_cleanup; storage; exec })
+        (Ok
+           {
+             config;
+             drift;
+             flow_state_cleanup;
+             plan_cleanup;
+             repo_config_cleanup;
+             storage;
+             ro_storage;
+             exec;
+           })
 
     let stop _t = raise (Failure "nyi")
     let routes t = Routes.routes t

@@ -202,10 +202,10 @@ module Make (_ : Terrat_vcs_provider2.S) (S : S) = struct
         api () /* Body.decode ~json:Terrat_api_components.Access_token_create.of_yojson ())
   end
 
-  let routes config storage =
+  let routes config storage ~ro_storage =
     Brtl_rtng.Route.
       [
-        (`GET, Rt.list_page () --> List.run config storage);
+        (`GET, Rt.list_page () --> List.run config ro_storage);
         (`POST, Rt.create () --> Create.run config storage);
         (`DELETE, Rt.delete () --> Delete.run config storage);
       ]
