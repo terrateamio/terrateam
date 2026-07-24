@@ -614,6 +614,12 @@ module Make (Abb : Abb_intf.S with type Native.t = Unix.file_descr) = struct
             Curl.set_customrequest handle "DELETE";
             maybe_set_body_writer handle body
         | `PATCH body ->
+            (* curl only consumes the body read-callback in POST/upload mode; a
+               custom request verb on its own sends the Content-Length from
+               set_postfieldsize with no bytes behind it, which servers reject
+               as an empty body.  Enable POST send-mode when there is a body and
+               let CUSTOMREQUEST override the verb back to PATCH. *)
+            if body <> None then Curl.set_post handle true;
             Curl.set_customrequest handle "PATCH";
             maybe_set_body_writer handle body
         | `Custom (meth_, body) ->

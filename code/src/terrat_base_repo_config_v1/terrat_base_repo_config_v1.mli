@@ -675,13 +675,24 @@ module Notifications : sig
 
     type t = {
       tag_query : Tag_query.t;
-      comment_strategy : Strategy.t; [@default Strategy.Append]
+      comment_strategy : Strategy.t; [@default Strategy.Minimize]
     }
     [@@deriving make, show, yojson, eq]
   end
 
   module Summary : sig
-    type t = { enabled : bool [@default false] } [@@deriving make, show, yojson, eq]
+    module Mode : sig
+      type t =
+        | Header
+        | Pull_request
+      [@@deriving show, yojson, eq]
+    end
+
+    type t = {
+      enabled : bool; [@default false]
+      mode : Mode.t; [@default Mode.Header]
+    }
+    [@@deriving make, show, yojson, eq]
   end
 
   type t = {

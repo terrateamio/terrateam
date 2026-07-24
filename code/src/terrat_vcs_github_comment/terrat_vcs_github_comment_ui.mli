@@ -1,4 +1,6 @@
 module Ui : sig
+  val base_url : Terrat_vcs_api_github.Config.t -> Terrat_vcs_api_github.Account.t -> string
+
   val work_manifest_url :
     Terrat_vcs_api_github.Config.t ->
     Terrat_vcs_api_github.Account.t ->

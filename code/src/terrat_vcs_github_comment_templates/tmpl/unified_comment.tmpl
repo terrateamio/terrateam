@@ -1,0 +1,43 @@
+# Terrateam Summary
+
+**{{ num_dirspaces }} dirspace{{ 's' if num_dirspaces != 1 else '' }}** · {{ num_failed }} failed · {{ num_planned }} planned · {{ num_pending }} pending · {{ num_applied }} applied
+
+| Directory | Workspace | Status | Created | Updated | Replaced | Deleted |
+| --- | --- | :---: | :---: | :---: | :---: | :---: |
+{%- for d in dirspaces %}
+| {% if d.run_url %}[`{{ d.dir }}`]({{ d.run_url }}){% else %}`{{ d.dir }}`{% endif %} | `{{ d.workspace }}` | {{ d.status }} | {{ d.created }} | {{ d.updated }} | {{ d.replaced }} | {{ d.deleted }} |
+{%- endfor %}
+| **Total** | | | **{{ totals.created }}** | **{{ totals.updated }}** | **{{ totals.replaced }}** | **{{ totals.deleted }}** |
+{%- if truncated > 0 %}
+
+… {{ truncated }} more dirspace{{ 's' if truncated != 1 else '' }} not shown{% if console_url %} — see the [Terrateam Console]({{ console_url }}){% endif %}.
+{%- endif %}
+{%- if details %}
+
+## Output details
+{%- for d in details %}
+
+<details>
+  <summary>{{ d.dir }} | {{ d.workspace }}</summary>
+
+```diff
+{{ d.output }}
+```
+
+</details>
+{%- endfor %}
+{%- endif %}
+{%- if show_apply_hint %}
+
+---
+
+To apply all these changes, comment:
+
+```
+terrateam apply
+```
+{%- endif %}
+{%- if machine %}
+
+<!-- terrateam:unified:v1 {{ machine }} -->
+{%- endif %}
