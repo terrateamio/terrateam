@@ -1,0 +1,5 @@
+{
+  "definitions": {
+    "Zip": { "type": "string" }
+  }
+}

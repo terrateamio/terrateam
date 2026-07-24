@@ -1,0 +1,5 @@
+{
+  "definitions": {
+    "X": { "type": "string" }
+  }
+}

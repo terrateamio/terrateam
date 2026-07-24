@@ -1,0 +1,13 @@
+{
+  "definitions": {
+    "Person": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "address": { "$ref": "common.json#/definitions/Address" },
+        "home": { "$ref": "#/definitions/Place" }
+      }
+    },
+    "Place": { "type": "string" }
+  }
+}

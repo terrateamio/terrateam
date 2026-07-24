@@ -1,0 +1,6 @@
+(test
+ (name test)
+ (libraries oth yojson json_schema_flatten)
+ (deps
+  (glob_files *.json)
+  (glob_files sub/*.json)))

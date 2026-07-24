@@ -5,16 +5,12 @@
   compiler-libs.common
   containers
   json_schema_conv
+  json_schema_flatten
   ocaml-compiler-libs.common
   ocaml-compiler-libs.shadow
-  ppx_deriving
-  sln
   tsort
-  yojson)
- (ocamlopt_flags
-  (:standard -w -32))
- (ocamlc_flags
-  (:standard -w -32))
+  yojson
+  ppx_deriving)
  (preprocess
   (pps
    ppx_deriving.eq

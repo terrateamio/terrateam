@@ -1,0 +1,10 @@
+{
+  "definitions": {
+    "Root": {
+      "type": "object",
+      "properties": {
+        "x": { "$ref": "lib.json#/definitions/X" }
+      }
+    }
+  }
+}
