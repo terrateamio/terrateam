@@ -32,6 +32,7 @@ module Config : sig
       expiration : [ `Session | `Max_age of Int64.t ];  (** How long the cookie should last. *)
       domain : string option;  (** The optional domain the cookie applies to. *)
       path : string option;  (** The optional path the cookie applies to. *)
+      secure : bool;  (** Whether to set the Secure flag on the cookie. *)
       load : 'a load;  (** The load function. This is called in the [pre_handler]. *)
       store : 'a store;
           (** The store function. This is called in the [post_handler] if the key in the context has

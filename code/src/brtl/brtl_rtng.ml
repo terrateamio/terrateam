@@ -222,7 +222,7 @@ module Route = struct
     let string () = raise (Failure "Body_noop - string - not implemented")
     let int () = raise (Failure "Body_noop - int - not implemented")
     let bool () = raise (Failure "Body_noop - bool - not implemented")
-    let decode _ _ = raise (Failure "Body_noop - decode - not implemented")
+    let decode _ _ = None
   end
 
   type ('f, 'r) t =

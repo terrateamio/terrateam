@@ -69,7 +69,7 @@ and vars_of_tokens acc =
 let of_string s =
   match Uritmpl_lexer.tokenize s with
   | Ok tokens -> Ok (exprs_of_tokens tokens)
-  | Error err -> Error `Error
+  | Error _err -> Error `Error
 
 let varspec_to_string buf vars =
   let strs =
@@ -107,7 +107,7 @@ let expand_value spec v value =
       match (spec, v) with
       | { kv = true; encode; _ }, { name; prefix = Some prefix; _ } ->
           Printf.sprintf "%s=%s" name (encode (String.sub s 0 (min prefix (String.length s))))
-      | { kv = false; encode; _ }, { name; prefix = Some prefix; _ } ->
+      | { kv = false; encode; _ }, { name = _; prefix = Some prefix; _ } ->
           encode (String.sub s 0 (min prefix (String.length s)))
       | { kv = true; encode; lead_char; _ }, { name; _ } -> (
           match lead_char with
@@ -118,11 +118,11 @@ let expand_value spec v value =
       match (spec, v) with
       | { kv = true; encode; _ }, { name; explode = false; _ } ->
           Printf.sprintf "%s=%s" name (String.concat "," (List.map encode l))
-      | { kv = true; encode; sep; lead_char; _ }, { name; explode = true; _ } ->
+      | { kv = true; encode; sep; lead_char = _; _ }, { name; explode = true; _ } ->
           String.concat sep (List.map (fun v -> Printf.sprintf "%s=%s" name (encode v)) l)
-      | { kv = false; encode; _ }, { name; explode = false; _ } ->
+      | { kv = false; encode; _ }, { name = _; explode = false; _ } ->
           String.concat "," (List.map encode l)
-      | { kv = false; encode; sep; _ }, { name; explode = true; _ } ->
+      | { kv = false; encode; sep; _ }, { name = _; explode = true; _ } ->
           String.concat sep (List.map encode l))
   | Var.M m -> (
       match (spec, v) with
@@ -131,11 +131,11 @@ let expand_value spec v value =
             "%s=%s"
             name
             (String.concat "," (List.map (fun (k, v) -> encode k ^ "," ^ encode v) m))
-      | { kv = true; encode; sep; _ }, { name; explode = true; _ } ->
+      | { kv = true; encode; sep; _ }, { name = _; explode = true; _ } ->
           String.concat sep (List.map (fun (k, v) -> encode k ^ "=" ^ encode v) m)
-      | { kv = false; encode; _ }, { name; explode = false; _ } ->
+      | { kv = false; encode; _ }, { name = _; explode = false; _ } ->
           String.concat "," (List.map (fun (k, v) -> encode k ^ "," ^ encode v) m)
-      | { kv = false; encode; sep; _ }, { name; explode = true; _ } ->
+      | { kv = false; encode; sep; _ }, { name = _; explode = true; _ } ->
           String.concat sep (List.map (fun (k, v) -> encode k ^ "=" ^ encode v) m))
 
 let expand_var spec vars v =

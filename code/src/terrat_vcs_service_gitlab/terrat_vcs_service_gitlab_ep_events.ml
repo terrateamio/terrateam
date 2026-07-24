@@ -90,7 +90,6 @@ module Make (P : Terrat_vcs_provider2_gitlab.S) = struct
     let module Pe = Gitlab_webhooks_push_event in
     let module Mre = Gitlab_webhooks_merge_request_event in
     let module Mrce = Gitlab_webhooks_merge_request_comment_event in
-    let module Pipee = Gitlab_webhooks_pipeline_event in
     let module Je = Gitlab_webhooks_job_event in
     let module User = Gitlab_webhooks_user in
     let module Mreoa = Mre.Object_attributes in

@@ -15,7 +15,6 @@ module Eh = struct
     | Query_comment_id of el * (comment_id option, [ `Error ]) result
     | Query_els_for_comment_id of comment_id * (el list, [ `Error ]) result
     | Upsert_comment_id of el list * comment_id * (unit, [ `Error ]) result
-    | Delete_comment of comment_id * (unit, [ `Error ]) result
     | Minimize_comment of comment_id * (unit, [ `Error ]) result
     | Post_comment of el list * (comment_id, [ `Error ]) result
   [@@deriving show]
@@ -24,10 +23,7 @@ module Eh = struct
 end
 
 module API_id = struct
-  type t = int Atomic.t
-
   let create start = Atomic.make start
-  let get counter = Atomic.get counter
   let next counter = Atomic.fetch_and_add counter 1 + 1
 end
 
@@ -62,9 +58,9 @@ module H = struct
         Printf.printf "\n\tQUERY ELS FOR COMMENT_ID LOG: %s%!\n" (Eh.show_commands es);
         assert false
 
-  let upsert_comment_id t els cid =
+  let upsert_comment_id t _els cid =
     match !t with
-    | Eh.Upsert_comment_id (els2, cid2, cmd_result) :: rest when cid = cid2 ->
+    | Eh.Upsert_comment_id (_els2, cid2, cmd_result) :: rest when cid = cid2 ->
         t := rest;
         let abb_result = Abb.Future.return cmd_result in
         (abb_result : ('a, [ `Error ]) result Abb.Future.t :> ('a, [> `Error ]) result Abb.Future.t)
@@ -74,15 +70,10 @@ module H = struct
         assert false
 
   let delete_comment t cid =
-    match !t with
-    | Eh.Delete_comment (cid2, cmd_result) :: rest when cid = cid2 ->
-        t := rest;
-        let abb_result = Abb.Future.return cmd_result in
-        (abb_result : ('a, [ `Error ]) result Abb.Future.t :> ('a, [> `Error ]) result Abb.Future.t)
-    | es ->
-        Printf.printf "\n\tDELETE INPUT: %d%!\n" cid;
-        Printf.printf "\n\tDELETE LOG: %s%!\n" (Eh.show_commands es);
-        assert false
+    let es = !t in
+    Printf.printf "\n\tDELETE INPUT: %d%!\n" cid;
+    Printf.printf "\n\tDELETE LOG: %s%!\n" (Eh.show_commands es);
+    assert false
 
   let minimize_comment t cid =
     match !t with
@@ -153,8 +144,6 @@ end
 module Make_wrapper = struct
   let run t els =
     let open Abb.Future.Infix_monad in
-    let module C = Terrat_vcs_comment in
-    let module D = Terrat_dirspace in
     let module Cm = Terrat_vcs_comment.Make (H) in
     Cm.run t els
     >>= function
@@ -171,7 +160,6 @@ let test_basic =
   let _empty_els =
     Oth_abb.test ~desc:"Noop flow" ~name:"[Basic] Empty elements" (fun () ->
         let open Abb.Future.Infix_monad in
-        let module Cm = Terrat_vcs_comment.Make (H) in
         let els = [] in
         let t = ref [] in
         Make_wrapper.run t els
@@ -182,8 +170,6 @@ let test_basic =
   let simple_post =
     Oth_abb.test ~name:"[Basic] Single post comment flow" (fun () ->
         let open Abb.Future.Infix_monad in
-        let module Cm = Terrat_vcs_comment.Make (H) in
-        let module Shr = Shared in
         (* TODO: Remove this random data gen *)
         let els = Shared.gen_els 1 10 20 in
         let counter = API_id.create 0 in
@@ -191,7 +177,7 @@ let test_basic =
         let t = ref [ Eh.Post_comment (els, Ok cid1); Eh.Upsert_comment_id (els, cid1, Ok ()) ] in
         Make_wrapper.run t els
         >>= function
-        | Ok r -> Abb.Future.return ()
+        | Ok _ -> Abb.Future.return ()
         | Error _ -> assert false)
   in
   Oth_abb.parallel [ simple_post ]
@@ -203,7 +189,6 @@ let test_errors =
       ~name:"[Error] Check error handling"
       (fun () ->
         let open Abb.Future.Infix_monad in
-        let module Cm = Terrat_vcs_comment.Make (H) in
         (* TODO: Remove this random data gen *)
         let els = Shared.gen_els 1 10 20 in
         let t = ref [ Eh.Post_comment (els, Error `Error) ] in
@@ -225,8 +210,6 @@ let test_append_strategy =
       (fun () ->
         let open Abb.Future.Infix_monad in
         let module C = Terrat_vcs_comment in
-        let module D = Terrat_dirspace in
-        let module Cm = Terrat_vcs_comment.Make (H) in
         let len = H.max_comment_length - 1 in
         let st = C.Strategy.Append in
         let el1 = Shared.create_el "A" "A" false len st in
@@ -262,8 +245,6 @@ let test_append_strategy =
       (fun () ->
         let open Abb.Future.Infix_monad in
         let module C = Terrat_vcs_comment in
-        let module D = Terrat_dirspace in
-        let module Cm = Terrat_vcs_comment.Make (H) in
         let len = H.max_comment_length + 1 in
         let st = C.Strategy.Append in
         let el1 = Shared.create_el "A" "A" false len st in
@@ -276,7 +257,7 @@ let test_append_strategy =
         let t = ref [ Eh.Post_comment (elsc, Ok cid1); Eh.Upsert_comment_id (elsc, cid1, Ok ()) ] in
         Make_wrapper.run t els
         >>= function
-        | Ok r -> Abb.Future.return ()
+        | Ok _ -> Abb.Future.return ()
         | Error _ -> assert false)
   in
   let multiple_mixed =
@@ -288,8 +269,6 @@ let test_append_strategy =
       (fun () ->
         let open Abb.Future.Infix_monad in
         let module C = Terrat_vcs_comment in
-        let module D = Terrat_dirspace in
-        let module Cm = Terrat_vcs_comment.Make (H) in
         let half = H.max_comment_length / 2 in
         let st = C.Strategy.Append in
         let el1 = Shared.create_el "A" "A" false half st in
@@ -327,8 +306,6 @@ let test_delete_strategy =
       (fun () ->
         let open Abb.Future.Infix_monad in
         let module C = Terrat_vcs_comment in
-        let module D = Terrat_dirspace in
-        let module Cm = Terrat_vcs_comment.Make (H) in
         let len = H.max_comment_length - 1 in
         let st = C.Strategy.Delete in
         let el1 = Shared.create_el "A" "A" false len st in
@@ -367,8 +344,6 @@ let test_delete_strategy =
       (fun () ->
         let open Abb.Future.Infix_monad in
         let module C = Terrat_vcs_comment in
-        let module D = Terrat_dirspace in
-        let module Cm = Terrat_vcs_comment.Make (H) in
         let len = H.max_comment_length + 1 in
         let st = C.Strategy.Delete in
         let el1 = Shared.create_el "A" "A" false len st in
@@ -390,7 +365,7 @@ let test_delete_strategy =
         in
         Make_wrapper.run t els
         >>= function
-        | Ok r -> Abb.Future.return ()
+        | Ok _ -> Abb.Future.return ()
         | Error _ -> assert false)
   in
   let multiple_mixed =
@@ -402,8 +377,6 @@ let test_delete_strategy =
       (fun () ->
         let open Abb.Future.Infix_monad in
         let module C = Terrat_vcs_comment in
-        let module D = Terrat_dirspace in
-        let module Cm = Terrat_vcs_comment.Make (H) in
         let half = H.max_comment_length / 2 in
         let st = C.Strategy.Delete in
         let el1 = Shared.create_el "A" "A" false half st in
@@ -445,8 +418,6 @@ let test_minimize_strategy =
       (fun () ->
         let open Abb.Future.Infix_monad in
         let module C = Terrat_vcs_comment in
-        let module D = Terrat_dirspace in
-        let module Cm = Terrat_vcs_comment.Make (H) in
         let len = H.max_comment_length - 1 in
         let st = C.Strategy.Minimize in
         let el1 = Shared.create_el "A" "A" false len st in
@@ -486,8 +457,6 @@ let test_minimize_strategy =
       (fun () ->
         let open Abb.Future.Infix_monad in
         let module C = Terrat_vcs_comment in
-        let module D = Terrat_dirspace in
-        let module Cm = Terrat_vcs_comment.Make (H) in
         let st = C.Strategy.Minimize in
         let el1 = Shared.create_el "A" "A" false 30 st in
         let el2 = Shared.create_el "B" "B" false 30 st in
@@ -525,8 +494,6 @@ let test_minimize_strategy =
       (fun () ->
         let open Abb.Future.Infix_monad in
         let module C = Terrat_vcs_comment in
-        let module D = Terrat_dirspace in
-        let module Cm = Terrat_vcs_comment.Make (H) in
         let len = H.max_comment_length - 1 in
         let st = C.Strategy.Minimize in
         let el1 = Shared.create_el "A" "A" false len st in
@@ -579,8 +546,6 @@ let test_minimize_strategy =
       (fun () ->
         let open Abb.Future.Infix_monad in
         let module C = Terrat_vcs_comment in
-        let module D = Terrat_dirspace in
-        let module Cm = Terrat_vcs_comment.Make (H) in
         let len = H.max_comment_length + 1 in
         let st = C.Strategy.Minimize in
         let el1 = Shared.create_el "A" "A" false len st in
@@ -602,7 +567,7 @@ let test_minimize_strategy =
         in
         Make_wrapper.run t els
         >>= function
-        | Ok r -> Abb.Future.return ()
+        | Ok _ -> Abb.Future.return ()
         | Error _ -> assert false)
   in
   let multiple_big_with_old_comment =
@@ -614,8 +579,6 @@ let test_minimize_strategy =
       (fun () ->
         let open Abb.Future.Infix_monad in
         let module C = Terrat_vcs_comment in
-        let module D = Terrat_dirspace in
-        let module Cm = Terrat_vcs_comment.Make (H) in
         let len = H.max_comment_length + 1 in
         let st = C.Strategy.Minimize in
         let el1 = Shared.create_el "A" "A" false len st in
@@ -672,8 +635,6 @@ let test_minimize_strategy =
       (fun () ->
         let open Abb.Future.Infix_monad in
         let module C = Terrat_vcs_comment in
-        let module D = Terrat_dirspace in
-        let module Cm = Terrat_vcs_comment.Make (H) in
         let half = H.max_comment_length / 2 in
         let st = C.Strategy.Delete in
         let el1 = Shared.create_el "A" "A" false half st in

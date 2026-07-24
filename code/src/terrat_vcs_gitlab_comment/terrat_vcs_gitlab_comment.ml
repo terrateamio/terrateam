@@ -1,10 +1,6 @@
 module Api = Terrat_vcs_api_gitlab
-module By_scope = Terrat_scope.By_scope
 module Publisher_tools = Terrat_vcs_gitlab_comment_publishers.Publisher_tools
 module Scope = Terrat_scope.Scope
-module Tmpl = Terrat_vcs_gitlab_comment_templates.Tmpl
-module Ui = Terrat_vcs_gitlab_comment_ui.Ui
-module Visible_on = Terrat_base_repo_config_v1.Workflow_step.Visible_on
 
 let src = Logs.Src.create "vcs_gitlab_comment"
 

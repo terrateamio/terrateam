@@ -183,6 +183,6 @@ module Make (S : S) = struct
            Brtl_js2.Router_output.create
              state
              (Brtl_js2.Brr.El.div ~at:At.[ class' (Jstr.v S.class') ] [])
-             Brtl_js2_rtng.[ S.query comp ];
+             [ S.query comp ];
          ])
 end

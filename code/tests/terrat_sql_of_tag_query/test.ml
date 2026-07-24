@@ -107,25 +107,6 @@ let test_or =
       | Ok None -> assert false
       | Error _ -> assert false)
 
-let test_complex =
-  Oth.test ~name:"Complex" (fun _ ->
-      let tq = "pr:123 and (user:foo or user:bar)" in
-      match Terrat_tag_query_ast.of_string tq with
-      | Ok (Some ast) -> (
-          match
-            Tag_query_sql.of_ast
-              ~tag_map:[ ("pr", (T.Bigint, "pull_number")); ("user", (T.String, "username")) ]
-              ast
-          with
-          | Ok t ->
-              assert (
-                Tag_query_sql.sql t
-                = "(pull_number = ($bigints)[1]) and ((username = ($strings)[1]) or (username = \
-                   ($strings)[2]))")
-          | Error _ -> assert false)
-      | Ok None -> assert false
-      | Error _ -> assert false)
-
 let test =
   Oth.parallel
     [

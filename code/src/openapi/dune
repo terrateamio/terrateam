@@ -1,9 +1,5 @@
 (library
  (name openapi)
  (libraries json_schema ppx_deriving)
- (ocamlopt_flags
-  (:standard -w -69))
- (ocamlc_flags
-  (:standard -w -69))
  (preprocess
   (pps ppx_deriving.show)))

@@ -104,7 +104,7 @@ module React = struct
     ({ signal = elem_value; set = elem_set_value }, elem)
 
   let combobox ?(a = []) ?(value = "") ~options () =
-    let datalist_id = Uuidm.(to_string (v `V4)) in
+    let datalist_id = Uuidm.to_string (Uuidm.v4_gen (Random.State.make_self_init ()) ()) in
     let elem_value, elem_set_value = Brtl_js.React.S.create value in
     let onchange =
       Brtl_js.handler_sync (fun event ->

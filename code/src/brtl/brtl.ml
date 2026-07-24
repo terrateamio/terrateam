@@ -36,7 +36,6 @@ let write_response oc rspnc =
   Http.Response_io.write (fun writer -> Rspnc.body rspnc writer) (Rspnc.response rspnc) oc
 
 let run_handler hndlr ctx =
-  let open Abb.Future.Infix_monad in
   Abb.Future.await_bind
     (function
       | `Det v -> Abb.Future.return v
@@ -56,10 +55,8 @@ let compute_remote_addr conn =
   | Abb_intf.Socket.Sockaddr.Inet { Abb_intf.Socket.Sockaddr.addr; _ } ->
       Unix.string_of_inet_addr addr
 
-let handler mw rtng conn req ic oc =
+let handler' mw rtng ctx req ic oc =
   let open Abb.Future.Infix_monad in
-  let remote_addr = compute_remote_addr conn in
-  let ctx = Ctx.create remote_addr req in
   Mw.exec_pre_handler ctx mw
   >>= function
   | Mw.Pre_handler.Cont ctx ->
@@ -74,6 +71,13 @@ let handler mw rtng conn req ic oc =
   | Mw.Pre_handler.Stop ctx ->
       Mw.exec_early_exit_handler ctx mw
       >>= fun ctx -> write_response oc (Ctx.response ctx) >>= fun () -> Abb.Future.return `Ok
+
+let handler mw rtng conn req ic oc =
+  let open Abb.Future.Infix_monad in
+  let remote_addr = compute_remote_addr conn in
+  let ctx = Ctx.create remote_addr req in
+  Abb.Task.run ~name:("brtl-req-" ^ Ctx.token ctx) (fun () -> handler' mw rtng ctx req ic oc)
+  >>= fun task -> task
 
 let on_handler_err req = function
   | `Exn (exn, bt_opt) ->
@@ -109,4 +113,6 @@ let run cfg mw rtng =
           handler_timeout = Cfg.handler_timeout cfg;
         })
   in
-  Http.Server.run (CCResult.get_exn config)
+  let open Abb.Future.Infix_monad in
+  Abb.Task.run ~name:"brtl-server" (fun () -> Http.Server.run (CCResult.get_exn config))
+  >>= fun task -> task

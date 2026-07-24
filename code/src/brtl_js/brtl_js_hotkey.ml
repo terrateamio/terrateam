@@ -41,7 +41,7 @@ let is_ignored_target event =
     (fun () -> false)
     (fun target -> CCList.mem ~eq:CCString.equal (Js.to_string target##.tagName) ignore_elements)
 
-let onkeydown peak_keys current_keys (event : Dom_html.keyboardEvent Js.t) =
+let onkeydown peak_keys _ (event : Dom_html.keyboardEvent Js.t) =
   if not (is_ignored_target event) then
     match (map_key event, map_modifiers event) with
     | Some key, modifiers ->

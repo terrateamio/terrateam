@@ -79,9 +79,7 @@ let update_page_param page_param cursor dir uri =
     cursor
 
 let encode_link rel uri = Printf.sprintf "<%s>; rel=\"%s\"" (Uri.to_string uri) rel
-
-let merge_uri_base uri_base uri =
-  Uri.with_query (Uri.with_path uri_base (Uri.path uri_base ^ Uri.path uri)) (Uri.query uri)
+let merge_uri_base uri_base uri = Brtl_uri.merge_base ~base:uri_base uri
 
 module Make (M : S) = struct
   type t = {

@@ -24,6 +24,7 @@ module Config = struct
       expiration : [ `Session | `Max_age of Int64.t ];
       domain : string option;
       path : string option;
+      secure : bool;
       load : 'a load;
       store : 'a store;
     }
@@ -58,7 +59,7 @@ let get_auth ctx =
 
 let load_bearer = get_auth
 
-let store_cookie config cookie value v ctx =
+let store_cookie _config cookie value v ctx =
   let open Abb.Future.Infix_monad in
   let cookie_id =
     if value.Value.is_create || value.Value.is_dirty then None
@@ -70,7 +71,7 @@ let store_cookie config cookie value v ctx =
     Cohttp.Cookie.Set_cookie_hdr.make
       ?domain:cookie.Config.Cookie.domain
       ?path:cookie.Config.Cookie.path
-      ~secure:true
+      ~secure:cookie.Config.Cookie.secure
       ~http_only:true
       ~expiration:cookie.Config.Cookie.expiration
       (cookie.Config.Cookie.name, cookie_id)

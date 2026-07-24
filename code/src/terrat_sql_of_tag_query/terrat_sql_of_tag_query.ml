@@ -84,7 +84,7 @@ let eq_bool t n =
   Buffer.add_string t.q n;
   Ok ()
 
-let lte_datetime t n v =
+let lte_datetime t _n v =
   CCVector.push t.strings v;
   Buffer.add_string
     t.q

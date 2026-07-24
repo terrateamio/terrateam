@@ -1,7 +1,3 @@
-let src = Logs.Src.create "vcs_service_github_oss"
-
-module Logs = (val Logs.src_log src : Logs.LOG)
-
 module Provider :
   Terrat_vcs_provider2_github.S
     with type Api.Config.t = Terrat_vcs_service_github_provider.Api.Config.t = struct

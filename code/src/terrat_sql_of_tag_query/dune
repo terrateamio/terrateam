@@ -1,9 +1,3 @@
 (library
  (name terrat_sql_of_tag_query)
- (libraries containers terrat_tag_query_parser_value yojson)
- (preprocess
-  (pps ppx_deriving.show))
- (ocamlopt_flags
-  (:standard -w -27))
- (ocamlc_flags
-  (:standard -w -27)))
+ (libraries containers terrat_tag_query_parser_value yojson))

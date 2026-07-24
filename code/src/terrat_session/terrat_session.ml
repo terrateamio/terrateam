@@ -173,6 +173,7 @@ let create storage =
                 expiration = `Session;
                 domain = None;
                 path = Some "/";
+                secure = true;
                 load = Cookie.load storage;
                 store = Cookie.store storage;
               };

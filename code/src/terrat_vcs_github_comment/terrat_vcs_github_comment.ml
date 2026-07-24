@@ -1,10 +1,7 @@
 module Api = Terrat_vcs_api_github
-module By_scope = Terrat_scope.By_scope
 module Publisher_tools = Terrat_vcs_github_comment_publishers.Publisher_tools
 module Scope = Terrat_scope.Scope
-module Tmpl = Terrat_vcs_github_comment_templates.Tmpl
 module Ui = Terrat_vcs_github_comment_ui.Ui
-module Visible_on = Terrat_base_repo_config_v1.Workflow_step.Visible_on
 
 let src = Logs.Src.create "vcs_github_comment"
 
@@ -113,7 +110,6 @@ module S = struct
   let create_el t ~work_manifest_id dirspace steps =
     let module St = Terrat_vcs_comment.Strategy in
     let module Cm3 = Terrat_change_match3 in
-    let module Brc1 = Terrat_base_repo_config_v1 in
     let module N = Terrat_base_repo_config_v1.Notifications in
     let from_base_repo_policy_strategy st =
       match st with

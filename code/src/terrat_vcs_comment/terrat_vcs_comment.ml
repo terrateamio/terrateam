@@ -118,7 +118,6 @@ module Make (M : S) = struct
 
   let run t els =
     let open Abbs_future_combinators.Infix_result_monad in
-    let module Alr = Abbs_future_combinators.List_result in
     let groups = partition_by_strategy els in
     match groups with
     | [] -> M.post_comment t [] >>= fun _ -> Abb.Future.return (Ok ())

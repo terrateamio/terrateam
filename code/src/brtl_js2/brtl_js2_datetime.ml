@@ -35,7 +35,7 @@ let set_minutes t minutes = ignore (t##setMinutes minutes)
 let timezone () =
   let intl = Jv.get Jv.global "Intl" in
   let date_time_format = Jv.get intl "DateTimeFormat" in
-  match Jv.new' date_time_format Jv.[||] with
+  match Jv.new' date_time_format [||] with
   | exception Jv.Error e -> failwith (Jstr.to_string (Jv.Error.message e))
   | v ->
       let used_options = Jv.call v "resolvedOptions" [||] in
