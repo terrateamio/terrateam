@@ -1,17 +1,130 @@
 (dirs src tests)
 
+; OCaml warning policy: each `-w +X -warn-error +X` line enables one warning
+; category and makes it a fatal compile error. Lowercase letters are OCaml
+; warning aliases; numbers refer to warnings without a letter alias.
+
 (env
- (dev
-  (flags
-   (:standard -strict-sequence -strict-formats -w "+d+f+p+u+s+40+K+L+R")))
  (release
+  (env-vars
+   (ABB_FUT_DEBUG 0))
   (flags
    (:standard
     -strict-sequence
     -strict-formats
     -noassert
     -w
-    "+d+f+p+u+s+40+K+L+R"))))
+    +d
+    -warn-error
+    +d ; 3      deprecated
+    -w
+    +f
+    -warn-error
+    +f ; 5      ignored-partial-application
+    -w
+    +k
+    -warn-error
+    +k ; 32..39 unused-* (value/open/type/ctor/...)
+    -w
+    +l
+    -warn-error
+    +l ; 6      labels-omitted
+    -w
+    +p
+    -warn-error
+    +p ; 8      partial-match
+    -w
+    +r
+    -warn-error
+    +r ; 9      no-field-clash
+    -w
+    +s
+    -warn-error
+    +s ; 10     non-unit-statement
+    -w
+    +u
+    -warn-error
+    +u ; 11,12  redundant-case, redundant-subpat
+    -w
+    +y
+    -warn-error
+    +y ; 26,27  unused-var
+    -w
+    +40
+    -warn-error
+    +40 ;        name-out-of-scope
+    -w
+    +60
+    -warn-error
+    +60 ;        unused-module
+    -w
+    +67
+    -warn-error
+    +67 ;        unused-functor-parameter
+    -w
+    +69
+    -warn-error
+    +69 ;        unused-field
+    )))
+ (dev
+  (flags
+   (:standard
+    -strict-sequence
+    -strict-formats
+    -g
+    -w
+    +d
+    -warn-error
+    +d ; 3      deprecated
+    -w
+    +f
+    -warn-error
+    +f ; 5      ignored-partial-application
+    -w
+    +k
+    -warn-error
+    +k ; 32..39 unused-* (value/open/type/ctor/...)
+    -w
+    +l
+    -warn-error
+    +l ; 6      labels-omitted
+    -w
+    +p
+    -warn-error
+    +p ; 8      partial-match
+    -w
+    +r
+    -warn-error
+    +r ; 9      no-field-clash
+    -w
+    +s
+    -warn-error
+    +s ; 10     non-unit-statement
+    -w
+    +u
+    -warn-error
+    +u ; 11,12  redundant-case, redundant-subpat
+    -w
+    +y
+    -warn-error
+    +y ; 26,27  unused-var
+    -w
+    +40
+    -warn-error
+    +40 ;        name-out-of-scope
+    -w
+    +60
+    -warn-error
+    +60 ;        unused-module
+    -w
+    +67
+    -warn-error
+    +67 ;        unused-functor-parameter
+    -w
+    +69
+    -warn-error
+    +69 ;        unused-field
+    ))))
 
 ; Aggregate alias: `dune build @code/terrat` produces the full terrateam backend
 
@@ -25,12 +138,11 @@
   (alias src/iris/all)))
 
 ; Codegen registry. Every dune-generated library declares its (input schema,
-; destination dir) pair as a `<lib>.generate-api-types-pairs` rule next to its
-; `(library)` (see e.g. src/terrat_api/dune). This rule collects them all into a
-; single manifest, so `make -C code generate-api-types` / `check-api-types`
-; drive regeneration off the per-package declarations rather than a
-; hand-maintained list. `(dirs src tests)` above bounds the recursive glob to
-; our sources.
+; destination dir) pair as a `<lib>.generate-api-types-pairs` rule next to its `(library)`
+; (see e.g. src/sgs_api/dune). This rule collects them all into a single
+; manifest, so `make -C code regenerate-codegen` / `check-generated` drive
+; regeneration off the per-package declarations rather than a hand-maintained
+; list. `(dirs src tests)` above bounds the recursive glob to our sources.
 
 (rule
  (target codegen-manifest)
