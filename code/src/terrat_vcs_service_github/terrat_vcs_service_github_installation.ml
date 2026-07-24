@@ -132,11 +132,12 @@ let refresh_repos_task request_id config storage installation_id task =
       Logs.err (fun m -> m "INSTALLATION : %s : REFRESH_REPOS : %a" request_id Pgsql_io.pp_err err);
       Abb.Future.return ()
 
-let refresh_repos' ~request_id ~config ~storage installation_id =
+let refresh_repos' ~request_id ~config ~storage ?user_id installation_id =
   Logs.debug (fun m -> m "INSTALLATION : %s : REPO_REFRESH : %d" request_id installation_id);
   let task =
     Terrat_task.make
       ~name:(Printf.sprintf "INSTALLATION : %s : REPO_REFRESH : %d" request_id installation_id)
+      ?user_id
       ()
   in
   let open Abbs_future_combinators.Infix_result_monad in

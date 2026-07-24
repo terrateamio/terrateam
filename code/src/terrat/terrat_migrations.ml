@@ -279,6 +279,7 @@ let migrations =
       run_sql [%blob "migrations/2026-03-19-delete-repo-tree-cache.sql"] );
     ( "extend-repo-configs-with-history",
       run_sql [%blob "migrations/2026-07-05-extend-repo-configs-with-history.sql"] );
+    ("add-tasks-user-id", run_sql [%blob "migrations/2026-07-23-add-tasks-user-id.sql"]);
   ]
 
 let run config storage = Mig.run { Migrate.config; storage; tx = () } migrations
