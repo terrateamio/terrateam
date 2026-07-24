@@ -152,3 +152,8 @@
   (with-stdout-to
    codegen-manifest
    (run cat %{deps}))))
+
+; Everything above this line is the *terrateam* part of the build. stategraph's
+; dune file is a strict extension of this file, and it is plugged in via the include below.
+
+(include dune.stategraph.inc)
