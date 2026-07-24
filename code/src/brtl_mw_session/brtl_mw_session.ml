@@ -77,6 +77,11 @@ let store_cookie _config cookie value v ctx =
       (cookie.Config.Cookie.name, cookie_id)
   in
   let cookie_header, cookie_value = Cohttp.Cookie.Set_cookie_hdr.serialize cookie in
+  (* Cohttp's Set_cookie_hdr has no SameSite field, so the attribute is appended
+     after serialisation.  Lax rather than Strict: the OAuth callback returns via
+     a cross-site top-level navigation, which Strict would strip the cookie from,
+     breaking sign-in. *)
+  let cookie_value = cookie_value ^ "; SameSite=Lax" in
   ctx
   |> Brtl_ctx.response
   |> Brtl_rspnc.add_header cookie_header cookie_value
