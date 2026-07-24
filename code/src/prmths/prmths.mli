@@ -208,7 +208,7 @@ module type HISTOGRAM = sig
   val time : t -> (unit -> 'a Abb.Future.t) -> 'a Abb.Future.t
 end
 
-module Histogram (Buckets : sig
+module Histogram (_ : sig
   val spec : Histogram_spec.t
 end) : HISTOGRAM
 

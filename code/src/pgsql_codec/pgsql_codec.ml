@@ -497,13 +497,13 @@ module Decode = struct
         run_backend_msg t 0 b (Bytes.length b))
       else Ok [])
 
-  let frontend_msg t ~pos ~len buf = failwith "nyi"
+  let frontend_msg _t ~pos:_ ~len:_ _buf = failwith "nyi"
   let needed_bytes t = if t.needed_bytes < 0 then None else Some t.needed_bytes
   let buffer_length t = Buffer.length t.buf
 end
 
 module Encode = struct
-  let backend_msg buf frame = failwith "nyi"
+  let backend_msg _buf _frame = failwith "nyi"
 
   let frontend_msg' =
     let open Writer in

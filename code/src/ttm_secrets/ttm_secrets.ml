@@ -1,7 +1,3 @@
-let src = Logs.Src.create "secrets"
-
-module Logs = (val Logs.src_log src : Logs.LOG)
-
 module Cli = struct
   module C = Cmdliner
 

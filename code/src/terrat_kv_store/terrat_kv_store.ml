@@ -1,7 +1,3 @@
-let src = Logs.Src.create "kv_store"
-
-module Logs = (val Logs.src_log src : Logs.LOG)
-
 let json_of_caps = [%to_yojson: Terrat_user.Capability.t list]
 let caps_of_json = CCFun.([%of_yojson: Terrat_user.Capability.t list] %> CCResult.to_opt)
 

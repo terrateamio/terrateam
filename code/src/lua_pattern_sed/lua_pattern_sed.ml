@@ -1,5 +1,3 @@
-module List = ListLabels
-
 let print line = function
   | Some sline -> print_endline sline
   | None -> print_endline line

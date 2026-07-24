@@ -170,7 +170,7 @@ module Background_fetch_event = struct
     t##waitUntil (Abb_js.Future.unsafe_to_promise fut)
 
   let registration (t : t) = t##.registration
-  let update_ui (t : t) = raise (Failure "nyi")
+  let update_ui (_ : t) = raise (Failure "nyi")
 end
 
 module Registration = struct

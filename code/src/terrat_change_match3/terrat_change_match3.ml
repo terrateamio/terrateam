@@ -130,9 +130,6 @@ let rec collect_depends_on_dependents topology dirspaces matches =
     matches
 
 let rec collect_modified_by_dependents ~path modifies_lookup dirspaces matches =
-  let module Wm = R.When_modified in
-  let module S = R.Stacks.Stack in
-  let module Rules = R.Stacks.Rules in
   CCList.flat_map
     (fun ({ Dirspace_config.dirspace = _; stack_name; _ } as dirspace_config) ->
       if not (CCList.mem ~eq:CCString.equal stack_name path) then

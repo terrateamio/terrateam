@@ -1,8 +1,6 @@
 (library
  (name otls)
  (libraries ctypes ctypes.foreign otls_bindings)
- (flags
-  (:standard -w -32-37-60))
  (library_flags -linkall)
  (ctypes
   (external_library_name libtls)
