@@ -306,6 +306,7 @@ module Publisher_tools = struct
       ~summary
       ~pull_number
       ~dirspace_run_urls
+      ~dirspace_applied
       request_id
       account_status
       tier_runs
@@ -456,6 +457,13 @@ module Publisher_tools = struct
                           | Some url -> `String url
                           | None -> `Null
                         in
+                        let applied =
+                          CCList.assoc_opt
+                            ~eq:(fun a b -> Terrat_dirspace.compare a b = 0)
+                            dirspace
+                            dirspace_applied
+                          |> CCOption.get_or ~default:false
+                        in
                         `Assoc
                           (CCList.flatten
                              [
@@ -469,6 +477,7 @@ module Publisher_tools = struct
                                         (Output.filter ~overall_success (output_of_steps steps))) );
                                  ("has_changes", `Bool has_changes);
                                  ("run_url", run_url);
+                                 ("applied", `Bool applied);
                                ];
                              ]))
                       dirspaces) );

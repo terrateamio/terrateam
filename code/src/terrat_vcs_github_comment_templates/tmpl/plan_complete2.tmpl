@@ -10,7 +10,7 @@
 | Directory | Workspace | Result | Changes |
 | --- | --- | :---: | :---: |
     {%- for d in dirspaces %}
-| `{{ d.dir }}` | `{{ d.workspace }}` | {% if d.success %}:white_check_mark:{% else %}:x:{% endif %} | {% if not d.success %}—{% elif d.has_changes %}Changes{% else %}No changes{% endif %} |
+| `{{ d.dir }}` | `{{ d.workspace }}` | {% if d.applied is defined and d.applied %}Applied :white_check_mark:{% elif d.success %}:white_check_mark:{% else %}:x:{% endif %} | {% if d.applied is defined and d.applied %}—{% elif not d.success %}—{% elif d.has_changes %}Changes{% else %}No changes{% endif %} |
     {%- endfor %}
 
   {%- endif %}
@@ -129,7 +129,7 @@ A gate is satisfied only when all conditions are met. See [documentation](https:
 | Directory | Workspace | Result | Changes |
 | --- | --- | :---: | :---: |
     {%- for d in dirspaces %}
-| `{{ d.dir }}` | `{{ d.workspace }}` | {% if d.success %}:white_check_mark:{% else %}:x:{% endif %} | {% if not d.success %}—{% elif d.has_changes %}Changes{% else %}No changes{% endif %} |
+| `{{ d.dir }}` | `{{ d.workspace }}` | {% if d.applied is defined and d.applied %}Applied :white_check_mark:{% elif d.success %}:white_check_mark:{% else %}:x:{% endif %} | {% if d.applied is defined and d.applied %}—{% elif not d.success %}—{% elif d.has_changes %}Changes{% else %}No changes{% endif %} |
     {%- endfor %}
 
   {%- endif %}
@@ -216,8 +216,17 @@ No output shown due to comment size.
 {%- endif %}
 {%- for d in dirspaces %}
 
-## {% if d.run_url %}[{{ d.dir }} | {{ d.workspace }}]({{ d.run_url }}){% else %}{{ d.dir }} | {{ d.workspace }}{% endif %} | {% if d.success %}{% if d.has_changes is defined and d.has_changes %}Success {% if compact_view %}:eyes:{% else %}:thumbsup:{% endif %}{% elif d.has_changes is defined and not d.has_changes %}No changes{% endif %}{% else %}:heavy_multiplication_x:{% endif %}
-  {%- if compact_dirspaces %}
+## {% if d.run_url %}[{{ d.dir }} | {{ d.workspace }}]({{ d.run_url }}){% else %}{{ d.dir }} | {{ d.workspace }}{% endif %} | {% if d.applied is defined and d.applied %}Applied :white_check_mark:{% elif d.success %}{% if d.has_changes is defined and d.has_changes %}Success {% if compact_view %}:eyes:{% else %}:thumbsup:{% endif %}{% elif d.has_changes is defined and not d.has_changes %}No changes{% endif %}{% else %}:heavy_multiplication_x:{% endif %}
+  {%- if d.applied is defined and d.applied %}
+
+> **Already applied.**  This plan is kept for history and does not reflect pending changes.
+
+<details>
+  <summary>Plan output (already applied)</summary>
+
+---
+
+  {% elif compact_dirspaces %}
 <details>
   <summary>Expand for details</summary>
 
@@ -250,7 +259,7 @@ No output shown due to comment size.
 
     {%- endif %}
   {%- endfor %}
-  {%- if compact_dirspaces %}
+  {%- if compact_dirspaces or (d.applied is defined and d.applied) %}
 </details>
 
   {%- endif %}

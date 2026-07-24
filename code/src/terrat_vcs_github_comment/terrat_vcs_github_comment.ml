@@ -37,6 +37,9 @@ module Sql = struct
       (* work_manifest.run_type *)
       Ret.text
       //
+      (* applied *)
+      Ret.boolean
+      //
       (* steps.ignore_errors *)
       Ret.boolean
       //
@@ -93,6 +96,9 @@ module S = struct
   }
 
   type el = {
+    (* This output was produced before its dirspace was applied, so it describes
+       work that has already happened rather than work that is still pending. *)
+    applied : bool;
     compact : bool;
     dirspace : Terrat_dirspace.t;
     steps : Terrat_api_components_workflow_step_output.t list;
@@ -107,7 +113,10 @@ module S = struct
     type t = bool * bool * Terrat_dirspace.t [@@deriving ord]
   end
 
-  let create_el t ~work_manifest_id dirspace steps =
+  (* [applied] defaults to false because the common caller is the run that just
+     finished, whose output is by definition not yet applied.  Only elements read
+     back out of a previous comment can be stale. *)
+  let create_el t ?(applied = false) ~work_manifest_id dirspace steps =
     let module St = Terrat_vcs_comment.Strategy in
     let module Cm3 = Terrat_change_match3 in
     let module N = Terrat_base_repo_config_v1.Notifications in
@@ -133,7 +142,7 @@ module S = struct
         (* I think it makes no sense dealing with this here, `terrat_vcs_comment`
            already knows how to handle that, so hardcoding may be fine *)
         let compact = false in
-        Some { work_manifest_id; dirspace; steps; strategy; compact }
+        Some { applied; work_manifest_id; dirspace; steps; strategy; compact }
     | _ -> None
 
   let query_comment_id t el =
@@ -165,14 +174,14 @@ module S = struct
     let cid = Api.Comment.Id.to_string comment_id |> Int64.of_string in
     let current_work_manifest = t.work_manifest.Terrat_work_manifest3.id in
     let module By_scope = Terrat_data.Group_by (struct
-      type t = Uuidm.t * string * Step.t
-      type key = Uuidm.t * string * Terrat_dirspace.t [@@deriving ord]
+      type t = Uuidm.t * string * bool * Step.t
+      type key = Uuidm.t * string * bool * Terrat_dirspace.t [@@deriving ord]
 
-      let key (work_manifest_id, run_type, step) =
+      let key (work_manifest_id, run_type, applied, step) =
         match step.Step.scope with
         | Scope.Workflow_step_output_scope_dirspace { D.dir; workspace; _ } ->
             let dirspace = { Terrat_dirspace.dir; workspace } in
-            (work_manifest_id, run_type, dirspace)
+            (work_manifest_id, run_type, applied, dirspace)
         | _ -> assert false
 
       let compare = compare_key
@@ -180,8 +189,8 @@ module S = struct
     Pgsql_io.Prepared_stmt.fetch
       t.db
       Sql.select_comment_elements
-      ~f:(fun wmid _ _ run_type ignore_errors payload scope success step ->
-        (wmid, run_type, { Step.ignore_errors; payload; scope; step; success }))
+      ~f:(fun wmid _ _ run_type applied ignore_errors payload scope success step ->
+        (wmid, run_type, applied, { Step.ignore_errors; payload; scope; step; success }))
       cid
       current_work_manifest
     >>= function
@@ -189,13 +198,14 @@ module S = struct
         let groups = By_scope.group elements in
         let split =
           CCList.map
-            (fun ((wid, run_type, d), v) -> (wid, run_type, d, CCList.map (fun (_, _, s) -> s) v))
+            (fun ((wid, run_type, applied, d), v) ->
+              (wid, run_type, applied, d, CCList.map (fun (_, _, _, s) -> s) v))
             groups
         in
         let els =
           CCList.filter_map
-            (fun (work_manifest_id, _, dirspace, steps) ->
-              create_el t ~work_manifest_id dirspace steps)
+            (fun (work_manifest_id, _, applied, dirspace, steps) ->
+              create_el t ~applied ~work_manifest_id dirspace steps)
             split
         in
         Abb.Future.return (Ok els)
@@ -256,6 +266,12 @@ module S = struct
         | None -> None)
       els
 
+  (* Dirspaces whose output is being carried forward from before an apply.  Kept
+     in the comment for the audit trail, but marked so it does not read as
+     pending work. *)
+  let dirspace_applied els =
+    CCList.filter_map (fun el -> if el.applied then Some (el.dirspace, true) else None) els
+
   let post_comment t els =
     let open Abb.Future.Infix_monad in
     let module R2 = Terrat_api_components.Work_manifest_tf_operation_result2 in
@@ -264,6 +280,7 @@ module S = struct
     let summary = summary_enabled t in
     let pull_number = pull_number t in
     let dirspace_run_urls = dirspace_run_urls t els in
+    let dirspace_applied = dirspace_applied els in
     let by_dirspace = CCList.map (fun el -> (Scope.Dirspace el.dirspace, el.steps)) els in
     let by_scope = t.hooks @ by_dirspace in
     let compact = CCList.exists (fun { compact; _ } -> compact) els in
@@ -273,6 +290,7 @@ module S = struct
         ~summary
         ~pull_number
         ~dirspace_run_urls
+        ~dirspace_applied
         t.request_id
         t.account_status
         t.tier_runs
@@ -297,6 +315,7 @@ module S = struct
             ~summary
             ~pull_number
             ~dirspace_run_urls
+            ~dirspace_applied
             t.request_id
             t.account_status
             t.tier_runs
@@ -321,6 +340,7 @@ module S = struct
                 ~summary
                 ~pull_number
                 ~dirspace_run_urls
+                ~dirspace_applied
                 t.request_id
                 t.account_status
                 t.tier_runs
@@ -342,6 +362,7 @@ module S = struct
     let summary = summary_enabled t in
     let pull_number = pull_number t in
     let dirspace_run_urls = dirspace_run_urls t els in
+    let dirspace_applied = dirspace_applied els in
     let by_dirspace = CCList.map (fun el -> (Scope.Dirspace el.dirspace, el.steps)) els in
     let by_scope = t.hooks @ by_dirspace in
     let compact = CCList.exists (fun { compact; _ } -> compact) els in
@@ -351,6 +372,7 @@ module S = struct
         ~summary
         ~pull_number
         ~dirspace_run_urls
+        ~dirspace_applied
         t.request_id
         t.account_status
         t.tier_runs
