@@ -75,57 +75,12 @@ end
 
 module Api = Openapi.Make (Io)
 
-module Page = struct
-  let parse_link s =
-    let open CCOption.Infix in
-    CCString.Split.left ~by:"; " s
-    >>= fun (link, rel) ->
-    let uri = Uri.of_string (String.sub link 1 (String.length link - 2)) in
-    CCString.Split.left ~by:"=" rel
-    >>= function
-    | "rel", n ->
-        let name = String.sub n 1 (String.length n - 2) in
-        Some (name, uri)
-    | _ -> None
-
-  let rec parse_links s =
-    if String.length s > 0 then
-      let open CCOption.Infix in
-      match CCString.Split.left ~by:", " s with
-      | Some (left, right) ->
-          parse_link left >>= fun link -> parse_links right >>= fun rest -> Some (link :: rest)
-      | None -> parse_link s >>= fun link -> Some [ link ]
-    else Some []
-
-  let of_response resp elts =
-    let headers = Openapi.Response.headers resp in
-    match CCList.Assoc.get ~eq:CCString.equal "link" headers with
-    | Some link -> (
-        match parse_links link with
-        | Some links ->
-            let next =
-              CCOption.flat_map
-                (CCFun.flip Uri.get_query_param' "page")
-                (CCList.Assoc.get ~eq:CCString.equal "next" links)
-            in
-            let prev =
-              CCOption.flat_map
-                (CCFun.flip Uri.get_query_param' "page")
-                (CCList.Assoc.get ~eq:CCString.equal "prev" links)
-            in
-            Brtl_js2_page.Page.make ?next ?prev elts
-        | None ->
-            Brtl_js2.Brr.Console.(log [ Jstr.v "Could not parse links"; Jstr.v link ]);
-            Brtl_js2_page.Page.make elts)
-    | None -> Brtl_js2_page.Page.make elts
-end
-
 type t = unit
 
 let call = Api.call
 let create () = ()
 
-let logout t =
+let logout _ =
   let open Abb_js_future_combinators.Infix_result_monad in
   call (Terrat_api_user.Logout.make ())
   >>= fun resp ->
@@ -133,7 +88,7 @@ let logout t =
   | `OK -> Abb_js.Future.return (Ok ())
   | `Forbidden -> Abb_js.Future.return (Ok ())
 
-let whoami t =
+let whoami _ =
   let open Abb_js_future_combinators.Infix_result_monad in
   call (Terrat_api_user.Whoami.make ())
   >>= fun resp ->
@@ -141,7 +96,7 @@ let whoami t =
   | `OK user -> Abb_js.Future.return (Ok (Some user))
   | `Forbidden -> Abb_js.Future.return (Ok None)
 
-let task ~id t =
+let task ~id _ =
   let open Abb_js_future_combinators.Infix_result_monad in
   call Terrat_api_tasks.Get.(make Parameters.(make ~id))
   >>= fun resp ->
@@ -149,7 +104,7 @@ let task ~id t =
   | `OK r -> Abb_js.Future.return (Ok r)
   | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
 
-let server_config t =
+let server_config _ =
   let open Abb_js_future_combinators.Infix_result_monad in
   call Terrat_api_server.Config.(make ())
   >>= fun resp ->

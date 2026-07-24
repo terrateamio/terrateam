@@ -1,7 +1,6 @@
 module At = Brtl_js2.Brr.At
 
 let run services state =
-  let module C = Terrat_api_components.Server_config in
   let open Abb_js.Future.Infix_monad in
   let client = Brtl_js2.State.app_state state in
   Terrat_ui_js_client.server_config client

@@ -24,4 +24,4 @@ end
 
 type service = Service : (module S with type t = 'a) * 'a -> service
 
-module Make (Vcs : Terrat_ui_js_service_vcs.S) : S
+module Make (_ : Terrat_ui_js_service_vcs.S) : S

@@ -51,7 +51,7 @@ let workflow_file =
 module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
   module State = Terrat_ui_js_service_state.Make (Vcs)
 
-  let run repo_name state =
+  let run _ state =
     let app_state = Brtl_js2.State.app_state state in
     let notify = app_state.State.v.State.notify in
     let workflow = Brtl_js2.Brr.El.pre ~at:At.[ class' (Jstr.v "hl") ] [] in
