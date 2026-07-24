@@ -878,6 +878,7 @@ module Drift = struct
       schedule : Sched.t;
       reconcile : bool; [@default false]
       window : Window.t option;
+      branch : string option;
     }
     [@@deriving make, show, yojson, eq]
   end
@@ -2272,7 +2273,7 @@ let of_version_1_drift_2 drift =
   let module Schedule = Terrat_repo_config_drift_schedule in
   let { Dr.enabled; schedules } = drift in
   CCResult.map_l
-    (fun (name, { Schedule.tag_query; reconcile; schedule; window }) ->
+    (fun (name, { Schedule.tag_query; reconcile; schedule; window; branch }) ->
       let schedule = of_version_1_drift_schedule schedule in
       CCResult.map_err
         (function
@@ -2280,7 +2281,8 @@ let of_version_1_drift_2 drift =
         (Terrat_tag_query.of_string tag_query)
       >>= fun tag_query ->
       map_opt (fun { Schedule.Window.start; end_ } -> Drift.Window.make ~start ~end_ ()) window
-      >>= fun window -> Ok (name, Drift.Schedule.make ~tag_query ~reconcile ~schedule ?window ()))
+      >>= fun window ->
+      Ok (name, Drift.Schedule.make ~tag_query ~reconcile ~schedule ?window ?branch ()))
     (Sln_map.String.to_list @@ Dr.Schedules.additional schedules)
   >>= fun schedules -> Ok (Drift.make ~enabled ~schedules:(Sln_map.String.of_list schedules) ())
 
@@ -2957,7 +2959,7 @@ let to_version_1_drift drift =
   let { Drift.enabled; schedules } = drift in
   let schedules =
     CCList.map
-      (fun (name, { Drift.Schedule.tag_query; reconcile; schedule; window }) ->
+      (fun (name, { Drift.Schedule.tag_query; reconcile; schedule; window; branch }) ->
         let window =
           CCOption.map (fun { Drift.Window.start; end_ } -> { Schedule.Window.start; end_ }) window
         in
@@ -2973,6 +2975,7 @@ let to_version_1_drift drift =
                | S.Monthly -> `Monthly);
             tag_query = Terrat_tag_query.to_string tag_query;
             window;
+            branch;
           } ))
       (Sln_map.String.to_list schedules)
   in

@@ -6118,7 +6118,7 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       >>= fun repo_config ->
       let { D.enabled; schedules } = V1.drift repo_config in
       CCList.iter
-        (fun (name, { D.Schedule.tag_query; reconcile; schedule; window }) ->
+        (fun (name, { D.Schedule.tag_query; reconcile; schedule; window; _ }) ->
           Logs.info (fun m ->
               m
                 "%s : DRIFT : UPDATE_SCHEDULE : name=%s : enabled=%s : repo=%s : schedule=%s : \
@@ -6147,7 +6147,26 @@ module Make (S : Terrat_vcs_provider2.S) = struct
       | State.St.Initial -> (
           let open Abbs_future_combinators.Infix_result_monad in
           query_missing_drift_scheduled_runs state.State.request_id (Ctx.storage ctx)
-          >>= function
+          >>= fun runs ->
+          let runs =
+            CCList.filter_map
+              (fun (name, account, repo, branch, reconcile, tag_query, window) ->
+                match branch with
+                | Some branch ->
+                    Logs.info (fun m ->
+                        m
+                          "%s : DRIFT : LEGACY_SKIP_BRANCH : name=%s : account=%s : repo=%s : \
+                           branch=%s"
+                          state.State.request_id
+                          name
+                          (S.Api.Account.to_string account)
+                          (S.Api.Repo.to_string repo)
+                          branch);
+                    None
+                | None -> Some (name, account, repo, reconcile, tag_query, window))
+              runs
+          in
+          match runs with
           | [] -> Abb.Future.return (Error (`Noop state))
           | self :: needed_runs ->
               let f (name, account, repo, reconcile, tag_query, window) =

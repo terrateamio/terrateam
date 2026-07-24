@@ -31,6 +31,7 @@ module Window = struct
 end
 
 type t = {
+  branch : string option; [@default None]
   reconcile : bool; [@default false]
   schedule : Schedule.t;
   tag_query : string;

@@ -26,6 +26,19 @@ drift:
 ```
 In this example, drift detection is enabled and set to run on a daily schedule. You can choose from `hourly`, `daily`, `weekly`, or `monthly` schedules based on your requirements.
 
+### Running Drift on a Branch
+Drift schedules are defined by the Terrateam config on the repository default branch. A schedule can run against another branch by setting `branch`:
+```yaml
+drift:
+  enabled: true
+  schedules:
+    staging:
+      branch: release/staging
+      tag_query: "dir:staging"
+      schedule: daily
+```
+The run uses the code and Terrateam config from `release/staging`. The Terrateam CI workflow file must also exist on that branch. Omitting `branch` means Terrateam follows the repository default branch; setting it to the current default branch name pins the schedule to that branch name.
+
 ## Drift Reconciliation
 In addition to detecting drift, Terrateam can also automatically reconcile the differences by applying the necessary changes to your infrastructure. This feature is called Drift Reconciliation.
 To enable drift reconciliation, add the following to your Terrateam configuration:
@@ -41,6 +54,10 @@ drift:
 With `reconcile` set to `true`, Terrateam will automatically run an `apply` operation against the generated Terraform plan whenever drift is detected. This ensures that your infrastructure is brought back in sync with your Terraform configuration.
 :::caution
 Enabling automatic reconciliation should be done with caution. Ensure that you have appropriate safeguards and testing in place before enabling this feature, as changes will be applied without manual review or approval.
+:::
+
+:::caution
+Reconciliation can run on non-default branches. Avoid overlapping branch schedules that reconcile the same dirspaces unless you intend those branches to apply the same desired state.
 :::
 
 ## Limiting Drift Detection Scope
@@ -105,4 +122,5 @@ In this example, the `drift-notify.sh` script is executed whenever drift detecti
 When implementing Drift Detection and Reconciliation with Terrateam, consider the following best practices:
 - Start with Drift Detection enabled and monitor the results before enabling automatic reconciliation. This allows you to assess the impact and ensure that the detected drift is valid and requires action.
 - Use tag queries to limit the scope of drift detection to critical parts of your infrastructure. This helps reduce noise and focuses on the areas that matter most.
+- Keep branch schedules in the default branch config and make sure every target branch has the Terrateam workflow file before relying on scheduled runs.
 - Implement custom notifications and integrate with your existing monitoring and alerting systems to ensure that the right people are notified promptly when drift is detected.

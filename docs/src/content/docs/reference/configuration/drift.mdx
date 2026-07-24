@@ -26,6 +26,7 @@ More than one schedule is a SaaS (all plans) and Enterprise Edition feature.
 | Key | Type | Description |
 |-----|------|-------------|
 | schedule | String | The interval to run drift detection and reconciliation: `hourly`, `daily`, `weekly`, `monthly`. |
+| branch | String | The branch where the drift run executes. Optional. If omitted, Terrateam uses the repository default branch. |
 | reconcile | Boolean | Specifies whether reconciliation is enabled. Default is false. |
 | tag_query | String | A tag query that specifies which directories and workspaces drift detection and reconciliation should be applied to. |
 | window | Object | The window that the scheduled drift can run in. Optional. |
@@ -80,6 +81,22 @@ drift:
 ```
 This configuration will enable drift detection, run it on an hourly schedule, and limit it to to the `dir:production` [tag query](/advanced-workflows/tags).
 
+### Running Drift on a Non-Default Branch
+```yaml
+drift:
+  enabled: true
+  schedules:
+    staging:
+      branch: release/staging
+      tag_query: 'dir:staging'
+      schedule: daily
+```
+This configuration stores the schedule from the default branch config, but runs drift using the code and Terrateam config from `release/staging`.
+
+The Terrateam CI workflow file must exist on the target branch. If the target branch is deleted or cannot be found when the schedule fires, Terrateam skips that run.
+
+If `branch` is omitted, Terrateam follows the repository default branch. Setting `branch` to the current default branch name is an explicit pin; if the repository default branch is renamed later, that schedule continues to target the old branch name until the config is changed.
+
 ## Schedule
 The `schedule` key can be set to one of the following values:
 - `hourly`
@@ -109,6 +126,17 @@ This configuration runs drift daily for both production and development environm
 
 ## Reconciliation
 The `reconcile` key enables or disables automatic reconciliation. When enabled, if changes are found during drift detection, an apply operation will automatically run against the generated Terraform plan to reconcile the infrastructure state.
+
+:::caution
+Reconciliation is allowed on non-default branches. Use it carefully when multiple branch schedules cover the same dirspaces, because those branches can apply competing desired states to the same infrastructure.
+:::
+
+## Configuration Source
+Drift schedules are read and stored only from the default branch Terrateam config. Each run executes against the schedule's target branch and fetches that branch's Terrateam config, merged with system defaults. Default-branch override keys still come from the default branch according to `default_branch_overrides`.
+
+Changing `drift.enabled` on a target branch does not add, remove, or skip stored schedules. To change which schedules exist, update the default branch config.
+
+Drift unlocks are repository-scoped and unlock drift runs for all branches in the repository.
 
 ## Notifications
 ### GitHub Issues

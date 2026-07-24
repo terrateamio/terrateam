@@ -2,6 +2,7 @@
 
 module E = Terrat_repo_config.Engine
 module Sg = Terrat_repo_config.Engine_stategraph
+module Drift_schedule = Terrat_repo_config.Drift_schedule
 
 let test_stategraph_minimal_round_trip =
   Oth.test ~name:"Engine_stategraph: minimal round-trip" (fun _ ->
@@ -91,6 +92,29 @@ let test_engine_chain_unknown_falls_to_other =
       | Error _ ->
           failwith "Expected Engine_other to accept unknown engine names; got Error instead")
 
+let test_drift_schedule_branch_round_trip =
+  Oth.test ~name:"Drift_schedule: branch round-trip" (fun _ ->
+      let json =
+        `Assoc
+          [
+            ("branch", `String "release/staging");
+            ("schedule", `String "daily");
+            ("tag_query", `String "dir:staging");
+          ]
+      in
+      match Drift_schedule.of_yojson json with
+      | Ok t ->
+          assert (t.Drift_schedule.branch = Some "release/staging");
+          assert (Drift_schedule.to_yojson t = json)
+      | Error msg -> failwith msg)
+
+let test_drift_schedule_branch_defaults_to_none =
+  Oth.test ~name:"Drift_schedule: branch defaults to none" (fun _ ->
+      let json = `Assoc [ ("schedule", `String "daily"); ("tag_query", `String "") ] in
+      match Drift_schedule.of_yojson json with
+      | Ok t -> assert (t.Drift_schedule.branch = None)
+      | Error msg -> failwith msg)
+
 let test =
   Oth.parallel
     [
@@ -102,6 +126,8 @@ let test =
       test_engine_chain_to_yojson_dispatches;
       test_stategraph_with_tf_fields_round_trip;
       test_engine_chain_unknown_falls_to_other;
+      test_drift_schedule_branch_round_trip;
+      test_drift_schedule_branch_defaults_to_none;
     ]
 
 let () =
