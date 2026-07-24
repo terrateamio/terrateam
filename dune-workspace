@@ -2,5 +2,6 @@
 
 ; Default profile is "release"
 ;
-; Override via DUNE_PROFILE=dev or `dune build --profile dev`
+; Override via DUNE_PROFILE=dev or `dune build --profile dev`; the devcontainer sets
+; DUNE_PROFILE=dev in its compose file.
 (profile release)

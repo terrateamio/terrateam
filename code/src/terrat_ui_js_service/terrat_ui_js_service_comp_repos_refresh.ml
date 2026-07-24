@@ -23,8 +23,10 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
       ~while_:
         (Abb_js_future_combinators.finite_tries tries (function
           | Error _ -> true
-          | Ok { T.state; _ } ->
-              not (CCList.mem ~eq:CCString.equal state [ "completed"; "aborted"; "failed" ])))
+          | Ok { T.state; _ } -> (
+              match state with
+              | `Completed | `Aborted | `Failed -> false
+              | `Pending | `Running -> true)))
       ~betwixt:
         (Abb_js_future_combinators.series ~start:0.5 ~step:(( *. ) 1.5) (fun n _ ->
              Abb_js.sleep (CCFloat.min n 5.0)))
@@ -34,7 +36,6 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
     let app_state = Brtl_js2.State.app_state state in
     let vcs = app_state.State.vcs in
     let { State.selected_installation = installation; _ } = app_state.State.v in
-    let module I = Terrat_api_components.Installation in
     let installation_id = Vcs.Installation.id installation in
     let module T = Terrat_api_components.Task in
     Vcs.Api.repos_refresh ~installation_id vcs
@@ -42,12 +43,12 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
     | Ok (Some task_id) -> (
         wait_for_task vcs task_id
         >>= function
-        | Ok T.{ state = "completed"; _ } ->
+        | Ok T.{ state = `Completed; _ } ->
             Abb_js.Future.return
             @@ Brtl_js2.Output.navigate
             @@ Uri.of_string
             @@ Brtl_js2.Path.abs state [ "i"; installation_id ]
-        | Ok task -> failwith "nyi"
+        | Ok _ -> failwith "nyi"
         | Error _ -> failwith "nyi")
     | Ok None ->
         Abb_js.Future.return

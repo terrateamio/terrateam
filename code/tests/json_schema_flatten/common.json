@@ -1,0 +1,11 @@
+{
+  "definitions": {
+    "Address": {
+      "type": "object",
+      "properties": {
+        "street": { "type": "string" },
+        "zip": { "$ref": "deep.json#/definitions/Zip" }
+      }
+    }
+  }
+}

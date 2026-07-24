@@ -19,7 +19,6 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
       | { Q.q = Some str; _ } as q -> { q with Q.q = Some ("(" ^ str ^ ") and " ^ s) })
 
   let render_dirspace query dirspace state =
-    let module Scg = Terrat_api_components.Server_config_github in
     let module Ds = Terrat_api_components.Installation_dirspace in
     let module P = Terrat_api_components.Kind_pull_request in
     let app_state = Brtl_js2.State.app_state state in
@@ -27,24 +26,17 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
     let web_base_url = Vcs.Server_config.vcs_web_base_url server_config in
     let consumed_path = Brtl_js2.State.consumed_path state in
     let {
-      Ds.base_branch;
-      base_ref;
-      branch;
-      branch_ref;
-      completed_at;
+      Ds.branch;
       created_at;
       dir;
-      environment;
       id = work_manifest_id;
       kind;
       owner = repo_owner;
       repo = repo_name;
-      run_id;
       run_type;
       state;
-      tag_query;
-      user;
       workspace;
+      _;
     } =
       dirspace
     in
@@ -192,6 +184,23 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
     in
     let date = Brtl_js2_datetime.(to_yyyy_mm_dd (of_string created_at)) in
     let time = Brtl_js2_datetime.(to_hh_mm (of_string created_at)) in
+    let run_type_str =
+      match run_type with
+      | `Apply -> "apply"
+      | `Build_config -> "build-config"
+      | `Build_tree -> "build-tree"
+      | `Index -> "index"
+      | `Plan -> "plan"
+    in
+    let state_str =
+      match state with
+      | `Aborted -> "aborted"
+      | `Failure -> "failure"
+      | `Queued -> "queued"
+      | `Running -> "running"
+      | `Success -> "success"
+      | `Unknown -> "unknown"
+    in
     Abb_js.Future.return
       (Brtl_js2.Output.const
          [
@@ -199,8 +208,8 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
            div
              ~at:At.[ class' (Jstr.v "operation") ]
              [
-               div ~at:At.[ class' (Jstr.v "op") ] [ txt' run_type ];
-               div ~at:At.[ class' (Jstr.v "state"); class' (Jstr.v state) ] [ txt' state ];
+               div ~at:At.[ class' (Jstr.v "op") ] [ txt' run_type_str ];
+               div ~at:At.[ class' (Jstr.v "state"); class' (Jstr.v state_str) ] [ txt' state_str ];
              ];
            (* Directory *)
            div
@@ -430,7 +439,6 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
     let app_state = Brtl_js2.State.app_state state in
     let vcs = app_state.State.vcs in
     let { State.selected_installation = installation; _ } = app_state.State.v in
-    let module I = Terrat_api_components.Installation in
     let module Ds = Terrat_api_components.Installation_dirspace in
     let module Page = Brtl_js2_page.Make (struct
       type fetch_err = Terrat_ui_js_service_vcs.Api.dirspaces_err [@@deriving show]
@@ -468,7 +476,7 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
         let tz = Brtl_js2_datetime.timezone () in
         Vcs.Api.dirspaces ?page ?q ~tz ~installation_id:(Vcs.Installation.id installation) vcs
 
-      let wrap_page query els =
+      let wrap_page _ els =
         Brtl_js2.Brr.El.
           [
             div
@@ -493,7 +501,7 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
             (render_dirspace query elt);
         ]
 
-      let search_comp (set_query : query Brtl_js2.Note.S.set) query state =
+      let search_comp (set_query : query Brtl_js2.Note.S.set) query _ =
         let query = CCOption.get_or ~default:"" query in
         let input =
           Brtl_js2.Kit.Ui.Input.v

@@ -125,8 +125,18 @@ let rec resolve_ref typ lookup ref_ =
       | _ -> failwith (Printf.sprintf "Unknown ref typ: %s" ref_))
   | Value.V v -> v
 
-let resolve_schema_ref { Components.schemas; _ } =
-  resolve_ref "schemas" (CCFun.flip Sln_map.String.get schemas)
+let resolve_schema_ref { Components.schemas; _ } ref_ =
+  match ref_ with
+  | Value.Ref r
+    when match CCString.split_on_char '/' r with
+         | [ "#"; "file-link"; _; _ ] -> true
+         | _ -> false ->
+      (* File-linked schemas are referenced via their existing OCaml module and are not loaded,
+         so there is no concrete schema to return.  A neutral (non-primitive, non-nullable,
+         default-less) schema is correct: the field/variant renders as [<Module_base>_<name>.t]
+         via [module_name_of_ref]/[variant_name_of_ref]. *)
+      Schema.make_t_ ()
+  | _ -> resolve_ref "schemas" (CCFun.flip Sln_map.String.get schemas) ref_
 
 let resolve_response_ref { Components.responses; _ } =
   resolve_ref "responses" (CCFun.flip Sln_map.String.get responses)
@@ -138,16 +148,22 @@ let resolve_parameter_ref { Components.parameters; _ } =
    Components and not into Components.Schemas.  This might change if we start
    converting responses into Components too. *)
 let module_name_of_ref base_module_name context ref_ =
-  match context with
-  | "schemas" | "parameters" | "responses" -> (
-      match CCString.split_on_char '/' ref_ with
-      | [ "#"; "components"; m; n ] when CCString.equal m context -> [ module_name_of_string n ]
-      | [ "#"; "components"; m; n ] -> [ CCString.capitalize_ascii m; module_name_of_string n ]
-      | _ -> failwith (Printf.sprintf "Unknown ref type: %s" ref_))
+  match CCString.split_on_char '/' ref_ with
+  (* Foreign ref mapped to an existing module via --file-link; resolves the same way regardless
+     of the context it appears in (component schema, operation response body, etc.). *)
+  | [ "#"; "file-link"; mb; n ] -> [ mb ^ "_" ^ CCString.lowercase_ascii (module_name_of_string n) ]
   | _ -> (
-      match CCString.split_on_char '/' ref_ with
-      | [ "#"; "components"; m; n ] -> [ base_module_name ^ "_components"; module_name_of_string n ]
-      | _ -> failwith (Printf.sprintf "Unknown ref type: %s" ref_))
+      match context with
+      | "schemas" | "parameters" | "responses" -> (
+          match CCString.split_on_char '/' ref_ with
+          | [ "#"; "components"; m; n ] when CCString.equal m context -> [ module_name_of_string n ]
+          | [ "#"; "components"; m; n ] -> [ CCString.capitalize_ascii m; module_name_of_string n ]
+          | _ -> failwith (Printf.sprintf "Unknown ref type: %s" ref_))
+      | _ -> (
+          match CCString.split_on_char '/' ref_ with
+          | [ "#"; "components"; _m; n ] ->
+              [ base_module_name ^ "_components"; module_name_of_string n ]
+          | _ -> failwith (Printf.sprintf "Unknown ref type: %s" ref_)))
 
 let http_status_to_name = function
   | "100" -> "Continue"
@@ -325,7 +341,7 @@ let request_param_of_op_params base_module_name components param_in params =
               (Some
                  (Ast_helper.Exp.ident
                     (Location.mknoloc (Gen.ident (enum_module @ [ "t_to_yojson" ])))))
-        | { Schema.typ = Some typ; format; _ } as schema when Json_schema_conv.is_prim_type schema
+        | { Schema.typ = Some _; format; _ } as schema when Json_schema_conv.is_prim_type schema
           -> (
             match Json_schema_conv.extract_prim_type schema with
             | Some ("string" | "file") -> scalar "String"
@@ -637,7 +653,7 @@ let convert_str_operation strict_records base_module_name components uritmpl op_
                      (resolved_responses
                      |> CCList.map (fun (code, r) ->
                          match get_json_media_type r.Response.content with
-                         | Some r ->
+                         | Some _r ->
                              Exp.tuple
                                [
                                  Exp.constant (Const.string code);
@@ -836,16 +852,20 @@ let convert_str_components
     strict_records
     output_dir
     base_module_name
-    ({ Components.schemas; responses; _ } as components) =
+    ({ Components.schemas; responses = _; _ } as components) =
   let module_name_of_ref ref_ =
     match CCString.split_on_char '/' ref_ with
-    | [ "#"; "components"; m; n ] ->
+    | [ "#"; "components"; _; n ] ->
         [ base_module_name ^ "_components_" ^ CCString.lowercase_ascii (module_name_of_string n) ]
+    | [ "#"; "file-link"; mb; n ] ->
+        (* Foreign ref mapped to an existing module via --file-link. *)
+        [ mb ^ "_" ^ CCString.lowercase_ascii (module_name_of_string n) ]
     | _ -> failwith (Printf.sprintf "Unknown ref type: %s" ref_)
   in
   let variant_name_of_ref ref_ =
     match CCString.split_on_char '/' ref_ with
-    | [ "#"; "components"; m; n ] -> [ module_name_of_string n ]
+    | [ "#"; "components"; _; n ] -> [ module_name_of_string n ]
+    | [ "#"; "file-link"; _; n ] -> [ module_name_of_string n ]
     | _ -> failwith (Printf.sprintf "Unknown ref type: %s" ref_)
   in
   let config =
@@ -937,8 +957,15 @@ let convert_str_document strict_records output_dir base_module_name { Document.p
   convert_str_components strict_records output_dir base_module_name components;
   convert_str_paths strict_records output_base base_module_name components paths
 
-let convert ~strict_records ~input_file ~output_name ~output_dir =
+let convert ~strict_records ~search_path ~file_link ~input_file ~output_name ~output_dir =
   let base_module_name = CCString.capitalize_ascii output_name in
-  match Document.of_yojson (Yojson.Safe.from_file input_file) with
+  let json =
+    Json_schema_flatten.flatten_document
+      ~search_path
+      ~file_link
+      ~root_file:input_file
+      (Yojson.Safe.from_file input_file)
+  in
+  match Document.of_yojson json with
   | Ok document -> convert_str_document strict_records output_dir base_module_name document
   | Error err -> print_endline ("ERROR: " ^ err)

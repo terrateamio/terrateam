@@ -17,11 +17,44 @@ module Cmdline = struct
     let doc = "Do not require records to be strict" in
     C.Arg.(value & flag & info [ "non-strict-records" ] ~doc)
 
+  let search_path =
+    let doc =
+      "Directory to search for files referenced by foreign $refs (e.g. \
+       \"common.json#/definitions/Foo\"). May be passed multiple times; directories are searched \
+       in the order given."
+    in
+    C.Arg.(value & opt_all dir [] & info [ "S"; "search-path" ] ~doc ~docv:"DIR")
+
+  let file_link =
+    let link_conv =
+      C.Arg.Conv.make
+        ~docv:"FILE=MODULE_BASE"
+        ~parser:(fun s ->
+          CCOption.to_result "Must be of form FILE=MODULE_BASE" (CCString.Split.left ~by:"=" s))
+        ~pp:(fun fmt (file, module_base) -> Format.fprintf fmt "%s=%s" file module_base)
+        ()
+    in
+    let doc =
+      "Reference a foreign schema file as an existing OCaml module instead of inlining it. Refs \
+       into FILE generate references to MODULE_BASE (e.g. \
+       \"session-capabilities.json=Sgs_session_caps\" makes \
+       \"session-capabilities.json#/definitions/Foo\" generate \"Sgs_session_caps_foo.t\"). May be \
+       passed multiple times."
+    in
+    C.Arg.(value & opt_all link_conv [] & info [ "file-link" ] ~doc)
+
   let convert_cmd f =
     let doc = "Convert to Ocaml" in
     C.Cmd.v
       (C.Cmd.info "convert" ~doc)
-      C.Term.(const f $ non_strict_records $ input_file $ output_name $ output_dir)
+      C.Term.(
+        const f
+        $ non_strict_records
+        $ input_file
+        $ output_name
+        $ output_dir
+        $ search_path
+        $ file_link)
 
   let default_cmd = C.Term.(ret (const (`Help (`Pager, None))))
 end
@@ -53,11 +86,15 @@ let module_name_of_ref module_base ref_ =
   match CCString.split_on_char '/' ref_ with
   | [ "#"; "definitions"; n ] ->
       [ module_base ^ "_" ^ CCString.lowercase_ascii (module_name_of_string n) ]
+  | [ "#"; "file-link"; mb; n ] ->
+      (* Foreign ref mapped to an existing module via --file-link. *)
+      [ mb ^ "_" ^ CCString.lowercase_ascii (module_name_of_string n) ]
   | _ -> failwith (Printf.sprintf "Unknown ref: %s" ref_)
 
 let variant_name_of_ref ref_ =
   match CCString.split_on_char '/' ref_ with
   | [ "#"; "definitions"; n ] -> [ module_name_of_string n ]
+  | [ "#"; "file-link"; _; n ] -> [ module_name_of_string n ]
   | _ -> failwith (Printf.sprintf "Unknown ref: %s" ref_)
 
 let field_name_of_schema s =
@@ -123,44 +160,16 @@ let rec resolve_ref definitions ref_ =
           | Some (Value.Ref _ as ref_) -> resolve_ref definitions ref_
           | Some (Value.V v) -> v
           | None -> failwith (Printf.sprintf "Could not resolve ref: %s" ref_))
+      | [ "#"; "file-link"; _; _ ] ->
+          (* File-linked schemas are referenced via their existing OCaml module and are not loaded,
+             so we have no concrete schema to return.  A neutral (non-primitive, non-nullable,
+             default-less) schema is correct for the common case: the field/variant renders as
+             [<Module_base>_<name>.t] via [module_name_of_ref]/[variant_name_of_ref].  The fields of
+             a file-linked schema cannot be merged into an enclosing allOf/oneOf base since they are
+             not available here. *)
+          Json_schema_conv.Schema.make_t_ ()
       | _ -> failwith (Printf.sprintf "Unknown ref: %s" ref_))
   | Value.V v -> v
-
-let rec collect_schema_refs
-    { Json_schema_conv.Schema.properties; additional_properties; items; any_of; one_of; all_of; _ }
-    =
-  let open Json_schema_conv in
-  let additional_schemas =
-    CCOption.get_or ~default:[] any_of
-    @ CCOption.get_or ~default:[] one_of
-    @ CCOption.get_or ~default:[] all_of
-  in
-  CCList.flatten
-    [
-      CCList.flatten
-        (CCList.map
-           (fun (_, schema) ->
-             match schema with
-             | Value.Ref ref_ -> [ ref_ ]
-             | Value.V schema -> collect_schema_refs schema)
-           (Sln_map.String.to_list properties));
-      (match additional_properties with
-      | Additional_properties.Bool _ -> []
-      | Additional_properties.V (Value.V schema) -> collect_schema_refs schema
-      | Additional_properties.V _ -> []);
-      (match items with
-      | Some (Value.V schema) -> collect_schema_refs schema
-      | Some (Value.Ref ref_) -> [ ref_ ]
-      | None -> []);
-      CCList.flatten
-      @@ CCList.map
-           (function
-             | Value.Ref ref_ -> [ ref_ ]
-             | Value.V schema -> collect_schema_refs schema)
-           additional_schemas;
-    ]
-
-let extract_module_name_from_ref ref_ = CCList.hd (CCList.rev (CCString.split ~by:"/" ref_))
 
 let convert_def strict_records definitions module_base def =
   Json_schema_conv.convert_str_schema
@@ -263,9 +272,16 @@ let convert_document strict_records output_dir output_name { Document.definition
     (Filename.concat output_dir (output_name ^ ".ml"))
     (fun oc -> CCIO.write_line oc (Pprintast.string_of_structure structure))
 
-let convert non_strict_records input_file output_name output_dir =
+let convert non_strict_records input_file output_name output_dir search_path file_link =
   let strict_records = not non_strict_records in
-  match Document.of_yojson (Yojson.Safe.from_file input_file) with
+  let json =
+    Json_schema_flatten.flatten_document
+      ~search_path
+      ~file_link
+      ~root_file:input_file
+      (Yojson.Safe.from_file input_file)
+  in
+  match Document.of_yojson json with
   | Ok document -> convert_document strict_records output_dir output_name document
   | Error err -> print_endline err
 

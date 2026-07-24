@@ -100,11 +100,14 @@ module Page = struct
 end
 
 type t = {
+  (* TODO: [auth] is captured by [create] but never read. Verify whether the auth header is
+     actually being applied to outgoing requests, or wire it up if not. *)
   auth : Authorization.t;
   base_url : Uri.t;
   headers : (string * string) list;
   call_timeout : float option;
 }
+[@@warning "-69"]
 
 let create ?(user_agent = "Openapic_abb") ?call_timeout ~base_url auth =
   let base_url =

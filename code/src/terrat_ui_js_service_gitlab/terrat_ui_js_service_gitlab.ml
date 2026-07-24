@@ -55,10 +55,7 @@ end
 module Server_config = struct
   module G = Terrat_api_components.Server_config_gitlab
 
-  type t = {
-    server_config : Terrat_api_components.Server_config.t;
-    config : Terrat_api_components.Server_config_gitlab.t;
-  }
+  type t = { config : Terrat_api_components.Server_config_gitlab.t }
 
   let vcs_web_base_url { config = { G.web_base_url; _ }; _ } = web_base_url
 end
@@ -80,7 +77,7 @@ module Installation = struct
 end
 
 module Api = struct
-  let whoami t =
+  let whoami _ =
     let open Abb_js_future_combinators.Infix_result_monad in
     Client.call (Terrat_api_gitlab_user.Whoami.make ())
     >>= fun resp ->
@@ -88,17 +85,16 @@ module Api = struct
     | `OK user -> Abb_js.Future.return (Ok user)
     | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
 
-  let server_config t =
+  let server_config _ =
     let module Sc = Terrat_api_components.Server_config in
     let open Abb_js_future_combinators.Infix_result_monad in
     Client.call (Terrat_api_server.Config.make ())
     >>= fun resp ->
     match Openapi.Response.value resp with
-    | `OK ({ Sc.gitlab = Some config; _ } as server_config) ->
-        Abb_js.Future.return (Ok { Server_config.server_config; config })
+    | `OK { Sc.gitlab = Some config; _ } -> Abb_js.Future.return (Ok { Server_config.config })
     | `OK _ -> Abb_js.Future.return (Error `Not_found)
 
-  let installations t =
+  let installations _ =
     let open Abb_js_future_combinators.Infix_result_monad in
     Client.call (Terrat_api_gitlab_installations.List.make ())
     >>= fun resp ->
@@ -107,26 +103,12 @@ module Api = struct
     | `OK { R.installations } -> Abb_js.Future.return (Ok installations)
     | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
 
-  let work_manifests ?tz ?page ?limit ?q ?dir ~installation_id t =
+  let work_manifests ?tz ?page ?limit ?q ?dir ~installation_id _ =
     let open Abb_js_future_combinators.Infix_result_monad in
     let module R = Terrat_api_gitlab_installations.List_work_manifests.Responses.OK in
     Client.call
       Terrat_api_gitlab_installations.List_work_manifests.(
-        make
-          Parameters.(
-            make
-              ~d:
-                (CCOption.map
-                   (function
-                     | `Asc -> "asc"
-                     | `Desc -> "desc")
-                   dir)
-              ~page
-              ~limit
-              ~q
-              ~tz
-              ~installation_id
-              ()))
+        make Parameters.(make ~d:dir ~page ~limit ~q ~tz ~installation_id ()))
     >>= fun resp ->
     match Openapi.Response.value resp with
     | `OK R.{ work_manifests } ->
@@ -134,7 +116,7 @@ module Api = struct
     | `Bad_request _ as err -> Abb_js.Future.return (Error err)
     | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
 
-  let work_manifest_outputs ?tz ?page ?limit ?q ?lite ~installation_id ~work_manifest_id t =
+  let work_manifest_outputs ?tz ?page ?limit ?q ?lite ~installation_id ~work_manifest_id _ =
     let open Abb_js_future_combinators.Infix_result_monad in
     let module R = Terrat_api_gitlab_installations.Get_work_manifest_outputs.Responses.OK in
     Client.call
@@ -148,26 +130,12 @@ module Api = struct
     | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
     | `Not_found -> Abb_js.Future.return (Error `Not_found)
 
-  let dirspaces ?tz ?page ?limit ?q ?dir ~installation_id t =
+  let dirspaces ?tz ?page ?limit ?q ?dir ~installation_id _ =
     let open Abb_js_future_combinators.Infix_result_monad in
     let module R = Terrat_api_gitlab_installations.List_dirspaces.Responses.OK in
     Client.call
       Terrat_api_gitlab_installations.List_dirspaces.(
-        make
-          Parameters.(
-            make
-              ~d:
-                (CCOption.map
-                   (function
-                     | `Asc -> "asc"
-                     | `Desc -> "desc")
-                   dir)
-              ~page
-              ~limit
-              ~q
-              ~tz
-              ~installation_id
-              ()))
+        make Parameters.(make ~d:dir ~page ~limit ~q ~tz ~installation_id ()))
     >>= fun resp ->
     match Openapi.Response.value resp with
     | `OK { R.dirspaces } ->
@@ -175,7 +143,7 @@ module Api = struct
     | `Bad_request _ as err -> Abb_js.Future.return (Error err)
     | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
 
-  let repos ?page ~installation_id t =
+  let repos ?page ~installation_id _ =
     let open Abb_js_future_combinators.Infix_result_monad in
     let module R = Terrat_api_gitlab_installations.List_repos.Responses.OK in
     Client.call
@@ -186,20 +154,19 @@ module Api = struct
         Abb_js.Future.return (Ok (Terrat_ui_js_service_vcs.Page.of_response resp repositories))
     | `Forbidden -> Abb_js.Future.return (Error `Forbidden)
 
-  let repos_refresh ~installation_id t = Abb_js.Future.return (Ok None)
-  let task ~id t = raise (Failure "nyi")
+  let repos_refresh ~installation_id:_ _ = Abb_js.Future.return (Ok None)
+  let task ~id:_ _ = raise (Failure "nyi")
 
   (* API Calls not part of the VCS provider interface *)
 
-  let groups t =
-    let module G = Terrat_api_components.Gitlab_group in
+  let groups _ =
     let open Abb_js_future_combinators.Infix_result_monad in
     Client.call (Terrat_api_gitlab_groups.List.make ())
     >>= fun resp ->
     let (`OK groups) = Openapi.Response.value resp in
     Abb_js.Future.return (Ok groups)
 
-  let is_group_member t group_id =
+  let is_group_member _ group_id =
     let module G = Terrat_api_gitlab_groups.Is_member in
     let open Abb_js_future_combinators.Infix_result_monad in
     Client.call G.(make (Parameters.make ~id:group_id))
@@ -207,15 +174,14 @@ module Api = struct
     let (`OK { G.Responses.OK.result }) = Openapi.Response.value resp in
     Abb_js.Future.return (Ok result)
 
-  let whoareyou t =
-    let module U = Terrat_api_components.Gitlab_whoareyou in
+  let whoareyou _ =
     let open Abb_js_future_combinators.Infix_result_monad in
     Client.call (Terrat_api_gitlab_user.Whoareyou.make ())
     >>= fun resp ->
     let (`OK whoareyou) = Openapi.Response.value resp in
     Abb_js.Future.return (Ok whoareyou)
 
-  let installation_webhook t group_id =
+  let installation_webhook _ group_id =
     let module W = Terrat_api_gitlab_installations.Get_webhook in
     let open Abb_js_future_combinators.Infix_result_monad in
     Client.call W.(make (Parameters.make ~id:group_id))
@@ -233,7 +199,7 @@ module Comp = struct
       function
       | { C.gitlab; _ } -> gitlab
 
-    let run config state =
+    let run config _ =
       let module C = Terrat_api_components.Server_config_gitlab in
       Abb_js.Future.return
         (Brtl_js2.Output.const
@@ -484,7 +450,7 @@ module Comp = struct
   end
 
   module Quickstart = struct
-    let run state =
+    let run _ =
       let open Brtl_js2.Brr.El in
       Abb_js.Future.return
         (Brtl_js2.Output.const

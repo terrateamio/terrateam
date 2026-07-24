@@ -269,7 +269,7 @@ and eval_list_test_section ln buf t kv ts section key empty =
   | Some _ -> raise (Apply_error (`Expected_list (key, ln)))
   | None -> raise (Apply_error (`Missing_key (key, ln)))
 
-and eval_exists_test_section ln buf t kv ts section key exists =
+and eval_exists_test_section _ln buf t kv ts section key exists =
   match (Kv.Map.get key kv, exists) with
   | Some _, `Exists | None, `Not_exists ->
       let ts = eval_template buf t kv ts key in

@@ -1,0 +1,10 @@
+{
+  "definitions": {
+    "A": {
+      "type": "object",
+      "properties": {
+        "b": { "$ref": "b.json#/definitions/B" }
+      }
+    }
+  }
+}

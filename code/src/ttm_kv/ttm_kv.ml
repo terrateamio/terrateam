@@ -10,20 +10,22 @@ module Cli = struct
   module C = Cmdliner
 
   let cap_conv =
-    C.Arg.conv
-      ( (fun s ->
-          (* If the string starts with a mustache then assume it's a JSON object
-             literal, otherwise wrap it in quotes because it's a string. *)
-          let s =
-            if not (CCString.starts_with ~prefix:"{" (CCString.trim s)) then "\"" ^ s ^ "\"" else s
-          in
-          try
-            let json = Yojson.Safe.from_string s in
-            match Terrat_user_caps.of_yojson json with
-            | Ok cap -> Ok cap
-            | Error s -> Error (`Msg s)
-          with Yojson.Json_error s -> Error (`Msg s)),
-        Terrat_user_caps.pp )
+    C.Arg.Conv.make
+      ~docv:"CAP"
+      ~parser:(fun s ->
+        (* If the string starts with a mustache then assume it's a JSON object
+           literal, otherwise wrap it in quotes because it's a string. *)
+        let s =
+          if not (CCString.starts_with ~prefix:"{" (CCString.trim s)) then "\"" ^ s ^ "\"" else s
+        in
+        try
+          let json = Yojson.Safe.from_string s in
+          match Terrat_user_caps.of_yojson json with
+          | Ok cap -> Ok cap
+          | Error s -> Error s
+        with Yojson.Json_error s -> Error s)
+      ~pp:Terrat_user_caps.pp
+      ()
 
   let draft =
     let doc = "Data is uncommitted (default false)" in

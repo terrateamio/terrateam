@@ -4,16 +4,9 @@
 .PHONY: generate-api-types check-api-types
 .PHONY: clean
 
-# Disable make-level parallelism. Every target here is a single `dune
-# build` invocation, and dune holds a workspace lock — so running two
-# goals concurrently (`make -j foo bar`) just serialises on the lock at
-# best, fails at worst. Dune's own scheduler handles all the parallelism
-# that actually matters within each invocation, so we lose nothing here.
-.NOTPARALLEL:
-
-# Dune lives at the repo root so that `(dirs code api_schemas)` can reach
-# the api_schemas/ tree. All commands here delegate to dune, invoked from
-# the parent directory.
+# Dune lives at the repo root so packages can reach ../../../api_schemas/
+# (via ppx_blob). All commands here delegate to dune, invoked from the
+# parent directory.
 # Profile selection is centralised: dune-workspace pins `(profile release)`
 # as the default.
 # No target here passes --profile explicitly.
@@ -22,12 +15,11 @@ ROOT := $(CURDIR)/..
 
 all: terrat
 
-# Aggregate target: builds all server binaries, the UI assets, and ttm in
-# a single dune invocation (the @code/terrat alias is defined in
-# code/dune). One invocation matters because dune holds a workspace lock —
-# listing the sub-targets as make prerequisites would let `make -j`
-# launch them in parallel and the second dune call would block on the
-# first. Dune's own scheduler parallelises within the single call.
+# Aggregate: build every server binary + the UI in a single dune invocation
+# (the @code/terrat alias is defined in code/dune). One invocation matters
+# because dune holds a workspace lock — listing the sub-targets as make
+# prerequisites would let `make -j` launch parallel dune calls that block on
+# each other.
 terrat:
 	cd $(ROOT) && $(DUNE) build @code/terrat
 
@@ -48,10 +40,13 @@ ttm:
 iris:
 	cd $(ROOT) && $(DUNE) build @code/src/iris/all
 
-# Tests. Tests are declared via `(test ...)` / `(tests ...)` stanzas
-# alongside the code they cover.
+# Unit tests. TERRAT_TEST_DIRS defaults to the whole code/tests/ tree; a
+# superset build (the monorepo) overrides it with a curated subset that
+# excludes suites that repo does not build here (see Makefile.stategraph.inc).
+TERRAT_TEST_DIRS := code/tests
+
 test-terrat:
-	cd $(ROOT) && $(DUNE) runtest code/tests/
+	cd $(ROOT) && $(DUNE) runtest $(TERRAT_TEST_DIRS)
 
 # Code generation lives entirely in dune. Each generated library carries, next
 # to its `(library)`: a `(rule (mode (promote (into .))) (targets (dir gen)) ...)`
@@ -93,3 +88,5 @@ check-api-types: generate-api-types
 
 clean:
 	cd $(ROOT) && $(DUNE) clean
+
+include stategraph.mk

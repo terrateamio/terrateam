@@ -1,0 +1,3 @@
+(library
+ (name json_schema_flatten)
+ (libraries containers sln yojson))

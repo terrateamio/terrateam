@@ -18,12 +18,6 @@ module Tls_protocols = struct
     | TLSv1_0 -> Stubs.tls_protocol_tlsv1_0
     | TLSv1_1 -> Stubs.tls_protocol_tlsv1_1
     | TLSv1_2 -> Stubs.tls_protocol_tlsv1_2
-
-  let of_int = function
-    | n when n = Stubs.tls_protocol_tlsv1_0 -> Some TLSv1_0
-    | n when n = Stubs.tls_protocol_tlsv1_1 -> Some TLSv1_1
-    | n when n = Stubs.tls_protocol_tlsv1_2 -> Some TLSv1_2
-    | _ -> None
 end
 
 module Tls_ciphers = struct

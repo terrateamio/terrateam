@@ -9,8 +9,6 @@ let terrateam_workflow_path = ".github/workflows/terrateam.yml"
 let installation_expiration_sec = three_minutes
 let call_timeout = Duration.(to_f (of_sec 10))
 
-module Org_admin = CCMap.Make (CCInt)
-
 module Metrics = struct
   module Call_retry_wait_histograph = Prmths.Histogram (struct
     let spec = Prmths.Histogram_spec.of_exponential ~start:30.0 ~factor:1.2 ~count:20
@@ -336,7 +334,6 @@ let fetch_pull_request_files ~owner ~repo ~pull_number client =
     Githubc2_pulls.List_files.(make (Parameters.make ~per_page:100 ~owner ~pull_number ~repo ()))
 
 let fetch_diff_files ~owner ~repo ~base_ref ~branch_ref client =
-  let module R = Githubc2_repos.Compare_commits.Responses in
   Prmths.Counter.inc_one (Metrics.fn_call_total "fetch_diff_files");
   Githubc2_abb.fold
     client
@@ -467,7 +464,6 @@ let load_workflow ?override_path ~owner ~repo client =
 let publish_comment ~owner ~repo ~pull_number ~body client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "publish_comment");
   let open Abbs_future_combinators.Infix_result_monad in
-  let module Ic = Githubc2_components_issue_comment.Primary in
   call
     client
     Githubc2_issues.Create_comment.(

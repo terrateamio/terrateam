@@ -31,7 +31,7 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
       let fetch { page } =
         Vcs.Api.repos ?page ~installation_id:(Vcs.Installation.id installation) vcs
 
-      let wrap_page query els =
+      let wrap_page _ els =
         let refresh_btn =
           Brtl_js2.Kit.Ui.Button.v'
             ~class':(Jstr.v "repos-refresh")
@@ -66,7 +66,7 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
               @ els);
           ]
 
-      let render_elt state query repo =
+      let render_elt _ _ repo =
         Brtl_js2.Brr.El.
           [
             div [ txt' repo.Repo.name ];

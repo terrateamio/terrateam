@@ -1,9 +1,7 @@
 module At = Brtl_js2.Brr.At
 
-module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
-  module State = Terrat_ui_js_service_state.Make (Vcs)
-
-  let run state =
+module Make (_ : Terrat_ui_js_service_vcs.S) = struct
+  let run _ =
     let open Brtl_js2.Brr.El in
     Abb_js.Future.return
       (Brtl_js2.Output.const

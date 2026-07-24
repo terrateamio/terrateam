@@ -114,7 +114,6 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
     let class' = "treeview"
 
     let fetch_outputs ?(lite = true) vcs installation_id work_manifest_id query =
-      let module O = Terrat_api_components.Installation_workflow_step_output in
       let open Abb_js_future_combinators.Infix_result_monad in
       Vcs.Api.work_manifest_outputs ~limit:100 ~q:query ~installation_id ~work_manifest_id ~lite vcs
       >>= fun page ->
@@ -143,7 +142,6 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
       | Output.(Scope Scope.(Hook Pre)) ->
           (* Do not fetch cost_estimation if present because that is done in a
            separate step *)
-          let module O = Terrat_api_components.Installation_workflow_step_output in
           fetch_outputs
             vcs
             installation_id
@@ -210,7 +208,7 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
       let open CCResult.Infix in
       let module P = Payload.Cost_estimation in
       P.of_yojson payload
-      >>= fun { P.dirspaces; summary = ce_summary; _ } ->
+      >>= fun { P.dirspaces; _ } ->
       let module Dirspace_cmp = struct
         type t = float * float * string * string [@@deriving ord]
       end in
@@ -488,7 +486,7 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
         | "tf/apply" | "pulumi/apply" | "custom/apply" -> render_payload_apply payload
         | "tf/cost-estimation" -> render_payload_cost_estimation payload
         | "tf/cost-estimation/details" -> render_payload_cost_estimation_details payload
-        | step -> render_payload_run payload
+        | _ -> render_payload_run payload
       in
       match run with
       | Ok r -> r
@@ -499,7 +497,6 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
 
     let render_output_cost_estimation output =
       let module O = Terrat_api_components.Installation_workflow_step_output in
-      let module S = Terrat_api_components_workflow_step_output_scope in
       let { O.created_at = _; idx = _; ignore_errors = _; payload; scope = _; state = _; step = _ }
           =
         output
@@ -523,8 +520,7 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
 
     let render_output_any output =
       let module O = Terrat_api_components.Installation_workflow_step_output in
-      let module S = Terrat_api_components_workflow_step_output_scope in
-      let { O.created_at = _; idx = _; ignore_errors; payload = _; scope = _; state; step } =
+      let { O.created_at = _; idx = _; ignore_errors = _; payload = _; scope = _; state; step } =
         output
       in
       let step =
@@ -609,7 +605,7 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
       | Brtl_js2_treeview.Node.Leaf node ->
           Abb_js.Future.return (Brtl_js2.Output.const (render_node' node))
 
-    let render_fetch_nodes_err node err state =
+    let render_fetch_nodes_err _ _ _ =
       Abb_js.Future.return (Brtl_js2.Output.const Brtl_js2.Brr.El.[ div [ txt' "Error" ] ])
   end)
 
@@ -620,7 +616,7 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
     | Wm.Kind.Kind_drift _ -> "drift"
     | Wm.Kind.Kind_index _ -> "index"
 
-  let render_title github_web_base_url wm run_type =
+  let render_title github_web_base_url wm _ =
     let module Wm = Terrat_api_components.Installation_work_manifest in
     let module P = Terrat_api_components_kind_pull_request in
     function
@@ -678,11 +674,10 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
         state = work_manifest_state;
         tag_query;
         user;
+        _;
       } as wm -> (
         let run =
           let open Abb_js_future_combinators.Infix_result_monad in
-          let module Scg = Terrat_api_components.Server_config_github in
-          let module I = Terrat_api_components.Installation in
           let module Ds = Terrat_api_components.Work_manifest_dirspace in
           let app_state = Brtl_js2.State.app_state state in
           let { State.selected_installation = installation; server_config; _ } =
@@ -744,9 +739,11 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
           in
           let work_manifest_state =
             match work_manifest_state with
-            | "completed" when CCList.is_empty (Brtl_js2_page.Page.page failed_runs) -> "success"
-            | "completed" -> "failure"
-            | any -> any
+            | `Completed when CCList.is_empty (Brtl_js2_page.Page.page failed_runs) -> "success"
+            | `Completed -> "failure"
+            | `Aborted -> "aborted"
+            | `Queued -> "queued"
+            | `Running -> "running"
           in
           let outputs =
             CCList.map
@@ -892,7 +889,6 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
     | Error _ -> raise (Failure "nyi")
 
   let comp work_manifest_id state =
-    let module I = Terrat_api_components.Installation in
     let app_state = Brtl_js2.State.app_state state in
     let { State.selected_installation = installation; _ } = app_state.State.v in
     let installation_id = Vcs.Installation.id installation in

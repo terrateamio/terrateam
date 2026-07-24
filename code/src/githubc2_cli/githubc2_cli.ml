@@ -1,5 +1,3 @@
-module List_result = Abbs_future_combinators.List_result
-
 let run () =
   let open Abbs_future_combinators.Infix_result_monad in
   let client = Githubc2_abb.create ~user_agent:"Gihubc2 Test Client" (`Token Sys.argv.(1)) in

@@ -2,7 +2,6 @@ type err = [ `Tag_query_error of string * string ] [@@deriving show]
 
 let state checkpoint =
   let module I = Terrat_tag_query_parser.MenhirInterpreter in
-  let module S = MenhirLib.General in
   match I.top checkpoint with
   | None -> 0
   | Some (I.Element (s, _, _, _)) -> I.number s

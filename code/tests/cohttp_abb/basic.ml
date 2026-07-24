@@ -6,7 +6,7 @@ module Buffered = Abb_io_buffered.Make (Abb.Future)
 let basic =
   Oth_abb.test ~desc:"Basic http test" ~name:"Basic" (fun () ->
       let open Abb.Future.Infix_monad in
-      let rc, ws = Buffered.of_bytes (Bytes.of_string "HTTP/1.1 200 OK\r\nFoo: bar\r\n\r\n") in
+      let rc, _ = Buffered.of_bytes (Bytes.of_string "HTTP/1.1 200 OK\r\nFoo: bar\r\n\r\n") in
       let rs, wc = Buffered.of_bytes (Bytes.of_string "") in
       let transport = Http.Client.Transport.default rc wc in
       Http.Client.do_request ~flush:true transport (Http.Request.make_for_client `GET (Uri.make ()))

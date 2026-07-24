@@ -42,7 +42,7 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
       let module Menu = Brtl_js2.Kit.Ui.Value_selector.Menu in
       let t = Brtl_js2.State.app_state state in
       let { State.selected_installation; installations; _ } = t.State.v in
-      let sel, set_sel = Brtl_js2.Note.S.create ~eq:Vcs.Installation.equal selected_installation in
+      let sel, _ = Brtl_js2.Note.S.create ~eq:Vcs.Installation.equal selected_installation in
       Menu.el
         (Menu.v'
            ~action:(fun i ->
@@ -220,7 +220,7 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
       | Error _ -> raise (Failure "nyi")
   end
 
-  let new_installation_install installation_id state =
+  let new_installation_install installation_id _ =
     Abb_js.Future.return
       (Brtl_js2.Output.navigate (Uri.of_string ("/i/" ^ installation_id ^ "/quickstart")))
 
@@ -229,7 +229,6 @@ module Make (Vcs : Terrat_ui_js_service_vcs.S) = struct
     let consumed_path = Brtl_js2.State.consumed_path state in
     let t = Brtl_js2.State.app_state state in
     let vcs = t.State.vcs in
-    let module R = Terrat_api_user.List_github_installations.Responses.OK in
     Vcs.Api.installations vcs
     >>= function
     | Ok [] -> Vcs.Comp.No_installations.run (Brtl_js2.State.with_app_state vcs state)

@@ -2531,7 +2531,6 @@ let of_version_1_tags_branches branches =
 let of_version_1_tags tags =
   let open CCResult.Infix in
   let module T = Terrat_repo_config_custom_tags in
-  let module Tb = Terrat_repo_config_custom_tags_branch in
   let { T.branch; dest_branch } = tags in
   map_opt of_version_1_tags_branches branch
   >>= fun branch ->
@@ -3092,13 +3091,11 @@ let to_version_1_plan_mode = function
   | Workflow_step.Plan.Mode.Fast_and_loose -> `Fast_and_loose
 
 let to_version_1_hooks_op_env_exec env =
-  let module Op = Terrat_repo_config.Hook_op in
   let module E = Terrat_repo_config.Hook_op_env_exec in
   let { Workflow_step.Env.Exec.cmd; name; sensitive; trim_trailing_newlines } = env in
   { E.cmd; method_ = Some `Exec; name; sensitive; trim_trailing_newlines; type_ = `Env }
 
 let to_version_1_hooks_op_env_source env =
-  let module Op = Terrat_repo_config.Hook_op in
   let module E = Terrat_repo_config.Hook_op_env_source in
   let { Workflow_step.Env.Source.cmd; sensitive } = env in
   { E.cmd; method_ = `Source; sensitive; type_ = `Env }
