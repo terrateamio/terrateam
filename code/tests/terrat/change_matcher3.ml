@@ -1679,9 +1679,7 @@ let test_index_module_in_same_dir =
   Oth.test ~name:"Test basic index" (fun _ ->
       let module Idx = Terrat_base_repo_config_v1.Index in
       let index =
-        Idx.make
-          ~symlinks:[]
-          [ ("tf", Idx.Dep.[ Module "./modules/foo" ]); ("tf/modules/foo", Idx.Dep.[]) ]
+        Idx.make ~symlinks:[] [ ("tf", Idx.Dep.[ Module "./modules/foo" ]); ("tf/modules/foo", []) ]
       in
       let file_list = [ "tf/modules/foo/main.tf"; "tf/main.tf" ] in
       let repo_config =
@@ -2473,11 +2471,13 @@ let test =
       test_recursive_dirs_template_dir;
       test_recursive_dirs_aws_prod;
       test_recursive_dirs_tags;
+      test_recursive_dirs_without_tags;
       test_bad_dir_config_iam;
       test_bad_dir_config_ec2;
       test_bad_dir_config_ec2_root_dir_change;
       test_bad_dir_config_s3;
       test_module_dir_with_root_dir;
+      test_large_directory_count_matching_files;
       test_large_directory_count_unmatching_files;
       (* FIX: This fails on ARM builds, for now just comment it out and fix later *)
       (* test_large_directory_count_matching_files; *)
