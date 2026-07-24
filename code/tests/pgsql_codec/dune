@@ -1,3 +1,3 @@
 (test
  (name test)
- (libraries pgsql_codec oth))
+ (libraries oth pgsql_codec))
