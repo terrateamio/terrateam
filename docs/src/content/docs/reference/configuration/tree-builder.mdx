@@ -29,30 +29,33 @@ When `tree_builder` is enabled, Terrateam executes your custom script during the
 
 ### Output
 
-The script must output valid JSON to stdout with the following structure
+The script must output a JSON array of file objects to stdout
 
 ```json
-{
-  "files": [
-    {
-      "path": "path/to/file1.tf",
-      "id": "abc123def456"
-    },
-    {
-      "path": "path/to/file2.tf",
-      "id": "789ghi012jkl"
-    }
-  ]
-}
+[
+  {
+    "path": "path/to/file1.tf",
+    "id": "abc123def456"
+  },
+  {
+    "path": "path/to/file2.tf",
+    "id": "789ghi012jkl"
+  }
+]
 ```
+
+The output is a bare array, not an object wrapping a `files` key. A script that
+outputs `{"files": [...]}` fails with `TypeError: string indices must be
+integers`.
+
+An empty array is valid and means the repository has no files to track.
 
 ### Output Fields
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
-| files | Array | Yes | Array of file objects |
-| files[].path | String | Yes | Relative path from repository root |
-| files[].id | String | Yes | Unique identifier for the file (typically a hash). Terrateam compares IDs between branches to detect changes |
+| [].path | String | Yes | Relative path from repository root |
+| [].id | String | No | Unique identifier for the file (typically a hash). Terrateam compares IDs between branches to detect changes |
 
 ## How It Works
 

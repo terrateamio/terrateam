@@ -357,6 +357,13 @@ module Db = struct
         /% Var.(array (option (boolean "changed")))
         /% Var.(str_array (option (text "id"))))
 
+    let insert_repo_tree_build =
+      Pgsql_io.Typed_sql.(
+        sql
+        /^ read [%blob "sql/insert_repo_tree_build.sql"]
+        /% Var.bigint "installation_id"
+        /% Var.text "sha")
+
     let upsert_flow_state_query = read [%blob "sql/update_flow_state.sql"]
 
     let upsert_flow_state () =
@@ -454,6 +461,16 @@ module Db = struct
         /% Var.bigint "installation_id"
         /% Var.text "sha"
         /% Var.(option (text "base_sha")))
+
+    let select_repo_tree_build =
+      Pgsql_io.Typed_sql.(
+        sql
+        //
+        (* sha *)
+        Ret.text
+        /^ read [%blob "sql/select_repo_tree_build.sql"]
+        /% Var.bigint "installation_id"
+        /% Var.text "sha")
 
     let select_next_work_manifest =
       Pgsql_io.Typed_sql.(
@@ -1266,7 +1283,22 @@ module Db = struct
               (CCList.map (fun { I.id; _ } -> id) chunk)))
       (CCList.chunks not_a_bad_chunk_size files)
     >>= function
-    | Ok () -> Abb.Future.return (Ok ())
+    | Ok () -> (
+        (* Record the build itself.  An empty tree stores no rows, so this is
+           the only way to tell a built-but-empty tree apart from one that was
+           never built. *)
+        Metrics.Psql_query_time.time (Metrics.psql_query_time "insert_repo_tree_build") (fun () ->
+            Pgsql_io.Prepared_stmt.execute
+              db
+              Sql.insert_repo_tree_build
+              (CCInt64.of_int @@ Api.Account.id account)
+              (Api.Ref.to_string ref_))
+        >>= function
+        | Ok () -> Abb.Future.return (Ok ())
+        | Error (#Pgsql_io.err as err) ->
+            Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+            Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
+            Abb.Future.return (Error `Error))
     | Error (#Pgsql_io.err as err) ->
         Prmths.Counter.inc_one Metrics.pgsql_errors_total;
         Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
@@ -1607,7 +1639,23 @@ module Db = struct
           (Api.Ref.to_string ref_)
           (CCOption.map Api.Ref.to_string base_ref))
     >>= function
-    | Ok [] -> Abb.Future.return (Ok None)
+    | Ok [] -> (
+        (* No rows is ambiguous: either the tree was built and is empty, or it
+           was never built.  [repo_tree_builds] tells the two apart. *)
+        Metrics.Psql_query_time.time (Metrics.psql_query_time "select_repo_tree_build") (fun () ->
+            Pgsql_io.Prepared_stmt.fetch
+              db
+              Sql.select_repo_tree_build
+              ~f:CCFun.id
+              (CCInt64.of_int @@ Api.Account.id account)
+              (Api.Ref.to_string ref_))
+        >>= function
+        | Ok (_ :: _) -> Abb.Future.return (Ok (Some []))
+        | Ok [] -> Abb.Future.return (Ok None)
+        | Error (#Pgsql_io.err as err) ->
+            Prmths.Counter.inc_one Metrics.pgsql_errors_total;
+            Logs.err (fun m -> m "%s : ERROR : %a" request_id Pgsql_io.pp_err err);
+            Abb.Future.return (Error `Error))
     | Ok files -> Abb.Future.return (Ok (Some files))
     | Error (#Pgsql_io.err as err) ->
         Prmths.Counter.inc_one Metrics.pgsql_errors_total;
