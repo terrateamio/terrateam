@@ -339,6 +339,7 @@ let test =
       route_extra_just_slash;
       route_any;
       route_any_no_extra;
+      route_any_just_slash;
       route_any_no_extra;
       route_homepage;
       route_homepage_slash;

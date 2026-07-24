@@ -364,13 +364,6 @@ let test_parse_failure_8 =
         Error (`Tag_query_error (query, Parse_errors.lparen_rparen))
         = Terrat_tag_query.of_string query))
 
-let test_parse_failure_8 =
-  Oth.test ~name:"Parse failure 8" (fun _ ->
-      let query = "not ()" in
-      assert (
-        Error (`Tag_query_error (query, Parse_errors.lparen_rparen))
-        = Terrat_tag_query.of_string query))
-
 let test_parse_failure_9 =
   Oth.test ~name:"Parse failure 9" (fun _ ->
       let query = "(foo" in
@@ -473,6 +466,7 @@ let test =
     [
       test_simple_match;
       test_simple_no_match;
+      test_simple_and;
       test_and;
       test_dir_glob_at_start;
       test_dir_glob_inner;

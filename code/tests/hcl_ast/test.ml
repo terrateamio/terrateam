@@ -1,4 +1,4 @@
-let make_success_test_expected path =
+let[@warning "-32"] make_success_test_expected path =
   Oth.test
     ~name:(Filename.basename path ^ ".expected")
     (fun _ ->
@@ -10,7 +10,7 @@ let make_success_test_expected path =
             (CCFun.flip CCIO.write_line (Yojson.Safe.pretty_to_string (Hcl_ast.to_yojson ast)))
       | Error (#Hcl_ast.err as err) -> raise (Failure (Hcl_ast.show_err err)))
 
-let make_fail_test_expected path =
+let[@warning "-32"] make_fail_test_expected path =
   Oth.test
     ~name:(Filename.basename path ^ ".expected")
     (fun _ ->

@@ -9,14 +9,12 @@ type t = Hcl_parser_value.t list [@@deriving show, eq, yojson]
 
 let state checkpoint =
   let module I = Hcl_parser.MenhirInterpreter in
-  let module S = MenhirLib.General in
   match I.top checkpoint with
   | None -> 0
   | Some (I.Element (s, _, _, _)) -> I.number s
 
 let position checkpoint =
   let module I = Hcl_parser.MenhirInterpreter in
-  let module S = MenhirLib.General in
   match I.top checkpoint with
   | None -> None
   | Some (I.Element (_, _, { Lexing.pos_lnum; pos_bol; _ }, _)) ->
