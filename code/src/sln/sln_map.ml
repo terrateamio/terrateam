@@ -23,4 +23,12 @@ module String = struct
 
   let pp f formatter t = Assoc_string_list.pp f formatter (to_list t)
   let show f t = Assoc_string_list.show f (to_list t)
+  let keys_set m = keys m |> Iter.to_list |> Sln_set.String.of_list
+end
+
+module Uuidm = struct
+  include CCMap.Make (Uuidm)
+
+  let by_uuidm_lists pairs =
+    CCList.fold_left (fun acc (k, v) -> add_to_list k v acc) empty pairs |> bindings
 end
