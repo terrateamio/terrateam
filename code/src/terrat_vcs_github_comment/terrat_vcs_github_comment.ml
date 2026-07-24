@@ -361,7 +361,7 @@ module S = struct
         gates
         t.work_manifest
     in
-    CCString.length @@ Yojson.Safe.to_string @@ `String body
+    CCString.length body
 
   let dirspace el = el.dirspace
   let strategy el = el.strategy
@@ -371,8 +371,8 @@ module S = struct
     let module P = Terrat_vcs_github_comment_publishers in
     P.dirspace_compare (el1.dirspace, el1.steps) (el2.dirspace, el2.steps)
 
-  (* Github Limits it to 2^16 = 65536
+  (* Github limits comments to 65536 characters.
      https://github.com/mshick/add-pr-comment/issues/93#issuecomment-1531415467
-     I set it to a smaller value *)
-  let max_comment_length = 65536 / 2
+     Leave a small buffer for any GitHub-side overhead. *)
+  let max_comment_length = 65536 - 512
 end
