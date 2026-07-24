@@ -12,7 +12,7 @@ services:
       - terrateam
 
   db:
-    image: postgres:14.5-alpine
+    image: postgres:18.4-alpine
     user: postgres
     environment:
       POSTGRES_PASSWORD: "terrateam"
@@ -24,7 +24,7 @@ services:
       timeout: 3s
       retries: 5
     volumes:
-      - db:/var/lib/postgresql/data/
+      - db:/var/lib/postgresql
     networks:
       - terrateam
 
