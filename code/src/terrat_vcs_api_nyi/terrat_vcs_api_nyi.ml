@@ -127,6 +127,7 @@ let create_commit_checks ~request_id client repo ref_ checks = raise (Failure "n
 let fetch_commit_checks ~request_id client repo ref_ = raise (Failure "nyi")
 let fetch_pull_request_reviews ~request_id client repo pull_request = raise (Failure "nyi")
 let fetch_pull_request_requested_reviews ~request_id repo pull_number client = raise (Failure "nyi")
+let fetch_pull_request_review_decision ~request_id repo pull_number client = raise (Failure "nyi")
 
 let merge_pull_request ~request_id ?retain_pr_title client pull_request merge_strategy =
   raise (Failure "nyi")

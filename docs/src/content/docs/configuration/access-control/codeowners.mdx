@@ -29,9 +29,11 @@ apply_requirements:
 ```
 
 With this configuration:
-- Terrateam will check that all CODEOWNERS have approved the pull request
-- If any required CODEOWNERS review is pending or has requested changes, the apply will be blocked
-- The apply can only proceed once all CODEOWNERS have approved
+- Terrateam will check that your VCS considers the pull request approved
+- If a required CODEOWNERS review is still pending or has requested changes, the apply will be blocked
+- The apply can proceed as soon as the CODEOWNERS requirement is satisfied
+
+Terrateam does not parse CODEOWNERS itself. It reads your VCS's own review verdict for the pull request, which means the apply gate matches the merge gate exactly. In particular, when a path lists more than one owner, [an approval from any one of them](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners) satisfies both. You never need to restate your CODEOWNERS file in `.terrateam/config.yml`.
 
 ### Environment-Specific CODEOWNERS Enforcement
 
@@ -69,10 +71,20 @@ When `require_completed_reviews: true` is configured:
 
 3. When someone runs `terrateam apply`, Terrateam checks:
    - Whether approval is required based on your configuration
-   - If all CODEOWNERS have approved the pull request
-   - If any required reviews are still pending or have requested changes
+   - Whether your VCS reports the pull request as approved
 
-4. If all CODEOWNERS have approved, the apply proceeds
+4. If the VCS reports the pull request as approved, the apply proceeds
 
-5. If any CODEOWNERS review is incomplete or has requested changes, Terrateam blocks the apply with a message indicating which reviews are still needed
+5. Otherwise Terrateam blocks the apply, listing any reviews that are still outstanding
 </Steps>
+
+## Requirements
+
+For the VCS verdict to account for code owners, the branch the pull request targets must have a branch protection rule or ruleset with **Require review from Code Owners** enabled. Without it, CODEOWNERS still auto-requests reviewers, but the VCS does not treat their approval as mandatory, and neither does Terrateam.
+
+Two cases behave differently:
+
+- **The branch requires reviews, but not from code owners.** The verdict counts approvals without regard to who gave them, so `require_completed_reviews` enforces the approval count rather than ownership.
+- **The branch requires no reviews at all.** There is no verdict to read. Terrateam falls back to requiring that no review request on the pull request is still outstanding.
+
+GitLab exposes no equivalent verdict, so on GitLab `require_completed_reviews` always uses the outstanding-review-request behavior.

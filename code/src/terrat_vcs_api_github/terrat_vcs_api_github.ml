@@ -797,6 +797,36 @@ let fetch_pull_request_requested_reviews ~request_id repo pull_number client =
           m "%s : FETCH_PULL_REQUEST_REQUESTED_REVIEWS: %a" request_id Githubc2_abb.pp_call_err err);
       Abb.Future.return (Error `Error)
 
+let fetch_pull_request_review_decision ~request_id repo pull_number client =
+  let module D = Terrat_pull_request_review.Decision in
+  let open Abb.Future.Infix_monad in
+  Terrat_github.fetch_pull_request_review_decision
+    ~owner:repo.Repo.owner
+    ~repo:repo.Repo.name
+    ~pull_number
+    client.Client.client
+  >>= function
+  | Ok None -> Abb.Future.return (Ok None)
+  | Ok (Some "APPROVED") -> Abb.Future.return (Ok (Some D.Approved))
+  | Ok (Some "CHANGES_REQUESTED") -> Abb.Future.return (Ok (Some D.Changes_requested))
+  | Ok (Some "REVIEW_REQUIRED") -> Abb.Future.return (Ok (Some D.Review_required))
+  | Ok (Some decision) ->
+      (* A value outside the documented enum means GitHub changed the API under
+         us.  Erroring is safer than guessing which way it should resolve. *)
+      Prmths.Counter.inc_one Metrics.github_errors_total;
+      Logs.err (fun m ->
+          m "%s : FETCH_PULL_REQUEST_REVIEW_DECISION : UNKNOWN : %s" request_id decision);
+      Abb.Future.return (Error `Error)
+  | Error (#Terrat_github.fetch_pull_request_review_decision_err as err) ->
+      Prmths.Counter.inc_one Metrics.github_errors_total;
+      Logs.err (fun m ->
+          m
+            "%s : FETCH_PULL_REQUEST_REVIEW_DECISION : %a"
+            request_id
+            Terrat_github.pp_fetch_pull_request_review_decision_err
+            err);
+      Abb.Future.return (Error `Error)
+
 let merge_pull_request' ?(retain_pr_title = false) request_id client pull_request merge_strategy =
   let open Abbs_future_combinators.Infix_result_monad in
   let module Ms = Terrat_base_repo_config_v1.Automerge.Merge_strategy in

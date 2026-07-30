@@ -91,6 +91,13 @@ type minimize_comment_err =
   ]
 [@@deriving show]
 
+type fetch_pull_request_review_decision_err =
+  [ Githubc2_abb.call_err
+  | `Graphql_err of string list
+  | `Not_found
+  ]
+[@@deriving show]
+
 type publish_reaction_err =
   [ Githubc2_abb.call_err
   | `Unprocessable_entity of Githubc2_components.Validation_error.t
@@ -296,6 +303,16 @@ val minimize_comment :
   comment_id:int ->
   Githubc2_abb.t ->
   (unit, [> minimize_comment_err ]) result Abb.Future.t
+
+(** GitHub's [PullRequest.reviewDecision], which is its own verdict on the target branch's
+    required-review rule, CODEOWNERS included. [None] means GitHub returned [null], which happens
+    when the branch requires no reviews at all. *)
+val fetch_pull_request_review_decision :
+  owner:string ->
+  repo:string ->
+  pull_number:int ->
+  Githubc2_abb.t ->
+  (string option, [> fetch_pull_request_review_decision_err ]) result Abb.Future.t
 
 val react_to_comment :
   ?content:Githubc2_reactions.Create_for_issue_comment.Request_body.Primary.Content.t ->

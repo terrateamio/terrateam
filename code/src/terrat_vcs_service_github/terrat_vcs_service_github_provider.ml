@@ -2310,7 +2310,14 @@ module Apply_requirements = struct
         (* Abb.Future.return (Error (`Invalid_query query)) *))
     | M.Any -> Abb.Future.return (Ok true)
 
-  let compute_approved ~request_id client repo approved approved_reviews requested_reviews =
+  let compute_approved
+      ~request_id
+      client
+      repo
+      approved
+      approved_reviews
+      requested_reviews
+      review_decision =
     let module Match_set = CCSet.Make (Terrat_base_repo_config_v1.Access_control.Match) in
     let module Match_map = CCMap.Make (Terrat_base_repo_config_v1.Access_control.Match) in
     let open Abbs_future_combinators.Infix_result_monad in
@@ -2359,11 +2366,25 @@ module Apply_requirements = struct
          else any_of_count - CCList.length any_of_results)
     in
     let any_of_passed = missing_any_of = 0 in
+    (* GitHub's [reviewDecision] already accounts for CODEOWNERS, including that
+       an approval from any one owner of a path satisfies that path.  Prefer it
+       over the requested reviewers, which only say who has an outstanding
+       request and so keep reporting a second owner as missing long after
+       GitHub considers the pull request approved.  [reviewDecision] is [None]
+       when the target branch requires no reviews at all, in which case there is
+       no verdict to defer to and the requested reviewers are all we have. *)
     let required_reviews_passed =
-      (not require_completed_reviews) || CCList.is_empty requested_reviews
+      let module D = Terrat_pull_request_review.Decision in
+      (not require_completed_reviews)
+      ||
+      match review_decision with
+      | Some D.Approved -> true
+      | Some (D.Changes_requested | D.Review_required) -> false
+      | None -> CCList.is_empty requested_reviews
     in
     let missing_reviews =
-      all_of_missing @ if require_completed_reviews then requested_reviews else []
+      all_of_missing
+      @ if require_completed_reviews && not required_reviews_passed then requested_reviews else []
     in
     Logs.info (fun m ->
         m
@@ -2416,8 +2437,16 @@ module Apply_requirements = struct
         commit_checks
     in
     let { Ar.checks; _ } = R.apply_requirements repo_config in
+    (* Only worth an extra API call if some check actually asks for it. *)
+    let requires_review_decision =
+      CCList.exists
+        (fun { Abc.approved = { Ar.Approved.enabled; require_completed_reviews; _ }; _ } ->
+          enabled && require_completed_reviews)
+        checks
+    in
     Abbs_future_combinators.Infix_result_app.(
-      (fun reviews commit_checks requested_reviews -> (reviews, commit_checks, requested_reviews))
+      (fun reviews commit_checks requested_reviews review_decision ->
+        (reviews, commit_checks, requested_reviews, review_decision))
       <$> Abbs_time_it.run (log_time request_id "FETCH_APPROVED_TIME") (fun () ->
           Api.fetch_pull_request_reviews
             ~request_id
@@ -2435,8 +2464,16 @@ module Apply_requirements = struct
             ~request_id
             (Api.Pull_request.repo pull_request)
             (Api.Pull_request.id pull_request)
-            client))
-    >>= fun (reviews, commit_checks, requested_reviews) ->
+            client)
+      <*> Abbs_time_it.run (log_time request_id "FETCH_REVIEW_DECISION") (fun () ->
+          if requires_review_decision then
+            Api.fetch_pull_request_review_decision
+              ~request_id
+              (Api.Pull_request.repo pull_request)
+              (Api.Pull_request.id pull_request)
+              client
+          else Abb.Future.return (Ok None)))
+    >>= fun (reviews, commit_checks, requested_reviews, review_decision) ->
     let approved_reviews =
       CCList.filter
         (function
@@ -2482,6 +2519,7 @@ module Apply_requirements = struct
                   approved
                   approved_reviews
                   requested_reviews
+                  review_decision
                 >>= fun (approved_result, missing_reviews, missing_any_of_count, any_of_count) ->
                 let module Ac = Terrat_base_repo_config_v1.Apply_requirements.Approved in
                 let { Ac.any_of; _ } = approved in
