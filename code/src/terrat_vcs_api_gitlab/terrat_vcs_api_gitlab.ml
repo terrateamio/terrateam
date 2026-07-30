@@ -961,6 +961,10 @@ let fetch_pull_request_requested_reviews ~request_id repo pull_number client =
           m "%s : FETCH_PULL_REQUEST_REQUESTED_REVIEWS : %a" request_id Openapic_abb.pp_call_err err);
       Abb.Future.return (Error `Error)
 
+(* GitLab has no equivalent of GitHub's [reviewDecision], so there is no verdict
+   to report and [require_completed_reviews] keeps using requested reviewers. *)
+let fetch_pull_request_review_decision ~request_id:_ _ _ _ = Abb.Future.return (Ok None)
+
 let merge_pull_request ~request_id ?(retain_pr_title = false) client pull_request merge_strategy =
   let module Gl =
     Gitlabc_projects_merge_requests.PutApiV4ProjectsIdMergeRequestsMergeRequestIidMerge

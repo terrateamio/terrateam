@@ -180,6 +180,16 @@ module type S = sig
     Client.t ->
     (Terrat_base_repo_config_v1.Access_control.Match.t list, [> `Error ]) result Abb.Future.t
 
+  (** The VCS's verdict on the pull request's required reviews. [None] means the VCS has no verdict,
+      either because the target branch requires no reviews or because the VCS does not implement
+      this. *)
+  val fetch_pull_request_review_decision :
+    request_id:string ->
+    Repo.t ->
+    Pull_request.Id.t ->
+    Client.t ->
+    (Terrat_pull_request_review.Decision.t option, [> `Error ]) result Abb.Future.t
+
   val fetch_diff_files :
     request_id:string ->
     base_ref:Ref.t ->

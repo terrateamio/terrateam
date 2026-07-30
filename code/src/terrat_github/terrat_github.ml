@@ -133,6 +133,13 @@ type minimize_comment_err =
   ]
 [@@deriving show]
 
+type fetch_pull_request_review_decision_err =
+  [ Githubc2_abb.call_err
+  | `Graphql_err of string list
+  | `Not_found
+  ]
+[@@deriving show]
+
 type publish_reaction_err =
   [ Githubc2_abb.call_err
   | `Unprocessable_entity of Githubc2_components.Validation_error.t
@@ -548,6 +555,114 @@ let minimize_comment ~owner ~repo ~comment_id client =
           | `OK -> Abb.Future.return (Ok ())
           | `Not_found -> Abb.Future.return (Error `Not_found)))
   | `Not_found _ -> Abb.Future.return (Error `Not_found)
+
+(* [reviewDecision] is GitHub's own verdict on whether the pull request
+   satisfies the target branch's required-review rule, including CODEOWNERS
+   matching.  There is no REST equivalent, so this has to go through GraphQL.
+   The value is [null] when the branch has no rule requiring reviews at all,
+   which is why the result is an option. *)
+let fetch_pull_request_review_decision ~owner ~repo ~pull_number client =
+  Prmths.Counter.inc_one (Metrics.fn_call_total "fetch_pull_request_review_decision");
+  let open Abbs_future_combinators.Infix_result_monad in
+  let module Body = struct
+    module Variables = struct
+      type t = {
+        owner : string;
+        repo : string;
+        pull_number : int;
+      }
+      [@@deriving to_yojson]
+    end
+
+    type t = {
+      query : string;
+      variables : Variables.t;
+    }
+    [@@deriving to_yojson]
+  end in
+  let module Resp = struct
+    module Err = struct
+      type t = { message : string } [@@deriving of_yojson { strict = false }, show]
+    end
+
+    module Pull_request = struct
+      type t = { review_decision : string option [@key "reviewDecision"] [@default None] }
+      [@@deriving of_yojson { strict = false }]
+    end
+
+    module Repository = struct
+      type t = { pull_request : Pull_request.t option [@key "pullRequest"] [@default None] }
+      [@@deriving of_yojson { strict = false }]
+    end
+
+    module Data = struct
+      type t = { repository : Repository.t option [@default None] }
+      [@@deriving of_yojson { strict = false }]
+    end
+
+    type t = {
+      data : Data.t option; [@default None]
+      errors : Err.t list option; [@default None]
+    }
+    [@@deriving of_yojson { strict = false }]
+  end in
+  let create_review_decision_request url =
+    let query =
+      {|
+        query($owner: String!, $repo: String!, $pull_number: Int!) {
+            repository(owner: $owner, name: $repo) {
+                pullRequest(number: $pull_number) {
+                reviewDecision
+                }
+            }
+        }
+      |}
+    in
+    let body = { Body.query; variables = { Body.Variables.owner; repo; pull_number } } in
+    Openapi.Request.make
+      ~body:(Body.to_yojson body)
+      ~headers:[]
+      ~url_params:[]
+      ~query_params:[]
+      ~url
+      ~responses:
+        [
+          ("200", Openapi.of_json_body (fun r -> `OK r) Resp.of_yojson);
+          ("404", fun _ -> Ok `Not_found);
+        ]
+      `Post
+  in
+  (* A GraphQL error comes back as a 200 with an [errors] array, so it has to be
+     pulled apart rather than relying on the status code. *)
+  let decision = function
+    | { Resp.errors = Some (_ :: _ as errs); _ } ->
+        Abb.Future.return
+          (Error (`Graphql_err (CCList.map (fun { Resp.Err.message } -> message) errs)))
+    | {
+        Resp.data =
+          Some
+            {
+              Resp.Data.repository =
+                Some { Resp.Repository.pull_request = Some { Resp.Pull_request.review_decision } };
+            };
+        _;
+      } -> Abb.Future.return (Ok review_decision)
+    | _ -> Abb.Future.return (Error `Not_found)
+  in
+  let url = "/graphql" in
+  let request = create_review_decision_request url in
+  call client request
+  >>= fun resp ->
+  match Openapi.Response.value resp with
+  | `OK resp -> decision resp
+  | `Not_found -> (
+      let url = "/api/graphql" in
+      let request = create_review_decision_request url in
+      call client request
+      >>= fun resp ->
+      match Openapi.Response.value resp with
+      | `OK resp -> decision resp
+      | `Not_found -> Abb.Future.return (Error `Not_found))
 
 let react_to_comment ?(content = `Rocket) ~owner ~repo ~comment_id client =
   Prmths.Counter.inc_one (Metrics.fn_call_total "react_to_comment");

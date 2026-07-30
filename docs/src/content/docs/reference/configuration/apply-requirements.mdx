@@ -66,7 +66,7 @@ By adjusting these settings, you can customize the apply requirements to match y
 `require_completed_reviews` is an Enterprise Edition feature. It is included in [Hosted SaaS](https://terrateam.io) and self-hosted Enterprise deployments. Setting it to `true` on the Open Source Edition is not permitted — Terrateam rejects the configuration and posts a comment on the pull request. See [Editions](/editions/).
 :::
 
-When `require_completed_reviews: true`, Terrateam blocks `apply` until every reviewer that the VCS marks as required — including CODEOWNERS — has approved the pull request. Use this to enforce CODEOWNERS as a hard gate on the apply step rather than only on merge.
+When `require_completed_reviews: true`, Terrateam blocks `apply` until GitHub itself reports the pull request as approved. Use this to enforce CODEOWNERS as a hard gate on the apply step rather than only on merge.
 
 ```yaml
 apply_requirements:
@@ -76,6 +76,15 @@ apply_requirements:
         enabled: true
         require_completed_reviews: true
 ```
+
+Terrateam does not parse CODEOWNERS. It reads GitHub's own review verdict for the pull request, so the apply gate agrees exactly with GitHub's merge gate — including the rule that [an approval from any one owner of a path satisfies that path](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners). When two teams own the same file, one approval is enough for both GitHub and Terrateam. Nothing in `.terrateam/config.yml` needs to mirror your CODEOWNERS file, and edits to CODEOWNERS take effect immediately.
+
+For the verdict to reflect code owners, the target branch must have a branch protection rule or ruleset with **Require review from Code Owners** enabled. Two cases behave differently:
+
+- **The branch requires reviews, but not from code owners.** GitHub's verdict only counts approvals and ignores who gave them, so `require_completed_reviews` enforces the approval count rather than ownership.
+- **The branch requires no reviews at all.** GitHub has no verdict to give. Terrateam falls back to requiring that no review request on the pull request is still outstanding.
+
+On GitLab, `require_completed_reviews` always uses the outstanding-review-request behavior, as GitLab exposes no equivalent verdict.
 
 For full guidance, scoped examples, and how this interacts with CODEOWNERS files, see the [CODEOWNERS enforcement guide](/configuration/access-control/codeowners).
 
