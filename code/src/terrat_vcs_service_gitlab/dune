@@ -15,6 +15,7 @@
   terrat_session
   terrat_sql_of_tag_query
   terrat_telemetry
+  terrat_user
   terrat_vcs_access_token
   terrat_vcs_api_gitlab
   terrat_vcs_event_evaluator
