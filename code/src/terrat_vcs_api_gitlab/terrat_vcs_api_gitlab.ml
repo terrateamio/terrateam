@@ -466,11 +466,93 @@ let comment_on_pull_request ~request_id client pull_request body =
           m "%s : COMMENT_ON_PULL_REQUEST : %a" request_id Openapic_abb.pp_call_err err);
       Abb.Future.return (Error `Error)
 
-let delete_pull_request_comment ~request_id:_ _client _pull_request _comment_id =
-  raise (Failure "nyi")
+let delete_pull_request_comment ~request_id client pull_request comment_id =
+  let module Gl =
+    Gitlabc_projects_merge_requests.DeleteApiV4ProjectsIdMergeRequestsMergeRequestIidNotesNotesId
+  in
+  let run =
+    let open Abbs_future_combinators.Infix_result_monad in
+    call
+      client.Client.client
+      Gl.(
+        make
+          (Parameters.make
+             ~id:(CCInt.to_string @@ Repo.id @@ Terrat_pull_request.repo pull_request)
+             ~merge_request_iid:(Terrat_pull_request.id pull_request)
+             ~note_id:comment_id))
+    >>= fun resp ->
+    match Openapi.Response.value resp with
+    | `OK -> Abb.Future.return (Ok ())
+    | `Not_found -> Abb.Future.return (Error `Not_found)
+  in
+  let open Abb.Future.Infix_monad in
+  run
+  >>= function
+  | Ok () -> Abb.Future.return (Ok ())
+  | Error (#Gl.Responses.t as err) ->
+      Logs.err (fun m ->
+          m "%s : DELETE_COMMENT_ON_PULL_REQUEST : %a" request_id Gl.Responses.pp err);
+      (* Ignore all errors as this can fail for a bunch of reasons and we don't
+         want to block the actual commenting *)
+      Abb.Future.return (Ok ())
+  | Error (#Openapic_abb.call_err as err) ->
+      Logs.err (fun m ->
+          m "%s : DELETE_COMMENT_ON_PULL_REQUEST : %a" request_id Openapic_abb.pp_call_err err);
+      Abb.Future.return (Ok ())
 
-let minimize_pull_request_comment ~request_id:_ _client _pull_request _comment_id =
-  raise (Failure "nyi")
+(* GitLab has no equivalent of GitHub's "minimize comment", so collapse the
+   note instead: replace its body with a closed [<details>] block.
+
+   Unlike GitHub's minimize this does not keep the original output, and the
+   generated client is why.  Reading the note first in order to wrap its body
+   needs [API_Entities_Note], which declares [system], [id] and [project_id] as
+   [string option] where GitLab sends booleans and integers, so decoding a real
+   note fails with a conversion error.  That is what made the first attempt at
+   this silently do nothing while delete worked.
+
+   Collapsing to a marker is therefore what minimize means here, and it is the
+   outcome audit item 05 allows for.  The full output is still in the run page
+   the comment links to and in the GitLab CI log.  Preserving it inline needs
+   the client's note schema fixed first. *)
+let minimize_pull_request_comment ~request_id client pull_request comment_id =
+  let module Gl =
+    Gitlabc_projects_merge_requests.PutApiV4ProjectsIdMergeRequestsMergeRequestIidNotesNotesId
+  in
+  let body =
+    "<details><summary>Outdated output (minimized)</summary>\n\n\
+     This output was superseded by a later run.\n\n\
+     </details>"
+  in
+  let run =
+    let open Abbs_future_combinators.Infix_result_monad in
+    call
+      client.Client.client
+      Gl.(
+        make
+          (Parameters.make
+             ~body
+             ~id:(CCInt.to_string @@ Repo.id @@ Terrat_pull_request.repo pull_request)
+             ~merge_request_iid:(Terrat_pull_request.id pull_request)
+             ~note_id:comment_id))
+    >>= fun resp ->
+    match Openapi.Response.value resp with
+    | `OK -> Abb.Future.return (Ok ())
+    | `Not_found -> Abb.Future.return (Error `Not_found)
+  in
+  let open Abb.Future.Infix_monad in
+  run
+  >>= function
+  | Ok () -> Abb.Future.return (Ok ())
+  | Error (#Gl.Responses.t as err) ->
+      Logs.err (fun m ->
+          m "%s : MINIMIZE_COMMENT_ON_PULL_REQUEST : %a" request_id Gl.Responses.pp err);
+      (* Ignore all errors as this can fail for a bunch of reasons and we don't
+         want to block the actual commenting *)
+      Abb.Future.return (Ok ())
+  | Error (#Openapic_abb.call_err as err) ->
+      Logs.err (fun m ->
+          m "%s : MINIMIZE_COMMENT_ON_PULL_REQUEST : %a" request_id Openapic_abb.pp_call_err err);
+      Abb.Future.return (Ok ())
 
 let fetch_diff ~request_id ~client ~repo merge_request_iid =
   let module Gl =
@@ -685,9 +767,26 @@ let create_commit_checks ~request_id client repo ref_ checks =
     let module Glp = Gitlabc_projects_pipelines.GetApiV4ProjectsIdPipelines in
     let module Glpb = Gitlabc_components_api_entities_ci_pipelinebasic in
     let module Tcc = Terrat_commit_check in
-    (* For GitLab, we only care about the terrateam apply status checks.  Status
-       checks do not show the same as in GitHub, so creating the extras is not
-       valuable. *)
+    (* Only the "terrateam apply" check is published, and unlike GitHub this is
+       load bearing rather than a display preference.
+
+       A GitLab commit status is attached to a pipeline, and the pipeline's own
+       status is the aggregate of the statuses attached to it.  Every check
+       below is posted against the merge request's pipeline (see
+       [lookup_mr_pipeline_id]), so publishing a check per dirspace would fold
+       each one into that pipeline's result: a queued or failed plan for a
+       single directory would drive the whole pipeline to pending or failed.
+       That feeds [detailed_merge_status] as [ci_must_pass], so on a project
+       that requires a green pipeline to merge it would block the merge on
+       Terrateam's own bookkeeping, and it would also make the merge request
+       read as broken while a plan is merely in flight.
+
+       GitHub has no equivalent coupling: its checks are independent of one
+       another, which is why the GitHub service publishes them all.
+
+       If per-dirspace visibility is wanted here, it needs its own status
+       grouping rather than the merge request pipeline -- do not simply widen
+       this filter. *)
     let checks =
       CCList.filter (fun { Tcc.title; _ } -> CCString.equal title "terrateam apply") checks
     in
@@ -758,7 +857,7 @@ let create_commit_checks ~request_id client repo ref_ checks =
     let module C = Terrat_commit_check in
     let module Body = Gitlabc_components_postapiv4projectsidstatusessha in
     Abbs_future_combinators.List_result.iter
-      ~f:(fun { C.status; title; description; _ } ->
+      ~f:(fun { C.status; title; description; details_url } ->
         let body =
           {
             Body.context = "terrateam external";
@@ -774,7 +873,10 @@ let create_commit_checks ~request_id client repo ref_ checks =
               | C.Status.Completed -> `Success
               | C.Status.Failed -> `Failed
               | C.Status.Canceled -> `Canceled);
-            target_url = None;
+            (* GitLab renders this as the link on the status, the same as
+               GitHub's details_url.  It is empty when there is no work manifest
+               to point at, and GitLab rejects an empty string, so send None. *)
+            target_url = (if CCString.is_empty details_url then None else Some details_url);
           }
         in
         Logs.info (fun m ->

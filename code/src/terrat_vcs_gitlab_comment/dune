@@ -13,9 +13,12 @@
   terrat_scope
   terrat_tier
   terrat_vcs_api_gitlab
+  terrat_data
   terrat_vcs_comment
   terrat_vcs_gitlab_comment_templates
   terrat_vcs_provider2
   terrat_work_manifest3)
+ (preprocessor_deps
+  (glob_files sql/*.sql))
  (preprocess
-  (pps ppx_deriving.ord ppx_deriving.show ppx_deriving_yojson)))
+  (pps ppx_blob ppx_deriving.ord ppx_deriving.show ppx_deriving_yojson)))
