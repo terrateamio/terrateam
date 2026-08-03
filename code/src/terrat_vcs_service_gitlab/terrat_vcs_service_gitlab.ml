@@ -287,7 +287,15 @@ struct
       Abb.Future.return
         (Ok { config; drift; flow_state_cleanup; plan_cleanup; repo_config_cleanup; storage; exec })
 
-    let stop _t = raise (Failure "nyi")
+    let stop t =
+      let open Abb.Future.Infix_monad in
+      Abb.Future.abort t.drift
+      >>= fun () ->
+      Abb.Future.abort t.flow_state_cleanup
+      >>= fun () ->
+      Abb.Future.abort t.plan_cleanup
+      >>= fun () -> Abb.Future.abort t.repo_config_cleanup >>= fun () -> Abb.Future.return ()
+
     let routes t = Routes.routes t
 
     let get_user t user_id =
