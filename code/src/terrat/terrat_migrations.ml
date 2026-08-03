@@ -281,6 +281,12 @@ let migrations =
       run_sql [%blob "migrations/2026-07-05-extend-repo-configs-with-history.sql"] );
     ("add-tasks-user-id", run_sql [%blob "migrations/2026-07-23-add-tasks-user-id.sql"]);
     ("add-repo-tree-builds", run_sql [%blob "migrations/2026-07-21-add-repo-tree-builds.sql"]);
+    ( "add-unified-comment-tracking",
+      run_sql [%blob "migrations/2026-07-21-add-unified-comment-tracking.sql"] );
+    ( "add-unified-comment-workflow-step-output-index",
+      run_sql
+        ~mode:`Async
+        [%blob "migrations/2026-07-22-add-unified-comment-workflow-step-output-index.sql"] );
   ]
 
 let run config storage = Mig.run { Migrate.config; storage; tx = () } migrations
