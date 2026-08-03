@@ -472,6 +472,9 @@ let delete_pull_request_comment ~request_id:_ _client _pull_request _comment_id 
 let minimize_pull_request_comment ~request_id:_ _client _pull_request _comment_id =
   raise (Failure "nyi")
 
+let update_pull_request_comment ~request_id:_ _client _pull_request _comment_id _body =
+  raise (Failure "nyi")
+
 let fetch_diff ~request_id ~client ~repo merge_request_iid =
   let module Gl =
     Gitlabc_projects_merge_requests.GetApiV4ProjectsIdMergeRequestsMergeRequestIidDiffs
