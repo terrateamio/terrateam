@@ -182,6 +182,7 @@ module Tmpl = struct
 
   let plan_complete2 = jinja [%blob "tmpl/plan_complete2.tmpl"]
   let apply_complete2 = jinja [%blob "tmpl/apply_complete2.tmpl"]
+  let unified_comment = jinja [%blob "tmpl/unified_comment.tmpl"]
   let automerge_failure = read [%blob "tmpl/automerge_error.tmpl"]
 
   let premium_feature_err_access_control =

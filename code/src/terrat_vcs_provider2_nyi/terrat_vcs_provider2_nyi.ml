@@ -99,6 +99,8 @@ end
 
 module Comment = struct
   let publish_comment ~request_id client user pull_request msg = raise (Failure "nyi")
+  let drain_unified_comment ~request_id config storage work_manifest_id = raise (Failure "nyi")
+  let mark_unified_comment_dirty ~request_id db work_manifest_id = raise (Failure "nyi")
 end
 
 module Repo_config = struct

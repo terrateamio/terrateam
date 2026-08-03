@@ -22,6 +22,13 @@ delete_work_manifest_comments as (
         and gir.id = $repo_id
         and gir.installation_id = $installation_id
 ),
+delete_unified_comments as (
+    delete from github_unified_comments
+    using github_installation_repositories as gir
+    where github_unified_comments.repository = gir.id
+        and gir.id = $repo_id
+        and gir.installation_id = $installation_id
+),
 delete_plans as (
     delete from plans
     using work_manifests as wm, repo as r
