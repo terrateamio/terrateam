@@ -581,8 +581,27 @@ let fetch_pull_request ~request_id _account client repo merge_request_iid =
       | "opened", _, _, _ -> Terrat_pull_request.State.(Open Open_status.Mergeable)
       | "merged", _, Some merge_commit_sha, Some merged_at ->
           Terrat_pull_request.State.(Merged { Merged.merged_hash = merge_commit_sha; merged_at })
+      (* A merged merge request without a merge commit sha is not a broken
+         response.  GitLab leaves it null for some merge methods, squash in
+         particular, where the resulting commit is reported elsewhere.  Fall
+         back to the head of the source branch rather than crashing, since the
+         merged hash is only used to identify what was merged. *)
+      | "merged", _, merge_commit_sha, merged_at ->
+          Terrat_pull_request.State.(
+            Merged
+              {
+                Merged.merged_hash =
+                  CCOption.get_or ~default:(Ref.to_string branch_ref) merge_commit_sha;
+                merged_at = CCOption.get_or ~default:"" merged_at;
+              })
       | "closed", _, _, _ -> Terrat_pull_request.State.Closed
-      | _, _, _, _ -> assert false
+      (* "locked" is the remaining state GitLab documents, and it is transient
+         while a merge is in progress.  Treat anything unrecognised as closed:
+         it stops Terrateam acting on the merge request, which is the safe
+         outcome, and it used to raise. *)
+      | state, _, _, _ ->
+          Logs.info (fun m -> m "%s : UNEXPECTED_MERGE_REQUEST_STATE : %s" request_id state);
+          Terrat_pull_request.State.Closed
     in
     let draft = CCOption.get_or ~default:false draft in
     let provisional_merge_ref = None in
@@ -974,7 +993,12 @@ let merge_pull_request ~request_id ?(retain_pr_title = false) client pull_reques
   let is_squash = merge_strategy = Ms.Squash in
   let merge_commit_message = None in
   let merge_when_pipeline_succeeds = None in
-  let sha = None in
+  (* GitLab rejects a merge with "SHA must be provided when merging" unless the
+     head of the source branch is passed, so automerge failed outright without
+     it.  Sending it is also the safer behaviour: GitLab refuses the merge if
+     the branch has moved on since, rather than merging something newer than
+     what was planned and approved. *)
+  let sha = Some (Ref.to_string (Terrat_pull_request.branch_ref pull_request)) in
   let should_remove_source_branch = None in
   let skip_merge_train = None in
   let squash = Some is_squash in
@@ -1172,4 +1196,20 @@ let get_org_role ~request_id ~org user client =
       Logs.err (fun m -> m "%s : GET_ORG_ROLE : %a" request_id Openapic_abb.pp_call_err err);
       Abb.Future.return (Error `Error)
 
+(* Deliberately a constant rather than a lookup.  The only caller is
+   [Access_control.is_ci_changed], which asks whether a merge request touches
+   the CI configuration so the ci_config_update policy can be applied, and it
+   treats [None] as "the CI config did not change".
+
+   Checking the repository for the file would therefore be a bypass: a merge
+   request that *adds* .gitlab-ci.yml is exactly the case the policy exists to
+   catch, and the file does not yet exist on the branch being compared against,
+   so the lookup would return [None] and the policy would not fire.  Returning
+   the conventional path unconditionally means the diff is always checked
+   against it, which is the safe direction to be wrong in.
+
+   GitLab reads the pipeline definition from .gitlab-ci.yml unless a project
+   overrides ci_config_path.  Honouring that override would be a genuine
+   improvement, but it must be read from the project settings rather than by
+   probing the repository, for the reason above. *)
 let find_workflow_file ~request_id:_ _repo _client = Abb.Future.return (Ok (Some ".gitlab-ci.yml"))
