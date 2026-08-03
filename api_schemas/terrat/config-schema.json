@@ -1235,6 +1235,14 @@
         "enabled": {
           "default": false,
           "type": "boolean"
+        },
+        "mode": {
+          "default": "header",
+          "enum": [
+            "header",
+            "pull_request"
+          ],
+          "type": "string"
         }
       },
       "type": "object"
