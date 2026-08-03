@@ -36,6 +36,7 @@ The summary header is an [Enterprise](/editions) feature. Enabling it on the Ope
 | Key | Type | Description |
 | --- | --- | --- |
 | `enabled` | boolean | When `true`, each plan and apply comment starts with a summary header: a one-line rollup and a table of the dirspaces (directory and workspace combinations) executed in that comment, with their result and, for plans, whether there are changes. This lets reviewers see what a comment covers without expanding the full output. Default is `false`. |
+| `mode` | string | How the summary is presented. Values are `header` (the per-comment summary header described above) or `pull_request` (a single unified summary comment maintained for the whole pull request). Default is `header`. |
 
 The summary header is rendered above the collapsed plan/apply output. Enable it (Enterprise only):
 
@@ -44,6 +45,33 @@ notifications:
   summary:
     enabled: true
 ```
+
+#### Pull Request Mode
+
+With `mode: pull_request`, Terrateam maintains one summary comment per pull request instead of a header on every plan and apply comment. The comment is created when the first result arrives and updated in place as each subsequent run finishes, so reviewers always have a single up-to-date view of the pull request.
+
+The unified comment contains a table with one row per dirspace (directory and workspace combination):
+
+- **Status**: `Pending`, `Planned`, `Applied`, or `Failed`.
+- **Change counts**: `Created`, `Updated`, `Replaced`, and `Deleted`, parsed from the plan/apply output. `Replaced` is not yet populated and shows `-`.
+- **Link**: a per-dirspace link to the Terrateam console.
+
+A totals row sums the change counts across all dirspaces. Rows are sorted with failures first, then dirspaces with changes.
+
+In this mode the regular per-run plan and apply output comments are not posted; the full output is available in the Terrateam console via the links in the table. The exception is results carrying gate approvals or access control denials, which still post their own comment.
+
+If the table is too large to fit in a single comment, it is truncated to the top rows with a link to the console for the full list.
+
+Enable it (Enterprise only):
+
+```yaml
+notifications:
+  summary:
+    enabled: true
+    mode: pull_request
+```
+
+Both `mode` values require `enabled: true`, which is an [Enterprise](/editions) feature.
 
 ## Examples
 ### Multiple Comment Strategies for Diferent Dirspaces
