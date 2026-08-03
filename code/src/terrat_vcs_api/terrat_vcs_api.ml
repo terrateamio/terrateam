@@ -158,6 +158,14 @@ module type S = sig
     Comment.Id.t ->
     (unit, [> `Error ]) result Abb.Future.t
 
+  val update_pull_request_comment :
+    request_id:string ->
+    Client.t ->
+    ('diff, 'checks) Pull_request.t ->
+    Comment.Id.t ->
+    string ->
+    (unit, [> `Not_found | `Error ]) result Abb.Future.t
+
   val fetch_pull_request :
     request_id:string ->
     Account.t ->
