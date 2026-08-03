@@ -119,6 +119,10 @@ let fetch_tree ~request_id client repo ref_ = raise (Failure "nyi")
 let comment_on_pull_request ~request_id client pull_request body = raise (Failure "nyi")
 let delete_pull_request_comment ~request_id client pull_request comment_id = raise (Failure "nyi")
 let minimize_pull_request_comment ~request_id client pull_request comment_id = raise (Failure "nyi")
+
+let update_pull_request_comment ~request_id client pull_request comment_id body =
+  raise (Failure "nyi")
+
 let fetch_diff ~client ~owner ~repo pull_number = raise (Failure "nyi")
 let fetch_pull_request ~request_id account client repo pull_request_id = raise (Failure "nyi")
 let fetch_diff_files ~request_id ~base_ref ~branch_ref repo client = raise (Failure "nyi")
