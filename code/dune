@@ -48,7 +48,11 @@
     -w
     +y
     -warn-error
-    +y ; 26,27  unused-var
+    +y ; 26     unused-var
+    -w
+    +z
+    -warn-error
+    +z ; 27     unused-var-strict (unused fn params, patterns)
     -w
     +40
     -warn-error
@@ -107,7 +111,11 @@
     -w
     +y
     -warn-error
-    +y ; 26,27  unused-var
+    +y ; 26     unused-var
+    -w
+    +z
+    -warn-error
+    +z ; 27     unused-var-strict (unused fn params, patterns)
     -w
     +40
     -warn-error
