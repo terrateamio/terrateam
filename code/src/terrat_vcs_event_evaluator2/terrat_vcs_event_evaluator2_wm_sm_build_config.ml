@@ -248,7 +248,7 @@ struct
     fetch Keys.publish_comment
     >>= fun publish_comment -> publish_comment' publish_comment Msg.Unexpected_temporary_err
 
-  let result ~cache_ref ~branch_ref ~branch work_manifest result s { Bs.Fetcher.fetch } =
+  let result ~cache_ref ~branch_ref:_ ~branch work_manifest result s { Bs.Fetcher.fetch } =
     let open Irm in
     let fail msg =
       fetch Keys.account
