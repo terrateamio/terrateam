@@ -34,6 +34,17 @@ val has_no_parent_escape : string -> bool
     escaping inputs is unspecified. *)
 val relpath : from:string -> to_:string -> string
 
+(** [classify_path ~scope filepath] decides where [filepath] lands relative to an outer tree and an
+    optional inner [scope] directory nested within it. [scope] and [filepath] must be expressed in
+    the same frame (both relative to the same origin).
+    - [`In_scope rel] — [filepath] is under [scope]; [rel] is the path within it ([""] when it IS
+      the scope directory).
+    - [`In_tree p] — no scope match, but the path stays inside the tree ([has_no_parent_escape]);
+      [p] is the normalized path ([""] for the tree root itself).
+    - [`Outside] — absolute, or a relative path that escapes above the tree. *)
+val classify_path :
+  scope:string option -> string -> [ `In_scope of string | `In_tree of string | `Outside ]
+
 (** [mkdir_p path] creates [path] and every missing ancestor, stopping at [/], [.] or the empty
     string. An already-existing directory is not an error, so concurrent callers building
     overlapping trees (parallel tests laying down fixture directories, say) do not race each other.
