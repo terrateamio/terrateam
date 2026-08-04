@@ -45,4 +45,8 @@ let service_throws_exn =
 
 let () =
   Random.self_init ();
-  Oth.run ~file:__FILE__ (Oth.parallel [ basic_run; service_throws_exn ])
+  Oth.run
+    ~file:__FILE__
+    ~setup:(fun () -> Ok ())
+    ~teardown:(fun _ -> ())
+    (fun _ -> Oth.parallel [ basic_run; service_throws_exn ])

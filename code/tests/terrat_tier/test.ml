@@ -6,24 +6,30 @@ let parse s =
 let test_empty_features =
   Oth.test ~name:"Empty features" (fun _ ->
       let t = parse "{}" in
-      assert (t.Terrat_tier.num_users_per_month = CCInt.max_int);
-      assert (t.Terrat_tier.runs_per_month = CCInt.max_int);
-      assert (t.Terrat_tier.private_runners = CCInt.max_int))
+      Oth.Assert.true_
+        "t.Terrat_tier.num_users_per_month = CCInt.max_int"
+        (t.Terrat_tier.num_users_per_month = CCInt.max_int);
+      Oth.Assert.true_
+        "t.Terrat_tier.runs_per_month = CCInt.max_int"
+        (t.Terrat_tier.runs_per_month = CCInt.max_int);
+      Oth.Assert.true_
+        "t.Terrat_tier.private_runners = CCInt.max_int"
+        (t.Terrat_tier.private_runners = CCInt.max_int))
 
 let test_free_tier_features =
   Oth.test ~name:"Free tier features" (fun _ ->
       let t = parse "{\"runs_per_month\":50,\"num_users_per_month\":3,\"private_runners\":1}" in
-      assert (t.Terrat_tier.num_users_per_month = 3);
-      assert (t.Terrat_tier.runs_per_month = 50);
-      assert (t.Terrat_tier.private_runners = 1))
+      Oth.Assert.Eq.int ~expected:3 ~actual:t.Terrat_tier.num_users_per_month;
+      Oth.Assert.Eq.int ~expected:50 ~actual:t.Terrat_tier.runs_per_month;
+      Oth.Assert.Eq.int ~expected:1 ~actual:t.Terrat_tier.private_runners)
 
 let test_unknown_fields =
   Oth.test ~name:"Unknown fields are ignored" (fun _ ->
       let t = parse "{\"num_users_per_month\":3,\"some_future_feature\":true}" in
-      assert (t.Terrat_tier.num_users_per_month = 3))
+      Oth.Assert.Eq.int ~expected:3 ~actual:t.Terrat_tier.num_users_per_month)
 
 let test = Oth.parallel [ test_empty_features; test_free_tier_features; test_unknown_fields ]
 
 let () =
   Random.self_init ();
-  Oth.run ~file:__FILE__ test
+  Oth.run ~file:__FILE__ ~setup:(fun () -> Ok ()) ~teardown:(fun _ -> ()) (fun _ -> test)

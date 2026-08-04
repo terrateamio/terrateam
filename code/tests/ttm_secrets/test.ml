@@ -25,7 +25,7 @@ let test_identity =
         ~fin:(Input_buffer.read input_buf)
         ~fout
         ();
-      assert (Buffer.contents output = "this is a test"))
+      Oth.Assert.Eq.string ~expected:"this is a test" ~actual:(Buffer.contents output))
 
 let test_simple_secret =
   Oth.test ~name:"simple secret" (fun _ ->
@@ -39,7 +39,7 @@ let test_simple_secret =
         ~fin:(Input_buffer.read input_buf)
         ~fout
         ();
-      assert (Buffer.contents output = "this *** test"))
+      Oth.Assert.Eq.string ~expected:"this *** test" ~actual:(Buffer.contents output))
 
 let test_simple_unmask =
   Oth.test ~name:"simple unmask" (fun _ ->
@@ -53,7 +53,7 @@ let test_simple_unmask =
         ~fin:(Input_buffer.read input_buf)
         ~fout
         ();
-      assert (Buffer.contents output = "this is a test"))
+      Oth.Assert.Eq.string ~expected:"this is a test" ~actual:(Buffer.contents output))
 
 let test_unmask_adjacent_front =
   Oth.test ~name:"unmask adjacent front" (fun _ ->
@@ -67,7 +67,7 @@ let test_unmask_adjacent_front =
         ~fin:(Input_buffer.read input_buf)
         ~fout
         ();
-      assert (Buffer.contents output = "this *** test"))
+      Oth.Assert.Eq.string ~expected:"this *** test" ~actual:(Buffer.contents output))
 
 let test_unmask_adjacent_back =
   Oth.test ~name:"unmask adjacent back" (fun _ ->
@@ -81,7 +81,7 @@ let test_unmask_adjacent_back =
         ~fin:(Input_buffer.read input_buf)
         ~fout
         ();
-      assert (Buffer.contents output = "this *** test"))
+      Oth.Assert.Eq.string ~expected:"this *** test" ~actual:(Buffer.contents output))
 
 let test_unmask_overlap_front =
   Oth.test ~name:"unmask overlap front" (fun _ ->
@@ -95,7 +95,7 @@ let test_unmask_overlap_front =
         ~fin:(Input_buffer.read input_buf)
         ~fout
         ();
-      assert (Buffer.contents output = "this is a test"))
+      Oth.Assert.Eq.string ~expected:"this is a test" ~actual:(Buffer.contents output))
 
 let test_unmask_overlap_back =
   Oth.test ~name:"unmask overlap back" (fun _ ->
@@ -109,7 +109,7 @@ let test_unmask_overlap_back =
         ~fin:(Input_buffer.read input_buf)
         ~fout
         ();
-      assert (Buffer.contents output = "this is a test"))
+      Oth.Assert.Eq.string ~expected:"this is a test" ~actual:(Buffer.contents output))
 
 let test_unmask_overlap_inside =
   Oth.test ~name:"unmask overlap inside" (fun _ ->
@@ -123,7 +123,7 @@ let test_unmask_overlap_inside =
         ~fin:(Input_buffer.read input_buf)
         ~fout
         ();
-      assert (Buffer.contents output = "this is a test"))
+      Oth.Assert.Eq.string ~expected:"this is a test" ~actual:(Buffer.contents output))
 
 let test_multiline_secret =
   Oth.test ~name:"multiline secret" (fun _ ->
@@ -137,7 +137,7 @@ let test_multiline_secret =
         ~fin:(Input_buffer.read input_buf)
         ~fout
         ();
-      assert (Buffer.contents output = "this\n***\ntest"))
+      Oth.Assert.Eq.string ~expected:"this\n***\ntest" ~actual:(Buffer.contents output))
 
 let test_multiple_overlapping_secrets =
   Oth.test ~name:"multiple overlapping secrets" (fun _ ->
@@ -151,7 +151,7 @@ let test_multiple_overlapping_secrets =
         ~fin:(Input_buffer.read input_buf)
         ~fout
         ();
-      assert (Buffer.contents output = "this ***"))
+      Oth.Assert.Eq.string ~expected:"this ***" ~actual:(Buffer.contents output))
 
 let test_mask_null_byte =
   Oth.test ~name:"mask null byte" (fun _ ->
@@ -165,7 +165,7 @@ let test_mask_null_byte =
         ~fin:(Input_buffer.read input_buf)
         ~fout
         ();
-      assert (Buffer.contents output = "this is *** a test"))
+      Oth.Assert.Eq.string ~expected:"this is *** a test" ~actual:(Buffer.contents output))
 
 let test =
   Oth.parallel
@@ -185,4 +185,4 @@ let test =
 
 let () =
   Random.self_init ();
-  Oth.run ~file:__FILE__ test
+  Oth.run ~file:__FILE__ ~setup:(fun () -> Ok ()) ~teardown:(fun _ -> ()) (fun _ -> test)

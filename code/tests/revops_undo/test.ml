@@ -14,8 +14,8 @@ let oprev =
 
 let () =
   Revops.run_in_context oprev (fun threaded ->
-      assert (threaded = initial);
-      assert (!state = changed))
+      Oth.Assert.true_ "threaded = initial" (threaded = initial);
+      Oth.Assert.true_ "!state = changed" (!state = changed))
 
 (* After the run in context, the state should be restored. *)
-let () = assert (!state = initial)
+let () = Oth.Assert.true_ "!state = initial" (!state = initial)

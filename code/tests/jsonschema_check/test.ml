@@ -4,17 +4,21 @@ let test_valid =
   Oth.test ~name:"valid" (fun _ ->
       let schema = {|{"type": "object", "properties": {"name": {"type": "string"}}}|} in
       let valid_json = {|{"name": "John"}|} in
-      assert (Jsonschema_check.validate_json_schema ~schema valid_json = Ok ()))
+      Oth.Assert.true_
+        "Jsonschema_check.validate_json_schema ~schema valid_json = Ok ()"
+        (Jsonschema_check.validate_json_schema ~schema valid_json = Ok ()))
 
 let test_invalid =
   Oth.test ~name:"invalid" (fun _ ->
       let schema = {|{"type": "object", "properties": {"name": {"type": "string"}}}|} in
       let valid_json = {|{"name": 123}|} in
       match Jsonschema_check.validate_json_schema ~schema valid_json with
-      | Ok () -> assert false
+      | Ok () -> Oth.Assert.false_ "invalid: unexpected value"
       | Error errors ->
-          assert (
-            errors
+          Oth.Assert.true_
+            "errors = [ { Jsonschema_check.Validation_err.msg = \"123 is not of type \
+             \\\"string\\\"\"; path = \".name\"; }; ]"
+            (errors
             = [
                 {
                   Jsonschema_check.Validation_err.msg = "123 is not of type \"string\"";
@@ -29,10 +33,12 @@ let test_invalid2 =
       in
       let valid_json = {|{"name": "foo", "bar": "hi"}|} in
       match Jsonschema_check.validate_json_schema ~schema valid_json with
-      | Ok () -> assert false
+      | Ok () -> Oth.Assert.false_ "invalid2: unexpected value"
       | Error errors ->
-          assert (
-            errors
+          Oth.Assert.true_
+            "errors = [ { Jsonschema_check.Validation_err.msg = \"\\\"hi\\\" is not of type \
+             \\\"integer\\\"\"; path = \".bar\"; }; ]"
+            (errors
             = [
                 {
                   Jsonschema_check.Validation_err.msg = "\"hi\" is not of type \"integer\"";
@@ -47,10 +53,12 @@ let test_invalid3 =
       in
       let valid_json = {|{"name": "foo", "bar": {"foo": "baz"}}|} in
       match Jsonschema_check.validate_json_schema ~schema valid_json with
-      | Ok () -> assert false
+      | Ok () -> Oth.Assert.false_ "invalid3: unexpected value"
       | Error errors ->
-          assert (
-            errors
+          Oth.Assert.true_
+            "errors = [ { Jsonschema_check.Validation_err.msg = \"\\\"baz\\\" is not of type \
+             \\\"integer\\\"\"; path = \".bar.foo\"; }; ]"
+            (errors
             = [
                 {
                   Jsonschema_check.Validation_err.msg = "\"baz\" is not of type \"integer\"";
@@ -62,4 +70,4 @@ let test = Oth.parallel [ test_valid; test_invalid; test_invalid2; test_invalid3
 
 let () =
   Random.self_init ();
-  Oth.run ~file:__FILE__ test
+  Oth.run ~file:__FILE__ ~setup:(fun () -> Ok ()) ~teardown:(fun _ -> ()) (fun _ -> test)

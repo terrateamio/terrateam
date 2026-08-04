@@ -17,7 +17,7 @@ let test_work_runs =
       >>= fun executor ->
       Exec.run executor ~name:[ "task" ] (fun () -> Fut.return 42)
       >>= fun result ->
-      assert (result = 42);
+      Oth.Assert.Eq.int ~expected:42 ~actual:result;
       Fut.return ())
 
 let test_slots_bound_concurrency =
@@ -48,8 +48,8 @@ let test_slots_bound_concurrency =
       >>= fun t3 ->
       Fc.all [ t1; t2; t3 ]
       >>= fun _ ->
-      assert (!peak = 1);
-      assert (!running = 0);
+      Oth.Assert.Eq.int ~expected:1 ~actual:!peak;
+      Oth.Assert.Eq.int ~expected:0 ~actual:!running;
       Fut.return ())
 
 let test_slots_allow_concurrency =
@@ -118,20 +118,22 @@ let test_suspend_unsuspend =
       >>= fun () ->
       task_a
       >>= fun () ->
-      assert (Fut.state task_a = `Det ());
-      assert (Fut.state task_b = `Det ());
+      Oth.Assert.true_ "Fut.state task_a = `Det ()" (Fut.state task_a = `Det ());
+      Oth.Assert.true_ "Fut.state task_b = `Det ()" (Fut.state task_b = `Det ());
       Fut.return ())
 
 let () =
   Random.self_init ();
-  Oth.run
+  Oth_abb.run
     ~file:__FILE__
-    Oth_abb.(
-      to_sync_test
-        (serial
-           [
-             test_work_runs;
-             test_slots_bound_concurrency;
-             test_slots_allow_concurrency;
-             test_suspend_unsuspend;
-           ]))
+    ~setup:(fun () -> Abb.Future.return (Ok ()))
+    ~teardown:(fun () -> Abb.Future.return ())
+    (fun () ->
+      Oth_abb.(
+        serial
+          [
+            test_work_runs;
+            test_slots_bound_concurrency;
+            test_slots_allow_concurrency;
+            test_suspend_unsuspend;
+          ]))

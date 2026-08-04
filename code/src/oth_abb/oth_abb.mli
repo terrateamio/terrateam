@@ -1,30 +1,34 @@
-module Make (Abb : Abb_intf.S) : sig
-  (** A test. Like moose, a plural of tests is called a test. A single test can wrap multiple tests
-      inside of it. Under the new scheme, an async test is just an {!Oth.Test.t} whose body runs the
-      Abb scheduler internally. *)
-  module Test : sig
-    type t = Oth.Test.t
+(** The Abb-aware assertion vocabulary: everything in {!Oth.ASSERT}, plus the assertions that name
+    an [Abb_intf] type.
+
+    Extending {!Oth.ASSERT} rather than redeclaring it is the point — an async test reaches the
+    whole vocabulary through one module path, [Oth_abb.Assert.*], and the shared part keeps a single
+    implementation. Holding the [Abb_intf]-typed pieces here is what lets [oth] itself stay free of
+    a dependency on [abb_intf]. *)
+module type ASSERT = sig
+  include Oth.ASSERT
+
+  module Exit_code : sig
+    (** Asserts that the process exited with a zero return code, otherwise fails the test. A
+        signaled or stopped process also fails the test. *)
+    val zero : Abb_intf.Process.Exit_code.t -> unit
+
+    (** Asserts that the process exited, with a non-zero exit, otherwise fails the test. A signaled
+        or stopped process also fails the test. *)
+    val non_zero : Abb_intf.Process.Exit_code.t -> unit
   end
+end
 
-  (** Takes a list of tests and makes them runnable in parallel. Alias for {!Oth.parallel}. *)
-  val parallel : Test.t list -> Test.t
+module Assert : ASSERT
 
-  (** Run multiple tests in serial. Alias for {!Oth.serial}. *)
-  val serial : Test.t list -> Test.t
+module Make (Abb : Abb_intf.S) : sig
+  include Oth.S with type 'a m = 'a Abb.Future.t
 
-  (** Run a test and timeout if it does not finish in a given amount of time. *)
-  val timeout : Duration.t -> Test.t -> Test.t
+  (** Re-export of the toplevel {!Assert}. Nothing in it depends on [Abb], but a call site that
+      writes [module Oth_abb = Oth_abb.Make (Abb)] shadows the library name and so cannot reach the
+      toplevel module; re-exporting means both spellings resolve. *)
+  module Assert : ASSERT
 
-  (** Turn an async function into a test. The scheduler is run for the duration of [f], and any
-      exception raised in the future tree propagates out synchronously. *)
-  val test :
-    ?tags:string list -> ?desc:string -> name:string -> (unit -> unit Abb.Future.t) -> Test.t
-
-  (** Turn a result-returning test into a unit-returning test. *)
-  val result_test :
-    (Oth.State.t -> (unit, 'err) result Abb.Future.t) -> Oth.State.t -> unit Abb.Future.t
-
-  (** No-op: async tests are now plain {!Oth.Test.t}, so no conversion is needed. Kept for backwards
-      compatibility with existing callers. *)
-  val to_sync_test : Test.t -> Oth.Test.t
+  (** No-op identity. Kept so migrated call sites need not be edited. *)
+  val to_sync_test : Test.t -> Test.t
 end

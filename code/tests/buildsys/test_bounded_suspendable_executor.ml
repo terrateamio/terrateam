@@ -100,9 +100,9 @@ let test_const =
       >>= fun queue ->
       Bs.build queue rebuilder tasks a1 st
       >>= fun result ->
-      assert (result = 10);
-      assert (Bs.St.running_count st = 0);
-      assert (Bs.St.blocking_count st = 0);
+      Oth.Assert.Eq.int ~expected:10 ~actual:result;
+      Oth.Assert.Eq.int ~expected:0 ~actual:(Bs.St.running_count st);
+      Oth.Assert.Eq.int ~expected:0 ~actual:(Bs.St.blocking_count st);
       Fut.return ())
 
 let test_dynamic_dependency =
@@ -126,11 +126,15 @@ let test_dynamic_dependency =
       >>= fun queue ->
       Bs.build queue rebuilder tasks b1 st
       >>= fun result ->
-      assert (result = 11);
-      assert (Bs.St.running_count st = 0);
-      assert (Bs.St.blocking_count st = 0);
+      Oth.Assert.Eq.int ~expected:11 ~actual:result;
+      Oth.Assert.Eq.int ~expected:0 ~actual:(Bs.St.running_count st);
+      Oth.Assert.Eq.int ~expected:0 ~actual:(Bs.St.blocking_count st);
       Fut.return ())
 
 let () =
   Random.self_init ();
-  Oth.run ~file:__FILE__ Oth_abb.(to_sync_test (serial [ test_const; test_dynamic_dependency ]))
+  Oth_abb.run
+    ~file:__FILE__
+    ~setup:(fun () -> Abb.Future.return (Ok ()))
+    ~teardown:(fun () -> Abb.Future.return ())
+    (fun () -> Oth_abb.(serial [ test_const; test_dynamic_dependency ]))

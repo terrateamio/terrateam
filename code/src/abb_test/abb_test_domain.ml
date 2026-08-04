@@ -13,7 +13,7 @@
    omitted for that reason — they would assert an invariant the
    scheduler does not currently uphold. *)
 module Make (Abb : Abb_intf.S) = struct
-  module Oth_abb = Oth_abb.Make (Abb)
+  module Oth_abb = Abb_test_oth.Make (Abb)
 
   let is_multi_domain =
     CCList.mem ~eq:Abb_intf.Scheduler_capability.equal `Multi_domain Abb.Scheduler.capabilities

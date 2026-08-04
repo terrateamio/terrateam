@@ -9,7 +9,7 @@ let basic_test =
       in
       let ret = Unix.read wait (Bytes.create 10) 0 10 in
       Abb_thread_pool.destroy pool;
-      assert (ret = 0))
+      Oth.Assert.Eq.int ~expected:0 ~actual:ret)
 
 let parallel_test =
   Oth.test ~desc:"Verify work runs in parallel" ~name:"Parallel test" (fun _ ->
@@ -31,9 +31,9 @@ let parallel_test =
       let ret2 = Unix.read wait2 (Bytes.create 10) 0 10 in
       let stop = Unix.time () in
       Abb_thread_pool.destroy pool;
-      assert (ret1 = 0);
-      assert (ret2 = 0);
-      assert (stop -. start < 6.0))
+      Oth.Assert.Eq.int ~expected:0 ~actual:ret1;
+      Oth.Assert.Eq.int ~expected:0 ~actual:ret2;
+      Oth.Assert.true_ "stop -. start < 6.0" (stop -. start < 6.0))
 
 let serialize_test =
   Oth.test ~desc:"Verify overcapacity work is serialized" ~name:"Serialize test" (fun _ ->
@@ -62,12 +62,17 @@ let serialize_test =
       let ret3 = Unix.read wait3 (Bytes.create 10) 0 10 in
       let stop = Unix.time () in
       Abb_thread_pool.destroy pool;
-      assert (ret1 = 0);
-      assert (ret2 = 0);
-      assert (ret3 = 0);
-      assert (stop -. start > 3.0);
-      assert (stop -. start < 9.0))
+      Oth.Assert.Eq.int ~expected:0 ~actual:ret1;
+      Oth.Assert.Eq.int ~expected:0 ~actual:ret2;
+      Oth.Assert.Eq.int ~expected:0 ~actual:ret3;
+      Oth.Assert.true_ "stop -. start > 3.0" (stop -. start > 3.0);
+      Oth.Assert.true_ "stop -. start < 9.0" (stop -. start < 9.0))
 
 let () =
   Random.self_init ();
-  Oth.(run ~file:__FILE__ (parallel [ basic_test; parallel_test; serialize_test ]))
+  Oth.(
+    run
+      ~file:__FILE__
+      ~setup:(fun () -> Ok ())
+      ~teardown:(fun _ -> ())
+      (fun _ -> parallel [ basic_test; parallel_test; serialize_test ]))

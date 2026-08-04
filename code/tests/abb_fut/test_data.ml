@@ -23,7 +23,7 @@ let p1 =
         Fut.return ()
       in
       drive fut;
-      assert (!r = Some 1))
+      Oth.Assert.true_ "!r = Some 1" (!r = Some 1))
 
 let p2 =
   Oth.test ~desc:"set_data flows through nested return chain" ~name:"P2" (fun _ ->
@@ -39,7 +39,7 @@ let p2 =
         Fut.return ()
       in
       drive fut;
-      assert (!r = Some 1))
+      Oth.Assert.true_ "!r = Some 1" (!r = Some 1))
 
 let default_data =
   Oth.test ~desc:"untouched chain reads zero_data" ~name:"Default" (fun _ ->
@@ -51,7 +51,7 @@ let default_data =
         Fut.return ()
       in
       drive fut;
-      assert (!r = Some 0))
+      Oth.Assert.true_ "!r = Some 0" (!r = Some 0))
 
 let promise_observer_keeps_own_data =
   Oth.test
@@ -76,7 +76,7 @@ let promise_observer_keeps_own_data =
       let setter = Fut.set_data 7 >>= fun () -> Fut.Promise.set p () in
       ignore (Fut.run_with_state observer state);
       ignore (Fut.run_with_state setter state);
-      assert (!r = Some 0))
+      Oth.Assert.true_ "!r = Some 0" (!r = Some 0))
 
 let fork_isolation =
   Oth.test ~desc:"forked chains see their own data" ~name:"Fork isolation" (fun _ ->
@@ -109,8 +109,8 @@ let fork_isolation =
       ignore (Fut.run_with_state chain_b state);
       ignore (Fut.run_with_state (Fut.Promise.set p_a ()) state);
       ignore (Fut.run_with_state (Fut.Promise.set p_b ()) state);
-      assert (!r_a = Some 11);
-      assert (!r_b = Some 22))
+      Oth.Assert.true_ "!r_a = Some 11" (!r_a = Some 11);
+      Oth.Assert.true_ "!r_b = Some 22" (!r_b = Some 22))
 
 (* Two chains run concurrently, each goes through several [set_data]/[get_data] steps, and
    pauses on a promise between them.  We drive their resumes in interleaved order to prove
@@ -171,19 +171,26 @@ let concurrent_bind_isolation =
       ignore (Fut.run_with_state (Fut.Promise.set pause_b1 ()) state);
       ignore (Fut.run_with_state (Fut.Promise.set pause_a2 ()) state);
       ignore (Fut.run_with_state (Fut.Promise.set pause_b2 ()) state);
-      assert (List.rev !trace_a = [ `After_first 11; `After_second 12 ]);
-      assert (List.rev !trace_b = [ `After_first 21; `After_second 22 ]))
+      Oth.Assert.true_
+        "List.rev !trace_a = [ `After_first 11; `After_second 12 ]"
+        (List.rev !trace_a = [ `After_first 11; `After_second 12 ]);
+      Oth.Assert.true_
+        "List.rev !trace_b = [ `After_first 21; `After_second 22 ]"
+        (List.rev !trace_b = [ `After_first 21; `After_second 22 ]))
 
 let () =
   Oth.(
     run
       ~file:__FILE__
-      (parallel
-         [
-           p1;
-           p2;
-           default_data;
-           promise_observer_keeps_own_data;
-           fork_isolation;
-           concurrent_bind_isolation;
-         ]))
+      ~setup:(fun () -> Ok ())
+      ~teardown:(fun _ -> ())
+      (fun _ ->
+        parallel
+          [
+            p1;
+            p2;
+            default_data;
+            promise_observer_keeps_own_data;
+            fork_isolation;
+            concurrent_bind_isolation;
+          ]))
